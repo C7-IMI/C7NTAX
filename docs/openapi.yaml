@@ -1,0 +1,820 @@
+openapi: "3.1.0"
+info:
+  title: C7 Overwatch API
+  description: |
+    Professional Services Automation API — programmatic access to the C7 Overwatch platform.
+    All endpoints require Bearer token authentication (JWT) obtained via `/api/auth/login`.
+    External apps and user-created plugins use this same API.
+
+    ## Authentication
+    1. POST `/api/auth/login` with email + password
+    2. If MFA is enabled, receive `mfaToken` and POST `/api/auth/verify-mfa` with TOTP code
+    3. Use returned `token` as `Authorization: Bearer <token>` header
+
+    ## Rate Limiting
+    100 requests per 15-minute window per token. 429 responses include `Retry-After`.
+
+    ## Permissions
+    Each endpoint lists required permission(s). Client users are scoped to their company's data.
+  version: "1.0.0"
+  contact:
+    name: Cyber 7 Group
+    email: support@cyber7group.com
+
+servers:
+  - url: http://localhost:4000/api
+    description: Local development
+  - url: https://api.c7overwatch.com/api
+    description: Production
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication, MFA setup, password reset
+  - name: Users
+    description: User CRUD (admin only)
+  - name: Tickets
+    description: Ticket lifecycle management
+  - name: Boards
+    description: Service boards and email connectors
+  - name: Clients
+    description: Company/client records
+  - name: Billing
+    description: Service agreements, invoices, payments
+  - name: Integrations
+    description: Third-party service connections
+
+paths:
+  # ─── Auth ───
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Login successful or MFA required
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/LoginResponse"
+                  - $ref: "#/components/schemas/MfaRequiredResponse"
+
+  /auth/verify-mfa:
+    post:
+      tags: [Auth]
+      summary: Verify MFA code and complete login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, code]
+              properties:
+                token: { type: string, description: "mfaToken from login response" }
+                code: { type: string, description: "6-digit TOTP or email code" }
+      responses:
+        "200":
+          description: MFA verified, token returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
+  /auth/setup-mfa:
+    post:
+      tags: [Auth]
+      summary: Generate MFA secret and QR code for setup
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: MFA setup data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret: { type: string, description: "TOTP secret key" }
+                  qrCode: { type: string, description: "Base64 QR code image data URI" }
+
+  /auth/verify-mfa-setup:
+    post:
+      tags: [Auth]
+      summary: Verify MFA setup code to enable MFA
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+      responses:
+        "200": { description: "MFA enabled successfully" }
+
+  # ─── Users ───
+  /users:
+    get:
+      tags: [Users]
+      summary: List all users
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: search, in: query, schema: { type: string } }
+        - { name: role, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        "200":
+          description: Paginated user list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/User" } }
+                  total: { type: integer }
+                  limit: { type: integer }
+                  offset: { type: integer }
+    post:
+      tags: [Users]
+      summary: Create a new user (admin only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, role]
+              properties:
+                email: { type: string }
+                password: { type: string }
+                firstName: { type: string }
+                lastName: { type: string }
+                role: { $ref: "#/components/schemas/SystemRole" }
+                companyId: { type: string }
+      responses:
+        "201": { description: "User created", content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } }
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get current authenticated user profile
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: "Current user profile", content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } }
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } }
+    patch:
+      tags: [Users]
+      summary: Update user
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      requestBody: { content: { application/json: { schema: { type: object } } } }
+      responses:
+        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } }
+    delete:
+      tags: [Users]
+      summary: Deactivate user (soft delete)
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: "User deactivated" }
+
+  # ─── Tickets ───
+  /tickets:
+    get:
+      tags: [Tickets]
+      summary: List tickets with filtering
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { $ref: "#/components/schemas/TicketStatus" } }
+        - { name: priority, in: query, schema: { $ref: "#/components/schemas/TicketPriority" } }
+        - { name: boardId, in: query, schema: { type: string } }
+        - { name: companyId, in: query, schema: { type: string } }
+        - { name: assignedToId, in: query, schema: { type: string } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        "200":
+          description: Paginated ticket list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Ticket" } }
+                  total: { type: integer }
+    post:
+      tags: [Tickets]
+      summary: Create a new ticket
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, boardId]
+              properties:
+                title: { type: string }
+                description: { type: string }
+                boardId: { type: string }
+                companyId: { type: string }
+                priority: { $ref: "#/components/schemas/TicketPriority" }
+                source: { $ref: "#/components/schemas/TicketSource" }
+      responses:
+        "201": { content: { application/json: { schema: { $ref: "#/components/schemas/Ticket" } } } }
+
+  /tickets/{id}:
+    get:
+      tags: [Tickets]
+      summary: Get ticket details with notes and time entries
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/TicketDetail" } } } }
+    patch:
+      tags: [Tickets]
+      summary: Update ticket status, assignment, or fields
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                status: { $ref: "#/components/schemas/TicketStatus" }
+                priority: { $ref: "#/components/schemas/TicketPriority" }
+                boardId: { type: string }
+                assignedToId: { type: string }
+                dueDate: { type: string, format: date-time }
+                estimatedHours: { type: number }
+                note: { type: string, description: "Note to add with this update" }
+                noteInternal: { type: boolean, description: "Mark note as internal only" }
+      responses:
+        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/Ticket" } } } }
+
+  /tickets/{id}/notes:
+    post:
+      tags: [Tickets]
+      summary: Add a note to a ticket
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string }
+                isInternal: { type: boolean, default: false }
+      responses:
+        "201": { description: "Note added" }
+
+  /tickets/{id}/time:
+    post:
+      tags: [Tickets]
+      summary: Log time entry against a ticket
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [startTime, endTime]
+              properties:
+                startTime: { type: string, format: date-time }
+                endTime: { type: string, format: date-time }
+                description: { type: string }
+                billable: { type: boolean, default: true }
+      responses:
+        "201": { description: "Time entry logged" }
+
+  # ─── Boards ───
+  /boards:
+    get:
+      tags: [Boards]
+      summary: List all service boards
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Board" } } } } }
+    post:
+      tags: [Boards]
+      summary: Create a new service board
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        "201": { content: { application/json: { schema: { $ref: "#/components/schemas/Board" } } } }
+
+  /boards/{id}:
+    get:
+      tags: [Boards]
+      summary: Get board with connector details
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/BoardDetail" } } } }
+    patch:
+      tags: [Boards]
+      summary: Update board settings
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { content: { application/json: { schema: { $ref: "#/components/schemas/Board" } } } }
+
+  /boards/{boardId}/connectors:
+    get:
+      tags: [Boards]
+      summary: List email connectors for a board
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: boardId, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/EmailConnector" } } } } }
+    post:
+      tags: [Boards]
+      summary: Create email connector for ticket ingestion
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: boardId, in: path, required: true, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, host, user, password]
+              properties:
+                email: { type: string, format: email }
+                host: { type: string }
+                port: { type: integer, default: 993 }
+                secure: { type: boolean, default: true }
+                folder: { type: string, default: "INBOX" }
+                user: { type: string }
+                password: { type: string }
+                pollIntervalSeconds: { type: integer, default: 60 }
+      responses:
+        "201": { content: { application/json: { schema: { $ref: "#/components/schemas/EmailConnector" } } } }
+
+  # ─── Clients ───
+  /clients:
+    get:
+      tags: [Clients]
+      summary: List all client companies
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: search, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        "200":
+          description: Paginated client list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Company" } }
+                  total: { type: integer }
+    post:
+      tags: [Clients]
+      summary: Create a new client company
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                email: { type: string }
+                phone: { type: string }
+                address: { type: string }
+                city: { type: string }
+                state: { type: string }
+                zip: { type: string }
+                country: { type: string, default: "US" }
+                website: { type: string }
+                notes: { type: string }
+      responses:
+        "201": { content: { application/json: { schema: { $ref: "#/components/schemas/Company" } } } }
+
+  # ─── Billing ───
+  /billing/agreements:
+    get:
+      tags: [Billing]
+      summary: List service agreements
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/ServiceAgreement" } } } } }
+    post:
+      tags: [Billing]
+      summary: Create a service agreement
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, companyId]
+              properties:
+                name: { type: string }
+                companyId: { type: string }
+                description: { type: string }
+                billingPeriod: { $ref: "#/components/schemas/BillingPeriod" }
+                price: { type: number }
+                startDate: { type: string, format: date }
+                endDate: { type: string, format: date }
+                autoRenew: { type: boolean }
+                cancellationDays: { type: integer }
+      responses:
+        "201": { content: { application/json: { schema: { $ref: "#/components/schemas/ServiceAgreement" } } } }
+
+  /billing/invoices:
+    get:
+      tags: [Billing]
+      summary: List invoices
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { $ref: "#/components/schemas/InvoiceStatus" } }
+        - { name: companyId, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        "200":
+          description: Paginated invoice list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/Invoice" } }
+                  total: { type: integer }
+
+  /billing/invoices/generate:
+    post:
+      tags: [Billing]
+      summary: Auto-generate invoice from unbilled time entries
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [companyId]
+              properties:
+                companyId: { type: string }
+                agreementId: { type: string }
+      responses:
+        "201": { content: { application/json: { schema: { $ref: "#/components/schemas/Invoice" } } } }
+
+  /billing/invoices/{id}/send:
+    post:
+      tags: [Billing]
+      summary: Send invoice to client via email
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: "Invoice sent" }
+
+  /billing/invoices/{id}/record-payment:
+    post:
+      tags: [Billing]
+      summary: Record a payment against an invoice
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount: { type: number }
+                method: { type: string }
+                reference: { type: string }
+      responses:
+        "200": { description: "Payment recorded" }
+
+  # ─── Integrations ───
+  /integrations/types:
+    get:
+      tags: [Integrations]
+      summary: List available integration service types
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string }
+                example: ["flexpoint", "quickbooks", "pax8", "avanan", "proofpoint", "sentinelone", "itglue", "microsoft365", "azure", "aws"]
+
+  /integrations:
+    get:
+      tags: [Integrations]
+      summary: List configured integrations
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/IntegrationConfig" } } } } }
+    post:
+      tags: [Integrations]
+      summary: Add a new integration configuration
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, name, credentials]
+              properties:
+                kind: { type: string }
+                name: { type: string }
+                credentials: { type: object }
+                settings: { type: object }
+      responses:
+        "201": { content: { application/json: { schema: { $ref: "#/components/schemas/IntegrationConfig" } } } }
+
+  /integrations/{id}/test:
+    post:
+      tags: [Integrations]
+      summary: Test integration connection
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /integrations/{id}/sync:
+    post:
+      tags: [Integrations]
+      summary: Trigger manual sync for an integration
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  kind: { type: string }
+                  recordsProcessed: { type: integer }
+                  errors: { type: array, items: { type: string } }
+                  syncedAt: { type: string, format: date-time }
+
+  # ─── WebSocket ───
+  /ws:
+    get:
+      summary: WebSocket connection for real-time updates
+      description: |
+        Connect with JWT as query parameter: `ws://host/ws?token=<jwt>`.
+        Server pushes typed events:
+        - `{ type: "ticket_updated", payload: { ticketId, changes } }`
+        - `{ type: "follow_up_sent", payload: { ticketId, ticketNumber } }`
+        - `{ type: "ticket_auto_closed", payload: { ticketId, ticketNumber } }`
+        - `{ type: "invoice_overdue", payload: { invoiceId, invoiceNumber } }`
+      tags: []
+      responses: {}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SystemRole:
+      type: string
+      enum: [admin, manager, technician, dispatcher, billing_manager, client_admin, client_user, read_only]
+
+    TicketStatus:
+      type: string
+      enum: [new, in_progress, waiting_on_client, waiting_on_third_party, on_hold, pending_approval, resolved, closed, cancelled]
+
+    TicketPriority:
+      type: string
+      enum: [low, medium, high, critical]
+
+    TicketSource:
+      type: string
+      enum: [phone, email, portal, chat, monitoring, walk_in, api, internal]
+
+    InvoiceStatus:
+      type: string
+      enum: [draft, sent, partial, paid, overdue, void, collections]
+
+    BillingPeriod:
+      type: string
+      enum: [one_time, weekly, monthly, quarterly, semi_annually, annually]
+
+    LoginResponse:
+      type: object
+      properties:
+        token: { type: string }
+        user: { $ref: "#/components/schemas/User" }
+
+    MfaRequiredResponse:
+      type: object
+      properties:
+        mfaRequired: { type: boolean, enum: [true] }
+        mfaToken: { type: string, description: "Temporary token valid for 5 minutes, pass to /auth/verify-mfa" }
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        role: { $ref: "#/components/schemas/SystemRole" }
+        status: { type: string }
+        mfaEnabled: { type: boolean }
+        companyId: { type: string }
+        lastLoginAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+
+    Ticket:
+      type: object
+      properties:
+        id: { type: string }
+        ticketNumber: { type: string, example: "C7-MK1234-AB12" }
+        title: { type: string }
+        description: { type: string }
+        status: { $ref: "#/components/schemas/TicketStatus" }
+        priority: { $ref: "#/components/schemas/TicketPriority" }
+        source: { $ref: "#/components/schemas/TicketSource" }
+        boardId: { type: string }
+        companyId: { type: string }
+        assignedToId: { type: string }
+        createdById: { type: string }
+        waitingSince: { type: string, format: date-time }
+        followUpCount: { type: integer }
+        dueDate: { type: string, format: date-time }
+        resolvedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    TicketDetail:
+      allOf:
+        - $ref: "#/components/schemas/Ticket"
+        - type: object
+          properties:
+            company: { $ref: "#/components/schemas/Company" }
+            assignedTo: { $ref: "#/components/schemas/User" }
+            board: { $ref: "#/components/schemas/Board" }
+            notes: { type: array, items: { type: object } }
+            timeEntries: { type: array, items: { type: object } }
+
+    Board:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        enabled: { type: boolean }
+        autoCloseDays: { type: integer }
+        createdAt: { type: string, format: date-time }
+
+    BoardDetail:
+      allOf:
+        - $ref: "#/components/schemas/Board"
+        - type: object
+          properties:
+            _count: { type: object, properties: { tickets: { type: integer } } }
+            emailConnectors: { type: array, items: { $ref: "#/components/schemas/EmailConnector" } }
+
+    EmailConnector:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        host: { type: string }
+        port: { type: integer }
+        secure: { type: boolean }
+        folder: { type: string }
+        pollIntervalSeconds: { type: integer }
+        enabled: { type: boolean }
+        lastCheckedAt: { type: string, format: date-time }
+
+    Company:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        address: { type: string }
+        city: { type: string }
+        state: { type: string }
+        zip: { type: string }
+        country: { type: string }
+        website: { type: string }
+        notes: { type: string }
+        status: { type: string }
+
+    ServiceAgreement:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        companyId: { type: string }
+        description: { type: string }
+        billingPeriod: { $ref: "#/components/schemas/BillingPeriod" }
+        price: { type: number }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        autoRenew: { type: boolean }
+        cancellationDays: { type: integer }
+        status: { type: string }
+
+    Invoice:
+      type: object
+      properties:
+        id: { type: string }
+        invoiceNumber: { type: string }
+        companyId: { type: string }
+        agreementId: { type: string }
+        issueDate: { type: string, format: date }
+        dueDate: { type: string, format: date }
+        subtotal: { type: number }
+        taxRate: { type: number }
+        taxTotal: { type: number }
+        total: { type: number }
+        status: { $ref: "#/components/schemas/InvoiceStatus" }
+        sentAt: { type: string, format: date-time }
+        paidAt: { type: string, format: date-time }
+        lineItems: { type: array, items: { $ref: "#/components/schemas/InvoiceLineItem" } }
+
+    InvoiceLineItem:
+      type: object
+      properties:
+        id: { type: string }
+        description: { type: string }
+        quantity: { type: number }
+        unitPrice: { type: number }
+        total: { type: number }
+
+    IntegrationConfig:
+      type: object
+      properties:
+        id: { type: string }
+        kind: { type: string }
+        name: { type: string }
+        enabled: { type: boolean }
+        status: { type: string, enum: [connected, error, disconnected] }
+        lastSyncAt: { type: string, format: date-time }
+        errorMessage: { type: string }
