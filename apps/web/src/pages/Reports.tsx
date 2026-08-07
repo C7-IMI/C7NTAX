@@ -251,6 +251,20 @@ function StandardReportsTab() {
       const blob = new Blob([content],{type:"text/csv"});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.href=url; a.download=`${showExport.title.replace(/\s+/g,"_")}.csv`; a.click(); URL.revokeObjectURL(url);
+    } else if (fmt === "pdf") {
+      const doc = new jsPDF({ orientation: "landscape" });
+      doc.setFontSize(16); doc.text(showExport.title, 14, 20);
+      doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()} — C7NTAX Reporting`, 14, 28);
+      const data = showExport.data;
+      if (Array.isArray(data) && data.length > 0) {
+        const cols = Object.keys(data[0] as object).filter(k => !k.startsWith("_"));
+        const rows = (data as Array<Record<string,unknown>>).map(r => cols.map(c => r[c] !== null && r[c] !== undefined ? (typeof r[c] === "object" ? JSON.stringify(r[c]) : String(r[c])) : "—"));
+        (doc as any).autoTable({ head: [cols.map(c => c.replace(/([A-Z])/g," $1").replace(/_/g," "))], body: rows, startY: 34, styles: { fontSize: 8 }, headStyles: { fillColor: [34, 211, 238] } });
+      } else if (data && typeof data === "object") {
+        const entries = Object.entries(data as Record<string,unknown>).filter(([k]) => !k.startsWith("_"));
+        (doc as any).autoTable({ head: [["Key","Value"]], body: entries.map(([k,v]) => [k.replace(/([A-Z])/g," $1").replace(/_/g," "), v !== null && v !== undefined ? (typeof v === "object" ? JSON.stringify(v) : String(v)) : "—"]), startY: 34, styles: { fontSize: 8 } });
+      }
+      doc.save(`${showExport.title.replace(/\s+/g,"_")}.pdf`);
     } else {
       const w = window.open("","_blank","width=900,height=700")!;
       w.document.write(generateReportHTML(showExport.title, showExport.data));
