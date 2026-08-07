@@ -51,9 +51,9 @@ ticketsRouter.get("/:id", requirePermission(Permission.TicketView), async (req: 
     const ticket = await prisma.ticket.findUnique({
       where: { id: req.params.id },
       include: {
-        company: true, assignedTo: true, board: true,
+        company: true, contact: { select: { id: true, firstName: true, lastName: true, email: true } }, assignedTo: true, board: true,
         comments: { orderBy: { createdAt: "desc" }, include: { author: { select: { id: true, firstName: true, lastName: true } } } },
-        timeEntries: { orderBy: { date: "desc" } },
+        timeEntries: { orderBy: { date: "desc" }, include: { user: { select: { id: true, firstName: true, lastName: true } } } },
         serviceAgreement: { select: { id: true, name: true, billingPeriod: true, billingAmount: true } },
       },
     });
@@ -74,7 +74,17 @@ ticketsRouter.post("/", requirePermission(Permission.TicketCreate), async (req: 
     const board = await prisma.serviceBoard.findUnique({ where: { id: boardId } });
     if (!board) throw new AppError("Service board not found", 404);
 
-    const ticketNumber = `C7-${Date.now().toString(36).toUpperCase()}-${uuid().slice(0, 4).toUpperCase()}`;
+    // Generate ticket number: ClientType-ClientID-Sequential (e.g. MSP-1001-1003)
+    let ticketNumber = `C7-${Date.now().toString(36).toUpperCase()}-${uuid().slice(0, 4).toUpperCase()}`;
+    if (companyId) {
+      const company = await prisma.company.findUnique({ where: { id: companyId }, select: { clientId: true, clientType: true } });
+      if (company?.clientId) {
+        const ct = company.clientType || "MSP";
+        const count = await prisma.ticket.count({ where: { companyId } });
+        const seq = 1000 + count + 1;
+        ticketNumber = `${ct}-${company.clientId}-${seq}`;
+      }
+    }
     const autoPriority = priority || extractPriority(title, description || "");
 
     const ticket = await prisma.ticket.create({

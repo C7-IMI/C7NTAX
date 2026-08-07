@@ -15,12 +15,13 @@ export function DashboardPage() {
       api.get("/tickets?status=waiting_on_client&limit=1").then(r => r.data.total || 0),
       api.get("/clients?limit=1").then(r => r.data.total || 0),
       api.get("/billing/invoices?status=overdue&limit=1").then(r => r.data.total || 0),
-    ]).then(([tickets, open, waiting, clients, overdue]) => {
+      api.get("/tickets?status=resolved&limit=1").then(r => r.data.total || 0),
+    ]).then(([tickets, open, waiting, clients, overdue, resolved]) => {
       setStats({
         totalTickets: tickets.total,
         openTickets: open,
         waitingOnClient: waiting,
-        resolvedToday: tickets.data?.filter((t: Record<string,unknown>) => t.status === "resolved").length || 0,
+        resolvedToday: resolved,
         overdueInvoices: overdue,
         revenueThisMonth: 28450,
         activeClients: clients,

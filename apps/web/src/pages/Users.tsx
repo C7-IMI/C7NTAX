@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { Plus, Users as UsersIcon, Shield } from "lucide-react";
 import { SystemRole } from "@C7NTAX/shared";
 
-interface UserRow { id: string; email: string; firstName: string | null; lastName: string | null; role: string; status: string; mfaEnabled: boolean; company?: { name: string } | null; }
+interface UserRow { id: string; email: string; firstName: string | null; lastName: string | null; role: string; status: string; mfaEnabled: boolean; company?: { name: string } | null; isActive?: boolean; }
 
 export function UsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);

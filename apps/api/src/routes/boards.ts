@@ -1,11 +1,92 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
-import { Permission } from "@C7NTAX/shared";
+import { Permission, TicketStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 
 export const boardsRouter = Router();
 boardsRouter.use(authenticate);
+
+// ── Board metrics (dashboard cards) ──
+boardsRouter.get("/metrics", requirePermission(Permission.BoardView), async (req: AuthRequest, res, next) => {
+  try {
+    const boards = await prisma.serviceBoard.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+    });
+
+    const now = new Date();
+    const threeDaysAgo = new Date(now.getTime() - 3 * 86400000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000);
+
+    const metrics = await Promise.all(boards.map(async (board) => {
+      const [open, workable, newTickets, onHold, waiting, stale3, stale7, stale30, escalations, avgAgeResult, activeClient] = await Promise.all([
+        prisma.ticket.count({ where: { boardId: board.id, status: { notIn: ["closed", "cancelled"] } } }),
+        prisma.ticket.count({ where: { boardId: board.id, status: "in_progress" } }),
+        prisma.ticket.count({ where: { boardId: board.id, status: "new" } }),
+        prisma.ticket.count({ where: { boardId: board.id, status: "on_hold" } }),
+        prisma.ticket.count({ where: { boardId: board.id, status: { in: ["waiting_on_client", "waiting_on_third_party"] } } }),
+        prisma.ticket.count({ where: { boardId: board.id, status: { notIn: ["closed", "cancelled"] }, updatedAt: { lt: threeDaysAgo } } }),
+        prisma.ticket.count({ where: { boardId: board.id, status: { notIn: ["closed", "cancelled"] }, updatedAt: { lt: sevenDaysAgo } } }),
+        prisma.ticket.count({ where: { boardId: board.id, status: { notIn: ["closed", "cancelled"] }, updatedAt: { lt: thirtyDaysAgo } } }),
+        prisma.ticket.count({ where: { boardId: board.id, status: { notIn: ["closed", "cancelled"] }, priority: "critical" } }),
+        Promise.resolve(null),
+        prisma.ticket.groupBy({
+          by: ["companyId"],
+          where: { boardId: board.id, createdAt: { gte: thirtyDaysAgo } },
+          _count: { id: true },
+          orderBy: { _count: { id: "desc" } },
+          take: 1,
+        }),
+      ]);
+
+      // Calculate average ticket age from open tickets
+      let avgAgeDays = 0;
+      if (open > 0) {
+        const openTickets = await prisma.ticket.findMany({
+          where: { boardId: board.id, status: { notIn: ["closed", "cancelled"] } },
+          select: { createdAt: true },
+        });
+        const totalAge = openTickets.reduce((sum, t) => sum + (now.getTime() - new Date(t.createdAt).getTime()), 0);
+        avgAgeDays = Math.round(totalAge / openTickets.length / 86400000);
+      }
+
+      // Active client name
+      let mostActiveClient: { id: string; name: string; count: number } | null = null;
+      if (activeClient.length > 0) {
+        const company = await prisma.company.findUnique({
+          where: { id: activeClient[0].companyId },
+          select: { id: true, name: true },
+        });
+        if (company) {
+          mostActiveClient = { ...company, count: activeClient[0]._count.id };
+        }
+      }
+
+      return {
+        boardId: board.id,
+        boardName: board.name,
+        boardDescription: board.description,
+        metrics: {
+          open,
+          workable,
+          new: newTickets,
+          onHold,
+          waitingOnResponse: waiting,
+          stale3Days: stale3,
+          stale7Days: stale7,
+          stale30Days: stale30,
+          escalations,
+          averageAgeDays: avgAgeDays,
+          mostActiveClient,
+        },
+      };
+    }));
+
+    res.json(metrics);
+  } catch (e) { next(e); }
+});
 
 // ── List boards ──
 boardsRouter.get("/", requirePermission(Permission.BoardView), async (req: AuthRequest, res, next) => {

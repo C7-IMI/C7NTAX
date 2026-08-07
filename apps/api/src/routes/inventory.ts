@@ -16,7 +16,7 @@ inventoryRouter.get("/assets", requirePermission(Permission.TicketView), async (
     if (companyId) where.companyId = companyId;
     if (search) where.OR = [{ name: { contains: search } }, { assetTag: { contains: search } }, { serialNumber: { contains: search } }];
     const [data, total] = await Promise.all([
-      prisma.asset.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" }, include: { company: { select: { id: true, name: true } } } }),
+      prisma.asset.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" } }),
       prisma.asset.count({ where }),
     ]);
     res.json({ data, total });

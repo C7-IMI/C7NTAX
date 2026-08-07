@@ -10,7 +10,7 @@ kbRouter.get("/", async (req: AuthRequest, res, next) => {
     if (categoryId) where.categoryId = categoryId;
     if (visibility) where.visibility = visibility;
     if (search) where.OR = [{ title: { contains: search } }, { content: { contains: search } }];
-    const [data, total] = await Promise.all([prisma.knowledgeBaseArticle.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" }, select: { id: true, title: true, slug: true, excerpt: true, status: true, visibility: true, tags: true, viewCount: true, helpfulCount: true, updatedAt: true, category: { select: { id: true, name: true } }, author: { select: { id: true, firstName: true, lastName: true } } } }), prisma.knowledgeBaseArticle.count({ where })]);
+    const [data, total] = await Promise.all([prisma.knowledgeBaseArticle.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" }, select: { id: true, title: true, slug: true, excerpt: true, status: true, visibility: true, tags: true, viewCount: true, helpfulCount: true, updatedAt: true, authorId: true, categoryId: true } }), prisma.knowledgeBaseArticle.count({ where })]);
     res.json({ data, total }); }
   catch (e) { next(e); }
 });

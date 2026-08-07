@@ -15,7 +15,10 @@ import { OpportunitiesPage } from "./pages/Opportunities";
 import { ProjectsPage } from "./pages/Projects";
 import { AssetsPage } from "./pages/Assets";
 import { KnowledgeBasePage } from "./pages/KnowledgeBase";
+import { AdministrationPage, AdminLogsPage, AdminServiceBoardsPage } from "./pages/Administration";
 import { InferenceSettingsPage } from "./pages/InferenceSettings";
+import { ProcurementPage } from "./pages/Procurement";
+import { ReportsPage } from "./pages/Reports";
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
@@ -31,11 +34,22 @@ function ProtectedRoutes() {
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/assets" element={<AssetsPage />} />
+        <Route path="/procurement" element={<ProcurementPage />} />
         <Route path="/kb" element={<KnowledgeBasePage />} />
         <Route path="/clients" element={<ClientsPage />} />
+        <Route path="/billing/agreements" element={<BillingPage tab="agreements" />} />
+        <Route path="/billing/payments" element={<BillingPage tab="payments" />} />
+        <Route path="/billing/time" element={<BillingPage tab="time" />} />
+        <Route path="/billing/reports" element={<BillingPage tab="reports" />} />
         <Route path="/billing" element={<BillingPage />} />
+        <Route path="/reports/standard" element={<ReportsPage tab="standard" />} />
+        <Route path="/reports/analytics" element={<ReportsPage tab="analytics" />} />
+        <Route path="/reports" element={<ReportsPage />} />
         <Route path="/integrations" element={<IntegrationsPage />} />
         <Route path="/users" element={<UsersPage />} />
+        <Route path="/admin/logs" element={<AdminLogsPage />} />
+        <Route path="/admin/boards" element={<AdminServiceBoardsPage />} />
+        <Route path="/admin" element={<AdministrationPage />} />
         <Route path="/settings/ai" element={<InferenceSettingsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/mfa-setup" element={<MFASetupPage />} />

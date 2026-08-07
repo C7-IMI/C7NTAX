@@ -28,11 +28,12 @@ usersRouter.get("/", requirePermission(Permission.UserManage), async (req: AuthR
         skip: Number(offset),
         take: Number(limit),
         orderBy: { createdAt: "desc" },
-        select: { id: true, email: true, firstName: true, lastName: true, role: true, status: true, companyId: true, mfaEnabled: true, lastLoginAt: true, createdAt: true },
+        select: { id: true, email: true, firstName: true, lastName: true, role: { select: { systemRole: true } }, isActive: true, mfaEnabled: true, lastLoginAt: true, createdAt: true, company: { select: { name: true } } },
       }),
       prisma.user.count({ where }),
     ]);
-    res.json({ data: users, total, limit: Number(limit), offset: Number(offset) });
+    const mapped = users.map(u => ({ ...u, role: u.role?.systemRole || "", status: u.isActive ? "active" : "inactive" }));
+    res.json({ data: mapped, total, limit: Number(limit), offset: Number(offset) });
   } catch (e) { next(e); }
 });
 
@@ -62,14 +63,19 @@ usersRouter.get("/:id", requirePermission(Permission.UserManage), async (req: Au
 // ── Create user ──
 usersRouter.post("/", requirePermission(Permission.UserManage), async (req: AuthRequest, res, next) => {
   try {
-    const { email, password, firstName, lastName, role, companyId } = req.body;
-    if (!email || !password || !role) throw new AppError("email, password, and role are required");
+    const { email, password, firstName, lastName, role: roleName, companyId } = req.body;
+    if (!email || !password || !roleName) throw new AppError("email, password, and role are required");
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) throw new AppError("Email already in use", 409);
+    
+    // Find the role by systemRole name
+    const roleRecord = await prisma.role.findFirst({ where: { systemRole: roleName } });
+    if (!roleRecord) throw new AppError(`Role "${roleName}" not found`, 400);
+    
     const passwordHash = await bcrypt.hash(password, 12);
-    const permissions = ROLE_PERMISSIONS[role as SystemRole] || [];
     const user = await prisma.user.create({
-      data: { email, passwordHash, firstName, lastName, role, companyId, permissions },
+      data: { email, passwordHash, firstName: firstName || null, lastName: lastName || null, roleId: roleRecord.id, companyId: companyId || null },
+      include: { role: true },
     });
     const { passwordHash: _, mfaSecret: __, ...safe } = user;
     res.status(201).json(safe);

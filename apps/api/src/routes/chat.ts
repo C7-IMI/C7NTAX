@@ -7,7 +7,7 @@ export const chatRouter = Router(); chatRouter.use(authenticate);
 chatRouter.get("/sessions", async (req: AuthRequest, res, next) => {
   try { const { status } = req.query as Record<string, string>; const where: Record<string, unknown> = {};
     if (status) where.status = status; else where.status = { in: ["active","waiting"] };
-    res.json(await prisma.chatSession.findMany({ where, orderBy: { startedAt: "desc" }, include: { company: { select: { name: true } }, assignedTo: { select: { firstName: true, lastName: true } }, _count: { select: { messages: true } } } })); }
+    res.json(await prisma.chatSession.findMany({ where, orderBy: { startedAt: "desc" }, include: { _count: { select: { messages: true } } } })); }
   catch (e) { next(e); }
 });
 
@@ -19,7 +19,7 @@ chatRouter.post("/sessions", async (req: AuthRequest, res, next) => {
 });
 
 chatRouter.get("/sessions/:id/messages", async (req: AuthRequest, res, next) => {
-  try { res.json(await prisma.chatMessage.findMany({ where: { sessionId: req.params.id }, orderBy: { createdAt: "asc" }, include: { sender: { select: { firstName: true, lastName: true } } } })); }
+  try { res.json(await prisma.chatMessage.findMany({ where: { sessionId: req.params.id }, orderBy: { createdAt: "asc" } })); }
   catch (e) { next(e); }
 });
 

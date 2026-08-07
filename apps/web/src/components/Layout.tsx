@@ -2,115 +2,195 @@ import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import {
-  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Plug, Users, Settings, Menu, X, LogOut, ChevronRight,
-  Target, FolderKanban, Monitor, BookOpen,
+  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Plug, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown,
+  Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
 } from "lucide-react";
 
-const NAV_ITEMS = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/tickets", icon: Ticket, label: "Tickets" },
-  { to: "/boards", icon: Columns3, label: "Service Boards" },
-  { to: "/opportunities", icon: Target, label: "Pipeline" },
-  { to: "/projects", icon: FolderKanban, label: "Projects" },
-  { to: "/assets", icon: Monitor, label: "Assets" },
-  { to: "/kb", icon: BookOpen, label: "Knowledge Base" },
-  { to: "/clients", icon: Building2, label: "Clients" },
-  { to: "/billing", icon: DollarSign, label: "Billing" },
-  { to: "/integrations", icon: Plug, label: "Integrations" },
-  { to: "/users", icon: Users, label: "Users" },
-  { to: "/settings", icon: Settings, label: "Settings" },
+type NavNode = {
+  id: string;
+  to?: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  children?: NavNode[];
+};
+
+const NAV_TREE: NavNode[] = [
+  { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets" },
+  { id: "boards", to: "/boards", icon: Columns3, label: "Service Boards" },
+  { id: "pipeline", to: "/opportunities", icon: Target, label: "Pipeline" },
+  {
+    id: "administration", icon: Shield, label: "Administration", children: [
+      { id: "admin-general", to: "/admin", icon: Settings, label: "General Settings" },
+      { id: "admin-boards", to: "/admin/boards", icon: Columns3, label: "Service Boards" },
+      { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs" },
+      { id: "admin-integrations", to: "/integrations", icon: Plug, label: "Integrations" },
+    ],
+  },
+  {
+    id: "clients", icon: Building2, label: "Clients", children: [
+      { id: "clients-list", to: "/clients", icon: Building2, label: "Client List" },
+    ],
+  },
+  {
+    id: "assets", icon: Monitor, label: "Assets", children: [
+      { id: "assets-inventory", to: "/assets", icon: Monitor, label: "Asset Inventory" },
+      { id: "assets-procurement", to: "/procurement", icon: DollarSign, label: "Procurement" },
+    ],
+  },
+  {
+    id: "users-roles", icon: Users, label: "Users & Roles", children: [
+      { id: "users-list", to: "/users", icon: Users, label: "Manage Users" },
+      { id: "users-roles", to: "/settings", icon: Shield, label: "Roles & Permissions" },
+    ],
+  },
+  {
+    id: "projects", icon: FolderKanban, label: "Projects", children: [
+      { id: "projects-list", to: "/projects", icon: FolderKanban, label: "Project List" },
+    ],
+  },
+  { id: "kb", to: "/kb", icon: BookOpen, label: "Knowledge Base" },
+  {
+    id: "billing", icon: DollarSign, label: "Billing", children: [
+      { id: "billing-invoices", to: "/billing", icon: Receipt, label: "Invoices" },
+      { id: "billing-agreements", to: "/billing/agreements", icon: ClipboardList, label: "Agreements" },
+      { id: "billing-payments", to: "/billing/payments", icon: CreditCard, label: "Payments" },
+      { id: "billing-time", to: "/billing/time", icon: Timer, label: "Time & Expenses" },
+      { id: "billing-reports", to: "/billing/reports", icon: BarChart3, label: "Reports" },
+    ],
+  },
+  {
+    id: "reports", icon: TrendingUp, label: "Reporting", children: [
+      { id: "reports-dashboard", to: "/reports", icon: TrendingUp, label: "Dashboards" },
+      { id: "reports-standard", to: "/reports/standard", icon: ClipboardList, label: "Standard Reports" },
+      { id: "reports-analytics", to: "/reports/analytics", icon: BarChart3, label: "Analytics" },
+    ],
+  },
 ];
+
+function loadExpanded(): Set<string> {
+  try {
+    const saved = localStorage.getItem("c7_nav_expanded");
+    if (saved) return new Set(JSON.parse(saved) as string[]);
+  } catch {}
+  return new Set(["administration", "clients", "billing"]); // defaults
+}
+
+function isNodeActive(node: NavNode, pathname: string): boolean {
+  if (node.to && (pathname === node.to || (node.to !== "/" && pathname.startsWith(node.to)))) return true;
+  if (node.children) return node.children.some(c => isNodeActive(c, pathname));
+  return false;
+}
+
+function getPageTitle(nodes: NavNode[], pathname: string): string {
+  for (const n of nodes) {
+    if (n.to && pathname === n.to) return n.label;
+    if (n.children) {
+      const found = getPageTitle(n.children, pathname);
+      if (found) return found;
+    }
+  }
+  return "Dashboard";
+}
 
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(loadExpanded);
+
+  const toggle = (id: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      localStorage.setItem("c7_nav_expanded", JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  const renderNode = (node: NavNode, depth: number = 0) => {
+    const active = isNodeActive(node, location.pathname);
+    const isExpanded = expanded.has(node.id);
+    const hasChildren = !!node.children?.length;
+    const linkTo = node.to || "#";
+
+    return (
+      <div key={node.id}>
+        {hasChildren ? (
+          <button
+            onClick={() => toggle(node.id)}
+            className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium transition-colors ${
+              active ? "bg-cyber-600/10 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+            }`}
+            style={{ paddingLeft: `${12 + depth * 12}px` }}
+          >
+            <node.icon size={18} />
+            <span className="flex-1 text-left">{node.label}</span>
+            <ChevronDown size={14} className={`transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
+          </button>
+        ) : (
+          <Link
+            to={linkTo}
+            onClick={() => setSidebarOpen(false)}
+            style={{ paddingLeft: `${12 + depth * 12}px` }}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium transition-colors ${
+              active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+            }`}
+          >
+            <node.icon size={18} />
+            {node.label}
+            {active && <ChevronRight size={14} className="ml-auto" />}
+          </Link>
+        )}
+        {hasChildren && isExpanded && (
+          <div className="border-l border-surface-border ml-7">
+            {node.children!.map(c => renderNode(c, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-navy-950">
-      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-surface-border flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {/* Logo */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-surface-border flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between px-5 h-16 border-b border-surface-border shrink-0">
           <Link to="/" className="flex items-center gap-2.5" onClick={() => setSidebarOpen(false)}>
-            <div className="w-8 h-8 rounded-lg bg-cyber-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">NT</span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#C42D4B" }}>
+              <span className="text-white font-bold text-sm">C7</span>
             </div>
             <span className="font-semibold text-base text-white tracking-tight">NTAX</span>
           </Link>
-          <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setSidebarOpen(false)}>
-            <X size={20} />
-          </button>
+          <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
-
-        {/* Nav */}
         <nav className="flex-1 py-3 px-2 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
-            const active = location.pathname === item.to || (item.to !== "/" && location.pathname.startsWith(item.to));
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-cyber-600/15 text-cyber-400"
-                    : "text-gray-400 hover:text-white hover:bg-surface-lighter"
-                }`}
-              >
-                <item.icon size={18} />
-                {item.label}
-                {active && <ChevronRight size={14} className="ml-auto" />}
-              </Link>
-            );
-          })}
+          {NAV_TREE.map(n => renderNode(n))}
         </nav>
-
-        {/* User footer */}
         <div className="border-t border-surface-border p-3">
           <div className="flex items-center gap-3 px-2 py-2">
             <div className="w-8 h-8 rounded-full bg-cyber-600/30 text-cyber-400 flex items-center justify-center text-sm font-bold">
               {user?.firstName?.[0]}{user?.lastName?.[0]}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
-                {user?.firstName} {user?.lastName}
-              </p>
+              <p className="text-sm font-medium text-white truncate">{user?.firstName} {user?.lastName}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
-            <button onClick={logout} className="text-gray-500 hover:text-red-400 transition-colors p-1" title="Sign out">
-              <LogOut size={16} />
-            </button>
+            <button onClick={logout} className="text-gray-500 hover:text-red-400 transition-colors p-1" title="Sign out"><LogOut size={16} /></button>
           </div>
         </div>
       </aside>
-
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
         <header className="h-16 border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50">
-          <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setSidebarOpen(true)}>
-            <Menu size={20} />
-          </button>
+          <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setSidebarOpen(true)}><Menu size={20} /></button>
           <h1 className="text-base font-semibold text-white truncate ml-2 lg:ml-0">
-            {NAV_ITEMS.find((n) => n.to === location.pathname || (n.to !== "/" && location.pathname.startsWith(n.to)))?.label || "Dashboard"}
+            {getPageTitle(NAV_TREE, location.pathname)}
           </h1>
           <div className="w-8 lg:hidden" />
         </header>
-
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
     </div>

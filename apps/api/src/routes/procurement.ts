@@ -50,7 +50,7 @@ procurementRouter.post("/orders", requirePermission(Permission.BillingManage), a
       data: { poNumber, vendorId, subtotal, taxTotal: 0, total: subtotal, createdById: req.user!.userId,
         lineItems: { create: items },
       },
-      include: { lineItems: true, vendor: true },
+      include: { lineItems: true },
     });
     res.status(201).json(po);
   } catch (e) { next(e); }

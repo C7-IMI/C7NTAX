@@ -99,6 +99,8 @@ model Company {
   country         String?
   notes           String?
   isActive        Boolean  @default(true)
+  clientId        Int?     @unique
+  clientType      String?  @default("MSP")
 
   // Portal access
   portalEnabled   Boolean  @default(false)

@@ -15,7 +15,7 @@ crmRouter.get("/opportunities", requirePermission(Permission.TicketView), async 
     if (stage) where.stage = stage;
     if (companyId) where.companyId = companyId;
     const [data, total] = await Promise.all([
-      prisma.opportunity.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" }, include: { company: { select: { id: true, name: true } }, assignedTo: { select: { id: true, firstName: true, lastName: true } } } }),
+      prisma.opportunity.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" } }),
       prisma.opportunity.count({ where }),
     ]);
     res.json({ data, total });

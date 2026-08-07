@@ -125,7 +125,7 @@ authRouter.post("/mfa/verify", async (req, res, next) => {
       id: user.id, email: user.email, role: user.role as SystemRole,
       companyId: user.companyId, permissions: ROLE_PERMISSIONS[user.role as SystemRole],
       firstName: user.firstName, lastName: user.lastName,
-      mfaEnabled: user.mfaEnabled, active: user.active, createdAt: user.createdAt, updatedAt: user.updatedAt,
+      mfaEnabled: user.mfaEnabled, active: user.isActive, createdAt: user.createdAt, updatedAt: user.updatedAt,
     });
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
@@ -185,7 +185,7 @@ authRouter.post("/mfa/verify-email", async (req, res, next) => {
       id: user.id, email: user.email, role: user.role as SystemRole,
       companyId: user.companyId, permissions: ROLE_PERMISSIONS[user.role as SystemRole],
       firstName: user.firstName, lastName: user.lastName,
-      mfaEnabled: user.mfaEnabled, active: user.active, createdAt: user.createdAt, updatedAt: user.updatedAt,
+      mfaEnabled: user.mfaEnabled, active: user.isActive, createdAt: user.createdAt, updatedAt: user.updatedAt,
     });
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });

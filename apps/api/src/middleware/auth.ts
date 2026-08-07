@@ -22,14 +22,20 @@ export interface AuthRequest extends Request {
  * Attaches user context to request.
  */
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction): void {
+  let token: string | undefined;
   const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) {
+  if (header?.startsWith("Bearer ")) {
+    token = header.slice(7);
+  } else if (req.query.token && typeof req.query.token === "string") {
+    token = req.query.token;
+  }
+
+  if (!token) {
     res.status(401).json({ error: "Missing or invalid token" });
     return;
   }
 
   try {
-    const token = header.slice(7);
     const payload = jwt.verify(token, JWT_SECRET) as AuthUser;
     req.user = payload;
     next();

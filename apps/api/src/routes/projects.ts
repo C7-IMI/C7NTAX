@@ -14,7 +14,7 @@ projectsRouter.get("/", requirePermission(Permission.TicketView), async (req: Au
     if (status) where.status = status;
     if (companyId) where.companyId = companyId;
     const [data, total] = await Promise.all([
-      prisma.project.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" }, include: { company: { select: { id: true, name: true } }, manager: { select: { id: true, firstName: true, lastName: true } }, _count: { select: { phases: true } } } }),
+      prisma.project.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" } }),
       prisma.project.count({ where }),
     ]);
     res.json({ data, total });
