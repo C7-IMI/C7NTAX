@@ -71,8 +71,7 @@ export function ClientsPage(){
           {showContact&&(<form onSubmit={handleAddContact} className="space-y-2 mt-2 pt-2 border-t border-surface-border">
             <div className="grid grid-cols-2 gap-2"><input className="input-field text-xs" placeholder="First" value={contactForm.firstName} onChange={e=>setContactForm({...contactForm,firstName:e.target.value})} required/><input className="input-field text-xs" placeholder="Last" value={contactForm.lastName} onChange={e=>setContactForm({...contactForm,lastName:e.target.value})} required/></div>
             <input className="input-field text-xs" placeholder="Email" type="email" value={contactForm.email} onChange={e=>setContactForm({...contactForm,email:e.target.value})} required/>
-            <div className="flex gap-2"><button type="submit" className="btn-primary text-xs">Save</button><button type="button" onClick={()=>setShowContact(false)} className="
-Cancel</button></div>
+            <div className="flex gap-2"><button type="submit" className="btn-primary text-xs">Save</button><button type="button" onClick={()=>setShowContact(false)} className="btn-secondary text-xs">Cancel</button></div>
           </form>)}
         </div>
       </div>)}
