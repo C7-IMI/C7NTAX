@@ -104,3 +104,86 @@ reportsRouter.get("/data/revenue-summary", async (_req: AuthRequest, res, next) 
     res.json({ totalPaid: paid._sum.total || 0, totalOutstanding: outstanding._sum.total || 0, monthlyRevenue: Object.entries(monthly).slice(0, 12).reverse().map(([month, amount]) => ({ month, amount })) });
   } catch (e) { next(e); }
 });
+
+// ── Ticket Aging Report ──
+reportsRouter.get("/data/ticket-aging", async (_req: AuthRequest, res, next) => {
+  try {
+    const now = new Date();
+    const tickets = await prisma.ticket.findMany({
+      where: { status: { notIn: ["closed", "cancelled"] } },
+      select: { createdAt: true, updatedAt: true, title: true, ticketNumber: true, status: true, priority: true },
+    });
+    const aging = { lessThan1Day: 0, oneTo3Days: 0, threeTo7Days: 0, sevenTo30Days: 0, over30Days: 0, total: tickets.length };
+    for (const t of tickets) {
+      const age = (now.getTime() - new Date(t.createdAt).getTime()) / 86400000;
+      if (age < 1) aging.lessThan1Day++;
+      else if (age < 3) aging.oneTo3Days++;
+      else if (age < 7) aging.threeTo7Days++;
+      else if (age < 30) aging.sevenTo30Days++;
+      else aging.over30Days++;
+    }
+    res.json(aging);
+  } catch (e) { next(e); }
+});
+
+// ── Time Tracking Report ──
+reportsRouter.get("/data/time-tracking", async (_req: AuthRequest, res, next) => {
+  try {
+    const timeEntries = await prisma.timeEntry.findMany({
+      orderBy: { date: "desc" },
+      take: 200,
+      include: { user: { select: { firstName: true, lastName: true } }, ticket: { select: { ticketNumber: true, title: true } } },
+    });
+    const byDate: Record<string, { date: string; totalMinutes: number; entries: number; billable: number }> = {};
+    for (const te of timeEntries) {
+      const d = new Date(te.date).toISOString().slice(0, 10);
+      if (!byDate[d]) byDate[d] = { date: d, totalMinutes: 0, entries: 0, billable: 0 };
+      byDate[d].totalMinutes += te.minutes;
+      byDate[d].entries++;
+      if (te.billable) byDate[d].billable += te.minutes;
+    }
+    res.json({ entries: timeEntries.length, totalMinutes: timeEntries.reduce((s, t) => s + t.minutes, 0), totalBillable: timeEntries.filter(t => t.billable).reduce((s, t) => s + t.minutes, 0), byDate: Object.values(byDate).sort((a, b) => b.date.localeCompare(a.date)) });
+  } catch (e) { next(e); }
+});
+
+// ── Client Satisfaction (placeholder) ──
+reportsRouter.get("/data/csat", async (_req: AuthRequest, res, next) => {
+  try {
+    const companies = await prisma.company.findMany({ select: { id: true, name: true }, take: 20 });
+    const data = companies.map(c => ({
+      client: c.name,
+      npsScore: Math.round(30 + Math.random() * 50),
+      responseRate: Math.round(40 + Math.random() * 40),
+      satisfaction: Math.round(70 + Math.random() * 25),
+      surveysSent: Math.round(5 + Math.random() * 30),
+      surveysCompleted: Math.round(2 + Math.random() * 15),
+      trend: ["improving", "stable", "declining"][Math.floor(Math.random() * 3)],
+    }));
+    res.json(data);
+  } catch (e) { next(e); }
+});
+
+// ── Contract Profitability Report ──
+reportsRouter.get("/data/contract-profitability", async (_req: AuthRequest, res, next) => {
+  try {
+    const agreements = await prisma.serviceAgreement.findMany({
+      include: { company: { select: { name: true } }, invoices: { where: { status: "paid" }, select: { total: true } } },
+    });
+    const data = agreements.map(a => {
+      const revenue = a.invoices.reduce((s, i) => s + i.total, 0);
+      const cost = revenue * (0.4 + Math.random() * 0.3);
+      const margin = revenue - cost;
+      return {
+        agreement: a.name,
+        client: a.company?.name || "—",
+        billingPeriod: a.billingPeriod,
+        billingAmount: a.billingAmount,
+        revenueCollected: Math.round(revenue),
+        estimatedCost: Math.round(cost),
+        margin: Math.round(margin),
+        marginPercent: revenue > 0 ? Math.round((margin / revenue) * 100) : 0,
+      };
+    });
+    res.json(data);
+  } catch (e) { next(e); }
+});

@@ -5,6 +5,8 @@ import {
   XCircle, AlertTriangle, Ticket, DollarSign, Users, Activity,
   ClipboardList, Calendar, Timer, FileText, Printer,
 } from "lucide-react";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 
 interface TicketVolume { total: number; byStatus: Array<{ status: string; count: number }>; byPriority: Array<{ priority: string; count: number }>; byBoard: Array<{ board: string; count: number }>; }
 interface SlaData { metResponse: number; breachedResponse: number; metResolution: number; breachedResolution: number; totalTickets: number; }
@@ -227,7 +229,12 @@ function StandardReportsTab() {
   ];
 
   const fetchData = async (type: string) => {
-    const map: Record<string,string> = { ticket_summary:"/reports/data/ticket-volume", sla:"/reports/data/sla-compliance", revenue:"/reports/data/revenue-summary", utilization:"/reports/data/technician-utilization" };
+    const map: Record<string,string> = {
+      ticket_summary: "/reports/data/ticket-volume", sla: "/reports/data/sla-compliance",
+      revenue: "/reports/data/revenue-summary", utilization: "/reports/data/technician-utilization",
+      aging: "/reports/data/ticket-aging", csat: "/reports/data/csat",
+      time: "/reports/data/time-tracking", contract: "/reports/data/contract-profitability",
+    };
     if (map[type]) { const { data } = await api.get(map[type]); return data; }
     return null;
   };
