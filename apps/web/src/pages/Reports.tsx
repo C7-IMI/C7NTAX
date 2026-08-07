@@ -5,8 +5,8 @@ import {
   XCircle, AlertTriangle, Ticket, DollarSign, Users, Activity,
   ClipboardList, Calendar, Timer, FileText, Printer,
 } from "lucide-react";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface TicketVolume { total: number; byStatus: Array<{ status: string; count: number }>; byPriority: Array<{ priority: string; count: number }>; byBoard: Array<{ board: string; count: number }>; }
 interface SlaData { metResponse: number; breachedResponse: number; metResolution: number; breachedResolution: number; totalTickets: number; }
@@ -258,11 +258,19 @@ function StandardReportsTab() {
       const data = showExport.data;
       if (Array.isArray(data) && data.length > 0) {
         const cols = Object.keys(data[0] as object).filter(k => !k.startsWith("_"));
-        const rows = (data as Array<Record<string,unknown>>).map(r => cols.map(c => r[c] !== null && r[c] !== undefined ? (typeof r[c] === "object" ? JSON.stringify(r[c]) : String(r[c])) : "—"));
-        (doc as any).autoTable({ head: [cols.map(c => c.replace(/([A-Z])/g," $1").replace(/_/g," "))], body: rows, startY: 34, styles: { fontSize: 8 }, headStyles: { fillColor: [34, 211, 238] } });
+        const rows = (data as Array<Record<string,unknown>>).map(r => cols.map(c => {
+          const v = r[c]; if (v === null || v === undefined) return "—";
+          if (typeof v === "number") return v.toLocaleString();
+          if (typeof v === "string" && /^[a-z]+(_[a-z]+)*$/.test(v)) return v.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+          return typeof v === "object" ? JSON.stringify(v) : String(v);
+        }));
+        autoTable(doc, { head: [cols.map(c => c.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()))], body: rows, startY: 34, styles: { fontSize: 8 }, headStyles: { fillColor: [34, 211, 238] } });
       } else if (data && typeof data === "object") {
         const entries = Object.entries(data as Record<string,unknown>).filter(([k]) => !k.startsWith("_"));
-        (doc as any).autoTable({ head: [["Key","Value"]], body: entries.map(([k,v]) => [k.replace(/([A-Z])/g," $1").replace(/_/g," "), v !== null && v !== undefined ? (typeof v === "object" ? JSON.stringify(v) : String(v)) : "—"]), startY: 34, styles: { fontSize: 8 } });
+        autoTable(doc, { head: [["Key","Value"]], body: entries.map(([k,v]) => {
+          const val = v !== null && v !== undefined ? (typeof v === "number" ? v.toLocaleString() : typeof v === "string" && /^[a-z]+(_[a-z]+)*$/.test(v) ? v.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()) : typeof v === "object" ? JSON.stringify(v) : String(v)) : "—";
+          return [k.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), val];
+        }), startY: 34, styles: { fontSize: 8 } });
       }
       doc.save(`${showExport.title.replace(/\s+/g,"_")}.pdf`);
     } else {
