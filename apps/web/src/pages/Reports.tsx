@@ -371,38 +371,53 @@ function KPICard({ icon: Icon, label, value, color }: { icon: React.ComponentTyp
 
 function ReportPreview({ data, type, compact }: { data: unknown; type: string; compact?: boolean }) {
   if (!data) return <p className="text-gray-500 text-sm">No data</p>;
-  if (type === "ticket_summary") {
-    const d = data as TicketVolume;
-    return (<div className="space-y-3">
-      <div className="flex items-center gap-3 flex-wrap"><span className="badge bg-cyber-600/20 text-cyber-400 text-sm">Total: {d.total}</span></div>
-      {!compact && (<>
-        <div><p className="text-xs text-gray-500 mb-1">By Status</p><div className="flex flex-wrap gap-1.5">{d.byStatus.map(s=>(<span key={s.status} className={`badge ${STATUS_COLORS[s.status]||""} text-xs`}>{s.status.replace(/_/g," ")}: {s.count}</span>))}</div></div>
-        <div><p className="text-xs text-gray-500 mb-1">By Priority</p><div className="flex flex-wrap gap-1.5">{d.byPriority.map(p=>(<span key={p.priority} className="badge bg-surface-lighter text-gray-400 text-xs capitalize">{p.priority}: {p.count}</span>))}</div></div>
-        <div><p className="text-xs text-gray-500 mb-1">By Board</p><div className="space-y-1">{d.byBoard.map(b=>(<div key={b.board} className="flex items-center justify-between text-xs"><span className="text-gray-300">{b.board}</span><span className="text-gray-500">{b.count}</span></div>))}</div></div>
-      </>)}
-    </div>);
+  const d = data as Record<string,unknown>;
+
+  // ── Universal card-based preview for any data ──
+  const renderValue = (v: unknown): string => {
+    if (v === null || v === undefined) return "—";
+    if (typeof v === "number") return v.toLocaleString();
+    if (typeof v === "boolean") return v ? "Yes" : "No";
+    if (typeof v === "string") return v;
+    return JSON.stringify(v).slice(0, 120);
+  };
+
+  // Build a key-value table from any data object
+  const entries: Array<[string, unknown]> = [];
+  for (const [key, val] of Object.entries(d)) {
+    if (key.startsWith("_")) continue;
+    entries.push([key.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/^./,c=>c.toUpperCase()), val]);
   }
-  if (type === "sla") {
-    const d = data as SlaData;
-    const rPct = d.metResponse+d.breachedResponse>0?Math.round(d.metResponse/(d.metResponse+d.breachedResponse)*100):0;
-    const sPct = d.metResolution+d.breachedResolution>0?Math.round(d.metResolution/(d.metResolution+d.breachedResolution)*100):0;
-    return (<div className="grid grid-cols-2 gap-2 text-xs">
-      <div className="bg-surface-lighter rounded p-2"><span className="text-gray-500">Response SLA: </span><span className={rPct>=80?"text-green-400":"text-red-400"}>{rPct}%</span><span className="text-gray-600 ml-1">({d.metResponse} met, {d.breachedResponse} breached)</span></div>
-      <div className="bg-surface-lighter rounded p-2"><span className="text-gray-500">Resolution SLA: </span><span className={sPct>=80?"text-green-400":"text-red-400"}>{sPct}%</span><span className="text-gray-600 ml-1">({d.metResolution} met, {d.breachedResolution} breached)</span></div>
-    </div>);
+
+  // If data is an array, show as table
+  if (Array.isArray(data)) {
+    const arr = data as Array<Record<string,unknown>>;
+    if (arr.length === 0) return <p className="text-gray-500 text-sm">No records found</p>;
+    const cols = Object.keys(arr[0]).filter(k => !k.startsWith("_"));
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead><tr className="border-b border-surface-border">{cols.map(c => <th key={c} className="text-left p-2 text-gray-500 uppercase font-semibold">{c.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/^./,c=>c.toUpperCase())}</th>)}</tr></thead>
+          <tbody>{arr.map((row,i) => <tr key={i} className="border-b border-surface-border/30 hover:bg-surface-lighter/20">{cols.map(c => <td key={c} className="p-2 text-white">{renderValue(row[c])}</td>)}</tr>)}</tbody>
+        </table>
+        {!compact && <p className="text-xs text-gray-600 mt-2">{arr.length} record{arr.length!==1?"s":""}</p>}
+      </div>
+    );
   }
-  if (type === "revenue") {
-    const d = data as RevenueData;
-    return (<div className="space-y-2">
-      <div className="flex items-center gap-3 text-xs"><span className="text-green-400">Paid: {formatCurrency(d.totalPaid)}</span><span className="text-amber-400">Outstanding: {formatCurrency(d.totalOutstanding)}</span></div>
-      {!compact && d.monthlyRevenue?.length>0 && (<div className="space-y-1"><p className="text-xs text-gray-500">Monthly</p>{d.monthlyRevenue.slice(0,6).map(m=>(<div key={m.month} className="flex justify-between text-xs"><span className="text-gray-400">{m.month}</span><span className="text-green-400">{formatCurrency(m.amount)}</span></div>))}</div>)}
-    </div>);
-  }
-  if (type === "utilization") {
-    const arr = data as Utilization;
-    return (<div className="space-y-1">{arr.slice(0,5).map(u=>{const total=u.billable+u.nonBillable;const pct=total>0?Math.round(u.billable/total*100):0;return(<div key={u.userId} className="flex items-center gap-2 text-xs"><span className="text-white w-24 truncate">{u.name}</span><div className="flex-1 h-1.5 bg-surface-lighter rounded-full"><div className="h-full bg-cyber-500 rounded-full" style={{width:`${pct}%`}}/></div><span className="text-gray-500 w-8 text-right">{pct}%</span></div>);})}</div>);
-  }
-  return <pre className="text-xs text-gray-400 whitespace-pre-wrap">{JSON.stringify(data, null, 2)}</pre>;
+
+  // Object data — show as value cards
+  return (
+    <div className={compact ? "space-y-1" : "space-y-3"}>
+      <div className={`grid ${compact ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"} gap-2`}>
+        {entries.map(([label, value]) => (
+          <div key={label} className="bg-surface-lighter rounded-lg px-3 py-2">
+            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">{label}</p>
+            <p className="text-sm font-medium text-white">{renderValue(value)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function generateReportHTML(title: string, data: unknown): string {
