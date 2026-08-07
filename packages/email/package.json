@@ -1,5 +1,5 @@
 {
-  "name": "@c7-overwatch/email",
+  "name": "@C7NTAX/email",
   "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -10,7 +10,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@c7-overwatch/shared": "workspace:*",
+    "@C7NTAX/shared": "workspace:*",
     "nodemailer": "^6.9.0",
     "mjml": "^4.15.0",
     "handlebars": "^4.7.8",

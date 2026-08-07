@@ -7,11 +7,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@c7-overwatch/shared": path.resolve(__dirname, "../../packages/shared/src"),
+      "@C7NTAX/shared": path.resolve(__dirname, "../../packages/shared/src"),
     },
   },
   optimizeDeps: {
-    include: ["@c7-overwatch/shared"],
+    include: ["@C7NTAX/shared"],
   },
   server: {
     port: 3003,

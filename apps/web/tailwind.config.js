@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // C7 Overwatch color system — cyber/navy palette
+        // C7NTAX color system — cyber/navy palette
         navy: {
           50: "#e8edf5",
           100: "#c5d1e5",

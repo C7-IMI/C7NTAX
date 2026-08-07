@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../index";
-import { Permission, type User } from "@c7-overwatch/shared";
+import { Permission, type User } from "@C7NTAX/shared";
 
-const JWT_SECRET = process.env.JWT_SECRET || "c7-overwatch-dev-secret-change-in-prod";
+const JWT_SECRET = process.env.JWT_SECRET || "C7NTAX-dev-secret-change-in-prod";
 
 export interface AuthUser {
   userId: string;

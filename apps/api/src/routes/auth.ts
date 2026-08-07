@@ -4,9 +4,9 @@ import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import { prisma } from "../index";
 import { authenticate, signToken, signMfaToken, JWT_SECRET, type AuthRequest } from "../middleware/auth";
-import { ROLE_PERMISSIONS, SystemRole } from "@c7-overwatch/shared";
+import { ROLE_PERMISSIONS, SystemRole } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
-import { EmailService } from "@c7-overwatch/email";
+import { EmailService } from "@C7NTAX/email";
 
 export const authRouter = Router();
 const emailService = new EmailService();
@@ -67,7 +67,7 @@ authRouter.post("/mfa/setup", authenticate, async (req: AuthRequest, res, next) 
     const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
-    const secret = speakeasy.generateSecret({ name: `C7 Overwatch (${user.email})` });
+    const secret = speakeasy.generateSecret({ name: `C7NTAX (${user.email})` });
 
     await prisma.user.update({
       where: { id: user.id },

@@ -86,7 +86,7 @@ const server = createServer(app);
 setupWebSocket(server);
 
 server.listen(PORT, () => {
-  console.log(`[C7 Overwatch] API running on port ${PORT}`);
+  console.log(`[C7NTAX] API running on port ${PORT}`);
   logger.info("server", `API listening on port ${PORT} (${process.env.NODE_ENV || "development"})`);
   startWorkers();
 });

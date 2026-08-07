@@ -1,4 +1,4 @@
-import type { Invoice, InvoiceLineItem } from "@c7-overwatch/shared";
+import type { Invoice, InvoiceLineItem } from "@C7NTAX/shared";
 import PDFDocument from "pdfkit";
 import { WritableStream } from "stream/web"; // stub — real impl uses 'stream'
 
@@ -13,7 +13,7 @@ export async function generateInvoicePdf(invoice: Invoice): Promise<Buffer> {
       margin: 50,
       info: {
         Title: `Invoice ${invoice.invoiceNumber}`,
-        Author: "C7 Overwatch",
+        Author: "C7NTAX",
         Subject: `Invoice #${invoice.invoiceNumber}`,
       },
     });
@@ -38,7 +38,7 @@ export async function generateInvoicePdf(invoice: Invoice): Promise<Buffer> {
     doc
       .fontSize(12)
       .font("Helvetica-Bold")
-      .text("C7 Overwatch", 50, topY)
+      .text("C7NTAX", 50, topY)
       .font("Helvetica")
       .fontSize(9)
       .text("Cyber 7 Group")
@@ -144,7 +144,7 @@ export async function generateInvoicePdf(invoice: Invoice): Promise<Buffer> {
       .font("Helvetica")
       .fillColor("#888888")
       .text("Thank you for your business.", 50, 750, { align: "center" })
-      .text("C7 Overwatch — Cyber 7 Group | Payment terms: Net 30", {
+      .text("C7NTAX — Cyber 7 Group | Payment terms: Net 30", {
         align: "center",
       });
 

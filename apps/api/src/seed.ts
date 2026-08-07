@@ -67,10 +67,10 @@ async function main() {
 
   const passwordHash = await bcrypt.hash("admin", 12);
 
-  const existingAdmin = await prisma.user.findUnique({ where: { email: "admin@c7overwatch.com" } });
+  const existingAdmin = await prisma.user.findUnique({ where: { email: "admin@C7NTAX.com" } });
   if (existingAdmin) {
     await prisma.user.update({
-      where: { email: "admin@c7overwatch.com" },
+      where: { email: "admin@C7NTAX.com" },
       data: {
         passwordHash,
         firstName: "Admin",
@@ -84,7 +84,7 @@ async function main() {
   } else {
     await prisma.user.create({
       data: {
-        email: "admin@c7overwatch.com",
+        email: "admin@C7NTAX.com",
         passwordHash,
         firstName: "Admin",
         lastName: "User",
@@ -93,13 +93,13 @@ async function main() {
         emailVerified: true,
       },
     });
-    console.log("  ✓ Created admin user (admin@c7overwatch.com / admin)");
+    console.log("  ✓ Created admin user (admin@C7NTAX.com / admin)");
   }
 
   // ── 3. Default system configs ────────────────────────────────────
   const configs = [
     { key: "default_landing_page", value: JSON.stringify({ path: "/", label: "Dashboard" }) },
-    { key: "app_name", value: JSON.stringify("C7 Overwatch") },
+    { key: "app_name", value: JSON.stringify("C7NTAX") },
     { key: "app_version", value: JSON.stringify("1.0.0") },
     { key: "ticket_auto_close_days", value: JSON.stringify(14) },
     { key: "follow_up_interval_hours", value: JSON.stringify(24) },
@@ -161,7 +161,7 @@ async function main() {
   }
 
   console.log("\n[Seed] Database seeding complete!");
-  console.log("  Login: admin@c7overwatch.com / admin\n");
+  console.log("  Login: admin@C7NTAX.com / admin\n");
 }
 
 main()

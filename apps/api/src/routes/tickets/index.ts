@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../../index";
 import { authenticate, requirePermission, type AuthRequest } from "../../middleware/auth";
-import { Permission, TicketStatus } from "@c7-overwatch/shared";
+import { Permission, TicketStatus } from "@C7NTAX/shared";
 import { AppError } from "../../middleware/errorHandler";
 import { onTicketStatusChange, extractPriority } from "./automations";
 import { v4 as uuid } from "uuid";
@@ -112,6 +112,32 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
 
     const updated = await prisma.ticket.update({ where: { id: req.params.id }, data: updates });
 
+    // ── Audit log: detect changes and create a comment ──
+    const changedFields: string[] = [];
+    const labels: Record<string, string> = { title: "Title", description: "Description", status: "Status", priority: "Priority", boardId: "Board", assignedToId: "Assigned To", dueDate: "Due Date", startTime: "Start Time", endTime: "End Time", contactId: "Contact", companyId: "Company", serviceAgreementId: "Service Agreement" };
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        const oldVal = (ticket as Record<string, unknown>)[key];
+        const newVal = updates[key];
+        const oldStr = oldVal instanceof Date ? oldVal.toISOString().slice(0, 16) : String(oldVal ?? "(empty)");
+        const newStr = newVal instanceof Date ? newVal.toISOString().slice(0, 16) : String(newVal ?? "(empty)");
+        if (oldStr !== newStr) {
+          const label = labels[key] || key;
+          changedFields.push(`${label}: ${oldStr} → ${newStr}`);
+        }
+      }
+    }
+    if (changedFields.length > 0) {
+      await prisma.ticketComment.create({
+        data: {
+          ticketId: req.params.id,
+          body: changedFields.join("\n"),
+          authorId: req.user!.userId,
+          isInternal: true,
+        },
+      });
+    }
+
     if (updates.status && updates.status !== oldStatus) {
       await onTicketStatusChange(req.params.id, updates.status as TicketStatus, oldStatus);
     }
@@ -142,10 +168,16 @@ ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async
 // ── Add time entry ──
 ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    const { startTime, endTime, description, billable } = req.body;
-    const hours = (new Date(endTime).getTime() - new Date(startTime).getTime()) / 3600000;
+    const { startTime, endTime, description, billable, minutes, date } = req.body;
+    let mins = 0;
+    if (minutes) {
+      mins = Math.round(Number(minutes));
+    } else if (startTime && endTime) {
+      mins = Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 60000);
+    }
+    if (!mins || mins <= 0) throw new AppError("Valid time required");
     const entry = await prisma.timeEntry.create({
-      data: { ticketId: req.params.id, userId: req.user!.userId, startTime: new Date(startTime), endTime: new Date(endTime), hours: Math.round(hours * 100) / 100, description, billable: billable ?? true },
+      data: { ticketId: req.params.id, userId: req.user!.userId, minutes: mins, date: date ? new Date(date) : new Date(), description: description || "", billable: billable ?? true },
     });
     res.status(201).json(entry);
   } catch (e) { next(e); }

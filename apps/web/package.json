@@ -1,5 +1,5 @@
 {
-  "name": "@c7-overwatch/web",
+  "name": "@C7NTAX/web",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@c7-overwatch/shared": "workspace:*",
+    "@C7NTAX/shared": "workspace:*",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-router-dom": "^6.23.0",

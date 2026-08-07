@@ -1,8 +1,8 @@
-# C7 Overwatch — Architecture
+# C7NTAX — Architecture
 
 ## Overview
 
-C7 Overwatch is a full-stack Professional Services Automation platform. It follows a modular monorepo pattern with clear separation of concerns.
+C7NTAX is a full-stack Professional Services Automation platform. It follows a modular monorepo pattern with clear separation of concerns.
 
 ## Layers
 

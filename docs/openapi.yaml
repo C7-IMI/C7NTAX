@@ -1,8 +1,8 @@
 openapi: "3.1.0"
 info:
-  title: C7 Overwatch API
+  title: C7NTAX API
   description: |
-    Professional Services Automation API — programmatic access to the C7 Overwatch platform.
+    Professional Services Automation API — programmatic access to the C7NTAX platform.
     All endpoints require Bearer token authentication (JWT) obtained via `/api/auth/login`.
     External apps and user-created plugins use this same API.
 
@@ -24,7 +24,7 @@ info:
 servers:
   - url: http://localhost:4000/api
     description: Local development
-  - url: https://api.c7overwatch.com/api
+  - url: https://api.C7NTAX.com/api
     description: Production
 
 security:

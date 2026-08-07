@@ -17,11 +17,11 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": false,
     "paths": {
-      "@c7-overwatch/shared": ["./packages/shared/src"],
-      "@c7-overwatch/shared/*": ["./packages/shared/src/*"],
-      "@c7-overwatch/email": ["./packages/email/src"],
-      "@c7-overwatch/billing": ["./packages/billing/src"],
-      "@c7-overwatch/integrations": ["./packages/integrations/src"]
+      "@C7NTAX/shared": ["./packages/shared/src"],
+      "@C7NTAX/shared/*": ["./packages/shared/src/*"],
+      "@C7NTAX/email": ["./packages/email/src"],
+      "@C7NTAX/billing": ["./packages/billing/src"],
+      "@C7NTAX/integrations": ["./packages/integrations/src"]
     }
   },
   "exclude": ["node_modules", "dist", "build", ".turbo"]

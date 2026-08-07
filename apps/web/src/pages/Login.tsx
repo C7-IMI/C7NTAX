@@ -74,7 +74,7 @@ export function LoginPage() {
           <div className="w-14 h-14 rounded-xl bg-cyber-600 flex items-center justify-center mx-auto mb-4">
             <span className="text-white font-bold text-xl">C7</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">C7 Overwatch</h1>
+          <h1 className="text-2xl font-bold text-white">C7NTAX</h1>
           <p className="text-gray-400 text-sm mt-1">Sign in to your PSA dashboard</p>
         </div>
         <form onSubmit={handleLogin} className="card space-y-4">

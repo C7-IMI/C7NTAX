@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
-import { Permission } from "@c7-overwatch/shared";
+import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 
 export const projectsRouter = Router();

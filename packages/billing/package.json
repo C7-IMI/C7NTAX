@@ -1,5 +1,5 @@
 {
-  "name": "@c7-overwatch/billing",
+  "name": "@C7NTAX/billing",
   "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -10,8 +10,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@c7-overwatch/shared": "workspace:*",
-    "@c7-overwatch/email": "workspace:*",
+    "@C7NTAX/shared": "workspace:*",
+    "@C7NTAX/email": "workspace:*",
     "pdfkit": "^0.15.0",
     "handlebars": "^4.7.8"
   },

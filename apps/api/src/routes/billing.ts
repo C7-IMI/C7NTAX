@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
-import { Permission, InvoiceStatus } from "@c7-overwatch/shared";
+import { Permission, InvoiceStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
-import { BillingEngine } from "@c7-overwatch/billing";
+import { BillingEngine } from "@C7NTAX/billing";
 import { v4 as uuid } from "uuid";
 
 export const billingRouter = Router();

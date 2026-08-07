@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
-import { Permission, ROLE_PERMISSIONS, SystemRole } from "@c7-overwatch/shared";
+import { Permission, ROLE_PERMISSIONS, SystemRole } from "@C7NTAX/shared";
 import bcrypt from "bcryptjs";
 import { AppError } from "../middleware/errorHandler";
 

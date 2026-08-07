@@ -4,8 +4,8 @@ import {
   type Invoice,
   type ServiceAgreement,
   type InvoiceLineItem,
-} from "@c7-overwatch/shared";
-import type { EmailService } from "@c7-overwatch/email";
+} from "@C7NTAX/shared";
+import type { EmailService } from "@C7NTAX/email";
 
 // ─── Invoice Number Generator ───────────────────────────────────────
 

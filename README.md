@@ -1,11 +1,11 @@
-# C7 Overwatch — PSA Platform
+# C7NTAX — PSA Platform
 
 A full-stack Professional Services Automation platform replicating the interface and core functionality of AutoTask PSA, tailored for Cyber 7 Group.
 
 ## Architecture
 
 ```
-c7-overwatch/
+C7NTAX/
 ├── apps/
 │   ├── api/          # Express + TypeScript REST API
 │   ├── web/          # React + Vite + Tailwind CSS

@@ -1,5 +1,5 @@
 {
-  "name": "@c7-overwatch/api",
+  "name": "@C7NTAX/api",
   "version": "1.0.0",
   "private": true,
   "main": "./src/index.ts",
@@ -15,10 +15,10 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@c7-overwatch/shared": "workspace:*",
-    "@c7-overwatch/email": "workspace:*",
-    "@c7-overwatch/billing": "workspace:*",
-    "@c7-overwatch/integrations": "workspace:*",
+    "@C7NTAX/shared": "workspace:*",
+    "@C7NTAX/email": "workspace:*",
+    "@C7NTAX/billing": "workspace:*",
+    "@C7NTAX/integrations": "workspace:*",
     "@prisma/client": "^5.14.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",

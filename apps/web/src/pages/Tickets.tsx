@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api";
 import { InferencePanel } from "../components/InferencePanel";
-import { Plus, Search, Save, X, Clock, Edit3 } from "lucide-react";
+import { Plus, Search, Save, X, Clock, Edit3, Timer, Send } from "lucide-react";
 import toast from "react-hot-toast";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -70,6 +70,10 @@ export function TicketDetailPage() {
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<Record<string,string>>({});
   const [saving, setSaving] = useState(false);
+  const [noteText, setNoteText] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [showTimeEntry, setShowTimeEntry] = useState(false);
+  const [timeForm, setTimeForm] = useState({ startTime: "", endTime: "", calculated: "", description: "", billable: true });
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
   const [contacts, setContacts] = useState<Array<{id:string;firstName:string;lastName:string}>>([]);
   const [agreements, setAgreements] = useState<Array<{id:string;name:string;billingPeriod:string;billingAmount:number}>>([]);
@@ -125,6 +129,38 @@ export function TicketDetailPage() {
   useEffect(()=>{
     if (ticket?.companyId && editing) handleCompanyChange(ticket.companyId as string);
   },[editing]);
+
+  const handlePostNote = async () => {
+    if (!noteText.trim()) return;
+    setPosting(true);
+    try {
+      await api.post(`/tickets/${id}/notes`, { content: noteText, isInternal: false });
+      toast.success("Note posted");
+      setNoteText("");
+      load();
+    } catch { toast.error("Failed"); }
+    finally { setPosting(false); }
+  };
+
+  const handleLogTime = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const start = new Date(timeForm.startTime);
+    const end = new Date(timeForm.endTime);
+    const mins = Math.round((end.getTime() - start.getTime()) / 60000);
+    if (mins <= 0) { toast.error("End time must be after start time"); return; }
+    try {
+      await api.post(`/tickets/${id}/time`, {
+        minutes: mins,
+        description: timeForm.description,
+        billable: timeForm.billable,
+        date: start.toISOString(),
+      });
+      toast.success("Time logged");
+      setShowTimeEntry(false);
+      setTimeForm({ startTime: "", endTime: "", calculated: "", description: "", billable: true });
+      load();
+    } catch { toast.error("Failed"); }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -214,7 +250,13 @@ export function TicketDetailPage() {
 
           {/* Dates & Times Section */}
           <div className="card">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Dates & Times</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Dates & Times</h3>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500">Total: <strong className="text-cyber-400">{(ticket.timeEntries as Array<{minutes:number}>||[]).reduce((s,t)=>s+(t.minutes||0),0)}m</strong></span>
+                <button onClick={()=>setShowTimeEntry(true)} className="btn-secondary text-xs flex items-center gap-1 px-2 py-1"><Timer size={12}/>Log Time</button>
+              </div>
+            </div>
             {editing ? (<div className="grid grid-cols-3 gap-3">
               <div><label className="text-xs text-gray-500 block mb-1">Due Date</label><input className="input-field" type="datetime-local" value={editForm.dueDate||""} onChange={e=>setEditForm({...editForm,dueDate:e.target.value})}/></div>
               <div><label className="text-xs text-gray-500 flex items-center gap-1"><Clock size={11}/>Start Time</label><input className="input-field" type="datetime-local" value={editForm.startTime||""} onChange={e=>setEditForm({...editForm,startTime:e.target.value})}/></div>
@@ -293,7 +335,30 @@ export function TicketDetailPage() {
       <InferencePanel ticketId={ticket.id as string} ticketTitle={ticket.title as string} ticketDescription={ticket.description as string|undefined}/>
 
       {/* Comments / Notes */}
-      <div className="card"><h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Notes & Activity</h3><div className="space-y-3">{(ticket.comments as Array<Record<string,unknown>>)?.map(n=>(<div key={n.id as string} className="border-l-2 border-surface-border pl-3 py-1"><p className="text-sm text-gray-300 whitespace-pre-wrap">{n.body as string}</p><p className="text-xs text-gray-500 mt-1">{(n.author as {firstName?:string;lastName?:string})?.firstName} · {new Date(n.createdAt as string).toLocaleString()}{(n as {isInternal?:boolean}).isInternal&&<span className="badge ml-2 bg-amber-600/20 text-amber-400">internal</span>}</p></div>))||<p className="text-gray-500 text-sm">No notes yet</p>}</div></div>
+      <div className="card"><h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Notes & Activity</h3>
+        {/* Inline note posting */}
+        <div className="flex gap-2 mb-4">
+          <input className="input-field flex-1" placeholder="Add a note..." value={noteText} onChange={e=>setNoteText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handlePostNote();}}} />
+          <button onClick={handlePostNote} disabled={posting||!noteText.trim()} className="btn-primary flex items-center gap-1.5 text-sm shrink-0"><Send size={14}/>{posting?"Posting...":"Post"}</button>
+        </div>
+        <div className="space-y-3">{(ticket.comments as Array<Record<string,unknown>>)?.map(n=>(<div key={n.id as string} className="border-l-2 border-surface-border pl-3 py-1"><p className="text-sm text-gray-300 whitespace-pre-wrap">{n.body as string}</p><p className="text-xs text-gray-500 mt-1">{(n.author as {firstName?:string;lastName?:string})?.firstName} · {new Date(n.createdAt as string).toLocaleString()}{(n as {isInternal?:boolean}).isInternal&&<span className="badge ml-2 bg-amber-600/20 text-amber-400">internal</span>}</p></div>))||<p className="text-gray-500 text-sm">No notes yet</p>}</div></div>
+
+      {/* Time Entry Modal */}
+      {showTimeEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={()=>setShowTimeEntry(false)}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e=>e.stopPropagation()} onSubmit={handleLogTime}>
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Timer size={16}/>Log Time</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-xs text-gray-500 block mb-1">Start Time</label><input className="input-field" type="datetime-local" value={timeForm.startTime} onChange={e=>{setTimeForm({...timeForm,startTime:e.target.value}); if(e.target.value&&timeForm.endTime){const d=(new Date(timeForm.endTime).getTime()-new Date(e.target.value).getTime())/3600000;setTimeForm(p=>({...p,startTime:e.target.value,calculated:d>0?d.toFixed(2)+'h':''}));}}} required/></div>
+              <div><label className="text-xs text-gray-500 block mb-1">End Time</label><input className="input-field" type="datetime-local" value={timeForm.endTime} onChange={e=>{setTimeForm({...timeForm,endTime:e.target.value}); if(timeForm.startTime&&e.target.value){const d=(new Date(e.target.value).getTime()-new Date(timeForm.startTime).getTime())/3600000;setTimeForm(p=>({...p,endTime:e.target.value,calculated:d>0?d.toFixed(2)+'h':''}));}}} required/></div>
+            </div>
+            {timeForm.calculated && <p className="text-sm text-cyber-400">Time spent: <strong>{timeForm.calculated}</strong></p>}
+            <div><label className="text-xs text-gray-500 block mb-1">Description</label><input className="input-field" placeholder="What did you work on?" value={timeForm.description} onChange={e=>setTimeForm({...timeForm,description:e.target.value})} required/></div>
+            <label className="flex items-center gap-2 text-sm text-gray-400"><input type="checkbox" checked={timeForm.billable} onChange={e=>setTimeForm({...timeForm,billable:e.target.checked})}/>Billable</label>
+            <div className="flex gap-2 justify-end"><button type="button" className="btn-secondary text-sm" onClick={()=>setShowTimeEntry(false)}>Cancel</button><button type="submit" className="btn-primary text-sm">Log Time</button></div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

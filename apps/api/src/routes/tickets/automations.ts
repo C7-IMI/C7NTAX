@@ -1,5 +1,5 @@
 import { prisma } from "../../index";
-import { TicketStatus, TicketPriority } from "@c7-overwatch/shared";
+import { TicketStatus, TicketPriority } from "@C7NTAX/shared";
 
 /**
  * When a ticket transitions to "waiting_on_client", record that so the

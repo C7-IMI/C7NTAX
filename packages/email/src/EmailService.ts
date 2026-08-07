@@ -57,7 +57,7 @@ export class EmailService {
   async sendMfaCode(email: string, code: string): Promise<void> {
     await this.send({
       to: email,
-      subject: "C7 Overwatch — Your Verification Code",
+      subject: "C7NTAX — Your Verification Code",
       html: mfaTemplate(code),
     });
   }
@@ -135,7 +135,7 @@ function mfaTemplate(code: string): string {
   return `
   <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; background: #0f1923; color: #e2e8f0; border-radius: 12px; overflow: hidden;">
     <div style="background: #00d4ff; padding: 24px; text-align: center;">
-      <h1 style="color: #0f1923; margin: 0; font-size: 20px;">C7 Overwatch</h1>
+      <h1 style="color: #0f1923; margin: 0; font-size: 20px;">C7NTAX</h1>
     </div>
     <div style="padding: 32px 24px;">
       <h2 style="color: #fff; margin: 0 0 8px;">Verification Code</h2>

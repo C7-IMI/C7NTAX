@@ -1,4 +1,4 @@
-# C7 Overwatch Design System
+# C7NTAX Design System
 
 Derived from the Cyber 7 Group brand identity — a cybersecurity professional services firm.
 

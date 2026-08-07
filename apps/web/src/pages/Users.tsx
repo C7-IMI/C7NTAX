@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Users as UsersIcon, Shield } from "lucide-react";
-import { SystemRole } from "@c7-overwatch/shared";
+import { SystemRole } from "@C7NTAX/shared";
 
 interface UserRow { id: string; email: string; firstName: string | null; lastName: string | null; role: string; status: string; mfaEnabled: boolean; company?: { name: string } | null; }
 

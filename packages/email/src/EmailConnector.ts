@@ -1,4 +1,4 @@
-import { TicketStatus, TicketPriority } from "@c7-overwatch/shared";
+import { TicketStatus, TicketPriority } from "@C7NTAX/shared";
 
 // ─── Types for processed emails ─────────────────────────────────────
 

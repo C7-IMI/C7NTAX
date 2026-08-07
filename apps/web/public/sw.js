@@ -1,6 +1,6 @@
-/* C7 Overwatch Service Worker — PWA offline support + caching */
+/* C7NTAX Service Worker — PWA offline support + caching */
 
-const CACHE_NAME = "c7-overwatch-v1";
+const CACHE_NAME = "C7NTAX-v1";
 const STATIC_ASSETS = ["/", "/index.html", "/favicon.svg", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -42,7 +42,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  const data = event.data?.json() || { title: "C7 Overwatch", body: "New notification" };
+  const data = event.data?.json() || { title: "C7NTAX", body: "New notification" };
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,

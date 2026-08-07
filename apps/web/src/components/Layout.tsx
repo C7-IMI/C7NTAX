@@ -46,9 +46,9 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="flex items-center justify-between px-5 h-16 border-b border-surface-border shrink-0">
           <Link to="/" className="flex items-center gap-2.5" onClick={() => setSidebarOpen(false)}>
             <div className="w-8 h-8 rounded-lg bg-cyber-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C7</span>
+              <span className="text-white font-bold text-sm">NT</span>
             </div>
-            <span className="font-semibold text-base text-white tracking-tight">Overwatch</span>
+            <span className="font-semibold text-base text-white tracking-tight">NTAX</span>
           </Link>
           <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setSidebarOpen(false)}>
             <X size={20} />

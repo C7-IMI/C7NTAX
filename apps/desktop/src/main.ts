@@ -12,7 +12,7 @@ function createWindow(): void {
     height: 900,
     minWidth: 800,
     minHeight: 600,
-    title: "C7 Overwatch",
+    title: "C7NTAX",
     icon: path.join(__dirname, "../assets/icon.png"),
     backgroundColor: "#0a1628",
     webPreferences: {
@@ -28,21 +28,17 @@ function createWindow(): void {
     mainWindow?.show();
   });
 
-  // In production, load the bundled web app or remote URL.
-  // For development, load the Vite dev server.
-  if (isDev) {
-    mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools({ mode: "detach" });
-  } else {
-    // Load the built React app (bundled with the Electron app)
+  // Always load from dev server or try local file
+  const webUrl = "http://localhost:3003";
+  mainWindow.loadURL(webUrl).catch(() => {
+    if (!mainWindow) return;
     const indexPath = path.join(__dirname, "../../web/dist/index.html");
     if (fs.existsSync(indexPath)) {
       mainWindow.loadFile(indexPath);
     } else {
-      // Fallback to hosted version
-      mainWindow.loadURL("https://app.c7overwatch.com");
+      mainWindow.loadURL("data:text/html,<h1 style='color:white;background:#0a1628;text-align:center;padding-top:40vh;font-family:sans-serif'>C7NTAX<br><small>Start the web server: pnpm dev</small></h1>");
     }
-  }
+  });
 
   // Open external links in the system browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -59,9 +55,9 @@ function createWindow(): void {
 function buildMenu(): void {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
-      label: "C7 Overwatch",
+      label: "C7NTAX",
       submenu: [
-        { label: "About C7 Overwatch", role: "about" },
+        { label: "About C7NTAX", role: "about" },
         { type: "separator" },
         { label: "Settings", accelerator: "CmdOrCtrl+,", click: () => mainWindow?.webContents.send("navigate", "/settings") },
         { type: "separator" },
@@ -91,8 +87,8 @@ function buildMenu(): void {
     {
       label: "Help",
       submenu: [
-        { label: "Documentation", click: () => shell.openExternal("https://docs.c7overwatch.com") },
-        { label: "Report Issue", click: () => shell.openExternal("https://github.com/cyber7group/c7-overwatch/issues") },
+        { label: "Documentation", click: () => shell.openExternal("https://docs.C7NTAX.com") },
+        { label: "Report Issue", click: () => shell.openExternal("https://github.com/cyber7group/C7NTAX/issues") },
       ],
     },
   ];

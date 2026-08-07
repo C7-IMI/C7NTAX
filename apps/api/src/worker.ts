@@ -1,7 +1,7 @@
 import { prisma } from "./index";
-import { TicketStatus, InvoiceStatus } from "@c7-overwatch/shared";
+import { TicketStatus, InvoiceStatus } from "@C7NTAX/shared";
 import { notifyUser } from "./ws";
-import { EmailService } from "@c7-overwatch/email";
+import { EmailService } from "@C7NTAX/email";
 import { logger } from "./services/logger";
 
 const emailService = new EmailService();

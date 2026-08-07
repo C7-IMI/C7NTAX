@@ -1,5 +1,5 @@
 {
-  "name": "C7 Overwatch",
+  "name": "C7NTAX",
   "short_name": "Overwatch",
   "description": "Professional Services Automation Platform",
   "start_url": "/",
@@ -15,5 +15,5 @@
   "categories": ["business", "productivity"],
   "lang": "en-US",
   "scope": "/",
-  "id": "com.cyber7group.c7overwatch"
+  "id": "com.cyber7group.C7NTAX"
 }
