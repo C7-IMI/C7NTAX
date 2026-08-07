@@ -2,6 +2,7 @@ import { prisma } from "./index";
 import { TicketStatus, InvoiceStatus } from "@c7-overwatch/shared";
 import { notifyUser } from "./ws";
 import { EmailService } from "@c7-overwatch/email";
+import { logger } from "./services/logger";
 
 const emailService = new EmailService();
 
@@ -57,7 +58,7 @@ async function processTicketFollowUps(): Promise<void> {
       }
     }
   } catch (err) {
-    console.error("[Worker] Ticket follow-up error:", err);
+    logger.error("worker.ticketFollowUp", err instanceof Error ? err : new Error(String(err)));
   }
 }
 
@@ -91,12 +92,13 @@ async function processAutoClose(): Promise<void> {
           },
         });
 
-        // Add auto-close note
-        await prisma.ticketNote.create({
+        // Add auto-close comment
+        await prisma.ticketComment.create({
           data: {
             ticketId: ticket.id,
-            content: `Ticket automatically closed after ${board.autoCloseDays || 14} days without client response.`,
+            body: `Ticket automatically closed after ${board.autoCloseDays || 14} days without client response.`,
             isInternal: true,
+            authorId: ticket.assignedToId || ticket.createdById,
           },
         });
 
@@ -109,7 +111,7 @@ async function processAutoClose(): Promise<void> {
       }
     }
   } catch (err) {
-    console.error("[Worker] Auto-close error:", err);
+    logger.error("worker.autoClose", err instanceof Error ? err : new Error(String(err)));
   }
 }
 
@@ -152,7 +154,7 @@ async function processInvoiceReminders(): Promise<void> {
       }
     }
   } catch (err) {
-    console.error("[Worker] Invoice reminder error:", err);
+    logger.error("worker.invoiceReminder", err instanceof Error ? err : new Error(String(err)));
   }
 }
 
@@ -167,6 +169,7 @@ let invoiceInterval: ReturnType<typeof setInterval> | null = null;
  */
 export function startWorkers(): void {
   console.log("[Worker] Starting background workers...");
+  logger.info("worker", "Background workers started: ticketFollowUp(30m), autoClose(1h), invoiceReminder(6h)");
 
   // Every 30 minutes: check for follow-ups
   followUpInterval = setInterval(processTicketFollowUps, 30 * 60 * 1000);

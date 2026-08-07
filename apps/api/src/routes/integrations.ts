@@ -21,7 +21,7 @@ integrationsRouter.get("/types", requirePermission(Permission.IntegrationView), 
 integrationsRouter.get("/", requirePermission(Permission.IntegrationView), async (_req: AuthRequest, res, next) => {
   try {
     // Sync from DB to hub
-    const dbConfigs = await prisma.integrationConfig.findMany();
+    const dbConfigs = await prisma.integration.findMany();
     for (const cfg of dbConfigs) {
       hub.upsertConfig({
         id: cfg.id,
@@ -46,7 +46,7 @@ integrationsRouter.post("/", requirePermission(Permission.IntegrationManage), as
     if (!kind || !name || !credentials) throw new AppError("kind, name, and credentials required");
     if (!hub.getAdapter(kind)) throw new AppError(`Unknown integration kind: ${kind}`);
 
-    const created = await prisma.integrationConfig.create({
+    const created = await prisma.integration.create({
       data: { kind, name, credentials: credentials as Record<string, string>, settings: settings || {} },
     });
     const { credentials: _, ...safe } = created;
@@ -60,7 +60,7 @@ integrationsRouter.patch("/:id", requirePermission(Permission.IntegrationManage)
     const allowed = ["name", "credentials", "settings", "enabled"];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) if (req.body[key] !== undefined) updates[key] = req.body[key];
-    const cfg = await prisma.integrationConfig.update({ where: { id: req.params.id }, data: updates });
+    const cfg = await prisma.integration.update({ where: { id: req.params.id }, data: updates });
     const { credentials: _, ...safe } = cfg;
     res.json(safe);
   } catch (e) { next(e); }
@@ -69,7 +69,7 @@ integrationsRouter.patch("/:id", requirePermission(Permission.IntegrationManage)
 // ── Test connection ──
 integrationsRouter.post("/:id/test", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
-    const cfg = await prisma.integrationConfig.findUnique({ where: { id: req.params.id } });
+    const cfg = await prisma.integration.findUnique({ where: { id: req.params.id } });
     if (!cfg) throw new AppError("Integration not found", 404);
     hub.upsertConfig({
       id: cfg.id, kind: cfg.kind as IntegrationConfig["kind"], name: cfg.name, enabled: cfg.enabled,
@@ -84,7 +84,7 @@ integrationsRouter.post("/:id/test", requirePermission(Permission.IntegrationVie
 // ── Sync ──
 integrationsRouter.post("/:id/sync", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
-    const cfg = await prisma.integrationConfig.findUnique({ where: { id: req.params.id } });
+    const cfg = await prisma.integration.findUnique({ where: { id: req.params.id } });
     if (!cfg) throw new AppError("Integration not found", 404);
     hub.upsertConfig({
       id: cfg.id, kind: cfg.kind as IntegrationConfig["kind"], name: cfg.name, enabled: cfg.enabled,
@@ -94,7 +94,7 @@ integrationsRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
     const result = await hub.sync(req.params.id);
     // Persist lastSyncAt
     if (result.success) {
-      await prisma.integrationConfig.update({ where: { id: req.params.id }, data: { lastSyncAt: new Date(), status: "connected" } });
+      await prisma.integration.update({ where: { id: req.params.id }, data: { lastSyncAt: new Date(), status: "connected" } });
     }
     res.json(result);
   } catch (e) { next(e); }
@@ -103,7 +103,7 @@ integrationsRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
 // ── Delete ──
 integrationsRouter.delete("/:id", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
-    await prisma.integrationConfig.delete({ where: { id: req.params.id } });
+    await prisma.integration.delete({ where: { id: req.params.id } });
     res.json({ message: "Integration removed" });
   } catch (e) { next(e); }
 });

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, BookOpen, Search } from "lucide-react";
+import { Plus, BookOpen } from "lucide-react";
 
 interface Article { id: string; title: string; slug: string; excerpt?: string; status: string; visibility: string; viewCount: number; category?: { name: string }; author?: { firstName: string; lastName: string }; tags: string[]; updatedAt: string; }
 

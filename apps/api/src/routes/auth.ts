@@ -14,14 +14,17 @@ const emailService = new EmailService();
 // ── POST /api/auth/login ────────────────────────────────────────────
 authRouter.post("/login", async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      res.status(400).json({ error: "Email and password required" });
+    const { email, username, password } = req.body;
+    if ((!email && !username) || !password) {
+      res.status(400).json({ error: "Email/username and password required" });
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.active) {
+    // Allow login by email OR username — include role relation
+    const user = email
+      ? await prisma.user.findUnique({ where: { email }, include: { role: true } })
+      : await prisma.user.findUnique({ where: { username }, include: { role: true } });
+    if (!user || !user.isActive) {
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
@@ -40,8 +43,8 @@ authRouter.post("/login", async (req, res, next) => {
     }
 
     const token = signToken({
-      id: user.id, email: user.email, role: user.role as SystemRole,
-      companyId: user.companyId, permissions: ROLE_PERMISSIONS[user.role as SystemRole],
+      id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
+      companyId: user.companyId, permissions: (user.role.permissions || ROLE_PERMISSIONS[user.role.systemRole as SystemRole] || []) as Permission[],
       firstName: user.firstName, lastName: user.lastName,
       mfaEnabled: false, active: true, createdAt: user.createdAt, updatedAt: user.updatedAt,
     });
@@ -49,7 +52,12 @@ authRouter.post("/login", async (req, res, next) => {
     // Update last login
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
-    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role } });
+    // Fetch default landing page
+    const landingConfig = await prisma.systemConfig.findUnique({ where: { key: "default_landing_page" } });
+    let landingPage = { path: "/", label: "Dashboard" };
+    if (landingConfig) { try { landingPage = JSON.parse(landingConfig.value as string); } catch { /* use default */ } }
+
+    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, landingPage });
   } catch (e) { next(e); }
 });
 

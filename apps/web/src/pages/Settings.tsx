@@ -1,9 +1,40 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { Cpu } from "lucide-react";
+import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Plug, Users, Target, FolderKanban, Monitor, BookOpen } from "lucide-react";
+import api from "../api";
+import toast from "react-hot-toast";
+
+const LANDING_OPTIONS = [
+  { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/tickets", label: "Tickets", icon: Ticket },
+  { path: "/boards", label: "Service Boards", icon: Columns3 },
+  { path: "/opportunities", label: "Sales Pipeline", icon: Target },
+  { path: "/projects", label: "Projects", icon: FolderKanban },
+  { path: "/assets", label: "Asset Inventory", icon: Monitor },
+  { path: "/kb", label: "Knowledge Base", icon: BookOpen },
+  { path: "/clients", label: "Clients", icon: Building2 },
+  { path: "/billing", label: "Billing", icon: DollarSign },
+  { path: "/integrations", label: "Integrations", icon: Plug },
+  { path: "/users", label: "Users", icon: Users },
+];
 
 export function SettingsPage() {
-  const { user } = useAuth();
+  const { user, landingPage, setLandingPage } = useAuth();
+  const [selectedPath, setSelectedPath] = useState(landingPage.path);
+
+  useEffect(() => { setSelectedPath(landingPage.path); }, [landingPage.path]);
+
+  const handleChange = async (path: string) => {
+    const option = LANDING_OPTIONS.find(o => o.path === path);
+    if (!option) return;
+    setSelectedPath(path);
+    try {
+      await api.patch("/system/config/default_landing_page", { value: { path: option.path, label: option.label } });
+      setLandingPage({ path: option.path, label: option.label });
+      toast.success(`Default landing page set to ${option.label}`);
+    } catch { toast.error("Failed to save setting"); }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
@@ -24,6 +55,30 @@ export function SettingsPage() {
             <label className="text-xs text-gray-500 block mb-1">Role</label>
             <input className="input-field" defaultValue={user?.role} readOnly />
           </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3 className="font-semibold text-white mb-4">Default Landing Page</h3>
+        <p className="text-xs text-gray-500 mb-3">Choose which section opens after login</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {LANDING_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            return (
+              <button
+                key={opt.path}
+                onClick={() => handleChange(opt.path)}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors border ${
+                  selectedPath === opt.path
+                    ? "bg-cyber-600/15 border-cyber-500/40 text-cyber-400"
+                    : "border-surface-border text-gray-400 hover:text-white hover:bg-surface-lighter"
+                }`}
+              >
+                <Icon size={15} />
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

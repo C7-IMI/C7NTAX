@@ -5,6 +5,7 @@ import morgan from "morgan";
 import { PrismaClient } from "@prisma/client";
 import { errorHandler } from "./middleware/errorHandler";
 import { rateLimiter } from "./middleware/rateLimiter";
+import { logger } from "./services/logger";
 import { authRouter } from "./routes/auth";
 import { usersRouter } from "./routes/users";
 import { ticketsRouter } from "./routes/tickets";
@@ -32,12 +33,20 @@ import { setupWebSocket } from "./ws";
 import { startWorkers } from "./worker";
 import { createServer } from "http";
 
+// ── Startup logging ─────────────────────────────────────────────────
+logger.startup();
+
 export const prisma = new PrismaClient();
 export const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173", credentials: true }));
-app.use(morgan("short"));
+app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:3003", credentials: true }));
+// Morgan HTTP logging piped to dev-errors.log
+app.use(morgan("short", {
+  stream: {
+    write: (message: string) => logger.info("http", message.trim()),
+  },
+}));
 app.use(rateLimiter());
 app.use(express.json({ limit: "10mb" }));
 
@@ -78,6 +87,7 @@ setupWebSocket(server);
 
 server.listen(PORT, () => {
   console.log(`[C7 Overwatch] API running on port ${PORT}`);
+  logger.info("server", `API listening on port ${PORT} (${process.env.NODE_ENV || "development"})`);
   startWorkers();
 });
 

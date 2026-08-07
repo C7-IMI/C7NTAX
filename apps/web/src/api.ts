@@ -22,8 +22,8 @@ api.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       const onLoginPage = window.location.pathname === "/login";
-      // Don't nuke the token on login page — it's expected that login may 401
-      if (!onLoginPage) {
+      const bypass = localStorage.getItem("c7_bypass") === "1";
+      if (!onLoginPage && !bypass) {
         localStorage.removeItem("c7_token");
         localStorage.removeItem("c7_user");
         // Use replace to avoid back-button loops

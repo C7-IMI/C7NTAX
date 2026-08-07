@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Monitor, Search } from "lucide-react";
+import { Plus, Monitor } from "lucide-react";
 
 interface Asset { id: string; name: string; assetTag: string; type: string; status: string; serialNumber?: string; company?: { name: string }; }
 

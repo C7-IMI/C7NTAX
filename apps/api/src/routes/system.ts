@@ -78,3 +78,35 @@ systemRouter.post("/calendar-sync", async (req: AuthRequest, res, next) => {
   try { res.status(201).json(await prisma.calendarSyncConfig.create({ data: { userId: req.user!.userId, provider: req.body.provider, syncScheduleEntries: req.body.syncScheduleEntries ?? true, syncPto: req.body.syncPto ?? true } })); }
   catch (e) { next(e); }
 });
+
+// ── System Config (landing page, etc.) ──
+
+systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
+  try {
+    const config = await prisma.systemConfig.findUnique({ where: { key: req.params.key } });
+    if (!config) { res.json({ key: req.params.key, value: null }); return; }
+    res.json({ key: config.key, value: JSON.parse(config.value as string) });
+  } catch (e) { next(e); }
+});
+
+systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
+  try {
+    const config = await prisma.systemConfig.upsert({
+      where: { key: req.params.key },
+      create: { key: req.params.key, value: JSON.stringify(req.body.value) },
+      update: { value: JSON.stringify(req.body.value) },
+    });
+    res.json({ key: config.key, value: JSON.parse(config.value as string) });
+  } catch (e) { next(e); }
+});
+
+systemRouter.get("/configs", async (_req: AuthRequest, res, next) => {
+  try {
+    const configs = await prisma.systemConfig.findMany();
+    const map: Record<string, unknown> = {};
+    for (const c of configs) {
+      try { map[c.key] = JSON.parse(c.value as string); } catch { map[c.key] = c.value; }
+    }
+    res.json(map);
+  } catch (e) { next(e); }
+});

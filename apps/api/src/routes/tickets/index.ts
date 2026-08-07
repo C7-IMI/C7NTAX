@@ -52,8 +52,9 @@ ticketsRouter.get("/:id", requirePermission(Permission.TicketView), async (req: 
       where: { id: req.params.id },
       include: {
         company: true, assignedTo: true, board: true,
-        notes: { orderBy: { createdAt: "desc" }, include: { author: { select: { id: true, firstName: true, lastName: true } } } },
-        timeEntries: { orderBy: { startTime: "desc" } },
+        comments: { orderBy: { createdAt: "desc" }, include: { author: { select: { id: true, firstName: true, lastName: true } } } },
+        timeEntries: { orderBy: { date: "desc" } },
+        serviceAgreement: { select: { id: true, name: true, billingPeriod: true, billingAmount: true } },
       },
     });
     if (!ticket) throw new AppError("Ticket not found", 404);
@@ -68,7 +69,7 @@ ticketsRouter.get("/:id", requirePermission(Permission.TicketView), async (req: 
 // ── Create ticket ──
 ticketsRouter.post("/", requirePermission(Permission.TicketCreate), async (req: AuthRequest, res, next) => {
   try {
-    const { title, description, boardId, companyId, priority, source } = req.body;
+    const { title, description, boardId, companyId, priority, source, startTime, endTime, contactId, assignedToId } = req.body;
     if (!title || !boardId) throw new AppError("title and boardId required");
     const board = await prisma.serviceBoard.findUnique({ where: { id: boardId } });
     if (!board) throw new AppError("Service board not found", 404);
@@ -82,6 +83,10 @@ ticketsRouter.post("/", requirePermission(Permission.TicketCreate), async (req: 
         priority: autoPriority, source: source || "portal",
         status: TicketStatus.New,
         createdById: req.user!.userId,
+        startTime: startTime ? new Date(startTime) : null,
+        endTime: endTime ? new Date(endTime) : null,
+        contactId: contactId || null,
+        assignedToId: assignedToId || null,
       },
     });
     res.status(201).json(ticket);
@@ -95,11 +100,15 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
     if (!ticket) throw new AppError("Ticket not found", 404);
     const oldStatus = ticket.status;
 
-    const allowed = ["title", "description", "status", "priority", "boardId", "assignedToId", "dueDate", "estimatedHours", "serviceAgreementId"];
+    const allowed = ["title", "description", "status", "priority", "boardId", "assignedToId", "dueDate", "startTime", "endTime", "contactId", "companyId", "serviceAgreementId"];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     }
+    // Handle date conversions
+    if (req.body.startTime) updates.startTime = new Date(req.body.startTime);
+    if (req.body.endTime) updates.endTime = new Date(req.body.endTime);
+    if (req.body.dueDate) updates.dueDate = new Date(req.body.dueDate);
 
     const updated = await prisma.ticket.update({ where: { id: req.params.id }, data: updates });
 
@@ -107,10 +116,10 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
       await onTicketStatusChange(req.params.id, updates.status as TicketStatus, oldStatus);
     }
 
-    // Add note if provided
+    // Add comment if provided
     if (req.body.note) {
-      await prisma.ticketNote.create({
-        data: { ticketId: req.params.id, content: req.body.note, authorId: req.user!.userId, isInternal: req.body.noteInternal || false },
+      await prisma.ticketComment.create({
+        data: { ticketId: req.params.id, body: req.body.note, authorId: req.user!.userId, isInternal: req.body.noteInternal || false },
       });
     }
 
@@ -118,13 +127,13 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
   } catch (e) { next(e); }
 });
 
-// ── Add note to ticket ──
+// ── Add comment to ticket ──
 ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
     const { content, isInternal } = req.body;
     if (!content) throw new AppError("content required");
-    const note = await prisma.ticketNote.create({
-      data: { ticketId: req.params.id, content, authorId: req.user!.userId, isInternal: isInternal || false },
+    const note = await prisma.ticketComment.create({
+      data: { ticketId: req.params.id, body: content, authorId: req.user!.userId, isInternal: isInternal || false },
     });
     res.status(201).json(note);
   } catch (e) { next(e); }

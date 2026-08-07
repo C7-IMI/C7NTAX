@@ -16,6 +16,7 @@ datasource db {
 model User {
   id              String   @id @default(uuid())
   email           String   @unique
+  username        String?  @unique
   passwordHash    String
   firstName       String
   lastName        String
@@ -201,6 +202,8 @@ model Ticket {
   priority    String   @default("medium")    // TicketPriority enum
   source      String   @default("portal")    // TicketSource enum
   dueDate     DateTime?
+  startTime   DateTime?
+  endTime     DateTime?
 
   // SLA tracking
   slaResponseDue    DateTime?
@@ -441,7 +444,6 @@ model AuditLog {
 // ─── System Config ──────────────────────────────────────────────────
 
 model SystemConfig {
-  id    String @id @default("singleton")
   key   String @unique
   value Json   @default("{}")
 }

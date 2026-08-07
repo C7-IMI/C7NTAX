@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, FolderKanban } from "lucide-react";
+import { Plus, FolderKanban, Calendar, ArrowRight } from "lucide-react";
 
 interface Proj { id: string; name: string; status: string; company?: { name: string }; manager?: { firstName: string; lastName: string }; budget: number; _count?: { phases: number }; }
 
@@ -30,6 +31,7 @@ export function ProjectsPage() {
       {showNew && (
         <div className="card"><form onSubmit={handleCreate} className="space-y-3">
           <input className="input-field" placeholder="Project name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
+          <input className="input-field" placeholder="Description (optional)" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
           <div className="grid grid-cols-2 gap-3">
             <input className="input-field" placeholder="Company ID" value={form.companyId} onChange={e => setForm({...form, companyId: e.target.value})} required />
             <input className="input-field" type="number" placeholder="Budget" value={form.budget} onChange={e => setForm({...form, budget: Number(e.target.value)})} />
@@ -41,7 +43,7 @@ export function ProjectsPage() {
       {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {projects.map(p => (
-            <div key={p.id} className="card hover:border-surface-border/80 transition-colors cursor-pointer">
+            <Link key={p.id} to={`/projects/${p.id}`} className="card hover:border-surface-border/80 transition-colors cursor-pointer block">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="font-semibold text-white">{p.name}</h3>
                 <span className={`badge ${STATUS_COLORS[p.status] || ""}`}>{p.status.replace("_", " ")}</span>
@@ -51,7 +53,7 @@ export function ProjectsPage() {
                 <p>Manager: {p.manager ? `${p.manager.firstName} ${p.manager.lastName}` : "Unassigned"}</p>
                 <div className="flex justify-between pt-2 border-t border-surface-border"><span>{p._count?.phases || 0} phases</span><span className="text-white font-medium">${p.budget.toLocaleString()}</span></div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

@@ -26,7 +26,7 @@ billingRouter.post("/agreements", requirePermission(Permission.BillingManage), a
     const { name, companyId, description, billingPeriod, price, startDate, endDate, autoRenew, cancellationDays } = req.body;
     if (!name || !companyId) throw new AppError("name and companyId required");
     const agreement = await prisma.serviceAgreement.create({
-      data: { name, companyId, description: description || "", billingPeriod: billingPeriod || "monthly", price: price || 0, startDate: new Date(startDate), endDate: endDate ? new Date(endDate) : null, autoRenew: autoRenew ?? true, cancellationDays: cancellationDays || 30 },
+      data: { name, companyId, description: description || "", billingPeriod: billingPeriod || "monthly", billingAmount: price || 0, startDate: new Date(startDate), endDate: endDate ? new Date(endDate) : null, autoRenew: autoRenew ?? true, followUpIntervalDays: cancellationDays || 30 },
     });
     res.status(201).json(agreement);
   } catch (e) { next(e); }
@@ -80,11 +80,12 @@ billingRouter.post("/invoices/generate", requirePermission(Permission.InvoiceCre
       where: { ticket: { companyId }, invoiceId: null, billable: true },
     });
 
+    const hourlyRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
     const lineItems = timeEntries.map((te) => ({
       description: te.description || `Time entry ${te.id.slice(0, 8)}`,
-      quantity: te.hours,
-      unitPrice: agreement.price > 0 ? agreement.price : 150, // default hourly rate
-      total: te.hours * (agreement.price > 0 ? agreement.price : 150),
+      quantity: +(te.minutes / 60).toFixed(2),
+      unitPrice: hourlyRate,
+      total: +(te.minutes / 60 * hourlyRate).toFixed(2),
     }));
 
     const subtotal = lineItems.reduce((sum, li) => sum + li.total, 0);
