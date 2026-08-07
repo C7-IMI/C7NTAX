@@ -421,8 +421,35 @@ function ReportPreview({ data, type, compact }: { data: unknown; type: string; c
 }
 
 function generateReportHTML(title: string, data: unknown): string {
-  const json = JSON.stringify(data, null, 2);
-  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+title+'</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#1e293b;padding:32px}h1{font-size:20px;color:#0b1120;border-bottom:2px solid #22d3ee;padding-bottom:8px;margin-bottom:4px}.meta{font-size:12px;color:#64748b;margin-bottom:16px}table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}th{text-align:left;padding:8px;background:#f1f5f9;border-bottom:2px solid #cbd5e1;font-weight:600}td{padding:8px;border-bottom:1px solid #e2e8f0}pre{font-size:11px;color:#334155;white-space:pre-wrap}@media print{body{padding:16px}}</style></head><body><h1>'+title+'</h1><p class="meta">Generated: '+new Date().toLocaleString()+' &mdash; C7NTAX Reporting</p><pre>'+json+'</pre></body></html>';
+  const now = new Date().toLocaleString();
+  let bodyHtml = "";
+
+  if (Array.isArray(data)) {
+    const arr = data as Array<Record<string,unknown>>;
+    if (arr.length > 0) {
+      const cols = Object.keys(arr[0]).filter(k => !k.startsWith("_"));
+      bodyHtml = `<table><thead><tr>${cols.map(c => `<th>${c.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/^./,c=>c.toUpperCase())}</th>`).join("")}</tr></thead><tbody>${arr.map(row => `<tr>${cols.map(c => `<td>${row[c] !== null && row[c] !== undefined ? (typeof row[c]==="object"?JSON.stringify(row[c]):String(row[c])) : "—"}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    }
+  } else if (data && typeof data === "object") {
+    const entries = Object.entries(data as Record<string,unknown>).filter(([k]) => !k.startsWith("_"));
+    bodyHtml = `<table><tbody>${entries.map(([k,v]) => `<tr><th>${k.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/^./,c=>c.toUpperCase())}</th><td>${v !== null && v !== undefined ? (typeof v==="object"?JSON.stringify(v):String(v)) : "—"}</td></tr>`).join("")}</tbody></table>`;
+  }
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#1e293b;padding:32px}
+  h1{font-size:22px;color:#0b1120;border-bottom:3px solid #22d3ee;padding-bottom:8px;margin-bottom:4px}
+  .meta{font-size:12px;color:#64748b;margin-bottom:20px}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}
+  th{text-align:left;padding:10px 12px;background:#f1f5f9;border-bottom:2px solid #cbd5e1;font-weight:600;color:#334155}
+  td{padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#1e293b}
+  tr:nth-child(even) td{background:#f8fafc}
+  @media print{body{padding:16px}}
+</style></head><body>
+<h1>${title}</h1><p class="meta">Generated: ${now} — C7NTAX Reporting</p>
+${bodyHtml || "<p>No data available</p>"}
+</body></html>`;
 }
 
 function renderTable(data: unknown): string {
