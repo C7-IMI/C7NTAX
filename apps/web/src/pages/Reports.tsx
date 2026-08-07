@@ -422,17 +422,23 @@ function ReportPreview({ data, type, compact }: { data: unknown; type: string; c
 
 function generateReportHTML(title: string, data: unknown): string {
   const now = new Date().toLocaleString();
-  let bodyHtml = "";
-
-  if (Array.isArray(data)) {
-    const arr = data as Array<Record<string,unknown>>;
-    if (arr.length > 0) {
-      const cols = Object.keys(arr[0]).filter(k => !k.startsWith("_"));
-      bodyHtml = `<table><thead><tr>${cols.map(c => `<th>${c.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/^./,c=>c.toUpperCase())}</th>`).join("")}</tr></thead><tbody>${arr.map(row => `<tr>${cols.map(c => `<td>${row[c] !== null && row[c] !== undefined ? (typeof row[c]==="object"?JSON.stringify(row[c]):String(row[c])) : "—"}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const renderValue = (v: unknown): string => {
+    if (v === null || v === undefined) return "—";
+    if (Array.isArray(v) && v.length > 0 && typeof v[0] === "object") {
+      const cols = Object.keys(v[0] as object).filter(k => !k.startsWith("_"));
+      return `<table style="margin:4px 0;font-size:11px"><thead><tr>${cols.map(c => `<th>${c.replace(/([A-Z])/g," $1").replace(/_/g," ")}</th>`).join("")}</tr></thead><tbody>${v.map(row => `<tr>${cols.map(c => `<td>${renderValue((row as Record<string,unknown>)[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
     }
+    if (typeof v === "object") return JSON.stringify(v);
+    return String(v);
+  };
+
+  let bodyHtml = "";
+  if (Array.isArray(data) && data.length > 0) {
+    const cols = Object.keys((data[0] as object) || {}).filter(k => !k.startsWith("_"));
+    bodyHtml = `<table><thead><tr>${cols.map(c => `<th>${c.replace(/([A-Z])/g," $1").replace(/_/g," ")}</th>`).join("")}</tr></thead><tbody>${(data as Array<Record<string,unknown>>).map(row => `<tr>${cols.map(c => `<td>${renderValue(row[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
   } else if (data && typeof data === "object") {
     const entries = Object.entries(data as Record<string,unknown>).filter(([k]) => !k.startsWith("_"));
-    bodyHtml = `<table><tbody>${entries.map(([k,v]) => `<tr><th>${k.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/^./,c=>c.toUpperCase())}</th><td>${v !== null && v !== undefined ? (typeof v==="object"?JSON.stringify(v):String(v)) : "—"}</td></tr>`).join("")}</tbody></table>`;
+    bodyHtml = `<table><tbody>${entries.map(([k,v]) => `<tr><th>${k.replace(/([A-Z])/g," $1").replace(/_/g," ")}</th><td>${renderValue(v)}</td></tr>`).join("")}</tbody></table>`;
   }
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
@@ -441,9 +447,9 @@ function generateReportHTML(title: string, data: unknown): string {
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#1e293b;padding:32px}
   h1{font-size:22px;color:#0b1120;border-bottom:3px solid #22d3ee;padding-bottom:8px;margin-bottom:4px}
   .meta{font-size:12px;color:#64748b;margin-bottom:20px}
-  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}
-  th{text-align:left;padding:10px 12px;background:#f1f5f9;border-bottom:2px solid #cbd5e1;font-weight:600;color:#334155}
-  td{padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#1e293b}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+  th{text-align:left;padding:8px 10px;background:#f1f5f9;border-bottom:2px solid #cbd5e1;font-weight:600;color:#334155}
+  td{padding:8px 10px;border-bottom:1px solid #e2e8f0;color:#1e293b;vertical-align:top}
   tr:nth-child(even) td{background:#f8fafc}
   @media print{body{padding:16px}}
 </style></head><body>
