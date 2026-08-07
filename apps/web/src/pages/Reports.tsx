@@ -399,7 +399,12 @@ function ReportPreview({ data, type, compact }: { data: unknown; type: string; c
     if (v === null || v === undefined) return "—";
     if (typeof v === "number") return v.toLocaleString();
     if (typeof v === "boolean") return v ? "Yes" : "No";
-    if (typeof v === "string") return v;
+    if (typeof v === "string") {
+      // Format status/priority codes to readable text
+      if (/^[a-z]+(_[a-z]+)*$/.test(v) && v.length < 40) return v.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      return v;
+    }
+    if (Array.isArray(v) && v.length > 0 && typeof v[0] === "object") return `${v.length} items`;
     return JSON.stringify(v).slice(0, 120);
   };
 
@@ -445,9 +450,11 @@ function generateReportHTML(title: string, data: unknown): string {
   const now = new Date().toLocaleString();
   const renderValue = (v: unknown): string => {
     if (v === null || v === undefined) return "—";
+    if (typeof v === "number") return v.toLocaleString();
+    if (typeof v === "string" && /^[a-z]+(_[a-z]+)*$/.test(v) && v.length < 40) return v.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
     if (Array.isArray(v) && v.length > 0 && typeof v[0] === "object") {
       const cols = Object.keys(v[0] as object).filter(k => !k.startsWith("_"));
-      return `<table style="margin:4px 0;font-size:11px"><thead><tr>${cols.map(c => `<th>${c.replace(/([A-Z])/g," $1").replace(/_/g," ")}</th>`).join("")}</tr></thead><tbody>${v.map(row => `<tr>${cols.map(c => `<td>${renderValue((row as Record<string,unknown>)[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+      return `<table style="margin:4px 0;font-size:11px"><thead><tr>${cols.map(c => `<th>${c.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())}</th>`).join("")}</tr></thead><tbody>${v.map(row => `<tr>${cols.map(c => `<td>${renderValue((row as Record<string,unknown>)[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
     }
     if (typeof v === "object") return JSON.stringify(v);
     return String(v);
