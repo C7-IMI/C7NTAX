@@ -5,6 +5,7 @@ import {
   Plus, Send, DollarSign, CreditCard, Eye, FileText, Clock, Calendar,
   TrendingUp, Download, Receipt, Building2, AlertTriangle, CheckCircle,
   XCircle, RotateCw, ClipboardList, BarChart3, Timer, Filter,
+  type LucideIcon,
 } from "lucide-react";
 
 // Types
@@ -463,7 +464,7 @@ function ReportsTab() {
 //  SHARED COMPONENTS
 // ═══════════════════════════════════════════════════════════════════
 
-function SummaryCard({ icon: Icon, label, value, color }: { icon: React.ComponentType<{ size?: number }>; label: string; value: string; color: string }) {
+function SummaryCard({ icon: Icon, label, value, color }: { icon: LucideIcon; label: string; value: string; color: string }) {
   return (
     <div className="bg-surface rounded-xl border border-surface-border p-3 flex items-center gap-3">
       <div className={`p-2 rounded-lg bg-surface-lighter`}><Icon size={18} className={color} /></div>
@@ -482,7 +483,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
   );
 }
 
-function ReportCard({ icon: Icon, title, desc }: { icon: React.ComponentType<{ size?: number }>; title: string; desc: string }) {
+function ReportCard({ icon: Icon, title, desc }: { icon: LucideIcon; title: string; desc: string }) {
   return (
     <div className="card hover:border-cyber-500/30 transition-colors group cursor-pointer">
       <div className="flex items-start gap-3">

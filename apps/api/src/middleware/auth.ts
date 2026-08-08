@@ -1,20 +1,32 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { prisma } from "../index";
-import { Permission, type User } from "@C7NTAX/shared";
+import { Permission, type SystemRole } from "@C7NTAX/shared";
 
 const JWT_SECRET = process.env.JWT_SECRET || "C7NTAX-dev-secret-change-in-prod";
 
 export interface AuthUser {
   userId: string;
   email: string;
-  role: string;
+  role: SystemRole;
   companyId: string | null;
   permissions: Permission[];
 }
 
 export interface AuthRequest extends Request {
   user?: AuthUser;
+}
+
+/** Payload accepted by signToken — a subset of the fields that get packed into the JWT */
+export interface SignTokenPayload {
+  id: string;
+  email: string;
+  role: SystemRole;
+  companyId?: string | null;
+  permissions?: Permission[];
+  firstName?: string;
+  lastName?: string;
+  mfaEnabled?: boolean;
+  active?: boolean;
 }
 
 /**
@@ -63,16 +75,16 @@ export function requirePermission(...permissions: Permission[]) {
 }
 
 /**
- * Generate a JWT token for a user.
+ * Generate a JWT token from a sign-payload (prisma result or ad-hoc object).
  */
-export function signToken(user: User): string {
+export function signToken(payload: SignTokenPayload): string {
   return jwt.sign(
     {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      companyId: user.companyId,
-      permissions: user.permissions,
+      userId: payload.id,
+      email: payload.email,
+      role: payload.role,
+      companyId: payload.companyId ?? null,
+      permissions: payload.permissions ?? [],
     } satisfies AuthUser,
     JWT_SECRET,
     { expiresIn: "12h" }

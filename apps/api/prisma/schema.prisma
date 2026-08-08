@@ -31,9 +31,11 @@ model User {
   emailVerified   Boolean  @default(false)
 
   // MFA
-  mfaEnabled      Boolean  @default(false)
-  mfaSecret       String?
-  mfaBackupCodes  String[] @default([]) // hashed
+  mfaEnabled        Boolean  @default(false)
+  mfaSecret         String?
+  mfaBackupCodes    String[] @default([]) // hashed
+  mfaEmailCode      String?
+  mfaEmailCodeExpires DateTime?
 
   // Relationships
   roleId          String

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Save, RotateCw, Shield, Mail, Database, Radio, Wrench, AlertTriangle, CheckCircle, XCircle, Clock, Activity } from "lucide-react";
+import { Save, RotateCw, Shield, Mail, Database, Radio, Wrench, AlertTriangle, CheckCircle, XCircle, Clock, Activity, type LucideIcon } from "lucide-react";
 
 const TABS = [
   { id: "general", label: "General", icon: Wrench },
@@ -151,6 +151,6 @@ function FailoverTab({ failover, onReset, onRefresh }: { failover: FailoverStatu
   </div>);
 }
 
-function StatusCard({ icon: Icon, label, value, color, bg }: { icon: React.ComponentType<{ size?: number }>; label: string; value: string; color: string; bg: string }) {
+function StatusCard({ icon: Icon, label, value, color, bg }: { icon: LucideIcon; label: string; value: string; color: string; bg: string }) {
   return (<div className={`${bg} rounded-xl p-3 flex items-center gap-3`}><Icon size={18} className={color} /><div><p className="text-xs text-gray-500">{label}</p><p className={`text-sm font-bold ${color}`}>{value}</p></div></div>);
 }

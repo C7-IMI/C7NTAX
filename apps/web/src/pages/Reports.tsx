@@ -3,7 +3,7 @@ import api from "../api";
 import {
   TrendingUp, BarChart3, PieChart, Download, Filter, Clock, CheckCircle,
   XCircle, AlertTriangle, Ticket, DollarSign, Users, Activity,
-  ClipboardList, Calendar, Timer, FileText, Printer,
+  ClipboardList, Calendar, Timer, FileText, Printer, type LucideIcon,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -385,7 +385,7 @@ function AnalyticsTab() {
 
 // ═══════════════════════════════════════════════════════════════════
 
-function KPICard({ icon: Icon, label, value, color }: { icon: React.ComponentType<{ size?: number }>; label: string; value: string | number; color: string }) {
+function KPICard({ icon: Icon, label, value, color }: { icon: LucideIcon; label: string; value: string | number; color: string }) {
   return (
     <div className="bg-surface rounded-xl border border-surface-border p-4 flex items-center gap-3">
       <div className="p-2 rounded-lg bg-surface-lighter"><Icon size={18} className={color} /></div>

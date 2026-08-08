@@ -46,8 +46,6 @@ import { bulkRouter } from "./routes/bulk";
 import { inferenceRouter } from "./routes/inference";
 import { setupWebSocket } from "./ws";
 import { startWorkers } from "./worker";
-import { createServer } from "http";
-
 // ── Startup logging ─────────────────────────────────────────────────
 logger.startup();
 

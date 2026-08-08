@@ -39,8 +39,9 @@ export function AdminLogsPage() {
 
       const grouped: Record<string, LogEntry> = {};
       for (const e of entries) {
-        if (!grouped[e.date]) grouped[e.date] = { id: e.date, date: e.date, entries: [] };
-        grouped[e.date].entries.push(e);
+        const bucket = grouped[e.date];
+        if (!bucket) grouped[e.date] = { id: e.date, date: e.date, entries: [e] };
+        else bucket.entries.push(e);
       }
       setLogs(Object.values(grouped).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       setLoading(false);

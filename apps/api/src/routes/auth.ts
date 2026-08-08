@@ -4,7 +4,7 @@ import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import { prisma } from "../index";
 import { authenticate, signToken, signMfaToken, JWT_SECRET, type AuthRequest } from "../middleware/auth";
-import { ROLE_PERMISSIONS, SystemRole } from "@C7NTAX/shared";
+import { ROLE_PERMISSIONS, SystemRole, Permission } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
 
@@ -46,7 +46,7 @@ authRouter.post("/login", async (req, res, next) => {
       id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
       companyId: user.companyId, permissions: (user.role.permissions || ROLE_PERMISSIONS[user.role.systemRole as SystemRole] || []) as Permission[],
       firstName: user.firstName, lastName: user.lastName,
-      mfaEnabled: false, active: true, createdAt: user.createdAt, updatedAt: user.updatedAt,
+      mfaEnabled: false, active: true,
     });
 
     // Update last login
@@ -107,7 +107,7 @@ authRouter.post("/mfa/verify", async (req, res, next) => {
       payload = jwt.verify(mfaToken, JWT_SECRET) as { userId: string };
     } catch { res.status(401).json({ error: "MFA token expired" }); return; }
 
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await prisma.user.findUnique({ where: { id: payload.userId }, include: { role: true } });
     if (!user?.mfaSecret) { res.status(400).json({ error: "MFA not configured" }); return; }
 
     const verified = speakeasy.totp.verify({ secret: user.mfaSecret, encoding: "base32", token: code, window: 1 });
@@ -122,10 +122,10 @@ authRouter.post("/mfa/verify", async (req, res, next) => {
     }
 
     const token = signToken({
-      id: user.id, email: user.email, role: user.role as SystemRole,
-      companyId: user.companyId, permissions: ROLE_PERMISSIONS[user.role as SystemRole],
+      id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
+      companyId: user.companyId, permissions: (user.role.permissions || ROLE_PERMISSIONS[user.role.systemRole as SystemRole] || []) as Permission[],
       firstName: user.firstName, lastName: user.lastName,
-      mfaEnabled: user.mfaEnabled, active: user.isActive, createdAt: user.createdAt, updatedAt: user.updatedAt,
+      mfaEnabled: user.mfaEnabled, active: user.isActive,
     });
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
@@ -155,7 +155,7 @@ authRouter.post("/send-mfa-email", async (req, res, next) => {
       data: { mfaEmailCode: code, mfaEmailCodeExpires: new Date(Date.now() + 15 * 60_000) },
     });
 
-    await emailService.sendMfaCode(user.email, user.firstName, code);
+    await emailService.sendMfaCode(user.email, code);
 
     res.json({ sent: true, message: "MFA code sent to your email" });
   } catch (e) { next(e); }
@@ -171,7 +171,7 @@ authRouter.post("/mfa/verify-email", async (req, res, next) => {
     try { payload = jwt.verify(mfaToken, JWT_SECRET) as { userId: string }; }
     catch { res.status(401).json({ error: "MFA token expired" }); return; }
 
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await prisma.user.findUnique({ where: { id: payload.userId }, include: { role: true } });
     if (!user?.mfaEmailCode || !user.mfaEmailCodeExpires || user.mfaEmailCodeExpires < new Date()) {
       res.status(400).json({ error: "Code expired or not requested" }); return;
     }
@@ -182,10 +182,10 @@ authRouter.post("/mfa/verify-email", async (req, res, next) => {
     await prisma.user.update({ where: { id: user.id }, data: { mfaEmailCode: null, mfaEmailCodeExpires: null } });
 
     const token = signToken({
-      id: user.id, email: user.email, role: user.role as SystemRole,
-      companyId: user.companyId, permissions: ROLE_PERMISSIONS[user.role as SystemRole],
+      id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
+      companyId: user.companyId, permissions: (user.role.permissions || ROLE_PERMISSIONS[user.role.systemRole as SystemRole] || []) as Permission[],
       firstName: user.firstName, lastName: user.lastName,
-      mfaEnabled: user.mfaEnabled, active: user.isActive, createdAt: user.createdAt, updatedAt: user.updatedAt,
+      mfaEnabled: user.mfaEnabled, active: user.isActive,
     });
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });

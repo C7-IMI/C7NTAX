@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, RefreshCw, Clock, AlertTriangle, Users, TrendingUp, Inbox, Pause, MessageSquare, Calendar } from "lucide-react";
+import { Plus, RefreshCw, Clock, AlertTriangle, Users, TrendingUp, Inbox, Pause, MessageSquare, Calendar, type LucideIcon } from "lucide-react";
 
 interface BoardMetrics {
   boardId: string; boardName: string; boardDescription: string | null;
@@ -154,7 +154,7 @@ export function BoardsPage() {
   );
 }
 
-function MetricBadge({ icon: Icon, label, value, color, bg }: { icon: React.ComponentType<{size?:number;className?:string}>; label: string; value: number | string; color: string; bg: string }) {
+function MetricBadge({ icon: Icon, label, value, color, bg }: { icon: LucideIcon; label: string; value: number | string; color: string; bg: string }) {
   return (
     <div className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5`}>
       <div className="flex items-center gap-1">

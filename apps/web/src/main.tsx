@@ -15,7 +15,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
-  render() {
+  override render() {
     if (this.state.error) {
       return (
         <div style={{

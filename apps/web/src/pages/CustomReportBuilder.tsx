@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Save, Eye, Copy, FileText, Bold, Italic, Underline, List, ListOrdered, Heading1, Heading2, Table, Download, RefreshCw, Plus } from "lucide-react";
+import { Save, Eye, Copy, FileText, Bold, Italic, Underline, List, ListOrdered, Heading1, Heading2, Table, Download, RefreshCw, Plus, type LucideIcon } from "lucide-react";
 
 interface Template {
   id: string; name: string; description: string;
@@ -301,7 +301,7 @@ export function CustomReportBuilder() {
   );
 }
 
-function ToolBtn({ icon: Icon, tag, endTag, label, onClick }: { icon: React.ComponentType<{ size?: number }>; tag: string; endTag: string; label: string; onClick: (tag: string) => void }) {
+function ToolBtn({ icon: Icon, tag, endTag, label, onClick }: { icon: LucideIcon; tag: string; endTag: string; label: string; onClick: (tag: string) => void }) {
   return (
     <button
       onClick={() => onClick(endTag ? tag + (endTag.includes("\n") ? "" : "") + endTag : tag)}
