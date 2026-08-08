@@ -21,6 +21,7 @@ import { SystemSettingsPage } from "./pages/SystemSettings";
 import { InferenceSettingsPage } from "./pages/InferenceSettings";
 import { ProcurementPage } from "./pages/Procurement";
 import { ReportsPage } from "./pages/Reports";
+import { CustomReportBuilder } from "./pages/CustomReportBuilder";
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
@@ -47,6 +48,7 @@ function ProtectedRoutes() {
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/reports/standard" element={<ReportsPage tab="standard" />} />
         <Route path="/reports/analytics" element={<ReportsPage tab="analytics" />} />
+        <Route path="/reports/custom" element={<CustomReportBuilder />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/integrations" element={<IntegrationsPage />} />
         <Route path="/users" element={<UsersPage />} />
