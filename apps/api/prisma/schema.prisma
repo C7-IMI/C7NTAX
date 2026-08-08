@@ -124,6 +124,8 @@ model Contact {
   phone       String?
   mobile      String?
   title       String?
+  department  String?
+  notes       String?
   isPrimary   Boolean  @default(false)
   isActive    Boolean  @default(true)
 

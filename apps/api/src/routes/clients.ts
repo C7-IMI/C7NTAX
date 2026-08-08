@@ -94,3 +94,15 @@ clientsRouter.get("/contacts", requirePermission(Permission.ClientView), async (
     res.json({ data, total });
   } catch (e) { next(e); }
 });
+
+// ── Update contact ──
+clientsRouter.patch("/contacts/:id", requirePermission(Permission.ClientEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const allowed = ["firstName","lastName","email","phone","mobile","title","department","notes","isPrimary","isActive"];
+    const updates: Record<string, unknown> = {};
+    for (const key of allowed) if (req.body[key] !== undefined) updates[key] = req.body[key];
+    if (req.body.companyId) updates.companyId = req.body.companyId;
+    const contact = await prisma.contact.update({ where: { id: req.params.id }, data: updates, include: { company: { select: { id: true, name: true } } } });
+    res.json(contact);
+  } catch (e) { next(e); }
+});
