@@ -1,5 +1,3 @@
-import { execSync } from "child_process";
-
 type ServiceStatus = "up" | "down" | "degraded";
 
 interface HealthResult {
