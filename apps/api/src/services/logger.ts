@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
 
 /**
  * DevErrorLogger — verbose, human-readable error logging with timestamps.
@@ -14,13 +13,7 @@ const MAX_LOG_SIZE_MB = 10;
 // ── Helpers ──────────────────────────────────────────────────────────
 
 function getGitInfo(): { branch: string; commit: string } {
-  try {
-    const branch = execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
-    const commit = execSync("git rev-parse --short HEAD", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
-    return { branch: branch || "unknown", commit: commit || "unknown" };
-  } catch {
-    return { branch: "unknown", commit: "unknown" };
-  }
+  return { branch: "unknown", commit: "unknown" };
 }
 
 function formatTimestamp(): string {
