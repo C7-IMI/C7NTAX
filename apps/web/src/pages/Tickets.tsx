@@ -35,6 +35,19 @@ export function TicketsPage() {
 
   useEffect(()=>{fetchBoards();fetchTickets();},[boardId]);
 
+  // Auto-open new ticket form when navigated from contact
+  useEffect(() => {
+    const isNew = searchParams.get("new") === "1";
+    if (isNew) {
+      const cId = searchParams.get("companyId") || "";
+      const cName = searchParams.get("contactName") || "";
+      const cEmail = searchParams.get("contactEmail") || "";
+      setForm(prev => ({ ...prev, companyId: cId, title: cName ? `Ticket for ${cName}` : "", description: cEmail ? `Contact: ${cName} (${cEmail})` : "" }));
+      api.get("/clients?limit=100").then(r => setCompanies(r.data?.data || [])).catch(() => {});
+      setShowNew(true);
+    }
+  }, [searchParams]);
+
   const openNew = async () => {
     try { const cR=await api.get("/clients?limit=50"); setCompanies(cR.data?.data||[]); } catch {}
     setForm(prev=>({...prev, boardId: boardId || ""}));
