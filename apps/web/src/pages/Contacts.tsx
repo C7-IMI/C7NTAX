@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock } from "lucide-react";
+import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock, Plus, Ticket } from "lucide-react";
 
 interface Contact {
   id: string; firstName: string; lastName: string; email: string;
@@ -21,6 +22,9 @@ export function ContactsPage() {
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<Record<string, string | boolean>>({});
   const [saving, setSaving] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newContact, setNewContact] = useState({ firstName: "", lastName: "", email: "", phone: "", companyId: "", title: "" });
+  const navigate = useNavigate();
 
   const fetch = () => {
     Promise.all([api.get("/clients?limit=100"), api.get("/clients/contacts?limit=500")])
@@ -61,9 +65,22 @@ export function ContactsPage() {
     } catch { toast.error("Failed to save"); setSaving(false); }
   };
 
+  const handleCreateContact = async (e: React.FormEvent) => { e.preventDefault();
+    try { await api.post("/clients", { name: `${newContact.firstName} ${newContact.lastName}`, email: newContact.email, phone: newContact.phone }); toast.success("Contact created"); setShowCreate(false); setNewContact({ firstName: "", lastName: "", email: "", phone: "", companyId: "", title: "" }); fetch(); }
+    catch { toast.error("Failed to create"); }
+  };
+
+  const createTicket = (c: Contact) => {
+    const params = new URLSearchParams();
+    if (c.company?.id) params.set("companyId", c.company.id);
+    params.set("contactName", `${c.firstName} ${c.lastName}`);
+    params.set("contactEmail", c.email);
+    navigate(`/tickets?new=1&${params.toString()}`);
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between"><div><h2 className="text-lg font-semibold text-white">Contacts</h2><p className="text-sm text-gray-400">{filtered.length} contacts</p></div></div>
+      <div className="flex items-center justify-between"><div><h2 className="text-lg font-semibold text-white">Contacts</h2><p className="text-sm text-gray-400">{filtered.length} contacts</p></div><button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Contact</button></div>
 
       <div className="flex gap-2 flex-wrap">
         <div className="relative flex-1 min-w-[200px]"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input className="input-field pl-9" placeholder="Search contacts..." value={search} onChange={e => setSearch(e.target.value)} /></div>
@@ -94,7 +111,7 @@ export function ContactsPage() {
                 <div className="w-12 h-12 rounded-full bg-cyber-600/30 text-cyber-400 flex items-center justify-center text-lg font-bold">{selected.firstName[0]}{selected.lastName[0]}</div>
                 <div><h3 className="font-semibold text-white">{selected.firstName} {selected.lastName}</h3>{selected.title && <p className="text-sm text-gray-400">{selected.title}</p>}</div>
               </div>
-              <div className="flex items-center gap-1">{!editing ? <button onClick={startEdit} className="p-1.5 text-gray-400 hover:text-cyber-400" title="Edit"><Edit3 size={14} /></button> : <><button onClick={handleSave} disabled={saving} className="p-1.5 text-green-400 hover:text-green-300" title="Save"><Save size={14} /></button><button onClick={() => setEditing(false)} className="p-1.5 text-gray-400 hover:text-red-400" title="Cancel"><X size={14} /></button></>}</div>
+              <div className="flex items-center gap-1">{!editing ? <><button onClick={startEdit} className="p-1.5 text-gray-400 hover:text-cyber-400" title="Edit"><Edit3 size={14} /></button><button onClick={() => createTicket(selected)} className="p-1.5 text-cyber-400 hover:text-cyber-300" title="Create Ticket"><Ticket size={14} /></button></> : <><button onClick={handleSave} disabled={saving} className="p-1.5 text-green-400 hover:text-green-300" title="Save"><Save size={14} /></button><button onClick={() => setEditing(false)} className="p-1.5 text-gray-400 hover:text-red-400" title="Cancel"><X size={14} /></button></>}</div>
             </div>
 
             {editing ? (
@@ -147,6 +164,16 @@ export function ContactsPage() {
           </div>
         )}
       </div>
+
+      {/* Add Contact Modal */}
+      {showCreate && (<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}><div className="card w-full max-w-md mx-4 space-y-3" onClick={e => e.stopPropagation()}><form onSubmit={handleCreateContact} className="space-y-3">
+        <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">Add Contact</h3><button type="button" onClick={() => setShowCreate(false)} className="text-gray-500 hover:text-white"><X size={18} /></button></div>
+        <div className="grid grid-cols-2 gap-2"><input className="input-field" placeholder="First name*" value={newContact.firstName} onChange={e => setNewContact({ ...newContact, firstName: e.target.value })} required /><input className="input-field" placeholder="Last name*" value={newContact.lastName} onChange={e => setNewContact({ ...newContact, lastName: e.target.value })} required /></div>
+        <input className="input-field" placeholder="Email" type="email" value={newContact.email} onChange={e => setNewContact({ ...newContact, email: e.target.value })} />
+        <div className="grid grid-cols-2 gap-2"><input className="input-field" placeholder="Phone" value={newContact.phone} onChange={e => setNewContact({ ...newContact, phone: e.target.value })} /><input className="input-field" placeholder="Title" value={newContact.title} onChange={e => setNewContact({ ...newContact, title: e.target.value })} /></div>
+        <select className="input-field" value={newContact.companyId} onChange={e => setNewContact({ ...newContact, companyId: e.target.value })} required><option value="">Select company*</option>{companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        <div className="flex gap-2"><button type="submit" className="btn-primary text-sm">Add</button><button type="button" onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button></div>
+      </form></div></div>)}
     </div>
   );
 }
