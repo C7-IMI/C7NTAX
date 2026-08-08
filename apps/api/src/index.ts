@@ -62,7 +62,7 @@ app.use(morgan("short", {
     write: (message: string) => logger.info("http", message.trim()),
   },
 }));
-app.use(rateLimiter());
+app.use(rateLimiter(9999, 60 * 1000));
 app.use(express.json({ limit: "10mb" }));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", version: "1.0.0" }));
