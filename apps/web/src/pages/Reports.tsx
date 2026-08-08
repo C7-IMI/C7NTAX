@@ -375,7 +375,7 @@ function AnalyticsTab() {
           <div className="space-y-2">
             <button className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Download size={14}/>Export Dashboard PDF</button>
             <button className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Calendar size={14}/>Schedule Weekly Report</button>
-            <button className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Filter size={14}/>Custom Report Builder</button>
+            <button onClick={() => window.location.href = "/reports/custom"} className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Filter size={14}/>Custom Report Builder</button>
           </div>
         </div>
       </div>
