@@ -21,9 +21,10 @@ export function TicketsPage() {
   const [tickets, setTickets] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
-  const [form, setForm] = useState({ title:"", description:"", priority:"medium", boardId:"", companyId:"", startTime:"", endTime:"" });
+  const [form, setForm] = useState({ title:"", description:"", priority:"medium", boardId:"", companyId:"", contactName:"", contactEmail:"", startTime:"", endTime:"", status:"new" });
   const [boards, setBoards] = useState<Array<{id:string;name:string}>>([]);
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
+  const [contacts, setContacts] = useState<Array<{id:string;firstName:string;lastName:string;email:string}>>([]);
 
   const fetchBoards = () => { api.get("/boards").then(r=>setBoards(Array.isArray(r.data)?r.data:(r.data?.data||r.data||[]))).catch(()=>{}); };
 
@@ -42,11 +43,21 @@ export function TicketsPage() {
       const cId = searchParams.get("companyId") || "";
       const cName = searchParams.get("contactName") || "";
       const cEmail = searchParams.get("contactEmail") || "";
-      setForm(prev => ({ ...prev, companyId: cId, title: cName ? `Ticket for ${cName}` : "", description: cEmail ? `Contact: ${cName} (${cEmail})` : "" }));
+      setForm(prev => ({ ...prev, companyId: cId, contactName: cName, contactEmail: cEmail, title: cName ? `Ticket for ${cName}` : "", description: cEmail ? `Contact: ${cName} (${cEmail})` : "" }));
       api.get("/clients?limit=100").then(r => setCompanies(r.data?.data || [])).catch(() => {});
+      if (cId) { api.get(`/clients/contacts?companyId=${cId}`).then(r => setContacts(r.data?.data || r.data || [])).catch(() => {}); }
       setShowNew(true);
     }
   }, [searchParams]);
+
+  const handleCompanyChange = (cId: string) => {
+    setForm(prev => ({ ...prev, companyId: cId, contactName: "", contactEmail: "" }));
+    if (cId) {
+      api.get(`/clients/contacts?companyId=${cId}`).then(r => setContacts(r.data?.data || r.data || [])).catch(() => {});
+    } else {
+      setContacts([]);
+    }
+  };
 
   const openNew = async () => {
     try { const cR=await api.get("/clients?limit=50"); setCompanies(cR.data?.data||[]); } catch {}
@@ -54,7 +65,7 @@ export function TicketsPage() {
     setShowNew(true);
   };
   const handleCreate = async (e: React.FormEvent) => { e.preventDefault();
-    try { await api.post("/tickets",form); toast.success("Ticket created"); setShowNew(false); setForm({title:"",description:"",priority:"medium",boardId:"",companyId:"",startTime:"",endTime:""}); fetchTickets(); }
+    try { await api.post("/tickets",form); toast.success("Ticket created"); setShowNew(false); setForm({title:"",description:"",priority:"medium",boardId:"",companyId:"",contactName:"",contactEmail:"",startTime:"",endTime:"",status:"new"}); fetchTickets(); }
     catch { toast.error("Failed"); }
   };
   return (
@@ -85,17 +96,20 @@ export function TicketsPage() {
       </div>
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={()=>setShowNew(false)}>
-          <form className="card w-full max-w-lg mx-4 space-y-3 max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()} onSubmit={handleCreate}>
-            <h3 className="text-lg font-semibold text-white">Create Ticket</h3>
-            <input className="input-field" placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required autoFocus/>
-            <textarea className="input-field" placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={3}/>
+          <form className="card w-full max-w-2xl mx-4 space-y-3 max-h-[92vh] overflow-y-auto" onClick={e=>e.stopPropagation()} onSubmit={handleCreate}>
+            <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">New Ticket</h3><button type="button" onClick={()=>setShowNew(false)} className="text-gray-500 hover:text-white"><X size={18}/></button></div>
+            
             <div className="grid grid-cols-2 gap-3">
-              <select className="input-field" value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
-              <select className="input-field" value={form.boardId} onChange={e=>setForm({...form,boardId:e.target.value})} required><option value="">Board...</option>{boards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
+              <div><label className="text-xs text-gray-500 block mb-1">Company <span className="text-red-400">*</span></label><select className="input-field" value={form.companyId} onChange={e=>handleCompanyChange(e.target.value)} required><option value="">Select company...</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Contact</label><select className="input-field" value={`${form.contactName}|${form.contactEmail}`} onChange={e=>{const [name,email] = e.target.value.split("|"); setForm({...form, contactName:name||"", contactEmail:email||""});}}><option value="|">Select contact...</option>{contacts.map(c=><option key={c.id} value={`${c.firstName} ${c.lastName}|${c.email}`}>{c.firstName} {c.lastName}</option>)}<option value={`${form.contactName}|${form.contactEmail}`}>{form.contactName && !contacts.length ? form.contactName : ""}</option></select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Board / Queue <span className="text-red-400">*</span></label><select className="input-field" value={form.boardId} onChange={e=>setForm({...form,boardId:e.target.value})} required><option value="">Select board...</option>{boards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Status</label><select className="input-field" value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="new">New</option><option value="in_progress">In Progress</option><option value="waiting_on_client">Waiting on Client</option><option value="on_hold">On Hold</option></select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Priority</label><select className="input-field" value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Start / End Time</label><div className="grid grid-cols-2 gap-1"><input className="input-field text-xs" type="datetime-local" value={form.startTime} onChange={e=>setForm({...form,startTime:e.target.value})} placeholder="Start"/><input className="input-field text-xs" type="datetime-local" value={form.endTime} onChange={e=>setForm({...form,endTime:e.target.value})} placeholder="End"/></div></div>
             </div>
-            <select className="input-field" value={form.companyId} onChange={e=>setForm({...form,companyId:e.target.value})}><option value="">Client (optional)</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
-            <div className="grid grid-cols-2 gap-3"><input className="input-field" type="datetime-local" value={form.startTime} onChange={e=>setForm({...form,startTime:e.target.value})}/><input className="input-field" type="datetime-local" value={form.endTime} onChange={e=>setForm({...form,endTime:e.target.value})}/></div>
-            <div className="flex gap-2 justify-end"><button type="button" className="btn-secondary" onClick={()=>setShowNew(false)}>Cancel</button><button type="submit" className="btn-primary">Create</button></div>
+            <div><label className="text-xs text-gray-500 block mb-1">Summary <span className="text-red-400">*</span></label><input className="input-field" placeholder="Brief summary of the issue" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/></div>
+            <div><label className="text-xs text-gray-500 block mb-1">Description</label><textarea className="input-field" placeholder="Detailed description..." value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={4}/></div>
+            <div className="flex gap-2 justify-end pt-2 border-t border-surface-border"><button type="button" className="btn-secondary" onClick={()=>setShowNew(false)}>Cancel</button><button type="submit" className="btn-primary flex items-center gap-1.5"><Save size={14}/>Create Ticket</button></div>
           </form>
         </div>
       )}
