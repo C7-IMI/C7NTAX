@@ -3,6 +3,21 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { PrismaClient } from "@prisma/client";
+import { createServer } from "http";
+
+// ── Crash guard — prevent EPIPE and other unhandled errors from killing the process ──
+process.on("uncaughtException", (err) => {
+  if ((err as any)?.code === "EPIPE" || (err as any)?.syscall === "write") {
+    console.error("[CRASH-GUARD] Suppressed EPIPE:", err.message);
+    return; // do NOT exit
+  }
+  console.error("[CRASH-GUARD] Uncaught exception:", err.message, err.stack?.split("\n")[1]);
+  // Log to file but don't crash
+  try { require("fs").appendFileSync("crash.log", `${new Date().toISOString()} ${err.message}\n`); } catch {}
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[CRASH-GUARD] Unhandled rejection:", reason);
+});
 import { errorHandler } from "./middleware/errorHandler";
 import { rateLimiter } from "./middleware/rateLimiter";
 import { logger } from "./services/logger";
