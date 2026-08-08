@@ -40,7 +40,7 @@ clientsRouter.get("/:id", requirePermission(Permission.ClientView), async (req: 
     const company = await prisma.company.findUnique({
       where: { id: req.params.id },
       include: {
-        users: { select: { id: true, email: true, firstName: true, lastName: true, role: true, status: true } },
+        users: { select: { id: true, email: true, firstName: true, lastName: true, roleId: true, isActive: true } },
         serviceAgreements: true,
         _count: { select: { tickets: true, invoices: true } },
       },
