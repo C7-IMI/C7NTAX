@@ -21,7 +21,7 @@ export function TicketsPage() {
   const [tickets, setTickets] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
-  const [form, setForm] = useState({ title:"", description:"", priority:"medium", boardId:"", companyId:"", contactName:"", contactEmail:"", startTime:"", endTime:"", status:"new" });
+  const [form, setForm] = useState({ title:"", description:"", priority:"medium", boardId:"", companyId:"", contactId:"", contactName:"", contactEmail:"", startTime:"", endTime:"", status:"new" });
   const [boards, setBoards] = useState<Array<{id:string;name:string}>>([]);
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
   const [contacts, setContacts] = useState<Array<{id:string;firstName:string;lastName:string;email:string}>>([]);
@@ -45,7 +45,7 @@ export function TicketsPage() {
       const cEmail = searchParams.get("contactEmail") || "";
       setForm(prev => ({ ...prev, companyId: cId, contactName: cName, contactEmail: cEmail, title: cName ? `Ticket for ${cName}` : "", description: cEmail ? `Contact: ${cName} (${cEmail})` : "" }));
       api.get("/clients?limit=100").then(r => setCompanies(r.data?.data || [])).catch(() => {});
-      if (cId) { api.get(`/clients/contacts?companyId=${cId}`).then(r => setContacts(r.data?.data || r.data || [])).catch(() => {}); }
+      if (cId) { api.get(`/clients/contacts?companyId=${cId}`).then(r => { const cons = r.data?.data || r.data || []; setContacts(cons); const match = cons.find((c: { email: string }) => c.email === cEmail); if (match) setForm(prev => ({ ...prev, contactId: match.id })); }).catch(() => {}); }
       setShowNew(true);
     }
   }, [searchParams]);
@@ -65,7 +65,7 @@ export function TicketsPage() {
     setShowNew(true);
   };
   const handleCreate = async (e: React.FormEvent) => { e.preventDefault();
-    try { await api.post("/tickets",form); toast.success("Ticket created"); setShowNew(false); setForm({title:"",description:"",priority:"medium",boardId:"",companyId:"",contactName:"",contactEmail:"",startTime:"",endTime:"",status:"new"}); fetchTickets(); }
+    try { await api.post("/tickets",form); toast.success("Ticket created"); setShowNew(false); setForm({title:"",description:"",priority:"medium",boardId:"",companyId:"",contactId:"",contactName:"",contactEmail:"",startTime:"",endTime:"",status:"new"}); fetchTickets(); }
     catch { toast.error("Failed"); }
   };
   return (
@@ -101,7 +101,7 @@ export function TicketsPage() {
             
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-xs text-gray-500 block mb-1">Company <span className="text-red-400">*</span></label><select className="input-field" value={form.companyId} onChange={e=>handleCompanyChange(e.target.value)} required><option value="">Select company...</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-              <div><label className="text-xs text-gray-500 block mb-1">Contact</label><select className="input-field" value={`${form.contactName}|${form.contactEmail}`} onChange={e=>{const [name,email] = e.target.value.split("|"); setForm({...form, contactName:name||"", contactEmail:email||""});}}><option value="|">Select contact...</option>{contacts.map(c=><option key={c.id} value={`${c.firstName} ${c.lastName}|${c.email}`}>{c.firstName} {c.lastName}</option>)}<option value={`${form.contactName}|${form.contactEmail}`}>{form.contactName && !contacts.length ? form.contactName : ""}</option></select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Contact</label><select className="input-field" value={form.contactId || `${form.contactName}|${form.contactEmail}`} onChange={e=>{const v = e.target.value; if (v.includes("|")) { const [name,email] = v.split("|"); setForm({...form, contactId:"", contactName:name||"", contactEmail:email||""}); } else { const c = contacts.find(x=>x.id===v); setForm({...form, contactId:v, contactName:c?`${c.firstName} ${c.lastName}`:"", contactEmail:c?.email||""}); }}}><option value="">Select contact...</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}<option value={`${form.contactName}|${form.contactEmail}`}>{form.contactName && !contacts.length ? form.contactName : ""}</option></select></div>
               <div><label className="text-xs text-gray-500 block mb-1">Board / Queue <span className="text-red-400">*</span></label><select className="input-field" value={form.boardId} onChange={e=>setForm({...form,boardId:e.target.value})} required><option value="">Select board...</option>{boards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
               <div><label className="text-xs text-gray-500 block mb-1">Status</label><select className="input-field" value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="new">New</option><option value="in_progress">In Progress</option><option value="waiting_on_client">Waiting on Client</option><option value="on_hold">On Hold</option></select></div>
               <div><label className="text-xs text-gray-500 block mb-1">Priority</label><select className="input-field" value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>
