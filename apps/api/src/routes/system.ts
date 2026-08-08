@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate, type AuthRequest } from "../middleware/auth";
 import { prisma } from "../index";
+import { getRetryCount, getRecoveryLog, resetPoller, isPaused } from "../services/poller";
 
 export const systemRouter = Router();
 systemRouter.use(authenticate);
@@ -109,4 +110,25 @@ systemRouter.get("/configs", async (_req: AuthRequest, res, next) => {
     }
     res.json(map);
   } catch (e) { next(e); }
+});
+
+// ── Save system config ──
+systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
+  try {
+    const { key } = req.params;
+    const value = typeof req.body.value === "string" ? req.body.value : JSON.stringify(req.body.value);
+    await prisma.systemConfig.upsert({ where: { key }, create: { key, value }, update: { value } });
+    res.json({ success: true });
+  } catch (e) { next(e); }
+});
+
+// ── Self-healing poller status ──
+
+systemRouter.get("/poller/status", async (_req: AuthRequest, res) => {
+  res.json({ paused: isPaused(), retryCount: getRetryCount(), maxRetries: 10, recoveryLog: getRecoveryLog() });
+});
+
+systemRouter.post("/poller/reset", async (_req: AuthRequest, res) => {
+  resetPoller();
+  res.json({ success: true, message: "Poller reset successfully" });
 });

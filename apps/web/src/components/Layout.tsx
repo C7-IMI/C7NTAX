@@ -23,6 +23,7 @@ const NAV_TREE: NavNode[] = [
     id: "administration", icon: Shield, label: "Administration", children: [
       { id: "admin-general", to: "/admin", icon: Settings, label: "General Settings" },
       { id: "admin-boards", to: "/admin/boards", icon: Columns3, label: "Service Boards" },
+      { id: "admin-system", to: "/admin/system", icon: Settings, label: "System Settings" },
       { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs" },
       { id: "admin-integrations", to: "/integrations", icon: Plug, label: "Integrations" },
     ],
