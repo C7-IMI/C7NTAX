@@ -30,6 +30,7 @@ const NAV_TREE: NavNode[] = [
   {
     id: "clients", icon: Building2, label: "Clients", children: [
       { id: "clients-list", to: "/clients", icon: Building2, label: "Client List" },
+      { id: "clients-contacts", to: "/clients/contacts", icon: Users, label: "Contacts" },
     ],
   },
   {
