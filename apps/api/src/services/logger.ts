@@ -15,8 +15,8 @@ const MAX_LOG_SIZE_MB = 10;
 
 function getGitInfo(): { branch: string; commit: string } {
   try {
-    const branch = execSync("git rev-parse --abbrev-ref HEAD 2>/dev/null", { encoding: "utf8" }).trim();
-    const commit = execSync("git rev-parse --short HEAD 2>/dev/null", { encoding: "utf8" }).trim();
+    const branch = execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
+    const commit = execSync("git rev-parse --short HEAD", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000 }).trim();
     return { branch: branch || "unknown", commit: commit || "unknown" };
   } catch {
     return { branch: "unknown", commit: "unknown" };
