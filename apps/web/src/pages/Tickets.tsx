@@ -142,17 +142,10 @@ export function TicketDetailPage() {
     if (!companyId) { setAgreements([]); return; }
     try {
       const [cRes, aRes] = await Promise.all([
-        api.get(`/clients?companyId=${companyId}`),
+        api.get(`/clients/contacts?companyId=${companyId}`),
         api.get(`/billing/agreements?companyId=${companyId}`)
       ]);
-      const clientContacts = (cRes.data?.data||[]).filter((c:Record<string,unknown>)=>c.companyId===companyId);
-      if (clientContacts.length===0) {
-        const allContacts = await api.get(`/clients/${companyId}`);
-        const compContacts = allContacts.data?.contacts || [];
-        setContacts(compContacts);
-      } else {
-        setContacts(clientContacts);
-      }
+      setContacts(cRes.data?.data || cRes.data || []);
       const ags = (aRes.data||[]).filter((a:Record<string,unknown>)=>a.companyId===companyId);
       setAgreements(ags as Array<{id:string;name:string;billingPeriod:string;billingAmount:number}>);
       if (ags.length===1) { setEditForm(prev=>({...prev,serviceAgreementId:ags[0].id})); setSelectedAgreement(ags[0]); }

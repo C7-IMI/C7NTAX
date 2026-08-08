@@ -80,3 +80,17 @@ clientsRouter.delete("/:id", requirePermission(Permission.ClientDelete), async (
     res.json({ message: "Client deactivated" });
   } catch (e) { next(e); }
 });
+
+// ── List all contacts across clients ──
+clientsRouter.get("/contacts", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
+  try {
+    const { companyId, limit = "500", offset = "0" } = req.query as Record<string, string>;
+    const where: Record<string, unknown> = {};
+    if (companyId) where.companyId = companyId;
+    const [data, total] = await Promise.all([
+      prisma.contact.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { lastName: "asc" }, include: { company: { select: { id: true, name: true } } } }),
+      prisma.contact.count({ where }),
+    ]);
+    res.json({ data, total });
+  } catch (e) { next(e); }
+});
