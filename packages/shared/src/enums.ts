@@ -68,95 +68,296 @@ export enum SystemRole {
 
 /** Detailed permission keys — each maps to a discrete action */
 export enum Permission {
-  // Tickets
+  // ── Tickets ──
   TicketView = "ticket:view",
   TicketCreate = "ticket:create",
   TicketEdit = "ticket:edit",
   TicketDelete = "ticket:delete",
   TicketAssign = "ticket:assign",
   TicketClose = "ticket:close",
-  TicketViewAll = "ticket:view_all", // override company scope
+  TicketViewAll = "ticket:view_all",
 
-  // Service Boards
+  // ── Service Boards ──
   BoardView = "board:view",
   BoardManage = "board:manage",
 
-  // Clients / CRM
+  // ── Clients / CRM ──
   ClientView = "client:view",
   ClientCreate = "client:create",
   ClientEdit = "client:edit",
   ClientDelete = "client:delete",
+  ContactView = "contact:view",
+  ContactCreate = "contact:create",
+  ContactEdit = "contact:edit",
+  ContactDelete = "contact:delete",
 
-  // Billing
+  // ── Billing ──
   BillingView = "billing:view",
   BillingManage = "billing:manage",
   InvoiceCreate = "invoice:create",
   InvoiceSend = "invoice:send",
+  PaymentView = "payment:view",
+  PaymentProcess = "payment:process",
+  ServiceAgreementView = "agreement:view",
+  ServiceAgreementManage = "agreement:manage",
 
-  // Admin
+  // ── Projects ──
+  ProjectView = "project:view",
+  ProjectCreate = "project:create",
+  ProjectEdit = "project:edit",
+  ProjectDelete = "project:delete",
+  ProjectManage = "project:manage",
+
+  // ── Assets / Inventory ──
+  AssetView = "asset:view",
+  AssetCreate = "asset:create",
+  AssetEdit = "asset:edit",
+  AssetDelete = "asset:delete",
+
+  // ── Procurement ──
+  ProcurementView = "procurement:view",
+  ProcurementCreate = "procurement:create",
+  ProcurementApprove = "procurement:approve",
+
+  // ── Knowledge Base ──
+  KBView = "kb:view",
+  KBCreate = "kb:create",
+  KBEdit = "kb:edit",
+  KBDelete = "kb:delete",
+  KBManage = "kb:manage",
+
+  // ── Opportunities / Pipeline ──
+  OpportunityView = "opportunity:view",
+  OpportunityCreate = "opportunity:create",
+  OpportunityEdit = "opportunity:edit",
+  OpportunityDelete = "opportunity:delete",
+
+  // ── Reports ──
+  ReportView = "report:view",
+  ReportExport = "report:export",
+  ReportCreate = "report:create",
+
+  // ── Integrations ──
+  IntegrationView = "integration:view",
+  IntegrationManage = "integration:manage",
+
+  // ── Admin ──
   UserManage = "user:manage",
   RoleManage = "role:manage",
   SystemConfig = "system:config",
 
-  // Integrations
-  IntegrationView = "integration:view",
-  IntegrationManage = "integration:manage",
+  // ── Schedule / Calendar ──
+  ScheduleView = "schedule:view",
+  ScheduleManage = "schedule:manage",
 
-  // Reports
-  ReportView = "report:view",
-  ReportExport = "report:export",
+  // ── Contracts ──
+  ContractView = "contract:view",
+  ContractCreate = "contract:create",
+  ContractEdit = "contract:edit",
+  ContractDelete = "contract:delete",
+
+  // ── Surveys ──
+  SurveyView = "survey:view",
+  SurveyCreate = "survey:create",
+  SurveyManage = "survey:manage",
+
+  // ── Chat ──
+  ChatView = "chat:view",
+  ChatManage = "chat:manage",
+
+  // ── Workflows / Automations ──
+  WorkflowView = "workflow:view",
+  WorkflowCreate = "workflow:create",
+  WorkflowEdit = "workflow:edit",
+  WorkflowDelete = "workflow:delete",
+  WorkflowManage = "workflow:manage",
+
+  // ── PTO / Time Off ──
+  PTOView = "pto:view",
+  PTORequest = "pto:request",
+  PTOApprove = "pto:approve",
+
+  // ── Security / MFA ──
+  SecurityManage = "security:manage",
+  MFAEnforce = "mfa:enforce",
+
+  // ── Inference / AI ──
+  InferenceView = "inference:view",
+  InferenceManage = "inference:manage",
 }
+
+/** Permission categories for UI grouping — order matters */
+export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: Permission[] }[] = [
+  {
+    key: "tickets", label: "Tickets",
+    permissions: [Permission.TicketView, Permission.TicketViewAll, Permission.TicketCreate, Permission.TicketEdit, Permission.TicketDelete, Permission.TicketAssign, Permission.TicketClose],
+  },
+  {
+    key: "boards", label: "Service Boards",
+    permissions: [Permission.BoardView, Permission.BoardManage],
+  },
+  {
+    key: "clients", label: "Clients & CRM",
+    permissions: [Permission.ClientView, Permission.ClientCreate, Permission.ClientEdit, Permission.ClientDelete, Permission.ContactView, Permission.ContactCreate, Permission.ContactEdit, Permission.ContactDelete],
+  },
+  {
+    key: "opportunities", label: "Opportunities",
+    permissions: [Permission.OpportunityView, Permission.OpportunityCreate, Permission.OpportunityEdit, Permission.OpportunityDelete],
+  },
+  {
+    key: "projects", label: "Projects",
+    permissions: [Permission.ProjectView, Permission.ProjectCreate, Permission.ProjectEdit, Permission.ProjectDelete, Permission.ProjectManage],
+  },
+  {
+    key: "billing", label: "Billing",
+    permissions: [Permission.BillingView, Permission.BillingManage, Permission.InvoiceCreate, Permission.InvoiceSend, Permission.PaymentView, Permission.PaymentProcess, Permission.ServiceAgreementView, Permission.ServiceAgreementManage],
+  },
+  {
+    key: "assets", label: "Assets & Inventory",
+    permissions: [Permission.AssetView, Permission.AssetCreate, Permission.AssetEdit, Permission.AssetDelete],
+  },
+  {
+    key: "procurement", label: "Procurement",
+    permissions: [Permission.ProcurementView, Permission.ProcurementCreate, Permission.ProcurementApprove],
+  },
+  {
+    key: "kb", label: "Knowledge Base",
+    permissions: [Permission.KBView, Permission.KBCreate, Permission.KBEdit, Permission.KBDelete, Permission.KBManage],
+  },
+  {
+    key: "schedule", label: "Schedule & Calendar",
+    permissions: [Permission.ScheduleView, Permission.ScheduleManage],
+  },
+  {
+    key: "contracts", label: "Contracts",
+    permissions: [Permission.ContractView, Permission.ContractCreate, Permission.ContractEdit, Permission.ContractDelete],
+  },
+  {
+    key: "surveys", label: "Surveys",
+    permissions: [Permission.SurveyView, Permission.SurveyCreate, Permission.SurveyManage],
+  },
+  {
+    key: "chat", label: "Chat & Messaging",
+    permissions: [Permission.ChatView, Permission.ChatManage],
+  },
+  {
+    key: "workflows", label: "Workflows & Automations",
+    permissions: [Permission.WorkflowView, Permission.WorkflowCreate, Permission.WorkflowEdit, Permission.WorkflowDelete, Permission.WorkflowManage],
+  },
+  {
+    key: "reports", label: "Reports & Analytics",
+    permissions: [Permission.ReportView, Permission.ReportExport, Permission.ReportCreate],
+  },
+  {
+    key: "integrations", label: "Integrations",
+    permissions: [Permission.IntegrationView, Permission.IntegrationManage],
+  },
+  {
+    key: "pto", label: "PTO & Time Off",
+    permissions: [Permission.PTOView, Permission.PTORequest, Permission.PTOApprove],
+  },
+  {
+    key: "inference", label: "AI & Inference",
+    permissions: [Permission.InferenceView, Permission.InferenceManage],
+  },
+  {
+    key: "security", label: "Security & MFA",
+    permissions: [Permission.SecurityManage, Permission.MFAEnforce],
+  },
+  {
+    key: "admin", label: "Administration",
+    permissions: [Permission.UserManage, Permission.RoleManage, Permission.SystemConfig],
+  },
+];
 
 /** Default role → permission mapping */
 export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
   [SystemRole.Admin]: Object.values(Permission),
   [SystemRole.Manager]: [
     Permission.TicketViewAll, Permission.TicketView, Permission.TicketCreate,
-    Permission.TicketEdit, Permission.TicketAssign, Permission.TicketClose,
+    Permission.TicketEdit, Permission.TicketAssign, Permission.TicketClose, Permission.TicketDelete,
     Permission.BoardView, Permission.BoardManage,
     Permission.ClientView, Permission.ClientCreate, Permission.ClientEdit,
+    Permission.ContactView, Permission.ContactCreate, Permission.ContactEdit,
+    Permission.OpportunityView, Permission.OpportunityCreate, Permission.OpportunityEdit,
+    Permission.ProjectView, Permission.ProjectCreate, Permission.ProjectEdit, Permission.ProjectManage,
     Permission.BillingView, Permission.BillingManage, Permission.InvoiceCreate, Permission.InvoiceSend,
+    Permission.PaymentView, Permission.PaymentProcess,
+    Permission.ServiceAgreementView, Permission.ServiceAgreementManage,
+    Permission.AssetView, Permission.AssetCreate, Permission.AssetEdit,
+    Permission.ProcurementView, Permission.ProcurementCreate,
+    Permission.KBView, Permission.KBCreate, Permission.KBEdit,
+    Permission.ScheduleView, Permission.ScheduleManage,
+    Permission.ContractView, Permission.ContractCreate, Permission.ContractEdit,
+    Permission.SurveyView, Permission.SurveyCreate,
+    Permission.ChatView, Permission.ChatManage,
+    Permission.WorkflowView, Permission.WorkflowCreate, Permission.WorkflowEdit,
+    Permission.ReportView, Permission.ReportExport, Permission.ReportCreate,
     Permission.IntegrationView, Permission.IntegrationManage,
-    Permission.ReportView, Permission.ReportExport,
+    Permission.PTOView, Permission.PTORequest, Permission.PTOApprove,
+    Permission.InferenceView,
     Permission.UserManage,
   ],
   [SystemRole.Technician]: [
     Permission.TicketView, Permission.TicketCreate, Permission.TicketEdit,
-    Permission.TicketViewAll,
+    Permission.TicketViewAll, Permission.TicketClose,
     Permission.BoardView,
-    Permission.ClientView,
-    Permission.IntegrationView,
+    Permission.ClientView, Permission.ContactView,
+    Permission.ProjectView,
+    Permission.AssetView,
+    Permission.KBView,
+    Permission.ScheduleView,
+    Permission.ChatView,
     Permission.ReportView,
+    Permission.IntegrationView,
+    Permission.InferenceView,
   ],
   [SystemRole.Dispatcher]: [
     Permission.TicketViewAll, Permission.TicketView, Permission.TicketCreate,
-    Permission.TicketEdit, Permission.TicketAssign,
-    Permission.BoardView,
-    Permission.ClientView,
+    Permission.TicketEdit, Permission.TicketAssign, Permission.TicketClose,
+    Permission.BoardView, Permission.BoardManage,
+    Permission.ClientView, Permission.ContactView,
+    Permission.ProjectView,
+    Permission.ScheduleView, Permission.ScheduleManage,
+    Permission.ChatView,
     Permission.ReportView,
   ],
   [SystemRole.BillingManager]: [
     Permission.BillingView, Permission.BillingManage,
     Permission.InvoiceCreate, Permission.InvoiceSend,
-    Permission.ClientView,
-    Permission.ReportView, Permission.ReportExport,
+    Permission.PaymentView, Permission.PaymentProcess,
+    Permission.ServiceAgreementView, Permission.ServiceAgreementManage,
+    Permission.ClientView, Permission.ContactView,
+    Permission.ReportView, Permission.ReportExport, Permission.ReportCreate,
+    Permission.ContractView, Permission.ContractCreate, Permission.ContractEdit,
+    Permission.ProcurementView,
   ],
   [SystemRole.ClientAdmin]: [
     Permission.TicketView, Permission.TicketCreate, Permission.TicketEdit, Permission.TicketClose,
     Permission.BoardView,
-    Permission.ClientView,
+    Permission.ClientView, Permission.ContactView,
+    Permission.ProjectView,
     Permission.BillingView,
+    Permission.AssetView,
+    Permission.KBView,
+    Permission.ScheduleView,
+    Permission.ChatView,
     Permission.ReportView,
+    Permission.PTOView, Permission.PTORequest,
   ],
   [SystemRole.ClientUser]: [
     Permission.TicketView, Permission.TicketCreate,
     Permission.BoardView,
     Permission.ClientView,
+    Permission.KBView,
+    Permission.ChatView,
     Permission.BillingView,
   ],
   [SystemRole.ReadOnly]: [
     Permission.TicketView, Permission.BoardView, Permission.ClientView,
-    Permission.BillingView, Permission.ReportView,
+    Permission.ContactView, Permission.BillingView, Permission.ReportView,
+    Permission.ProjectView, Permission.AssetView, Permission.KBView,
+    Permission.ScheduleView, Permission.ChatView,
   ],
 };
 
