@@ -66,7 +66,7 @@ export function ContactsPage() {
   };
 
   const handleCreateContact = async (e: React.FormEvent) => { e.preventDefault();
-    try { await api.post("/clients", { name: `${newContact.firstName} ${newContact.lastName}`, email: newContact.email, phone: newContact.phone }); toast.success("Contact created"); setShowCreate(false); setNewContact({ firstName: "", lastName: "", email: "", phone: "", companyId: "", title: "" }); fetch(); }
+    try { await api.post("/clients/contacts", { companyId: newContact.companyId, firstName: newContact.firstName, lastName: newContact.lastName, email: newContact.email, phone: newContact.phone, title: newContact.title }); toast.success("Contact created"); setShowCreate(false); setNewContact({ firstName: "", lastName: "", email: "", phone: "", companyId: "", title: "" }); fetch(); }
     catch { toast.error("Failed to create"); }
   };
 

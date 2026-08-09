@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Save, X, ChevronLeft, Building2, Users, FileText, DollarSign, Ticket, ClipboardList, Clock, Mail, Phone, Globe, MapPin, Badge, Briefcase } from "lucide-react";
@@ -16,6 +16,7 @@ export function ClientDetailPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
 
   const load = async () => {
     try { const r = await api.get(`/clients/${id}`); setClient(r.data); setForm(r.data); }
@@ -203,7 +204,7 @@ export function ClientDetailPage() {
             <thead><tr className="border-b border-surface-border text-left text-gray-400"><th className="px-4 py-3">#</th><th className="px-4 py-3">Title</th><th className="px-4 py-3 hidden md:table-cell">Status</th><th className="px-4 py-3 hidden sm:table-cell">Assigned</th></tr></thead>
             <tbody>
               {(client.tickets || []).map((t: any) => (
-                <tr key={t.id} className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer" onClick={() => window.location.href = `/tickets/${t.id}`}>
+                <tr key={t.id} className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer" onClick={() => navigate(`/tickets/${t.id}`)}>
                   <td className="px-4 py-3 text-cyber-400 font-mono text-xs">{t.ticketNumber}</td>
                   <td className="px-4 py-3 text-white">{t.title}</td>
                   <td className="px-4 py-3 hidden md:table-cell"><span className="badge bg-cyber-600/20 text-cyber-400 text-xs">{t.status}</span></td>

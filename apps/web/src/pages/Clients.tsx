@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown } from "lucide-react";
@@ -21,6 +21,7 @@ export function ClientsPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [sort, setSort] = useState("name");
   const [showNew, setShowNew] = useState(false);
+  const navigate = useNavigate();
   const [form, setForm] = useState<Record<string, string>>({ name: "", email: "", phone: "", city: "", state: "", companyType: "Client", industry: "" });
 
   const fetch = () => {
@@ -93,7 +94,7 @@ export function ClientsPage() {
             </tr></thead>
             <tbody>
               {clients.map(c => (
-                <tr key={c.id} className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer" onClick={() => window.location.href = `/clients/${c.id}`}>
+                <tr key={c.id} className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer" onClick={() => navigate(`/clients/${c.id}`)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="p-1.5 rounded bg-cyber-600/10"><Building2 size={16} className="text-cyber-400" /></div>

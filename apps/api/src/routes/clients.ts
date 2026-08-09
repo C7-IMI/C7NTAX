@@ -68,6 +68,37 @@ clientsRouter.get("/contacts", async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ── Create contact ───────────────────────────────────────────────────
+clientsRouter.post("/contacts", async (req: AuthRequest, res, next) => {
+  try {
+    const { companyId, firstName, lastName, email } = req.body;
+    if (!companyId || !firstName || !lastName || !email) {
+      throw new AppError("companyId, firstName, lastName, email are required", 400);
+    }
+    const allowed = ["phone","mobile","title","department","notes","isPrimary","isActive"];
+    const data: Record<string, unknown> = { companyId, firstName, lastName, email };
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+    const contact = await prisma.contact.create({ data: data as any, include: { company: { select: { id: true, name: true } } } });
+    res.status(201).json(contact);
+  } catch (e) { next(e); }
+});
+
+// ── Update contact ───────────────────────────────────────────────────
+clientsRouter.patch("/contacts/:id", async (req: AuthRequest, res, next) => {
+  try {
+    const allowed = ["firstName","lastName","email","phone","mobile","title","department","notes","isPrimary","isActive","companyId"];
+    const data: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+    if (Object.keys(data).length === 0) throw new AppError("No fields to update", 400);
+    const contact = await prisma.contact.update({ where: { id: req.params.id }, data: data as any, include: { company: { select: { id: true, name: true } } } });
+    res.json(contact);
+  } catch (e) { next(e); }
+});
+
 // ── Get single client ────────────────────────────────────────────────
 clientsRouter.get("/:id", async (req: AuthRequest, res, next) => {
   try {
