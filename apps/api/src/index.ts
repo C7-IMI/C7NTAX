@@ -45,6 +45,7 @@ import { systemRouter } from "./routes/system";
 import { bulkRouter } from "./routes/bulk";
 import { inferenceRouter } from "./routes/inference";
 import { setupWebSocket } from "./ws";
+import { WEB_ORIGIN } from "@C7NTAX/shared";
 import { startWorkers } from "./worker";
 // ── Startup logging ─────────────────────────────────────────────────
 logger.startup();
@@ -53,7 +54,7 @@ export const prisma = new PrismaClient();
 export const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:3003", credentials: true }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || WEB_ORIGIN, credentials: true }));
 // Morgan HTTP logging piped to dev-errors.log
 app.use(morgan("short", {
   stream: {

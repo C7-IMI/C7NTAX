@@ -21,11 +21,12 @@ import { SystemSettingsPage } from "./pages/SystemSettings";
 import { InferenceSettingsPage } from "./pages/InferenceSettings";
 import { ProcurementPage } from "./pages/Procurement";
 import { ReportsPage } from "./pages/Reports";
+import { LoadingScreen } from "./components/LoadingScreen";
 import { CustomReportBuilder } from "./pages/CustomReportBuilder";
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
-  if (loading) return <div className="flex items-center justify-center min-h-screen bg-navy-950"><div className="animate-spin h-8 w-8 border-2 border-cyber-400 border-t-transparent rounded-full" /></div>;
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   return (
     <Layout>

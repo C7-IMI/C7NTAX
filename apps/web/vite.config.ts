@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { WEB_PORT, API_ORIGIN } from "../../packages/shared/src/constants";
 
 export default defineConfig({
   plugins: [react()],
@@ -14,10 +15,10 @@ export default defineConfig({
     include: ["@C7NTAX/shared"],
   },
   server: {
-    port: 3003,
+    port: WEB_PORT,
     proxy: {
-      "/api": "http://localhost:4000",
-      "/ws": { target: "ws://localhost:4000", ws: true },
+      "/api": API_ORIGIN,
+      "/ws": { target: API_ORIGIN.replace("http", "ws"), ws: true },
     },
   },
 });

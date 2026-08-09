@@ -29,7 +29,7 @@ function createWindow(): void {
   });
 
   // Always load from dev server or try local file
-  const webUrl = "http://localhost:3003";
+  const webUrl = "http://localhost:3010";
   mainWindow.loadURL(webUrl).catch(() => {
     if (!mainWindow) return;
     const indexPath = path.join(__dirname, "../../web/dist/index.html");
