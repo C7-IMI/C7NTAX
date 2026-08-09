@@ -24,7 +24,9 @@ export function RolesPage() {
   const [editIsDefault, setEditIsDefault] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
-  const [newRole, setNewRole] = useState({ name: "", systemRole: "technician" });
+  const [showCopyRole, setShowCopyRole] = useState(false);
+  const [createDropdown, setCreateDropdown] = useState(false);
+  const [newRole, setNewRole] = useState<{ name: string; systemRole: string; permissions?: string[] }>({ name: "", systemRole: "technician" });
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set(["tickets", "clients", "admin"]));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showMembers, setShowMembers] = useState(false);
@@ -97,7 +99,7 @@ export function RolesPage() {
       await api.post("/roles", newRole);
       toast.success("Role created");
       setShowCreate(false);
-      setNewRole({ name: "", systemRole: "technician" });
+      setNewRole({ name: "", systemRole: "technician", permissions: undefined });
       fetch();
     } catch { toast.error("Failed to create"); }
   };
@@ -175,9 +177,33 @@ export function RolesPage() {
           <h2 className="text-lg font-semibold text-white">Roles & Permissions</h2>
           <p className="text-sm text-gray-400">{roles.length} roles</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm">
-          <Plus size={16} /> Create Role
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setCreateDropdown(!createDropdown)}
+            className="btn-primary flex items-center gap-2 text-sm"
+          >
+            <Plus size={16} /> Create Role <ChevronDown size={14} className={`transition-transform ${createDropdown ? "rotate-180" : ""}`} />
+          </button>
+          {createDropdown && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setCreateDropdown(false)} />
+              <div className="absolute right-0 z-50 mt-1.5 w-52 bg-surface border border-surface-border rounded-lg shadow-lg overflow-hidden">
+                <button
+                  onClick={() => { setCreateDropdown(false); setNewRole({ name: "", systemRole: "technician", permissions: undefined }); setShowCreate(true); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-surface-lighter flex items-center gap-2 transition-colors"
+                >
+                  <Plus size={14} className="text-cyber-400" /> Create New
+                </button>
+                <button
+                  onClick={() => { setCreateDropdown(false); setShowCopyRole(true); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-surface-lighter flex items-center gap-2 transition-colors border-t border-surface-border/50"
+                >
+                  <Copy size={14} className="text-cyber-400" /> Create from Existing
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -400,6 +426,44 @@ export function RolesPage() {
           )}
         </div>
       </div>
+
+      {/* Copy from Existing Role Modal */}
+      {showCopyRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCopyRole(false)}>
+          <div className="card w-full max-w-md mx-4 space-y-3" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Create from Existing Role</h3>
+              <button onClick={() => setShowCopyRole(false)} className="text-gray-500 hover:text-white"><X size={18} /></button>
+            </div>
+            <p className="text-xs text-gray-500">Select a role to copy permissions from, then enter a name for the new role.</p>
+            <div className="space-y-1.5 max-h-60 overflow-y-auto">
+              {roles.map(r => (
+                <button
+                  key={r.id}
+                  onClick={() => {
+                    setNewRole({ name: `${r.name} (Copy)`, systemRole: r.systemRole, permissions: [...r.permissions] });
+                    setShowCopyRole(false);
+                    setShowCreate(true);
+                  }}
+                  className="w-full text-left px-4 py-3 rounded-lg hover:bg-surface-lighter/50 transition-colors flex items-center gap-3"
+                >
+                  <div className={`p-1.5 rounded ${r.isDefault ? "bg-cyber-600/20" : "bg-surface-lighter"}`}>
+                    <Shield size={16} className={r.isDefault ? "text-cyber-400" : "text-gray-400"} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white truncate">{r.name}</p>
+                    <p className="text-xs text-gray-500">{r.systemRole.replace(/_/g, " ")} · {r.permissions.length} permissions</p>
+                  </div>
+                  <span className="text-xs text-gray-600">{r._count?.users || 0} users</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 pt-2 border-t border-surface-border">
+              <button onClick={() => setShowCopyRole(false)} className="btn-secondary text-sm flex-1">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Role Modal */}
       {showCreate && (
