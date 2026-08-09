@@ -2,20 +2,79 @@ import type { IIntegrationAdapter } from "../IAdapter";
 import type { IntegrationConfig, SyncResult } from "../types";
 
 /**
- * ITGlue documentation platform adapter.
- * Syncs configurations, flexible assets, passwords, and documents.
- * API: REST JSON with x-api-key header.
+ * IT Glue documentation platform adapter.
+ * API: https://api.itglue.com/developer/
+ * Auth: x-api-key header
+ * Resources: configurations, flexible_assets, passwords, documents,
+ *            contacts, organizations, domains, locations, attachments
  */
 export class ITGlueAdapter implements IIntegrationAdapter {
   readonly kind = "itglue" as const;
 
+  // ── Helpers ──────────────────────────────────────────────────────
+
+  private baseUrl(cfg: IntegrationConfig): string {
+    return (cfg.settings?.baseUrl as string) || "https://api.itglue.com";
+  }
+
+  /** Fetch a single page. Returns { data, meta, links } */
+  private async fetchPage(cfg: IntegrationConfig, path: string, params: URLSearchParams): Promise<any> {
+    const url = `${this.baseUrl(cfg)}${path}?${params.toString()}`;
+    const res = await fetch(url, {
+      headers: {
+        "x-api-key": cfg.credentials.apiKey as string,
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`IT Glue ${path}: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    return res.json();
+  }
+
+  /** Fetch all pages for a collection. */
+  private async fetchAll(
+    cfg: IntegrationConfig,
+    resource: string,
+    extraParams: Record<string, string> = {}
+  ): Promise<{ items: unknown[]; pageCount: number }> {
+    const items: unknown[] = [];
+    const pageSize = 1000; // IT Glue max
+    let pageNumber = 1;
+    let totalPages = 1;
+
+    while (pageNumber <= totalPages) {
+      const params = new URLSearchParams({
+        "page[size]": String(pageSize),
+        "page[number]": String(pageNumber),
+        ...extraParams,
+      });
+
+      const data = await this.fetchPage(cfg, `/${resource}`, params);
+
+      if (Array.isArray(data?.data)) {
+        items.push(...data.data);
+      }
+
+      totalPages = data?.meta?.["total-pages"] || data?.meta?.totalPages || 1;
+      pageNumber++;
+    }
+
+    return { items, pageCount: totalPages };
+  }
+
+  // ── IIntegrationAdapter ───────────────────────────────────────────
+
   async validateCredentials(cfg: IntegrationConfig): Promise<boolean> {
     try {
-      const res = await fetch(`${cfg.settings.baseUrl}/api`, {
-        headers: { "x-api-key": cfg.credentials.apiKey, Accept: "application/json" },
+      const res = await fetch(`${this.baseUrl(cfg)}/api`, {
+        headers: { "x-api-key": cfg.credentials.apiKey as string, Accept: "application/json" },
       });
       return res.ok;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
 
   async testConnection(cfg: IntegrationConfig): Promise<boolean> {
@@ -23,20 +82,50 @@ export class ITGlueAdapter implements IIntegrationAdapter {
   }
 
   async sync(cfg: IntegrationConfig): Promise<SyncResult> {
-    const result: SyncResult = { success: true, kind: "itglue", recordsProcessed: 0, errors: [], syncedAt: new Date() };
-    try {
-      const resources = ["configurations", "flexible_assets", "passwords", "documents", "contacts", "organizations"];
-      for (const resource of resources) {
-        const params = new URLSearchParams({ "page[size]": "100", ...(cfg.lastSyncAt && { "filter[updated_at]": cfg.lastSyncAt.toISOString() }) });
-        const res = await fetch(`${cfg.settings.baseUrl}/api/${resource}?${params}`, {
-          headers: { "x-api-key": cfg.credentials.apiKey, Accept: "application/json" },
-        });
-        if (res.ok) {
-          const data = (await res.json()) as { data?: unknown[] };
-          result.recordsProcessed += data.data?.length ?? 0;
-        } else { result.errors.push(`${resource}: HTTP ${res.status}`); }
+    const result: SyncResult = {
+      success: true,
+      kind: "itglue",
+      recordsProcessed: 0,
+      errors: [],
+      syncedAt: new Date(),
+    };
+
+    // IT Glue resources in priority order
+    const resources = [
+      { path: "organizations", include: [] },
+      { path: "configurations", include: ["organization"] },
+      { path: "flexible_assets", include: ["organization"] },
+      { path: "passwords", include: ["organization"] },
+      { path: "documents", include: ["organization"] },
+      { path: "contacts", include: ["organization"] },
+      { path: "domains", include: [] },
+      { path: "locations", include: ["organization"] },
+    ];
+
+    // Build filter params: only get records updated since last sync
+    const filterParams: Record<string, string> = {};
+    if (cfg.lastSyncAt) {
+      filterParams["filter[updated_at]"] = cfg.lastSyncAt.toISOString();
+    }
+
+    for (const rsrc of resources) {
+      try {
+        const extra: Record<string, string> = { ...filterParams };
+        if (rsrc.include.length > 0) {
+          extra["include"] = rsrc.include.join(",");
+        }
+
+        const { items } = await this.fetchAll(cfg, rsrc.path, extra);
+        result.recordsProcessed += items.length;
+
+        // Attach raw data for DB persistence
+        (result as any)[rsrc.path] = items;
+      } catch (e: any) {
+        result.errors.push(`${rsrc.path}: ${e.message}`);
       }
-    } catch (e) { result.errors.push(String(e)); result.success = false; }
+    }
+
+    result.success = result.errors.length === 0;
     return result;
   }
 

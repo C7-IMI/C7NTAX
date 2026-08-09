@@ -3,22 +3,35 @@ import type { IntegrationConfig, SyncResult } from "../types";
 
 /**
  * Kantata (formerly Mavenlink) adapter.
- * OAuth 2.0 via Bearer token.
- * API docs: https://developer.kantata.com
+ * API: https://developer.kantata.com
+ * Auth: OAuth 2.0 Bearer token
+ * Resources: workspaces, users, tasks, time_entries, expenses,
+ *            invoices, stories, project_templates, roles
  */
 export class KantataAdapter implements IIntegrationAdapter {
   readonly kind = "kantata" as const;
 
-  private async apiGet(cfg: IntegrationConfig, path: string): Promise<any> {
-    const res = await fetch(`https://api.kantata.com/v1${path}`, {
-      headers: { Authorization: `Bearer ${cfg.credentials.accessToken}`, "Content-Type": "application/json" },
-    });
-    if (!res.ok) throw new Error(`Kantata ${path}: HTTP ${res.status}`);
-    return res.json();
+  private baseUrl = "https://api.kantata.com/v1";
+
+  private async fetchAll(cfg: IntegrationConfig, path: string, pageSize: number = 200): Promise<unknown[]> {
+    const items: unknown[] = [];
+    let page = 1;
+    while (true) {
+      const res = await fetch(`${this.baseUrl}${path}?per_page=${pageSize}&page=${page}`, {
+        headers: { Authorization: `Bearer ${cfg.credentials.accessToken}`, "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error(`Kantata ${path}: HTTP ${res.status}`);
+      const data = (await res.json()) as any;
+      const list = data?.results || data?.workspaces || data?.users || data?.tasks || data || [];
+      items.push(...list);
+      if (!Array.isArray(list) || list.length < pageSize) break;
+      page++;
+    }
+    return items;
   }
 
   async validateCredentials(cfg: IntegrationConfig): Promise<boolean> {
-    try { const r = await this.apiGet(cfg, "/workspaces"); return r?.workspaces !== undefined; } catch { return false; }
+    try { await this.fetchAll(cfg, "/workspaces", 1); return true; } catch { return false; }
   }
 
   async testConnection(cfg: IntegrationConfig): Promise<boolean> {
@@ -27,24 +40,25 @@ export class KantataAdapter implements IIntegrationAdapter {
 
   async sync(cfg: IntegrationConfig): Promise<SyncResult> {
     const result: SyncResult = { success: true, kind: "kantata", recordsProcessed: 0, errors: [], syncedAt: new Date() };
-    try {
-      const resources: Array<{ path: string; key: string }> = [
-        { path: "/workspaces", key: "workspaces" },
-        { path: "/users", key: "users" },
-        { path: "/tasks", key: "tasks" },
-        { path: "/time_entries", key: "time_entries" },
-        { path: "/expenses", key: "expenses" },
-        { path: "/invoices", key: "invoices" },
-        { path: "/stories", key: "stories" },
-      ];
-      for (const r of resources) {
-        try {
-          const data = await this.apiGet(cfg, r.path);
-          const items = data?.[r.key] || data?.results || [];
-          result.recordsProcessed += Array.isArray(items) ? items.length : 0;
-        } catch (e: any) { result.errors.push(`${r.path}: ${e.message}`); }
-      }
-    } catch (e: any) { result.errors.push(String(e)); result.success = false; }
+    const resources: Array<{ path: string; key: string }> = [
+      { path: "/workspaces", key: "workspaces" },
+      { path: "/users", key: "users" },
+      { path: "/tasks", key: "tasks" },
+      { path: "/time_entries", key: "timeEntries" },
+      { path: "/expenses", key: "expenses" },
+      { path: "/invoices", key: "invoices" },
+      { path: "/stories", key: "stories" },
+      { path: "/project_templates", key: "projectTemplates" },
+      { path: "/roles", key: "roles" },
+    ];
+    for (const r of resources) {
+      try {
+        const items = await this.fetchAll(cfg, r.path);
+        result.recordsProcessed += items.length;
+        (result as any)[r.key] = items;
+      } catch (e: any) { result.errors.push(`${r.path}: ${e.message}`); }
+    }
+    result.success = result.errors.length === 0;
     return result;
   }
 
