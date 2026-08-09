@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import api from "../api";
 
+// ── Temporary auth bypass — set to false to re-enable login ──
+const TEMP_BYPASS_AUTH = true;
+
 interface User {
   id: string;
   email: string;
@@ -36,6 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [landingPage, setLandingPage] = useState<LandingPage>({ path: "/", label: "Dashboard" });
 
   useEffect(() => {
+    // ── Temporary bypass: skip all auth, always logged in as guest ──
+    // Revert: delete this block and set TEMP_BYPASS_AUTH = false
+    if (TEMP_BYPASS_AUTH) {
+      setUser({ id: "bypass", email: "bypass@local", firstName: "Guest", lastName: "User", role: "admin" });
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     // Bypass auth for quick dashboard access
     if (localStorage.getItem("c7_bypass") === "1") {
