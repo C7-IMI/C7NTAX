@@ -195,15 +195,15 @@ export function IntegrationsPage() {
             Select Integration Type
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {types.map(kind => (
+            {types.map((t: any) => (
               <button
-                key={kind}
-                onClick={() => handleAdd(kind)}
+                key={t.kind}
+                onClick={() => handleAdd(t.kind)}
                 className="card hover:border-cyber-500/30 transition-colors text-left p-4 cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-cyber-600/10 group-hover:bg-cyber-600/20 transition-colors">
-                    {kind === "microsoft365" ? (
+                    {t.kind === "microsoft365" ? (
                       <Building size={18} className="text-cyber-400" />
                     ) : (
                       <Plug size={18} className="text-cyber-400" />
@@ -211,9 +211,9 @@ export function IntegrationsPage() {
                   </div>
                   <div>
                     <p className="text-white font-medium text-sm">
-                      {KIND_LABELS[kind] || kind}
+                      {KIND_LABELS[t.kind] || t.name || t.kind}
                     </p>
-                    <p className="text-xs text-gray-500">{kind}</p>
+                    <p className="text-xs text-gray-500">{t.description || t.kind}</p>
                   </div>
                 </div>
               </button>
