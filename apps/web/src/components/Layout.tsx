@@ -158,25 +158,28 @@ export function Layout({ children }: { children: ReactNode }) {
     const hasChildren = !!node.children?.length;
     const linkTo = node.to || "#";
     const isDragging = dragId === node.id;
+    const isTopLevel = depth === 0;
 
     return (
       <div
         key={node.id}
-        draggable
-        onDragStart={(e) => handleDragStart(e, node.id)}
+        draggable={isTopLevel}
+        onDragStart={(e) => isTopLevel && handleDragStart(e, node.id)}
         onDragOver={handleDragOver}
-        onDrop={(e) => handleDrop(e, node.id)}
+        onDrop={(e) => isTopLevel && handleDrop(e, node.id)}
         onDragEnd={handleDragEnd}
-        className={`rounded-lg transition-colors ${isDragging ? "opacity-50" : ""} ${dragId && dragId !== node.id ? "border border-dashed border-cyber-500/30" : ""}`}
+        className={`rounded-lg transition-colors ${isDragging ? "opacity-50" : ""} ${dragId && dragId !== node.id && isTopLevel ? "border border-dashed border-cyber-500/30" : ""}`}
       >
         {hasChildren ? (
           <div className="flex items-center group/drag">
-            <button
-              className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <GripVertical size={12} />
-            </button>
+            {isTopLevel && (
+              <button
+                className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <GripVertical size={12} />
+              </button>
+            )}
             <button
               onClick={() => toggle(node.id)}
               className={`flex-1 flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${
