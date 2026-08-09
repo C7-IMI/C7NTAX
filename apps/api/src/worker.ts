@@ -12,6 +12,46 @@ const emailService = new EmailService();
  * For now, a simple setInterval-based scheduler.
  */
 
+// ── Ticket Past-Due Auto-Update ──
+// Periodically flags tickets where dueDate has passed as overdue.
+
+async function processPastDueTickets(): Promise<void> {
+  try {
+    const pastDue = await prisma.ticket.findMany({
+      where: {
+        dueDate: { lt: new Date() },
+        isOverdue: false,
+        status: { notIn: [TicketStatus.Resolved, TicketStatus.Closed, TicketStatus.Cancelled] },
+      },
+      include: { assignedTo: true, company: true },
+    });
+
+    for (const ticket of pastDue) {
+      await prisma.ticket.update({
+        where: { id: ticket.id },
+        data: { isOverdue: true },
+      });
+
+      // Notify assigned tech
+      if (ticket.assignedToId) {
+        notifyUser(ticket.assignedToId, {
+          type: "ticket_overdue",
+          payload: {
+            ticketId: ticket.id,
+            ticketNumber: ticket.ticketNumber,
+            title: ticket.title,
+            dueDate: ticket.dueDate?.toISOString(),
+          },
+        });
+      }
+
+      logger.info("worker.pastDue", `Ticket ${ticket.ticketNumber} marked overdue (due: ${ticket.dueDate?.toISOString()})`);
+    }
+  } catch (err) {
+    logger.error("worker.pastDue", err instanceof Error ? err : new Error(String(err)));
+  }
+}
+
 // ── Ticket Auto-Follow-Up ──
 // Sends daily emails for tickets stuck in "waiting_on_client" status.
 
@@ -160,6 +200,7 @@ async function processInvoiceReminders(): Promise<void> {
 
 // ── Scheduler ──
 
+let pastDueInterval: ReturnType<typeof setInterval> | null = null;
 let followUpInterval: ReturnType<typeof setInterval> | null = null;
 let autoCloseInterval: ReturnType<typeof setInterval> | null = null;
 let invoiceInterval: ReturnType<typeof setInterval> | null = null;
@@ -169,8 +210,10 @@ let invoiceInterval: ReturnType<typeof setInterval> | null = null;
  */
 export function startWorkers(): void {
   console.log("[Worker] Starting background workers...");
-  logger.info("worker", "Background workers started: ticketFollowUp(30m), autoClose(1h), invoiceReminder(6h)");
+  logger.info("worker", "Background workers started: pastDue(15m), ticketFollowUp(30m), autoClose(1h), invoiceReminder(6h)");
 
+  // Every 15 minutes: check for past-due tickets
+  pastDueInterval = setInterval(processPastDueTickets, 15 * 60 * 1000);
   // Every 30 minutes: check for follow-ups
   followUpInterval = setInterval(processTicketFollowUps, 30 * 60 * 1000);
   // Every hour: check for auto-close
@@ -179,6 +222,7 @@ export function startWorkers(): void {
   invoiceInterval = setInterval(processInvoiceReminders, 6 * 60 * 60 * 1000);
 
   // Run once immediately on startup
+  void processPastDueTickets();
   void processTicketFollowUps();
   void processAutoClose();
   void processInvoiceReminders();
@@ -188,6 +232,7 @@ export function startWorkers(): void {
  * Stop all background workers (for graceful shutdown).
  */
 export function stopWorkers(): void {
+  if (pastDueInterval) clearInterval(pastDueInterval);
   if (followUpInterval) clearInterval(followUpInterval);
   if (autoCloseInterval) clearInterval(autoCloseInterval);
   if (invoiceInterval) clearInterval(invoiceInterval);

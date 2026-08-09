@@ -217,6 +217,7 @@ model Ticket {
   firstResponseAt   DateTime?
   resolvedAt        DateTime?
   closedAt          DateTime?
+  isOverdue         Boolean   @default(false) // Auto-set when dueDate passes
 
   // Auto-close tracking
   waitingSince      DateTime?  // When status changed to waiting_on_client

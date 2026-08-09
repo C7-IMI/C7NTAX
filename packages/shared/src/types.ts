@@ -112,6 +112,7 @@ export interface Ticket {
   waitingSince: Date | null;
   autoClosedAt: Date | null;
   dueDate: Date | null;
+  isOverdue: boolean;
   resolvedAt: Date | null;
   closedAt: Date | null;
   createdAt: Date;
