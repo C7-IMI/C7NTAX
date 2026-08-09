@@ -6,7 +6,7 @@ import {
   Mail, Phone, Building2, Clock, KeyRound, UserCheck, UserX, ShieldAlert,
   ChevronLeft,
 } from "lucide-react";
-import { SystemRole, Permission, PERMISSION_CATEGORIES } from "@C7NTAX/shared";
+import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from "@C7NTAX/shared";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -42,6 +42,7 @@ export function UsersPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
   const [permSet, setPermSet] = useState<Set<string>>(new Set());
+  const [roleTemplate, setRoleTemplate] = useState<string | null>(null); // the role whose defaults we compare against
   const [saving, setSaving] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [sort, setSort] = useState<SortState | null>(null);
@@ -74,6 +75,7 @@ export function UsersPage() {
       setSelected(r.data);
       setForm(r.data);
       setPermSet(new Set(r.data.permissions || []));
+      setRoleTemplate(r.data.role?.systemRole || null);
     } catch { /* ignore */ }
   };
 
@@ -81,6 +83,7 @@ export function UsersPage() {
     setSelected(user);
     setForm(user);
     setPermSet(new Set(user.permissions || []));
+    setRoleTemplate(user.role?.systemRole || null);
     setEditing(false);
     setTab("profile");
   };
@@ -384,6 +387,54 @@ export function UsersPage() {
                     )}
                   </div>
 
+                  {/* Role template dropdown */}
+                  {editing && (
+                    <div className="card py-2.5 px-4 flex items-center gap-3">
+                      <label className="text-xs text-gray-400 font-medium shrink-0">Apply role defaults:</label>
+                      <select
+                        className="input-field text-sm py-1.5 flex-1"
+                        value={roleTemplate || ""}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setRoleTemplate(val || null);
+                          if (val) {
+                            const defaults = ROLE_PERMISSIONS[val as SystemRole] || [];
+                            setPermSet(new Set(defaults));
+                          }
+                        }}
+                      >
+                        <option value="">— Select a role template —</option>
+                        {Object.values(SystemRole).map(sr => (
+                          <option key={sr} value={sr}>
+                            {sr.replace(/_/g, " ")} ({ (ROLE_PERMISSIONS[sr] || []).length } perms)
+                          </option>
+                        ))}
+                      </select>
+                      {roleTemplate && (
+                        <button
+                          onClick={() => { setRoleTemplate(null); }}
+                          className="text-xs text-gray-500 hover:text-white shrink-0"
+                          title="Clear role template"
+                        >✕</button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Customization note */}
+                  {roleTemplate && (() => {
+                    const tPerms = ROLE_PERMISSIONS[roleTemplate as SystemRole] || [];
+                    const tSet = new Set(tPerms);
+                    const customized = tPerms.some(p => permSet.has(p) !== tSet.has(p));
+                    return customized ? (
+                      <div className="bg-amber-600/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
+                        <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                        <div className="text-xs text-amber-300">
+                          <span className="font-medium">Permissions have been customized.</span> Please verify the level of access. Compared to "{roleTemplate.replace(/_/g, " ")}" defaults.
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+
                   {PERMISSION_CATEGORIES.map(cat => (
                     <div key={cat.key} className="card py-3 px-4">
                       <div className="flex items-center justify-between mb-2">
@@ -409,20 +460,32 @@ export function UsersPage() {
                         {cat.permissions.map(p => {
                           const has = permSet.has(p);
                           const isAdmin = cat.key === "admin";
+                          const tPerms = roleTemplate ? (ROLE_PERMISSIONS[roleTemplate as SystemRole] || []) : [];
+                          const tSet = new Set(tPerms);
+                          const deviates = roleTemplate ? (has !== tSet.has(p as any)) : false;
                           return (
                             <label key={p}
                               className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
                                 editing ? "cursor-pointer hover:bg-surface-lighter" : "cursor-default"
-                              } ${has ? (isAdmin ? "bg-red-600/10 text-red-300" : "bg-cyber-600/10 text-cyber-300") : "text-gray-500"}`}>
+                              } ${
+                                deviates
+                                  ? "bg-amber-600/10 border border-amber-500/40 text-amber-300"
+                                  : has
+                                    ? (isAdmin ? "bg-red-600/10 text-red-300" : "bg-cyber-600/10 text-cyber-300")
+                                    : "text-gray-500"
+                              }`}>
                               {editing ? (
                                 <input type="checkbox" checked={has} onChange={() => togglePerm(p)}
                                   className="rounded accent-cyber-500" />
                               ) : (
-                                <span className={`w-3 h-3 rounded border flex items-center justify-center ${has ? "border-cyber-400 bg-cyber-500/30" : "border-gray-700"}`}>
-                                  {has && <Check size={8} className="text-cyber-400" />}
+                                <span className={`w-3 h-3 rounded border flex items-center justify-center ${
+                                  deviates ? "border-amber-500 bg-amber-500/30" : has ? "border-cyber-400 bg-cyber-500/30" : "border-gray-700"
+                                }`}>
+                                  {has && <Check size={8} className={deviates ? "text-amber-400" : "text-cyber-400"} />}
                                 </span>
                               )}
                               <span className="truncate">{formatPermLabel(p)}</span>
+                              {deviates && <span className="text-[9px] text-amber-400 ml-auto font-medium">edited</span>}
                             </label>
                           );
                         })}
@@ -430,11 +493,11 @@ export function UsersPage() {
                     </div>
                   ))}
 
-                  {editing && (
+                  {editing && !roleTemplate && (
                     <div className="bg-amber-600/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
                       <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
                       <div className="text-xs text-amber-300">
-                        Changes to permissions take effect at next login. Giving administrative permissions should be done with caution.
+                        Changes to permissions take effect at next login. Giving administrative permissions should be done with caution. Use the role dropdown above to apply a preset.
                       </div>
                     </div>
                   )}

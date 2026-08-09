@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Shield, Edit3, Trash2, Save, X, AlertTriangle, ChevronDown, ChevronRight, Users, CheckSquare, Copy } from "lucide-react";
+import { Plus, Shield, Edit3, Trash2, Save, X, AlertTriangle, ChevronDown, ChevronRight, Users, CheckSquare, Copy, UserPlus, UserMinus, Search } from "lucide-react";
 import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from "@C7NTAX/shared";
 
 interface RoleRow {
@@ -27,6 +27,11 @@ export function RolesPage() {
   const [newRole, setNewRole] = useState({ name: "", systemRole: "technician" });
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set(["tickets", "clients", "admin"]));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showMembers, setShowMembers] = useState(false);
+  const [roleMembers, setRoleMembers] = useState<Array<{id:string;email:string;firstName:string|null;lastName:string|null}>>([]);
+  const [allUsers, setAllUsers] = useState<Array<{id:string;email:string;firstName:string|null;lastName:string|null;roleId:string;role?:{systemRole?:string}}>>([]);
+  const [memberSearch, setMemberSearch] = useState("");
+  const [membersLoading, setMembersLoading] = useState(false);
 
   const fetch = useCallback(async () => {
     try { const r = await api.get("/roles"); setRoles(r.data.data); }
@@ -107,6 +112,53 @@ export function RolesPage() {
     } catch { toast.error("Failed to delete"); }
   };
 
+  // ── Member management ──
+  const openMembers = async () => {
+    if (!selected) return;
+    setShowMembers(true);
+    setMemberSearch("");
+    setMembersLoading(true);
+    try {
+      const [roleRes, usersRes] = await Promise.all([
+        api.get(`/roles/${selected.id}`),
+        api.get("/users?limit=500"),
+      ]);
+      setRoleMembers(roleRes.data.users || []);
+      setAllUsers(usersRes.data.data || []);
+    } catch { toast.error("Failed to load members"); }
+    finally { setMembersLoading(false); }
+  };
+
+  const addUserToRole = async (userId: string) => {
+    try {
+      await api.patch(`/users/${userId}`, { role: selected!.systemRole });
+      toast.success("User assigned to role");
+      // Refresh member list
+      const roleRes = await api.get(`/roles/${selected!.id}`);
+      setRoleMembers(roleRes.data.users || []);
+      fetch();
+    } catch { toast.error("Failed to assign user"); }
+  };
+
+  const removeUserFromRole = async (userId: string) => {
+    // Reassign to "Read Only" or the most basic role
+    try {
+      const roRole = roles.find(r => r.systemRole === "read_only");
+      await api.patch(`/users/${userId}`, { role: roRole?.systemRole || "read_only" });
+      toast.success("User removed from role");
+      const roleRes = await api.get(`/roles/${selected!.id}`);
+      setRoleMembers(roleRes.data.users || []);
+      fetch();
+    } catch { toast.error("Failed to remove user"); }
+  };
+
+  const unassignedUsers = allUsers.filter(u => !roleMembers.some(m => m.id === u.id));
+  const filteredUnassigned = memberSearch
+    ? unassignedUsers.filter(u =>
+        `${u.firstName||""} ${u.lastName||""} ${u.email}`.toLowerCase().includes(memberSearch.toLowerCase())
+      )
+    : unassignedUsers;
+
   const resetToDefaults = () => {
     if (!selected) return;
     const defaults = ROLE_PERMISSIONS[editSystemRole as SystemRole] || [];
@@ -152,7 +204,14 @@ export function RolesPage() {
                       <p className="text-xs text-gray-500 capitalize">{r.systemRole.replace(/_/g, " ")}</p>
                     </div>
                     {r._count?.users !== undefined && (
-                      <span className="text-xs text-gray-600">{r._count.users}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); selectRole(r); setTimeout(openMembers, 50); }}
+                        className="flex items-center gap-1 text-xs font-medium bg-cyber-600/10 text-cyber-400 hover:bg-cyber-600/25 hover:text-cyber-300 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                        title="Manage role members"
+                      >
+                        <Users size={10} />
+                        {r._count.users}
+                      </button>
                     )}
                   </div>
                 </button>
@@ -216,12 +275,17 @@ export function RolesPage() {
                 </div>
               </div>
 
-              {/* User count warning */}
+              {/* User count banner */}
               {selected._count?.users ? (
-                <div className="flex items-center gap-2 text-xs bg-surface-lighter rounded-lg px-3 py-2">
+                <button
+                  onClick={openMembers}
+                  className="flex items-center gap-2 text-xs bg-cyber-600/10 hover:bg-cyber-600/20 rounded-lg px-3 py-2 transition-colors cursor-pointer w-full text-left group"
+                  title="Manage role members"
+                >
                   <Users size={14} className="text-cyber-400" />
-                  <span className="text-gray-400"><span className="text-white">{selected._count.users}</span> user{selected._count.users !== 1 ? "s" : ""} assigned to this role</span>
-                </div>
+                  <span className="text-gray-400"><span className="text-white font-medium">{selected._count.users}</span> user{selected._count.users !== 1 ? "s" : ""} assigned to this role</span>
+                  <span className="ml-auto text-gray-600 group-hover:text-cyber-400 transition-colors">Manage →</span>
+                </button>
               ) : null}
 
               {/* Delete confirmation */}
@@ -359,6 +423,109 @@ export function RolesPage() {
             <div className="flex gap-2 pt-2 border-t border-surface-border">
               <button onClick={handleCreateRole} className="btn-primary text-sm flex-1">Create</button>
               <button onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Members Modal */}
+      {showMembers && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowMembers(false)}>
+          <div className="card w-full max-w-lg mx-4 space-y-4 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Manage Members</h3>
+                <p className="text-xs text-gray-500">Assign users to "{selected.name}"</p>
+              </div>
+              <button onClick={() => setShowMembers(false)} className="text-gray-500 hover:text-white"><X size={18} /></button>
+            </div>
+
+            {membersLoading ? (
+              <div className="text-center py-8 text-gray-500">Loading...</div>
+            ) : (
+              <>
+                {/* Current members */}
+                <div className="space-y-1.5">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Current Members ({roleMembers.length})
+                  </h4>
+                  {roleMembers.length === 0 ? (
+                    <p className="text-xs text-gray-600 py-2">No users assigned to this role</p>
+                  ) : (
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {roleMembers.map(u => (
+                        <div key={u.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-surface-lighter/50">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 rounded-full bg-cyber-600/30 text-cyber-400 flex items-center justify-center text-xs font-bold shrink-0">
+                              {u.firstName?.[0]}{u.lastName?.[0]}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm text-white truncate">{u.firstName} {u.lastName}</p>
+                              <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeUserFromRole(u.id)}
+                            className="text-gray-500 hover:text-red-400 transition-colors p-1 shrink-0"
+                            title="Remove from role"
+                          >
+                            <UserMinus size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Add members */}
+                <div className="space-y-2 border-t border-surface-border pt-3">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Add Members</h4>
+                  <div className="relative">
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                      className="input-field text-sm pl-8"
+                      placeholder="Search users..."
+                      value={memberSearch}
+                      onChange={e => setMemberSearch(e.target.value)}
+                    />
+                  </div>
+                  {filteredUnassigned.length === 0 ? (
+                    <p className="text-xs text-gray-600 py-1">
+                      {memberSearch ? "No matching users found" : "All users are already assigned to this role"}
+                    </p>
+                  ) : (
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {filteredUnassigned.slice(0, 30).map(u => (
+                        <div key={u.id} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-surface-lighter/50 transition-colors">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 rounded-full bg-surface-lighter text-gray-400 flex items-center justify-center text-xs font-bold shrink-0">
+                              {u.firstName?.[0]}{u.lastName?.[0]}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm text-white truncate">{u.firstName} {u.lastName}</p>
+                              <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => addUserToRole(u.id)}
+                            className="text-gray-500 hover:text-cyber-400 transition-colors p-1 shrink-0"
+                            title="Add to role"
+                          >
+                            <UserPlus size={16} />
+                          </button>
+                        </div>
+                      ))}
+                      {filteredUnassigned.length > 30 && (
+                        <p className="text-xs text-gray-600 text-center py-1">Showing 30 of {filteredUnassigned.length} — use search to narrow</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            <div className="flex gap-2 pt-2 border-t border-surface-border shrink-0">
+              <button onClick={() => setShowMembers(false)} className="btn-secondary text-sm flex-1">Close</button>
             </div>
           </div>
         </div>
