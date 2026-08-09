@@ -91,7 +91,9 @@ model Company {
   legalName       String?
   taxId           String?
   phone           String?
+  fax             String?
   email           String?
+  billingEmail    String?
   website         String?
   addressLine1    String?
   addressLine2    String?
@@ -99,10 +101,24 @@ model Company {
   state           String?
   postalCode      String?
   country         String?
+  billingAddressLine1 String?
+  billingAddressLine2 String?
+  billingCity     String?
+  billingState    String?
+  billingPostalCode String?
+  billingCountry  String?
   notes           String?
   isActive        Boolean  @default(true)
   clientId        Int?     @unique
-  clientType      String?  @default("MSP")
+  clientType      String?  @default("Client")
+  companyType     String?  @default("Client") // Client, Prospect, Vendor, Partner
+  industry        String?
+  territory       String?
+  region          String?
+  currency        String?  @default("USD")
+  accountManagerId String?
+  primaryContactId String?
+  serviceLevel    String?  // Standard, Premium, Enterprise
 
   // Portal access
   portalEnabled   Boolean  @default(false)
