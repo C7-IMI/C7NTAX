@@ -53,7 +53,7 @@ export function SettingsPage() {
           </div>
           <div>
             <label className="text-xs text-gray-500 block mb-1">Role</label>
-            <input className="input-field" defaultValue={user?.role} readOnly />
+            <input className="input-field" defaultValue={typeof user?.role === 'object' ? (user?.role as any)?.systemRole?.replace(/_/g, " ") : user?.role} readOnly />
           </div>
         </div>
       </div>
