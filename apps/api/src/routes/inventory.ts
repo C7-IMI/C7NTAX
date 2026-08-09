@@ -30,13 +30,6 @@ inventoryRouter.get("/assets", async (req: AuthRequest, res, next) => {
         skip: Number(offset),
         take: Number(limit),
         orderBy: { createdAt: "desc" },
-        include: {
-          assignments: {
-            include: { assignedTo: { select: { id: true, firstName: true, lastName: true } }, ticket: { select: { id: true, ticketNumber: true } } },
-            where: { checkedInAt: null },
-            take: 1,
-          },
-        },
       }),
       prisma.asset.count({ where }),
     ]);
@@ -49,15 +42,13 @@ inventoryRouter.get("/assets/:id", async (req: AuthRequest, res, next) => {
   try {
     const asset = await prisma.asset.findUnique({
       where: { id: req.params.id },
-      include: {
-        assignments: {
-          include: { assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } }, ticket: { select: { id: true, ticketNumber: true } } },
-          orderBy: { checkedOutAt: "desc" },
-        },
-      },
     });
     if (!asset) throw new AppError("Asset not found", 404);
-    res.json(asset);
+    const assignments = await prisma.assetAssignment.findMany({
+      where: { assetId: req.params.id },
+      orderBy: { checkedOutAt: "desc" },
+    });
+    res.json({ ...asset, assignments });
   } catch (e) { next(e); }
 });
 
