@@ -130,30 +130,6 @@ clientsRouter.delete("/:id", async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
-// ── Get ALL contacts (standalone contacts page) ────────────────────
-clientsRouter.get("/contacts", async (req: AuthRequest, res, next) => {
-  try {
-    const { search, limit = "100", offset = "0" } = req.query as Record<string, string>;
-    const where: Record<string, unknown> = {};
-    if (search) {
-      where.OR = [
-        { firstName: { contains: search } },
-        { lastName: { contains: search } },
-        { email: { contains: search } },
-      ];
-    }
-    const [contacts, total] = await Promise.all([
-      prisma.contact.findMany({
-        where, skip: Number(offset), take: Number(limit),
-        orderBy: { firstName: "asc" },
-        include: { company: { select: { id: true, name: true } } },
-      }),
-      prisma.contact.count({ where }),
-    ]);
-    res.json({ data: contacts, total, limit: Number(limit), offset: Number(offset) });
-  } catch (e) { next(e); }
-});
-
 // ── Get client contacts ──────────────────────────────────────────────
 clientsRouter.get("/:id/contacts", async (req: AuthRequest, res, next) => {
   try {
