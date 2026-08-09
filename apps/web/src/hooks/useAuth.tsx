@@ -92,6 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("c7_bypass");
     setToken(null);
     setUser(null);
+    // Force navigation to login — avoids race conditions with React batched state
+    window.location.replace("/login");
   }, []);
 
   return (
