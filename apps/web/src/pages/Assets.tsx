@@ -1,59 +1,145 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Monitor, Search, Link2, CheckCircle } from "lucide-react";
+import { Plus, Search, Monitor, Server, Laptop, Smartphone, Network, Database, Wrench } from "lucide-react";
 
-interface Asset { id: string; name: string; assetTag: string; type: string; status: string; serialNumber?: string; model?: string; location?: string; }
-const TC: Record<string, string> = { hardware: "bg-blue-600/20 text-blue-400", software: "bg-purple-600/20 text-purple-400", license: "bg-amber-600/20 text-amber-400", server: "bg-green-600/20 text-green-400", laptop: "bg-indigo-600/20 text-indigo-400" };
-const SC: Record<string, string> = { available: "bg-green-600/20 text-green-400", assigned: "bg-cyber-600/20 text-cyber-400", maintenance: "bg-amber-600/20 text-amber-400", retired: "bg-gray-600/20 text-gray-400" };
+interface Asset {
+  id: string; name: string; assetTag: string; type: string; category?: string;
+  status: string; manufacturer?: string; model?: string; serialNumber?: string;
+  location?: string; department?: string; assignedToId?: string;
+  purchasePrice?: number; warrantyExpiry?: string;
+  assignments?: Array<{ assignedTo?: { firstName?: string; lastName?: string } }>;
+}
+
+const TYPE_ICONS: Record<string, typeof Monitor> = {
+  hardware: Monitor, software: Database, license: FileText, server: Server,
+  laptop: Laptop, mobile: Smartphone, network: Network, other: Wrench,
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  hardware: "Hardware", software: "Software", license: "License",
+  server: "Server", laptop: "Laptop", mobile: "Mobile Device",
+  network: "Network Equipment", other: "Other",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  available: "bg-green-600/20 text-green-400", assigned: "bg-cyber-600/20 text-cyber-400",
+  maintenance: "bg-amber-600/20 text-amber-400", retired: "bg-gray-600/20 text-gray-400",
+  lost: "bg-red-600/20 text-red-400",
+};
+
+// Need FileText from lucide
+import { FileText } from "lucide-react";
 
 export function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [showNew, setShowNew] = useState(false);
-  const [form, setForm] = useState({ name: "", assetTag: "", type: "hardware", serialNumber: "", model: "", location: "" });
-  const [showAssign, setShowAssign] = useState<Asset | null>(null);
-  const [assignForm, setAssignForm] = useState({ assignedToId: "", ticketId: "", notes: "" });
-  const [users, setUsers] = useState<Array<{ id: string; firstName: string; lastName: string }>>([]);
+  const [form, setForm] = useState<Record<string, string>>({ name: "", assetTag: "", type: "hardware", serialNumber: "", model: "", manufacturer: "", location: "", department: "", category: "", purchasePrice: "", notes: "" });
 
-  const fetch = () => { api.get("/inventory/assets?limit=200").then(r => setAssets(r.data.data || [])).catch(() => {}).finally(() => setLoading(false)); };
-  useEffect(() => { fetch(); api.get("/users?limit=50").then(r => setUsers(r.data.data || [])).catch(() => {}); }, []);
+  const fetchAssets = () => {
+    let url = "/inventory/assets?limit=200";
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (typeFilter) url += `&type=${typeFilter}`;
+    api.get(url).then(r => setAssets(r.data.data || [])).catch(() => {}).finally(() => setLoading(false));
+  };
 
-  const handleCreate = async (e: React.FormEvent) => { e.preventDefault(); try { await api.post("/inventory/assets", form); toast.success("Created"); setShowNew(false); setForm({ name: "", assetTag: "", type: "hardware", serialNumber: "", model: "", location: "" }); fetch(); } catch { toast.error("Failed"); } };
-  const handleCheckout = async () => { if (!showAssign) return; try { await api.post(`/inventory/assets/${showAssign.id}/checkout`, assignForm); toast.success("Checked out"); setShowAssign(null); fetch(); } catch { toast.error("Failed"); } };
-  const filtered = assets.filter(a => (!search || a.name.toLowerCase().includes(search.toLowerCase()) || a.assetTag.toLowerCase().includes(search.toLowerCase())));
-  const activeCount = assets.filter(a => a.status !== "retired").length;
+  useEffect(() => { fetchAssets(); }, [search, typeFilter]);
 
-  return (<div className="space-y-4 animate-fade-in">
-    <div className="flex items-center justify-between flex-wrap gap-3"><div><h2 className="text-lg font-semibold text-white">Asset Inventory</h2><p className="text-sm text-gray-400">{activeCount} active · {assets.length} total</p></div>
-      <div className="flex items-center gap-2"><button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Asset</button></div></div>
-    <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input className="input-field pl-9" placeholder="Search by name, tag, or serial..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post("/inventory/assets", form);
+      toast.success("Asset created");
+      setShowNew(false);
+      setForm({ name: "", assetTag: "", type: "hardware", serialNumber: "", model: "", manufacturer: "", location: "", department: "", category: "", purchasePrice: "", notes: "" });
+      fetchAssets();
+    } catch { toast.error("Failed"); }
+  };
 
-    {showNew && (<div className="card"><form onSubmit={handleCreate} className="space-y-3">
-      <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">Add Asset</h3><button type="button" onClick={() => setShowNew(false)} className="text-gray-500 hover:text-white">X</button></div>
-      <div className="grid grid-cols-2 gap-3"><input className="input-field" placeholder="Name*" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /><input className="input-field" placeholder="Tag*" value={form.assetTag} onChange={e => setForm({ ...form, assetTag: e.target.value })} required /></div>
-      <div className="grid grid-cols-3 gap-3"><select className="input-field" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>{Object.keys(TC).map(t => <option key={t} value={t}>{t}</option>)}</select><input className="input-field" placeholder="Serial" value={form.serialNumber} onChange={e => setForm({ ...form, serialNumber: e.target.value })} /><input className="input-field" placeholder="Model" value={form.model} onChange={e => setForm({ ...form, model: e.target.value })} /></div>
-      <input className="input-field" placeholder="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
-      <div className="flex gap-2"><button type="submit" className="btn-primary text-sm">Add</button><button type="button" onClick={() => setShowNew(false)} className="btn-secondary text-sm">Cancel</button></div>
-    </form></div>)}
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div><h2 className="text-lg font-semibold text-white">Asset Inventory</h2><p className="text-sm text-gray-400 mt-0.5">Manage hardware, software, and licenses</p></div>
+        <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2 self-start"><Plus size={16} /> Add Asset</button>
+      </div>
 
-    {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : filtered.length === 0 ? <div className="text-center py-12 card"><Monitor size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No assets</p></div> : (
-      <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">Asset</th><th className="p-3">Tag</th><th className="p-3 hidden md:table-cell">Type</th><th className="p-3">Status</th><th className="p-3 hidden lg:table-cell">Location</th><th className="p-3 hidden md:table-cell">Serial</th><th className="p-3 text-right">Actions</th></tr></thead>
-        <tbody>{filtered.map(a => (<tr key={a.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
-          <td className="p-3"><p className="font-medium text-white">{a.name}</p>{a.model && <p className="text-xs text-gray-500">{a.model}</p>}</td>
-          <td className="p-3 text-gray-300 font-mono text-xs">{a.assetTag}</td><td className="p-3 hidden md:table-cell"><span className={`badge text-xs ${TC[a.type] || ""}`}>{a.type}</span></td>
-          <td className="p-3"><span className={`badge text-xs ${SC[a.status] || ""}`}>{a.status}</span></td><td className="p-3 text-gray-400 text-xs hidden lg:table-cell">{a.location || "—"}</td>
-          <td className="p-3 text-gray-500 text-xs font-mono hidden md:table-cell">{a.serialNumber || "—"}</td>
-          <td className="p-3 text-right">{a.status === "available" ? <button onClick={() => setShowAssign(a)} className="text-xs text-cyber-400 hover:text-cyber-300"><Link2 size={13} className="inline mr-1" />Assign</button> : <span className="text-xs text-gray-600">In use</span>}</td>
-        </tr>))}</tbody></table></div></div>)}
+      {/* Filters */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input className="input-field pl-9" placeholder="Search assets..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className="input-field text-sm py-1.5 w-auto" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+          <option value="">All Types</option>
+          {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+      </div>
 
-    {showAssign && (<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAssign(null)}><div className="card w-full max-w-md mx-4 space-y-3" onClick={e => e.stopPropagation()}>
-      <h3 className="text-lg font-semibold text-white">Assign: {showAssign.name}</h3><p className="text-xs text-gray-500">{showAssign.assetTag} · {showAssign.type}</p>
-      <select className="input-field" value={assignForm.assignedToId} onChange={e => setAssignForm({ ...assignForm, assignedToId: e.target.value })} required><option value="">Select user...</option>{users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}</select>
-      <input className="input-field" placeholder="Ticket ID (optional)" value={assignForm.ticketId} onChange={e => setAssignForm({ ...assignForm, ticketId: e.target.value })} />
-      <textarea className="input-field" placeholder="Notes" rows={2} value={assignForm.notes} onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })} />
-      <div className="flex gap-2"><button onClick={handleCheckout} className="btn-primary text-sm"><CheckCircle size={14} className="inline mr-1" />Check Out</button><button onClick={() => setShowAssign(null)} className="btn-secondary text-sm">Cancel</button></div>
-    </div></div>)}
-  </div>);
+      {/* Create modal */}
+      {showNew && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowNew(false)}>
+          <form className="card w-full max-w-xl mx-4 space-y-3 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} onSubmit={handleCreate}>
+            <h3 className="text-lg font-semibold text-white">New Asset</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-xs text-gray-500 block mb-1">Name *</label><input className="input-field" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Asset Tag *</label><input className="input-field" value={form.assetTag} onChange={e => setForm(p => ({ ...p, assetTag: e.target.value }))} required /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Type *</label><select className="input-field" value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))}>{Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Category</label><input className="input-field" value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Serial Number</label><input className="input-field" value={form.serialNumber} onChange={e => setForm(p => ({ ...p, serialNumber: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Model</label><input className="input-field" value={form.model} onChange={e => setForm(p => ({ ...p, model: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Manufacturer</label><input className="input-field" value={form.manufacturer} onChange={e => setForm(p => ({ ...p, manufacturer: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Department</label><input className="input-field" value={form.department} onChange={e => setForm(p => ({ ...p, department: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Location</label><input className="input-field" value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Purchase Price</label><input className="input-field" type="number" value={form.purchasePrice} onChange={e => setForm(p => ({ ...p, purchasePrice: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Notes</label><input className="input-field" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
+            </div>
+            <div className="flex gap-2 justify-end pt-2 border-t border-surface-border">
+              <button type="button" className="btn-secondary" onClick={() => setShowNew(false)}>Cancel</button>
+              <button type="submit" className="btn-primary">Create Asset</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Asset list */}
+      <div className="card overflow-hidden p-0">
+        {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> :
+         assets.length === 0 ? <div className="p-8 text-center text-gray-500">No assets found</div> :
+         <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-surface-border text-left text-gray-400">
+              <th className="px-4 py-3">Asset</th><th className="px-4 py-3 hidden md:table-cell">Tag</th><th className="px-4 py-3 hidden lg:table-cell">Type</th><th className="px-4 py-3 hidden sm:table-cell">Status</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden md:table-cell">Assigned To</th>
+            </tr></thead>
+            <tbody>
+              {assets.map(a => {
+                const Icon = TYPE_ICONS[a.type] || Monitor;
+                return (
+                  <tr key={a.id} className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer" onClick={() => window.location.href = `/assets/${a.id}`}>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 rounded bg-cyber-600/10"><Icon size={16} className="text-cyber-400" /></div>
+                        <div>
+                          <p className="text-white font-medium hover:text-cyber-400">{a.name}</p>
+                          {a.model && <p className="text-xs text-gray-500">{a.manufacturer} {a.model}</p>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell text-gray-300 font-mono text-xs">{a.assetTag}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{TYPE_LABELS[a.type] || a.type}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell"><span className={`badge text-xs ${STATUS_COLORS[a.status] || ""}`}>{a.status}</span></td>
+                    <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{a.location || a.department || "—"}</td>
+                    <td className="px-4 py-3 hidden md:table-cell text-gray-400">{a.assignments?.[0]?.assignedTo ? `${a.assignments[0].assignedTo.firstName} ${a.assignments[0].assignedTo.lastName}` : "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>}
+      </div>
+    </div>
+  );
 }

@@ -751,15 +751,32 @@ model Asset {
   serialNumber    String?
   model           String?
   manufacturer    String?
-  type            String
-  status          String   @default("available")
+  type            String   // hardware, software, license, server, laptop, mobile, network, other
+  category        String?  // workstation, peripheral, infrastructure, cloud, saas
+  status          String   @default("available") // available, assigned, maintenance, retired, lost
+  department      String?
+  vendor          String?
   purchaseDate    DateTime?
   purchasePrice   Float?
+  purchaseOrder   String?
   warrantyExpiry  DateTime?
   location        String?
+  building        String?
+  room            String?
   companyId       String?
+  assignedToId    String?
+  costCenter      String?
+  depreciationMethod String? // straight_line, declining_balance, none
+  usefulLife      Int?     // months
+  salvageValue    Float?
+  ipAddress       String?
+  macAddress      String?
+  osName          String?
+  osVersion       String?
+  installedSoftware Json?  @default("[]")
   notes           String?
   customFields    Json     @default("{}")
+  lastAuditedAt   DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

@@ -7,61 +7,142 @@ import { AppError } from "../middleware/errorHandler";
 export const inventoryRouter = Router();
 inventoryRouter.use(authenticate);
 
-inventoryRouter.get("/assets", requirePermission(Permission.TicketView), async (req: AuthRequest, res, next) => {
+// ── List assets ─────────────────────────────────────────────────────
+inventoryRouter.get("/assets", async (req: AuthRequest, res, next) => {
   try {
-    const { type, status, companyId, search, limit = "50", offset = "0" } = req.query as Record<string, string>;
+    const { type, status, companyId, search, category, limit = "50", offset = "0" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
     if (type) where.type = type;
     if (status) where.status = status;
+    if (category) where.category = category;
     if (companyId) where.companyId = companyId;
-    if (search) where.OR = [{ name: { contains: search } }, { assetTag: { contains: search } }, { serialNumber: { contains: search } }];
-    const [data, total] = await Promise.all([
-      prisma.asset.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" } }),
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { assetTag: { contains: search } },
+        { serialNumber: { contains: search } },
+        { manufacturer: { contains: search } },
+      ];
+    }
+    const [assets, total] = await Promise.all([
+      prisma.asset.findMany({
+        where,
+        skip: Number(offset),
+        take: Number(limit),
+        orderBy: { createdAt: "desc" },
+        include: {
+          assignments: {
+            include: { assignedTo: { select: { id: true, firstName: true, lastName: true } }, ticket: { select: { id: true, ticketNumber: true } } },
+            where: { checkedInAt: null },
+            take: 1,
+          },
+        },
+      }),
       prisma.asset.count({ where }),
     ]);
-    res.json({ data, total });
+    res.json({ data: assets, total, limit: Number(limit), offset: Number(offset) });
   } catch (e) { next(e); }
 });
 
-inventoryRouter.post("/assets", requirePermission(Permission.TicketCreate), async (req: AuthRequest, res, next) => {
+// ── Get single asset ─────────────────────────────────────────────────
+inventoryRouter.get("/assets/:id", async (req: AuthRequest, res, next) => {
   try {
-    const { name, assetTag, type, serialNumber, model, manufacturer, purchaseDate, purchasePrice, warrantyExpiry, location, companyId } = req.body;
-    if (!name || !assetTag || !type) throw new AppError("name, assetTag, and type required");
-    const asset = await prisma.asset.create({ data: { name, assetTag, type, serialNumber: serialNumber || null, model: model || null, manufacturer: manufacturer || null, purchaseDate: purchaseDate ? new Date(purchaseDate) : null, purchasePrice: purchasePrice || null, warrantyExpiry: warrantyExpiry ? new Date(warrantyExpiry) : null, location: location || null, companyId: companyId || null } });
+    const asset = await prisma.asset.findUnique({
+      where: { id: req.params.id },
+      include: {
+        assignments: {
+          include: { assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } }, ticket: { select: { id: true, ticketNumber: true } } },
+          orderBy: { checkedOutAt: "desc" },
+        },
+      },
+    });
+    if (!asset) throw new AppError("Asset not found", 404);
+    res.json(asset);
+  } catch (e) { next(e); }
+});
+
+// ── Create asset ─────────────────────────────────────────────────────
+inventoryRouter.post("/assets", async (req: AuthRequest, res, next) => {
+  try {
+    const { name, assetTag, type } = req.body;
+    if (!name || !assetTag || !type) throw new AppError("name, assetTag, and type are required", 400);
+    const allowed = ["serialNumber", "model", "manufacturer", "category", "department", "vendor",
+      "purchaseDate", "purchasePrice", "purchaseOrder", "warrantyExpiry", "location", "building", "room",
+      "companyId", "assignedToId", "costCenter", "depreciationMethod", "usefulLife", "salvageValue",
+      "ipAddress", "macAddress", "osName", "osVersion", "installedSoftware", "notes", "customFields"];
+    const data: Record<string, unknown> = { name, assetTag, type };
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+    if (req.body.purchaseDate) data.purchaseDate = new Date(req.body.purchaseDate);
+    if (req.body.warrantyExpiry) data.warrantyExpiry = new Date(req.body.warrantyExpiry);
+    const asset = await prisma.asset.create({ data: data as any });
     res.status(201).json(asset);
   } catch (e) { next(e); }
 });
 
-inventoryRouter.patch("/assets/:id", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+// ── Update asset ─────────────────────────────────────────────────────
+inventoryRouter.patch("/assets/:id", async (req: AuthRequest, res, next) => {
   try {
-    const allowed = ["status","location","companyId","notes","warrantyExpiry","purchasePrice"];
-    const updates: Record<string, unknown> = {};
-    for (const k of allowed) if (req.body[k] !== undefined) updates[k] = req.body[k];
-    if (req.body.warrantyExpiry) updates.warrantyExpiry = new Date(req.body.warrantyExpiry);
-    res.json(await prisma.asset.update({ where: { id: req.params.id }, data: updates }));
+    const allowed = ["name", "assetTag", "serialNumber", "model", "manufacturer", "type", "category",
+      "status", "department", "vendor", "purchaseOrder", "location", "building", "room", "companyId",
+      "assignedToId", "costCenter", "depreciationMethod", "usefulLife", "salvageValue",
+      "ipAddress", "macAddress", "osName", "osVersion", "installedSoftware", "notes", "customFields",
+      "purchaseDate", "purchasePrice", "warrantyExpiry"];
+    const data: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+    if (req.body.purchaseDate) data.purchaseDate = new Date(req.body.purchaseDate);
+    if (req.body.warrantyExpiry) data.warrantyExpiry = new Date(req.body.warrantyExpiry);
+    if (req.body.purchasePrice !== undefined) data.purchasePrice = Number(req.body.purchasePrice);
+    if (req.body.usefulLife !== undefined) data.usefulLife = Number(req.body.usefulLife);
+    if (req.body.salvageValue !== undefined) data.salvageValue = Number(req.body.salvageValue);
+    const asset = await prisma.asset.update({ where: { id: req.params.id }, data: data as any });
+    res.json(asset);
   } catch (e) { next(e); }
 });
 
-// Assignments
-inventoryRouter.get("/assets/:id/assignments", requirePermission(Permission.TicketView), async (req: AuthRequest, res, next) => {
+// ── Delete asset ─────────────────────────────────────────────────────
+inventoryRouter.delete("/assets/:id", async (req: AuthRequest, res, next) => {
   try {
-    res.json(await prisma.assetAssignment.findMany({ where: { assetId: req.params.id }, orderBy: { checkedOutAt: "desc" }, include: { assignedTo: { select: { id: true, firstName: true, lastName: true } }, ticket: { select: { id: true, ticketNumber: true } } } }));
+    await prisma.asset.delete({ where: { id: req.params.id } });
+    res.json({ message: "Asset deleted" });
   } catch (e) { next(e); }
 });
 
-inventoryRouter.post("/assets/:id/checkout", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+// ── Checkout / assign asset ──────────────────────────────────────────
+inventoryRouter.post("/assets/:id/checkout", async (req: AuthRequest, res, next) => {
   try {
-    // Set asset to assigned
-    await prisma.asset.update({ where: { id: req.params.id }, data: { status: "assigned" } });
-    const assignment = await prisma.assetAssignment.create({ data: { assetId: req.params.id, assignedToId: req.body.assignedToId || null, ticketId: req.body.ticketId || null, notes: req.body.notes || null } });
-    res.status(201).json(assignment);
+    const { assignedToId, ticketId, notes } = req.body;
+    const asset = await prisma.asset.findUnique({ where: { id: req.params.id } });
+    if (!asset) throw new AppError("Asset not found", 404);
+    if (asset.status === "assigned") throw new AppError("Asset already assigned", 400);
+
+    await prisma.assetAssignment.create({
+      data: { assetId: req.params.id, assignedToId: assignedToId || null, ticketId: ticketId || null, notes },
+    });
+    await prisma.asset.update({
+      where: { id: req.params.id },
+      data: { status: "assigned", assignedToId: assignedToId || null },
+    });
+    res.json({ message: "Asset checked out" });
   } catch (e) { next(e); }
 });
 
-inventoryRouter.post("/assignments/:id/checkin", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+// ── Checkin / return asset ───────────────────────────────────────────
+inventoryRouter.post("/assignments/:id/checkin", async (req: AuthRequest, res, next) => {
   try {
-    const assignment = await prisma.assetAssignment.update({ where: { id: req.params.id }, data: { checkedInAt: new Date() } });
-    await prisma.asset.update({ where: { id: assignment.assetId }, data: { status: "available" } });
-    res.json(assignment);
+    const assignment = await prisma.assetAssignment.findUnique({ where: { id: req.params.id } });
+    if (!assignment) throw new AppError("Assignment not found", 404);
+    await prisma.assetAssignment.update({
+      where: { id: req.params.id },
+      data: { checkedInAt: new Date() },
+    });
+    await prisma.asset.update({
+      where: { id: assignment.assetId },
+      data: { status: "available", assignedToId: null },
+    });
+    res.json({ message: "Asset checked in" });
   } catch (e) { next(e); }
 });

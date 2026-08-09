@@ -15,6 +15,7 @@ import { MFASetupPage } from "./pages/MFASetup";
 import { OpportunitiesPage } from "./pages/Opportunities";
 import { ProjectsPage } from "./pages/Projects";
 import { AssetsPage } from "./pages/Assets";
+import { AssetDetailPage } from "./pages/AssetDetail";
 import { KnowledgeBasePage } from "./pages/KnowledgeBase";
 import { AdministrationPage, AdminLogsPage, AdminServiceBoardsPage } from "./pages/Administration";
 import { SystemSettingsPage } from "./pages/SystemSettings";
@@ -36,6 +37,7 @@ function ProtectedRoutes() {
         <Route path="/boards" element={<BoardsPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/assets/:id" element={<AssetDetailPage />} />
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/procurement" element={<ProcurementPage />} />
         <Route path="/kb" element={<KnowledgeBasePage />} />
