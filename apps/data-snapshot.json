@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-08-09T08:25:42.036Z",
+  "counts": {
+    "user": 6,
+    "company": 5,
+    "contact": 13,
+    "ticket": 8,
+    "serviceBoard": 3,
+    "integration": 0,
+    "asset": 5,
+    "m365User": 0,
+    "m365Group": 0,
+    "m365Subscription": 0,
+    "syncedEntity": 0,
+    "syncLog": 0,
+    "invoice": 4,
+    "serviceAgreement": 5,
+    "project": 3,
+    "opportunity": 3,
+    "knowledgeBaseArticle": 4,
+    "notification": 0,
+    "contract": 0,
+    "procurementOrder": "N/A",
+    "assetAssignment": 0,
+    "ticketComment": 8,
+    "timeEntry": 5,
+    "role": 4
+  }
+}
