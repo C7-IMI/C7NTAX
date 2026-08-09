@@ -28,6 +28,7 @@ import { CustomReportBuilder } from "./pages/CustomReportBuilder";
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+  const [forceContinue, setForceContinue] = useState(false);
 
   // Ensure the loading screen shows for at least 2s so the service status panel is visible
   useEffect(() => {
@@ -35,9 +36,9 @@ function ProtectedRoutes() {
     return () => clearTimeout(t);
   }, []);
 
-  const showLoading = loading || !minTimeElapsed;
+  const showLoading = (loading || !minTimeElapsed) && !forceContinue;
 
-  if (showLoading) return <LoadingScreen allReady={!loading} />;
+  if (showLoading) return <LoadingScreen allReady={!loading} onForceContinue={() => setForceContinue(true)} />;
   if (!user) return <Navigate to="/login" replace />;
   return (
     <Layout>

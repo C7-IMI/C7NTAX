@@ -28,13 +28,22 @@ const HELP_MESSAGES: Record<string, string> = {
 
 // ── Component ───────────────────────────────────────────────────────
 
-export function LoadingScreen({ allReady = false }: { allReady?: boolean }) {
+export function LoadingScreen({ allReady = false, onForceContinue }: { allReady?: boolean; onForceContinue?: () => void }) {
+  const [stuck, setStuck] = useState(false);
   const [services, setServices] = useState<ServiceStatus[]>([
     { name: "Web Server", label: "Frontend", icon: <Globe size={13} />, port: 3010, status: "up", message: "Serving" },
     { name: "API Server", label: "Backend", icon: <Server size={13} />, port: 4000, status: "checking", message: "Checking..." },
     { name: "Database", label: "PostgreSQL", icon: <Database size={13} />, port: 5432, status: "checking", message: "Checking..." },
     { name: "WebSocket", label: "Real-time", icon: <Wifi size={13} />, port: 4000, status: "checking", message: "Checking..." },
   ]);
+
+  useEffect(() => {
+    // If still showing after 5 seconds, offer a force-continue escape
+    if (onForceContinue) {
+      const t = setTimeout(() => setStuck(true), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [onForceContinue]);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,6 +174,19 @@ export function LoadingScreen({ allReady = false }: { allReady?: boolean }) {
               className="text-sm text-cyber-400 hover:text-cyber-300 transition-colors"
             >
               Skip login — go to dashboard
+            </button>
+          </div>
+        )}
+
+        {/* Stuck escape hatch — appears after 5s if the screen hasn't transitioned */}
+        {stuck && onForceContinue && (
+          <div className="text-center mt-4 pt-4 border-t border-surface-border">
+            <p className="text-xs text-gray-500 mb-2">Taking longer than expected?</p>
+            <button
+              onClick={onForceContinue}
+              className="text-sm text-amber-400 hover:text-amber-300 transition-colors font-medium"
+            >
+              Continue anyway →
             </button>
           </div>
         )}
