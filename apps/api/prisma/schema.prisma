@@ -420,6 +420,77 @@ model Integration {
   updatedAt     DateTime @updatedAt
 }
 
+// ─── Microsoft 365 Synced Data ─────────────────────────────────────
+
+model M365User {
+  id              String   @id @default(uuid())
+  integrationId   String
+  azureObjectId   String   @unique
+  userPrincipalName String
+  displayName     String
+  givenName       String?
+  surname         String?
+  mail            String?
+  jobTitle        String?
+  department      String?
+  officeLocation  String?
+  mobilePhone     String?
+  businessPhone   String?
+  usageLocation   String?
+  accountEnabled  Boolean  @default(true)
+  contactId       String?
+  raw             Json     @default("{}")
+  lastSyncedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model M365Group {
+  id              String   @id @default(uuid())
+  integrationId   String
+  azureObjectId   String   @unique
+  displayName     String
+  description     String?
+  mail            String?
+  visibility      String?
+  memberCount     Int      @default(0)
+  raw             Json     @default("{}")
+  lastSyncedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model M365Subscription {
+  id              String   @id @default(uuid())
+  integrationId   String
+  skuId           String
+  skuPartNumber   String
+  displayName     String
+  enabled         Int      @default(0)
+  suspended       Int      @default(0)
+  assigned        Int      @default(0)
+  unit            String   @default("user")
+  raw             Json     @default("{}")
+  lastSyncedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SyncLog {
+  id              String   @id @default(uuid())
+  integrationId   String
+  status          String   @default("running")
+  entityType      String
+  recordsProcessed Int     @default(0)
+  recordsCreated  Int      @default(0)
+  recordsUpdated  Int      @default(0)
+  recordsFailed   Int      @default(0)
+  errorMessage    String?
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+}
+
 // ─── Notifications ──────────────────────────────────────────────────
 
 model Notification {
