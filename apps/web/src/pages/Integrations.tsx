@@ -4,7 +4,8 @@ import toast from "react-hot-toast";
 import {
   Plus, Plug, RefreshCw, Trash2, Key, Settings, Users, Building,
   ShieldCheck, Globe, Server, Cloud, CreditCard, FileText, Database,
-  Wifi, Monitor, AlertTriangle, type LucideIcon,
+  Wifi, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2,
+  type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -50,6 +51,36 @@ const KIND_ICONS: Record<string, LucideIcon> = {
   sentinelone: ShieldCheck, itglue: Database, aws: Cloud,
 };
 
+// ── Credential field help text (module-level) ───────────────────
+
+const CRED_HELP: Record<string, string> = {
+  tenantid: "Your directory tenant ID or domain (e.g., contoso.onmicrosoft.com)",
+  clientid: "Application (client) ID from the app registration",
+  clientsecret: "Client secret value or certificate thumbprint",
+  apikey: "API key or access token from the service provider",
+  apisecret: "API secret or signing key",
+  domain: "Your organization domain (e.g., contoso.com)",
+  username: "Service account email or username",
+  password: "Service account password or app password",
+  instanceurl: "Full URL of your instance (e.g., https://company.halopsa.com)",
+  webhooksecret: "Secret used to validate incoming webhooks",
+  accesstoken: "OAuth access token or personal access token",
+  refreshtoken: "OAuth refresh token for long-lived sessions",
+  subscriptionkey: "Azure subscription key or equivalent",
+  awsaccesskeyid: "AWS IAM access key ID (starts with AKIA)",
+  awssecretaccesskey: "AWS IAM secret access key",
+  region: "AWS region (e.g., us-east-1)",
+};
+
+function getCredHelp(field: string): string | null {
+  const lower = field.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (CRED_HELP[lower]) return CRED_HELP[lower];
+  for (const [key, help] of Object.entries(CRED_HELP)) {
+    if (lower.includes(key) || key.includes(lower)) return help;
+  }
+  return null;
+}
+
 // ── Main Component ──────────────────────────────────────────────────
 
 export function IntegrationsPage() {
@@ -63,6 +94,7 @@ export function IntegrationsPage() {
   const [formName, setFormName] = useState("");
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
   const [showLogs, setShowLogs] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, { status: "testing" | "pass" | "fail"; error?: string; fieldErrors?: Record<string, string> }>>({});
 
   const fetchAll = async () => {
     try {
@@ -117,8 +149,27 @@ export function IntegrationsPage() {
   };
 
   const handleTest = async (id: string) => {
-    try { await api.post(`/integrations/${id}/test`); toast.success("Connected"); fetchAll(); }
-    catch { toast.error("Connection failed"); }
+    setTestResults(p => ({ ...p, [id]: { status: "testing" } }));
+    try {
+      await api.post(`/integrations/${id}/test`);
+      setTestResults(p => ({ ...p, [id]: { status: "pass" } }));
+      fetchAll();
+    } catch (e: any) {
+      const errData = e?.response?.data?.error;
+      const msg = typeof errData === "string" ? errData : errData?.message || "Connection failed";
+      // Parse field-level errors from the response
+      let fieldErrors: Record<string, string> | undefined;
+      if (e?.response?.data?.fieldErrors) {
+        fieldErrors = e.response.data.fieldErrors;
+      } else if (msg.toLowerCase().includes("tenant") || msg.toLowerCase().includes("domain")) {
+        fieldErrors = { tenantId: msg };
+      } else if (msg.toLowerCase().includes("client id") || msg.toLowerCase().includes("app")) {
+        fieldErrors = { clientId: msg };
+      } else if (msg.toLowerCase().includes("secret") || msg.toLowerCase().includes("password")) {
+        fieldErrors = { clientSecret: msg };
+      }
+      setTestResults(p => ({ ...p, [id]: { status: "fail", error: msg, fieldErrors } }));
+    }
   };
 
   const handleSync = async (id: string) => {
@@ -139,22 +190,24 @@ export function IntegrationsPage() {
 
   // ── Render Helpers ────────────────────────────────────────────────
 
-  const statusColor = (s: string) =>
+    const statusColor = (s: string) =>
     s === "connected" ? "text-green-400 bg-green-600/20" :
     s === "error" ? "text-red-400 bg-red-600/20" : "text-gray-400 bg-gray-600/20";
 
   function renderCredField(cred: string) {
     const isSecret = cred.toLowerCase().includes("secret") || cred.toLowerCase().includes("password") || cred.toLowerCase().includes("key");
+    const help = getCredHelp(cred);
     return (
       <div key={cred}>
         <label className="text-xs text-gray-500 block mb-1 capitalize">{cred.replace(/([A-Z])/g, " $1").trim()}</label>
         <input
           className="input-field"
           type={isSecret ? "password" : "text"}
-          placeholder={`Enter ${cred}`}
+          placeholder={help ? help.slice(0, 70) + "…" : `Enter ${cred}`}
           value={credForm[cred] || ""}
           onChange={e => setCredForm(p => ({ ...p, [cred]: e.target.value }))}
         />
+        {help && <p className="text-[10px] text-gray-600 mt-1">{help}</p>}
       </div>
     );
   }
@@ -328,12 +381,53 @@ export function IntegrationsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <button onClick={() => handleTest(int.id)} className="btn-secondary text-xs py-1 px-2"><Plug size={11} /> Test</button>
+                    <button onClick={() => handleTest(int.id)} className="btn-primary text-xs py-1 px-2 flex items-center gap-1">
+                      <Plug size={11} /> Test Connection
+                    </button>
                     <button onClick={() => handleSync(int.id)} className="btn-secondary text-xs py-1 px-2"><RefreshCw size={11} /> Sync</button>
                     <button onClick={() => fetchLogs(int.id)} className="btn-secondary text-xs py-1 px-2">Logs</button>
                     <button onClick={() => handleDelete(int.id)} className="btn-secondary text-xs py-1 px-2 text-red-400 hover:text-red-300"><Trash2 size={11} /></button>
                     {int.lastSyncAt && <span className="text-xs text-gray-600">Last: {new Date(int.lastSyncAt).toLocaleString()}</span>}
                   </div>
+                  {/* Test result inline */}
+                  {testResults[int.id] && (
+                    <div className={`rounded-lg px-3 py-2 text-xs flex items-start gap-2 ${
+                      testResults[int.id]!.status === "testing" ? "bg-cyber-600/10 border border-cyber-500/30" :
+                      testResults[int.id]!.status === "pass" ? "bg-green-600/10 border border-green-500/30" :
+                      "bg-red-600/10 border border-red-500/30"
+                    }`}>
+                      {testResults[int.id]!.status === "testing" ? (
+                        <Loader2 size={14} className="text-cyber-400 animate-spin shrink-0 mt-0.5" />
+                      ) : testResults[int.id]!.status === "pass" ? (
+                        <CheckCircle size={14} className="text-green-400 shrink-0 mt-0.5" />
+                      ) : (
+                        <XCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium ${
+                          testResults[int.id]!.status === "testing" ? "text-cyber-400" :
+                          testResults[int.id]!.status === "pass" ? "text-green-400" : "text-red-400"
+                        }`}>
+                          {testResults[int.id]!.status === "testing" ? "Testing connection..." :
+                           testResults[int.id]!.status === "pass" ? "Connection successful" : "Connection failed"}
+                        </p>
+                        {testResults[int.id]!.status === "fail" && testResults[int.id]!.error && (
+                          <p className="text-red-300 mt-0.5">{testResults[int.id]!.error}</p>
+                        )}
+                        {testResults[int.id]!.status === "fail" && testResults[int.id]!.fieldErrors && (
+                          <div className="mt-1.5 space-y-1">
+                            {Object.entries(testResults[int.id]!.fieldErrors!).map(([field, err]) => (
+                              <div key={field} className="text-red-300 pl-2 border-l-2 border-red-500/50">
+                                <span className="font-mono text-[10px] text-red-400">{field}:</span>{" "}
+                                <span className="text-red-300">{err}</span>
+                                <p className="text-gray-500 mt-0.5">Fix: Verify the {field.replace(/([A-Z])/g, " $1").toLowerCase()} value in your integration settings.</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {showLogs === int.id && (
                     <div className="mt-3 pt-3 border-t border-surface-border">
                       <h4 className="text-xs font-semibold text-gray-500 mb-2">Sync History</h4>
