@@ -15,7 +15,8 @@ export type IntegrationKind =
   | "halopsa"
   | "kantata"
   | "scoro"
-  | "autotask";
+  | "autotask"
+  | "azure_ad_sso";
 
 export interface IntegrationConfig {
   id: string;

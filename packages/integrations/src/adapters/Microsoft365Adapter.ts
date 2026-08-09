@@ -8,6 +8,10 @@ import type { IntegrationConfig, SyncResult } from "../types";
  * syncs users → Contacts, groups, and subscription/license data
  * via the Microsoft Graph v1.0 API.
  * 
+ * For SAML/OIDC single sign-on, see the separate "Azure AD SSO"
+ * integration (azure_ad_sso adapter) which handles federation,
+ * JIT user provisioning, and group-claim-to-role mapping.
+ * 
  * Required credentials object:
  *   tenantId, clientId, clientSecret, accessToken (optional if using refresh)
  * 

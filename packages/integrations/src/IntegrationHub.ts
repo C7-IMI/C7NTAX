@@ -17,6 +17,7 @@ import { HaloPSAAdapter } from "./adapters/HaloPSAAdapter";
 import { KantataAdapter } from "./adapters/KantataAdapter";
 import { ScoroAdapter } from "./adapters/ScoroAdapter";
 import { AutoTaskAdapter } from "./adapters/AutoTaskAdapter";
+import { AzureADSSOAdapter } from "./adapters/AzureADSSOAdapter";
 
 /**
  * IntegrationHub — central registry for all third-party integrations.
@@ -44,6 +45,7 @@ export class IntegrationHub {
     this.registerAdapter(new KantataAdapter());
     this.registerAdapter(new ScoroAdapter());
     this.registerAdapter(new AutoTaskAdapter());
+    this.registerAdapter(new AzureADSSOAdapter());
   }
 
   /** Register a new adapter (built-in or plugin-provided) */
