@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import api from "../api";
 
 // ── Temporary auth bypass — set to false to re-enable login ──
-const TEMP_BYPASS_AUTH = true;
+const TEMP_BYPASS_AUTH = false;
 
 interface User {
   id: string;
