@@ -13,3 +13,8 @@ export { ITGlueAdapter } from "./adapters/ITGlueAdapter";
 export { Microsoft365Adapter } from "./adapters/Microsoft365Adapter";
 export { AzureAdapter } from "./adapters/AzureAdapter";
 export { AwsAdapter } from "./adapters/AwsAdapter";
+export { ConnectWiseAdapter } from "./adapters/ConnectWiseAdapter";
+export { HaloPSAAdapter } from "./adapters/HaloPSAAdapter";
+export { KantataAdapter } from "./adapters/KantataAdapter";
+export { ScoroAdapter } from "./adapters/ScoroAdapter";
+export { AutoTaskAdapter } from "./adapters/AutoTaskAdapter";

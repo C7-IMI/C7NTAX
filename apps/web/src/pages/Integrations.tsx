@@ -18,6 +18,8 @@ const KIND_LABELS: Record<string, string> = {
   flexpoint: "Flexpoint Payments", quickbooks: "QuickBooks Online", pax8: "Pax8",
   avanan: "Avanan", proofpoint: "Proofpoint", sentinelone: "SentinelOne",
   itglue: "ITGlue", microsoft365: "Microsoft 365", azure: "Azure", aws: "AWS",
+  connectwise: "ConnectWise PSA", halopsa: "HaloPSA",
+  kantata: "Kantata", scoro: "Scoro", autotask: "AutoTask PSA",
 };
 
 const M365_SCOPES = [

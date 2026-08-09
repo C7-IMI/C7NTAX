@@ -10,7 +10,12 @@ export type IntegrationKind =
   | "itglue"
   | "microsoft365"
   | "azure"
-  | "aws";
+  | "aws"
+  | "connectwise"
+  | "halopsa"
+  | "kantata"
+  | "scoro"
+  | "autotask";
 
 export interface IntegrationConfig {
   id: string;

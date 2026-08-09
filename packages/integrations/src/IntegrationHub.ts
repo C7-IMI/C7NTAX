@@ -12,6 +12,11 @@ import { ITGlueAdapter } from "./adapters/ITGlueAdapter";
 import { Microsoft365Adapter } from "./adapters/Microsoft365Adapter";
 import { AzureAdapter } from "./adapters/AzureAdapter";
 import { AwsAdapter } from "./adapters/AwsAdapter";
+import { ConnectWiseAdapter } from "./adapters/ConnectWiseAdapter";
+import { HaloPSAAdapter } from "./adapters/HaloPSAAdapter";
+import { KantataAdapter } from "./adapters/KantataAdapter";
+import { ScoroAdapter } from "./adapters/ScoroAdapter";
+import { AutoTaskAdapter } from "./adapters/AutoTaskAdapter";
 
 /**
  * IntegrationHub — central registry for all third-party integrations.
@@ -34,6 +39,11 @@ export class IntegrationHub {
     this.registerAdapter(new Microsoft365Adapter());
     this.registerAdapter(new AzureAdapter());
     this.registerAdapter(new AwsAdapter());
+    this.registerAdapter(new ConnectWiseAdapter());
+    this.registerAdapter(new HaloPSAAdapter());
+    this.registerAdapter(new KantataAdapter());
+    this.registerAdapter(new ScoroAdapter());
+    this.registerAdapter(new AutoTaskAdapter());
   }
 
   /** Register a new adapter (built-in or plugin-provided) */
