@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (res.data.token) {
               localStorage.setItem("c7_token", res.data.token);
               setToken(res.data.token);
-              setUser(res.data.user);
+              if (res.data.user) setUser(res.data.user);
             } else {
               setUser({ id: "bypass", email: "bypass@local", firstName: "Guest", lastName: "User", role: "admin" });
             }
@@ -62,7 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .finally(() => setLoading(false));
         return;
       }
-      setUser({ id: "bypass", email: "bypass@local", firstName: "Guest", lastName: "User", role: "admin" });
+      // Token already exists — don't overwrite the user
+      if (!user) {
+        setUser({ id: "bypass", email: "bypass@local", firstName: "Guest", lastName: "User", role: "admin" });
+      }
       setLoading(false);
       return;
     }
