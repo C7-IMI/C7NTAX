@@ -137,3 +137,33 @@ inventoryRouter.post("/assignments/:id/checkin", async (req: AuthRequest, res, n
     res.json({ message: "Asset checked in" });
   } catch (e) { next(e); }
 });
+
+// ── Import assets from CSV ──────────────────────────────────────────
+const ASSET_FIELDS = ["name", "assetTag", "type", "category", "status", "serialNumber", "model", "manufacturer", "department", "vendor", "location", "building", "room", "purchaseDate", "purchasePrice", "purchaseOrder", "warrantyExpiry", "costCenter", "depreciationMethod", "usefulLife", "salvageValue", "ipAddress", "macAddress", "osName", "osVersion", "notes"];
+
+inventoryRouter.post("/assets/import", async (req: AuthRequest, res, next) => {
+  try {
+    const { rows } = req.body;
+    if (!Array.isArray(rows) || rows.length === 0) throw new AppError("No data rows provided", 400);
+    const errors: Array<{ line: number; message: string }> = [];
+    const imported: string[] = [];
+    const requiredFields = ["name", "assetTag", "type"];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const line = i + 2;
+      const invalidFields = Object.keys(row).filter(k => !ASSET_FIELDS.includes(k));
+      if (invalidFields.length > 0) { errors.push({ line, message: `Unknown field(s): ${invalidFields.join(", ")}` }); continue; }
+      const missing = requiredFields.filter(f => !row[f]);
+      if (missing.length > 0) { errors.push({ line, message: `Missing required fields: ${missing.join(", ")}` }); continue; }
+      const data: Record<string, unknown> = {};
+      for (const f of ASSET_FIELDS) { if (row[f] !== undefined && row[f] !== "") data[f] = row[f]; }
+      if (row.purchaseDate) data.purchaseDate = new Date(row.purchaseDate);
+      if (row.warrantyExpiry) data.warrantyExpiry = new Date(row.warrantyExpiry);
+      try {
+        await prisma.asset.upsert({ where: { assetTag: row.assetTag }, create: data as any, update: data as any });
+        imported.push(row.assetTag);
+      } catch (e: any) { errors.push({ line, message: `DB error: ${e.message?.slice(0, 100)}` }); }
+    }
+    res.json({ success: errors.length === 0 || imported.length > 0, imported, errors, total: rows.length });
+  } catch (e) { next(e); }
+});
