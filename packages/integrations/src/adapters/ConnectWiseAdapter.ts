@@ -11,7 +11,7 @@ export class ConnectWiseAdapter implements IIntegrationAdapter {
 
   private authHeaders(cfg: IntegrationConfig): Record<string, string> {
     const { companyId, publicKey, privateKey, clientId } = cfg.credentials;
-    const auth = Buffer.from(`${companyId}+${publicKey}:${privateKey}`).toString("base64");
+    const auth = btoa(`${companyId}+${publicKey}:${privateKey}`);
     return {
       Authorization: `Basic ${auth}`,
       clientId: clientId || "",
