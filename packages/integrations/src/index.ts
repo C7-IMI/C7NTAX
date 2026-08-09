@@ -18,3 +18,4 @@ export { HaloPSAAdapter } from "./adapters/HaloPSAAdapter";
 export { KantataAdapter } from "./adapters/KantataAdapter";
 export { ScoroAdapter } from "./adapters/ScoroAdapter";
 export { AutoTaskAdapter } from "./adapters/AutoTaskAdapter";
+export { AzureADSSOAdapter } from "./adapters/AzureADSSOAdapter";
