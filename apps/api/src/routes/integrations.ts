@@ -369,6 +369,36 @@ integrationsRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
   } catch (e) { next(e); }
 });
 
+// ── Get synced data for any integration ────────────────────────────────────
+integrationsRouter.get("/:id/synced-entities", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
+  try {
+    const { entityType, limit = "100", offset = "0" } = req.query as Record<string, string>;
+    const where: Record<string, unknown> = { integrationId: req.params.id };
+    if (entityType) where.entityType = entityType;
+    const [items, total] = await Promise.all([
+      prisma.syncedEntity.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { lastSyncedAt: "desc" } }),
+      prisma.syncedEntity.count({ where }),
+    ]);
+    res.json({ data: items, total, limit: Number(limit), offset: Number(offset) });
+  } catch (e) { next(e); }
+});
+
+// ── Get entity types available for an integration ─────────────────────────
+integrationsRouter.get("/:id/entity-types", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
+  try {
+    const types = await prisma.syncedEntity.findMany({
+      where: { integrationId: req.params.id },
+      distinct: ["entityType"],
+      select: { entityType: true },
+    });
+    const counts = await Promise.all(types.map(async t => ({
+      entityType: t.entityType,
+      count: await prisma.syncedEntity.count({ where: { integrationId: req.params.id, entityType: t.entityType } }),
+    })));
+    res.json({ data: counts });
+  } catch (e) { next(e); }
+});
+
 // ── Get M365 synced data ──────────────────────────────────────────────────
 integrationsRouter.get("/:id/m365/users", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
