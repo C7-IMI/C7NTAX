@@ -84,7 +84,7 @@ export function LoginPage() {
           <button className="btn-primary w-full" type="submit" disabled={loading}>
             {loading ? "Signing in..." : "Sign In"}
           </button>
-          <button type="button" onClick={() => { localStorage.setItem("c7_bypass", "1"); navigate("/"); }} className="w-full text-center text-sm text-cyber-400 hover:text-cyber-300 transition-colors py-2">
+          <button type="button" onClick={() => { localStorage.setItem("c7_bypass", "1"); window.location.href = "/"; }} className="w-full text-center text-sm text-cyber-400 hover:text-cyber-300 transition-colors py-2">
             Skip login — go to dashboard
           </button>
         </form>
