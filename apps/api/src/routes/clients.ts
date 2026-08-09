@@ -7,68 +7,54 @@ import { AppError } from "../middleware/errorHandler";
 export const clientsRouter = Router();
 clientsRouter.use(authenticate);
 
-// ── List clients (companies) ──
-clientsRouter.get("/", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
+// ── List companies / clients ────────────────────────────────────────
+clientsRouter.get("/", async (req: AuthRequest, res, next) => {
   try {
+    const { search, status, type, industry, territory, limit = "50", offset = "0", sort = "name" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
-    const { search, limit = "50", offset = "0" } = req.query as Record<string, string>;
+    if (status === "active") where.isActive = true;
+    if (status === "inactive") where.isActive = false;
+    if (type) where.companyType = type;
+    if (industry) where.industry = industry;
+    if (territory) where.territory = territory;
     if (search) {
       where.OR = [
         { name: { contains: search } },
+        { legalName: { contains: search } },
         { email: { contains: search } },
+        { city: { contains: search } },
+        { phone: { contains: search } },
       ];
     }
+    const orderField = ["name","createdAt","city","state","industry"].includes(sort) ? sort : "name";
     const [companies, total] = await Promise.all([
       prisma.company.findMany({
         where,
         skip: Number(offset),
         take: Number(limit),
-        orderBy: { name: "asc" },
+        orderBy: { [orderField]: "asc" },
         include: {
-          _count: { select: { users: true, tickets: true, invoices: true } },
+          _count: { select: { contacts: true, tickets: true, serviceAgreements: true } },
+          contacts: { where: { isPrimary: true }, take: 1, select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
         },
       }),
       prisma.company.count({ where }),
     ]);
-    res.json({ data: companies, total });
+    res.json({ data: companies, total, limit: Number(limit), offset: Number(offset) });
   } catch (e) { next(e); }
 });
 
-// ── List all contacts across clients ──
-clientsRouter.get("/contacts", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
-  try {
-    const { companyId, limit = "500", offset = "0" } = req.query as Record<string, string>;
-    const where: Record<string, unknown> = {};
-    if (companyId) where.companyId = companyId;
-    const [data, total] = await Promise.all([
-      prisma.contact.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { lastName: "asc" }, include: { company: { select: { id: true, name: true } } } }),
-      prisma.contact.count({ where }),
-    ]);
-    res.json({ data, total });
-  } catch (e) { next(e); }
-});
-
-// ── Update contact ──
-clientsRouter.patch("/contacts/:id", requirePermission(Permission.ClientEdit), async (req: AuthRequest, res, next) => {
-  try {
-    const allowed = ["firstName","lastName","email","phone","mobile","title","department","notes","isPrimary","isActive"];
-    const updates: Record<string, unknown> = {};
-    for (const key of allowed) if (req.body[key] !== undefined) updates[key] = req.body[key];
-    if (req.body.companyId) updates.companyId = req.body.companyId;
-    const contact = await prisma.contact.update({ where: { id: req.params.id }, data: updates, include: { company: { select: { id: true, name: true } } } });
-    res.json(contact);
-  } catch (e) { next(e); }
-});
-
-// ── Get single client ──
-clientsRouter.get("/:id", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
+// ── Get single client ────────────────────────────────────────────────
+clientsRouter.get("/:id", async (req: AuthRequest, res, next) => {
   try {
     const company = await prisma.company.findUnique({
       where: { id: req.params.id },
       include: {
-        users: { select: { id: true, email: true, firstName: true, lastName: true, roleId: true, isActive: true } },
-        serviceAgreements: true,
-        _count: { select: { tickets: true, invoices: true } },
+        contacts: { orderBy: { isPrimary: "desc" } },
+        tickets: { take: 10, orderBy: { createdAt: "desc" }, include: { assignedTo: { select: { firstName: true, lastName: true } } } },
+        serviceAgreements: { take: 10, orderBy: { createdAt: "desc" } },
+        invoices: { take: 10, orderBy: { createdAt: "desc" } },
+        _count: { select: { contacts: true, tickets: true, serviceAgreements: true, invoices: true } },
       },
     });
     if (!company) throw new AppError("Client not found", 404);
@@ -76,33 +62,57 @@ clientsRouter.get("/:id", requirePermission(Permission.ClientView), async (req: 
   } catch (e) { next(e); }
 });
 
-// ── Create client ──
-clientsRouter.post("/", requirePermission(Permission.ClientCreate), async (req: AuthRequest, res, next) => {
+// ── Create client ────────────────────────────────────────────────────
+clientsRouter.post("/", async (req: AuthRequest, res, next) => {
   try {
-    const { name, email, phone, address, city, state, zip, country, website, notes } = req.body;
-    if (!name) throw new AppError("Company name is required");
-    const company = await prisma.company.create({
-      data: { name, email: email || null, phone: phone || null, address: address || null, city: city || null, state: state || null, zip: zip || null, country: country || "US", website: website || null, notes: notes || null },
-    });
+    const { name } = req.body;
+    if (!name) throw new AppError("name is required", 400);
+    const allowed = ["legalName","taxId","phone","fax","email","billingEmail","website",
+      "addressLine1","addressLine2","city","state","postalCode","country",
+      "billingAddressLine1","billingAddressLine2","billingCity","billingState","billingPostalCode","billingCountry",
+      "notes","isActive","clientType","companyType","industry","territory","region","currency",
+      "accountManagerId","primaryContactId","serviceLevel","portalEnabled"];
+    const data: Record<string, unknown> = { name };
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+    const company = await prisma.company.create({ data: data as any });
     res.status(201).json(company);
   } catch (e) { next(e); }
 });
 
-// ── Update client ──
-clientsRouter.patch("/:id", requirePermission(Permission.ClientEdit), async (req: AuthRequest, res, next) => {
+// ── Update client ────────────────────────────────────────────────────
+clientsRouter.patch("/:id", async (req: AuthRequest, res, next) => {
   try {
-    const allowed = ["name", "email", "phone", "address", "city", "state", "zip", "country", "website", "notes"];
-    const updates: Record<string, unknown> = {};
-    for (const key of allowed) if (req.body[key] !== undefined) updates[key] = req.body[key];
-    const company = await prisma.company.update({ where: { id: req.params.id }, data: updates });
+    const allowed = ["name","legalName","taxId","phone","fax","email","billingEmail","website",
+      "addressLine1","addressLine2","city","state","postalCode","country",
+      "billingAddressLine1","billingAddressLine2","billingCity","billingState","billingPostalCode","billingCountry",
+      "notes","isActive","clientType","companyType","industry","territory","region","currency",
+      "accountManagerId","primaryContactId","serviceLevel","portalEnabled"];
+    const data: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+    const company = await prisma.company.update({ where: { id: req.params.id }, data: data as any });
     res.json(company);
   } catch (e) { next(e); }
 });
 
-// ── Delete client ──
-clientsRouter.delete("/:id", requirePermission(Permission.ClientDelete), async (req: AuthRequest, res, next) => {
+// ── Delete client ────────────────────────────────────────────────────
+clientsRouter.delete("/:id", async (req: AuthRequest, res, next) => {
   try {
-    await prisma.company.update({ where: { id: req.params.id }, data: { status: "inactive" } });
-    res.json({ message: "Client deactivated" });
+    await prisma.company.delete({ where: { id: req.params.id } });
+    res.json({ message: "Client deleted" });
+  } catch (e) { next(e); }
+});
+
+// ── Get client contacts ──────────────────────────────────────────────
+clientsRouter.get("/:id/contacts", async (req: AuthRequest, res, next) => {
+  try {
+    const contacts = await prisma.contact.findMany({
+      where: { companyId: req.params.id },
+      orderBy: { isPrimary: "desc" },
+    });
+    res.json({ data: contacts });
   } catch (e) { next(e); }
 });
