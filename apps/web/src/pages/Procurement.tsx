@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
+import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, ShoppingCart, Truck, CheckCircle, X, Building } from "lucide-react";
 
 interface PO{id:string;poNumber:string;vendorId:string;status:string;total:number;expectedAt?:string;createdAt:string;vendor?:{name:string};}

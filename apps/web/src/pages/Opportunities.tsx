@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
+import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, Target, TrendingUp, DollarSign, ChevronRight, ArrowRight, Building2 } from "lucide-react";
 
 const STAGES: Record<string,string>={prospect:"bg-blue-600/20 text-blue-400",qualified:"bg-cyber-600/20 text-cyber-400",proposal:"bg-amber-600/20 text-amber-400",negotiation:"bg-purple-600/20 text-purple-400",won:"bg-green-600/20 text-green-400",lost:"bg-red-600/20 text-red-400"};

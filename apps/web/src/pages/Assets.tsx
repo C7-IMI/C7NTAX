@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
+import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, Search, Monitor, Server, Laptop, Smartphone, Network, Database, Wrench, FileText, Upload, Download, AlertTriangle, CheckCircle, XCircle, ArrowUpDown, Wifi } from "lucide-react";
 
 interface Asset {
