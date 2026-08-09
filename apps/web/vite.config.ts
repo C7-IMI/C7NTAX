@@ -16,6 +16,7 @@ export default defineConfig({
   },
   server: {
     port: WEB_PORT,
+    strictPort: true,
     proxy: {
       "/api": API_ORIGIN,
       "/ws": { target: API_ORIGIN.replace("http", "ws"), ws: true },
