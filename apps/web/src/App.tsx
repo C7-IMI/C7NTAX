@@ -31,14 +31,19 @@ function ProtectedRoutes() {
   const [forceContinue, setForceContinue] = useState(false);
 
   // Ensure the loading screen shows for at least 2s so the service status panel is visible
+  // Skip the timer if a bypass token is already set
   useEffect(() => {
+    if (localStorage.getItem("c7_bypass") === "1") {
+      setMinTimeElapsed(true);
+      return;
+    }
     const t = setTimeout(() => setMinTimeElapsed(true), 2000);
     return () => clearTimeout(t);
   }, []);
 
   const showLoading = (loading || !minTimeElapsed) && !forceContinue;
 
-  if (showLoading) return <LoadingScreen allReady={!loading} onForceContinue={() => setForceContinue(true)} />;
+  if (showLoading) return <LoadingScreen allReady={!loading} onForceContinue={() => { localStorage.setItem("c7_bypass", "1"); setForceContinue(true); }} />;
   if (!user) return <Navigate to="/login" replace />;
   return (
     <Layout>

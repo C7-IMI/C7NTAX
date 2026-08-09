@@ -183,7 +183,7 @@ export function LoadingScreen({ allReady = false, onForceContinue }: { allReady?
           <div className="text-center mt-4 pt-4 border-t border-surface-border">
             <p className="text-xs text-gray-500 mb-2">Taking longer than expected?</p>
             <button
-              onClick={onForceContinue}
+              onClick={() => { localStorage.setItem("c7_bypass", "1"); window.location.href = "/"; }}
               className="text-sm text-amber-400 hover:text-amber-300 transition-colors font-medium"
             >
               Continue anyway →
