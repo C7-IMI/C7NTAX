@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import {
-  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Plug, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown,
+  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Plug, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   type LucideIcon,
 } from "lucide-react";
