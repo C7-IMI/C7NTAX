@@ -4,6 +4,7 @@ import api from "../api";
 import { InferencePanel } from "../components/InferencePanel";
 import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, Filter } from "lucide-react";
 import toast from "react-hot-toast";
+import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
@@ -22,6 +23,7 @@ export function TicketsPage() {
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState({ title:"", description:"", priority:"medium", boardId:"", companyId:"", contactId:"", contactName:"", contactEmail:"", startTime:"", endTime:"", status:"new" });
+  const [sort, setSort] = useState<SortState | null>(null);
   const [boards, setBoards] = useState<Array<{id:string;name:string}>>([]);
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
   const [contacts, setContacts] = useState<Array<{id:string;firstName:string;lastName:string;email:string}>>([]);
@@ -116,8 +118,8 @@ export function TicketsPage() {
       <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/><input className="input-field pl-9" placeholder="Search tickets..."/></div>
       <div className="card overflow-hidden p-0">
         {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
-          <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-surface-border text-left text-gray-400"><th className="px-4 py-3 w-36">Ticket #</th><th className="px-4 py-3 hidden md:table-cell">Status</th><th className="px-4 py-3 hidden lg:table-cell">Board</th><th className="px-4 py-3 hidden lg:table-cell">Client</th><th className="px-4 py-3 hidden sm:table-cell">Updated</th></tr></thead>
-            <tbody>{(tickets as Array<Record<string,unknown>>).map(t=>(<tr key={t.id as string} className="border-b border-surface-border/50 hover:bg-surface-light/50"><td className="px-4 py-3"><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium">{t.ticketNumber as string}</Link><p className="text-gray-500 text-xs mt-0.5 truncate max-w-xs">{(t.title as string)?.slice(0,60)}</p></td><td className="px-4 py-3 hidden md:table-cell"><span className={`badge ${STATUS_COLORS[t.status as string]||""}`}>{(t.status as string)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5">OVERDUE</span> : null}</td><td className="px-4 py-3 hidden lg:table-cell text-gray-400 text-xs">{(t.board as {name?:string})?.name||"—"}</td><td className="px-4 py-3 hidden lg:table-cell text-gray-400">{(t.company as {name?:string})?.name||"—"}</td><td className="px-4 py-3 hidden sm:table-cell text-gray-500 text-xs">{t.updatedAt?new Date(t.updatedAt as string).toLocaleDateString():"—"}</td></tr>))}</tbody></table></div>)}
+          <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400"><SortableHeader field="ticketNumber" label="Ticket #" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 w-36" /><SortableHeader field="status" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden md:table-cell" /><SortableHeader field="board.name" label="Board" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" /><SortableHeader field="company.name" label="Client" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" /><SortableHeader field="updatedAt" label="Updated" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden sm:table-cell" /></tr></thead>
+            <tbody>{sortData(tickets as Array<Record<string,unknown>>, sort?.field || "updatedAt", sort?.direction || "desc").map(t=>(<tr key={t.id as string} className="border-b border-surface-border/50 hover:bg-surface-light/50"><td className="px-4 py-3"><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium">{t.ticketNumber as string}</Link><p className="text-gray-500 text-xs mt-0.5 truncate max-w-xs">{(t.title as string)?.slice(0,60)}</p></td><td className="px-4 py-3 hidden md:table-cell"><span className={`badge ${STATUS_COLORS[t.status as string]||""}`}>{(t.status as string)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5">OVERDUE</span> : null}</td><td className="px-4 py-3 hidden lg:table-cell text-gray-400 text-xs">{(t.board as {name?:string})?.name||"—"}</td><td className="px-4 py-3 hidden lg:table-cell text-gray-400">{(t.company as {name?:string})?.name||"—"}</td><td className="px-4 py-3 hidden sm:table-cell text-gray-500 text-xs">{t.updatedAt?new Date(t.updatedAt as string).toLocaleDateString():"—"}</td></tr>))}</tbody></table></div>)}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
+import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Save, X, ChevronLeft, Building2, Users, FileText, DollarSign, Ticket, ClipboardList, Clock, Mail, Phone, Globe, MapPin, Badge, Briefcase } from "lucide-react";
 
 const TYPE_OPTIONS = ["Client", "Prospect", "Vendor", "Partner"];
@@ -16,6 +17,7 @@ export function ClientDetailPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
+  const [sort, setSort] = useState<SortState | null>(null);
   const navigate = useNavigate();
 
   const load = async () => {
@@ -162,7 +164,7 @@ export function ClientDetailPage() {
       {tab === "contacts" && (
         <div className="card overflow-hidden p-0">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-surface-border text-left text-gray-400"><th className="px-4 py-3">Name</th><th className="px-4 py-3 hidden md:table-cell">Email</th><th className="px-4 py-3 hidden sm:table-cell">Phone</th><th className="px-4 py-3">Title</th><th className="px-4 py-3 w-20">Primary</th></tr></thead>
+            <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400"><SortableHeader field="firstName" label="Name" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3 hidden md:table-cell">Email</th><th className="px-4 py-3 hidden sm:table-cell">Phone</th><th className="px-4 py-3">Title</th><th className="px-4 py-3 w-20">Primary</th></tr></thead>
             <tbody>
               {(client.contacts || []).map((c: any) => (
                 <tr key={c.id} className="border-b border-surface-border/50 hover:bg-surface-light/50">
@@ -182,7 +184,7 @@ export function ClientDetailPage() {
       {tab === "agreements" && (
         <div className="card overflow-hidden p-0">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-surface-border text-left text-gray-400"><th className="px-4 py-3">Name</th><th className="px-4 py-3">Period</th><th className="px-4 py-3">Amount</th><th className="px-4 py-3 hidden sm:table-cell">Status</th></tr></thead>
+            <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400"><SortableHeader field="firstName" label="Name" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3">Period</th><th className="px-4 py-3">Amount</th><th className="px-4 py-3 hidden sm:table-cell">Status</th></tr></thead>
             <tbody>
               {(client.serviceAgreements || []).map((a: any) => (
                 <tr key={a.id} className="border-b border-surface-border/50">
@@ -201,7 +203,7 @@ export function ClientDetailPage() {
       {tab === "tickets" && (
         <div className="card overflow-hidden p-0">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-surface-border text-left text-gray-400"><th className="px-4 py-3">#</th><th className="px-4 py-3">Title</th><th className="px-4 py-3 hidden md:table-cell">Status</th><th className="px-4 py-3 hidden sm:table-cell">Assigned</th></tr></thead>
+            <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400"><SortableHeader field="ticketNumber" label="#" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><SortableHeader field="title" label="Title" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3 hidden md:table-cell">Status</th><th className="px-4 py-3 hidden sm:table-cell">Assigned</th></tr></thead>
             <tbody>
               {(client.tickets || []).map((t: any) => (
                 <tr key={t.id} className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer" onClick={() => navigate(`/tickets/${t.id}`)}>
@@ -220,7 +222,7 @@ export function ClientDetailPage() {
       {tab === "invoices" && (
         <div className="card overflow-hidden p-0">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-surface-border text-left text-gray-400"><th className="px-4 py-3">#</th><th className="px-4 py-3">Date</th><th className="px-4 py-3">Due</th><th className="px-4 py-3">Amount</th><th className="px-4 py-3 hidden sm:table-cell">Status</th></tr></thead>
+            <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400"><SortableHeader field="invoiceNumber" label="#" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><SortableHeader field="issueDate" label="Date" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3">Due</th><th className="px-4 py-3">Amount</th><th className="px-4 py-3 hidden sm:table-cell">Status</th></tr></thead>
             <tbody>
               {(client.invoices || []).map((inv: any) => (
                 <tr key={inv.id} className="border-b border-surface-border/50">

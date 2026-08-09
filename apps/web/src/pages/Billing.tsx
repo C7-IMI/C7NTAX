@@ -7,6 +7,7 @@ import {
   XCircle, RotateCw, ClipboardList, BarChart3, Timer, Filter,
   type LucideIcon,
 } from "lucide-react";
+import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 
 // Types
 interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; }
@@ -96,6 +97,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
   const [payForm, setPayForm] = useState({ invoiceId: "", amount: 0, method: "other", reference: "" });
   const [showPay, setShowPay] = useState(false);
+  const [sort, setSort] = useState<SortState | null>(null);
 
   const fetchInvoices = () => {
     let url = "/billing/invoices?limit=100";
@@ -159,8 +161,8 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
         <div className="text-center py-12 card"><Receipt size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No invoices</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
-          <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase tracking-wider"><th className="p-3">Invoice</th><th className="p-3 hidden sm:table-cell">Client</th><th className="p-3">Amount</th><th className="p-3 hidden md:table-cell">Issued</th><th className="p-3 hidden md:table-cell">Due</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th></tr></thead>
-          <tbody>{invoices.map(inv => (
+          <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase tracking-wider"><SortableHeader field="invoiceNumber" label="Invoice" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="company.name" label="Client" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden sm:table-cell" /><SortableHeader field="total" label="Amount" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="issueDate" label="Issued" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="dueDate" label="Due" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="status" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><th className="p-3 text-right">Actions</th></tr></thead>
+          <tbody>{sortData(invoices, sort?.field || "dueDate", sort?.direction || "desc").map(inv => (
             <tr key={inv.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 cursor-pointer" onDoubleClick={() => handleInvoicePdf(inv)} onClick={() => setViewInvoice(inv)}>
               <td className="p-3 font-medium text-white">{inv.invoiceNumber}</td>
               <td className="p-3 text-gray-300 hidden sm:table-cell">{inv.company?.name || "—"}</td>
@@ -249,6 +251,7 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: "", companyId: "", description: "", billingPeriod: "monthly", price: 0, startDate: "", endDate: "", autoRenew: true });
+  const [sortAg, setSortAg] = useState<SortState | null>(null);
 
   const fetch = () => {
     api.get("/billing/agreements").then(r => setAgreements(r.data || [])).catch(() => toast.error("Failed")).finally(() => setLoading(false));
@@ -272,8 +275,8 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
         <div className="text-center py-12 card"><ClipboardList size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No service agreements</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
-          <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">Name</th><th className="p-3 hidden sm:table-cell">Client</th><th className="p-3">Billing</th><th className="p-3">Amount</th><th className="p-3 hidden md:table-cell">Period</th><th className="p-3">Status</th></tr></thead>
-          <tbody>{agreements.map(a => (
+          <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><SortableHeader field="name" label="Name" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /><SortableHeader field="company.name" label="Client" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3 hidden sm:table-cell" /><SortableHeader field="billingPeriod" label="Billing" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /><SortableHeader field="billingAmount" label="Amount" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /><SortableHeader field="startDate" label="Period" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="isActive" label="Status" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /></tr></thead>
+          <tbody>{sortData(agreements, sortAg?.field || "name", sortAg?.direction || "asc").map(a => (
             <tr key={a.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
               <td className="p-3 font-medium text-white">{a.name}</td>
               <td className="p-3 text-gray-300 hidden sm:table-cell">{a.company?.name || "—"}</td>
@@ -323,6 +326,7 @@ function PaymentsTab() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [methodFilter, setMethodFilter] = useState("");
+  const [sortPay, setSortPay] = useState<SortState | null>(null);
 
   useEffect(() => {
     api.get("/billing/invoices?limit=200").then(r => {
@@ -357,8 +361,8 @@ function PaymentsTab() {
         <div className="text-center py-12 card"><CreditCard size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No payments recorded</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
-          <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">Invoice</th><th className="p-3">Client</th><th className="p-3">Amount</th><th className="p-3 hidden sm:table-cell">Method</th><th className="p-3 hidden md:table-cell">Date</th><th className="p-3 hidden md:table-cell">Reference</th></tr></thead>
-          <tbody>{filtered.map((p, i) => (
+          <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><SortableHeader field="invoice.invoiceNumber" label="Invoice" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3" /><SortableHeader field="invoice.company.name" label="Client" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3" /><SortableHeader field="amount" label="Amount" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3" /><SortableHeader field="method" label="Method" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3 hidden sm:table-cell" /><SortableHeader field="processedAt" label="Date" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="reference" label="Reference" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3 hidden md:table-cell" /></tr></thead>
+          <tbody>{sortData(filtered, sortPay?.field || "processedAt", sortPay?.direction || "desc").map((p, i) => (
             <tr key={i} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
               <td className="p-3 font-medium text-white">{p.invoice.invoiceNumber}</td>
               <td className="p-3 text-gray-300">{p.invoice.company?.name || "—"}</td>

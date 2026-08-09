@@ -58,6 +58,7 @@ export function AssetsPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [sortBy, setSortBy] = useState("name");
+  const [sort, setSort] = useState<SortState | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({ name: "", assetTag: "", type: "hardware", serialNumber: "", model: "", manufacturer: "", location: "", department: "", category: "", purchasePrice: "", notes: "" });
 
@@ -270,8 +271,8 @@ export function AssetsPage() {
          assets.length === 0 ? <div className="p-8 text-center text-gray-500">No assets found</div> :
          <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-surface-border text-left text-gray-400">
-              <th className="px-4 py-3">Asset</th><th className="px-4 py-3 hidden md:table-cell">Tag</th><th className="px-4 py-3 hidden lg:table-cell">Type</th><th className="px-4 py-3 hidden sm:table-cell">Status</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden md:table-cell">Assigned To</th>
+            <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
+              <SortableHeader field="name" label="Asset" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3 hidden md:table-cell">Tag</th><th className="px-4 py-3 hidden lg:table-cell">Type</th><th className="px-4 py-3 hidden sm:table-cell">Status</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden md:table-cell">Assigned To</th>
             </tr></thead>
             <tbody>
               {assets.map(a => {

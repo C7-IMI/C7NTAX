@@ -7,6 +7,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { SystemRole, Permission, PERMISSION_CATEGORIES } from "@C7NTAX/shared";
+import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-600/20 text-green-400",
@@ -43,6 +44,7 @@ export function UsersPage() {
   const [permSet, setPermSet] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [sort, setSort] = useState<SortState | null>(null);
   const [createForm, setCreateForm] = useState({ email: "", password: "", firstName: "", lastName: "", role: "technician" });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -201,17 +203,17 @@ export function UsersPage() {
       <div className="card overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead>
+            <thead className="group">
               <tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase tracking-wider">
-                <th className="px-4 py-3">User</th>
-                <th className="px-4 py-3 hidden md:table-cell">Role</th>
-                <th className="px-4 py-3 hidden lg:table-cell">Company</th>
-                <th className="px-4 py-3 w-16">MFA</th>
-                <th className="px-4 py-3 w-24">Status</th>
+                <SortableHeader field="firstName" label="User" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" />
+                <SortableHeader field="role.name" label="Role" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden md:table-cell" />
+                <SortableHeader field="company.name" label="Company" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" />
+                <SortableHeader field="mfaEnabled" label="MFA" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 w-16" />
+                <SortableHeader field="isActive" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 w-24" />
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {sortData(users, sort?.field || "firstName", sort?.direction || "asc").map(u => (
                 <tr key={u.id}
                   className={`border-b border-surface-border/50 hover:bg-surface-lighter/30 transition-colors cursor-pointer ${selected?.id === u.id ? "bg-cyber-600/10 border-l-2 border-l-cyber-400" : ""}`}
                   onClick={() => openDetail(u)}>

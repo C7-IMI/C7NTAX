@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
@@ -89,8 +90,8 @@ export function ClientsPage() {
          clients.length === 0 ? <div className="p-8 text-center text-gray-500">No clients found</div> :
          <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-surface-border text-left text-gray-400">
-              <th className="px-4 py-3">Company</th><th className="px-4 py-3 hidden sm:table-cell">Type</th><th className="px-4 py-3 hidden md:table-cell">Contact</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden lg:table-cell">Industry</th><th className="px-4 py-3 hidden sm:table-cell">Status</th>
+            <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
+              <SortableHeader field="name" label="Company" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3 hidden sm:table-cell">Type</th><th className="px-4 py-3 hidden md:table-cell">Contact</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden lg:table-cell">Industry</th><th className="px-4 py-3 hidden sm:table-cell">Status</th>
             </tr></thead>
             <tbody>
               {clients.map(c => (
