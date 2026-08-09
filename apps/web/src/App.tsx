@@ -6,6 +6,7 @@ import { DashboardPage } from "./pages/Dashboard";
 import { TicketsPage, TicketDetailPage } from "./pages/Tickets";
 import { BoardsPage } from "./pages/Boards";
 import { ClientsPage } from "./pages/Clients";
+import { ClientDetailPage } from "./pages/ClientDetail";
 import { ContactsPage } from "./pages/Contacts";
 import { BillingPage } from "./pages/Billing";
 import { IntegrationsPage } from "./pages/Integrations";
@@ -41,6 +42,7 @@ function ProtectedRoutes() {
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/procurement" element={<ProcurementPage />} />
         <Route path="/kb" element={<KnowledgeBasePage />} />
+        <Route path="/clients/:id" element={<ClientDetailPage />} />
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/clients/contacts" element={<ContactsPage />} />
         <Route path="/billing/agreements" element={<BillingPage tab="agreements" />} />

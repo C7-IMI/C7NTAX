@@ -1,80 +1,131 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Building2, Mail, Phone, MapPin, Users, FileText, DollarSign, ChevronDown, Search } from "lucide-react";
+import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown } from "lucide-react";
 
-interface Company{id:string;name:string;email?:string;phone?:string;city?:string;state?:string;clientType?:string;isActive:boolean;_count?:{tickets:number;invoices:number;users:number};}
-interface Contact{id:string;firstName:string;lastName:string;email:string;phone?:string;isPrimary:boolean;}
+const TYPE_COLORS: Record<string, string> = {
+  Client: "bg-cyber-600/20 text-cyber-400", Prospect: "bg-amber-600/20 text-amber-400",
+  Vendor: "bg-purple-600/20 text-purple-400", Partner: "bg-green-600/20 text-green-400",
+};
+const SORT_OPTIONS = [
+  { value: "name", label: "Name" }, { value: "createdAt", label: "Date Added" },
+  { value: "city", label: "City" }, { value: "state", label: "State" },
+  { value: "industry", label: "Industry" },
+];
 
-export function ClientsPage(){
-  const [clients,setClients]=useState<Company[]>([]);
-  const [loading,setLoading]=useState(true);
-  const [search,setSearch]=useState("");
-  const [showNew,setShowNew]=useState(false);
-  const [form,setForm]=useState({name:"",email:"",phone:"",city:"",state:""});
-  const [selected,setSelected]=useState<Company|null>(null);
-  const [contacts,setContacts]=useState<Contact[]>([]);
-  const [showContact,setShowContact]=useState(false);
-  const [contactForm,setContactForm]=useState({firstName:"",lastName:"",email:"",phone:""});
+export function ClientsPage() {
+  const [clients, setClients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [sort, setSort] = useState("name");
+  const [showNew, setShowNew] = useState(false);
+  const [form, setForm] = useState<Record<string, string>>({ name: "", email: "", phone: "", city: "", state: "", companyType: "Client", industry: "" });
 
-  const fetch=()=>{api.get("/clients?limit=100").then(r=>setClients(r.data.data||[])).catch(()=>{}).finally(()=>setLoading(false))};
-  useEffect(()=>{fetch()},[]);
+  const fetch = () => {
+    let url = `/clients?limit=200&sort=${sort}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (typeFilter) url += `&type=${typeFilter}`;
+    api.get(url).then(r => setClients(r.data.data || [])).catch(() => {}).finally(() => setLoading(false));
+  };
 
-  const handleCreate=async(e:React.FormEvent)=>{e.preventDefault();try{await api.post("/clients",form);toast.success("Client created");setShowNew(false);setForm({name:"",email:"",phone:"",city:"",state:""});fetch()}catch{toast.error("Failed")}};
-  const selectClient=async(c:Company)=>{setSelected(c);try{const r=await api.get("/clients/"+c.id);setContacts(r.data.contacts||[])}catch{setContacts([])}};
-  const handleAddContact=async(e:React.FormEvent)=>{e.preventDefault();if(!selected)return;try{await api.post("/clients/"+selected.id+"/contacts",contactForm);toast.success("Contact added");setShowContact(false);setContactForm({firstName:"",lastName:"",email:"",phone:""});selectClient(selected)}catch{toast.error("Failed")}};
+  useEffect(() => { fetch(); }, [search, typeFilter, sort]);
 
-  const filtered=clients.filter(c=>!search||c.name.toLowerCase().includes(search.toLowerCase())||c.email?.toLowerCase().includes(search.toLowerCase()));
+  const handleCreate = async (e: React.FormEvent) => { e.preventDefault();
+    try { await api.post("/clients", form); toast.success("Client created"); setShowNew(false); setForm({ name: "", email: "", phone: "", city: "", state: "", companyType: "Client", industry: "" }); fetch(); }
+    catch { toast.error("Failed"); }
+  };
 
-  const CT:Record<string,string>={MSP:"bg-cyber-600/20 text-cyber-400",INT:"bg-purple-600/20 text-purple-400",INF:"bg-blue-600/20 text-blue-400"};
-
-  return(<div className="space-y-4 animate-fade-in">
-    <div className="flex items-center justify-between flex-wrap gap-3">
-      <div><h2 className="text-lg font-semibold text-white">Clients</h2><p className="text-sm text-gray-400">{clients.length} clients</p></div>
-      <div className="flex items-center gap-2">
-        <button onClick={()=>setShowNew(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16}/>Add Client</button>
-      </div>
-    </div>
-
-    <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/><input className="input-field pl-9" placeholder="Search clients..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
-
-    {showNew&&(<div className="card"><form onSubmit={handleCreate} className="space-y-3">
-      <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">New Client</h3><button type="button" onClick={()=>setShowNew(false)} className="text-gray-500 hover:text-white">x</button></div>
-      <input className="input-field" placeholder="Company name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/>
-      <div className="grid grid-cols-2 gap-3"><input className="input-field" placeholder="Email" type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/><input className="input-field" placeholder="Phone" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
-      <div className="grid grid-cols-2 gap-3"><input className="input-field" placeholder="City" value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/><input className="input-field" placeholder="State" value={form.state} onChange={e=>setForm({...form,state:e.target.value})}/></div>
-      <div className="flex gap-2"><button type="submit" className="btn-primary text-sm">Create</button><button type="button" onClick={()=>setShowNew(false)} className="btn-secondary text-sm">Cancel</button></div>
-    </form></div>)}
-
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div className="lg:col-span-2 space-y-3">
-        {loading?<div className="text-center py-12 text-gray-500">Loading...</div>:filtered.length===0?<div className="text-center py-12 card"><Building2 size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">No clients</p></div>:filtered.map(c=>(<div key={c.id} className={`card hover:border-cyber-500/30 transition-colors cursor-pointer ${selected?.id===c.id?"border-cyber-500/30":""}`} onClick={()=>selectClient(c)}>
-          <div className="flex items-start justify-between">
-            <div><h3 className="font-semibold text-white text-sm">{c.name}{c.clientType&&<span className={"badge text-xs ml-2 "+(CT[c.clientType]||"")}>{c.clientType}</span>}</h3>
-              <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">{c.email&&<span className="flex items-center gap-1"><Mail size={11}/>{c.email}</span>}{c.phone&&<span className="flex items-center gap-1"><Phone size={11}/>{c.phone}</span>}{c.city&&<span className="flex items-center gap-1"><MapPin size={11}/>{c.city}{c.state?", "+c.state:""}</span>}</div></div>
-            <span className={"w-2 h-2 rounded-full "+(c.isActive?"bg-green-400":"bg-gray-600")}/>
-          </div>
-          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500"><span><FileText size={11} className="inline mr-1"/>{c._count?.tickets||0} tickets</span><span><DollarSign size={11} className="inline mr-1"/>{c._count?.invoices||0} invoices</span><span><Users size={11} className="inline mr-1"/>{c._count?.users||0} users</span></div>
-        </div>))}
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div><h2 className="text-lg font-semibold text-white">Clients</h2><p className="text-sm text-gray-400">{clients.length} clients</p></div>
+        <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Client</button>
       </div>
 
-      {selected&&(<div className="card">
-        <h3 className="text-sm font-semibold text-white mb-2">{selected.name}</h3>
-        <div className="space-y-2 text-xs text-gray-400">
-          {selected.email&&<p>Email: {selected.email}</p>}
-          {selected.phone&&<p>Phone: {selected.phone}</p>}
-          {selected.city&&<p>Location: {selected.city}{selected.state?", "+selected.state:""}</p>}
+      {/* Filters + Sort */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input className="input-field pl-9" placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+        <select className="input-field text-sm py-1.5 w-auto" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+          <option value="">All Types</option>
+          <option value="Client">Client</option><option value="Prospect">Prospect</option>
+          <option value="Vendor">Vendor</option><option value="Partner">Partner</option>
+        </select>
+        <div className="flex items-center gap-1.5">
+          <ArrowUpDown size={14} className="text-gray-500" />
+          <select className="input-field text-sm py-1.5 w-auto" value={sort} onChange={e => setSort(e.target.value)}>
+            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
         </div>
-        <div className="mt-3 pt-3 border-t border-surface-border">
-          <div className="flex items-center justify-between mb-2"><h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Contacts</h4><button onClick={()=>setShowContact(true)} className="text-xs text-cyber-400 hover:text-cyber-300"><Plus size={12} className="inline"/> Add</button></div>
-          {contacts.length===0?<p className="text-xs text-gray-600">No contacts</p>:contacts.map(con=>(<div key={con.id} className="flex items-center justify-between text-xs py-1.5"><div><p className="text-white">{con.firstName} {con.lastName}</p><p className="text-gray-500">{con.email}</p></div>{con.isPrimary&&<span className="badge bg-cyber-600/20 text-cyber-400 text-[10px]">Primary</span>}</div>))}
-          {showContact&&(<form onSubmit={handleAddContact} className="space-y-2 mt-2 pt-2 border-t border-surface-border">
-            <div className="grid grid-cols-2 gap-2"><input className="input-field text-xs" placeholder="First" value={contactForm.firstName} onChange={e=>setContactForm({...contactForm,firstName:e.target.value})} required/><input className="input-field text-xs" placeholder="Last" value={contactForm.lastName} onChange={e=>setContactForm({...contactForm,lastName:e.target.value})} required/></div>
-            <input className="input-field text-xs" placeholder="Email" type="email" value={contactForm.email} onChange={e=>setContactForm({...contactForm,email:e.target.value})} required/>
-            <div className="flex gap-2"><button type="submit" className="btn-primary text-xs">Save</button><button type="button" onClick={()=>setShowContact(false)} className="btn-secondary text-xs">Cancel</button></div>
-          </form>)}
+      </div>
+
+      {/* Create modal */}
+      {showNew && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowNew(false)}>
+          <form className="card w-full max-w-lg mx-4 space-y-3 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} onSubmit={handleCreate}>
+            <h3 className="text-lg font-semibold text-white">New Client</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Company Name *</label><input className="input-field" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Type</label><select className="input-field" value={form.companyType} onChange={e => setForm(p => ({ ...p, companyType: e.target.value }))}><option>Client</option><option>Prospect</option><option>Vendor</option><option>Partner</option></select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Industry</label><input className="input-field" value={form.industry} onChange={e => setForm(p => ({ ...p, industry: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Email</label><input className="input-field" type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Phone</label><input className="input-field" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">City</label><input className="input-field" value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">State</label><input className="input-field" value={form.state} onChange={e => setForm(p => ({ ...p, state: e.target.value }))} /></div>
+            </div>
+            <div className="flex gap-2 justify-end pt-2 border-t border-surface-border">
+              <button type="button" className="btn-secondary" onClick={() => setShowNew(false)}>Cancel</button>
+              <button type="submit" className="btn-primary">Create</button>
+            </div>
+          </form>
         </div>
-      </div>)}
+      )}
+
+      {/* Client List */}
+      <div className="card overflow-hidden p-0">
+        {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> :
+         clients.length === 0 ? <div className="p-8 text-center text-gray-500">No clients found</div> :
+         <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-surface-border text-left text-gray-400">
+              <th className="px-4 py-3">Company</th><th className="px-4 py-3 hidden sm:table-cell">Type</th><th className="px-4 py-3 hidden md:table-cell">Contact</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden lg:table-cell">Industry</th><th className="px-4 py-3 hidden sm:table-cell">Status</th>
+            </tr></thead>
+            <tbody>
+              {clients.map(c => (
+                <tr key={c.id} className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer" onClick={() => window.location.href = `/clients/${c.id}`}>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 rounded bg-cyber-600/10"><Building2 size={16} className="text-cyber-400" /></div>
+                      <div>
+                        <p className="text-white font-medium hover:text-cyber-400">{c.name}</p>
+                        {c.email && <p className="text-xs text-gray-500 flex items-center gap-1"><Mail size={10} />{c.email}</p>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    {c.companyType && <span className={`badge text-xs ${TYPE_COLORS[c.companyType] || "bg-gray-600/20 text-gray-400"}`}>{c.companyType}</span>}
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    {c.contacts?.[0] ? (
+                      <div>
+                        <p className="text-gray-300">{c.contacts[0].firstName} {c.contacts[0].lastName}</p>
+                        <p className="text-xs text-gray-500">{c.phone || c.contacts[0].phone || "—"}</p>
+                      </div>
+                    ) : <span className="text-gray-500">—</span>}
+                  </td>
+                  <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{[c.city, c.state].filter(Boolean).join(", ") || "—"}</td>
+                  <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{c.industry || "—"}</td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <span className={`w-2 h-2 rounded-full inline-block mr-1.5 ${c.isActive ? "bg-green-400" : "bg-gray-600"}`} />
+                    <span className="text-xs text-gray-400">{c.isActive ? "Active" : "Inactive"}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>}
+      </div>
     </div>
-  </div>);
+  );
 }
