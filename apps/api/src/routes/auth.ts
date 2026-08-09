@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import { prisma } from "../index";
-import { authenticate, signToken, signMfaToken, JWT_SECRET, type AuthRequest } from "../middleware/auth";
+import { authenticate, signToken, signMfaToken, JWT_SECRET, computePermissions, type AuthRequest } from "../middleware/auth";
 import { ROLE_PERMISSIONS, SystemRole, Permission } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
@@ -44,7 +44,7 @@ authRouter.post("/login", async (req, res, next) => {
 
     const token = signToken({
       id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
-      companyId: user.companyId, permissions: (user.role.permissions || ROLE_PERMISSIONS[user.role.systemRole as SystemRole] || []) as Permission[],
+      companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
       mfaEnabled: false, active: true,
     });
@@ -123,7 +123,7 @@ authRouter.post("/mfa/verify", async (req, res, next) => {
 
     const token = signToken({
       id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
-      companyId: user.companyId, permissions: (user.role.permissions || ROLE_PERMISSIONS[user.role.systemRole as SystemRole] || []) as Permission[],
+      companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
       mfaEnabled: user.mfaEnabled, active: user.isActive,
     });
@@ -183,7 +183,7 @@ authRouter.post("/mfa/verify-email", async (req, res, next) => {
 
     const token = signToken({
       id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
-      companyId: user.companyId, permissions: (user.role.permissions || ROLE_PERMISSIONS[user.role.systemRole as SystemRole] || []) as Permission[],
+      companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
       mfaEnabled: user.mfaEnabled, active: user.isActive,
     });

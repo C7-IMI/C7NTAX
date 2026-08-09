@@ -23,6 +23,7 @@ import { rateLimiter } from "./middleware/rateLimiter";
 import { logger } from "./services/logger";
 import { authRouter } from "./routes/auth";
 import { usersRouter } from "./routes/users";
+import { rolesRouter } from "./routes/roles";
 import { ticketsRouter } from "./routes/tickets";
 import { boardsRouter } from "./routes/boards";
 import { clientsRouter } from "./routes/clients";
@@ -69,6 +70,7 @@ app.get("/api/health", (_req, res) => res.json({ status: "ok", version: "1.0.0" 
 // Core routes
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/roles", rolesRouter);
 app.use("/api/tickets", ticketsRouter);
 app.use("/api/boards", boardsRouter);
 app.use("/api/clients", clientsRouter);

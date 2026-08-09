@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { Permission, type SystemRole } from "@C7NTAX/shared";
+import { Permission, ROLE_PERMISSIONS, type SystemRole } from "@C7NTAX/shared";
 
 const JWT_SECRET = process.env.JWT_SECRET || "C7NTAX-dev-secret-change-in-prod";
 
@@ -99,3 +99,13 @@ export function signMfaToken(userId: string): string {
 }
 
 export { JWT_SECRET };
+
+/**
+ * Compute the effective permission set for a user.
+ * Merges role-based permissions with individual overrides (additive).
+ */
+export function computePermissions(roleSystemRole: SystemRole, rolePermissions: string[], userOverrides: string[]): Permission[] {
+  const base = rolePermissions.length > 0 ? rolePermissions : (ROLE_PERMISSIONS[roleSystemRole] || []);
+  const merged = new Set([...base, ...userOverrides]);
+  return [...merged] as Permission[];
+}

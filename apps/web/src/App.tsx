@@ -11,6 +11,7 @@ import { ContactsPage } from "./pages/Contacts";
 import { BillingPage } from "./pages/Billing";
 import { IntegrationsPage } from "./pages/Integrations";
 import { UsersPage } from "./pages/Users";
+import { RolesPage } from "./pages/Roles";
 import { SettingsPage } from "./pages/Settings";
 import { MFASetupPage } from "./pages/MFASetup";
 import { OpportunitiesPage } from "./pages/Opportunities";
@@ -55,6 +56,7 @@ function ProtectedRoutes() {
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/integrations" element={<IntegrationsPage />} />
         <Route path="/users" element={<UsersPage />} />
+        <Route path="/roles" element={<RolesPage />} />
         <Route path="/admin/logs" element={<AdminLogsPage />} />
         <Route path="/admin/boards" element={<AdminServiceBoardsPage />} />
         <Route path="/admin/system" element={<SystemSettingsPage />} />
