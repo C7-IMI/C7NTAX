@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Layout } from "./components/Layout";
 import { LoginPage } from "./pages/Login";
@@ -26,7 +27,17 @@ import { CustomReportBuilder } from "./pages/CustomReportBuilder";
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
-  if (loading) return <LoadingScreen />;
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
+  // Ensure the loading screen shows for at least 2s so the service status panel is visible
+  useEffect(() => {
+    const t = setTimeout(() => setMinTimeElapsed(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const showLoading = loading || !minTimeElapsed;
+
+  if (showLoading) return <LoadingScreen allReady={!loading} />;
   if (!user) return <Navigate to="/login" replace />;
   return (
     <Layout>

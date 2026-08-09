@@ -28,7 +28,7 @@ const HELP_MESSAGES: Record<string, string> = {
 
 // ── Component ───────────────────────────────────────────────────────
 
-export function LoadingScreen() {
+export function LoadingScreen({ allReady = false }: { allReady?: boolean }) {
   const [services, setServices] = useState<ServiceStatus[]>([
     { name: "Web Server", label: "Frontend", icon: <Globe size={13} />, port: 3010, status: "up", message: "Serving" },
     { name: "API Server", label: "Backend", icon: <Server size={13} />, port: 4000, status: "checking", message: "Checking..." },
@@ -84,7 +84,8 @@ export function LoadingScreen() {
   }, []);
 
   const downCount = services.filter((s) => s.status === "down").length;
-  const allUp = downCount === 0 && services.every((s) => s.status !== "checking");
+  const servicesDone = services.every((s) => s.status !== "checking");
+  const allUp = downCount === 0 && servicesDone;
 
   return (
     <div className="min-h-screen bg-navy-950 flex items-center justify-center px-4">
@@ -100,8 +101,8 @@ export function LoadingScreen() {
           </p>
         </div>
 
-        {/* Spinner */}
-        {!allUp && (
+        {/* Spinner — hide when allReady (auth resolved) even during min display time */}
+        {!allReady && services.some((s) => s.status === "checking") && (
           <div className="flex justify-center mb-6">
             <div className="animate-spin h-6 w-6 border-2 border-cyber-400 border-t-transparent rounded-full" />
           </div>
@@ -153,8 +154,8 @@ export function LoadingScreen() {
           ))}
         </div>
 
-        {/* Skip login link */}
-        {allUp && (
+        {/* Skip login — show when services are up AND auth has resolved, or all services green */}
+        {(allUp || (allReady && servicesDone)) && (
           <div className="text-center mt-6">
             <button
               onClick={() => {
