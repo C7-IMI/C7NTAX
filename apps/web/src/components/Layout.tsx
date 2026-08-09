@@ -102,6 +102,46 @@ export function Layout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(loadExpanded);
 
+  // ── Drag-and-drop nav order ────────────────────────────────────
+  const [navOrder, setNavOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("c7_nav_order");
+      if (saved) return JSON.parse(saved) as string[];
+    } catch {}
+    return NAV_TREE.map(n => n.id);
+  });
+  const [dragId, setDragId] = useState<string | null>(null);
+
+  const orderedTree = navOrder
+    .map(id => NAV_TREE.find(n => n.id === id))
+    .filter(Boolean) as NavNode[];
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDragId(id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!dragId || dragId === targetId) return;
+    const newOrder = [...navOrder];
+    const fromIdx = newOrder.indexOf(dragId);
+    const toIdx = newOrder.indexOf(targetId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    newOrder.splice(fromIdx, 1);
+    newOrder.splice(toIdx, 0, dragId);
+    setNavOrder(newOrder);
+    localStorage.setItem("c7_nav_order", JSON.stringify(newOrder));
+    setDragId(null);
+  };
+
+  const handleDragEnd = () => setDragId(null);
+
   const toggle = (id: string) => {
     setExpanded(prev => {
       const next = new Set(prev);
@@ -117,34 +157,59 @@ export function Layout({ children }: { children: ReactNode }) {
     const isExpanded = expanded.has(node.id);
     const hasChildren = !!node.children?.length;
     const linkTo = node.to || "#";
+    const isDragging = dragId === node.id;
 
     return (
-      <div key={node.id}>
+      <div
+        key={node.id}
+        draggable
+        onDragStart={(e) => handleDragStart(e, node.id)}
+        onDragOver={handleDragOver}
+        onDrop={(e) => handleDrop(e, node.id)}
+        onDragEnd={handleDragEnd}
+        className={`rounded-lg transition-colors ${isDragging ? "opacity-50" : ""} ${dragId && dragId !== node.id ? "border border-dashed border-cyber-500/30" : ""}`}
+      >
         {hasChildren ? (
-          <button
-            onClick={() => toggle(node.id)}
-            className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium transition-colors ${
-              active ? "bg-cyber-600/10 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
-            }`}
-            style={{ paddingLeft: `${12 + depth * 12}px` }}
-          >
-            <node.icon size={18} />
-            <span className="flex-1 text-left">{node.label}</span>
-            <ChevronDown size={14} className={`transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
-          </button>
+          <div className="flex items-center group/drag">
+            <button
+              className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <GripVertical size={12} />
+            </button>
+            <button
+              onClick={() => toggle(node.id)}
+              className={`flex-1 flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${
+                active ? "bg-cyber-600/10 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+              }`}
+              style={{ paddingLeft: `${12 + depth * 12}px` }}
+            >
+              <node.icon size={18} />
+              <span className="flex-1 text-left">{node.label}</span>
+              <ChevronDown size={14} className={`transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
+            </button>
+          </div>
         ) : (
-          <Link
-            to={linkTo}
-            onClick={() => setSidebarOpen(false)}
-            style={{ paddingLeft: `${12 + depth * 12}px` }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium transition-colors ${
-              active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
-            }`}
-          >
-            <node.icon size={18} />
-            {node.label}
-            {active && <ChevronRight size={14} className="ml-auto" />}
-          </Link>
+          <div className="flex items-center group/drag">
+            <button
+              className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <GripVertical size={12} />
+            </button>
+            <Link
+              to={linkTo}
+              onClick={() => setSidebarOpen(false)}
+              style={{ paddingLeft: `${12 + depth * 12}px` }}
+              className={`flex-1 flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
+                active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+              }`}
+            >
+              <node.icon size={18} />
+              {node.label}
+              {active && <ChevronRight size={14} className="ml-auto" />}
+            </Link>
+          </div>
         )}
         {hasChildren && isExpanded && (
           <div className="border-l border-surface-border ml-7">
@@ -171,7 +236,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
         <nav className="flex-1 py-3 px-2 overflow-y-auto">
-          {NAV_TREE.map(n => renderNode(n))}
+          {orderedTree.map(n => renderNode(n))}
         </nav>
         <div className="border-t border-surface-border p-3">
           <div className="flex items-center gap-3 px-2 py-2">
