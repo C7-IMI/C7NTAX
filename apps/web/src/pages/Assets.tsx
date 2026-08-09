@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Search, Monitor, Server, Laptop, Smartphone, Network, Database, Wrench, FileText, Upload, Download, AlertTriangle, CheckCircle, XCircle, ArrowUpDown } from "lucide-react";
+import { Plus, Search, Monitor, Server, Laptop, Smartphone, Network, Database, Wrench, FileText, Upload, Download, AlertTriangle, CheckCircle, XCircle, ArrowUpDown, Wifi } from "lucide-react";
 
 interface Asset {
   id: string; name: string; assetTag: string; type: string; category?: string;
@@ -25,9 +25,6 @@ const TYPE_LABELS: Record<string, string> = {
   network: "Network Equipment", other: "Other", firewall: "Firewall",
   switch: "Switch", access_point: "Access Point",
 };
-
-// Import needed icons
-import { Wifi, ArrowUpDown as ArrowUpDownIcon } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   available: "bg-green-600/20 text-green-400", assigned: "bg-cyber-600/20 text-cyber-400",
@@ -150,7 +147,7 @@ export function AssetsPage() {
           {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
         <div className="flex items-center gap-1.5">
-          <ArrowUpDownIcon size={14} className="text-gray-500" />
+          <ArrowUpDown size={14} className="text-gray-500" />
           <select className="input-field text-sm py-1.5 w-auto" value={sortBy} onChange={e => setSortBy(e.target.value)}>
             {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
