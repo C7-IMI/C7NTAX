@@ -67,7 +67,6 @@ const NAV_TREE: NavNode[] = [
       { id: "reports-dashboard", to: "/reports", icon: TrendingUp, label: "Dashboards" },
       { id: "reports-standard", to: "/reports/standard", icon: ClipboardList, label: "Standard Reports" },
       { id: "reports-analytics", to: "/reports/analytics", icon: BarChart3, label: "Analytics" },
-      { id: "reports-custom", to: "/reports/custom", icon: FileText, label: "Custom Report Builder" },
     ],
   },
 ];
