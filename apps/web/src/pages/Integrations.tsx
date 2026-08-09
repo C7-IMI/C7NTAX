@@ -20,6 +20,7 @@ const KIND_LABELS: Record<string, string> = {
   itglue: "ITGlue", microsoft365: "Microsoft 365", azure: "Azure", aws: "AWS",
   connectwise: "ConnectWise PSA", halopsa: "HaloPSA",
   kantata: "Kantata", scoro: "Scoro", autotask: "AutoTask PSA",
+  azure_ad_sso: "Azure AD SSO",
 };
 
 const M365_SCOPES = [
