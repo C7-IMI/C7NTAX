@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Layout } from "./components/Layout";
 import { LoginPage } from "./pages/Login";
@@ -27,23 +26,7 @@ import { CustomReportBuilder } from "./pages/CustomReportBuilder";
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
-  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
-  const [forceContinue, setForceContinue] = useState(false);
-
-  // Ensure the loading screen shows for at least 2s so the service status panel is visible
-  // Skip the timer if a bypass token is already set
-  useEffect(() => {
-    if (localStorage.getItem("c7_bypass") === "1") {
-      setMinTimeElapsed(true);
-      return;
-    }
-    const t = setTimeout(() => setMinTimeElapsed(true), 2000);
-    return () => clearTimeout(t);
-  }, []);
-
-  const showLoading = (loading || !minTimeElapsed) && !forceContinue;
-
-  if (showLoading) return <LoadingScreen allReady={!loading} onForceContinue={() => { localStorage.setItem("c7_bypass", "1"); setForceContinue(true); }} />;
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   return (
     <Layout>

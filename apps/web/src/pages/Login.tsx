@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { ServiceHealthPanel } from "../components/ServiceHealthPanel";
 import toast from "react-hot-toast";
 
 export function LoginPage() {
@@ -68,7 +69,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4 py-8">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-xl bg-cyber-600 flex items-center justify-center mx-auto mb-4">
@@ -87,6 +88,11 @@ export function LoginPage() {
             Skip login — go to dashboard
           </button>
         </form>
+
+        {/* Service health status */}
+        <div className="mt-6 pt-4 border-t border-surface-border/50">
+          <ServiceHealthPanel />
+        </div>
       </div>
     </div>
   );
