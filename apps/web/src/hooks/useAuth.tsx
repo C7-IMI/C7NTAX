@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // ── Temporary bypass: skip all auth, always logged in as guest ──
     // Revert: delete this block and set TEMP_BYPASS_AUTH = false
     if (TEMP_BYPASS_AUTH) {
+      localStorage.setItem("c7_bypass", "1");
       setUser({ id: "bypass", email: "bypass@local", firstName: "Guest", lastName: "User", role: "admin" });
       setLoading(false);
       return;
