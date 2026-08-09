@@ -62,8 +62,8 @@ export function IntegrationsPage() {
         api.get("/integrations"),
         api.get("/integrations/types"),
       ]);
-      setIntegrations(intRes.data);
-      setTypes(typeRes.data);
+      setIntegrations(intRes.data?.data || []);
+      setTypes(typeRes.data?.types || []);
     } catch {
       toast.error("Failed to load integrations");
     } finally {
