@@ -194,12 +194,14 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         ) : (
           <div className="flex items-center group/drag">
-            <button
-              className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <GripVertical size={12} />
-            </button>
+            {isTopLevel && (
+              <button
+                className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <GripVertical size={12} />
+              </button>
+            )}
             <Link
               to={linkTo}
               onClick={() => setSidebarOpen(false)}
