@@ -491,6 +491,27 @@ model SyncLog {
   createdAt       DateTime @default(now())
 }
 
+// ─── Generic Synced Entity (for all integration types) ─────────────
+
+model SyncedEntity {
+  id              String   @id @default(uuid())
+  integrationId   String
+  entityKind      String   // e.g. "connectwise", "halopsa", "itglue"
+  entityType      String   // e.g. "ticket", "contact", "invoice"
+  externalId      String   // unique ID from the external system
+  displayName     String?
+  data            Json     @default("{}")  // raw JSON from the API
+  linkedContactId String?  // optional link to a Contact record
+  linkedCompanyId String?  // optional link to a Company record
+  lastSyncedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([integrationId, entityType, externalId])
+  @@index([integrationId, entityType])
+  @@index([linkedContactId])
+}
+
 // ─── Notifications ──────────────────────────────────────────────────
 
 model Notification {

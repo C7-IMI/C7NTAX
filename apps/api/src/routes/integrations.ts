@@ -301,6 +301,44 @@ integrationsRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
       }
     }
 
+    // ── Generic persistence: store synced data for ALL integration kinds ──
+    // Each adapter returns its data under named keys (e.g. result.tickets, result.contacts)
+    const syncDataKeys = Object.keys(result).filter(
+      k => !["success", "kind", "recordsProcessed", "errors", "syncedAt"].includes(k) && Array.isArray((result as any)[k])
+    );
+    for (const key of syncDataKeys) {
+      const items = (result as any)[key] as Array<Record<string, unknown>>;
+      for (const item of items) {
+        const externalId = (item.id || item.Id || item.externalId || String(Math.random())) as string;
+        const displayField = item.displayName || item.DisplayName || item.name || item.Name || item.title || item.Title || item.subject || key;
+        try {
+          await prisma.syncedEntity.upsert({
+            where: {
+              integrationId_entityType_externalId: {
+                integrationId: req.params.id,
+                entityType: key,
+                externalId: String(externalId),
+              },
+            },
+            create: {
+              integrationId: req.params.id,
+              entityKind: config.kind,
+              entityType: key,
+              externalId: String(externalId),
+              displayName: String(displayField).slice(0, 200),
+              data: item as any,
+              lastSyncedAt: new Date(),
+            },
+            update: {
+              displayName: String(displayField).slice(0, 200),
+              data: item as any,
+              lastSyncedAt: new Date(),
+            },
+          });
+        } catch { /* duplicate key = skip */ }
+      }
+    }
+
     // Update sync log
     await prisma.syncLog.update({
       where: { id: log.id },
