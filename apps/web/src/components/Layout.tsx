@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
-  Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen,
+  Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Clock, HelpCircle, UserCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -431,7 +431,34 @@ export function Layout({ children }: { children: ReactNode }) {
               {getPageTitle(NAV_TREE, location.pathname)}
             </h1>
           </div>
-          <div className="w-8 lg:hidden" />
+          {/* Header toolbar — placeholders only */}
+          <div className="hidden sm:flex items-center gap-1">
+            <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Search">
+              <Search size={14} />
+              <span>Search</span>
+            </button>
+            <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Recent Items">
+              <Clock size={14} />
+              <span>Recent</span>
+            </button>
+            <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="AI Assistant">
+              <Sparkles size={14} />
+              <span>AI</span>
+            </button>
+            <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Help">
+              <HelpCircle size={14} />
+              <span>Help</span>
+            </button>
+            <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Settings">
+              <Settings size={14} />
+              <span>Settings</span>
+            </button>
+            <button className="px-3 py-1.5 text-xs text-cyber-400 hover:text-cyber-300 hover:bg-cyber-600/10 rounded-md transition-colors flex items-center gap-1.5" title="My Account">
+              <UserCircle size={14} />
+              <span>My Account</span>
+            </button>
+          </div>
+          <div className="sm:hidden w-8" />
         </header>
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
