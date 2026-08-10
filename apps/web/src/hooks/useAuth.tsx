@@ -43,26 +43,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Revert: set TEMP_BYPASS_AUTH = false below
     if (TEMP_BYPASS_AUTH) {
       localStorage.setItem("c7_bypass", "1");
-      const existingToken = localStorage.getItem("c7_token");
-      // Try existing token first
-      if (existingToken) {
-        setToken(existingToken);
-        setUser({ id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
-        setLoading(false);
-        return;
-      }
-      // Get a real JWT token via login
+      // Clear any stale token and get a fresh one
+      localStorage.removeItem("c7_token");
+      setUser({ id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
+      // Get a real JWT token via login (async — loading completes when done)
       api.post("/auth/login", { username: "admin", password: "admin" })
         .then((res) => {
           if (res.data.token) {
             localStorage.setItem("c7_token", res.data.token);
             setToken(res.data.token);
+            setUser(res.data.user || { id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
           }
-          setUser(res.data.user || { id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
         })
-        .catch(() => {
-          setUser({ id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
-        })
+        .catch(() => {})
         .finally(() => setLoading(false));
       return;
     }
