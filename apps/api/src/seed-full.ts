@@ -8,6 +8,12 @@ async function main() {
   console.log("╚══════════════════════════════════════════╝\n");
 
   // ── Clean existing data ──
+  await prisma.syncedEntity.deleteMany();
+  await prisma.syncLog.deleteMany();
+  await prisma.m365Subscription.deleteMany();
+  await prisma.m365Group.deleteMany();
+  await prisma.m365User.deleteMany();
+  await prisma.integration.deleteMany();
   await prisma.ticketComment.deleteMany();
   await prisma.timeEntry.deleteMany();
   await prisma.payment.deleteMany();
@@ -157,6 +163,154 @@ async function main() {
     { invoiceNumber: "INV-2026-004", status: "draft", issueDate: daysAgo(2), dueDate: daysAgo(-28), subtotal: 12000, taxRate: 8.75, taxTotal: 1050.00, total: 13050.00, companyId: stark.id },
   ] });
   console.log("  ✓ Created 4 invoices");
+
+  // ── Sample Integrations ──
+  const ms365 = await prisma.integration.create({
+    data: {
+      kind: "microsoft365",
+      name: "Contoso Microsoft 365",
+      enabled: false,
+      status: "disconnected",
+      credentials: {
+        tenantId: "contoso.onmicrosoft.com",
+        clientId: "00000000-0000-0000-0000-000000000000",
+      },
+      settings: {
+        syncUsers: true,
+        syncContacts: true,
+        syncLicenses: true,
+        syncIntervalMinutes: 60,
+      },
+    },
+  });
+
+  await prisma.integration.create({
+    data: {
+      kind: "autotask",
+      name: "AutoTask PSA Production",
+      enabled: false,
+      status: "disconnected",
+      credentials: {
+        username: "apiuser@company.com",
+        integrationCode: "ABCDEF123456",
+      },
+      settings: {},
+    },
+  });
+
+  await prisma.integration.create({
+    data: {
+      kind: "connectwise",
+      name: "ConnectWise Manage",
+      enabled: false,
+      status: "disconnected",
+      credentials: {
+        companyId: "mycompany",
+        publicKey: "xxx",
+        privateKey: "xxx",
+        clientId: "00000000-0000-0000-0000-000000000000",
+        baseUrl: "https://api-na.myconnectwise.net",
+      },
+      settings: {},
+    },
+  });
+
+  await prisma.integration.create({
+    data: {
+      kind: "quickbooks",
+      name: "QuickBooks Online",
+      enabled: false,
+      status: "disconnected",
+      credentials: {
+        clientId: "QB123456",
+        clientSecret: "xxx",
+        realmId: "1234567890",
+      },
+      settings: {},
+    },
+  });
+
+  // ── Sample M365 Sync Data ──
+  await prisma.m365User.createMany({
+    data: [
+      {
+        integrationId: ms365.id,
+        azureObjectId: "user-001",
+        userPrincipalName: "john.doe@contoso.com",
+        displayName: "John Doe",
+        givenName: "John",
+        surname: "Doe",
+        mail: "john.doe@contoso.com",
+        jobTitle: "Software Engineer",
+        department: "Engineering",
+        accountEnabled: true,
+        usageLocation: "US",
+        raw: { id: "user-001" },
+        lastSyncedAt: new Date(),
+      },
+      {
+        integrationId: ms365.id,
+        azureObjectId: "user-002",
+        userPrincipalName: "jane.smith@contoso.com",
+        displayName: "Jane Smith",
+        givenName: "Jane",
+        surname: "Smith",
+        mail: "jane.smith@contoso.com",
+        jobTitle: "Project Manager",
+        department: "PMO",
+        accountEnabled: true,
+        usageLocation: "US",
+        raw: { id: "user-002" },
+        lastSyncedAt: new Date(),
+      },
+      {
+        integrationId: ms365.id,
+        azureObjectId: "user-003",
+        userPrincipalName: "bob.wilson@contoso.com",
+        displayName: "Bob Wilson",
+        givenName: "Bob",
+        surname: "Wilson",
+        mail: "bob.wilson@contoso.com",
+        jobTitle: "IT Administrator",
+        department: "IT",
+        accountEnabled: true,
+        usageLocation: "US",
+        raw: { id: "user-003" },
+        lastSyncedAt: new Date(),
+      },
+    ],
+  });
+
+  await prisma.m365Subscription.createMany({
+    data: [
+      {
+        integrationId: ms365.id,
+        skuId: "sku-001",
+        skuPartNumber: "O365_BUSINESS_PREMIUM",
+        displayName: "Microsoft 365 Business Premium",
+        enabled: 50,
+        suspended: 0,
+        assigned: 42,
+        unit: "user",
+        raw: { skuId: "sku-001" },
+        lastSyncedAt: new Date(),
+      },
+      {
+        integrationId: ms365.id,
+        skuId: "sku-002",
+        skuPartNumber: "O365_BUSINESS_STANDARD",
+        displayName: "Microsoft 365 Business Standard",
+        enabled: 25,
+        suspended: 0,
+        assigned: 20,
+        unit: "user",
+        raw: { skuId: "sku-002" },
+        lastSyncedAt: new Date(),
+      },
+    ],
+  });
+
+  console.log("  ✓ Created 4 sample integrations with M365 sync data");
 
   console.log("\n╔══════════════════════════════════════════╗");
   console.log("║   SEED COMPLETE                          ║");
