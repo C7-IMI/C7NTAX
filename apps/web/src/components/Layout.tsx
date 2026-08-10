@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
@@ -7,8 +7,9 @@ import {
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, UserCircle,
   type LucideIcon,
 } from "lucide-react";
+import { Breadcrumbs, buildBreadcrumbs } from "./Breadcrumbs";
 
-type NavNode = {
+export type NavNode = {
   id: string;
   to?: string;
   icon: LucideIcon;
@@ -16,7 +17,7 @@ type NavNode = {
   children?: NavNode[];
 };
 
-const NAV_TREE: NavNode[] = [
+export const NAV_TREE: NavNode[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets" },
   { id: "boards", to: "/boards", icon: Columns3, label: "Service Boards" },
@@ -422,14 +423,17 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50">
-          <div className="flex items-center gap-3">
-            <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setMobileOpen(true)}>
-              <Menu size={20} />
-            </button>
-            <h1 className="text-base font-semibold text-white truncate">
-              {getPageTitle(NAV_TREE, location.pathname)}
-            </h1>
+        <header className="border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50 py-2">
+          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+            <div className="flex items-center gap-3">
+              <button className="lg:hidden text-gray-400 hover:text-white p-1 shrink-0" onClick={() => setMobileOpen(true)}>
+                <Menu size={20} />
+              </button>
+              <h1 className="text-base font-semibold text-white truncate">
+                {getPageTitle(NAV_TREE, location.pathname)}
+              </h1>
+            </div>
+            <Breadcrumbs segments={buildBreadcrumbs(NAV_TREE, location.pathname)} />
           </div>
           {/* Header toolbar — placeholders only */}
           <div className="hidden sm:flex items-center gap-1">

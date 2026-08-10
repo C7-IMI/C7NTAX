@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Layout } from "./components/Layout";
 import { LoginPage } from "./pages/Login";
@@ -34,6 +34,8 @@ import { SystemSettingsPage } from "./pages/SystemSettings";
 import { InferenceSettingsPage } from "./pages/InferenceSettings";
 import { ProcurementPage } from "./pages/Procurement";
 import { ReportsPage } from "./pages/Reports";
+import { SectionLanding, SECTION_DESCRIPTIONS } from "./pages/SectionLanding";
+import { NAV_TREE } from "./components/Layout";
 import { LoadingScreen } from "./components/LoadingScreen";
 
 function ProtectedRoutes() {
@@ -84,8 +86,31 @@ function ProtectedRoutes() {
         <Route path="/settings/ai" element={<InferenceSettingsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/mfa-setup" element={<MFASetupPage />} />
+        {/* Section landing pages — shown when clicking parent section in collapsed sidebar */}
+        <Route path="/section/:sectionId" element={<SectionLandingRoute />} />
       </Routes>
     </Layout>
+  );
+}
+
+function SectionLandingRoute() {
+  const { sectionId } = useParams<{ sectionId: string }>();
+  const section = NAV_TREE.find(n => n.id === sectionId);
+  if (!section) return <Navigate to="/" replace />;
+  const children = section.children || [];
+  const mapped = children.map(c => ({
+    id: c.id,
+    to: c.to || "/",
+    icon: c.icon,
+    label: c.label,
+  }));
+  return (
+    <SectionLanding
+      sectionId={sectionId!}
+      sectionLabel={section.label}
+      subSections={mapped}
+      descriptions={SECTION_DESCRIPTIONS[sectionId || ""]}
+    />
   );
 }
 
