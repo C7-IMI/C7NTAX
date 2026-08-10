@@ -39,33 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [landingPage, setLandingPage] = useState<LandingPage>({ path: "/", label: "Dashboard" });
 
   useEffect(() => {
-    // ── Temporary bypass: auto-login with admin credentials ──
-    // Revert: delete this block and set TEMP_BYPASS_AUTH = false
+    // ── Temporary bypass: immediate login without API call ──
+    // Revert: set TEMP_BYPASS_AUTH = false below
     if (TEMP_BYPASS_AUTH) {
       localStorage.setItem("c7_bypass", "1");
-      // Auto-login to get a real JWT token so API calls work
-      const existingToken = localStorage.getItem("c7_token");
-      if (!existingToken) {
-        api.post("/auth/login", { username: "admin", password: "admin" })
-          .then((res) => {
-            if (res.data.token) {
-              localStorage.setItem("c7_token", res.data.token);
-              setToken(res.data.token);
-              if (res.data.user) setUser(res.data.user);
-            } else {
-              setUser({ id: "bypass", email: "bypass@local", firstName: "Guest", lastName: "User", role: "admin" });
-            }
-          })
-          .catch(() => {
-            setUser({ id: "bypass", email: "bypass@local", firstName: "Guest", lastName: "User", role: "admin" });
-          })
-          .finally(() => setLoading(false));
-        return;
-      }
-      // Token already exists — don't overwrite the user
-      if (!user) {
-        setUser({ id: "bypass", email: "bypass@local", firstName: "Guest", lastName: "User", role: "admin" });
-      }
+      setUser({ id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
       setLoading(false);
       return;
     }

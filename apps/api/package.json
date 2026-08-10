@@ -14,6 +14,9 @@
     "db:seed": "tsx src/seed.ts",
     "db:seed-full": "tsx src/seed-full.ts",
     "db:seed-auto": "tsx src/seed-automation.ts",
+    "db:seed-from-snapshots": "tsx src/seed-from-snapshots.ts",
+    "db:capture": "tsx src/snapshot-capture.ts",
+    "db:reseed": "tsx src/snapshot-capture.ts && tsx src/seed-from-snapshots.ts",
     "db:snapshot": "tsx src/seed-automation.ts",
     "clean": "rimraf dist"
   },
