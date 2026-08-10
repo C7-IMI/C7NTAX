@@ -17,3 +17,4 @@ new_models.prisma
 *.db
 *.db-journal
 dist/
+dist-electron/

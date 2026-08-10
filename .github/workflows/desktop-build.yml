@@ -1,0 +1,66 @@
+name: Build Desktop App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/desktop/**'
+      - 'apps/web/**'
+      - 'packages/shared/**'
+      - '.github/workflows/desktop-build.yml'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Windows Desktop
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: '9.1.0'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @C7NTAX/shared build
+
+      - name: Build web app
+        run: pnpm --filter @C7NTAX/web build
+
+      - name: Build desktop app
+        run: pnpm --filter @C7NTAX/desktop build
+
+      - name: Upload portable exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: C7NTAX-Portable
+          path: apps/desktop/dist-electron/C7NTAX-Portable-*.exe
+
+      - name: Create Nightly Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Nightly Build"
+          tag_name: nightly
+          prerelease: true
+          files: apps/desktop/dist-electron/C7NTAX-Portable-*.exe
+          body: |
+            Automated nightly build.
+
+            **Commit:** ${{ github.sha }}
+            **Message:** ${{ github.event.head_commit.message }}
