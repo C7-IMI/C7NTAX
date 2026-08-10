@@ -327,27 +327,127 @@ kumoRouter.get("/passwords/:id/access-logs", requirePermission(Permission.KumoPa
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  CONFIGS — Phase 4 stub
+//  LINKS
 // ═══════════════════════════════════════════════════════════════════
 
-kumoRouter.get("/configs/servers", requirePermission(Permission.KumoConfigView), async (_req: AuthRequest, res) => {
-  res.json({ data: [], message: "Phase 4 — Standard Configs" });
+kumoRouter.get("/links", requirePermission(Permission.KumoLinkView), async (req: AuthRequest, res, next) => {
+  try {
+    const { sourceType, sourceId } = req.query as Record<string, string>;
+    const where: any = {};
+    if (sourceType && sourceId) { where.sourceType = sourceType; where.sourceId = sourceId; }
+    const links = await prisma.kumoLink.findMany({ where, orderBy: { createdAt: "desc" }, take: 200 });
+    res.json({ data: links });
+  } catch (e) { next(e); }
+});
+
+kumoRouter.post("/links", requirePermission(Permission.KumoLinkManage), async (req: AuthRequest, res, next) => {
+  try {
+    const { sourceType, sourceId, targetType, targetId, relationship, label, notes } = req.body;
+    if (!sourceType || !sourceId || !targetType || !targetId) throw new AppError("sourceType, sourceId, targetType, targetId required", 400);
+    const link = await prisma.kumoLink.create({
+      data: { sourceType, sourceId, targetType, targetId, relationship: relationship || "related_to", label: label || null, notes: notes || null, createdById: req.user!.userId },
+    });
+    res.status(201).json(link);
+  } catch (e) { next(e); }
+});
+
+kumoRouter.delete("/links/:id", requirePermission(Permission.KumoLinkManage), async (req: AuthRequest, res, next) => {
+  try { await prisma.kumoLink.delete({ where: { id: req.params.id } }); res.json({ message: "Link removed" }); }
+  catch (e) { next(e); }
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  DOCUMENTS — Phase 5 stub
+//  CONFIGS
 // ═══════════════════════════════════════════════════════════════════
 
-kumoRouter.get("/documents", requirePermission(Permission.KumoDocumentView), async (_req: AuthRequest, res) => {
-  res.json({ data: [], message: "Phase 5 — Documents" });
+kumoRouter.get("/configs/servers", requirePermission(Permission.KumoConfigView), async (_req: AuthRequest, res, next) => {
+  try {
+    const data = await prisma.kumoServer.findMany({ include: { kumoAsset: { select: { id: true, name: true } } }, take: 200 });
+    res.json({ data });
+  } catch (e) { next(e); }
+});
+
+kumoRouter.post("/configs/servers", requirePermission(Permission.KumoConfigCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const { name, hostname, templateId, ...fields } = req.body;
+    if (!name || !hostname || !templateId) throw new AppError("name, hostname, templateId required", 400);
+    const asset = await prisma.kumoAsset.create({ data: { name, templateId, companyId: req.user!.companyId, createdById: req.user!.userId } });
+    const server = await prisma.kumoServer.create({ data: { kumoAssetId: asset.id, hostname, ...fields } });
+    res.status(201).json({ ...asset, server });
+  } catch (e) { next(e); }
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  LINKS — Phase 4 stub
+//  DOCUMENTS
 // ═══════════════════════════════════════════════════════════════════
 
-kumoRouter.get("/links", requirePermission(Permission.KumoLinkView), async (_req: AuthRequest, res) => {
-  res.json({ data: [], message: "Phase 4 — Links" });
+kumoRouter.get("/documents/folders", requirePermission(Permission.KumoDocumentView), async (req: AuthRequest, res, next) => {
+  try {
+    const folders = await prisma.kumoFolder.findMany({ orderBy: { sortOrder: "asc" }, include: { _count: { select: { documents: true } } } });
+    res.json({ data: folders });
+  } catch (e) { next(e); }
+});
+
+kumoRouter.post("/documents/folders", requirePermission(Permission.KumoDocumentCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const { name, parentId } = req.body;
+    if (!name) throw new AppError("name required", 400);
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const folder = await prisma.kumoFolder.create({ data: { name, slug, parentId: parentId || null, companyId: req.user!.companyId } });
+    res.status(201).json(folder);
+  } catch (e) { next(e); }
+});
+
+kumoRouter.get("/documents", requirePermission(Permission.KumoDocumentView), async (req: AuthRequest, res, next) => {
+  try {
+    const { folderId } = req.query as Record<string, string>;
+    const where: any = {};
+    if (folderId) where.folderId = folderId;
+    const docs = await prisma.kumoDocument.findMany({ where, orderBy: { sortOrder: "asc" }, take: 200 });
+    res.json({ data: docs });
+  } catch (e) { next(e); }
+});
+
+kumoRouter.get("/documents/:id", requirePermission(Permission.KumoDocumentView), async (req: AuthRequest, res, next) => {
+  try {
+    const doc = await prisma.kumoDocument.findUnique({ where: { id: req.params.id }, include: { folder: true } });
+    if (!doc) throw new AppError("Not found", 404);
+    const revisions = await prisma.kumoDocumentRevision.findMany({
+      where: { documentId: doc.id }, orderBy: { version: "desc" },
+      select: { id: true, version: true, changeLog: true, authorId: true, createdAt: true }, take: 20,
+    });
+    res.json({ ...doc, revisions });
+  } catch (e) { next(e); }
+});
+
+kumoRouter.post("/documents", requirePermission(Permission.KumoDocumentCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const { title, content, folderId, visibility } = req.body;
+    if (!title || !content) throw new AppError("title and content required", 400);
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now().toString(36);
+    const doc = await prisma.kumoDocument.create({
+      data: { title, slug, currentContent: content, currentVersion: 1, folderId: folderId || null, visibility: visibility || "internal", companyId: req.user!.companyId, authorId: req.user!.userId },
+    });
+    await prisma.kumoDocumentRevision.create({ data: { documentId: doc.id, version: 1, content, authorId: req.user!.userId } });
+    res.status(201).json(doc);
+  } catch (e) { next(e); }
+});
+
+kumoRouter.patch("/documents/:id", requirePermission(Permission.KumoDocumentEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const { title, content, changeLog, folderId, visibility, status } = req.body;
+    const data: any = {};
+    if (title !== undefined) { data.title = title; data.slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now().toString(36); }
+    if (content !== undefined) { data.currentContent = content; data.currentVersion = { increment: 1 }; data.lastEditorId = req.user!.userId; }
+    if (folderId !== undefined) data.folderId = folderId;
+    if (visibility !== undefined) data.visibility = visibility;
+    if (status !== undefined) data.status = status;
+    const doc = await prisma.kumoDocument.update({ where: { id: req.params.id }, data });
+    if (content !== undefined) {
+      await prisma.kumoDocumentRevision.create({ data: { documentId: doc.id, version: doc.currentVersion, content, changeLog: changeLog || null, authorId: req.user!.userId } });
+    }
+    res.json(doc);
+  } catch (e) { next(e); }
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -356,11 +456,13 @@ kumoRouter.get("/links", requirePermission(Permission.KumoLinkView), async (_req
 
 kumoRouter.get("/dashboard", requirePermission(Permission.KumoView), async (_req: AuthRequest, res, next) => {
   try {
-    const [assets, passwords, documents] = await Promise.all([
+    const [assets, passwords, configs, documents, links] = await Promise.all([
       prisma.kumoAsset.count(),
       prisma.kumoPassword.count(),
+      prisma.kumoServer.count(),
       prisma.kumoDocument.count(),
+      prisma.kumoLink.count(),
     ]);
-    res.json({ assets, passwords, configs: 0, documents, links: 0 });
+    res.json({ assets, passwords, configs, documents, links });
   } catch (e) { next(e); }
 });
