@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, type AuthRequest } from "../middleware/auth";
+import { AppError } from "../middleware/errorHandler";
 
 export const alertsRouter = Router();
 alertsRouter.use(authenticate);
