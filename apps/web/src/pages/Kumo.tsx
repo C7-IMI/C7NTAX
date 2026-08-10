@@ -1,6 +1,15 @@
+import { useState, useEffect } from "react";
+import api from "../api";
 import { Shield, Monitor, FileText, Link2, Server, Database } from "lucide-react";
 
 export function KumoDashboardPage() {
+  const [stats, setStats] = useState({ assets: 0, passwords: 0, configs: 0, documents: 0, links: 0 });
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    api.get("/kumo/dashboard").then(r => setStats(r.data)).catch(() => {}).finally(() => setLoaded(true));
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -12,35 +21,35 @@ export function KumoDashboardPage() {
         <Card
           icon={Monitor}
           title="Flexible Assets"
-          description="Dynamic asset records with user-defined templates and custom fields."
+          description={`${stats.assets} assets • Dynamic templates description="Dynamic asset records with user-defined templates and custom fields." custom fields`}
           to="/kumo/assets"
           color="cyber"
         />
         <Card
           icon={Shield}
           title="Password Vault"
-          description="AES-256 encrypted credential storage with immutable access logs."
+          description={`${stats.passwords} passwords • AES-256 encrypted`}
           to="/kumo/passwords"
           color="amber"
         />
         <Card
           icon={Server}
           title="Configurations"
-          description="Standardized servers, workstations, and network device records."
+          description={`${stats.configs} servers • Workstations description="Standardized servers, workstations, and network device records." networks`}
           to="/kumo/configs"
           color="green"
         />
         <Card
           icon={FileText}
           title="Documents & SOPs"
-          description="WYSIWYG knowledge base with folders, revisions, and templates."
+          description={`${stats.documents} documents • Folders description="WYSIWYG knowledge base with folders, revisions, and templates." revisions`}
           to="/kumo/documents"
           color="purple"
         />
         <Card
           icon={Link2}
           title="Universal Links"
-          description="Relate any entity to any other — assets, passwords, tickets, clients."
+          description={`${stats.links} links • Universal relationship mapping`}
           to="/kumo"
           color="blue"
         />
