@@ -62,7 +62,6 @@ export function KumoConfigsPage() {
               </div>
             </button>
           ))}
-          }
         </div>
         <div className="lg:col-span-2">
           {!selected ? (
