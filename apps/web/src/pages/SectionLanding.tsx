@@ -83,7 +83,7 @@ export const SECTION_DESCRIPTIONS: Record<string, Record<string, string>> = {
   },
   "users-roles": {
     "users-list": "Create, edit, and manage user accounts with role assignments",
-    "users-roles": "Configure granular permissions and role-based access control",
+    "users-roles": "View, create, and manage roles with granular permission assignments",
   },
   projects: {
     "projects-list": "View and manage all projects with phases and milestones",

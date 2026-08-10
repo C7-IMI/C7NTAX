@@ -174,7 +174,7 @@ export function RolesPage() {
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-white">Roles & Permissions</h2>
+          <h2 className="text-lg font-semibold text-white">Manage Roles</h2>
           <p className="text-sm text-gray-400">{roles.length} roles</p>
         </div>
         <div className="relative">

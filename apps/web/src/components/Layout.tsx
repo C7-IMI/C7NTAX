@@ -47,7 +47,7 @@ export const NAV_TREE: NavNode[] = [
   {
     id: "users-roles", icon: Users, label: "Users & Roles", children: [
       { id: "users-list", to: "/users", icon: Users, label: "Manage Users" },
-      { id: "users-roles", to: "/roles", icon: Shield, label: "Roles & Permissions" },
+      { id: "users-roles", to: "/roles", icon: Shield, label: "Manage Roles" },
     ],
   },
   {

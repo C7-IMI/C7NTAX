@@ -89,7 +89,7 @@
 - Board settings: SLA response/resolution times, auto-close toggle/days, follow-up toggle/intervals
 - Clients section with Client List sub-item
 - Assets section with Asset Inventory and Procurement sub-items
-- Users & Roles section with Manage Users and Roles & Permissions sub-items
+- Users & Roles section with Manage Users and Manage Roles sub-items
 - Projects section with Project List sub-item
 - New Procurement placeholder page created
 - Administration landing page shows card grid linking to all admin sub-sections

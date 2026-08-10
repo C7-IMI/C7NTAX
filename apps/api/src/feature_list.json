@@ -48,7 +48,7 @@
       "Alerting System — expiry-based alert rules with dismissible alert logs",
       "File Manager — polymorphic file storage for clients, tickets, and assets",
       "CloudConnect — 16 connector types with Test Connection button and inline pass/fail results",
-      "Roles & Permissions — 101 granular permissions across 21 categories with interactive editor",
+      "Manage Roles — 101 granular permissions across 21 categories with interactive editor",
       "Create from Existing — copy roles and users from templates with all settings preserved"
     ]
   },
@@ -59,7 +59,7 @@
     "changes": [
       "Granular RBAC — 77 permissions across 20 categories with role management UI",
       "Manage Users — master-detail layout with profile, permissions, and security tabs",
-      "Roles & Permissions — interactive role editor with expandable permission categories",
+      "Manage Roles — interactive role editor with expandable permission categories",
       "Role Member Management — add/remove users from roles via searchable dialog",
       "Permission Template Dropdown — apply role defaults and detect customizations",
       "Sortable Headers — click-to-sort on all table columns across every page",
