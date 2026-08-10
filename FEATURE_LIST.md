@@ -13,20 +13,20 @@
 ---
 
 ## 2026.8.10.003 — Header Descriptions & Section Landing Pages
-- **[New]** Dynamic section header — every page displays its section name with a brief contextual description on a single line
-- **[New]** 36 section descriptions mapped across all routes with parent-path fallback for nested routes
-- **[New]** Collapsible resizable sidebar — icon-only mode (64px) with persistent width stored in localStorage
-- **[New]** Section landing pages — clicking a parent section in collapsed sidebar opens a card grid of all subsections with descriptions
-- **[New]** Breadcrumb navigation bar — hierarchical path shown on every page with clickable parent segments and Home icon
-- **[New]** Auto-snapshot capture — database state automatically dumped to 38 snapshot fixture files after any successful POST/PUT/PATCH/DELETE
-- **[New]** Snapshot capture-to-reseed pipeline — `db:capture` + `db:reseed` scripts with dependency-order cleanup and seeding
-- **[New]** Recently Viewed tracking — browsing Kumo assets, passwords, configs, and documents records views automatically via POST /api/kumo/recently-viewed
-- **[New]** Header toolbar — Search, Recent, AI, Help, Settings, and My Account placeholder buttons in the top bar
-- **[Update]** CloudConnect rebrand — Integrations renamed to CloudConnect with updated routes, files, navigation, and API mount paths
-- **[Update]** Extended contacts seed — 13 contacts with full PSA fields (phone, mobile, title, department, isActive) across 5 companies
-- **[Update]** Resequenced version numbering to date-based Year.Month.Day.Build format across all changelogs
-- **[Update]** "Roles & Permissions" renamed to "Manage Roles" — UI labels, nav links, page titles, and docs updated
-- **[Update]** "Dashboard" top-level breadcrumb label renamed to "Home" with new Home landing page
+- **[New]** Dynamic section header — every page now displays its section name alongside a brief contextual description rendered on a single line in the top navigation bar, replacing the previous title-only header with a formatted `{Section Name} — {description}` layout that stays on one line and leaves generous spacing before the Search button.
+- **[New]** 36 section descriptions — mapped across all application routes (e.g., `/`, `/tickets`, `/kumo`, `/billing`) with intelligent parent-path fallback so nested pages (e.g., `/kumo/assets/abc123`) inherit their parent section's description rather than showing nothing.
+- **[New]** Collapsible resizable sidebar — icon-only mode (64 px) with persistent width stored in localStorage; drag-to-resize handle on the right edge of the sidebar; clicking a parent section in collapsed mode navigates to a landing page instead of expanding the sidebar.
+- **[New]** Section landing pages — clicking any parent section (Administration, Clients, Assets, Users & Roles, Projects, Kumo, Billing, Reports) while the sidebar is collapsed opens a card-grid landing page listing every subsection with its icon, label, and a brief description of its functionality.
+- **[New]** Breadcrumb navigation bar — hierarchical path shown on every page with clickable parent segments; the first segment is always "Home" with a house icon linking to `/home`; all segments including the current page are clickable.
+- **[New]** Auto-snapshot capture — the database state is automatically dumped to 38 snapshot fixture files (`src/snapshots/*.json`) after any successful POST, PUT, PATCH, or DELETE operation, with 5-second debouncing to coalesce rapid consecutive writes into a single capture.
+- **[New]** Snapshot capture-to-reseed pipeline — the `pnpm db:capture` and `pnpm db:reseed` scripts provide a full round-trip: wipe the database in dependency order (children before parents), re-seed every table from captured JSON fixtures, and output record counts for verification.
+- **[New]** Recently Viewed tracking — browsing Kumo assets (`/kumo/assets/:id`), passwords (`selectPassword()`), configurations (`setSelected()`), and documents (`openDoc()`) now automatically records views via `POST /api/kumo/recently-viewed`; the Kumo Dashboard polls `GET /api/kumo/recently-viewed` every 10 seconds for live updates without full page reload.
+- **[New]** Header toolbar — Search, Recent (Clock icon), AI (Sparkles icon), Help (HelpCircle icon), Settings (Settings icon), and My Account (UserCircle icon, cyber-accented) placeholder buttons rendered in the top-right of the application header bar, hidden on mobile screens below the `sm` breakpoint.
+- **[Update]** CloudConnect rebrand — the "Integrations" navigation item (formerly `admin-integrations`, route `/integrations`, API mount `/api/integrations`, component `IntegrationsPage`, file `Integrations.tsx`) has been renamed to "CloudConnect" (`admin-cloudconnect`, `/cloudconnect`, `/api/cloudconnect`, `CloudConnectPage`, `CloudConnect.tsx`); all 12 cross-reference files updated including Dashboard quick-links, Settings landing page, and the Administration card grid.
+- **[Update]** Extended contacts seed — the database seed script (`seed-full.ts`) now creates 13 contacts across 5 companies (up from 5 contacts) with full PSA-standard fields: phone (`+1-555-XXXX`), mobile, title (IT Director, VP Operations, CEO), department, and `isActive` boolean.
+- **[Update]** Resequenced version numbering — all 25 entries in FEATURE_LIST.md and 7 entries in feature_list.json (the What's New data source) converted from semantic-like versions (`v1.11.001`) to date-based `Year.Month.Day.Build` format (e.g., `2026.8.10.003`); build number starts at `001` each day and increments sequentially for same-day releases.
+- **[Update]** Manage Roles rename — "Roles & Permissions" (navigation label, page title `<h2>`, SectionLanding description, feature_list.json changelog entries x2, FEATURE_LIST.md sub-item reference) has been renamed to "Manage Roles" across the entire codebase; the parent "Users & Roles" section and `/roles` route path remain unchanged.
+- **[Update]** Home breadcrumb — the top-level breadcrumb label changed from "Dashboard" to "Home" with a house icon; a new `/home` route renders a `HomePage` with a welcome message and 12-card Getting Started grid linking to Tickets, Boards, Pipeline, Clients, Billing, Projects, Assets, KB, Kumo, Users, Roles, and Administration; the "Home" nav section sits fixed at the top of the sidebar and is non-draggable.
 
 ## 2026.8.10.002 — Recently Viewed on Kumo Dashboard
 - **[New]** Recently Viewed card replaces Implementation Status on the Kumo Dashboard
