@@ -348,7 +348,7 @@ export function Layout({ children }: { children: ReactNode }) {
               </button>
             )}
             <button
-              onClick={() => toggle(node.id)}
+              onClick={() => { toggle(node.id); navigate(`/section/${node.id}`); }}
               className={`flex-1 flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${
                 active ? "bg-cyber-600/10 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
