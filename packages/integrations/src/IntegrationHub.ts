@@ -153,6 +153,11 @@ export class IntegrationHub {
     config.status = "disconnected";
     this.configs.set(config.id, config);
   }
+
+  /** Remove an integration config from the hub */
+  remove(configId: string): void {
+    this.configs.delete(configId);
+  }
 }
 
 // Re-export types

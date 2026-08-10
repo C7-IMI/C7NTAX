@@ -152,11 +152,11 @@ integrationsRouter.patch("/:id", requirePermission(Permission.IntegrationManage)
 // ── Test connection ───────────────────────────────────────────────────────
 integrationsRouter.post("/:id/test", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
-    const config = await loadConfig(req.params.id);
+    const config = await loadConfig(req.params.id!);
     const adapter = hub.getAdapter(config.kind);
     if (!adapter) throw new AppError(`Unknown integration kind: ${config.kind}`, 400);
     const ok = await adapter.testConnection(config);
-    await persistCredentials(req.params.id, config.credentials as Record<string, string>);
+    await persistCredentials(req.params.id!, config.credentials as Record<string, string>);
     await prisma.integration.update({
       where: { id: req.params.id },
       data: { status: ok ? "connected" : "error", errorMessage: ok ? null : "Connection test failed" },
@@ -168,7 +168,7 @@ integrationsRouter.post("/:id/test", requirePermission(Permission.IntegrationVie
 // ── Sync integration ──────────────────────────────────────────────────────
 integrationsRouter.post("/:id/sync", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
-    const config = await loadConfig(req.params.id);
+    const config = await loadConfig(req.params.id!);
     const adapter = hub.getAdapter(config.kind);
     if (!adapter) throw new AppError(`Unknown integration kind: ${config.kind}`, 400);
 
@@ -180,7 +180,7 @@ integrationsRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
     const result = await adapter.sync(config);
 
     // Persist credentials (may have been updated with new tokens)
-    await persistCredentials(req.params.id, config.credentials as Record<string, string>);
+    await persistCredentials(req.params.id!, config.credentials as Record<string, string>);
 
     let recordsCreated = 0;
     let recordsUpdated = 0;
@@ -391,7 +391,7 @@ integrationsRouter.get("/:id/entity-types", requirePermission(Permission.Integra
       distinct: ["entityType"],
       select: { entityType: true },
     });
-    const counts = await Promise.all(types.map(async t => ({
+    const counts = await Promise.all(types.map(async (t: { entityType: string }) => ({
       entityType: t.entityType,
       count: await prisma.syncedEntity.count({ where: { integrationId: req.params.id, entityType: t.entityType } }),
     })));
@@ -435,7 +435,7 @@ integrationsRouter.get("/:id/sync-logs", requirePermission(Permission.Integratio
 integrationsRouter.delete("/:id", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
     await prisma.integration.delete({ where: { id: req.params.id } });
-    hub.remove(req.params.id);
+    hub.remove(req.params.id!);
     res.json({ message: "Integration removed" });
   } catch (e) { next(e); }
 });
