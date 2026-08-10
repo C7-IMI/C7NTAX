@@ -1,29 +1,32 @@
 {
-  "timestamp": "2026-08-09T08:25:42.036Z",
+  "timestamp": "2026-08-10T14:49:57.697Z",
+  "verified": true,
   "counts": {
+    "role": 4,
     "user": 6,
     "company": 5,
     "contact": 13,
-    "ticket": 8,
     "serviceBoard": 3,
-    "integration": 0,
-    "asset": 5,
-    "m365User": 0,
-    "m365Group": 0,
-    "m365Subscription": 0,
-    "syncedEntity": 0,
-    "syncLog": 0,
-    "invoice": 4,
+    "ticket": 8,
+    "ticketComment": 6,
+    "timeEntry": 5,
     "serviceAgreement": 5,
+    "invoice": 4,
     "project": 3,
     "opportunity": 3,
+    "asset": 5,
     "knowledgeBaseArticle": 4,
+    "integration": 4,
+    "m365User": 3,
+    "m365Subscription": 2,
+    "m365Group": 0,
+    "syncedEntity": 0,
+    "syncLog": 0,
     "notification": 0,
-    "contract": 0,
-    "procurementOrder": "N/A",
-    "assetAssignment": 0,
-    "ticketComment": 8,
-    "timeEntry": 5,
-    "role": 4
-  }
+    "recentlyViewedItem": 0
+  },
+  "fixtureFiles": [
+    "contacts.json",
+    "core.json"
+  ]
 }

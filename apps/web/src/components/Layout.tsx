@@ -1,10 +1,10 @@
-import { useState, type ReactNode } from "react";
+import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
-  Database, Server, Sparkles,
+  Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -52,8 +52,8 @@ const NAV_TREE: NavNode[] = [
   {
     id: "projects", icon: FolderKanban, label: "Projects", children: [
       { id: "projects-list", to: "/projects", icon: FolderKanban, label: "Project List" },
-  { id: "calendar", to: "/calendar", icon: Calendar, label: "Calendar" },
-  { id: "pto", to: "/pto", icon: Clock, label: "Time Off" },
+      { id: "calendar", to: "/calendar", icon: Calendar, label: "Calendar" },
+      { id: "pto", to: "/pto", icon: Clock, label: "Time Off" },
     ],
   },
   { id: "kb", to: "/kb", icon: BookOpen, label: "Knowledge Base" },
@@ -90,7 +90,21 @@ function loadExpanded(): Set<string> {
     const saved = localStorage.getItem("c7_nav_expanded");
     if (saved) return new Set(JSON.parse(saved) as string[]);
   } catch {}
-  return new Set(["administration", "clients", "billing"]); // defaults
+  return new Set(["administration", "clients", "billing"]);
+}
+
+function loadCollapsed(): boolean {
+  try {
+    return localStorage.getItem("c7_sidebar_collapsed") === "true";
+  } catch { return false; }
+}
+
+function loadSidebarWidth(): number {
+  try {
+    const w = localStorage.getItem("c7_sidebar_width");
+    if (w) return Math.max(200, Math.min(480, Number(w)));
+  } catch {}
+  return 256;
 }
 
 function isNodeActive(node: NavNode, pathname: string): boolean {
@@ -113,8 +127,12 @@ function getPageTitle(nodes: NavNode[], pathname: string): string {
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(loadExpanded);
+  const [collapsed, setCollapsed] = useState<boolean>(loadCollapsed);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(loadSidebarWidth);
+  const [resizing, setResizing] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
 
   // ── Drag-and-drop nav order ────────────────────────────────────
   const [navOrder, setNavOrder] = useState<string[]>(() => {
@@ -129,6 +147,51 @@ export function Layout({ children }: { children: ReactNode }) {
   const orderedTree = navOrder
     .map(id => NAV_TREE.find(n => n.id === id))
     .filter(Boolean) as NavNode[];
+
+  // ── Collapse persistence ───────────────────────────────────────
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem("c7_sidebar_collapsed", String(next));
+      return next;
+    });
+  }, []);
+
+  // ── Resize handling ────────────────────────────────────────────
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!resizing) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.max(200, Math.min(480, e.clientX));
+      setSidebarWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      setResizing(false);
+      localStorage.setItem("c7_sidebar_width", String(sidebarWidth));
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [resizing, sidebarWidth]);
+
+  // Save sidebar width on change
+  useEffect(() => {
+    if (!resizing) {
+      localStorage.setItem("c7_sidebar_width", String(sidebarWidth));
+    }
+  }, [sidebarWidth, resizing]);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDragId(id);
@@ -157,6 +220,11 @@ export function Layout({ children }: { children: ReactNode }) {
   const handleDragEnd = () => setDragId(null);
 
   const toggle = (id: string) => {
+    if (collapsed) {
+      // In collapsed mode, expand the sidebar to show children
+      setCollapsed(false);
+      localStorage.setItem("c7_sidebar_collapsed", "false");
+    }
     setExpanded(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -174,19 +242,48 @@ export function Layout({ children }: { children: ReactNode }) {
     const isDragging = dragId === node.id;
     const isTopLevel = depth === 0;
 
+    // In collapsed mode, top-level items are just icon buttons
+    if (collapsed && isTopLevel) {
+      return (
+        <div key={node.id} className="relative flex justify-center" title={node.label}>
+          {hasChildren ? (
+            <button
+              onClick={() => toggle(node.id)}
+              className={`p-2.5 rounded-lg transition-colors ${
+                active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+              }`}
+            >
+              <node.icon size={20} />
+            </button>
+          ) : (
+            <Link
+              to={linkTo}
+              onClick={() => setMobileOpen(false)}
+              className={`p-2.5 rounded-lg transition-colors ${
+                active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+              }`}
+            >
+              <node.icon size={20} />
+            </Link>
+          )}
+          {active && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-cyber-500 rounded-full" />}
+        </div>
+      );
+    }
+
     return (
       <div
         key={node.id}
-        draggable={isTopLevel}
-        onDragStart={(e) => isTopLevel && handleDragStart(e, node.id)}
+        draggable={isTopLevel && !collapsed}
+        onDragStart={(e) => isTopLevel && !collapsed && handleDragStart(e, node.id)}
         onDragOver={handleDragOver}
-        onDrop={(e) => isTopLevel && handleDrop(e, node.id)}
+        onDrop={(e) => isTopLevel && !collapsed && handleDrop(e, node.id)}
         onDragEnd={handleDragEnd}
         className={`rounded-lg transition-colors ${isDragging ? "opacity-50" : ""} ${dragId && dragId !== node.id && isTopLevel ? "border border-dashed border-cyber-500/30" : ""}`}
       >
         {hasChildren ? (
           <div className="flex items-center group/drag">
-            {isTopLevel && (
+            {isTopLevel && !collapsed && (
               <button
                 className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
                 onMouseDown={(e) => e.stopPropagation()}
@@ -202,13 +299,13 @@ export function Layout({ children }: { children: ReactNode }) {
               style={{ paddingLeft: `${12 + depth * 12}px` }}
             >
               <node.icon size={18} />
-              <span className="flex-1 text-left">{node.label}</span>
-              <ChevronDown size={14} className={`transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />
+              {!collapsed && <span className="flex-1 text-left truncate">{node.label}</span>}
+              {!collapsed && <ChevronDown size={14} className={`transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />}
             </button>
           </div>
         ) : (
           <div className="flex items-center group/drag">
-            {isTopLevel && (
+            {isTopLevel && !collapsed && (
               <button
                 className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
                 onMouseDown={(e) => e.stopPropagation()}
@@ -218,19 +315,19 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
             <Link
               to={linkTo}
-              onClick={() => setSidebarOpen(false)}
+              onClick={() => setMobileOpen(false)}
               style={{ paddingLeft: `${12 + depth * 12}px` }}
               className={`flex-1 flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
                 active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
               <node.icon size={18} />
-              {node.label}
-              {active && <ChevronRight size={14} className="ml-auto" />}
+              {!collapsed && node.label}
+              {active && !collapsed && <ChevronRight size={14} className="ml-auto" />}
             </Link>
           </div>
         )}
-        {hasChildren && isExpanded && (
+        {hasChildren && isExpanded && !collapsed && (
           <div className="border-l border-surface-border ml-7">
             {node.children!.map(c => renderNode(c, depth + 1))}
           </div>
@@ -239,43 +336,101 @@ export function Layout({ children }: { children: ReactNode }) {
     );
   };
 
+  const sidebarStyle = collapsed
+    ? { width: "64px" }
+    : { width: `${sidebarWidth}px` };
+
   return (
     <div className="flex h-screen overflow-hidden bg-navy-950">
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-surface-border flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex items-center justify-between px-5 h-16 border-b border-surface-border shrink-0">
-          <Link to="/" className="flex items-center gap-2.5" onClick={() => setSidebarOpen(false)}>
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#C42D4B" }}>
+
+      {/* Sidebar */}
+      <aside
+        ref={sidebarRef}
+        className={`fixed inset-y-0 left-0 z-50 bg-surface border-r border-surface-border flex flex-col shrink-0 transition-all duration-200 lg:relative lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={sidebarStyle}
+      >
+        {/* Logo + Collapse Toggle */}
+        <div className={`flex items-center h-16 border-b border-surface-border shrink-0 ${collapsed ? "justify-center px-2" : "justify-between px-4"}`}>
+          <Link to="/" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#C42D4B" }}>
               <span className="text-white font-bold text-sm">C7</span>
             </div>
-            <span className="font-semibold text-base text-white tracking-tight">NTAX</span>
+            {!collapsed && <span className="font-semibold text-base text-white tracking-tight">NTAX</span>}
           </Link>
-          <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
-        </div>
-        <nav className="flex-1 py-3 px-2 overflow-y-auto">
-          {orderedTree.map(n => renderNode(n))}
-        </nav>
-        <div className="border-t border-surface-border p-3">
-          <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-8 h-8 rounded-full bg-cyber-600/30 text-cyber-400 flex items-center justify-center text-sm font-bold">
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user?.firstName} {user?.lastName}</p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-            </div>
-            <button onClick={logout} className="text-gray-500 hover:text-red-400 transition-colors p-1" title="Sign out"><LogOut size={16} /></button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggleCollapsed}
+              className="hidden lg:flex text-gray-500 hover:text-white p-1 rounded transition-colors"
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            </button>
+            <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setMobileOpen(false)}>
+              <X size={20} />
+            </button>
           </div>
         </div>
+
+        {/* Navigation */}
+        <nav className={`flex-1 py-3 overflow-y-auto ${collapsed ? "px-1.5" : "px-2"}`}>
+          <div className={collapsed ? "flex flex-col items-center gap-1" : ""}>
+            {orderedTree.map(n => renderNode(n))}
+          </div>
+        </nav>
+
+        {/* User footer */}
+        <div className={`border-t border-surface-border ${collapsed ? "p-2" : "p-3"}`}>
+          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3 px-2 py-2"}`}>
+            <div className="w-8 h-8 rounded-full bg-cyber-600/30 text-cyber-400 flex items-center justify-center text-sm font-bold shrink-0">
+              {user?.firstName?.[0]}{user?.lastName?.[0]}
+            </div>
+            {!collapsed && (
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                </div>
+                <button onClick={logout} className="text-gray-500 hover:text-red-400 transition-colors p-1" title="Sign out">
+                  <LogOut size={16} />
+                </button>
+              </>
+            )}
+            {collapsed && (
+              <button onClick={logout} className="text-gray-500 hover:text-red-400 transition-colors p-1 absolute bottom-3" title="Sign out">
+                <LogOut size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Resize handle */}
+        {!collapsed && (
+          <div
+            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-cyber-500/30 transition-colors group"
+            onMouseDown={handleResizeMouseDown}
+          >
+            <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-surface-border group-hover:bg-cyber-500/50 transition-colors" />
+          </div>
+        )}
       </aside>
+
+      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50">
-          <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setSidebarOpen(true)}><Menu size={20} /></button>
-          <h1 className="text-base font-semibold text-white truncate ml-2 lg:ml-0">
-            {getPageTitle(NAV_TREE, location.pathname)}
-          </h1>
+          <div className="flex items-center gap-3">
+            <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setMobileOpen(true)}>
+              <Menu size={20} />
+            </button>
+            <h1 className="text-base font-semibold text-white truncate">
+              {getPageTitle(NAV_TREE, location.pathname)}
+            </h1>
+          </div>
           <div className="w-8 lg:hidden" />
         </header>
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>

@@ -61,13 +61,21 @@ async function main() {
 
   // ── Contacts ──
   await prisma.contact.createMany({ data: [
-    { firstName: "David", lastName: "Chen", email: "david@acmecorp.com", companyId: acme.id, isPrimary: true },
-    { firstName: "Emily", lastName: "Johnson", email: "emily@globexind.com", companyId: globex.id, isPrimary: true },
-    { firstName: "Robert", lastName: "Miller", email: "robert@initech.io", companyId: initech.id, isPrimary: true },
-    { firstName: "Alice", lastName: "Wong", email: "alice@umbrellacorp.net", companyId: umbrell.id, isPrimary: true },
-    { firstName: "Tony", lastName: "Pepper", email: "tony@starkent.com", companyId: stark.id, isPrimary: true },
+    { firstName: "David", lastName: "Chen", email: "david@acmecorp.com", phone: "+1-555-0101", mobile: "+1-555-0111", title: "IT Director", department: "Information Technology", companyId: acme.id, isPrimary: true, isActive: true },
+    { firstName: "Maria", lastName: "Garcia", email: "maria@acmecorp.com", phone: "+1-555-0102", title: "HR Manager", department: "Human Resources", companyId: acme.id, isPrimary: false, isActive: true },
+    { firstName: "James", lastName: "Wilson", email: "jwilson@acmecorp.com", phone: "+1-555-0103", title: "CFO", department: "Finance", companyId: acme.id, isPrimary: false, isActive: true },
+    { firstName: "Emily", lastName: "Johnson", email: "emily@globexind.com", phone: "+1-555-0201", mobile: "+1-555-0211", title: "VP Operations", department: "Operations", companyId: globex.id, isPrimary: true, isActive: true },
+    { firstName: "Robert", lastName: "Kim", email: "rkim@globexind.com", phone: "+1-555-0202", title: "Network Admin", department: "IT", companyId: globex.id, isPrimary: false, isActive: true },
+    { firstName: "Sarah", lastName: "Lee", email: "slee@globexind.com", phone: "+1-555-0203", mobile: "+1-555-0213", title: "Office Manager", department: "Administration", companyId: globex.id, isPrimary: false, isActive: true },
+    { firstName: "Michael", lastName: "Brown", email: "mbrown@initech.io", phone: "+1-555-0301", title: "CEO", department: "Executive", companyId: initech.id, isPrimary: true, isActive: true },
+    { firstName: "Jessica", lastName: "Davis", email: "jdavis@initech.io", phone: "+1-555-0302", mobile: "+1-555-0312", title: "CTO", department: "Engineering", companyId: initech.id, isPrimary: false, isActive: true },
+    { firstName: "Alice", lastName: "Wong", email: "alice@umbrellacorp.net", phone: "+1-555-0401", title: "Security Officer", department: "Security", companyId: umbrell.id, isPrimary: true, isActive: true },
+    { firstName: "Thomas", lastName: "Mueller", email: "tmueller@umbrellacorp.net", phone: "+1-555-0402", mobile: "+1-555-0412", title: "IT Manager", department: "IT", companyId: umbrell.id, isPrimary: false, isActive: true },
+    { firstName: "Tony", lastName: "Stark", email: "tony@starkent.com", phone: "+1-555-0501", mobile: "+1-555-0511", title: "Owner", department: "Executive", companyId: stark.id, isPrimary: true, isActive: true },
+    { firstName: "Pepper", lastName: "Potts", email: "pepper@starkent.com", phone: "+1-555-0502", mobile: "+1-555-0512", title: "Operations Director", department: "Operations", companyId: stark.id, isPrimary: false, isActive: true },
+    { firstName: "Happy", lastName: "Hogan", email: "happy@starkent.com", phone: "+1-555-0503", title: "Facilities Manager", department: "Facilities", companyId: stark.id, isPrimary: false, isActive: true },
   ] });
-  console.log("  ✓ Created 5 contacts");
+  console.log("  ✓ Created 13 contacts");
 
   // ── Service Boards ──
   const helpdesk = await prisma.serviceBoard.create({ data: { name: "Helpdesk", description: "General IT support", slaResponseMinutes: 120, slaResolutionMinutes: 480 } });

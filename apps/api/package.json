@@ -12,6 +12,9 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx src/seed.ts",
+    "db:seed-full": "tsx src/seed-full.ts",
+    "db:seed-auto": "tsx src/seed-automation.ts",
+    "db:snapshot": "tsx src/seed-automation.ts",
     "clean": "rimraf dist"
   },
   "dependencies": {
