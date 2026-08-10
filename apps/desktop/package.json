@@ -21,11 +21,10 @@
     "appId": "com.cyber7group.C7NTAX",
     "productName": "C7NTAX",
     "directories": {
-      "output": "release"
+      "output": "dist-electron"
     },
     "win": {
       "target": [
-        "nsis",
         "portable"
       ],
       
