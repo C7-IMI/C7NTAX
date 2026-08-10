@@ -76,7 +76,9 @@ export function UsersPage() {
       const r = await api.get(`/users/${id}`);
       setSelected(r.data);
       setForm(r.data);
-      setPermSet(new Set(r.data.permissions || []));
+      const rolePerms = r.data.role?.permissions || [];
+      const userOverrides = r.data.permissions || [];
+      setPermSet(new Set([...rolePerms, ...userOverrides]));
       setRoleTemplate(r.data.role?.systemRole || null);
     } catch { /* ignore */ }
   };
@@ -84,7 +86,9 @@ export function UsersPage() {
   const openDetail = (user: UserFull) => {
     setSelected(user);
     setForm(user);
-    setPermSet(new Set(user.permissions || []));
+    const rolePerms = user.role?.permissions || [];
+    const userOverrides = user.permissions || [];
+    setPermSet(new Set([...rolePerms, ...userOverrides]));
     setRoleTemplate(user.role?.systemRole || null);
     setEditing(false);
     setTab("profile");

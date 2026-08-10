@@ -31,7 +31,7 @@ usersRouter.get("/", requirePermission(Permission.UserManage), async (req: AuthR
         orderBy: { createdAt: "desc" },
         select: {
           id: true, email: true, username: true, firstName: true, lastName: true, title: true,
-          role: { select: { id: true, systemRole: true, name: true } },
+          role: { select: { id: true, systemRole: true, name: true, permissions: true } },
           permissions: true, isActive: true, isLocked: true, mfaEnabled: true, lastLoginAt: true,
           createdAt: true, company: { select: { id: true, name: true } },
         },
