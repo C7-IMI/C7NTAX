@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 import { authenticate, type AuthRequest } from "../middleware/auth";
 import { prisma } from "../index";
 import { getRetryCount, getRecoveryLog, resetPoller, isPaused } from "../services/poller";
@@ -133,12 +135,74 @@ systemRouter.post("/poller/reset", async (_req: AuthRequest, res) => {
   res.json({ success: true, message: "Poller reset successfully" });
 });
 
-// ── Changelog ──────────────────────────────────────────────────────
+// ── Changelog — parses FEATURE_LIST.md at runtime (single source of truth) ──
+import { readFileSync } from "fs";
+import { resolve } from "path";
+
+interface ChangeItem {
+  text: string;
+  type: "new" | "update" | "fix";
+}
+
+interface VersionEntry {
+  version: string;
+  date: string;
+  title: string;
+  changes: ChangeItem[];
+}
+
+function parseFeatureList(mdPath: string): VersionEntry[] {
+  const raw = readFileSync(mdPath, "utf-8");
+  const versions: VersionEntry[] = [];
+
+  // Match version headers:  ## YYYY.M.D.BBB — Title
+  const headerRe = /^## (\d{4}\.\d{1,2}\.\d{1,2}\.\d{3})\s*[—–-]\s*(.+)$/gm;
+  const matches = [...raw.matchAll(headerRe)];
+
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i];
+    const version = m[1];
+    const title = m[2].trim();
+    const headerEnd = (m.index ?? 0) + m[0].length;
+    const nextHeaderStart = i + 1 < matches.length ? matches[i + 1].index! : raw.length;
+
+    // Extract lines between this header and the next
+    const body = raw.slice(headerEnd, nextHeaderStart);
+    const changes: ChangeItem[] = [];
+
+    // Parse bullet lines:  - **[Type]** text
+    const bulletRe = /^-\s*\*\*\[(New|Update|Fix)\]\*\*\s+(.+)$/gm;
+    let bm: RegExpExecArray | null;
+    while ((bm = bulletRe.exec(body)) !== null) {
+      const typeLabel = bm[1];
+      const text = bm[2].trim();
+      const type = typeLabel === "New" ? "new" : typeLabel === "Update" ? "update" : "fix";
+      changes.push({ text, type });
+    }
+
+    if (changes.length > 0 || title) {
+      // Derive date from version: YYYY.M.D.BBB → YYYY-MM-DD
+      const parts = version.split(".");
+      const date = `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}`;
+      versions.push({ version, date, title, changes });
+    }
+  }
+
+  return versions;
+}
+
 systemRouter.get("/changelog", (_req, res) => {
   try {
-    const data = require("../feature_list.json");
+    const mdPath = resolve(__dirname, "../../../../FEATURE_LIST.md");
+    const data = parseFeatureList(mdPath);
     res.json(data);
   } catch {
-    res.json([]);
+    // Fallback to static JSON if MD not available
+    try {
+      const data = require("../feature_list.json");
+      res.json(data);
+    } catch {
+      res.json([]);
+    }
   }
 });
