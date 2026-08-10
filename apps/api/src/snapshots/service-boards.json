@@ -1,6 +1,6 @@
 [
   {
-    "id": "3cde00a5-3f6d-417a-ba0e-6a2d7de1da4c",
+    "id": "da9896de-6f7b-4e36-bbbf-e0a85420ce37",
     "name": "Helpdesk",
     "description": "General IT support",
     "isActive": true,
@@ -10,11 +10,11 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-10T17:13:15.832Z",
-    "updatedAt": "2026-08-10T17:13:15.832Z"
+    "createdAt": "2026-08-10T17:27:38.286Z",
+    "updatedAt": "2026-08-10T17:27:38.286Z"
   },
   {
-    "id": "0ff2a5e0-b2ff-4c1a-a426-a816a9520ac4",
+    "id": "9e46eb0e-bf89-40ec-a239-e5f15510f122",
     "name": "Security",
     "description": "Security incidents and alerts",
     "isActive": true,
@@ -24,11 +24,11 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-10T17:13:15.833Z",
-    "updatedAt": "2026-08-10T17:13:15.833Z"
+    "createdAt": "2026-08-10T17:27:38.287Z",
+    "updatedAt": "2026-08-10T17:27:38.287Z"
   },
   {
-    "id": "37e576c9-dfa0-4011-9007-088dabf3c1ef",
+    "id": "f347e65b-7d55-4a67-b645-40a5fb9d4501",
     "name": "Client Onboarding",
     "description": "New client setup and migration",
     "isActive": true,
@@ -38,7 +38,7 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-10T17:13:15.833Z",
-    "updatedAt": "2026-08-10T17:13:15.833Z"
+    "createdAt": "2026-08-10T17:27:38.287Z",
+    "updatedAt": "2026-08-10T17:27:38.287Z"
   }
 ]

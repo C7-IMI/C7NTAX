@@ -1,1 +1,68 @@
-[]
+[
+  {
+    "id": "74651709-5fb6-45dc-a25c-0a0f9df9ef93",
+    "body": "Checked Exchange Online — connector is healthy. Investigating transport rules.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "aff371d4-0af1-4d54-bad5-6ff61c6862e5",
+    "authorId": "692a843b-b4a9-4151-bf99-78e284924cba",
+    "createdAt": "2026-08-09T17:27:38.288Z",
+    "updatedAt": "2026-08-10T17:27:38.299Z"
+  },
+  {
+    "id": "db9663f0-a469-4f3a-ae34-46033e873018",
+    "body": "Found the issue — outbound connector was pointing to old smart host IP after ISP change. Updated and testing.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "aff371d4-0af1-4d54-bad5-6ff61c6862e5",
+    "authorId": "692a843b-b4a9-4151-bf99-78e284924cba",
+    "createdAt": "2026-08-10T05:27:38.288Z",
+    "updatedAt": "2026-08-10T17:27:38.299Z"
+  },
+  {
+    "id": "8e7955d3-de7f-481c-9b9c-c29fd63cd7c3",
+    "body": "We've tested VPN from three different locations. Issue appears to be with ISP routing, not our configuration.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "15e0d6e5-b73c-40f3-a09a-23865b7e709d",
+    "authorId": "692a843b-b4a9-4151-bf99-78e284924cba",
+    "createdAt": "2026-08-08T17:27:38.288Z",
+    "updatedAt": "2026-08-10T17:27:38.299Z"
+  },
+  {
+    "id": "340240ca-842d-4f74-8932-9deb5de9ce90",
+    "body": "Email was from spoofed domain. Defender has blocked the attachment across all mailboxes. User training scheduled.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "46095d67-c2e6-4175-84a8-03dda89a05ef",
+    "authorId": "e87896b8-3a18-4ae2-9279-4f103a9be594",
+    "createdAt": "2026-08-08T17:27:38.288Z",
+    "updatedAt": "2026-08-10T17:27:38.299Z"
+  },
+  {
+    "id": "e1d26171-069c-43e0-9ba0-bd274cb88448",
+    "body": "Marking as resolved. All checks clear — no compromise detected. User awareness email sent company-wide.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "46095d67-c2e6-4175-84a8-03dda89a05ef",
+    "authorId": "e87896b8-3a18-4ae2-9279-4f103a9be594",
+    "createdAt": "2026-08-09T17:27:38.288Z",
+    "updatedAt": "2026-08-10T17:27:38.299Z"
+  },
+  {
+    "id": "b6564731-2331-43eb-93e6-040f0135f4a1",
+    "body": "CEO's MFA configured — Microsoft Authenticator. CFO session scheduled for tomorrow 10:00 AM.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "2e1d2b72-a671-43bf-bd21-794b131bd408",
+    "authorId": "e87896b8-3a18-4ae2-9279-4f103a9be594",
+    "createdAt": "2026-08-10T12:39:38.288Z",
+    "updatedAt": "2026-08-10T17:27:38.299Z"
+  }
+]

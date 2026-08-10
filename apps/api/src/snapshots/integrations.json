@@ -1,6 +1,6 @@
 [
   {
-    "id": "18db3d6a-2c72-48c4-a51c-2c8672b72a2d",
+    "id": "15e534c4-cf32-40b0-a042-de3bdb869ca7",
     "kind": "microsoft365",
     "name": "Contoso Microsoft 365",
     "enabled": false,
@@ -17,11 +17,11 @@
     },
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-10T17:13:15.857Z",
-    "updatedAt": "2026-08-10T17:13:15.857Z"
+    "createdAt": "2026-08-10T17:27:38.308Z",
+    "updatedAt": "2026-08-10T17:27:38.308Z"
   },
   {
-    "id": "5532e14c-f087-4761-bca5-5253f080884c",
+    "id": "a78332d9-2f1d-4398-bae3-8142a73f2949",
     "kind": "autotask",
     "name": "AutoTask PSA Production",
     "enabled": false,
@@ -33,11 +33,11 @@
     "settings": {},
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-10T17:13:15.858Z",
-    "updatedAt": "2026-08-10T17:13:15.858Z"
+    "createdAt": "2026-08-10T17:27:38.309Z",
+    "updatedAt": "2026-08-10T17:27:38.309Z"
   },
   {
-    "id": "7c9baa8d-daf2-40da-a105-021e98781827",
+    "id": "df49c018-a079-460a-bae9-5ce7e9d46e0d",
     "kind": "connectwise",
     "name": "ConnectWise Manage",
     "enabled": false,
@@ -52,11 +52,11 @@
     "settings": {},
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-10T17:13:15.858Z",
-    "updatedAt": "2026-08-10T17:13:15.858Z"
+    "createdAt": "2026-08-10T17:27:38.309Z",
+    "updatedAt": "2026-08-10T17:27:38.309Z"
   },
   {
-    "id": "ba03e499-154c-45e6-b012-ca30f615b535",
+    "id": "f4255396-0ef4-4481-b744-0136f556f61f",
     "kind": "quickbooks",
     "name": "QuickBooks Online",
     "enabled": false,
@@ -69,7 +69,7 @@
     "settings": {},
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-10T17:13:15.859Z",
-    "updatedAt": "2026-08-10T17:13:15.859Z"
+    "createdAt": "2026-08-10T17:27:38.310Z",
+    "updatedAt": "2026-08-10T17:27:38.310Z"
   }
 ]

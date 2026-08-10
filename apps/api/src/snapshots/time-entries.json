@@ -1,1 +1,67 @@
-[]
+[
+  {
+    "id": "f98babed-1b5d-40f6-bd3e-0efe3a94c5d8",
+    "description": "Diagnosed Exchange transport rules and connector config",
+    "minutes": 90,
+    "billable": true,
+    "rate": null,
+    "date": "2026-08-09T17:27:38.288Z",
+    "ticketId": "aff371d4-0af1-4d54-bad5-6ff61c6862e5",
+    "userId": "692a843b-b4a9-4151-bf99-78e284924cba",
+    "invoiceId": null,
+    "createdAt": "2026-08-10T17:27:38.301Z",
+    "updatedAt": "2026-08-10T17:27:38.301Z"
+  },
+  {
+    "id": "2338032a-b9d1-4a2f-a6a7-159613799627",
+    "description": "Updated outbound connector and verified mail flow",
+    "minutes": 45,
+    "billable": true,
+    "rate": null,
+    "date": "2026-08-10T05:27:38.288Z",
+    "ticketId": "aff371d4-0af1-4d54-bad5-6ff61c6862e5",
+    "userId": "692a843b-b4a9-4151-bf99-78e284924cba",
+    "invoiceId": null,
+    "createdAt": "2026-08-10T17:27:38.301Z",
+    "updatedAt": "2026-08-10T17:27:38.301Z"
+  },
+  {
+    "id": "9768aa03-b095-49ab-8ba1-0de91995ddf3",
+    "description": "Investigated phishing email — message trace, attachment analysis",
+    "minutes": 120,
+    "billable": true,
+    "rate": null,
+    "date": "2026-08-08T17:27:38.288Z",
+    "ticketId": "46095d67-c2e6-4175-84a8-03dda89a05ef",
+    "userId": "e87896b8-3a18-4ae2-9279-4f103a9be594",
+    "invoiceId": null,
+    "createdAt": "2026-08-10T17:27:38.301Z",
+    "updatedAt": "2026-08-10T17:27:38.301Z"
+  },
+  {
+    "id": "3aac9aab-a6ed-423a-933a-c33f8630697e",
+    "description": "Sent user awareness communication",
+    "minutes": 30,
+    "billable": false,
+    "rate": null,
+    "date": "2026-08-09T17:27:38.288Z",
+    "ticketId": "46095d67-c2e6-4175-84a8-03dda89a05ef",
+    "userId": "e87896b8-3a18-4ae2-9279-4f103a9be594",
+    "invoiceId": null,
+    "createdAt": "2026-08-10T17:27:38.301Z",
+    "updatedAt": "2026-08-10T17:27:38.301Z"
+  },
+  {
+    "id": "21c314ef-7b55-48de-bdcf-8f6eaa881203",
+    "description": "MFA setup for CEO",
+    "minutes": 15,
+    "billable": true,
+    "rate": null,
+    "date": "2026-08-10T12:39:38.288Z",
+    "ticketId": "2e1d2b72-a671-43bf-bd21-794b131bd408",
+    "userId": "e87896b8-3a18-4ae2-9279-4f103a9be594",
+    "invoiceId": null,
+    "createdAt": "2026-08-10T17:27:38.301Z",
+    "updatedAt": "2026-08-10T17:27:38.301Z"
+  }
+]
