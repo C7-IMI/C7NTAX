@@ -1588,3 +1588,18 @@ model AlertLog {
 
   @@index([dismissed, createdAt])
 }
+
+// ── FI-041: Recently Viewed Items ──────────────────────────────────
+
+model RecentlyViewedItem {
+  id          String   @id @default(uuid())
+  userId      String
+  entityType  String   // "password", "config", "asset", "document", "domain", "certificate", "link"
+  entityId    String
+  entityName  String
+  entityIcon  String   @default("document")  // icon hint for the frontend
+  viewedAt    DateTime @default(now())
+
+  @@unique([userId, entityType, entityId])
+  @@index([userId, viewedAt])
+}

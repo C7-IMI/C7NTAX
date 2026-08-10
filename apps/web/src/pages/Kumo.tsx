@@ -1,13 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import api from "../api";
-import { Shield, Monitor, FileText, Link2, Server, Database } from "lucide-react";
+import { Shield, Monitor, FileText, Link2, Server, Database, Clock, Key, BookOpen, Globe, ShieldCheck } from "lucide-react";
+
+interface RecentItem {
+  id: string;
+  entityType: string;
+  entityId: string;
+  entityName: string;
+  entityIcon: string;
+  viewedAt: string;
+}
 
 export function KumoDashboardPage() {
   const [stats, setStats] = useState({ assets: 0, passwords: 0, configs: 0, documents: 0, links: 0 });
+  const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
+
+  const fetchRecent = useCallback(() => {
+    api.get("/kumo/recently-viewed").then(r => setRecentItems(r.data?.data || [])).catch(() => {});
+  }, []);
 
   useEffect(() => {
     api.get("/kumo/dashboard").then(r => setStats(r.data)).catch(() => {});
-  }, []);
+    fetchRecent();
+    // Poll for live updates every 10 seconds
+    const interval = setInterval(fetchRecent, 10000);
+    return () => clearInterval(interval);
+  }, [fetchRecent]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -25,15 +43,16 @@ export function KumoDashboardPage() {
       </div>
 
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Implementation Status</h3>
-        <div className="space-y-2">
-          <PhaseRow phase="Phase 1" label="Foundation — schema, permissions, API scaffold" status="complete" />
-          <PhaseRow phase="Phase 2" label="Flexible Assets — templates + CRUD" status="complete" />
-          <PhaseRow phase="Phase 3" label="Password Vault — encryption + reveal + logs" status="complete" />
-          <PhaseRow phase="Phase 4" label="Universal Links & Configurations" status="complete" />
-          <PhaseRow phase="Phase 5" label="Documents & SOPs — folders + revisions" status="complete" />
-          <PhaseRow phase="Phase 6" label="Navigation & Asset Migration" status="complete" />
-        </div>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Recently Viewed</h3>
+        {recentItems.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-6">No recently viewed items. Browse your assets, passwords, or configurations to populate this list.</p>
+        ) : (
+          <div className="space-y-0.5">
+            {recentItems.map((item) => (
+              <RecentRow key={item.id} item={item} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -61,6 +80,95 @@ function Card({ icon: Icon, title, description, to, color }: {
       </div>
     </a>
   );
+}
+
+function RecentRow({ item }: { item: RecentItem }) {
+  const icon = getIcon(item.entityIcon, item.entityType);
+  const typeLabel = getTypeLabel(item.entityType);
+  const timeAgo = getTimeAgo(item.viewedAt);
+  const link = getEntityLink(item.entityType, item.entityId);
+
+  return (
+    <a href={link} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-surface-lighter transition-colors group">
+      <div className={`p-1.5 rounded-md ${getTypeColor(item.entityType)}`}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-white truncate group-hover:text-cyber-300 transition-colors">{item.entityName}</p>
+        <p className="text-xs text-gray-500">{typeLabel}</p>
+      </div>
+      <span className="text-xs text-gray-600 shrink-0 flex items-center gap-1">
+        <Clock size={11} />
+        {timeAgo}
+      </span>
+    </a>
+  );
+}
+
+function getIcon(entityIcon: string, entityType: string) {
+  const map: Record<string, JSX.Element> = {
+    key: <Key size={15} />,
+    shield: <ShieldCheck size={15} />,
+    monitor: <Monitor size={15} />,
+    book: <BookOpen size={15} />,
+    globe: <Globe size={15} />,
+    certificate: <ShieldCheck size={15} />,
+    link: <Link2 size={15} />,
+    document: <FileText size={15} />,
+    server: <Server size={15} />,
+  };
+  return map[entityIcon] || map[entityType] || <FileText size={15} />;
+}
+
+function getTypeLabel(entityType: string): string {
+  const map: Record<string, string> = {
+    password: "Password",
+    config: "Configuration",
+    asset: "Flexible Asset",
+    document: "Document / SOP",
+    domain: "Domain",
+    certificate: "Certificate",
+    link: "Universal Link",
+  };
+  return map[entityType] || entityType;
+}
+
+function getTypeColor(entityType: string): string {
+  const map: Record<string, string> = {
+    password: "bg-amber-600/10 text-amber-400",
+    config: "bg-green-600/10 text-green-400",
+    asset: "bg-cyber-600/10 text-cyber-400",
+    document: "bg-purple-600/10 text-purple-400",
+    domain: "bg-blue-600/10 text-blue-400",
+    certificate: "bg-yellow-600/10 text-yellow-400",
+    link: "bg-gray-600/10 text-gray-400",
+  };
+  return map[entityType] || "bg-gray-600/10 text-gray-400";
+}
+
+function getEntityLink(entityType: string, entityId: string): string {
+  const map: Record<string, string> = {
+    password: `/kumo/passwords`,
+    config: `/kumo/configs`,
+    asset: `/kumo/assets/${entityId}`,
+    document: `/kumo/documents`,
+    domain: `/kumo`,
+    certificate: `/kumo`,
+    link: `/kumo`,
+  };
+  return map[entityType] || `/kumo`;
+}
+
+function getTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
 }
 
 function PhaseRow({ phase, label, status }: { phase: string; label: string; status: string }) {

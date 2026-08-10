@@ -554,3 +554,31 @@ kumoRouter.delete("/files/:id", requirePermission(Permission.KumoAssetDelete), a
   try { await prisma.kumoFile.delete({ where: { id: req.params.id } }); res.json({ message: "Deleted" }); }
   catch (e) { next(e); }
 });
+
+// ── Recently Viewed Items ───────────────────────────────────────────
+
+kumoRouter.get("/recently-viewed", requirePermission(Permission.KumoView), async (req: AuthRequest, res, next) => {
+  try {
+    const items = await prisma.recentlyViewedItem.findMany({
+      where: { userId: req.user!.userId },
+      orderBy: { viewedAt: "desc" },
+      take: 20,
+    });
+    res.json({ data: items });
+  } catch (e) { next(e); }
+});
+
+kumoRouter.post("/recently-viewed", requirePermission(Permission.KumoView), async (req: AuthRequest, res, next) => {
+  try {
+    const { entityType, entityId, entityName, entityIcon } = req.body;
+    if (!entityType || !entityId || !entityName) throw new AppError("entityType, entityId, and entityName are required", 400);
+    const validTypes = ["password", "config", "asset", "document", "domain", "certificate", "link"];
+    if (!validTypes.includes(entityType)) throw new AppError(`Invalid entityType. Must be one of: ${validTypes.join(", ")}`, 400);
+    const item = await prisma.recentlyViewedItem.upsert({
+      where: { userId_entityType_entityId: { userId: req.user!.userId, entityType, entityId } },
+      create: { userId: req.user!.userId, entityType, entityId, entityName, entityIcon: entityIcon || "document" },
+      update: { entityName, entityIcon: entityIcon || "document", viewedAt: new Date() },
+    });
+    res.status(201).json(item);
+  } catch (e) { next(e); }
+});

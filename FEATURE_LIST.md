@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 1.10.001 | Last Updated: 2026-08-08
+## Version: 1.11.001 | Last Updated: 2026-08-10
 
 ---
 
@@ -8,6 +8,18 @@
 - Bug fixes: increment `0.0.001` (e.g., 1.0.001 → 1.0.002)
 
 ---
+
+## v1.11.001 — Recently Viewed on Kumo Dashboard
+- Replaced "Implementation Status" card on Kumo Dashboard with "Recently Viewed" card
+- Recently Viewed tracks user access to Kumo items: Passwords, Configurations, Flexible Assets, Documents, Domains, Certificates, and Universal Links
+- New `RecentlyViewedItem` Prisma model with per-user deduplication via `@@unique([userId, entityType, entityId])`
+- API endpoint `POST /api/kumo/recently-viewed` upserts view records when users access items
+- API endpoint `GET /api/kumo/recently-viewed` returns last 20 items for the current user, ordered by most recent
+- Real-time 10-second polling keeps the Recently Viewed list current without manual refresh
+- Items display with color-coded type indicators (amber=passwords, green=configs, cyber=assets, purple=docs, blue=domains, yellow=certs)
+- Each entry shows the item name, type label, and relative timestamp ("just now", "5m ago", "2h ago", "3d ago")
+- Clicking an item navigates to its detail page (assets link to specific asset, others link to their list pages)
+- Preserved C7NTAX dark navy/cyber theme across all new components
 
 ## v1.10.001 — Past Due Tasks Auto-Update
 - Added `isOverdue` boolean field to Ticket model in Prisma schema
