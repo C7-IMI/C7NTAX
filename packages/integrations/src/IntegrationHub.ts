@@ -68,6 +68,11 @@ export class IntegrationHub {
     this.configs.set(config.id, config);
   }
 
+  /** Register an integration config (alias for upsertConfig) */
+  register(config: IntegrationConfig): void {
+    this.upsertConfig(config);
+  }
+
   /** Get an integration config by id */
   getConfig(id: string): IntegrationConfig | undefined {
     return this.configs.get(id);
