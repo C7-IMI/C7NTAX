@@ -1,7 +1,22 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes, createHash } from "crypto";
 
 const ALGO = "aes-256-gcm";
-const KEY = Buffer.from(process.env.KUMO_MASTER_KEY || randomBytes(32).toString("hex"), "hex").slice(0, 32);
+
+// Derive a stable key from JWT_SECRET or use environment variable.
+// KEY is computed once at module load and stays stable across restarts.
+function deriveKey(): Buffer {
+  const envKey = process.env.KUMO_MASTER_KEY;
+  if (envKey && envKey.length >= 64) {
+    return Buffer.from(envKey, "hex").slice(0, 32);
+  }
+  // Fallback: derive from JWT secret (stable across restarts in dev)
+  const base = process.env.JWT_SECRET || "C7NTAX-dev-secret-change-in-prod";
+  const hash = createHash("sha256").update("kumo-vault:" + base).digest();
+  return hash.slice(0, 32);
+}
+
+const KEY = deriveKey();
+console.log("[KumoCrypto] Key initialized (length:" + KEY.length + ")");
 
 export function encrypt(plaintext: string): { ciphertext: string; iv: string; authTag: string } {
   const iv = randomBytes(16);
