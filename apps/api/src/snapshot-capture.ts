@@ -23,10 +23,7 @@ interface TableDef {
 
 const TABLES: TableDef[] = [
   { name: "role", fileName: "roles.json" },
-  { name: "user", fileName: "users.json",
-    select: { id: true, email: true, username: true, firstName: true, lastName: true,
-              roleId: true, companyId: true, isActive: true, emailVerified: true,
-              mfaEnabled: true, createdAt: true, updatedAt: true } },
+  { name: "user", fileName: "users.json" },
   { name: "company", fileName: "companies.json" },
   { name: "contact", fileName: "contacts.json" },
   { name: "serviceBoard", fileName: "service-boards.json" },
