@@ -125,9 +125,64 @@ function getPageTitle(nodes: NavNode[], pathname: string): string {
   return "Dashboard";
 }
 
+// ── Section descriptions for header display ───────────────────────
+const SECTION_DESCRIPTIONS: Record<string, string> = {
+  "/": "real-time, high-level overview of key business metrics, open ticket volumes, and technician workloads.",
+  "/tickets": "track client issues, manage troubleshooting workflows, and log billable time.",
+  "/boards": "monitor service boards with live ticket metrics, stale tracking, and SLA status.",
+  "/opportunities": "manage your sales pipeline, track deal stages, and forecast revenue.",
+  "/admin": "configure company profile, service boards, system settings, and audit logs.",
+  "/admin/boards": "manage service boards, SLA policies, email connectors, and automations.",
+  "/admin/system": "system-level configuration for database, backups, and integration settings.",
+  "/admin/logs": "view cumulative audit trail and track all changes across the system.",
+  "/admin/changelog": "release history and feature changelog for C7NTAX.",
+  "/cloudconnect": "connect third-party services with 16 available connector types.",
+  "/clients": "browse, search, and manage all client companies and accounts.",
+  "/clients/contacts": "manage contacts across all client organizations.",
+  "/assets": "track hardware, software, and all IT assets across your organization.",
+  "/procurement": "manage purchase orders, vendors, and procurement workflow.",
+  "/users": "create, edit, and manage user accounts with role assignments.",
+  "/roles": "configure granular permissions and role-based access control.",
+  "/projects": "view and manage all projects with phases, milestones, and time tracking.",
+  "/calendar": "calendar view of scheduled tasks, deadlines, and events.",
+  "/pto": "manage time-off requests and team availability.",
+  "/kb": "search and browse internal and external knowledge base articles.",
+  "/kumo": "IT documentation overview — assets, passwords, configurations, and SOPs.",
+  "/kumo/assets": "flexible assets with custom templates and dynamic fields.",
+  "/kumo/passwords": "AES-256 encrypted password vault with TOTP and access logs.",
+  "/kumo/configs": "server, workstation, and network device configurations.",
+  "/kumo/documents": "SOPs and documentation with folder organization and revision history.",
+  "/billing/dashboard": "financial overview with invoiced, paid, outstanding, and overdue metrics.",
+  "/billing": "create, send, and track invoices with line items and payment processing.",
+  "/billing/agreements": "manage recurring service agreements and billing schedules.",
+  "/billing/payments": "record and reconcile payments against invoices.",
+  "/billing/time": "track billable and non-billable time entries per ticket and project.",
+  "/billing/reports": "revenue summaries, aging reports, and billing analytics.",
+  "/reports": "KPI dashboards with real-time ticket, SLA, and technician metrics.",
+  "/reports/standard": "pre-built reports: ticket volume, SLA, revenue, utilization.",
+  "/reports/analytics": "advanced analytics with visual charts and trend data.",
+  "/settings": "configure your landing page, personal preferences, and account settings.",
+  "/settings/ai": "manage AI inference providers and model configurations.",
+  "/mfa-setup": "set up multi-factor authentication for your account.",
+};
+
+function getSectionDescription(pathname: string): string {
+  // Exact match first
+  if (SECTION_DESCRIPTIONS[pathname]) return SECTION_DESCRIPTIONS[pathname];
+  // Try parent path for nested routes (e.g., /tickets/abc123 → /tickets)
+  const parts = pathname.split("/");
+  while (parts.length > 1) {
+    parts.pop();
+    const parent = parts.join("/") || "/";
+    if (SECTION_DESCRIPTIONS[parent]) return SECTION_DESCRIPTIONS[parent];
+  }
+  return "";
+}
+
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(loadExpanded);
   const [collapsed, setCollapsed] = useState<boolean>(loadCollapsed);
@@ -249,7 +304,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <div key={node.id} className="relative flex justify-center" title={node.label}>
           {hasChildren ? (
             <button
-              onClick={() => toggle(node.id)}
+              onClick={() => navigate(`/section/${node.id}`)}
               className={`p-2.5 rounded-lg transition-colors ${
                 active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
@@ -423,20 +478,21 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50 py-2">
-          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+        <header className="border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50 py-3">
+          <div className="flex flex-col gap-0.5 min-w-0 flex-1 mr-6">
             <div className="flex items-center gap-3">
               <button className="lg:hidden text-gray-400 hover:text-white p-1 shrink-0" onClick={() => setMobileOpen(true)}>
                 <Menu size={20} />
               </button>
               <h1 className="text-base font-semibold text-white truncate">
                 {getPageTitle(NAV_TREE, location.pathname)}
+                {(() => { const desc = getSectionDescription(location.pathname); return desc ? <span className="text-gray-500 font-normal text-sm ml-2">— {desc}</span> : null; })()}
               </h1>
             </div>
             <Breadcrumbs segments={buildBreadcrumbs(NAV_TREE, location.pathname)} />
           </div>
           {/* Header toolbar — placeholders only */}
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
             <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Search">
               <Search size={14} />
               <span>Search</span>
