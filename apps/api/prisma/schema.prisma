@@ -385,6 +385,14 @@ model Invoice {
   currency       String   @default("USD")
   notes          String?
 
+  // Quote workflow (FI-034)
+  quoteStatus   String?  // null=regular invoice, "draft"|"sent"|"accepted"|"converted"|"declined"
+
+  // Recurring (FI-037)
+  isRecurring        Boolean  @default(false)
+  recurrenceRule     String?  // "monthly"|"quarterly"|"annually"|cron
+  nextGenerationDate DateTime?
+
   companyId      String
   company        Company  @relation(fields: [companyId], references: [id])
   agreementId    String?
