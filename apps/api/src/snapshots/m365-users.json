@@ -1,7 +1,7 @@
 [
   {
-    "id": "4fbf03eb-2ef3-4a8d-958b-ba9b651102de",
-    "integrationId": "15e534c4-cf32-40b0-a042-de3bdb869ca7",
+    "id": "6bb16cd3-a588-4dee-ab4e-4fe17202f350",
+    "integrationId": "234961bb-7511-47cf-92dd-48886589ef07",
     "azureObjectId": "user-001",
     "userPrincipalName": "john.doe@contoso.com",
     "displayName": "John Doe",
@@ -19,13 +19,13 @@
     "raw": {
       "id": "user-001"
     },
-    "lastSyncedAt": "2026-08-10T17:27:38.309Z",
-    "createdAt": "2026-08-10T17:27:38.311Z",
-    "updatedAt": "2026-08-10T17:27:38.311Z"
+    "lastSyncedAt": "2026-08-10T17:37:37.474Z",
+    "createdAt": "2026-08-10T17:37:37.475Z",
+    "updatedAt": "2026-08-10T17:37:37.475Z"
   },
   {
-    "id": "84d8f2b0-3ce1-4e6a-859a-cf3055b44d09",
-    "integrationId": "15e534c4-cf32-40b0-a042-de3bdb869ca7",
+    "id": "8e89003f-06c2-45e9-b130-6fe7dcc211c4",
+    "integrationId": "234961bb-7511-47cf-92dd-48886589ef07",
     "azureObjectId": "user-002",
     "userPrincipalName": "jane.smith@contoso.com",
     "displayName": "Jane Smith",
@@ -43,13 +43,13 @@
     "raw": {
       "id": "user-002"
     },
-    "lastSyncedAt": "2026-08-10T17:27:38.309Z",
-    "createdAt": "2026-08-10T17:27:38.311Z",
-    "updatedAt": "2026-08-10T17:27:38.311Z"
+    "lastSyncedAt": "2026-08-10T17:37:37.474Z",
+    "createdAt": "2026-08-10T17:37:37.475Z",
+    "updatedAt": "2026-08-10T17:37:37.475Z"
   },
   {
-    "id": "49d613b9-b00e-409a-aa76-5a732b38f6fc",
-    "integrationId": "15e534c4-cf32-40b0-a042-de3bdb869ca7",
+    "id": "7bf17b0d-54f5-4e27-a257-7e15fecc3f00",
+    "integrationId": "234961bb-7511-47cf-92dd-48886589ef07",
     "azureObjectId": "user-003",
     "userPrincipalName": "bob.wilson@contoso.com",
     "displayName": "Bob Wilson",
@@ -67,8 +67,8 @@
     "raw": {
       "id": "user-003"
     },
-    "lastSyncedAt": "2026-08-10T17:27:38.309Z",
-    "createdAt": "2026-08-10T17:27:38.311Z",
-    "updatedAt": "2026-08-10T17:27:38.311Z"
+    "lastSyncedAt": "2026-08-10T17:37:37.474Z",
+    "createdAt": "2026-08-10T17:37:37.475Z",
+    "updatedAt": "2026-08-10T17:37:37.475Z"
   }
 ]
