@@ -171,3 +171,17 @@ clientsRouter.get("/:id/contacts", async (req: AuthRequest, res, next) => {
     res.json({ data: contacts });
   } catch (e) { next(e); }
 });
+
+// ── FI-033: Client Kumo summary ────────────────────────────────────
+clientsRouter.get("/:id/kumo", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const [assets, passwords, documents, domains, certificates] = await Promise.all([
+      prisma.kumoAsset.count({ where: { companyId: req.params.id } }),
+      prisma.kumoPassword.count({ where: { companyId: req.params.id } }),
+      prisma.kumoDocument.count({ where: { companyId: req.params.id } }),
+      prisma.kumoDomain.count({ where: { companyId: req.params.id } }),
+      prisma.kumoCertificate.count({ where: { companyId: req.params.id } }),
+    ]);
+    res.json({ assets, passwords, documents, domains, certificates });
+  } catch (e) { next(e); }
+});

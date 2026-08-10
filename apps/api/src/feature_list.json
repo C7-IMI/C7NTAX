@@ -1,0 +1,80 @@
+[
+  {
+    "version": "2.4.0",
+    "date": "2026-08-10",
+    "title": "Kumo IT Documentation + FlowIngest Integration",
+    "changes": [
+      "Kumo Module — IT documentation with flexible asset templates, password vault (AES-256), standard configs, SOPs with revisions, and universal polymorphic linking",
+      "Domain Tracking — register and monitor client domains with expiry alerts",
+      "Certificate/SSL Tracking — wildcard, DV, OV certificate lifecycle management",
+      "Password Vault TOTP — QR-code and manual base32 secret entry with live code generation",
+      "Password Strength Indicator — visual bar showing Very Weak through Very Strong",
+      "Finance Dashboard — aggregated billing metrics with total invoiced, paid, outstanding, overdue",
+      "Client Profile Enriched — Kumo entity counts on client detail pages",
+      "Quotes/Estimates — create quotes with line items, accept into invoices",
+      "Recurring Invoices — set monthly/quarterly/annual recurrence on invoices",
+      "Expense Tracking — log and categorize business expenses per client",
+      "Alerting System — expiry-based alert rules with dismissible alert logs",
+      "File Manager — polymorphic file storage for clients, tickets, and assets",
+      "Integrations — 16 connector types with Test Connection button and inline pass/fail results",
+      "Roles & Permissions — 101 granular permissions across 21 categories with interactive editor",
+      "Create from Existing — copy roles and users from templates with all settings preserved"
+    ]
+  },
+  {
+    "version": "2.3.0",
+    "date": "2026-08-09",
+    "title": "RBAC System & Administration Overhaul",
+    "changes": [
+      "Granular RBAC — 77 permissions across 20 categories with role management UI",
+      "Manage Users — master-detail layout with profile, permissions, and security tabs",
+      "Roles & Permissions — interactive role editor with expandable permission categories",
+      "Role Member Management — add/remove users from roles via searchable dialog",
+      "Permission Template Dropdown — apply role defaults and detect customizations",
+      "Sortable Headers — click-to-sort on all table columns across every page",
+      "User Count Badges — clickable role member counts with inline management",
+      "Deactivation Workflow — warning dialogs for user/role deletion"
+    ]
+  },
+  {
+    "version": "2.2.0",
+    "date": "2026-08-08",
+    "title": "Client Management & PSA Features",
+    "changes": [
+      "Client Detail — contact, agreement, ticket, and invoice tabs with inline editing",
+      "Contact Management — create/edit contacts with company assignment",
+      "Client List — search, type filter, and sortable table with status indicators",
+      "Service Boards — SLA defaults, auto-close, and board management",
+      "Billing Dashboard — invoiced, paid, outstanding, and overdue aggregation cards",
+      "Enhanced Company Model — PSA-standard fields including territory, region, service level"
+    ]
+  },
+  {
+    "version": "2.1.0",
+    "date": "2026-08-07",
+    "title": "Multi-Tenant Foundation & Core Infrastructure",
+    "changes": [
+      "Multi-tenancy — company-scoped data isolation across all modules",
+      "JWT Authentication — login, MFA with authenticator app and email backup codes",
+      "User Management — create, edit, deactivate users with role assignment",
+      "Ticket Management — full CRUD with assignment, status workflow, and time entries",
+      "Asset Inventory — hardware tracking with type, status, and assignment",
+      "Knowledge Base — internal/external articles with categories, slugs, and view tracking",
+      "Dashboard — landing page with ticket counts, status breakdowns, and quick stats",
+      "Navigation — drag-and-drop sidebar with collapsible sections and persistent state"
+    ]
+  },
+  {
+    "version": "2.0.0",
+    "date": "2026-08-05",
+    "title": "Initial Release — C7NTAX PSA Platform",
+    "changes": [
+      "Application scaffold — monorepo with Turborepo, shared packages, API + Web + Desktop",
+      "Database — PostgreSQL 16 with Prisma ORM and auto-generated client",
+      "Express API — health check, auth routes, error handling middleware",
+      "React SPA — Vite, Tailwind CSS, React Router, dark theme with cyber color scheme",
+      "Desktop App — Electron wrapper for native Windows installation",
+      "CI/CD — build pipeline with type checking and production bundling"
+    ]
+  }
+]

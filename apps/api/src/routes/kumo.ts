@@ -530,3 +530,27 @@ kumoRouter.get("/dashboard", requirePermission(Permission.KumoView), async (_req
     res.json({ assets, passwords, configs, documents, links });
   } catch (e) { next(e); }
 });
+
+// ── FI-035: File Manager ───────────────────────────────────────────
+kumoRouter.get("/files", requirePermission(Permission.KumoAssetView), async (req: AuthRequest, res, next) => {
+  try {
+    const files = await prisma.kumoFile.findMany({ orderBy: { createdAt: "desc" }, take: 200 });
+    res.json({ data: files });
+  } catch (e) { next(e); }
+});
+
+kumoRouter.post("/files/upload", requirePermission(Permission.KumoAssetCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const { filename, mimeType, size, storagePath, entityType, entityId, companyId } = req.body;
+    if (!filename) throw new AppError("filename required", 400);
+    const file = await prisma.kumoFile.create({
+      data: { filename, mimeType: mimeType || "application/octet-stream", size: size || 0, storagePath: storagePath || filename, entityType, entityId, companyId, uploadedById: req.user!.userId },
+    });
+    res.status(201).json(file);
+  } catch (e) { next(e); }
+});
+
+kumoRouter.delete("/files/:id", requirePermission(Permission.KumoAssetDelete), async (req: AuthRequest, res, next) => {
+  try { await prisma.kumoFile.delete({ where: { id: req.params.id } }); res.json({ message: "Deleted" }); }
+  catch (e) { next(e); }
+});

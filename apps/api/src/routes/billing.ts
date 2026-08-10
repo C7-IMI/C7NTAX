@@ -287,3 +287,76 @@ billingRouter.get("/reports/revenue", requirePermission(Permission.BillingView),
     });
   } catch (e) { next(e); }
 });
+
+// ── FI-032 / FI-041: Finance Dashboard ────────────────────────────
+billingRouter.get("/dashboard", authenticate, async (_req: AuthRequest, res, next) => {
+  try {
+    const [invoices, payments] = await Promise.all([
+      prisma.invoice.findMany({ select: { status: true, total: true, dueDate: true, issueDate: true } }),
+      prisma.payment.findMany({ select: { amount: true, processedAt: true, invoice: { select: { status: true } } } }),
+    ]);
+    const totalInvoiced = invoices.reduce((s,i) => s + i.total, 0);
+    const totalPaid = payments.reduce((s,p) => s + p.amount, 0);
+    const totalOutstanding = invoices.filter(i => i.status === "sent" || i.status === "partial").reduce((s,i) => s + i.total, 0);
+    const totalOverdue = invoices.filter(i => i.status === "overdue").reduce((s,i) => s + i.total, 0);
+    res.json({ totalInvoiced, totalPaid, totalOutstanding, totalOverdue, invoiceCount: invoices.length, paymentCount: payments.length });
+  } catch (e) { next(e); }
+});
+
+// ── FI-034: Quotes ─────────────────────────────────────────────────
+billingRouter.post("/quotes", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const { companyId, lineItems, notes, dueDate } = req.body;
+    if (!companyId) throw new AppError("companyId required", 400);
+    const total = (lineItems || []).reduce((s: number, li: any) => s + (li.quantity * li.unitPrice), 0);
+    const invoice = await prisma.invoice.create({
+      data: {
+        invoiceNumber: `QUOTE-${Date.now().toString(36).toUpperCase()}`,
+        status: "draft", quoteStatus: "draft", companyId, total, subtotal: total, dueDate: dueDate ? new Date(dueDate) : new Date(Date.now() + 30*86400000),
+        issueDate: new Date(),
+        lineItems: { create: (lineItems || []).map((li: any) => ({ description: li.description, quantity: li.quantity || 1, unitPrice: li.unitPrice || 0, total: (li.quantity || 1) * (li.unitPrice || 0) })) },
+      },
+    });
+    res.status(201).json(invoice);
+  } catch (e) { next(e); }
+});
+
+billingRouter.post("/quotes/:id/accept", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const inv = await prisma.invoice.update({ where: { id: req.params.id }, data: { quoteStatus: "accepted", invoiceNumber: `INV-${Date.now().toString(36).toUpperCase()}` } });
+    res.json(inv);
+  } catch (e) { next(e); }
+});
+
+// ── FI-037: Recurring Invoices ─────────────────────────────────────
+billingRouter.post("/invoices/:id/recurring", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const { recurrenceRule } = req.body; // "monthly", "quarterly", "annually"
+    const inv = await prisma.invoice.update({ where: { id: req.params.id }, data: { isRecurring: true, recurrenceRule, nextGenerationDate: new Date() } });
+    res.json(inv);
+  } catch (e) { next(e); }
+});
+
+// ── FI-038: Expenses ───────────────────────────────────────────────
+billingRouter.get("/expenses", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const expenses = await prisma.expense.findMany({ orderBy: { expenseDate: "desc" }, take: 200 });
+    res.json({ data: expenses });
+  } catch (e) { next(e); }
+});
+
+billingRouter.post("/expenses", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const { description, amount, category, companyId, ticketId, receiptUrl, expenseDate } = req.body;
+    if (!description || !amount) throw new AppError("description and amount required", 400);
+    const exp = await prisma.expense.create({
+      data: { description, amount, category: category || "other", companyId: companyId || null, ticketId: ticketId || null, receiptUrl, expenseDate: expenseDate ? new Date(expenseDate) : new Date(), createdById: req.user!.userId },
+    });
+    res.status(201).json(exp);
+  } catch (e) { next(e); }
+});
+
+billingRouter.delete("/expenses/:id", authenticate, async (req: AuthRequest, res, next) => {
+  try { await prisma.expense.delete({ where: { id: req.params.id } }); res.json({ message: "Deleted" }); }
+  catch (e) { next(e); }
+});

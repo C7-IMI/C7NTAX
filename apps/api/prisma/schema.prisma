@@ -1512,3 +1512,71 @@ model KumoCertificate {
   @@index([companyId])
   @@index([expiryDate])
 }
+
+// ── FI-035: Kumo File Manager ─────────────────────────────────────
+
+model KumoFile {
+  id           String   @id @default(uuid())
+  filename     String
+  mimeType     String
+  size         Int
+  storagePath  String
+  entityType   String?  // "client", "ticket", "kumo_asset"
+  entityId     String?
+  companyId    String?
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([companyId])
+}
+
+// ── FI-038: Expense Tracking ───────────────────────────────────────
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Float
+  category    String   @default("other")
+  companyId   String?
+  ticketId    String?
+  invoiceId   String?
+  receiptUrl  String?
+  expenseDate DateTime @default(now())
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([category])
+}
+
+// ── FI-040: Alerting System ────────────────────────────────────────
+
+model AlertRule {
+  id            String   @id @default(uuid())
+  name          String
+  entityType    String   // "domain", "certificate", "invoice", "password"
+  triggerDays   Int      @default(30) // days before expiry to trigger
+  enabled       Boolean  @default(true)
+  notifyEmail   String?
+  lastTriggered DateTime?
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AlertLog {
+  id            String   @id @default(uuid())
+  ruleId        String?
+  entityType    String
+  entityId      String
+  message       String
+  severity      String   @default("warning") // "info", "warning", "critical"
+  dismissed     Boolean  @default(false)
+  dismissedBy   String?
+  dismissedAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([dismissed, createdAt])
+}

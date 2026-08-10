@@ -132,3 +132,13 @@ systemRouter.post("/poller/reset", async (_req: AuthRequest, res) => {
   resetPoller();
   res.json({ success: true, message: "Poller reset successfully" });
 });
+
+// ── Changelog ──────────────────────────────────────────────────────
+systemRouter.get("/changelog", (_req, res) => {
+  try {
+    const data = require("../feature_list.json");
+    res.json(data);
+  } catch {
+    res.json([]);
+  }
+});
