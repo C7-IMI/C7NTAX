@@ -4,10 +4,9 @@ import { Shield, Monitor, FileText, Link2, Server, Database } from "lucide-react
 
 export function KumoDashboardPage() {
   const [stats, setStats] = useState({ assets: 0, passwords: 0, configs: 0, documents: 0, links: 0 });
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    api.get("/kumo/dashboard").then(r => setStats(r.data)).catch(() => {}).finally(() => setLoaded(true));
+    api.get("/kumo/dashboard").then(r => setStats(r.data)).catch(() => {});
   }, []);
 
   return (
@@ -18,59 +17,22 @@ export function KumoDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card
-          icon={Monitor}
-          title="Flexible Assets"
-          description={`${stats.assets} assets • Dynamic templates description="Dynamic asset records with user-defined templates and custom fields." custom fields`}
-          to="/kumo/assets"
-          color="cyber"
-        />
-        <Card
-          icon={Shield}
-          title="Password Vault"
-          description={`${stats.passwords} passwords • AES-256 encrypted`}
-          to="/kumo/passwords"
-          color="amber"
-        />
-        <Card
-          icon={Server}
-          title="Configurations"
-          description={`${stats.configs} servers • Workstations description="Standardized servers, workstations, and network device records." networks`}
-          to="/kumo/configs"
-          color="green"
-        />
-        <Card
-          icon={FileText}
-          title="Documents & SOPs"
-          description={`${stats.documents} documents • Folders description="WYSIWYG knowledge base with folders, revisions, and templates." revisions`}
-          to="/kumo/documents"
-          color="purple"
-        />
-        <Card
-          icon={Link2}
-          title="Universal Links"
-          description={`${stats.links} links • Universal relationship mapping`}
-          to="/kumo"
-          color="blue"
-        />
-        <Card
-          icon={Database}
-          title="Coming Soon"
-          description="Additional Kumo features are in active development. Check back regularly."
-          to="/kumo"
-          color="gray"
-        />
+        <Card icon={Monitor} title="Flexible Assets" description={`${stats.assets} assets • Dynamic templates & custom fields`} to="/kumo/assets" color="cyber" />
+        <Card icon={Shield} title="Password Vault" description={`${stats.passwords} passwords • AES-256 encrypted`} to="/kumo/passwords" color="amber" />
+        <Card icon={Server} title="Configurations" description={`${stats.configs} servers • Workstations & networks`} to="/kumo/configs" color="green" />
+        <Card icon={FileText} title="Documents & SOPs" description={`${stats.documents} documents • Folders & revisions`} to="/kumo/documents" color="purple" />
+        <Card icon={Link2} title="Universal Links" description={`${stats.links} links • Universal relationship mapping`} to="/kumo" color="blue" />
       </div>
 
       <div className="card">
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Implementation Status</h3>
         <div className="space-y-2">
-          <PhaseRow phase="Phase 1" label="Foundation" status="complete" />
-          <PhaseRow phase="Phase 2" label="Flexible Assets" status="pending" />
-          <PhaseRow phase="Phase 3" label="Password Vault" status="pending" />
-          <PhaseRow phase="Phase 4" label="Universal Links & Configs" status="pending" />
-          <PhaseRow phase="Phase 5" label="Documents & SOPs" status="pending" />
-          <PhaseRow phase="Phase 6" label="Navigation & Asset Migration" status="pending" />
+          <PhaseRow phase="Phase 1" label="Foundation — schema, permissions, API scaffold" status="complete" />
+          <PhaseRow phase="Phase 2" label="Flexible Assets — templates + CRUD" status="complete" />
+          <PhaseRow phase="Phase 3" label="Password Vault — encryption + reveal + logs" status="complete" />
+          <PhaseRow phase="Phase 4" label="Universal Links & Configurations" status="complete" />
+          <PhaseRow phase="Phase 5" label="Documents & SOPs — folders + revisions" status="complete" />
+          <PhaseRow phase="Phase 6" label="Navigation & Asset Migration" status="complete" />
         </div>
       </div>
     </div>
@@ -88,13 +50,10 @@ function Card({ icon: Icon, title, description, to, color }: {
     blue: "bg-blue-600/10 text-blue-400 border-blue-500/20",
     gray: "bg-gray-600/10 text-gray-400 border-gray-500/20",
   };
-
   return (
     <a href={to} className={`card border ${colors[color] || colors.gray} hover:bg-surface-lighter/50 transition-colors space-y-3 block`}>
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${colors[color]}`}>
-          <Icon size={18} />
-        </div>
+        <div className={`p-2 rounded-lg ${colors[color]}`}><Icon size={18} /></div>
         <div>
           <p className="text-white font-medium text-sm">{title}</p>
           <p className="text-xs text-gray-500 mt-0.5">{description}</p>
