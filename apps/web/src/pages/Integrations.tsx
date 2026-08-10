@@ -190,7 +190,7 @@ export function IntegrationsPage() {
 
   // ── Render Helpers ────────────────────────────────────────────────
 
-    const statusColor = (s: string) =>
+  const statusColor = (s: string) =>
     s === "connected" ? "text-green-400 bg-green-600/20" :
     s === "error" ? "text-red-400 bg-red-600/20" : "text-gray-400 bg-gray-600/20";
 
