@@ -1,0 +1,17 @@
+{
+  "contacts": [
+    { "firstName": "David", "lastName": "Chen", "email": "david@acmecorp.com", "phone": "+1-555-0101", "mobile": "+1-555-0111", "title": "IT Director", "department": "IT", "isPrimary": true, "companyIdx": 0 },
+    { "firstName": "Maria", "lastName": "Garcia", "email": "maria@acmecorp.com", "phone": "+1-555-0102", "title": "HR Manager", "department": "HR", "isPrimary": false, "companyIdx": 0 },
+    { "firstName": "James", "lastName": "Wilson", "email": "jwilson@acmecorp.com", "phone": "+1-555-0103", "title": "CFO", "department": "Finance", "isPrimary": false, "companyIdx": 0 },
+    { "firstName": "Emily", "lastName": "Johnson", "email": "emily@globexind.com", "phone": "+1-555-0201", "mobile": "+1-555-0211", "title": "VP Operations", "department": "Operations", "isPrimary": true, "companyIdx": 1 },
+    { "firstName": "Robert", "lastName": "Kim", "email": "rkim@globexind.com", "phone": "+1-555-0202", "title": "Network Admin", "department": "IT", "isPrimary": false, "companyIdx": 1 },
+    { "firstName": "Sarah", "lastName": "Lee", "email": "slee@globexind.com", "phone": "+1-555-0203", "title": "Office Manager", "department": "Admin", "isPrimary": false, "companyIdx": 1 },
+    { "firstName": "Michael", "lastName": "Brown", "email": "mbrown@initech.io", "phone": "+1-555-0301", "title": "CEO", "department": "Executive", "isPrimary": true, "companyIdx": 2 },
+    { "firstName": "Jessica", "lastName": "Davis", "email": "jdavis@initech.io", "phone": "+1-555-0302", "title": "CTO", "department": "Engineering", "isPrimary": false, "companyIdx": 2 },
+    { "firstName": "Alice", "lastName": "Wong", "email": "alice@umbrellacorp.net", "phone": "+1-555-0401", "title": "Security Officer", "department": "Security", "isPrimary": true, "companyIdx": 3 },
+    { "firstName": "Thomas", "lastName": "Mueller", "email": "tmueller@umbrellacorp.net", "phone": "+1-555-0402", "title": "IT Manager", "department": "IT", "isPrimary": false, "companyIdx": 3 },
+    { "firstName": "Tony", "lastName": "Stark", "email": "tony@starkent.com", "phone": "+1-555-0501", "mobile": "+1-555-0511", "title": "Owner", "department": "Executive", "isPrimary": true, "companyIdx": 4 },
+    { "firstName": "Pepper", "lastName": "Potts", "email": "pepper@starkent.com", "phone": "+1-555-0502", "title": "Operations Director", "department": "Operations", "isPrimary": false, "companyIdx": 4 },
+    { "firstName": "Happy", "lastName": "Hogan", "email": "happy@starkent.com", "phone": "+1-555-0503", "title": "Facilities Manager", "department": "Facilities", "isPrimary": false, "companyIdx": 4 }
+  ]
+}

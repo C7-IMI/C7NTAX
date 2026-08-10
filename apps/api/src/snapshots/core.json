@@ -1,0 +1,27 @@
+{
+  "roles": [
+    { "name": "Admin", "systemRole": "admin", "isDefault": true,
+      "permissions": ["ticket:view","ticket:create","ticket:edit","ticket:delete","ticket:assign","ticket:close","ticket:view_all","board:view","board:manage","client:view","client:create","client:edit","client:delete","billing:view","billing:manage","invoice:create","invoice:send","user:manage","role:manage","system:config","integration:view","integration:manage","report:view","report:export"] },
+    { "name": "Technician", "systemRole": "technician", "isDefault": false,
+      "permissions": ["ticket:view","ticket:create","ticket:edit","ticket:assign","ticket:close","board:view","client:view","integration:view","report:view"] },
+    { "name": "Client Admin", "systemRole": "client_admin", "isDefault": false,
+      "permissions": ["ticket:view","ticket:create","ticket:edit","board:view","client:view","billing:view"] },
+    { "name": "Read Only", "systemRole": "read_only", "isDefault": false,
+      "permissions": ["ticket:view","board:view","client:view","report:view"] }
+  ],
+  "users": [
+    { "email": "admin@C7NTAX.com", "username": "admin", "password": "admin", "firstName": "Admin", "lastName": "User", "role": "admin", "isActive": true, "emailVerified": true },
+    { "email": "john.smith@c7ntax.com", "username": "jsmith", "password": "password123", "firstName": "John", "lastName": "Smith", "role": "technician", "isActive": true },
+    { "email": "sarah.jones@c7ntax.com", "username": "sjones", "password": "password123", "firstName": "Sarah", "lastName": "Jones", "role": "technician", "isActive": true },
+    { "email": "mike.wilson@c7ntax.com", "username": "mwilson", "password": "password123", "firstName": "Mike", "lastName": "Wilson", "role": "admin", "isActive": true },
+    { "email": "lisa.brown@c7ntax.com", "username": "lbrown", "password": "password123", "firstName": "Lisa", "lastName": "Brown", "role": "admin", "isActive": true },
+    { "email": "david@acmecorp.com", "username": "david", "password": "password123", "firstName": "David", "lastName": "Chen", "role": "client_admin", "isActive": true }
+  ],
+  "companies": [
+    { "name": "Acme Corporation", "clientId": 1001, "clientType": "MSP", "email": "info@acmecorp.com", "phone": "+1-555-0100", "website": "https://acmecorp.com", "city": "New York", "state": "NY", "country": "US", "isActive": true },
+    { "name": "Globex Industries", "clientId": 1002, "clientType": "INT", "email": "contact@globexind.com", "phone": "+1-555-0200", "website": "https://globexind.com", "city": "Chicago", "state": "IL", "country": "US", "isActive": true },
+    { "name": "Initech Solutions", "clientId": 1003, "clientType": "MSP", "email": "support@initech.io", "phone": "+1-555-0300", "website": "https://initech.io", "city": "Austin", "state": "TX", "country": "US", "isActive": true },
+    { "name": "Umbrella Corp", "clientId": 1004, "clientType": "INF", "email": "info@umbrellacorp.net", "phone": "+1-555-0400", "website": "https://umbrellacorp.net", "city": "Seattle", "state": "WA", "country": "US", "isActive": true },
+    { "name": "Stark Enterprises", "clientId": 1005, "clientType": "MSP", "email": "hello@starkent.com", "phone": "+1-555-0500", "website": "https://starkent.com", "city": "San Francisco", "state": "CA", "country": "US", "isActive": true }
+  ]
+}
