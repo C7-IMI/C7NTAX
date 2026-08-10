@@ -52,6 +52,8 @@ const NAV_TREE: NavNode[] = [
   {
     id: "projects", icon: FolderKanban, label: "Projects", children: [
       { id: "projects-list", to: "/projects", icon: FolderKanban, label: "Project List" },
+  { id: "calendar", to: "/calendar", icon: Calendar, label: "Calendar" },
+  { id: "pto", to: "/pto", icon: Clock, label: "Time Off" },
     ],
   },
   { id: "kb", to: "/kb", icon: BookOpen, label: "Knowledge Base" },
@@ -66,6 +68,7 @@ const NAV_TREE: NavNode[] = [
   },
   {
     id: "billing", icon: DollarSign, label: "Billing", children: [
+      { id: "billing-dashboard", to: "/billing/dashboard", icon: TrendingUp, label: "Finance Dashboard" },
       { id: "billing-invoices", to: "/billing", icon: Receipt, label: "Invoices" },
       { id: "billing-agreements", to: "/billing/agreements", icon: ClipboardList, label: "Agreements" },
       { id: "billing-payments", to: "/billing/payments", icon: CreditCard, label: "Payments" },
