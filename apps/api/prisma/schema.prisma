@@ -1472,3 +1472,22 @@ model KumoDocumentRevision {
   @@unique([documentId, version])
   @@index([documentId, createdAt])
 }
+
+// ── FlowIngest: Domain Tracking ───────────────────────────────────
+
+model KumoDomain {
+  id          String   @id @default(uuid())
+  domainName  String
+  registrar   String?
+  expiryDate  DateTime?
+  autoRenew   Boolean  @default(true)
+  dnsProvider String?
+  nameservers String[] @default([])
+  notes       String?
+  companyId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([expiryDate])
+}
