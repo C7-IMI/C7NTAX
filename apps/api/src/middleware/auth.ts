@@ -32,6 +32,7 @@ export interface SignTokenPayload {
 /**
  * Extract and verify JWT from Authorization header.
  * Attaches user context to request.
+ * Also refreshes permissions from the database to catch newly added permissions.
  */
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction): void {
   let token: string | undefined;
@@ -50,9 +51,32 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
   try {
     const payload = jwt.verify(token, JWT_SECRET) as AuthUser;
     req.user = payload;
-    next();
+    // Refresh permissions from DB to capture newly added Permission enum values
+    refreshPermissionsFromDB(req.user).then(() => next()).catch(() => next());
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
+  }
+}
+
+async function refreshPermissionsFromDB(user: AuthUser): Promise<void> {
+  try {
+    const { prisma } = await import("../index");
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { permissions: true, role: { select: { systemRole: true, permissions: true } } },
+    });
+    if (dbUser) {
+      const fresh = computePermissions(
+        dbUser.role.systemRole as SystemRole,
+        dbUser.role.permissions as string[],
+        dbUser.permissions as string[]
+      );
+      if (fresh.length > user.permissions.length) {
+        user.permissions = fresh;
+      }
+    }
+  } catch {
+    // Silently use JWT permissions if DB is unreachable
   }
 }
 
