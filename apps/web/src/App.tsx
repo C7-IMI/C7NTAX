@@ -26,6 +26,7 @@ import { AssetsPage } from "./pages/Assets";
 import { AssetDetailPage } from "./pages/AssetDetail";
 import { KnowledgeBasePage } from "./pages/KnowledgeBase";
 import { AdministrationPage, AdminLogsPage, AdminServiceBoardsPage } from "./pages/Administration";
+import { ChangelogPage } from "./pages/Changelog";
 import { SystemSettingsPage } from "./pages/SystemSettings";
 import { InferenceSettingsPage } from "./pages/InferenceSettings";
 import { ProcurementPage } from "./pages/Procurement";
@@ -73,6 +74,7 @@ function ProtectedRoutes() {
         <Route path="/admin/boards" element={<AdminServiceBoardsPage />} />
         <Route path="/admin/system" element={<SystemSettingsPage />} />
         <Route path="/admin" element={<AdministrationPage />} />
+        <Route path="/admin/changelog" element={<ChangelogPage />} />
         <Route path="/settings/ai" element={<InferenceSettingsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/mfa-setup" element={<MFASetupPage />} />
