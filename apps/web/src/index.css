@@ -2,11 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Theme CSS Variables ────────────────────────────────────── */
+/* Dark theme (default) */
+html {
+  --navy-50: #e8edf5;
+  --navy-100: #c5d1e5;
+  --navy-200: #9eb3d3;
+  --navy-300: #7895c1;
+  --navy-400: #5b7db3;
+  --navy-500: #3e64a5;
+  --navy-600: #365796;
+  --navy-700: #2b4783;
+  --navy-800: #223771;
+  --navy-900: #142454;
+  --navy-950: #0a1628;
+
+  --cyber-50: #e0f7fe;
+  --cyber-100: #b3edfc;
+  --cyber-200: #80e2fa;
+  --cyber-300: #4dd6f8;
+  --cyber-400: #26cbf6;
+  --cyber-500: #00c0f4;
+  --cyber-600: #00aae0;
+  --cyber-700: #0090c4;
+  --cyber-800: #0077a9;
+  --cyber-900: #00507d;
+
+  --surface: #0f1a2e;
+  --surface-light: #162238;
+  --surface-lighter: #1e2d48;
+  --surface-border: #2a3a5c;
+
+  --alert-red: #ef4444;
+  --alert-amber: #f59e0b;
+  --alert-green: #22c55e;
+
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --text-muted: #6b7280;
+  --text-muted-alt: #4b5563;
+}
+
+/* Light theme — overrides all CSS variables */
+html.light {
+  --navy-50: #f0f4f8;
+  --navy-100: #e2e8f0;
+  --navy-200: #cbd5e1;
+  --navy-300: #94a3b8;
+  --navy-400: #64748b;
+  --navy-500: #475569;
+  --navy-600: #334155;
+  --navy-700: #1e293b;
+  --navy-800: #0f172a;
+  --navy-900: #020617;
+  --navy-950: #f8fafc;
+
+  --cyber-50: #f0f9ff;
+  --cyber-100: #e0f2fe;
+  --cyber-200: #bae6fd;
+  --cyber-300: #7dd3fc;
+  --cyber-400: #38bdf8;
+  --cyber-500: #0ea5e9;
+  --cyber-600: #0284c7;
+  --cyber-700: #0369a1;
+  --cyber-800: #075985;
+  --cyber-900: #0c4a6e;
+
+  --surface: #ffffff;
+  --surface-light: #f8fafc;
+  --surface-lighter: #f1f5f9;
+  --surface-border: #e2e8f0;
+
+  --alert-red: #dc2626;
+  --alert-amber: #d97706;
+  --alert-green: #16a34a;
+
+  --text-primary: #1e293b;
+  --text-secondary: #334155;
+  --text-tertiary: #475569;
+  --text-muted: #64748b;
+  --text-muted-alt: #94a3b8;
+}
+
 @layer base {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
-  body { min-height: 100dvh; line-height: 1.6; }
-  :focus-visible { outline: 2px solid #00c0f4; outline-offset: 2px; }
+  body { min-height: 100dvh; line-height: 1.6; background: var(--navy-950); color: var(--text-secondary); }
+  :focus-visible { outline: 2px solid var(--cyber-400); outline-offset: 2px; }
 }
 
 @layer components {
@@ -35,6 +118,8 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #2a3a5c; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a4a6c; }
+html.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+html.light ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
@@ -44,26 +129,3 @@
     transition-duration: 0.01ms !important;
   }
 }
-
-/* ── Light Theme Overrides ──────────────────────────────────── */
-html.light {
-  --tw-bg-navy-950: #f8fafc;
-  --tw-bg-surface: #ffffff;
-  --tw-bg-surface-lighter: #f1f5f9;
-  --tw-border-surface-border: #e2e8f0;
-}
-html.light body { background: #f8fafc; color: #1e293b; }
-html.light .card { background: #ffffff; border-color: #e2e8f0; }
-html.light .input-field { background: #ffffff; border-color: #cbd5e1; color: #1e293b; }
-html.light .input-field::placeholder { color: #94a3b8; }
-html.light .btn-secondary { background: #f1f5f9; border-color: #cbd5e1; color: #334155; }
-html.light .btn-secondary:hover { background: #e2e8f0; }
-html.light header { background: #ffffff !important; border-color: #e2e8f0 !important; }
-html.light aside { background: #ffffff !important; border-color: #e2e8f0 !important; }
-html.light h1, html.light h2, html.light h3, html.light h4 { color: #1e293b; }
-html.light p, html.light span { color: #475569; }
-html.light .text-white { color: #1e293b; }
-html.light .text-gray-400 { color: #64748b; }
-html.light .text-gray-500 { color: #475569; }
-html.light .text-gray-600 { color: #64748b; }
-html.light .badge { color: #334155; }
