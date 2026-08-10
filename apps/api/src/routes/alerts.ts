@@ -5,6 +5,26 @@ import { authenticate, type AuthRequest } from "../middleware/auth";
 export const alertsRouter = Router();
 alertsRouter.use(authenticate);
 
+alertsRouter.post("/", async (req: AuthRequest, res, next) => {
+  try {
+    const { name, entityType, triggerDays, enabled, notifyEmail } = req.body;
+    if (!name || !entityType) throw new AppError("name and entityType required", 400);
+    const rule = await prisma.alertRule.create({ data: { name, entityType, triggerDays: triggerDays || 30, enabled: enabled !== false, notifyEmail: notifyEmail || null, createdById: req.user!.userId } });
+    res.status(201).json(rule);
+  } catch (e) { next(e); }
+});
+
+alertsRouter.get("/rules", async (_req: AuthRequest, res, next) => {
+  try { const rules = await prisma.alertRule.findMany({ orderBy: { name: "asc" } }); res.json({ data: rules }); }
+  catch (e) { next(e); }
+});
+
+alertsRouter.delete("/rules/:id", async (req: AuthRequest, res, next) => {
+  try { await prisma.alertRule.delete({ where: { id: req.params.id } }); res.json({ message: "Deleted" }); }
+  catch (e) { next(e); }
+});
+
+
 alertsRouter.get("/", async (_req: AuthRequest, res, next) => {
   try {
     const alerts = await prisma.alertLog.findMany({ where: { dismissed: false }, orderBy: { createdAt: "desc" }, take: 50 });

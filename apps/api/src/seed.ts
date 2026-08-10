@@ -35,3 +35,15 @@ async function main() {
       console.log(`  ✓ Updated role: ${def.name} (${permissions.length} permissions)`);
     }
   }
+
+  console.log("\n[Seed] Done.\n");
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
