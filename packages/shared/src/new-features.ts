@@ -1,1 +1,3 @@
-[cache hygiene: omitted completed write.content argument, 25.7KB, approx 6828 token(s), 622 line(s); see following tool result] preview="import { z } from \"zod\"; import { TicketStatus, TicketPriority, BillingPeriod } from \"./enums\"; // ═══════════════════════════════════════"
+// Feature schemas — all schemas have been consolidated into the features/ subdirectory
+// This file intentionally exports nothing to avoid duplicate symbol errors
+export {};

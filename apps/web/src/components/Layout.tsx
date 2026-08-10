@@ -498,8 +498,22 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           {/* Header toolbar — placeholders only */}
           <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
-            <button onClick={toggleTheme} className="px-2 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+            <button
+              onClick={toggleTheme}
+              className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"
+              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {theme === "dark" ? (
+                <>
+                  <Sun size={14} />
+                  <span className="hidden lg:inline">Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon size={14} />
+                  <span className="hidden lg:inline">Dark</span>
+                </>
+              )}
             </button>
             <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Search">
               <Search size={14} />
