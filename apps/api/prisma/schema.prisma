@@ -44,7 +44,6 @@ model User {
   companyId       String?
   company         Company?          @relation(fields: [companyId], references: [id])
   sessions        Session[]
-  kumoWorkstations KumoWorkstation[]
   tickets         Ticket[]          @relation("AssignedTickets")
   createdTickets  Ticket[]          @relation("CreatedTickets")
   comments        TicketComment[]
@@ -61,7 +60,6 @@ model Role {
   permissions String[] // Permission enum values
   isDefault   Boolean  @default(false)
   users       User[]
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -133,11 +131,6 @@ model Company {
   tickets         Ticket[]
   serviceAgreements ServiceAgreement[]
   invoices        Invoice[]
-  kumoTemplates   KumoAssetTemplate[]
-  kumoAssets      KumoAsset[]
-  kumoPasswords   KumoPassword[]
-  kumoFolders     KumoFolder[]
-  kumoDocuments   KumoDocument[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -160,7 +153,6 @@ model Contact {
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   tickets     Ticket[]
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -297,7 +289,6 @@ model TicketComment {
 
   attachments TicketAttachment[]
 
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -314,7 +305,6 @@ model TicketAttachment {
   commentId   String?
   comment     TicketComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
   uploadedById String
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
 }
@@ -337,7 +327,6 @@ model TimeEntry {
   invoiceId   String?
   invoice     Invoice? @relation(fields: [invoiceId], references: [id])
 
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -615,7 +604,6 @@ model InferenceCache {
   latencyMs   Int      @default(0)
   hitCount    Int      @default(0)
   expiresAt   DateTime?
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   @@index([ticketId])
@@ -646,7 +634,6 @@ model DetectedPattern {
   status      String   @default("open")
   detectedAt  DateTime @default(now())
   resolvedAt  DateTime?
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -717,7 +704,6 @@ model ScheduleEntry {
   location    String?
   travelTime  Int?
   color       String?
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -753,7 +739,6 @@ model ProjectPhase {
   startDate   DateTime?
   endDate     DateTime?
   status      String   @default("pending")
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -830,7 +815,6 @@ model AssetAssignment {
   checkedOutAt DateTime @default(now())
   checkedInAt  DateTime?
   notes       String?
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
 }
@@ -865,7 +849,6 @@ model ContractMilestone {
   completedAt DateTime?
   amount      Float?
   status      String   @default("pending")
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -883,7 +866,6 @@ model Vendor {
   paymentTerms String?
   isActive    Boolean  @default(true)
   notes       String?
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -904,7 +886,6 @@ model PurchaseOrder {
   approvedById String?
   createdById String
   notes       String?
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -932,7 +913,6 @@ model PtoRequest {
   approvedById String?
   approvedAt  DateTime?
   deniedReason String?
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -956,7 +936,6 @@ model Survey {
   isActive    Boolean  @default(true)
   sendOnResolve Boolean @default(false)
   sendDelayHours Int   @default(1)
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -980,7 +959,6 @@ model SurveyResponse {
   userId      String?
   npsScore    Int?
   completedAt DateTime @default(now())
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
 }
@@ -1006,7 +984,6 @@ model KnowledgeBaseArticle {
   helpfulCount Int     @default(0)
   notHelpfulCount Int  @default(0)
   tags        String[] @default([])
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1019,7 +996,6 @@ model KBCategory {
   description String?
   parentId    String?
   sortOrder   Int      @default(0)
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1079,7 +1055,6 @@ model ChatMessage {
   content     String
   contentType String   @default("text")
   isRead      Boolean  @default(false)
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
 }
@@ -1093,7 +1068,6 @@ model WorkflowRule {
   conditions  Json     @default("[]")
   isActive    Boolean  @default(true)
   priority    Int      @default(0)
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1125,7 +1099,6 @@ model Report {
   config      Json     @default("{}")
   isSystem    Boolean  @default(false)
   createdById String
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1255,10 +1228,10 @@ model BulkOperation {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
 //  KUMO — IT Documentation & Asset Management Module
 // ═══════════════════════════════════════════════════════════════════
-
-// ── Universal Relationship Mapping ─────────────────────────────────
 
 model KumoLink {
   id            String   @id @default(uuid())
@@ -1279,8 +1252,6 @@ model KumoLink {
   @@index([sourceType, sourceId, targetType, targetId])
 }
 
-// ── Flexible Asset Templates ───────────────────────────────────────
-
 model KumoAssetTemplate {
   id          String   @id @default(uuid())
   name        String
@@ -1290,33 +1261,29 @@ model KumoAssetTemplate {
   isBuiltIn   Boolean  @default(false)
   isActive    Boolean  @default(true)
   companyId   String?
-  company     Company? @relation(fields: [companyId], references: [id])
   fields      KumoTemplateField[]
   assets      KumoAsset[]
-
-  assetFieldValues KumoAssetFieldValue[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model KumoTemplateField {
-  id           String   @id @default(uuid())
+  id           String            @id @default(uuid())
   templateId   String
   template     KumoAssetTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
   key          String
   label        String
-  fieldType    String   @default("text")
-  required     Boolean  @default(false)
+  fieldType    String            @default("text")
+  required     Boolean           @default(false)
   options      Json?
   placeholder  String?
   helpText     String?
   defaultValue Json?
-  isSensitive  Boolean  @default(false)
-  encrypted    Boolean  @default(false)
-  sortOrder    Int      @default(0)
-
-  assetFieldValues KumoAssetFieldValue[]
+  isSensitive  Boolean           @default(false)
+  encrypted    Boolean           @default(false)
+  sortOrder    Int               @default(0)
+  values       KumoAssetFieldValue[] @relation("FieldToValues")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1324,39 +1291,33 @@ model KumoTemplateField {
   @@unique([templateId, key])
 }
 
-// ── Flexible Asset Records ─────────────────────────────────────────
-
 model KumoAsset {
-  id          String   @id @default(uuid())
-  templateId  String
-  template    KumoAssetTemplate @relation(fields: [templateId], references: [id])
-  name        String
-  status      String   @default("active")
-  companyId   String?
-  company     Company? @relation(fields: [companyId], references: [id])
-  tags        String[] @default([])
-  createdById String
-  updatedById String?
-
-  assetFieldValues KumoAssetFieldValue[]
+  id            String            @id @default(uuid())
+  templateId    String
+  template      KumoAssetTemplate @relation(fields: [templateId], references: [id])
+  name          String
+  status        String            @default("active")
+  companyId     String?
+  tags          String[]          @default([])
+  createdById   String
+  updatedById   String?
+  fieldValues   KumoAssetFieldValue[] @relation("AssetToValues")
+  configServer      KumoServer?
+  configWorkstation KumoWorkstation?
+  configNetwork     KumoNetworkDevice?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  fieldValues KumoAssetFieldValue[]
-  configServer   KumoServer?
-  configWorkstation KumoWorkstation?
-  configNetwork  KumoNetworkDevice?
 
   @@index([templateId, companyId])
 }
 
 model KumoAssetFieldValue {
-  id             String   @id @default(uuid())
+  id             String            @id @default(uuid())
   assetId        String
-  asset          KumoAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  asset          KumoAsset         @relation("AssetToValues", fields: [assetId], references: [id], onDelete: Cascade)
   fieldId        String
-  field          KumoTemplateField @relation(fields: [fieldId], references: [id])
+  field          KumoTemplateField @relation("FieldToValues", fields: [fieldId], references: [id])
   valueText      String?
   valueNum       Float?
   valueBool      Boolean?
@@ -1368,11 +1329,9 @@ model KumoAssetFieldValue {
   @@index([fieldId])
 }
 
-// ── Standard Configurations ────────────────────────────────────────
-
 model KumoServer {
-  id              String   @id @default(uuid())
-  kumoAssetId     String   @unique
+  id              String    @id @default(uuid())
+  kumoAssetId     String    @unique
   kumoAsset       KumoAsset @relation(fields: [kumoAssetId], references: [id], onDelete: Cascade)
   hostname        String
   fqdn            String?
@@ -1389,22 +1348,21 @@ model KumoServer {
 }
 
 model KumoWorkstation {
-  id              String   @id @default(uuid())
-  kumoAssetId     String   @unique
+  id              String    @id @default(uuid())
+  kumoAssetId     String    @unique
   kumoAsset       KumoAsset @relation(fields: [kumoAssetId], references: [id], onDelete: Cascade)
   hostname        String
   operatingSystem String?
   serialNumber    String?
   assignedUserId  String?
-  assignedTo      User?    @relation(fields: [assignedUserId], references: [id])
   lastCheckInAt   DateTime?
 }
 
 model KumoNetworkDevice {
-  id              String   @id @default(uuid())
-  kumoAssetId     String   @unique
+  id              String    @id @default(uuid())
+  kumoAssetId     String    @unique
   kumoAsset       KumoAsset @relation(fields: [kumoAssetId], references: [id], onDelete: Cascade)
-  deviceType      String   @default("switch")
+  deviceType      String    @default("switch")
   managementIp    String?
   macAddress      String?
   firmwareVersion String?
@@ -1412,8 +1370,6 @@ model KumoNetworkDevice {
   serialNumber    String?
   rackPosition    String?
 }
-
-// ── Password Vault ─────────────────────────────────────────────────
 
 model KumoPassword {
   id                String   @id @default(uuid())
@@ -1431,53 +1387,45 @@ model KumoPassword {
   strength          String?
   notes             String?
   companyId         String?
-  company           Company? @relation(fields: [companyId], references: [id])
   totpSecret        String?
   totpEnabled       Boolean  @default(false)
   isActive          Boolean  @default(true)
   createdById       String
   updatedById       String?
-
-  assetFieldValues KumoAssetFieldValue[]
+  accessLogs        KumoPasswordAccessLog[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  accessLogs  KumoPasswordAccessLog[]
 
   @@index([companyId, category])
 }
 
 model KumoPasswordAccessLog {
-  id            String   @id @default(uuid())
+  id            String       @id @default(uuid())
   passwordId    String
   password      KumoPassword @relation(fields: [passwordId], references: [id], onDelete: Cascade)
   accessedById  String
-  accessedAt    DateTime @default(now())
+  accessedAt    DateTime     @default(now())
   accessType    String
   ipAddress     String?
   userAgent     String?
-  success       Boolean  @default(true)
+  success       Boolean      @default(true)
   failureReason String?
 
   @@index([passwordId, accessedAt])
   @@index([accessedById])
 }
 
-// ── Knowledge Base (SOPs) ──────────────────────────────────────────
-
 model KumoFolder {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
   slug        String
   description String?
   parentId    String?
   parent      KumoFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
   children    KumoFolder[] @relation("FolderHierarchy")
-  sortOrder   Int      @default(0)
+  sortOrder   Int          @default(0)
   companyId   String?
-  company     Company? @relation(fields: [companyId], references: [id])
-
   documents   KumoDocument[]
 
   @@unique([slug, parentId, companyId])
@@ -1485,45 +1433,41 @@ model KumoFolder {
 }
 
 model KumoDocument {
-  id             String   @id @default(uuid())
+  id             String      @id @default(uuid())
   folderId       String?
   folder         KumoFolder? @relation(fields: [folderId], references: [id])
   title          String
   slug           String
   currentContent String
-  currentVersion Int      @default(1)
-  status         String   @default("draft")
-  visibility     String   @default("internal")
-  sortOrder      Int      @default(0)
+  currentVersion Int         @default(1)
+  status         String      @default("draft")
+  visibility     String      @default("internal")
+  sortOrder      Int         @default(0)
   companyId      String?
-  company        Company? @relation(fields: [companyId], references: [id])
-  tags           String[] @default([])
+  tags           String[]    @default([])
   authorId       String
   lastEditorId   String?
-  viewCount      Int      @default(0)
-  isTemplate     Boolean  @default(false)
-
-  assetFieldValues KumoAssetFieldValue[]
+  viewCount      Int         @default(0)
+  isTemplate     Boolean     @default(false)
+  revisions      KumoDocumentRevision[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  revisions    KumoDocumentRevision[]
 
   @@index([folderId, sortOrder])
   @@index([companyId, status])
 }
 
 model KumoDocumentRevision {
-  id         String   @id @default(uuid())
+  id         String        @id @default(uuid())
   documentId String
-  document   KumoDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document   KumoDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
   version    Int
   content    String
   changeLog  String?
   authorId   String
   fileSize   Int?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime      @default(now())
 
   @@unique([documentId, version])
   @@index([documentId, createdAt])

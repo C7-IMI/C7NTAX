@@ -45,6 +45,7 @@ import { ssoRouter } from "./routes/sso";
 import { systemRouter } from "./routes/system";
 import { bulkRouter } from "./routes/bulk";
 import { inferenceRouter } from "./routes/inference";
+import { kumoRouter } from "./routes/kumo";
 import { setupWebSocket } from "./ws";
 import { WEB_ORIGIN } from "@C7NTAX/shared";
 import { startWorkers } from "./worker";
@@ -94,6 +95,7 @@ app.use("/api/sso", ssoRouter);
 app.use("/api/system", systemRouter);
 app.use("/api/bulk", bulkRouter);
 app.use("/api/inference", inferenceRouter);
+app.use("/api/kumo", kumoRouter);
 
 app.use(errorHandler);
 

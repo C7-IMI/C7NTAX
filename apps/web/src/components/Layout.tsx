@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Plug, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
+  Database, Server,
   type LucideIcon,
 } from "lucide-react";
 
@@ -53,6 +54,15 @@ const NAV_TREE: NavNode[] = [
     ],
   },
   { id: "kb", to: "/kb", icon: BookOpen, label: "Knowledge Base" },
+  {
+    id: "kumo", icon: Database, label: "Kumo", children: [
+      { id: "kumo-dashboard", to: "/kumo", icon: LayoutDashboard, label: "Dashboard" },
+      { id: "kumo-assets", to: "/kumo/assets", icon: Monitor, label: "Assets" },
+      { id: "kumo-passwords", to: "/kumo/passwords", icon: Shield, label: "Passwords" },
+      { id: "kumo-configs", to: "/kumo/configs", icon: Server, label: "Configurations" },
+      { id: "kumo-documents", to: "/kumo/documents", icon: BookOpen, label: "Documents" },
+    ],
+  },
   {
     id: "billing", icon: DollarSign, label: "Billing", children: [
       { id: "billing-invoices", to: "/billing", icon: Receipt, label: "Invoices" },

@@ -184,6 +184,32 @@ export enum Permission {
   // ── Inference / AI ──
   InferenceView = "inference:view",
   InferenceManage = "inference:manage",
+
+  // ── Kumo / IT Documentation ──
+  KumoView = "kumo:view",
+  KumoManage = "kumo:manage",
+  KumoViewAll = "kumo:view_all",
+  KumoAssetView = "kumo:asset:view",
+  KumoAssetCreate = "kumo:asset:create",
+  KumoAssetEdit = "kumo:asset:edit",
+  KumoAssetDelete = "kumo:asset:delete",
+  KumoAssetManageTemplates = "kumo:asset:template:manage",
+  KumoPasswordsView = "kumo:passwords:view",
+  KumoPasswordsCreate = "kumo:passwords:create",
+  KumoPasswordsEdit = "kumo:passwords:edit",
+  KumoPasswordsDelete = "kumo:passwords:delete",
+  KumoPasswordsReveal = "kumo:passwords:reveal",
+  KumoConfigView = "kumo:config:view",
+  KumoConfigCreate = "kumo:config:create",
+  KumoConfigEdit = "kumo:config:edit",
+  KumoConfigDelete = "kumo:config:delete",
+  KumoDocumentView = "kumo:doc:view",
+  KumoDocumentCreate = "kumo:doc:create",
+  KumoDocumentEdit = "kumo:doc:edit",
+  KumoDocumentDelete = "kumo:doc:delete",
+  KumoDocumentPublish = "kumo:doc:publish",
+  KumoLinkView = "kumo:link:view",
+  KumoLinkManage = "kumo:link:manage",
 }
 
 /** Permission categories for UI grouping — order matters */
@@ -263,6 +289,17 @@ export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: P
   {
     key: "security", label: "Security & MFA",
     permissions: [Permission.SecurityManage, Permission.MFAEnforce],
+  },
+  {
+    key: "kumo", label: "Kumo IT Documentation",
+    permissions: [
+      Permission.KumoView, Permission.KumoManage, Permission.KumoViewAll,
+      Permission.KumoAssetView, Permission.KumoAssetCreate, Permission.KumoAssetEdit, Permission.KumoAssetDelete, Permission.KumoAssetManageTemplates,
+      Permission.KumoPasswordsView, Permission.KumoPasswordsCreate, Permission.KumoPasswordsEdit, Permission.KumoPasswordsDelete, Permission.KumoPasswordsReveal,
+      Permission.KumoConfigView, Permission.KumoConfigCreate, Permission.KumoConfigEdit, Permission.KumoConfigDelete,
+      Permission.KumoDocumentView, Permission.KumoDocumentCreate, Permission.KumoDocumentEdit, Permission.KumoDocumentDelete, Permission.KumoDocumentPublish,
+      Permission.KumoLinkView, Permission.KumoLinkManage,
+    ],
   },
   {
     key: "admin", label: "Administration",
