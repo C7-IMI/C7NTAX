@@ -4,6 +4,8 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { encrypt, decrypt, secureClear } from "../services/kumoCrypto";
+import speakeasy from "speakeasy";
+import QRCode from "qrcode";
 
 export const kumoRouter = Router();
 kumoRouter.use(authenticate);
@@ -323,6 +325,56 @@ kumoRouter.get("/passwords/:id/access-logs", requirePermission(Permission.KumoPa
       take: 100,
     });
     res.json({ data: logs });
+  } catch (e) { next(e); }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  TOTP / 2FA
+// ═══════════════════════════════════════════════════════════════════
+
+kumoRouter.post("/passwords/:id/totp/setup", requirePermission(Permission.KumoPasswordsEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const pw = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
+    if (!pw) throw new AppError("Not found", 404);
+    const secret = speakeasy.generateSecret({ name: `Kumo: ${pw.label}` });
+    const { ciphertext } = encrypt(secret.base32);
+    await prisma.kumoPassword.update({ where: { id: pw.id }, data: { totpSecret: ciphertext, totpEnabled: true } });
+    const qrcode = await QRCode.toDataURL(secret.otpauth_url!);
+    res.json({ secret: secret.base32, otpauthUrl: secret.otpauth_url, qrcode });
+  } catch (e) { next(e); }
+});
+
+kumoRouter.post("/passwords/:id/totp/verify", requirePermission(Permission.KumoPasswordsEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const { code } = req.body;
+    if (!code) throw new AppError("code required", 400);
+    const pw = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
+    if (!pw || !pw.totpSecret) throw new AppError("TOTP not configured", 400);
+    const secret = decrypt(pw.totpSecret, pw.iv, pw.authTag);
+    const valid = speakeasy.totp.verify({ secret, encoding: "base32", token: code, window: 1 });
+    if (!valid) throw new AppError("Invalid code", 400);
+    await prisma.kumoPasswordAccessLog.create({
+      data: { passwordId: pw.id, accessedById: req.user!.userId, accessType: "totp_verify", ipAddress: req.ip || req.socket.remoteAddress, success: true },
+    });
+    res.json({ verified: true });
+  } catch (e) { next(e); }
+});
+
+kumoRouter.get("/passwords/:id/totp", requirePermission(Permission.KumoPasswordsView), async (req: AuthRequest, res, next) => {
+  try {
+    const pw = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
+    if (!pw || !pw.totpSecret || !pw.totpEnabled) return res.json({ enabled: false });
+    const secret = decrypt(pw.totpSecret, pw.iv, pw.authTag);
+    const token = speakeasy.totp({ secret, encoding: "base32" });
+    const remaining = 30 - Math.floor(Date.now() / 1000) % 30;
+    res.json({ enabled: true, code: token, remaining });
+  } catch { res.json({ enabled: false }); }
+});
+
+kumoRouter.delete("/passwords/:id/totp", requirePermission(Permission.KumoPasswordsEdit), async (req: AuthRequest, res, next) => {
+  try {
+    await prisma.kumoPassword.update({ where: { id: req.params.id }, data: { totpSecret: null, totpEnabled: false } });
+    res.json({ message: "TOTP removed" });
   } catch (e) { next(e); }
 });
 

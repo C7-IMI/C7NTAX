@@ -14,6 +14,8 @@ export function KumoPasswordsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ label: "", username: "", password: "", email: "", url: "", category: "", companyId: "" });
   const [revealData, setRevealData] = useState<any>(null);
+  const [totpSetup, setTotpSetup] = useState<any>(null);
+  const [totpCode, setTotpCode] = useState<{code:string;remaining:number} | null>(null);
 
   const fetch = async () => {
     try { const r = await api.get("/kumo/passwords"); setPasswords(r.data.data || []); }
@@ -51,6 +53,10 @@ export function KumoPasswordsPage() {
     try { await api.delete(`/kumo/passwords/${selected.id}`); toast.success("Deactivated"); setSelected(null); fetch(); }
     catch { toast.error("Failed"); }
   };
+
+  const setupTotp = async () => { try { const r = await api.post(`/kumo/passwords/${selected.id}/totp/setup`); setTotpSetup(r.data); } catch { toast.error("Failed"); } };
+  const fetchTotp = async () => { if (!selected) return; try { const r = await api.get(`/kumo/passwords/${selected.id}/totp`); if (r.data.enabled) setTotpCode(r.data); else setTotpCode(null); } catch { setTotpCode(null); } };
+  const removeTotp = async () => { try { await api.delete(`/kumo/passwords/${selected.id}/totp`); toast.success("TOTP removed"); setTotpSetup(null); setTotpCode(null); fetch(); } catch { toast.error("Failed"); } };
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -124,6 +130,28 @@ export function KumoPasswordsPage() {
               {revealData && (
                 <div className="bg-amber-600/10 border border-amber-500/30 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2"><span className="text-xs text-amber-400 font-medium">Credentials Revealed</span><span className="text-xs text-amber-500 flex items-center gap-1"><Clock size={11} /> Auto-clears 30s</span></div>
+
+              {!totpSetup && !selected.totpEnabled && (
+                <button onClick={setupTotp} className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 w-full justify-center"><Shield size={12} /> Setup TOTP</button>
+              )}
+              {totpSetup && totpSetup.qrcode && (
+                <div className="bg-surface-lighter rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-400 mb-2">Scan with authenticator app</p>
+                  <img src={totpSetup.qrcode} alt="TOTP QR" className="w-36 h-36 mx-auto rounded-lg bg-white p-1" />
+                  <p className="text-xs text-gray-500 mt-2 font-mono select-all">{totpSetup.secret}</p>
+                  <button onClick={() => { setTotpSetup(null); fetchTotp(); }} className="btn-primary text-xs mt-2">Done</button>
+                </div>
+              )}
+              {totpCode && totpCode.enabled && (
+                <div className="bg-cyber-600/10 border border-cyber-500/30 rounded-lg p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-400">Time-based code</p>
+                    <p className="text-xl font-mono font-bold text-cyber-400">{totpCode.code}</p>
+                    <p className="text-xs text-gray-500">Refreshes in {totpCode.remaining}s</p>
+                  </div>
+                  <button onClick={removeTotp} className="text-xs text-red-400 hover:text-red-300">Remove</button>
+                </div>
+              )}
                   <div className="space-y-2 text-sm">
                     <div><span className="text-xs text-gray-500">Username</span><p className="text-white">{revealData.username || "—"}</p></div>
                     <div><span className="text-xs text-gray-500">Password</span><code className="block bg-black/30 px-3 py-1.5 mt-1 rounded text-green-400 font-mono select-all">{revealData.passwordPlaintext}</code></div>
