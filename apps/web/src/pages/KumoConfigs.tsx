@@ -51,7 +51,7 @@ export function KumoConfigsPage() {
           {loading ? <div className="text-center py-8 text-gray-500">Loading...</div> :
            filtered.length === 0 ? <div className="card py-8 text-center text-gray-500 text-sm">No configurations</div> :
            filtered.map(c => (
-            <button key={c.id} onClick={() => setSelected(c)}
+            <button key={c.id} onClick={() => { setSelected(c); api.post("/kumo/recently-viewed", { entityType: "config", entityId: c.id, entityName: c.kumoAsset?.name || c.hostname, entityIcon: "server" }).catch(() => {}); }}
               className={"w-full text-left card px-4 py-3 hover:border-cyber-500/30 " + (selected?.id === c.id ? "border-cyber-500/50 bg-cyber-600/5" : "")}>
               <div className="flex items-center gap-2">
                 <Server size={14} className="text-cyber-400 shrink-0" />

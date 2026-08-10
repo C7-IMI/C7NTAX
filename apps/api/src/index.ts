@@ -20,6 +20,7 @@ process.on("unhandledRejection", (reason) => {
 });
 import { errorHandler } from "./middleware/errorHandler";
 import { rateLimiter } from "./middleware/rateLimiter";
+import { autoSnapshotMiddleware } from "./services/autoSnapshot";
 import { logger } from "./services/logger";
 import { authRouter } from "./routes/auth";
 import { usersRouter } from "./routes/users";
@@ -66,6 +67,10 @@ app.use(morgan("short", {
 }));
 app.use(rateLimiter(9999, 60 * 1000));
 app.use(express.json({ limit: "10mb" }));
+
+// Auto-capture snapshots after any successful write (debounced 5s)
+// Must be BEFORE routes so it hooks into response finish events
+app.use(autoSnapshotMiddleware);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", version: "1.0.0" }));
 

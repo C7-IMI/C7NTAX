@@ -50,7 +50,8 @@ export function KumoDocumentsPage() {
   };
 
   const openDoc = async (id: string) => {
-    try { const r = await api.get(`/kumo/documents/${id}`); setViewDoc(r.data); }
+    try { const r = await api.get(`/kumo/documents/${id}`); setViewDoc(r.data); 
+      if (r.data) api.post("/kumo/recently-viewed", { entityType: "document", entityId: id, entityName: r.data.title, entityIcon: "book" }).catch(() => {}); }
     catch { toast.error("Failed to load"); }
   };
 

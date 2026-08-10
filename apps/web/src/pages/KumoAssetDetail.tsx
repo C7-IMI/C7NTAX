@@ -13,7 +13,8 @@ export function KumoAssetDetailPage() {
   const [values, setValues] = useState<Record<string, any>>({});
 
   const load = async () => {
-    try { const r = await api.get(`/kumo/assets/${id}`); setAsset(r.data); setValues(r.data.values || {}); }
+    try { const r = await api.get(`/kumo/assets/${id}`); setAsset(r.data); setValues(r.data.values || {}); 
+      if (r.data) api.post("/kumo/recently-viewed", { entityType: "asset", entityId: id!, entityName: r.data.name, entityIcon: "monitor" }).catch(() => {}); }
     catch { toast.error("Asset not found"); }
     finally { setLoading(false); }
   };

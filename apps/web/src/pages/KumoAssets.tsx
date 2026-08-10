@@ -136,7 +136,10 @@ export function KumoAssetsPage() {
             <tbody>
               {filtered.map(a => (
                 <tr key={a.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 cursor-pointer"
-                  onClick={() => navigate(`/kumo/assets/${a.id}`)}>
+                  onClick={() => { 
+                    navigate(`/kumo/assets/${a.id}`); 
+                    api.post("/kumo/recently-viewed", { entityType: "asset", entityId: a.id, entityName: a.name, entityIcon: "monitor" }).catch(() => {});
+                  }}>
                   <td className="px-4 py-3 text-white font-medium">{a.name}</td>
                   <td className="px-4 py-3 hidden md:table-cell text-gray-400 text-xs">{a.template?.name || "—"}</td>
                   <td className="px-4 py-3 hidden sm:table-cell">

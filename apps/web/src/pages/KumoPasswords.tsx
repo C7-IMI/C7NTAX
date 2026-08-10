@@ -37,7 +37,10 @@ export function KumoPasswordsPage() {
 
   const filtered = companyFilter ? passwords.filter(p => p.companyId === companyFilter) : passwords;
 
-  const selectPassword = (p: any) => { setSelected(p); setEditing(false); setEditForm({ ...p }); };
+  const selectPassword = (p: any) => { 
+    setSelected(p); setEditing(false); setEditForm({ ...p }); 
+    api.post("/kumo/recently-viewed", { entityType: "password", entityId: p.id, entityName: p.label || p.username || p.email, entityIcon: "key" }).catch(() => {});
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,7 +222,7 @@ export function KumoPasswordsPage() {
                     </div>
                     <div>
                       <p className="text-gray-500 mb-1">Last Changed</p>
-                      <p className="text-white">{selected.updatedAt ? new Date(selected.updatedAt).toLocaleDateString() : "—"}</p>
+                      <p className="text-white">{selected.updatedAt ? new Date(selected.updatedAt).toLocaleDateString() : "ï¿½"}</p>
                     </div>
                   </div>
                 );
