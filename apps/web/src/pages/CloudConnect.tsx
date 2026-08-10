@@ -83,7 +83,7 @@ function getCredHelp(field: string): string | null {
 
 // ── Main Component ──────────────────────────────────────────────────
 
-export function IntegrationsPage() {
+export function CloudConnectPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [types, setTypes] = useState<IntegrationType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,18 +99,18 @@ export function IntegrationsPage() {
   const fetchAll = async () => {
     try {
       const [intRes, typeRes] = await Promise.all([
-        api.get("/integrations"),
-        api.get("/integrations/types"),
+        api.get("/cloudconnect"),
+        api.get("/cloudconnect/types"),
       ]);
       setIntegrations(intRes.data?.data || []);
       setTypes(typeRes.data?.types || []);
-    } catch { toast.error("Failed to load integrations"); }
+    } catch { toast.error("Failed to load CloudConnect integrations"); }
     finally { setLoading(false); }
   };
 
   const fetchLogs = async (id: string) => {
     try {
-      const res = await api.get(`/integrations/${id}/sync-logs`);
+      const res = await api.get(`/cloudconnect/${id}/sync-logs`);
       setSyncLogs(res.data?.data || []);
       setShowLogs(id);
     } catch { toast.error("Failed to load logs"); }
@@ -136,13 +136,13 @@ export function IntegrationsPage() {
 
   const handleCreate = async () => {
     try {
-      await api.post("/integrations", {
+      await api.post("/cloudconnect", {
         kind: selectedType!.kind,
         name: formName,
         credentials: credForm,
         settings: settingsForm,
       });
-      toast.success(`${selectedType!.name} integration created`);
+      toast.success(`${selectedType!.name} connection created`);
       setShowAdd(false); setSelectedType(null);
       fetchAll();
     } catch { toast.error("Failed"); }
@@ -151,7 +151,7 @@ export function IntegrationsPage() {
   const handleTest = async (id: string) => {
     setTestResults(p => ({ ...p, [id]: { status: "testing" } }));
     try {
-      await api.post(`/integrations/${id}/test`);
+      await api.post(`/cloudconnect/${id}/test`);
       setTestResults(p => ({ ...p, [id]: { status: "pass" } }));
       fetchAll();
     } catch (e: any) {
@@ -173,18 +173,18 @@ export function IntegrationsPage() {
   };
 
   const handleSync = async (id: string) => {
-    try { const r = await api.post(`/integrations/${id}/sync`); toast.success(`Synced ${r.data?.recordsProcessed || 0} records`); fetchAll(); }
+    try { const r = await api.post(`/cloudconnect/${id}/sync`); toast.success(`Synced ${r.data?.recordsProcessed || 0} records`); fetchAll(); }
     catch { toast.error("Sync failed"); }
   };
 
   const handleToggle = async (id: string, v: boolean) => {
-    try { await api.patch(`/integrations/${id}`, { enabled: v }); fetchAll(); }
+    try { await api.patch(`/cloudconnect/${id}`, { enabled: v }); fetchAll(); }
     catch { toast.error("Failed"); }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete?")) return;
-    try { await api.delete(`/integrations/${id}`); toast.success("Deleted"); fetchAll(); }
+    try { await api.delete(`/cloudconnect/${id}`); toast.success("Deleted"); fetchAll(); }
     catch { toast.error("Failed"); }
   };
 
@@ -263,15 +263,15 @@ export function IntegrationsPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <div className="flex items-center justify-between">
-        <div><h2 className="text-lg font-semibold text-white">Integrations</h2><p className="text-sm text-gray-400 mt-0.5">Connect third-party services — 16 integrations available</p></div>
-        {!showAdd && <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Integration</button>}
+        <div><h2 className="text-lg font-semibold text-white">CloudConnect</h2><p className="text-sm text-gray-400 mt-0.5">Connect third-party services — 16 connectors available</p></div>
+        {!showAdd && <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Connection</button>}
       </div>
 
       {/* Type Selection Grid */}
       {showAdd && !selectedType && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Select Integration Type</h3>
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Select Service Type</h3>
             <button onClick={() => setShowAdd(false)} className="text-sm text-gray-500 hover:text-white">Cancel</button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -307,7 +307,7 @@ export function IntegrationsPage() {
 
           {/* Name */}
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Integration Name</label>
+            <label className="text-xs text-gray-500 block mb-1">Connection Name</label>
             <input className="input-field" value={formName} onChange={e => setFormName(e.target.value)} />
           </div>
 
@@ -321,133 +321,124 @@ export function IntegrationsPage() {
             </div>
           )}
 
-          {/* Scopes */}
-          {selectedType.requiredScopes?.length && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2 mb-2"><ShieldCheck size={13} /> Required API Scopes</h4>
-              <div className="grid grid-cols-2 gap-1.5">
-                {selectedType.requiredScopes.map(s => (
-                  <div key={s} className="flex items-center gap-2 text-xs text-gray-400">
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyber-400 shrink-0" />
-                    <code className="text-[11px]">{s}</code>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Settings */}
-          {selectedType.settings?.length && (
+          {selectedType.settings?.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"><Settings size={13} /> Configuration Options</h4>
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"><Settings size={13} /> Settings</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {selectedType.settings.map(s => renderSettingsField(s))}
               </div>
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex gap-2 justify-end pt-2 border-t border-surface-border">
+          <div className="flex gap-3 pt-2">
+            <button onClick={handleCreate} className="btn-primary">Create Connection</button>
             <button onClick={() => { setShowAdd(false); setSelectedType(null); }} className="btn-secondary">Cancel</button>
-            <button onClick={handleCreate} className="btn-primary">Save & Connect</button>
           </div>
         </div>
       )}
 
       {/* Integration List */}
       {!showAdd && (
-        <>
-          {loading ? <div className="text-center py-8 text-gray-500">Loading...</div> :
-           integrations.length === 0 ? <div className="card text-center py-8 text-gray-500">No integrations configured.</div> :
-           <div className="space-y-3">
-            {integrations.map((int: any) => {
-              const Icon = IconFor(int.kind);
-              return (
-                <div key={int.id} className="card space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-cyber-600/10"><Icon size={18} className="text-cyber-400" /></div>
-                      <div>
-                        <p className="text-white font-medium">{int.name}</p>
-                        <p className="text-xs text-gray-500">{KIND_LABELS[int.kind] || int.kind}</p>
-                      </div>
+        loading ? <div className="text-center py-8 text-gray-500"><Loader2 size={24} className="animate-spin mx-auto mb-2" /> Loading...</div> :
+        integrations.length === 0 ? <div className="card text-center py-8 text-gray-500">No connections configured.</div> :
+        <div className="space-y-3">
+          {integrations.map((int: any) => {
+            const IconComp = IconFor(int.kind);
+            const tr = testResults[int.id];
+            return (
+              <div key={int.id} className={`card space-y-4 ${int.enabled ? "border-l-2 border-l-cyber-500" : "opacity-60"}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 rounded-lg bg-cyber-600/10">
+                      <IconComp size={18} className="text-cyber-400" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`badge text-xs ${statusColor(int.status)}`}>{int.status}</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" checked={int.enabled} onChange={e => handleToggle(int.id, e.target.checked)} />
-                        <div className="w-8 h-4 bg-gray-600 rounded-full peer peer-checked:bg-cyber-600 transition-colors" />
-                      </label>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-white font-medium text-sm truncate">{int.name}</p>
+                        <span className={`badge text-xs ${statusColor(int.status)}`}>
+                          {int.status === "connected" ? <CheckCircle size={10} className="inline mr-0.5" /> :
+                           int.status === "error" ? <XCircle size={10} className="inline mr-0.5" /> : null}
+                          {int.status || "disconnected"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">{KIND_LABELS[int.kind] || int.kind}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button onClick={() => handleTest(int.id)} className="btn-primary text-xs py-1 px-2 flex items-center gap-1">
-                      <Plug size={11} /> Test Connection
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button onClick={() => handleTest(int.id)} className={`p-1.5 rounded-md transition-colors ${
+                      tr?.status === "testing" ? "text-yellow-400 bg-yellow-600/10" :
+                      tr?.status === "pass" ? "text-green-400 bg-green-600/10" :
+                      tr?.status === "fail" ? "text-red-400 bg-red-600/10" : "text-gray-500 hover:text-white hover:bg-surface-lighter"}`}
+                      title="Test Connection">
+                      {tr?.status === "testing" ? <Loader2 size={14} className="animate-spin" /> :
+                       tr?.status === "pass" ? <CheckCircle size={14} /> :
+                       tr?.status === "fail" ? <AlertTriangle size={14} /> : <Wifi size={14} />}
                     </button>
-                    <button onClick={() => handleSync(int.id)} className="btn-secondary text-xs py-1 px-2"><RefreshCw size={11} /> Sync</button>
-                    <button onClick={() => fetchLogs(int.id)} className="btn-secondary text-xs py-1 px-2">Logs</button>
-                    <button onClick={() => handleDelete(int.id)} className="btn-secondary text-xs py-1 px-2 text-red-400 hover:text-red-300"><Trash2 size={11} /></button>
-                    {int.lastSyncAt && <span className="text-xs text-gray-600">Last: {new Date(int.lastSyncAt).toLocaleString()}</span>}
+                    <button onClick={() => handleSync(int.id)} className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-surface-lighter transition-colors" title="Sync">
+                      <RefreshCw size={14} />
+                    </button>
+                    <button onClick={() => fetchLogs(int.id)} className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-surface-lighter transition-colors" title="Sync Logs">
+                      <FileText size={14} />
+                    </button>
+                    <button onClick={() => handleToggle(int.id, !int.enabled)} className={`p-1.5 rounded-md transition-colors ${int.enabled ? "text-green-400" : "text-gray-500"} hover:bg-surface-lighter`}
+                      title={int.enabled ? "Disable" : "Enable"}>
+                      {int.enabled ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                    </button>
+                    <button onClick={() => handleDelete(int.id)} className="p-1.5 rounded-md text-gray-500 hover:text-red-400 hover:bg-surface-lighter transition-colors" title="Delete">
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                  {/* Test result inline */}
-                  {testResults[int.id] && (
-                    <div className={`rounded-lg px-3 py-2 text-xs flex items-start gap-2 ${
-                      testResults[int.id]!.status === "testing" ? "bg-cyber-600/10 border border-cyber-500/30" :
-                      testResults[int.id]!.status === "pass" ? "bg-green-600/10 border border-green-500/30" :
-                      "bg-red-600/10 border border-red-500/30"
-                    }`}>
-                      {testResults[int.id]!.status === "testing" ? (
-                        <Loader2 size={14} className="text-cyber-400 animate-spin shrink-0 mt-0.5" />
-                      ) : testResults[int.id]!.status === "pass" ? (
-                        <CheckCircle size={14} className="text-green-400 shrink-0 mt-0.5" />
-                      ) : (
-                        <XCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-medium ${
-                          testResults[int.id]!.status === "testing" ? "text-cyber-400" :
-                          testResults[int.id]!.status === "pass" ? "text-green-400" : "text-red-400"
-                        }`}>
-                          {testResults[int.id]!.status === "testing" ? "Testing connection..." :
-                           testResults[int.id]!.status === "pass" ? "Connection successful" : "Connection failed"}
-                        </p>
-                        {testResults[int.id]!.status === "fail" && testResults[int.id]!.error && (
-                          <p className="text-red-300 mt-0.5">{testResults[int.id]!.error}</p>
-                        )}
-                        {testResults[int.id]!.status === "fail" && testResults[int.id]!.fieldErrors && (
-                          <div className="mt-1.5 space-y-1">
-                            {Object.entries(testResults[int.id]!.fieldErrors!).map(([field, err]) => (
-                              <div key={field} className="text-red-300 pl-2 border-l-2 border-red-500/50">
-                                <span className="font-mono text-[10px] text-red-400">{field}:</span>{" "}
-                                <span className="text-red-300">{err}</span>
-                                <p className="text-gray-500 mt-0.5">Fix: Verify the {field.replace(/([A-Z])/g, " $1").toLowerCase()} value in your integration settings.</p>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {showLogs === int.id && (
-                    <div className="mt-3 pt-3 border-t border-surface-border">
-                      <h4 className="text-xs font-semibold text-gray-500 mb-2">Sync History</h4>
-                      {syncLogs.length === 0 ? <p className="text-xs text-gray-600">No logs</p> :
-                       <div className="space-y-1 max-h-48 overflow-y-auto">
-                        {syncLogs.map(l => (
-                          <div key={l.id} className="flex items-center justify-between text-xs py-1 px-2 rounded bg-surface-lighter">
-                            <span className={`badge text-[10px] ${l.status==="success"?"bg-green-600/20 text-green-400":l.status==="failed"?"bg-red-600/20 text-red-400":"bg-amber-600/20 text-amber-400"}`}>{l.status}</span>
-                            <span className="text-gray-500">{l.recordsCreated}c/{l.recordsUpdated}u/{l.recordsFailed}f</span>
-                            <span className="text-gray-600">{new Date(l.startedAt).toLocaleTimeString()}</span>
+                </div>
+
+                {/* Test Result Details */}
+                {tr?.status === "fail" && (
+                  <div className="bg-red-600/5 border border-red-500/20 rounded-lg p-3 text-sm">
+                    <p className="text-red-400 font-medium flex items-center gap-1.5"><AlertTriangle size={13} /> Connection Failed</p>
+                    <p className="text-gray-400 text-xs mt-1">{tr.error}</p>
+                    {tr.fieldErrors && (
+                      <div className="mt-2 space-y-1">
+                        {Object.entries(tr.fieldErrors).map(([field, msg]) => (
+                          <div key={field} className="flex items-start gap-2 text-xs">
+                            <span className="text-red-400 font-mono shrink-0">{field}:</span>
+                            <span className="text-gray-500">{msg}</span>
                           </div>
                         ))}
-                      </div>}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>}
-        </>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Sync Logs */}
+                {showLogs === int.id && (
+                  <div className="border-t border-surface-border pt-3">
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Recent Sync Logs</h4>
+                    {syncLogs.length === 0 ? (
+                      <p className="text-xs text-gray-600">No sync history yet.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {syncLogs.map(log => (
+                          <div key={log.id} className="flex items-center justify-between text-xs bg-surface rounded p-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`px-1.5 py-0.5 rounded ${log.status === "success" ? "bg-green-600/20 text-green-400" : log.status === "failed" ? "bg-red-600/20 text-red-400" : "bg-yellow-600/20 text-yellow-400"}`}>
+                                {log.status}
+                              </span>
+                              <span className="text-gray-400">{log.entityType}</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-gray-500">
+                              <span>{log.recordsProcessed} processed</span>
+                              <span>{new Date(log.startedAt).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

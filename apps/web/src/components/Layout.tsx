@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import {
-  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Plug, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
+  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles,
   type LucideIcon,
@@ -27,8 +27,8 @@ const NAV_TREE: NavNode[] = [
       { id: "admin-boards", to: "/admin/boards", icon: Columns3, label: "Service Boards" },
       { id: "admin-system", to: "/admin/system", icon: Settings, label: "System Settings" },
       { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs" },
+      { id: "admin-cloudconnect", to: "/cloudconnect", icon: Cloud, label: "CloudConnect" },
       { id: "admin-changelog", to: "/admin/changelog", icon: Sparkles, label: "What's New" },
-      { id: "admin-integrations", to: "/integrations", icon: Plug, label: "Integrations" },
     ],
   },
   {

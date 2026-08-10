@@ -20,6 +20,8 @@
 - Each entry shows the item name, type label, and relative timestamp ("just now", "5m ago", "2h ago", "3d ago")
 - Clicking an item navigates to its detail page (assets link to specific asset, others link to their list pages)
 - Preserved C7NTAX dark navy/cyber theme across all new components
+- Renamed Integrations navigation → CloudConnect; moved What's New below CloudConnect in Administration menu
+- Route /integrations → /cloudconnect; API /api/integrations → /api/cloudconnect; frontend page Integrations.tsx → CloudConnect.tsx
 
 ## v1.10.001 — Past Due Tasks Auto-Update
 - Added `isOverdue` boolean field to Ticket model in Prisma schema

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Plug, Users, Target, FolderKanban, Monitor, BookOpen } from "lucide-react";
+import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Target, FolderKanban, Monitor, BookOpen } from "lucide-react";
 import api from "../api";
 import toast from "react-hot-toast";
 
@@ -15,7 +15,7 @@ const LANDING_OPTIONS = [
   { path: "/kb", label: "Knowledge Base", icon: BookOpen },
   { path: "/clients", label: "Clients", icon: Building2 },
   { path: "/billing", label: "Billing", icon: DollarSign },
-  { path: "/integrations", label: "Integrations", icon: Plug },
+  { path: "/cloudconnect", label: "CloudConnect", icon: Cloud },
   { path: "/users", label: "Users", icon: Users },
 ];
 

@@ -31,7 +31,7 @@
       "Expense Tracking — log and categorize business expenses per client",
       "Alerting System — expiry-based alert rules with dismissible alert logs",
       "File Manager — polymorphic file storage for clients, tickets, and assets",
-      "Integrations — 16 connector types with Test Connection button and inline pass/fail results",
+      "CloudConnect — 16 connector types with Test Connection button and inline pass/fail results",
       "Roles & Permissions — 101 granular permissions across 21 categories with interactive editor",
       "Create from Existing — copy roles and users from templates with all settings preserved"
     ]

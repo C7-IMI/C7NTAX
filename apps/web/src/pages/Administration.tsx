@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import {
-  FileText, Clock, ChevronDown, Shield, Columns3, Plug, Settings,
+  FileText, Clock, ChevronDown, Shield, Columns3, Cloud, Settings,
   Users, Activity, Plus, Trash2, Save, X
 } from "lucide-react";
 
@@ -214,9 +214,9 @@ export function AdministrationPage() {
           <h3 className="font-semibold text-white group-hover:text-cyber-400 transition-colors">Service Boards</h3>
           <p className="text-sm text-gray-500 mt-1">Configure boards, SLA policies, email connectors, and automations</p>
         </Link>
-        <Link to="/integrations" className="card hover:border-cyber-500/30 transition-colors group">
-          <Plug size={22} className="text-cyber-400 mb-2" />
-          <h3 className="font-semibold text-white group-hover:text-cyber-400 transition-colors">Integrations</h3>
+        <Link to="/cloudconnect" className="card hover:border-cyber-500/30 transition-colors group">
+          <Cloud size={22} className="text-cyber-400 mb-2" />
+          <h3 className="font-semibold text-white group-hover:text-cyber-400 transition-colors">CloudConnect</h3>
           <p className="text-sm text-gray-500 mt-1">Manage third-party service connections and API keys</p>
         </Link>
         <Link to="/users" className="card hover:border-cyber-500/30 transition-colors group">

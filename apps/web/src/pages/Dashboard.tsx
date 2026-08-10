@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
-import { Ticket, Clock, DollarSign, AlertTriangle, TrendingUp, Users, Columns3, Building2, FolderKanban, Monitor, BookOpen, Target, Plug } from "lucide-react";
+import { Ticket, Clock, DollarSign, AlertTriangle, TrendingUp, Users, Columns3, Building2, FolderKanban, Monitor, BookOpen, Target, Cloud } from "lucide-react";
 
 interface DashboardStats { totalTickets: number; openTickets: number; waitingOnClient: number; resolvedToday: number; overdueInvoices: number; revenueThisMonth: number; activeClients: number; }
 
@@ -47,7 +47,7 @@ export function DashboardPage() {
     { to: "/kb", icon: BookOpen, label: "Knowledge Base", desc: "Articles and documentation" },
     { to: "/clients", icon: Building2, label: "Clients", desc: "Company accounts and contacts" },
     { to: "/billing", icon: DollarSign, label: "Billing", desc: "Invoices and agreements" },
-    { to: "/integrations", icon: Plug, label: "Integrations", desc: "Third-party service connections" },
+    { to: "/cloudconnect", icon: Cloud, label: "CloudConnect", desc: "Third-party service connections" },
   ];
 
   return (

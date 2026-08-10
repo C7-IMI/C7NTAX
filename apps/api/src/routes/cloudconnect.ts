@@ -6,8 +6,8 @@ import { IntegrationHub } from "@C7NTAX/integrations";
 import type { IntegrationConfig } from "@C7NTAX/integrations";
 import { AppError } from "../middleware/errorHandler";
 
-export const integrationsRouter = Router();
-integrationsRouter.use(authenticate);
+export const cloudConnectRouter = Router();
+cloudConnectRouter.use(authenticate);
 
 const hub = new IntegrationHub();
 
@@ -68,7 +68,7 @@ async function upsertContactFromM365User(
 }
 
 // ── List available integration types ─────────────────────────────────────
-integrationsRouter.get("/types", requirePermission(Permission.IntegrationView), (_req, res) => {
+cloudConnectRouter.get("/types", requirePermission(Permission.IntegrationView), (_req, res) => {
   res.json({
     types: [
       {
@@ -105,7 +105,7 @@ integrationsRouter.get("/types", requirePermission(Permission.IntegrationView), 
 });
 
 // ── List configured integrations ─────────────────────────────────────────
-integrationsRouter.get("/", requirePermission(Permission.IntegrationView), async (_req, res, next) => {
+cloudConnectRouter.get("/", requirePermission(Permission.IntegrationView), async (_req, res, next) => {
   try {
     const rows = await prisma.integration.findMany({ orderBy: { createdAt: "desc" } });
     for (const row of rows) {
@@ -124,7 +124,7 @@ integrationsRouter.get("/", requirePermission(Permission.IntegrationView), async
 });
 
 // ── Create integration ────────────────────────────────────────────────────
-integrationsRouter.post("/", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.post("/", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
     const { kind, name, credentials, settings } = req.body;
     if (!kind || !name) throw new AppError("kind and name are required", 400);
@@ -136,7 +136,7 @@ integrationsRouter.post("/", requirePermission(Permission.IntegrationManage), as
 });
 
 // ── Update integration ────────────────────────────────────────────────────
-integrationsRouter.patch("/:id", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.patch("/:id", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
     const { name, credentials, settings, enabled } = req.body;
     const data: Record<string, unknown> = {};
@@ -150,7 +150,7 @@ integrationsRouter.patch("/:id", requirePermission(Permission.IntegrationManage)
 });
 
 // ── Test connection ───────────────────────────────────────────────────────
-integrationsRouter.post("/:id/test", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.post("/:id/test", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
     const config = await loadConfig(req.params.id!);
     const adapter = hub.getAdapter(config.kind);
@@ -166,7 +166,7 @@ integrationsRouter.post("/:id/test", requirePermission(Permission.IntegrationVie
 });
 
 // ── Sync integration ──────────────────────────────────────────────────────
-integrationsRouter.post("/:id/sync", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.post("/:id/sync", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
     const config = await loadConfig(req.params.id!);
     const adapter = hub.getAdapter(config.kind);
@@ -370,7 +370,7 @@ integrationsRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
 });
 
 // ── Get synced data for any integration ────────────────────────────────────
-integrationsRouter.get("/:id/synced-entities", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.get("/:id/synced-entities", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
     const { entityType, limit = "100", offset = "0" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = { integrationId: req.params.id };
@@ -384,7 +384,7 @@ integrationsRouter.get("/:id/synced-entities", requirePermission(Permission.Inte
 });
 
 // ── Get entity types available for an integration ─────────────────────────
-integrationsRouter.get("/:id/entity-types", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.get("/:id/entity-types", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
     const types = await prisma.syncedEntity.findMany({
       where: { integrationId: req.params.id },
@@ -400,7 +400,7 @@ integrationsRouter.get("/:id/entity-types", requirePermission(Permission.Integra
 });
 
 // ── Get M365 synced data ──────────────────────────────────────────────────
-integrationsRouter.get("/:id/m365/users", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.get("/:id/m365/users", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
     const users = await prisma.m365User.findMany({
       where: { integrationId: req.params.id },
@@ -410,7 +410,7 @@ integrationsRouter.get("/:id/m365/users", requirePermission(Permission.Integrati
   } catch (e) { next(e); }
 });
 
-integrationsRouter.get("/:id/m365/subscriptions", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.get("/:id/m365/subscriptions", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
     const subs = await prisma.m365Subscription.findMany({
       where: { integrationId: req.params.id },
@@ -420,7 +420,7 @@ integrationsRouter.get("/:id/m365/subscriptions", requirePermission(Permission.I
   } catch (e) { next(e); }
 });
 
-integrationsRouter.get("/:id/sync-logs", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.get("/:id/sync-logs", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
     const logs = await prisma.syncLog.findMany({
       where: { integrationId: req.params.id },
@@ -432,7 +432,7 @@ integrationsRouter.get("/:id/sync-logs", requirePermission(Permission.Integratio
 });
 
 // ── Delete integration ────────────────────────────────────────────────────
-integrationsRouter.delete("/:id", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
+cloudConnectRouter.delete("/:id", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
     await prisma.integration.delete({ where: { id: req.params.id } });
     hub.remove(req.params.id!);

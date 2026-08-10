@@ -9,7 +9,7 @@ import { ClientsPage } from "./pages/Clients";
 import { ClientDetailPage } from "./pages/ClientDetail";
 import { ContactsPage } from "./pages/Contacts";
 import { BillingPage } from "./pages/Billing";
-import { IntegrationsPage } from "./pages/Integrations";
+import { CloudConnectPage } from "./pages/CloudConnect";
 import { UsersPage } from "./pages/Users";
 import { RolesPage } from "./pages/Roles";
 import { KumoDashboardPage } from "./pages/Kumo";
@@ -64,7 +64,7 @@ function ProtectedRoutes() {
         <Route path="/reports/standard" element={<ReportsPage tab="standard" />} />
         <Route path="/reports/analytics" element={<ReportsPage tab="analytics" />} />
         <Route path="/reports" element={<ReportsPage />} />
-        <Route path="/integrations" element={<IntegrationsPage />} />
+        <Route path="/cloudconnect" element={<CloudConnectPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/roles" element={<RolesPage />} />
         <Route path="/kumo" element={<KumoDashboardPage />} />
