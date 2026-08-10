@@ -37,6 +37,7 @@ import { ReportsPage } from "./pages/Reports";
 import { SectionLanding, SECTION_DESCRIPTIONS } from "./pages/SectionLanding";
 import { NAV_TREE } from "./components/Layout";
 import { LoadingScreen } from "./components/LoadingScreen";
+import { HomePage } from "./pages/HomePage";
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
@@ -46,6 +47,7 @@ function ProtectedRoutes() {
     <Layout>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/tickets" element={<TicketsPage />} />
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
         <Route path="/boards" element={<BoardsPage />} />
