@@ -1,6 +1,6 @@
 [
   {
-    "id": "3d06d070-4b1d-4471-b349-050d28656cd5",
+    "id": "e498a862-5a28-4dcb-b7bf-204e50a3d497",
     "name": "Admin",
     "systemRole": "admin",
     "permissions": [
@@ -30,11 +30,11 @@
       "report:export"
     ],
     "isDefault": true,
-    "createdAt": "2026-08-10T17:37:37.061Z",
-    "updatedAt": "2026-08-10T17:37:37.061Z"
+    "createdAt": "2026-08-10T17:51:06.132Z",
+    "updatedAt": "2026-08-10T17:51:06.132Z"
   },
   {
-    "id": "427eb998-eafe-471a-bc88-ea47c025a93f",
+    "id": "5d9bc831-355c-485d-a33e-55f8ec963c8c",
     "name": "Technician",
     "systemRole": "technician",
     "permissions": [
@@ -49,11 +49,11 @@
       "report:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-10T17:37:37.063Z",
-    "updatedAt": "2026-08-10T17:37:37.063Z"
+    "createdAt": "2026-08-10T17:51:06.135Z",
+    "updatedAt": "2026-08-10T17:51:06.135Z"
   },
   {
-    "id": "c5251fa8-da60-4f04-8530-988c0351e663",
+    "id": "080fa03b-debe-4b30-862e-309b8d33283d",
     "name": "Client Admin",
     "systemRole": "client_admin",
     "permissions": [
@@ -65,11 +65,11 @@
       "billing:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-10T17:37:37.064Z",
-    "updatedAt": "2026-08-10T17:37:37.064Z"
+    "createdAt": "2026-08-10T17:51:06.136Z",
+    "updatedAt": "2026-08-10T17:51:06.136Z"
   },
   {
-    "id": "b8a223da-7ac9-450d-b1ab-23a95aa986e6",
+    "id": "ae5b2910-0147-42ff-81c7-389a8e16df3e",
     "name": "Read Only",
     "systemRole": "read_only",
     "permissions": [
@@ -79,7 +79,7 @@
       "report:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-10T17:37:37.065Z",
-    "updatedAt": "2026-08-10T17:37:37.065Z"
+    "createdAt": "2026-08-10T17:51:06.137Z",
+    "updatedAt": "2026-08-10T17:51:06.137Z"
   }
 ]

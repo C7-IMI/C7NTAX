@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-08-10T17:38:05.311Z",
-  "totalRecords": 107,
+  "capturedAt": "2026-08-10T17:51:48.740Z",
+  "totalRecords": 83,
   "tables": {
     "role": 4,
     "user": 6,
@@ -26,19 +26,19 @@
     "syncedEntity": 0,
     "syncLog": 0,
     "notification": 0,
-    "kumoAsset": 7,
-    "kumoAssetTemplate": 2,
+    "kumoAsset": 0,
+    "kumoAssetTemplate": 0,
     "kumoPassword": 0,
-    "kumoDocument": 2,
-    "kumoFolder": 1,
-    "kumoServer": 5,
-    "kumoLink": 2,
+    "kumoDocument": 0,
+    "kumoFolder": 0,
+    "kumoServer": 0,
+    "kumoLink": 0,
     "kumoDomain": 0,
     "kumoCertificate": 0,
     "kumoFile": 0,
     "recentlyViewedItem": 0,
-    "expense": 3,
-    "alertRule": 2,
+    "expense": 0,
+    "alertRule": 0,
     "alertLog": 0
   }
 }
