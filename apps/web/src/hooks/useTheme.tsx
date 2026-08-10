@@ -10,44 +10,44 @@ interface ThemeState {
 
 const ThemeContext = createContext<ThemeState>(null!);
 
+const STORAGE_KEY = "c7_theme";
+
 function loadTheme(): Theme {
   try {
-    const saved = localStorage.getItem("c7_theme");
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "light" || saved === "dark") return saved;
   } catch {}
   return "dark";
 }
 
-/** Apply theme class to <html> element directly */
-function applyThemeClass(t: Theme) {
+function applyTheme(t: Theme) {
+  document.documentElement.setAttribute("data-theme", t);
   document.documentElement.classList.toggle("light", t === "light");
+  try { localStorage.setItem(STORAGE_KEY, t); } catch {}
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const initial = loadTheme();
-    // Apply class immediately during init so there's no flash
-    applyThemeClass(initial);
-    return initial;
-  });
+/** Apply on script evaluation — before React hydrates — to prevent flash */
+applyTheme(loadTheme());
 
-  // Keep class in sync whenever state changes (belt-and-suspenders with direct calls below)
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>(loadTheme);
+
+  // Sync in case initial applyTheme raced
   useEffect(() => {
-    applyThemeClass(theme);
-    localStorage.setItem("c7_theme", theme);
+    applyTheme(theme);
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
     setThemeState(prev => {
       const next = prev === "dark" ? "light" : "dark";
-      applyThemeClass(next);
+      applyTheme(next);
       return next;
     });
   }, []);
 
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
-    applyThemeClass(t);
+    applyTheme(t);
   }, []);
 
   return (
