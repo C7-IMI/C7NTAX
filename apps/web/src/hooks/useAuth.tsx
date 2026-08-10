@@ -39,12 +39,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [landingPage, setLandingPage] = useState<LandingPage>({ path: "/", label: "Dashboard" });
 
   useEffect(() => {
-    // ── Temporary bypass: immediate login without API call ──
+    // ── Temporary bypass: login via API to get a real JWT token ──
     // Revert: set TEMP_BYPASS_AUTH = false below
     if (TEMP_BYPASS_AUTH) {
       localStorage.setItem("c7_bypass", "1");
-      setUser({ id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
-      setLoading(false);
+      const existingToken = localStorage.getItem("c7_token");
+      // Try existing token first
+      if (existingToken) {
+        setToken(existingToken);
+        setUser({ id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
+        setLoading(false);
+        return;
+      }
+      // Get a real JWT token via login
+      api.post("/auth/login", { username: "admin", password: "admin" })
+        .then((res) => {
+          if (res.data.token) {
+            localStorage.setItem("c7_token", res.data.token);
+            setToken(res.data.token);
+          }
+          setUser(res.data.user || { id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
+        })
+        .catch(() => {
+          setUser({ id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
+        })
+        .finally(() => setLoading(false));
       return;
     }
 
