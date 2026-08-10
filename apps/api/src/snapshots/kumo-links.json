@@ -1,0 +1,30 @@
+[
+  {
+    "id": "41ebdb60-513d-4fff-83df-71d7fc2b8d50",
+    "sourceType": "kumo_asset",
+    "sourceId": "b7d572fd-4392-41ae-ace3-0d1cb6408e50",
+    "targetType": "kumo_password",
+    "targetId": "84ca0d33-0b9e-4478-b17e-6c2a69dac8c0",
+    "relationship": "authenticates_to",
+    "label": "Domain Admin",
+    "notes": null,
+    "isDirectional": true,
+    "sortOrder": 0,
+    "createdById": "a23d9925-5c8f-4812-baf7-5662a1df8bbe",
+    "createdAt": "2026-08-10T01:48:04.760Z"
+  },
+  {
+    "id": "ef9741dc-87f8-44e0-848c-e5c580716fc0",
+    "sourceType": "kumo_asset",
+    "sourceId": "d0cd4cf8-a6c7-401e-bcbb-11bde6b73305",
+    "targetType": "kumo_password",
+    "targetId": "4266fba5-bcf5-4b5c-859d-1d0fd34d184a",
+    "relationship": "authenticates_to",
+    "label": "SQL Service Account",
+    "notes": null,
+    "isDirectional": true,
+    "sortOrder": 0,
+    "createdById": "a23d9925-5c8f-4812-baf7-5662a1df8bbe",
+    "createdAt": "2026-08-10T01:48:04.867Z"
+  }
+]

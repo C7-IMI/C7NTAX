@@ -1,0 +1,85 @@
+[
+  {
+    "id": "10faab4b-ce35-4d8f-a313-b3a1f0bb96ad",
+    "name": "Admin",
+    "systemRole": "admin",
+    "permissions": [
+      "ticket:view",
+      "ticket:create",
+      "ticket:edit",
+      "ticket:delete",
+      "ticket:assign",
+      "ticket:close",
+      "ticket:view_all",
+      "board:view",
+      "board:manage",
+      "client:view",
+      "client:create",
+      "client:edit",
+      "client:delete",
+      "billing:view",
+      "billing:manage",
+      "invoice:create",
+      "invoice:send",
+      "user:manage",
+      "role:manage",
+      "system:config",
+      "integration:view",
+      "integration:manage",
+      "report:view",
+      "report:export"
+    ],
+    "isDefault": true,
+    "createdAt": "2026-08-10T14:49:57.241Z",
+    "updatedAt": "2026-08-10T14:49:57.241Z"
+  },
+  {
+    "id": "9450718c-93bd-4751-a284-2be8d45c5237",
+    "name": "Technician",
+    "systemRole": "technician",
+    "permissions": [
+      "ticket:view",
+      "ticket:create",
+      "ticket:edit",
+      "ticket:assign",
+      "ticket:close",
+      "board:view",
+      "client:view",
+      "integration:view",
+      "report:view"
+    ],
+    "isDefault": false,
+    "createdAt": "2026-08-10T14:49:57.244Z",
+    "updatedAt": "2026-08-10T14:49:57.244Z"
+  },
+  {
+    "id": "0c662933-d2e4-4917-ba47-e2e95174b16a",
+    "name": "Client Admin",
+    "systemRole": "client_admin",
+    "permissions": [
+      "ticket:view",
+      "ticket:create",
+      "ticket:edit",
+      "board:view",
+      "client:view",
+      "billing:view"
+    ],
+    "isDefault": false,
+    "createdAt": "2026-08-10T14:49:57.245Z",
+    "updatedAt": "2026-08-10T14:49:57.245Z"
+  },
+  {
+    "id": "5df801a8-2067-4084-a988-3db065936157",
+    "name": "Read Only",
+    "systemRole": "read_only",
+    "permissions": [
+      "ticket:view",
+      "board:view",
+      "client:view",
+      "report:view"
+    ],
+    "isDefault": false,
+    "createdAt": "2026-08-10T14:49:57.245Z",
+    "updatedAt": "2026-08-10T14:49:57.245Z"
+  }
+]

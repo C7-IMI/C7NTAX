@@ -1,0 +1,74 @@
+[
+  {
+    "id": "29ccd636-0b07-4cc0-92c1-7c79add41c83",
+    "integrationId": "e60a2332-4402-47a4-9258-8d8faacd7108",
+    "azureObjectId": "user-001",
+    "userPrincipalName": "john.doe@contoso.com",
+    "displayName": "John Doe",
+    "givenName": "John",
+    "surname": "Doe",
+    "mail": "john.doe@contoso.com",
+    "jobTitle": "Software Engineer",
+    "department": "Engineering",
+    "officeLocation": null,
+    "mobilePhone": null,
+    "businessPhone": null,
+    "usageLocation": "US",
+    "accountEnabled": true,
+    "contactId": null,
+    "raw": {
+      "id": "user-001"
+    },
+    "lastSyncedAt": "2026-08-10T14:49:57.636Z",
+    "createdAt": "2026-08-10T14:49:57.638Z",
+    "updatedAt": "2026-08-10T14:49:57.638Z"
+  },
+  {
+    "id": "92877ce0-77fe-422e-a17b-628ed0b2a7b3",
+    "integrationId": "e60a2332-4402-47a4-9258-8d8faacd7108",
+    "azureObjectId": "user-002",
+    "userPrincipalName": "jane.smith@contoso.com",
+    "displayName": "Jane Smith",
+    "givenName": "Jane",
+    "surname": "Smith",
+    "mail": "jane.smith@contoso.com",
+    "jobTitle": "Project Manager",
+    "department": "PMO",
+    "officeLocation": null,
+    "mobilePhone": null,
+    "businessPhone": null,
+    "usageLocation": "US",
+    "accountEnabled": true,
+    "contactId": null,
+    "raw": {
+      "id": "user-002"
+    },
+    "lastSyncedAt": "2026-08-10T14:49:57.636Z",
+    "createdAt": "2026-08-10T14:49:57.638Z",
+    "updatedAt": "2026-08-10T14:49:57.638Z"
+  },
+  {
+    "id": "d29a66ed-2651-4dc3-b408-71c05eacfda3",
+    "integrationId": "e60a2332-4402-47a4-9258-8d8faacd7108",
+    "azureObjectId": "user-003",
+    "userPrincipalName": "bob.wilson@contoso.com",
+    "displayName": "Bob Wilson",
+    "givenName": "Bob",
+    "surname": "Wilson",
+    "mail": "bob.wilson@contoso.com",
+    "jobTitle": "IT Administrator",
+    "department": "IT",
+    "officeLocation": null,
+    "mobilePhone": null,
+    "businessPhone": null,
+    "usageLocation": "US",
+    "accountEnabled": true,
+    "contactId": null,
+    "raw": {
+      "id": "user-003"
+    },
+    "lastSyncedAt": "2026-08-10T14:49:57.636Z",
+    "createdAt": "2026-08-10T14:49:57.638Z",
+    "updatedAt": "2026-08-10T14:49:57.638Z"
+  }
+]

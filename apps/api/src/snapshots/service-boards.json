@@ -1,0 +1,44 @@
+[
+  {
+    "id": "063c4f32-0ad9-4646-becd-b6ad68e39f34",
+    "name": "Helpdesk",
+    "description": "General IT support",
+    "isActive": true,
+    "slaResponseMinutes": 120,
+    "slaResolutionMinutes": 480,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-10T14:49:57.613Z",
+    "updatedAt": "2026-08-10T14:49:57.613Z"
+  },
+  {
+    "id": "24042125-3a87-403c-b7ff-d8911741e2ed",
+    "name": "Security",
+    "description": "Security incidents and alerts",
+    "isActive": true,
+    "slaResponseMinutes": 30,
+    "slaResolutionMinutes": 240,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-10T14:49:57.614Z",
+    "updatedAt": "2026-08-10T14:49:57.614Z"
+  },
+  {
+    "id": "999f99cc-470b-4369-800f-214ae1be420c",
+    "name": "Client Onboarding",
+    "description": "New client setup and migration",
+    "isActive": true,
+    "slaResponseMinutes": 240,
+    "slaResolutionMinutes": 1440,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-10T14:49:57.614Z",
+    "updatedAt": "2026-08-10T14:49:57.614Z"
+  }
+]

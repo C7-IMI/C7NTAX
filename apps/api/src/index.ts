@@ -29,7 +29,7 @@ import { ticketsRouter } from "./routes/tickets";
 import { boardsRouter } from "./routes/boards";
 import { clientsRouter } from "./routes/clients";
 import { billingRouter } from "./routes/billing";
-import { integrationsRouter } from "./routes/integrations";
+import { cloudConnectRouter } from "./routes/cloudconnect";
 import { crmRouter } from "./routes/crm";
 import { projectsRouter } from "./routes/projects";
 import { scheduleRouter } from "./routes/schedule";
@@ -82,7 +82,7 @@ app.use("/api/tickets", ticketsRouter);
 app.use("/api/boards", boardsRouter);
 app.use("/api/clients", clientsRouter);
 app.use("/api/billing", billingRouter);
-app.use("/api/integrations", integrationsRouter);
+app.use("/api/cloudconnect", cloudConnectRouter);
 
 // New feature routes
 app.use("/api/crm", crmRouter);

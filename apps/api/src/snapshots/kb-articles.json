@@ -1,0 +1,85 @@
+[
+  {
+    "id": "371b95ae-f611-4a86-9ad7-1227f8e3f632",
+    "title": "VPN Setup Guide for Remote Users",
+    "slug": "vpn-setup-guide",
+    "content": "# VPN Setup Guide\n\nFollow these steps to configure your VPN client.\n\n1. Download the client from company portal\n2. Enter your credentials\n3. Select the closest gateway\n4. Click Connect",
+    "excerpt": "Step-by-step guide for configuring the VPN client",
+    "status": "published",
+    "visibility": "public",
+    "categoryId": null,
+    "authorId": "9e2a4a6c-4d82-49d3-b5fe-3471cc84b886",
+    "viewCount": 0,
+    "helpfulCount": 0,
+    "notHelpfulCount": 0,
+    "tags": [
+      "vpn",
+      "remote",
+      "setup"
+    ],
+    "createdAt": "2026-08-10T14:49:57.632Z",
+    "updatedAt": "2026-08-10T14:49:57.632Z"
+  },
+  {
+    "id": "19228646-ec3d-4dcc-b0e8-a013525230d1",
+    "title": "Common Email Issues and Troubleshooting",
+    "slug": "common-email-issues",
+    "content": "# Common Email Issues\n\n## Outbound Email Fails\n- Check Exchange connector settings\n- Verify smart host configuration\n- Test transport rules",
+    "excerpt": "Troubleshooting guide for common email delivery problems",
+    "status": "published",
+    "visibility": "internal",
+    "categoryId": null,
+    "authorId": "9e2a4a6c-4d82-49d3-b5fe-3471cc84b886",
+    "viewCount": 0,
+    "helpfulCount": 0,
+    "notHelpfulCount": 0,
+    "tags": [
+      "email",
+      "exchange",
+      "troubleshooting"
+    ],
+    "createdAt": "2026-08-10T14:49:57.632Z",
+    "updatedAt": "2026-08-10T14:49:57.632Z"
+  },
+  {
+    "id": "dd619685-0357-4d1e-9f22-3c5d8f6cfca3",
+    "title": "Phishing Awareness Training",
+    "slug": "phishing-awareness",
+    "content": "# Phishing Awareness\n\n## How to Spot Phishing\n- Check sender address carefully\n- Look for generic greetings\n- Don't click unexpected links\n- Report to IT immediately",
+    "excerpt": "Security awareness training for identifying phishing attempts",
+    "status": "published",
+    "visibility": "public",
+    "categoryId": null,
+    "authorId": "be5dbbc2-fda2-4ac0-a0cb-6ef0aa7fd482",
+    "viewCount": 0,
+    "helpfulCount": 0,
+    "notHelpfulCount": 0,
+    "tags": [
+      "security",
+      "phishing",
+      "training"
+    ],
+    "createdAt": "2026-08-10T14:49:57.632Z",
+    "updatedAt": "2026-08-10T14:49:57.632Z"
+  },
+  {
+    "id": "62fe3b85-c818-4525-8162-03f51c3a93e8",
+    "title": "New Hire Onboarding Checklist",
+    "slug": "new-hire-onboarding",
+    "content": "# New Hire Onboarding\n\n## Checklist\n1. Create user account\n2. Assign licenses\n3. Configure email\n4. Set up MFA\n5. Deploy workstation",
+    "excerpt": "Standard IT onboarding procedure for new employees",
+    "status": "draft",
+    "visibility": "internal",
+    "categoryId": null,
+    "authorId": "deeb7912-2343-478f-9cd2-04f47ea910f7",
+    "viewCount": 0,
+    "helpfulCount": 0,
+    "notHelpfulCount": 0,
+    "tags": [
+      "onboarding",
+      "checklist"
+    ],
+    "createdAt": "2026-08-10T14:49:57.632Z",
+    "updatedAt": "2026-08-10T14:49:57.632Z"
+  }
+]

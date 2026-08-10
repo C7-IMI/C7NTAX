@@ -1,0 +1,75 @@
+[
+  {
+    "id": "e60a2332-4402-47a4-9258-8d8faacd7108",
+    "kind": "microsoft365",
+    "name": "Contoso Microsoft 365",
+    "enabled": false,
+    "status": "disconnected",
+    "credentials": {
+      "clientId": "00000000-0000-0000-0000-000000000000",
+      "tenantId": "contoso.onmicrosoft.com"
+    },
+    "settings": {
+      "syncUsers": true,
+      "syncContacts": true,
+      "syncLicenses": true,
+      "syncIntervalMinutes": 60
+    },
+    "lastSyncAt": null,
+    "errorMessage": null,
+    "createdAt": "2026-08-10T14:49:57.635Z",
+    "updatedAt": "2026-08-10T14:49:57.635Z"
+  },
+  {
+    "id": "df0d9eb4-be36-4aa2-bd71-032db8645dcb",
+    "kind": "autotask",
+    "name": "AutoTask PSA Production",
+    "enabled": false,
+    "status": "disconnected",
+    "credentials": {
+      "username": "apiuser@company.com",
+      "integrationCode": "ABCDEF123456"
+    },
+    "settings": {},
+    "lastSyncAt": null,
+    "errorMessage": null,
+    "createdAt": "2026-08-10T14:49:57.636Z",
+    "updatedAt": "2026-08-10T14:49:57.636Z"
+  },
+  {
+    "id": "39f8f98d-a952-4cd2-aaa4-971a1326a7ae",
+    "kind": "connectwise",
+    "name": "ConnectWise Manage",
+    "enabled": false,
+    "status": "disconnected",
+    "credentials": {
+      "baseUrl": "https://api-na.myconnectwise.net",
+      "clientId": "00000000-0000-0000-0000-000000000000",
+      "companyId": "mycompany",
+      "publicKey": "xxx",
+      "privateKey": "xxx"
+    },
+    "settings": {},
+    "lastSyncAt": null,
+    "errorMessage": null,
+    "createdAt": "2026-08-10T14:49:57.637Z",
+    "updatedAt": "2026-08-10T14:49:57.637Z"
+  },
+  {
+    "id": "3d266fe2-f9af-4410-bbc7-bac6ad87261d",
+    "kind": "quickbooks",
+    "name": "QuickBooks Online",
+    "enabled": false,
+    "status": "disconnected",
+    "credentials": {
+      "realmId": "1234567890",
+      "clientId": "QB123456",
+      "clientSecret": "xxx"
+    },
+    "settings": {},
+    "lastSyncAt": null,
+    "errorMessage": null,
+    "createdAt": "2026-08-10T14:49:57.637Z",
+    "updatedAt": "2026-08-10T14:49:57.637Z"
+  }
+]

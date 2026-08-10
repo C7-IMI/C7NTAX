@@ -1,0 +1,40 @@
+[
+  {
+    "id": "a14da6db-a801-4ec1-9fb7-d65dc1c086fd",
+    "folderId": null,
+    "title": "Server Provisioning SOP",
+    "slug": "server-provisioning-sop-msmkglro",
+    "currentContent": "## Purpose\nStandard procedure for provisioning new servers.\n\n## Steps\n1. Create VM in vCenter\n2. Install OS\n3. Apply patches\n4. Join domain\n5. Install monitoring",
+    "currentVersion": 1,
+    "status": "draft",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": null,
+    "tags": [],
+    "authorId": "a23d9925-5c8f-4812-baf7-5662a1df8bbe",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-10T01:42:18.423Z",
+    "updatedAt": "2026-08-10T01:42:18.423Z"
+  },
+  {
+    "id": "98394be3-d2d1-4a2d-9dc8-1f8c48c9bae9",
+    "folderId": null,
+    "title": "Password Policy",
+    "slug": "password-policy-msmkglup",
+    "currentContent": "## Rotation Schedule\n- Admin: 30 days\n- Service: 90 days\n- User: 90 days\n\nStore all credentials in Kumo Vault after rotation.",
+    "currentVersion": 1,
+    "status": "draft",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": null,
+    "tags": [],
+    "authorId": "a23d9925-5c8f-4812-baf7-5662a1df8bbe",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-10T01:42:18.532Z",
+    "updatedAt": "2026-08-10T01:42:18.532Z"
+  }
+]

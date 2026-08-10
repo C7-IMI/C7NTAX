@@ -1,0 +1,26 @@
+[
+  {
+    "id": "0b7ca511-ae3b-4d5f-99c0-7019996a0940",
+    "name": "Domain Expiry Warning",
+    "entityType": "domain",
+    "triggerDays": 30,
+    "enabled": true,
+    "notifyEmail": null,
+    "lastTriggered": null,
+    "createdById": "a23d9925-5c8f-4812-baf7-5662a1df8bbe",
+    "createdAt": "2026-08-10T04:33:11.368Z",
+    "updatedAt": "2026-08-10T04:33:11.368Z"
+  },
+  {
+    "id": "c67970c6-cd1e-4e91-b564-b2012c18a88e",
+    "name": "SSL Certificate Expiry",
+    "entityType": "certificate",
+    "triggerDays": 14,
+    "enabled": true,
+    "notifyEmail": null,
+    "lastTriggered": null,
+    "createdById": "a23d9925-5c8f-4812-baf7-5662a1df8bbe",
+    "createdAt": "2026-08-10T04:33:11.473Z",
+    "updatedAt": "2026-08-10T04:33:11.473Z"
+  }
+]

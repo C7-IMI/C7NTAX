@@ -1,0 +1,26 @@
+[
+  {
+    "id": "d15e4013-ebbb-4bff-8419-3ae9b1dcd44b",
+    "name": "Server",
+    "description": null,
+    "icon": "Server",
+    "color": "#3b82d6",
+    "isBuiltIn": true,
+    "isActive": true,
+    "companyId": null,
+    "createdAt": "2026-08-10T00:53:22.112Z",
+    "updatedAt": "2026-08-10T00:53:22.112Z"
+  },
+  {
+    "id": "8b341384-53ce-4afd-ae69-c8b63dd390e2",
+    "name": "Workstation",
+    "description": null,
+    "icon": "Monitor",
+    "color": "#10b981",
+    "isBuiltIn": true,
+    "isActive": true,
+    "companyId": null,
+    "createdAt": "2026-08-10T00:53:22.129Z",
+    "updatedAt": "2026-08-10T00:53:22.129Z"
+  }
+]
