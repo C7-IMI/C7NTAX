@@ -136,8 +136,6 @@ systemRouter.post("/poller/reset", async (_req: AuthRequest, res) => {
 });
 
 // ── Changelog — parses FEATURE_LIST.md at runtime (single source of truth) ──
-import { readFileSync } from "fs";
-import { resolve } from "path";
 
 interface ChangeItem {
   text: string;
