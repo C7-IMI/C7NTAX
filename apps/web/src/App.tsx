@@ -13,6 +13,9 @@ import { IntegrationsPage } from "./pages/Integrations";
 import { UsersPage } from "./pages/Users";
 import { RolesPage } from "./pages/Roles";
 import { KumoDashboardPage } from "./pages/Kumo";
+import { KumoAssetsPage } from "./pages/KumoAssets";
+import { KumoAssetDetailPage } from "./pages/KumoAssetDetail";
+import { KumoPasswordsPage } from "./pages/KumoPasswords";
 import { SettingsPage } from "./pages/Settings";
 import { MFASetupPage } from "./pages/MFASetup";
 import { OpportunitiesPage } from "./pages/Opportunities";
@@ -59,6 +62,9 @@ function ProtectedRoutes() {
         <Route path="/users" element={<UsersPage />} />
         <Route path="/roles" element={<RolesPage />} />
         <Route path="/kumo" element={<KumoDashboardPage />} />
+        <Route path="/kumo/assets/:id" element={<KumoAssetDetailPage />} />
+        <Route path="/kumo/assets" element={<KumoAssetsPage />} />
+        <Route path="/kumo/passwords" element={<KumoPasswordsPage />} />
         <Route path="/admin/logs" element={<AdminLogsPage />} />
         <Route path="/admin/boards" element={<AdminServiceBoardsPage />} />
         <Route path="/admin/system" element={<SystemSettingsPage />} />
