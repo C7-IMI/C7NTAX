@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-08-10T15:22:47.514Z",
-  "totalRecords": 114,
+  "capturedAt": "2026-08-10T17:13:51.697Z",
+  "totalRecords": 107,
   "tables": {
     "role": 4,
     "user": 6,
@@ -28,7 +28,7 @@
     "notification": 0,
     "kumoAsset": 7,
     "kumoAssetTemplate": 2,
-    "kumoPassword": 7,
+    "kumoPassword": 0,
     "kumoDocument": 2,
     "kumoFolder": 1,
     "kumoServer": 5,

@@ -1,7 +1,7 @@
 [
   {
-    "id": "188f05c9-a831-4277-8d11-23c2b67df71b",
-    "integrationId": "e60a2332-4402-47a4-9258-8d8faacd7108",
+    "id": "2f2be399-2f3c-422e-8560-039648f7a96f",
+    "integrationId": "18db3d6a-2c72-48c4-a51c-2c8672b72a2d",
     "skuId": "sku-001",
     "skuPartNumber": "O365_BUSINESS_PREMIUM",
     "displayName": "Microsoft 365 Business Premium",
@@ -12,13 +12,13 @@
     "raw": {
       "skuId": "sku-001"
     },
-    "lastSyncedAt": "2026-08-10T14:49:57.637Z",
-    "createdAt": "2026-08-10T14:49:57.639Z",
-    "updatedAt": "2026-08-10T14:49:57.639Z"
+    "lastSyncedAt": "2026-08-10T17:13:15.859Z",
+    "createdAt": "2026-08-10T17:13:15.860Z",
+    "updatedAt": "2026-08-10T17:13:15.860Z"
   },
   {
-    "id": "b3d9511e-dbf2-4088-bae9-077c2173eee6",
-    "integrationId": "e60a2332-4402-47a4-9258-8d8faacd7108",
+    "id": "0b43098e-ee5e-4952-a2c4-b0089ee8b151",
+    "integrationId": "18db3d6a-2c72-48c4-a51c-2c8672b72a2d",
     "skuId": "sku-002",
     "skuPartNumber": "O365_BUSINESS_STANDARD",
     "displayName": "Microsoft 365 Business Standard",
@@ -29,8 +29,8 @@
     "raw": {
       "skuId": "sku-002"
     },
-    "lastSyncedAt": "2026-08-10T14:49:57.637Z",
-    "createdAt": "2026-08-10T14:49:57.639Z",
-    "updatedAt": "2026-08-10T14:49:57.639Z"
+    "lastSyncedAt": "2026-08-10T17:13:15.859Z",
+    "createdAt": "2026-08-10T17:13:15.860Z",
+    "updatedAt": "2026-08-10T17:13:15.860Z"
   }
 ]

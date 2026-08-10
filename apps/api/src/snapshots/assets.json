@@ -1,6 +1,6 @@
 [
   {
-    "id": "a1082dd2-ad99-4be6-85b1-b458818c0f5d",
+    "id": "d6bf14a8-57ff-49bd-ab84-04396429691a",
     "name": "SRV-DC-01",
     "assetTag": "ACME-DC01",
     "serialNumber": null,
@@ -18,7 +18,7 @@
     "location": "Acme HQ - IDF 2",
     "building": null,
     "room": null,
-    "companyId": "75d9cfdf-f36e-44f2-911d-1ab907d79aeb",
+    "companyId": "8a380f1b-2f87-4063-9115-b0ae8319c7b3",
     "assignedToId": null,
     "costCenter": null,
     "depreciationMethod": null,
@@ -32,11 +32,11 @@
     "notes": null,
     "customFields": {},
     "lastAuditedAt": null,
-    "createdAt": "2026-08-10T14:49:57.631Z",
-    "updatedAt": "2026-08-10T14:49:57.631Z"
+    "createdAt": "2026-08-10T17:13:15.850Z",
+    "updatedAt": "2026-08-10T17:13:15.850Z"
   },
   {
-    "id": "2612e665-bb55-4155-b6ea-3ccbe306f21e",
+    "id": "7f271550-a1d9-479d-8e83-6a2d391c95ad",
     "name": "FW-PRIMARY",
     "assetTag": "GLOBEX-FW01",
     "serialNumber": null,
@@ -54,7 +54,7 @@
     "location": "Globex Chicago - MDF",
     "building": null,
     "room": null,
-    "companyId": "181e147c-7c95-41d1-be1d-61a091ce8b9d",
+    "companyId": "5c351702-fe99-47f8-ab06-a8ac7aa76b12",
     "assignedToId": null,
     "costCenter": null,
     "depreciationMethod": null,
@@ -68,11 +68,11 @@
     "notes": null,
     "customFields": {},
     "lastAuditedAt": null,
-    "createdAt": "2026-08-10T14:49:57.631Z",
-    "updatedAt": "2026-08-10T14:49:57.631Z"
+    "createdAt": "2026-08-10T17:13:15.850Z",
+    "updatedAt": "2026-08-10T17:13:15.850Z"
   },
   {
-    "id": "4894dbee-0413-46ae-b1e8-d92fd2a76329",
+    "id": "7815e2ec-a6ae-4f9d-8037-39a452e1e354",
     "name": "SW-CORE-01",
     "assetTag": "INITECH-SW01",
     "serialNumber": null,
@@ -90,7 +90,7 @@
     "location": "Initech Austin - MDF",
     "building": null,
     "room": null,
-    "companyId": "3aaf34e8-bf4b-401a-acf2-121ff70e368b",
+    "companyId": "3dba73a2-a309-466b-8ef1-78ed0fa2aceb",
     "assignedToId": null,
     "costCenter": null,
     "depreciationMethod": null,
@@ -104,11 +104,11 @@
     "notes": null,
     "customFields": {},
     "lastAuditedAt": null,
-    "createdAt": "2026-08-10T14:49:57.631Z",
-    "updatedAt": "2026-08-10T14:49:57.631Z"
+    "createdAt": "2026-08-10T17:13:15.850Z",
+    "updatedAt": "2026-08-10T17:13:15.850Z"
   },
   {
-    "id": "c6357a28-bc4e-446f-be5a-cf6adb77210a",
+    "id": "299d9790-0661-417b-8e8e-8e0a0b300974",
     "name": "LAP-MGR-03",
     "assetTag": "UMB-LT03",
     "serialNumber": null,
@@ -126,7 +126,7 @@
     "location": "Umbrella Seattle - Floor 3",
     "building": null,
     "room": null,
-    "companyId": "cb350498-b78a-4311-b402-ff6beff2fe66",
+    "companyId": "566982ac-e71f-4dfc-98ae-40c861c9c298",
     "assignedToId": null,
     "costCenter": null,
     "depreciationMethod": null,
@@ -140,11 +140,11 @@
     "notes": null,
     "customFields": {},
     "lastAuditedAt": null,
-    "createdAt": "2026-08-10T14:49:57.631Z",
-    "updatedAt": "2026-08-10T14:49:57.631Z"
+    "createdAt": "2026-08-10T17:13:15.850Z",
+    "updatedAt": "2026-08-10T17:13:15.850Z"
   },
   {
-    "id": "f807e3be-d7b4-4164-880d-a61f185e792a",
+    "id": "746ac327-b1f3-49aa-8391-e826c953b4e7",
     "name": "AP-WING-A",
     "assetTag": "STARK-AP01",
     "serialNumber": null,
@@ -162,7 +162,7 @@
     "location": "Stark SF - Wing A",
     "building": null,
     "room": null,
-    "companyId": "ef82b7bb-4660-48cc-baec-a5142a95c421",
+    "companyId": "800f9b2d-e9df-484a-a4b5-13ad5cfcf724",
     "assignedToId": null,
     "costCenter": null,
     "depreciationMethod": null,
@@ -176,7 +176,7 @@
     "notes": null,
     "customFields": {},
     "lastAuditedAt": null,
-    "createdAt": "2026-08-10T14:49:57.631Z",
-    "updatedAt": "2026-08-10T14:49:57.631Z"
+    "createdAt": "2026-08-10T17:13:15.850Z",
+    "updatedAt": "2026-08-10T17:13:15.850Z"
   }
 ]
