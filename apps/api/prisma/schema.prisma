@@ -1491,3 +1491,24 @@ model KumoDomain {
   @@index([companyId])
   @@index([expiryDate])
 }
+
+// ── FI-031: Certificate/SSL Tracking ──────────────────────────────
+
+model KumoCertificate {
+  id               String   @id @default(uuid())
+  name             String
+  domain           String
+  issuer           String?
+  expiryDate       DateTime
+  validFrom        DateTime?
+  subjectAltNames  String[] @default([])
+  certificateType  String?  @default("DV")
+  autoRenew        Boolean  @default(false)
+  notes            String?
+  companyId        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([expiryDate])
+}
