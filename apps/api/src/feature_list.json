@@ -4,15 +4,18 @@
     "date": "2026-08-10",
     "title": "Header Descriptions & Section Landing Pages",
     "changes": [
-      "Dynamic section header — every page displays its section name with a brief contextual description on a single line",
-      "Collapsible resizable sidebar — icon-only mode with persistent width and state saved to localStorage",
-      "Section landing pages — clicking a parent section in collapsed sidebar opens a card grid of all subsections",
-      "Breadcrumb navigation bar — hierarchical path shown on every page with clickable parent segments",
-      "Auto-snapshot capture — database state automatically dumped to snapshot fixtures after any successful write operation",
-      "Snapshot capture-to-reseed pipeline — capture current DB, wipe, and re-seed from fixtures in dependency order",
-      "Recently Viewed tracking — browsing Kumo assets, passwords, configs, and documents records views automatically",
-      "Header toolbar — Search, Recent, AI, Help, Settings, and My Account placeholder buttons",
-      "CloudConnect rebrand — Integrations renamed to CloudConnect with updated routes, files, and navigation"
+      {"text": "Dynamic section header — every page displays its section name with a brief contextual description on a single line", "type": "New Feature"},
+      {"text": "36 section descriptions mapped across all routes with parent-path fallback for nested routes", "type": "New Feature"},
+      {"text": "Collapsible resizable sidebar — icon-only mode with persistent width and state saved to localStorage", "type": "New Feature"},
+      {"text": "Section landing pages — clicking a parent section in collapsed sidebar opens a card grid of all subsections", "type": "New Feature"},
+      {"text": "Breadcrumb navigation bar — hierarchical path shown on every page with clickable parent segments", "type": "New Feature"},
+      {"text": "Auto-snapshot capture — database state automatically dumped to snapshot fixtures after any successful write operation", "type": "New Feature"},
+      {"text": "Snapshot capture-to-reseed pipeline — capture current DB, wipe, and re-seed from fixtures in dependency order", "type": "New Feature"},
+      {"text": "Recently Viewed tracking — browsing Kumo assets, passwords, configs, and documents records views automatically", "type": "New Feature"},
+      {"text": "Header toolbar — Search, Recent, AI, Help, Settings, and My Account placeholder buttons", "type": "Update"},
+      {"text": "CloudConnect rebrand — Integrations renamed to CloudConnect with updated routes, files, and navigation", "type": "Update"},
+      {"text": "Extended contacts seed — 13 contacts with full PSA fields across 5 companies", "type": "Update"},
+      {"text": "Resequenced version numbering to date-based Year.Month.Day.Build format across all changelogs", "type": "Update"}
     ]
   },
   {
@@ -20,14 +23,17 @@
     "date": "2026-08-10",
     "title": "Recently Viewed on Kumo Dashboard",
     "changes": [
-      "Recently Viewed card replaces Implementation Status on the Kumo Dashboard",
-      "Tracks user access across all Kumo item types: Passwords, Configurations, Flexible Assets, Documents, Domains, Certificates, and Universal Links",
-      "New RecentlyViewedItem database model with per-user deduplication",
-      "GET /api/kumo/recently-viewed endpoint returns last 20 items for the current user",
-      "POST /api/kumo/recently-viewed upserts view records when items are accessed",
-      "Real-time 10-second polling keeps the list live without full page reload",
-      "Color-coded type indicators and relative timestamps (just now, 5m ago, 2h ago)",
-      "Click-through navigation — assets link to detail, other types link to list pages"
+      {"text": "Recently Viewed card replaces Implementation Status on the Kumo Dashboard", "type": "New Feature"},
+      {"text": "Tracks user access across all Kumo item types: Passwords, Configurations, Flexible Assets, Documents, Domains, Certificates, and Universal Links", "type": "New Feature"},
+      {"text": "New RecentlyViewedItem database model with per-user deduplication", "type": "New Feature"},
+      {"text": "GET /api/kumo/recently-viewed endpoint returns last 20 items for the current user", "type": "New Feature"},
+      {"text": "POST /api/kumo/recently-viewed upserts view records when items are accessed", "type": "New Feature"},
+      {"text": "Real-time 10-second polling keeps the list live without full page reload", "type": "Update"},
+      {"text": "Color-coded type indicators and relative timestamps (just now, 5m ago, 2h ago)", "type": "Update"},
+      {"text": "Click-through navigation — assets link to detail, other types link to list pages", "type": "Update"},
+      {"text": "Preserved C7NTAX dark navy/cyber theme across all new components", "type": "Update"},
+      {"text": "Renamed Integrations navigation → CloudConnect; moved What's New below CloudConnect in Administration menu", "type": "Update"},
+      {"text": "Route /integrations → /cloudconnect; API /api/integrations → /api/cloudconnect; frontend page Integrations.tsx → CloudConnect.tsx", "type": "Update"}
     ]
   },
   {
@@ -35,21 +41,21 @@
     "date": "2026-08-10",
     "title": "Kumo IT Documentation + FlowIngest Integration",
     "changes": [
-      "Kumo Module — IT documentation with flexible asset templates, password vault (AES-256), standard configs, SOPs with revisions, and universal polymorphic linking",
-      "Domain Tracking — register and monitor client domains with expiry alerts",
-      "Certificate/SSL Tracking — wildcard, DV, OV certificate lifecycle management",
-      "Password Vault TOTP — QR-code and manual base32 secret entry with live code generation",
-      "Password Strength Indicator — visual bar showing Very Weak through Very Strong",
-      "Finance Dashboard — aggregated billing metrics with total invoiced, paid, outstanding, overdue",
-      "Client Profile Enriched — Kumo entity counts on client detail pages",
-      "Quotes/Estimates — create quotes with line items, accept into invoices",
-      "Recurring Invoices — set monthly/quarterly/annual recurrence on invoices",
-      "Expense Tracking — log and categorize business expenses per client",
-      "Alerting System — expiry-based alert rules with dismissible alert logs",
-      "File Manager — polymorphic file storage for clients, tickets, and assets",
-      "CloudConnect — 16 connector types with Test Connection button and inline pass/fail results",
-      "Manage Roles — 101 granular permissions across 21 categories with interactive editor",
-      "Create from Existing — copy roles and users from templates with all settings preserved"
+      {"text": "Kumo Module — IT documentation with flexible asset templates, password vault (AES-256), standard configs, SOPs with revisions, and universal polymorphic linking", "type": "New Feature"},
+      {"text": "Domain Tracking — register and monitor client domains with expiry alerts", "type": "New Feature"},
+      {"text": "Certificate/SSL Tracking — wildcard, DV, OV certificate lifecycle management", "type": "New Feature"},
+      {"text": "Password Vault TOTP — QR-code and manual base32 secret entry with live code generation", "type": "New Feature"},
+      {"text": "Password Strength Indicator — visual bar showing Very Weak through Very Strong", "type": "New Feature"},
+      {"text": "Finance Dashboard — aggregated billing metrics with total invoiced, paid, outstanding, overdue", "type": "New Feature"},
+      {"text": "Client Profile Enriched — Kumo entity counts on client detail pages", "type": "Update"},
+      {"text": "Quotes/Estimates — create quotes with line items, accept into invoices", "type": "New Feature"},
+      {"text": "Recurring Invoices — set monthly/quarterly/annual recurrence on invoices", "type": "New Feature"},
+      {"text": "Expense Tracking — log and categorize business expenses per client", "type": "New Feature"},
+      {"text": "Alerting System — expiry-based alert rules with dismissible alert logs", "type": "New Feature"},
+      {"text": "File Manager — polymorphic file storage for clients, tickets, and assets", "type": "New Feature"},
+      {"text": "CloudConnect — 16 connector types with Test Connection button and inline pass/fail results", "type": "New Feature"},
+      {"text": "Roles & Permissions — 101 granular permissions across 21 categories with interactive editor", "type": "New Feature"},
+      {"text": "Create from Existing — copy roles and users from templates with all settings preserved", "type": "New Feature"}
     ]
   },
   {
@@ -57,14 +63,14 @@
     "date": "2026-08-09",
     "title": "RBAC System & Administration Overhaul",
     "changes": [
-      "Granular RBAC — 77 permissions across 20 categories with role management UI",
-      "Manage Users — master-detail layout with profile, permissions, and security tabs",
-      "Manage Roles — interactive role editor with expandable permission categories",
-      "Role Member Management — add/remove users from roles via searchable dialog",
-      "Permission Template Dropdown — apply role defaults and detect customizations",
-      "Sortable Headers — click-to-sort on all table columns across every page",
-      "User Count Badges — clickable role member counts with inline management",
-      "Deactivation Workflow — warning dialogs for user/role deletion"
+      {"text": "Granular RBAC — 77 permissions across 20 categories with role management UI", "type": "New Feature"},
+      {"text": "Manage Users — master-detail layout with profile, permissions, and security tabs", "type": "New Feature"},
+      {"text": "Roles & Permissions — interactive role editor with expandable permission categories", "type": "New Feature"},
+      {"text": "Role Member Management — add/remove users from roles via searchable dialog", "type": "New Feature"},
+      {"text": "Permission Template Dropdown — apply role defaults and detect customizations", "type": "New Feature"},
+      {"text": "Sortable Headers — click-to-sort on all table columns across every page", "type": "Update"},
+      {"text": "User Count Badges — clickable role member counts with inline management", "type": "Update"},
+      {"text": "Deactivation Workflow — warning dialogs for user/role deletion", "type": "Update"}
     ]
   },
   {
@@ -72,12 +78,12 @@
     "date": "2026-08-08",
     "title": "Client Management & PSA Features",
     "changes": [
-      "Client Detail — contact, agreement, ticket, and invoice tabs with inline editing",
-      "Contact Management — create/edit contacts with company assignment",
-      "Client List — search, type filter, and sortable table with status indicators",
-      "Service Boards — SLA defaults, auto-close, and board management",
-      "Billing Dashboard — invoiced, paid, outstanding, and overdue aggregation cards",
-      "Enhanced Company Model — PSA-standard fields including territory, region, service level"
+      {"text": "Client Detail — contact, agreement, ticket, and invoice tabs with inline editing", "type": "New Feature"},
+      {"text": "Contact Management — create/edit contacts with company assignment", "type": "New Feature"},
+      {"text": "Client List — search, type filter, and sortable table with status indicators", "type": "New Feature"},
+      {"text": "Service Boards — SLA defaults, auto-close, and board management", "type": "New Feature"},
+      {"text": "Billing Dashboard — invoiced, paid, outstanding, and overdue aggregation cards", "type": "New Feature"},
+      {"text": "Enhanced Company Model — PSA-standard fields including territory, region, service level", "type": "Update"}
     ]
   },
   {
@@ -85,14 +91,14 @@
     "date": "2026-08-07",
     "title": "Multi-Tenant Foundation & Core Infrastructure",
     "changes": [
-      "Multi-tenancy — company-scoped data isolation across all modules",
-      "JWT Authentication — login, MFA with authenticator app and email backup codes",
-      "User Management — create, edit, deactivate users with role assignment",
-      "Ticket Management — full CRUD with assignment, status workflow, and time entries",
-      "Asset Inventory — hardware tracking with type, status, and assignment",
-      "Knowledge Base — internal/external articles with categories, slugs, and view tracking",
-      "Dashboard — landing page with ticket counts, status breakdowns, and quick stats",
-      "Navigation — drag-and-drop sidebar with collapsible sections and persistent state"
+      {"text": "Multi-tenancy — company-scoped data isolation across all modules", "type": "New Feature"},
+      {"text": "JWT Authentication — login, MFA with authenticator app and email backup codes", "type": "New Feature"},
+      {"text": "User Management — create, edit, deactivate users with role assignment", "type": "New Feature"},
+      {"text": "Ticket Management — full CRUD with assignment, status workflow, and time entries", "type": "New Feature"},
+      {"text": "Asset Inventory — hardware tracking with type, status, and assignment", "type": "New Feature"},
+      {"text": "Knowledge Base — internal/external articles with categories, slugs, and view tracking", "type": "New Feature"},
+      {"text": "Dashboard — landing page with ticket counts, status breakdowns, and quick stats", "type": "New Feature"},
+      {"text": "Navigation — drag-and-drop sidebar with collapsible sections and persistent state", "type": "New Feature"}
     ]
   },
   {
@@ -100,12 +106,12 @@
     "date": "2026-08-05",
     "title": "Initial Release — C7NTAX PSA Platform",
     "changes": [
-      "Application scaffold — monorepo with Turborepo, shared packages, API + Web + Desktop",
-      "Database — PostgreSQL 16 with Prisma ORM and auto-generated client",
-      "Express API — health check, auth routes, error handling middleware",
-      "React SPA — Vite, Tailwind CSS, React Router, dark theme with cyber color scheme",
-      "Desktop App — Electron wrapper for native Windows installation",
-      "CI/CD — build pipeline with type checking and production bundling"
+      {"text": "Application scaffold — monorepo with Turborepo, shared packages, API + Web + Desktop", "type": "New Feature"},
+      {"text": "Database — PostgreSQL 16 with Prisma ORM and auto-generated client", "type": "New Feature"},
+      {"text": "Express API — health check, auth routes, error handling middleware", "type": "New Feature"},
+      {"text": "React SPA — Vite, Tailwind CSS, React Router, dark theme with cyber color scheme", "type": "New Feature"},
+      {"text": "Desktop App — Electron wrapper for native Windows installation", "type": "New Feature"},
+      {"text": "CI/CD — build pipeline with type checking and production bundling", "type": "New Feature"}
     ]
   }
 ]
