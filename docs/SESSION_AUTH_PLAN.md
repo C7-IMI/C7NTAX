@@ -639,6 +639,322 @@ export function SecuritySettingsTab() {
 
 ---
 
+## 5. Session Timeout Rules & Rollback Strategy
+
+### 5.1 Timeout Behavior
+
+| Account Type | Default Timeout | Override |
+|---|---|---|
+| **Admin** (`systemRole: "admin"`) | No timeout (infinite session) | Not configurable — enforced by middleware |
+| **All other roles** | 30 minutes inactivity | Configurable via tenant setting `session.timeoutMinutes` |
+
+**Middleware enforcement logic** (`middleware/inactivity.ts`):
+```typescript
+// Pseudocode for inactivity check in session middleware
+if (req.user.role === "admin") {
+  // Admin sessions never expire — skip inactivity check entirely.
+  // Only invalidated by explicit logout or server restart.
+  return next();
+}
+
+const config = await getSessionConfig();           // reads TenantSetting
+const timeoutMs = config.sessionTimeoutMs;          // default 30 min
+const idleMs = Date.now() - session.lastActivityAt.getTime();
+if (idleMs > timeoutMs) {
+  await invalidateSession(session.id);
+  res.clearCookie(SESSION_COOKIE);
+  res.status(440).json({ error: "Session expired due to inactivity", code: "SESSION_TIMEOUT" });
+  return;
+}
+// Extend sliding window
+await updateLastActivity(session.id);
+next();
+```
+
+### 5.2 Why Admin Has No Timeout (PSA Standard Rationale)
+- **Autotask PSA**: Global Admin accounts bypass session timeouts to avoid interruption during long-running administrative tasks (bulk imports, report generation, system configuration).
+- **ConnectWise Manage**: Admin-level users are exempt from idle timeout policies.
+- **HaloPSA**: System administrators have perpetual sessions; only explicit logout or password change terminates them.
+
+### 5.3 Per-User MFA Override Field
+Add to `User` model:
+```prisma
+model User {
+  // ... existing ...
+  mfaEnabled        Boolean  @default(false)  // already exists — keep
+  mfaEnforced       Boolean  @default(false)  // NEW: if true, MFA is mandatory regardless of system setting
+  mfaBypassUntil    DateTime?                  // NEW: temp bypass (e.g., trusted device for 30 days)
+  mfaPreferredMethod String? @default("totp")  // NEW: "totp" | "email" | "sms"
+  mfaSmsPhone       String?                    // NEW: phone number for SMS delivery
+}
+```
+
+### 5.4 Rollback Strategy
+All changes are implemented behind feature flags and can be individually reverted:
+
+| Component | Rollback Method |
+|---|---|
+| **Session cookies** | Middleware checks for `Authorization: Bearer` header as fallback; setting env `AUTH_MODE=jwt` switches back to JWT-only |
+| **Inactivity timeout** | Setting `session.timeoutMinutes=0` disables timeout globally; per-role check is a single `if` branch |
+| **Admin exemption** | Hardcoded `role === "admin"` check — if problematic, remove the `if` block and all users get the same timeout |
+| **MFA** | `User.mfaEnforced` default is `false`; system tenant setting `mfa.required` default is `false`; both must be true for enforcement |
+| **Full rollback** | Run `git revert <commit>` for the auth-migration branch, restart servers — zero data loss (all new tables are additive) |
+
+---
+
+## 6. Multi-Factor Authentication (MFA)
+
+### 6.1 MFA Methods — Modeled After PSA Leaders
+
+| Method | Autotask | ConnectWise | HaloPSA | C7NTAX Implementation |
+|---|---|---|---|---|
+| **TOTP Authenticator App** | ✓ (Google Authenticator, Microsoft Authenticator) | ✓ | ✓ | Use `otplib` for TOTP generation/validation; store `mfaSecret` (existing field) |
+| **Email Code** | ✓ (6-digit code to registered email) | ✓ | ✓ | Generate 6-digit code, store hashed with 5-min expiry in `mfaEmailCode` / `mfaEmailCodeExpires` (existing fields) |
+| **SMS** | ✓ (Twilio integration) | ✓ | ✓ | New field `mfaSmsPhone`; integrate SMS provider (Twilio or generic HTTP API) |
+
+### 6.2 System-Level MFA Configuration
+
+**Tenant Settings** (`category: "mfa"`):
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `mfa.required` | boolean | `false` | If true, ALL non-admin users MUST enroll MFA |
+| `mfa.adminRequired` | boolean | `false` | If true, admin accounts also require MFA |
+| `mfa.allowedMethods` | string[] | `["totp","email","sms"]` | Which methods are available system-wide |
+| `mfa.codeLength` | number | `6` | Digits in email/SMS codes |
+| `mfa.codeExpiryMinutes` | number | `5` | Email/SMS code validity window |
+| `mfa.rememberDeviceDays` | number | `30` | If 0, "remember this device" is disabled |
+
+### 6.3 Per-User MFA Settings
+
+**User Edit Screen** (`pages/Users.tsx` — User Detail panel):
+| Field | Type | Description |
+|---|---|---|
+| MFA Enabled | Toggle | Enables/disables MFA for this specific user |
+| MFA Enforced | Toggle | If on, user cannot disable MFA (overrides system setting) |
+| Preferred Method | Dropdown | `totp`, `email`, `sms` (filtered by `mfa.allowedMethods`) |
+| SMS Phone | Input | Required if preferred method is `sms` |
+| Reset MFA | Button | Clears TOTP secret, backup codes; forces re-enrollment |
+| Generate Backup Codes | Button | Issues 10 one-time-use recovery codes |
+
+### 6.4 Login Flow with MFA (Dynamic Prompt)
+
+```
+User enters credentials
+    ↓
+POST /api/auth/login { email, password }
+    ↓
+Credentials valid?
+    ├─ No  → 401 "Invalid credentials"
+    └─ Yes → Check MFA status
+              ├─ MFA NOT enabled for user
+              │     → Create session, return cookies + user data
+              │
+              └─ MFA IS enabled
+                    → Return { mfaRequired: true, mfaToken: "<short-lived-token>",
+                               methods: ["totp", "email"], preferred: "totp" }
+                    → Frontend shows MFA prompt (NOT the login form)
+```
+
+**MFA prompt on login screen** — the `LoginPage` component conditionally renders:
+```tsx
+// LoginPage.tsx — pseudocode
+function LoginPage() {
+  const [step, setStep] = useState<"credentials" | "mfa">("credentials");
+  const [mfaToken, setMfaToken] = useState("");
+  const [methods, setMethods] = useState<string[]>([]);
+
+  const handleLogin = async (email, password) => {
+    const res = await api.post("/auth/login", { email, password });
+    if (res.data.mfaRequired) {
+      setMfaToken(res.data.mfaToken);
+      setMethods(res.data.methods);
+      setStep("mfa");        // ← Switches to MFA code input without page reload
+    } else {
+      onLoginSuccess(res.data);
+    }
+  };
+
+  const handleMfaSubmit = async (code, method) => {
+    const res = await api.post("/auth/verify-mfa", { mfaToken, code, method });
+    onLoginSuccess(res.data);
+  };
+
+  return step === "credentials" ? (
+    <LoginForm onSubmit={handleLogin} />
+  ) : (
+    <MfaPrompt mfaToken={mfaToken} methods={methods} onSubmit={handleMfaSubmit} />
+  );
+}
+```
+
+### 6.5 MFA Enrollment Flow
+
+```
+User navigates to /settings/security or Admin edits user
+    ↓
+POST /api/auth/mfa/enroll { method: "totp" }
+    → Returns { secret: "JBSWY3DPEHPK3PXP", qrCodeUrl: "otpauth://..." }
+    → Frontend shows QR code + manual entry key
+    ↓
+User scans QR, enters TOTP code
+    ↓
+POST /api/auth/mfa/verify-enrollment { method: "totp", code: "123456" }
+    → Validates code, stores mfaSecret, sets mfaEnabled=true
+    → Returns backup codes to display once
+```
+
+### 6.6 Admin MFA Management UI
+
+Admin can override MFA for any user from the Manage Users page:
+- **Disable MFA** button (with confirmation modal: "This will remove MFA protection for this user. Continue?") — aligned with Autotask admin override
+- **Reset MFA** button — forces re-enrollment on next login (ConnectWise standard)
+- **View MFA Status** — badge shows: "Enabled (TOTP)", "Enabled (Email)", "Disabled", "Enforced"
+
+---
+
+## 7. Implementation Phases (Extended)
+
+### Phase 1: Foundation (Session Infrastructure)
+- Add `TenantSetting`, `UserSession`, `LoginAttempt`, `UserPermissionOverride` models
+- Create `sessionAuth.ts` middleware alongside existing JWT auth
+- Add `User.mfaEnforced`, `User.mfaPreferredMethod`, `User.mfaSmsPhone` columns
+- **Rollback**: `git revert` — new tables deleted, no data loss
+
+### Phase 2: Session Timeout & Admin Exemption
+- Implement inactivity check in session middleware
+- Admin bypass logic (`role === "admin"` → skip timeout)
+- Tenant setting `session.timeoutMinutes` configurable via admin UI
+- Activity monitor hook on frontend with warning modal
+- **Rollback**: Set env `SESSION_TIMEOUT_ENABLED=false`; middleware skips timeout check
+
+### Phase 3: MFA — TOTP (Authenticator App)
+- Build on existing `mfaSecret`, `mfaEnabled` fields
+- Create `/api/auth/mfa/enroll`, `/api/auth/mfa/verify-enrollment` endpoints
+- Update login flow to check MFA status and return `mfaRequired` + challenge token
+- Dynamic MFA prompt on login screen
+- **Rollback**: Set tenant setting `mfa.required=false`; all users bypass MFA
+
+### Phase 4: MFA — Email Codes
+- Use existing `mfaEmailCode`, `mfaEmailCodeExpires` fields
+- Send 6-digit code via configured email provider (`@C7NTAX/email` package)
+- Add email method to login MFA prompt
+- **Rollback**: Remove `"email"` from `mfa.allowedMethods` tenant setting
+
+### Phase 5: MFA — SMS
+- Add `User.mfaSmsPhone` column
+- Integrate SMS provider (Twilio SDK or generic HTTP webhook)
+- Add SMS method to login MFA prompt
+- **Rollback**: Remove `"sms"` from `mfa.allowedMethods` tenant setting
+
+### Phase 6: Admin MFA Management UI
+- Admin user detail panel: MFA status, disable/reset buttons
+- System settings → Security → MFA tab with all tenant-level configs
+- Audit log entries for MFA changes
+- **Rollback**: UI components are additive; removing them leaves no broken functionality
+
+### Phase 7: Hardening & Edge Cases
+- Backup/recovery codes for MFA (one-time use, 10 codes per user)
+- "Remember this device" — trusted device cookie bypasses MFA for N days
+- Rate limiting on MFA code attempts (3 failures = lockout for 5 minutes)
+- **Rollback**: All features controlled by tenant settings; set to `false`/`0` to disable
+
+---
+
+## 8. Rollback Commands (Quick Reference)
+
+```bash
+# Full rollback — restore pre-implementation state
+git revert <session-auth-commit-range>
+pnpm prisma migrate reset    # rolls back schema changes
+pnpm db:seed-full             # re-seeds from original fixtures
+
+# Partial rollback — disable MFA only
+psql -c "INSERT INTO \"TenantSetting\" (key, value, category) VALUES ('mfa.required', 'false', 'mfa') ON CONFLICT (key) DO UPDATE SET value='false'"
+
+# Partial rollback — disable timeout only
+psql -c "UPDATE \"TenantSetting\" SET value='0' WHERE key='session.timeoutMinutes'"
+
+# Partial rollback — switch to JWT auth
+export AUTH_MODE=jwt
+```
+
+---
+
+## 9. CloudConnect Integration Compatibility
+
+All 16 CloudConnect integrations must continue to function after the session auth migration. Each integration uses its own credential store (stored in the `Integration` table's `credentials` JSON field) and authenticates to third-party APIs independently — **not** via the C7NTAX user session. This section documents each integration's auth mechanism and confirms session compatibility.
+
+### 9.1 Integration Authentication Methods (All 16)
+
+| # | Integration | Auth Method | Credentials Stored | Session Impact |
+|---|---|---|---|---|
+| 1 | **Microsoft 365** | OAuth 2.0 client_credentials (tenantId, clientId, clientSecret → access token) | `tenantId`, `clientId`, `clientSecret` | None — uses its own OAuth token, not user session |
+| 2 | **AutoTask PSA** | HTTP Basic + API integration code headers | `username`, `password`, `integrationCode` | None — sends `UserName`, `Secret`, `ApiIntegrationCode` headers per AutoTask REST API spec |
+| 3 | **ConnectWise PSA** | HTTP Basic (companyId+publicKey:privateKey) | `companyId`, `publicKey`, `privateKey`, `clientId`, `baseUrl` | None — `Authorization: Basic base64(companyId+publicKey:privateKey)` per ConnectWise REST API |
+| 4 | **HaloPSA** | OAuth 2.0 client_credentials (clientId, clientSecret → access token) | `tenantUrl`, `clientId`, `clientSecret` | None — obtains its own bearer token via `/auth/token` endpoint |
+| 5 | **Kantata** | Bearer token (accessToken) | `accessToken` | None — `Authorization: Bearer {accessToken}` per Kantata REST API |
+| 6 | **Scoro** | API key + company account ID in JSON-RPC body | `apiKey`, `companyAccountId` | None — sends `apiKey` and `company_account_id` in request payload per Scoro RPC spec |
+| 7 | **Flexpoint Payments** | API key header | `apiKey`, `baseUrl` | None — `x-api-key: {apiKey}` header |
+| 8 | **QuickBooks Online** | OAuth 2.0 (clientId, clientSecret, realmId, accessToken with refresh) | `clientId`, `clientSecret`, `realmId`, `accessToken` | None — uses Intuit OAuth token, supports refresh via `refreshAccessToken()` |
+| 9 | **Pax8** | API key header | `apiKey`, `baseUrl` | None — `Authorization: Bearer {apiKey}` per Pax8 API |
+| 10 | **Avanan** | API key header | `apiKey`, `baseUrl` | None — `x-api-key: {apiKey}` header |
+| 11 | **Proofpoint** | HTTP Basic (principal:secret) | `principal`, `secret`, `baseUrl` | None — `Authorization: Basic base64(principal:secret)` per Proofpoint SIEM API |
+| 12 | **SentinelOne** | API token header | `apiToken`, `baseUrl` | None — `Authorization: ApiToken {apiToken}` per S1 API |
+| 13 | **ITGlue** | API key header | `apiKey`, `baseUrl` | None — `x-api-key: {apiKey}` per ITGlue API |
+| 14 | **Azure** | Bearer token (accessToken) | `accessToken`, `subscriptionId` | None — `Authorization: Bearer {accessToken}` per Azure ARM API |
+| 15 | **AWS** | Access key + secret key (AWS Signature V4) | `accessKeyId`, `secretAccessKey`, `region` | None — uses AWS SDK credential chain |
+| 16 | **Azure AD SSO** | SAML 2.0 / OpenID Connect federation | `tenantId`, `clientId` | None — handles its own OIDC/SAML flow; generates SAML metadata and login URLs server-side |
+
+### 9.2 Key Architecture Principle
+
+**Integration credentials are NEVER derived from or linked to user sessions.** Each integration stores its own credentials in the `Integration.credentials` JSON column. The `IntegrationHub` adapter classes read credentials directly from the database and use them to authenticate with third-party APIs. This is the same pattern used by Autotask PSA's "Extensions & Integrations" module and ConnectWise Manage's "Setup Tables" → "Integrator Login" pattern.
+
+### 9.3 Sync & Test Connection — Session Independence
+
+The CloudConnect routes (`/api/cloudconnect/*`) currently use the existing `authenticate` (JWT) middleware. After migration, they switch to `authenticateSession` (cookie). This change is transparent because:
+
+1. **Test Connection** (`POST /api/cloudconnect/:id/test`) — The middleware only validates the C7NTAX user has permission to trigger the test. The actual API call to the third-party service uses the integration's stored credentials, not the user's session.
+
+2. **Sync** (`POST /api/cloudconnect/:id/sync`) — Same pattern. The user's session authorizes the sync trigger; the adapter's credentials authorize the third-party API call.
+
+3. **CRUD operations** (create/update/delete integration) — Session middleware validates user permissions (`integration:manage`). The credentials are stored in the database independently.
+
+### 9.4 Integration-Specific Notes
+
+**OAuth 2.0 integrations (Microsoft 365, HaloPSA, QuickBooks Online):**
+- These adapters implement `refreshAccessToken()` which may update the stored `credentials.accessToken` field via `persistCredentials()`.
+- This write-back to the `Integration` table is triggered by the sync process, not by user session activity.
+- No session migration impact — the `persistCredentials()` helper calls `prisma.integration.update()` directly.
+
+**SAML/OIDC integrations (Azure AD SSO):**
+- The `AzureADSSOAdapter` generates SAML metadata URLs and OIDC redirect URIs server-side.
+- These are served as configuration endpoints consumed by Azure AD, not by the C7NTAX user session.
+- No session migration impact.
+
+**API key/basic auth integrations (remaining 12):**
+- All use static credential headers or auth parameters.
+- No token refresh, no session dependency.
+- Transparent migration.
+
+### 9.5 Required Code Changes (Minimal)
+
+| File | Change |
+|---|---|
+| `routes/cloudconnect.ts` | Replace `import { authenticate }` with `import { authenticateSession }` |
+| `routes/cloudconnect.ts` | Replace `cloudConnectRouter.use(authenticate)` with `cloudConnectRouter.use(authenticateSession)` |
+| No other files | All adapter code, credential storage, and sync/test logic remain unchanged |
+
+### 9.6 Verification Checklist
+
+- [ ] Test Connection works for all 16 integrations after session auth migration
+- [ ] Sync triggers and completes without 401/403 errors
+- [ ] OAuth token refresh (Microsoft 365, HaloPSA, QuickBooks) continues to update stored credentials
+- [ ] Azure AD SSO metadata endpoints respond correctly
+- [ ] Integration CRUD (create, update, delete) respects RBAC via session permissions
+- [ ] Long-running syncs do not time out the user's session (sync runs server-side)
+
+---
+
 ## 5. Implementation Order (Phased, Non-Breaking)
 
 | Phase | Task | Impact |
@@ -650,3 +966,23 @@ export function SecuritySettingsTab() {
 | **5** | Create admin security settings UI page & API endpoints | New feature; no existing feature affected |
 | **6** | Migrate frontend `useAuth.tsx` to session-based flow | Requires browser cookie support; JWT fallback preserved |
 | **7** | Gradually migrate API routes from JWT to session auth | One route at a time to prevent regressions |
+
+### Phase Execution Dependency Graph
+
+```
+Phase 1 (Schema)
+    ↓
+Phase 2 (Session Auth Middleware — dual JWT + cookie)
+    ↓
+    ├── Phase 3 (Timeout + Admin Exemption)
+    │       ↓
+    │   Phase 5 (MFA TOTP)
+    │       ↓
+    │   Phase 6 (MFA Email SMS)
+    │       ↓
+    │   Phase 7 (Admin UI)
+    │
+    └── Phase 4 (Frontend Migration — useActivityMonitor, SessionTimeoutWarning, ProtectedRoute)
+            ↓
+        Phase 8 (Route Migration — incrementally switch routes from JWT to session)
+```
