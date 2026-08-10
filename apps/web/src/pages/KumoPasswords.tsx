@@ -16,6 +16,8 @@ export function KumoPasswordsPage() {
   const [revealData, setRevealData] = useState<any>(null);
   const [totpSetup, setTotpSetup] = useState<any>(null);
   const [totpCode, setTotpCode] = useState<{code:string;remaining:number} | null>(null);
+  const [manualSecret, setManualSecret] = useState("");
+  const [manualTotpCode, setManualTotpCode] = useState<{code:string;remaining:number} | null>(null);
 
   const fetch = async () => {
     try { const r = await api.get("/kumo/passwords"); setPasswords(r.data.data || []); }
@@ -26,6 +28,12 @@ export function KumoPasswordsPage() {
     fetch();
     api.get("/clients?limit=100").then(r => setCompanies(r.data.data || [])).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!manualTotpCode?.enabled) return;
+    const timer = setInterval(refreshManualTotp, 30000);
+    return () => clearInterval(timer);
+  }, [manualTotpCode?.enabled, selected?.id]);
 
   const filtered = companyFilter ? passwords.filter(p => p.companyId === companyFilter) : passwords;
 
@@ -56,7 +64,21 @@ export function KumoPasswordsPage() {
 
   const setupTotp = async () => { try { const r = await api.post(`/kumo/passwords/${selected.id}/totp/setup`); setTotpSetup(r.data); } catch { toast.error("Failed"); } };
   const fetchTotp = async () => { if (!selected) return; try { const r = await api.get(`/kumo/passwords/${selected.id}/totp`); if (r.data.enabled) setTotpCode(r.data); else setTotpCode(null); } catch { setTotpCode(null); } };
-  const removeTotp = async () => { try { await api.delete(`/kumo/passwords/${selected.id}/totp`); toast.success("TOTP removed"); setTotpSetup(null); setTotpCode(null); fetch(); } catch { toast.error("Failed"); } };
+  const removeTotp = async () => { try { await api.delete(`/kumo/passwords/${selected.id}/totp`); toast.success("TOTP removed"); setTotpSetup(null); setTotpCode(null); setManualSecret(""); setManualTotpCode(null); fetch(); } catch { toast.error("Failed"); } };
+
+  const saveManualSecret = async () => {
+    if (!selected || !manualSecret.trim()) return;
+    try {
+      const r = await api.post(`/kumo/passwords/${selected.id}/totp/manual`, { secret: manualSecret.trim() });
+      setManualTotpCode(r.data);
+      toast.success("TOTP secret saved");
+    } catch { toast.error("Invalid secret or failed"); }
+  };
+
+  const refreshManualTotp = async () => {
+    if (!selected) return;
+    try { const r = await api.get(`/kumo/passwords/${selected.id}/totp`); if (r.data.enabled) setManualTotpCode(r.data); } catch {}
+  };
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -159,6 +181,50 @@ export function KumoPasswordsPage() {
                 </div>
               )}
 
+              {/* Manual TOTP Section */}
+              <div className="bg-surface-lighter rounded-lg p-3 space-y-2">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">TOTP Authenticator</p>
+                <div className="flex items-center gap-2">
+                  <input className="input-field text-sm flex-1 font-mono" placeholder="Enter TOTP secret (base32)"
+                    value={manualSecret} onChange={e => setManualSecret(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveManualSecret(); }} />
+                  <button onClick={saveManualSecret} className="btn-primary text-xs py-1.5 px-3 shrink-0">Save</button>
+                </div>
+                {manualTotpCode && manualTotpCode.enabled && (
+                  <div className="flex items-center justify-between mt-2">
+                    <div>
+                      <p className="text-xs text-gray-500">Generated code</p>
+                      <p className="text-lg font-mono font-bold text-cyber-400">{manualTotpCode.code}</p>
+                    </div>
+                    <span className="text-xs text-gray-600">{manualTotpCode.remaining}s</span>
+                  </div>
+                )}
+                <div className="flex gap-2 mt-1">
+                  <button onClick={() => { setTotpSetup(null); setupTotp(); }} className="text-xs text-cyber-400 hover:text-cyber-300">Setup via QR code</button>
+                  {manualTotpCode?.enabled && <button onClick={() => { setManualSecret(""); setManualTotpCode(null); removeTotp(); }} className="text-xs text-red-400 hover:text-red-300">Remove</button>}
+                </div>
+              </div>
+
+              {/* Strength + Date */}
+              {revealData && (() => {
+                const strength = passwordStrength(revealData.passwordPlaintext || "");
+                return (
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="flex-1">
+                      <p className="text-gray-500 mb-1">Password Strength</p>
+                      <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                        <div className={`h-full ${strength.color} rounded-full transition-all`} style={{ width: strength.width + "%" }} />
+                      </div>
+                      <p className="text-gray-400 mt-0.5">{strength.label}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 mb-1">Last Changed</p>
+                      <p className="text-white">{selected.updatedAt ? new Date(selected.updatedAt).toLocaleDateString() : "—"}</p>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className={`grid grid-cols-2 gap-3 ${revealData ? "opacity-40" : ""}`}>
                 {editing ? (<>
                   <Field label="Username" val={editForm.username} onChange={v => setEditForm({ ...editForm, username: v })} />
@@ -197,6 +263,20 @@ export function KumoPasswordsPage() {
       )}
     </div>
   );
+}
+
+function passwordStrength(pw: string): { label: string; color: string; width: number } {
+  if (!pw) return { label: "N/A", color: "bg-gray-600", width: 0 };
+  let score = 0;
+  if (pw.length >= 12) score++;
+  if (pw.length >= 16) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[a-z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const labels = ["Very Weak", "Weak", "Fair", "Good", "Strong", "Very Strong"];
+  const colors = ["bg-red-500", "bg-red-400", "bg-amber-400", "bg-amber-300", "bg-green-400", "bg-green-500"];
+  return { label: labels[score] || "Strong", color: colors[score] || "bg-green-500", width: Math.min(100, (score + 1) * 16.6) };
 }
 
 function ReadOnlyField({ label, value }: { label: string; value: any }) {

@@ -378,6 +378,18 @@ kumoRouter.delete("/passwords/:id/totp", requirePermission(Permission.KumoPasswo
   } catch (e) { next(e); }
 });
 
+kumoRouter.post("/passwords/:id/totp/manual", requirePermission(Permission.KumoPasswordsEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const { secret } = req.body;
+    if (!secret || !/^[A-Z2-7]+=*$/i.test(secret)) throw new AppError("Invalid base32 secret", 400);
+    const { ciphertext } = encrypt(secret.toUpperCase());
+    await prisma.kumoPassword.update({ where: { id: req.params.id }, data: { totpSecret: ciphertext, totpEnabled: true } });
+    const token = speakeasy.totp({ secret: secret.toUpperCase(), encoding: "base32" });
+    const remaining = 30 - Math.floor(Date.now() / 1000) % 30;
+    res.json({ enabled: true, code: token, remaining });
+  } catch (e) { next(e); }
+});
+
 // ═══════════════════════════════════════════════════════════════════
 //  LINKS
 // ═══════════════════════════════════════════════════════════════════
