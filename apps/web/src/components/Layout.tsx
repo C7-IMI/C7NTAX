@@ -8,6 +8,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs } from "./Breadcrumbs";
+import { useTheme } from "../hooks/useTheme";
+import { Sun, Moon } from "lucide-react";
 
 export type NavNode = {
   id: string;
@@ -183,6 +185,7 @@ function getSectionDescription(pathname: string): string {
 
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -495,6 +498,9 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           {/* Header toolbar — placeholders only */}
           <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
+            <button onClick={toggleTheme} className="px-2 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
             <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Search">
               <Search size={14} />
               <span>Search</span>
