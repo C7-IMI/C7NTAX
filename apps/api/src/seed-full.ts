@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Permission } from "@C7NTAX/shared";
+import { encrypt } from "./services/kumoCrypto";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -408,14 +409,20 @@ await prisma.kumoAssetFieldValue.createMany({ data: [
 ] });
 console.log("  ✓ Created Kumo asset field values");
 
-// ── Kumo: Passwords ─────────────────────────────────────────────────
+// ── Kumo: Passwords (properly encrypted with AES-256-GCM) ──────────
 const cryptoId = "550e8400-e29b-41d4-a716-446655440000";
+const enc = (pw: string) => encrypt(pw);
+const pwd1 = enc("AcmeDC@dmin2026!");
+const pwd2 = enc("GlobexVPN#2026");
+const pwd3 = enc("InitechWiFi!23");
+const pwd4 = enc("Umbrella365$Admin");
+const pwd5 = enc("StarkAWS!Root2026");
 await prisma.kumoPassword.createMany({ data: [
-  { label: "Acme Domain Admin", username: "admin@acmecorp.local", url: "https://acmecorp.com/admin", encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", authTag: "f1e2d3c4b5a69788796a5b4c3d2e1f0a", category: "admin", strength: "strong", companyId: acme.id, createdById: adminUser.id },
-  { label: "Globex VPN Credential", username: "vpn@globexind.com", url: "https://vpn.globexind.com", encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", authTag: "0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d", category: "vpn", strength: "medium", companyId: globex.id, createdById: tech1.id },
-  { label: "Initech Wi-Fi PSK", username: null, url: null, encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8", authTag: "5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0", category: "wifi", strength: "weak", companyId: initech.id, createdById: tech2.id },
-  { label: "Office 365 Global Admin", username: "admin@umbrellacorp.net", url: "https://admin.microsoft.com", encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9", authTag: "f0e1d2c3b4a5968778695a4b3c2d1e0f", category: "m365", strength: "very_strong", companyId: umbrell.id, createdById: tech2.id },
-  { label: "Stark AWS Root", username: "root@starkent.com", url: "https://console.aws.amazon.com", encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0", authTag: "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d", category: "cloud", strength: "very_strong", companyId: stark.id, createdById: manager.id },
+  { label: "Acme Domain Admin", username: "admin@acmecorp.local", url: "https://acmecorp.com/admin", encryptedPassword: pwd1.ciphertext, encryptionKeyId: cryptoId, iv: pwd1.iv, authTag: pwd1.authTag, category: "admin", strength: "strong", companyId: acme.id, createdById: adminUser.id },
+  { label: "Globex VPN Credential", username: "vpn@globexind.com", url: "https://vpn.globexind.com", encryptedPassword: pwd2.ciphertext, encryptionKeyId: cryptoId, iv: pwd2.iv, authTag: pwd2.authTag, category: "vpn", strength: "medium", companyId: globex.id, createdById: tech1.id },
+  { label: "Initech Wi-Fi PSK", username: null, url: null, encryptedPassword: pwd3.ciphertext, encryptionKeyId: cryptoId, iv: pwd3.iv, authTag: pwd3.authTag, category: "wifi", strength: "weak", companyId: initech.id, createdById: tech2.id },
+  { label: "Office 365 Global Admin", username: "admin@umbrellacorp.net", url: "https://admin.microsoft.com", encryptedPassword: pwd4.ciphertext, encryptionKeyId: cryptoId, iv: pwd4.iv, authTag: pwd4.authTag, category: "m365", strength: "very_strong", companyId: umbrell.id, createdById: tech2.id },
+  { label: "Stark AWS Root", username: "root@starkent.com", url: "https://console.aws.amazon.com", encryptedPassword: pwd5.ciphertext, encryptionKeyId: cryptoId, iv: pwd5.iv, authTag: pwd5.authTag, category: "cloud", strength: "very_strong", companyId: stark.id, createdById: manager.id },
 ] });
 console.log("  ✓ Created 5 Kumo passwords");
 

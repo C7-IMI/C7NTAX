@@ -16,5 +16,32 @@
     "entityName": "Acme Domain Admin",
     "entityIcon": "key",
     "viewedAt": "2026-08-11T05:07:08.152Z"
+  },
+  {
+    "id": "ef3aadd0-7482-4f46-b2e9-e989162570f0",
+    "userId": "31074017-de9f-487e-bd63-4848016b6b00",
+    "entityType": "password",
+    "entityId": "c08d0323-c74f-4277-9020-ff70b9d4207f",
+    "entityName": "Acme Domain Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-08-11T05:20:34.366Z"
+  },
+  {
+    "id": "295e7320-5b1a-439b-bb15-36d124086ca0",
+    "userId": "31074017-de9f-487e-bd63-4848016b6b00",
+    "entityType": "password",
+    "entityId": "cbb9d77d-e6e7-46e4-8ef8-39fcd793f997",
+    "entityName": "Initech Wi-Fi PSK",
+    "entityIcon": "key",
+    "viewedAt": "2026-08-11T07:52:59.548Z"
+  },
+  {
+    "id": "d35d4cf8-f5bd-4291-9bf6-35b38995625c",
+    "userId": "31074017-de9f-487e-bd63-4848016b6b00",
+    "entityType": "password",
+    "entityId": "bcb01dc1-da80-4bb5-99f5-7dfa586f8ec5",
+    "entityName": "Office 365 Global Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-08-11T07:53:13.755Z"
   }
 ]
