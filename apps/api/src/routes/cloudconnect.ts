@@ -157,11 +157,55 @@ cloudConnectRouter.post("/:id/test", requirePermission(Permission.IntegrationVie
     if (!adapter) throw new AppError(`Unknown integration kind: ${config.kind}`, 400);
     const ok = await adapter.testConnection(config);
     await persistCredentials(req.params.id!, config.credentials as Record<string, string>);
-    await prisma.integration.update({
-      where: { id: req.params.id },
-      data: { status: ok ? "connected" : "error", errorMessage: ok ? null : "Connection test failed" },
-    });
-    res.json({ connected: ok });
+
+    if (ok) {
+      await prisma.integration.update({
+        where: { id: req.params.id },
+        data: { status: "connected", errorMessage: null },
+      });
+      res.json({ connected: true });
+    } else {
+      // Build structured field errors with fix suggestions
+      const requiredCreds = getRequiredCredentials(config.kind);
+      const missingFields: string[] = [];
+      const fieldErrors: Array<{ field: string; message: string; fix: string; example: string }> = [];
+
+      for (const cred of requiredCreds) {
+        const val = config.credentials?.[cred];
+        if (!val || val.length === 0) {
+          missingFields.push(cred);
+          fieldErrors.push({
+            field: cred,
+            message: `${formatCredLabel(cred)} is missing`,
+            fix: getCredFix(cred, config.kind),
+            example: getCredExample(cred, config.kind),
+          });
+        }
+      }
+
+      // Also flag any credential that looks invalid
+      for (const [key, val] of Object.entries(config.credentials || {})) {
+        if (val && typeof val === "string" && !missingFields.includes(key)) {
+          const issue = checkCredFormat(key, val);
+          if (issue) {
+            fieldErrors.push({
+              field: key,
+              message: issue,
+              fix: getCredFix(key, config.kind),
+              example: getCredExample(key, config.kind),
+            });
+          }
+        }
+      }
+
+      await prisma.integration.update({
+        where: { id: req.params.id },
+        data: { status: "error", errorMessage: missingFields.length > 0
+          ? `Missing: ${missingFields.map(formatCredLabel).join(", ")}`
+          : "Connection test failed — check credentials" },
+      });
+      res.json({ connected: false, fieldErrors: fieldErrors.length > 0 ? fieldErrors : undefined });
+    }
   } catch (e) { next(e); }
 });
 

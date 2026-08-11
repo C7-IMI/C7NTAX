@@ -1,1 +1,122 @@
-[]
+[
+  {
+    "id": "fc5f6507-866a-4d81-b221-24a0809a23d6",
+    "templateId": "a9ee4c80-eade-4348-9ee9-b0cb1f380ba3",
+    "name": "SRV-DC-01",
+    "status": "active",
+    "companyId": "259cf0f1-7350-468c-affe-f757577e0e08",
+    "tags": [],
+    "createdById": "75087368-78f4-4956-b66b-47d9ac454b73",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:23:12.907Z",
+    "updatedAt": "2026-08-11T02:23:12.907Z"
+  },
+  {
+    "id": "ae2b65b8-b64b-4792-9d4d-787ef94857e1",
+    "templateId": "a9ee4c80-eade-4348-9ee9-b0cb1f380ba3",
+    "name": "SRV-APP-02",
+    "status": "active",
+    "companyId": "1a823623-d201-499e-8345-e4d6644c7488",
+    "tags": [],
+    "createdById": "a03c5ef6-0294-45a9-b672-8b396d7b05dc",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:23:12.910Z",
+    "updatedAt": "2026-08-11T02:23:12.910Z"
+  },
+  {
+    "id": "06fec72d-5757-4806-969e-a44456c3f232",
+    "templateId": "cacd0a84-b2fb-40f3-942f-6fb734487992",
+    "name": "LAP-MGR-03",
+    "status": "active",
+    "companyId": "c0076ad8-8260-46dc-8f91-ffddc9f1287d",
+    "tags": [],
+    "createdById": "ec294143-ab61-49a3-a776-06e62fd06a34",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:23:12.910Z",
+    "updatedAt": "2026-08-11T02:23:12.910Z"
+  },
+  {
+    "id": "df1b4f51-2747-4cca-92d6-714b68f8eef9",
+    "templateId": "db3be4ac-7a81-4ee6-927c-b49b6a28c7e8",
+    "name": "FW-PRIMARY",
+    "status": "active",
+    "companyId": "1a823623-d201-499e-8345-e4d6644c7488",
+    "tags": [],
+    "createdById": "75087368-78f4-4956-b66b-47d9ac454b73",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:23:12.911Z",
+    "updatedAt": "2026-08-11T02:23:12.911Z"
+  },
+  {
+    "id": "aeda5129-ba71-41b8-bda8-1605937c848e",
+    "templateId": "cacd0a84-b2fb-40f3-942f-6fb734487992",
+    "name": "WS-ENG-07",
+    "status": "maintenance",
+    "companyId": "c91ceef8-1efe-4179-a893-d225385146a9",
+    "tags": [],
+    "createdById": "456c2482-aa0c-46af-9036-54e426a8d2ae",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:23:12.912Z",
+    "updatedAt": "2026-08-11T02:23:12.912Z"
+  },
+  {
+    "id": "1d69310e-a5f1-4001-af59-17bd1bddbbd0",
+    "templateId": "2bd2b27e-a81d-4d43-adbe-c6f622f93c6d",
+    "name": "SRV-DC-01",
+    "status": "active",
+    "companyId": "f986a7d8-2acb-4e0e-9c30-75c35cf80e65",
+    "tags": [],
+    "createdById": "c9b8412e-bb8f-4bc9-9f46-857002f61da6",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:29:30.997Z",
+    "updatedAt": "2026-08-11T02:29:30.997Z"
+  },
+  {
+    "id": "0eef2a42-b4e2-41fc-b575-fd37afd1fd36",
+    "templateId": "2bd2b27e-a81d-4d43-adbe-c6f622f93c6d",
+    "name": "SRV-APP-02",
+    "status": "active",
+    "companyId": "f819d722-b0d5-4a8f-8a65-7f7f0ff359d8",
+    "tags": [],
+    "createdById": "0fa876dd-e1e5-45dc-9876-08bfccafdca9",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:29:30.999Z",
+    "updatedAt": "2026-08-11T02:29:30.999Z"
+  },
+  {
+    "id": "319ee8ea-cfee-47e7-83de-1d8bce3fb339",
+    "templateId": "28e1df6f-008d-49af-9820-890b68c179df",
+    "name": "LAP-MGR-03",
+    "status": "active",
+    "companyId": "e75bc35e-d9bb-4e39-b144-d2e2cebe6173",
+    "tags": [],
+    "createdById": "b378f6ce-87ab-44c6-a9ed-8bbcd5f22038",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:29:31.001Z",
+    "updatedAt": "2026-08-11T02:29:31.001Z"
+  },
+  {
+    "id": "489051f3-8eff-4941-9eb1-e928bfe71f42",
+    "templateId": "2a8545eb-e337-4cf9-bea4-a976224e5508",
+    "name": "FW-PRIMARY",
+    "status": "active",
+    "companyId": "f819d722-b0d5-4a8f-8a65-7f7f0ff359d8",
+    "tags": [],
+    "createdById": "c9b8412e-bb8f-4bc9-9f46-857002f61da6",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:29:31.001Z",
+    "updatedAt": "2026-08-11T02:29:31.001Z"
+  },
+  {
+    "id": "ce4dd47f-93f7-405b-b649-c3e854ad30cb",
+    "templateId": "28e1df6f-008d-49af-9820-890b68c179df",
+    "name": "WS-ENG-07",
+    "status": "maintenance",
+    "companyId": "86dc1eb6-28ad-4bd1-90cc-c205e02bbc3d",
+    "tags": [],
+    "createdById": "d3a556ad-a7fc-4021-8212-a14d8a3c6181",
+    "updatedById": null,
+    "createdAt": "2026-08-11T02:29:31.002Z",
+    "updatedAt": "2026-08-11T02:29:31.002Z"
+  }
+]

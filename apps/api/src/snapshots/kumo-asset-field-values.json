@@ -1,0 +1,211 @@
+[
+  {
+    "id": "a42e2a7b-e7d8-41d6-bf0d-4f059159f183",
+    "assetId": "1d69310e-a5f1-4001-af59-17bd1bddbbd0",
+    "fieldId": "4d41f2ef-ed89-4361-8f69-83fb32443214",
+    "valueText": "SRV-DC-01.acmecorp.local",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "2d84a9f6-c94c-4ec7-a92b-5c48a919067c",
+    "assetId": "1d69310e-a5f1-4001-af59-17bd1bddbbd0",
+    "fieldId": "994de16c-82fc-418e-8756-0ba616d9661f",
+    "valueText": "Windows Server 2022",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "584a2894-366c-483b-9ac4-2f5c2793ea56",
+    "assetId": "1d69310e-a5f1-4001-af59-17bd1bddbbd0",
+    "fieldId": "d3a0076e-d4c7-43ee-92c6-fdd2974eeb63",
+    "valueText": null,
+    "valueNum": 8,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "39b7e683-1855-422e-9554-9db23f8495f7",
+    "assetId": "1d69310e-a5f1-4001-af59-17bd1bddbbd0",
+    "fieldId": "26e6be7f-4cbc-478e-8655-643373405975",
+    "valueText": null,
+    "valueNum": 32,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "472626db-f5db-4baf-a1a6-1bbae5325782",
+    "assetId": "1d69310e-a5f1-4001-af59-17bd1bddbbd0",
+    "fieldId": "26de949c-4d76-4eb9-a8cb-0701e07d9c9f",
+    "valueText": "10.1.10.10",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "0bf40fa4-c63e-4f0a-af57-d9ca991c5ae7",
+    "assetId": "0eef2a42-b4e2-41fc-b575-fd37afd1fd36",
+    "fieldId": "4d41f2ef-ed89-4361-8f69-83fb32443214",
+    "valueText": "SRV-APP-02.globexind.local",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "b16b98c9-b7b5-4eac-afd4-6da1ffaced47",
+    "assetId": "0eef2a42-b4e2-41fc-b575-fd37afd1fd36",
+    "fieldId": "994de16c-82fc-418e-8756-0ba616d9661f",
+    "valueText": "Ubuntu 24.04 LTS",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "205dee7a-5801-4ddd-86e1-6327342ff779",
+    "assetId": "0eef2a42-b4e2-41fc-b575-fd37afd1fd36",
+    "fieldId": "d3a0076e-d4c7-43ee-92c6-fdd2974eeb63",
+    "valueText": null,
+    "valueNum": 16,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "e4da2236-6035-4663-a1da-00b9c0d9d4b6",
+    "assetId": "0eef2a42-b4e2-41fc-b575-fd37afd1fd36",
+    "fieldId": "26e6be7f-4cbc-478e-8655-643373405975",
+    "valueText": null,
+    "valueNum": 64,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "de93392d-0749-4c94-9c08-b3dd534a3710",
+    "assetId": "0eef2a42-b4e2-41fc-b575-fd37afd1fd36",
+    "fieldId": "26de949c-4d76-4eb9-a8cb-0701e07d9c9f",
+    "valueText": "10.2.20.20",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "e071cce5-cbf5-4c69-86b5-9caa4eed4deb",
+    "assetId": "319ee8ea-cfee-47e7-83de-1d8bce3fb339",
+    "fieldId": "cd032c8d-8923-42cd-9ff7-507ca8d0433d",
+    "valueText": "LAP-MGR-03",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "a4ac2b50-d4a7-492b-95aa-c8d4e3799248",
+    "assetId": "319ee8ea-cfee-47e7-83de-1d8bce3fb339",
+    "fieldId": "ecc0e43b-d0d5-473b-b48a-52e5850431ae",
+    "valueText": "Windows 11 Pro",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "55c20c8a-8249-43b1-a941-5fea5e541d7e",
+    "assetId": "319ee8ea-cfee-47e7-83de-1d8bce3fb339",
+    "fieldId": "7e97bfd6-8f7e-4766-94a5-f868e1ce8fda",
+    "valueText": "SN-UMB-LT03-2025",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "be0598cb-f19d-439a-a05e-059995f032fa",
+    "assetId": "489051f3-8eff-4941-9eb1-e928bfe71f42",
+    "fieldId": "82747869-96f0-4a5c-9ed1-11e2b6588d4f",
+    "valueText": "FW-PRIMARY",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "bbb323e6-b431-4bee-9595-c133d50036c9",
+    "assetId": "489051f3-8eff-4941-9eb1-e928bfe71f42",
+    "fieldId": "09f84782-80c6-46fc-87ea-26f04ac545b2",
+    "valueText": "Firewall",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "8bebbd10-97cf-455d-9705-e2a5ba3d87ab",
+    "assetId": "489051f3-8eff-4941-9eb1-e928bfe71f42",
+    "fieldId": "6fbb8e2b-b3fa-4640-9cde-b9747471b0d7",
+    "valueText": "192.168.1.1",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "219e2fd2-9fb7-4200-a877-b63eef385467",
+    "assetId": "ce4dd47f-93f7-405b-b649-c3e854ad30cb",
+    "fieldId": "cd032c8d-8923-42cd-9ff7-507ca8d0433d",
+    "valueText": "WS-ENG-07",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "e62624c7-cc38-4447-b4e5-757f13b0c9c1",
+    "assetId": "ce4dd47f-93f7-405b-b649-c3e854ad30cb",
+    "fieldId": "ecc0e43b-d0d5-473b-b48a-52e5850431ae",
+    "valueText": "Windows 11 Pro",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  },
+  {
+    "id": "1c7e6f01-1592-4232-909d-5325ac490b52",
+    "assetId": "ce4dd47f-93f7-405b-b649-c3e854ad30cb",
+    "fieldId": "7e97bfd6-8f7e-4766-94a5-f868e1ce8fda",
+    "valueText": "SN-STK-WS07-2025",
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": null,
+    "encryptedValue": null
+  }
+]

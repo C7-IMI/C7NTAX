@@ -1,1 +1,178 @@
-[]
+[
+  {
+    "id": "3bf5f118-dca3-46e8-9ab7-9fa0e2ced8c7",
+    "folderId": "00d3e90a-bf4b-44b1-80a0-29eca6da6d33",
+    "title": "Acme Network Topology Overview",
+    "slug": "acme-network-topology",
+    "currentContent": "# Network Topology\n\nAcme HQ uses a hub-and-spoke topology.",
+    "currentVersion": 1,
+    "status": "published",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": "259cf0f1-7350-468c-affe-f757577e0e08",
+    "tags": [
+      "network",
+      "diagram"
+    ],
+    "authorId": "a03c5ef6-0294-45a9-b672-8b396d7b05dc",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-11T02:23:12.930Z",
+    "updatedAt": "2026-08-11T02:23:12.930Z"
+  },
+  {
+    "id": "925fad88-2152-4c4b-9c03-aa3588adbb32",
+    "folderId": "fb311e40-ccd5-4c17-ba07-c5cd78a82464",
+    "title": "Password Policy",
+    "slug": "password-policy",
+    "currentContent": "# Password Policy\n\nMinimum 12 characters, must include uppercase, lowercase, numbers, and symbols.",
+    "currentVersion": 1,
+    "status": "published",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": "259cf0f1-7350-468c-affe-f757577e0e08",
+    "tags": [
+      "security",
+      "policy"
+    ],
+    "authorId": "75087368-78f4-4956-b66b-47d9ac454b73",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-11T02:23:12.930Z",
+    "updatedAt": "2026-08-11T02:23:12.930Z"
+  },
+  {
+    "id": "ff0635ba-06e9-41fc-a0e5-aa8bc9a0ea43",
+    "folderId": "fb311e40-ccd5-4c17-ba07-c5cd78a82464",
+    "title": "Incident Response Plan",
+    "slug": "ir-plan",
+    "currentContent": "# Incident Response Plan\n\n1. Identify\n2. Contain\n3. Eradicate\n4. Recover\n5. Lessons Learned",
+    "currentVersion": 1,
+    "status": "published",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": "259cf0f1-7350-468c-affe-f757577e0e08",
+    "tags": [
+      "security",
+      "ir"
+    ],
+    "authorId": "ec294143-ab61-49a3-a776-06e62fd06a34",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-11T02:23:12.930Z",
+    "updatedAt": "2026-08-11T02:23:12.930Z"
+  },
+  {
+    "id": "ee9ff1c7-f72c-478a-8778-63cfaeec2061",
+    "folderId": "c8e0f469-cb27-4dfb-aa17-d0d4e1ee55eb",
+    "title": "Server Reboot Procedure",
+    "slug": "server-reboot",
+    "currentContent": "# Server Reboot Procedure\n\n1. Notify stakeholders\n2. Graceful shutdown\n3. Verify services post-boot",
+    "currentVersion": 1,
+    "status": "draft",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": "1a823623-d201-499e-8345-e4d6644c7488",
+    "tags": [
+      "runbook",
+      "servers"
+    ],
+    "authorId": "a03c5ef6-0294-45a9-b672-8b396d7b05dc",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-11T02:23:12.930Z",
+    "updatedAt": "2026-08-11T02:23:12.930Z"
+  },
+  {
+    "id": "d7c7dd2e-6014-4115-b8f9-bb761640bba5",
+    "folderId": "31ee970d-45f3-42c1-af5f-8098092e578b",
+    "title": "Acme Network Topology Overview",
+    "slug": "acme-network-topology",
+    "currentContent": "# Network Topology\n\nAcme HQ uses a hub-and-spoke topology.",
+    "currentVersion": 1,
+    "status": "published",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": "f986a7d8-2acb-4e0e-9c30-75c35cf80e65",
+    "tags": [
+      "network",
+      "diagram"
+    ],
+    "authorId": "0fa876dd-e1e5-45dc-9876-08bfccafdca9",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-11T02:29:31.029Z",
+    "updatedAt": "2026-08-11T02:29:31.029Z"
+  },
+  {
+    "id": "ce97efbe-9154-43c4-bc3e-46e2d13be0b4",
+    "folderId": "9ca59146-8f7b-46f8-96f6-e2135d12bf3d",
+    "title": "Password Policy",
+    "slug": "password-policy",
+    "currentContent": "# Password Policy\n\nMinimum 12 characters, must include uppercase, lowercase, numbers, and symbols.",
+    "currentVersion": 1,
+    "status": "published",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": "f986a7d8-2acb-4e0e-9c30-75c35cf80e65",
+    "tags": [
+      "security",
+      "policy"
+    ],
+    "authorId": "c9b8412e-bb8f-4bc9-9f46-857002f61da6",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-11T02:29:31.029Z",
+    "updatedAt": "2026-08-11T02:29:31.029Z"
+  },
+  {
+    "id": "8a1a1aec-db6f-483b-a7e3-ef025a61606c",
+    "folderId": "9ca59146-8f7b-46f8-96f6-e2135d12bf3d",
+    "title": "Incident Response Plan",
+    "slug": "ir-plan",
+    "currentContent": "# Incident Response Plan\n\n1. Identify\n2. Contain\n3. Eradicate\n4. Recover\n5. Lessons Learned",
+    "currentVersion": 1,
+    "status": "published",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": "f986a7d8-2acb-4e0e-9c30-75c35cf80e65",
+    "tags": [
+      "security",
+      "ir"
+    ],
+    "authorId": "b378f6ce-87ab-44c6-a9ed-8bbcd5f22038",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-11T02:29:31.029Z",
+    "updatedAt": "2026-08-11T02:29:31.029Z"
+  },
+  {
+    "id": "7e1be955-4d89-4f5a-83a2-6593901955ed",
+    "folderId": "c46f2f4c-5ffe-4be2-91d8-3e22bd69f2d7",
+    "title": "Server Reboot Procedure",
+    "slug": "server-reboot",
+    "currentContent": "# Server Reboot Procedure\n\n1. Notify stakeholders\n2. Graceful shutdown\n3. Verify services post-boot",
+    "currentVersion": 1,
+    "status": "draft",
+    "visibility": "internal",
+    "sortOrder": 0,
+    "companyId": "f819d722-b0d5-4a8f-8a65-7f7f0ff359d8",
+    "tags": [
+      "runbook",
+      "servers"
+    ],
+    "authorId": "0fa876dd-e1e5-45dc-9876-08bfccafdca9",
+    "lastEditorId": null,
+    "viewCount": 0,
+    "isTemplate": false,
+    "createdAt": "2026-08-11T02:29:31.029Z",
+    "updatedAt": "2026-08-11T02:29:31.029Z"
+  }
+]

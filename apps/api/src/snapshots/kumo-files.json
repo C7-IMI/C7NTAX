@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "id": "0d3e5265-ad8f-4f8c-ab09-f8ede6980496",
+    "filename": "acme-network-diagram.pdf",
+    "mimeType": "application/pdf",
+    "size": 245000,
+    "storagePath": "/files/acme/network-diagram.pdf",
+    "entityType": "client",
+    "entityId": "259cf0f1-7350-468c-affe-f757577e0e08",
+    "companyId": null,
+    "uploadedById": "a03c5ef6-0294-45a9-b672-8b396d7b05dc",
+    "createdAt": "2026-08-11T02:23:12.948Z"
+  },
+  {
+    "id": "42289491-1d66-46f0-98b2-47704a996444",
+    "filename": "globex-onboarding-checklist.xlsx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "size": 18500,
+    "storagePath": "/files/globex/onboarding.xlsx",
+    "entityType": "client",
+    "entityId": "1a823623-d201-499e-8345-e4d6644c7488",
+    "companyId": null,
+    "uploadedById": "456c2482-aa0c-46af-9036-54e426a8d2ae",
+    "createdAt": "2026-08-11T02:23:12.948Z"
+  },
+  {
+    "id": "ed092418-fbdc-4420-af5a-51eba93efbf9",
+    "filename": "acme-network-diagram.pdf",
+    "mimeType": "application/pdf",
+    "size": 245000,
+    "storagePath": "/files/acme/network-diagram.pdf",
+    "entityType": "client",
+    "entityId": "f986a7d8-2acb-4e0e-9c30-75c35cf80e65",
+    "companyId": null,
+    "uploadedById": "0fa876dd-e1e5-45dc-9876-08bfccafdca9",
+    "createdAt": "2026-08-11T02:29:31.052Z"
+  },
+  {
+    "id": "656e7012-b215-4897-af3e-c11273caeba2",
+    "filename": "globex-onboarding-checklist.xlsx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "size": 18500,
+    "storagePath": "/files/globex/onboarding.xlsx",
+    "entityType": "client",
+    "entityId": "f819d722-b0d5-4a8f-8a65-7f7f0ff359d8",
+    "companyId": null,
+    "uploadedById": "d3a556ad-a7fc-4021-8212-a14d8a3c6181",
+    "createdAt": "2026-08-11T02:29:31.052Z"
+  }
+]

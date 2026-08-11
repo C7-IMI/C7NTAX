@@ -1,1 +1,98 @@
-[]
+[
+  {
+    "id": "0dbbfa89-a876-4bba-a2dc-fa3d5af7f0cd",
+    "name": "acmecorp.com Wildcard",
+    "domain": "*.acmecorp.com",
+    "issuer": "DigiCert",
+    "expiryDate": "2026-12-09T02:23:12.874Z",
+    "validFrom": "2025-12-09T02:23:12.874Z",
+    "subjectAltNames": [],
+    "certificateType": "OV",
+    "autoRenew": true,
+    "notes": null,
+    "companyId": "259cf0f1-7350-468c-affe-f757577e0e08",
+    "createdAt": "2026-08-11T02:23:12.937Z",
+    "updatedAt": "2026-08-11T02:23:12.937Z"
+  },
+  {
+    "id": "7bbc1720-9f5e-48de-8de9-b587ff1868e4",
+    "name": "globexind.com",
+    "domain": "globexind.com",
+    "issuer": "Let's Encrypt",
+    "expiryDate": "2026-10-10T02:23:12.874Z",
+    "validFrom": "2025-10-10T02:23:12.874Z",
+    "subjectAltNames": [],
+    "certificateType": "DV",
+    "autoRenew": true,
+    "notes": null,
+    "companyId": "1a823623-d201-499e-8345-e4d6644c7488",
+    "createdAt": "2026-08-11T02:23:12.937Z",
+    "updatedAt": "2026-08-11T02:23:12.937Z"
+  },
+  {
+    "id": "150b5445-d5d0-4ba7-a757-5d0107e6ec5b",
+    "name": "starkent.com Wildcard",
+    "domain": "*.starkent.com",
+    "issuer": "Sectigo",
+    "expiryDate": "2027-04-18T02:23:12.874Z",
+    "validFrom": "2026-04-18T02:23:12.874Z",
+    "subjectAltNames": [
+      "starkent.com",
+      "*.starkent.com"
+    ],
+    "certificateType": "OV",
+    "autoRenew": true,
+    "notes": null,
+    "companyId": "c91ceef8-1efe-4179-a893-d225385146a9",
+    "createdAt": "2026-08-11T02:23:12.937Z",
+    "updatedAt": "2026-08-11T02:23:12.937Z"
+  },
+  {
+    "id": "62616213-959e-4b2e-ade4-59d467f311dc",
+    "name": "acmecorp.com Wildcard",
+    "domain": "*.acmecorp.com",
+    "issuer": "DigiCert",
+    "expiryDate": "2026-12-09T02:29:30.958Z",
+    "validFrom": "2025-12-09T02:29:30.958Z",
+    "subjectAltNames": [],
+    "certificateType": "OV",
+    "autoRenew": true,
+    "notes": null,
+    "companyId": "f986a7d8-2acb-4e0e-9c30-75c35cf80e65",
+    "createdAt": "2026-08-11T02:29:31.034Z",
+    "updatedAt": "2026-08-11T02:29:31.034Z"
+  },
+  {
+    "id": "44f6dd0c-2002-4ab5-9d34-6b942da999b4",
+    "name": "globexind.com",
+    "domain": "globexind.com",
+    "issuer": "Let's Encrypt",
+    "expiryDate": "2026-10-10T02:29:30.958Z",
+    "validFrom": "2025-10-10T02:29:30.958Z",
+    "subjectAltNames": [],
+    "certificateType": "DV",
+    "autoRenew": true,
+    "notes": null,
+    "companyId": "f819d722-b0d5-4a8f-8a65-7f7f0ff359d8",
+    "createdAt": "2026-08-11T02:29:31.034Z",
+    "updatedAt": "2026-08-11T02:29:31.034Z"
+  },
+  {
+    "id": "f7d0b467-602e-46ed-9e07-8098caaa9a70",
+    "name": "starkent.com Wildcard",
+    "domain": "*.starkent.com",
+    "issuer": "Sectigo",
+    "expiryDate": "2027-04-18T02:29:30.958Z",
+    "validFrom": "2026-04-18T02:29:30.958Z",
+    "subjectAltNames": [
+      "starkent.com",
+      "*.starkent.com"
+    ],
+    "certificateType": "OV",
+    "autoRenew": true,
+    "notes": null,
+    "companyId": "86dc1eb6-28ad-4bd1-90cc-c205e02bbc3d",
+    "createdAt": "2026-08-11T02:29:31.034Z",
+    "updatedAt": "2026-08-11T02:29:31.034Z"
+  }
+]

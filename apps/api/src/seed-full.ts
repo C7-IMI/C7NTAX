@@ -320,6 +320,144 @@ async function main() {
 
   console.log("  ✓ Created 4 sample integrations with M365 sync data");
 
+// ── Kumo: Asset Templates ───────────────────────────────────────────
+const serverTpl = await prisma.kumoAssetTemplate.create({
+  data: { name: "Server", description: "Physical or virtual server", icon: "server", color: "#3b82d6", isBuiltIn: true },
+});
+const wsTpl = await prisma.kumoAssetTemplate.create({
+  data: { name: "Workstation", description: "Desktop or laptop", icon: "monitor", color: "#22c55e", isBuiltIn: true },
+});
+const netTpl = await prisma.kumoAssetTemplate.create({
+  data: { name: "Network Device", description: "Switch, router, firewall, AP", icon: "router", color: "#f59e0b", isBuiltIn: true },
+});
+console.log("  ✓ Created 3 Kumo asset templates");
+
+// ── Kumo: Template Fields ───────────────────────────────────────────
+await prisma.kumoTemplateField.createMany({ data: [
+  { templateId: serverTpl.id, key: "hostname", label: "Hostname", fieldType: "text", required: true, sortOrder: 0 },
+  { templateId: serverTpl.id, key: "os", label: "Operating System", fieldType: "text", sortOrder: 1 },
+  { templateId: serverTpl.id, key: "cpu", label: "CPU Cores", fieldType: "number", sortOrder: 2 },
+  { templateId: serverTpl.id, key: "ram", label: "RAM (GB)", fieldType: "number", sortOrder: 3 },
+  { templateId: serverTpl.id, key: "ip", label: "IP Address", fieldType: "text", sortOrder: 4 },
+  { templateId: wsTpl.id, key: "hostname", label: "Hostname", fieldType: "text", required: true, sortOrder: 0 },
+  { templateId: wsTpl.id, key: "os", label: "OS", fieldType: "text", sortOrder: 1 },
+  { templateId: wsTpl.id, key: "serial", label: "Serial Number", fieldType: "text", sortOrder: 2 },
+  { templateId: netTpl.id, key: "hostname", label: "Hostname", fieldType: "text", required: true, sortOrder: 0 },
+  { templateId: netTpl.id, key: "deviceType", label: "Device Type", fieldType: "text", sortOrder: 1 },
+  { templateId: netTpl.id, key: "mgmt_ip", label: "Management IP", fieldType: "text", sortOrder: 2 },
+] });
+console.log("  ✓ Created 11 Kumo template fields");
+
+// ── Kumo: Flexible Assets ───────────────────────────────────────────
+const kumoAsset1 = await prisma.kumoAsset.create({ data: { templateId: serverTpl.id, name: "SRV-DC-01", status: "active", companyId: acme.id, createdById: adminUser.id } });
+const kumoAsset2 = await prisma.kumoAsset.create({ data: { templateId: serverTpl.id, name: "SRV-APP-02", status: "active", companyId: globex.id, createdById: tech1.id } });
+const kumoAsset3 = await prisma.kumoAsset.create({ data: { templateId: wsTpl.id, name: "LAP-MGR-03", status: "active", companyId: umbrell.id, createdById: tech2.id } });
+const kumoAsset4 = await prisma.kumoAsset.create({ data: { templateId: netTpl.id, name: "FW-PRIMARY", status: "active", companyId: globex.id, createdById: adminUser.id } });
+const kumoAsset5 = await prisma.kumoAsset.create({ data: { templateId: wsTpl.id, name: "WS-ENG-07", status: "maintenance", companyId: stark.id, createdById: manager.id } });
+console.log("  ✓ Created 5 Kumo assets");
+
+// ── Kumo: Asset Field Values ────────────────────────────────────────
+const hostField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: serverTpl.id, key: "hostname" } }))!;
+const osField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: serverTpl.id, key: "os" } }))!;
+const cpuField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: serverTpl.id, key: "cpu" } }))!;
+const ramField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: serverTpl.id, key: "ram" } }))!;
+const ipField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: serverTpl.id, key: "ip" } }))!;
+const wsHostField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: wsTpl.id, key: "hostname" } }))!;
+const wsOsField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: wsTpl.id, key: "os" } }))!;
+const wsSerialField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: wsTpl.id, key: "serial" } }))!;
+const netHostField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: netTpl.id, key: "hostname" } }))!;
+const netTypeField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: netTpl.id, key: "deviceType" } }))!;
+const netMgmtField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: netTpl.id, key: "mgmt_ip" } }))!;
+
+await prisma.kumoAssetFieldValue.createMany({ data: [
+  { assetId: kumoAsset1.id, fieldId: hostField.id, valueText: "SRV-DC-01.acmecorp.local" },
+  { assetId: kumoAsset1.id, fieldId: osField.id, valueText: "Windows Server 2022" },
+  { assetId: kumoAsset1.id, fieldId: cpuField.id, valueNum: 8 },
+  { assetId: kumoAsset1.id, fieldId: ramField.id, valueNum: 32 },
+  { assetId: kumoAsset1.id, fieldId: ipField.id, valueText: "10.1.10.10" },
+  { assetId: kumoAsset2.id, fieldId: hostField.id, valueText: "SRV-APP-02.globexind.local" },
+  { assetId: kumoAsset2.id, fieldId: osField.id, valueText: "Ubuntu 24.04 LTS" },
+  { assetId: kumoAsset2.id, fieldId: cpuField.id, valueNum: 16 },
+  { assetId: kumoAsset2.id, fieldId: ramField.id, valueNum: 64 },
+  { assetId: kumoAsset2.id, fieldId: ipField.id, valueText: "10.2.20.20" },
+  { assetId: kumoAsset3.id, fieldId: wsHostField.id, valueText: "LAP-MGR-03" },
+  { assetId: kumoAsset3.id, fieldId: wsOsField.id, valueText: "Windows 11 Pro" },
+  { assetId: kumoAsset3.id, fieldId: wsSerialField.id, valueText: "SN-UMB-LT03-2025" },
+  { assetId: kumoAsset4.id, fieldId: netHostField.id, valueText: "FW-PRIMARY" },
+  { assetId: kumoAsset4.id, fieldId: netTypeField.id, valueText: "Firewall" },
+  { assetId: kumoAsset4.id, fieldId: netMgmtField.id, valueText: "192.168.1.1" },
+  { assetId: kumoAsset5.id, fieldId: wsHostField.id, valueText: "WS-ENG-07" },
+  { assetId: kumoAsset5.id, fieldId: wsOsField.id, valueText: "Windows 11 Pro" },
+  { assetId: kumoAsset5.id, fieldId: wsSerialField.id, valueText: "SN-STK-WS07-2025" },
+] });
+console.log("  ✓ Created Kumo asset field values");
+
+// ── Kumo: Passwords ─────────────────────────────────────────────────
+const cryptoId = "550e8400-e29b-41d4-a716-446655440000";
+await prisma.kumoPassword.createMany({ data: [
+  { label: "Acme Domain Admin", username: "admin@acmecorp.local", url: "https://acmecorp.com/admin", encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", authTag: "f1e2d3c4b5a69788796a5b4c3d2e1f0a", category: "admin", strength: "strong", companyId: acme.id, createdById: adminUser.id },
+  { label: "Globex VPN Credential", username: "vpn@globexind.com", url: "https://vpn.globexind.com", encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", authTag: "0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d", category: "vpn", strength: "medium", companyId: globex.id, createdById: tech1.id },
+  { label: "Initech Wi-Fi PSK", username: null, url: null, encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8", authTag: "5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0", category: "wifi", strength: "weak", companyId: initech.id, createdById: tech2.id },
+  { label: "Office 365 Global Admin", username: "admin@umbrellacorp.net", url: "https://admin.microsoft.com", encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9", authTag: "f0e1d2c3b4a5968778695a4b3c2d1e0f", category: "m365", strength: "very_strong", companyId: umbrell.id, createdById: tech2.id },
+  { label: "Stark AWS Root", username: "root@starkent.com", url: "https://console.aws.amazon.com", encryptedPassword: "ENC:bm90LWFjdHVhbC1lbmNyeXB0ZWQtZGF0YQ==", encryptionKeyId: cryptoId, iv: "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0", authTag: "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d", category: "cloud", strength: "very_strong", companyId: stark.id, createdById: manager.id },
+] });
+console.log("  ✓ Created 5 Kumo passwords");
+
+// ── Kumo: Folders ───────────────────────────────────────────────────
+const folderGeneral = await prisma.kumoFolder.create({ data: { name: "General Documentation", slug: "general", description: "General-purpose documents", companyId: acme.id } });
+const folderSec = await prisma.kumoFolder.create({ data: { name: "Security Policies", slug: "security-policies", description: "Security and compliance", companyId: acme.id, parentId: folderGeneral.id } });
+const folderOps = await prisma.kumoFolder.create({ data: { name: "Operational Runbooks", slug: "runbooks", description: "Day-to-day operational procedures", companyId: globex.id } });
+console.log("  ✓ Created 3 Kumo folders");
+
+// ── Kumo: Documents ─────────────────────────────────────────────────
+await prisma.kumoDocument.createMany({ data: [
+  { folderId: folderGeneral.id, title: "Acme Network Topology Overview", slug: "acme-network-topology", currentContent: "# Network Topology\n\nAcme HQ uses a hub-and-spoke topology.", status: "published", visibility: "internal", companyId: acme.id, authorId: tech1.id, tags: ["network", "diagram"] },
+  { folderId: folderSec.id, title: "Password Policy", slug: "password-policy", currentContent: "# Password Policy\n\nMinimum 12 characters, must include uppercase, lowercase, numbers, and symbols.", status: "published", visibility: "internal", companyId: acme.id, authorId: adminUser.id, tags: ["security", "policy"] },
+  { folderId: folderSec.id, title: "Incident Response Plan", slug: "ir-plan", currentContent: "# Incident Response Plan\n\n1. Identify\n2. Contain\n3. Eradicate\n4. Recover\n5. Lessons Learned", status: "published", visibility: "internal", companyId: acme.id, authorId: tech2.id, tags: ["security", "ir"] },
+  { folderId: folderOps.id, title: "Server Reboot Procedure", slug: "server-reboot", currentContent: "# Server Reboot Procedure\n\n1. Notify stakeholders\n2. Graceful shutdown\n3. Verify services post-boot", status: "draft", visibility: "internal", companyId: globex.id, authorId: tech1.id, tags: ["runbook", "servers"] },
+] });
+console.log("  ✓ Created 4 Kumo documents");
+
+// ── Kumo: Domains ───────────────────────────────────────────────────
+await prisma.kumoDomain.createMany({ data: [
+  { domainName: "acmecorp.com", registrar: "GoDaddy", expiryDate: daysAgo(-180), autoRenew: true, dnsProvider: "Cloudflare", nameservers: ["ns1.cloudflare.com", "ns2.cloudflare.com"], companyId: acme.id },
+  { domainName: "globexind.com", registrar: "Namecheap", expiryDate: daysAgo(-90), autoRenew: true, dnsProvider: "AWS Route53", companyId: globex.id },
+  { domainName: "initech.io", registrar: "Google Domains", expiryDate: daysAgo(-30), autoRenew: false, dnsProvider: "Google Cloud DNS", companyId: initech.id },
+  { domainName: "starkent.com", registrar: "MarkMonitor", expiryDate: daysAgo(-365), autoRenew: true, dnsProvider: "Cloudflare", nameservers: ["ns1.cloudflare.com", "ns2.cloudflare.com"], companyId: stark.id },
+] });
+console.log("  ✓ Created 4 Kumo domains");
+
+// ── Kumo: Certificates ──────────────────────────────────────────────
+await prisma.kumoCertificate.createMany({ data: [
+  { name: "acmecorp.com Wildcard", domain: "*.acmecorp.com", issuer: "DigiCert", expiryDate: daysAgo(-120), validFrom: daysAgo(245), certificateType: "OV", autoRenew: true, companyId: acme.id },
+  { name: "globexind.com", domain: "globexind.com", issuer: "Let's Encrypt", expiryDate: daysAgo(-60), validFrom: daysAgo(305), certificateType: "DV", autoRenew: true, companyId: globex.id },
+  { name: "starkent.com Wildcard", domain: "*.starkent.com", issuer: "Sectigo", expiryDate: daysAgo(-250), validFrom: daysAgo(115), subjectAltNames: ["starkent.com", "*.starkent.com"], certificateType: "OV", autoRenew: true, companyId: stark.id },
+] });
+console.log("  ✓ Created 3 Kumo certificates");
+
+// ── Kumo: Universal Links ───────────────────────────────────────────
+const acmeAdminPwd = await prisma.kumoPassword.findFirst({ where: { label: "Acme Domain Admin" } });
+const acmeDomain = await prisma.kumoDomain.findFirst({ where: { domainName: "acmecorp.com" } });
+const netDoc = await prisma.kumoDocument.findFirst({ where: { slug: "acme-network-topology" } });
+const globexDomain = await prisma.kumoDomain.findFirst({ where: { domainName: "globexind.com" } });
+const globexCert = await prisma.kumoCertificate.findFirst({ where: { domain: "globexind.com" } });
+
+if (acmeAdminPwd && acmeDomain && netDoc && globexDomain && globexCert) {
+  await prisma.kumoLink.createMany({ data: [
+    { sourceType: "password", sourceId: acmeAdminPwd.id, targetType: "domain", targetId: acmeDomain.id, relationship: "authenticates", label: "Domain Admin creds for acmecorp.com", createdById: adminUser.id },
+    { sourceType: "asset", sourceId: kumoAsset1.id, targetType: "document", targetId: netDoc.id, relationship: "documented_by", label: "Network doc", createdById: tech1.id },
+    { sourceType: "domain", sourceId: globexDomain.id, targetType: "certificate", targetId: globexCert.id, relationship: "secured_by", label: "TLS cert for globexind.com", createdById: tech1.id },
+  ] });
+  console.log("  ✓ Created 3 Kumo universal links");
+}
+
+// ── Kumo: Files ─────────────────────────────────────────────────────
+await prisma.kumoFile.createMany({ data: [
+  { filename: "acme-network-diagram.pdf", mimeType: "application/pdf", size: 245000, storagePath: "/files/acme/network-diagram.pdf", entityType: "client", entityId: acme.id, uploadedById: tech1.id },
+  { filename: "globex-onboarding-checklist.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", size: 18500, storagePath: "/files/globex/onboarding.xlsx", entityType: "client", entityId: globex.id, uploadedById: manager.id },
+] });
+console.log("  ✓ Created 2 Kumo files");
+
   console.log("\n╔══════════════════════════════════════════╗");
   console.log("║   SEED COMPLETE                          ║");
   console.log("║   Login: admin@C7NTAX.com / admin        ║");

@@ -1,67 +1,67 @@
 [
   {
-    "id": "576bfec0-a801-4ff9-a62f-a9c91e295b54",
+    "id": "9d67185c-9f54-41ee-9aa5-08cfb2454f81",
     "description": "Diagnosed Exchange transport rules and connector config",
     "minutes": 90,
     "billable": true,
     "rate": null,
-    "date": "2026-08-09T17:51:06.522Z",
-    "ticketId": "ce8dc4d4-7e5e-4df7-981c-cf51e6bd85e0",
-    "userId": "949bf8ed-f22d-477e-83a1-205477e4fa62",
+    "date": "2026-08-10T02:29:30.958Z",
+    "ticketId": "8c37f26e-549a-42d7-ba37-8c74a39b6e11",
+    "userId": "0fa876dd-e1e5-45dc-9876-08bfccafdca9",
     "invoiceId": null,
-    "createdAt": "2026-08-10T17:51:06.535Z",
-    "updatedAt": "2026-08-10T17:51:06.535Z"
+    "createdAt": "2026-08-11T02:29:30.976Z",
+    "updatedAt": "2026-08-11T02:29:30.976Z"
   },
   {
-    "id": "05c51c20-25a4-4d0f-932f-c16cd82e157d",
+    "id": "37145eba-22c9-4c3c-9549-2619dae90f37",
     "description": "Updated outbound connector and verified mail flow",
     "minutes": 45,
     "billable": true,
     "rate": null,
-    "date": "2026-08-10T05:51:06.522Z",
-    "ticketId": "ce8dc4d4-7e5e-4df7-981c-cf51e6bd85e0",
-    "userId": "949bf8ed-f22d-477e-83a1-205477e4fa62",
+    "date": "2026-08-10T14:29:30.958Z",
+    "ticketId": "8c37f26e-549a-42d7-ba37-8c74a39b6e11",
+    "userId": "0fa876dd-e1e5-45dc-9876-08bfccafdca9",
     "invoiceId": null,
-    "createdAt": "2026-08-10T17:51:06.535Z",
-    "updatedAt": "2026-08-10T17:51:06.535Z"
+    "createdAt": "2026-08-11T02:29:30.976Z",
+    "updatedAt": "2026-08-11T02:29:30.976Z"
   },
   {
-    "id": "eb0ae009-31ae-485f-8b3c-3c9b77462c6d",
+    "id": "2bd92f26-882e-4cba-847d-f6ac2a20fc24",
     "description": "Investigated phishing email — message trace, attachment analysis",
     "minutes": 120,
     "billable": true,
     "rate": null,
-    "date": "2026-08-08T17:51:06.522Z",
-    "ticketId": "4afe5b4c-9468-4ee2-8b21-244bd0418dbc",
-    "userId": "e874048e-0efb-423d-a61c-c2ad04541886",
+    "date": "2026-08-09T02:29:30.958Z",
+    "ticketId": "07521c73-edd8-4372-a1b1-4b3a07eb3ab0",
+    "userId": "b378f6ce-87ab-44c6-a9ed-8bbcd5f22038",
     "invoiceId": null,
-    "createdAt": "2026-08-10T17:51:06.535Z",
-    "updatedAt": "2026-08-10T17:51:06.535Z"
+    "createdAt": "2026-08-11T02:29:30.976Z",
+    "updatedAt": "2026-08-11T02:29:30.976Z"
   },
   {
-    "id": "bf5ac81d-8090-4c6b-b872-dcd70eabef1a",
+    "id": "2f83e942-6466-4302-84fe-44b4bec123cb",
     "description": "Sent user awareness communication",
     "minutes": 30,
     "billable": false,
     "rate": null,
-    "date": "2026-08-09T17:51:06.522Z",
-    "ticketId": "4afe5b4c-9468-4ee2-8b21-244bd0418dbc",
-    "userId": "e874048e-0efb-423d-a61c-c2ad04541886",
+    "date": "2026-08-10T02:29:30.958Z",
+    "ticketId": "07521c73-edd8-4372-a1b1-4b3a07eb3ab0",
+    "userId": "b378f6ce-87ab-44c6-a9ed-8bbcd5f22038",
     "invoiceId": null,
-    "createdAt": "2026-08-10T17:51:06.535Z",
-    "updatedAt": "2026-08-10T17:51:06.535Z"
+    "createdAt": "2026-08-11T02:29:30.976Z",
+    "updatedAt": "2026-08-11T02:29:30.976Z"
   },
   {
-    "id": "15a1d45f-b445-4a84-81ba-6b30cb452e3e",
+    "id": "0c531063-7b56-4159-a71b-d50d8d85bd32",
     "description": "MFA setup for CEO",
     "minutes": 15,
     "billable": true,
     "rate": null,
-    "date": "2026-08-10T13:03:06.522Z",
-    "ticketId": "ef6c4911-2129-4c52-a0ac-a6bf37c525cb",
-    "userId": "e874048e-0efb-423d-a61c-c2ad04541886",
+    "date": "2026-08-10T21:41:30.958Z",
+    "ticketId": "f117efca-c464-4360-bb53-3645b420afce",
+    "userId": "b378f6ce-87ab-44c6-a9ed-8bbcd5f22038",
     "invoiceId": null,
-    "createdAt": "2026-08-10T17:51:06.535Z",
-    "updatedAt": "2026-08-10T17:51:06.535Z"
+    "createdAt": "2026-08-11T02:29:30.976Z",
+    "updatedAt": "2026-08-11T02:29:30.976Z"
   }
 ]

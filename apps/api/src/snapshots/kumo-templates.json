@@ -1,1 +1,74 @@
-[]
+[
+  {
+    "id": "a9ee4c80-eade-4348-9ee9-b0cb1f380ba3",
+    "name": "Server",
+    "description": "Physical or virtual server",
+    "icon": "server",
+    "color": "#3b82d6",
+    "isBuiltIn": true,
+    "isActive": true,
+    "companyId": null,
+    "createdAt": "2026-08-11T02:23:12.900Z",
+    "updatedAt": "2026-08-11T02:23:12.900Z"
+  },
+  {
+    "id": "cacd0a84-b2fb-40f3-942f-6fb734487992",
+    "name": "Workstation",
+    "description": "Desktop or laptop",
+    "icon": "monitor",
+    "color": "#22c55e",
+    "isBuiltIn": true,
+    "isActive": true,
+    "companyId": null,
+    "createdAt": "2026-08-11T02:23:12.902Z",
+    "updatedAt": "2026-08-11T02:23:12.902Z"
+  },
+  {
+    "id": "db3be4ac-7a81-4ee6-927c-b49b6a28c7e8",
+    "name": "Network Device",
+    "description": "Switch, router, firewall, AP",
+    "icon": "router",
+    "color": "#f59e0b",
+    "isBuiltIn": true,
+    "isActive": true,
+    "companyId": null,
+    "createdAt": "2026-08-11T02:23:12.902Z",
+    "updatedAt": "2026-08-11T02:23:12.902Z"
+  },
+  {
+    "id": "2bd2b27e-a81d-4d43-adbe-c6f622f93c6d",
+    "name": "Server",
+    "description": "Physical or virtual server",
+    "icon": "server",
+    "color": "#3b82d6",
+    "isBuiltIn": true,
+    "isActive": true,
+    "companyId": null,
+    "createdAt": "2026-08-11T02:29:30.989Z",
+    "updatedAt": "2026-08-11T02:29:30.989Z"
+  },
+  {
+    "id": "28e1df6f-008d-49af-9820-890b68c179df",
+    "name": "Workstation",
+    "description": "Desktop or laptop",
+    "icon": "monitor",
+    "color": "#22c55e",
+    "isBuiltIn": true,
+    "isActive": true,
+    "companyId": null,
+    "createdAt": "2026-08-11T02:29:30.991Z",
+    "updatedAt": "2026-08-11T02:29:30.991Z"
+  },
+  {
+    "id": "2a8545eb-e337-4cf9-bea4-a976224e5508",
+    "name": "Network Device",
+    "description": "Switch, router, firewall, AP",
+    "icon": "router",
+    "color": "#f59e0b",
+    "isBuiltIn": true,
+    "isActive": true,
+    "companyId": null,
+    "createdAt": "2026-08-11T02:29:30.992Z",
+    "updatedAt": "2026-08-11T02:29:30.992Z"
+  }
+]
