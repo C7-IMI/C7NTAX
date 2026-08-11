@@ -114,6 +114,17 @@ systemRouter.get("/configs", async (_req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ── Get single system config ──
+systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
+  try {
+    const c = await prisma.systemConfig.findUnique({ where: { key: req.params.key } });
+    if (!c) return res.json({ value: null });
+    let value: unknown;
+    try { value = JSON.parse(c.value as string); } catch { value = c.value; }
+    res.json({ value });
+  } catch (e) { next(e); }
+});
+
 // ── Save system config ──
 systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
   try {
@@ -121,6 +132,17 @@ systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
     const value = typeof req.body.value === "string" ? req.body.value : JSON.stringify(req.body.value);
     await prisma.systemConfig.upsert({ where: { key }, create: { key, value }, update: { value } });
     res.json({ success: true });
+  } catch (e) { next(e); }
+});
+
+// ── Get single system config ──
+systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
+  try {
+    const c = await prisma.systemConfig.findUnique({ where: { key: req.params.key } });
+    if (!c) return res.json({ value: null });
+    let value: unknown;
+    try { value = JSON.parse(c.value as string); } catch { value = c.value; }
+    res.json({ value });
   } catch (e) { next(e); }
 });
 

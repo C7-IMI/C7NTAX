@@ -8,7 +8,19 @@ import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../index";
 
 const SESSION_COOKIE = "c7_sid";
-const ADMIN_TIMEOUT_BYPASS = true; // Admin sessions never expire per PSA standard
+const ADMIN_TIMEOUT_BYPASS = true; // Admin + Super Admin sessions never expire per PSA standard
+
+/** Read session timeout from SystemConfig, fallback to 30 minutes */
+async function getSessionTimeoutMs(): Promise<number> {
+  try {
+    const cfg = await prisma.systemConfig.findUnique({ where: { key: "session_timeout" } });
+    if (cfg?.value) {
+      const val = JSON.parse(cfg.value as string);
+      if (typeof val === "number" && val >= 5 && val <= 480) return val * 60 * 1000;
+    }
+  } catch {}
+  return 30 * 60 * 1000; // default 30 min
+}
 
 export interface SessionUser {
   userId: string;
@@ -83,7 +95,7 @@ export async function authenticateSession(
         (session.user?.role?.systemRole === "admin" || session.user?.role?.systemRole === "super_admin")) {
       // Admin and Super Admin sessions never expire from inactivity
     } else {
-      const timeoutMs = 30 * 60 * 1000; // Default 30 min (configurable via tenant settings)
+      const timeoutMs = await getSessionTimeoutMs();
       const idleMs = Date.now() - session.lastActivityAt.getTime();
       if (idleMs > timeoutMs) {
         await prisma.userSession.update({

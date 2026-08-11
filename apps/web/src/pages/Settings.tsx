@@ -22,8 +22,26 @@ const LANDING_OPTIONS = [
 export function SettingsPage() {
   const { user, landingPage, setLandingPage } = useAuth();
   const [selectedPath, setSelectedPath] = useState(landingPage.path);
+  const [sessionTimeout, setSessionTimeout] = useState(30);
+  const [savingTimeout, setSavingTimeout] = useState(false);
 
   useEffect(() => { setSelectedPath(landingPage.path); }, [landingPage.path]);
+
+  // Load session timeout on mount
+  useEffect(() => {
+    api.get("/system/config/session_timeout").then(r => {
+      setSessionTimeout(r.data?.value || 30);
+    }).catch(() => {});
+  }, []);
+
+  const saveSessionTimeout = async () => {
+    setSavingTimeout(true);
+    try {
+      await api.patch("/system/config/session_timeout", { value: sessionTimeout });
+      toast.success(`Session timeout set to ${sessionTimeout} minutes`);
+    } catch { toast.error("Failed to save"); }
+    finally { setSavingTimeout(false); }
+  };
 
   const handleChange = async (path: string) => {
     const option = LANDING_OPTIONS.find(o => o.path === path);
@@ -95,6 +113,29 @@ export function SettingsPage() {
             </span>
           </div>
         </div>
+      </div>
+
+      <div className="card">
+        <h3 className="font-semibold text-white mb-4">Session Timeout</h3>
+        <p className="text-xs text-gray-500 mb-3">Inactivity timeout in minutes before users are logged out. Super Admin and Admin users are never timed out.</p>
+        <div className="flex items-center gap-3">
+          <input
+            type="number"
+            className="input-field w-24"
+            min={5} max={480}
+            value={sessionTimeout}
+            onChange={e => setSessionTimeout(Number(e.target.value))}
+          />
+          <span className="text-sm text-gray-400">minutes</span>
+          <button
+            onClick={saveSessionTimeout}
+            disabled={savingTimeout}
+            className="btn-primary text-xs py-1.5 px-3"
+          >
+            {savingTimeout ? "Saving..." : "Save"}
+          </button>
+        </div>
+        <p className="text-[10px] text-gray-600 mt-2">Default: 30 minutes. Range: 5–480 minutes (8 hours).</p>
       </div>
 
       <Link to="/settings/ai" className="card block hover:border-cyber-500/30 transition-colors group">
