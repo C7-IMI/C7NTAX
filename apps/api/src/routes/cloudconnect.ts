@@ -67,6 +67,84 @@ async function upsertContactFromM365User(
   return prisma.contact.create({ data: { ...data, isPrimary: false } });
 }
 
+// ── Credential helpers for field-level error diagnosis ──────────────────
+
+function getRequiredCredentials(kind: string): string[] {
+  const map: Record<string, string[]> = {
+    microsoft365: ["tenantId", "clientId", "clientSecret"],
+    connectwise: ["companyId", "publicKey", "privateKey", "clientId", "baseUrl"],
+    halopsa: ["tenantUrl", "clientId", "clientSecret"],
+    kantata: ["accessToken"], scoro: ["apiKey", "companyAccountId"],
+    autotask: ["username", "password", "integrationCode"],
+    flexpoint: ["apiKey", "baseUrl"], quickbooks: ["clientId", "clientSecret", "realmId", "accessToken"],
+    pax8: ["apiKey", "baseUrl"], avanan: ["apiKey", "baseUrl"],
+    proofpoint: ["principal", "secret", "baseUrl"], sentinelone: ["apiToken", "baseUrl"],
+    itglue: ["apiKey", "baseUrl"], azure: ["accessToken", "subscriptionId"],
+    aws: ["accessKeyId", "secretAccessKey", "region"],
+    azure_ad_sso: ["tenantId", "clientId", "clientSecret", "domain"],
+  };
+  return map[kind] || [];
+}
+
+function formatCredLabel(cred: string): string {
+  return cred.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase()).trim();
+}
+
+function getCredFix(cred: string): string {
+  const fixes: Record<string, string> = {
+    tenantId: "Find it in Azure Portal → Azure AD → Overview → Tenant ID, or use your primary domain (contoso.onmicrosoft.com)",
+    clientId: "Create an app registration → copy the Application (client) ID",
+    clientSecret: "Go to Certificates & secrets → New client secret → copy the value immediately",
+    domain: "Enter your verified domain (e.g., contoso.com)",
+    username: "Service account email or username for API access",
+    integrationCode: "Find in AutoTask → Admin → API Security → Integration Code",
+    accessToken: "Obtain an OAuth access token from your provider's authorization endpoint",
+    apiKey: "Generate in your provider's admin panel (usually Settings → API Keys)",
+    apiToken: "Generate an API token in your provider's admin console",
+    baseUrl: "Full URL of your instance, e.g., https://company.halopsa.com/api",
+    tenantUrl: "Your tenant URL, e.g., https://company.halopsa.com",
+    companyId: "Your company identifier used in the login URL",
+    publicKey: "ConnectWise → System → Members → API Keys → copy Public Key",
+    privateKey: "ConnectWise → System → Members → API Keys → copy Private Key",
+    realmId: "QuickBooks Online → Settings → Company Info → Company ID",
+    principal: "Proofpoint service principal (API username or email)",
+    secret: "Proofpoint API secret from your admin console",
+    companyAccountId: "Scoro → Settings → Site → Account ID",
+    accessKeyId: "AWS IAM → your user → Security credentials → Create access key",
+    secretAccessKey: "Shown once when you create an AWS access key",
+    region: "AWS region code, e.g., us-east-1, eu-west-2",
+    subscriptionId: "Azure Portal → Subscriptions → copy Subscription ID",
+  };
+  return fixes[cred] || `Enter a valid ${formatCredLabel(cred)}`;
+}
+
+function getCredExample(cred: string): string {
+  const ex: Record<string, string> = {
+    tenantId: "contoso.onmicrosoft.com", clientId: "00000000-0000-0000-0000-000000000000",
+    clientSecret: "abc123~xyz789...", domain: "contoso.com", username: "api@company.com",
+    integrationCode: "ABCDEF123456", accessToken: "eyJ0eXAiOiJKV1Qi...", apiKey: "sk-abc123...",
+    apiToken: "s1-api-token-abc...", baseUrl: "https://api-na.myconnectwise.net/v4_6_release/apis/3.0",
+    tenantUrl: "https://company.halopsa.com", companyId: "mycompany",
+    publicKey: "-----BEGIN PUBLIC KEY-----...", privateKey: "-----BEGIN PRIVATE KEY-----...",
+    realmId: "4620816365012345678", principal: "api-user@company.com",
+    secret: "abc123xyz...", companyAccountId: "12345", accessKeyId: "AKIAIOSFODNN7EXAMPLE",
+    secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    region: "us-east-1", subscriptionId: "00000000-0000-0000-0000-000000000000",
+  };
+  return ex[cred] || `Enter your ${formatCredLabel(cred)}`;
+}
+
+function checkCredFormat(key: string, val: string): string | null {
+  const v = val.trim();
+  if (v === "xxx" || v === "..." || v === "changeme" || v === "your-" || v === "test")
+    return `${formatCredLabel(key)} appears to be a placeholder — enter the real value`;
+  if ((key === "clientId" || key === "tenantId" || key === "subscriptionId") && !v.includes("-") && v.length < 20)
+    return `${formatCredLabel(key)} should be a GUID`;
+  if (key === "realmId" && !/^\d{10,}$/.test(v))
+    return `${formatCredLabel(key)} should be a numeric company ID (10+ digits)`;
+  return null;
+}
+
 // ── List available integration types ─────────────────────────────────────
 cloudConnectRouter.get("/types", requirePermission(Permission.IntegrationView), (_req, res) => {
   res.json({
@@ -177,8 +255,8 @@ cloudConnectRouter.post("/:id/test", requirePermission(Permission.IntegrationVie
           fieldErrors.push({
             field: cred,
             message: `${formatCredLabel(cred)} is missing`,
-            fix: getCredFix(cred, config.kind),
-            example: getCredExample(cred, config.kind),
+            fix: getCredFix(cred),
+            example: getCredExample(cred),
           });
         }
       }
@@ -191,8 +269,8 @@ cloudConnectRouter.post("/:id/test", requirePermission(Permission.IntegrationVie
             fieldErrors.push({
               field: key,
               message: issue,
-              fix: getCredFix(key, config.kind),
-              example: getCredExample(key, config.kind),
+              fix: getCredFix(key),
+              example: getCredExample(key),
             });
           }
         }
