@@ -7,6 +7,7 @@ interface ChangeItem {
 }
 
 interface Version {
+  id: number;
   version: string;
   date: string;
   title: string;
@@ -46,7 +47,7 @@ function parseFeatureList(raw: string): Version[] {
       // Derive date from version: YYYY.M.D.BBB → YYYY-MM-DD
       const parts = version.split(".");
       const date = `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}`;
-      versions.push({ version, date, title, changes });
+      versions.push({ id: versions.length + 1, version, date, title, changes });
     }
   }
 
@@ -108,6 +109,7 @@ export function ChangelogPage() {
                 {/* Version header */}
                 <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
                   <div className="flex items-center gap-3">
+                    <span className="badge bg-navy-600/40 text-gray-500 font-mono text-xs px-2 py-0.5">#{v.id}</span>
                     <span className="badge bg-cyber-600/20 text-cyber-400 font-mono text-sm px-3 py-1">{v.version}</span>
                     {i === 0 && <span className="badge bg-green-600/20 text-green-400 text-xs">Latest</span>}
                   </div>

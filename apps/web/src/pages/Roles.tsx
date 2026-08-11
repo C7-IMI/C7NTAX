@@ -19,6 +19,7 @@ export function RolesPage() {
   const [selected, setSelected] = useState<RoleRow | null>(null);
   const [editing, setEditing] = useState(false);
   const [editPerms, setEditPerms] = useState<Set<string>>(new Set());
+  const [originalPerms, setOriginalPerms] = useState<Set<string>>(new Set());
   const [editName, setEditName] = useState("");
   const [editSystemRole, setEditSystemRole] = useState("");
   const [editIsDefault, setEditIsDefault] = useState(false);
@@ -45,7 +46,9 @@ export function RolesPage() {
 
   const selectRole = (r: RoleRow) => {
     setSelected(r);
-    setEditPerms(new Set(r.permissions));
+    const perms = new Set(r.permissions);
+    setEditPerms(perms);
+    setOriginalPerms(perms);
     setEditName(r.name);
     setEditSystemRole(r.systemRole);
     setEditIsDefault(r.isDefault);
@@ -54,6 +57,7 @@ export function RolesPage() {
 
   const startEdit = () => {
     if (!selected) return;
+    setOriginalPerms(new Set(editPerms));
     setEditing(true);
   };
 
@@ -284,6 +288,10 @@ export function RolesPage() {
                     <>
                       <button onClick={() => setEditing(false)} className="btn-secondary text-xs py-1 px-2 flex items-center gap-1"><X size={12} /> Cancel</button>
                       <button onClick={handleSaveRole} disabled={saving} className="btn-primary text-xs py-1 px-2 flex items-center gap-1"><Save size={12} /> {saving ? "Saving..." : "Save"}</button>
+                      {(() => {
+                        const changed = editPerms.size !== originalPerms.size || [...editPerms].some(p => !originalPerms.has(p));
+                        return changed ? <span className="badge bg-amber-600/20 text-amber-400 text-[10px] px-1.5 py-0.5">Changed</span> : null;
+                      })()}
                     </>
                   ) : (
                     <>
