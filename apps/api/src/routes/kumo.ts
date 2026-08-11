@@ -305,7 +305,14 @@ kumoRouter.post("/passwords/:id/reveal", requirePermission(Permission.KumoPasswo
   try {
     const pw = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
     if (!pw) throw new AppError("Not found", 404);
-    const plaintext = decrypt(pw.encryptedPassword, pw.iv, pw.authTag);
+    let plaintext: string;
+    try {
+      plaintext = decrypt(pw.encryptedPassword, pw.iv, pw.authTag);
+    } catch {
+      plaintext = pw.encryptedPassword.startsWith("ENC:")
+        ? "[Seed data — re-encrypt this password to use it]"
+        : "[Unable to decrypt]";
+    }
     // Write access log
     await prisma.kumoPasswordAccessLog.create({
       data: { passwordId: pw.id, accessedById: req.user!.userId, accessType: "reveal", ipAddress: req.ip || req.socket.remoteAddress, userAgent: req.get("User-Agent")?.slice(0, 300) || "", success: true },
@@ -351,7 +358,9 @@ kumoRouter.post("/passwords/:id/totp/verify", requirePermission(Permission.KumoP
     if (!code) throw new AppError("code required", 400);
     const pw = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
     if (!pw || !pw.totpSecret) throw new AppError("TOTP not configured", 400);
-    const secret = decrypt(pw.totpSecret, pw.iv, pw.authTag);
+    const parts = pw.totpSecret.split(":");
+    const [ciphertext, iv, authTag] = parts.length === 3 ? parts : [pw.totpSecret, pw.iv, pw.authTag];
+    const secret = decrypt(ciphertext, iv, authTag);
     const valid = speakeasy.totp.verify({ secret, encoding: "base32", token: code, window: 1 });
     if (!valid) throw new AppError("Invalid code", 400);
     await prisma.kumoPasswordAccessLog.create({
@@ -365,7 +374,9 @@ kumoRouter.get("/passwords/:id/totp", requirePermission(Permission.KumoPasswords
   try {
     const pw = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
     if (!pw || !pw.totpSecret || !pw.totpEnabled) return res.json({ enabled: false });
-    const secret = decrypt(pw.totpSecret, pw.iv, pw.authTag);
+    const parts = pw.totpSecret.split(":");
+    const [ciphertext, iv, authTag] = parts.length === 3 ? parts : [pw.totpSecret, pw.iv, pw.authTag];
+    const secret = decrypt(ciphertext, iv, authTag);
     const token = speakeasy.totp({ secret, encoding: "base32" });
     const remaining = 30 - Math.floor(Date.now() / 1000) % 30;
     res.json({ enabled: true, code: token, remaining });
@@ -383,8 +394,8 @@ kumoRouter.post("/passwords/:id/totp/manual", requirePermission(Permission.KumoP
   try {
     const { secret } = req.body;
     if (!secret || !/^[A-Z2-7]+=*$/i.test(secret)) throw new AppError("Invalid base32 secret", 400);
-    const { ciphertext } = encrypt(secret.toUpperCase());
-    await prisma.kumoPassword.update({ where: { id: req.params.id }, data: { totpSecret: ciphertext, totpEnabled: true } });
+    const { ciphertext, iv, authTag } = encrypt(secret.toUpperCase());
+    await prisma.kumoPassword.update({ where: { id: req.params.id }, data: { totpSecret: `${ciphertext}:${iv}:${authTag}`, totpEnabled: true } });
     const token = speakeasy.totp({ secret: secret.toUpperCase(), encoding: "base32" });
     const remaining = 30 - Math.floor(Date.now() / 1000) % 30;
     res.json({ enabled: true, code: token, remaining });
