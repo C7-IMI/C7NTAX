@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, RefreshCw, Clock, AlertTriangle, Users, TrendingUp, Inbox, Pause, MessageSquare, Calendar, type LucideIcon } from "lucide-react";
+import { RefreshCw, Clock, AlertTriangle, Users, TrendingUp, Inbox, Pause, MessageSquare, Calendar, type LucideIcon } from "lucide-react";
 
 interface BoardMetrics {
   boardId: string; boardName: string; boardDescription: string | null;
@@ -17,8 +17,6 @@ interface BoardMetrics {
 export function BoardsPage() {
   const [boards, setBoards] = useState<BoardMetrics[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newBoard, setNewBoard] = useState({ name: "", description: "" });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchMetrics = useCallback(async () => {
@@ -38,17 +36,6 @@ export function BoardsPage() {
     return () => clearInterval(interval);
   }, [fetchMetrics]);
 
-  const createBoard = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await api.post("/boards", newBoard);
-      setNewBoard({ name: "", description: "" });
-      setShowCreate(false);
-      fetchMetrics();
-      toast.success("Board created");
-    } catch { toast.error("Failed to create board"); }
-  };
-
   if (loading) return <div className="flex items-center justify-center py-20 text-gray-500">Loading boards...</div>;
 
   return (
@@ -64,9 +51,6 @@ export function BoardsPage() {
         <div className="flex items-center gap-2">
           <button onClick={fetchMetrics} className="btn-secondary text-sm flex items-center gap-1.5" title="Refresh metrics">
             <RefreshCw size={14} /> Refresh
-          </button>
-          <button className="btn-primary flex items-center gap-2 text-sm" onClick={() => setShowCreate(true)}>
-            <Plus size={16} /> New Board
           </button>
         </div>
       </div>
@@ -135,21 +119,6 @@ export function BoardsPage() {
           );
         })}
       </div>
-
-      {/* Create Board Modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
-          <form className="card w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()} onSubmit={createBoard}>
-            <h3 className="text-lg font-semibold text-white">Create Service Board</h3>
-            <input className="input-field" placeholder="Board name" value={newBoard.name} onChange={(e) => setNewBoard({ ...newBoard, name: e.target.value })} required autoFocus />
-            <textarea className="input-field" placeholder="Description (optional)" value={newBoard.description} onChange={(e) => setNewBoard({ ...newBoard, description: e.target.value })} rows={2} />
-            <div className="flex gap-2 justify-end">
-              <button type="button" className="btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
-              <button type="submit" className="btn-primary">Create</button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 }
