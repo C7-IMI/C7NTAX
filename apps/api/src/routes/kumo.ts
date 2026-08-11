@@ -288,6 +288,13 @@ kumoRouter.patch("/passwords/:id", requirePermission(Permission.KumoPasswordsEdi
     const data: Record<string, any> = {};
     const allowed = ["label","username","email","url","category","notes","passwordPolicy","expiresAt","isActive"];
     for (const k of allowed) if (req.body[k] !== undefined) data[k] = req.body[k];
+    // Handle password change — encrypt new value
+    if (req.body.password && req.body.password.length > 0) {
+      const encPwd = encrypt(req.body.password);
+      data.encryptedPassword = encPwd.ciphertext;
+      data.iv = encPwd.iv;
+      data.authTag = encPwd.authTag;
+    }
     if (Object.keys(data).length === 0) throw new AppError("No fields", 400);
     data.updatedById = req.user!.userId;
     const pw = await prisma.kumoPassword.update({ where: { id: req.params.id }, data, select: { id: true, label: true } });
