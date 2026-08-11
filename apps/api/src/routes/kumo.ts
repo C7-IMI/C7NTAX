@@ -305,10 +305,12 @@ kumoRouter.post("/passwords/:id/reveal", requirePermission(Permission.KumoPasswo
   try {
     const pw = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
     if (!pw) throw new AppError("Not found", 404);
+    // Show who last changed it — fall back to creator if never updated
     let updatedByName: string | null = null;
-    if (pw.updatedById) {
-      const updater = await prisma.user.findUnique({ where: { id: pw.updatedById }, select: { firstName: true, lastName: true } });
-      if (updater) updatedByName = `${updater.firstName} ${updater.lastName}`;
+    const lookupId = pw.updatedById || pw.createdById;
+    if (lookupId) {
+      const u = await prisma.user.findUnique({ where: { id: lookupId }, select: { firstName: true, lastName: true } });
+      if (u) updatedByName = `${u.firstName} ${u.lastName}`;
     }
     let plaintext: string;
     try {
