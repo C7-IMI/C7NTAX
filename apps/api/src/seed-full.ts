@@ -8,7 +8,21 @@ async function main() {
   console.log("║   C7NTAX — Full Database Seed           ║");
   console.log("╚══════════════════════════════════════════╝\n");
 
-  // ── Clean existing data ──
+  // ── Clean existing data (reverse FK order) ──
+  await prisma.kumoFile.deleteMany();
+  await prisma.kumoLink.deleteMany();
+  await prisma.kumoCertificate.deleteMany();
+  await prisma.kumoDomain.deleteMany();
+  await prisma.kumoPassword.deleteMany();
+  await prisma.kumoServer.deleteMany();
+  await prisma.kumoWorkstation.deleteMany();
+  await prisma.kumoNetworkDevice.deleteMany();
+  await prisma.kumoDocument.deleteMany();
+  await prisma.kumoAssetFieldValue.deleteMany();
+  await prisma.kumoAsset.deleteMany();
+  await prisma.kumoTemplateField.deleteMany();
+  await prisma.kumoAssetTemplate.deleteMany();
+  await prisma.kumoFolder.deleteMany();
   await prisma.syncedEntity.deleteMany();
   await prisma.syncLog.deleteMany();
   await prisma.m365Subscription.deleteMany();

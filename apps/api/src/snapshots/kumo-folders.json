@@ -1,56 +1,29 @@
 [
   {
-    "id": "00d3e90a-bf4b-44b1-80a0-29eca6da6d33",
+    "id": "afe022a6-2396-4b31-8c74-9b60c165425f",
     "name": "General Documentation",
     "slug": "general",
     "description": "General-purpose documents",
     "parentId": null,
     "sortOrder": 0,
-    "companyId": "259cf0f1-7350-468c-affe-f757577e0e08"
+    "companyId": "55fdab95-a9c5-4990-85dc-5c1e8c71ce50"
   },
   {
-    "id": "fb311e40-ccd5-4c17-ba07-c5cd78a82464",
+    "id": "a6b8cd36-b568-4eaa-bdbf-39ef428bd847",
     "name": "Security Policies",
     "slug": "security-policies",
     "description": "Security and compliance",
-    "parentId": "00d3e90a-bf4b-44b1-80a0-29eca6da6d33",
+    "parentId": "afe022a6-2396-4b31-8c74-9b60c165425f",
     "sortOrder": 0,
-    "companyId": "259cf0f1-7350-468c-affe-f757577e0e08"
+    "companyId": "55fdab95-a9c5-4990-85dc-5c1e8c71ce50"
   },
   {
-    "id": "c8e0f469-cb27-4dfb-aa17-d0d4e1ee55eb",
+    "id": "b5a90df1-ca51-410a-b1ef-e66d157f4ff1",
     "name": "Operational Runbooks",
     "slug": "runbooks",
     "description": "Day-to-day operational procedures",
     "parentId": null,
     "sortOrder": 0,
-    "companyId": "1a823623-d201-499e-8345-e4d6644c7488"
-  },
-  {
-    "id": "31ee970d-45f3-42c1-af5f-8098092e578b",
-    "name": "General Documentation",
-    "slug": "general",
-    "description": "General-purpose documents",
-    "parentId": null,
-    "sortOrder": 0,
-    "companyId": "f986a7d8-2acb-4e0e-9c30-75c35cf80e65"
-  },
-  {
-    "id": "9ca59146-8f7b-46f8-96f6-e2135d12bf3d",
-    "name": "Security Policies",
-    "slug": "security-policies",
-    "description": "Security and compliance",
-    "parentId": "31ee970d-45f3-42c1-af5f-8098092e578b",
-    "sortOrder": 0,
-    "companyId": "f986a7d8-2acb-4e0e-9c30-75c35cf80e65"
-  },
-  {
-    "id": "c46f2f4c-5ffe-4be2-91d8-3e22bd69f2d7",
-    "name": "Operational Runbooks",
-    "slug": "runbooks",
-    "description": "Day-to-day operational procedures",
-    "parentId": null,
-    "sortOrder": 0,
-    "companyId": "f819d722-b0d5-4a8f-8a65-7f7f0ff359d8"
+    "companyId": "005bee2a-89a9-4fda-aef8-1b320e855386"
   }
 ]
