@@ -187,6 +187,7 @@ export function KumoPasswordsPage() {
                     <div><span className="text-xs text-gray-500">Username</span><p className="text-white">{revealData.username || "—"}</p></div>
                     <div><span className="text-xs text-gray-500">Password</span><code className="block bg-black/30 px-3 py-1.5 mt-1 rounded text-green-400 font-mono select-all">{revealData.passwordPlaintext}</code></div>
                     {revealData.updatedBy && <div><span className="text-xs text-gray-500">Last changed by</span><p className="text-white text-sm">{revealData.updatedBy}</p></div>}
+                    {!revealData.updatedBy && <div><span className="text-xs text-gray-500">Last changed by</span><p className="text-gray-600 text-sm">—</p></div>}
                   </div>
                 </div>
               )}

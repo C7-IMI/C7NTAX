@@ -1,9 +1,9 @@
 [
   {
-    "id": "85d0cd42-1da7-4e0e-b1d4-fd4ce5fa2e8b",
+    "id": "40cf4416-7d15-4473-abc0-a8832bd2004f",
     "name": "Acme Standard Plan",
     "description": null,
-    "companyId": "a6c52e63-1f54-4de8-adde-286d84f72932",
+    "companyId": "6ac3b99c-2b15-403a-8068-0d970208dad4",
     "isActive": true,
     "billingPeriod": "monthly",
     "billingAmount": 2500,
@@ -18,14 +18,14 @@
     "followUpEnabled": true,
     "followUpIntervalDays": 7,
     "maxFollowUps": 3,
-    "createdAt": "2026-08-11T07:56:34.668Z",
-    "updatedAt": "2026-08-11T07:56:34.668Z"
+    "createdAt": "2026-08-11T14:21:53.593Z",
+    "updatedAt": "2026-08-11T14:21:53.593Z"
   },
   {
-    "id": "4aab7517-48c3-4744-bb35-6089c342d69e",
+    "id": "101c3639-dd5c-4cc9-8db2-e1d32e1e961a",
     "name": "Globex Enterprise",
     "description": null,
-    "companyId": "ad2deacf-a1de-4f39-a3b6-bbc25804e08a",
+    "companyId": "4f26d870-65bc-43c9-9383-e124f0bdf82d",
     "isActive": true,
     "billingPeriod": "monthly",
     "billingAmount": 8000,
@@ -40,14 +40,14 @@
     "followUpEnabled": true,
     "followUpIntervalDays": 7,
     "maxFollowUps": 3,
-    "createdAt": "2026-08-11T07:56:34.668Z",
-    "updatedAt": "2026-08-11T07:56:34.668Z"
+    "createdAt": "2026-08-11T14:21:53.593Z",
+    "updatedAt": "2026-08-11T14:21:53.593Z"
   },
   {
-    "id": "34fb6653-0306-4c7c-b3cc-6956a697dddb",
+    "id": "704c7f66-f57b-4090-939a-043410bc5b30",
     "name": "Initech Pro",
     "description": null,
-    "companyId": "7b2fc132-794b-4d19-b670-a820e41e20db",
+    "companyId": "e32616a7-20d6-411c-9f41-be91521603e8",
     "isActive": true,
     "billingPeriod": "monthly",
     "billingAmount": 3500,
@@ -62,14 +62,14 @@
     "followUpEnabled": true,
     "followUpIntervalDays": 7,
     "maxFollowUps": 3,
-    "createdAt": "2026-08-11T07:56:34.668Z",
-    "updatedAt": "2026-08-11T07:56:34.668Z"
+    "createdAt": "2026-08-11T14:21:53.593Z",
+    "updatedAt": "2026-08-11T14:21:53.593Z"
   },
   {
-    "id": "e13272fa-609b-4fda-81be-1af4eb040575",
+    "id": "990c792a-7687-4fdb-b780-4d4de1da6c3a",
     "name": "Umbrella Silver",
     "description": null,
-    "companyId": "dece8242-e860-4532-9abe-ade9bdf1e8e3",
+    "companyId": "c9fd24c1-b817-4069-90c4-c240c091c346",
     "isActive": true,
     "billingPeriod": "quarterly",
     "billingAmount": 4500,
@@ -84,14 +84,14 @@
     "followUpEnabled": true,
     "followUpIntervalDays": 7,
     "maxFollowUps": 3,
-    "createdAt": "2026-08-11T07:56:34.668Z",
-    "updatedAt": "2026-08-11T07:56:34.668Z"
+    "createdAt": "2026-08-11T14:21:53.593Z",
+    "updatedAt": "2026-08-11T14:21:53.593Z"
   },
   {
-    "id": "f1440915-4ec5-4ac6-9655-c640bb49eeb0",
+    "id": "3cc23f81-952e-4dfa-a830-c25eab7b0b00",
     "name": "Stark Platinum",
     "description": null,
-    "companyId": "521dda1f-a1ff-42cc-974e-4c98852eb6b6",
+    "companyId": "bdb30105-929e-447f-979b-816a76a6a92f",
     "isActive": true,
     "billingPeriod": "monthly",
     "billingAmount": 12000,
@@ -106,7 +106,7 @@
     "followUpEnabled": true,
     "followUpIntervalDays": 7,
     "maxFollowUps": 3,
-    "createdAt": "2026-08-11T07:56:34.668Z",
-    "updatedAt": "2026-08-11T07:56:34.668Z"
+    "createdAt": "2026-08-11T14:21:53.593Z",
+    "updatedAt": "2026-08-11T14:21:53.593Z"
   }
 ]

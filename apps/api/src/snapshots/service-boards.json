@@ -1,35 +1,7 @@
 [
   {
-    "id": "3288a5f4-e72a-46be-a927-f3e7b7723f3b",
-    "name": "Helpdesk",
-    "description": "General IT support",
-    "isActive": true,
-    "slaResponseMinutes": 120,
-    "slaResolutionMinutes": 480,
-    "autoCloseEnabled": true,
-    "autoCloseDays": 14,
-    "followUpEnabled": true,
-    "followUpIntervalHours": 24,
-    "createdAt": "2026-08-11T07:56:34.666Z",
-    "updatedAt": "2026-08-11T07:56:34.666Z"
-  },
-  {
-    "id": "c64de350-9771-4c45-98e1-db001db890d9",
-    "name": "Security",
-    "description": "Security incidents and alerts",
-    "isActive": true,
-    "slaResponseMinutes": 30,
-    "slaResolutionMinutes": 240,
-    "autoCloseEnabled": true,
-    "autoCloseDays": 14,
-    "followUpEnabled": true,
-    "followUpIntervalHours": 24,
-    "createdAt": "2026-08-11T07:56:34.666Z",
-    "updatedAt": "2026-08-11T07:56:34.666Z"
-  },
-  {
-    "id": "88a4248f-7fdc-4180-8764-fdd70d2c1209",
-    "name": "Client Onboarding",
+    "id": "fe147d30-54af-49c6-8e23-86f95cd3f073",
+    "name": "Infrastructure Service Desk",
     "description": "New client setup and migration",
     "isActive": true,
     "slaResponseMinutes": 240,
@@ -38,7 +10,49 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-11T07:56:34.667Z",
-    "updatedAt": "2026-08-11T07:56:34.667Z"
+    "createdAt": "2026-08-11T14:21:53.591Z",
+    "updatedAt": "2026-08-11T14:23:16.627Z"
+  },
+  {
+    "id": "66c0bd58-9d91-49f0-ba46-ce19d7ed6083",
+    "name": "MSP Service Desk",
+    "description": "General IT support",
+    "isActive": true,
+    "slaResponseMinutes": 120,
+    "slaResolutionMinutes": 480,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-11T14:21:53.590Z",
+    "updatedAt": "2026-08-11T14:23:27.852Z"
+  },
+  {
+    "id": "81d0fd15-1841-4bd2-81f4-22d5eb8f5842",
+    "name": "NOC Alerts",
+    "description": "Security incidents and alerts",
+    "isActive": true,
+    "slaResponseMinutes": 30,
+    "slaResolutionMinutes": 240,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-11T14:21:53.591Z",
+    "updatedAt": "2026-08-11T14:23:35.324Z"
+  },
+  {
+    "id": "30718ada-f9b5-4d0d-b316-8ccd90ffdd44",
+    "name": "Intelligence Service Desk",
+    "description": "",
+    "isActive": true,
+    "slaResponseMinutes": 240,
+    "slaResolutionMinutes": 1440,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-11T14:23:44.913Z",
+    "updatedAt": "2026-08-11T14:23:44.913Z"
   }
 ]
