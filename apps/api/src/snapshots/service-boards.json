@@ -1,35 +1,7 @@
 [
   {
-    "id": "b0f5acc2-e705-4b41-8746-b785450c6349",
-    "name": "Helpdesk",
-    "description": "General IT support",
-    "isActive": true,
-    "slaResponseMinutes": 120,
-    "slaResolutionMinutes": 480,
-    "autoCloseEnabled": true,
-    "autoCloseDays": 14,
-    "followUpEnabled": true,
-    "followUpIntervalHours": 24,
-    "createdAt": "2026-08-11T02:29:30.954Z",
-    "updatedAt": "2026-08-11T02:29:30.954Z"
-  },
-  {
-    "id": "ea4a2e38-54a2-45bd-9a10-1360c09bd574",
-    "name": "Security",
-    "description": "Security incidents and alerts",
-    "isActive": true,
-    "slaResponseMinutes": 30,
-    "slaResolutionMinutes": 240,
-    "autoCloseEnabled": true,
-    "autoCloseDays": 14,
-    "followUpEnabled": true,
-    "followUpIntervalHours": 24,
-    "createdAt": "2026-08-11T02:29:30.955Z",
-    "updatedAt": "2026-08-11T02:29:30.955Z"
-  },
-  {
     "id": "05dbf38a-11d5-414f-903d-a4aae855e3aa",
-    "name": "Client Onboarding",
+    "name": "MSP Service Desk",
     "description": "New client setup and migration",
     "isActive": true,
     "slaResponseMinutes": 240,
@@ -39,6 +11,48 @@
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
     "createdAt": "2026-08-11T02:29:30.956Z",
-    "updatedAt": "2026-08-11T02:29:30.956Z"
+    "updatedAt": "2026-08-11T03:50:50.140Z"
+  },
+  {
+    "id": "b0f5acc2-e705-4b41-8746-b785450c6349",
+    "name": "Infrastructure Service Desk",
+    "description": "General IT support",
+    "isActive": true,
+    "slaResponseMinutes": 120,
+    "slaResolutionMinutes": 480,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-11T02:29:30.954Z",
+    "updatedAt": "2026-08-11T03:51:07.060Z"
+  },
+  {
+    "id": "ea4a2e38-54a2-45bd-9a10-1360c09bd574",
+    "name": "NOC Alerts",
+    "description": "Security incidents and alerts",
+    "isActive": true,
+    "slaResponseMinutes": 30,
+    "slaResolutionMinutes": 240,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-11T02:29:30.955Z",
+    "updatedAt": "2026-08-11T03:51:14.592Z"
+  },
+  {
+    "id": "5cf77abc-de23-4d85-9a94-f73256b8f6da",
+    "name": "Intelligence Service Desk",
+    "description": "",
+    "isActive": true,
+    "slaResponseMinutes": 240,
+    "slaResolutionMinutes": 1440,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-11T03:51:26.383Z",
+    "updatedAt": "2026-08-11T03:51:26.383Z"
   }
 ]
