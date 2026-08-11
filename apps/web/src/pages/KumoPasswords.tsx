@@ -55,8 +55,14 @@ export function KumoPasswordsPage() {
 
   const handleReveal = async () => {
     if (!selected) return;
-    try { const r = await api.post(`/kumo/passwords/${selected.id}/reveal`); setRevealData(r.data); setTimeout(() => setRevealData(null), 30000); }
-    catch { toast.error("Access denied"); }
+    try {
+      const r = await api.post(`/kumo/passwords/${selected.id}/reveal`);
+      setRevealData(r.data);
+      setTimeout(() => setRevealData(null), 30000);
+    } catch (e: any) {
+      const msg = e?.response?.data?.error?.message || e?.response?.data?.error || e?.message || "Access denied";
+      toast.error(typeof msg === "string" ? msg : "Access denied");
+    }
   };
 
   const handleDelete = async () => {

@@ -1,6 +1,6 @@
 [
   {
-    "id": "9c924b66-3a2f-4c85-9367-d0da011af334",
+    "id": "bd396293-9f82-4bca-9bd5-831e9124c70a",
     "title": "VPN Setup Guide for Remote Users",
     "slug": "vpn-setup-guide",
     "content": "# VPN Setup Guide\n\nFollow these steps to configure your VPN client.\n\n1. Download the client from company portal\n2. Enter your credentials\n3. Select the closest gateway\n4. Click Connect",
@@ -8,7 +8,7 @@
     "status": "published",
     "visibility": "public",
     "categoryId": null,
-    "authorId": "caf8c1e0-5c0f-4648-b622-ab6b4d42f57e",
+    "authorId": "f49e48d5-f044-41ed-a12c-53b1c795bf88",
     "viewCount": 0,
     "helpfulCount": 0,
     "notHelpfulCount": 0,
@@ -17,11 +17,11 @@
       "remote",
       "setup"
     ],
-    "createdAt": "2026-08-11T04:44:06.661Z",
-    "updatedAt": "2026-08-11T04:44:06.661Z"
+    "createdAt": "2026-08-11T05:18:05.151Z",
+    "updatedAt": "2026-08-11T05:18:05.151Z"
   },
   {
-    "id": "6a4b590f-aeec-44d8-bf77-f67f023d25a6",
+    "id": "7877e16a-6c5d-445e-a66b-db744af07a6c",
     "title": "Common Email Issues and Troubleshooting",
     "slug": "common-email-issues",
     "content": "# Common Email Issues\n\n## Outbound Email Fails\n- Check Exchange connector settings\n- Verify smart host configuration\n- Test transport rules",
@@ -29,7 +29,7 @@
     "status": "published",
     "visibility": "internal",
     "categoryId": null,
-    "authorId": "caf8c1e0-5c0f-4648-b622-ab6b4d42f57e",
+    "authorId": "f49e48d5-f044-41ed-a12c-53b1c795bf88",
     "viewCount": 0,
     "helpfulCount": 0,
     "notHelpfulCount": 0,
@@ -38,11 +38,11 @@
       "exchange",
       "troubleshooting"
     ],
-    "createdAt": "2026-08-11T04:44:06.661Z",
-    "updatedAt": "2026-08-11T04:44:06.661Z"
+    "createdAt": "2026-08-11T05:18:05.151Z",
+    "updatedAt": "2026-08-11T05:18:05.151Z"
   },
   {
-    "id": "699d079a-041c-4c9a-9726-0a899b6bdc47",
+    "id": "2373e60b-1ade-4400-8334-6bd00be17ca4",
     "title": "Phishing Awareness Training",
     "slug": "phishing-awareness",
     "content": "# Phishing Awareness\n\n## How to Spot Phishing\n- Check sender address carefully\n- Look for generic greetings\n- Don't click unexpected links\n- Report to IT immediately",
@@ -50,7 +50,7 @@
     "status": "published",
     "visibility": "public",
     "categoryId": null,
-    "authorId": "9ea07ac1-9342-470c-a87d-9ecb6db4af7f",
+    "authorId": "e995f5e9-aa9a-4502-afb9-ef726fa24051",
     "viewCount": 0,
     "helpfulCount": 0,
     "notHelpfulCount": 0,
@@ -59,11 +59,11 @@
       "phishing",
       "training"
     ],
-    "createdAt": "2026-08-11T04:44:06.661Z",
-    "updatedAt": "2026-08-11T04:44:06.661Z"
+    "createdAt": "2026-08-11T05:18:05.151Z",
+    "updatedAt": "2026-08-11T05:18:05.151Z"
   },
   {
-    "id": "93e037ea-5294-49ea-83de-0c9dc49d2c2a",
+    "id": "c2aacefc-6467-47fb-93f0-0af7cf9ddcb3",
     "title": "New Hire Onboarding Checklist",
     "slug": "new-hire-onboarding",
     "content": "# New Hire Onboarding\n\n## Checklist\n1. Create user account\n2. Assign licenses\n3. Configure email\n4. Set up MFA\n5. Deploy workstation",
@@ -71,7 +71,7 @@
     "status": "draft",
     "visibility": "internal",
     "categoryId": null,
-    "authorId": "e7f3fd0d-d08b-46d1-8c3a-7a512cacc6be",
+    "authorId": "9c8d045e-70f9-42b3-8acb-4aad3b1c3b16",
     "viewCount": 0,
     "helpfulCount": 0,
     "notHelpfulCount": 0,
@@ -79,7 +79,7 @@
       "onboarding",
       "checklist"
     ],
-    "createdAt": "2026-08-11T04:44:06.661Z",
-    "updatedAt": "2026-08-11T04:44:06.661Z"
+    "createdAt": "2026-08-11T05:18:05.151Z",
+    "updatedAt": "2026-08-11T05:18:05.151Z"
   }
 ]
