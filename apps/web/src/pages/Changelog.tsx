@@ -14,7 +14,7 @@ interface Version {
   changes: ChangeItem[];
 }
 
-/** Parse FEATURE_LIST.md text into structured version entries */
+/** Parse BuildNotes.md text into structured version entries */
 function parseFeatureList(raw: string): Version[] {
   const versions: Version[] = [];
 
@@ -60,12 +60,12 @@ export function ChangelogPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch raw FEATURE_LIST.md from Vite's public directory — no server needed
-    fetch("/FEATURE_LIST.md")
+    // Fetch raw BuildNotes.md from Vite's public directory — no server needed
+    fetch("/BuildNotes.md")
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
       .then(raw => {
         const parsed = parseFeatureList(raw);
-        if (parsed.length === 0) throw new Error("No version entries found in FEATURE_LIST.md");
+        if (parsed.length === 0) throw new Error("No version entries found in BuildNotes.md");
         setVersions(parsed);
       })
       .catch(err => setError(err.message))
@@ -77,7 +77,7 @@ export function ChangelogPage() {
   if (error) return (
     <div className="text-center py-12">
       <p className="text-red-400 text-sm">Could not load changelog: {error}</p>
-      <p className="text-gray-500 text-xs mt-2">Ensure FEATURE_LIST.md exists in the public/ directory.</p>
+      <p className="text-gray-500 text-xs mt-2">Ensure BuildNotes.md exists in the public/ directory.</p>
     </div>
   );
 

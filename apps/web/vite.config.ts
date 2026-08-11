@@ -4,26 +4,26 @@ import path from "path";
 import fs from "fs";
 import { WEB_PORT, API_ORIGIN } from "../../packages/shared/src/constants";
 
-/** Copy FEATURE_LIST.md from project root into public/ so it's served at /FEATURE_LIST.md */
-function syncFeatureList(): import("vite").Plugin {
-  const src = path.resolve(__dirname, "../../FEATURE_LIST.md");
-  const dest = path.resolve(__dirname, "public/FEATURE_LIST.md");
+/** Copy BuildNotes.md from project root into public/ so it's served at /BuildNotes.md */
+function syncBuildNotes(): import("vite").Plugin {
+  const src = path.resolve(__dirname, "../../BuildNotes.md");
+  const dest = path.resolve(__dirname, "public/BuildNotes.md");
   return {
-    name: "sync-feature-list",
+    name: "sync-build-notes",
     buildStart() {
       try {
         fs.mkdirSync(path.dirname(dest), { recursive: true });
         fs.copyFileSync(src, dest);
-        console.log("[sync-feature-list] FEATURE_LIST.md → public/");
+        console.log("[sync-build-notes] BuildNotes.md → public/");
       } catch (e) {
-        console.warn("[sync-feature-list] Could not copy FEATURE_LIST.md:", (e as Error).message);
+        console.warn("[sync-build-notes] Could not copy BuildNotes.md:", (e as Error).message);
       }
     },
   };
 }
 
 export default defineConfig({
-  plugins: [syncFeatureList(), react()],
+  plugins: [syncBuildNotes(), react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

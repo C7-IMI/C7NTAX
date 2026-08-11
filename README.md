@@ -9,7 +9,7 @@ Stop wrestling with fragmented tools and rigid legacy software. Speak the langua
 
 ## What's New
 
-> Sourced from [`FEATURE_LIST.md`](FEATURE_LIST.md) — the authoritative changelog.  
+> Sourced from [`BuildNotes.md`](BuildNotes.md) — the authoritative changelog.  
 > Badge legend: 🟢 `[New]` = New Feature &nbsp;|&nbsp; 🟡 `[Update]` = Enhancement &nbsp;|&nbsp; 🔴 `[Fix]` = Bug Fix
 
 ### 2026.8.10.003 — Header Descriptions & Section Landing Pages
@@ -26,7 +26,7 @@ Stop wrestling with fragmented tools and rigid legacy software. Speak the langua
 | 🟢 New | **Header toolbar** — Search, Recent, AI, Help, Settings, and My Account placeholder buttons added to the top-right of the application header bar. |
 | 🟡 Update | **CloudConnect rebrand** — the Integrations navigation item and all associated routes, file names, component labels, and documentation strings have been renamed to CloudConnect. |
 | 🟡 Update | **Extended contacts seed** — the database seed script now creates 13 contacts (up from 5) with full PSA fields: phone, mobile, title, department, and isActive. |
-| 🟡 Update | **Date-based versioning** — version numbers resequenced to `Year.Month.Day.Build` format across the What's New changelog, FEATURE_LIST.md, and all documentation. |
+| 🟡 Update | **Date-based versioning** — version numbers resequenced to `Year.Month.Day.Build` format across the What's New changelog, BuildNotes.md, and all documentation. |
 | 🟡 Update | **Manage Roles rename** — "Roles & Permissions" has been renamed to "Manage Roles" in all UI labels, navigation links, page titles, and documentation. |
 | 🟡 Update | **Home breadcrumb** — the top-level breadcrumb label changed from "Dashboard" to "Home", with a new Home landing page containing a welcome message and Getting Started cards. |
 
@@ -45,7 +45,7 @@ Stop wrestling with fragmented tools and rigid legacy software. Speak the langua
 | 🟡 Update | **Navigation relocation** — CloudConnect (formerly Integrations) and What's New have been repositioned in the Administration sidebar menu. |
 | 🟡 Update | **Route migration** — `/integrations` → `/cloudconnect`, `/api/integrations` → `/api/cloudconnect`, and `Integrations.tsx` → `CloudConnect.tsx`. |
 
-_For the complete changelog with all historical entries, see [FEATURE_LIST.md](FEATURE_LIST.md)._
+_For the complete changelog with all historical entries, see [BuildNotes.md](BuildNotes.md)._
 
 ## Architecture
 

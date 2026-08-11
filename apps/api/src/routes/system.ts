@@ -157,7 +157,7 @@ systemRouter.post("/poller/reset", async (_req: AuthRequest, res) => {
   res.json({ success: true, message: "Poller reset successfully" });
 });
 
-// ── Changelog — parses FEATURE_LIST.md at runtime (single source of truth) ──
+// ── Changelog — parses BuildNotes.md at runtime (single source of truth) ──
 
 interface ChangeItem {
   text: string;
@@ -213,7 +213,7 @@ function parseFeatureList(mdPath: string): VersionEntry[] {
 
 systemRouter.get("/changelog", (_req, res) => {
   try {
-    const mdPath = resolve(__dirname, "../../../../FEATURE_LIST.md");
+    const mdPath = resolve(__dirname, "../../../../BuildNotes.md");
     const data = parseFeatureList(mdPath);
     res.json(data);
   } catch {
