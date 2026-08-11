@@ -36,6 +36,7 @@ async function main() {
   const hash = (pw: string) => bcrypt.hashSync(pw, 10);
 
   // ── Roles ──
+  const superAdminRole = await prisma.role.create({ data: { name: "Super Admin", systemRole: "super_admin", isDefault: false, permissions: Object.values(Permission) } });
   const adminRole = await prisma.role.create({ data: { name: "Admin", systemRole: "admin", isDefault: true, permissions: ["ticket:view","ticket:create","ticket:edit","ticket:delete","ticket:assign","ticket:close","ticket:view_all","board:view","board:manage","client:view","client:create","client:edit","client:delete","billing:view","billing:manage","invoice:create","invoice:send","user:manage","role:manage","system:config","integration:view","integration:manage","report:view","report:export"] } });
   const techRole = await prisma.role.create({ data: { name: "Technician", systemRole: "technician", permissions: ["ticket:view","ticket:create","ticket:edit","ticket:assign","ticket:close","board:view","client:view","integration:view","report:view"] } });
   const clientRole = await prisma.role.create({ data: { name: "Client Admin", systemRole: "client_admin", permissions: ["ticket:view","ticket:create","ticket:edit","board:view","client:view","billing:view"] } });

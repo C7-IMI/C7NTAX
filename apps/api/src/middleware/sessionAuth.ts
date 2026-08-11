@@ -78,9 +78,10 @@ export async function authenticateSession(
       return;
     }
 
-    // Inactivity timeout — admin bypass per PSA standard
-    if (ADMIN_TIMEOUT_BYPASS && session.user?.role?.systemRole === "admin") {
-      // Admin sessions never expire from inactivity
+    // Inactivity timeout — admin + super_admin bypass per PSA standard
+    if (ADMIN_TIMEOUT_BYPASS &&
+        (session.user?.role?.systemRole === "admin" || session.user?.role?.systemRole === "super_admin")) {
+      // Admin and Super Admin sessions never expire from inactivity
     } else {
       const timeoutMs = 30 * 60 * 1000; // Default 30 min (configurable via tenant settings)
       const idleMs = Date.now() - session.lastActivityAt.getTime();

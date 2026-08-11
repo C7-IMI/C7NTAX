@@ -56,6 +56,7 @@ export enum BillingPeriod {
 
 /** User roles for RBAC */
 export enum SystemRole {
+  SuperAdmin = "super_admin",
   Admin = "admin",
   Manager = "manager",
   Technician = "technician",
@@ -309,6 +310,7 @@ export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: P
 
 /** Default role → permission mapping */
 export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
+  [SystemRole.SuperAdmin]: Object.values(Permission),
   [SystemRole.Admin]: Object.values(Permission),
   [SystemRole.Manager]: [
     Permission.TicketViewAll, Permission.TicketView, Permission.TicketCreate,
