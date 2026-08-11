@@ -13,7 +13,7 @@ import type { Request, Response, NextFunction } from "express";
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingCapture = false;
 const DEBOUNCE_MS = 5000;
-const CAPTURE_SCRIPT = path.join(__dirname, "snapshot-capture.ts");
+const CAPTURE_SCRIPT = path.join(__dirname, "..", "snapshot-capture.ts");
 // Skip auto-capture on these paths (health checks, auth, etc.)
 const SKIP_PATHS = ["/api/health", "/api/auth/", "/api/users/me"];
 

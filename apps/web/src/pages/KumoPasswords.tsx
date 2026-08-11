@@ -19,6 +19,8 @@ export function KumoPasswordsPage() {
   const [totpCode, setTotpCode] = useState<{code:string;remaining:number} | null>(null);
   const [manualSecret, setManualSecret] = useState("");
   const [manualTotpCode, setManualTotpCode] = useState<{code:string;remaining:number} | null>(null);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showEditPwd, setShowEditPwd] = useState(false);
 
   const fetch = async () => {
     try { const r = await api.get("/kumo/passwords"); setPasswords(r.data.data || []); }
@@ -246,13 +248,17 @@ export function KumoPasswordsPage() {
                   <div>
                     <label className="text-xs text-gray-500 block mb-1">New Password (leave blank to keep current)</label>
                     <div className="flex gap-1">
-                      <input className="input-field text-sm py-1 flex-1" type="password"
+                      <input className="input-field text-sm py-1 flex-1" type={showEditPwd ? "text" : "password"}
                         placeholder="Enter new password"
                         value={editForm.password || ""}
                         onChange={e => setEditForm({ ...editForm, password: e.target.value })} />
+                      <button type="button" onClick={() => setShowEditPwd(!showEditPwd)}
+                        className="btn-secondary text-xs py-1 px-1.5 flex items-center shrink-0" title={showEditPwd ? "Hide" : "Show"}>
+                        {showEditPwd ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
                       <button type="button" onClick={() => setEditForm({ ...editForm, password: generatePassword() })}
                         className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
-                        <Key size={12} /> Gen
+                        <Key size={12} /> Generate
                       </button>
                     </div>
                   </div>
@@ -277,10 +283,14 @@ export function KumoPasswordsPage() {
             <input className="input-field" placeholder="Label *" value={form.label} onChange={e => setForm({...form, label: e.target.value})} required />
             <div className="grid grid-cols-2 gap-2"><input className="input-field" placeholder="Username" value={form.username} onChange={e => setForm({...form, username: e.target.value})} /><input className="input-field" placeholder="Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
             <div className="flex gap-1">
-              <input className="input-field flex-1" type="password" placeholder="Password *" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
+              <input className="input-field flex-1" type={showNewPwd ? "text" : "password"} placeholder="Password *" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
+              <button type="button" onClick={() => setShowNewPwd(!showNewPwd)}
+                className="btn-secondary text-xs py-1 px-1.5 flex items-center shrink-0" title={showNewPwd ? "Hide" : "Show"}>
+                {showNewPwd ? <EyeOff size={13} /> : <Eye size={13} />}
+              </button>
               <button type="button" onClick={() => setForm({...form, password: generatePassword()})}
                 className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
-                <Key size={12} /> Gen
+                <Key size={12} /> Generate
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2"><input className="input-field" placeholder="URL" value={form.url} onChange={e => setForm({...form, url: e.target.value})} /><input className="input-field" placeholder="Category" value={form.category} onChange={e => setForm({...form, category: e.target.value})} /></div>

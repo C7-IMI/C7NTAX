@@ -51,6 +51,8 @@ export function UsersPage() {
   const [sort, setSort] = useState<SortState | null>(null);
   const [createForm, setCreateForm] = useState({ email: "", password: "", firstName: "", lastName: "", role: "technician" });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCreatePwd, setShowCreatePwd] = useState(false);
+  const [showChangePwd, setShowChangePwd] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -339,10 +341,14 @@ export function UsersPage() {
             </div>
             <input className="input-field" placeholder="Email" type="email" value={createForm.email} onChange={e => setCreateForm({ ...createForm, email: e.target.value })} required />
             <div className="flex gap-1">
-              <input className="input-field flex-1" placeholder="Password" type="password" value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} required minLength={8} />
+              <input className="input-field flex-1" placeholder="Password" type={showCreatePwd ? "text" : "password"} value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} required minLength={8} />
+              <button type="button" onClick={() => setShowCreatePwd(!showCreatePwd)}
+                className="btn-secondary text-xs py-1 px-1.5 flex items-center shrink-0" title={showCreatePwd ? "Hide" : "Show"}>
+                {showCreatePwd ? <EyeOff size={13} /> : <Eye size={13} />}
+              </button>
               <button type="button" onClick={() => setCreateForm({ ...createForm, password: generatePassword() })}
                 className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
-                <Key size={12} /> Gen
+                <Key size={12} /> Generate
               </button>
             </div>
             <select className="input-field" value={createForm.role} onChange={e => setCreateForm({ ...createForm, role: e.target.value })}>
@@ -440,11 +446,15 @@ export function UsersPage() {
                       <div className="max-w-xs">
                         <Label>New Password</Label>
                         <div className="flex gap-1">
-                          <input className="input-field flex-1" type="password" placeholder="Leave blank to keep current"
+                          <input className="input-field flex-1" type={showChangePwd ? "text" : "password"} placeholder="Leave blank to keep current"
                             value={String(form.password || "")} onChange={e => setForm({ ...form, password: e.target.value })} />
+                          <button type="button" onClick={() => setShowChangePwd(!showChangePwd)}
+                            className="btn-secondary text-xs py-1 px-1.5 flex items-center shrink-0" title={showChangePwd ? "Hide" : "Show"}>
+                            {showChangePwd ? <EyeOff size={13} /> : <Eye size={13} />}
+                          </button>
                           <button type="button" onClick={() => setForm({ ...form, password: generatePassword() })}
                             className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
-                            <Key size={12} /> Gen
+                            <Key size={12} /> Generate
                           </button>
                         </div>
                       </div>
