@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { Permission } from "@C7NTAX/shared";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -41,7 +42,7 @@ async function main() {
   const techRole = await prisma.role.create({ data: { name: "Technician", systemRole: "technician", permissions: ["ticket:view","ticket:create","ticket:edit","ticket:assign","ticket:close","board:view","client:view","integration:view","report:view"] } });
   const clientRole = await prisma.role.create({ data: { name: "Client Admin", systemRole: "client_admin", permissions: ["ticket:view","ticket:create","ticket:edit","board:view","client:view","billing:view"] } });
   const readOnlyRole = await prisma.role.create({ data: { name: "Read Only", systemRole: "read_only", permissions: ["ticket:view","board:view","client:view","report:view"] } });
-  console.log("  ✓ Created 4 roles");
+  console.log("  ✓ Created 5 roles");
 
   // ── Users ──
   const adminUser = await prisma.user.create({ data: { email: "admin@C7NTAX.com", username: "admin", passwordHash: hash("admin"), firstName: "Admin", lastName: "User", roleId: adminRole.id, isActive: true, emailVerified: true } });
