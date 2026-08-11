@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import {
   Plus, Search, Shield, X, Save, Edit3, Check, AlertTriangle,
   Mail, Phone, Building2, Clock, KeyRound, UserCheck, UserX, ShieldAlert,
-  ChevronLeft, ChevronDown, Copy, Key,
+  ChevronLeft, ChevronDown, Copy, Key, Eye, EyeOff,
 } from "lucide-react";
 import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from "@C7NTAX/shared";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
