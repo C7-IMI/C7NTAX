@@ -71,7 +71,10 @@ async function refreshPermissionsFromDB(user: AuthUser): Promise<void> {
         dbUser.role.permissions as string[],
         dbUser.permissions as string[]
       );
-      if (fresh.length > user.permissions.length) {
+      // Always refresh if the DB has different permissions (not just more)
+      const hasNew = fresh.some(p => !user.permissions.includes(p));
+      const hasLess = user.permissions.some(p => !fresh.includes(p));
+      if (hasNew || hasLess) {
         user.permissions = fresh;
       }
     }
