@@ -1,7 +1,7 @@
 [
   {
-    "id": "8486edb4-dd6d-4e5a-a40a-a1d7ad69c06d",
-    "templateId": "f994031d-9e31-47dd-9fdf-3e109bcb41d2",
+    "id": "7ebe9c9e-ed4c-4ef2-9781-d9d9eb990c8f",
+    "templateId": "467b77ef-4853-498d-b5c0-8c622433ab58",
     "key": "hostname",
     "label": "Hostname",
     "fieldType": "text",
@@ -13,12 +13,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 0,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "67c83b6c-a2de-4a6e-b04e-3819084e6552",
-    "templateId": "f994031d-9e31-47dd-9fdf-3e109bcb41d2",
+    "id": "ce6051ec-6d40-4416-bed1-2e86f0254a5f",
+    "templateId": "467b77ef-4853-498d-b5c0-8c622433ab58",
     "key": "os",
     "label": "Operating System",
     "fieldType": "text",
@@ -30,12 +30,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 1,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "d9791f9a-c7b4-4a86-860e-3309acc974c1",
-    "templateId": "f994031d-9e31-47dd-9fdf-3e109bcb41d2",
+    "id": "b5a839bc-ca39-4048-9356-b40722c102f3",
+    "templateId": "467b77ef-4853-498d-b5c0-8c622433ab58",
     "key": "cpu",
     "label": "CPU Cores",
     "fieldType": "number",
@@ -47,12 +47,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 2,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "5ccd1699-bd1e-4ead-b1fd-8b483db88063",
-    "templateId": "f994031d-9e31-47dd-9fdf-3e109bcb41d2",
+    "id": "53b6b2a0-02e4-4da8-972d-7ea290325835",
+    "templateId": "467b77ef-4853-498d-b5c0-8c622433ab58",
     "key": "ram",
     "label": "RAM (GB)",
     "fieldType": "number",
@@ -64,12 +64,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 3,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "2edd708c-e377-4b39-8b29-66ed8caede7d",
-    "templateId": "f994031d-9e31-47dd-9fdf-3e109bcb41d2",
+    "id": "27f9db71-a651-4bd6-98f9-8e819f8fd17a",
+    "templateId": "467b77ef-4853-498d-b5c0-8c622433ab58",
     "key": "ip",
     "label": "IP Address",
     "fieldType": "text",
@@ -81,12 +81,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 4,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "7e4e5bae-c269-4706-ab6f-f610eb0c0174",
-    "templateId": "204dce11-6f58-4aa9-afd2-b215dc5024dc",
+    "id": "74aae021-50f3-4bdc-9304-56c7b34b03d6",
+    "templateId": "2e6be782-fb99-4be2-a4ad-c1d7f5e52a9d",
     "key": "hostname",
     "label": "Hostname",
     "fieldType": "text",
@@ -98,12 +98,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 0,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "4a0ee5c5-b933-484a-baa5-25e4dc63ab2d",
-    "templateId": "204dce11-6f58-4aa9-afd2-b215dc5024dc",
+    "id": "8c9c0ee3-9878-4caa-bda3-d7ef4ac626ed",
+    "templateId": "2e6be782-fb99-4be2-a4ad-c1d7f5e52a9d",
     "key": "os",
     "label": "OS",
     "fieldType": "text",
@@ -115,12 +115,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 1,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "4f497371-8fcb-4d74-a831-3007010b7693",
-    "templateId": "204dce11-6f58-4aa9-afd2-b215dc5024dc",
+    "id": "718d8639-12cc-43a6-b568-7cadf9292ecd",
+    "templateId": "2e6be782-fb99-4be2-a4ad-c1d7f5e52a9d",
     "key": "serial",
     "label": "Serial Number",
     "fieldType": "text",
@@ -132,12 +132,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 2,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "852bf9ff-de08-49cd-9751-1da4702df3a4",
-    "templateId": "edf96898-c694-4549-8fb3-a40415536dae",
+    "id": "5a201ad6-6b3f-49ef-a0d8-e18487de7f8c",
+    "templateId": "4f9afa87-8477-4af0-8ed9-57625f31e667",
     "key": "hostname",
     "label": "Hostname",
     "fieldType": "text",
@@ -149,12 +149,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 0,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "96780440-2025-4208-97b9-e6c8d403bee6",
-    "templateId": "edf96898-c694-4549-8fb3-a40415536dae",
+    "id": "f16d3f08-8eb3-451a-b665-ec2575d21bb8",
+    "templateId": "4f9afa87-8477-4af0-8ed9-57625f31e667",
     "key": "deviceType",
     "label": "Device Type",
     "fieldType": "text",
@@ -166,12 +166,12 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 1,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   },
   {
-    "id": "def68c50-99d9-4a74-bd19-a3c6329691fc",
-    "templateId": "edf96898-c694-4549-8fb3-a40415536dae",
+    "id": "31c0577d-147a-4a5f-823b-2226db7ff095",
+    "templateId": "4f9afa87-8477-4af0-8ed9-57625f31e667",
     "key": "mgmt_ip",
     "label": "Management IP",
     "fieldType": "text",
@@ -183,7 +183,7 @@
     "isSensitive": false,
     "encrypted": false,
     "sortOrder": 2,
-    "createdAt": "2026-08-11T04:28:13.373Z",
-    "updatedAt": "2026-08-11T04:28:13.373Z"
+    "createdAt": "2026-08-11T04:40:34.483Z",
+    "updatedAt": "2026-08-11T04:40:34.483Z"
   }
 ]

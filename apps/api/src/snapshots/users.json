@@ -1,9 +1,9 @@
 [
   {
-    "id": "96cb0a7d-dbef-4d22-a352-ddc090dd6bdf",
+    "id": "3be58656-1e7b-4e57-95d7-81a03dd18220",
     "email": "admin@C7NTAX.com",
     "username": "admin",
-    "passwordHash": "$2a$10$JQ22xhQUoFKn4qF4hYpF2OUzfiM3t/8v1mTSRawgUErNIQtIBkhmm",
+    "passwordHash": "$2a$10$r6v4e3CE/RoQ6qO/cJf6MeQ2xy8W3B7Ap8p2ViyIcy54qOn9oqFry",
     "firstName": "Admin",
     "lastName": "User",
     "phone": null,
@@ -20,17 +20,17 @@
     "mfaBackupCodes": [],
     "mfaEmailCode": null,
     "mfaEmailCodeExpires": null,
-    "roleId": "9414067f-7578-4dff-9018-dc98c7707376",
+    "roleId": "f531f86f-6ad5-4b28-935e-b1a295f1841d",
     "permissions": [],
     "companyId": null,
-    "createdAt": "2026-08-11T04:28:13.043Z",
-    "updatedAt": "2026-08-11T04:28:13.043Z"
+    "createdAt": "2026-08-11T04:40:34.166Z",
+    "updatedAt": "2026-08-11T04:40:34.166Z"
   },
   {
-    "id": "a0f3adaa-7994-4d92-9522-3586bcd23fea",
+    "id": "abe2add4-5a5a-4cc9-9947-ae7dff255a14",
     "email": "john.smith@c7ntax.com",
     "username": "jsmith",
-    "passwordHash": "$2a$10$BVQjOLAw8ckqPscX29jaqulJptBvEwiEdiJl3A.gP4KZt9Cf.iGWC",
+    "passwordHash": "$2a$10$cDOBOchvhDw1luuOLuEJ9eGOfnLNPWG/Fjvo8hUlemPYZRNwahJuu",
     "firstName": "John",
     "lastName": "Smith",
     "phone": null,
@@ -47,17 +47,17 @@
     "mfaBackupCodes": [],
     "mfaEmailCode": null,
     "mfaEmailCodeExpires": null,
-    "roleId": "d3a368c2-1438-4304-970f-28cad823dfd1",
+    "roleId": "84fb9425-e469-48df-a657-14244839f6dd",
     "permissions": [],
     "companyId": null,
-    "createdAt": "2026-08-11T04:28:13.100Z",
-    "updatedAt": "2026-08-11T04:28:13.100Z"
+    "createdAt": "2026-08-11T04:40:34.223Z",
+    "updatedAt": "2026-08-11T04:40:34.223Z"
   },
   {
-    "id": "63f2f9fe-e626-4e31-a8f1-144b32daef0e",
+    "id": "460343e8-2146-4192-b95c-5230b3ea5eb9",
     "email": "sarah.jones@c7ntax.com",
     "username": "sjones",
-    "passwordHash": "$2a$10$M2ZOellfU1P/R40gai358.PFaB8H5kyjfnk20tKCrVfg98JstdDeC",
+    "passwordHash": "$2a$10$9Cv3y1d375VAet37.f5Hn.twcV8V00oTLaxXIW3rIgloJsdiYHRWi",
     "firstName": "Sarah",
     "lastName": "Jones",
     "phone": null,
@@ -74,17 +74,17 @@
     "mfaBackupCodes": [],
     "mfaEmailCode": null,
     "mfaEmailCodeExpires": null,
-    "roleId": "d3a368c2-1438-4304-970f-28cad823dfd1",
+    "roleId": "84fb9425-e469-48df-a657-14244839f6dd",
     "permissions": [],
     "companyId": null,
-    "createdAt": "2026-08-11T04:28:13.156Z",
-    "updatedAt": "2026-08-11T04:28:13.156Z"
+    "createdAt": "2026-08-11T04:40:34.278Z",
+    "updatedAt": "2026-08-11T04:40:34.278Z"
   },
   {
-    "id": "33698a85-b0e5-4710-9889-e2b7bd68ca9e",
+    "id": "86c0c287-522b-40f3-935a-3a1f968c9102",
     "email": "mike.wilson@c7ntax.com",
     "username": "mwilson",
-    "passwordHash": "$2a$10$7AXRKzXvX7HE5Ti2AiBfpOsSsH7qx2ty3GAjXB4bcyE4E4hDDuSZO",
+    "passwordHash": "$2a$10$xkjoF.1POtej3RECQTCdWONgrRXp77ezcVfn6h7LEMuC5ufLuku8e",
     "firstName": "Mike",
     "lastName": "Wilson",
     "phone": null,
@@ -101,17 +101,17 @@
     "mfaBackupCodes": [],
     "mfaEmailCode": null,
     "mfaEmailCodeExpires": null,
-    "roleId": "9414067f-7578-4dff-9018-dc98c7707376",
+    "roleId": "f531f86f-6ad5-4b28-935e-b1a295f1841d",
     "permissions": [],
     "companyId": null,
-    "createdAt": "2026-08-11T04:28:13.212Z",
-    "updatedAt": "2026-08-11T04:28:13.212Z"
+    "createdAt": "2026-08-11T04:40:34.332Z",
+    "updatedAt": "2026-08-11T04:40:34.332Z"
   },
   {
-    "id": "4bf15588-1003-4d7d-b64c-911ec6db8424",
+    "id": "2e786c77-7a4f-4993-bb68-7a497e789b10",
     "email": "lisa.brown@c7ntax.com",
     "username": "lbrown",
-    "passwordHash": "$2a$10$MjZXrIWHPdvlQwo.7o3zPuG4zAMamfvhiMt.Fp0pHZWMAwDQl/PB2",
+    "passwordHash": "$2a$10$0.jAZURh9XhmCecTIZ1tZeq0rptseZ5jysZYjTTzEB.ON5o3s9rPG",
     "firstName": "Lisa",
     "lastName": "Brown",
     "phone": null,
@@ -128,17 +128,17 @@
     "mfaBackupCodes": [],
     "mfaEmailCode": null,
     "mfaEmailCodeExpires": null,
-    "roleId": "9414067f-7578-4dff-9018-dc98c7707376",
+    "roleId": "f531f86f-6ad5-4b28-935e-b1a295f1841d",
     "permissions": [],
     "companyId": null,
-    "createdAt": "2026-08-11T04:28:13.270Z",
-    "updatedAt": "2026-08-11T04:28:13.270Z"
+    "createdAt": "2026-08-11T04:40:34.388Z",
+    "updatedAt": "2026-08-11T04:40:34.388Z"
   },
   {
-    "id": "0eff8e18-ccb1-4eb9-addc-4d40ec010ce0",
+    "id": "9fb0ad0f-6737-4737-8d74-51ef0ae828e9",
     "email": "david@acmecorp.com",
     "username": "david",
-    "passwordHash": "$2a$10$rSBrOU2VKJXRnCaHBrVI0eKOl8YYlYalx.5Ue4/Ws2u8kv7FAnnzi",
+    "passwordHash": "$2a$10$l38ke9c2K92ARrR15JUukeRfIGGbnMPbcmsWlm6Q4i2fVkpzAT7U6",
     "firstName": "David",
     "lastName": "Chen",
     "phone": null,
@@ -155,10 +155,10 @@
     "mfaBackupCodes": [],
     "mfaEmailCode": null,
     "mfaEmailCodeExpires": null,
-    "roleId": "f2ea80bb-96bf-4c9b-b70d-78013a8cb040",
+    "roleId": "35e33349-3b76-475d-9d46-7b7b577cd8b6",
     "permissions": [],
     "companyId": null,
-    "createdAt": "2026-08-11T04:28:13.326Z",
-    "updatedAt": "2026-08-11T04:28:13.326Z"
+    "createdAt": "2026-08-11T04:40:34.444Z",
+    "updatedAt": "2026-08-11T04:40:34.444Z"
   }
 ]

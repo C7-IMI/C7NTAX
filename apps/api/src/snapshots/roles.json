@@ -1,6 +1,6 @@
 [
   {
-    "id": "7fb7505f-f770-4ced-b5c6-a98c25a8137c",
+    "id": "fa5e8d88-d647-4e24-9882-3dc48eed15de",
     "name": "Super Admin",
     "systemRole": "super_admin",
     "permissions": [
@@ -107,11 +107,11 @@
       "kumo:link:manage"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-11T04:28:12.980Z",
-    "updatedAt": "2026-08-11T04:28:12.980Z"
+    "createdAt": "2026-08-11T04:40:34.101Z",
+    "updatedAt": "2026-08-11T04:40:34.101Z"
   },
   {
-    "id": "9414067f-7578-4dff-9018-dc98c7707376",
+    "id": "f531f86f-6ad5-4b28-935e-b1a295f1841d",
     "name": "Admin",
     "systemRole": "admin",
     "permissions": [
@@ -138,14 +138,69 @@
       "integration:view",
       "integration:manage",
       "report:view",
-      "report:export"
+      "report:export",
+      "report:create",
+      "kumo:view",
+      "kumo:manage",
+      "kumo:view_all",
+      "kumo:asset:view",
+      "kumo:asset:create",
+      "kumo:asset:edit",
+      "kumo:asset:delete",
+      "kumo:asset:template:manage",
+      "kumo:passwords:view",
+      "kumo:passwords:create",
+      "kumo:passwords:edit",
+      "kumo:passwords:delete",
+      "kumo:passwords:reveal",
+      "kumo:config:view",
+      "kumo:config:create",
+      "kumo:config:edit",
+      "kumo:config:delete",
+      "kumo:doc:view",
+      "kumo:doc:create",
+      "kumo:doc:edit",
+      "kumo:doc:delete",
+      "kumo:doc:publish",
+      "kumo:link:view",
+      "kumo:link:manage",
+      "asset:view",
+      "asset:create",
+      "asset:edit",
+      "asset:delete",
+      "project:view",
+      "project:create",
+      "project:edit",
+      "project:delete",
+      "project:manage",
+      "kb:view",
+      "kb:create",
+      "kb:edit",
+      "kb:delete",
+      "kb:manage",
+      "opportunity:view",
+      "opportunity:create",
+      "opportunity:edit",
+      "opportunity:delete",
+      "procurement:view",
+      "procurement:create",
+      "procurement:approve",
+      "schedule:view",
+      "schedule:manage",
+      "pto:view",
+      "pto:request",
+      "pto:approve",
+      "inference:view",
+      "inference:manage",
+      "security:manage",
+      "mfa:enforce"
     ],
     "isDefault": true,
-    "createdAt": "2026-08-11T04:28:12.982Z",
-    "updatedAt": "2026-08-11T04:28:12.982Z"
+    "createdAt": "2026-08-11T04:40:34.104Z",
+    "updatedAt": "2026-08-11T04:40:34.104Z"
   },
   {
-    "id": "d3a368c2-1438-4304-970f-28cad823dfd1",
+    "id": "84fb9425-e469-48df-a657-14244839f6dd",
     "name": "Technician",
     "systemRole": "technician",
     "permissions": [
@@ -160,11 +215,11 @@
       "report:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-11T04:28:12.983Z",
-    "updatedAt": "2026-08-11T04:28:12.983Z"
+    "createdAt": "2026-08-11T04:40:34.105Z",
+    "updatedAt": "2026-08-11T04:40:34.105Z"
   },
   {
-    "id": "f2ea80bb-96bf-4c9b-b70d-78013a8cb040",
+    "id": "35e33349-3b76-475d-9d46-7b7b577cd8b6",
     "name": "Client Admin",
     "systemRole": "client_admin",
     "permissions": [
@@ -176,11 +231,11 @@
       "billing:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-11T04:28:12.984Z",
-    "updatedAt": "2026-08-11T04:28:12.984Z"
+    "createdAt": "2026-08-11T04:40:34.105Z",
+    "updatedAt": "2026-08-11T04:40:34.105Z"
   },
   {
-    "id": "cdefa750-90dd-47a3-9b02-87d3055c283d",
+    "id": "f242051b-0708-4834-a490-01a1adbb1187",
     "name": "Read Only",
     "systemRole": "read_only",
     "permissions": [
@@ -190,7 +245,7 @@
       "report:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-11T04:28:12.984Z",
-    "updatedAt": "2026-08-11T04:28:12.984Z"
+    "createdAt": "2026-08-11T04:40:34.106Z",
+    "updatedAt": "2026-08-11T04:40:34.106Z"
   }
 ]
