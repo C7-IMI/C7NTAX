@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../api";
-import { Calendar, Sparkles, ArrowRight, Zap, RefreshCw, Bug } from "lucide-react";
+import { Calendar, Sparkles, Zap, RefreshCw, Bug } from "lucide-react";
 
 interface ChangeItem {
   text: string;
@@ -14,15 +13,74 @@ interface Version {
   changes: ChangeItem[];
 }
 
+/** Parse FEATURE_LIST.md text into structured version entries */
+function parseFeatureList(raw: string): Version[] {
+  const versions: Version[] = [];
+
+  // Match version headers:  ## YYYY.M.D.BBB — Title
+  const headerRe = /^## (\d{4}\.\d{1,2}\.\d{1,2}\.\d{3})\s*[—–-]\s*(.+)$/gm;
+  const matches = [...raw.matchAll(headerRe)];
+
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i];
+    const version = m[1];
+    const title = m[2].trim();
+    const headerEnd = (m.index ?? 0) + m[0].length;
+    const nextHeaderStart = i + 1 < matches.length ? matches[i + 1].index! : raw.length;
+
+    // Extract lines between this header and the next
+    const body = raw.slice(headerEnd, nextHeaderStart);
+    const changes: ChangeItem[] = [];
+
+    // Parse bullet lines:  - **[Type]** text
+    const bulletRe = /^-\s*\*\*\[(New|Update|Fix)\]\*\*\s+(.+)$/gm;
+    let bm: RegExpExecArray | null;
+    while ((bm = bulletRe.exec(body)) !== null) {
+      const typeLabel = bm[1];
+      const text = bm[2].trim();
+      const type = typeLabel === "New" ? "new" : typeLabel === "Update" ? "update" : "fix";
+      changes.push({ text, type });
+    }
+
+    if (changes.length > 0 || title) {
+      // Derive date from version: YYYY.M.D.BBB → YYYY-MM-DD
+      const parts = version.split(".");
+      const date = `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}`;
+      versions.push({ version, date, title, changes });
+    }
+  }
+
+  return versions;
+}
+
 export function ChangelogPage() {
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get("/system/changelog").then(r => setVersions(r.data)).catch(() => {}).finally(() => setLoading(false));
+    // Fetch raw FEATURE_LIST.md from Vite's public directory — no server needed
+    fetch("/FEATURE_LIST.md")
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+      .then(raw => {
+        const parsed = parseFeatureList(raw);
+        if (parsed.length === 0) throw new Error("No version entries found in FEATURE_LIST.md");
+        setVersions(parsed);
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="text-center py-12 text-gray-500">Loading changelog...</div>;
+
+  if (error) return (
+    <div className="text-center py-12">
+      <p className="text-red-400 text-sm">Could not load changelog: {error}</p>
+      <p className="text-gray-500 text-xs mt-2">Ensure FEATURE_LIST.md exists in the public/ directory.</p>
+    </div>
+  );
+
+  if (versions.length === 0) return <div className="text-center py-12 text-gray-500">No changelog entries found.</div>;
 
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl">
