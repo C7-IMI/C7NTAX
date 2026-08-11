@@ -157,6 +157,39 @@ systemRouter.post("/poller/reset", async (_req: AuthRequest, res) => {
   res.json({ success: true, message: "Poller reset successfully" });
 });
 
+// ── Snapshot poller status ─────────────────────────────────────────
+
+systemRouter.get("/snapshot-poller/status", async (_req: AuthRequest, res) => {
+  try {
+    const { getStatus } = await import("../services/snapshotPoller");
+    res.json(getStatus());
+  } catch { res.json({ error: "Snapshot poller not loaded" }); }
+});
+
+systemRouter.post("/snapshot-poller/force", async (_req: AuthRequest, res) => {
+  try {
+    const { forcePoll } = await import("../services/snapshotPoller");
+    await forcePoll();
+    res.json({ success: true, message: "Force poll + capture triggered" });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+systemRouter.post("/snapshot-poller/pause", async (_req: AuthRequest, res) => {
+  try {
+    const { setPaused } = await import("../services/snapshotPoller");
+    setPaused(true);
+    res.json({ success: true, message: "Snapshot poller paused" });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+systemRouter.post("/snapshot-poller/resume", async (_req: AuthRequest, res) => {
+  try {
+    const { setPaused } = await import("../services/snapshotPoller");
+    setPaused(false);
+    res.json({ success: true, message: "Snapshot poller resumed" });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // ── Changelog — parses BuildNotes.md at runtime (single source of truth) ──
 
 interface ChangeItem {
