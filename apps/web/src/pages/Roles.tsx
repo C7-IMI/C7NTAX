@@ -309,18 +309,20 @@ export function RolesPage() {
                 </div>
               </div>
 
-              {/* User count banner */}
-              {selected._count?.users ? (
-                <button
-                  onClick={openMembers}
-                  className="flex items-center gap-2 text-xs bg-cyber-600/10 hover:bg-cyber-600/20 rounded-lg px-3 py-2 transition-colors cursor-pointer w-full text-left group"
-                  title="Manage role members"
-                >
-                  <Users size={14} className="text-cyber-400" />
-                  <span className="text-gray-400"><span className="text-white font-medium">{selected._count.users}</span> user{selected._count.users !== 1 ? "s" : ""} assigned to this role</span>
-                  <span className="ml-auto text-gray-600 group-hover:text-cyber-400 transition-colors">Manage →</span>
-                </button>
-              ) : null}
+              {/* User count banner — always shown */}
+              <button
+                onClick={openMembers}
+                className="flex items-center gap-2 text-xs bg-cyber-600/10 hover:bg-cyber-600/20 rounded-lg px-3 py-2 transition-colors cursor-pointer w-full text-left group"
+                title="Manage role members"
+              >
+                <Users size={14} className="text-cyber-400" />
+                {(selected._count?.users ?? 0) > 0 ? (
+                  <span className="text-gray-400"><span className="text-white font-medium">{selected._count?.users}</span> user{(selected._count?.users ?? 0) !== 1 ? "s" : ""} assigned to this role</span>
+                ) : (
+                  <span className="text-gray-400"><span className="text-white font-medium">0</span> users assigned to this role</span>
+                )}
+                <span className="ml-auto text-gray-600 group-hover:text-cyber-400 transition-colors">Manage →</span>
+              </button>
 
               {/* Delete confirmation */}
               {showDeleteConfirm && (

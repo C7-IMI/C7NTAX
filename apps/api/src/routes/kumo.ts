@@ -305,6 +305,11 @@ kumoRouter.post("/passwords/:id/reveal", requirePermission(Permission.KumoPasswo
   try {
     const pw = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
     if (!pw) throw new AppError("Not found", 404);
+    let updatedByName: string | null = null;
+    if (pw.updatedById) {
+      const updater = await prisma.user.findUnique({ where: { id: pw.updatedById }, select: { firstName: true, lastName: true } });
+      if (updater) updatedByName = `${updater.firstName} ${updater.lastName}`;
+    }
     let plaintext: string;
     try {
       plaintext = decrypt(pw.encryptedPassword, pw.iv, pw.authTag);
@@ -317,7 +322,7 @@ kumoRouter.post("/passwords/:id/reveal", requirePermission(Permission.KumoPasswo
     await prisma.kumoPasswordAccessLog.create({
       data: { passwordId: pw.id, accessedById: req.user!.userId, accessType: "reveal", ipAddress: req.ip || req.socket.remoteAddress, userAgent: req.get("User-Agent")?.slice(0, 300) || "", success: true },
     });
-    const result = { id: pw.id, label: pw.label, username: pw.username, passwordPlaintext: plaintext };
+    const result = { id: pw.id, label: pw.label, username: pw.username, passwordPlaintext: plaintext, updatedBy: updatedByName };
     // Clear plaintext from memory after response
     setImmediate(() => { secureClear(Buffer.from(plaintext, "utf8")); });
     res.json(result);
