@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Shield, Eye, EyeOff, Search, X, Save, Clock, Edit3, Trash2, Copy, Building2 } from "lucide-react";
+import { Plus, Shield, Eye, EyeOff, Search, X, Save, Clock, Edit3, Trash2, Copy, Building2, Key } from "lucide-react";
+import { generatePassword } from "../lib/generatePassword";
 
 export function KumoPasswordsPage() {
   const [passwords, setPasswords] = useState<any[]>([]);
@@ -242,6 +243,19 @@ export function KumoPasswordsPage() {
                   <Field label="Email" val={editForm.email} onChange={v => setEditForm({ ...editForm, email: v })} />
                   <Field label="URL" val={editForm.url} onChange={v => setEditForm({ ...editForm, url: v })} />
                   <Field label="Category" val={editForm.category} onChange={v => setEditForm({ ...editForm, category: v })} />
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">New Password (leave blank to keep current)</label>
+                    <div className="flex gap-1">
+                      <input className="input-field text-sm py-1 flex-1" type="password"
+                        placeholder="Enter new password"
+                        value={editForm.password || ""}
+                        onChange={e => setEditForm({ ...editForm, password: e.target.value })} />
+                      <button type="button" onClick={() => setEditForm({ ...editForm, password: generatePassword() })}
+                        className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
+                        <Key size={12} /> Gen
+                      </button>
+                    </div>
+                  </div>
                   <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Notes</label><textarea className="input-field text-sm" rows={3} value={editForm.notes || ""} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} /></div>
                 </>) : (<>
                   <ReadOnlyField label="Username" value={selected.username} />
@@ -262,7 +276,13 @@ export function KumoPasswordsPage() {
             <h3 className="text-lg font-semibold text-white">New Password</h3>
             <input className="input-field" placeholder="Label *" value={form.label} onChange={e => setForm({...form, label: e.target.value})} required />
             <div className="grid grid-cols-2 gap-2"><input className="input-field" placeholder="Username" value={form.username} onChange={e => setForm({...form, username: e.target.value})} /><input className="input-field" placeholder="Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
-            <input className="input-field" type="password" placeholder="Password *" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
+            <div className="flex gap-1">
+              <input className="input-field flex-1" type="password" placeholder="Password *" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
+              <button type="button" onClick={() => setForm({...form, password: generatePassword()})}
+                className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
+                <Key size={12} /> Gen
+              </button>
+            </div>
             <div className="grid grid-cols-2 gap-2"><input className="input-field" placeholder="URL" value={form.url} onChange={e => setForm({...form, url: e.target.value})} /><input className="input-field" placeholder="Category" value={form.category} onChange={e => setForm({...form, category: e.target.value})} /></div>
             <select className="input-field" value={form.companyId} onChange={e => setForm({...form, companyId: e.target.value})}>
               <option value="">No client</option>

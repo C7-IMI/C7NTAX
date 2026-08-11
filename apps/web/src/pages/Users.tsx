@@ -4,10 +4,11 @@ import toast from "react-hot-toast";
 import {
   Plus, Search, Shield, X, Save, Edit3, Check, AlertTriangle,
   Mail, Phone, Building2, Clock, KeyRound, UserCheck, UserX, ShieldAlert,
-  ChevronLeft, ChevronDown, Copy,
+  ChevronLeft, ChevronDown, Copy, Key,
 } from "lucide-react";
 import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from "@C7NTAX/shared";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
+import { generatePassword } from "../lib/generatePassword";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-600/20 text-green-400",
@@ -337,7 +338,13 @@ export function UsersPage() {
               <input className="input-field" placeholder="Last name" value={createForm.lastName} onChange={e => setCreateForm({ ...createForm, lastName: e.target.value })} />
             </div>
             <input className="input-field" placeholder="Email" type="email" value={createForm.email} onChange={e => setCreateForm({ ...createForm, email: e.target.value })} required />
-            <input className="input-field" placeholder="Password" type="password" value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} required minLength={8} />
+            <div className="flex gap-1">
+              <input className="input-field flex-1" placeholder="Password" type="password" value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} required minLength={8} />
+              <button type="button" onClick={() => setCreateForm({ ...createForm, password: generatePassword() })}
+                className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
+                <Key size={12} /> Gen
+              </button>
+            </div>
             <select className="input-field" value={createForm.role} onChange={e => setCreateForm({ ...createForm, role: e.target.value })}>
               {Object.values(SystemRole).map(r => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
             </select>
@@ -432,8 +439,14 @@ export function UsersPage() {
                     <Section title="Change Password">
                       <div className="max-w-xs">
                         <Label>New Password</Label>
-                        <input className="input-field" type="password" placeholder="Leave blank to keep current"
-                          value={String(form.password || "")} onChange={e => setForm({ ...form, password: e.target.value })} />
+                        <div className="flex gap-1">
+                          <input className="input-field flex-1" type="password" placeholder="Leave blank to keep current"
+                            value={String(form.password || "")} onChange={e => setForm({ ...form, password: e.target.value })} />
+                          <button type="button" onClick={() => setForm({ ...form, password: generatePassword() })}
+                            className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
+                            <Key size={12} /> Gen
+                          </button>
+                        </div>
                       </div>
                     </Section>
                   )}
