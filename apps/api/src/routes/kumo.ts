@@ -337,8 +337,9 @@ kumoRouter.post("/passwords/:id/totp/setup", requirePermission(Permission.KumoPa
     const pw = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
     if (!pw) throw new AppError("Not found", 404);
     const secret = speakeasy.generateSecret({ name: `Kumo: ${pw.label}` });
-    const { ciphertext } = encrypt(secret.base32);
-    await prisma.kumoPassword.update({ where: { id: pw.id }, data: { totpSecret: ciphertext, totpEnabled: true } });
+    const { ciphertext, iv, authTag } = encrypt(secret.base32);
+    // Store all three values delimited so decrypt can use the correct IV/authTag
+    await prisma.kumoPassword.update({ where: { id: pw.id }, data: { totpSecret: `${ciphertext}:${iv}:${authTag}`, totpEnabled: true } });
     const qrcode = await QRCode.toDataURL(secret.otpauth_url!);
     res.json({ secret: secret.base32, otpauthUrl: secret.otpauth_url, qrcode });
   } catch (e) { next(e); }

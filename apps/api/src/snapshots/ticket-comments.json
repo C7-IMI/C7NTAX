@@ -1,68 +1,68 @@
 [
   {
-    "id": "0adc905b-2e9f-4599-8058-7ebcdcaf327f",
+    "id": "fc40bf73-0f59-4d24-8db5-754aea119c91",
     "body": "Checked Exchange Online — connector is healthy. Investigating transport rules.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "e9bcea12-70b0-4e1f-ad92-a073e4ad733c",
-    "authorId": "abe2add4-5a5a-4cc9-9947-ae7dff255a14",
-    "createdAt": "2026-08-10T04:40:34.456Z",
-    "updatedAt": "2026-08-11T04:40:34.468Z"
+    "ticketId": "78f98f68-0a8b-44e8-8885-4488343ef687",
+    "authorId": "caf8c1e0-5c0f-4648-b622-ab6b4d42f57e",
+    "createdAt": "2026-08-10T04:44:06.633Z",
+    "updatedAt": "2026-08-11T04:44:06.652Z"
   },
   {
-    "id": "36a66fd5-c7f2-487e-976e-174e57221ae1",
+    "id": "92921e6c-272b-4f46-b818-7ec5080d86c6",
     "body": "Found the issue — outbound connector was pointing to old smart host IP after ISP change. Updated and testing.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "e9bcea12-70b0-4e1f-ad92-a073e4ad733c",
-    "authorId": "abe2add4-5a5a-4cc9-9947-ae7dff255a14",
-    "createdAt": "2026-08-10T16:40:34.456Z",
-    "updatedAt": "2026-08-11T04:40:34.468Z"
+    "ticketId": "78f98f68-0a8b-44e8-8885-4488343ef687",
+    "authorId": "caf8c1e0-5c0f-4648-b622-ab6b4d42f57e",
+    "createdAt": "2026-08-10T16:44:06.633Z",
+    "updatedAt": "2026-08-11T04:44:06.652Z"
   },
   {
-    "id": "d3566389-e267-4b10-b149-b6f04503067f",
+    "id": "b2f2c087-1b99-4751-af95-f26886217068",
     "body": "We've tested VPN from three different locations. Issue appears to be with ISP routing, not our configuration.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "db8261b6-b1c3-49d7-b74e-89816fd613ff",
-    "authorId": "abe2add4-5a5a-4cc9-9947-ae7dff255a14",
-    "createdAt": "2026-08-09T04:40:34.456Z",
-    "updatedAt": "2026-08-11T04:40:34.468Z"
+    "ticketId": "514a7ceb-566f-4527-88fc-7e42b0c83a7c",
+    "authorId": "caf8c1e0-5c0f-4648-b622-ab6b4d42f57e",
+    "createdAt": "2026-08-09T04:44:06.633Z",
+    "updatedAt": "2026-08-11T04:44:06.652Z"
   },
   {
-    "id": "07e1e74b-5aac-4c04-a376-42187dd8e11d",
+    "id": "6479a903-2c00-4f99-a418-d209546f6ed0",
     "body": "Email was from spoofed domain. Defender has blocked the attachment across all mailboxes. User training scheduled.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "8b861f30-39dd-4976-92af-682cc47275b2",
-    "authorId": "460343e8-2146-4192-b95c-5230b3ea5eb9",
-    "createdAt": "2026-08-09T04:40:34.456Z",
-    "updatedAt": "2026-08-11T04:40:34.468Z"
+    "ticketId": "0b36a072-097e-4837-bb6d-c3e70b945726",
+    "authorId": "9ea07ac1-9342-470c-a87d-9ecb6db4af7f",
+    "createdAt": "2026-08-09T04:44:06.633Z",
+    "updatedAt": "2026-08-11T04:44:06.652Z"
   },
   {
-    "id": "4e6a20ea-bed9-410e-b2e5-df99aa06059d",
+    "id": "aee30c70-b446-4f4c-aa28-b52b07391eb3",
     "body": "Marking as resolved. All checks clear — no compromise detected. User awareness email sent company-wide.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "8b861f30-39dd-4976-92af-682cc47275b2",
-    "authorId": "460343e8-2146-4192-b95c-5230b3ea5eb9",
-    "createdAt": "2026-08-10T04:40:34.456Z",
-    "updatedAt": "2026-08-11T04:40:34.468Z"
+    "ticketId": "0b36a072-097e-4837-bb6d-c3e70b945726",
+    "authorId": "9ea07ac1-9342-470c-a87d-9ecb6db4af7f",
+    "createdAt": "2026-08-10T04:44:06.633Z",
+    "updatedAt": "2026-08-11T04:44:06.652Z"
   },
   {
-    "id": "3615641e-d61b-4aa9-af7d-3eba024e1cae",
+    "id": "844e4828-2a40-4c18-8b37-1574d0faa885",
     "body": "CEO's MFA configured — Microsoft Authenticator. CFO session scheduled for tomorrow 10:00 AM.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "593c86df-fb47-47a6-8b5c-e618e2f09c07",
-    "authorId": "460343e8-2146-4192-b95c-5230b3ea5eb9",
-    "createdAt": "2026-08-10T23:52:34.456Z",
-    "updatedAt": "2026-08-11T04:40:34.468Z"
+    "ticketId": "d993579d-d5bd-4e85-9193-d096d6f08b09",
+    "authorId": "9ea07ac1-9342-470c-a87d-9ecb6db4af7f",
+    "createdAt": "2026-08-10T23:56:06.633Z",
+    "updatedAt": "2026-08-11T04:44:06.652Z"
   }
 ]

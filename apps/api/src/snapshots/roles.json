@@ -1,6 +1,6 @@
 [
   {
-    "id": "fa5e8d88-d647-4e24-9882-3dc48eed15de",
+    "id": "f96cb97e-56a1-491e-80f8-264e877b868f",
     "name": "Super Admin",
     "systemRole": "super_admin",
     "permissions": [
@@ -107,11 +107,11 @@
       "kumo:link:manage"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-11T04:40:34.101Z",
-    "updatedAt": "2026-08-11T04:40:34.101Z"
+    "createdAt": "2026-08-11T04:44:06.241Z",
+    "updatedAt": "2026-08-11T04:44:06.241Z"
   },
   {
-    "id": "f531f86f-6ad5-4b28-935e-b1a295f1841d",
+    "id": "2374a0b6-4db0-4fcf-8db4-10ef7560411a",
     "name": "Admin",
     "systemRole": "admin",
     "permissions": [
@@ -196,11 +196,11 @@
       "mfa:enforce"
     ],
     "isDefault": true,
-    "createdAt": "2026-08-11T04:40:34.104Z",
-    "updatedAt": "2026-08-11T04:40:34.104Z"
+    "createdAt": "2026-08-11T04:44:06.243Z",
+    "updatedAt": "2026-08-11T04:44:06.243Z"
   },
   {
-    "id": "84fb9425-e469-48df-a657-14244839f6dd",
+    "id": "730da4e8-e176-4d94-92d7-27bac9aa80fd",
     "name": "Technician",
     "systemRole": "technician",
     "permissions": [
@@ -215,11 +215,11 @@
       "report:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-11T04:40:34.105Z",
-    "updatedAt": "2026-08-11T04:40:34.105Z"
+    "createdAt": "2026-08-11T04:44:06.244Z",
+    "updatedAt": "2026-08-11T04:44:06.244Z"
   },
   {
-    "id": "35e33349-3b76-475d-9d46-7b7b577cd8b6",
+    "id": "3f4eaef2-8b51-42d2-a073-998fd53b4f9b",
     "name": "Client Admin",
     "systemRole": "client_admin",
     "permissions": [
@@ -231,11 +231,11 @@
       "billing:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-11T04:40:34.105Z",
-    "updatedAt": "2026-08-11T04:40:34.105Z"
+    "createdAt": "2026-08-11T04:44:06.245Z",
+    "updatedAt": "2026-08-11T04:44:06.245Z"
   },
   {
-    "id": "f242051b-0708-4834-a490-01a1adbb1187",
+    "id": "285ff3c1-81ae-43b1-93dd-10ce05ea060d",
     "name": "Read Only",
     "systemRole": "read_only",
     "permissions": [
@@ -245,7 +245,7 @@
       "report:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-11T04:40:34.106Z",
-    "updatedAt": "2026-08-11T04:40:34.106Z"
+    "createdAt": "2026-08-11T04:44:06.245Z",
+    "updatedAt": "2026-08-11T04:44:06.245Z"
   }
 ]

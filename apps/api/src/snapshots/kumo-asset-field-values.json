@@ -1,8 +1,8 @@
 [
   {
-    "id": "475bf4b6-d9ec-4e21-978b-7f8992d1934c",
-    "assetId": "08112336-9e69-47f5-8a8a-5a9103f5c05c",
-    "fieldId": "7ebe9c9e-ed4c-4ef2-9781-d9d9eb990c8f",
+    "id": "940dea6d-7762-489f-8a29-2b35b8eb969b",
+    "assetId": "b935ffe9-b126-45f0-98e5-e205b2252709",
+    "fieldId": "903c7af9-968a-40d8-9946-12c8fd16e075",
     "valueText": "SRV-DC-01.acmecorp.local",
     "valueNum": null,
     "valueBool": null,
@@ -11,9 +11,9 @@
     "encryptedValue": null
   },
   {
-    "id": "88a67ce9-a9bd-4bbe-a09c-20a359457e63",
-    "assetId": "08112336-9e69-47f5-8a8a-5a9103f5c05c",
-    "fieldId": "ce6051ec-6d40-4416-bed1-2e86f0254a5f",
+    "id": "b38938fa-2ed6-4125-a12d-38ceb746cbd3",
+    "assetId": "b935ffe9-b126-45f0-98e5-e205b2252709",
+    "fieldId": "0e9b9311-8a8d-42b5-8acc-ce945782235d",
     "valueText": "Windows Server 2022",
     "valueNum": null,
     "valueBool": null,
@@ -22,9 +22,9 @@
     "encryptedValue": null
   },
   {
-    "id": "30b07715-aead-4a97-9db5-2b79c64762f0",
-    "assetId": "08112336-9e69-47f5-8a8a-5a9103f5c05c",
-    "fieldId": "b5a839bc-ca39-4048-9356-b40722c102f3",
+    "id": "7f5b14c2-d8d6-4dc4-983a-e38f84eb314c",
+    "assetId": "b935ffe9-b126-45f0-98e5-e205b2252709",
+    "fieldId": "5b66f818-c27b-4f01-88fe-2398a5b3c82f",
     "valueText": null,
     "valueNum": 8,
     "valueBool": null,
@@ -33,9 +33,9 @@
     "encryptedValue": null
   },
   {
-    "id": "17a4d4ac-7a14-411f-a599-55d87d075783",
-    "assetId": "08112336-9e69-47f5-8a8a-5a9103f5c05c",
-    "fieldId": "53b6b2a0-02e4-4da8-972d-7ea290325835",
+    "id": "b38b2246-9c9a-41c5-b0b5-bd2078b455e8",
+    "assetId": "b935ffe9-b126-45f0-98e5-e205b2252709",
+    "fieldId": "6a4e85d1-6edf-4881-9e5d-93d8909c0f52",
     "valueText": null,
     "valueNum": 32,
     "valueBool": null,
@@ -44,9 +44,9 @@
     "encryptedValue": null
   },
   {
-    "id": "5061d4d0-70a9-4221-9e9a-abec7c1291da",
-    "assetId": "08112336-9e69-47f5-8a8a-5a9103f5c05c",
-    "fieldId": "27f9db71-a651-4bd6-98f9-8e819f8fd17a",
+    "id": "7096e8c0-efdd-4017-bdbc-5cf6a77b23b5",
+    "assetId": "b935ffe9-b126-45f0-98e5-e205b2252709",
+    "fieldId": "a3a72c72-9103-4122-b930-511d1b5aa8f2",
     "valueText": "10.1.10.10",
     "valueNum": null,
     "valueBool": null,
@@ -55,9 +55,9 @@
     "encryptedValue": null
   },
   {
-    "id": "e8f98095-8b99-45f3-baad-131d22503332",
-    "assetId": "bb8cb299-1c59-43a0-9df6-3022d504813b",
-    "fieldId": "7ebe9c9e-ed4c-4ef2-9781-d9d9eb990c8f",
+    "id": "7f8cd39a-d8a9-4798-8292-1f5f8804d454",
+    "assetId": "c33f02dd-4769-4c09-8f38-92261f0ece5f",
+    "fieldId": "903c7af9-968a-40d8-9946-12c8fd16e075",
     "valueText": "SRV-APP-02.globexind.local",
     "valueNum": null,
     "valueBool": null,
@@ -66,9 +66,9 @@
     "encryptedValue": null
   },
   {
-    "id": "b3e896ec-42d6-46af-8eea-03c4fb42c40b",
-    "assetId": "bb8cb299-1c59-43a0-9df6-3022d504813b",
-    "fieldId": "ce6051ec-6d40-4416-bed1-2e86f0254a5f",
+    "id": "8f06b682-3b6c-4416-bd64-7c27254a3be8",
+    "assetId": "c33f02dd-4769-4c09-8f38-92261f0ece5f",
+    "fieldId": "0e9b9311-8a8d-42b5-8acc-ce945782235d",
     "valueText": "Ubuntu 24.04 LTS",
     "valueNum": null,
     "valueBool": null,
@@ -77,9 +77,9 @@
     "encryptedValue": null
   },
   {
-    "id": "1f853020-a455-4e12-8fb9-f476f6ee89b8",
-    "assetId": "bb8cb299-1c59-43a0-9df6-3022d504813b",
-    "fieldId": "b5a839bc-ca39-4048-9356-b40722c102f3",
+    "id": "d8b4a1c7-264b-468d-94bc-5c61bf95c4ce",
+    "assetId": "c33f02dd-4769-4c09-8f38-92261f0ece5f",
+    "fieldId": "5b66f818-c27b-4f01-88fe-2398a5b3c82f",
     "valueText": null,
     "valueNum": 16,
     "valueBool": null,
@@ -88,9 +88,9 @@
     "encryptedValue": null
   },
   {
-    "id": "a65b02a1-ea09-4012-b401-17fb313616cf",
-    "assetId": "bb8cb299-1c59-43a0-9df6-3022d504813b",
-    "fieldId": "53b6b2a0-02e4-4da8-972d-7ea290325835",
+    "id": "6f4d065d-d15a-4216-a12b-79c3a3dc09d3",
+    "assetId": "c33f02dd-4769-4c09-8f38-92261f0ece5f",
+    "fieldId": "6a4e85d1-6edf-4881-9e5d-93d8909c0f52",
     "valueText": null,
     "valueNum": 64,
     "valueBool": null,
@@ -99,9 +99,9 @@
     "encryptedValue": null
   },
   {
-    "id": "16e3c47b-4d40-4a26-b992-8d856d22b471",
-    "assetId": "bb8cb299-1c59-43a0-9df6-3022d504813b",
-    "fieldId": "27f9db71-a651-4bd6-98f9-8e819f8fd17a",
+    "id": "cd3edb8f-eab3-4ddc-bd5f-5b9cee5ffced",
+    "assetId": "c33f02dd-4769-4c09-8f38-92261f0ece5f",
+    "fieldId": "a3a72c72-9103-4122-b930-511d1b5aa8f2",
     "valueText": "10.2.20.20",
     "valueNum": null,
     "valueBool": null,
@@ -110,9 +110,9 @@
     "encryptedValue": null
   },
   {
-    "id": "b6c0b02f-5044-4b98-94ad-61b306f69da2",
-    "assetId": "18ad1965-af9f-4b80-9aa5-ee1ff78d343b",
-    "fieldId": "74aae021-50f3-4bdc-9304-56c7b34b03d6",
+    "id": "3e23d0d4-d346-4112-8d69-129281718658",
+    "assetId": "8c3b8011-7cf3-424e-a631-2ca49cf46f2c",
+    "fieldId": "952503a4-c568-42b5-943a-072187af5d52",
     "valueText": "LAP-MGR-03",
     "valueNum": null,
     "valueBool": null,
@@ -121,9 +121,9 @@
     "encryptedValue": null
   },
   {
-    "id": "806fa433-9219-4cc8-894d-14542b213582",
-    "assetId": "18ad1965-af9f-4b80-9aa5-ee1ff78d343b",
-    "fieldId": "8c9c0ee3-9878-4caa-bda3-d7ef4ac626ed",
+    "id": "e90971c2-b9a3-43d8-bea8-ffc4cb91ccc2",
+    "assetId": "8c3b8011-7cf3-424e-a631-2ca49cf46f2c",
+    "fieldId": "c8e94578-bdc9-4527-a2f2-3a00219acda4",
     "valueText": "Windows 11 Pro",
     "valueNum": null,
     "valueBool": null,
@@ -132,9 +132,9 @@
     "encryptedValue": null
   },
   {
-    "id": "ea0e2c96-21d7-49ad-8571-487cc6859acb",
-    "assetId": "18ad1965-af9f-4b80-9aa5-ee1ff78d343b",
-    "fieldId": "718d8639-12cc-43a6-b568-7cadf9292ecd",
+    "id": "1f5aa074-3514-448f-9f2b-1d3fc5b2a498",
+    "assetId": "8c3b8011-7cf3-424e-a631-2ca49cf46f2c",
+    "fieldId": "3bcd3dfb-cc73-4aff-ae6e-aa2c79ba62c3",
     "valueText": "SN-UMB-LT03-2025",
     "valueNum": null,
     "valueBool": null,
@@ -143,9 +143,9 @@
     "encryptedValue": null
   },
   {
-    "id": "d8883ade-1677-4710-b2f2-ef5cb8aed26a",
-    "assetId": "1fb66188-144a-4f40-a4b6-d2b135fe9e6e",
-    "fieldId": "5a201ad6-6b3f-49ef-a0d8-e18487de7f8c",
+    "id": "c6f1e62e-86f3-4e6a-b450-b5f872b83d3e",
+    "assetId": "710899f7-1b77-439d-aa1d-7e03f4a7af53",
+    "fieldId": "02d22d8e-cf79-4f67-8ddf-9234d9fda7ff",
     "valueText": "FW-PRIMARY",
     "valueNum": null,
     "valueBool": null,
@@ -154,9 +154,9 @@
     "encryptedValue": null
   },
   {
-    "id": "387c2680-9a6c-4581-ab5d-80029297ce27",
-    "assetId": "1fb66188-144a-4f40-a4b6-d2b135fe9e6e",
-    "fieldId": "f16d3f08-8eb3-451a-b665-ec2575d21bb8",
+    "id": "fe0e475d-1457-4b30-9d49-874dfc91dcb3",
+    "assetId": "710899f7-1b77-439d-aa1d-7e03f4a7af53",
+    "fieldId": "5541201e-f1fa-4371-a7d9-2c35427bede0",
     "valueText": "Firewall",
     "valueNum": null,
     "valueBool": null,
@@ -165,9 +165,9 @@
     "encryptedValue": null
   },
   {
-    "id": "a308412d-ef35-439c-adfb-95393c7c9300",
-    "assetId": "1fb66188-144a-4f40-a4b6-d2b135fe9e6e",
-    "fieldId": "31c0577d-147a-4a5f-823b-2226db7ff095",
+    "id": "2a3f742b-d359-4b8a-8f87-08d52b3e9deb",
+    "assetId": "710899f7-1b77-439d-aa1d-7e03f4a7af53",
+    "fieldId": "ea4004fc-7666-4fa7-848f-9ceb93e9e520",
     "valueText": "192.168.1.1",
     "valueNum": null,
     "valueBool": null,
@@ -176,9 +176,9 @@
     "encryptedValue": null
   },
   {
-    "id": "081fc564-c19a-4053-b49f-f9eb83144240",
-    "assetId": "cc5a015a-a15d-4c58-b005-456e42b384a2",
-    "fieldId": "74aae021-50f3-4bdc-9304-56c7b34b03d6",
+    "id": "e5ec8668-66cd-4071-acb8-999b5ca1d7e8",
+    "assetId": "ea47cd05-f0d0-48e8-a646-ed024b20ebf0",
+    "fieldId": "952503a4-c568-42b5-943a-072187af5d52",
     "valueText": "WS-ENG-07",
     "valueNum": null,
     "valueBool": null,
@@ -187,9 +187,9 @@
     "encryptedValue": null
   },
   {
-    "id": "a718dc18-218d-4c04-88fc-071c8b31de2d",
-    "assetId": "cc5a015a-a15d-4c58-b005-456e42b384a2",
-    "fieldId": "8c9c0ee3-9878-4caa-bda3-d7ef4ac626ed",
+    "id": "5a1aed11-9049-4c7e-9516-9ff6b14375d4",
+    "assetId": "ea47cd05-f0d0-48e8-a646-ed024b20ebf0",
+    "fieldId": "c8e94578-bdc9-4527-a2f2-3a00219acda4",
     "valueText": "Windows 11 Pro",
     "valueNum": null,
     "valueBool": null,
@@ -198,9 +198,9 @@
     "encryptedValue": null
   },
   {
-    "id": "f9cb60bb-91d0-4305-a7d9-53e8f35ec04b",
-    "assetId": "cc5a015a-a15d-4c58-b005-456e42b384a2",
-    "fieldId": "718d8639-12cc-43a6-b568-7cadf9292ecd",
+    "id": "286027bf-3f99-44d3-b97b-96d188459b46",
+    "assetId": "ea47cd05-f0d0-48e8-a646-ed024b20ebf0",
+    "fieldId": "3bcd3dfb-cc73-4aff-ae6e-aa2c79ba62c3",
     "valueText": "SN-STK-WS07-2025",
     "valueNum": null,
     "valueBool": null,
