@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Sparkles, Zap, RefreshCw, Bug } from "lucide-react";
+import { Calendar, Sparkles, Zap, RefreshCw, Bug, Search, X } from "lucide-react";
 
 interface ChangeItem {
   text: string;
@@ -58,6 +58,7 @@ export function ChangelogPage() {
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     // Fetch raw BuildNotes.md from Vite's public directory — no server needed
@@ -83,6 +84,20 @@ export function ChangelogPage() {
 
   if (versions.length === 0) return <div className="text-center py-12 text-gray-500">No changelog entries found.</div>;
 
+  // Filter versions by search term (case-insensitive, checks id, version, title, and all change texts)
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? versions.filter(v => {
+        const haystack = [
+          `#${v.id}`,
+          v.version,
+          v.title,
+          ...v.changes.map(c => c.text),
+        ].join(" ").toLowerCase();
+        return haystack.includes(q);
+      })
+    : versions;
+
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl">
       <div>
@@ -92,10 +107,30 @@ export function ChangelogPage() {
         <p className="text-sm text-gray-400 mt-0.5">Release history and feature changelog for C7NTAX</p>
       </div>
 
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+        <input
+          className="input-field pl-9 pr-8 py-2 text-sm"
+          type="text"
+          placeholder="Search by ID, version, or keyword..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-gray-500 hover:text-white hover:bg-surface-lighter"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
       <div className="relative">
         <div className="absolute left-6 top-0 bottom-0 w-px bg-surface-border" />
         <div className="space-y-8">
-          {versions.map((v, i) => {
+          {filtered.map((v, i) => {
             const features = v.changes.filter(c => c.type === "new");
             const updates = v.changes.filter(c => c.type === "update");
             const fixes = v.changes.filter(c => c.type === "fix");
