@@ -115,6 +115,7 @@ server.listen(PORT, () => {
   logger.info("server", `API listening on port ${PORT} (${process.env.NODE_ENV || "development"})`);
   startWorkers();
   import("./services/poller").then(p => p.startPoller()).catch(() => {});
+  import("./services/snapshotPoller").then(p => p.startSnapshotPoller()).catch(() => {});
 });
 
 export default app;
