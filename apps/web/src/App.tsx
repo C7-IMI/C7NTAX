@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, Navigate, useParams, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Layout } from "./components/Layout";
 import { LoginPage } from "./pages/Login";
@@ -45,6 +46,7 @@ function ProtectedRoutes() {
   if (!user) return <Navigate to="/login" replace />;
   return (
     <Layout>
+      <DesktopNavBridge />
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/home" element={<HomePage />} />
@@ -114,6 +116,18 @@ function SectionLandingRoute() {
       descriptions={SECTION_DESCRIPTIONS[sectionId || ""]}
     />
   );
+}
+
+/** Bridges the Electron desktop menu "navigate" IPC into the router, so the
+ *  desktop app behaves exactly like the WebUI plus native menu shortcuts. */
+function DesktopNavBridge() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).c7Desktop?.onNavigate) {
+      return (window as any).c7Desktop.onNavigate((path: string) => navigate(path));
+    }
+  }, [navigate]);
+  return null;
 }
 
 export default function App() {

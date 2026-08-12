@@ -4,7 +4,8 @@
   "private": true,
   "main": "./dist/main.js",
   "scripts": {
-    "dev": "electron .",
+    "dev": "electron . --dev",
+    "prebuild": "pnpm --filter @C7NTAX/web build",
     "build": "tsc && electron-builder --win portable --config.electronVersion=33.4.11",
     "clean": "rimraf dist"
   },
@@ -23,6 +24,13 @@
     "directories": {
       "output": "dist-electron"
     },
+    "extraResources": [
+      {
+        "from": "../web/dist",
+        "to": "webui",
+        "filter": ["**/*"]
+      }
+    ],
     "win": {
       "target": [
         "portable"
