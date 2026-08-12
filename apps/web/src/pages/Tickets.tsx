@@ -627,7 +627,10 @@ export function TicketDetailPage() {
 
           {/* Dates & Times */}
           <div className="card space-y-3">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Dates & Times</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Dates & Times</h3>
+              <button onClick={() => setShowTimeTabAdd(true)} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               {editing ? (<>
                 <div><label className="text-xs text-gray-500 block mb-1">Start Time</label><input className="input-field text-xs" type="datetime-local" value={editForm.startTime||""} onChange={e=>setEditForm({...editForm,startTime:e.target.value})}/></div>
@@ -650,7 +653,7 @@ export function TicketDetailPage() {
               <input className="input-field flex-1 text-sm" placeholder="Add a note... (Enter to submit)" value={noteText} onChange={e=>setNoteText(e.target.value)} />
               <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Post"}</button>
             </form>
-            <button onClick={() => setShowTimeEntry(!showTimeEntry)} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Log Time</button>
+            <button onClick={() => setShowTimeEntry(!showTimeEntry)} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>
             {showTimeEntry && (
               <form onSubmit={handleTimeEntry} className="bg-surface-lighter rounded-lg p-3 space-y-2">
                 <div className="grid grid-cols-3 gap-2">

@@ -1,5 +1,27 @@
 [
   {
+    "version": "2026.8.12.014",
+    "date": "2026-08-12",
+    "title": "Add Time Entry Button on Dates & Times Card",
+    "changes": [
+      {"text": "Restored Add Time Entry button on the Dates & Times card header (renamed from Log Time) with small text-xs cyber styling", "type": "Fix"},
+      {"text": "Card button opens the same Add Time Entry dialog as the Time tab — time can be added from both locations", "type": "Update"},
+      {"text": "Notes & Activity inline toggle relabeled Log Time → Add Time Entry; Time tab functionality unchanged", "type": "Update"}
+    ]
+  },
+  {
+    "version": "2026.8.12.013",
+    "date": "2026-08-12",
+    "title": "Tab Dialog Data Fully Connected Across the App",
+    "changes": [
+      {"text": "Attachments tab uses real TicketAttachment records — new POST/DELETE endpoints, ticket include, real file input dialog, legacy customFields migrated", "type": "New Feature"},
+      {"text": "Configurations carry kind + refId to real assets and Kumo servers with Open links; dialog fetches /kumo/configs/servers", "type": "Update"},
+      {"text": "Links tab shows incoming reverse links; Finance tab includes Products total card", "type": "Update"},
+      {"text": "Kumo server records seeded (5) — Kumo Configurations and link dialog populated; snapshot capture/reseed now include ticketAttachment (43 tables)", "type": "New Feature"},
+      {"text": "seed-full.ts creates real attachments and Kumo servers, links configs to real IDs; migration re-run; snapshot recaptured (259 records)", "type": "Update"}
+    ]
+  },
+  {
     "version": "2026.8.12.012",
     "date": "2026-08-12",
     "title": "Ticket Tab Sample Data Seeded Across All Tickets",

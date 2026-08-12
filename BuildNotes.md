@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.012 | Last Updated: 2026-08-12
+## Version: 2026.8.12.014 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,20 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.014 — Add Time Entry Button on Dates & Times Card
+- **[Fix]** Restored the time-entry button on the Dates & Times card — previously labeled "Log Time", now labeled "Add Time Entry" to match the Time tab; placed in the card header right of the title.
+- **[Update]** Card button keeps the small `text-xs` cyber-styled size (Timer icon, 12px) matching the previous "Log Time" styling; opens the same Add Time Entry dialog used by the Time tab, so time can be added from both locations.
+- **[Update]** Notes & Activity inline toggle button renamed "Log Time" → "Add Time Entry" for consistency.
+- **[Update]** Time tab functionality unchanged (same dialog, totals, and list).
+
+## 2026.8.12.013 — Tab Dialog Data Fully Connected Across the App
+- **[New]** Attachments tab now uses real `TicketAttachment` records — new API endpoints `POST /tickets/:id/attachments` and `DELETE /tickets/:id/attachments/:attId`; ticket detail includes attachments; the dialog accepts a real file (name/size/type stored, content storage placeholder); legacy customFields attachments migrated into real records.
+- **[Update]** Configurations tab — linked configurations now carry `kind` + `refId` pointing to real assets and Kumo servers; each row has an Open link (assets → /assets/:id, Kumo servers → /kumo/configs, Kumo assets → /kumo/assets/:id); the link dialog now fetches the correct `/kumo/configs/servers` endpoint.
+- **[New]** Links tab shows incoming (reverse) links — tickets that link to the current one are computed and displayed with Open buttons, making links two-way.
+- **[Update]** Finance tab now includes a Products total card (5-card summary).
+- **[New]** Kumo server records seeded (5 servers linked to Kumo assets) so Kumo → Configurations and the link dialog are populated; snapshot capture and reseed lists now include `ticketAttachment` and `kumoServer` (43 tables).
+- **[Update]** `seed-full.ts` creates real attachments, Kumo server records, and links ticket configurations to real asset/Kumo-asset IDs after entity creation; `seed-ticket-tabs.ts` migration re-run; snapshot recaptured (259 records).
 
 ## 2026.8.12.012 — Ticket Tab Sample Data Seeded Across All Tickets
 - **[New]** Every ticket now shows representative content in all toolbar tabs — seeded per ticket: 2 configurations, 2 products, 2 links, 2 attachments (customFields), 2 expenses (Expense rows), 2 schedule entries (ScheduleEntry rows), 1 History change-log comment, and 2 audit trail entries.

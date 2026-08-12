@@ -640,6 +640,30 @@
 - Live DB verified: 8/8 tickets with customFields, 16 ticket expenses, 16 ticket schedule entries, 8 history comments, 16 ticket audit entries; snapshot recaptured (236 records, 42 tables) with `schedule-entries.json` (17 entries) and customFields in tickets.json
 - All three changelog sources updated with `2026.8.12.012`; `tsc --noEmit` clean on all modified files
 
+### Prompt 55 — Connect all remaining tab dialog data app-wide
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~50 min
+**BuildNotes IDs:** #1 (2026.8.12.013)
+> Ensure all remaining data entered or displayed in the tabbed dialogs is connected to its corresponding locations throughout the application, so each field stays synchronized with the rest of the app.
+
+**Changes:**
+- `apps/api/src/routes/tickets/index.ts` — New `POST /tickets/:id/attachments` and `DELETE /tickets/:id/attachments/:attId`; ticket detail GET now includes `attachments`
+- `apps/web/src/pages/Tickets.tsx` — Attachments tab switched from customFields metadata to real `TicketAttachment` records (file input dialog reads name/size/type; delete via API; size formatted); Configurations now store `kind` + `refId` with Open links (assets → /assets/:id, Kumo servers → /kumo/configs, Kumo assets → /kumo/assets/:id); link dialog fetches correct `/kumo/configs/servers` endpoint and maps `kumoAsset?.name || hostname`; Links tab shows incoming reverse links; Finance tab includes Products total card
+- `apps/api/src/seed-ticket-tabs.ts` — Migration: legacy customFields attachments → real TicketAttachment rows (16); deterministic config enrichment with real asset/Kumo-server refIds; ensures Kumo server records exist (5 created)
+- `apps/api/src/seed-full.ts` — Real attachments (16), Kumo server records (3), configs linked to real asset/Kumo-asset IDs after entity creation; cleanup for ticketAttachment
+- `apps/api/src/snapshot-capture.ts` + `seed-from-snapshots.ts` — Added `ticketAttachment` → ticket-attachments.json (43 tables)
+- Live DB verified: 8 asset refs + 8 server refs (no duplicates), 16 real attachments, 5 Kumo servers; snapshot recaptured (259 records, 43 tables)
+
+### Prompt 56 — Add Time Entry button on Dates & Times card
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.12.014)
+> Restore the missing Add Time Entry button on the Dates & Times card. The button was previously labeled "Log Time"; rename it to "Add Time Entry" to match the Time tab. Keep the card button's font size smaller, as it was when labeled "Log Time." Keep the Time tab functionality unchanged. Users should be able to add time from both the Dates & Times card and the Time tab. Refer to the screenshots for the expected button location and styling.
+
+**Changes:**
+- `apps/web/src/pages/Tickets.tsx` — Dates & Times card header is now a flex row with the title on the left and an "Add Time Entry" button on the right; button uses the previous small `text-xs text-cyber-400` styling with a 12px Timer icon; clicking it opens the same `showTimeTabAdd` modal dialog used by the Time tab
+- `apps/web/src/pages/Tickets.tsx` — Notes & Activity inline toggle button relabeled "Log Time" → "Add Time Entry" for consistency
+- Time tab untouched — same dialog, totals cards, and entries list
+- Verified: `tsc --noEmit` clean; all three changelog sources updated with `2026.8.12.014`
+
 ---
 
-**Total Prompts:** 54 | **Completed:** 54 | **In Progress:** 0
+**Total Prompts:** 56 | **Completed:** 56 | **In Progress:** 0
