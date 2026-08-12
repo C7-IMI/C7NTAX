@@ -152,5 +152,16 @@
     "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
     "createdAt": "2026-08-07T17:54:21.248Z",
     "updatedAt": "2026-08-12T17:54:21.249Z"
+  },
+  {
+    "id": "789771db-d90f-41be-a7ea-4bef4a89ef5e",
+    "body": "Start Time: 2026-08-11T18:04 → 2026-08-11T23:04\nContact: (empty) → b6e70376-66b9-400d-9fc7-3afee4b4f80b",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "4cf131de-f902-4993-be73-d5d37d924717",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-12T19:05:25.260Z",
+    "updatedAt": "2026-08-12T19:05:25.260Z"
   }
 ]
