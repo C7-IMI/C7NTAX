@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.011 | Last Updated: 2026-08-12
+## Version: 2026.8.12.012 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,12 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.012 — Ticket Tab Sample Data Seeded Across All Tickets
+- **[New]** Every ticket now shows representative content in all toolbar tabs — seeded per ticket: 2 configurations, 2 products, 2 links, 2 attachments (customFields), 2 expenses (Expense rows), 2 schedule entries (ScheduleEntry rows), 1 History change-log comment, and 2 audit trail entries.
+- **[New]** `seed-ticket-tabs.ts` — idempotent seeding script for existing databases; added `scheduleEntry` to snapshot capture and reseed lists so the new data survives the snapshot/reseed cycle (new `schedule-entries.json` fixture, 42 tables total).
+- **[Update]** `seed-full.ts` — full reseeds now create the same ticket tab data (cleanup added for expense, scheduleEntry, and auditLog).
+- **[Update]** Billing → Time & Expenses now shows an Expenses section — a linked ticket expense created in the ticket tab dialog appears there with ticket number, category, date, and amount; expenses total line included.
 
 ## 2026.8.12.011 — Sample Data Toggling
 - **[New]** Sample data toggling — `pnpm db:sample-off` (disable) and `pnpm db:sample-on` (enable), backed by `apps/api/src/sample-data-toggle.ts`.

@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.12.012",
+    "date": "2026-08-12",
+    "title": "Ticket Tab Sample Data Seeded Across All Tickets",
+    "changes": [
+      {"text": "Every ticket shows representative content in all toolbar tabs — configs, products, links, attachments, expenses, schedule, history, audit", "type": "New Feature"},
+      {"text": "seed-ticket-tabs.ts — idempotent seeding script; scheduleEntry added to snapshot capture and reseed lists (schedule-entries.json)", "type": "New Feature"},
+      {"text": "seed-full.ts — full reseeds create the same tab data with cleanup for expense, scheduleEntry, and auditLog", "type": "Update"},
+      {"text": "Billing → Time & Expenses now shows an Expenses section — ticket expenses appear with ticket number, category, date, and amount", "type": "Update"}
+    ]
+  },
+  {
     "version": "2026.8.12.011",
     "date": "2026-08-12",
     "title": "Sample Data Toggling",

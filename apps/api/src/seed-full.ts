@@ -32,6 +32,9 @@ async function main() {
   await prisma.integration.deleteMany();
   await prisma.ticketComment.deleteMany();
   await prisma.timeEntry.deleteMany();
+  await prisma.scheduleEntry.deleteMany();
+  await prisma.expense.deleteMany();
+  await prisma.auditLog.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.invoiceLineItem.deleteMany();
   await prisma.invoice.deleteMany();
@@ -144,6 +147,109 @@ async function main() {
     { ticketId: t8.id, userId: tech2.id, minutes: 15, billable: true, description: "MFA setup for CEO", date: daysAgo(0.2) },
   ] });
   console.log("  ✓ Created 5 time entries");
+
+  // ── Ticket Tab Sample Data (toolbar tabs: Configurations, Products, Links,
+  //    Attachments, Expenses, Schedule, History, Audit Trail) ──
+  const allTickets = [t1, t2, t3, t4, t5, t6, t7, t8];
+  const cfConfigs = [
+    { name: "DC-01 Domain Controller", type: "Kumo Config" },
+    { name: "EXCH-01 Exchange Server", type: "Kumo Config" },
+    { name: "ThinkPad T14 — Finance", type: "Asset" },
+    { name: "Reception Printer IR-ADV C5550", type: "Asset" },
+  ];
+  const cfProducts = [
+    { name: "SSD 1TB Upgrade Kit", qty: 1, unitCost: 149.99 },
+    { name: "USB-C Docking Station", qty: 2, unitCost: 189.0 },
+    { name: "Patch Cable Cat6 (10-pack)", qty: 1, unitCost: 24.5 },
+    { name: "Laptop RAM 16GB SODIMM", qty: 2, unitCost: 79.99 },
+  ];
+  for (let i = 0; i < allTickets.length; i++) {
+    const tk = allTickets[i];
+    const other = allTickets[(i + 1) % allTickets.length];
+    const other2 = allTickets[(i + 3) % allTickets.length];
+    await prisma.ticket.update({
+      where: { id: tk.id },
+      data: {
+        customFields: {
+          ticketConfigurations: [
+            { id: `s-${tk.id.slice(0, 8)}-c1`, ...cfConfigs[i % cfConfigs.length], linkedAt: daysAgo(6 - (i % 5)) },
+            { id: `s-${tk.id.slice(0, 8)}-c2`, ...cfConfigs[(i + 1) % cfConfigs.length], linkedAt: daysAgo(4 - (i % 3)) },
+          ],
+          ticketProducts: [
+            { id: `s-${tk.id.slice(0, 8)}-p1`, ...cfProducts[i % cfProducts.length] },
+            { id: `s-${tk.id.slice(0, 8)}-p2`, ...cfProducts[(i + 2) % cfProducts.length] },
+          ],
+          ticketLinks: [
+            { id: `s-${tk.id.slice(0, 8)}-l1`, ticketId: other.id, ticketNumber: other.ticketNumber, title: other.title, rel: "related", linkedAt: daysAgo(5).toISOString() },
+            { id: `s-${tk.id.slice(0, 8)}-l2`, ticketId: other2.id, ticketNumber: other2.ticketNumber, title: other2.title, rel: "related", linkedAt: daysAgo(2).toISOString() },
+          ],
+          ticketAttachments: [
+            { id: `s-${tk.id.slice(0, 8)}-a1`, name: "network-diagram.pdf", size: "—", uploadedBy: "John Smith", at: daysAgo(3).toISOString() },
+            { id: `s-${tk.id.slice(0, 8)}-a2`, name: "screenshot-before-after.png", size: "—", uploadedBy: "System", at: daysAgo(1).toISOString() },
+          ],
+        } as any,
+      },
+    });
+  }
+  console.log("  ✓ Ticket tab data (configs, products, links, attachments) — 8 tickets");
+
+  await prisma.expense.createMany({ data: [
+    { ticketId: t1.id, companyId: acme.id, createdById: tech1.id, description: "On-site travel — client office", category: "travel", amount: 85.5, expenseDate: daysAgo(5) },
+    { ticketId: t1.id, companyId: acme.id, createdById: tech1.id, description: "Replacement network switch", category: "hardware", amount: 249.99, expenseDate: daysAgo(2) },
+    { ticketId: t2.id, companyId: globex.id, createdById: tech2.id, description: "Malware analysis tool subscription", category: "software", amount: 59.0, expenseDate: daysAgo(4) },
+    { ticketId: t2.id, companyId: globex.id, createdById: tech2.id, description: "After-hours labor surcharge", category: "labor", amount: 175.0, expenseDate: daysAgo(1) },
+    { ticketId: t3.id, companyId: initech.id, createdById: tech1.id, description: "Replacement toner cartridge", category: "parts", amount: 118.0, expenseDate: daysAgo(3) },
+    { ticketId: t3.id, companyId: initech.id, createdById: tech1.id, description: "On-site travel — branch office", category: "travel", amount: 62.75, expenseDate: daysAgo(1) },
+    { ticketId: t4.id, companyId: umbrell.id, createdById: tech2.id, description: "Malware analysis tool subscription", category: "software", amount: 59.0, expenseDate: daysAgo(4) },
+    { ticketId: t4.id, companyId: umbrell.id, createdById: tech2.id, description: "Replacement network switch", category: "hardware", amount: 249.99, expenseDate: daysAgo(2) },
+    { ticketId: t5.id, companyId: stark.id, createdById: tech1.id, description: "On-site travel — client office", category: "travel", amount: 85.5, expenseDate: daysAgo(5) },
+    { ticketId: t5.id, companyId: stark.id, createdById: tech1.id, description: "USB-C docking station for onboarding", category: "hardware", amount: 189.0, expenseDate: daysAgo(1) },
+    { ticketId: t6.id, companyId: acme.id, createdById: tech2.id, description: "Replacement toner cartridge", category: "parts", amount: 118.0, expenseDate: daysAgo(3) },
+    { ticketId: t6.id, companyId: acme.id, createdById: tech2.id, description: "After-hours labor surcharge", category: "labor", amount: 175.0, expenseDate: daysAgo(1) },
+    { ticketId: t7.id, companyId: initech.id, createdById: tech1.id, description: "Adobe license procurement fee", category: "software", amount: 42.5, expenseDate: daysAgo(2) },
+    { ticketId: t7.id, companyId: initech.id, createdById: tech1.id, description: "Patch cable Cat6 (10-pack)", category: "parts", amount: 24.5, expenseDate: daysAgo(1) },
+    { ticketId: t8.id, companyId: stark.id, createdById: tech2.id, description: "Security key hardware", category: "hardware", amount: 129.99, expenseDate: daysAgo(2) },
+    { ticketId: t8.id, companyId: stark.id, createdById: tech2.id, description: "After-hours labor surcharge", category: "labor", amount: 175.0, expenseDate: daysAgo(0.5) },
+  ] });
+  console.log("  ✓ Created 16 ticket expenses (linked to Billing → Time & Expenses)");
+
+  await prisma.scheduleEntry.createMany({ data: [
+    { ticketId: t1.id, userId: tech1.id, title: "On-site visit", location: "Client office", startTime: daysAgo(-1), endTime: daysAgo(-0.9), status: "scheduled", color: "#3b82d6" },
+    { ticketId: t2.id, userId: tech2.id, title: "Remote session with user", location: null, startTime: daysAgo(-2), endTime: daysAgo(-1.9), status: "scheduled", color: "#8b5cf6" },
+    { ticketId: t3.id, userId: tech1.id, title: "Vendor conference call", location: "Teams", startTime: daysAgo(-1.5), endTime: daysAgo(-1.4), status: "scheduled", color: "#3b82d6" },
+    { ticketId: t4.id, userId: tech2.id, title: "Backup verification review", location: null, startTime: daysAgo(-3), endTime: daysAgo(-2.9), status: "scheduled", color: "#8b5cf6" },
+    { ticketId: t5.id, userId: tech1.id, title: "Change window maintenance", location: null, startTime: daysAgo(-4), endTime: daysAgo(-3.9), status: "scheduled", color: "#3b82d6" },
+    { ticketId: t6.id, userId: tech2.id, title: "On-site visit", location: "Client office", startTime: daysAgo(-2.5), endTime: daysAgo(-2.4), status: "scheduled", color: "#8b5cf6" },
+    { ticketId: t7.id, userId: tech1.id, title: "Remote session with user", location: null, startTime: daysAgo(-1.2), endTime: daysAgo(-1.1), status: "scheduled", color: "#3b82d6" },
+    { ticketId: t8.id, userId: tech2.id, title: "On-site visit", location: "Client office", startTime: daysAgo(-0.8), endTime: daysAgo(-0.7), status: "scheduled", color: "#8b5cf6" },
+  ] });
+  console.log("  ✓ Created 8 ticket schedule entries");
+
+  await prisma.ticketComment.createMany({ data: [
+    { ticketId: t1.id, body: "Status: New → In Progress", authorId: tech1.id, isInternal: true, createdAt: daysAgo(6) },
+    { ticketId: t2.id, body: "Priority: Medium → Critical", authorId: tech2.id, isInternal: true, createdAt: daysAgo(5) },
+    { ticketId: t3.id, body: "Status: In Progress → Waiting On Client", authorId: tech1.id, isInternal: true, createdAt: daysAgo(4) },
+    { ticketId: t4.id, body: "Status: In Progress → Resolved", authorId: tech2.id, isInternal: true, createdAt: daysAgo(1) },
+    { ticketId: t5.id, body: "Due Date: (empty) → next business day", authorId: tech1.id, isInternal: true, createdAt: daysAgo(3) },
+    { ticketId: t6.id, body: "Priority: Low → Medium", authorId: tech2.id, isInternal: true, createdAt: daysAgo(2) },
+    { ticketId: t7.id, body: "Status: New → Pending Approval", authorId: tech1.id, isInternal: true, createdAt: daysAgo(2) },
+    { ticketId: t8.id, body: "Assigned To: (empty) → assigned technician", authorId: tech2.id, isInternal: true, createdAt: daysAgo(1) },
+  ] });
+  console.log("  ✓ Created 8 History change-log comments");
+
+  await prisma.auditLog.createMany({ data: [
+    { action: "ticket:update", entity: "ticket", entityId: t1.id, changes: { status: "in_progress" } as any, userId: tech1.id, ipAddress: "127.0.0.1", createdAt: daysAgo(6) },
+    { action: "ticket:create", entity: "ticket", entityId: t1.id, changes: { title: "created" } as any, userId: adminUser.id, ipAddress: "127.0.0.1", createdAt: daysAgo(7) },
+    { action: "ticket:update", entity: "ticket", entityId: t2.id, changes: { priority: "critical" } as any, userId: tech2.id, ipAddress: "127.0.0.1", createdAt: daysAgo(5) },
+    { action: "ticket:create", entity: "ticket", entityId: t2.id, changes: { title: "created" } as any, userId: manager.id, ipAddress: "127.0.0.1", createdAt: daysAgo(6) },
+    { action: "ticket:update", entity: "ticket", entityId: t3.id, changes: { status: "waiting_on_client" } as any, userId: tech1.id, ipAddress: "127.0.0.1", createdAt: daysAgo(4) },
+    { action: "ticket:update", entity: "ticket", entityId: t4.id, changes: { status: "resolved" } as any, userId: tech2.id, ipAddress: "127.0.0.1", createdAt: daysAgo(1) },
+    { action: "ticket:update", entity: "ticket", entityId: t5.id, changes: { dueDate: "set" } as any, userId: tech1.id, ipAddress: "127.0.0.1", createdAt: daysAgo(3) },
+    { action: "ticket:update", entity: "ticket", entityId: t6.id, changes: { priority: "medium" } as any, userId: tech2.id, ipAddress: "127.0.0.1", createdAt: daysAgo(2) },
+    { action: "ticket:update", entity: "ticket", entityId: t7.id, changes: { status: "pending_approval" } as any, userId: tech1.id, ipAddress: "127.0.0.1", createdAt: daysAgo(2) },
+    { action: "ticket:update", entity: "ticket", entityId: t8.id, changes: { assignedToId: "assigned" } as any, userId: tech2.id, ipAddress: "127.0.0.1", createdAt: daysAgo(1) },
+  ] });
+  console.log("  ✓ Created 10 ticket audit trail entries");
 
   // ── Projects ──
   await prisma.project.createMany({ data: [

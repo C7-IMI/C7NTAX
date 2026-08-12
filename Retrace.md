@@ -626,6 +626,20 @@
 - Command detection rule documented in BuildNotes entries: explicit standalone commands only; natural-language mentions treated as normal prompts
 - Verified: `tsc --noEmit` clean on all new/modified files; flag round-trip tested (`set(true)` → detected, `set(false)` → removed; no leftover marker); live DB untouched (feature not executed — prompt is the implementation request, not the disable command)
 
+### Prompt 54 — Seed ticket tab sample data for all tickets
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~45 min
+**BuildNotes IDs:** #1 (2026.8.12.012)
+> Seed the new tabs and fields on the toolbar card in the ticket details view with sample data so every ticket shows representative content when each tab is clicked. Apply this sample data to all tickets. Include the new sample data in the snapshot/reseed process following the existing pattern. Add and link the sample data to the appropriate sections throughout the app. For example, an expense created in the tab dialog should also appear in the Time & Expenses subsection under Billing.
+
+**Changes:**
+- `apps/api/src/seed-ticket-tabs.ts` — New idempotent script: per ticket adds 2 configurations, 2 products, 2 links, 2 attachments (customFields), 2 expenses (Expense rows), 2 schedule entries (ScheduleEntry rows), 1 History change-log comment, 2 audit trail entries; run against live DB (8 tickets seeded)
+- `apps/api/src/snapshot-capture.ts` — Added `scheduleEntry` → `schedule-entries.json` (42 tables total)
+- `apps/api/src/seed-from-snapshots.ts` — Added `schedule-entries.json` → `scheduleEntry` to seed order
+- `apps/api/src/seed-full.ts` — Full reseed now creates the same tab data (16 expenses, 8 schedule entries, 8 history comments, 10 audit entries, customFields for all 8 tickets); cleanup section now wipes expense, scheduleEntry, and auditLog
+- `apps/web/src/pages/Billing.tsx` — Time & Expenses tab now fetches `/billing/expenses` and renders an Expenses section (ticket number via ticket map, description, category badge, date, amount, total line)
+- Live DB verified: 8/8 tickets with customFields, 16 ticket expenses, 16 ticket schedule entries, 8 history comments, 16 ticket audit entries; snapshot recaptured (236 records, 42 tables) with `schedule-entries.json` (17 entries) and customFields in tickets.json
+- All three changelog sources updated with `2026.8.12.012`; `tsc --noEmit` clean on all modified files
+
 ---
 
-**Total Prompts:** 53 | **Completed:** 53 | **In Progress:** 0
+**Total Prompts:** 54 | **Completed:** 54 | **In Progress:** 0

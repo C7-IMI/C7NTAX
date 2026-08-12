@@ -384,6 +384,8 @@ function PaymentsTab() {
 
 function TimeExpensesTab() {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [ticketMap, setTicketMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [billableFilter, setBillableFilter] = useState<"" | "true" | "false">("");
 
@@ -391,7 +393,9 @@ function TimeExpensesTab() {
     api.get("/tickets?limit=200").then(r => {
       const tickets = r.data.data || [];
       const timeEntries: TimeEntry[] = [];
+      const map: Record<string, any> = {};
       for (const t of tickets) {
+        map[t.id] = t;
         if (t.timeEntries) {
           for (const te of t.timeEntries) {
             timeEntries.push({ ...te, ticket: { ticketNumber: t.ticketNumber, company: t.company } } as TimeEntry);
@@ -399,15 +403,19 @@ function TimeExpensesTab() {
         }
       }
       timeEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setTicketMap(map);
       setEntries(timeEntries);
       setLoading(false);
     }).catch(() => setLoading(false));
+    // Expenses linked to tickets (created via the ticket Expenses tab dialog)
+    api.get("/billing/expenses").then(r => setExpenses(r.data?.data || r.data || [])).catch(() => {});
   }, []);
 
   const filtered = billableFilter ? entries.filter(e => e.billable === (billableFilter === "true")) : entries;
   const totalHours = filtered.reduce((s, e) => s + e.minutes, 0) / 60;
   const totalBillable = filtered.filter(e => e.billable).reduce((s, e) => s + e.minutes, 0) / 60;
   const totalUnbilled = filtered.filter(e => e.billable && !e.invoiceId).reduce((s, e) => s + e.minutes, 0) / 60;
+  const expenseTotal = expenses.reduce((s, e) => s + (e.amount || 0), 0);
 
   return (
     <div className="space-y-4">
@@ -437,6 +445,27 @@ function TimeExpensesTab() {
               <td className="p-3">{e.billable ? <span className="badge bg-green-600/20 text-green-400">billable</span> : <span className="badge bg-gray-600/20 text-gray-400">non-bill</span>}</td>
               <td className="p-3 hidden md:table-cell">{e.invoiceId ? <span className="badge bg-blue-600/20 text-blue-400">invoiced</span> : <span className="text-amber-400 text-xs">unbilled</span>}</td>
               <td className="p-3 text-gray-500 text-xs hidden lg:table-cell">{new Date(e.date).toLocaleDateString()}</td>
+            </tr>
+          ))}</tbody>
+        </table></div></div>
+      )}
+
+      {/* Expenses — linked from the ticket Expenses tab */}
+      <div className="flex justify-between items-center pt-2 border-t border-surface-border">
+        <p className="text-sm text-gray-400">{expenses.length} expenses · <span className="text-cyber-400 font-medium">${expenseTotal.toFixed(2)}</span></p>
+      </div>
+      {expenses.length === 0 ? (
+        <div className="text-center py-8 card"><Receipt size={36} className="text-gray-600 mx-auto mb-2" /><p className="text-gray-500 text-sm">No expenses</p></div>
+      ) : (
+        <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
+          <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">Ticket</th><th className="p-3">Description</th><th className="p-3">Category</th><th className="p-3 hidden md:table-cell">Date</th><th className="p-3 text-right">Amount</th></tr></thead>
+          <tbody>{expenses.map(e => (
+            <tr key={e.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
+              <td className="p-3"><span className="font-medium text-white">{ticketMap[e.ticketId]?.ticketNumber || "—"}</span></td>
+              <td className="p-3 text-gray-300 text-xs">{e.description}</td>
+              <td className="p-3"><span className="badge bg-purple-600/20 text-purple-400 text-xs capitalize">{e.category}</span></td>
+              <td className="p-3 text-gray-500 text-xs hidden md:table-cell">{new Date(e.expenseDate).toLocaleDateString()}</td>
+              <td className="p-3 text-right text-cyber-400 font-medium">${(e.amount || 0).toFixed(2)}</td>
             </tr>
           ))}</tbody>
         </table></div></div>
