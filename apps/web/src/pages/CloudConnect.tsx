@@ -47,7 +47,7 @@ const KIND_LABELS: Record<string, string> = {
   itglue: "ITGlue", microsoft365: "Microsoft 365", azure: "Azure", aws: "AWS",
   connectwise: "ConnectWise PSA", halopsa: "HaloPSA",
   kantata: "Kantata", scoro: "Scoro", autotask: "AutoTask PSA",
-  azure_ad_sso: "Azure AD SSO",
+  azure_ad_sso: "Azure AD SSO", dummy: "DummyConnect Simulator",
 };
 
 const KIND_ICONS: Record<string, LucideIcon> = {
@@ -97,6 +97,12 @@ export function CloudConnectPage() {
   const [fixFieldValues, setFixFieldValues] = useState<Record<string, string>>({});
   // Per-field test results within the dialog
   const [fixTestResults, setFixTestResults] = useState<Record<string, { status: "idle" | "testing" | "pass" | "fail"; error?: string }>>({});
+
+  // ── Integration Action Panel state ──
+  const [actionPanel, setActionPanel] = useState<{ open: boolean; integration: Integration } | null>(null);
+  const [simulatedKind, setSimulatedKind] = useState<string>("microsoft365");
+  const [mockUsers, setMockUsers] = useState<Array<{ id: string; name: string; email: string; selected: boolean }>>([]);
+  const [mockLoaded, setMockLoaded] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {

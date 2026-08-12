@@ -1,44 +1,44 @@
 [
   {
-    "id": "4a320b6a-84d8-43e6-81e2-6fee7b5af53d",
+    "id": "a863090f-a070-4586-88c0-949f385a86c5",
     "sourceType": "password",
-    "sourceId": "44027e77-93f0-409d-b595-4dc0e88c7792",
+    "sourceId": "a3500717-cd71-4726-9266-f35f734c04f5",
     "targetType": "domain",
-    "targetId": "0d80a2de-edc6-452e-b1d7-2ba41f992de4",
+    "targetId": "df673734-9646-446f-8efd-7ca42789e26c",
     "relationship": "authenticates",
     "label": "Domain Admin creds for acmecorp.com",
     "notes": null,
     "isDirectional": true,
     "sortOrder": 0,
-    "createdById": "64e1d056-1441-4010-9e13-58266fcd6ca5",
-    "createdAt": "2026-08-11T14:21:53.637Z"
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-12T06:04:15.167Z"
   },
   {
-    "id": "5ada0b00-bd74-4150-9cc1-25f1779ce194",
+    "id": "60dcc705-6c62-4094-941f-3ddf8260aaa0",
     "sourceType": "asset",
-    "sourceId": "3cfc60cd-b26a-47c0-ac42-e9547b491017",
+    "sourceId": "75a17625-21ff-483c-9449-1834ba6081b3",
     "targetType": "document",
-    "targetId": "36ef12c6-5246-4267-8c50-5f109cc0e8f6",
+    "targetId": "493a0ec4-910c-480f-937d-be0baa32b992",
     "relationship": "documented_by",
     "label": "Network doc",
     "notes": null,
     "isDirectional": true,
     "sortOrder": 0,
-    "createdById": "d34dae4a-c8e6-4cce-a6cd-92b9dddfdb99",
-    "createdAt": "2026-08-11T14:21:53.637Z"
+    "createdById": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "createdAt": "2026-08-12T06:04:15.167Z"
   },
   {
-    "id": "d2f518db-f44d-4b09-b2cd-e3944eb74d8d",
+    "id": "cb0d6d9c-ad38-47c0-9343-934c9a9a6d55",
     "sourceType": "domain",
-    "sourceId": "f7196dca-6c5c-4071-a4da-8e1a8fcd4a4d",
+    "sourceId": "494e0f55-a9ef-4946-802a-78812b9d9633",
     "targetType": "certificate",
-    "targetId": "d086ea3b-1ab0-4796-9281-fb535f8659b2",
+    "targetId": "34c3f03f-d27e-40e6-a1d2-6c2548a30761",
     "relationship": "secured_by",
     "label": "TLS cert for globexind.com",
     "notes": null,
     "isDirectional": true,
     "sortOrder": 0,
-    "createdById": "d34dae4a-c8e6-4cce-a6cd-92b9dddfdb99",
-    "createdAt": "2026-08-11T14:21:53.637Z"
+    "createdById": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "createdAt": "2026-08-12T06:04:15.167Z"
   }
 ]

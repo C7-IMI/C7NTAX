@@ -58,6 +58,7 @@ const TABLES: TableDef[] = [
   { name: "kumoLink", fileName: "kumo-links.json" },
   { name: "kumoDomain", fileName: "kumo-domains.json" },
   { name: "kumoCertificate", fileName: "kumo-certificates.json" },
+  { name: "auditLog", fileName: "audit-logs.json" },
   { name: "kumoFile", fileName: "kumo-files.json" },
   { name: "kumoTemplateField", fileName: "kumo-template-fields.json" },
   { name: "kumoAssetFieldValue", fileName: "kumo-asset-field-values.json" },

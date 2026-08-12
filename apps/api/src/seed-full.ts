@@ -337,6 +337,19 @@ async function main() {
 
   console.log("  ✓ Created 4 sample integrations with M365 sync data");
 
+// ── DummyConnect — persistent sandbox simulator ─────────────────────
+await prisma.integration.create({
+  data: {
+    kind: "dummy",
+    name: "DummyConnect",
+    enabled: true,
+    status: "connected",
+    credentials: {},
+    settings: { simulatedKind: "microsoft365" },
+  },
+});
+console.log("  ✓ Created DummyConnect simulator");
+
 // ── Kumo: Asset Templates ───────────────────────────────────────────
 const serverTpl = await prisma.kumoAssetTemplate.create({
   data: { name: "Server", description: "Physical or virtual server", icon: "server", color: "#3b82d6", isBuiltIn: true },

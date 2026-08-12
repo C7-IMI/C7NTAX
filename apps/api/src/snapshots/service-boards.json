@@ -1,21 +1,7 @@
 [
   {
-    "id": "fe147d30-54af-49c6-8e23-86f95cd3f073",
-    "name": "Infrastructure Service Desk",
-    "description": "New client setup and migration",
-    "isActive": true,
-    "slaResponseMinutes": 240,
-    "slaResolutionMinutes": 1440,
-    "autoCloseEnabled": true,
-    "autoCloseDays": 14,
-    "followUpEnabled": true,
-    "followUpIntervalHours": 24,
-    "createdAt": "2026-08-11T14:21:53.591Z",
-    "updatedAt": "2026-08-11T14:23:16.627Z"
-  },
-  {
-    "id": "66c0bd58-9d91-49f0-ba46-ce19d7ed6083",
-    "name": "MSP Service Desk",
+    "id": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "name": "Helpdesk",
     "description": "General IT support",
     "isActive": true,
     "slaResponseMinutes": 120,
@@ -24,12 +10,12 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-11T14:21:53.590Z",
-    "updatedAt": "2026-08-11T14:23:27.852Z"
+    "createdAt": "2026-08-12T06:04:15.108Z",
+    "updatedAt": "2026-08-12T06:04:15.108Z"
   },
   {
-    "id": "81d0fd15-1841-4bd2-81f4-22d5eb8f5842",
-    "name": "NOC Alerts",
+    "id": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+    "name": "Security",
     "description": "Security incidents and alerts",
     "isActive": true,
     "slaResponseMinutes": 30,
@@ -38,13 +24,13 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-11T14:21:53.591Z",
-    "updatedAt": "2026-08-11T14:23:35.324Z"
+    "createdAt": "2026-08-12T06:04:15.109Z",
+    "updatedAt": "2026-08-12T06:04:15.109Z"
   },
   {
-    "id": "30718ada-f9b5-4d0d-b316-8ccd90ffdd44",
-    "name": "Intelligence Service Desk",
-    "description": "",
+    "id": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+    "name": "Client Onboarding",
+    "description": "New client setup and migration",
     "isActive": true,
     "slaResponseMinutes": 240,
     "slaResolutionMinutes": 1440,
@@ -52,7 +38,7 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-11T14:23:44.913Z",
-    "updatedAt": "2026-08-11T14:23:44.913Z"
+    "createdAt": "2026-08-12T06:04:15.109Z",
+    "updatedAt": "2026-08-12T06:04:15.109Z"
   }
 ]

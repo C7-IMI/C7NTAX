@@ -259,3 +259,14 @@ systemRouter.get("/changelog", (_req, res) => {
     }
   }
 });
+
+// ── Audit logs ──
+systemRouter.get("/audit-logs", async (_req: AuthRequest, res, next) => {
+  try {
+    const logs = await prisma.auditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 500,
+    });
+    res.json({ data: logs });
+  } catch (e) { next(e); }
+});

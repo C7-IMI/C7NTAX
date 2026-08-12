@@ -1,6 +1,6 @@
 [
   {
-    "id": "d30b7a7e-6c03-4e30-82a0-dc46d1a2d69a",
+    "id": "b8552ba7-054c-4c91-9a25-e5bb5c2e4ee7",
     "kind": "microsoft365",
     "name": "Contoso Microsoft 365",
     "enabled": false,
@@ -17,11 +17,11 @@
     },
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-11T14:21:53.611Z",
-    "updatedAt": "2026-08-11T14:21:53.611Z"
+    "createdAt": "2026-08-12T06:04:15.134Z",
+    "updatedAt": "2026-08-12T06:04:15.134Z"
   },
   {
-    "id": "73232b24-ad6e-4708-bf3a-fe4ebb0bbaaf",
+    "id": "66283324-8256-4c76-a588-dbfcdfaba736",
     "kind": "autotask",
     "name": "AutoTask PSA Production",
     "enabled": false,
@@ -33,11 +33,11 @@
     "settings": {},
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-11T14:21:53.612Z",
-    "updatedAt": "2026-08-11T14:21:53.612Z"
+    "createdAt": "2026-08-12T06:04:15.135Z",
+    "updatedAt": "2026-08-12T06:04:15.135Z"
   },
   {
-    "id": "6e37bf9f-50e2-4bc8-88ef-bf526e30d5af",
+    "id": "6b919672-78a4-41ba-bca6-5d70638d80b8",
     "kind": "connectwise",
     "name": "ConnectWise Manage",
     "enabled": false,
@@ -52,11 +52,11 @@
     "settings": {},
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-11T14:21:53.613Z",
-    "updatedAt": "2026-08-11T14:21:53.613Z"
+    "createdAt": "2026-08-12T06:04:15.135Z",
+    "updatedAt": "2026-08-12T06:04:15.135Z"
   },
   {
-    "id": "ce40d4c6-99a2-466b-99b3-069618c9dbe0",
+    "id": "dd1621e8-8fe4-4030-88b8-e3ea6de1e7e3",
     "kind": "quickbooks",
     "name": "QuickBooks Online",
     "enabled": false,
@@ -69,7 +69,22 @@
     "settings": {},
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-11T14:21:53.613Z",
-    "updatedAt": "2026-08-11T14:21:53.613Z"
+    "createdAt": "2026-08-12T06:04:15.136Z",
+    "updatedAt": "2026-08-12T06:04:15.136Z"
+  },
+  {
+    "id": "d08887f7-005e-487f-bd4f-8315e1ff6975",
+    "kind": "dummy",
+    "name": "DummyConnect",
+    "enabled": true,
+    "status": "connected",
+    "credentials": {},
+    "settings": {
+      "simulatedKind": "microsoft365"
+    },
+    "lastSyncAt": null,
+    "errorMessage": null,
+    "createdAt": "2026-08-12T06:04:15.139Z",
+    "updatedAt": "2026-08-12T06:04:15.139Z"
   }
 ]

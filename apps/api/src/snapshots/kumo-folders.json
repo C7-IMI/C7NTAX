@@ -1,29 +1,29 @@
 [
   {
-    "id": "3b442998-a682-4448-a6be-8c0663d8e5e6",
+    "id": "67210424-5078-49ef-b885-537feca1b900",
     "name": "General Documentation",
     "slug": "general",
     "description": "General-purpose documents",
     "parentId": null,
     "sortOrder": 0,
-    "companyId": "6ac3b99c-2b15-403a-8068-0d970208dad4"
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
   },
   {
-    "id": "7e96a574-9ecb-46cf-81f5-d38ef095aa25",
+    "id": "6a06f015-b9d2-4169-af84-0a1598a0145c",
     "name": "Security Policies",
     "slug": "security-policies",
     "description": "Security and compliance",
-    "parentId": "3b442998-a682-4448-a6be-8c0663d8e5e6",
+    "parentId": "67210424-5078-49ef-b885-537feca1b900",
     "sortOrder": 0,
-    "companyId": "6ac3b99c-2b15-403a-8068-0d970208dad4"
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
   },
   {
-    "id": "590214e1-3de4-4091-b470-b135cde459de",
+    "id": "208bb817-7204-4edd-a760-bee315b0592e",
     "name": "Operational Runbooks",
     "slug": "runbooks",
     "description": "Day-to-day operational procedures",
     "parentId": null,
     "sortOrder": 0,
-    "companyId": "4f26d870-65bc-43c9-9383-e124f0bdf82d"
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a"
   }
 ]

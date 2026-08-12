@@ -57,6 +57,7 @@ const SEED_ORDER: { fileName: string; model: string }[] = [
   { fileName: "recently-viewed.json", model: "recentlyViewedItem" },
   { fileName: "expenses.json", model: "expense" },
   { fileName: "alert-rules.json", model: "alertRule" },
+  { fileName: "audit-logs.json", model: "auditLog" },
   { fileName: "alert-logs.json", model: "alertLog" },
 ];
 

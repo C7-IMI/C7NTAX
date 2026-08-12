@@ -1,7 +1,7 @@
 [
   {
-    "id": "36ef12c6-5246-4267-8c50-5f109cc0e8f6",
-    "folderId": "3b442998-a682-4448-a6be-8c0663d8e5e6",
+    "id": "493a0ec4-910c-480f-937d-be0baa32b992",
+    "folderId": "67210424-5078-49ef-b885-537feca1b900",
     "title": "Acme Network Topology Overview",
     "slug": "acme-network-topology",
     "currentContent": "# Network Topology\n\nAcme HQ uses a hub-and-spoke topology.",
@@ -9,21 +9,21 @@
     "status": "published",
     "visibility": "internal",
     "sortOrder": 0,
-    "companyId": "6ac3b99c-2b15-403a-8068-0d970208dad4",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
     "tags": [
       "network",
       "diagram"
     ],
-    "authorId": "d34dae4a-c8e6-4cce-a6cd-92b9dddfdb99",
+    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
     "lastEditorId": null,
     "viewCount": 0,
     "isTemplate": false,
-    "createdAt": "2026-08-11T14:21:53.632Z",
-    "updatedAt": "2026-08-11T14:21:53.632Z"
+    "createdAt": "2026-08-12T06:04:15.159Z",
+    "updatedAt": "2026-08-12T06:04:15.159Z"
   },
   {
-    "id": "cfc11209-3236-41cd-91ee-b0ec93d6d139",
-    "folderId": "7e96a574-9ecb-46cf-81f5-d38ef095aa25",
+    "id": "11f3437d-6576-4a14-b707-84a88be41b3a",
+    "folderId": "6a06f015-b9d2-4169-af84-0a1598a0145c",
     "title": "Password Policy",
     "slug": "password-policy",
     "currentContent": "# Password Policy\n\nMinimum 12 characters, must include uppercase, lowercase, numbers, and symbols.",
@@ -31,21 +31,21 @@
     "status": "published",
     "visibility": "internal",
     "sortOrder": 0,
-    "companyId": "6ac3b99c-2b15-403a-8068-0d970208dad4",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
     "tags": [
       "security",
       "policy"
     ],
-    "authorId": "64e1d056-1441-4010-9e13-58266fcd6ca5",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "lastEditorId": null,
     "viewCount": 0,
     "isTemplate": false,
-    "createdAt": "2026-08-11T14:21:53.632Z",
-    "updatedAt": "2026-08-11T14:21:53.632Z"
+    "createdAt": "2026-08-12T06:04:15.159Z",
+    "updatedAt": "2026-08-12T06:04:15.159Z"
   },
   {
-    "id": "e487d663-dd8d-4fe4-917c-00e57c8d597d",
-    "folderId": "7e96a574-9ecb-46cf-81f5-d38ef095aa25",
+    "id": "96bf248c-5dfe-4d89-bad7-8c89ef332b00",
+    "folderId": "6a06f015-b9d2-4169-af84-0a1598a0145c",
     "title": "Incident Response Plan",
     "slug": "ir-plan",
     "currentContent": "# Incident Response Plan\n\n1. Identify\n2. Contain\n3. Eradicate\n4. Recover\n5. Lessons Learned",
@@ -53,21 +53,21 @@
     "status": "published",
     "visibility": "internal",
     "sortOrder": 0,
-    "companyId": "6ac3b99c-2b15-403a-8068-0d970208dad4",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
     "tags": [
       "security",
       "ir"
     ],
-    "authorId": "ec3c027e-c5c6-46a4-b586-11cb3fe2b32b",
+    "authorId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "lastEditorId": null,
     "viewCount": 0,
     "isTemplate": false,
-    "createdAt": "2026-08-11T14:21:53.632Z",
-    "updatedAt": "2026-08-11T14:21:53.632Z"
+    "createdAt": "2026-08-12T06:04:15.159Z",
+    "updatedAt": "2026-08-12T06:04:15.159Z"
   },
   {
-    "id": "23f55ef0-8da6-4904-86ee-f335030872e5",
-    "folderId": "590214e1-3de4-4091-b470-b135cde459de",
+    "id": "626b9f7b-c83b-494c-8612-bd8c9d513738",
+    "folderId": "208bb817-7204-4edd-a760-bee315b0592e",
     "title": "Server Reboot Procedure",
     "slug": "server-reboot",
     "currentContent": "# Server Reboot Procedure\n\n1. Notify stakeholders\n2. Graceful shutdown\n3. Verify services post-boot",
@@ -75,16 +75,16 @@
     "status": "draft",
     "visibility": "internal",
     "sortOrder": 0,
-    "companyId": "4f26d870-65bc-43c9-9383-e124f0bdf82d",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
     "tags": [
       "runbook",
       "servers"
     ],
-    "authorId": "d34dae4a-c8e6-4cce-a6cd-92b9dddfdb99",
+    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
     "lastEditorId": null,
     "viewCount": 0,
     "isTemplate": false,
-    "createdAt": "2026-08-11T14:21:53.632Z",
-    "updatedAt": "2026-08-11T14:21:53.632Z"
+    "createdAt": "2026-08-12T06:04:15.159Z",
+    "updatedAt": "2026-08-12T06:04:15.159Z"
   }
 ]
