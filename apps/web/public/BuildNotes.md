@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.017 | Last Updated: 2026-08-12
+## Version: 2026.8.12.018 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.018 — Native Desktop OSS Plan
+- **[New]** `native-desktop-oss-plan.md` — open-source edition of the native desktop plan: preserves goals and structure while replacing all proprietary tooling (Visual Studio → VS Code + dotnet CLI, MSIX GUI → msix-packaging CLI, signtool → osslsigncode + self-signed, MSVC AOT linker → LLVM clang/lld, Xcode → VS Code + swift.org toolchain + CLT, GitHub Actions → Forgejo/GitLab CE/Jenkins, commercial monitoring → GlitchTip/OpenTelemetry).
+- **[New]** Includes license table per tool, no-purchase signing/distribution strategies (WinGet sideload, Homebrew Cask, Flathub), and a cost-comparison section flagging the only unavoidable costs (Apple hardware for macOS CI; optional paid certs for SmartScreen/notarization).
 
 ## 2026.8.12.017 — Native Desktop Clients Plan (Windows / Linux / macOS)
 - **[New]** `native-desktop-plan.md` — plan only, no code: three native desktop apps using C#/.NET 8 + WinUI 3 (Windows), Rust + GTK 4/libadwaita (Linux), Swift 6 + SwiftUI/AppKit (macOS); Electron app remains and is updated alongside, not replaced.
