@@ -228,5 +228,27 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-12T07:55:51.121Z"
+  },
+  {
+    "id": "f8e03e4b-07f5-49f9-8384-d9fde896e288",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "batch",
+    "changes": {
+      "status": "waiting_client",
+      "ticketIds": [
+        "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+        "4cf131de-f902-4993-be73-d5d37d924717",
+        "bc93e884-6717-46fd-9a5e-96b59a03b54b",
+        "a09d99d5-06d4-4d06-a397-70ba25d7200a",
+        "7ba48735-e64d-48b7-b494-b148b6808416",
+        "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+        "5545e551-f4ac-4412-9934-96e86383d869",
+        "8da69561-0e86-4082-b323-0bfa64c95e1f"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T08:15:51.766Z"
   }
 ]

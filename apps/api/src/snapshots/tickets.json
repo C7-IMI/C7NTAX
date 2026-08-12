@@ -4,7 +4,7 @@
     "ticketNumber": "INT-1002-1001",
     "title": "Network drive mapping failure after migration",
     "description": "All users in Chicago office lost mapped drives after weekend migration. GPO seems intact.",
-    "status": "new",
+    "status": "waiting_client",
     "priority": "critical",
     "source": "portal",
     "dueDate": "2026-08-13T11:04:00.000Z",
@@ -29,14 +29,14 @@
     "customFields": {},
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.115Z",
-    "updatedAt": "2026-08-12T07:50:27.084Z"
+    "updatedAt": "2026-08-12T08:15:51.758Z"
   },
   {
     "id": "8da69561-0e86-4082-b323-0bfa64c95e1f",
     "ticketNumber": "MSP-1001-1001",
     "title": "Email server not sending outbound messages",
     "description": "Users cannot send external emails. Internal mail flow works fine. Error: 550 5.7.1 Unable to relay.",
-    "status": "in_progress",
+    "status": "waiting_client",
     "priority": "high",
     "source": "portal",
     "dueDate": "2026-08-14T06:04:15.110Z",
@@ -61,14 +61,14 @@
     "customFields": {},
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.114Z",
-    "updatedAt": "2026-08-12T06:04:15.114Z"
+    "updatedAt": "2026-08-12T08:15:51.758Z"
   },
   {
     "id": "5545e551-f4ac-4412-9934-96e86383d869",
     "ticketNumber": "MSP-1003-1001",
     "title": "VPN connection drops every 15 minutes",
     "description": "Remote users report consistent VPN disconnects. Affects 12 users. Started Monday morning.",
-    "status": "waiting_on_client",
+    "status": "waiting_client",
     "priority": "medium",
     "source": "portal",
     "dueDate": null,
@@ -93,14 +93,14 @@
     "customFields": {},
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.117Z",
-    "updatedAt": "2026-08-12T06:04:15.117Z"
+    "updatedAt": "2026-08-12T08:15:51.758Z"
   },
   {
     "id": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
     "ticketNumber": "INF-1004-1001",
     "title": "Phishing alert: suspicious email circulating",
     "description": "Multiple users received fake invoice email. Attachment was quarantined by Defender. Need to verify scope.",
-    "status": "resolved",
+    "status": "waiting_client",
     "priority": "high",
     "source": "portal",
     "dueDate": null,
@@ -125,14 +125,14 @@
     "customFields": {},
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.118Z",
-    "updatedAt": "2026-08-12T06:04:15.118Z"
+    "updatedAt": "2026-08-12T08:15:51.758Z"
   },
   {
     "id": "7ba48735-e64d-48b7-b494-b148b6808416",
     "ticketNumber": "MSP-1005-1001",
     "title": "New user onboarding — Finance department",
     "description": "Need 3 new workstations set up with standard software stack. John in Finance starts next Monday.",
-    "status": "new",
+    "status": "waiting_client",
     "priority": "low",
     "source": "portal",
     "dueDate": "2026-08-17T06:04:15.110Z",
@@ -157,14 +157,14 @@
     "customFields": {},
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.120Z",
-    "updatedAt": "2026-08-12T06:04:15.120Z"
+    "updatedAt": "2026-08-12T08:15:51.758Z"
   },
   {
     "id": "a09d99d5-06d4-4d06-a397-70ba25d7200a",
     "ticketNumber": "MSP-1001-1002",
     "title": "Printer queue stuck — reception area",
     "description": "Reception printer IR-ADV C5550 shows 'Processing' but never prints. Restarted spooler, no change.",
-    "status": "in_progress",
+    "status": "waiting_client",
     "priority": "medium",
     "source": "portal",
     "dueDate": null,
@@ -189,14 +189,14 @@
     "customFields": {},
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.121Z",
-    "updatedAt": "2026-08-12T06:04:15.121Z"
+    "updatedAt": "2026-08-12T08:15:51.758Z"
   },
   {
     "id": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
     "ticketNumber": "MSP-1003-1002",
     "title": "Software license renewal — Adobe CC",
     "description": "Adobe Creative Cloud licenses expire next month. Need to renew for design team (8 seats).",
-    "status": "pending_approval",
+    "status": "waiting_client",
     "priority": "medium",
     "source": "portal",
     "dueDate": null,
@@ -221,14 +221,14 @@
     "customFields": {},
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.122Z",
-    "updatedAt": "2026-08-12T06:04:15.122Z"
+    "updatedAt": "2026-08-12T08:15:51.758Z"
   },
   {
     "id": "4cf131de-f902-4993-be73-d5d37d924717",
     "ticketNumber": "MSP-1005-1002",
     "title": "MFA setup for C-suite execs",
     "description": "CEO and CFO need MFA configured on their accounts. Schedule with their EAs for 15-min remote session.",
-    "status": "in_progress",
+    "status": "waiting_client",
     "priority": "high",
     "source": "portal",
     "dueDate": null,
@@ -253,6 +253,6 @@
     "customFields": {},
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.123Z",
-    "updatedAt": "2026-08-12T06:04:15.123Z"
+    "updatedAt": "2026-08-12T08:15:51.758Z"
   }
 ]
