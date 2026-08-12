@@ -132,12 +132,31 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
     // ── Audit log: detect changes and create a comment ──
     const changedFields: string[] = [];
     const labels: Record<string, string> = { title: "Title", description: "Description", status: "Status", priority: "Priority", boardId: "Board", assignedToId: "Assigned To", dueDate: "Due Date", startTime: "Start Time", endTime: "End Time", contactId: "Contact", companyId: "Company", serviceAgreementId: "Service Agreement" };
+
+    // Resolve raw values (IDs, ISO dates, enums) to human-friendly names
+    const resolveValue = async (key: string, val: unknown): Promise<string> => {
+      if (val === null || val === undefined || val === "") return "(empty)";
+      if (val instanceof Date) {
+        return val.toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      }
+      const s = String(val);
+      try {
+        if (key === "boardId") { const b = await prisma.serviceBoard.findUnique({ where: { id: s }, select: { name: true } }); if (b) return b.name; }
+        else if (key === "assignedToId") { const u = await prisma.user.findUnique({ where: { id: s }, select: { firstName: true, lastName: true } }); if (u) return `${u.firstName || ""} ${u.lastName || ""}`.trim(); }
+        else if (key === "contactId") { const c = await prisma.contact.findUnique({ where: { id: s }, select: { firstName: true, lastName: true } }); if (c) return `${c.firstName || ""} ${c.lastName || ""}`.trim(); }
+        else if (key === "companyId") { const c = await prisma.company.findUnique({ where: { id: s }, select: { name: true } }); if (c) return c.name; }
+        else if (key === "serviceAgreementId") { const a = await prisma.serviceAgreement.findUnique({ where: { id: s }, select: { name: true } }); if (a) return a.name; }
+      } catch { /* fall through to raw */ }
+      if (key === "status" || key === "priority") return s.replace(/_/g, " ").replace(/\b\w/g, m => m.toUpperCase());
+      return s;
+    };
+
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
         const oldVal = (ticket as Record<string, unknown>)[key];
         const newVal = updates[key];
-        const oldStr = oldVal instanceof Date ? oldVal.toISOString().slice(0, 16) : String(oldVal ?? "(empty)");
-        const newStr = newVal instanceof Date ? newVal.toISOString().slice(0, 16) : String(newVal ?? "(empty)");
+        const oldStr = await resolveValue(key, oldVal);
+        const newStr = await resolveValue(key, newVal);
         if (oldStr !== newStr) {
           const label = labels[key] || key;
           changedFields.push(`${label}: ${oldStr} → ${newStr}`);

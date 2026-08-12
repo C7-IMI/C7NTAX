@@ -536,6 +536,17 @@
 - `apps/web/src/pages/Administration.tsx` — `expanded` state changed from `string | null` to `Set<string>`; after sorting day groups newest-first, `setExpanded(new Set(sorted.slice(0, 3).map(d => d.id)))` pre-expands the top three groups; toggle add/removes from the set for independent expand/collapse
 - All three changelog sources updated with `2026.8.12.003` entry; LSP diagnostics clean
 
+### Prompt 46 — Friendly Notes & Activity card in Ticket Details
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #1 (2026.8.12.004)
+> Fix the Notes and Activity card in Ticket Details. This is a regression after changing the service board from Infrastructure to Intelligence. On some tickets, the card is displaying raw data instead of friendly names for fields and actions. Update the card so every field and action renders its human-readable/friendly name, not raw enum values, IDs, or internal codes.
+
+**Changes:**
+- `apps/api/src/routes/tickets/index.ts` — PATCH change-comment generation now uses a `resolveValue()` helper: board/assignee/contact/company/serviceAgreement IDs are resolved to friendly names via Prisma lookups; Date values formatted as "Aug 13, 2026, 6:04 AM"; status/priority enums title-cased; empty values as "(empty)"
+- `apps/web/src/pages/Tickets.tsx` — Added `friendlyActivityBody()` in `TicketDetailPage`: detects machine-generated change-log bodies ("Label: old → new"), resolves UUIDs via lookup maps (boards, users, companies, contacts, agreements, ticket relations), converts ISO timestamps to readable dates, title-cases snake_case enums; plain note bodies pass through unchanged
+- `apps/web/src/pages/Tickets.tsx` — Comment badges now Email (purple)/Internal (amber)/Note (blue); author fallback to `fromEmail` for email comments, "System" otherwise; time entries show entry date and "System" fallback
+- All three changelog sources updated with `2026.8.12.004` entry; LSP diagnostics clean on both files
+
 ---
 
-**Total Prompts:** 45 | **Completed:** 45 | **In Progress:** 0
+**Total Prompts:** 46 | **Completed:** 46 | **In Progress:** 0

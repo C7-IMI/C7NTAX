@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.12.004",
+    "date": "2026-08-12",
+    "title": "Friendly Notes & Activity Card in Ticket Details",
+    "changes": [
+      {"text": "Ticket change comments no longer contain raw UUIDs or ISO timestamps — API resolves board, assignee, contact, company, and service agreement IDs to friendly names", "type": "Fix"},
+      {"text": "Legacy change-log comments with raw values are rendered friendly in Notes & Activity — UUIDs resolved via lookups, ISO dates formatted, snake_case enums title-cased", "type": "Fix"},
+      {"text": "Comment badges distinguish Email (purple), Internal (amber), Note (blue); email comments use sender email as author fallback", "type": "Update"},
+      {"text": "Author fallbacks — comments and time entries without an author display 'System' instead of 'undefined undefined'", "type": "Update"}
+    ]
+  },
+  {
     "version": "2026.8.12.003",
     "date": "2026-08-12",
     "title": "Audit Log Username + UserID & Default Expanded Entries",

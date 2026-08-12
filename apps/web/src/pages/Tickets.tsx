@@ -397,6 +397,40 @@ export function TicketDetailPage() {
   const [users, setUsers] = useState<Array<{id:string;firstName:string;lastName:string}>>([]);
   const [allBoards, setAllBoards] = useState<Array<{id:string;name:string}>>([]);
 
+  // ── Friendly display for machine-generated change-log comments ──
+  // Legacy change comments contain raw UUIDs, ISO dates, and enum codes like
+  // "Board: 81f12ded-... → 9e4422d8-..." or "Due Date: 2026-08-13T06:04 → ...".
+  // Resolve them to friendly names using loaded lookups + ticket relations.
+  const friendlyActivityBody = (body: string): string => {
+    if (!body) return "";
+    // Only transform machine-generated change-log lines ("Label: old → new")
+    if (!/^[A-Z][A-Za-z ]+: .+ → .+/m.test(body)) return body;
+
+    const uuidMap: Record<string, string> = {};
+    for (const b of allBoards) uuidMap[b.id] = b.name;
+    for (const u of users) uuidMap[u.id] = `${u.firstName||""} ${u.lastName||""}`.trim();
+    for (const c of companies) uuidMap[c.id] = c.name;
+    for (const c of contacts) uuidMap[c.id] = `${c.firstName||""} ${c.lastName||""}`.trim();
+    for (const a of agreements) uuidMap[a.id] = a.name;
+    const t = ticket as any;
+    if (t?.board?.id && t?.board?.name) uuidMap[t.board.id] = t.board.name;
+    if (t?.company?.id && t?.company?.name) uuidMap[t.company.id] = t.company.name;
+    if (t?.assignedTo?.id) uuidMap[t.assignedTo.id] = `${t.assignedTo.firstName||""} ${t.assignedTo.lastName||""}`.trim();
+    if (t?.contact?.id) uuidMap[t.contact.id] = `${t.contact.firstName||""} ${t.contact.lastName||""}`.trim();
+    if (t?.serviceAgreement?.id && t?.serviceAgreement?.name) uuidMap[t.serviceAgreement.id] = t.serviceAgreement.name;
+
+    return body
+      // ISO timestamps → "Aug 13, 2026, 6:04 AM"
+      .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d+)?Z?/g, m => {
+        const d = new Date(m);
+        return isNaN(d.getTime()) ? m : d.toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      })
+      // UUIDs → resolved friendly names
+      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, m => uuidMap[m] || m)
+      // snake_case enums → Title Case
+      .replace(/\b(in_progress|waiting_on_client|on_hold|pending_approval)\b/g, m => m.split("_").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "));
+  };
+
   const load = () => {
     if(!id) return;
     api.get(`/tickets/${id}`).then(r=>{
@@ -543,14 +577,14 @@ export function TicketDetailPage() {
             <div className="space-y-3">
               {(ticket.comments as Array<Record<string,unknown>>)?.map((c:any,i:number)=>(
                 <div key={c.id||i} className="flex gap-2 text-xs">
-                  <span className={`badge shrink-0 mt-0.5 ${c.isInternal?"bg-amber-600/20 text-amber-400":"bg-blue-600/20 text-blue-400"}`}>{c.isInternal?"Internal":"Note"}</span>
-                  <div><p className="text-gray-300 whitespace-pre-wrap">{c.body||c.content}</p><p className="text-gray-600 mt-0.5">{c.author?.firstName} {c.author?.lastName} · {c.createdAt?new Date(c.createdAt).toLocaleString():""}</p></div>
+                  <span className={`badge shrink-0 mt-0.5 ${c.isEmail?"bg-purple-600/20 text-purple-400":c.isInternal?"bg-amber-600/20 text-amber-400":"bg-blue-600/20 text-blue-400"}`}>{c.isEmail?"Email":c.isInternal?"Internal":"Note"}</span>
+                  <div className="min-w-0"><p className="text-gray-300 whitespace-pre-wrap">{friendlyActivityBody(c.body||c.content)}</p><p className="text-gray-600 mt-0.5">{(c.author?.firstName||c.author?.lastName) ? `${c.author.firstName||""} ${c.author.lastName||""}`.trim() : (c.fromEmail||"System")} · {c.createdAt?new Date(c.createdAt).toLocaleString():""}</p></div>
                 </div>
               ))||null}
               {(ticket.timeEntries as Array<Record<string,unknown>>)?.map((te:any,i:number)=>(
                 <div key={te.id||i} className="flex gap-2 text-xs">
                   <span className="badge bg-green-600/20 text-green-400 shrink-0 mt-0.5">Time</span>
-                  <div><p className="text-gray-300">{te.description}{te.minutes ? ` (${Math.floor(te.minutes/60)}h ${te.minutes%60}m)` : ""} {te.billable?"· Billable":"· Non-billable"}</p><p className="text-gray-600 mt-0.5">{te.user?.firstName} {te.user?.lastName} · {te.createdAt?new Date(te.createdAt).toLocaleString():""}</p></div>
+                  <div className="min-w-0"><p className="text-gray-300">{te.description}{te.minutes ? ` (${Math.floor(te.minutes/60)}h ${te.minutes%60}m)` : ""} {te.billable?"· Billable":"· Non-billable"}</p><p className="text-gray-600 mt-0.5">{(te.user?.firstName||te.user?.lastName) ? `${te.user.firstName||""} ${te.user.lastName||""}`.trim() : "System"} · {(te.date||te.createdAt)?new Date((te.date||te.createdAt) as string).toLocaleString():""}</p></div>
                 </div>
               ))||null}
             </div>

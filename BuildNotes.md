@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.003 | Last Updated: 2026-08-12
+## Version: 2026.8.12.004 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,12 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.004 — Friendly Notes & Activity Card in Ticket Details
+- **[Fix]** Ticket change comments no longer contain raw UUIDs or ISO timestamps — the API now resolves board, assignee, contact, company, and service agreement IDs to friendly names, and formats dates as readable strings when generating change-log comments.
+- **[Fix]** Legacy change-log comments with raw values (e.g., "Board: 81f12ded-… → 9e4422d8-…") are now rendered friendly in the Notes & Activity card — UUIDs are resolved to names from loaded lookups and ticket relations, ISO timestamps become readable dates, and snake_case enums become title case.
+- **[Update]** Comment badges now distinguish Email (purple), Internal (amber), and Note (blue); email-sourced comments show the sender email as author fallback.
+- **[Update]** Author/user fallbacks — comments and time entries without an author display "System" instead of "undefined undefined"; time entries show their entry date.
 
 ## 2026.8.12.003 — Audit Log Username + UserID & Default Expanded Entries
 - **[Update]** Audit log entries now display both the friendly username and the UserID (8-character prefix) — e.g., "Fiona Ray (a1b2c3d4)"; system entries show only "System".
