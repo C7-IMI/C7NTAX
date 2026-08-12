@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.10.003 | Last Updated: 2026-08-10
+## Version: 2026.8.11.001 | Last Updated: 2026-08-11
 
 ---
 
@@ -11,6 +11,42 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.11.001 — CloudConnect, Batch Tickets, Audit Logging & Kumo Fixes
+- **[New]** CloudConnect action screen — clicking a connected integration tile opens a modal with user preview, field mapping, company assignment, and sync controls.
+- **[New]** DummyConnect simulator — a persistent, always-active integration for exploring any connector's interface without live credentials. Includes a type selector dropdown with all 16 integration types.
+- **[New]** Batch ticket operations — checkbox column on every ticket row with Select All; "Modify Selected" dropdown appears when tickets are checked, supporting bulk status and priority changes.
+- **[New]** Individual ticket Modify menu — ChevronDown button per row opens a dropdown with Acknowledge, Close, Set Status, and Set Priority actions; excludes predecessor options.
+- **[New]** Ticket filter dialog — Filter button opens a modal with Status, Priority, Assigned Technician, and Date Range fields; structured for easy addition of future filter fields.
+- **[New]** Comprehensive audit logging — every create, update, and delete operation across the entire application is logged to the AuditLog model with user identity, entity type, change summary, and IP address.
+- **[New]** Audit Logs page — now fetches from `GET /system/audit-logs` instead of ad-hoc ticket/invoice queries; displays all operations grouped by date with action type, detail, and user identity.
+- **[New]** Auto-incremented IDs in What's New — each BuildNotes entry displays a `#ID` badge for user reference when submitting prompts.
+- **[New]** Password generator — "Generate" button with eye toggle added to Kumo Passwords create/edit dialogs and Manage Users create/change-password sections.
+- **[New]** Super Admin role — `super_admin` system role with all permissions; sessions never expire due to inactivity.
+- **[New]** Editable session timeout — Settings page card with configurable inactivity timeout (5–480 minutes, default 30); stored in SystemConfig; sessionAuth middleware reads dynamically.
+- **[New]** Snapshot polling system — background service polls at varying intervals with jitter and adaptive backoff; detects new records from any source and triggers snapshot captures.
+- **[Update]** Admin role permissions expanded from 24 to 79 — now includes Kumo, Assets, Projects, KB, Opportunities, Procurement, Schedule, PTO, Inference, and Security permissions.
+- **[Update]** Kumo seed data cleanup fix — Kumo tables now properly deleted in reverse FK order before re-seeding, preventing data accumulation.
+- **[Update]** FEATURE_LIST.md renamed to BuildNotes.md — all 16 references updated across the codebase including Vite plugin, fetch paths, API resolver, README, and self-references.
+- **[Update]** CloudConnect error fix dialog — clickable error banners open a modal with per-field editable inputs, Test buttons, pass/fail results, and "OK — Save All Fixes" when all resolved.
+- **[Update]** Credential helpers — `getRequiredCredentials()`, `formatCredLabel()`, `getCredFix()`, `getCredExample()`, `checkCredFormat()` added for all 16 integration kinds.
+- **[Update]** Test endpoint enhanced — returns structured `fieldErrors[]` with fix instructions and example values on failure.
+- **[Update]** Snapshot capture now includes `auditLog`, `kumoTemplateField`, `kumoAssetFieldValue` tables; 41 tables total.
+- **[Update]** Permissions refresh logic — now refreshes on any permission difference (`hasNew || hasLess`), not just count increase.
+- **[Fix]** Kumo password reveal "access denied" — decrypt failures now handled gracefully with placeholder fallback text.
+- **[Fix]** Kumo password TOTP setup — IV and authTag now stored delimited in `totpSecret` field; decrypt uses correct per-record encryption params.
+- **[Fix]** Kumo password edit flow — save now sends only editable fields in payload; password field clears after save; reveal card refreshes with updated "last changed by" after password change.
+- **[Fix]** Kumo reveal card stuck on entry switch — `selectPassword()` now clears `revealData` and `showEditPwd` when switching entries.
+- **[Fix]** Kumo seed passwords — placeholder `ENC:` values replaced with properly AES-256-GCM-encrypted sample passwords.
+- **[Fix]** Kumo PATCH endpoint — `updatedById` now set on every password edit; password change encrypts new value with correct IV/authTag.
+- **[Fix]** Manage Roles "Changed" indicator — amber badge now only appears when `editPerms` differs from `originalPerms`; no false positives on initial edit open.
+- **[Fix]** Manage Roles user count banner — now always visible; "0 users assigned to this role" is clickable and opens the member management modal.
+- **[Fix]** "New Board" button removed from main Service Boards page; board creation now only possible under Administration → Service Boards.
+- **[Fix]** Service Boards snapshot — manual data changes now captured; snapshot updated from 3 to 4 boards with correct SLA settings.
+- **[Fix]** AutoSnapShot path — `CAPTURE_SCRIPT` corrected from `snapshot-capture.ts` to `../snapshot-capture.ts`, fixing MODULE_NOT_FOUND crash on server start.
+- **[Fix]** `Eye`/`EyeOff` imports added to Users.tsx — fixing `ReferenceError: Eye is not defined`.
+- **[Fix]** Ticket batch endpoint — `POST /tickets/batch` added to tickets router supporting `updateMany` for status and priority.
+- **[Fix]** Retrace.md — expanded from 18 to 37 entries; all prompts standardized with BuildNotes IDs, verbatim text, and detailed change lists.
 
 ## 2026.8.10.003 — Header Descriptions & Section Landing Pages
 - **[New]** Dynamic section header — every page now displays its section name alongside a brief contextual description rendered on a single line in the top navigation bar, replacing the previous title-only header with a formatted `{Section Name} — {description}` layout that stays on one line and leaves generous spacing before the Search button.
