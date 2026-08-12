@@ -85,10 +85,25 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
+// ─── Tenant / MSP Multi-Tenancy ────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  domain    String?  @unique
+  settings  Json     @default("{}")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  companies Company[]
+}
+
 // ─── Company / Client ───────────────────────────────────────────────
 
 model Company {
   id              String   @id @default(uuid())
+  tenantId        String?
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
   name            String
   legalName       String?
   taxId           String?
