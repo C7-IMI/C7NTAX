@@ -82,7 +82,6 @@ export function UsersPage() {
       const rolePerms = r.data.role?.permissions || [];
       const userOverrides = r.data.permissions || [];
       setPermSet(new Set([...rolePerms, ...userOverrides]));
-      setRoleTemplate(r.data.role?.systemRole || null);
     } catch { /* ignore */ }
   };
 
@@ -92,7 +91,6 @@ export function UsersPage() {
     const rolePerms = user.role?.permissions || [];
     const userOverrides = user.permissions || [];
     setPermSet(new Set([...rolePerms, ...userOverrides]));
-    setRoleTemplate(user.role?.systemRole || null);
     setEditing(false);
     setTab("profile");
   };

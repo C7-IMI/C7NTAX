@@ -24,9 +24,9 @@ scheduleRouter.get("/", requirePermission(Permission.TicketView), async (req: Au
 
 scheduleRouter.post("/", requirePermission(Permission.TicketCreate), async (req: AuthRequest, res, next) => {
   try {
-    const { title, startTime, endTime, userId, ticketId, location } = req.body;
+    const { title, startTime, endTime, userId, ticketId, location, color } = req.body;
     if (!title || !startTime || !endTime) throw new AppError("title, startTime, endTime required");
-    const entry = await prisma.scheduleEntry.create({ data: { title, startTime: new Date(startTime), endTime: new Date(endTime), userId: userId || req.user!.userId, ticketId: ticketId || null, location: location || null, description: req.body.description || null } });
+    const entry = await prisma.scheduleEntry.create({ data: { title, startTime: new Date(startTime), endTime: new Date(endTime), userId: userId || req.user!.userId, ticketId: ticketId || null, location: location || null, description: req.body.description || null, color: color || null } });
     res.status(201).json(entry);
   } catch (e) { next(e); }
 });
