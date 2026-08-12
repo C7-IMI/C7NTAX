@@ -123,6 +123,23 @@ export function CloudConnectPage() {
     return () => clearInterval(interval);
   }, [fetchAll]);
 
+  const openActionPanel = (integration: Integration) => {
+    setActionPanel({ open: true, integration });
+    setMockLoaded(false);
+    // Load mock users for simulation
+    const kind = integration.kind === "dummy" ? simulatedKind : integration.kind;
+    setTimeout(() => {
+      setMockUsers([
+        { id: "u1", name: "John Doe", email: "john.doe@contoso.com", selected: false },
+        { id: "u2", name: "Jane Smith", email: "jane.smith@contoso.com", selected: false },
+        { id: "u3", name: "Bob Wilson", email: "bob.wilson@contoso.com", selected: false },
+        { id: "u4", name: "Alice Chen", email: "alice.chen@contoso.com", selected: false },
+        { id: "u5", name: "Mark Lee", email: "mark.lee@contoso.com", selected: false },
+      ]);
+      setMockLoaded(true);
+    }, 500);
+  };
+
   const fetchLogs = async (id: string) => {
     try {
       const res = await api.get(`/cloudconnect/${id}/sync-logs`);
