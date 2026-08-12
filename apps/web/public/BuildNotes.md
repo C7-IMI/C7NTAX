@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.015 | Last Updated: 2026-08-12
+## Version: 2026.8.12.016 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,13 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.016 — Desktop App Now Replicates WebUI Exactly
+- **[Update]** Desktop app rewritten to serve the exact built WebUI via a custom `app://c7ntax` protocol — same interface and session state as the browser; `/api/*` proxied to the API server so the relative API contract works unchanged; SPA fallback for client routing; stable origin keeps localStorage state (login, theme, sidebar) persistent.
+- **[Update]** Production packages now bundle the freshly built WebUI (`prebuild` runs `vite build`; `extraResources` copies `web/dist` → `resources/webui`); dev mode loads the Vite dev server with hot reload.
+- **[Update]** Window bounds persisted across launches; `npmRebuild` disabled to avoid the pnpm `workspace:` protocol breaking electron-builder; desktop menu navigation wired into the web router via a `DesktopNavBridge` (Settings/New Ticket/New Invoice shortcuts now work).
+- **[Fix]** Pre-existing web strict-mode type errors blocking the build pipeline: Changelog date parsing non-null assertions, SectionLanding + HomePage icon types widened, Clients sort state typed as SortState, KumoConfigs state arrays typed; web `vite build` verified green.
+- **[Update]** Portable exe rebuilt (144 MB) with the current WebUI and placed in `apps/desktop/dist-electron/`.
 
 ## 2026.8.12.015 — Native Mobile Applications Plan
 - **[New]** `mobile-native-plan.md` — comprehensive phased plan for native Android (Kotlin + Jetpack Compose) and iOS (Swift + SwiftUI) apps replicating core C7NTAX desktop functionality; no code implemented (planning only).

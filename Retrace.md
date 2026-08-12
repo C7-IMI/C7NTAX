@@ -673,6 +673,19 @@
 - `mobile-native-plan.md` — New 344-line phased plan document (19.4 KB): objectives & feature parity matrix (12 v1 features, billing/reports/admin excluded); Phase 0 foundations (monorepo layout apps/mobile/{android,ios,shared}, Android JDK 17 + Gradle version catalogs + Compose BOM, iOS Xcode 16/Swift 5.10/SwiftData, OpenAPI codegen, GitHub Actions macos-15 + ubuntu, Fastlane, Sentry/Crashlytics, FCM); Phase 1 backend enablement (versioned /api/v1, ETag/If-None-Match, cursor pagination, device sessions + refresh-token rotation + PKCE, FCM/APNs push with device registry, /sync delta endpoints with updatedAt cursors + last-write-wins, offline write queue with idempotency keys, pre-signed URL uploads); Phases 2–3 Android/iOS builds (MVVM, Room/SwiftData caches, WorkManager/BackgroundTasks sync, BiometricPrompt/Face ID, feature parity per platform); Phase 4 security (TLS 1.2+, cert pinning via OkHttp CertificatePinner/URLSession delegate, Android Keystore/iOS Keychain, FLAG_SECURE, root/jailbreak detection advisory, CI-injected secrets, Play Data Safety + Apple PrivacyInfo.xcprivacy); Phase 5 publishing (Play Console + Play App Signing + AAB + staged rollout; Apple Developer Program, App Store Connect, TestFlight, review guideline mapping 4.2/5.1.1/1.1.6; Fastlane beta/release lanes; monitoring and update cadence)
 - No code implemented per instruction; all three changelog sources updated with `2026.8.12.015`
 
+### Prompt 58 — Desktop app replicates WebUI exactly
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~55 min
+**BuildNotes IDs:** #1 (2026.8.12.016)
+> Using the WebUI as the source of truth, update the existing Desktop app so its current application state and interface replicate the WebUI exactly.
+
+**Changes:**
+- `apps/desktop/src/main.ts` — Rewritten: custom `app://c7ntax` protocol (registered as privileged) serves the built WebUI dist with SPA fallback + correct mime types; `/api/*` requests proxied to the API server (localhost:4000) via `net.fetch` so the WebUI's relative `/api` base works unchanged; production loads `app://c7ntax/`, dev loads the Vite dev server (localhost:3010); stable origin makes localStorage state (login, theme, sidebar) persistent; window bounds persisted to userData
+- `apps/desktop/package.json` — `prebuild` runs `vite build` in the web package (fresh WebUI as source of truth); `extraResources` copies `web/dist` → `resources/webui`; `npmRebuild: false` (fixes pnpm `workspace:` protocol breaking electron-builder); `dev` script passes `--dev`
+- `apps/web/src/App.tsx` — Added `DesktopNavBridge` (listens to `window.c7Desktop.onNavigate` and navigates the router) so desktop menu shortcuts (Settings/New Ticket/New Invoice) work in the same UI
+- Pre-existing web strict-mode type fixes to unblock the build: `Changelog.tsx` non-null assertions, `SectionLanding.tsx` + `HomePage.tsx` icon types widened, `Clients.tsx` sort state typed as `SortState | null`, `KumoConfigs.tsx` state arrays typed
+- Verified: desktop `tsc` clean; web `vite build` green; portable exe built (144 MB) with bundled `resources/webui` (fresh dist); exe copied to `apps/desktop/dist-electron/C7NTAX-Portable-1.0.0.exe`; remaining shared-package strict-mode errors are pre-existing baseline debt untouched by this task
+- All three changelog sources updated with `2026.8.12.016`
+
 ---
 
-**Total Prompts:** 57 | **Completed:** 57 | **In Progress:** 0
+**Total Prompts:** 58 | **Completed:** 58 | **In Progress:** 0

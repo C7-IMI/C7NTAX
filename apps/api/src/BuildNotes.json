@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.12.016",
+    "date": "2026-08-12",
+    "title": "Desktop App Now Replicates WebUI Exactly",
+    "changes": [
+      {"text": "Desktop rewritten to serve the exact built WebUI via app://c7ntax protocol with /api proxied to the API server — same interface and session state as the browser", "type": "Update"},
+      {"text": "Production packages bundle the fresh WebUI (prebuild vite build + extraResources webui); dev mode uses the Vite dev server", "type": "Update"},
+      {"text": "Window bounds persisted; npmRebuild disabled for pnpm workspace compatibility; desktop menu navigation wired via DesktopNavBridge", "type": "Update"},
+      {"text": "Fixed pre-existing web strict-mode type errors blocking the build; portable exe rebuilt (144 MB) with current WebUI", "type": "Fix"}
+    ]
+  },
+  {
     "version": "2026.8.12.015",
     "date": "2026-08-12",
     "title": "Native Mobile Applications Plan",
