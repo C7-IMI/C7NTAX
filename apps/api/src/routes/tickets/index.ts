@@ -117,7 +117,7 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
     if (!ticket) throw new AppError("Ticket not found", 404);
     const oldStatus = ticket.status;
 
-    const allowed = ["title", "description", "status", "priority", "boardId", "assignedToId", "dueDate", "startTime", "endTime", "contactId", "companyId", "serviceAgreementId"];
+    const allowed = ["title", "description", "status", "priority", "boardId", "assignedToId", "dueDate", "startTime", "endTime", "contactId", "companyId", "serviceAgreementId", "customFields"];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) {
       if (req.body[key] !== undefined && req.body[key] !== "") updates[key] = req.body[key];
@@ -153,6 +153,7 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
 
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
+        if (key === "customFields") continue; // don't log raw tab data as a change comment
         const oldVal = (ticket as Record<string, unknown>)[key];
         const newVal = updates[key];
         const oldStr = await resolveValue(key, oldVal);

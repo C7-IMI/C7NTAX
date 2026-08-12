@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import api from "../api";
 import { InferencePanel } from "../components/InferencePanel";
-import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, Filter, ChevronDown, CheckSquare, Square } from "lucide-react";
+import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User } from "lucide-react";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 
@@ -30,6 +30,22 @@ const BATCH_ACTIONS = [
 
 const TICKET_STATUSES = ["new","in_progress","waiting_on_client","on_hold","pending_approval","resolved","closed","cancelled"];
 const TICKET_PRIORITIES = ["low","medium","high","critical"];
+
+// ── Ticket detail tabs (ConnectWise-style toolbar; Tasks/Open Tickets/Conversions/Surveys/RMA excluded) ──
+const TICKET_DETAIL_TABS = [
+  { id: "ticket", label: "Ticket" },
+  { id: "configurations", label: "Configurations" },
+  { id: "products", label: "Products" },
+  { id: "activities", label: "Activities" },
+  { id: "time", label: "Time" },
+  { id: "links", label: "Links" },
+  { id: "expenses", label: "Expenses" },
+  { id: "schedule", label: "Schedule" },
+  { id: "attachments", label: "Attachments" },
+  { id: "history", label: "History" },
+  { id: "finance", label: "Finance" },
+  { id: "audittrail", label: "Audit Trail" },
+];
 
 export function TicketsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -431,11 +447,52 @@ export function TicketDetailPage() {
       .replace(/\b(in_progress|waiting_on_client|on_hold|pending_approval)\b/g, m => m.split("_").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "));
   };
 
+  // ── Tabbed toolbar state ──
+  const [activeTab, setActiveTab] = useState("ticket");
+  const [cf, setCf] = useState<Record<string, any>>({});
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [schedEntries, setSchedEntries] = useState<any[]>([]);
+  const [auditEntries, setAuditEntries] = useState<any[]>([]);
+  const [assetResults, setAssetResults] = useState<any[]>([]);
+  const [kumoConfigResults, setKumoConfigResults] = useState<any[]>([]);
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [configDialogQuery, setConfigDialogQuery] = useState("");
+  const [showProductDialog, setShowProductDialog] = useState(false);
+  const [productForm, setProductForm] = useState({ name: "", qty: 1, unitCost: 0 });
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [linkResults, setLinkResults] = useState<any[]>([]);
+  const [linkQuery, setLinkQuery] = useState("");
+  const [linkRel, setLinkRel] = useState("related");
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [expenseForm, setExpenseForm] = useState({ description: "", amount: "", category: "other", expenseDate: "" });
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ title: "", startTime: "", endTime: "", location: "" });
+  const [showAttachDialog, setShowAttachDialog] = useState(false);
+  const [attachForm, setAttachForm] = useState({ name: "" });
+  const [showTimeTabAdd, setShowTimeTabAdd] = useState(false);
+
+  const cfArr = (key: string): any[] => Array.isArray(cf[key]) ? cf[key] : [];
+  const persistCF = async (key: string, value: any[]) => {
+    const next = { ...cf, [key]: value };
+    setCf(next);
+    try { await api.patch(`/tickets/${id}`, { customFields: next }); }
+    catch { toast.error("Save failed"); }
+  };
+  const uuidish = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+  useEffect(() => {
+    if (activeTab === "expenses") api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((e: any) => e.ticketId === id))).catch(() => {});
+    if (activeTab === "schedule") api.get("/schedule?limit=200").then(r => setSchedEntries((Array.isArray(r.data) ? r.data : (r.data?.data || [])).filter((e: any) => e.ticketId === id))).catch(() => {});
+    if (activeTab === "audittrail") api.get("/system/audit-logs").then(r => setAuditEntries((r.data?.data || []).filter((a: any) => a.entity === "ticket" && a.entityId === id))).catch(() => {});
+    if (activeTab === "configurations") { api.get("/assets?limit=50").then(r => setAssetResults(r.data?.data || r.data || [])).catch(() => {}); api.get("/kumo/configs").then(r => setKumoConfigResults(r.data?.data || r.data || [])).catch(() => {}); }
+  }, [activeTab, id]);
+
   const load = () => {
     if(!id) return;
     api.get(`/tickets/${id}`).then(r=>{
       const t = r.data;
       setTicket(t);
+      setCf(t.customFields && typeof t.customFields === "object" && !Array.isArray(t.customFields) ? t.customFields : {});
       setEditForm({
         title: t.title||"", description: t.description||"", status: t.status||"new", priority: t.priority||"medium",
         dueDate: t.dueDate?new Date(t.dueDate).toISOString().slice(0,16):"",
@@ -479,8 +536,7 @@ export function TicketDetailPage() {
     if (timeForm.startTime && timeForm.endTime) {
       mins = Math.round((new Date(timeForm.endTime).getTime() - new Date(timeForm.startTime).getTime()) / 60000);
     }
-    try {
-      await api.post(`/tickets/${id}/time-entries`, { ...timeForm, minutes: mins || undefined, date: new Date().toISOString().slice(0,10) });
+    try{await api.post(`/tickets/${id}/time`, { ...timeForm, minutes: mins || undefined, date: new Date().toISOString().slice(0,10) });
       toast.success("Time logged"); setShowTimeEntry(false);
       setTimeForm({ startTime: "", endTime: "", calculated: "", description: "", billable: true });
       load();
@@ -518,7 +574,40 @@ export function TicketDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* ── Full-width toolbar card: tabs + icon actions (ConnectWise-style) ── */}
+      <div className="card p-3 space-y-2">
+        {/* Tab strip */}
+        <div className="flex items-center gap-0.5 overflow-x-auto border-b border-surface-border pb-2">
+          {TICKET_DETAIL_TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`shrink-0 px-3 py-1.5 text-sm font-medium rounded-t-md border-b-2 -mb-px transition-colors ${
+                activeTab === t.id
+                  ? "border-cyber-500 text-cyber-400 bg-surface-lighter"
+                  : "border-transparent text-gray-400 hover:text-white hover:bg-surface-lighter"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Icon toolbar */}
+        <div className="flex items-center gap-1 flex-wrap">
+          <button onClick={() => load()} title="Refresh" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><RotateCw size={16} /></button>
+          <button onClick={() => setActiveTab("ticket")} title="Add Note" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><MessageSquare size={16} /></button>
+          <button onClick={() => { setActiveTab("time"); setShowTimeTabAdd(true); }} title="Log Time" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Timer size={16} /></button>
+          <button onClick={() => { setActiveTab("attachments"); setShowAttachDialog(true); }} title="Attach File" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Paperclip size={16} /></button>
+          <button onClick={() => toast("Email integration coming soon")} title="Email Contact (placeholder)" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Mail size={16} /></button>
+          <button onClick={() => toast("Print coming soon")} title="Print (placeholder)" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Printer size={16} /></button>
+          <button onClick={() => toast("Follow-up coming soon")} title="Follow Up (placeholder)" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Bell size={16} /></button>
+          <button onClick={() => toast("More actions coming soon")} title="More Actions (placeholder)" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><MoreHorizontal size={16} /></button>
+        </div>
+      </div>
+
+      {activeTab === "ticket" && (
+      <div className="grid grid-cols-1 gap-5">
         <div className="lg:col-span-2 space-y-5">
           {/* General */}
           <div className="card space-y-3">
@@ -619,7 +708,405 @@ export function TicketDetailPage() {
             </div>)}
           </div>
         </div>
-      </div>
+      </div>)}
+
+      {/* ── Configurations tab ── */}
+      {activeTab === "configurations" && (
+        <div className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Configurations</h3>
+            <button onClick={() => setShowConfigDialog(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={12} /> Link Configuration</button>
+          </div>
+          {cfArr("ticketConfigurations").length === 0 ? (
+            <p className="text-sm text-gray-500 py-6 text-center">No configurations linked to this ticket.</p>
+          ) : (
+            <div className="space-y-2">
+              {cfArr("ticketConfigurations").map((c: any) => (
+                <div key={c.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
+                  <Wrench size={14} className="text-cyber-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-xs font-medium truncate">{c.name}</p>
+                    <p className="text-gray-500 text-[10px]">{c.type} · linked {c.linkedAt ? new Date(c.linkedAt).toLocaleString() : ""}</p>
+                  </div>
+                  <button onClick={() => persistCF("ticketConfigurations", cfArr("ticketConfigurations").filter((x: any) => x.id !== c.id))} className="text-gray-500 hover:text-red-400"><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Products tab ── */}
+      {activeTab === "products" && (
+        <div className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Products</h3>
+            <button onClick={() => setShowProductDialog(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={12} /> Add Product</button>
+          </div>
+          {cfArr("ticketProducts").length === 0 ? (
+            <p className="text-sm text-gray-500 py-6 text-center">No products on this ticket.</p>
+          ) : (
+            <>
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-surface-border text-left text-gray-400 text-xs uppercase"><th className="px-2 py-2">Item</th><th className="px-2 py-2">Qty</th><th className="px-2 py-2">Unit Cost</th><th className="px-2 py-2 text-right">Total</th><th className="px-2 py-2 w-8"></th></tr></thead>
+                <tbody>{cfArr("ticketProducts").map((p: any) => (
+                  <tr key={p.id} className="border-b border-surface-border/50">
+                    <td className="px-2 py-2 text-white text-xs">{p.name}</td>
+                    <td className="px-2 py-2 text-gray-400 text-xs">{p.qty}</td>
+                    <td className="px-2 py-2 text-gray-400 text-xs">${(p.unitCost || 0).toFixed(2)}</td>
+                    <td className="px-2 py-2 text-right text-cyber-400 text-xs font-medium">${((p.qty || 0) * (p.unitCost || 0)).toFixed(2)}</td>
+                    <td className="px-2 py-2"><button onClick={() => persistCF("ticketProducts", cfArr("ticketProducts").filter((x: any) => x.id !== p.id))} className="text-gray-500 hover:text-red-400"><Trash2 size={12} /></button></td>
+                  </tr>
+                ))}</tbody>
+              </table>
+              <p className="text-right text-xs text-gray-400">Total: <span className="text-white font-medium">${cfArr("ticketProducts").reduce((s: number, p: any) => s + (p.qty || 0) * (p.unitCost || 0), 0).toFixed(2)}</span></p>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Activities tab ── */}
+      {activeTab === "activities" && (() => {
+        const acts = [
+          ...((ticket.comments as any[]) || []).map((c: any) => ({ kind: c.isEmail ? "Email" : c.isInternal ? "Internal" : "Note", time: c.createdAt, text: friendlyActivityBody(c.body || c.content), by: (c.author?.firstName || c.author?.lastName) ? `${c.author.firstName || ""} ${c.author.lastName || ""}`.trim() : (c.fromEmail || "System") })),
+          ...((ticket.timeEntries as any[]) || []).map((te: any) => ({ kind: "Time", time: te.date || te.createdAt, text: `${te.description || ""}${te.minutes ? ` (${Math.floor(te.minutes / 60)}h ${te.minutes % 60}m)` : ""} ${te.billable ? "· Billable" : "· Non-billable"}`, by: (te.user?.firstName || te.user?.lastName) ? `${te.user.firstName || ""} ${te.user.lastName || ""}`.trim() : "System" })),
+        ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        return (
+          <div className="card space-y-2">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Activities</h3>
+            {acts.length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">No activity recorded yet.</p> : (
+              <div className="space-y-1.5">
+                {acts.map((a, i) => (
+                  <div key={i} className="flex gap-2 text-xs items-start">
+                    <span className={`badge shrink-0 mt-0.5 ${a.kind === "Email" ? "bg-purple-600/20 text-purple-400" : a.kind === "Internal" ? "bg-amber-600/20 text-amber-400" : a.kind === "Time" ? "bg-green-600/20 text-green-400" : "bg-blue-600/20 text-blue-400"}`}>{a.kind}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-gray-300 whitespace-pre-wrap">{a.text}</p>
+                      <p className="text-gray-600 mt-0.5">{a.by} · {a.time ? new Date(a.time).toLocaleString() : ""}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── Time tab ── */}
+      {activeTab === "time" && (() => {
+        const tes = (ticket.timeEntries as any[]) || [];
+        const bill = tes.filter(t => t.billable).reduce((s, t) => s + (t.minutes || 0), 0);
+        const non = tes.filter(t => !t.billable).reduce((s, t) => s + (t.minutes || 0), 0);
+        return (
+          <div className="card space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Time</h3>
+              <button onClick={() => setShowTimeTabAdd(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={12} /> Add Time Entry</button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Billable</p><p className="text-white font-semibold">{Math.floor(bill / 60)}h {bill % 60}m</p></div>
+              <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Non-billable</p><p className="text-white font-semibold">{Math.floor(non / 60)}h {non % 60}m</p></div>
+            </div>
+            {tes.length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">No time entries yet.</p> : (
+              <div className="space-y-2">
+                {tes.map((te: any) => (
+                  <div key={te.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
+                    <Clock size={14} className="text-green-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-xs">{te.description}{te.minutes ? ` (${Math.floor(te.minutes / 60)}h ${te.minutes % 60}m)` : ""}</p>
+                      <p className="text-gray-500 text-[10px]">{(te.user?.firstName || te.user?.lastName) ? `${te.user.firstName || ""} ${te.user.lastName || ""}`.trim() : "System"} · {(te.date || te.createdAt) ? new Date((te.date || te.createdAt) as string).toLocaleString() : ""}</p>
+                    </div>
+                    <span className={`badge text-[10px] ${te.billable ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>{te.billable ? "Billable" : "Non-billable"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── Links tab ── */}
+      {activeTab === "links" && (
+        <div className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Links</h3>
+            <button onClick={() => { setShowLinkDialog(true); setLinkQuery(""); setLinkResults([]); api.get("/tickets?limit=200").then(r => setLinkResults((r.data?.data || []).filter((t: any) => t.id !== id))).catch(() => {}); }} className="btn-primary text-xs flex items-center gap-1"><Link2 size={12} /> Link Ticket</button>
+          </div>
+          {cfArr("ticketLinks").length === 0 ? (
+            <p className="text-sm text-gray-500 py-6 text-center">No linked tickets.</p>
+          ) : (
+            <div className="space-y-2">
+              {cfArr("ticketLinks").map((l: any) => (
+                <div key={l.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
+                  <Link2 size={14} className="text-cyber-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-xs font-medium truncate">{l.ticketNumber} — {l.title}</p>
+                    <p className="text-gray-500 text-[10px] capitalize">{l.rel}</p>
+                  </div>
+                  <Link to={`/tickets/${l.ticketId}`} className="text-xs text-cyber-400 hover:text-cyber-300 shrink-0">Open</Link>
+                  <button onClick={() => persistCF("ticketLinks", cfArr("ticketLinks").filter((x: any) => x.id !== l.id))} className="text-gray-500 hover:text-red-400"><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Expenses tab ── */}
+      {activeTab === "expenses" && (
+        <div className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Expenses</h3>
+            <button onClick={() => setShowExpenseDialog(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={12} /> Add Expense</button>
+          </div>
+          {expenses.length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">No expenses on this ticket.</p> : (
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-surface-border text-left text-gray-400 text-xs uppercase"><th className="px-2 py-2">Description</th><th className="px-2 py-2">Category</th><th className="px-2 py-2">Date</th><th className="px-2 py-2 text-right">Amount</th><th className="px-2 py-2 w-8"></th></tr></thead>
+              <tbody>{expenses.map((e: any) => (
+                <tr key={e.id} className="border-b border-surface-border/50">
+                  <td className="px-2 py-2 text-white text-xs">{e.description}</td>
+                  <td className="px-2 py-2 text-gray-400 text-xs capitalize">{e.category}</td>
+                  <td className="px-2 py-2 text-gray-400 text-xs">{new Date(e.expenseDate).toLocaleDateString()}</td>
+                  <td className="px-2 py-2 text-right text-cyber-400 text-xs font-medium">${(e.amount || 0).toFixed(2)}</td>
+                  <td className="px-2 py-2"><button onClick={async () => { try { await api.delete(`/billing/expenses/${e.id}`); toast.success("Deleted"); api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((x: any) => x.ticketId === id))).catch(() => {}); } catch { toast.error("Failed"); } }} className="text-gray-500 hover:text-red-400"><Trash2 size={12} /></button></td>
+                </tr>
+              ))}</tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* ── Schedule tab ── */}
+      {activeTab === "schedule" && (
+        <div className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Schedule</h3>
+            <button onClick={() => setShowScheduleDialog(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={12} /> Schedule Entry</button>
+          </div>
+          {schedEntries.length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">No scheduled entries for this ticket.</p> : (
+            <div className="space-y-2">
+              {schedEntries.map((s: any) => (
+                <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
+                  <Clock size={14} className="text-cyber-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-xs font-medium">{s.title}</p>
+                    <p className="text-gray-500 text-[10px]">{new Date(s.startTime).toLocaleString()} — {new Date(s.endTime).toLocaleString()}{s.location ? ` · ${s.location}` : ""}</p>
+                  </div>
+                  <span className="badge text-[10px] bg-cyber-600/20 text-cyber-400 capitalize">{s.status || "scheduled"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Attachments tab ── */}
+      {activeTab === "attachments" && (
+        <div className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Attachments</h3>
+            <button onClick={() => setShowAttachDialog(true)} className="btn-primary text-xs flex items-center gap-1"><Paperclip size={12} /> Attach File</button>
+          </div>
+          {cfArr("ticketAttachments").length === 0 ? (
+            <p className="text-sm text-gray-500 py-6 text-center">No attachments on this ticket.</p>
+          ) : (
+            <div className="space-y-2">
+              {cfArr("ticketAttachments").map((a: any) => (
+                <div key={a.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
+                  <FileText size={14} className="text-cyber-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-xs font-medium truncate">{a.name}</p>
+                    <p className="text-gray-500 text-[10px]">{a.uploadedBy} · {a.at ? new Date(a.at).toLocaleString() : ""}</p>
+                  </div>
+                  <button onClick={() => toast("Download coming soon")} className="text-gray-500 hover:text-white"><Download size={14} /></button>
+                  <button onClick={() => persistCF("ticketAttachments", cfArr("ticketAttachments").filter((x: any) => x.id !== a.id))} className="text-gray-500 hover:text-red-400"><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── History tab (field change log) ── */}
+      {activeTab === "history" && (() => {
+        const changes = ((ticket.comments as any[]) || []).filter((c: any) => (c.body || "").includes(" → "));
+        return (
+          <div className="card space-y-2">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">History</h3>
+            {changes.length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">No field changes recorded yet.</p> : (
+              <div className="space-y-2">
+                {changes.map((c: any) => (
+                  <div key={c.id} className="p-2 rounded-lg bg-surface-lighter">
+                    <p className="text-gray-300 text-xs whitespace-pre-wrap">{friendlyActivityBody(c.body)}</p>
+                    <p className="text-gray-600 text-[10px] mt-1">{(c.author?.firstName || c.author?.lastName) ? `${c.author.firstName || ""} ${c.author.lastName || ""}`.trim() : "System"} · {c.createdAt ? new Date(c.createdAt).toLocaleString() : ""}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── Finance tab ── */}
+      {activeTab === "finance" && (() => {
+        const tes = (ticket.timeEntries as any[]) || [];
+        const bill = tes.filter(t => t.billable).reduce((s, t) => s + (t.minutes || 0), 0);
+        const non = tes.filter(t => !t.billable).reduce((s, t) => s + (t.minutes || 0), 0);
+        const expTotal = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+        const sa = ticket.serviceAgreement as any;
+        return (
+          <div className="card space-y-3">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Finance</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Billable Time</p><p className="text-white font-semibold">{Math.floor(bill / 60)}h {bill % 60}m</p></div>
+              <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Non-billable</p><p className="text-white font-semibold">{Math.floor(non / 60)}h {non % 60}m</p></div>
+              <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Expenses</p><p className="text-white font-semibold">${expTotal.toFixed(2)}</p></div>
+              <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Agreement</p><p className="text-white font-semibold text-xs truncate">{sa?.name || "None"}</p></div>
+            </div>
+            {sa && <div className="flex items-center justify-between text-xs"><span className="text-gray-500">Agreement amount</span><span className="text-white">${(sa.billingAmount || 0).toFixed(2)} / {sa.billingPeriod || "period"}</span></div>}
+            <div className="flex gap-2 pt-1 border-t border-surface-border">
+              <Link to="/billing" className="btn-secondary text-xs">View Invoices</Link>
+              <Link to={`/billing/time`} className="btn-secondary text-xs">Time & Expenses</Link>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── Audit Trail tab ── */}
+      {activeTab === "audittrail" && (
+        <div className="card space-y-2">
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Audit Trail</h3>
+          {auditEntries.length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">No audit records for this ticket.</p> : (
+            <div className="space-y-1.5">
+              {auditEntries.map((a: any) => {
+                const fields = Object.keys(a.changes || {}).map(k => k.replace(/([A-Z])/g, " $1").toLowerCase().trim()).join(", ");
+                return (
+                  <div key={a.id} className="flex items-start gap-3 py-1 text-xs">
+                    <div className="shrink-0 text-gray-600 font-mono w-20">{new Date(a.createdAt).toLocaleTimeString()}</div>
+                    <span className="badge bg-cyber-600/20 text-cyber-400 shrink-0">{(a.action || "").replace(/:/g, " → ")}</span>
+                    <span className="text-gray-400 truncate flex-1">{fields ? `Changed: ${fields}` : "Operation recorded"}</span>
+                    <span className="text-gray-600 shrink-0 ml-auto"><User size={10} className="inline mr-1" />{a.userName || "System"}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Dialogs ── */}
+      {showConfigDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowConfigDialog(false)}>
+          <div className="card w-full max-w-md mx-4 space-y-3 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-white">Link Configuration</h3>
+            <input className="input-field" placeholder="Search assets and Kumo configurations..." onChange={e => { setConfigDialogQuery(e.target.value); }} />
+            <p className="text-xs text-gray-500">Assets</p>
+            {assetResults.filter((a: any) => !configDialogQuery || (a.name || a.tag || "").toLowerCase().includes(configDialogQuery.toLowerCase())).slice(0, 8).map((a: any) => (
+              <div key={a.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
+                <Wrench size={14} className="text-cyber-400 shrink-0" />
+                <div className="flex-1 min-w-0"><p className="text-white text-xs font-medium truncate">{a.name || a.tag || a.id}</p><p className="text-gray-500 text-[10px]">Asset</p></div>
+                <button onClick={() => { persistCF("ticketConfigurations", [...cfArr("ticketConfigurations"), { id: uuidish(), name: a.name || a.tag || a.id, type: "Asset", linkedAt: new Date().toISOString() }]); setShowConfigDialog(false); toast.success("Linked"); }} className="btn-secondary text-xs">Link</button>
+              </div>
+            ))}
+            <p className="text-xs text-gray-500">Kumo Configurations</p>
+            {kumoConfigResults.filter((c: any) => !configDialogQuery || (c.name || c.hostname || "").toLowerCase().includes(configDialogQuery.toLowerCase())).slice(0, 8).map((c: any) => (
+              <div key={c.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
+                <Wrench size={14} className="text-cyber-400 shrink-0" />
+                <div className="flex-1 min-w-0"><p className="text-white text-xs font-medium truncate">{c.name || c.hostname || c.id}</p><p className="text-gray-500 text-[10px]">Kumo Config</p></div>
+                <button onClick={() => { persistCF("ticketConfigurations", [...cfArr("ticketConfigurations"), { id: uuidish(), name: c.name || c.hostname || c.id, type: "Kumo Config", linkedAt: new Date().toISOString() }]); setShowConfigDialog(false); toast.success("Linked"); }} className="btn-secondary text-xs">Link</button>
+              </div>
+            ))}
+            <div className="flex justify-end"><button onClick={() => setShowConfigDialog(false)} className="btn-secondary text-sm">Close</button></div>
+          </div>
+        </div>
+      )}
+
+      {showProductDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowProductDialog(false)}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={e => { e.preventDefault(); if (!productForm.name.trim()) return; persistCF("ticketProducts", [...cfArr("ticketProducts"), { id: uuidish(), ...productForm }]); setProductForm({ name: "", qty: 1, unitCost: 0 }); setShowProductDialog(false); toast.success("Added"); }}>
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Package size={16} /> Add Product</h3>
+            <input className="input-field" placeholder="Product name *" value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} required />
+            <div className="grid grid-cols-2 gap-2"><input className="input-field" type="number" placeholder="Qty" min={1} value={productForm.qty} onChange={e => setProductForm({ ...productForm, qty: Number(e.target.value) })} /><input className="input-field" type="number" placeholder="Unit cost" step="0.01" min={0} value={productForm.unitCost} onChange={e => setProductForm({ ...productForm, unitCost: Number(e.target.value) })} /></div>
+            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowProductDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Add</button></div>
+          </form>
+        </div>
+      )}
+
+      {showLinkDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowLinkDialog(false)}>
+          <div className="card w-full max-w-md mx-4 space-y-3 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Link2 size={16} /> Link Ticket</h3>
+            <input className="input-field" placeholder="Search tickets..." value={linkQuery} onChange={e => setLinkQuery(e.target.value)} />
+            <select className="input-field" value={linkRel} onChange={e => setLinkRel(e.target.value)}>
+              <option value="related">Related</option><option value="parent">Parent</option><option value="child">Child</option><option value="duplicate">Duplicate</option>
+            </select>
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {linkResults.filter((t: any) => !linkQuery || `${t.ticketNumber} ${t.title}`.toLowerCase().includes(linkQuery.toLowerCase())).slice(0, 12).map((t: any) => (
+                <div key={t.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
+                  <div className="flex-1 min-w-0"><p className="text-white text-xs font-medium truncate">{t.ticketNumber}</p><p className="text-gray-500 text-[10px] truncate">{t.title}</p></div>
+                  <button onClick={() => { persistCF("ticketLinks", [...cfArr("ticketLinks"), { id: uuidish(), ticketId: t.id, ticketNumber: t.ticketNumber, title: t.title, rel: linkRel, linkedAt: new Date().toISOString() }]); setShowLinkDialog(false); toast.success("Linked"); }} className="btn-secondary text-xs">Link</button>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end"><button onClick={() => setShowLinkDialog(false)} className="btn-secondary text-sm">Close</button></div>
+          </div>
+        </div>
+      )}
+
+      {showExpenseDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowExpenseDialog(false)}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); try { await api.post("/billing/expenses", { ...expenseForm, amount: Number(expenseForm.amount), ticketId: id, expenseDate: expenseForm.expenseDate || new Date().toISOString() }); toast.success("Expense added"); setShowExpenseDialog(false); setExpenseForm({ description: "", amount: "", category: "other", expenseDate: "" }); api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((x: any) => x.ticketId === id))).catch(() => {}); } catch { toast.error("Failed"); } }}>
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Receipt size={16} /> Add Expense</h3>
+            <input className="input-field" placeholder="Description *" value={expenseForm.description} onChange={e => setExpenseForm({ ...expenseForm, description: e.target.value })} required />
+            <div className="grid grid-cols-2 gap-2">
+              <input className="input-field" type="number" placeholder="Amount *" step="0.01" min={0} value={expenseForm.amount} onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })} required />
+              <select className="input-field" value={expenseForm.category} onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}>
+                <option value="other">Other</option><option value="travel">Travel</option><option value="hardware">Hardware</option><option value="software">Software</option><option value="parts">Parts</option><option value="labor">Labor</option>
+              </select>
+            </div>
+            <input className="input-field" type="date" value={expenseForm.expenseDate} onChange={e => setExpenseForm({ ...expenseForm, expenseDate: e.target.value })} />
+            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowExpenseDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Add</button></div>
+          </form>
+        </div>
+      )}
+
+      {showScheduleDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowScheduleDialog(false)}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); if (!scheduleForm.title || !scheduleForm.startTime || !scheduleForm.endTime) return; try { await api.post("/schedule", { ...scheduleForm, ticketId: id }); toast.success("Scheduled"); setShowScheduleDialog(false); setScheduleForm({ title: "", startTime: "", endTime: "", location: "" }); api.get("/schedule?limit=200").then(r => setSchedEntries((Array.isArray(r.data) ? r.data : (r.data?.data || [])).filter((x: any) => x.ticketId === id))).catch(() => {}); } catch { toast.error("Failed"); } }}>
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Clock size={16} /> Schedule Entry</h3>
+            <input className="input-field" placeholder="Title *" value={scheduleForm.title} onChange={e => setScheduleForm({ ...scheduleForm, title: e.target.value })} required />
+            <div className="grid grid-cols-2 gap-2"><input className="input-field text-xs" type="datetime-local" value={scheduleForm.startTime} onChange={e => setScheduleForm({ ...scheduleForm, startTime: e.target.value })} required /><input className="input-field text-xs" type="datetime-local" value={scheduleForm.endTime} onChange={e => setScheduleForm({ ...scheduleForm, endTime: e.target.value })} required /></div>
+            <input className="input-field" placeholder="Location (optional)" value={scheduleForm.location} onChange={e => setScheduleForm({ ...scheduleForm, location: e.target.value })} />
+            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowScheduleDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Schedule</button></div>
+          </form>
+        </div>
+      )}
+
+      {showAttachDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAttachDialog(false)}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={e => { e.preventDefault(); if (!attachForm.name.trim()) return; persistCF("ticketAttachments", [...cfArr("ticketAttachments"), { id: uuidish(), name: attachForm.name, size: "—", uploadedBy: "You", at: new Date().toISOString() }]); setAttachForm({ name: "" }); setShowAttachDialog(false); toast.success("Attached"); }}>
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Paperclip size={16} /> Attach File</h3>
+            <p className="text-xs text-gray-500">File upload storage is a placeholder — the attachment record is saved with the ticket.</p>
+            <input className="input-field" placeholder="File name *" value={attachForm.name} onChange={e => setAttachForm({ ...attachForm, name: e.target.value })} required />
+            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowAttachDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Attach</button></div>
+          </form>
+        </div>
+      )}
+
+      {showTimeTabAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowTimeTabAdd(false)}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); await handleTimeEntry(e); setShowTimeTabAdd(false); }}>
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Timer size={16} /> Add Time Entry</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <input className="input-field text-xs" type="datetime-local" value={timeForm.startTime} onChange={e => { setTimeForm({ ...timeForm, startTime: e.target.value }); setTimeout(calcDuration, 0); }} required />
+              <input className="input-field text-xs" type="datetime-local" value={timeForm.endTime} onChange={e => { setTimeForm({ ...timeForm, endTime: e.target.value }); setTimeout(calcDuration, 0); }} required />
+            </div>
+            <input className="input-field text-xs" readOnly value={timeForm.calculated} placeholder="Duration" />
+            <input className="input-field" placeholder="Description" value={timeForm.description} onChange={e => setTimeForm({ ...timeForm, description: e.target.value })} />
+            <label className="flex items-center gap-1 text-xs text-gray-400"><input type="checkbox" checked={timeForm.billable} onChange={e => setTimeForm({ ...timeForm, billable: e.target.checked })} /> Billable</label>
+            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowTimeTabAdd(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Save</button></div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
