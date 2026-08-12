@@ -9,6 +9,7 @@
 import { exec } from "child_process";
 import * as path from "path";
 import { prisma } from "../index";
+import { isSampleDataDisabled } from "./sampleDataState";
 
 // ── Configuration ──────────────────────────────────────────────────
 
@@ -113,6 +114,13 @@ async function poll(): Promise<void> {
 
   isRunning = true;
   try {
+    // While sample data is disabled the snapshot is locked — no captures
+    if (isSampleDataDisabled()) {
+      lastRecordCount = await countAllRecords();
+      scheduleNext();
+      isRunning = false;
+      return;
+    }
     const count = await countAllRecords();
     if (count !== lastRecordCount) {
       const delta = count - lastRecordCount;

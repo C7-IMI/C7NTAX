@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.010 | Last Updated: 2026-08-12
+## Version: 2026.8.12.011 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,13 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.011 — Sample Data Toggling
+- **[New]** Sample data toggling — `pnpm db:sample-off` (disable) and `pnpm db:sample-on` (enable), backed by `apps/api/src/sample-data-toggle.ts`.
+- **[New]** Disable flow — captures a snapshot as usual, wipes all business data (identity and platform config preserved so login/RBAC/settings still work), then sets a marker flag (`.sample-data-disabled`).
+- **[New]** While disabled — snapshot captures are locked (auto-snapshot middleware, snapshot poller, and the capture script all skip), so the preserved snapshot is never overwritten and no automatic reseed occurs after changes.
+- **[New]** Enable flow — reseeds from the preserved snapshot files via the established `seed-from-snapshots` process, then clears the flag so the snapshot-after-change process resumes.
+- **[New]** Command detection rule — "disable sample data"/"turn off sample data" and "enable sample data"/"turn on sample data" only apply as explicit standalone commands; when those phrases appear inside a natural-language sentence they are ignored and treated as a normal prompt.
 
 ## 2026.8.12.010 — Ticket Detail Two-Column Layout Restored & Compact Tabs
 - **[Fix]** Classification & Details and Client Info cards moved back to their original location — right column beside the General card (restored `lg:grid-cols-3` with the left column spanning 2); both cards' display and edit modes fully functional.

@@ -10,6 +10,7 @@
 import { PrismaClient } from "@prisma/client";
 import * as fs from "fs";
 import * as path from "path";
+import { isSampleDataDisabled } from "./services/sampleDataState";
 
 const prisma = new PrismaClient();
 
@@ -70,6 +71,12 @@ const TABLES: TableDef[] = [
 
 async function main(): Promise<void> {
   const log = (msg: string) => console.log(`[SnapshotCapture] ${msg}`);
+
+  // Sample data disabled → the snapshot is locked; skip capture entirely
+  if (isSampleDataDisabled()) {
+    log("Sample data is disabled — snapshot capture skipped (snapshot is locked until sample data is re-enabled).");
+    return;
+  }
 
   log("Capturing current database state to snapshot fixtures...\n");
 

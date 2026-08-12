@@ -9,6 +9,7 @@
 import { exec } from "child_process";
 import * as path from "path";
 import type { Request, Response, NextFunction } from "express";
+import { isSampleDataDisabled } from "./sampleDataState";
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingCapture = false;
@@ -35,6 +36,8 @@ function runCapture(): void {
 }
 
 export function scheduleSnapshotCapture(): void {
+  // While sample data is disabled the snapshot is locked — never capture
+  if (isSampleDataDisabled()) return;
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     debounceTimer = null;

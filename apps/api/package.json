@@ -17,6 +17,8 @@
     "db:seed-from-snapshots": "tsx src/seed-from-snapshots.ts",
     "db:capture": "tsx src/snapshot-capture.ts",
     "db:reseed": "tsx src/snapshot-capture.ts && tsx src/seed-from-snapshots.ts",
+    "db:sample-off": "tsx src/sample-data-toggle.ts off",
+    "db:sample-on": "tsx src/sample-data-toggle.ts on",
     "verify": "tsx src/verify-post-change.ts",
     "db:snapshot": "tsx src/seed-automation.ts",
     "clean": "rimraf dist"
