@@ -1,6 +1,7 @@
 [
   {
     "id": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tenantId": null,
     "name": "Acme Corporation",
     "legalName": null,
     "taxId": null,
@@ -39,6 +40,7 @@
   },
   {
     "id": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tenantId": null,
     "name": "Globex Industries",
     "legalName": null,
     "taxId": null,
@@ -77,6 +79,7 @@
   },
   {
     "id": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tenantId": null,
     "name": "Initech Solutions",
     "legalName": null,
     "taxId": null,
@@ -115,6 +118,7 @@
   },
   {
     "id": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tenantId": null,
     "name": "Umbrella Corp",
     "legalName": null,
     "taxId": null,
@@ -153,6 +157,7 @@
   },
   {
     "id": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tenantId": null,
     "name": "Stark Enterprises",
     "legalName": null,
     "taxId": null,
