@@ -64,5 +64,16 @@
     "authorId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "createdAt": "2026-08-12T01:16:15.110Z",
     "updatedAt": "2026-08-12T06:04:15.124Z"
+  },
+  {
+    "id": "9875e1ea-c38d-4d9a-a507-bbb1b8fb0601",
+    "body": "Board: 81f12ded-6039-4c63-81b5-3d520ea1e854 → 9e4422d8-18fb-4f5e-b922-5ef5597880f8\nDue Date: 2026-08-13T06:04 → 2026-08-13T11:04",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-12T07:50:27.089Z",
+    "updatedAt": "2026-08-12T07:50:27.089Z"
   }
 ]

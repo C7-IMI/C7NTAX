@@ -106,5 +106,14 @@
     "entityName": "Globex VPN Credential",
     "entityIcon": "key",
     "viewedAt": "2026-08-12T06:00:51.147Z"
+  },
+  {
+    "id": "c157890c-c1c6-4e1e-9009-002aa20cf19d",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "entityName": "Acme Domain Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-08-12T07:52:25.638Z"
   }
 ]

@@ -379,6 +379,7 @@ export function TicketDetailPage() {
         serviceAgreementId: t.serviceAgreementId||"", boardId: t.boardId||"",
       });
       setSelectedAgreement(t.serviceAgreement||null);
+      if(t.companyId){api.get(`/clients/contacts?companyId=${t.companyId}`).then(r=>setContacts(r.data?.data||r.data||[])).catch(()=>{});api.get(`/clients/${t.companyId}/agreements`).then(r=>setAgreements(r.data?.data||r.data||[])).catch(()=>{});}
     }).catch(()=>toast.error("Ticket not found"));
   };
 

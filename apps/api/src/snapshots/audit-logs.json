@@ -77,5 +77,156 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-12T07:27:49.653Z"
+  },
+  {
+    "id": "23e18d2e-7e2d-4514-bf52-af7615851d15",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+    "changes": {
+      "title": "Network drive mapping failure after migration",
+      "status": "new",
+      "boardId": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
+      "dueDate": "2026-08-13T06:04",
+      "endTime": "",
+      "priority": "critical",
+      "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "contactId": "",
+      "startTime": "",
+      "description": "All users in Chicago office lost mapped drives after weekend migration. GPO seems intact.",
+      "assignedToId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+      "serviceAgreementId": ""
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:50:27.093Z"
+  },
+  {
+    "id": "6e8a3250-1430-416a-a10b-57a9fb8d3111",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:51:49.150Z"
+  },
+  {
+    "id": "04ce18fc-39f5-4916-8c88-64f5d2c61457",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "url": "https://acmecorp.com/admin",
+      "email": null,
+      "label": "Acme Domain Admin",
+      "category": "admin",
+      "password": "***",
+      "username": "admin@acmecorp.local"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:51:57.651Z"
+  },
+  {
+    "id": "90769f97-1f90-41b2-9234-b69086a13823",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:51:57.677Z"
+  },
+  {
+    "id": "02e81783-572b-4906-8355-2306ab1771e6",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "url": "https://acmecorp.com/admin",
+      "email": null,
+      "label": "Acme Domain Admin",
+      "category": "admin",
+      "password": "***",
+      "username": "admin@acmecorp.local"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:16.981Z"
+  },
+  {
+    "id": "6208e514-e4d2-44f4-8fe9-4a52baf688e1",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:17.003Z"
+  },
+  {
+    "id": "5d2957bb-04b6-48ff-9c90-0f5545fe1275",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "url": "https://acmecorp.com/admin",
+      "email": null,
+      "label": "Acme Domain Admin",
+      "category": "admin",
+      "password": "***",
+      "username": "admin@acmecorp.local"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:25.630Z"
+  },
+  {
+    "id": "fc6c3efc-2e08-42ef-b6cb-151ba665807b",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:25.648Z"
+  },
+  {
+    "id": "2560335a-83de-4c7d-8667-a86bd9b4f6cc",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:29.677Z"
+  },
+  {
+    "id": "a4c7dceb-8ded-4dc7-bba1-b5e8135e2287",
+    "action": "schedule:create",
+    "entity": "schedule",
+    "entityId": "schedule",
+    "changes": {
+      "color": "#3b82d6",
+      "title": "Test",
+      "endTime": "2026-08-28T02:55",
+      "location": "SD",
+      "startTime": "2026-08-24T02:55",
+      "description": "Test"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:55:51.121Z"
   }
 ]
