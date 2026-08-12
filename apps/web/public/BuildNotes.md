@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.11.001 | Last Updated: 2026-08-11
+## Version: 2026.8.12.001 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,17 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.001 — Calendar, Permissions UX & Human-Readable Audit Logs
+- **[New]** Monthly calendar card — Outlook-style month grid above Scheduled Events on the Calendar page with prev/next month navigation, colored event indicators on each date, today highlighting, and click-a-date filtering of the event list below.
+- **[New]** Batch action confirmation — the "Modify Selected" ticket menu now shows checkboxes next to each action with an OK button that applies only the checked actions and a Cancel button that dismisses without changes; multiple checked actions run sequentially with per-action success/failure reporting.
+- **[New]** Audit log user name resolution — `GET /system/audit-logs` now resolves user IDs to full names ("Stephen Simmons") instead of truncated UUID prefixes.
+- **[Update]** Human-readable audit log display — raw JSON and code blocks eliminated from the Audit Logs page; every event renders as a narrative sentence (e.g., "updated ticket #a1b2c3d4 — status to in progress") with friendly entity/field labels, "enabled/disabled" for booleans, "(redacted)" for masked values, and flattened nested objects.
+- **[Update]** Modify Selected menu labels — batch action items now display human-readable names ("Set Status → In Progress") instead of raw machine values like `status_in_progress`.
+- **[Update]** Schedule events keep their color — the schedule POST endpoint now accepts and stores the `color` field so newly created calendar events render with the chosen color in both the event list and monthly calendar indicators.
+- **[Fix]** Permissions tab false yellow highlight — the amber deviation indicator on Manage Users permissions no longer appears when loaded permissions exactly match the user's assigned role; comparison is always against the role's actual permissions and updates live while toggling.
+- **[Fix]** Permissions role-template mismatch — the "Apply role defaults" dropdown no longer drives deviation highlighting; it applies presets only, while the highlight always compares against the assigned role.
+- **[Fix]** Project Calendar loading — the Calendar page now handles both array and wrapped API response shapes reliably and resets the create form after adding an event so new events display immediately.
 
 ## 2026.8.11.001 — CloudConnect, Batch Tickets, Audit Logging & Kumo Fixes
 - **[New]** CloudConnect action screen — clicking a connected integration tile opens a modal with user preview, field mapping, company assignment, and sync controls.

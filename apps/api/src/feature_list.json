@@ -1,5 +1,21 @@
 [
   {
+    "version": "2026.8.12.001",
+    "date": "2026-08-12",
+    "title": "Calendar, Permissions UX & Human-Readable Audit Logs",
+    "changes": [
+      {"text": "Monthly calendar card — Outlook-style month grid above Scheduled Events with prev/next navigation, colored event indicators, today highlighting, and click-a-date filtering", "type": "New Feature"},
+      {"text": "Batch action confirmation — Modify Selected menu uses checkboxes with OK/Cancel so actions only run on explicit confirmation", "type": "New Feature"},
+      {"text": "Audit log user name resolution — GET /system/audit-logs resolves user IDs to full names instead of truncated UUIDs", "type": "New Feature"},
+      {"text": "Human-readable audit log display — raw JSON eliminated; every event renders as a narrative sentence with friendly labels", "type": "Update"},
+      {"text": "Modify Selected menu labels — human-readable action names replace raw machine values", "type": "Update"},
+      {"text": "Schedule events keep their color — schedule POST endpoint now accepts and stores the color field", "type": "Update"},
+      {"text": "Permissions tab false yellow highlight — deviation indicator only appears when permissions actually differ from the assigned role", "type": "Fix"},
+      {"text": "Permissions role-template mismatch — Apply role defaults dropdown no longer drives deviation highlighting", "type": "Fix"},
+      {"text": "Project Calendar loading — Calendar page handles array and wrapped API response shapes; new events display immediately", "type": "Fix"}
+    ]
+  },
+  {
     "version": "2026.8.10.003",
     "date": "2026-08-10",
     "title": "Header Descriptions & Section Landing Pages",
