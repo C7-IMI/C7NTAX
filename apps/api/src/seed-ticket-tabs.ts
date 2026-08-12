@@ -108,6 +108,14 @@ async function main(): Promise<void> {
 
   // Real entities for cross-app links
   const realAssets = await prisma.asset.findMany({ take: 12, select: { id: true, name: true } });
+  // Ensure real Kumo server records exist (drives Kumo → Configurations and the link dialog)
+  const kumoAssetsAll = await prisma.kumoAsset.findMany({ take: 6 });
+  for (const ka of kumoAssetsAll) {
+    const exists = await prisma.kumoServer.findUnique({ where: { kumoAssetId: ka.id } });
+    if (!exists) {
+      await prisma.kumoServer.create({ data: { kumoAssetId: ka.id, hostname: ka.name.toLowerCase(), operatingSystem: "Windows Server 2022" } });
+    }
+  }
   const realServers = await prisma.kumoServer.findMany({ take: 12, select: { id: true, hostname: true, kumoAsset: { select: { name: true } } } });
 
   let addedConfigs = 0, addedProducts = 0, addedLinks = 0, addedAttach = 0;
@@ -134,6 +142,21 @@ async function main(): Promise<void> {
         { id: `s-${t.id.slice(0, 8)}-c2`, name: s1 ? (s1.kumoAsset?.name || s1.hostname) : (s2 ? (s2.kumoAsset?.name || s2.hostname) : c2.name), type: "Kumo Config", kind: "kumoServer", refId: s1?.id || s2?.id || "", linkedAt: daysAgo(4 - (i % 3)).toISOString() },
       ];
       addedConfigs += 2;
+    }
+    // Enrich config entries with real entity refs (deterministic, cross-app links)
+    {
+      const enriched = (existingCf.ticketConfigurations as any[]).map((c: any, ci: number) => {
+        if (c.type === "Asset") {
+          const a = realAssets[(offset + ci) % realAssets.length];
+          return { ...c, kind: "asset", refId: a?.id || "", name: a?.name || c.name };
+        }
+        if (c.type === "Kumo Config" || c.type === "Kumo Server") {
+          const s = realServers[(offset + ci) % realServers.length];
+          return { ...c, kind: "kumoServer", refId: s?.id || "", name: s ? (s.kumoAsset?.name || s.hostname) : c.name };
+        }
+        return c;
+      });
+      if (JSON.stringify(enriched) !== JSON.stringify(existingCf.ticketConfigurations)) existingCf.ticketConfigurations = enriched;
     }
 
     const products = Array.isArray(existingCf.ticketProducts) ? (existingCf.ticketProducts as unknown[]) : [];

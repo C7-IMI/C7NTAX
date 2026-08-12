@@ -31,6 +31,7 @@ async function main() {
   await prisma.m365User.deleteMany();
   await prisma.integration.deleteMany();
   await prisma.ticketComment.deleteMany();
+  await prisma.ticketAttachment.deleteMany();
   await prisma.timeEntry.deleteMany();
   await prisma.scheduleEntry.deleteMany();
   await prisma.expense.deleteMany();
@@ -172,8 +173,8 @@ async function main() {
       data: {
         customFields: {
           ticketConfigurations: [
-            { id: `s-${tk.id.slice(0, 8)}-c1`, ...cfConfigs[i % cfConfigs.length], linkedAt: daysAgo(6 - (i % 5)) },
-            { id: `s-${tk.id.slice(0, 8)}-c2`, ...cfConfigs[(i + 1) % cfConfigs.length], linkedAt: daysAgo(4 - (i % 3)) },
+            { id: `s-${tk.id.slice(0, 8)}-c1`, ...cfConfigs[i % cfConfigs.length], kind: "asset", refId: "", linkedAt: daysAgo(6 - (i % 5)) },
+            { id: `s-${tk.id.slice(0, 8)}-c2`, ...cfConfigs[(i + 1) % cfConfigs.length], kind: "kumoAsset", refId: "", linkedAt: daysAgo(4 - (i % 3)) },
           ],
           ticketProducts: [
             { id: `s-${tk.id.slice(0, 8)}-p1`, ...cfProducts[i % cfProducts.length] },
@@ -285,6 +286,21 @@ async function main() {
     { name: "AP-WING-A", assetTag: "STARK-AP01", type: "access_point", status: "active", model: "Aruba AP-535", location: "Stark SF - Wing A", companyId: stark.id },
   ] });
   console.log("  ✓ Created 5 assets");
+
+  // ── Link ticket configurations to real assets (cross-app sync) ──
+  const inventoryAssets = await prisma.asset.findMany({ take: 8, select: { id: true } });
+  for (let i = 0; i < allTickets.length; i++) {
+    const tk = allTickets[i];
+    const cfs = (tk.customFields as Record<string, any>) || {};
+    const configs = (cfs.ticketConfigurations as any[]) || [];
+    const next = configs.map((c: any) => c.type === "Asset" && inventoryAssets[i % inventoryAssets.length]
+      ? { ...c, refId: inventoryAssets[i % inventoryAssets.length].id }
+      : c);
+    if (next.some((c: any, idx: number) => c.refId !== configs[idx]?.refId)) {
+      await prisma.ticket.update({ where: { id: tk.id }, data: { customFields: { ...cfs, ticketConfigurations: next } as any } });
+    }
+  }
+  console.log("  ✓ Linked ticket configurations to real assets");
 
   // ── Knowledge Base Articles ──
   await prisma.knowledgeBaseArticle.createMany({ data: [
@@ -508,6 +524,29 @@ const kumoAsset3 = await prisma.kumoAsset.create({ data: { templateId: wsTpl.id,
 const kumoAsset4 = await prisma.kumoAsset.create({ data: { templateId: netTpl.id, name: "FW-PRIMARY", status: "active", companyId: globex.id, createdById: adminUser.id } });
 const kumoAsset5 = await prisma.kumoAsset.create({ data: { templateId: wsTpl.id, name: "WS-ENG-07", status: "maintenance", companyId: stark.id, createdById: manager.id } });
 console.log("  ✓ Created 5 Kumo assets");
+
+// ── Kumo: Server records (drives Kumo → Configurations and ticket link dialog) ──
+await prisma.kumoServer.createMany({ data: [
+  { kumoAssetId: kumoAsset1.id, hostname: "srv-dc-01", operatingSystem: "Windows Server 2022", cpuCores: 8, ramGb: 32, storageGb: 512 },
+  { kumoAssetId: kumoAsset2.id, hostname: "srv-app-02", operatingSystem: "Windows Server 2019", cpuCores: 16, ramGb: 64, storageGb: 1024 },
+  { kumoAssetId: kumoAsset4.id, hostname: "fw-primary", operatingSystem: "FortiOS 7.4", cpuCores: 4, ramGb: 8, storageGb: 128 },
+] });
+console.log("  ✓ Created 3 Kumo server records");
+
+// ── Link Kumo-type ticket configurations to real Kumo assets ──
+for (let i = 0; i < allTickets.length; i++) {
+  const tk = allTickets[i];
+  const cfs = (tk.customFields as Record<string, any>) || {};
+  const configs = (cfs.ticketConfigurations as any[]) || [];
+  const kumoAssets = [kumoAsset1, kumoAsset2, kumoAsset3, kumoAsset4, kumoAsset5];
+  const next = configs.map((c: any) => c.type !== "Asset" && kumoAssets[i % kumoAssets.length]
+    ? { ...c, kind: "kumoAsset", refId: kumoAssets[i % kumoAssets.length].id, name: kumoAssets[i % kumoAssets.length].name }
+    : c);
+  if (next.some((c: any, idx: number) => c.refId !== configs[idx]?.refId)) {
+    await prisma.ticket.update({ where: { id: tk.id }, data: { customFields: { ...cfs, ticketConfigurations: next } as any } });
+  }
+}
+console.log("  ✓ Linked Kumo ticket configurations to real Kumo assets");
 
 // ── Kumo: Asset Field Values ────────────────────────────────────────
 const hostField = (await prisma.kumoTemplateField.findFirst({ where: { templateId: serverTpl.id, key: "hostname" } }))!;
