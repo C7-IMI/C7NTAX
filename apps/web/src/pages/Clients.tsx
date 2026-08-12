@@ -56,7 +56,7 @@ export function ClientsPage() {
         </select>
         <div className="flex items-center gap-1.5">
           <ArrowUpDown size={14} className="text-gray-500" />
-          <select className="input-field text-sm py-1.5 w-auto" value={sort} onChange={e => setSort(e.target.value)}>
+          <select className="input-field text-sm py-1.5 w-auto" value={sort?.field || "name"} onChange={e => setSort({ field: e.target.value, direction: "asc" })}>
             {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>

@@ -4,11 +4,11 @@ import toast from "react-hot-toast";
 import { Plus, Server, Search } from "lucide-react";
 
 export function KumoConfigsPage() {
-  const [configs, setConfigs] = useState([]);
-  const [companies, setCompanies] = useState([]);
+  const [configs, setConfigs] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyFilter, setCompanyFilter] = useState("");
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<any>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [form, setForm] = useState({name:"",hostname:"",templateId:"",os:"",cpu:"",ram:"",storage:"",ip:"",virt:""});
@@ -24,7 +24,7 @@ export function KumoConfigsPage() {
 
   const filtered = companyFilter ? configs.filter(c => c.kumoAsset?.companyId === companyFilter) : configs;
 
-  const handleCreate = (e) => {
+  const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     api.post("/kumo/configs/servers", {
       name: form.name, hostname: form.hostname, templateId: form.templateId,
