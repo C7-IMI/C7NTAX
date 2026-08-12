@@ -192,3 +192,17 @@ ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async 
     res.status(201).json(entry);
   } catch (e) { next(e); }
 });
+
+// ── Batch update tickets ──
+ticketsRouter.post("/batch", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const { ticketIds, status, priority } = req.body;
+    if (!ticketIds || !Array.isArray(ticketIds) || ticketIds.length === 0) throw new AppError("ticketIds array required", 400);
+    const data: Record<string, unknown> = {};
+    if (status) data.status = status;
+    if (priority) data.priority = priority;
+    if (Object.keys(data).length === 0) throw new AppError("status or priority required", 400);
+    const result = await prisma.ticket.updateMany({ where: { id: { in: ticketIds } }, data });
+    res.json({ updated: result.count, ticketIds });
+  } catch (e) { next(e); }
+});

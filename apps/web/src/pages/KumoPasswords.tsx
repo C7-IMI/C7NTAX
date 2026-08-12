@@ -52,15 +52,18 @@ export function KumoPasswordsPage() {
   };
 
   const handleSave = async () => {
+    if (!selected) return;
+    const payload: Record<string, any> = {};
+    const allowed = ["label","username","email","url","category","notes"];
+    for (const k of allowed) if (editForm[k] !== undefined) payload[k] = editForm[k];
+    if (editForm.password) payload.password = editForm.password;
     try {
-      await api.patch(`/kumo/passwords/${selected.id}`, editForm);
+      await api.patch(`/kumo/passwords/${selected.id}`, payload);
       toast.success("Updated");
       const changedPwd = !!editForm.password;
       setEditing(false);
       fetch();
-      // Refresh the selected entry with updated data
       selectPassword({ ...selected, ...editForm, password: undefined });
-      // If password was changed, re-fetch reveal data and clear the password field
       if (changedPwd) {
         setEditForm(prev => ({ ...prev, password: "" }));
         const r = await api.post(`/kumo/passwords/${selected.id}/reveal`);
