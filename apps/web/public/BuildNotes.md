@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.006 | Last Updated: 2026-08-12
+## Version: 2026.8.12.007 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.007 — Clear Selected-State Highlight in Navigation
+- **[Update]** Sidebar selected/active items now use the same light `bg-surface-lighter` background with white text as the hover state — replacing the previous faint cyber tint that was hard to distinguish.
+- **[Update]** Applied consistently across all four nav rendering paths: collapsed-mode icon buttons, collapsed-mode links, expandable parent sections, and leaf/section links; the existing accent indicators (active chevron and collapsed-mode edge bar) remain as secondary cues.
 
 ## 2026.8.12.006 — Time Off Monthly Calendar
 - **[New]** Monthly calendar added to the Time Off page above the PTO Requests card — same Outlook-style mini-card design used on the Calendar page (subtle cell borders, top-left date numbers, month navigation, today highlight).

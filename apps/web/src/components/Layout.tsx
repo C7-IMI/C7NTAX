@@ -311,7 +311,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <button
               onClick={() => navigate(`/section/${node.id}`)}
               className={`p-2.5 rounded-lg transition-colors ${
-                active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+                active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
               <node.icon size={20} />
@@ -321,7 +321,7 @@ export function Layout({ children }: { children: ReactNode }) {
               to={linkTo}
               onClick={() => setMobileOpen(false)}
               className={`p-2.5 rounded-lg transition-colors ${
-                active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+                active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
               <node.icon size={20} />
@@ -355,7 +355,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <button
               onClick={() => { toggle(node.id); navigate(`/section/${node.id}`); }}
               className={`flex-1 flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${
-                active ? "bg-cyber-600/10 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+                active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
               style={{ paddingLeft: `${12 + depth * 12}px` }}
             >
@@ -379,7 +379,7 @@ export function Layout({ children }: { children: ReactNode }) {
               onClick={() => setMobileOpen(false)}
               style={{ paddingLeft: `${12 + depth * 12}px` }}
               className={`flex-1 flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
-                active ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+                active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
               <node.icon size={18} />

@@ -558,6 +558,26 @@
 - Behavior preserved: month prev/next, month-title click → today, date click → filter Scheduled Events, clear-filter row
 - All three changelog sources updated with `2026.8.12.005` entry; LSP diagnostics clean
 
+### Prompt 48 — Time Off monthly calendar
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.12.006)
+> In the Time Off subsection, add the same type of calendar used elsewhere, placing it above the PTO Requests card.
+
+**Changes:**
+- `apps/web/src/pages/PTO.tsx` — Added the same Outlook-style mini-card month calendar above the PTO Requests card (month navigation, day headers, bordered mini-card cells, top-left dates, today/selected highlights)
+- `apps/web/src/pages/PTO.tsx` — PTO requests mapped across their full date span into status-colored chips (approved green, denied red, pending amber); up to 2 chips per day with "+N more" overflow; click-a-date filters the requests table with clear-filter row; card header shows total/filtered count; create form resets after submission
+- All three changelog sources updated with `2026.8.12.006` entry; LSP diagnostics clean
+
+### Prompt 49 — Selected-state highlight in navigation pane
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.12.007)
+> Update the navigation pane so the selected section/subsection is clearly highlighted. Currently the selected state is hard to distinguish because it only changes the text color and shows a small arrow. Change the selected section/subsection background to use the same light background as the hover state shown in the screenshot, and keep that highlight consistent for the active/selected item.
+
+**Changes:**
+- `apps/web/src/components/Layout.tsx` — All four active-state class groups changed from faint cyber tints (`bg-cyber-600/10`, `bg-cyber-600/15` + `text-cyber-400`) to the hover-style highlight `bg-surface-lighter text-white`: collapsed-mode icon buttons, collapsed-mode links, expandable parent section buttons, and leaf/section links
+- Secondary indicators retained: active ChevronRight on leaf items and the collapsed-mode right-edge cyber bar
+- All three changelog sources updated with `2026.8.12.007` entry; LSP diagnostics clean
+
 ---
 
-**Total Prompts:** 47 | **Completed:** 47 | **In Progress:** 0
+**Total Prompts:** 49 | **Completed:** 49 | **In Progress:** 0

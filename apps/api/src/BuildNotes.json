@@ -1,5 +1,25 @@
 [
   {
+    "version": "2026.8.12.007",
+    "date": "2026-08-12",
+    "title": "Clear Selected-State Highlight in Navigation",
+    "changes": [
+      {"text": "Sidebar selected/active items now use the same light bg-surface-lighter background with white text as the hover state", "type": "Update"},
+      {"text": "Applied consistently across all four nav rendering paths: collapsed icons, collapsed links, parent sections, and leaf links", "type": "Update"}
+    ]
+  },
+  {
+    "version": "2026.8.12.006",
+    "date": "2026-08-12",
+    "title": "Time Off Monthly Calendar",
+    "changes": [
+      {"text": "Monthly calendar added to Time Off page above the PTO Requests card — same Outlook-style mini-card design as the Calendar page", "type": "New Feature"},
+      {"text": "PTO requests appear as status-colored chips across their full date span (green approved, red denied, amber pending)", "type": "New Feature"},
+      {"text": "Click-a-date filtering — selecting a calendar date filters the PTO Requests table with clear-filter row", "type": "New Feature"},
+      {"text": "PTO Requests card header shows total or filtered count; request form resets after submission", "type": "Update"}
+    ]
+  },
+  {
     "version": "2026.8.12.005",
     "date": "2026-08-12",
     "title": "Outlook-Style Mini-Card Month Calendar",
