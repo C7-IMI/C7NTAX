@@ -686,6 +686,18 @@
 - Verified: desktop `tsc` clean; web `vite build` green; portable exe built (144 MB) with bundled `resources/webui` (fresh dist); exe copied to `apps/desktop/dist-electron/C7NTAX-Portable-1.0.0.exe`; remaining shared-package strict-mode errors are pre-existing baseline debt untouched by this task
 - All three changelog sources updated with `2026.8.12.016`
 
+### Prompt 59 — Native desktop clients plan (Windows / Linux / macOS)
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.12.017)
+> Create a plan only to rewrite the current Desktop app into three additional native client applications: one for Windows, one for Linux, and one for macOS. Choose a native language or framework for each platform—not Electron or other web frameworks—optimizing for best compatibility, easiest maintenance, best speed, and lowest memory/resource usage, with particular priority on speed and low resource usage. Include all required software, compilers, SDKs, UI SDKs, binaries, libraries, and dependencies that must be installed and configured to build each version. The new applications must look and function as close as possible to the current web/desktop version. Follow each platform's best practices. Ensure each application can be compiled and packaged into installers: MSI or EXE for Windows, .deb or Flatpak for Linux, and .pkg or .dmg for macOS. Output only the plan. The current Electron based desktop version will remain part of the project and be updated alongside these 3 new versions. It will not be replaced as part of the rewrite.
+
+**Changes:**
+- `native-desktop-plan.md` — New 189-line plan document (11.2 KB), plan only, no code: technology selection C#/.NET 8 LTS + WinUI 3 (Windows, Native AOT option, WPF fallback), Rust + GTK 4/libadwaita gtk4-rs (Linux, Qt6 fallback), Swift 6 + SwiftUI/AppKit (macOS); rejection rationale for C++/Win32, cross-platform frameworks, Tauri/webview shells
+- Full per-platform toolchains/SDKs/dependencies: Windows (Visual Studio 2022 workloads, Windows App SDK 1.5+, Windows SDK 10.0.26100, WiX v4, MSIX, signtool), Linux (rustup 1.80+, GTK4/libadwaita dev, flatpak-builder GNOME SDK 46, cargo-deb, AppStream), macOS (Xcode 16+, SPM, create-dmg/pkgbuild/productbuild, Developer ID + notarytool/stapler)
+- Installers: MSIX + MSI + self-contained AOT EXE (Windows), .deb + Flatpak (Linux), .dmg + .pkg with notarization (macOS)
+- Design-token parity approach (machine-readable tokens → WinUI ResourceDictionary / GTK CSS provider / SwiftUI extensions), same REST API backend, feature parity matrix, security (secure storage per platform, TLS, signing), CI/CD (GitHub Actions per-OS runners), performance budgets, phased delivery plan and milestones; Electron app explicitly retained and updated alongside
+- All three changelog sources updated with `2026.8.12.017`
+
 ---
 
-**Total Prompts:** 58 | **Completed:** 58 | **In Progress:** 0
+**Total Prompts:** 59 | **Completed:** 59 | **In Progress:** 0

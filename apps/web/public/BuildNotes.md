@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.016 | Last Updated: 2026-08-12
+## Version: 2026.8.12.017 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.017 — Native Desktop Clients Plan (Windows / Linux / macOS)
+- **[New]** `native-desktop-plan.md` — plan only, no code: three native desktop apps using C#/.NET 8 + WinUI 3 (Windows), Rust + GTK 4/libadwaita (Linux), Swift 6 + SwiftUI/AppKit (macOS); Electron app remains and is updated alongside, not replaced.
+- **[New]** Plan covers per-platform toolchains/SDKs/dependencies, installer packaging (MSIX/MSI/EXE, .deb/Flatpak, .pkg/.dmg with notarization), design-token parity with the WebUI, backend reuse (same REST API), security, and CI/CD.
 
 ## 2026.8.12.016 — Desktop App Now Replicates WebUI Exactly
 - **[Update]** Desktop app rewritten to serve the exact built WebUI via a custom `app://c7ntax` protocol — same interface and session state as the browser; `/api/*` proxied to the API server so the relative API contract works unchanged; SPA fallback for client routing; stable origin keeps localStorage state (login, theme, sidebar) persistent.

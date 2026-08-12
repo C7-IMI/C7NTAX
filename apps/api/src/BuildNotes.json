@@ -1,5 +1,14 @@
 [
   {
+    "version": "2026.8.12.017",
+    "date": "2026-08-12",
+    "title": "Native Desktop Clients Plan (Windows / Linux / macOS)",
+    "changes": [
+      {"text": "native-desktop-plan.md — plan only: C#/.NET 8 + WinUI 3 (Windows), Rust + GTK 4/libadwaita (Linux), Swift 6 + SwiftUI/AppKit (macOS); Electron app retained and updated alongside", "type": "New Feature"},
+      {"text": "Covers per-platform toolchains/SDKs, installer packaging (MSIX/MSI/EXE, .deb/Flatpak, .pkg/.dmg + notarization), design-token parity, backend reuse, security, and CI/CD", "type": "New Feature"}
+    ]
+  },
+  {
     "version": "2026.8.12.016",
     "date": "2026-08-12",
     "title": "Desktop App Now Replicates WebUI Exactly",
