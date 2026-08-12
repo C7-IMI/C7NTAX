@@ -590,6 +590,27 @@
 - `apps/web/src/pages/Tickets.tsx` — Time logging endpoint corrected from `/tickets/:id/time-entries` (nonexistent) to `/tickets/:id/time`
 - Verified: `tsc --noEmit` clean; all three changelog sources updated with `2026.8.12.008`
 
+### Prompt 51 — Square date cards on all calendars
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.12.009)
+> Using the attached screenshot as reference, update all calendars so the date cards remain square instead of rectangular for a cleaner visual style. Adjust the vertical height of the calendar card as necessary to support the square date cards. Preserve the smaller size that was already implemented as much as possible. Ensure the entire month is visible on a single screen without needing to scroll.
+
+**Changes:**
+- `apps/web/src/pages/Calendar.tsx` — Day cells (including empty leading cells) changed from `min-h-[60px]` to `aspect-square`; calendar card constrained to `max-w-3xl` so squares remain small (~100px) and 6-week months fit on one screen
+- `apps/web/src/pages/PTO.tsx` — Same changes applied to the Time Off calendar (empty cells + day cells `aspect-square`, card `max-w-3xl`)
+- All existing calendar behavior preserved (navigation, jump-to-today, highlights, chips, date filtering); `tsc --noEmit` clean on both files; all three changelog sources updated with `2026.8.12.009`
+
+### Prompt 52 — Restore two-column ticket card layout & compact toolbar tabs
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.12.010)
+> Adjust the card layout: 1) Move the "Classification & Details" card and the "Client info" card back to their original location, to the right of the "General" card. Use the attached screenshots as a reference. Restore full functionality. 2) Make the "Toolbar" card span the full width of the two columns originally created by the "General" card and the "Classification & Details" card. 3) In the "Toolbar" card, reduce the label font size and tighten spacing so all options fit without requiring horizontal scrolling.
+
+**Changes:**
+- `apps/web/src/pages/Tickets.tsx` — Ticket tab grid restored from single-column (`grid-cols-1`) to original two-column layout (`grid-cols-1 lg:grid-cols-3 gap-5`) with left column `lg:col-span-2` (General, Dates & Times, Notes & Activity) and right column (Classification & Details, Client Info) — both cards' display/edit modes intact
+- `apps/web/src/pages/Tickets.tsx` — Toolbar card remains a top-level full-width card spanning both columns
+- `apps/web/src/pages/Tickets.tsx` — Tab strip tightened: `gap-0`, `whitespace-nowrap`, tab labels `text-xs` with `px-2 py-1` so all 12 tabs fit without horizontal scrolling on desktop
+- Verified: `tsc --noEmit` clean; all three changelog sources updated with `2026.8.12.010`
+
 ---
 
-**Total Prompts:** 50 | **Completed:** 50 | **In Progress:** 0
+**Total Prompts:** 52 | **Completed:** 52 | **In Progress:** 0

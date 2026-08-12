@@ -1,5 +1,25 @@
 [
   {
+    "version": "2026.8.12.010",
+    "date": "2026-08-12",
+    "title": "Ticket Detail Two-Column Layout Restored & Compact Tabs",
+    "changes": [
+      {"text": "Classification & Details and Client Info cards moved back to the right column beside General (lg:grid-cols-3 with left spanning 2); display and edit modes fully functional", "type": "Fix"},
+      {"text": "Toolbar card spans the full width of both columns per reference screenshot", "type": "Update"},
+      {"text": "Toolbar tab labels compacted — text-xs, px-2 py-1, zero gap — all 12 tabs fit without horizontal scrolling", "type": "Update"}
+    ]
+  },
+  {
+    "version": "2026.8.12.009",
+    "date": "2026-08-12",
+    "title": "Square Date Cards on All Calendars",
+    "changes": [
+      {"text": "Day cells on Calendar and Time Off pages changed from min-h rectangles to true squares via aspect-square", "type": "Update"},
+      {"text": "Calendar cards constrained to max-w-3xl so square cells stay small and the full month fits on one screen without scrolling", "type": "Update"},
+      {"text": "All existing calendar behavior preserved — navigation, jump-to-today, highlights, event chips, date filtering", "type": "Update"}
+    ]
+  },
+  {
     "version": "2026.8.12.008",
     "date": "2026-08-12",
     "title": "ConnectWise-Style Ticket Detail Toolbar & Tabs",

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.009 | Last Updated: 2026-08-12
+## Version: 2026.8.12.010 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,11 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.010 — Ticket Detail Two-Column Layout Restored & Compact Tabs
+- **[Fix]** Classification & Details and Client Info cards moved back to their original location — right column beside the General card (restored `lg:grid-cols-3` with the left column spanning 2); both cards' display and edit modes fully functional.
+- **[Update]** Toolbar card spans the full width of both columns (General left, Classification & Details right) per the reference screenshot.
+- **[Update]** Toolbar tab labels compacted — `text-xs` with `px-2 py-1`, zero gap between tabs — so all 12 tabs fit without horizontal scrolling on desktop widths.
 
 ## 2026.8.12.009 — Square Date Cards on All Calendars
 - **[Update]** Calendar page and Time Off page day cells changed from `min-h-[60px]` rectangles to true squares via `aspect-square` — cleaner visual style per reference screenshot.

@@ -577,12 +577,12 @@ export function TicketDetailPage() {
       {/* ── Full-width toolbar card: tabs + icon actions (ConnectWise-style) ── */}
       <div className="card p-3 space-y-2">
         {/* Tab strip */}
-        <div className="flex items-center gap-0.5 overflow-x-auto border-b border-surface-border pb-2">
+        <div className="flex items-center gap-0 overflow-x-auto whitespace-nowrap border-b border-surface-border pb-1.5">
           {TICKET_DETAIL_TABS.map(t => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`shrink-0 px-3 py-1.5 text-sm font-medium rounded-t-md border-b-2 -mb-px transition-colors ${
+              className={`shrink-0 px-2 py-1 text-xs font-medium rounded-t border-b-2 -mb-px transition-colors ${
                 activeTab === t.id
                   ? "border-cyber-500 text-cyber-400 bg-surface-lighter"
                   : "border-transparent text-gray-400 hover:text-white hover:bg-surface-lighter"
@@ -607,7 +607,7 @@ export function TicketDetailPage() {
       </div>
 
       {activeTab === "ticket" && (
-      <div className="grid grid-cols-1 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
           {/* General */}
           <div className="card space-y-3">
