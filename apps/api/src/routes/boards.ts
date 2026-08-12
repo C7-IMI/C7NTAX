@@ -129,11 +129,19 @@ boardsRouter.post("/", requirePermission(Permission.BoardManage), async (req: Au
 // ── Update board ──
 boardsRouter.patch("/:id", requirePermission(Permission.BoardManage), async (req: AuthRequest, res, next) => {
   try {
-    const { name, description, enabled } = req.body;
-    const board = await prisma.serviceBoard.update({
-      where: { id: req.params.id },
-      data: { ...(name !== undefined && { name }), ...(description !== undefined && { description }), ...(enabled !== undefined && { enabled }) },
-    });
+    const { name, description, enabled, ticketCode, slaResponseMinutes, slaResolutionMinutes, autoCloseEnabled, autoCloseDays, followUpEnabled, followUpIntervalMinutes } = req.body;
+    const data: Record<string, unknown> = {};
+    if (name !== undefined) data.name = name;
+    if (description !== undefined) data.description = description;
+    if (ticketCode !== undefined) data.ticketCode = ticketCode || null;
+    if (enabled !== undefined) data.enabled = enabled;
+    if (slaResponseMinutes !== undefined) data.slaResponseMinutes = slaResponseMinutes;
+    if (slaResolutionMinutes !== undefined) data.slaResolutionMinutes = slaResolutionMinutes;
+    if (autoCloseEnabled !== undefined) data.autoCloseEnabled = autoCloseEnabled;
+    if (autoCloseDays !== undefined) data.autoCloseDays = autoCloseDays;
+    if (followUpEnabled !== undefined) data.followUpEnabled = followUpEnabled;
+    if (followUpIntervalMinutes !== undefined) data.followUpIntervalMinutes = followUpIntervalMinutes;
+    const board = await prisma.serviceBoard.update({ where: { id: req.params.id }, data });
     res.json(board);
   } catch (e) { next(e); }
 });

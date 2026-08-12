@@ -104,7 +104,10 @@ html[data-theme="light"] {
     @apply bg-red-600/20 hover:bg-red-600/30 text-red-400 font-medium px-4 py-2 rounded-lg transition-colors duration-150 border border-red-600/30;
   }
   .input-field {
-    @apply w-full bg-surface border border-surface-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:border-cyber-500 focus:ring-1 focus:ring-cyber-500/30 transition-colors duration-150 text-sm;
+    @apply w-full bg-surface border border-surface-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:border-cyber-500 focus:outline-none transition-colors duration-150 text-sm;
+  }
+  .input-field:focus {
+    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.3);
   }
   .card {
     @apply bg-surface border border-surface-border rounded-xl p-5;
