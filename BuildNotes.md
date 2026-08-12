@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.008 | Last Updated: 2026-08-12
+## Version: 2026.8.12.009 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,11 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.009 — Square Date Cards on All Calendars
+- **[Update]** Calendar page and Time Off page day cells changed from `min-h-[60px]` rectangles to true squares via `aspect-square` — cleaner visual style per reference screenshot.
+- **[Update]** Calendar cards constrained to `max-w-3xl` so square cells stay small (~100px per cell) and the full month (including 6-week months) fits on a single screen without scrolling.
+- **[Update]** All existing behavior preserved: month navigation, jump-to-today, today/selected highlights, event chips with "+N more", click-a-date filtering, and clear-filter rows.
 
 ## 2026.8.12.008 — ConnectWise-Style Ticket Detail Toolbar & Tabs
 - **[New]** Full-width toolbar card on ticket detail — tabbed interface with 12 tabs (Ticket, Configurations, Products, Activities, Time, Links, Expenses, Schedule, Attachments, History, Finance, Audit Trail); Tasks, Open Tickets, Conversions, Surveys, and RMA excluded per spec.
