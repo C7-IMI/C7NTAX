@@ -1,5 +1,14 @@
 [
   {
+    "version": "2026.8.12.018",
+    "date": "2026-08-12",
+    "title": "Native Desktop OSS Plan",
+    "changes": [
+      {"text": "native-desktop-oss-plan.md — open-source edition of the native desktop plan; same goals/structure with all proprietary tooling replaced (VS Code + dotnet CLI, msix-packaging CLI, osslsigncode, LLVM clang/lld, swift.org toolchain + CLT, Forgejo/GitLab CE/Jenkins, GlitchTip/OpenTelemetry, Inkscape/Penpot)", "type": "New Feature"},
+      {"text": "License table per tool; no-purchase signing/distribution strategies (WinGet sideload, Homebrew Cask, Flathub); cost comparison flags only unavoidable costs (Apple hardware for macOS CI; optional paid certs)", "type": "New Feature"}
+    ]
+  },
+  {
     "version": "2026.8.12.017",
     "date": "2026-08-12",
     "title": "Native Desktop Clients Plan (Windows / Linux / macOS)",

@@ -698,6 +698,16 @@
 - Design-token parity approach (machine-readable tokens → WinUI ResourceDictionary / GTK CSS provider / SwiftUI extensions), same REST API backend, feature parity matrix, security (secure storage per platform, TLS, signing), CI/CD (GitHub Actions per-OS runners), performance budgets, phased delivery plan and milestones; Electron app explicitly retained and updated alongside
 - All three changelog sources updated with `2026.8.12.017`
 
+### Prompt 60 — Native desktop OSS plan
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.12.018)
+> Review the existing native desktop implementation plan in this repository. Replace all proprietary tools, including Visual Studio 2022, with open-source alternatives that can achieve the same results the plan calls for. If no direct open-source alternative exists, suggest ways to accomplish the same results using the features of available open-source tools. Assume you have not purchased any proprietary software yet and are trying to reduce development costs without buying anything. Create another plan file called `native desktop oss plan` that preserves the original plan's goals and structure while using only open-source or free tooling.
+
+**Changes:**
+- `native-desktop-oss-plan.md` — New 249-line plan document (16.6 KB) preserving the original plan's goals, structure, phases, parity checklist, and performance budgets while replacing all proprietary tooling: Visual Studio 2022 → VS Code + C# extension + dotnet CLI; MSIX Packaging Tool GUI → msix-packaging CLI (makemsix/signmsix); signtool → osslsigncode + self-signed certs; MSVC AOT linker → LLVM clang-cl + lld-link; Squirrel → Velopack/WinSparkle; Xcode → VS Code + swift.org toolchain + Command Line Tools with scripted .app bundling; GitHub Actions → Forgejo/Gitea Actions, GitLab CE, or Jenkins with self-hosted runners; Instruments → dotnet-trace/perf/Tracy/samply/FlameGraph/hyperfine; commercial monitoring → GlitchTip or OpenTelemetry+Grafana; Figma → Inkscape/Penpot
+- License column for every tool; no-purchase signing/distribution strategies (self-signed + WinGet sideload for Windows, ad-hoc codesign + Homebrew Cask for macOS, Flathub for Linux); new cost & compliance comparison section flagging the only unavoidable costs (Apple hardware for macOS CI; optional paid certs/Apple Developer Program only if SmartScreen reputation or notarization is required)
+- All three changelog sources updated with `2026.8.12.018`
+
 ---
 
-**Total Prompts:** 59 | **Completed:** 59 | **In Progress:** 0
+**Total Prompts:** 60 | **Completed:** 60 | **In Progress:** 0
