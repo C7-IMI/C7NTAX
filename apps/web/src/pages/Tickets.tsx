@@ -457,6 +457,7 @@ export function TicketDetailPage() {
   const [kumoConfigResults, setKumoConfigResults] = useState<any[]>([]);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [configDialogQuery, setConfigDialogQuery] = useState("");
+  const [incomingLinks, setIncomingLinks] = useState<any[]>([]);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [productForm, setProductForm] = useState({ name: "", qty: 1, unitCost: 0 });
   const [showLinkDialog, setShowLinkDialog] = useState(false);
@@ -468,7 +469,7 @@ export function TicketDetailPage() {
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ title: "", startTime: "", endTime: "", location: "" });
   const [showAttachDialog, setShowAttachDialog] = useState(false);
-  const [attachForm, setAttachForm] = useState({ name: "" });
+  const [attachForm, setAttachForm] = useState<{ file: File | null }>({ file: null });
   const [showTimeTabAdd, setShowTimeTabAdd] = useState(false);
 
   const cfArr = (key: string): any[] => Array.isArray(cf[key]) ? cf[key] : [];
@@ -484,7 +485,8 @@ export function TicketDetailPage() {
     if (activeTab === "expenses") api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((e: any) => e.ticketId === id))).catch(() => {});
     if (activeTab === "schedule") api.get("/schedule?limit=200").then(r => setSchedEntries((Array.isArray(r.data) ? r.data : (r.data?.data || [])).filter((e: any) => e.ticketId === id))).catch(() => {});
     if (activeTab === "audittrail") api.get("/system/audit-logs").then(r => setAuditEntries((r.data?.data || []).filter((a: any) => a.entity === "ticket" && a.entityId === id))).catch(() => {});
-    if (activeTab === "configurations") { api.get("/assets?limit=50").then(r => setAssetResults(r.data?.data || r.data || [])).catch(() => {}); api.get("/kumo/configs").then(r => setKumoConfigResults(r.data?.data || r.data || [])).catch(() => {}); }
+    if (activeTab === "configurations") { api.get("/assets?limit=50").then(r => setAssetResults(r.data?.data || r.data || [])).catch(() => {}); api.get("/kumo/configs/servers").then(r => setKumoConfigResults(r.data?.data || r.data || [])).catch(() => {}); }
+    if (activeTab === "links") { api.get("/tickets?limit=200").then(r => { const all = r.data?.data || []; setIncomingLinks(all.filter((t: any) => t.id !== id && Array.isArray(t.customFields?.ticketLinks) && t.customFields.ticketLinks.some((l: any) => l.ticketId === id)).map((t: any) => ({ ticketId: t.id, ticketNumber: t.ticketNumber, title: t.title }))); }).catch(() => {}); }
   }, [activeTab, id]);
 
   const load = () => {
@@ -728,6 +730,7 @@ export function TicketDetailPage() {
                     <p className="text-white text-xs font-medium truncate">{c.name}</p>
                     <p className="text-gray-500 text-[10px]">{c.type} · linked {c.linkedAt ? new Date(c.linkedAt).toLocaleString() : ""}</p>
                   </div>
+                  {c.refId && <Link to={c.kind === "kumoServer" ? "/kumo/configs" : c.kind === "kumoAsset" ? `/kumo/assets/${c.refId}` : `/assets/${c.refId}`} className="text-xs text-cyber-400 hover:text-cyber-300 shrink-0">Open</Link>}
                   <button onClick={() => persistCF("ticketConfigurations", cfArr("ticketConfigurations").filter((x: any) => x.id !== c.id))} className="text-gray-500 hover:text-red-400"><Trash2 size={14} /></button>
                 </div>
               ))}
@@ -848,6 +851,23 @@ export function TicketDetailPage() {
               ))}
             </div>
           )}
+          {incomingLinks.length > 0 && (
+            <>
+              <p className="text-xs text-gray-500 pt-2 border-t border-surface-border">Incoming links — tickets that link to this one</p>
+              <div className="space-y-2">
+                {incomingLinks.map((l: any) => (
+                  <div key={`in-${l.ticketId}`} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
+                    <Link2 size={14} className="text-purple-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-xs font-medium truncate">{l.ticketNumber} — {l.title}</p>
+                      <p className="text-gray-500 text-[10px]">links to this ticket</p>
+                    </div>
+                    <Link to={`/tickets/${l.ticketId}`} className="text-xs text-cyber-400 hover:text-cyber-300 shrink-0">Open</Link>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -906,19 +926,19 @@ export function TicketDetailPage() {
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Attachments</h3>
             <button onClick={() => setShowAttachDialog(true)} className="btn-primary text-xs flex items-center gap-1"><Paperclip size={12} /> Attach File</button>
           </div>
-          {cfArr("ticketAttachments").length === 0 ? (
+          {((ticket.attachments as any[]) || []).length === 0 ? (
             <p className="text-sm text-gray-500 py-6 text-center">No attachments on this ticket.</p>
           ) : (
             <div className="space-y-2">
-              {cfArr("ticketAttachments").map((a: any) => (
+              {((ticket.attachments as any[]) || []).map((a: any) => (
                 <div key={a.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
                   <FileText size={14} className="text-cyber-400 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-xs font-medium truncate">{a.name}</p>
-                    <p className="text-gray-500 text-[10px]">{a.uploadedBy} · {a.at ? new Date(a.at).toLocaleString() : ""}</p>
+                    <p className="text-white text-xs font-medium truncate">{a.filename}</p>
+                    <p className="text-gray-500 text-[10px]">{a.size ? (a.size < 1024 ? `${a.size} B` : a.size < 1048576 ? `${(a.size / 1024).toFixed(1)} KB` : `${(a.size / 1048576).toFixed(1)} MB`) : "—"} · {a.mimeType} · {a.createdAt ? new Date(a.createdAt).toLocaleString() : ""}</p>
                   </div>
                   <button onClick={() => toast("Download coming soon")} className="text-gray-500 hover:text-white"><Download size={14} /></button>
-                  <button onClick={() => persistCF("ticketAttachments", cfArr("ticketAttachments").filter((x: any) => x.id !== a.id))} className="text-gray-500 hover:text-red-400"><Trash2 size={14} /></button>
+                  <button onClick={async () => { try { await api.delete(`/tickets/${id}/attachments/${a.id}`); toast.success("Deleted"); load(); } catch { toast.error("Failed"); } }} className="text-gray-500 hover:text-red-400"><Trash2 size={14} /></button>
                 </div>
               ))}
             </div>
@@ -952,14 +972,16 @@ export function TicketDetailPage() {
         const bill = tes.filter(t => t.billable).reduce((s, t) => s + (t.minutes || 0), 0);
         const non = tes.filter(t => !t.billable).reduce((s, t) => s + (t.minutes || 0), 0);
         const expTotal = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+        const prodTotal = cfArr("ticketProducts").reduce((s: number, p: any) => s + (p.qty || 0) * (p.unitCost || 0), 0);
         const sa = ticket.serviceAgreement as any;
         return (
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Finance</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Billable Time</p><p className="text-white font-semibold">{Math.floor(bill / 60)}h {bill % 60}m</p></div>
               <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Non-billable</p><p className="text-white font-semibold">{Math.floor(non / 60)}h {non % 60}m</p></div>
               <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Expenses</p><p className="text-white font-semibold">${expTotal.toFixed(2)}</p></div>
+              <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Products</p><p className="text-white font-semibold">${prodTotal.toFixed(2)}</p></div>
               <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Agreement</p><p className="text-white font-semibold text-xs truncate">{sa?.name || "None"}</p></div>
             </div>
             {sa && <div className="flex items-center justify-between text-xs"><span className="text-gray-500">Agreement amount</span><span className="text-white">${(sa.billingAmount || 0).toFixed(2)} / {sa.billingPeriod || "period"}</span></div>}
@@ -1004,15 +1026,15 @@ export function TicketDetailPage() {
               <div key={a.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
                 <Wrench size={14} className="text-cyber-400 shrink-0" />
                 <div className="flex-1 min-w-0"><p className="text-white text-xs font-medium truncate">{a.name || a.tag || a.id}</p><p className="text-gray-500 text-[10px]">Asset</p></div>
-                <button onClick={() => { persistCF("ticketConfigurations", [...cfArr("ticketConfigurations"), { id: uuidish(), name: a.name || a.tag || a.id, type: "Asset", linkedAt: new Date().toISOString() }]); setShowConfigDialog(false); toast.success("Linked"); }} className="btn-secondary text-xs">Link</button>
+                <button onClick={() => { persistCF("ticketConfigurations", [...cfArr("ticketConfigurations"), { id: uuidish(), name: a.name || a.tag || a.id, type: "Asset", kind: "asset", refId: a.id, linkedAt: new Date().toISOString() }]); setShowConfigDialog(false); toast.success("Linked"); }} className="btn-secondary text-xs">Link</button>
               </div>
             ))}
             <p className="text-xs text-gray-500">Kumo Configurations</p>
-            {kumoConfigResults.filter((c: any) => !configDialogQuery || (c.name || c.hostname || "").toLowerCase().includes(configDialogQuery.toLowerCase())).slice(0, 8).map((c: any) => (
+            {kumoConfigResults.filter((c: any) => !configDialogQuery || (c.kumoAsset?.name || c.hostname || "").toLowerCase().includes(configDialogQuery.toLowerCase())).slice(0, 8).map((c: any) => (
               <div key={c.id} className="flex items-center gap-3 p-2 rounded-lg bg-surface-lighter">
                 <Wrench size={14} className="text-cyber-400 shrink-0" />
-                <div className="flex-1 min-w-0"><p className="text-white text-xs font-medium truncate">{c.name || c.hostname || c.id}</p><p className="text-gray-500 text-[10px]">Kumo Config</p></div>
-                <button onClick={() => { persistCF("ticketConfigurations", [...cfArr("ticketConfigurations"), { id: uuidish(), name: c.name || c.hostname || c.id, type: "Kumo Config", linkedAt: new Date().toISOString() }]); setShowConfigDialog(false); toast.success("Linked"); }} className="btn-secondary text-xs">Link</button>
+                <div className="flex-1 min-w-0"><p className="text-white text-xs font-medium truncate">{c.kumoAsset?.name || c.hostname || c.id}</p><p className="text-gray-500 text-[10px]">Kumo Config</p></div>
+                <button onClick={() => { persistCF("ticketConfigurations", [...cfArr("ticketConfigurations"), { id: uuidish(), name: c.kumoAsset?.name || c.hostname || c.id, type: "Kumo Server", kind: "kumoServer", refId: c.id, linkedAt: new Date().toISOString() }]); setShowConfigDialog(false); toast.success("Linked"); }} className="btn-secondary text-xs">Link</button>
               </div>
             ))}
             <div className="flex justify-end"><button onClick={() => setShowConfigDialog(false)} className="btn-secondary text-sm">Close</button></div>
@@ -1083,11 +1105,11 @@ export function TicketDetailPage() {
 
       {showAttachDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAttachDialog(false)}>
-          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={e => { e.preventDefault(); if (!attachForm.name.trim()) return; persistCF("ticketAttachments", [...cfArr("ticketAttachments"), { id: uuidish(), name: attachForm.name, size: "—", uploadedBy: "You", at: new Date().toISOString() }]); setAttachForm({ name: "" }); setShowAttachDialog(false); toast.success("Attached"); }}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); const f = attachForm.file; if (!f) return; try { await api.post(`/tickets/${id}/attachments`, { filename: f.name, mimeType: f.type || "application/octet-stream", size: f.size, storagePath: "pending-upload" }); toast.success("Attached"); setShowAttachDialog(false); setAttachForm({ file: null }); load(); } catch { toast.error("Failed"); } }}>
             <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Paperclip size={16} /> Attach File</h3>
-            <p className="text-xs text-gray-500">File upload storage is a placeholder — the attachment record is saved with the ticket.</p>
-            <input className="input-field" placeholder="File name *" value={attachForm.name} onChange={e => setAttachForm({ ...attachForm, name: e.target.value })} required />
-            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowAttachDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Attach</button></div>
+            <p className="text-xs text-gray-500">The attachment record is stored with the ticket and synced app-wide; file content storage remains a placeholder.</p>
+            <input type="file" className="input-field" onChange={e => setAttachForm({ file: e.target.files?.[0] || null })} />
+            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowAttachDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" disabled={!attachForm.file} className="btn-primary text-sm">Attach</button></div>
           </form>
         </div>
       )}

@@ -30,6 +30,7 @@ const TABLES: TableDef[] = [
   { name: "serviceBoard", fileName: "service-boards.json" },
   { name: "ticket", fileName: "tickets.json" },
   { name: "ticketComment", fileName: "ticket-comments.json" },
+  { name: "ticketAttachment", fileName: "ticket-attachments.json" },
   { name: "timeEntry", fileName: "time-entries.json" },
   { name: "scheduleEntry", fileName: "schedule-entries.json" },
   { name: "serviceAgreement", fileName: "service-agreements.json" },

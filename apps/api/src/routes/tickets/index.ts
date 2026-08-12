@@ -61,6 +61,7 @@ ticketsRouter.get("/:id", requirePermission(Permission.TicketView), async (req: 
         company: true, contact: { select: { id: true, firstName: true, lastName: true, email: true } }, assignedTo: true, board: true,
         comments: { orderBy: { createdAt: "desc" }, include: { author: { select: { id: true, firstName: true, lastName: true } } } },
         timeEntries: { orderBy: { date: "desc" }, include: { user: { select: { id: true, firstName: true, lastName: true } } } },
+        attachments: { orderBy: { createdAt: "desc" } },
         serviceAgreement: { select: { id: true, name: true, billingPeriod: true, billingAmount: true } },
       },
     });
@@ -199,6 +200,34 @@ ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async
       data: { ticketId: req.params.id, body: content, authorId: req.user!.userId, isInternal: isInternal || false },
     });
     res.status(201).json(note);
+  } catch (e) { next(e); }
+});
+
+// ── Attachments (real TicketAttachment records) ──
+ticketsRouter.post("/:id/attachments", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const { filename, mimeType, size, storagePath } = req.body;
+    if (!filename) throw new AppError("filename required");
+    const att = await prisma.ticketAttachment.create({
+      data: {
+        ticketId: req.params.id,
+        filename,
+        mimeType: mimeType || "application/octet-stream",
+        size: Number(size) || 0,
+        storagePath: storagePath || "pending-upload",
+        uploadedById: req.user!.userId,
+      },
+    });
+    res.status(201).json(att);
+  } catch (e) { next(e); }
+});
+
+ticketsRouter.delete("/:id/attachments/:attId", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const att = await prisma.ticketAttachment.findFirst({ where: { id: req.params.attId, ticketId: req.params.id } });
+    if (!att) throw new AppError("Attachment not found", 404);
+    await prisma.ticketAttachment.delete({ where: { id: att.id } });
+    res.json({ message: "Deleted" });
   } catch (e) { next(e); }
 });
 

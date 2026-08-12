@@ -183,15 +183,32 @@ async function main() {
             { id: `s-${tk.id.slice(0, 8)}-l1`, ticketId: other.id, ticketNumber: other.ticketNumber, title: other.title, rel: "related", linkedAt: daysAgo(5).toISOString() },
             { id: `s-${tk.id.slice(0, 8)}-l2`, ticketId: other2.id, ticketNumber: other2.ticketNumber, title: other2.title, rel: "related", linkedAt: daysAgo(2).toISOString() },
           ],
-          ticketAttachments: [
-            { id: `s-${tk.id.slice(0, 8)}-a1`, name: "network-diagram.pdf", size: "—", uploadedBy: "John Smith", at: daysAgo(3).toISOString() },
-            { id: `s-${tk.id.slice(0, 8)}-a2`, name: "screenshot-before-after.png", size: "—", uploadedBy: "System", at: daysAgo(1).toISOString() },
-          ],
         } as any,
       },
     });
   }
   console.log("  ✓ Ticket tab data (configs, products, links, attachments) — 8 tickets");
+
+  // Real ticket attachments (synced with the Attachments tab)
+  await prisma.ticketAttachment.createMany({ data: [
+    { ticketId: t1.id, filename: "network-diagram.pdf", mimeType: "application/pdf", size: 153600, storagePath: "pending-upload", uploadedById: tech1.id, createdAt: daysAgo(3) },
+    { ticketId: t1.id, filename: "error-log-export.txt", mimeType: "text/plain", size: 2048, storagePath: "pending-upload", uploadedById: tech1.id, createdAt: daysAgo(1) },
+    { ticketId: t2.id, filename: "screenshot-before-after.png", mimeType: "image/png", size: 512000, storagePath: "pending-upload", uploadedById: tech2.id, createdAt: daysAgo(2) },
+    { ticketId: t2.id, filename: "purchase-order.pdf", mimeType: "application/pdf", size: 88064, storagePath: "pending-upload", uploadedById: tech2.id, createdAt: daysAgo(1) },
+    { ticketId: t3.id, filename: "config-backup.json", mimeType: "application/json", size: 4096, storagePath: "pending-upload", uploadedById: tech1.id, createdAt: daysAgo(4) },
+    { ticketId: t3.id, filename: "meeting-notes.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 24576, storagePath: "pending-upload", uploadedById: tech1.id, createdAt: daysAgo(1) },
+    { ticketId: t4.id, filename: "error-log-export.txt", mimeType: "text/plain", size: 10240, storagePath: "pending-upload", uploadedById: tech2.id, createdAt: daysAgo(2) },
+    { ticketId: t4.id, filename: "network-diagram.pdf", mimeType: "application/pdf", size: 153600, storagePath: "pending-upload", uploadedById: tech2.id, createdAt: daysAgo(0.5) },
+    { ticketId: t5.id, filename: "screenshot-before-after.png", mimeType: "image/png", size: 204800, storagePath: "pending-upload", uploadedById: tech1.id, createdAt: daysAgo(3) },
+    { ticketId: t5.id, filename: "purchase-order.pdf", mimeType: "application/pdf", size: 88064, storagePath: "pending-upload", uploadedById: tech1.id, createdAt: daysAgo(1) },
+    { ticketId: t6.id, filename: "config-backup.json", mimeType: "application/json", size: 4096, storagePath: "pending-upload", uploadedById: tech2.id, createdAt: daysAgo(2) },
+    { ticketId: t6.id, filename: "meeting-notes.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", size: 24576, storagePath: "pending-upload", uploadedById: tech2.id, createdAt: daysAgo(1) },
+    { ticketId: t7.id, filename: "error-log-export.txt", mimeType: "text/plain", size: 6144, storagePath: "pending-upload", uploadedById: tech1.id, createdAt: daysAgo(2) },
+    { ticketId: t7.id, filename: "network-diagram.pdf", mimeType: "application/pdf", size: 153600, storagePath: "pending-upload", uploadedById: tech1.id, createdAt: daysAgo(1) },
+    { ticketId: t8.id, filename: "screenshot-before-after.png", mimeType: "image/png", size: 307200, storagePath: "pending-upload", uploadedById: tech2.id, createdAt: daysAgo(1) },
+    { ticketId: t8.id, filename: "purchase-order.pdf", mimeType: "application/pdf", size: 88064, storagePath: "pending-upload", uploadedById: tech2.id, createdAt: daysAgo(0.5) },
+  ] });
+  console.log("  ✓ Created 16 ticket attachments");
 
   await prisma.expense.createMany({ data: [
     { ticketId: t1.id, companyId: acme.id, createdById: tech1.id, description: "On-site travel — client office", category: "travel", amount: 85.5, expenseDate: daysAgo(5) },

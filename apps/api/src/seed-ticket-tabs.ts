@@ -106,6 +106,10 @@ async function main(): Promise<void> {
 
   console.log(`Seeding tab data for ${tickets.length} tickets (linked user: ${tech.firstName} ${tech.lastName})...\n`);
 
+  // Real entities for cross-app links
+  const realAssets = await prisma.asset.findMany({ take: 12, select: { id: true, name: true } });
+  const realServers = await prisma.kumoServer.findMany({ take: 12, select: { id: true, hostname: true, kumoAsset: { select: { name: true } } } });
+
   let addedConfigs = 0, addedProducts = 0, addedLinks = 0, addedAttach = 0;
   let addedExpenses = 0, addedSchedules = 0, addedHistory = 0, addedAudit = 0;
 
@@ -121,9 +125,13 @@ async function main(): Promise<void> {
     if (configs.length === 0) {
       const c1 = CONFIG_POOL[offset % CONFIG_POOL.length];
       const c2 = CONFIG_POOL[(offset + 1) % CONFIG_POOL.length];
+      const a1 = realAssets[offset % realAssets.length];
+      const a2 = realAssets[(offset + 1) % realAssets.length];
+      const s1 = realServers[offset % realServers.length];
+      const s2 = realServers[(offset + 1) % realServers.length];
       existingCf.ticketConfigurations = [
-        { id: `s-${t.id.slice(0, 8)}-c1`, name: c1.name, type: c1.type, linkedAt: daysAgo(6 - (i % 5)).toISOString() },
-        { id: `s-${t.id.slice(0, 8)}-c2`, name: c2.name, type: c2.type, linkedAt: daysAgo(4 - (i % 3)).toISOString() },
+        { id: `s-${t.id.slice(0, 8)}-c1`, name: a1 ? a1.name : c1.name, type: "Asset", kind: "asset", refId: a1?.id || "", linkedAt: daysAgo(6 - (i % 5)).toISOString() },
+        { id: `s-${t.id.slice(0, 8)}-c2`, name: s1 ? (s1.kumoAsset?.name || s1.hostname) : (s2 ? (s2.kumoAsset?.name || s2.hostname) : c2.name), type: "Kumo Config", kind: "kumoServer", refId: s1?.id || s2?.id || "", linkedAt: daysAgo(4 - (i % 3)).toISOString() },
       ];
       addedConfigs += 2;
     }
@@ -151,13 +159,26 @@ async function main(): Promise<void> {
     }
 
     const attaches = Array.isArray(existingCf.ticketAttachments) ? (existingCf.ticketAttachments as unknown[]) : [];
-    if (attaches.length === 0) {
-      existingCf.ticketAttachments = [
-        { id: `s-${t.id.slice(0, 8)}-a1`, name: ATTACH_POOL[offset % ATTACH_POOL.length], size: "—", uploadedBy: `${tech.firstName} ${tech.lastName}`.trim(), at: daysAgo(3).toISOString() },
-        { id: `s-${t.id.slice(0, 8)}-a2`, name: ATTACH_POOL[(offset + 4) % ATTACH_POOL.length], size: "—", uploadedBy: "System", at: daysAgo(1).toISOString() },
-      ];
-      addedAttach += 2;
+    // Migrate legacy customFields attachments into real TicketAttachment records
+    const realAttCount = await prisma.ticketAttachment.count({ where: { ticketId: t.id } });
+    if (realAttCount === 0) {
+      const rows: Array<{ ticketId: string; filename: string; mimeType: string; size: number; storagePath: string; uploadedById: string; createdAt: Date }> = [];
+      if (attaches.length > 0) {
+        for (const a of attaches as any[]) {
+          rows.push({ ticketId: t.id, filename: a.name || "attachment", mimeType: "application/octet-stream", size: 0, storagePath: "pending-upload", uploadedById: tech.id, createdAt: a.at ? new Date(a.at) : daysAgo(3) });
+        }
+        addedAttach += attaches.length;
+      }
+      if (rows.length === 0) {
+        rows.push(
+          { ticketId: t.id, filename: ATTACH_POOL[offset % ATTACH_POOL.length], mimeType: "text/plain", size: 2048, storagePath: "pending-upload", uploadedById: tech.id, createdAt: daysAgo(3) },
+          { ticketId: t.id, filename: ATTACH_POOL[(offset + 4) % ATTACH_POOL.length], mimeType: "application/pdf", size: 153600, storagePath: "pending-upload", uploadedById: tech.id, createdAt: daysAgo(1) },
+        );
+        addedAttach += 2;
+      }
+      await prisma.ticketAttachment.createMany({ data: rows as any });
     }
+    delete existingCf.ticketAttachments;
 
     await prisma.ticket.update({ where: { id: t.id }, data: { customFields: existingCf as any } });
 
