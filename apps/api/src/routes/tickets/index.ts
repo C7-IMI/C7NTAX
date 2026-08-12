@@ -21,7 +21,14 @@ ticketsRouter.get("/", requirePermission(Permission.TicketView), async (req: Aut
     }
     if (status) where.status = status;
     if (priority) where.priority = priority;
-    if (boardId) where.boardId = boardId;
+    if (boardId) {
+      where.boardId = boardId;
+      // If the board has a ticketCode, prefix-filter ticket numbers
+      const board = await prisma.serviceBoard.findUnique({ where: { id: boardId }, select: { ticketCode: true } });
+      if (board?.ticketCode) {
+        where.ticketNumber = { startsWith: `${board.ticketCode}-` };
+      }
+    }
     if (companyId && req.user!.permissions.includes(Permission.TicketViewAll)) where.companyId = companyId;
     if (assignedToId) where.assignedToId = assignedToId;
     if (search) {

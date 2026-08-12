@@ -89,7 +89,7 @@ export function ServiceBoardsSection() {
     catch { toast.error("Failed"); }
   };
 
-  const startEdit = (b: any) => { setEditingId(b.id); setEditForm({ name: b.name, description: b.description, slaResponseMinutes: b.slaResponseMinutes, slaResolutionMinutes: b.slaResolutionMinutes, autoCloseEnabled: b.autoCloseEnabled, autoCloseDays: b.autoCloseDays, followUpEnabled: b.followUpEnabled, followUpIntervalMinutes: b.followUpIntervalMinutes }); };
+  const startEdit = (b: any) => { setEditingId(b.id); setEditForm({ name: b.name, description: b.description, ticketCode: b.ticketCode, slaResponseMinutes: b.slaResponseMinutes, slaResolutionMinutes: b.slaResolutionMinutes, autoCloseEnabled: b.autoCloseEnabled, autoCloseDays: b.autoCloseDays, followUpEnabled: b.followUpEnabled, followUpIntervalMinutes: b.followUpIntervalMinutes }); };
   const saveEdit = async (id: string) => {
     try { await api.patch(`/boards/${id}`, editForm); toast.success("Updated"); setEditingId(null); fetch(); }
     catch { toast.error("Failed"); }
@@ -139,6 +139,8 @@ export function ServiceBoardsSection() {
               </div>
               {editingId === b.id && (
                 <div className="grid grid-cols-2 gap-3 pt-2 border-t border-surface-border">
+                  <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Description</label><input className="input-field" value={String(editForm.description || "")} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
+                  <div><label className="text-xs text-gray-500 block mb-1">Ticket Code</label><input className="input-field" placeholder="e.g. MSP" value={String(editForm.ticketCode || "")} onChange={e => setEditForm({ ...editForm, ticketCode: e.target.value })} /><p className="text-[10px] text-gray-600 mt-0.5">Filters tickets by prefix (e.g., "MSP-1005-1002")</p></div>
                   <div><label className="text-xs text-gray-500 block mb-1">SLA Response (min)</label><input className="input-field" type="number" value={String(editForm.slaResponseMinutes || "")} onChange={e => setEditForm({ ...editForm, slaResponseMinutes: Number(e.target.value) })} /></div>
                   <div><label className="text-xs text-gray-500 block mb-1">SLA Resolution (min)</label><input className="input-field" type="number" value={String(editForm.slaResolutionMinutes || "")} onChange={e => setEditForm({ ...editForm, slaResolutionMinutes: Number(e.target.value) })} /></div>
                   <div className="flex items-center gap-2"><input type="checkbox" checked={!!editForm.autoCloseEnabled} onChange={e => setEditForm({ ...editForm, autoCloseEnabled: e.target.checked })} /><label className="text-xs text-gray-400">Auto-close</label></div>

@@ -179,6 +179,7 @@ model ServiceBoard {
   id              String   @id @default(uuid())
   name            String
   description     String?
+  ticketCode      String?  // optional prefix filter (e.g., "MSP" filters ticketNumber starting with "MSP-")
   isActive        Boolean  @default(true)
 
   // SLA defaults

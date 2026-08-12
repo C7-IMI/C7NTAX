@@ -189,29 +189,6 @@ export function TicketsPage() {
         </div>
       </div>
 
-      {/* ── Batch actions bar ── */}
-      {selectedIds.size > 0 && (
-        <div className="card flex items-center gap-3 bg-cyber-600/5 border-cyber-500/30">
-          <span className="text-sm text-white font-medium">{selectedIds.size} selected</span>
-          <div className="relative">
-            <button onClick={() => setBatchDropdown(!batchDropdown)} className="btn-primary text-sm flex items-center gap-1.5">
-              Modify Selected <ChevronDown size={14} />
-            </button>
-            {batchDropdown && (
-              <div className="absolute top-full mt-1 left-0 bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 min-w-[200px] py-1">
-                {BATCH_ACTIONS.map(a => (
-                  <button key={a.value} onClick={() => applyBatchAction(a.value)} disabled={batchApplying}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white flex items-center gap-2">
-                    {a.value} {batchApplying ? "..." : ""}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button onClick={() => setSelectedIds(new Set())} className="text-xs text-gray-500 hover:text-white">Clear selection</button>
-        </div>
-      )}
-
       {/* ── Filter Dialog ── */}
       {showFilter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowFilter(false)}>
@@ -284,6 +261,29 @@ export function TicketsPage() {
       )}
 
       <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/><input className="input-field pl-9" placeholder="Search tickets..."/></div>
+      {/* ── Batch actions bar ── */}
+      {selectedIds.size > 0 && (
+        <div className="card flex items-center gap-3 bg-cyber-600/5 border-cyber-500/30">
+          <span className="text-sm text-white font-medium">{selectedIds.size} selected</span>
+          <div className="relative">
+            <button onClick={() => setBatchDropdown(!batchDropdown)} className="btn-primary text-sm flex items-center gap-1.5">
+              Modify Selected <ChevronDown size={14} />
+            </button>
+            {batchDropdown && (
+              <div className="absolute top-full mt-1 left-0 bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 min-w-[200px] py-1">
+                {BATCH_ACTIONS.map(a => (
+                  <button key={a.value} onClick={() => applyBatchAction(a.value)} disabled={batchApplying}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white flex items-center gap-2">
+                    {a.value} {batchApplying ? "..." : ""}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button onClick={() => setSelectedIds(new Set())} className="text-xs text-gray-500 hover:text-white">Clear selection</button>
+        </div>
+      )}
+
       <div className="card overflow-hidden p-0">
         {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
