@@ -1,5 +1,15 @@
 [
   {
+    "version": "2026.8.12.002",
+    "date": "2026-08-12",
+    "title": "feature_list.json Renamed to BuildNotes.json",
+    "changes": [
+      {"text": "Data source renamed from feature_list.json to BuildNotes.json to match BuildNotes.md naming convention", "type": "Update"},
+      {"text": "parseFeatureList() renamed to parseBuildNotes() in API system.ts and web Changelog.tsx", "type": "Update"},
+      {"text": "What's New continuity — all three changelog sources remain in sync after every change", "type": "Fix"}
+    ]
+  },
+  {
     "version": "2026.8.12.001",
     "date": "2026-08-12",
     "title": "Calendar, Permissions UX & Human-Readable Audit Logs",

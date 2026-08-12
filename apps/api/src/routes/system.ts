@@ -204,7 +204,7 @@ interface VersionEntry {
   changes: ChangeItem[];
 }
 
-function parseFeatureList(mdPath: string): VersionEntry[] {
+function parseBuildNotes(mdPath: string): VersionEntry[] {
   const raw = readFileSync(mdPath, "utf-8");
   const versions: VersionEntry[] = [];
 
@@ -247,12 +247,12 @@ function parseFeatureList(mdPath: string): VersionEntry[] {
 systemRouter.get("/changelog", (_req, res) => {
   try {
     const mdPath = resolve(__dirname, "../../../../BuildNotes.md");
-    const data = parseFeatureList(mdPath);
+    const data = parseBuildNotes(mdPath);
     res.json(data);
   } catch {
     // Fallback to static JSON if MD not available
     try {
-      const data = require("../feature_list.json");
+      const data = require("../BuildNotes.json");
       res.json(data);
     } catch {
       res.json([]);

@@ -15,7 +15,7 @@ interface Version {
 }
 
 /** Parse BuildNotes.md text into structured version entries */
-function parseFeatureList(raw: string): Version[] {
+function parseBuildNotes(raw: string): Version[] {
   const versions: Version[] = [];
 
   // Match version headers:  ## YYYY.M.D.BBB — Title
@@ -65,7 +65,7 @@ export function ChangelogPage() {
     fetch("/BuildNotes.md")
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
       .then(raw => {
-        const parsed = parseFeatureList(raw);
+        const parsed = parseBuildNotes(raw);
         if (parsed.length === 0) throw new Error("No version entries found in BuildNotes.md");
         setVersions(parsed);
       })

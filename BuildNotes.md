@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.001 | Last Updated: 2026-08-12
+## Version: 2026.8.12.002 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,13 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.002 — feature_list.json Renamed to BuildNotes.json
+- **[Update]** Data source rename — `apps/api/src/feature_list.json` renamed to `apps/api/src/BuildNotes.json` to match the BuildNotes.md naming convention.
+- **[Update]** API resolver renamed — `parseFeatureList()` renamed to `parseBuildNotes()` in `apps/api/src/routes/system.ts`; the `/api/system/changelog` fallback now loads `../BuildNotes.json`.
+- **[Update]** Frontend parser renamed — `parseFeatureList()` renamed to `parseBuildNotes()` in `apps/web/src/pages/Changelog.tsx`.
+- **[Update]** Historical changelog references — BuildNotes.md (root and public copies) entries that named `feature_list.json` as the What's New data source now reference `BuildNotes.json`.
+- **[Fix]** What's New continuity — all three changelog sources (public BuildNotes.md, root BuildNotes.md, BuildNotes.json) remain in sync and are updated after every change.
 
 ## 2026.8.12.001 — Calendar, Permissions UX & Human-Readable Audit Logs
 - **[New]** Monthly calendar card — Outlook-style month grid above Scheduled Events on the Calendar page with prev/next month navigation, colored event indicators on each date, today highlighting, and click-a-date filtering of the event list below.
@@ -71,8 +78,8 @@
 - **[New]** Header toolbar — Search, Recent (Clock icon), AI (Sparkles icon), Help (HelpCircle icon), Settings (Settings icon), and My Account (UserCircle icon, cyber-accented) placeholder buttons rendered in the top-right of the application header bar, hidden on mobile screens below the `sm` breakpoint.
 - **[Update]** CloudConnect rebrand — the "Integrations" navigation item (formerly `admin-integrations`, route `/integrations`, API mount `/api/integrations`, component `IntegrationsPage`, file `Integrations.tsx`) has been renamed to "CloudConnect" (`admin-cloudconnect`, `/cloudconnect`, `/api/cloudconnect`, `CloudConnectPage`, `CloudConnect.tsx`); all 12 cross-reference files updated including Dashboard quick-links, Settings landing page, and the Administration card grid.
 - **[Update]** Extended contacts seed — the database seed script (`seed-full.ts`) now creates 13 contacts across 5 companies (up from 5 contacts) with full PSA-standard fields: phone (`+1-555-XXXX`), mobile, title (IT Director, VP Operations, CEO), department, and `isActive` boolean.
-- **[Update]** Resequenced version numbering — all 25 entries in BuildNotes.md and 7 entries in feature_list.json (the What's New data source) converted from semantic-like versions (`v1.11.001`) to date-based `Year.Month.Day.Build` format (e.g., `2026.8.10.003`); build number starts at `001` each day and increments sequentially for same-day releases.
-- **[Update]** Manage Roles rename — "Roles & Permissions" (navigation label, page title `<h2>`, SectionLanding description, feature_list.json changelog entries x2, BuildNotes.md sub-item reference) has been renamed to "Manage Roles" across the entire codebase; the parent "Users & Roles" section and `/roles` route path remain unchanged.
+- **[Update]** Resequenced version numbering — all 25 entries in BuildNotes.md and 7 entries in BuildNotes.json (the What's New data source) converted from semantic-like versions (`v1.11.001`) to date-based `Year.Month.Day.Build` format (e.g., `2026.8.10.003`); build number starts at `001` each day and increments sequentially for same-day releases.
+- **[Update]** Manage Roles rename — "Roles & Permissions" (navigation label, page title `<h2>`, SectionLanding description, BuildNotes.json changelog entries x2, BuildNotes.md sub-item reference) has been renamed to "Manage Roles" across the entire codebase; the parent "Users & Roles" section and `/roles` route path remain unchanged.
 - **[Update]** Home breadcrumb — the top-level breadcrumb label changed from "Dashboard" to "Home" with a house icon; a new `/home` route renders a `HomePage` with a welcome message and 12-card Getting Started grid linking to Tickets, Boards, Pipeline, Clients, Billing, Projects, Assets, KB, Kumo, Users, Roles, and Administration; the "Home" nav section sits fixed at the top of the sidebar and is non-draggable.
 
 ## 2026.8.10.002 — Recently Viewed on Kumo Dashboard

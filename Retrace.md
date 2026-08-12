@@ -461,6 +461,71 @@
 **Changes:**
 - `Retrace.md` — Verified all 36 prior prompts present and complete; added Prompt 37 (this entry); confirmed chronological ordering from 2026-08-04 through 2026-08-10; total count 37 prompts
 
+### Prompt 38 — Permissions tab yellow highlight fix
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #2 (2026.8.12.001)
+> Fix the permissions tab visual bug: when opening the tab for the first time, it incorrectly shows a yellow highlight/indicator even though the permissions already match the assigned/selected role. The indicator should only appear when there is an actual mismatch.
+
+**Changes:**
+- `apps/web/src/pages/Users.tsx` — Removed auto-`setRoleTemplate()` from `refreshUser()` and `openDetail()` so the role template dropdown no longer initializes to the user's systemRole; `roleTemplate` stays null on open, keeping `deviates` false until a template is explicitly selected
+
+### Prompt 39 — Project Calendar fixes + monthly calendar card
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~40 min
+**BuildNotes IDs:** #2 (2026.8.12.001)
+> Fix the Project Calendar loading failure and the missing new event display. Then, add a monthly calendar card above the scheduled events card in the Calendar subsection. The monthly calendar should function like Outlook calendars: a month grid with navigation, event indicators, and date-click interaction.
+
+**Changes:**
+- `apps/api/src/routes/schedule.ts` — POST route now accepts and stores `color` field so new events keep their chosen color
+- `apps/web/src/pages/Calendar.tsx` — Full rewrite: monthly calendar card above Scheduled Events with prev/next month navigation, day-of-week headers, colored event dots per date (max 3 + overflow), today highlighting, click-a-date filtering of the event list; robust response parsing `Array.isArray(r.data) ? r.data : (r.data.data || [])`; form resets after create
+
+### Prompt 40 — Permissions editing behavior vs assigned role
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #2 (2026.8.12.001)
+> Update the user permissions editing behavior: the yellow highlight should only appear if permissions do not match the user's assigned role defaults; after modifying, highlight whenever selections differ; comparison always against the currently assigned role.
+
+**Changes:**
+- `apps/web/src/pages/Users.tsx` — `deviates` now always computed as `has !== selected.role.permissions.includes(p)` (no longer gated on `roleTemplate`); status banner shows amber "customized" or green "match" when editing; `roleTemplate` repurposed to preset-application only; generic warning banner no longer gated on `!roleTemplate`
+
+### Prompt 41 — Human-readable audit logs
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~35 min
+**BuildNotes IDs:** #2 (2026.8.12.001)
+> Refactor the audit logging display to eliminate any raw JSON, code blocks, or machine-oriented serialization. Render each event as a descriptive narrative with friendly labels while preserving all captured information.
+
+**Changes:**
+- `apps/api/src/routes/system.ts` — `/audit-logs` resolves user full names via batched `prisma.user.findMany` and enriches each log with `userName`
+- `apps/web/src/pages/Administration.tsx` — Added `ENTITY_LABELS`, `FRIENDLY_FIELDS`, `formatValue()`, and `buildAuditSentence()` helpers; detail column renders narrative sentences ("updated ticket #abc12345 — status to in progress") instead of `JSON.stringify(log.changes)`; booleans as enabled/disabled, `***` as (redacted), arrays as item counts, nested objects flattened
+
+### Prompt 42 — Modify Selected menu confirmation workflow
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #2 (2026.8.12.001)
+> In the Modify selected menu: make item names user-friendly (no underscores); add checkboxes, an OK button applying only checked items, and a Cancel button dismissing without changes.
+
+**Changes:**
+- `apps/web/src/pages/Tickets.tsx` — Dropdown renders `a.label` instead of raw `a.value`; items became checkbox rows with `checkedActions` state reset on open; OK runs `batchApplyChecked()` sequentially over checked actions with per-action success/failure toasts; Cancel closes without changes; `applyBatchAction` converted to pure helper returning boolean
+
+### Prompt 43 — What's New update continuity
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #2 (2026.8.12.001)
+> Fix the What's New update issue: it did not update with application changes after the previous fix, including the last two prompts. From now on, update both What's New and BuildNotes.md continuously after every change or prompt submission.
+
+**Changes:**
+- `apps/web/public/BuildNotes.md` + `BuildNotes.md` — Added `2026.8.12.001` entry covering calendar, permissions UX, audit log readability, and batch confirmation changes; header bumped to `2026.8.12.001`
+- `apps/api/src/feature_list.json` — Added matching `2026.8.12.001` entry (renamed to BuildNotes.json in Prompt 44)
+- Established standing practice: update all three changelog sources after every code change
+
+### Prompt 44 — Rename feature_list.json to BuildNotes.json
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.12.002)
+> Rename feature_list.json to BuildNotes.json to match the naming convention used by BuildNotes.md and its associated function. Update all references, links, hooks, code, and any other usage of feature_list.json accordingly. Ensure all functionality continues to work, especially that "What's New" is continuously updated.
+
+**Changes:**
+- `apps/api/src/feature_list.json` → `apps/api/src/BuildNotes.json` — File renamed; new `2026.8.12.002` entry added documenting the rename
+- `apps/api/src/routes/system.ts` — `parseFeatureList()` → `parseBuildNotes()` (definition + call site); fallback `require("../feature_list.json")` → `require("../BuildNotes.json")`
+- `apps/web/src/pages/Changelog.tsx` — `parseFeatureList()` → `parseBuildNotes()` (definition + call site)
+- `apps/web/public/BuildNotes.md` + `BuildNotes.md` — Historical entries naming `feature_list.json` as data source now reference `BuildNotes.json`; new `2026.8.12.002` entry added to both copies
+- `Retrace.md` — Prompts 38–44 appended (this session); total count 37 → 44
+- Verified: zero remaining functional `feature_list`/`FeatureList` references in `.ts`/`.tsx`/`.json` sources; BuildNotes.json parses (9 entries); public BuildNotes.md parses (27 entries); LSP diagnostics clean on both edited source files
+
 ---
 
-**Total Prompts:** 37 | **Completed:** 37 | **In Progress:** 0
+**Total Prompts:** 44 | **Completed:** 44 | **In Progress:** 0
