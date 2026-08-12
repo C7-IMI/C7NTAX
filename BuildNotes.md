@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.004 | Last Updated: 2026-08-12
+## Version: 2026.8.12.006 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,18 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.006 — Time Off Monthly Calendar
+- **[New]** Monthly calendar added to the Time Off page above the PTO Requests card — same Outlook-style mini-card design used on the Calendar page (subtle cell borders, top-left date numbers, month navigation, today highlight).
+- **[New]** PTO requests appear as status-colored chips across their full date span in the calendar (green = approved, red = denied, amber = pending), up to 2 chips per day with "+N more" overflow.
+- **[New]** Click-a-date filtering — selecting a calendar date filters the PTO Requests table to requests covering that date, with a clear-filter row.
+- **[Update]** PTO Requests card now has a header showing total count or filtered count; request form resets after submission.
+
+## 2026.8.12.005 — Outlook-Style Mini-Card Month Calendar
+- **[Update]** Monthly calendar redesigned — smaller, visually cleaner day cells in mini-card style with subtle borders (`border-surface-border`), rounded corners, and consistent `gap-1` spacing.
+- **[Update]** Date number moved from center to top-left corner of each day cell; day-of-week headers compacted to uppercase micro-labels.
+- **[Update]** Event dots replaced by Outlook-style event chips — up to 2 chips per cell showing time and title in the event's color, with "+N more" overflow text.
+- **[Update]** Today highlight (cyber border + tint) and selected-date highlight (stronger cyber border + background) preserved; all existing behavior intact: month navigation, click month/year to jump to today, click-a-date filtering, clear-filter row.
 
 ## 2026.8.12.004 — Friendly Notes & Activity Card in Ticket Details
 - **[Fix]** Ticket change comments no longer contain raw UUIDs or ISO timestamps — the API now resolves board, assignee, contact, company, and service agreement IDs to friendly names, and formats dates as readable strings when generating change-log comments.

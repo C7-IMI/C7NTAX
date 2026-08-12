@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.12.005",
+    "date": "2026-08-12",
+    "title": "Outlook-Style Mini-Card Month Calendar",
+    "changes": [
+      {"text": "Monthly calendar redesigned — smaller day cells in mini-card style with subtle borders, rounded corners, and consistent spacing", "type": "Update"},
+      {"text": "Date number moved from center to top-left corner of each day cell; compact uppercase day-of-week headers", "type": "Update"},
+      {"text": "Event dots replaced by Outlook-style event chips showing time and title in event color, with '+N more' overflow", "type": "Update"},
+      {"text": "All existing behavior preserved — month navigation, jump-to-today, date-click filtering, clear filter", "type": "Update"}
+    ]
+  },
+  {
     "version": "2026.8.12.004",
     "date": "2026-08-12",
     "title": "Friendly Notes & Activity Card in Ticket Details",

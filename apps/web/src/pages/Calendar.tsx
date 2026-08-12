@@ -76,30 +76,30 @@ export function CalendarPage() {
       </div>
 
       {/* ── Monthly Calendar Card ── */}
-      <div className="card p-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="card p-3">
+        <div className="flex items-center justify-between mb-2">
           <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-surface-lighter text-gray-400 hover:text-white transition-colors">
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </button>
           <button onClick={() => { setViewDate(new Date()); setSelectedDate(null); }} className="text-sm font-semibold text-white hover:text-cyber-400 transition-colors">
             {MONTHS[month]} {year}
           </button>
           <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-surface-lighter text-gray-400 hover:text-white transition-colors">
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
         </div>
 
         {/* Day headers */}
-        <div className="grid grid-cols-7 mb-1">
+        <div className="grid grid-cols-7 gap-1 mb-1">
           {DAYS.map(d => (
-            <div key={d} className="text-center text-xs font-medium text-gray-500 py-1">{d}</div>
+            <div key={d} className="text-center text-[10px] font-medium uppercase tracking-wide text-gray-500 py-0.5">{d}</div>
           ))}
         </div>
 
-        {/* Day cells */}
-        <div className="grid grid-cols-7 gap-px">
+        {/* Day cells — mini card style with subtle borders and consistent spacing */}
+        <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((day, i) => {
-            if (day === null) return <div key={`e-${i}`} className="aspect-square" />;
+            if (day === null) return <div key={`e-${i}`} className="min-h-[60px] rounded-md border border-transparent" />;
             const dk = dateKey(day);
             const dayEvents = eventsByDate[dk] || [];
             const isToday = dk === todayKey;
@@ -108,20 +108,20 @@ export function CalendarPage() {
               <button
                 key={dk}
                 onClick={() => setSelectedDate(isSelected ? null : dk)}
-                className={`aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition-colors relative
-                  ${isSelected ? "bg-cyber-600/30 text-cyber-400 ring-1 ring-cyber-500/50" :
-                    isToday ? "bg-cyber-600/10 text-cyber-400" :
-                    "hover:bg-surface-lighter text-gray-300"}`}
+                className={`min-h-[60px] rounded-md border p-1 flex flex-col items-start text-left transition-colors
+                  ${isSelected ? "border-cyber-500/60 bg-cyber-600/20" :
+                    isToday ? "border-cyber-500/40 bg-cyber-600/10" :
+                    "border-surface-border hover:border-gray-600 hover:bg-surface-lighter"}`}
               >
-                <span className={`text-xs ${isToday && !isSelected ? "font-bold" : ""}`}>{day}</span>
-                {dayEvents.length > 0 && (
-                  <div className="flex gap-0.5 mt-0.5">
-                    {dayEvents.slice(0, 3).map((ev, ei) => (
-                      <span key={ei} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ev.color || "#3b82d6" }} />
-                    ))}
-                    {dayEvents.length > 3 && <span className="text-[8px] text-gray-500 leading-none">+{dayEvents.length - 3}</span>}
-                  </div>
-                )}
+                <span className={`text-[11px] leading-none px-0.5 ${isToday && !isSelected ? "font-bold text-cyber-400" : "text-gray-300"}`}>{day}</span>
+                <span className="mt-1 w-full space-y-0.5 overflow-hidden">
+                  {dayEvents.slice(0, 2).map((ev, ei) => (
+                    <span key={ei} className="block truncate rounded px-1 py-px text-[9px] leading-tight" style={{ backgroundColor: (ev.color || "#3b82d6") + "1f", color: ev.color || "#3b82d6" }}>
+                      {new Date(ev.startTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} {ev.title}
+                    </span>
+                  ))}
+                  {dayEvents.length > 2 && <span className="block px-0.5 text-[9px] leading-tight text-gray-500">+{dayEvents.length - 2} more</span>}
+                </span>
               </button>
             );
           })}

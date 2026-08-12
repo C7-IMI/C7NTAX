@@ -547,6 +547,17 @@
 - `apps/web/src/pages/Tickets.tsx` — Comment badges now Email (purple)/Internal (amber)/Note (blue); author fallback to `fromEmail` for email comments, "System" otherwise; time entries show entry date and "System" fallback
 - All three changelog sources updated with `2026.8.12.004` entry; LSP diagnostics clean on both files
 
+### Prompt 47 — Outlook-style mini-card project calendar
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.12.005)
+> Update the project calendar to be smaller and visually cleaner. Move the date number to the top-left corner of each day cell instead of the center. Add borders to each day cell in a mini card style, using subtle card borders and consistent spacing. Follow the provided screenshot as the reference for design, layout, and functionality, and keep the existing calendar behavior intact.
+
+**Changes:**
+- `apps/web/src/pages/Calendar.tsx` — Monthly calendar card redesigned: cells changed from `aspect-square` centered style to `min-h-[60px] rounded-md border p-1` mini cards with `border-surface-border` and `gap-1` consistent spacing; date number now top-left (`items-start text-left`); day headers compacted to 10px uppercase
+- `apps/web/src/pages/Calendar.tsx` — Event dots replaced with Outlook-style chips: up to 2 per cell, each showing `startTime` + title in the event's color (colored translucent background); "+N more" overflow line; today = cyber border/tint, selected = stronger cyber border/background; nav icons reduced 18→16px, card padding p-4→p-3
+- Behavior preserved: month prev/next, month-title click → today, date click → filter Scheduled Events, clear-filter row
+- All three changelog sources updated with `2026.8.12.005` entry; LSP diagnostics clean
+
 ---
 
-**Total Prompts:** 46 | **Completed:** 46 | **In Progress:** 0
+**Total Prompts:** 47 | **Completed:** 47 | **In Progress:** 0
