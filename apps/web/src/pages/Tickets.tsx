@@ -47,6 +47,7 @@ export function TicketsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchDropdown, setBatchDropdown] = useState(false);
   const [batchApplying, setBatchApplying] = useState(false);
+  const [checkedActions, setCheckedActions] = useState<Set<string>>(new Set());
 
   // ── Filter dialog ──
   const [showFilter, setShowFilter] = useState(false);
@@ -106,8 +107,7 @@ export function TicketsPage() {
     setSelectedIds(prev => prev.size === tickets.length ? new Set() : new Set(tickets.map(t => t.id)));
   };
   const applyBatchAction = async (action: string) => {
-    if (selectedIds.size === 0) return;
-    setBatchApplying(true);
+    if (selectedIds.size === 0) return false;
     try {
       const ids = [...selectedIds];
       let status: string | undefined;
@@ -116,18 +116,31 @@ export function TicketsPage() {
       else if (action === "close") status = "closed";
       else if (action.startsWith("status_")) status = action.replace("status_", "");
       else if (action.startsWith("priority_")) priority = action.replace("priority_", "");
-      
+
       const payload: any = { ticketIds: ids };
       if (status) payload.status = status;
       if (priority) payload.priority = priority;
-      
+
       await api.post("/tickets/batch", payload);
-      toast.success(`Applied to ${ids.length} ticket${ids.length!==1?"s":""}`);
-      setSelectedIds(new Set());
-      setBatchDropdown(false);
-      fetchTickets();
-    } catch { toast.error("Batch operation failed"); }
-    finally { setBatchApplying(false); }
+      return true;
+    } catch { return false; }
+  };
+
+  const batchApplyChecked = async () => {
+    if (selectedIds.size === 0 || checkedActions.size === 0) return;
+    setBatchApplying(true);
+    let success = 0;
+    let fail = 0;
+    for (const action of checkedActions) {
+      const ok = await applyBatchAction(action);
+      if (ok) success++; else fail++;
+    }
+    setBatchApplying(false);
+    if (success > 0) toast.success(`Applied ${success} action${success!==1?"s":""} to ${selectedIds.size} ticket${selectedIds.size!==1?"s":""}`);
+    if (fail > 0) toast.error(`${fail} action${fail!==1?"s":""} failed`);
+    setSelectedIds(new Set());
+    setCheckedActions(new Set());
+    fetchTickets();
   };
 
   // ── Individual ticket action ──
@@ -266,17 +279,36 @@ export function TicketsPage() {
         <div className="card flex items-center gap-3 bg-cyber-600/5 border-cyber-500/30">
           <span className="text-sm text-white font-medium">{selectedIds.size} selected</span>
           <div className="relative">
-            <button onClick={() => setBatchDropdown(!batchDropdown)} className="btn-primary text-sm flex items-center gap-1.5">
+            <button onClick={() => { setBatchDropdown(!batchDropdown); if (!batchDropdown) setCheckedActions(new Set()); }} className="btn-primary text-sm flex items-center gap-1.5">
               Modify Selected <ChevronDown size={14} />
             </button>
             {batchDropdown && (
-              <div className="absolute top-full mt-1 left-0 bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 min-w-[200px] py-1">
-                {BATCH_ACTIONS.map(a => (
-                  <button key={a.value} onClick={() => applyBatchAction(a.value)} disabled={batchApplying}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white flex items-center gap-2">
-                    {a.value} {batchApplying ? "..." : ""}
+              <div className="absolute top-full mt-1 left-0 bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 min-w-[240px] py-1">
+                <div className="max-h-64 overflow-y-auto">
+                  {BATCH_ACTIONS.map(a => {
+                    const checked = checkedActions.has(a.value);
+                    return (
+                      <label key={a.value}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white cursor-pointer">
+                        <input type="checkbox" checked={checked} onChange={() => {
+                          setCheckedActions(prev => { const n = new Set(prev); checked ? n.delete(a.value) : n.add(a.value); return n; });
+                        }} className="rounded accent-cyber-500" />
+                        <span>{a.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-surface-border mt-1 pt-1 px-2 pb-1 flex gap-2">
+                  <button
+                    onClick={() => { setBatchDropdown(false); setCheckedActions(new Set()); }}
+                    className="flex-1 text-xs py-1.5 rounded text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors">Cancel</button>
+                  <button
+                    onClick={() => { batchApplyChecked(); setBatchDropdown(false); }}
+                    disabled={checkedActions.size === 0 || batchApplying}
+                    className="flex-1 text-xs py-1.5 rounded bg-cyber-600/30 text-cyber-400 hover:bg-cyber-600/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium">
+                    OK{batchApplying ? "..." : ""}
                   </button>
-                ))}
+                </div>
               </div>
             )}
           </div>
@@ -299,9 +331,9 @@ export function TicketsPage() {
               <td className="px-4 py-3"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white">{selectedIds.has(t.id) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></td>
               <td className="px-2 py-3"><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium">{t.ticketNumber}</Link><p className="text-gray-500 text-xs mt-0.5 truncate max-w-xs">{(t.title)?.slice(0,60)}</p></td>
               <td className="px-4 py-3 hidden md:table-cell"><span className={`badge ${STATUS_COLORS[t.status]||""}`}>{(t.status)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5">OVERDUE</span> : null}</td>
-              <td className="px-4 py-3 hidden lg:table-cell text-gray-400 text-xs">{(t.board as {name?:string})?.name||"—"}</td>
-              <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{(t.company as {name?:string})?.name||"—"}</td>
-              <td className="px-4 py-3 hidden sm:table-cell text-gray-500 text-xs">{t.updatedAt?new Date(t.updatedAt).toLocaleDateString():"—"}</td>
+              <td className="px-4 py-3 hidden lg:table-cell text-gray-400 text-xs">{(t.board as {name?:string})?.name||"-"}</td>
+              <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{(t.company as {name?:string})?.name||"-"}</td>
+              <td className="px-4 py-3 hidden sm:table-cell text-gray-500 text-xs">{t.updatedAt?new Date(t.updatedAt).toLocaleDateString():"-"}</td>
               <td className="px-4 py-3">
                 <TicketActionMenu ticketId={t.id} currentStatus={t.status} currentPriority={t.priority} onAction={ticketAction} />
               </td>
@@ -462,7 +494,7 @@ export function TicketDetailPage() {
                 <div><label className="text-xs text-gray-500 block mb-1">Summary</label><input className="input-field text-sm" value={editForm.title||""} onChange={e=>setEditForm({...editForm,title:e.target.value})}/></div>
                 <div><label className="text-xs text-gray-500 block mb-1">Description</label><textarea className="input-field text-sm" rows={3} value={editForm.description||""} onChange={e=>setEditForm({...editForm,description:e.target.value})}/></div>
               </>) : (<>
-                <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Summary</label><p className="text-white text-sm">{ticket.title as string||"—"}</p></div>
+                <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Summary</label><p className="text-white text-sm">{ticket.title as string||"-"}</p></div>
                 {ticket.description ? <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Description</label><p className="text-gray-300 text-sm whitespace-pre-wrap">{(ticket.description as string)}</p></div> : null}
               </>)}
             </div>
@@ -477,9 +509,9 @@ export function TicketDetailPage() {
                 <div><label className="text-xs text-gray-500 block mb-1">End Time</label><input className="input-field text-xs" type="datetime-local" value={editForm.endTime||""} onChange={e=>setEditForm({...editForm,endTime:e.target.value})}/></div>
                 <div><label className="text-xs text-gray-500 block mb-1">Due Date</label><input className="input-field text-xs" type="datetime-local" value={editForm.dueDate||""} onChange={e=>setEditForm({...editForm,dueDate:e.target.value})}/></div>
               </>) : (<>
-                <div><label className="text-xs text-gray-500 block mb-1">Created</label><p className="text-white text-xs">{ticket.createdAt?new Date(ticket.createdAt as string).toLocaleString():"—"}</p></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Updated</label><p className="text-white text-xs">{ticket.updatedAt?new Date(ticket.updatedAt as string).toLocaleString():"—"}</p></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Due Date</label><p className="text-white text-xs">{ticket.dueDate?new Date(ticket.dueDate as string).toLocaleDateString():"—"}</p></div>
+                <div><label className="text-xs text-gray-500 block mb-1">Created</label><p className="text-white text-xs">{ticket.createdAt?new Date(ticket.createdAt as string).toLocaleString():"-"}</p></div>
+                <div><label className="text-xs text-gray-500 block mb-1">Updated</label><p className="text-white text-xs">{ticket.updatedAt?new Date(ticket.updatedAt as string).toLocaleString():"-"}</p></div>
+                <div><label className="text-xs text-gray-500 block mb-1">Due Date</label><p className="text-white text-xs">{ticket.dueDate?new Date(ticket.dueDate as string).toLocaleDateString():"-"}</p></div>
                 {ticket.startTime && <div><label className="text-xs text-gray-500 block mb-1">Start Time</label><p className="text-white text-xs">{new Date(ticket.startTime as string).toLocaleString()}</p></div>}
                 {ticket.endTime && <div><label className="text-xs text-gray-500 block mb-1">End Time</label><p className="text-white text-xs">{new Date(ticket.endTime as string).toLocaleString()}</p></div>}
               </>)}
@@ -532,24 +564,24 @@ export function TicketDetailPage() {
             {editing ? (<div className="space-y-2">
               <div><label className="text-xs text-gray-500 block mb-1">Status</label><select className="input-field" value={editForm.status||""} onChange={e=>setEditForm({...editForm,status:e.target.value})}>{TICKET_STATUSES.map(s=><option key={s} value={s}>{s.replace(/_/g," ")}</option>)}</select></div>
               <div><label className="text-xs text-gray-500 block mb-1">Priority</label><select className="input-field" value={editForm.priority||""} onChange={e=>setEditForm({...editForm,priority:e.target.value})}>{TICKET_PRIORITIES.map(p=><option key={p} value={p}>{p}</option>)}</select></div>
-              <div><label className="text-xs text-gray-500 block mb-1">Board</label><select className="input-field" value={editForm.boardId||""} onChange={e=>setEditForm({...editForm,boardId:e.target.value})}><option value="">—</option>{allBoards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Board</label><select className="input-field" value={editForm.boardId||""} onChange={e=>setEditForm({...editForm,boardId:e.target.value})}><option value="">-</option>{allBoards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
             </div>) : (<div className="space-y-2">
               <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Status</span><span className={`badge ${STATUS_COLORS[ticket.status as string]||""}`}>{(ticket.status as string)?.replace(/_/g," ")}</span></div>
               <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Priority</span><span className={`badge ${PRIORITY_COLORS[ticket.priority as string]||""}`}>{ticket.priority as string}</span></div>
-              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Board</span><span className="text-white text-xs">{(ticket.board as {name?:string})?.name||"—"}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Board</span><span className="text-white text-xs">{(ticket.board as {name?:string})?.name||"-"}</span></div>
             </div>)}
           </div>
 
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Client Info</h3>
             {editing ? (<div className="space-y-2">
-              <div><label className="text-xs text-gray-500 block mb-1">Company</label><select className="input-field" value={editForm.companyId||""} onChange={e=>handleCompanyChange(e.target.value)}><option value="">—</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-              <div><label className="text-xs text-gray-500 block mb-1">Contact</label><select className="input-field" value={editForm.contactId||""} onChange={e=>setEditForm({...editForm,contactId:e.target.value})}><option value="">—</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}</select></div>
-              <div><label className="text-xs text-gray-500 block mb-1">Assigned To</label><select className="input-field" value={editForm.assignedToId||""} onChange={e=>setEditForm({...editForm,assignedToId:e.target.value})}><option value="">—</option>{users.map(u=><option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Company</label><select className="input-field" value={editForm.companyId||""} onChange={e=>handleCompanyChange(e.target.value)}><option value="">-</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Contact</label><select className="input-field" value={editForm.contactId||""} onChange={e=>setEditForm({...editForm,contactId:e.target.value})}><option value="">-</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Assigned To</label><select className="input-field" value={editForm.assignedToId||""} onChange={e=>setEditForm({...editForm,assignedToId:e.target.value})}><option value="">-</option>{users.map(u=><option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}</select></div>
             </div>) : (<div className="space-y-2">
-              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Company</span><span className="text-white text-xs">{(ticket.company as {name?:string})?.name||"—"}</span></div>
-              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Contact</span><span className="text-white text-xs">{ticket.contact?`${(ticket.contact as any).firstName} ${(ticket.contact as any).lastName}`:"—"}</span></div>
-              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Assigned To</span><span className="text-white text-xs">{ticket.assignedTo?`${(ticket.assignedTo as any).firstName} ${(ticket.assignedTo as any).lastName}`:"—"}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Company</span><span className="text-white text-xs">{(ticket.company as {name?:string})?.name||"-"}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Contact</span><span className="text-white text-xs">{ticket.contact?`${(ticket.contact as any).firstName} ${(ticket.contact as any).lastName}`:"-"}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Assigned To</span><span className="text-white text-xs">{ticket.assignedTo?`${(ticket.assignedTo as any).firstName} ${(ticket.assignedTo as any).lastName}`:"-"}</span></div>
             </div>)}
           </div>
         </div>
