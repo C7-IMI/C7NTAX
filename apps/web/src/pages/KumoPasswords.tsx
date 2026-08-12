@@ -52,8 +52,18 @@ export function KumoPasswordsPage() {
   };
 
   const handleSave = async () => {
-    try { await api.patch(`/kumo/passwords/${selected.id}`, editForm); toast.success("Updated"); setEditing(false); fetch(); if (selected) selectPassword({ ...selected, ...editForm }); }
-    catch { toast.error("Save failed"); }
+    try {
+      await api.patch(`/kumo/passwords/${selected.id}`, editForm);
+      toast.success("Updated");
+      setEditing(false);
+      // If password was changed, re-fetch the reveal data to show updated info
+      if (editForm.password) {
+        setEditForm({ ...editForm, password: "" });
+        handleReveal();
+      }
+      fetch();
+      selectPassword({ ...selected, ...editForm, password: undefined });
+    } catch { toast.error("Save failed"); }
   };
 
   const handleReveal = async () => {

@@ -130,7 +130,12 @@ export function UsersPage() {
     if (!selected) return;
     setSaving(true);
     try {
-      const payload: Record<string, any> = { ...form };
+      const payload: Record<string, any> = {};
+      // Only send fields the API accepts
+      const allowed = ["firstName", "lastName", "title", "phone", "mobile", "companyId", "isActive"];
+      for (const k of allowed) if (form[k] !== undefined) payload[k] = form[k];
+      if (form.password) payload.password = form.password;
+      if (form.role?.systemRole) payload.role = form.role.systemRole;
       if (tab === "permissions") {
         payload.permissions = [...permSet];
       }
@@ -138,10 +143,12 @@ export function UsersPage() {
       toast.success("User updated");
       setSaving(false);
       setEditing(false);
+      // Clear password field after save
+      setForm({ ...form, password: "" });
       await fetchUsers();
       await refreshUser(selected.id);
     } catch (e: any) {
-      toast.error(e?.response?.data?.error?.message || "Failed to save");
+      toast.error(e?.response?.data?.error?.message || e?.response?.data?.error || "Failed to save");
       setSaving(false);
     }
   };
