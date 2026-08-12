@@ -41,7 +41,7 @@ export function KumoPasswordsPage() {
   const filtered = companyFilter ? passwords.filter(p => p.companyId === companyFilter) : passwords;
 
   const selectPassword = (p: any) => { 
-    setSelected(p); setEditing(false); setEditForm({ ...p }); 
+    setSelected(p); setEditing(false); setEditForm({ ...p }); setRevealData(null); setShowEditPwd(false);
     api.post("/kumo/recently-viewed", { entityType: "password", entityId: p.id, entityName: p.label || p.username || p.email, entityIcon: "key" }).catch(() => {});
   };
 
@@ -55,14 +55,18 @@ export function KumoPasswordsPage() {
     try {
       await api.patch(`/kumo/passwords/${selected.id}`, editForm);
       toast.success("Updated");
+      const changedPwd = !!editForm.password;
       setEditing(false);
-      // If password was changed, re-fetch the reveal data to show updated info
-      if (editForm.password) {
-        setEditForm({ ...editForm, password: "" });
-        handleReveal();
-      }
       fetch();
+      // Refresh the selected entry with updated data
       selectPassword({ ...selected, ...editForm, password: undefined });
+      // If password was changed, re-fetch reveal data and clear the password field
+      if (changedPwd) {
+        setEditForm(prev => ({ ...prev, password: "" }));
+        const r = await api.post(`/kumo/passwords/${selected.id}/reveal`);
+        setRevealData(r.data);
+        setTimeout(() => setRevealData(null), 30000);
+      }
     } catch { toast.error("Save failed"); }
   };
 
