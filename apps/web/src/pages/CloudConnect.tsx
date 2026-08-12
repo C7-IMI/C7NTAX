@@ -389,21 +389,23 @@ export function CloudConnectPage() {
           {integrations.map((int: any) => {
             const IconComp = IconFor(int.kind);
             const tr = testResults[int.id];
+            const isConnected = int.status === "connected";
             return (
               <div key={int.id} className={`card space-y-4 ${int.enabled ? "border-l-2 border-l-cyber-500" : "opacity-60"}`}>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 cursor-pointer" onClick={() => isConnected && openActionPanel(int)} title={isConnected ? "Click to open integration actions" : ""}>
                     <div className="p-2 rounded-lg bg-cyber-600/10">
                       <IconComp size={18} className="text-cyber-400" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-white font-medium text-sm truncate">{int.name}</p>
+                        <p className="text-white font-medium text-sm truncate hover:text-cyber-400 transition-colors">{int.name}</p>
                         <span className={`badge text-xs ${statusColor(int.status)}`}>
                           {int.status === "connected" ? <CheckCircle size={10} className="inline mr-0.5" /> :
                            int.status === "error" ? <XCircle size={10} className="inline mr-0.5" /> : null}
                           {int.status || "disconnected"}
                         </span>
+                        {isConnected && <span className="text-[10px] text-cyber-500">click to explore →</span>}
                       </div>
                       <p className="text-xs text-gray-500">{KIND_LABELS[int.kind] || int.kind}</p>
                     </div>
@@ -486,6 +488,87 @@ export function CloudConnectPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ═══ Integration Action Panel ═══ */}
+      {actionPanel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setActionPanel(null)}>
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative bg-navy-800 border border-surface-border rounded-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-surface-border">
+              <div>
+                <h3 className="text-white font-semibold text-base">{actionPanel.integration.name}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{KIND_LABELS[actionPanel.integration.kind] || actionPanel.integration.kind}</p>
+              </div>
+              <button onClick={() => setActionPanel(null)} className="p-1 rounded-md text-gray-500 hover:text-white hover:bg-surface-lighter"><X size={18} /></button>
+            </div>
+
+            {/* DummyConnect type selector */}
+            {actionPanel.integration.kind === "dummy" && (
+              <div className="p-5 border-b border-surface-border bg-surface-lighter/30">
+                <label className="text-xs text-gray-400 block mb-2">Simulate Integration Type</label>
+                <select className="input-field" value={simulatedKind}
+                  onChange={e => { setSimulatedKind(e.target.value); setMockLoaded(false); setTimeout(() => { setMockUsers([{ id:"u1",name:"Demo User",email:"demo@example.com",selected:false}]); setMockLoaded(true); }, 300); }}>
+                  {Object.entries(KIND_LABELS).filter(([k]) => k !== "dummy").map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+                <p className="text-[10px] text-amber-400 mt-2">⚠ DummyConnect simulates the selected integration using mock data. No live connection is made.</p>
+              </div>
+            )}
+
+            {/* M365 / User-based integration body */}
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Synced Users Preview</h4>
+                <span className="badge bg-green-600/20 text-green-400 text-xs">Connected</span>
+              </div>
+
+              {!mockLoaded ? (
+                <div className="text-center py-8 text-gray-500"><Loader2 size={24} className="animate-spin mx-auto mb-2" />Loading users...</div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => { const all = mockUsers.every(u => u.selected); setMockUsers(mockUsers.map(u => ({ ...u, selected: !all }))); }}
+                      className="btn-secondary text-xs">Select All</button>
+                    <select className="input-field text-sm w-48">
+                      <option value="">Assign to company...</option>
+                      <option value="acme">Acme Corporation</option>
+                      <option value="globex">Globex Industries</option>
+                      <option value="initech">Initech Solutions</option>
+                    </select>
+                    <button onClick={() => toast.success(`${mockUsers.filter(u => u.selected).length} users queued for sync`)}
+                      className="btn-primary text-xs">Sync Selected</button>
+                  </div>
+
+                  <div className="space-y-1">
+                    {mockUsers.map(u => (
+                      <label key={u.id} className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${u.selected ? "bg-cyber-600/10 border border-cyber-500/20" : "hover:bg-surface-lighter/50 border border-transparent"}`}>
+                        <input type="checkbox" checked={u.selected} onChange={() => setMockUsers(mockUsers.map(m => m.id === u.id ? { ...m, selected: !m.selected } : m))} className="rounded accent-cyber-500" />
+                        <div className="flex-1"><p className="text-sm text-white">{u.name}</p><p className="text-xs text-gray-500">{u.email}</p></div>
+                        {u.selected && <span className="text-[10px] text-cyber-400">Queued</span>}
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="bg-surface-lighter rounded-lg p-3 space-y-2 text-xs">
+                    <p className="text-gray-400 font-medium">Field Mapping</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center justify-between"><span className="text-gray-500">Display Name →</span><span className="text-white">firstName</span></div>
+                      <div className="flex items-center justify-between"><span className="text-gray-500">Mail →</span><span className="text-white">email</span></div>
+                      <div className="flex items-center justify-between"><span className="text-gray-500">Job Title →</span><span className="text-white">title</span></div>
+                      <div className="flex items-center justify-between"><span className="text-gray-500">Department →</span><span className="text-white">department</span></div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 justify-end pt-2 border-t border-surface-border">
+                    <button onClick={() => setActionPanel(null)} className="btn-secondary text-sm">Close</button>
+                    <button onClick={() => { toast.success("Sync initiated"); setActionPanel(null); }} className="btn-primary text-sm">Sync to Contacts</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

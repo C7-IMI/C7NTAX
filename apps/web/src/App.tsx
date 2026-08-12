@@ -25,7 +25,7 @@ import { ProjectsPage } from "./pages/Projects";
 import { AssetsPage } from "./pages/Assets";
 import { AssetDetailPage } from "./pages/AssetDetail";
 import { KnowledgeBasePage } from "./pages/KnowledgeBase";
-import { AdministrationPage, AdminLogsPage, AdminServiceBoardsPage } from "./pages/Administration";
+import { AuditLogsSection, ServiceBoardsSection } from "./pages/Administration";
 import { ChangelogPage } from "./pages/Changelog";
 import { CalendarPage } from "./pages/Calendar";
 import { PTOPage } from "./pages/PTO";
@@ -77,10 +77,10 @@ function ProtectedRoutes() {
         <Route path="/kumo/passwords" element={<KumoPasswordsPage />} />
         <Route path="/kumo/documents" element={<KumoDocumentsPage />} />
         <Route path="/kumo/configs" element={<KumoConfigsPage />} />
-        <Route path="/admin/logs" element={<AdminLogsPage />} />
-        <Route path="/admin/boards" element={<AdminServiceBoardsPage />} />
+        <Route path="/admin/logs" element={<AuditLogsSection />} />
+        <Route path="/admin/boards" element={<ServiceBoardsSection />} />
         <Route path="/admin/system" element={<SystemSettingsPage />} />
-        <Route path="/admin" element={<AdministrationPage />} />
+        <Route path="/admin" element={<AuditLogsSection />} />
         <Route path="/admin/changelog" element={<ChangelogPage />} />
         <Route path="/billing/dashboard" element={<FinanceDashboardPage />} />
         <Route path="/calendar" element={<CalendarPage />} />

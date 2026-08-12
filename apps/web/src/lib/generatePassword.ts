@@ -21,7 +21,7 @@ export function generatePassword(length = 20): string {
   const array = new Uint32Array(length - 4);
   crypto.getRandomValues(array);
   for (let i = 0; i < array.length; i++) {
-    chars.push(all[array[i] % all.length]);
+    chars.push(all[(array[i] ?? 0) % all.length]);
   }
 
   // Fisher-Yates shuffle
