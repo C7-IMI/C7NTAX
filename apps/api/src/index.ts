@@ -72,6 +72,10 @@ app.use(express.json({ limit: "10mb" }));
 // Must be BEFORE routes so it hooks into response finish events
 app.use(autoSnapshotMiddleware);
 
+// Audit logging — logs every create/update/delete operation
+import { auditMiddleware } from "./middleware/auditLog";
+app.use(auditMiddleware);
+
 app.get("/api/health", (_req, res) => res.json({ status: "ok", version: "1.0.0" }));
 
 // Core routes
