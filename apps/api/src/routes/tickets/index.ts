@@ -120,7 +120,7 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
     const allowed = ["title", "description", "status", "priority", "boardId", "assignedToId", "dueDate", "startTime", "endTime", "contactId", "companyId", "serviceAgreementId"];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) {
-      if (req.body[key] !== undefined) updates[key] = req.body[key];
+      if (req.body[key] !== undefined && req.body[key] !== "") updates[key] = req.body[key];
     }
     // Handle date conversions
     if (req.body.startTime) updates.startTime = new Date(req.body.startTime);

@@ -47,8 +47,9 @@ clientsRouter.get("/", async (req: AuthRequest, res, next) => {
 // ── Get ALL contacts (standalone contacts page) — MUST be before /:id ─
 clientsRouter.get("/contacts", async (req: AuthRequest, res, next) => {
   try {
-    const { search, limit = "100", offset = "0" } = req.query as Record<string, string>;
+    const { search, companyId, limit = "100", offset = "0" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
+    if (companyId) where.companyId = companyId;
     if (search) {
       where.OR = [
         { firstName: { contains: search } },

@@ -3,6 +3,7 @@
     "id": "8be4cb6f-9838-4715-99e0-501d083de0b5",
     "name": "MSP Service Desk",
     "description": "New client setup and migration",
+    "ticketCode": "MSP",
     "isActive": true,
     "slaResponseMinutes": 240,
     "slaResolutionMinutes": 1440,
@@ -11,26 +12,13 @@
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
     "createdAt": "2026-08-12T06:04:15.109Z",
-    "updatedAt": "2026-08-12T06:25:26.340Z"
-  },
-  {
-    "id": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
-    "name": "Intelligence Service Desk",
-    "description": "",
-    "isActive": true,
-    "slaResponseMinutes": 240,
-    "slaResolutionMinutes": 1440,
-    "autoCloseEnabled": true,
-    "autoCloseDays": 14,
-    "followUpEnabled": true,
-    "followUpIntervalHours": 24,
-    "createdAt": "2026-08-12T06:25:38.113Z",
-    "updatedAt": "2026-08-12T06:25:38.113Z"
+    "updatedAt": "2026-08-12T07:11:18.309Z"
   },
   {
     "id": "81f12ded-6039-4c63-81b5-3d520ea1e854",
     "name": "Infrastructure Service Desk",
     "description": "General IT support",
+    "ticketCode": "INF",
     "isActive": true,
     "slaResponseMinutes": 120,
     "slaResolutionMinutes": 480,
@@ -39,12 +27,13 @@
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
     "createdAt": "2026-08-12T06:04:15.108Z",
-    "updatedAt": "2026-08-12T06:25:51.997Z"
+    "updatedAt": "2026-08-12T07:11:18.314Z"
   },
   {
     "id": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
     "name": "NOC Alerts",
     "description": "Security incidents and alerts",
+    "ticketCode": "NOC",
     "isActive": true,
     "slaResponseMinutes": 30,
     "slaResolutionMinutes": 240,
@@ -53,6 +42,21 @@
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
     "createdAt": "2026-08-12T06:04:15.109Z",
-    "updatedAt": "2026-08-12T06:25:59.023Z"
+    "updatedAt": "2026-08-12T07:11:18.315Z"
+  },
+  {
+    "id": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
+    "name": "Intelligence Service Desk",
+    "description": "",
+    "ticketCode": "INT",
+    "isActive": true,
+    "slaResponseMinutes": 240,
+    "slaResolutionMinutes": 1440,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-12T06:25:38.113Z",
+    "updatedAt": "2026-08-12T07:27:49.646Z"
   }
 ]
