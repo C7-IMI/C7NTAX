@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import api from "../api";
 import { InferencePanel } from "../components/InferencePanel";
-import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, Filter } from "lucide-react";
+import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, Filter, ChevronDown, CheckSquare, Square } from "lucide-react";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 
@@ -10,16 +10,31 @@ const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
   waiting_on_client: "bg-amber-600/20 text-amber-400", on_hold: "bg-purple-600/20 text-purple-400",
   resolved: "bg-green-600/20 text-green-400", closed: "bg-gray-600/20 text-gray-400", cancelled: "bg-red-600/20 text-red-400",
+  pending_approval: "bg-yellow-600/20 text-yellow-400",
 };
 const PRIORITY_COLORS: Record<string, string> = {
   critical: "bg-red-600/20 text-red-400", high: "bg-orange-600/20 text-orange-400",
   medium: "bg-amber-600/20 text-amber-400", low: "bg-gray-600/20 text-gray-400",
 };
 
+const BATCH_ACTIONS = [
+  { value: "acknowledge", label: "Acknowledge", icon: CheckSquare },
+  { value: "close", label: "Close", icon: X },
+  { value: "status_in_progress", label: "Set Status → In Progress" },
+  { value: "status_waiting_client", label: "Set Status → Waiting on Client" },
+  { value: "status_on_hold", label: "Set Status → On Hold" },
+  { value: "status_resolved", label: "Set Status → Resolved" },
+  { value: "priority_high", label: "Set Priority → High" },
+  { value: "priority_critical", label: "Set Priority → Critical" },
+];
+
+const TICKET_STATUSES = ["new","in_progress","waiting_on_client","on_hold","pending_approval","resolved","closed","cancelled"];
+const TICKET_PRIORITIES = ["low","medium","high","critical"];
+
 export function TicketsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const boardId = searchParams.get("boardId") || "";
-  const [tickets, setTickets] = useState<unknown[]>([]);
+  const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState({ title:"", description:"", priority:"medium", boardId:"", companyId:"", contactId:"", contactName:"", contactEmail:"", startTime:"", endTime:"", status:"new" });
@@ -28,15 +43,32 @@ export function TicketsPage() {
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
   const [contacts, setContacts] = useState<Array<{id:string;firstName:string;lastName:string;email:string}>>([]);
 
+  // ── Batch selection ──
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchDropdown, setBatchDropdown] = useState(false);
+  const [batchApplying, setBatchApplying] = useState(false);
+
+  // ── Filter dialog ──
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterForm, setFilterForm] = useState<Record<string,string>>({ status: "", priority: "", assignedToId: "", dateFrom: "", dateTo: "" });
+  const [users, setUsers] = useState<Array<{id:string;firstName:string;lastName:string}>>([]);
+
   const fetchBoards = () => { api.get("/boards").then(r=>setBoards(Array.isArray(r.data)?r.data:(r.data?.data||r.data||[]))).catch(()=>{}); };
 
   const fetchTickets = () => {
-    let url = "/tickets?limit=100";
+    let url = "/tickets?limit=200";
     if (boardId) url += `&boardId=${boardId}`;
+    // Apply active filters
+    if (filterForm.status) url += `&status=${filterForm.status}`;
+    if (filterForm.priority) url += `&priority=${filterForm.priority}`;
+    if (filterForm.assignedToId) url += `&assignedToId=${filterForm.assignedToId}`;
+    if (filterForm.dateFrom) url += `&dateFrom=${filterForm.dateFrom}`;
+    if (filterForm.dateTo) url += `&dateTo=${filterForm.dateTo}`;
     api.get(url).then(r=>setTickets(r.data.data||[])).catch(()=>{}).finally(()=>setLoading(false));
   };
 
   useEffect(()=>{fetchBoards();fetchTickets();},[boardId]);
+  useEffect(()=>{api.get("/users?limit=200").then(r=>setUsers(r.data.data||[])).catch(()=>{});},[]);
 
   // Auto-open new ticket form when navigated from contact
   useEffect(() => {
@@ -54,11 +86,8 @@ export function TicketsPage() {
 
   const handleCompanyChange = (cId: string) => {
     setForm(prev => ({ ...prev, companyId: cId, contactName: "", contactEmail: "" }));
-    if (cId) {
-      api.get(`/clients/contacts?companyId=${cId}`).then(r => setContacts(r.data?.data || r.data || [])).catch(() => {});
-    } else {
-      setContacts([]);
-    }
+    if (cId) { api.get(`/clients/contacts?companyId=${cId}`).then(r => setContacts(r.data?.data || r.data || [])).catch(() => {}); }
+    else { setContacts([]); }
   };
 
   const openNew = async () => {
@@ -70,6 +99,66 @@ export function TicketsPage() {
     try { await api.post("/tickets",form); toast.success("Ticket created"); setShowNew(false); setForm({title:"",description:"",priority:"medium",boardId:"",companyId:"",contactId:"",contactName:"",contactEmail:"",startTime:"",endTime:"",status:"new"}); fetchTickets(); }
     catch { toast.error("Failed"); }
   };
+
+  // ── Batch actions ──
+  const toggleSelect = (id: string) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSelectAll = () => {
+    setSelectedIds(prev => prev.size === tickets.length ? new Set() : new Set(tickets.map(t => t.id)));
+  };
+  const applyBatchAction = async (action: string) => {
+    if (selectedIds.size === 0) return;
+    setBatchApplying(true);
+    try {
+      const ids = [...selectedIds];
+      let status: string | undefined;
+      let priority: string | undefined;
+      if (action === "acknowledge") status = "in_progress";
+      else if (action === "close") status = "closed";
+      else if (action.startsWith("status_")) status = action.replace("status_", "");
+      else if (action.startsWith("priority_")) priority = action.replace("priority_", "");
+      
+      const payload: any = { ticketIds: ids };
+      if (status) payload.status = status;
+      if (priority) payload.priority = priority;
+      
+      await api.post("/tickets/batch", payload);
+      toast.success(`Applied to ${ids.length} ticket${ids.length!==1?"s":""}`);
+      setSelectedIds(new Set());
+      setBatchDropdown(false);
+      fetchTickets();
+    } catch { toast.error("Batch operation failed"); }
+    finally { setBatchApplying(false); }
+  };
+
+  // ── Individual ticket action ──
+  const ticketAction = async (ticketId: string, action: string) => {
+    try {
+      if (action === "close") {
+        await api.patch(`/tickets/${ticketId}`, { status: "closed" });
+      } else if (action === "acknowledge") {
+        await api.patch(`/tickets/${ticketId}`, { status: "in_progress" });
+      } else if (action.startsWith("status_")) {
+        await api.patch(`/tickets/${ticketId}`, { status: action.replace("status_", "") });
+      } else if (action.startsWith("priority_")) {
+        await api.patch(`/tickets/${ticketId}`, { priority: action.replace("priority_", "") });
+      }
+      toast.success("Updated");
+      fetchTickets();
+    } catch { toast.error("Failed"); }
+  };
+
+  // ── Filter ──
+  const applyFilters = () => {
+    fetchTickets();
+    setShowFilter(false);
+  };
+  const clearFilters = () => {
+    setFilterForm({ status: "", priority: "", assignedToId: "", dateFrom: "", dateTo: "" });
+    setShowFilter(false);
+    // re-fetch without filters
+    setTimeout(() => fetchTickets(), 50);
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Breadcrumb */}
@@ -93,14 +182,92 @@ export function TicketsPage() {
             <option value="">All Boards</option>
             {boards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
+          <button onClick={() => setShowFilter(true)} className="btn-secondary text-sm flex items-center gap-1.5">
+            <Filter size={14} /> Filter
+          </button>
           <button onClick={openNew} className="btn-primary flex items-center gap-2 self-start"><Plus size={16}/>Create</button>
         </div>
       </div>
+
+      {/* ── Batch actions bar ── */}
+      {selectedIds.size > 0 && (
+        <div className="card flex items-center gap-3 bg-cyber-600/5 border-cyber-500/30">
+          <span className="text-sm text-white font-medium">{selectedIds.size} selected</span>
+          <div className="relative">
+            <button onClick={() => setBatchDropdown(!batchDropdown)} className="btn-primary text-sm flex items-center gap-1.5">
+              Modify Selected <ChevronDown size={14} />
+            </button>
+            {batchDropdown && (
+              <div className="absolute top-full mt-1 left-0 bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 min-w-[200px] py-1">
+                {BATCH_ACTIONS.map(a => (
+                  <button key={a.value} onClick={() => applyBatchAction(a.value)} disabled={batchApplying}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white flex items-center gap-2">
+                    {a.value} {batchApplying ? "..." : ""}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button onClick={() => setSelectedIds(new Set())} className="text-xs text-gray-500 hover:text-white">Clear selection</button>
+        </div>
+      )}
+
+      {/* ── Filter Dialog ── */}
+      {showFilter && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowFilter(false)}>
+          <div className="card w-full max-w-md mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Filter Tickets</h3>
+              <button onClick={() => setShowFilter(false)} className="text-gray-500 hover:text-white"><X size={18}/></button>
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Status</label>
+              <select className="input-field" value={filterForm.status} onChange={e => setFilterForm({...filterForm, status: e.target.value})}>
+                <option value="">Any</option>
+                {TICKET_STATUSES.map(s => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Priority</label>
+              <select className="input-field" value={filterForm.priority} onChange={e => setFilterForm({...filterForm, priority: e.target.value})}>
+                <option value="">Any</option>
+                {TICKET_PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Assigned Technician</label>
+              <select className="input-field" value={filterForm.assignedToId} onChange={e => setFilterForm({...filterForm, assignedToId: e.target.value})}>
+                <option value="">Any</option>
+                {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Date From</label>
+                <input className="input-field" type="date" value={filterForm.dateFrom} onChange={e => setFilterForm({...filterForm, dateFrom: e.target.value})} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Date To</label>
+                <input className="input-field" type="date" value={filterForm.dateTo} onChange={e => setFilterForm({...filterForm, dateTo: e.target.value})} />
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2 border-t border-surface-border">
+              <button onClick={clearFilters} className="btn-secondary text-sm">Clear</button>
+              <button onClick={applyFilters} className="btn-primary text-sm">Apply Filters</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={()=>setShowNew(false)}>
           <form className="card w-full max-w-2xl mx-4 space-y-3 max-h-[92vh] overflow-y-auto" onClick={e=>e.stopPropagation()} onSubmit={handleCreate}>
             <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">New Ticket</h3><button type="button" onClick={()=>setShowNew(false)} className="text-gray-500 hover:text-white"><X size={18}/></button></div>
-            
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-xs text-gray-500 block mb-1">Company <span className="text-red-400">*</span></label><select className="input-field" value={form.companyId} onChange={e=>handleCompanyChange(e.target.value)} required><option value="">Select company...</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
               <div><label className="text-xs text-gray-500 block mb-1">Contact</label><select className="input-field" value={form.contactId || `${form.contactName}|${form.contactEmail}`} onChange={e=>{const v = e.target.value; if (v.includes("|")) { const [name,email] = v.split("|"); setForm({...form, contactId:"", contactName:name||"", contactEmail:email||""}); } else { const c = contacts.find(x=>x.id===v); setForm({...form, contactId:v, contactName:c?`${c.firstName} ${c.lastName}`:"", contactEmail:c?.email||""}); }}}><option value="">Select contact...</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}<option value={`${form.contactName}|${form.contactEmail}`}>{form.contactName && !contacts.length ? form.contactName : ""}</option></select></div>
@@ -115,12 +282,68 @@ export function TicketsPage() {
           </form>
         </div>
       )}
+
       <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/><input className="input-field pl-9" placeholder="Search tickets..."/></div>
       <div className="card overflow-hidden p-0">
         {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
-          <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400"><SortableHeader field="ticketNumber" label="Ticket #" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 w-36" /><SortableHeader field="status" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden md:table-cell" /><SortableHeader field="board.name" label="Board" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" /><SortableHeader field="company.name" label="Client" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" /><SortableHeader field="updatedAt" label="Updated" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden sm:table-cell" /></tr></thead>
-            <tbody>{sortData(tickets as Array<Record<string,unknown>>, sort?.field || "updatedAt", sort?.direction || "desc").map(t=>(<tr key={t.id as string} className="border-b border-surface-border/50 hover:bg-surface-light/50"><td className="px-4 py-3"><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium">{t.ticketNumber as string}</Link><p className="text-gray-500 text-xs mt-0.5 truncate max-w-xs">{(t.title as string)?.slice(0,60)}</p></td><td className="px-4 py-3 hidden md:table-cell"><span className={`badge ${STATUS_COLORS[t.status as string]||""}`}>{(t.status as string)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5">OVERDUE</span> : null}</td><td className="px-4 py-3 hidden lg:table-cell text-gray-400 text-xs">{(t.board as {name?:string})?.name||"—"}</td><td className="px-4 py-3 hidden lg:table-cell text-gray-400">{(t.company as {name?:string})?.name||"—"}</td><td className="px-4 py-3 hidden sm:table-cell text-gray-500 text-xs">{t.updatedAt?new Date(t.updatedAt as string).toLocaleDateString():"—"}</td></tr>))}</tbody></table></div>)}
+          <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
+            <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white">{selectedIds.size === tickets.length ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>
+            <SortableHeader field="ticketNumber" label="Ticket #" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-2 py-3 w-32" />
+            <SortableHeader field="status" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden md:table-cell" />
+            <SortableHeader field="board.name" label="Board" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" />
+            <SortableHeader field="company.name" label="Client" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" />
+            <SortableHeader field="updatedAt" label="Updated" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden sm:table-cell" />
+            <th className="px-4 py-3 w-10"></th>
+          </tr></thead>
+            <tbody>{sortData(tickets as Array<Record<string,unknown>>, sort?.field || "updatedAt", sort?.direction || "desc").map((t:any)=>(<tr key={t.id} className={`border-b border-surface-border/50 hover:bg-surface-light/50 ${selectedIds.has(t.id) ? "bg-cyber-600/10" : ""}`}>
+              <td className="px-4 py-3"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white">{selectedIds.has(t.id) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></td>
+              <td className="px-2 py-3"><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium">{t.ticketNumber}</Link><p className="text-gray-500 text-xs mt-0.5 truncate max-w-xs">{(t.title)?.slice(0,60)}</p></td>
+              <td className="px-4 py-3 hidden md:table-cell"><span className={`badge ${STATUS_COLORS[t.status]||""}`}>{(t.status)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5">OVERDUE</span> : null}</td>
+              <td className="px-4 py-3 hidden lg:table-cell text-gray-400 text-xs">{(t.board as {name?:string})?.name||"—"}</td>
+              <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{(t.company as {name?:string})?.name||"—"}</td>
+              <td className="px-4 py-3 hidden sm:table-cell text-gray-500 text-xs">{t.updatedAt?new Date(t.updatedAt).toLocaleDateString():"—"}</td>
+              <td className="px-4 py-3">
+                <TicketActionMenu ticketId={t.id} currentStatus={t.status} currentPriority={t.priority} onAction={ticketAction} />
+              </td>
+            </tr>))}</tbody></table></div>)}
       </div>
+    </div>
+  );
+}
+
+// ── Individual ticket "Modify Selected" dropdown menu ──
+function TicketActionMenu({ ticketId, currentStatus, currentPriority, onAction }: {
+  ticketId: string; currentStatus: string; currentPriority: string;
+  onAction: (id: string, action: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(!open)} className="text-gray-500 hover:text-white p-1 rounded" title="Modify">
+        <ChevronDown size={14} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 py-1 min-w-[180px]">
+            <div className="px-3 py-1.5 text-[10px] text-gray-600 uppercase font-semibold">Modify Ticket</div>
+            {currentStatus !== "in_progress" && (
+              <button onClick={() => { onAction(ticketId, "acknowledge"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Acknowledge</button>
+            )}
+            {currentStatus !== "closed" && (
+              <button onClick={() => { onAction(ticketId, "close"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Close</button>
+            )}
+            <div className="border-t border-surface-border my-1" />
+            {TICKET_STATUSES.filter(s => s !== currentStatus && s !== "closed" && s !== "cancelled").slice(0,5).map(s => (
+              <button key={s} onClick={() => { onAction(ticketId, `status_${s}`); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Set Status → {s.replace(/_/g, " ")}</button>
+            ))}
+            <div className="border-t border-surface-border my-1" />
+            {TICKET_PRIORITIES.filter(p => p !== currentPriority).map(p => (
+              <button key={p} onClick={() => { onAction(ticketId, `priority_${p}`); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Priority → {p}</button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -158,337 +381,178 @@ export function TicketDetailPage() {
       setSelectedAgreement(t.serviceAgreement||null);
     }).catch(()=>toast.error("Ticket not found"));
   };
-  useEffect(()=>{
-    load();
-    api.get("/clients?limit=50").then(r=>setCompanies(r.data.data||[])).catch(()=>{});
-    api.get("/users?limit=50").then(r=>setUsers(r.data.data||[])).catch(()=>{});
-    api.get("/boards").then(r=>setAllBoards(Array.isArray(r.data)?r.data:(r.data?.data||r.data||[]))).catch(()=>{});
-  },[id]);
 
-  const handleCompanyChange = async (companyId: string) => {
-    setEditForm(prev=>({...prev, companyId, contactId: "", serviceAgreementId: ""}));
-    setSelectedAgreement(null); setContacts([]);
-    if (!companyId) { setAgreements([]); return; }
-    try {
-      const [cRes, aRes] = await Promise.all([
-        api.get(`/clients/contacts?companyId=${companyId}`),
-        api.get(`/billing/agreements?companyId=${companyId}`)
-      ]);
-      setContacts(cRes.data?.data || cRes.data || []);
-      const ags = (aRes.data||[]).filter((a:Record<string,unknown>)=>a.companyId===companyId);
-      setAgreements(ags as Array<{id:string;name:string;billingPeriod:string;billingAmount:number}>);
-      if (ags.length===1) { setEditForm(prev=>({...prev,serviceAgreementId:ags[0].id})); setSelectedAgreement(ags[0]); }
-    } catch { setAgreements([]); setContacts([]); }
+  useEffect(()=>{load();api.get("/clients?limit=100").then(r=>setCompanies(r.data?.data||r.data||[])).catch(()=>{});api.get("/users?limit=100").then(r=>setUsers(r.data?.data||r.data||[])).catch(()=>{});api.get("/boards").then(r=>setAllBoards(Array.isArray(r.data)?r.data:(r.data?.data||r.data||[]))).catch(()=>{});},[id]);
+
+  const handleCompanyChange = (cId: string) => {
+    setEditForm(prev=>({...prev,companyId:cId,contactId:""}));
+    if(cId){api.get(`/clients/contacts?companyId=${cId}`).then(r=>setContacts(r.data?.data||r.data||[])).catch(()=>{});api.get(`/clients/${cId}/agreements`).then(r=>setAgreements(r.data?.data||r.data||[])).catch(()=>{});}
+    else{setContacts([]);setAgreements([]);}
   };
 
-  // Auto-load agreements/contacts when company is already set on first load
-  useEffect(()=>{
-    if (ticket?.companyId && editing) handleCompanyChange(ticket.companyId as string);
-  },[editing]);
+  const handleSave = async () => {
+    setSaving(true);
+    try{await api.patch(`/tickets/${id}`,editForm);setEditing(false);load();toast.success("Saved");}
+    catch{toast.error("Save failed");}
+    finally{setSaving(false);}
+  };
 
-  const handlePostNote = async () => {
-    if (!noteText.trim()) return;
+  const handlePostNote = async (e?: React.FormEvent) => {
+    if(e)e.preventDefault();
+    if(!noteText.trim())return;
     setPosting(true);
-    try {
-      await api.post(`/tickets/${id}/notes`, { content: noteText, isInternal: false });
-      toast.success("Note posted");
-      setNoteText("");
-      load();
-    } catch { toast.error("Failed"); }
-    finally { setPosting(false); }
+    try{await api.post(`/tickets/${id}/comments`,{body:noteText});setNoteText("");load();toast.success("Posted");}
+    catch{toast.error("Failed");}
+    finally{setPosting(false);}
   };
 
-  const handleLogTime = async (e: React.FormEvent) => {
+  const handleTimeEntry = async (e: React.FormEvent) => {
     e.preventDefault();
-    const start = new Date(timeForm.startTime);
-    const end = new Date(timeForm.endTime);
-    const mins = Math.round((end.getTime() - start.getTime()) / 60000);
-    if (mins <= 0) { toast.error("End time must be after start time"); return; }
+    let mins = 0;
+    if (timeForm.startTime && timeForm.endTime) {
+      mins = Math.round((new Date(timeForm.endTime).getTime() - new Date(timeForm.startTime).getTime()) / 60000);
+    }
     try {
-      await api.post(`/tickets/${id}/time`, {
-        minutes: mins,
-        description: timeForm.description,
-        billable: timeForm.billable,
-        date: start.toISOString(),
-      });
-      toast.success("Time logged");
-      setShowTimeEntry(false);
+      await api.post(`/tickets/${id}/time-entries`, { ...timeForm, minutes: mins || undefined, date: new Date().toISOString().slice(0,10) });
+      toast.success("Time logged"); setShowTimeEntry(false);
       setTimeForm({ startTime: "", endTime: "", calculated: "", description: "", billable: true });
       load();
     } catch { toast.error("Failed"); }
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const data: Record<string,unknown> = {};
-      for (const [k,v] of Object.entries(editForm)) {
-        if (v === undefined || v === null) continue;
-        if (v === "" && ["startTime","endTime","dueDate","contactId","serviceAgreementId","assignedToId"].includes(k)) {
-          data[k] = null; // send null to clear optional fields
-        } else if (k === "companyId" || k === "boardId") {
-          // Required FK fields - skip if empty, don't send null
-          if (v !== "") data[k] = v;
-        } else if (v !== "") {
-          data[k] = v;
-        }
-      }
-      // Convert datetime strings to ISO
-      for (const f of ["startTime","endTime","dueDate"]) {
-        if (data[f] && typeof data[f] === "string" && (data[f] as string).trim() !== "") {
-          data[f] = new Date(data[f] as string).toISOString();
-        }
-      }
-      await api.patch(`/tickets/${id}`, data);
-      toast.success("Ticket updated");
-      setEditing(false);
-      load();
-    } catch (e: unknown) {
-      const msg = (e as {response?:{data?:{error?:{message?:string}}}})?.response?.data?.error?.message || "Failed to save";
-      toast.error(msg);
+  const calcDuration = () => {
+    if (timeForm.startTime && timeForm.endTime) {
+      const mins = Math.round((new Date(timeForm.endTime).getTime() - new Date(timeForm.startTime).getTime()) / 60000);
+      const h = Math.floor(mins / 60), m = mins % 60;
+      setTimeForm(prev => ({ ...prev, calculated: `${h}h ${m}m` }));
     }
-    finally { setSaving(false); }
   };
 
-  if (!ticket) return <div className="flex items-center justify-center py-20 text-gray-500">Loading ticket...</div>;
+  if(!ticket) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-5xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="space-y-6 animate-fade-in max-w-4xl">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <Link to="/tickets" className="text-sm text-cyber-400 hover:text-cyber-300">← Back to tickets</Link>
-          <h2 className="text-xl font-bold text-white mt-1">{ticket.ticketNumber as string}</h2>
+          <div className="flex items-center gap-2">
+            <Link to="/tickets" className="text-sm text-gray-500 hover:text-white">Tickets</Link>
+            <ChevronRight size={14} className="text-gray-600"/>
+            <h2 className="text-lg font-semibold text-white">{(ticket.ticketNumber as string) || `Ticket #${id}`}</h2>
+          </div>
+          <p className="text-sm text-gray-400 mt-0.5">{(ticket.title as string)?.slice(0, 80)}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`badge ${STATUS_COLORS[ticket.status as string]||""}`}>{(ticket.status as string)?.replace(/_/g," ")}</span>
-          <span className={`badge ${PRIORITY_COLORS[ticket.priority as string]||""}`}>{ticket.priority as string}</span>
-          {!editing
-            ? <button onClick={()=>setEditing(true)} className="btn-primary text-sm flex items-center gap-1.5"><Edit3 size={14}/>Edit Ticket</button>
-            : <><button onClick={handleSave} disabled={saving} className="btn-primary text-sm flex items-center gap-1.5"><Save size={14}/>{saving?"Saving...":"Save Changes"}</button><button onClick={()=>setEditing(false)} className="btn-secondary text-sm flex items-center gap-1.5"><X size={14}/>Cancel</button></>
-          }
+          {editing ? (<>
+            <button onClick={() => setEditing(false)} className="btn-secondary text-sm">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">{saving?"Saving...":"Save"}</button>
+          </>) : (
+            <button onClick={() => setEditing(true)} className="btn-secondary text-sm flex items-center gap-1"><Edit3 size={14}/>Edit</button>
+          )}
         </div>
       </div>
 
-      {/* Main layout - 2 columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left column - General & Classification */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* General Section */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">General</h3>
-            {editing ? (<div className="space-y-3">
-              <div><label className="text-xs text-gray-500 block mb-1">Title</label><input className="input-field" value={editForm.title||""} onChange={e=>setEditForm({...editForm,title:e.target.value})}/></div>
-              <div><label className="text-xs text-gray-500 block mb-1">Description</label><textarea className="input-field" rows={5} value={editForm.description||""} onChange={e=>setEditForm({...editForm,description:e.target.value})}/></div>
-            </div>) : (
-              <div className="space-y-3">
-                <div><p className="text-xs text-gray-500">Title</p><p className="text-white font-medium">{ticket.title as string}</p></div>
-                <div><p className="text-xs text-gray-500">Description</p><p className="text-gray-300 text-sm whitespace-pre-wrap">{ticket.description||"-"}</p></div>
-              </div>
-            )}
-          </div>
-
-          {/* Dates & Times Section */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Dates & Times</h3>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500">Total: <strong className="text-cyber-400">{(ticket.timeEntries as Array<{minutes:number}>||[]).reduce((s,t)=>s+(t.minutes||0),0)}m</strong></span>
-                <button onClick={()=>setShowTimeEntry(true)} className="btn-secondary text-xs flex items-center gap-1 px-2 py-1"><Timer size={12}/>Log Time</button>
-              </div>
-            </div>
-            {editing ? (<div className="grid grid-cols-3 gap-3">
-              <div><label className="text-xs text-gray-500 block mb-1">Due Date</label><input className="input-field" type="datetime-local" value={editForm.dueDate||""} onChange={e=>setEditForm({...editForm,dueDate:e.target.value})}/></div>
-              <div><label className="text-xs text-gray-500 flex items-center gap-1"><Clock size={11}/>Start Time</label><input className="input-field" type="datetime-local" value={editForm.startTime||""} onChange={e=>setEditForm({...editForm,startTime:e.target.value})}/></div>
-              <div><label className="text-xs text-gray-500 flex items-center gap-1"><Clock size={11}/>End Time</label><input className="input-field" type="datetime-local" value={editForm.endTime||""} onChange={e=>setEditForm({...editForm,endTime:e.target.value})}/></div>
-            </div>) : (
-              <div className="grid grid-cols-3 gap-3 text-sm">
-                <div><p className="text-xs text-gray-500">Due Date</p><p className="text-white">{ticket.dueDate?new Date(ticket.dueDate as string).toLocaleString():"-"}{ticket.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-2">OVERDUE</span> : null}</p></div>
-                <div><p className="text-xs text-gray-500">Start Time</p><p className="text-white">{ticket.startTime?new Date(ticket.startTime as string).toLocaleString():"-"}</p></div>
-                <div><p className="text-xs text-gray-500">End Time</p><p className="text-white">{ticket.endTime?new Date(ticket.endTime as string).toLocaleString():"-"}</p></div>
-              </div>
-            )}
-            {/* Time Entries List */}
-            {(ticket.timeEntries as Array<Record<string,unknown>>||[]).length > 0 && (
-              <div className="mt-4 pt-4 border-t border-surface-border">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Logged Time</h4>
-                <div className="space-y-2">
-                  {(ticket.timeEntries as Array<Record<string,unknown>>||[]).sort((a,b)=>new Date(b.date as string).getTime()-new Date(a.date as string).getTime()).map((te,i)=>(
-                    <div key={te.id as string||i} className="bg-surface-lighter rounded-lg px-3 py-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="badge bg-green-600/20 text-green-400 text-[10px]">Time Entry</span>
-                        <span className="text-cyber-400 font-mono font-medium">{te.minutes as number}m</span>
-                        {te.billable ? <span className="badge bg-green-600/20 text-green-400 text-[10px]">billable</span> : <span className="badge bg-gray-600/20 text-gray-400 text-[10px]">non-billable</span>}
-                      </div>
-                      {te.description && <p className="text-gray-300 mt-0.5">{te.description as string}</p>}
-                      <p className="text-xs text-gray-600 mt-0.5">{(te.user as {firstName?:string;lastName?:string})?.firstName} {(te.user as {lastName?:string})?.lastName} · {te.date?new Date(te.date as string).toLocaleString():"-"}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column - Classification + Details merged */}
-        <div className="space-y-6">
-          <div className="card space-y-4">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Classification & Details</h3>
-            {editing ? (<>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs text-gray-500 block mb-1">Status</label><select className="input-field" value={editForm.status||"new"} onChange={e=>setEditForm({...editForm,status:e.target.value})}>{Object.keys(STATUS_COLORS).map(k=><option key={k} value={k}>{k.replace(/_/g," ")}</option>)}</select></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Priority</label><select className="input-field" value={editForm.priority||"medium"} onChange={e=>setEditForm({...editForm,priority:e.target.value})}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>
-              </div>
-              <div><label className="text-xs text-gray-500 block mb-1">Board / Queue</label><select className="input-field" value={editForm.boardId||""} onChange={e=>setEditForm({...editForm,boardId:e.target.value})}><option value="">Select...</option>{allBoards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
-              <hr className="border-surface-border"/>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Company</label>
-                <select className="input-field" value={editForm.companyId||""} onChange={e=>handleCompanyChange(e.target.value)}>
-                  <option value="">None</option>
-                  {companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              {agreements.length > 0 && (
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Service Agreement</label>
-                  <select className="input-field" value={editForm.serviceAgreementId||""} onChange={e=>{setEditForm({...editForm,serviceAgreementId:e.target.value}); setSelectedAgreement(agreements.find(a=>a.id===e.target.value)||null);}}>
-                    <option value="">None</option>
-                    {agreements.map(a=><option key={a.id} value={a.id}>{a.name} - ${a.billingAmount}</option>)}
-                  </select>
-                  {selectedAgreement && (agreements.length>0 || ticket?.serviceAgreement) && (
-                    <div className="mt-2 p-2 rounded-lg bg-cyber-600/10 border border-cyber-600/20 text-xs text-cyber-400">
-                      {selectedAgreement
-                        ? <><strong>{selectedAgreement.name as string}</strong> · ${selectedAgreement.billingAmount as number} / {(selectedAgreement.billingPeriod as string||"monthly").replace(/_/g," ")}</>
-                        : ticket?.serviceAgreement && <><strong>{(ticket.serviceAgreement as {name?:string}).name}</strong> · ${(ticket.serviceAgreement as {billingAmount?:number}).billingAmount} / {(ticket.serviceAgreement as {billingPeriod?:string}).billingPeriod?.replace(/_/g," ")}</>
-                      }
-                    </div>
-                  )}
-                </div>
-              )}
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Contact</label>
-                <select className="input-field" value={editForm.contactId||""} onChange={e=>setEditForm({...editForm,contactId:e.target.value})}>
-                  <option value="">None</option>
-                  {contacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Assigned To</label>
-                <select className="input-field" value={editForm.assignedToId||""} onChange={e=>setEditForm({...editForm,assignedToId:e.target.value})}>
-                  <option value="">Unassigned</option>
-                  {users.map(u=><option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
-                </select>
-              </div>
-            </>) : (<>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><p className="text-xs text-gray-500">Status</p><span className={`badge ${STATUS_COLORS[ticket.status as string]||""}`}>{(ticket.status as string)?.replace(/_/g," ")}</span></div>
-                <div><p className="text-xs text-gray-500">Priority</p><span className={`badge ${PRIORITY_COLORS[ticket.priority as string]||""}`}>{ticket.priority as string}</span></div>
-              </div>
-              <div><p className="text-xs text-gray-500">Board</p><p className="text-white font-medium">{ticket.board?(ticket.board as {name:string}).name:"-"}</p></div>
-              <hr className="border-surface-border"/>
-              <div>
-                <p className="text-xs text-gray-500">Company</p>
-                <p className="text-white font-medium">{ticket.company?(ticket.company as {name:string;clientType?:string}).name:"-"}</p>
-                {(ticket.company as {clientType?:string})?.clientType && <span className="badge bg-cyber-600/20 text-cyber-400 text-[10px] mt-0.5">{(ticket.company as {clientType:string}).clientType}</span>}
-              </div>
-              {ticket.serviceAgreement && (
-                <div className="p-2 rounded-lg bg-cyber-600/10 border border-cyber-600/20">
-                  <p className="text-xs text-gray-400">Service Agreement</p>
-                  <p className="text-xs text-cyber-400"><strong>{(ticket.serviceAgreement as {name?:string}).name}</strong> · ${(ticket.serviceAgreement as {billingAmount?:number}).billingAmount} / {(ticket.serviceAgreement as {billingPeriod?:string}).billingPeriod?.replace(/_/g," ")}</p>
-                </div>
-              )}
-              <div><p className="text-xs text-gray-500">Contact</p><p className="text-white">{ticket.contact?(ticket.contact as {firstName:string;lastName:string}).firstName+" "+(ticket.contact as {firstName:string;lastName:string}).lastName:"-"}</p></div>
-              <div><p className="text-xs text-gray-500">Assigned To</p><p className="text-white">{ticket.assignedTo?`${(ticket.assignedTo as {firstName?:string}).firstName} ${(ticket.assignedTo as {lastName?:string}).lastName}`:"Unassigned"}</p></div>
-              <hr className="border-surface-border"/>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><p className="text-xs text-gray-500">Created</p><p className="text-white text-sm">{new Date(ticket.createdAt as string).toLocaleString()}</p></div>
-                <div><p className="text-xs text-gray-500">Updated</p><p className="text-white text-sm">{new Date(ticket.updatedAt as string).toLocaleString()}</p></div>
-              </div>
-            </>)}
-          </div>
-        </div>
-      </div>
-
-      {/* AI Inference */}
-      <InferencePanel ticketId={ticket.id as string} ticketTitle={ticket.title as string} ticketDescription={ticket.description as string|undefined}/>
-
-      {/* Notes & Activity - unified feed: comments + time entries */}
-      <div className="card"><h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Notes & Activity</h3>
-        {/* Inline note posting */}
-        <div className="flex gap-2 mb-4">
-          <input className="input-field flex-1" placeholder="Add a note..." value={noteText} onChange={e=>setNoteText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handlePostNote();}}} />
-          <button onClick={handlePostNote} disabled={posting||!noteText.trim()} className="btn-primary flex items-center gap-1.5 text-sm shrink-0"><Send size={14}/>{posting?"Posting...":"Post"}</button>
-        </div>
-        <div className="space-y-3">
-          {(() => {
-            const items: Array<{type: string; id: string; body?: string; author?: {firstName?:string;lastName?:string}; createdAt: string; isInternal?: boolean; isEmail?: boolean; fromEmail?: string; minutes?: number; description?: string; billable?: boolean; date?: string }> = [];
-            // Add comments
-            ((ticket.comments as Array<Record<string,unknown>>)||[]).forEach((n: Record<string,unknown>) => items.push({
-              type: (n.isEmail as boolean) ? "Email Note" : ((n.isInternal as boolean) ? "Internal Note" : "Note"),
-              id: n.id as string, body: n.body as string,
-              author: n.author as {firstName?:string;lastName?:string} | undefined,
-              createdAt: n.createdAt as string,
-              isInternal: n.isInternal as boolean | undefined,
-              isEmail: n.isEmail as boolean | undefined,
-              fromEmail: n.fromEmail as string | undefined,
-            }));
-            // Add time entries
-            ((ticket.timeEntries as Array<Record<string,unknown>>)||[]).forEach((te: Record<string,unknown>) => items.push({
-              type: "Time Entry",
-              id: `te-${te.id as string}`, createdAt: te.date as string || te.createdAt as string,
-              author: te.user as {firstName?:string;lastName?:string} | undefined,
-              minutes: te.minutes as number | undefined,
-              description: te.description as string | undefined,
-              billable: te.billable as boolean | undefined,
-              date: te.date as string | undefined,
-            }));
-            items.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            if (items.length === 0) return <p className="text-gray-500 text-sm">No notes yet</p>;
-            return items.map(item => {
-              const typeColors: Record<string,string> = { "Note": "bg-blue-600/20 text-blue-400", "Internal Note": "bg-amber-600/20 text-amber-400", "Email Note": "bg-purple-600/20 text-purple-400", "Time Entry": "bg-green-600/20 text-green-400" };
-              const authorName = item.author?.firstName && item.author?.lastName ? `${item.author.firstName} ${item.author.lastName}` : (item.author?.firstName || item.fromEmail || "System");
-              return (
-                <div key={item.id} className="border-l-2 border-surface-border pl-3 py-1">
-                  {item.type === "Time Entry" ? (
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`badge text-[10px] ${typeColors[item.type]||"bg-gray-600/20 text-gray-400"}`}><Clock size={10} className="inline mr-0.5"/>{item.type}</span>
-                        <span className="text-cyber-400 font-mono text-sm font-medium">{item.minutes}m</span>
-                        {item.billable !== undefined && (item.billable ? <span className="badge bg-green-600/20 text-green-400 text-[10px]">billable</span> : <span className="badge bg-gray-600/20 text-gray-400 text-[10px]">non-billable</span>)}
-                      </div>
-                      {item.description && <p className="text-sm text-gray-300 whitespace-pre-wrap">{item.description}</p>}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`badge text-[10px] ${typeColors[item.type]||"bg-gray-600/20 text-gray-400"}`}>{item.type}</span>
-                      </div>
-                      <p className="text-sm text-gray-300 whitespace-pre-wrap">{item.body}</p>
-                    </>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">{authorName} · {new Date(item.createdAt).toLocaleString()}</p>
-                </div>
-              );
-            });
-          })()}
-        </div></div>
-
-      {/* Time Entry Modal */}
-      {showTimeEntry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={()=>setShowTimeEntry(false)}>
-          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e=>e.stopPropagation()} onSubmit={handleLogTime}>
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Timer size={16}/>Log Time</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2 space-y-5">
+          {/* General */}
+          <div className="card space-y-3">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">General</h3>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs text-gray-500 block mb-1">Start Time</label><input className="input-field" type="datetime-local" value={timeForm.startTime} onChange={e=>{setTimeForm({...timeForm,startTime:e.target.value}); if(e.target.value&&timeForm.endTime){const d=(new Date(timeForm.endTime).getTime()-new Date(e.target.value).getTime())/3600000;setTimeForm(p=>({...p,startTime:e.target.value,calculated:d>0?d.toFixed(2)+'h':''}));}}} required/></div>
-              <div><label className="text-xs text-gray-500 block mb-1">End Time</label><input className="input-field" type="datetime-local" value={timeForm.endTime} onChange={e=>{setTimeForm({...timeForm,endTime:e.target.value}); if(timeForm.startTime&&e.target.value){const d=(new Date(e.target.value).getTime()-new Date(timeForm.startTime).getTime())/3600000;setTimeForm(p=>({...p,endTime:e.target.value,calculated:d>0?d.toFixed(2)+'h':''}));}}} required/></div>
+              {editing ? (<>
+                <div><label className="text-xs text-gray-500 block mb-1">Summary</label><input className="input-field text-sm" value={editForm.title||""} onChange={e=>setEditForm({...editForm,title:e.target.value})}/></div>
+                <div><label className="text-xs text-gray-500 block mb-1">Description</label><textarea className="input-field text-sm" rows={3} value={editForm.description||""} onChange={e=>setEditForm({...editForm,description:e.target.value})}/></div>
+              </>) : (<>
+                <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Summary</label><p className="text-white text-sm">{ticket.title as string||"—"}</p></div>
+                {ticket.description ? <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Description</label><p className="text-gray-300 text-sm whitespace-pre-wrap">{(ticket.description as string)}</p></div> : null}
+              </>)}
             </div>
-            {timeForm.calculated && <p className="text-sm text-cyber-400">Time spent: <strong>{timeForm.calculated}</strong></p>}
-            <div><label className="text-xs text-gray-500 block mb-1">Description</label><input className="input-field" placeholder="What did you work on?" value={timeForm.description} onChange={e=>setTimeForm({...timeForm,description:e.target.value})} required/></div>
-            <label className="flex items-center gap-2 text-sm text-gray-400"><input type="checkbox" checked={timeForm.billable} onChange={e=>setTimeForm({...timeForm,billable:e.target.checked})}/>Billable</label>
-            <div className="flex gap-2 justify-end"><button type="button" className="btn-secondary text-sm" onClick={()=>setShowTimeEntry(false)}>Cancel</button><button type="submit" className="btn-primary text-sm">Log Time</button></div>
-          </form>
+          </div>
+
+          {/* Dates & Times */}
+          <div className="card space-y-3">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Dates & Times</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {editing ? (<>
+                <div><label className="text-xs text-gray-500 block mb-1">Start Time</label><input className="input-field text-xs" type="datetime-local" value={editForm.startTime||""} onChange={e=>setEditForm({...editForm,startTime:e.target.value})}/></div>
+                <div><label className="text-xs text-gray-500 block mb-1">End Time</label><input className="input-field text-xs" type="datetime-local" value={editForm.endTime||""} onChange={e=>setEditForm({...editForm,endTime:e.target.value})}/></div>
+                <div><label className="text-xs text-gray-500 block mb-1">Due Date</label><input className="input-field text-xs" type="datetime-local" value={editForm.dueDate||""} onChange={e=>setEditForm({...editForm,dueDate:e.target.value})}/></div>
+              </>) : (<>
+                <div><label className="text-xs text-gray-500 block mb-1">Created</label><p className="text-white text-xs">{ticket.createdAt?new Date(ticket.createdAt as string).toLocaleString():"—"}</p></div>
+                <div><label className="text-xs text-gray-500 block mb-1">Updated</label><p className="text-white text-xs">{ticket.updatedAt?new Date(ticket.updatedAt as string).toLocaleString():"—"}</p></div>
+                <div><label className="text-xs text-gray-500 block mb-1">Due Date</label><p className="text-white text-xs">{ticket.dueDate?new Date(ticket.dueDate as string).toLocaleDateString():"—"}</p></div>
+                {ticket.startTime && <div><label className="text-xs text-gray-500 block mb-1">Start Time</label><p className="text-white text-xs">{new Date(ticket.startTime as string).toLocaleString()}</p></div>}
+                {ticket.endTime && <div><label className="text-xs text-gray-500 block mb-1">End Time</label><p className="text-white text-xs">{new Date(ticket.endTime as string).toLocaleString()}</p></div>}
+              </>)}
+            </div>
+          </div>
+
+          {/* Notes & Activity */}
+          <div className="card space-y-3">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Notes & Activity</h3>
+            <form onSubmit={handlePostNote} className="flex gap-2">
+              <input className="input-field flex-1 text-sm" placeholder="Add a note... (Enter to submit)" value={noteText} onChange={e=>setNoteText(e.target.value)} />
+              <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Post"}</button>
+            </form>
+            <button onClick={() => setShowTimeEntry(!showTimeEntry)} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Log Time</button>
+            {showTimeEntry && (
+              <form onSubmit={handleTimeEntry} className="bg-surface-lighter rounded-lg p-3 space-y-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <input className="input-field text-xs" type="datetime-local" value={timeForm.startTime} onChange={e=>{setTimeForm({...timeForm,startTime:e.target.value});setTimeout(calcDuration,0);}} placeholder="Start"/>
+                  <input className="input-field text-xs" type="datetime-local" value={timeForm.endTime} onChange={e=>{setTimeForm({...timeForm,endTime:e.target.value});setTimeout(calcDuration,0);}} placeholder="End"/>
+                  <input className="input-field text-xs" readOnly value={timeForm.calculated} placeholder="Duration"/>
+                </div>
+                <div className="flex gap-2">
+                  <input className="input-field flex-1 text-xs" placeholder="Description" value={timeForm.description} onChange={e=>setTimeForm({...timeForm,description:e.target.value})}/>
+                  <label className="flex items-center gap-1 text-xs text-gray-400"><input type="checkbox" checked={timeForm.billable} onChange={e=>setTimeForm({...timeForm,billable:e.target.checked})} /> Billable</label>
+                  <button type="submit" className="btn-primary text-xs">Save</button>
+                </div>
+              </form>
+            )}
+            <div className="space-y-3">
+              {(ticket.comments as Array<Record<string,unknown>>)?.map((c:any,i:number)=>(
+                <div key={c.id||i} className="flex gap-2 text-xs">
+                  <span className={`badge shrink-0 mt-0.5 ${c.isInternal?"bg-amber-600/20 text-amber-400":"bg-blue-600/20 text-blue-400"}`}>{c.isInternal?"Internal":"Note"}</span>
+                  <div><p className="text-gray-300 whitespace-pre-wrap">{c.body||c.content}</p><p className="text-gray-600 mt-0.5">{c.author?.firstName} {c.author?.lastName} · {c.createdAt?new Date(c.createdAt).toLocaleString():""}</p></div>
+                </div>
+              ))||null}
+              {(ticket.timeEntries as Array<Record<string,unknown>>)?.map((te:any,i:number)=>(
+                <div key={te.id||i} className="flex gap-2 text-xs">
+                  <span className="badge bg-green-600/20 text-green-400 shrink-0 mt-0.5">Time</span>
+                  <div><p className="text-gray-300">{te.description}{te.minutes ? ` (${Math.floor(te.minutes/60)}h ${te.minutes%60}m)` : ""} {te.billable?"· Billable":"· Non-billable"}</p><p className="text-gray-600 mt-0.5">{te.user?.firstName} {te.user?.lastName} · {te.createdAt?new Date(te.createdAt).toLocaleString():""}</p></div>
+                </div>
+              ))||null}
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Right column */}
+        <div className="space-y-5">
+          <div className="card space-y-3">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Classification & Details</h3>
+            {editing ? (<div className="space-y-2">
+              <div><label className="text-xs text-gray-500 block mb-1">Status</label><select className="input-field" value={editForm.status||""} onChange={e=>setEditForm({...editForm,status:e.target.value})}>{TICKET_STATUSES.map(s=><option key={s} value={s}>{s.replace(/_/g," ")}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Priority</label><select className="input-field" value={editForm.priority||""} onChange={e=>setEditForm({...editForm,priority:e.target.value})}>{TICKET_PRIORITIES.map(p=><option key={p} value={p}>{p}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Board</label><select className="input-field" value={editForm.boardId||""} onChange={e=>setEditForm({...editForm,boardId:e.target.value})}><option value="">—</option>{allBoards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+            </div>) : (<div className="space-y-2">
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Status</span><span className={`badge ${STATUS_COLORS[ticket.status as string]||""}`}>{(ticket.status as string)?.replace(/_/g," ")}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Priority</span><span className={`badge ${PRIORITY_COLORS[ticket.priority as string]||""}`}>{ticket.priority as string}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Board</span><span className="text-white text-xs">{(ticket.board as {name?:string})?.name||"—"}</span></div>
+            </div>)}
+          </div>
+
+          <div className="card space-y-3">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Client Info</h3>
+            {editing ? (<div className="space-y-2">
+              <div><label className="text-xs text-gray-500 block mb-1">Company</label><select className="input-field" value={editForm.companyId||""} onChange={e=>handleCompanyChange(e.target.value)}><option value="">—</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Contact</label><select className="input-field" value={editForm.contactId||""} onChange={e=>setEditForm({...editForm,contactId:e.target.value})}><option value="">—</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}</select></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Assigned To</label><select className="input-field" value={editForm.assignedToId||""} onChange={e=>setEditForm({...editForm,assignedToId:e.target.value})}><option value="">—</option>{users.map(u=><option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}</select></div>
+            </div>) : (<div className="space-y-2">
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Company</span><span className="text-white text-xs">{(ticket.company as {name?:string})?.name||"—"}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Contact</span><span className="text-white text-xs">{ticket.contact?`${(ticket.contact as any).firstName} ${(ticket.contact as any).lastName}`:"—"}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Assigned To</span><span className="text-white text-xs">{ticket.assignedTo?`${(ticket.assignedTo as any).firstName} ${(ticket.assignedTo as any).lastName}`:"—"}</span></div>
+            </div>)}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
