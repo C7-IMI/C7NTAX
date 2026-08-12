@@ -13,7 +13,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-08-12T07:55:54.527Z",
+    "lastLoginAt": "2026-08-12T14:56:34.549Z",
     "emailVerified": true,
     "mfaEnabled": false,
     "mfaSecret": null,
@@ -24,7 +24,7 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-08-12T07:55:54.529Z"
+    "updatedAt": "2026-08-12T14:56:34.550Z"
   },
   {
     "id": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",

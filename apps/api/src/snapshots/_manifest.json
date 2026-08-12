@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-08-12T08:15:58.090Z",
-  "totalRecords": 179,
+  "capturedAt": "2026-08-12T14:56:35.229Z",
+  "totalRecords": 180,
   "tables": {
     "role": 5,
     "user": 6,
@@ -39,7 +39,7 @@
     "kumoFile": 2,
     "kumoTemplateField": 11,
     "kumoAssetFieldValue": 19,
-    "recentlyViewedItem": 13,
+    "recentlyViewedItem": 14,
     "expense": 0,
     "alertRule": 0,
     "alertLog": 0

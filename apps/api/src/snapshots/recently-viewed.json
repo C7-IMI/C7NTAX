@@ -115,5 +115,14 @@
     "entityName": "Acme Domain Admin",
     "entityIcon": "key",
     "viewedAt": "2026-08-12T07:52:25.638Z"
+  },
+  {
+    "id": "c556a0d7-38d9-4bf2-86a9-fe125af863ca",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "3631fd0d-bc75-4480-8a81-31c5396c5327",
+    "entityName": "Stark AWS Root",
+    "entityIcon": "key",
+    "viewedAt": "2026-08-12T14:56:12.953Z"
   }
 ]
