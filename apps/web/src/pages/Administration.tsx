@@ -8,6 +8,101 @@ interface LogEntry {
   entries: Array<{ date: string; time: string; user: string; action: string; detail: string }>;
 }
 
+// ── Human-readable audit formatting ──
+
+const ENTITY_LABELS: Record<string, string> = {
+  ticket: "ticket", user: "user", company: "company", contact: "contact",
+  board: "service board", invoice: "invoice", project: "project",
+  report: "report", role: "role", opportunity: "opportunity",
+  kumo_passwords: "Kumo password", kumo_assets: "Kumo asset",
+  kumo_config: "Kumo configuration", kumo_doc: "Kumo document",
+  kumo_link: "Kumo link", system_config: "system configuration",
+  service_agreement: "service agreement", schedule: "schedule entry",
+  locale: "locale", translation: "translation",
+};
+
+function friendlyEntity(entity: string): string {
+  return ENTITY_LABELS[entity] || entity.replace(/_/g, " ");
+}
+
+function friendlyField(key: string): string {
+  const FIELDS: Record<string, string> = {
+    firstName: "first name", lastName: "last name", phone: "phone",
+    mobile: "mobile", title: "job title", isActive: "active status",
+    isLocked: "locked status", mfaEnabled: "MFA", startTime: "start time",
+    endTime: "end time", dueDate: "due date", assignedToId: "assignee",
+    companyId: "company", contactId: "contact", boardId: "board",
+    ticketId: "ticket", userId: "user", priority: "priority",
+    description: "description", status: "status", name: "name",
+    email: "email", role: "role", permissions: "permissions",
+    budget: "budget", serviceAgreementId: "service agreement",
+    slaResponseMinutes: "SLA response", slaResolutionMinutes: "SLA resolution",
+    autoCloseEnabled: "auto-close", autoCloseDays: "auto-close days",
+    followUpEnabled: "follow-up", followUpIntervalMinutes: "follow-up interval",
+    ticketCode: "ticket code", location: "location", color: "color",
+    password: "password", passwordHash: "password", ipAddress: "IP address",
+    sessionLockoutMinutes: "session lockout", requireMfa: "require MFA",
+    ipWhitelist: "IP whitelist", auditRetentionDays: "audit retention",
+    timezone: "timezone", dateFormat: "date format", companyName: "company name",
+  };
+  return FIELDS[key] || key.replace(/([A-Z])/g, " $1").toLowerCase().trim();
+}
+
+function formatValue(v: unknown): string {
+  if (v === null || v === undefined) return "(none)";
+  if (v === "***") return "(redacted)";
+  if (typeof v === "boolean") return v ? "enabled" : "disabled";
+  if (Array.isArray(v)) return v.length === 0 ? "(none)" : `${v.length} item(s)`;
+  if (typeof v === "object") {
+    const entries = Object.entries(v as Record<string, unknown>);
+    if (entries.length === 0) return "(none)";
+    return entries.map(([k, val]) => `${friendlyField(k)}: ${formatValue(val)}`).join(", ");
+  }
+  return String(v);
+}
+
+function buildAuditSentence(log: any): string {
+  const [entity, verb] = (log.action || "").split(":");
+  const entLabel = friendlyEntity(entity || log.entity || "");
+  const VERBS: Record<string, string> = { create: "created", update: "updated", delete: "deleted" };
+  const actionWord = VERBS[verb] || verb || "modified";
+
+  let sentence = `${actionWord} ${entLabel}`;
+
+  // Add entity ID context for identification
+  if (log.entityId && verb !== "create") {
+    const idShort = log.entityId.slice(0, 8);
+    if (entity === "ticket" || entity === "invoice" || entity === "project") {
+      sentence += ` #${idShort}`;
+    }
+  }
+
+  // Format changes into a description
+  const changes = log.changes;
+  if (changes && typeof changes === "object" && Object.keys(changes).length > 0) {
+    // Handle special case: delete (just a note)
+    if (changes.note === "delete") {
+      return `deleted ${entLabel}`;
+    }
+    const parts: string[] = [];
+    for (const [key, val] of Object.entries(changes as Record<string, unknown>)) {
+      if (key === "note") continue;
+      const field = friendlyField(key);
+      const fval = formatValue(val);
+      if (verb === "create") {
+        parts.push(`${field} to ${fval}`);
+      } else {
+        parts.push(`${field} to ${fval}`);
+      }
+    }
+    if (parts.length > 0) {
+      sentence += ` — ${parts.join(", ")}`;
+    }
+  }
+
+  return sentence;
+}
+
 export function AuditLogsSection() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,11 +118,9 @@ export function AuditLogsSection() {
         grouped[dt].entries.push({
           date: dt,
           time: new Date(log.createdAt).toLocaleTimeString(),
-          user: log.userId?.slice(0, 8) || "System",
-          action: log.action.replace(/_/g, " ").replace(/:/g, " → "),
-          detail: typeof log.changes === "object"
-            ? JSON.stringify(log.changes).slice(0, 120)
-            : String(log.changes || ""),
+          user: log.userName || log.userId?.slice(0, 8) || "System",
+          action: (log.action || "").replace(/:/g, " → "),
+          detail: buildAuditSentence(log),
         });
       }
       setLogs(Object.values(grouped).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));

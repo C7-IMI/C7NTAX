@@ -43,7 +43,7 @@ export function UsersPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
   const [permSet, setPermSet] = useState<Set<string>>(new Set());
-  const [roleTemplate, setRoleTemplate] = useState<string | null>(null); // the role whose defaults we compare against
+  const [roleTemplate, setRoleTemplate] = useState<string | null>(null); // selected preset role template for applying defaults
   const [saving, setSaving] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showCopyUser, setShowCopyUser] = useState(false);
@@ -522,19 +522,27 @@ export function UsersPage() {
                     </div>
                   )}
 
-                  {/* Customization note */}
-                  {roleTemplate && (() => {
-                    const tPerms = ROLE_PERMISSIONS[roleTemplate as SystemRole] || [];
-                    const tSet = new Set(tPerms);
-                    const customized = tPerms.some(p => permSet.has(p) !== tSet.has(p));
-                    return customized ? (
+                  {/* Customization warning — compares against user's assigned role */}
+                  {editing && (() => {
+                    const rolePermsArr = selected?.role?.permissions || [];
+                    const roleSet = new Set(rolePermsArr);
+                    const hasDeviation = rolePermsArr.some(p => permSet.has(p) !== roleSet.has(p)) ||
+                      [...permSet].some(p => !roleSet.has(p));
+                    return hasDeviation ? (
                       <div className="bg-amber-600/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
                         <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
                         <div className="text-xs text-amber-300">
-                          <span className="font-medium">Permissions have been customized.</span> Please verify the level of access. Compared to "{roleTemplate.replace(/_/g, " ")}" defaults.
+                          <span className="font-medium">Permissions have been customized.</span> The current selections differ from the assigned role "{selected?.role?.name || selected?.role?.systemRole?.replace(/_/g, " ")}".
                         </div>
                       </div>
-                    ) : null;
+                    ) : (
+                      <div className="bg-green-600/10 border border-green-500/30 rounded-lg p-3 flex items-start gap-2">
+                        <Check size={16} className="text-green-400 shrink-0 mt-0.5" />
+                        <div className="text-xs text-green-300">
+                          <span className="font-medium">Permissions match assigned role.</span> No deviations from "{selected?.role?.name || selected?.role?.systemRole?.replace(/_/g, " ")}".
+                        </div>
+                      </div>
+                    );
                   })()}
 
                   {PERMISSION_CATEGORIES.map(cat => (
@@ -562,9 +570,8 @@ export function UsersPage() {
                         {cat.permissions.map(p => {
                           const has = permSet.has(p);
                           const isAdmin = cat.key === "admin";
-                          const tPerms = roleTemplate ? (ROLE_PERMISSIONS[roleTemplate as SystemRole] || []) : [];
-                          const tSet = new Set(tPerms);
-                          const deviates = roleTemplate ? (has !== tSet.has(p as any)) : false;
+                          const rolePermsArr = selected?.role?.permissions || [];
+                          const deviates = has !== rolePermsArr.includes(p);
                           return (
                             <label key={p}
                               className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
@@ -595,7 +602,7 @@ export function UsersPage() {
                     </div>
                   ))}
 
-                  {editing && !roleTemplate && (
+                  {editing && (
                     <div className="bg-amber-600/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
                       <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
                       <div className="text-xs text-amber-300">

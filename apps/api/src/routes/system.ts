@@ -267,6 +267,18 @@ systemRouter.get("/audit-logs", async (_req: AuthRequest, res, next) => {
       orderBy: { createdAt: "desc" },
       take: 500,
     });
-    res.json({ data: logs });
+    // Resolve user names for display
+    const userIds = [...new Set(logs.map(l => l.userId).filter(Boolean))];
+    const users = userIds.length > 0
+      ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, lastName: true } })
+      : [];
+    const userMap = new Map(users.map(u => [u.id, u]));
+    const enriched = logs.map(log => ({
+      ...log,
+      userName: log.userId === "system" ? "System"
+        : userMap.has(log.userId) ? `${userMap.get(log.userId)!.firstName || ""} ${userMap.get(log.userId)!.lastName || ""}`.trim() || log.userId.slice(0, 8)
+        : log.userId?.slice(0, 8) || "System",
+    }));
+    res.json({ data: enriched });
   } catch (e) { next(e); }
 });
