@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 interface SubSection {
   id: string;
   to: string;
-  icon?: React.ComponentType<{ size?: number; className?: string }>;
+  icon?: React.ComponentType<any>;
   label: string;
 }
 

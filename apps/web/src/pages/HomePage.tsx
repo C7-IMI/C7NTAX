@@ -8,7 +8,7 @@ interface QuickLink {
   label: string;
   description: string;
   to: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<any>;
 }
 
 const GETTING_STARTED: QuickLink[] = [

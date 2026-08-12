@@ -20,13 +20,13 @@ export function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
-  const [sort, setSort] = useState("name");
+  const [sort, setSort] = useState<SortState | null>(null);
   const [showNew, setShowNew] = useState(false);
   const navigate = useNavigate();
   const [form, setForm] = useState<Record<string, string>>({ name: "", email: "", phone: "", city: "", state: "", companyType: "Client", industry: "" });
 
   const fetch = () => {
-    let url = `/clients?limit=200&sort=${sort}`;
+    let url = `/clients?limit=200&sort=${sort?.field || "name"}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (typeFilter) url += `&type=${typeFilter}`;
     api.get(url).then(r => setClients(r.data.data || [])).catch(() => {}).finally(() => setLoading(false));

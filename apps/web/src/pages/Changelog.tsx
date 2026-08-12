@@ -23,11 +23,11 @@ function parseBuildNotes(raw: string): Version[] {
   const matches = [...raw.matchAll(headerRe)];
 
   for (let i = 0; i < matches.length; i++) {
-    const m = matches[i];
-    const version = m[1];
-    const title = m[2].trim();
+    const m = matches[i]!;
+    const version = m[1]!;
+    const title = m[2]!.trim();
     const headerEnd = (m.index ?? 0) + m[0].length;
-    const nextHeaderStart = i + 1 < matches.length ? matches[i + 1].index! : raw.length;
+    const nextHeaderStart = i + 1 < matches.length ? matches[i + 1]!.index! : raw.length;
 
     // Extract lines between this header and the next
     const body = raw.slice(headerEnd, nextHeaderStart);
@@ -37,8 +37,8 @@ function parseBuildNotes(raw: string): Version[] {
     const bulletRe = /^-\s*\*\*\[(New|Update|Fix)\]\*\*\s+(.+)$/gm;
     let bm: RegExpExecArray | null;
     while ((bm = bulletRe.exec(body)) !== null) {
-      const typeLabel = bm[1];
-      const text = bm[2].trim();
+      const typeLabel = bm[1]!;
+      const text = bm[2]!.trim();
       const type = typeLabel === "New" ? "new" : typeLabel === "Update" ? "update" : "fix";
       changes.push({ text, type });
     }
@@ -46,7 +46,7 @@ function parseBuildNotes(raw: string): Version[] {
     if (changes.length > 0 || title) {
       // Derive date from version: YYYY.M.D.BBB → YYYY-MM-DD
       const parts = version.split(".");
-      const date = `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}`;
+      const date = `${parts[0]!}-${parts[1]!.padStart(2, "0")}-${parts[2]!.padStart(2, "0")}`;
       versions.push({ id: versions.length + 1, version, date, title, changes });
     }
   }
