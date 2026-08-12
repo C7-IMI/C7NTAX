@@ -1,5 +1,18 @@
 [
   {
+    "version": "2026.8.12.008",
+    "date": "2026-08-12",
+    "title": "ConnectWise-Style Ticket Detail Toolbar & Tabs",
+    "changes": [
+      {"text": "Full-width toolbar card on ticket detail with 12-tab interface (Ticket, Configurations, Products, Activities, Time, Links, Expenses, Schedule, Attachments, History, Finance, Audit Trail); excluded tabs per spec", "type": "New Feature"},
+      {"text": "Icon toolbar below tabs — Refresh, Add Note, Log Time, Attach functional; Email, Print, Follow Up, More Actions as placeholders", "type": "New Feature"},
+      {"text": "General and Classification & Details cards each on their own full-width row under the toolbar", "type": "Update"},
+      {"text": "Configuration dialogs for every tab — link configuration, add product, link ticket, add expense, schedule entry, attach file, add time entry", "type": "New Feature"},
+      {"text": "Lightweight tab data persisted in ticket customFields JSON; tickets PATCH accepts customFields and excludes it from change comments", "type": "Update"},
+      {"text": "Time entry logging fixed to correct /tickets/:id/time endpoint", "type": "Fix"}
+    ]
+  },
+  {
     "version": "2026.8.12.007",
     "date": "2026-08-12",
     "title": "Clear Selected-State Highlight in Navigation",

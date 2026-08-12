@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.007 | Last Updated: 2026-08-12
+## Version: 2026.8.12.008 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,15 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.008 — ConnectWise-Style Ticket Detail Toolbar & Tabs
+- **[New]** Full-width toolbar card on ticket detail — tabbed interface with 12 tabs (Ticket, Configurations, Products, Activities, Time, Links, Expenses, Schedule, Attachments, History, Finance, Audit Trail); Tasks, Open Tickets, Conversions, Surveys, and RMA excluded per spec.
+- **[New]** Icon toolbar below the tabs — Refresh, Add Note, Log Time, and Attach are functional; Email, Print, Follow Up, and More Actions are placeholders with "coming soon" toasts.
+- **[Update]** Ticket detail layout — General and Classification & Details cards now each sit on their own full-width row under the toolbar (single-column stack).
+- **[New]** Configuration dialogs for every tab — Link Configuration (searches assets + Kumo configurations), Add Product (qty/cost with totals), Link Ticket (search + relation type), Add Expense (backed by /billing/expenses), Schedule Entry (backed by /schedule with ticketId), Attach File (metadata placeholder), and Add Time Entry.
+- **[Update]** Lightweight tab data (linked configurations, products, links, attachments) persisted in the ticket's `customFields` JSON — tickets PATCH now accepts `customFields` and excludes it from change-comment logging.
+- **[Fix]** Time entry logging now posts to the correct `/tickets/:id/time` endpoint (was `/time-entries`, which does not exist).
+- **[New]** Activities tab merges notes and time entries into one chronological feed; History tab shows friendly field-change log; Finance tab shows billable/non-billable totals, expenses, and agreement summary; Audit Trail tab lists ticket-scoped system audit records.
 
 ## 2026.8.12.007 — Clear Selected-State Highlight in Navigation
 - **[Update]** Sidebar selected/active items now use the same light `bg-surface-lighter` background with white text as the hover state — replacing the previous faint cyber tint that was hard to distinguish.

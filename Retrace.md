@@ -578,6 +578,18 @@
 - Secondary indicators retained: active ChevronRight on leaf items and the collapsed-mode right-edge cyber bar
 - All three changelog sources updated with `2026.8.12.007` entry; LSP diagnostics clean
 
+### Prompt 50 — Ticket detail toolbar, tabs, and icon actions
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~60 min
+**BuildNotes IDs:** #1 (2026.8.12.008)
+> Update the ticket detail screen to add a new toolbar/card at the top, directly underneath the ticket summary, spanning the full width of the General and Classification & Details cards with each card on its own row. Use a tabbed interface for the menu options and action buttons shown in the screenshot. Create tabs for all labels shown except Tasks, Open Tickets, Conversions, Surveys, and RMA. Infer options and behavior from existing features and standard PSA workflows. Build out configuration dialogs for each option. Below the tabbed interface, replicate the icon toolbar — implement decipherable icons, placeholder the unclear ones. Extend the application and adapt the affected ticket detail pages.
+
+**Changes:**
+- `apps/api/src/routes/tickets/index.ts` — PATCH `allowed` list now includes `customFields` (persists tab data); change-comment loop skips `customFields` to avoid logging raw tab JSON
+- `apps/web/src/pages/Tickets.tsx` — Added `TICKET_DETAIL_TABS` (12 tabs, excluded ones omitted); new full-width toolbar card under the ticket summary with tab strip + icon toolbar (Refresh/Add Note/Log Time/Attach functional; Email/Print/Follow Up/More as "coming soon" placeholders); Ticket tab restructured to single-column so General and Classification & Details each sit on their own full-width row
+- `apps/web/src/pages/Tickets.tsx` — New tabs with dialogs: Configurations (search assets + Kumo configs, link/unlink via customFields), Products (qty/cost table with totals), Activities (merged chronological feed), Time (billable/non-billable totals + add dialog), Links (ticket search + relation type), Expenses (real /billing/expenses API with add/delete), Schedule (real /schedule API with ticketId), Attachments (metadata placeholder with download toast), History (friendly field-change log), Finance (totals + agreement + invoice links), Audit Trail (ticket-scoped /system/audit-logs)
+- `apps/web/src/pages/Tickets.tsx` — Time logging endpoint corrected from `/tickets/:id/time-entries` (nonexistent) to `/tickets/:id/time`
+- Verified: `tsc --noEmit` clean; all three changelog sources updated with `2026.8.12.008`
+
 ---
 
-**Total Prompts:** 49 | **Completed:** 49 | **In Progress:** 0
+**Total Prompts:** 50 | **Completed:** 50 | **In Progress:** 0

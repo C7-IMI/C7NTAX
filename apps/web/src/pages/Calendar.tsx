@@ -76,7 +76,7 @@ export function CalendarPage() {
       </div>
 
       {/* ── Monthly Calendar Card ── */}
-      <div className="card p-3">
+      <div className="card p-3 max-w-3xl">
         <div className="flex items-center justify-between mb-2">
           <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-surface-lighter text-gray-400 hover:text-white transition-colors">
             <ChevronLeft size={16} />
@@ -99,7 +99,7 @@ export function CalendarPage() {
         {/* Day cells — mini card style with subtle borders and consistent spacing */}
         <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((day, i) => {
-            if (day === null) return <div key={`e-${i}`} className="min-h-[60px] rounded-md border border-transparent" />;
+            if (day === null) return <div key={`e-${i}`} className="aspect-square rounded-md border border-transparent" />;
             const dk = dateKey(day);
             const dayEvents = eventsByDate[dk] || [];
             const isToday = dk === todayKey;
@@ -108,7 +108,7 @@ export function CalendarPage() {
               <button
                 key={dk}
                 onClick={() => setSelectedDate(isSelected ? null : dk)}
-                className={`min-h-[60px] rounded-md border p-1 flex flex-col items-start text-left transition-colors
+                className={`aspect-square rounded-md border p-1 flex flex-col items-start text-left transition-colors
                   ${isSelected ? "border-cyber-500/60 bg-cyber-600/20" :
                     isToday ? "border-cyber-500/40 bg-cyber-600/10" :
                     "border-surface-border hover:border-gray-600 hover:bg-surface-lighter"}`}
