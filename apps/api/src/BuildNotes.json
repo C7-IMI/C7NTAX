@@ -1,5 +1,14 @@
 [
   {
+    "version": "2026.8.12.015",
+    "date": "2026-08-12",
+    "title": "Native Mobile Applications Plan",
+    "changes": [
+      {"text": "mobile-native-plan.md — phased plan for native Android (Kotlin + Jetpack Compose) and iOS (Swift + SwiftUI) apps; planning only, no code", "type": "New Feature"},
+      {"text": "Covers foundations/tooling, backend enablement (v1 API, device sessions, push, delta sync, offline queue), app builds, security hardening, and Play/App Store publishing", "type": "New Feature"}
+    ]
+  },
+  {
     "version": "2026.8.12.014",
     "date": "2026-08-12",
     "title": "Add Time Entry Button on Dates & Times Card",

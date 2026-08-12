@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.014 | Last Updated: 2026-08-12
+## Version: 2026.8.12.015 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.015 — Native Mobile Applications Plan
+- **[New]** `mobile-native-plan.md` — comprehensive phased plan for native Android (Kotlin + Jetpack Compose) and iOS (Swift + SwiftUI) apps replicating core C7NTAX desktop functionality; no code implemented (planning only).
+- **[New]** Plan covers: Phase 0 foundations/tooling (Gradle version catalogs, Xcode, Fastlane, CI), Phase 1 backend enablement (versioned /api/v1 contract, OpenAPI codegen, device sessions, push via FCM/APNs, delta sync + ETags, offline queue), Phases 2–3 app builds (MVVM, Room/SwiftData offline cache, WorkManager/BackgroundTasks, biometrics), Phase 4 security (certificate pinning, Keystore/Keychain, refresh-token rotation, privacy manifests, data safety), and Phase 5 store publishing (Play App Signing, App Store Connect, Fastlane lanes, review guidelines, maintenance).
 
 ## 2026.8.12.014 — Add Time Entry Button on Dates & Times Card
 - **[Fix]** Restored the time-entry button on the Dates & Times card — previously labeled "Log Time", now labeled "Add Time Entry" to match the Time tab; placed in the card header right of the title.

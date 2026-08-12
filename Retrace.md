@@ -664,6 +664,15 @@
 - Time tab untouched — same dialog, totals cards, and entries list
 - Verified: `tsc --noEmit` clean; all three changelog sources updated with `2026.8.12.014`
 
+### Prompt 57 — Native mobile applications plan (Android + iOS)
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~40 min
+**BuildNotes IDs:** #1 (2026.8.12.015)
+> Create a plan for building native mobile applications for C7NTAX that replicate the core functionality of the existing native desktop client. The plan is for Android and iPhone and will be used later to implement the actual apps. Use native platform toolkits: Kotlin and Jetpack Compose for Android, and Swift and SwiftUI for iOS. Cover: additional software/SDKs/dependencies/configuration; required architectural changes to the backend (API design, authentication, data synchronization, offline behavior, notifications); security best practices (secure storage, encrypted transport, certificate pinning, auth/session handling, secrets management, platform data safety); publishing to Google Play and Apple App Store (signing, privacy manifests, review guidelines, maintenance). Return a structured, phased plan with deliverables, technology choices, and action items. Do not implement any code yet.
+
+**Changes:**
+- `mobile-native-plan.md` — New 344-line phased plan document (19.4 KB): objectives & feature parity matrix (12 v1 features, billing/reports/admin excluded); Phase 0 foundations (monorepo layout apps/mobile/{android,ios,shared}, Android JDK 17 + Gradle version catalogs + Compose BOM, iOS Xcode 16/Swift 5.10/SwiftData, OpenAPI codegen, GitHub Actions macos-15 + ubuntu, Fastlane, Sentry/Crashlytics, FCM); Phase 1 backend enablement (versioned /api/v1, ETag/If-None-Match, cursor pagination, device sessions + refresh-token rotation + PKCE, FCM/APNs push with device registry, /sync delta endpoints with updatedAt cursors + last-write-wins, offline write queue with idempotency keys, pre-signed URL uploads); Phases 2–3 Android/iOS builds (MVVM, Room/SwiftData caches, WorkManager/BackgroundTasks sync, BiometricPrompt/Face ID, feature parity per platform); Phase 4 security (TLS 1.2+, cert pinning via OkHttp CertificatePinner/URLSession delegate, Android Keystore/iOS Keychain, FLAG_SECURE, root/jailbreak detection advisory, CI-injected secrets, Play Data Safety + Apple PrivacyInfo.xcprivacy); Phase 5 publishing (Play Console + Play App Signing + AAB + staged rollout; Apple Developer Program, App Store Connect, TestFlight, review guideline mapping 4.2/5.1.1/1.1.6; Fastlane beta/release lanes; monitoring and update cadence)
+- No code implemented per instruction; all three changelog sources updated with `2026.8.12.015`
+
 ---
 
-**Total Prompts:** 56 | **Completed:** 56 | **In Progress:** 0
+**Total Prompts:** 57 | **Completed:** 57 | **In Progress:** 0
