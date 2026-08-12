@@ -26,6 +26,7 @@ const SEED_ORDER: { fileName: string; model: string }[] = [
   { fileName: "tickets.json", model: "ticket" },
   { fileName: "ticket-comments.json", model: "ticketComment" },
   { fileName: "time-entries.json", model: "timeEntry" },
+  { fileName: "schedule-entries.json", model: "scheduleEntry" },
   { fileName: "service-agreements.json", model: "serviceAgreement" },
   { fileName: "invoices.json", model: "invoice" },
   { fileName: "invoice-line-items.json", model: "invoiceLineItem" },

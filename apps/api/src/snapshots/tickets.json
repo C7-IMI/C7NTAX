@@ -1,101 +1,5 @@
 [
   {
-    "id": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
-    "ticketNumber": "INT-1002-1001",
-    "title": "Network drive mapping failure after migration",
-    "description": "All users in Chicago office lost mapped drives after weekend migration. GPO seems intact.",
-    "status": "waiting_client",
-    "priority": "critical",
-    "source": "portal",
-    "dueDate": "2026-08-13T11:04:00.000Z",
-    "startTime": null,
-    "endTime": null,
-    "slaResponseDue": null,
-    "slaResolutionDue": null,
-    "firstResponseAt": null,
-    "resolvedAt": null,
-    "closedAt": null,
-    "isOverdue": false,
-    "waitingSince": null,
-    "followUpCount": 0,
-    "lastFollowUpAt": null,
-    "boardId": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
-    "categoryId": null,
-    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
-    "contactId": null,
-    "assignedToId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
-    "createdById": "632e5daf-5190-4f6c-8352-ce24896d4e41",
-    "tags": [],
-    "customFields": {},
-    "serviceAgreementId": null,
-    "createdAt": "2026-08-12T06:04:15.115Z",
-    "updatedAt": "2026-08-12T08:15:51.758Z"
-  },
-  {
-    "id": "8da69561-0e86-4082-b323-0bfa64c95e1f",
-    "ticketNumber": "MSP-1001-1001",
-    "title": "Email server not sending outbound messages",
-    "description": "Users cannot send external emails. Internal mail flow works fine. Error: 550 5.7.1 Unable to relay.",
-    "status": "waiting_client",
-    "priority": "high",
-    "source": "portal",
-    "dueDate": "2026-08-14T06:04:15.110Z",
-    "startTime": "2026-08-11T06:04:15.110Z",
-    "endTime": null,
-    "slaResponseDue": null,
-    "slaResolutionDue": null,
-    "firstResponseAt": null,
-    "resolvedAt": null,
-    "closedAt": null,
-    "isOverdue": false,
-    "waitingSince": null,
-    "followUpCount": 0,
-    "lastFollowUpAt": null,
-    "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
-    "categoryId": null,
-    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "contactId": "4542970a-cdfa-4489-9d2e-b2c705a35682",
-    "assignedToId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "tags": [],
-    "customFields": {},
-    "serviceAgreementId": null,
-    "createdAt": "2026-08-12T06:04:15.114Z",
-    "updatedAt": "2026-08-12T08:15:51.758Z"
-  },
-  {
-    "id": "5545e551-f4ac-4412-9934-96e86383d869",
-    "ticketNumber": "MSP-1003-1001",
-    "title": "VPN connection drops every 15 minutes",
-    "description": "Remote users report consistent VPN disconnects. Affects 12 users. Started Monday morning.",
-    "status": "waiting_client",
-    "priority": "medium",
-    "source": "portal",
-    "dueDate": null,
-    "startTime": "2026-08-09T06:04:15.110Z",
-    "endTime": null,
-    "slaResponseDue": null,
-    "slaResolutionDue": null,
-    "firstResponseAt": null,
-    "resolvedAt": null,
-    "closedAt": null,
-    "isOverdue": false,
-    "waitingSince": null,
-    "followUpCount": 0,
-    "lastFollowUpAt": null,
-    "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
-    "categoryId": null,
-    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
-    "contactId": null,
-    "assignedToId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "tags": [],
-    "customFields": {},
-    "serviceAgreementId": null,
-    "createdAt": "2026-08-12T06:04:15.117Z",
-    "updatedAt": "2026-08-12T08:15:51.758Z"
-  },
-  {
     "id": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
     "ticketNumber": "INF-1004-1001",
     "title": "Phishing alert: suspicious email circulating",
@@ -122,42 +26,73 @@
     "assignedToId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "createdById": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "tags": [],
-    "customFields": {},
+    "customFields": {
+      "ticketLinks": [
+        {
+          "id": "s-e28544bc-l1",
+          "rel": "related",
+          "title": "Network drive mapping failure after migration",
+          "linkedAt": "2026-08-07T17:54:21.154Z",
+          "ticketId": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+          "ticketNumber": "INT-1002-1001"
+        },
+        {
+          "id": "s-e28544bc-l2",
+          "rel": "related",
+          "title": "Printer queue stuck — reception area",
+          "linkedAt": "2026-08-10T17:54:21.154Z",
+          "ticketId": "a09d99d5-06d4-4d06-a397-70ba25d7200a",
+          "ticketNumber": "MSP-1001-1002"
+        }
+      ],
+      "ticketProducts": [
+        {
+          "id": "s-e28544bc-p1",
+          "qty": 1,
+          "name": "SSD 1TB Upgrade Kit",
+          "unitCost": 149.99
+        },
+        {
+          "id": "s-e28544bc-p2",
+          "qty": 2,
+          "name": "USB-C Docking Station",
+          "unitCost": 189
+        }
+      ],
+      "ticketAttachments": [
+        {
+          "at": "2026-08-09T17:54:21.154Z",
+          "id": "s-e28544bc-a1",
+          "name": "error-log-export.txt",
+          "size": "—",
+          "uploadedBy": "John Smith"
+        },
+        {
+          "at": "2026-08-11T17:54:21.154Z",
+          "id": "s-e28544bc-a2",
+          "name": "config-backup.json",
+          "size": "—",
+          "uploadedBy": "System"
+        }
+      ],
+      "ticketConfigurations": [
+        {
+          "id": "s-e28544bc-c1",
+          "name": "DC-01 Domain Controller",
+          "type": "Kumo Config",
+          "linkedAt": "2026-08-06T17:54:21.154Z"
+        },
+        {
+          "id": "s-e28544bc-c2",
+          "name": "EXCH-01 Exchange Server",
+          "type": "Kumo Config",
+          "linkedAt": "2026-08-08T17:54:21.154Z"
+        }
+      ]
+    },
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.118Z",
-    "updatedAt": "2026-08-12T08:15:51.758Z"
-  },
-  {
-    "id": "7ba48735-e64d-48b7-b494-b148b6808416",
-    "ticketNumber": "MSP-1005-1001",
-    "title": "New user onboarding — Finance department",
-    "description": "Need 3 new workstations set up with standard software stack. John in Finance starts next Monday.",
-    "status": "waiting_client",
-    "priority": "low",
-    "source": "portal",
-    "dueDate": "2026-08-17T06:04:15.110Z",
-    "startTime": null,
-    "endTime": null,
-    "slaResponseDue": null,
-    "slaResolutionDue": null,
-    "firstResponseAt": null,
-    "resolvedAt": null,
-    "closedAt": null,
-    "isOverdue": false,
-    "waitingSince": null,
-    "followUpCount": 0,
-    "lastFollowUpAt": null,
-    "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
-    "categoryId": null,
-    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
-    "contactId": null,
-    "assignedToId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdById": "632e5daf-5190-4f6c-8352-ce24896d4e41",
-    "tags": [],
-    "customFields": {},
-    "serviceAgreementId": null,
-    "createdAt": "2026-08-12T06:04:15.120Z",
-    "updatedAt": "2026-08-12T08:15:51.758Z"
+    "updatedAt": "2026-08-12T17:54:21.157Z"
   },
   {
     "id": "a09d99d5-06d4-4d06-a397-70ba25d7200a",
@@ -186,42 +121,73 @@
     "assignedToId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "tags": [],
-    "customFields": {},
+    "customFields": {
+      "ticketLinks": [
+        {
+          "id": "s-a09d99d5-l1",
+          "rel": "related",
+          "title": "VPN connection drops every 15 minutes",
+          "linkedAt": "2026-08-07T17:54:21.212Z",
+          "ticketId": "5545e551-f4ac-4412-9934-96e86383d869",
+          "ticketNumber": "MSP-1003-1001"
+        },
+        {
+          "id": "s-a09d99d5-l2",
+          "rel": "related",
+          "title": "New user onboarding — Finance department",
+          "linkedAt": "2026-08-10T17:54:21.212Z",
+          "ticketId": "7ba48735-e64d-48b7-b494-b148b6808416",
+          "ticketNumber": "MSP-1005-1001"
+        }
+      ],
+      "ticketProducts": [
+        {
+          "id": "s-a09d99d5-p1",
+          "qty": 2,
+          "name": "Replacement Toner Cartridge",
+          "unitCost": 118
+        },
+        {
+          "id": "s-a09d99d5-p2",
+          "qty": 3,
+          "name": "Microsoft 365 Business Premium",
+          "unitCost": 22
+        }
+      ],
+      "ticketAttachments": [
+        {
+          "at": "2026-08-09T17:54:21.212Z",
+          "id": "s-a09d99d5-a1",
+          "name": "error-log-export.txt",
+          "size": "—",
+          "uploadedBy": "John Smith"
+        },
+        {
+          "at": "2026-08-11T17:54:21.212Z",
+          "id": "s-a09d99d5-a2",
+          "name": "config-backup.json",
+          "size": "—",
+          "uploadedBy": "System"
+        }
+      ],
+      "ticketConfigurations": [
+        {
+          "id": "s-a09d99d5-c1",
+          "name": "M365 Tenant",
+          "type": "Kumo Config",
+          "linkedAt": "2026-08-09T17:54:21.212Z"
+        },
+        {
+          "id": "s-a09d99d5-c2",
+          "name": "NAS Backup Server",
+          "type": "Asset",
+          "linkedAt": "2026-08-08T17:54:21.212Z"
+        }
+      ]
+    },
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.121Z",
-    "updatedAt": "2026-08-12T08:15:51.758Z"
-  },
-  {
-    "id": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
-    "ticketNumber": "MSP-1003-1002",
-    "title": "Software license renewal — Adobe CC",
-    "description": "Adobe Creative Cloud licenses expire next month. Need to renew for design team (8 seats).",
-    "status": "waiting_client",
-    "priority": "medium",
-    "source": "portal",
-    "dueDate": null,
-    "startTime": null,
-    "endTime": null,
-    "slaResponseDue": null,
-    "slaResolutionDue": null,
-    "firstResponseAt": null,
-    "resolvedAt": null,
-    "closedAt": null,
-    "isOverdue": false,
-    "waitingSince": null,
-    "followUpCount": 0,
-    "lastFollowUpAt": null,
-    "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
-    "categoryId": null,
-    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
-    "contactId": null,
-    "assignedToId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdById": "632e5daf-5190-4f6c-8352-ce24896d4e41",
-    "tags": [],
-    "customFields": {},
-    "serviceAgreementId": null,
-    "createdAt": "2026-08-12T06:04:15.122Z",
-    "updatedAt": "2026-08-12T08:15:51.758Z"
+    "updatedAt": "2026-08-12T17:54:21.213Z"
   },
   {
     "id": "4cf131de-f902-4993-be73-d5d37d924717",
@@ -250,9 +216,547 @@
     "assignedToId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "createdById": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "tags": [],
-    "customFields": {},
+    "customFields": {
+      "ticketLinks": [
+        {
+          "id": "s-4cf131de-l1",
+          "rel": "parent",
+          "title": "Phishing alert: suspicious email circulating",
+          "linkedAt": "2026-08-07T17:54:21.243Z",
+          "ticketId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+          "ticketNumber": "INF-1004-1001"
+        },
+        {
+          "id": "s-4cf131de-l2",
+          "rel": "related",
+          "title": "Email server not sending outbound messages",
+          "linkedAt": "2026-08-10T17:54:21.243Z",
+          "ticketId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
+          "ticketNumber": "MSP-1001-1001"
+        }
+      ],
+      "ticketProducts": [
+        {
+          "id": "s-4cf131de-p1",
+          "qty": 2,
+          "name": "Replacement Toner Cartridge",
+          "unitCost": 118
+        },
+        {
+          "id": "s-4cf131de-p2",
+          "qty": 3,
+          "name": "Microsoft 365 Business Premium",
+          "unitCost": 22
+        }
+      ],
+      "ticketAttachments": [
+        {
+          "at": "2026-08-09T17:54:21.243Z",
+          "id": "s-4cf131de-a1",
+          "name": "screenshot-before-after.png",
+          "size": "—",
+          "uploadedBy": "John Smith"
+        },
+        {
+          "at": "2026-08-11T17:54:21.243Z",
+          "id": "s-4cf131de-a2",
+          "name": "error-log-export.txt",
+          "size": "—",
+          "uploadedBy": "System"
+        }
+      ],
+      "ticketConfigurations": [
+        {
+          "id": "s-4cf131de-c1",
+          "name": "M365 Tenant",
+          "type": "Kumo Config",
+          "linkedAt": "2026-08-08T17:54:21.243Z"
+        },
+        {
+          "id": "s-4cf131de-c2",
+          "name": "NAS Backup Server",
+          "type": "Asset",
+          "linkedAt": "2026-08-09T17:54:21.243Z"
+        }
+      ]
+    },
     "serviceAgreementId": null,
     "createdAt": "2026-08-12T06:04:15.123Z",
-    "updatedAt": "2026-08-12T08:15:51.758Z"
+    "updatedAt": "2026-08-12T17:54:21.244Z"
+  },
+  {
+    "id": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+    "ticketNumber": "INT-1002-1001",
+    "title": "Network drive mapping failure after migration",
+    "description": "All users in Chicago office lost mapped drives after weekend migration. GPO seems intact.",
+    "status": "waiting_client",
+    "priority": "critical",
+    "source": "portal",
+    "dueDate": "2026-08-13T11:04:00.000Z",
+    "startTime": null,
+    "endTime": null,
+    "slaResponseDue": null,
+    "slaResolutionDue": null,
+    "firstResponseAt": null,
+    "resolvedAt": null,
+    "closedAt": null,
+    "isOverdue": false,
+    "waitingSince": null,
+    "followUpCount": 0,
+    "lastFollowUpAt": null,
+    "boardId": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
+    "categoryId": null,
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "contactId": null,
+    "assignedToId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "createdById": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "tags": [],
+    "customFields": {
+      "ticketLinks": [
+        {
+          "id": "s-7f6076a4-l1",
+          "rel": "parent",
+          "title": "Email server not sending outbound messages",
+          "linkedAt": "2026-08-07T17:54:21.188Z",
+          "ticketId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
+          "ticketNumber": "MSP-1001-1001"
+        },
+        {
+          "id": "s-7f6076a4-l2",
+          "rel": "related",
+          "title": "VPN connection drops every 15 minutes",
+          "linkedAt": "2026-08-10T17:54:21.188Z",
+          "ticketId": "5545e551-f4ac-4412-9934-96e86383d869",
+          "ticketNumber": "MSP-1003-1001"
+        }
+      ],
+      "ticketProducts": [
+        {
+          "id": "s-7f6076a4-p1",
+          "qty": 1,
+          "name": "Patch Cable Cat6 (10-pack)",
+          "unitCost": 24.5
+        },
+        {
+          "id": "s-7f6076a4-p2",
+          "qty": 8,
+          "name": "Adobe Creative Cloud License",
+          "unitCost": 54.99
+        }
+      ],
+      "ticketAttachments": [
+        {
+          "at": "2026-08-09T17:54:21.188Z",
+          "id": "s-7f6076a4-a1",
+          "name": "screenshot-before-after.png",
+          "size": "—",
+          "uploadedBy": "John Smith"
+        },
+        {
+          "at": "2026-08-11T17:54:21.188Z",
+          "id": "s-7f6076a4-a2",
+          "name": "error-log-export.txt",
+          "size": "—",
+          "uploadedBy": "System"
+        }
+      ],
+      "ticketConfigurations": [
+        {
+          "id": "s-7f6076a4-c1",
+          "name": "FW-EDGE Firewall",
+          "type": "Kumo Config",
+          "linkedAt": "2026-08-07T17:54:21.188Z"
+        },
+        {
+          "id": "s-7f6076a4-c2",
+          "name": "ThinkPad T14 — Finance",
+          "type": "Asset",
+          "linkedAt": "2026-08-09T17:54:21.188Z"
+        }
+      ]
+    },
+    "serviceAgreementId": null,
+    "createdAt": "2026-08-12T06:04:15.115Z",
+    "updatedAt": "2026-08-12T17:54:21.189Z"
+  },
+  {
+    "id": "8da69561-0e86-4082-b323-0bfa64c95e1f",
+    "ticketNumber": "MSP-1001-1001",
+    "title": "Email server not sending outbound messages",
+    "description": "Users cannot send external emails. Internal mail flow works fine. Error: 550 5.7.1 Unable to relay.",
+    "status": "waiting_client",
+    "priority": "high",
+    "source": "portal",
+    "dueDate": "2026-08-14T06:04:15.110Z",
+    "startTime": "2026-08-11T06:04:15.110Z",
+    "endTime": null,
+    "slaResponseDue": null,
+    "slaResolutionDue": null,
+    "firstResponseAt": null,
+    "resolvedAt": null,
+    "closedAt": null,
+    "isOverdue": false,
+    "waitingSince": null,
+    "followUpCount": 0,
+    "lastFollowUpAt": null,
+    "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "categoryId": null,
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "contactId": "4542970a-cdfa-4489-9d2e-b2c705a35682",
+    "assignedToId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "tags": [],
+    "customFields": {
+      "ticketLinks": [
+        {
+          "id": "s-8da69561-l1",
+          "rel": "duplicate",
+          "title": "Printer queue stuck — reception area",
+          "linkedAt": "2026-08-07T17:54:21.195Z",
+          "ticketId": "a09d99d5-06d4-4d06-a397-70ba25d7200a",
+          "ticketNumber": "MSP-1001-1002"
+        },
+        {
+          "id": "s-8da69561-l2",
+          "rel": "related",
+          "title": "Software license renewal — Adobe CC",
+          "linkedAt": "2026-08-10T17:54:21.195Z",
+          "ticketId": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
+          "ticketNumber": "MSP-1003-1002"
+        }
+      ],
+      "ticketProducts": [
+        {
+          "id": "s-8da69561-p1",
+          "qty": 2,
+          "name": "Laptop RAM 16GB SODIMM",
+          "unitCost": 79.99
+        },
+        {
+          "id": "s-8da69561-p2",
+          "qty": 12,
+          "name": "VPN Client License",
+          "unitCost": 9.5
+        }
+      ],
+      "ticketAttachments": [
+        {
+          "at": "2026-08-09T17:54:21.195Z",
+          "id": "s-8da69561-a1",
+          "name": "config-backup.json",
+          "size": "—",
+          "uploadedBy": "John Smith"
+        },
+        {
+          "at": "2026-08-11T17:54:21.195Z",
+          "id": "s-8da69561-a2",
+          "name": "screenshot-before-after.png",
+          "size": "—",
+          "uploadedBy": "System"
+        }
+      ],
+      "ticketConfigurations": [
+        {
+          "id": "s-8da69561-c1",
+          "name": "Reception Printer IR-ADV C5550",
+          "type": "Asset",
+          "linkedAt": "2026-08-08T17:54:21.195Z"
+        },
+        {
+          "id": "s-8da69561-c2",
+          "name": "VPN Gateway Appliance",
+          "type": "Asset",
+          "linkedAt": "2026-08-10T17:54:21.195Z"
+        }
+      ]
+    },
+    "serviceAgreementId": null,
+    "createdAt": "2026-08-12T06:04:15.114Z",
+    "updatedAt": "2026-08-12T17:54:21.197Z"
+  },
+  {
+    "id": "5545e551-f4ac-4412-9934-96e86383d869",
+    "ticketNumber": "MSP-1003-1001",
+    "title": "VPN connection drops every 15 minutes",
+    "description": "Remote users report consistent VPN disconnects. Affects 12 users. Started Monday morning.",
+    "status": "waiting_client",
+    "priority": "medium",
+    "source": "portal",
+    "dueDate": null,
+    "startTime": "2026-08-09T06:04:15.110Z",
+    "endTime": null,
+    "slaResponseDue": null,
+    "slaResolutionDue": null,
+    "firstResponseAt": null,
+    "resolvedAt": null,
+    "closedAt": null,
+    "isOverdue": false,
+    "waitingSince": null,
+    "followUpCount": 0,
+    "lastFollowUpAt": null,
+    "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "categoryId": null,
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "contactId": null,
+    "assignedToId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "tags": [],
+    "customFields": {
+      "ticketLinks": [
+        {
+          "id": "s-5545e551-l1",
+          "rel": "parent",
+          "title": "Software license renewal — Adobe CC",
+          "linkedAt": "2026-08-07T17:54:21.219Z",
+          "ticketId": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
+          "ticketNumber": "MSP-1003-1002"
+        },
+        {
+          "id": "s-5545e551-l2",
+          "rel": "related",
+          "title": "MFA setup for C-suite execs",
+          "linkedAt": "2026-08-10T17:54:21.219Z",
+          "ticketId": "4cf131de-f902-4993-be73-d5d37d924717",
+          "ticketNumber": "MSP-1005-1002"
+        }
+      ],
+      "ticketProducts": [
+        {
+          "id": "s-5545e551-p1",
+          "qty": 1,
+          "name": "SSD 1TB Upgrade Kit",
+          "unitCost": 149.99
+        },
+        {
+          "id": "s-5545e551-p2",
+          "qty": 2,
+          "name": "USB-C Docking Station",
+          "unitCost": 189
+        }
+      ],
+      "ticketAttachments": [
+        {
+          "at": "2026-08-09T17:54:21.219Z",
+          "id": "s-5545e551-a1",
+          "name": "screenshot-before-after.png",
+          "size": "—",
+          "uploadedBy": "John Smith"
+        },
+        {
+          "at": "2026-08-11T17:54:21.219Z",
+          "id": "s-5545e551-a2",
+          "name": "error-log-export.txt",
+          "size": "—",
+          "uploadedBy": "System"
+        }
+      ],
+      "ticketConfigurations": [
+        {
+          "id": "s-5545e551-c1",
+          "name": "DC-01 Domain Controller",
+          "type": "Kumo Config",
+          "linkedAt": "2026-08-10T17:54:21.219Z"
+        },
+        {
+          "id": "s-5545e551-c2",
+          "name": "EXCH-01 Exchange Server",
+          "type": "Kumo Config",
+          "linkedAt": "2026-08-09T17:54:21.219Z"
+        }
+      ]
+    },
+    "serviceAgreementId": null,
+    "createdAt": "2026-08-12T06:04:15.117Z",
+    "updatedAt": "2026-08-12T17:54:21.221Z"
+  },
+  {
+    "id": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
+    "ticketNumber": "MSP-1003-1002",
+    "title": "Software license renewal — Adobe CC",
+    "description": "Adobe Creative Cloud licenses expire next month. Need to renew for design team (8 seats).",
+    "status": "waiting_client",
+    "priority": "medium",
+    "source": "portal",
+    "dueDate": null,
+    "startTime": null,
+    "endTime": null,
+    "slaResponseDue": null,
+    "slaResolutionDue": null,
+    "firstResponseAt": null,
+    "resolvedAt": null,
+    "closedAt": null,
+    "isOverdue": false,
+    "waitingSince": null,
+    "followUpCount": 0,
+    "lastFollowUpAt": null,
+    "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "categoryId": null,
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "contactId": null,
+    "assignedToId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "createdById": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "tags": [],
+    "customFields": {
+      "ticketLinks": [
+        {
+          "id": "s-bc93e884-l1",
+          "rel": "duplicate",
+          "title": "New user onboarding — Finance department",
+          "linkedAt": "2026-08-07T17:54:21.228Z",
+          "ticketId": "7ba48735-e64d-48b7-b494-b148b6808416",
+          "ticketNumber": "MSP-1005-1001"
+        },
+        {
+          "id": "s-bc93e884-l2",
+          "rel": "related",
+          "title": "Phishing alert: suspicious email circulating",
+          "linkedAt": "2026-08-10T17:54:21.228Z",
+          "ticketId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+          "ticketNumber": "INF-1004-1001"
+        }
+      ],
+      "ticketProducts": [
+        {
+          "id": "s-bc93e884-p1",
+          "qty": 1,
+          "name": "Patch Cable Cat6 (10-pack)",
+          "unitCost": 24.5
+        },
+        {
+          "id": "s-bc93e884-p2",
+          "qty": 8,
+          "name": "Adobe Creative Cloud License",
+          "unitCost": 54.99
+        }
+      ],
+      "ticketAttachments": [
+        {
+          "at": "2026-08-09T17:54:21.228Z",
+          "id": "s-bc93e884-a1",
+          "name": "config-backup.json",
+          "size": "—",
+          "uploadedBy": "John Smith"
+        },
+        {
+          "at": "2026-08-11T17:54:21.228Z",
+          "id": "s-bc93e884-a2",
+          "name": "screenshot-before-after.png",
+          "size": "—",
+          "uploadedBy": "System"
+        }
+      ],
+      "ticketConfigurations": [
+        {
+          "id": "s-bc93e884-c1",
+          "name": "FW-EDGE Firewall",
+          "type": "Kumo Config",
+          "linkedAt": "2026-08-06T17:54:21.228Z"
+        },
+        {
+          "id": "s-bc93e884-c2",
+          "name": "ThinkPad T14 — Finance",
+          "type": "Asset",
+          "linkedAt": "2026-08-10T17:54:21.228Z"
+        }
+      ]
+    },
+    "serviceAgreementId": null,
+    "createdAt": "2026-08-12T06:04:15.122Z",
+    "updatedAt": "2026-08-12T17:54:21.230Z"
+  },
+  {
+    "id": "7ba48735-e64d-48b7-b494-b148b6808416",
+    "ticketNumber": "MSP-1005-1001",
+    "title": "New user onboarding — Finance department",
+    "description": "Need 3 new workstations set up with standard software stack. John in Finance starts next Monday.",
+    "status": "waiting_client",
+    "priority": "low",
+    "source": "portal",
+    "dueDate": "2026-08-17T06:04:15.110Z",
+    "startTime": null,
+    "endTime": null,
+    "slaResponseDue": null,
+    "slaResolutionDue": null,
+    "firstResponseAt": null,
+    "resolvedAt": null,
+    "closedAt": null,
+    "isOverdue": false,
+    "waitingSince": null,
+    "followUpCount": 0,
+    "lastFollowUpAt": null,
+    "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+    "categoryId": null,
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "contactId": null,
+    "assignedToId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "createdById": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "tags": [],
+    "customFields": {
+      "ticketLinks": [
+        {
+          "id": "s-7ba48735-l1",
+          "rel": "related",
+          "title": "MFA setup for C-suite execs",
+          "linkedAt": "2026-08-07T17:54:21.236Z",
+          "ticketId": "4cf131de-f902-4993-be73-d5d37d924717",
+          "ticketNumber": "MSP-1005-1002"
+        },
+        {
+          "id": "s-7ba48735-l2",
+          "rel": "related",
+          "title": "Network drive mapping failure after migration",
+          "linkedAt": "2026-08-10T17:54:21.236Z",
+          "ticketId": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+          "ticketNumber": "INT-1002-1001"
+        }
+      ],
+      "ticketProducts": [
+        {
+          "id": "s-7ba48735-p1",
+          "qty": 2,
+          "name": "Laptop RAM 16GB SODIMM",
+          "unitCost": 79.99
+        },
+        {
+          "id": "s-7ba48735-p2",
+          "qty": 12,
+          "name": "VPN Client License",
+          "unitCost": 9.5
+        }
+      ],
+      "ticketAttachments": [
+        {
+          "at": "2026-08-09T17:54:21.236Z",
+          "id": "s-7ba48735-a1",
+          "name": "error-log-export.txt",
+          "size": "—",
+          "uploadedBy": "John Smith"
+        },
+        {
+          "at": "2026-08-11T17:54:21.236Z",
+          "id": "s-7ba48735-a2",
+          "name": "config-backup.json",
+          "size": "—",
+          "uploadedBy": "System"
+        }
+      ],
+      "ticketConfigurations": [
+        {
+          "id": "s-7ba48735-c1",
+          "name": "Reception Printer IR-ADV C5550",
+          "type": "Asset",
+          "linkedAt": "2026-08-07T17:54:21.236Z"
+        },
+        {
+          "id": "s-7ba48735-c2",
+          "name": "VPN Gateway Appliance",
+          "type": "Asset",
+          "linkedAt": "2026-08-08T17:54:21.236Z"
+        }
+      ]
+    },
+    "serviceAgreementId": null,
+    "createdAt": "2026-08-12T06:04:15.120Z",
+    "updatedAt": "2026-08-12T17:54:21.237Z"
   }
 ]

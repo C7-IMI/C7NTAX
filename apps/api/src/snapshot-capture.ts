@@ -31,6 +31,7 @@ const TABLES: TableDef[] = [
   { name: "ticket", fileName: "tickets.json" },
   { name: "ticketComment", fileName: "ticket-comments.json" },
   { name: "timeEntry", fileName: "time-entries.json" },
+  { name: "scheduleEntry", fileName: "schedule-entries.json" },
   { name: "serviceAgreement", fileName: "service-agreements.json" },
   { name: "invoice", fileName: "invoices.json" },
   { name: "invoiceLineItem", fileName: "invoice-line-items.json" },

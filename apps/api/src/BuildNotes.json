@@ -1,5 +1,17 @@
 [
   {
+    "version": "2026.8.12.011",
+    "date": "2026-08-12",
+    "title": "Sample Data Toggling",
+    "changes": [
+      {"text": "Sample data toggling — pnpm db:sample-off / db:sample-on backed by sample-data-toggle.ts", "type": "New Feature"},
+      {"text": "Disable flow — snapshot captured first, business data wiped (identity + platform config preserved), disabled flag set", "type": "New Feature"},
+      {"text": "While disabled — snapshot captures locked in capture script, auto-snapshot middleware, and snapshot poller; no auto-reseed after changes", "type": "New Feature"},
+      {"text": "Enable flow — reseeds from preserved snapshots via seed-from-snapshots, then clears flag and resumes snapshot-after-change", "type": "New Feature"},
+      {"text": "Command detection — explicit standalone commands only; natural-language mentions treated as normal prompts", "type": "New Feature"}
+    ]
+  },
+  {
     "version": "2026.8.12.010",
     "date": "2026-08-12",
     "title": "Ticket Detail Two-Column Layout Restored & Compact Tabs",

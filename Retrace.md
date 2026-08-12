@@ -611,6 +611,21 @@
 - `apps/web/src/pages/Tickets.tsx` — Tab strip tightened: `gap-0`, `whitespace-nowrap`, tab labels `text-xs` with `px-2 py-1` so all 12 tabs fit without horizontal scrolling on desktop
 - Verified: `tsc --noEmit` clean; all three changelog sources updated with `2026.8.12.010`
 
+### Prompt 53 — Sample data toggling
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~35 min
+**BuildNotes IDs:** #1 (2026.8.12.011)
+> Implement sample data toggling. Explicit disable commands: "disable sample data" or "turn off sample data" — create a snapshot as usual, remove the sample data so the application appears empty, do not automatically reseed after a change while disabled, do not overwrite the snapshot until re-enabled. Explicit enable commands: "enable sample data" or "turn on sample data" — reseed using established processes, resume snapshot→auto-reseed after change. Command detection: only apply when explicit; phrases inside natural-language sentences are ignored and treated as normal prompts.
+
+**Changes:**
+- `apps/api/src/services/sampleDataState.ts` — New flag module: `.sample-data-disabled` marker file with `isSampleDataDisabled()` / `setSampleDataDisabled()`
+- `apps/api/src/sample-data-toggle.ts` — New toggle script (`npx tsx src/sample-data-toggle.ts off|on`): OFF captures snapshot first, wipes all business models children-first (identity + platform config preserved: user, role, session, refreshToken, tenant, systemConfig, ssoConfig, fieldPermission, locale, translation, currency, exchangeRate, retentionPolicy), sets flag; ON reseeds via seed-from-snapshots while flag still set, then clears flag
+- `apps/api/src/snapshot-capture.ts` — Guard added: skips capture when sample data disabled (snapshot locked)
+- `apps/api/src/services/autoSnapshot.ts` — `scheduleSnapshotCapture()` returns early when disabled (no auto-capture after writes)
+- `apps/api/src/services/snapshotPoller.ts` — Poll cycle skips captures when disabled (keeps record count in sync, no capture, no auto-reseed)
+- `apps/api/package.json` — Added `db:sample-off` / `db:sample-on` scripts; root `package.json` — passthroughs `db:sample-off` / `db:sample-on`
+- Command detection rule documented in BuildNotes entries: explicit standalone commands only; natural-language mentions treated as normal prompts
+- Verified: `tsc --noEmit` clean on all new/modified files; flag round-trip tested (`set(true)` → detected, `set(false)` → removed; no leftover marker); live DB untouched (feature not executed — prompt is the implementation request, not the disable command)
+
 ---
 
-**Total Prompts:** 52 | **Completed:** 52 | **In Progress:** 0
+**Total Prompts:** 53 | **Completed:** 53 | **In Progress:** 0
