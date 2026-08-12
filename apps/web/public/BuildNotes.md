@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.002 | Last Updated: 2026-08-12
+## Version: 2026.8.12.003 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.003 — Audit Log Username + UserID & Default Expanded Entries
+- **[Update]** Audit log entries now display both the friendly username and the UserID (8-character prefix) — e.g., "Fiona Ray (a1b2c3d4)"; system entries show only "System".
+- **[Update]** Audit Logs page defaults — the top three most recent day groups are expanded on open; all older groups default to collapsed; each group toggles independently.
 
 ## 2026.8.12.002 — feature_list.json Renamed to BuildNotes.json
 - **[Update]** Data source rename — `apps/api/src/feature_list.json` renamed to `apps/api/src/BuildNotes.json` to match the BuildNotes.md naming convention.

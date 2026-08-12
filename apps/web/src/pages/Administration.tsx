@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 
 interface LogEntry {
   id: string; date: string;
-  entries: Array<{ date: string; time: string; user: string; action: string; detail: string }>;
+  entries: Array<{ date: string; time: string; user: string; userId: string; action: string; detail: string }>;
 }
 
 // ── Human-readable audit formatting ──
@@ -106,7 +106,7 @@ function buildAuditSentence(log: any): string {
 export function AuditLogsSection() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     api.get("/system/audit-logs").then(r => {
@@ -118,12 +118,16 @@ export function AuditLogsSection() {
         grouped[dt].entries.push({
           date: dt,
           time: new Date(log.createdAt).toLocaleTimeString(),
-          user: log.userName || log.userId?.slice(0, 8) || "System",
+          user: log.userName || "Unknown User",
+          userId: log.userId === "system" ? "" : (log.userId?.slice(0, 8) || ""),
           action: (log.action || "").replace(/:/g, " → "),
           detail: buildAuditSentence(log),
         });
       }
-      setLogs(Object.values(grouped).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      const sorted = Object.values(grouped).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setLogs(sorted);
+      // Default: expand the top 3 most recent day groups, collapse the rest
+      setExpanded(new Set(sorted.slice(0, 3).map(d => d.id)));
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -135,18 +139,24 @@ export function AuditLogsSection() {
         <div className="space-y-3">
           {logs.map(day => (
             <div key={day.id} className="card">
-              <button onClick={() => setExpanded(expanded === day.id ? null : day.id)} className="w-full flex items-center justify-between text-left">
+              <button onClick={() => {
+                setExpanded(prev => {
+                  const next = new Set(prev);
+                  if (next.has(day.id)) next.delete(day.id); else next.add(day.id);
+                  return next;
+                });
+              }} className="w-full flex items-center justify-between text-left">
                 <div className="flex items-center gap-3"><FileText size={16} className="text-cyber-400"/><h3 className="font-semibold text-white text-sm">{day.date}</h3><span className="badge bg-surface-border text-gray-400 text-xs">{day.entries.length} events</span></div>
-                {expanded === day.id ? <ChevronDown size={16} className="text-gray-500"/> : <ChevronRight size={16} className="text-gray-500"/>}
+                {expanded.has(day.id) ? <ChevronDown size={16} className="text-gray-500"/> : <ChevronRight size={16} className="text-gray-500"/>}
               </button>
-              {expanded === day.id && (
+              {expanded.has(day.id) && (
                 <div className="mt-3 space-y-1 border-t border-surface-border pt-3">
                   {day.entries.map((e, i) => (
                     <div key={i} className="flex items-start gap-3 py-1 text-xs">
                       <div className="shrink-0 text-gray-600 font-mono w-20">{e.time}</div>
                       <span className="badge bg-cyber-600/20 text-cyber-400 shrink-0">{e.action}</span>
                       <span className="text-gray-400 truncate">{e.detail}</span>
-                      <span className="text-gray-600 shrink-0 ml-auto flex items-center gap-1"><User size={10}/>{e.user}</span>
+                      <span className="text-gray-600 shrink-0 ml-auto flex items-center gap-1"><User size={10}/><span className="text-gray-400">{e.user}</span>{e.userId && <span className="font-mono text-gray-600">({e.userId})</span>}</span>
                     </div>
                   ))}
                 </div>

@@ -526,6 +526,16 @@
 - `Retrace.md` — Prompts 38–44 appended (this session); total count 37 → 44
 - Verified: zero remaining functional `feature_list`/`FeatureList` references in `.ts`/`.tsx`/`.json` sources; BuildNotes.json parses (9 entries); public BuildNotes.md parses (27 entries); LSP diagnostics clean on both edited source files
 
+### Prompt 45 — Audit log username + userID & default expansion
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.12.003)
+> Fix the audit logs so each log entry displays both the friendly, human-readable Username and the UserID. Keep all other audit log functionality unchanged. When the audit logs subsection is clicked in the left navigation pane, the top most recent log entry and the next two entries should default to expanded. All entries after those three should default to collapsed.
+
+**Changes:**
+- `apps/web/src/pages/Administration.tsx` — `LogEntry` entries now carry `user` and `userId` separately; data mapping stores `log.userName` as `user` and 8-char `log.userId` prefix as `userId` (empty for system entries); user column renders both as "Name (a1b2c3d4)"
+- `apps/web/src/pages/Administration.tsx` — `expanded` state changed from `string | null` to `Set<string>`; after sorting day groups newest-first, `setExpanded(new Set(sorted.slice(0, 3).map(d => d.id)))` pre-expands the top three groups; toggle add/removes from the set for independent expand/collapse
+- All three changelog sources updated with `2026.8.12.003` entry; LSP diagnostics clean
+
 ---
 
-**Total Prompts:** 44 | **Completed:** 44 | **In Progress:** 0
+**Total Prompts:** 45 | **Completed:** 45 | **In Progress:** 0
