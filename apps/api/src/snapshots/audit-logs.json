@@ -539,5 +539,17 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-13T06:15:32.315Z"
+  },
+  {
+    "id": "6ae608ee-1731-4eee-a7e5-acdc99243e13",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T06:39:48.610Z"
   }
 ]
