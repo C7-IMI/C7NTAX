@@ -68,10 +68,15 @@ export const SECTION_DESCRIPTIONS: Record<string, Record<string, string>> = {
   administration: {
     "admin-general": "Configure company profile, defaults, and overall application settings",
     "admin-boards": "Manage service boards, SLA policies, email connectors, and automations",
+    "admin-service-alerts": "Configure monitored services, RSS feeds, and the outage alerting mechanism",
     "admin-system": "System-level configuration including database, backups, and integrations",
     "admin-logs": "View audit trail and track all changes across the system",
     "admin-cloudconnect": "Connect third-party services with 16 available connector types",
     "admin-changelog": "Release history and feature changelog for C7NTAX",
+  },
+  boards: {
+    "boards-dashboard": "Monitor service boards with live ticket metrics, stale tracking, and SLA status",
+    "service-alerts": "Live outage monitoring for Microsoft 365, Azure, AWS, GitHub, ISPs, and other configured services",
   },
   clients: {
     "clients-list": "Browse, search, and manage all client companies and accounts",

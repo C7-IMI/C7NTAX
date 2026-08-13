@@ -25,10 +25,10 @@ export const NAV_TREE: NavNode[] = [
   { id: "home", to: "/home", icon: Home, label: "Home" },
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets" },
-  { id: "boards", to: "/boards", icon: Columns3, label: "Service Boards" },
   {
-    id: "service-alerts", icon: AlertTriangle, label: "Service Alerts", children: [
-      { id: "service-alerts-dashboard", to: "/service-alerts", icon: AlertTriangle, label: "Dashboard" },
+    id: "boards", icon: Columns3, label: "Service Boards", children: [
+      { id: "boards-dashboard", to: "/boards", icon: Columns3, label: "Service Boards" },
+      { id: "service-alerts", to: "/service-alerts", icon: AlertTriangle, label: "Service Alerts" },
     ],
   },
   { id: "pipeline", to: "/opportunities", icon: Target, label: "Pipeline" },
@@ -206,10 +206,33 @@ export function Layout({ children }: { children: ReactNode }) {
   const sidebarRef = useRef<HTMLElement>(null);
 
   // ── Drag-and-drop nav order ────────────────────────────────────
+  // Saved order is reconciled with NAV_TREE on load: unknown ids are dropped
+  // and any new top-level ids are inserted at their default position, so
+  // newly added nav sections (e.g. Service Alerts) never disappear for users
+  // with a previously persisted order.
   const [navOrder, setNavOrder] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("c7_nav_order");
-      if (saved) return JSON.parse(saved) as string[];
+      if (saved) {
+        const parsed = JSON.parse(saved) as string[];
+        const known = new Set(NAV_TREE.map(n => n.id));
+        const merged = parsed.filter(id => known.has(id));
+        let changed = merged.length !== parsed.length;
+        NAV_TREE.forEach((node, idx) => {
+          if (merged.includes(node.id)) return;
+          changed = true;
+          let insertAt = merged.length;
+          for (let i = idx - 1; i >= 0; i--) {
+            const prev = NAV_TREE[i];
+            if (!prev) continue;
+            const pos = merged.indexOf(prev.id);
+            if (pos !== -1) { insertAt = pos + 1; break; }
+          }
+          merged.splice(insertAt, 0, node.id);
+        });
+        if (changed) localStorage.setItem("c7_nav_order", JSON.stringify(merged));
+        return merged;
+      }
     } catch {}
     return NAV_TREE.map(n => n.id);
   });
@@ -378,7 +401,7 @@ export function Layout({ children }: { children: ReactNode }) {
               }`}
             >
               <node.icon size={20} />
-              {node.id === "service-alerts" && alertCount > 0 && (
+              {node.id === "boards" && alertCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{alertCount}</span>
               )}
             </button>
@@ -391,7 +414,7 @@ export function Layout({ children }: { children: ReactNode }) {
               }`}
             >
               <node.icon size={20} />
-              {node.id === "service-alerts" && alertCount > 0 && (
+              {node.id === "boards" && alertCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{alertCount}</span>
               )}
             </Link>
@@ -430,8 +453,8 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={18} />
               {!collapsed && <span className="flex-1 text-left truncate">{node.label}</span>}
-              {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
-                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
+              {!collapsed && node.id === "boards" && alertCount > 0 && (
+                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"} — see Service Alerts`}>{alertCount}</span>
               )}
               {!collapsed && <ChevronDown size={14} className={`transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />}
             </button>

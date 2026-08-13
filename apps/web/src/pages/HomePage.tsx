@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import {
   Ticket, Columns3, Building2, Target, DollarSign,
-  FolderKanban, Monitor, BookOpen, Shield, Database, Users
+  FolderKanban, Monitor, BookOpen, Shield, Database, Users, AlertTriangle
 } from "lucide-react";
 
 interface QuickLink {
@@ -23,6 +23,12 @@ const GETTING_STARTED: QuickLink[] = [
     description: "Monitor service boards with live ticket metrics, stale tracking, and SLA status.",
     to: "/boards",
     icon: Columns3,
+  },
+  {
+    label: "Service Alerts",
+    description: "Live outage monitoring for Microsoft 365, Azure, AWS, GitHub, ISPs, and more.",
+    to: "/service-alerts",
+    icon: AlertTriangle,
   },
   {
     label: "Pipeline",
