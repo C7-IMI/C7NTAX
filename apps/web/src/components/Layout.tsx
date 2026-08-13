@@ -24,13 +24,13 @@ export type NavNode = {
 export const NAV_TREE: NavNode[] = [
   { id: "home", to: "/home", icon: Home, label: "Home" },
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets" },
   {
-    id: "boards", icon: Columns3, label: "Service Boards", children: [
-      { id: "boards-dashboard", to: "/boards", icon: Columns3, label: "Service Boards" },
-      { id: "service-alerts", to: "/service-alerts", icon: AlertTriangle, label: "Service Alerts" },
+    id: "service-alerts", icon: AlertTriangle, label: "Service Alerts", children: [
+      { id: "service-alerts-dashboard", to: "/service-alerts", icon: AlertTriangle, label: "Dashboard" },
     ],
   },
+  { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets" },
+  { id: "boards", to: "/boards", icon: Columns3, label: "Service Boards" },
   { id: "pipeline", to: "/opportunities", icon: Target, label: "Pipeline" },
   {
     id: "administration", icon: Shield, label: "Administration", children: [
@@ -401,7 +401,7 @@ export function Layout({ children }: { children: ReactNode }) {
               }`}
             >
               <node.icon size={20} />
-              {node.id === "boards" && alertCount > 0 && (
+              {node.id === "service-alerts" && alertCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{alertCount}</span>
               )}
             </button>
@@ -414,7 +414,7 @@ export function Layout({ children }: { children: ReactNode }) {
               }`}
             >
               <node.icon size={20} />
-              {node.id === "boards" && alertCount > 0 && (
+              {node.id === "service-alerts" && alertCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{alertCount}</span>
               )}
             </Link>
@@ -453,8 +453,8 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={18} />
               {!collapsed && <span className="flex-1 text-left truncate">{node.label}</span>}
-              {!collapsed && node.id === "boards" && alertCount > 0 && (
-                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"} — see Service Alerts`}>{alertCount}</span>
+              {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
+                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
               )}
               {!collapsed && <ChevronDown size={14} className={`transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />}
             </button>
@@ -479,9 +479,6 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={18} />
               {!collapsed && node.label}
-              {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
-                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
-              )}
               {active && !collapsed && <ChevronRight size={14} className="ml-auto" />}
             </Link>
           </div>

@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.8.13.002",
+    "date": "2026-08-13",
+    "title": "Service Alerts as Top-Level Nav Section",
+    "changes": [
+      {"text": "Service Alerts is now a top-level parent section placed between Dashboard and Tickets; expands to its own Dashboard landing page and is draggable like every other parent section", "type": "Update"},
+      {"text": "Service Boards restored to a single top-level link; active-alert badge moved back to the Service Alerts parent section (expanded + collapsed sidebar)", "type": "Update"},
+      {"text": "Stale persisted nav orders reconciled so the new top-level Service Alerts section inserts at its default position (after Dashboard) without wiping user customizations", "type": "Fix"},
+      {"text": "Section-landing description moved to the Service Alerts section (Dashboard child); Service Alerts card remains on the Home landing page", "type": "Update"}
+    ]
+  },
+  {
+    "version": "2026.8.13.001",
+    "date": "2026-08-13",
+    "title": "Service Alerts Nested Under Service Boards",
+    "changes": [
+      {"text": "Service Alerts is now nested inside the Service Boards navigation section (Service Boards → Service Boards, Service Alerts); the dedicated top-level Service Alerts parent section was removed", "type": "Update"},
+      {"text": "Navigation reconciles persisted c7_nav_order against the nav tree on load — stale saved orders no longer hide new sections, and the removed top-level service-alerts id is dropped safely", "type": "Fix"},
+      {"text": "Service Boards now carries the active-alert count badge (expanded and collapsed sidebar); the Service Alerts child keeps its own badge too", "type": "Update"},
+      {"text": "Service Alerts card added to the Home landing page Getting Started grid, linking to the outage dashboard", "type": "New Feature"},
+      {"text": "Section landing descriptions added for Service Boards (dashboard + Service Alerts) and Administration → Service Alerts settings", "type": "Update"}
+    ]
+  },
+  {
     "version": "2026.8.12.019",
     "date": "2026-08-12",
     "title": "Service Alerts — Outage Monitoring & Alerting",

@@ -728,6 +728,32 @@
 - `apps/api/src/verify-post-change.ts` — New pages added to required checks; min counts serviceAlertService: 8, serviceAlert: 2
 - All three changelog sources updated with `2026.8.12.019`
 
+### Prompt 62 — Service Alerts nested under Service Boards
+**Timestamp:** 2026-08-13 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.13.001)
+> Fix the navigation pane so the Service Alerts section and landing page appear nested under Service Boards. The Service Alerts page works when opened from the banner, but its navigation item is missing. Refer to the attached screenshots to see the current navigation structure and correct it so Service Alerts is properly nested under Service Boards. Also ensure Service Alerts appears on the Home landing page.
+
+**Changes:**
+- `apps/web/src/components/Layout.tsx` — NAV_TREE restructured: "boards" is now a parent section with children (Service Boards → /boards, Service Alerts → /service-alerts); the separate top-level "service-alerts" parent was removed; active-alert badge moved to the boards node (expanded label + collapsed icon) while the Service Alerts child keeps its own badge
+- `apps/web/src/components/Layout.tsx` — nav-order reconciliation on load: saved `c7_nav_order` is filtered to known top-level ids, missing ids are inserted at their default positions, and stale ids (the old top-level "service-alerts") are dropped — this was the root cause of the missing nav item on browsers with persisted nav order
+- `apps/web/src/pages/HomePage.tsx` — Service Alerts quick-link card added to the Home landing page "Getting Started" grid (after Service Boards)
+- `apps/web/src/pages/SectionLanding.tsx` — SECTION_DESCRIPTIONS entries for the boards section (boards-dashboard, service-alerts) and administration → admin-service-alerts
+- Verified: reconciliation logic unit-tested against stale/legacy/custom saved orders; web tsc clean for changed files; vite transforms clean; `verify-post-change` passed ("✓ All checks passed")
+- All three changelog sources updated with `2026.8.13.001`
+
 ---
 
-**Total Prompts:** 61 | **Completed:** 61 | **In Progress:** 0
+### Prompt 63 — Service Alerts as top-level nav section
+**Timestamp:** 2026-08-13 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.13.002)
+> Update the navigation pane so that Service Alerts is a top-level parent section, not a child/subsection. Place Service Alerts between Dashboard and Tickets. Make Service Alerts draggable in the same way as the other parent sections. Ensure Service Alerts also appears as a card on the Home landing page.
+
+**Changes:**
+- `apps/web/src/components/Layout.tsx` — NAV_TREE: Service Alerts restored as a top-level parent section (child: Dashboard → /service-alerts) placed between Dashboard and Tickets; Service Boards restored to a single top-level link; alert-count badge moved to the Service Alerts parent (expanded label + collapsed icon); existing nav-order reconciliation now inserts the missing top-level id at its default position (after Dashboard) on load without wiping user customizations
+- `apps/web/src/pages/SectionLanding.tsx` — Section descriptions: removed boards block, added "service-alerts" → "service-alerts-dashboard" entry
+- `apps/web/src/pages/HomePage.tsx` — Service Alerts card already present from prior turn (verified)
+- All three changelog sources updated with `2026.8.13.002`
+
+---
+
+**Total Prompts:** 63 | **Completed:** 63 | **In Progress:** 0

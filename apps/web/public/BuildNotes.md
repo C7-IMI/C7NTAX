@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.019 | Last Updated: 2026-08-12
+## Version: 2026.8.13.002 | Last Updated: 2026-08-13
 
 ---
 
@@ -11,6 +11,19 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.13.002 — Service Alerts as Top-Level Nav Section
+- **[Update]** Service Alerts is now a top-level parent section placed between Dashboard and Tickets (Dashboard, Service Alerts, Tickets, Service Boards…); it expands to its own Dashboard landing page and is draggable like every other parent section.
+- **[Update]** Service Boards restored to a single top-level link (no longer a parent); active-alert badge moved back to the Service Alerts parent section (expanded + collapsed sidebar).
+- **[Fix]** Stale persisted nav orders are reconciled so the new top-level Service Alerts section inserts at its default position (after Dashboard) without wiping user customizations.
+- **[Update]** Section-landing description moved to the Service Alerts section (Dashboard child); Service Alerts card remains on the Home landing page.
+
+## 2026.8.13.001 — Service Alerts Nested Under Service Boards
+- **[Update]** Service Alerts is now nested inside the Service Boards navigation section: Service Boards → (Service Boards, Service Alerts), matching the requested structure; the dedicated top-level Service Alerts parent section was removed.
+- **[Fix]** Navigation now reconciles the persisted `c7_nav_order` against the nav tree on load — stale saved orders no longer hide new sections, and the removed top-level "service-alerts" id is dropped safely.
+- **[Update]** Service Boards now carries the active-alert count badge (expanded and collapsed sidebar); the Service Alerts child keeps its own badge too.
+- **[New]** Service Alerts card added to the Home landing page "Getting Started" grid, linking to the outage dashboard.
+- **[Update]** Section landing descriptions added for Service Boards (dashboard + Service Alerts) and the Administration → Service Alerts settings page.
 
 ## 2026.8.12.019 — Service Alerts (Outage Monitoring & Alerting)
 - **[New]** Draggable "Service Alerts" parent section in the app navigation (below Service Boards) with a live red badge showing the number of active alerts; Administration gains a "Service Alerts" configuration subsection.
