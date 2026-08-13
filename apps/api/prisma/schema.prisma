@@ -1619,3 +1619,42 @@ model RecentlyViewedItem {
   @@unique([userId, entityType, entityId])
   @@index([userId, viewedAt])
 }
+
+// ── FI-060: Service Alerts ─────────────────────────────────────────
+
+model ServiceAlertService {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  category        String   @default("other") // cloud, isp, telecom, collaboration, other
+  description     String?  // short summary shown on dashboard cards
+  statusPageUrl   String?  // official status page
+  downDetectorUrl String?  // DownDetector status page
+  rssUrl          String?  // RSS feed polled by the alert monitor
+  monitorEnabled  Boolean  @default(true)
+  enabled         Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  alerts          ServiceAlert[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([enabled, sortOrder])
+}
+
+model ServiceAlert {
+  id          String              @id @default(uuid())
+  serviceId   String
+  service     ServiceAlertService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  severity    String              @default("outage") // outage, degraded, informational
+  status      String              @default("active") // active, resolved
+  source      String              @default("rss") // rss, statuspage, downdetector, manual
+  sourceUrl   String?
+  detectedAt  DateTime            @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([serviceId])
+  @@index([status])
+}
