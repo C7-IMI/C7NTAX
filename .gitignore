@@ -8,6 +8,7 @@ release/
 *.env.local
 .env.production
 *.log
+*.log.previous
 .DS_Store
 Thumbs.db
 prisma/migrations/
