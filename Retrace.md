@@ -708,6 +708,26 @@
 - License column for every tool; no-purchase signing/distribution strategies (self-signed + WinGet sideload for Windows, ad-hoc codesign + Homebrew Cask for macOS, Flathub for Linux); new cost & compliance comparison section flagging the only unavoidable costs (Apple hardware for macOS CI; optional paid certs/Apple Developer Program only if SmartScreen reputation or notarization is required)
 - All three changelog sources updated with `2026.8.12.018`
 
+### Prompt 61 — Service Alerts (outage monitoring, banner, alerting)
+**Timestamp:** 2026-08-12 | **Status:** ✅ Completed | **Duration:** ~3.5 h
+**BuildNotes IDs:** #1 (2026.8.12.019)
+> Implement a new draggable parent section named "Service Alerts" placed below "Service Boards" in the application navigation. Use AutoTaskPSA, ConnectWise Asio, HaloPSA, Kantata, Scoro, NinjaOne, Atera, and ConnectWise PSA as layout and functionality references, while keeping the existing C7NTAX application theme/style. Include typical PSA service alert capabilities. Service Alerts landing page/dashboard: aggregate outage/alert cards for major services (Microsoft 365, Azure, AWS, GitHub, Comcast, Verizon, Spectrum, and other configured major ISPs/services); source alerts from DownDetector, Twitter/X, official status/alert sites, and RSS feeds whenever available; import and parse RSS feeds. Global outage banner: dismissable red banner below the header with click-through to the dashboard, service-name-replaced text, close button far right, persisting across sections until dismissed or auto-cleared; badge icon on the nav section with active alert count. Alerting mechanism: monitor feeds on a schedule, auto-create alerts on outages, auto-clear banner/alert when service is restored. Administration configuration subsection: Service Alerts settings page under Administration.
+
+**Changes:**
+- `apps/api/prisma/schema.prisma` — New `ServiceAlertService` (name, category, description, statusPageUrl, downDetectorUrl, rssUrl, monitorEnabled, enabled, sortOrder) and `ServiceAlert` (serviceId, title, description, severity outage/degraded/informational, status active/resolved, source rss/statuspage/downdetector/manual, sourceUrl, detectedAt, resolvedAt) models; db pushed
+- `apps/api/src/services/alertMonitor.ts` — Background monitor (5-min interval + initial run): dependency-free RSS/Atom parser, outage/degraded keyword classifier and restored/resolved classifier, auto-create/update/resolve alerts, in-memory run snapshot (lastCheckAt, created/updated/resolved counts, errors, log); status-page HTML probing deliberately excluded after it produced false positives
+- `apps/api/src/routes/serviceAlerts.ts` — `/api/service-alerts` routes: GET / (active + resolved), GET /status (banner payload), GET /services, POST/PATCH/DELETE /services, POST / (manual alert), POST /:id/resolve, POST /refresh, GET /monitor-status; gated by new `ServiceAlertView`/`ServiceAlertManage` permissions
+- `packages/shared/src/enums.ts` — New `Permission.ServiceAlertView`/`ServiceAlertManage`, PERMISSION_CATEGORIES group, and ROLE_PERMISSIONS additions for all 8 default roles
+- `apps/api/src/seed-service-alerts.ts` — New seed: 8 monitored services (M365, Azure, AWS, GitHub, Google Workspace, Comcast/Xfinity, Verizon, Spectrum) with real status/DownDetector/RSS URLs, representative alerts (2 active, 1 resolved), role permission backfill for existing roles
+- `apps/api/src/seed-full.ts` — Service-alert cleanup + seeding (8 services, 3 alerts) and role permission strings for full reseeds
+- `apps/api/src/snapshot-capture.ts` / `seed-from-snapshots.ts` / `sample-data-toggle.ts` — serviceAlertService + serviceAlert added to capture, seed order, and wipe lists; snapshots recaptured (275 records / 45 tables)
+- `apps/web/src/components/Layout.tsx` — Service Alerts parent section below Service Boards (draggable, collapsed-icon + label badges with live count), admin child entry, section descriptions, global red outage banner below header (click → /service-alerts, dismiss X far right, localStorage `c7_sa_dismissed` per-alert persistence, 60s polling, auto-clear on resolution)
+- `apps/web/src/pages/ServiceAlerts.tsx` — Dashboard: summary strip (outages/degraded/operational/monitored), active-alert list with severity accents and source links, monitored-service card grid with status badges and Status/DownDetector/RSS links, recently-resolved list, 60s auto-refresh
+- `apps/web/src/pages/ServiceAlertsSettings.tsx` — Administration page: monitor status panel (last check, services polled, created/resolved, feed errors), manual alert creation, services table (visibility + feed-polling toggles, sources, active counts), add/edit/delete dialog, Run Monitor Check Now
+- `apps/web/src/App.tsx` — `/service-alerts` and `/admin/service-alerts` routes
+- `apps/api/src/verify-post-change.ts` — New pages added to required checks; min counts serviceAlertService: 8, serviceAlert: 2
+- All three changelog sources updated with `2026.8.12.019`
+
 ---
 
-**Total Prompts:** 60 | **Completed:** 60 | **In Progress:** 0
+**Total Prompts:** 61 | **Completed:** 61 | **In Progress:** 0

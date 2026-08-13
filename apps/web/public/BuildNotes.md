@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.12.018 | Last Updated: 2026-08-12
+## Version: 2026.8.12.019 | Last Updated: 2026-08-12
 
 ---
 
@@ -11,6 +11,15 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.12.019 — Service Alerts (Outage Monitoring & Alerting)
+- **[New]** Draggable "Service Alerts" parent section in the app navigation (below Service Boards) with a live red badge showing the number of active alerts; Administration gains a "Service Alerts" configuration subsection.
+- **[New]** Service Alerts dashboard (`/service-alerts`): aggregate outage cards for Microsoft 365, Azure, AWS, GitHub, Google Workspace, Comcast/Xfinity, Verizon, and Spectrum, each with official status-page and DownDetector links plus Outage/Degraded/Operational status badges; summary strip and recently-resolved list; alerts sourced from official status RSS feeds, status pages, and DownDetector.
+- **[New]** Global outage banner below the header on every section: red, dismissable (X on the far right), clickable to the Service Alerts dashboard, example text "Possible Service Interruption has been reported for Microsoft 365. Click here for more details." (service name replaced as appropriate), persists across navigation until dismissed or auto-cleared.
+- **[New]** Alerting mechanism: background monitor polls configured RSS feeds every 5 minutes, imports/parses RSS (no external deps), auto-creates an alert on outage/degraded keywords, and auto-resolves the alert + banner once a restored/resolved feed item appears. Status-page HTML keyword scraping deliberately avoided (false-positive prone); non-RSS services are monitored manually via the dashboard.
+- **[New]** Administration → Service Alerts page (`/admin/service-alerts`): add/edit/delete monitored services, category, RSS/status-page/DownDetector URLs, dashboard visibility + feed-polling toggles, manual alert creation, "Run Monitor Check Now" with live run stats and feed-error log.
+- **[New]** Backend: `ServiceAlertService` + `ServiceAlert` Prisma models, `/api/service-alerts` REST routes (status, alerts, services CRUD, manual alert, resolve, refresh, monitor-status), `servicealert:view` / `servicealert:manage` permissions added to shared enums and all default roles, seeded sample services/alerts, snapshot capture/reseed entries, sample-data-toggle wipe entries, and verify-post-change coverage.
+- **[Fix]** Removed two false-positive auto-alerts generated during the initial HTML-probe run; monitor reverted to RSS-only detection.
 
 ## 2026.8.12.018 — Native Desktop OSS Plan
 - **[New]** `native-desktop-oss-plan.md` — open-source edition of the native desktop plan: preserves goals and structure while replacing all proprietary tooling (Visual Studio → VS Code + dotnet CLI, MSIX GUI → msix-packaging CLI, signtool → osslsigncode + self-signed, MSVC AOT linker → LLVM clang/lld, Xcode → VS Code + swift.org toolchain + CLT, GitHub Actions → Forgejo/GitLab CE/Jenkins, commercial monitoring → GlitchTip/OpenTelemetry).

@@ -1,5 +1,18 @@
 [
   {
+    "version": "2026.8.12.019",
+    "date": "2026-08-12",
+    "title": "Service Alerts — Outage Monitoring & Alerting",
+    "changes": [
+      {"text": "New draggable Service Alerts parent section in the navigation (below Service Boards) with a live red badge showing the number of active alerts", "type": "New Feature"},
+      {"text": "Service Alerts dashboard: status cards for Microsoft 365, Azure, AWS, GitHub, Google Workspace, Comcast/Xfinity, Verizon, and Spectrum with official status-page + DownDetector links; active/degraded/outage summary strip and recently-resolved list", "type": "New Feature"},
+      {"text": "Global outage banner below the header on every page — clickable through to the dashboard, dismissible with an X, persists across navigation, and auto-clears when the alert is resolved", "type": "New Feature"},
+      {"text": "Alerting mechanism: background monitor polls configured RSS feeds every 5 minutes (Outlook/M365, Azure, AWS, GitHub, Google status feeds), auto-creates alerts from outage keywords and auto-resolves them when restored feeds appear; no false-positive HTML scraping", "type": "New Feature"},
+      {"text": "Administration → Service Alerts settings page: add/edit/delete services, RSS/status/DownDetector URLs, enable/disable visibility and feed polling, manual alert creation, Run Monitor Check Now with run stats and feed error log", "type": "New Feature"},
+      {"text": "New ServiceAlert + ServiceAlertService models, /api/service-alerts routes (status, alerts, services, manual alert, resolve, refresh, monitor-status), servicealert:view/manage permissions added to all roles, seed data, snapshot capture/reseed, and verify-post-change coverage", "type": "New Feature"}
+    ]
+  },
+  {
     "version": "2026.8.12.018",
     "date": "2026-08-12",
     "title": "Native Desktop OSS Plan",
