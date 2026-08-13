@@ -124,5 +124,23 @@
     "entityName": "Stark AWS Root",
     "entityIcon": "key",
     "viewedAt": "2026-08-12T14:56:12.953Z"
+  },
+  {
+    "id": "54f8b516-7ef7-404d-89e3-2c1c64996d1c",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "d69e3593-a2d1-48d6-a3f4-929856a41ad1",
+    "entityName": "Globex VPN Credential",
+    "entityIcon": "key",
+    "viewedAt": "2026-08-13T06:15:22.727Z"
+  },
+  {
+    "id": "de67fa4e-8511-4009-ba0a-323ff573662d",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "b4e69c8a-ca6e-4995-b0d0-3fa617304217",
+    "entityName": "Office 365 Global Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-08-13T06:15:30.374Z"
   }
 ]

@@ -74,9 +74,6 @@ export const SECTION_DESCRIPTIONS: Record<string, Record<string, string>> = {
     "admin-cloudconnect": "Connect third-party services with 16 available connector types",
     "admin-changelog": "Release history and feature changelog for C7NTAX",
   },
-  "service-alerts": {
-    "service-alerts-dashboard": "Aggregate outage monitoring for Microsoft 365, Azure, AWS, GitHub, ISPs, and other configured services",
-  },
   clients: {
     "clients-list": "Browse, search, and manage all client companies and accounts",
     "clients-contacts": "Manage contacts across all client organizations",

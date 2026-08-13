@@ -757,3 +757,13 @@
 ---
 
 **Total Prompts:** 63 | **Completed:** 63 | **In Progress:** 0
+
+### Prompt 64 — Service Alerts as direct landing nav item
+**Timestamp:** 2026-08-13 | **Status:** ✅ Completed | **Duration:** ~10 min
+**BuildNotes IDs:** #1 (2026.8.13.003)
+> Make the Service Alerts Dashboard the landing page for the Service Alerts section. The Service Alerts section should not have any child pages or nested items.
+
+**Changes:**
+- `apps/web/src/components/Layout.tsx` — Service Alerts nav node flattened from parent-with-child to a single top-level leaf (`to: "/service-alerts"`, no `children`), so clicking it opens the Service Alerts Dashboard directly; nav-order reconciliation keeps it between Dashboard and Tickets; active-alert badge re-added to the leaf row (plus existing collapsed-icon badge)
+- `apps/web/src/pages/SectionLanding.tsx` — removed the now-unused `service-alerts` section landing description block
+- All three changelog sources updated with `2026.8.13.003`

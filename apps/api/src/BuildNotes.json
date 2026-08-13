@@ -1,5 +1,14 @@
 [
   {
+    "version": "2026.8.13.003",
+    "date": "2026-08-13",
+    "title": "Service Alerts Landing Directly",
+    "changes": [
+      {"text": "Service Alerts is now a single top-level nav item with no children — clicking it opens the Service Alerts Dashboard directly as the section's landing page", "type": "Update"},
+      {"text": "Active-alert count badge remains on the Service Alerts nav item (expanded + collapsed sidebar)", "type": "Update"}
+    ]
+  },
+  {
     "version": "2026.8.13.002",
     "date": "2026-08-13",
     "title": "Service Alerts as Top-Level Nav Section",

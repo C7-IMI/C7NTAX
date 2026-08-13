@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.13.002 | Last Updated: 2026-08-13
+## Version: 2026.8.13.003 | Last Updated: 2026-08-13
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.13.003 — Service Alerts Landing Directly
+- **[Update]** Service Alerts is now a single top-level nav item with no children — clicking it opens the Service Alerts Dashboard directly as the section's landing page.
+- **[Update]** Active-alert count badge remains on the Service Alerts nav item (expanded + collapsed sidebar).
 
 ## 2026.8.13.002 — Service Alerts as Top-Level Nav Section
 - **[Update]** Service Alerts is now a top-level parent section placed between Dashboard and Tickets (Dashboard, Service Alerts, Tickets, Service Boards…); it expands to its own Dashboard landing page and is draggable like every other parent section.

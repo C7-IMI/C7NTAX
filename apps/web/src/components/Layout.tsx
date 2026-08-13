@@ -24,11 +24,7 @@ export type NavNode = {
 export const NAV_TREE: NavNode[] = [
   { id: "home", to: "/home", icon: Home, label: "Home" },
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  {
-    id: "service-alerts", icon: AlertTriangle, label: "Service Alerts", children: [
-      { id: "service-alerts-dashboard", to: "/service-alerts", icon: AlertTriangle, label: "Dashboard" },
-    ],
-  },
+  { id: "service-alerts", to: "/service-alerts", icon: AlertTriangle, label: "Service Alerts" },
   { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets" },
   { id: "boards", to: "/boards", icon: Columns3, label: "Service Boards" },
   { id: "pipeline", to: "/opportunities", icon: Target, label: "Pipeline" },
@@ -479,6 +475,9 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={18} />
               {!collapsed && node.label}
+              {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
+                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
+              )}
               {active && !collapsed && <ChevronRight size={14} className="ml-auto" />}
             </Link>
           </div>
