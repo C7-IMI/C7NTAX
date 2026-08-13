@@ -1,0 +1,10 @@
+[2026-08-13 12:31:12] === C7NTAX boot sequence started ===
+[2026-08-13 12:31:13] PostgreSQL already running
+[2026-08-13 12:31:13] PostgreSQL OK (port 5432)
+[2026-08-13 12:31:20] Prisma client + schema synced
+[2026-08-13 12:31:28] seed-full.ts finished
+[2026-08-13 12:31:34] seed-contacts.ts finished
+[2026-08-13 12:31:40] seed-service-alerts.ts finished
+[2026-08-13 12:31:40] Sample data reseeded
+[2026-08-13 12:31:40] API starting (PID 29836)
+[2026-08-13 12:32:49] FATAL: API did not come up on 4000 - see startup/api.err.log
