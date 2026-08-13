@@ -265,8 +265,8 @@ export function ServiceAlertsSettingsPage() {
                   <th className="px-3 py-3 font-medium">Category</th>
                   <th className="px-3 py-3 font-medium">Sources</th>
                   <th className="px-3 py-3 font-medium">Active Alerts</th>
-                  <th className="px-3 py-3 font-medium">Monitoring</th>
                   <th className="px-3 py-3 font-medium">Visible</th>
+                  <th className="px-3 py-3 font-medium">Feed Polling</th>
                   <th className="px-3 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
