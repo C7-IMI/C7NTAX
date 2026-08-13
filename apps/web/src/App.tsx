@@ -39,6 +39,8 @@ import { SectionLanding, SECTION_DESCRIPTIONS } from "./pages/SectionLanding";
 import { NAV_TREE } from "./components/Layout";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { HomePage } from "./pages/HomePage";
+import { ServiceAlertsPage } from "./pages/ServiceAlerts";
+import { ServiceAlertsSettingsPage } from "./pages/ServiceAlertsSettings";
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
@@ -53,6 +55,8 @@ function ProtectedRoutes() {
         <Route path="/tickets" element={<TicketsPage />} />
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
         <Route path="/boards" element={<BoardsPage />} />
+        <Route path="/service-alerts" element={<ServiceAlertsPage />} />
+        <Route path="/admin/service-alerts" element={<ServiceAlertsSettingsPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/assets/:id" element={<AssetDetailPage />} />

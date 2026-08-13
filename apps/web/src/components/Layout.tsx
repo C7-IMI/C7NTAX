@@ -373,21 +373,27 @@ export function Layout({ children }: { children: ReactNode }) {
           {hasChildren ? (
             <button
               onClick={() => navigate(`/section/${node.id}`)}
-              className={`p-2.5 rounded-lg transition-colors ${
+              className={`relative p-2.5 rounded-lg transition-colors ${
                 active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
               <node.icon size={20} />
+              {node.id === "service-alerts" && alertCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{alertCount}</span>
+              )}
             </button>
           ) : (
             <Link
               to={linkTo}
               onClick={() => setMobileOpen(false)}
-              className={`p-2.5 rounded-lg transition-colors ${
+              className={`relative p-2.5 rounded-lg transition-colors ${
                 active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
               <node.icon size={20} />
+              {node.id === "service-alerts" && alertCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{alertCount}</span>
+              )}
             </Link>
           )}
           {active && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-cyber-500 rounded-full" />}
@@ -424,6 +430,9 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={18} />
               {!collapsed && <span className="flex-1 text-left truncate">{node.label}</span>}
+              {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
+                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
+              )}
               {!collapsed && <ChevronDown size={14} className={`transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />}
             </button>
           </div>
@@ -447,6 +456,9 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={18} />
               {!collapsed && node.label}
+              {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
+                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
+              )}
               {active && !collapsed && <ChevronRight size={14} className="ml-auto" />}
             </Link>
           </div>
@@ -605,6 +617,32 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           <div className="sm:hidden w-8" />
         </header>
+        {/* ── FI-060: Global service outage banner (below header, above content) ── */}
+        {bannerAlert && (
+          <div
+            role="alert"
+            onClick={() => navigate("/service-alerts")}
+            className="bg-red-600/15 border-b border-red-500/40 px-4 lg:px-6 py-2.5 flex items-center gap-3 cursor-pointer select-none shrink-0"
+            title="Click for more details"
+          >
+            <AlertTriangle size={16} className="text-red-400 shrink-0" />
+            <span className="text-sm text-red-100 flex-1 min-w-0 truncate">
+              {/possible service interruption|reported for/i.test(bannerAlert.title)
+                ? bannerAlert.title
+                : `Possible Service Interruption has been reported for ${bannerAlert.serviceName}`}
+              {bannerAlert.title.includes(".") ? " " : ". "}
+              <span className="underline underline-offset-2 font-medium text-red-200">Click here for more details.</span>
+            </span>
+            <button
+              onClick={(e) => { e.stopPropagation(); dismissBanner(); }}
+              className="shrink-0 text-red-300 hover:text-white p-1 rounded transition-colors"
+              title="Dismiss alert"
+              aria-label="Dismiss alert"
+            >
+              <XCircle size={16} />
+            </button>
+          </div>
+        )}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
     </div>
