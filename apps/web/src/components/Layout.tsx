@@ -5,11 +5,13 @@ import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, UserCircle, Home,
+  AlertTriangle, XCircle,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs } from "./Breadcrumbs";
 import { useTheme } from "../hooks/useTheme";
 import { Sun, Moon } from "lucide-react";
+import api from "../api";
 
 export type NavNode = {
   id: string;
@@ -24,11 +26,17 @@ export const NAV_TREE: NavNode[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets" },
   { id: "boards", to: "/boards", icon: Columns3, label: "Service Boards" },
+  {
+    id: "service-alerts", icon: AlertTriangle, label: "Service Alerts", children: [
+      { id: "service-alerts-dashboard", to: "/service-alerts", icon: AlertTriangle, label: "Dashboard" },
+    ],
+  },
   { id: "pipeline", to: "/opportunities", icon: Target, label: "Pipeline" },
   {
     id: "administration", icon: Shield, label: "Administration", children: [
       { id: "admin-general", to: "/admin", icon: Settings, label: "General Settings" },
       { id: "admin-boards", to: "/admin/boards", icon: Columns3, label: "Service Boards" },
+      { id: "admin-service-alerts", to: "/admin/service-alerts", icon: AlertTriangle, label: "Service Alerts" },
       { id: "admin-system", to: "/admin/system", icon: Settings, label: "System Settings" },
       { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs" },
       { id: "admin-cloudconnect", to: "/cloudconnect", icon: Cloud, label: "CloudConnect" },
@@ -134,6 +142,8 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/": "Real-time, high-level overview of key business metrics, open ticket volumes, and technician workloads.",
   "/tickets": "Track client issues, manage troubleshooting workflows, and log billable time.",
   "/boards": "Monitor service boards with live ticket metrics, stale tracking, and SLA status.",
+  "/service-alerts": "Aggregate outage monitoring for Microsoft 365, Azure, AWS, GitHub, ISPs, and other configured services.",
+  "/admin/service-alerts": "Configure monitored services, RSS feeds, and alert monitoring settings.",
   "/opportunities": "Manage your sales pipeline, track deal stages, and forecast revenue.",
   "/admin": "Configure company profile, service boards, system settings, and audit logs.",
   "/admin/boards": "Manage service boards, SLA policies, email connectors, and automations.",
@@ -204,6 +214,59 @@ export function Layout({ children }: { children: ReactNode }) {
     return NAV_TREE.map(n => n.id);
   });
   const [dragId, setDragId] = useState<string | null>(null);
+
+  // ── FI-060: Service Alerts banner + nav badge ──────────────────
+  interface BannerAlert {
+    id: string;
+    serviceName: string;
+    title: string;
+    severity: string;
+    detectedAt: string;
+    sourceUrl: string | null;
+  }
+  const [alertCount, setAlertCount] = useState(0);
+  const [bannerAlert, setBannerAlert] = useState<BannerAlert | null>(null);
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem("c7_sa_dismissed");
+      if (saved) return new Set(JSON.parse(saved) as string[]);
+    } catch {}
+    return new Set<string>();
+  });
+
+  const refreshAlertStatus = useCallback(() => {
+    api.get("/service-alerts/status")
+      .then(r => {
+        const { activeCount, top } = r.data || {};
+        setAlertCount(Number(activeCount) || 0);
+        if (top && !dismissedAlerts.has(top.id)) setBannerAlert(top);
+        else setBannerAlert(null);
+      })
+      .catch(() => {});
+  }, [dismissedAlerts]);
+
+  useEffect(() => {
+    refreshAlertStatus();
+    const t = setInterval(refreshAlertStatus, 60_000);
+    return () => clearInterval(t);
+  }, [refreshAlertStatus]);
+
+  const dismissBanner = () => {
+    if (!bannerAlert) return;
+    setDismissedAlerts(prev => {
+      const next = new Set(prev);
+      next.add(bannerAlert.id);
+      if (next.size > 50) {
+        const arr = [...next];
+        while (arr.length > 50) arr.shift();
+        localStorage.setItem("c7_sa_dismissed", JSON.stringify(arr));
+      } else {
+        localStorage.setItem("c7_sa_dismissed", JSON.stringify([...next]));
+      }
+      return next;
+    });
+    setBannerAlert(null);
+  };
 
   const orderedTree = navOrder
     .map(id => NAV_TREE.find(n => n.id === id))

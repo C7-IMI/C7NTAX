@@ -72,7 +72,6 @@ serviceAlertsRouter.get("/status", requirePermission(Permission.ServiceAlertView
 serviceAlertsRouter.get("/services", requirePermission(Permission.ServiceAlertView), async (_req: AuthRequest, res, next) => {
   try {
     const services = await prisma.serviceAlertService.findMany({
-      where: { enabled: true },
       include: {
         alerts: {
           where: { status: "active" },
@@ -80,7 +79,7 @@ serviceAlertsRouter.get("/services", requirePermission(Permission.ServiceAlertVi
           take: 3,
         },
       },
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      orderBy: [{ enabled: "desc" }, { sortOrder: "asc" }, { name: "asc" }],
     });
     res.json({ data: services });
   } catch (e) { next(e); }
