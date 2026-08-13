@@ -465,5 +465,43 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-12T19:05:25.266Z"
+  },
+  {
+    "id": "0dbcaf32-e503-4bf3-88ca-ee1b9e703ebc",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "service-alerts",
+    "changes": {
+      "title": "Test manual alert",
+      "severity": "informational",
+      "serviceId": "b18bb396-1836-47a2-abf4-028e54c40b57"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T04:54:31.959Z"
+  },
+  {
+    "id": "39ae798f-d98b-417c-b2f7-2f4f25f49c05",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "b46ff32f-cac4-4480-8c7b-9d11851583f8",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T04:54:32.186Z"
+  },
+  {
+    "id": "b1811cc5-d2ae-4de1-b4b6-d7fdcf9757d0",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T04:55:17.286Z"
   }
 ]

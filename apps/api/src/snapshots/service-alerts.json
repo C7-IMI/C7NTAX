@@ -1,0 +1,72 @@
+[
+  {
+    "id": "79a9a48a-65e6-4776-9692-0a2bbe8db37d",
+    "serviceId": "b18bb396-1836-47a2-abf4-028e54c40b57",
+    "title": "Possible Service Interruption has been reported for Microsoft 365",
+    "description": "Users may be unable to access Exchange Online and Teams. Microsoft is investigating degraded service availability.",
+    "severity": "outage",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.cloud.microsoft",
+    "detectedAt": "2026-08-13T03:20:42.286Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-13T04:05:42.287Z",
+    "updatedAt": "2026-08-13T04:05:42.287Z"
+  },
+  {
+    "id": "8b86cf35-c943-4dec-99a5-f75930e2a47e",
+    "serviceId": "5ac89007-8723-4d4c-b057-a44814c986a9",
+    "title": "Comcast Xfinity — intermittent connectivity reported",
+    "description": "Reports of intermittent internet connectivity across multiple regions. No official statement yet.",
+    "severity": "degraded",
+    "status": "active",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/comcast-xfinity/",
+    "detectedAt": "2026-08-13T02:35:42.288Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-13T04:05:42.289Z",
+    "updatedAt": "2026-08-13T04:05:42.289Z"
+  },
+  {
+    "id": "609714c5-e93e-459e-ba45-320012bd9260",
+    "serviceId": "7bc0f125-51fa-481a-901e-1f6d951c0bf7",
+    "title": "GitHub Actions — degraded performance",
+    "description": "GitHub Actions runners experienced degraded performance.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://www.githubstatus.com",
+    "detectedAt": "2026-08-12T02:05:42.288Z",
+    "resolvedAt": "2026-08-12T06:05:42.288Z",
+    "createdAt": "2026-08-13T04:05:42.289Z",
+    "updatedAt": "2026-08-13T04:05:42.289Z"
+  },
+  {
+    "id": "54c23576-4609-462e-ac6b-9dd2f79ad408",
+    "serviceId": "7bc0f125-51fa-481a-901e-1f6d951c0bf7",
+    "title": "GitHub status page reports disruption",
+    "description": "Auto-resolved: Disruption with Login and Release Asset downloads\n\nDetected outage language on the official status page.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "statuspage",
+    "sourceUrl": "https://www.githubstatus.com",
+    "detectedAt": "2026-08-13T04:11:29.010Z",
+    "resolvedAt": "2026-08-13T04:14:36.645Z",
+    "createdAt": "2026-08-13T04:11:29.011Z",
+    "updatedAt": "2026-08-13T04:14:36.646Z"
+  },
+  {
+    "id": "b46ff32f-cac4-4480-8c7b-9d11851583f8",
+    "serviceId": "b18bb396-1836-47a2-abf4-028e54c40b57",
+    "title": "Test manual alert",
+    "description": null,
+    "severity": "informational",
+    "status": "resolved",
+    "source": "manual",
+    "sourceUrl": null,
+    "detectedAt": "2026-08-13T04:54:31.956Z",
+    "resolvedAt": "2026-08-13T04:54:32.181Z",
+    "createdAt": "2026-08-13T04:54:31.956Z",
+    "updatedAt": "2026-08-13T04:54:32.183Z"
+  }
+]

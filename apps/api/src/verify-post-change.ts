@@ -25,6 +25,7 @@ const REQUIRED_PAGES = [
   "/kumo/assets", "/kumo/passwords", "/kumo/configs", "/kumo/documents",
   "/cloudconnect", "/users", "/roles", "/admin", "/admin/changelog",
   "/admin/logs", "/kb", "/reports", "/calendar", "/settings", "/procurement",
+  "/service-alerts", "/admin/service-alerts",
 ];
 
 // Minimum expected record counts per table
@@ -33,6 +34,7 @@ const MIN_COUNTS: Record<string, number> = {
   ticket: 5, ticketComment: 3, timeEntry: 3, serviceAgreement: 3,
   invoice: 3, project: 2, opportunity: 2, asset: 3,
   knowledgeBaseArticle: 3, integration: 2,
+  serviceAlertService: 8, serviceAlert: 2,
 };
 
 // Names of tables in Prisma (camelCase)
