@@ -82,6 +82,10 @@ export enum Permission {
   BoardView = "board:view",
   BoardManage = "board:manage",
 
+  // ── Service Alerts ──
+  ServiceAlertView = "servicealert:view",
+  ServiceAlertManage = "servicealert:manage",
+
   // ── Clients / CRM ──
   ClientView = "client:view",
   ClientCreate = "client:create",
@@ -224,6 +228,10 @@ export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: P
     permissions: [Permission.BoardView, Permission.BoardManage],
   },
   {
+    key: "servicealerts", label: "Service Alerts",
+    permissions: [Permission.ServiceAlertView, Permission.ServiceAlertManage],
+  },
+  {
     key: "clients", label: "Clients & CRM",
     permissions: [Permission.ClientView, Permission.ClientCreate, Permission.ClientEdit, Permission.ClientDelete, Permission.ContactView, Permission.ContactCreate, Permission.ContactEdit, Permission.ContactDelete],
   },
@@ -316,6 +324,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.TicketViewAll, Permission.TicketView, Permission.TicketCreate,
     Permission.TicketEdit, Permission.TicketAssign, Permission.TicketClose, Permission.TicketDelete,
     Permission.BoardView, Permission.BoardManage,
+    Permission.ServiceAlertView, Permission.ServiceAlertManage,
     Permission.ClientView, Permission.ClientCreate, Permission.ClientEdit,
     Permission.ContactView, Permission.ContactCreate, Permission.ContactEdit,
     Permission.OpportunityView, Permission.OpportunityCreate, Permission.OpportunityEdit,
@@ -341,6 +350,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.TicketView, Permission.TicketCreate, Permission.TicketEdit,
     Permission.TicketViewAll, Permission.TicketClose,
     Permission.BoardView,
+    Permission.ServiceAlertView,
     Permission.ClientView, Permission.ContactView,
     Permission.ProjectView,
     Permission.AssetView,
@@ -355,6 +365,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.TicketViewAll, Permission.TicketView, Permission.TicketCreate,
     Permission.TicketEdit, Permission.TicketAssign, Permission.TicketClose,
     Permission.BoardView, Permission.BoardManage,
+    Permission.ServiceAlertView,
     Permission.ClientView, Permission.ContactView,
     Permission.ProjectView,
     Permission.ScheduleView, Permission.ScheduleManage,
@@ -367,6 +378,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.PaymentView, Permission.PaymentProcess,
     Permission.ServiceAgreementView, Permission.ServiceAgreementManage,
     Permission.ClientView, Permission.ContactView,
+    Permission.ServiceAlertView,
     Permission.ReportView, Permission.ReportExport, Permission.ReportCreate,
     Permission.ContractView, Permission.ContractCreate, Permission.ContractEdit,
     Permission.ProcurementView,
@@ -374,6 +386,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
   [SystemRole.ClientAdmin]: [
     Permission.TicketView, Permission.TicketCreate, Permission.TicketEdit, Permission.TicketClose,
     Permission.BoardView,
+    Permission.ServiceAlertView,
     Permission.ClientView, Permission.ContactView,
     Permission.ProjectView,
     Permission.BillingView,
@@ -387,6 +400,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
   [SystemRole.ClientUser]: [
     Permission.TicketView, Permission.TicketCreate,
     Permission.BoardView,
+    Permission.ServiceAlertView,
     Permission.ClientView,
     Permission.KBView,
     Permission.ChatView,
@@ -394,6 +408,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
   ],
   [SystemRole.ReadOnly]: [
     Permission.TicketView, Permission.BoardView, Permission.ClientView,
+    Permission.ServiceAlertView,
     Permission.ContactView, Permission.BillingView, Permission.ReportView,
     Permission.ProjectView, Permission.AssetView, Permission.KBView,
     Permission.ScheduleView, Permission.ChatView,

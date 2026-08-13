@@ -48,6 +48,7 @@ import { bulkRouter } from "./routes/bulk";
 import { inferenceRouter } from "./routes/inference";
 import { kumoRouter } from "./routes/kumo";
 import { alertsRouter } from "./routes/alerts";
+import { serviceAlertsRouter } from "./routes/serviceAlerts";
 import { setupWebSocket } from "./ws";
 import { WEB_ORIGIN } from "@C7NTAX/shared";
 import { startWorkers } from "./worker";
@@ -107,6 +108,7 @@ app.use("/api/bulk", bulkRouter);
 app.use("/api/inference", inferenceRouter);
 app.use("/api/kumo", kumoRouter);
 app.use("/api/alerts", alertsRouter);
+app.use("/api/service-alerts", serviceAlertsRouter);
 
 app.use(errorHandler);
 
@@ -120,6 +122,7 @@ server.listen(PORT, () => {
   startWorkers();
   import("./services/poller").then(p => p.startPoller()).catch(() => {});
   import("./services/snapshotPoller").then(p => p.startSnapshotPoller()).catch(() => {});
+  import("./services/alertMonitor").then(p => p.startAlertMonitor()).catch(() => {});
 });
 
 export default app;
