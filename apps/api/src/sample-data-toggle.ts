@@ -47,6 +47,7 @@ const WIPE_MODELS: string[] = [
   "invoiceLineItem", "payment", "invoice", "serviceAgreement",
   "salesActivity", "opportunity",
   "notification", "auditLog", "alertLog", "alertRule", "expense", "recentlyViewedItem",
+  "serviceAlert", "serviceAlertService",
   "m365Subscription", "m365Group", "m365User", "syncedEntity", "syncLog", "integration", "webhookConfig",
   "technicianSkill", "scheduleEntry", "ptoRequest", "holiday", "bulkOperation", "calendarSyncConfig",
   "kumoFile", "kumoCertificate", "kumoDomain", "kumoLink", "kumoDocumentRevision",

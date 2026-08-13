@@ -69,6 +69,8 @@ const TABLES: TableDef[] = [
   { name: "expense", fileName: "expenses.json" },
   { name: "alertRule", fileName: "alert-rules.json" },
   { name: "alertLog", fileName: "alert-logs.json" },
+  { name: "serviceAlertService", fileName: "service-alert-services.json" },
+  { name: "serviceAlert", fileName: "service-alerts.json" },
 ];
 
 async function main(): Promise<void> {

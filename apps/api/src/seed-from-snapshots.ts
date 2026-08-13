@@ -61,6 +61,8 @@ const SEED_ORDER: { fileName: string; model: string }[] = [
   { fileName: "alert-rules.json", model: "alertRule" },
   { fileName: "audit-logs.json", model: "auditLog" },
   { fileName: "alert-logs.json", model: "alertLog" },
+  { fileName: "service-alert-services.json", model: "serviceAlertService" },
+  { fileName: "service-alerts.json", model: "serviceAlert" },
 ];
 
 // Reverse order for clean deletion

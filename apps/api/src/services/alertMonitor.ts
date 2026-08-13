@@ -80,49 +80,36 @@ function classify(text: string): "outage" | "restored" | null {
   return null;
 }
 
-async function checkService(service: { id: string; name: string; rssUrl: string | null; statusPageUrl: string | null }): Promise<void> {
-  const candidates: Array<{ url: string; kind: "rss" | "statuspage" }> = [];
-  if (service.rssUrl) candidates.push({ url: service.rssUrl, kind: "rss" });
-  if (service.statusPageUrl) candidates.push({ url: service.statusPageUrl, kind: "statuspage" });
+async function checkService(service: { id: string; name: string; rssUrl: string | null }): Promise<void> {
+  if (!service.rssUrl) return; // no RSS feed → no auto-detection (status-page HTML is too noisy for keyword probing)
 
-  let outageText: { title: string; description: string; link: string; kind: string } | null = null;
-  let restoredText: { title: string; description: string; link: string; kind: string } | null = null;
+  let outageText: { title: string; description: string; link: string } | null = null;
+  let restoredText: { title: string; description: string; link: string } | null = null;
 
-  for (const candidate of candidates) {
-    try {
-      const resp = await fetch(candidate.url, {
-        signal: AbortSignal.timeout(12000),
-        headers: { "user-agent": "C7NTAX-ServiceAlerts/1.0", accept: "application/rss+xml, application/atom+xml, text/xml, application/xml, text/html;q=0.9, */*;q=0.8" },
-      });
-      if (!resp.ok) {
-        snapshot.errors.push(`${service.name}: HTTP ${resp.status} from ${candidate.url}`);
-        continue;
-      }
-      const body = await resp.text();
-      if (candidate.kind === "rss") {
-        const items = parseFeedItems(body);
-        const now = Date.now();
-        for (const item of items) {
-          const age = item.pubDate ? now - item.pubDate.getTime() : 0;
-          if (item.pubDate && age > ITEM_WINDOW_MS) continue;
-          const cls = classify(`${item.title} ${item.description}`);
-          if (cls === "outage" && !outageText) {
-            outageText = { title: item.title, description: item.description.slice(0, 500), link: item.link, kind: "rss" };
-          } else if (cls === "restored" && !restoredText) {
-            restoredText = { title: item.title, description: item.description.slice(0, 500), link: item.link, kind: "rss" };
-          }
-        }
-      } else {
-        // Status-page HTML probe: only flag if a *strong* outage marker appears.
-        if (/currently unavailable|major outage|service disruption|all systems are down|currently experiencing a major/i.test(body)) {
-          outageText = { title: `${service.name} status page reports disruption`, description: "Detected outage language on the official status page.", link: candidate.url, kind: "statuspage" };
-        } else if (/all systems operational|no incidents reported/i.test(body) && !restoredText) {
-          restoredText = { title: `${service.name} reports all systems operational`, description: "", link: candidate.url, kind: "statuspage" };
-        }
-      }
-    } catch (e: any) {
-      snapshot.errors.push(`${service.name}: fetch failed for ${candidate.url} (${e?.name || "error"})`);
+  try {
+    const resp = await fetch(service.rssUrl, {
+      signal: AbortSignal.timeout(12000),
+      headers: { "user-agent": "C7NTAX-ServiceAlerts/1.0", accept: "application/rss+xml, application/atom+xml, text/xml, application/xml;q=0.9, */*;q=0.8" },
+    });
+    if (!resp.ok) {
+      snapshot.errors.push(`${service.name}: HTTP ${resp.status} from ${service.rssUrl}`);
+      return;
     }
+    const body = await resp.text();
+    const items = parseFeedItems(body);
+    const now = Date.now();
+    for (const item of items) {
+      const age = item.pubDate ? now - item.pubDate.getTime() : 0;
+      if (item.pubDate && age > ITEM_WINDOW_MS) continue;
+      const cls = classify(`${item.title} ${item.description}`);
+      if (cls === "outage" && !outageText) {
+        outageText = { title: item.title, description: item.description.slice(0, 500), link: item.link };
+      } else if (cls === "restored" && !restoredText) {
+        restoredText = { title: item.title, description: item.description.slice(0, 500), link: item.link };
+      }
+    }
+  } catch (e: any) {
+    snapshot.errors.push(`${service.name}: fetch failed for ${service.rssUrl} (${e?.name || "error"})`);
   }
 
   const active = await prisma.serviceAlert.findFirst({
@@ -151,7 +138,7 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
           description: outageText.description || null,
           severity: /major|down\b|unavailable/i.test(`${outageText.title} ${outageText.description}`) ? "outage" : "degraded",
           status: "active",
-          source: outageText.kind === "rss" ? "rss" : "statuspage",
+          source: "rss",
           sourceUrl: outageText.link || null,
           detectedAt: new Date(),
         },

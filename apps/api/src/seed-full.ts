@@ -51,16 +51,18 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();
   await prisma.serviceBoard.deleteMany();
+  await prisma.serviceAlert.deleteMany();
+  await prisma.serviceAlertService.deleteMany();
   console.log("  ✓ Cleaned existing data\n");
 
   const hash = (pw: string) => bcrypt.hashSync(pw, 10);
 
   // ── Roles ──
   const superAdminRole = await prisma.role.create({ data: { name: "Super Admin", systemRole: "super_admin", isDefault: false, permissions: Object.values(Permission) } });
-  const adminRole = await prisma.role.create({ data: { name: "Admin", systemRole: "admin", isDefault: true, permissions: ["ticket:view","ticket:create","ticket:edit","ticket:delete","ticket:assign","ticket:close","ticket:view_all","board:view","board:manage","client:view","client:create","client:edit","client:delete","billing:view","billing:manage","invoice:create","invoice:send","user:manage","role:manage","system:config","integration:view","integration:manage","report:view","report:export","report:create","kumo:view","kumo:manage","kumo:view_all","kumo:asset:view","kumo:asset:create","kumo:asset:edit","kumo:asset:delete","kumo:asset:template:manage","kumo:passwords:view","kumo:passwords:create","kumo:passwords:edit","kumo:passwords:delete","kumo:passwords:reveal","kumo:config:view","kumo:config:create","kumo:config:edit","kumo:config:delete","kumo:doc:view","kumo:doc:create","kumo:doc:edit","kumo:doc:delete","kumo:doc:publish","kumo:link:view","kumo:link:manage","asset:view","asset:create","asset:edit","asset:delete","project:view","project:create","project:edit","project:delete","project:manage","kb:view","kb:create","kb:edit","kb:delete","kb:manage","opportunity:view","opportunity:create","opportunity:edit","opportunity:delete","procurement:view","procurement:create","procurement:approve","schedule:view","schedule:manage","pto:view","pto:request","pto:approve","inference:view","inference:manage","security:manage","mfa:enforce"] } });
-  const techRole = await prisma.role.create({ data: { name: "Technician", systemRole: "technician", permissions: ["ticket:view","ticket:create","ticket:edit","ticket:assign","ticket:close","board:view","client:view","integration:view","report:view"] } });
-  const clientRole = await prisma.role.create({ data: { name: "Client Admin", systemRole: "client_admin", permissions: ["ticket:view","ticket:create","ticket:edit","board:view","client:view","billing:view"] } });
-  const readOnlyRole = await prisma.role.create({ data: { name: "Read Only", systemRole: "read_only", permissions: ["ticket:view","board:view","client:view","report:view"] } });
+  const adminRole = await prisma.role.create({ data: { name: "Admin", systemRole: "admin", isDefault: true, permissions: ["ticket:view","ticket:create","ticket:edit","ticket:delete","ticket:assign","ticket:close","ticket:view_all","board:view","board:manage","client:view","client:create","client:edit","client:delete","billing:view","billing:manage","invoice:create","invoice:send","user:manage","role:manage","system:config","integration:view","integration:manage","report:view","report:export","report:create","kumo:view","kumo:manage","kumo:view_all","kumo:asset:view","kumo:asset:create","kumo:asset:edit","kumo:asset:delete","kumo:asset:template:manage","kumo:passwords:view","kumo:passwords:create","kumo:passwords:edit","kumo:passwords:delete","kumo:passwords:reveal","kumo:config:view","kumo:config:create","kumo:config:edit","kumo:config:delete","kumo:doc:view","kumo:doc:create","kumo:doc:edit","kumo:doc:delete","kumo:doc:publish","kumo:link:view","kumo:link:manage","asset:view","asset:create","asset:edit","asset:delete","project:view","project:create","project:edit","project:delete","project:manage","kb:view","kb:create","kb:edit","kb:delete","kb:manage","opportunity:view","opportunity:create","opportunity:edit","opportunity:delete","procurement:view","procurement:create","procurement:approve","schedule:view","schedule:manage","pto:view","pto:request","pto:approve","inference:view","inference:manage","security:manage","mfa:enforce","servicealert:view","servicealert:manage"] } });
+  const techRole = await prisma.role.create({ data: { name: "Technician", systemRole: "technician", permissions: ["ticket:view","ticket:create","ticket:edit","ticket:assign","ticket:close","board:view","client:view","integration:view","report:view","servicealert:view"] } });
+  const clientRole = await prisma.role.create({ data: { name: "Client Admin", systemRole: "client_admin", permissions: ["ticket:view","ticket:create","ticket:edit","board:view","client:view","billing:view","servicealert:view"] } });
+  const readOnlyRole = await prisma.role.create({ data: { name: "Read Only", systemRole: "read_only", permissions: ["ticket:view","board:view","client:view","report:view","servicealert:view"] } });
   console.log("  ✓ Created 5 roles");
 
   // ── Users ──
@@ -655,6 +657,31 @@ await prisma.kumoFile.createMany({ data: [
   { filename: "globex-onboarding-checklist.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", size: 18500, storagePath: "/files/globex/onboarding.xlsx", entityType: "client", entityId: globex.id, uploadedById: manager.id },
 ] });
 console.log("  ✓ Created 2 Kumo files");
+
+// ── FI-060: Service Alerts ────────────────────────────────────────
+await prisma.serviceAlertService.createMany({ data: [
+  { name: "Microsoft 365", category: "cloud", description: "Exchange Online, Teams, SharePoint, OneDrive and Entra ID.", statusPageUrl: "https://status.cloud.microsoft", downDetectorUrl: "https://downdetector.com/status/microsoft-365/", rssUrl: "https://status.cloud.microsoft/rss", sortOrder: 10 },
+  { name: "Azure", category: "cloud", description: "Azure infrastructure, compute, storage and networking services.", statusPageUrl: "https://azure.status.microsoft/en-us/status", downDetectorUrl: "https://downdetector.com/status/azure/", rssUrl: "https://azure.status.microsoft/en-us/status/feed/", sortOrder: 20 },
+  { name: "AWS", category: "cloud", description: "Amazon Web Services global infrastructure and regions.", statusPageUrl: "https://health.aws.amazon.com/health/status", downDetectorUrl: "https://downdetector.com/status/aws-amazon-web-services/", rssUrl: "https://status.aws.amazon.com/rss/all.rss", sortOrder: 30 },
+  { name: "GitHub", category: "cloud", description: "GitHub.com, Actions, Packages and Pages.", statusPageUrl: "https://www.githubstatus.com", downDetectorUrl: "https://downdetector.com/status/github/", rssUrl: "https://www.githubstatus.com/history.rss", sortOrder: 40 },
+  { name: "Google Workspace", category: "collaboration", description: "Gmail, Google Drive, Calendar, Meet and Docs.", statusPageUrl: "https://www.google.com/appsstatus/dashboard/", downDetectorUrl: "https://downdetector.com/status/gmail/", rssUrl: "https://www.google.com/appsstatus/rss/en", sortOrder: 50 },
+  { name: "Comcast Xfinity", category: "isp", description: "Comcast / Xfinity internet and business services.", statusPageUrl: "https://www.xfinity.com/support/status", downDetectorUrl: "https://downdetector.com/status/comcast-xfinity/", sortOrder: 60 },
+  { name: "Verizon", category: "isp", description: "Verizon Fios and wireless connectivity.", downDetectorUrl: "https://downdetector.com/status/verizon/", sortOrder: 70 },
+  { name: "Spectrum", category: "isp", description: "Charter Spectrum internet and business services.", statusPageUrl: "https://www.spectrum.net/support/internet/service-status", downDetectorUrl: "https://downdetector.com/status/spectrum/", sortOrder: 80 },
+] });
+console.log("  ✓ Created 8 Service Alert services");
+
+const m365Svc = await prisma.serviceAlertService.findUnique({ where: { name: "Microsoft 365" } });
+const comcastSvc = await prisma.serviceAlertService.findUnique({ where: { name: "Comcast Xfinity" } });
+const githubSvc = await prisma.serviceAlertService.findUnique({ where: { name: "GitHub" } });
+if (m365Svc && comcastSvc && githubSvc) {
+  await prisma.serviceAlert.createMany({ data: [
+    { serviceId: m365Svc.id, title: "Possible Service Interruption has been reported for Microsoft 365", description: "Users may be unable to access Exchange Online and Teams. Microsoft is investigating degraded service availability.", severity: "outage", status: "active", source: "rss", sourceUrl: "https://status.cloud.microsoft", detectedAt: new Date(Date.now() - 45 * 60 * 1000) },
+    { serviceId: comcastSvc.id, title: "Comcast Xfinity — intermittent connectivity reported", description: "Reports of intermittent internet connectivity across multiple regions. No official statement yet.", severity: "degraded", status: "active", source: "downdetector", sourceUrl: "https://downdetector.com/status/comcast-xfinity/", detectedAt: new Date(Date.now() - 90 * 60 * 1000) },
+    { serviceId: githubSvc.id, title: "GitHub Actions — degraded performance", description: "GitHub Actions runners experienced degraded performance.", severity: "degraded", status: "resolved", source: "rss", sourceUrl: "https://www.githubstatus.com", detectedAt: new Date(Date.now() - 26 * 60 * 60 * 1000), resolvedAt: new Date(Date.now() - 22 * 60 * 60 * 1000) },
+  ] });
+  console.log("  ✓ Created 3 representative Service Alerts");
+}
 
   console.log("\n╔══════════════════════════════════════════╗");
   console.log("║   SEED COMPLETE                          ║");
