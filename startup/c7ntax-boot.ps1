@@ -140,8 +140,8 @@ foreach ($port in 4000, 3010) {
 # 4. Prisma client + schema
 Write-Step "Prisma generate + db push..."
 Push-Location $ApiDir
-& $Node "`"$NpxCli`"" prisma generate 2>&1 | Out-Null
-& $Node "`"$NpxCli`"" prisma db push --accept-data-loss 2>&1 | Out-Null
+& $Node $NpxCli prisma generate 2>&1 | Out-Null
+& $Node $NpxCli prisma db push --accept-data-loss 2>&1 | Out-Null
 Pop-Location
 Write-Step "Prisma client + schema synced"
 
