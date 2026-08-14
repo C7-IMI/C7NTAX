@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.13.003 | Last Updated: 2026-08-13
+## Version: 2026.8.13.004 | Last Updated: 2026-08-13
 
 ---
 
@@ -11,6 +11,12 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.13.004 — Automatic Startup on Reboot (Self-Healing Boot)
+- **[New]** `startup/c7ntax-boot.ps1` — self-healing boot script that starts PostgreSQL (prefers the `postgresql-c7ntax` Windows service, ensures Automatic start, console fallback), verifies the DB with a real backend query, restarts PG up to 4x when backends cannot spawn, adds best-effort Defender exclusions for the PG data/bin dirs, syncs Prisma, reseeds sample data (seed-full + seed-contacts + seed-service-alerts) with exit-code checks and one retry, then launches the API (:4000) and frontend (:3010) and verifies login + page HTTP — every blocking call is time-bounded and logged to `startup/boot.log`.
+- **[New]** Scheduled task "C7NTAX Boot Startup" (AtStartup + 45s delay, highest privileges, StartWhenAvailable, restarts 3x on failure) — the app is now fully functional automatically after every reboot, including sample-data reseed.
+- **[Fix]** Root cause of the loading failure: PostgreSQL was down after reboot (no auto-start) and later entered a recurring failure mode where a backend/autovacuum worker dies with 0xC0000142 and the postmaster then cannot spawn backends (error 487) despite listening on 5432 — fixed by service-mode PostgreSQL, Defender exclusions, and the script's backend-query self-heal.
+- **[Fix]** Boot-script portability fixes: pure-ASCII (PS 5.1 UTF-8 BOM), reserved `$args` renamed, Start-Process quoting for spaced paths, cmd /c wrapper for reliable exit codes.
 
 ## 2026.8.13.003 — Service Alerts Landing Directly
 - **[Update]** Service Alerts is now a single top-level nav item with no children — clicking it opens the Service Alerts Dashboard directly as the section's landing page.

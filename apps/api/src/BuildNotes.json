@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.13.004",
+    "date": "2026-08-13",
+    "title": "Automatic Startup on Reboot (Self-Healing Boot)",
+    "changes": [
+      {"text": "startup/c7ntax-boot.ps1 self-healing boot script: PostgreSQL via the postgresql-c7ntax Windows service (auto-start ensured, console fallback), real backend-query verification with up to 4 PG restarts, best-effort Defender exclusions for PG data/bin, Prisma sync, sample-data reseed (seed-full + seed-contacts + seed-service-alerts) with exit-code checks and one retry, API :4000 + frontend :3010 launch, login + page verification, time-bounded logged steps", "type": "New Feature"},
+      {"text": "Scheduled task C7NTAX Boot Startup (AtStartup + 45s delay, highest, StartWhenAvailable, restart 3x on failure) - app fully functional automatically after every reboot including sample-data reseed; task run verified LastTaskResult 0", "type": "New Feature"},
+      {"text": "Fixed loading failure root cause: PG down after reboot and recurring 0xC0000142 backend crash + error-487 shared-memory failure (listening postmaster that cannot serve) - resolved with service-mode PG, Defender exclusions, and backend-query self-heal", "type": "Fix"},
+      {"text": "Boot-script portability: pure ASCII (PS 5.1 BOM), reserved $args renamed, Start-Process quoting for spaced paths, cmd /c wrapper for reliable exit codes", "type": "Fix"}
+    ]
+  },
+  {
     "version": "2026.8.13.003",
     "date": "2026-08-13",
     "title": "Service Alerts Landing Directly",

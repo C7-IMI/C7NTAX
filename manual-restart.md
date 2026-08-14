@@ -109,3 +109,33 @@ curl -s http://localhost:3004/
 # Login: http://localhost:3004
 # Credentials: admin@C7NTAX.com / admin
 # Database: 8 tickets, 5 companies, 6 users, 4 invoices, 5 assets, 13 contacts, 3 boards
+
+## Section 3: Automatic Boot Startup (no manual action needed)
+
+### What starts automatically after every reboot
+1. **PostgreSQL** - Windows service `postgresql-c7ntax` (StartType: Automatic, LocalSystem).
+2. **Scheduled task "C7NTAX Boot Startup"** (AtStartup + 45s delay) runs
+   `startup/c7ntax-boot.ps1`, which self-heals everything else:
+   - Verifies PostgreSQL with a real backend query (not just the port) and
+     restarts it up to 4x if backends cannot spawn (the 0xC0000142 / error-487
+     failure mode); ensures Defender exclusions for the PG data/bin dirs.
+   - `prisma generate` + `prisma db push`.
+   - **Reseeds sample data** every boot: `seed-full.ts` + `seed-contacts.ts` +
+     `seed-service-alerts.ts` (exit codes checked, one PG-restart retry each).
+   - Starts API (:4000) and frontend vite (:3010), then verifies login HTTP 200.
+   - Logs everything to `startup/boot.log` (server output in `startup/*.log`).
+
+### Manual controls
+- Run now:      `powershell -ExecutionPolicy Bypass -File startup/c7ntax-boot.ps1`
+- Skip reseed:  add `-SkipSeed`
+- Task details: `schtasks /query /tn "C7NTAX Boot Startup" /v`
+- Trigger task: `schtasks /run /tn "C7NTAX Boot Startup"`
+- PG service:   `sc start postgresql-c7ntax` / `sc stop postgresql-c7ntax`
+
+### Known failure mode (self-healed by the script)
+A PostgreSQL child process occasionally dies with 0xC0000142 (DLL init,
+AV/EDR interference). The postmaster then "reinitializes" and every new
+backend fails with "could not reserve shared memory region ... error 487"
+while port 5432 stays open. The boot script detects this via the backend
+query and restarts the service. Defender exclusions for the PG data/bin
+directories reduce recurrence.
