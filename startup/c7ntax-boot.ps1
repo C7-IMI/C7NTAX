@@ -46,7 +46,8 @@ function Invoke-Node([string]$workDir, [string[]]$nodeArgs, [int]$timeoutSec, [s
         $cmdLine += "`"$clean`" "
     }
     $cmdLine += "> `"$outLog`" 2>&1"
-    $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c", $cmdLine -WorkingDirectory $workDir -WindowStyle Hidden -PassThru
+    $wrapped = "`"" + $cmdLine + "`""
+    $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c", $wrapped -WorkingDirectory $workDir -WindowStyle Hidden -PassThru
     if (-not $p.WaitForExit($timeoutSec * 1000)) {
         Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
         return -1
