@@ -56,11 +56,21 @@ function Test-Db {
 }
 
 function Restart-Pg {
-    Write-Step "  [pg] stopping..."
-    & "$PgBin/pg_ctl.exe" stop -D $PgDataDir -m fast -t 20 2>&1 | Out-Null
-    Start-Sleep -Seconds 3
-    Write-Step "  [pg] starting..."
-    & "$PgBin/pg_ctl.exe" start -D $PgDataDir -l "$PgDataDir/logfile" -w -t 40 2>&1 | Out-Null
+    $svc = Get-Service "postgresql-c7ntax" -ErrorAction SilentlyContinue
+    if ($svc) {
+        Write-Step "  [pg] restarting service postgresql-c7ntax..."
+        try { Stop-Service "postgresql-c7ntax" -Force -ErrorAction Stop } catch {}
+        Start-Sleep -Seconds 3
+        try { Start-Service "postgresql-c7ntax" -ErrorAction Stop } catch {
+            Write-Step "  [pg] service start failed: $($_.Exception.Message)"
+        }
+    } else {
+        Write-Step "  [pg] stopping (console)..."
+        & "$PgBin/pg_ctl.exe" stop -D $PgDataDir -m fast -t 20 2>&1 | Out-Null
+        Start-Sleep -Seconds 3
+        Write-Step "  [pg] starting (console)..."
+        & "$PgBin/pg_ctl.exe" start -D $PgDataDir -l "$PgDataDir/logfile" -w -t 40 2>&1 | Out-Null
+    }
     for ($i = 0; $i -lt 20; $i++) {
         if (Test-Port 5432) { Write-Step "  [pg] port 5432 up"; return }
         Start-Sleep -Seconds 2
@@ -86,10 +96,38 @@ if (Test-Path $BootLog) {
 
 Write-Step "=== C7NTAX boot sequence started (self-healing) ==="
 
-# 1. PostgreSQL - up AND serving backends
-if (-not (Test-Port 5432)) {
-    Write-Step "PostgreSQL down - starting"
-    Restart-Pg
+# 1. PostgreSQL - prefer the Windows service (starts automatically on boot),
+# fall back to console mode; verify a real backend query and self-heal.
+$pgSvc = Get-Service "postgresql-c7ntax" -ErrorAction SilentlyContinue
+if ($pgSvc) {
+    if ($pgSvc.Status -ne "Running") {
+        Write-Step "PostgreSQL service exists but not running - starting"
+        try { Start-Service "postgresql-c7ntax" -ErrorAction Stop } catch {
+            Write-Step "Service start failed: $($_.Exception.Message) - trying console fallback"
+            Restart-Pg
+        }
+    } else {
+        Write-Step "PostgreSQL service already running"
+    }
+    # Ensure start type is Automatic so PG survives future reboots
+    try {
+        if ((Get-Service "postgresql-c7ntax").StartType -ne "Automatic") {
+            Set-Service "postgresql-c7ntax" -StartupType Automatic -ErrorAction Stop
+            Write-Step "PostgreSQL service start type set to Automatic"
+        }
+    } catch {
+        Write-Step "NOTE: could not set service start type (no admin rights)"
+    }
+} else {
+    Write-Step "No PostgreSQL service - registering one (best effort)..."
+    try {
+        & "$PgBin/pg_ctl.exe" register -N "postgresql-c7ntax" -D $PgDataDir -S auto -w -t 30 2>&1 | Out-Null
+        Start-Service "postgresql-c7ntax" -ErrorAction Stop
+        Write-Step "PostgreSQL registered as service postgresql-c7ntax (auto-start)"
+    } catch {
+        Write-Step "NOTE: service registration failed ($($_.Exception.Message)) - using console mode"
+        if (-not (Test-Port 5432)) { Restart-Pg }
+    }
 }
 $dbOk = $false
 for ($attempt = 1; $attempt -le 4; $attempt++) {
