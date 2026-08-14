@@ -37,8 +37,8 @@ function Test-Port([int]$port) {
 }
 
 # Run a node command with a hard timeout; returns exit code (or -1 on timeout)
-function Invoke-Node([string]$workDir, [string[]]$args, [int]$timeoutSec, [string]$outLog, [string]$errLog) {
-    $p = Start-Process -FilePath $Node -ArgumentList $args -WorkingDirectory $workDir -WindowStyle Hidden -RedirectStandardOutput $outLog -RedirectStandardError $errLog -PassThru
+function Invoke-Node([string]$workDir, [string[]]$nodeArgs, [int]$timeoutSec, [string]$outLog, [string]$errLog) {
+    $p = Start-Process -FilePath $Node -ArgumentList $nodeArgs -WorkingDirectory $workDir -WindowStyle Hidden -RedirectStandardOutput $outLog -RedirectStandardError $errLog -PassThru
     if (-not $p.WaitForExit($timeoutSec * 1000)) {
         Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
         return -1
