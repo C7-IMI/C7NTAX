@@ -1,41 +1,41 @@
 [
   {
-    "id": "b4ba0e74-f7b5-4457-b744-9b4511630a13",
+    "id": "92a2a8c0-e461-4fc6-98b1-b1adf7d021f3",
     "name": "acmecorp.com Wildcard",
     "domain": "*.acmecorp.com",
     "issuer": "DigiCert",
-    "expiryDate": "2026-12-12T05:55:14.870Z",
-    "validFrom": "2025-12-12T05:55:14.870Z",
+    "expiryDate": "2026-12-10T06:04:15.110Z",
+    "validFrom": "2025-12-10T06:04:15.110Z",
     "subjectAltNames": [],
     "certificateType": "OV",
     "autoRenew": true,
     "notes": null,
-    "companyId": "64a256cb-c039-4441-a384-412b7e013325",
-    "createdAt": "2026-08-14T05:55:14.942Z",
-    "updatedAt": "2026-08-14T05:55:14.942Z"
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "createdAt": "2026-08-12T06:04:15.162Z",
+    "updatedAt": "2026-08-12T06:04:15.162Z"
   },
   {
-    "id": "fa17039e-ff00-4633-993f-2c21a90291ec",
+    "id": "34c3f03f-d27e-40e6-a1d2-6c2548a30761",
     "name": "globexind.com",
     "domain": "globexind.com",
     "issuer": "Let's Encrypt",
-    "expiryDate": "2026-10-13T05:55:14.870Z",
-    "validFrom": "2025-10-13T05:55:14.870Z",
+    "expiryDate": "2026-10-11T06:04:15.110Z",
+    "validFrom": "2025-10-11T06:04:15.110Z",
     "subjectAltNames": [],
     "certificateType": "DV",
     "autoRenew": true,
     "notes": null,
-    "companyId": "02525ba6-6624-4573-8625-2f2bcc5f0557",
-    "createdAt": "2026-08-14T05:55:14.942Z",
-    "updatedAt": "2026-08-14T05:55:14.942Z"
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "createdAt": "2026-08-12T06:04:15.162Z",
+    "updatedAt": "2026-08-12T06:04:15.162Z"
   },
   {
-    "id": "30fa7bcb-d6a0-46ea-9c11-6af21c85fe7b",
+    "id": "3fd18f77-3abc-42bc-a6fa-3da9c2b242a1",
     "name": "starkent.com Wildcard",
     "domain": "*.starkent.com",
     "issuer": "Sectigo",
-    "expiryDate": "2027-04-21T05:55:14.870Z",
-    "validFrom": "2026-04-21T05:55:14.870Z",
+    "expiryDate": "2027-04-19T06:04:15.110Z",
+    "validFrom": "2026-04-19T06:04:15.110Z",
     "subjectAltNames": [
       "starkent.com",
       "*.starkent.com"
@@ -43,8 +43,8 @@
     "certificateType": "OV",
     "autoRenew": true,
     "notes": null,
-    "companyId": "35e5bbdc-9081-49c7-b9e1-0f90a5980606",
-    "createdAt": "2026-08-14T05:55:14.942Z",
-    "updatedAt": "2026-08-14T05:55:14.942Z"
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "createdAt": "2026-08-12T06:04:15.162Z",
+    "updatedAt": "2026-08-12T06:04:15.162Z"
   }
 ]

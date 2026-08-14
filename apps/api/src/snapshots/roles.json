@@ -1,6 +1,6 @@
 [
   {
-    "id": "f733a8bb-4f49-4b16-86b3-f7ad01967a52",
+    "id": "ead437af-8f98-4b1c-8716-9435830d4877",
     "name": "Super Admin",
     "systemRole": "super_admin",
     "permissions": [
@@ -13,8 +13,6 @@
       "ticket:view_all",
       "board:view",
       "board:manage",
-      "servicealert:view",
-      "servicealert:manage",
       "client:view",
       "client:create",
       "client:edit",
@@ -109,11 +107,11 @@
       "kumo:link:manage"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-14T05:55:14.503Z",
-    "updatedAt": "2026-08-14T05:55:14.503Z"
+    "createdAt": "2026-08-12T06:04:14.718Z",
+    "updatedAt": "2026-08-12T06:04:14.718Z"
   },
   {
-    "id": "55c9fd27-dd33-4fbf-af9e-f7a55d95f1c1",
+    "id": "52f22c12-60e7-4489-a606-f82710131221",
     "name": "Admin",
     "systemRole": "admin",
     "permissions": [
@@ -195,16 +193,14 @@
       "inference:view",
       "inference:manage",
       "security:manage",
-      "mfa:enforce",
-      "servicealert:view",
-      "servicealert:manage"
+      "mfa:enforce"
     ],
     "isDefault": true,
-    "createdAt": "2026-08-14T05:55:14.506Z",
-    "updatedAt": "2026-08-14T05:55:14.506Z"
+    "createdAt": "2026-08-12T06:04:14.720Z",
+    "updatedAt": "2026-08-12T06:04:14.720Z"
   },
   {
-    "id": "df16840f-84f1-468b-b840-41b576a041cb",
+    "id": "f032badc-4d32-463c-973d-5cf0559f273a",
     "name": "Technician",
     "systemRole": "technician",
     "permissions": [
@@ -216,15 +212,14 @@
       "board:view",
       "client:view",
       "integration:view",
-      "report:view",
-      "servicealert:view"
+      "report:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-14T05:55:14.507Z",
-    "updatedAt": "2026-08-14T05:55:14.507Z"
+    "createdAt": "2026-08-12T06:04:14.721Z",
+    "updatedAt": "2026-08-12T06:04:14.721Z"
   },
   {
-    "id": "f52b1a79-1935-47c5-8d8a-4adf0a755f23",
+    "id": "d077b89f-73e4-4f50-ab39-20c9f1f7964a",
     "name": "Client Admin",
     "systemRole": "client_admin",
     "permissions": [
@@ -233,26 +228,24 @@
       "ticket:edit",
       "board:view",
       "client:view",
-      "billing:view",
-      "servicealert:view"
+      "billing:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-14T05:55:14.508Z",
-    "updatedAt": "2026-08-14T05:55:14.508Z"
+    "createdAt": "2026-08-12T06:04:14.721Z",
+    "updatedAt": "2026-08-12T06:04:14.721Z"
   },
   {
-    "id": "3778292f-4edc-495d-838c-566404d0bde2",
+    "id": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
     "name": "Read Only",
     "systemRole": "read_only",
     "permissions": [
       "ticket:view",
       "board:view",
       "client:view",
-      "report:view",
-      "servicealert:view"
+      "report:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-14T05:55:14.508Z",
-    "updatedAt": "2026-08-14T05:55:14.508Z"
+    "createdAt": "2026-08-12T06:04:14.722Z",
+    "updatedAt": "2026-08-12T06:04:14.722Z"
   }
 ]

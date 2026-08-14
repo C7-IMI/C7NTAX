@@ -1,6 +1,6 @@
 [
   {
-    "id": "8661d8be-dde8-4334-81b6-db952817cf1b",
+    "id": "b8552ba7-054c-4c91-9a25-e5bb5c2e4ee7",
     "kind": "microsoft365",
     "name": "Contoso Microsoft 365",
     "enabled": false,
@@ -17,11 +17,11 @@
     },
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-14T05:55:14.912Z",
-    "updatedAt": "2026-08-14T05:55:14.912Z"
+    "createdAt": "2026-08-12T06:04:15.134Z",
+    "updatedAt": "2026-08-12T06:04:15.134Z"
   },
   {
-    "id": "6f5e55d7-bce0-4a25-9c33-438701acde6f",
+    "id": "66283324-8256-4c76-a588-dbfcdfaba736",
     "kind": "autotask",
     "name": "AutoTask PSA Production",
     "enabled": false,
@@ -33,11 +33,11 @@
     "settings": {},
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-14T05:55:14.912Z",
-    "updatedAt": "2026-08-14T05:55:14.912Z"
+    "createdAt": "2026-08-12T06:04:15.135Z",
+    "updatedAt": "2026-08-12T06:04:15.135Z"
   },
   {
-    "id": "d8924dc9-283c-47a0-81fb-7ab58ec0b1c2",
+    "id": "6b919672-78a4-41ba-bca6-5d70638d80b8",
     "kind": "connectwise",
     "name": "ConnectWise Manage",
     "enabled": false,
@@ -52,11 +52,11 @@
     "settings": {},
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-14T05:55:14.913Z",
-    "updatedAt": "2026-08-14T05:55:14.913Z"
+    "createdAt": "2026-08-12T06:04:15.135Z",
+    "updatedAt": "2026-08-12T06:04:15.135Z"
   },
   {
-    "id": "afd53672-21e1-4be1-8427-f2f62a43df5e",
+    "id": "dd1621e8-8fe4-4030-88b8-e3ea6de1e7e3",
     "kind": "quickbooks",
     "name": "QuickBooks Online",
     "enabled": false,
@@ -69,11 +69,11 @@
     "settings": {},
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-14T05:55:14.914Z",
-    "updatedAt": "2026-08-14T05:55:14.914Z"
+    "createdAt": "2026-08-12T06:04:15.136Z",
+    "updatedAt": "2026-08-12T06:04:15.136Z"
   },
   {
-    "id": "87cbbb10-ee25-428b-bfef-f870f9a6db1c",
+    "id": "d08887f7-005e-487f-bd4f-8315e1ff6975",
     "kind": "dummy",
     "name": "DummyConnect",
     "enabled": true,
@@ -84,7 +84,7 @@
     },
     "lastSyncAt": null,
     "errorMessage": null,
-    "createdAt": "2026-08-14T05:55:14.917Z",
-    "updatedAt": "2026-08-14T05:55:14.917Z"
+    "createdAt": "2026-08-12T06:04:15.139Z",
+    "updatedAt": "2026-08-12T06:04:15.139Z"
   }
 ]

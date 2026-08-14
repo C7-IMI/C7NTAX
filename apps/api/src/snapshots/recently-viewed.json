@@ -106,50 +106,5 @@
     "entityName": "Globex VPN Credential",
     "entityIcon": "key",
     "viewedAt": "2026-08-12T06:00:51.147Z"
-  },
-  {
-    "id": "c157890c-c1c6-4e1e-9009-002aa20cf19d",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "password",
-    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
-    "entityName": "Acme Domain Admin",
-    "entityIcon": "key",
-    "viewedAt": "2026-08-12T07:52:25.638Z"
-  },
-  {
-    "id": "c556a0d7-38d9-4bf2-86a9-fe125af863ca",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "password",
-    "entityId": "3631fd0d-bc75-4480-8a81-31c5396c5327",
-    "entityName": "Stark AWS Root",
-    "entityIcon": "key",
-    "viewedAt": "2026-08-12T14:56:12.953Z"
-  },
-  {
-    "id": "54f8b516-7ef7-404d-89e3-2c1c64996d1c",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "password",
-    "entityId": "d69e3593-a2d1-48d6-a3f4-929856a41ad1",
-    "entityName": "Globex VPN Credential",
-    "entityIcon": "key",
-    "viewedAt": "2026-08-13T06:15:22.727Z"
-  },
-  {
-    "id": "de67fa4e-8511-4009-ba0a-323ff573662d",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "password",
-    "entityId": "b4e69c8a-ca6e-4995-b0d0-3fa617304217",
-    "entityName": "Office 365 Global Admin",
-    "entityIcon": "key",
-    "viewedAt": "2026-08-13T06:15:30.374Z"
-  },
-  {
-    "id": "4f7893f9-2754-40fa-a787-9ee4f9aa4c45",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "password",
-    "entityId": "0a79a980-891e-4e66-85f8-35e76030ba39",
-    "entityName": "Stark AWS Root",
-    "entityIcon": "key",
-    "viewedAt": "2026-08-14T06:03:14.385Z"
   }
 ]
