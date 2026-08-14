@@ -1,7 +1,7 @@
 [
   {
-    "id": "d0d116cf-ff36-40ff-b124-37f159d5a881",
-    "kumoAssetId": "81837e07-a305-4bc8-9aee-4815e5493dcc",
+    "id": "ca585d07-2388-4f0a-999f-1004a6de1193",
+    "kumoAssetId": "135b0a11-fb41-4fda-bfd3-ceb47eb60c7e",
     "hostname": "srv-dc-01",
     "fqdn": null,
     "operatingSystem": "Windows Server 2022",
@@ -16,8 +16,8 @@
     "lastPatchedAt": null
   },
   {
-    "id": "1e384a8c-8a0c-458b-ba1f-8a2a3ce9f83a",
-    "kumoAssetId": "8e74cc4c-771c-4074-a6b3-f4683dcd8be5",
+    "id": "25151f22-d288-44fe-8959-483d3d6e0b81",
+    "kumoAssetId": "fdd009ea-186b-43de-990b-592041bab76b",
     "hostname": "srv-app-02",
     "fqdn": null,
     "operatingSystem": "Windows Server 2019",
@@ -32,8 +32,8 @@
     "lastPatchedAt": null
   },
   {
-    "id": "d7e68178-2c56-4bf2-88fc-21f5c30f2452",
-    "kumoAssetId": "87943e4a-eba0-4bbb-9a9f-721c9985678d",
+    "id": "e21c038c-6816-449f-8fb2-ef58f37dc75b",
+    "kumoAssetId": "792cb124-ba73-41a6-8c6f-f21039ffdd5f",
     "hostname": "fw-primary",
     "fqdn": null,
     "operatingSystem": "FortiOS 7.4",

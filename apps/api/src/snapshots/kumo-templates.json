@@ -1,6 +1,6 @@
 [
   {
-    "id": "11d7fbe1-bec2-4f77-8f5d-5b0e0daf596d",
+    "id": "fdcc7a4e-57fc-4796-9472-9bfc3612f277",
     "name": "Server",
     "description": "Physical or virtual server",
     "icon": "server",
@@ -8,11 +8,11 @@
     "isBuiltIn": true,
     "isActive": true,
     "companyId": null,
-    "createdAt": "2026-08-14T04:24:55.705Z",
-    "updatedAt": "2026-08-14T04:24:55.705Z"
+    "createdAt": "2026-08-14T05:55:14.918Z",
+    "updatedAt": "2026-08-14T05:55:14.918Z"
   },
   {
-    "id": "b39f48ee-94cb-4131-baae-c13a284d7221",
+    "id": "e6952bb7-6405-4a84-809c-115af70162e3",
     "name": "Workstation",
     "description": "Desktop or laptop",
     "icon": "monitor",
@@ -20,11 +20,11 @@
     "isBuiltIn": true,
     "isActive": true,
     "companyId": null,
-    "createdAt": "2026-08-14T04:24:55.724Z",
-    "updatedAt": "2026-08-14T04:24:55.724Z"
+    "createdAt": "2026-08-14T05:55:14.919Z",
+    "updatedAt": "2026-08-14T05:55:14.919Z"
   },
   {
-    "id": "b148603d-11f4-40e9-932e-224498d15e7b",
+    "id": "e068942a-98da-454d-b585-4ed2cbc5cb57",
     "name": "Network Device",
     "description": "Switch, router, firewall, AP",
     "icon": "router",
@@ -32,7 +32,7 @@
     "isBuiltIn": true,
     "isActive": true,
     "companyId": null,
-    "createdAt": "2026-08-14T04:24:55.725Z",
-    "updatedAt": "2026-08-14T04:24:55.725Z"
+    "createdAt": "2026-08-14T05:55:14.919Z",
+    "updatedAt": "2026-08-14T05:55:14.919Z"
   }
 ]

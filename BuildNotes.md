@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.13.004 | Last Updated: 2026-08-13
+## Version: 2026.8.14.001 | Last Updated: 2026-08-14
 
 ---
 
@@ -11,6 +11,13 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.14.001 — Full System Audit & Configuration Corrections
+- **[Fix]** `apps/api/.env` — `CORS_ORIGIN` corrected from stale `http://localhost:3001` to `http://localhost:3010` (matches `WEB_ORIGIN`/vite port); preflight now returns `Access-Control-Allow-Origin: http://localhost:3010` with credentials.
+- **[Fix]** PostgreSQL service logging — `postgresql.conf`: `logging_collector = on`, `log_directory = 'log'`, `log_filename = 'postgresql-%Y-%m-%d.log'`; the Windows service previously wrote no logs, now service-mode PG writes daily logs to `data/log/` for crash diagnosis (0xC0000142/487 recurrence watch).
+- **[Update]** `postgresql-c7ntax` service re-registered cleanly (Automatic, LocalSystem); verified against a full boot-script run.
+- **[Audit]** Verified healthy: PG service Running/Automatic on 5432 with real backend queries; single API (:4000) + single vite (:3010) processes, no orphans; scheduled task "C7NTAX Boot Startup" (AtStartup+45s, Highest, StartWhenAvailable, 3x restart) LastTaskResult 0; Defender exclusions present for PG data/bin; Prisma schema valid + DB synced; sample data intact (6 users, 8 tickets, 3 boards, 5 companies, 13 contacts, 8 alert services, active alerts legitimate — Azure RSS incident + 2 seeded); all roles carry `servicealert:view`; full boot sequence re-run green in 21s with login HTTP 200; verify-post-change "All checks passed".
+- **[Audit]** Known baseline: pre-existing strict-`tsc` errors remain in legacy files (`seed-ticket-tabs`, `seed-full`, `packages/billing`, `shared/features`, `KumoConfigs`, `KumoPasswords`, `Reports`, etc.) — runtime-unaffected (tsx strips types; seeds/API verified working at runtime); intentionally left untouched to avoid scope creep.
 
 ## 2026.8.13.004 — Automatic Startup on Reboot (Self-Healing Boot)
 - **[New]** `startup/c7ntax-boot.ps1` — self-healing boot script that starts PostgreSQL (prefers the `postgresql-c7ntax` Windows service, ensures Automatic start, console fallback), verifies the DB with a real backend query, restarts PG up to 4x when backends cannot spawn, adds best-effort Defender exclusions for the PG data/bin dirs, syncs Prisma, reseeds sample data (seed-full + seed-contacts + seed-service-alerts) with exit-code checks and one retry, then launches the API (:4000) and frontend (:3010) and verifies login + page HTTP — every blocking call is time-bounded and logged to `startup/boot.log`.

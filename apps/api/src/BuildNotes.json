@@ -1,5 +1,17 @@
 [
   {
+    "version": "2026.8.14.001",
+    "date": "2026-08-14",
+    "title": "Full System Audit & Configuration Corrections",
+    "changes": [
+      {"text": "apps/api/.env CORS_ORIGIN corrected from stale http://localhost:3001 to http://localhost:3010 (matches WEB_ORIGIN/vite port); preflight returns Access-Control-Allow-Origin: http://localhost:3010 with credentials", "type": "Fix"},
+      {"text": "postgresql.conf: logging_collector=on, log_directory=log, log_filename=postgresql-%Y-%m-%d.log - the Windows service previously wrote no logs; service-mode PG now logs daily to data/log/ for crash diagnosis", "type": "Fix"},
+      {"text": "postgresql-c7ntax service re-registered cleanly (Automatic, LocalSystem) and verified against a full boot-script run", "type": "Update"},
+      {"text": "Audit verified: PG service healthy with real backend queries; single API + single vite process, no orphans; C7NTAX Boot Startup task LastTaskResult 0; Defender exclusions present; Prisma valid + synced; sample data intact (6 users, 8 tickets, 3 boards, 5 companies, 13 contacts, 8 alert services, 3 legitimate active alerts); all roles carry servicealert:view; full boot run green in 21s with login HTTP 200; verify-post-change passed", "type": "Audit"},
+      {"text": "Known baseline: pre-existing strict-tsc errors in legacy files (seed-ticket-tabs, seed-full, packages/billing, shared/features, KumoConfigs, KumoPasswords, Reports) - runtime-unaffected, left untouched", "type": "Audit"}
+    ]
+  },
+  {
     "version": "2026.8.13.004",
     "date": "2026-08-13",
     "title": "Automatic Startup on Reboot (Self-Healing Boot)",

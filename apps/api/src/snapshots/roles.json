@@ -1,6 +1,6 @@
 [
   {
-    "id": "cba55550-59b8-4abd-945e-ce1d0f8dc5e8",
+    "id": "f733a8bb-4f49-4b16-86b3-f7ad01967a52",
     "name": "Super Admin",
     "systemRole": "super_admin",
     "permissions": [
@@ -109,11 +109,11 @@
       "kumo:link:manage"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-14T04:24:55.191Z",
-    "updatedAt": "2026-08-14T04:24:55.191Z"
+    "createdAt": "2026-08-14T05:55:14.503Z",
+    "updatedAt": "2026-08-14T05:55:14.503Z"
   },
   {
-    "id": "432252e8-0b5b-4cda-8c47-87949d58ccab",
+    "id": "55c9fd27-dd33-4fbf-af9e-f7a55d95f1c1",
     "name": "Admin",
     "systemRole": "admin",
     "permissions": [
@@ -200,11 +200,11 @@
       "servicealert:manage"
     ],
     "isDefault": true,
-    "createdAt": "2026-08-14T04:24:55.202Z",
-    "updatedAt": "2026-08-14T04:24:55.202Z"
+    "createdAt": "2026-08-14T05:55:14.506Z",
+    "updatedAt": "2026-08-14T05:55:14.506Z"
   },
   {
-    "id": "8fc38055-eb6f-46f1-8461-0be8d9ecc8c5",
+    "id": "df16840f-84f1-468b-b840-41b576a041cb",
     "name": "Technician",
     "systemRole": "technician",
     "permissions": [
@@ -220,11 +220,11 @@
       "servicealert:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-14T04:24:55.203Z",
-    "updatedAt": "2026-08-14T04:24:55.203Z"
+    "createdAt": "2026-08-14T05:55:14.507Z",
+    "updatedAt": "2026-08-14T05:55:14.507Z"
   },
   {
-    "id": "c40fa70b-40ad-4a24-b5a2-ead7474680b4",
+    "id": "f52b1a79-1935-47c5-8d8a-4adf0a755f23",
     "name": "Client Admin",
     "systemRole": "client_admin",
     "permissions": [
@@ -237,11 +237,11 @@
       "servicealert:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-14T04:24:55.203Z",
-    "updatedAt": "2026-08-14T04:24:55.203Z"
+    "createdAt": "2026-08-14T05:55:14.508Z",
+    "updatedAt": "2026-08-14T05:55:14.508Z"
   },
   {
-    "id": "bf1c9352-4a33-4ee1-90cb-04d53579ce9d",
+    "id": "3778292f-4edc-495d-838c-566404d0bde2",
     "name": "Read Only",
     "systemRole": "read_only",
     "permissions": [
@@ -252,7 +252,7 @@
       "servicealert:view"
     ],
     "isDefault": false,
-    "createdAt": "2026-08-14T04:24:55.204Z",
-    "updatedAt": "2026-08-14T04:24:55.204Z"
+    "createdAt": "2026-08-14T05:55:14.508Z",
+    "updatedAt": "2026-08-14T05:55:14.508Z"
   }
 ]

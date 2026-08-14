@@ -756,7 +756,7 @@
 
 ---
 
-**Total Prompts:** 65 | **Completed:** 65 | **In Progress:** 0
+**Total Prompts:** 66 | **Completed:** 66 | **In Progress:** 0
 
 ### Prompt 64 — Service Alerts as direct landing nav item
 **Timestamp:** 2026-08-13 | **Status:** ✅ Completed | **Duration:** ~10 min
@@ -786,3 +786,24 @@
 - Fixed PowerShell pitfalls encountered: UTF-8 BOM (rewrote as pure ASCII), $args reserved variable, Start-Process argument quoting for paths with spaces, cmd /c outer-quote wrapping for reliable exit codes.
 
 **Verified:** full boot run green (PG OK, 3 seeds OK, API 4000, vite 3010, login HTTP 200); task wiring test LastTaskResult 0; login + service-alerts API + frontend all functional.
+
+
+### Prompt 66 — Full system & configuration audit
+**Timestamp:** 2026-08-14 | **Status:** Completed | **Duration:** ~1 h
+**BuildNotes IDs:** #1 (2026.8.14.001)
+> Audit the entire codebase and all processes/services. Verify that all configurations are correct and functional, including the auto-restart configuration/service that was just created. Identify and correct any misconfigurations or broken settings, and confirm that everything is working as intended.
+
+**Findings & fixes:**
+- FIX: `apps/api/.env` CORS_ORIGIN was stale (http://localhost:3001) vs the actual frontend port 3010 - corrected; CORS preflight verified returning Access-Control-Allow-Origin: http://localhost:3010.
+- FIX: PostgreSQL Windows service wrote no logs (registered without a logfile; pg_ctl register ignores -l on PG 18.4) - enabled logging_collector in postgresql.conf (log_directory=log, log_filename=postgresql-%Y-%m-%d.log); daily service logs now written to data/log/ for the 0xC0000142/487 recurrence watch.
+- UPDATE: postgresql-c7ntax service unregistered/re-registered cleanly (Automatic, LocalSystem); full boot-script run green afterwards.
+
+**Verified healthy:**
+- PG service Running/Automatic, port 5432 owned by service postmaster, real backend queries OK; no 0xC0000142/487 since service-mode + Defender exclusions (exclusions confirmed present for PG data/bin).
+- Exactly one API process (:4000, tsx) and one vite process (:3010) - no orphans or duplicates.
+- Scheduled task C7NTAX Boot Startup: Ready, BootTrigger+45s, StephenSimmons/Highest, StartWhenAvailable, restart 3x; LastTaskResult 0.
+- Boot script parses clean; re-run completed all steps in 21s: PG OK, 3 seeds OK, API + frontend OK, login HTTP 200, frontend HTTP 200.
+- Prisma schema valid + db push synced; verify-post-change: All checks passed; snapshots recaptured.
+- Sample data: 6 users, 8 tickets, 3 boards, 5 companies, 13 contacts, 8 alert services; 3 active alerts all legitimate (Azure RSS incident + 2 seeded); all 5 roles carry servicealert:view.
+- git tree clean.
+- Known baseline (documented, left untouched): pre-existing strict-tsc errors in legacy files (seed-ticket-tabs, seed-full, packages/billing, shared/features, KumoConfigs, KumoPasswords, Reports) - runtime-unaffected via tsx; seeds and API verified working at runtime.

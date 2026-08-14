@@ -1,122 +1,146 @@
 [
   {
-    "id": "c7c49f39-ff03-474e-887c-eb27b48489d8",
+    "id": "ab1b134b-f22a-40d7-95d0-69c7d9dcf846",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "0a79a980-891e-4e66-85f8-35e76030ba39",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-14T06:03:16.928Z"
+  },
+  {
+    "id": "2e083963-6c91-4c5d-bbd5-877b9609deff",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "0a79a980-891e-4e66-85f8-35e76030ba39",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-14T06:03:18.388Z"
+  },
+  {
+    "id": "76a8c8eb-d610-40c0-acca-be73f71e0952",
     "action": "ticket:update",
     "entity": "ticket",
-    "entityId": "d98ec61d-e6dd-430d-b778-0afdda979553",
+    "entityId": "f7df26b7-79e7-463a-8f36-7fcd40004019",
     "changes": {
       "status": "in_progress"
     },
-    "userId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "userId": "ce4f5ced-cc7a-4103-b9fc-3385930fe9fb",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-08T04:24:55.590Z"
+    "createdAt": "2026-08-08T05:55:14.870Z"
   },
   {
-    "id": "c6bd6d47-de52-4266-949b-dd86067fe437",
+    "id": "e1e36444-a9dd-4553-b85d-1ad665b79300",
     "action": "ticket:create",
     "entity": "ticket",
-    "entityId": "d98ec61d-e6dd-430d-b778-0afdda979553",
+    "entityId": "f7df26b7-79e7-463a-8f36-7fcd40004019",
     "changes": {
       "title": "created"
     },
-    "userId": "0b088fbb-b604-43bb-bdcf-3cfca313ecb7",
+    "userId": "bbb71684-938a-4bf6-8a2f-e1b4ba17e532",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-07T04:24:55.590Z"
+    "createdAt": "2026-08-07T05:55:14.870Z"
   },
   {
-    "id": "7bd68b58-22c4-4ffa-ba33-452bdda270c7",
+    "id": "41a4854a-ef65-4395-b47d-a07d19114e51",
     "action": "ticket:update",
     "entity": "ticket",
-    "entityId": "9d322ea0-7968-4acc-838b-a907baa7825c",
+    "entityId": "347ff66b-ce44-427a-b04a-5a93e1905496",
     "changes": {
       "priority": "critical"
     },
-    "userId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "userId": "1c60b37d-3caa-4aaf-a32a-84f1dba2b820",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-09T04:24:55.590Z"
+    "createdAt": "2026-08-09T05:55:14.870Z"
   },
   {
-    "id": "537b7cac-24f0-4be0-870a-e1c44eb1bb38",
+    "id": "c757bce5-eaa7-4bf6-93ab-50ca01997cc0",
     "action": "ticket:create",
     "entity": "ticket",
-    "entityId": "9d322ea0-7968-4acc-838b-a907baa7825c",
+    "entityId": "347ff66b-ce44-427a-b04a-5a93e1905496",
     "changes": {
       "title": "created"
     },
-    "userId": "dc46f4ff-6810-48eb-ac70-e758adb93d7e",
+    "userId": "d1fb351e-9cef-41ae-8804-3348d9ca6d8a",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-08T04:24:55.590Z"
+    "createdAt": "2026-08-08T05:55:14.870Z"
   },
   {
-    "id": "c0b3584d-2126-4caa-a512-9fdc5e97fdef",
+    "id": "8b632cab-f1e2-4917-bac0-cab59ce3d821",
     "action": "ticket:update",
     "entity": "ticket",
-    "entityId": "f4a020e9-1f10-4b1d-b03a-c49defce3570",
+    "entityId": "bd02f864-01ad-4b10-bd59-d02f47b9bfb8",
     "changes": {
       "status": "waiting_on_client"
     },
-    "userId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "userId": "ce4f5ced-cc7a-4103-b9fc-3385930fe9fb",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-10T04:24:55.590Z"
+    "createdAt": "2026-08-10T05:55:14.870Z"
   },
   {
-    "id": "f228a363-079a-48f0-ab61-a095ff0047e1",
+    "id": "546a253d-c75e-4bba-91ce-62b0ff351eea",
     "action": "ticket:update",
     "entity": "ticket",
-    "entityId": "2102e3da-f798-4ad1-9c4a-0cfd6e29444b",
+    "entityId": "b95b8ba1-a78b-44b8-9d5d-a93fe03d1c04",
     "changes": {
       "status": "resolved"
     },
-    "userId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "userId": "1c60b37d-3caa-4aaf-a32a-84f1dba2b820",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-13T04:24:55.590Z"
+    "createdAt": "2026-08-13T05:55:14.870Z"
   },
   {
-    "id": "d14d6a41-058c-40c0-ad3f-6fccad204ea1",
+    "id": "3f15aa60-bd00-4f52-afbe-41ca7713f6a8",
     "action": "ticket:update",
     "entity": "ticket",
-    "entityId": "e7569150-0bff-442a-bcb8-1a42c9ea8e51",
+    "entityId": "7b1507ac-059a-4d84-826f-c0b381076788",
     "changes": {
       "dueDate": "set"
     },
-    "userId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "userId": "ce4f5ced-cc7a-4103-b9fc-3385930fe9fb",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-11T04:24:55.590Z"
+    "createdAt": "2026-08-11T05:55:14.870Z"
   },
   {
-    "id": "485daec5-ffd8-4db0-b65d-e24f09dda386",
+    "id": "7ba3c507-df61-436e-a0d1-7095399e6de1",
     "action": "ticket:update",
     "entity": "ticket",
-    "entityId": "3108bedf-241e-42fe-9026-0d70c074cc17",
+    "entityId": "d12d76d2-e818-4482-ab64-1ccdab2adb96",
     "changes": {
       "priority": "medium"
     },
-    "userId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "userId": "1c60b37d-3caa-4aaf-a32a-84f1dba2b820",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-12T04:24:55.590Z"
+    "createdAt": "2026-08-12T05:55:14.870Z"
   },
   {
-    "id": "abfa56cf-a476-4f19-bb0f-6b2dbce7bf1b",
+    "id": "95c18a82-de92-44ea-9525-bd04dfc7f931",
     "action": "ticket:update",
     "entity": "ticket",
-    "entityId": "709938ee-a408-4213-964e-3b21cc718d4c",
+    "entityId": "ea434d1a-88b8-49c8-89aa-7b865c12d044",
     "changes": {
       "status": "pending_approval"
     },
-    "userId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "userId": "ce4f5ced-cc7a-4103-b9fc-3385930fe9fb",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-12T04:24:55.590Z"
+    "createdAt": "2026-08-12T05:55:14.870Z"
   },
   {
-    "id": "5133e6fb-ae87-46e9-aeb5-254e1b8c7722",
+    "id": "e1a8a368-f06c-4f0b-ba10-88650304c1a6",
     "action": "ticket:update",
     "entity": "ticket",
-    "entityId": "8b24ee22-d71d-4aef-b495-37d65ac56d5d",
+    "entityId": "45213981-328b-4557-9f77-6a2ab88f5b10",
     "changes": {
       "assignedToId": "assigned"
     },
-    "userId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "userId": "1c60b37d-3caa-4aaf-a32a-84f1dba2b820",
     "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-13T04:24:55.590Z"
+    "createdAt": "2026-08-13T05:55:14.870Z"
   }
 ]

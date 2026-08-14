@@ -1,6 +1,6 @@
 [
   {
-    "id": "0b06088a-92ef-4fea-95d7-132ba86c25d5",
+    "id": "48143ab1-21c1-4f95-93a5-df0862f293a7",
     "name": "Helpdesk",
     "description": "General IT support",
     "ticketCode": null,
@@ -11,11 +11,11 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-14T04:24:55.575Z",
-    "updatedAt": "2026-08-14T04:24:55.575Z"
+    "createdAt": "2026-08-14T05:55:14.865Z",
+    "updatedAt": "2026-08-14T05:55:14.865Z"
   },
   {
-    "id": "54da956c-2ff3-4e95-9f08-bb2fd51980cd",
+    "id": "0387108c-a61e-4265-af70-40d0b0650df7",
     "name": "Security",
     "description": "Security incidents and alerts",
     "ticketCode": null,
@@ -26,11 +26,11 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-14T04:24:55.582Z",
-    "updatedAt": "2026-08-14T04:24:55.582Z"
+    "createdAt": "2026-08-14T05:55:14.866Z",
+    "updatedAt": "2026-08-14T05:55:14.866Z"
   },
   {
-    "id": "a31b467b-58c7-4cf7-9fff-eca563ed0a61",
+    "id": "559a31bb-01dc-486e-8b47-eb71897401e6",
     "name": "Client Onboarding",
     "description": "New client setup and migration",
     "ticketCode": null,
@@ -41,7 +41,7 @@
     "autoCloseDays": 14,
     "followUpEnabled": true,
     "followUpIntervalHours": 24,
-    "createdAt": "2026-08-14T04:24:55.583Z",
-    "updatedAt": "2026-08-14T04:24:55.583Z"
+    "createdAt": "2026-08-14T05:55:14.867Z",
+    "updatedAt": "2026-08-14T05:55:14.867Z"
   }
 ]
