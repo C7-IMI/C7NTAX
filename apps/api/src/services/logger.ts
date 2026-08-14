@@ -8,7 +8,8 @@ import path from "path";
  */
 
 const LOG_FILE = path.resolve(__dirname, "../../dev-errors.log");
-const MAX_LOG_SIZE_MB = 10;
+// TOKEN-SAVE-02: smaller cap (5 MB) + rotation also runs at boot
+const MAX_LOG_SIZE_MB = 5;
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -111,6 +112,8 @@ export const logger = {
    * Write a startup banner marking server initialization.
    */
   startup(): void {
+    // TOKEN-SAVE-02: rotate at boot so the log never grows unbounded across restarts
+    rotateIfNeeded();
     const git = getGitInfo();
     const lines = [
       "",

@@ -32,13 +32,13 @@ export async function llmSuggestSolutions(
   }
 }
 
-function buildPrompt(title: string, description: string): string {
-  return `You are a technical support assistant for an MSP (Managed Service Provider). Analyze this ticket and respond with:
+// TOKEN-SAVE-08: memoized static prompt prefix (no rebuild per call) +
+// excerpt cap for long ticket descriptions + env override for cheap models
+const PROMPT_PREFIX = `You are a technical support assistant for an MSP (Managed Service Provider). Analyze this ticket and respond with:
 
 TICKET:
-Title: ${title}
-Description: ${description || "No description provided"}
-
+`;
+const PROMPT_SUFFIX = `
 Respond with a JSON object containing:
 1. "summary": A 1-2 sentence analysis of the issue
 2. "suggestions": An array of 1-3 suggested solution approaches, each with:
@@ -49,6 +49,11 @@ Respond with a JSON object containing:
 3. "rootCauseHint": The most likely root cause
 
 Return ONLY valid JSON, no other text.`;
+const MAX_DESCRIPTION_CHARS = 6000;
+
+function buildPrompt(title: string, description: string): string {
+  const desc = (description || "No description provided").slice(0, MAX_DESCRIPTION_CHARS);
+  return `${PROMPT_PREFIX}Title: ${title}\nDescription: ${desc}${PROMPT_SUFFIX}`;
 }
 
 async function callProvider(
@@ -67,7 +72,9 @@ async function callProvider(
     headers["api-key"] = provider.apiKey!;
   }
 
-  const body = buildRequestBody(provider, prompt);
+  // TOKEN-SAVE-08: INFERENCE_MODEL env override routes AI calls to a cheaper model
+  const effectiveProvider = { ...provider, model: process.env.INFERENCE_MODEL || provider.model };
+  const body = buildRequestBody(effectiveProvider, prompt);
   const start = Date.now();
   const res = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body) });
   const json = (await res.json()) as Record<string, unknown>;

@@ -58,10 +58,39 @@ logger.startup();
 export const prisma = new PrismaClient();
 export const app = express();
 
+// TOKEN-SAVE-09: gzip-compress JSON responses (smaller dev payloads) + weak ETags
+import zlib from "zlib";
+app.set("etag", "weak");
+app.use((req, res, next) => {
+  const accept = String(req.headers["accept-encoding"] || "");
+  if (!accept.includes("gzip") || res.getHeader("Content-Encoding")) return next();
+  res.setHeader("Content-Encoding", "gzip");
+  res.removeHeader("Content-Length");
+  const vary = res.getHeader("Vary");
+  res.setHeader("Vary", (vary ? String(vary) + ", " : "") + "Accept-Encoding");
+  const gzip = zlib.createGzip();
+  gzip.on("error", () => {});
+  gzip.pipe(res);
+  const end = res.end.bind(res);
+  (res as any).write = (chunk: any, ...args: any[]) => gzip.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)), ...args);
+  (res as any).end = (chunk?: any, ...args: any[]) => {
+    if (chunk !== undefined && chunk !== null) gzip.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+    gzip.end();
+    return end.call(res, ...args);
+  };
+  next();
+});
+
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || WEB_ORIGIN, credentials: true }));
 // Morgan HTTP logging piped to dev-errors.log
+// TOKEN-SAVE-01: skip unauthenticated health/poller probes (401 spam)
+const QUIET_POLL_PATHS = [
+  "/api/auth/login", "/api/tickets", "/api/clients",
+  "/api/users", "/api/billing/invoices", "/api/boards",
+];
 app.use(morgan("short", {
+  skip: (req) => !req.headers.authorization && QUIET_POLL_PATHS.includes(req.path),
   stream: {
     write: (message: string) => logger.info("http", message.trim()),
   },

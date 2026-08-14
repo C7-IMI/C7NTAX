@@ -98,11 +98,47 @@ async function main(): Promise<void> {
 
       const rows = await model.findMany({ select: table.select });
       const filePath = path.join(SNAPSHOTS_DIR, table.fileName);
+      const json = JSON.stringify(rows, null, 2);
 
-      fs.writeFileSync(filePath, JSON.stringify(rows, null, 2));
+      // TOKEN-SAVE-03: write only when content changed (diff-only captures)
+      let previous: string | null = null;
+      try {
+        previous = fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf-8") : null;
+      } catch { previous = null; }
+
+      if (previous !== null && previous === json) {
+        log(`  - ${table.name}: unchanged (${rows.length} records)`);
+      } else {
+        fs.writeFileSync(filePath, json);
+        log(`  ✓ ${table.name}: ${rows.length} records → ${table.fileName}`);
+      }
+
+      // TOKEN-SAVE-10: additive delta journal (compact change trace, capped)
+      try {
+        if (previous !== null) {
+          const prevRows = JSON.parse(previous) as Array<{ id?: string }>;
+          const prevIds = new Set(prevRows.map((r) => r.id).filter(Boolean));
+          const currIds = new Set((rows as Array<{ id?: string }>).map((r) => r.id).filter(Boolean));
+          const added = (rows as Array<{ id?: string }>).filter((r) => r.id && !prevIds.has(r.id)).length;
+          const removed = prevRows.filter((r) => r.id && !currIds.has(r.id)).length;
+          if (added > 0 || removed > 0) {
+            const deltasDir = path.join(SNAPSHOTS_DIR, "deltas");
+            fs.mkdirSync(deltasDir, { recursive: true });
+            const deltaPath = path.join(deltasDir, `${table.fileName}.delta.jsonl`);
+            const line = JSON.stringify({ at: new Date().toISOString(), added, removed, total: rows.length }) + "\n";
+            let tail = "";
+            try { tail = fs.readFileSync(deltaPath, "utf-8"); } catch { tail = ""; }
+            const lines = tail.split("\n").filter(Boolean);
+            lines.push(line.trim());
+            // cap journal at 100 entries (keep newest)
+            if (lines.length > 100) lines.splice(0, lines.length - 100);
+            fs.writeFileSync(deltaPath, lines.join("\n") + "\n");
+          }
+        }
+      } catch { /* delta journal is best-effort only */ }
+
       summary[table.name] = rows.length;
       totalRecords += rows.length;
-      log(`  ✓ ${table.name}: ${rows.length} records → ${table.fileName}`);
     } catch (e) {
       log(`  ✗ ${table.name}: ${(e as Error).message}`);
     }
