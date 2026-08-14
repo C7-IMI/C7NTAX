@@ -104,6 +104,15 @@ if (Test-Path $BootLog) {
     }
 }
 
+# TOKEN-SAVE-04: rotate boot.log before a new run (cap growth)
+if (Test-Path $BootLog) {
+    $size = (Get-Item $BootLog).Length
+    if ($size -gt 1MB) {
+        Move-Item -Force $BootLog "$BootLog.1"
+        Write-Host "Rotated oversized boot.log to boot.log.1"
+    }
+}
+
 Write-Step "=== C7NTAX boot sequence started (self-healing) ==="
 
 # 1. PostgreSQL - prefer the Windows service (starts automatically on boot),
@@ -186,12 +195,23 @@ foreach ($port in 4000, 3010) {
 }
 
 # 4. Prisma client + schema
-Write-Step "Prisma generate + db push..."
-Push-Location $ApiDir
-& $Node $NpxCli prisma generate 2>&1 | Out-Null
-& $Node $NpxCli prisma db push --accept-data-loss 2>&1 | Out-Null
-Pop-Location
-Write-Step "Prisma client + schema synced"
+# TOKEN-SAVE-04: skip generate + db push when schema.prisma is unchanged
+$schemaPath = "$ApiDir/prisma/schema.prisma"
+$schemaHash = (Get-FileHash -Algorithm SHA256 $schemaPath).Hash
+$hashFile = "$LogDir/.schema.sha256"
+$prevHash = ""
+if (Test-Path $hashFile) { $prevHash = (Get-Content $hashFile -Raw).Trim() }
+if ($prevHash -ne $schemaHash) {
+    Write-Step "Prisma generate + db push (schema changed)..."
+    Push-Location $ApiDir
+    & $Node $NpxCli prisma generate 2>&1 | Out-Null
+    & $Node $NpxCli prisma db push --accept-data-loss 2>&1 | Out-Null
+    Pop-Location
+    Set-Content -Path $hashFile -Value $schemaHash
+    Write-Step "Prisma client + schema synced"
+} else {
+    Write-Step "Prisma skipped (schema unchanged)"
+}
 
 # 5. Reseed sample data from snapshots (source of truth), then backfill
 # service-alert role permissions (idempotent). Exit codes checked, one

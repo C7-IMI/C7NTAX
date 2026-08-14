@@ -4,8 +4,14 @@
     "date": "2026-08-14",
     "title": "SOC2.Compliance Plan",
     "changes": [
-      {"text": "SOC2.Compliance.md - SOC 2 Type II readiness plan for C7NTAX on AWS: numbered items SC-01..OR-04 across Security/Availability/Confidentiality/Processing Integrity/Privacy/Organizational controls, each with why, functional impact, and breakage-risk flags; AWS guidance inline (Secrets Manager, KMS envelope encryption, RDS Multi-AZ + PITR, ALB/ACM/WAF, ECS Fargate, CloudWatch/CloudTrail/GuardDuty/Security Hub/Config); sequencing + open decisions", "type": "New Feature"},
-      {"text": "Top gaps identified: dev secrets in .env, permissive rate limit, JWT without rotation, --accept-data-loss in boot pipeline, reseed-able audit trail, hardcoded crypto fallback key", "type": "Audit"}
+      {
+        "text": "`SOC2.Compliance.md` — SOC 2 Type II readiness plan for C7NTAX deployed to AWS: numbered items (SC-01…OR-04) across Security, Availability, Confidentiality, Processing Integrity, Privacy, and Organizational controls; each item includes why, functional impact, and ⚠️ breakage-risk flags; AWS-specific guidance inline (Secrets Manager, KMS envelope encryption, RDS Multi-AZ + PITR, ALB/ACM/WAF, ECS Fargate hardening, CloudWatch/CloudTrail/GuardDuty/Security Hub/Config); recommended sequencing and open decisions (Type I vs II, desktop app scope, AWS org/SCPs, pen-test vendor).",
+        "type": "New Feature"
+      },
+      {
+        "text": "Top gaps identified: dev secrets in `.env`, permissive rate limit, JWT without rotation, `--accept-data-loss` in the boot pipeline, reseed-able audit trail, hardcoded crypto fallback key.",
+        "type": "New Feature"
+      }
     ]
   },
   {
@@ -13,9 +19,18 @@
     "date": "2026-08-14",
     "title": "Audit Log Data Recovery & Snapshot Restoration",
     "changes": [
-      {"text": "Recovered missing audit logs by unioning all 15 historical git versions of apps/api/src/snapshots/audit-logs.json - 63 unique rows spanning 2026-08-06 to 2026-08-14 (ticket updates, kumo password events, board/schedule/service-alert activity)", "type": "Fix"},
-      {"text": "Restored the 63 rows into the live DB (deleteMany + createMany skipDuplicates); audit-logs.json now carries the full union and verify-post-change re-captured auditLog: 63 records so every boot reseed restores the complete audit trail", "type": "Fix"},
-      {"text": "apps/api/src/restore-audit-logs.ts - idempotent utility to rebuild the audit trail from the snapshot union", "type": "New Feature"}
+      {
+        "text": "Missing audit logs recovered: the snapshot reseed (Option 2) had replaced the live audit trail with the older 6-row snapshot, losing several days of `AuditLog` rows. Reconstructed the complete set by unioning all 15 historical git versions of `apps/api/src/snapshots/audit-logs.json` — 63 unique rows spanning 2026-08-06 → 2026-08-14 (ticket updates, kumo password events, board/schedule/service-alert activity).",
+        "type": "Fix"
+      },
+      {
+        "text": "Restored the 63 rows into the live database (deleteMany + createMany with skipDuplicates); `audit-logs.json` now carries the full union, and verify-post-change re-captured `auditLog: 63 records`, so every future boot reseed restores the complete audit trail.",
+        "type": "Fix"
+      },
+      {
+        "text": "`apps/api/src/restore-audit-logs.ts` — idempotent utility to rebuild the audit trail from the snapshot union.",
+        "type": "New Feature"
+      }
     ]
   },
   {
@@ -23,10 +38,18 @@
     "date": "2026-08-14",
     "title": "Snapshot Fixtures Are Now the Seed Source of Truth",
     "changes": [
-      {"text": "Boot reseed switched from hardcoded seed scripts to snapshot restore: c7ntax-boot.ps1 now runs seed-from-snapshots.ts + idempotent seed-service-alerts.ts backfill instead of seed-full.ts + seed-contacts.ts + seed-service-alerts.ts", "type": "Update"},
-      {"text": "Restored the 4-service-board snapshot set from git (9ec9f67: MSP Service Desk, Intelligence Service Desk, Infrastructure Service Desk, NOC Alerts) with matching-era tickets/users/companies/agreements; cross-era fixtures reset to empty to avoid dangling FKs", "type": "Update"},
-      {"text": "Root cause: seed-full.ts hardcodes 3 boards and ran every boot, after which verify/snapshot-poller captures overwrote the richer 4-board snapshot - snapshots are now the source of truth and captures mirror them back", "type": "Fix"},
-      {"text": "Verified: boot run green in 20s (snapshot reseed OK, backfill OK, login 200, frontend 200); DB has 4 boards, 8 tickets, 6 users, 5 companies, 13 contacts, 5 agreements, 0 orphaned board refs, 8 alert services; verify-post-change passed and re-captured service-boards.json with 4 records", "type": "Audit"}
+      {
+        "text": "Boot reseed switched from hardcoded seed scripts to snapshot restore: `c7ntax-boot.ps1` now runs `seed-from-snapshots.ts` (full dataset from `apps/api/src/snapshots/`) plus the idempotent `seed-service-alerts.ts` role-permission backfill, instead of `seed-full.ts` + `seed-contacts.ts` + `seed-service-alerts.ts`.",
+        "type": "Update"
+      },
+      {
+        "text": "Restored the 4-service-board snapshot set from git history (commit 9ec9f67: MSP Service Desk, Intelligence Service Desk, Infrastructure Service Desk, NOC Alerts) along with the matching-era tickets/users/companies/agreements; the two HEAD-only cross-era fixtures (ticket-attachments, schedule-entries) were reset to empty so no foreign-key references dangle.",
+        "type": "Update"
+      },
+      {
+        "text": "Root cause addressed: `seed-full.ts` hardcodes 3 boards and previously ran on every boot, after which verify/snapshot-poller captures overwrote the richer 4-board snapshot with the 3-board state. With snapshots as the source of truth, reseed now preserves the richer dataset and captures mirror it back.",
+        "type": "Fix"
+      }
     ]
   },
   {
@@ -34,11 +57,26 @@
     "date": "2026-08-14",
     "title": "Full System Audit & Configuration Corrections",
     "changes": [
-      {"text": "apps/api/.env CORS_ORIGIN corrected from stale http://localhost:3001 to http://localhost:3010 (matches WEB_ORIGIN/vite port); preflight returns Access-Control-Allow-Origin: http://localhost:3010 with credentials", "type": "Fix"},
-      {"text": "postgresql.conf: logging_collector=on, log_directory=log, log_filename=postgresql-%Y-%m-%d.log - the Windows service previously wrote no logs; service-mode PG now logs daily to data/log/ for crash diagnosis", "type": "Fix"},
-      {"text": "postgresql-c7ntax service re-registered cleanly (Automatic, LocalSystem) and verified against a full boot-script run", "type": "Update"},
-      {"text": "Audit verified: PG service healthy with real backend queries; single API + single vite process, no orphans; C7NTAX Boot Startup task LastTaskResult 0; Defender exclusions present; Prisma valid + synced; sample data intact (6 users, 8 tickets, 3 boards, 5 companies, 13 contacts, 8 alert services, 3 legitimate active alerts); all roles carry servicealert:view; full boot run green in 21s with login HTTP 200; verify-post-change passed", "type": "Audit"},
-      {"text": "Known baseline: pre-existing strict-tsc errors in legacy files (seed-ticket-tabs, seed-full, packages/billing, shared/features, KumoConfigs, KumoPasswords, Reports) - runtime-unaffected, left untouched", "type": "Audit"}
+      {
+        "text": "`apps/api/.env` — `CORS_ORIGIN` corrected from stale `http://localhost:3001` to `http://localhost:3010` (matches `WEB_ORIGIN`/vite port); preflight now returns `Access-Control-Allow-Origin: http://localhost:3010` with credentials.",
+        "type": "Fix"
+      },
+      {
+        "text": "PostgreSQL service logging — `postgresql.conf`: `logging_collector = on`, `log_directory = 'log'`, `log_filename = 'postgresql-%Y-%m-%d.log'`; the Windows service previously wrote no logs, now service-mode PG writes daily logs to `data/log/` for crash diagnosis (0xC0000142/487 recurrence watch).",
+        "type": "Fix"
+      },
+      {
+        "text": "`postgresql-c7ntax` service re-registered cleanly (Automatic, LocalSystem); verified against a full boot-script run.",
+        "type": "Update"
+      },
+      {
+        "text": "Verified healthy: PG service Running/Automatic on 5432 with real backend queries; single API (:4000) + single vite (:3010) processes, no orphans; scheduled task \"C7NTAX Boot Startup\" (AtStartup+45s, Highest, StartWhenAvailable, 3x restart) LastTaskResult 0; Defender exclusions present for PG data/bin; Prisma schema valid + DB synced; sample data intact (6 users, 8 tickets, 3 boards, 5 companies, 13 contacts, 8 alert services, active alerts legitimate — Azure RSS incident + 2 seeded); all roles carry `servicealert:view`; full boot sequence re-run green in 21s with login HTTP 200; verify-post-change \"All checks passed\".",
+        "type": "Audit"
+      },
+      {
+        "text": "Known baseline: pre-existing strict-`tsc` errors remain in legacy files (`seed-ticket-tabs`, `seed-full`, `packages/billing`, `shared/features`, `KumoConfigs`, `KumoPasswords`, `Reports`, etc.) — runtime-unaffected (tsx strips types; seeds/API verified working at runtime); intentionally left untouched to avoid scope creep.",
+        "type": "Audit"
+      }
     ]
   },
   {
@@ -46,10 +84,22 @@
     "date": "2026-08-13",
     "title": "Automatic Startup on Reboot (Self-Healing Boot)",
     "changes": [
-      {"text": "startup/c7ntax-boot.ps1 self-healing boot script: PostgreSQL via the postgresql-c7ntax Windows service (auto-start ensured, console fallback), real backend-query verification with up to 4 PG restarts, best-effort Defender exclusions for PG data/bin, Prisma sync, sample-data reseed (seed-full + seed-contacts + seed-service-alerts) with exit-code checks and one retry, API :4000 + frontend :3010 launch, login + page verification, time-bounded logged steps", "type": "New Feature"},
-      {"text": "Scheduled task C7NTAX Boot Startup (AtStartup + 45s delay, highest, StartWhenAvailable, restart 3x on failure) - app fully functional automatically after every reboot including sample-data reseed; task run verified LastTaskResult 0", "type": "New Feature"},
-      {"text": "Fixed loading failure root cause: PG down after reboot and recurring 0xC0000142 backend crash + error-487 shared-memory failure (listening postmaster that cannot serve) - resolved with service-mode PG, Defender exclusions, and backend-query self-heal", "type": "Fix"},
-      {"text": "Boot-script portability: pure ASCII (PS 5.1 BOM), reserved $args renamed, Start-Process quoting for spaced paths, cmd /c wrapper for reliable exit codes", "type": "Fix"}
+      {
+        "text": "`startup/c7ntax-boot.ps1` — self-healing boot script that starts PostgreSQL (prefers the `postgresql-c7ntax` Windows service, ensures Automatic start, console fallback), verifies the DB with a real backend query, restarts PG up to 4x when backends cannot spawn, adds best-effort Defender exclusions for the PG data/bin dirs, syncs Prisma, reseeds sample data (seed-full + seed-contacts + seed-service-alerts) with exit-code checks and one retry, then launches the API (:4000) and frontend (:3010) and verifies login + page HTTP — every blocking call is time-bounded and logged to `startup/boot.log`.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Scheduled task \"C7NTAX Boot Startup\" (AtStartup + 45s delay, highest privileges, StartWhenAvailable, restarts 3x on failure) — the app is now fully functional automatically after every reboot, including sample-data reseed.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Root cause of the loading failure: PostgreSQL was down after reboot (no auto-start) and later entered a recurring failure mode where a backend/autovacuum worker dies with 0xC0000142 and the postmaster then cannot spawn backends (error 487) despite listening on 5432 — fixed by service-mode PostgreSQL, Defender exclusions, and the script's backend-query self-heal.",
+        "type": "Fix"
+      },
+      {
+        "text": "Boot-script portability fixes: pure-ASCII (PS 5.1 UTF-8 BOM), reserved `$args` renamed, Start-Process quoting for spaced paths, cmd /c wrapper for reliable exit codes.",
+        "type": "Fix"
+      }
     ]
   },
   {
@@ -57,8 +107,14 @@
     "date": "2026-08-13",
     "title": "Service Alerts Landing Directly",
     "changes": [
-      {"text": "Service Alerts is now a single top-level nav item with no children — clicking it opens the Service Alerts Dashboard directly as the section's landing page", "type": "Update"},
-      {"text": "Active-alert count badge remains on the Service Alerts nav item (expanded + collapsed sidebar)", "type": "Update"}
+      {
+        "text": "Service Alerts is now a single top-level nav item with no children — clicking it opens the Service Alerts Dashboard directly as the section's landing page.",
+        "type": "Update"
+      },
+      {
+        "text": "Active-alert count badge remains on the Service Alerts nav item (expanded + collapsed sidebar).",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -66,10 +122,22 @@
     "date": "2026-08-13",
     "title": "Service Alerts as Top-Level Nav Section",
     "changes": [
-      {"text": "Service Alerts is now a top-level parent section placed between Dashboard and Tickets; expands to its own Dashboard landing page and is draggable like every other parent section", "type": "Update"},
-      {"text": "Service Boards restored to a single top-level link; active-alert badge moved back to the Service Alerts parent section (expanded + collapsed sidebar)", "type": "Update"},
-      {"text": "Stale persisted nav orders reconciled so the new top-level Service Alerts section inserts at its default position (after Dashboard) without wiping user customizations", "type": "Fix"},
-      {"text": "Section-landing description moved to the Service Alerts section (Dashboard child); Service Alerts card remains on the Home landing page", "type": "Update"}
+      {
+        "text": "Service Alerts is now a top-level parent section placed between Dashboard and Tickets (Dashboard, Service Alerts, Tickets, Service Boards…); it expands to its own Dashboard landing page and is draggable like every other parent section.",
+        "type": "Update"
+      },
+      {
+        "text": "Service Boards restored to a single top-level link (no longer a parent); active-alert badge moved back to the Service Alerts parent section (expanded + collapsed sidebar).",
+        "type": "Update"
+      },
+      {
+        "text": "Stale persisted nav orders are reconciled so the new top-level Service Alerts section inserts at its default position (after Dashboard) without wiping user customizations.",
+        "type": "Fix"
+      },
+      {
+        "text": "Section-landing description moved to the Service Alerts section (Dashboard child); Service Alerts card remains on the Home landing page.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -77,24 +145,61 @@
     "date": "2026-08-13",
     "title": "Service Alerts Nested Under Service Boards",
     "changes": [
-      {"text": "Service Alerts is now nested inside the Service Boards navigation section (Service Boards → Service Boards, Service Alerts); the dedicated top-level Service Alerts parent section was removed", "type": "Update"},
-      {"text": "Navigation reconciles persisted c7_nav_order against the nav tree on load — stale saved orders no longer hide new sections, and the removed top-level service-alerts id is dropped safely", "type": "Fix"},
-      {"text": "Service Boards now carries the active-alert count badge (expanded and collapsed sidebar); the Service Alerts child keeps its own badge too", "type": "Update"},
-      {"text": "Service Alerts card added to the Home landing page Getting Started grid, linking to the outage dashboard", "type": "New Feature"},
-      {"text": "Section landing descriptions added for Service Boards (dashboard + Service Alerts) and Administration → Service Alerts settings", "type": "Update"}
+      {
+        "text": "Service Alerts is now nested inside the Service Boards navigation section: Service Boards → (Service Boards, Service Alerts), matching the requested structure; the dedicated top-level Service Alerts parent section was removed.",
+        "type": "Update"
+      },
+      {
+        "text": "Navigation now reconciles the persisted `c7_nav_order` against the nav tree on load — stale saved orders no longer hide new sections, and the removed top-level \"service-alerts\" id is dropped safely.",
+        "type": "Fix"
+      },
+      {
+        "text": "Service Boards now carries the active-alert count badge (expanded and collapsed sidebar); the Service Alerts child keeps its own badge too.",
+        "type": "Update"
+      },
+      {
+        "text": "Service Alerts card added to the Home landing page \"Getting Started\" grid, linking to the outage dashboard.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Section landing descriptions added for Service Boards (dashboard + Service Alerts) and the Administration → Service Alerts settings page.",
+        "type": "Update"
+      }
     ]
   },
   {
     "version": "2026.8.12.019",
     "date": "2026-08-12",
-    "title": "Service Alerts — Outage Monitoring & Alerting",
+    "title": "Service Alerts (Outage Monitoring & Alerting)",
     "changes": [
-      {"text": "New draggable Service Alerts parent section in the navigation (below Service Boards) with a live red badge showing the number of active alerts", "type": "New Feature"},
-      {"text": "Service Alerts dashboard: status cards for Microsoft 365, Azure, AWS, GitHub, Google Workspace, Comcast/Xfinity, Verizon, and Spectrum with official status-page + DownDetector links; active/degraded/outage summary strip and recently-resolved list", "type": "New Feature"},
-      {"text": "Global outage banner below the header on every page — clickable through to the dashboard, dismissible with an X, persists across navigation, and auto-clears when the alert is resolved", "type": "New Feature"},
-      {"text": "Alerting mechanism: background monitor polls configured RSS feeds every 5 minutes (Outlook/M365, Azure, AWS, GitHub, Google status feeds), auto-creates alerts from outage keywords and auto-resolves them when restored feeds appear; no false-positive HTML scraping", "type": "New Feature"},
-      {"text": "Administration → Service Alerts settings page: add/edit/delete services, RSS/status/DownDetector URLs, enable/disable visibility and feed polling, manual alert creation, Run Monitor Check Now with run stats and feed error log", "type": "New Feature"},
-      {"text": "New ServiceAlert + ServiceAlertService models, /api/service-alerts routes (status, alerts, services, manual alert, resolve, refresh, monitor-status), servicealert:view/manage permissions added to all roles, seed data, snapshot capture/reseed, and verify-post-change coverage", "type": "New Feature"}
+      {
+        "text": "Draggable \"Service Alerts\" parent section in the app navigation (below Service Boards) with a live red badge showing the number of active alerts; Administration gains a \"Service Alerts\" configuration subsection.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Service Alerts dashboard (`/service-alerts`): aggregate outage cards for Microsoft 365, Azure, AWS, GitHub, Google Workspace, Comcast/Xfinity, Verizon, and Spectrum, each with official status-page and DownDetector links plus Outage/Degraded/Operational status badges; summary strip and recently-resolved list; alerts sourced from official status RSS feeds, status pages, and DownDetector.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Global outage banner below the header on every section: red, dismissable (X on the far right), clickable to the Service Alerts dashboard, example text \"Possible Service Interruption has been reported for Microsoft 365. Click here for more details.\" (service name replaced as appropriate), persists across navigation until dismissed or auto-cleared.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Alerting mechanism: background monitor polls configured RSS feeds every 5 minutes, imports/parses RSS (no external deps), auto-creates an alert on outage/degraded keywords, and auto-resolves the alert + banner once a restored/resolved feed item appears. Status-page HTML keyword scraping deliberately avoided (false-positive prone); non-RSS services are monitored manually via the dashboard.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Administration → Service Alerts page (`/admin/service-alerts`): add/edit/delete monitored services, category, RSS/status-page/DownDetector URLs, dashboard visibility + feed-polling toggles, manual alert creation, \"Run Monitor Check Now\" with live run stats and feed-error log.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Backend: `ServiceAlertService` + `ServiceAlert` Prisma models, `/api/service-alerts` REST routes (status, alerts, services CRUD, manual alert, resolve, refresh, monitor-status), `servicealert:view` / `servicealert:manage` permissions added to shared enums and all default roles, seeded sample services/alerts, snapshot capture/reseed entries, sample-data-toggle wipe entries, and verify-post-change coverage.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Removed two false-positive auto-alerts generated during the initial HTML-probe run; monitor reverted to RSS-only detection.",
+        "type": "Fix"
+      }
     ]
   },
   {
@@ -102,8 +207,14 @@
     "date": "2026-08-12",
     "title": "Native Desktop OSS Plan",
     "changes": [
-      {"text": "native-desktop-oss-plan.md — open-source edition of the native desktop plan; same goals/structure with all proprietary tooling replaced (VS Code + dotnet CLI, msix-packaging CLI, osslsigncode, LLVM clang/lld, swift.org toolchain + CLT, Forgejo/GitLab CE/Jenkins, GlitchTip/OpenTelemetry, Inkscape/Penpot)", "type": "New Feature"},
-      {"text": "License table per tool; no-purchase signing/distribution strategies (WinGet sideload, Homebrew Cask, Flathub); cost comparison flags only unavoidable costs (Apple hardware for macOS CI; optional paid certs)", "type": "New Feature"}
+      {
+        "text": "`native-desktop-oss-plan.md` — open-source edition of the native desktop plan: preserves goals and structure while replacing all proprietary tooling (Visual Studio → VS Code + dotnet CLI, MSIX GUI → msix-packaging CLI, signtool → osslsigncode + self-signed, MSVC AOT linker → LLVM clang/lld, Xcode → VS Code + swift.org toolchain + CLT, GitHub Actions → Forgejo/GitLab CE/Jenkins, commercial monitoring → GlitchTip/OpenTelemetry).",
+        "type": "New Feature"
+      },
+      {
+        "text": "Includes license table per tool, no-purchase signing/distribution strategies (WinGet sideload, Homebrew Cask, Flathub), and a cost-comparison section flagging the only unavoidable costs (Apple hardware for macOS CI; optional paid certs for SmartScreen/notarization).",
+        "type": "New Feature"
+      }
     ]
   },
   {
@@ -111,8 +222,14 @@
     "date": "2026-08-12",
     "title": "Native Desktop Clients Plan (Windows / Linux / macOS)",
     "changes": [
-      {"text": "native-desktop-plan.md — plan only: C#/.NET 8 + WinUI 3 (Windows), Rust + GTK 4/libadwaita (Linux), Swift 6 + SwiftUI/AppKit (macOS); Electron app retained and updated alongside", "type": "New Feature"},
-      {"text": "Covers per-platform toolchains/SDKs, installer packaging (MSIX/MSI/EXE, .deb/Flatpak, .pkg/.dmg + notarization), design-token parity, backend reuse, security, and CI/CD", "type": "New Feature"}
+      {
+        "text": "`native-desktop-plan.md` — plan only, no code: three native desktop apps using C#/.NET 8 + WinUI 3 (Windows), Rust + GTK 4/libadwaita (Linux), Swift 6 + SwiftUI/AppKit (macOS); Electron app remains and is updated alongside, not replaced.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Plan covers per-platform toolchains/SDKs/dependencies, installer packaging (MSIX/MSI/EXE, .deb/Flatpak, .pkg/.dmg with notarization), design-token parity with the WebUI, backend reuse (same REST API), security, and CI/CD.",
+        "type": "New Feature"
+      }
     ]
   },
   {
@@ -120,10 +237,26 @@
     "date": "2026-08-12",
     "title": "Desktop App Now Replicates WebUI Exactly",
     "changes": [
-      {"text": "Desktop rewritten to serve the exact built WebUI via app://c7ntax protocol with /api proxied to the API server — same interface and session state as the browser", "type": "Update"},
-      {"text": "Production packages bundle the fresh WebUI (prebuild vite build + extraResources webui); dev mode uses the Vite dev server", "type": "Update"},
-      {"text": "Window bounds persisted; npmRebuild disabled for pnpm workspace compatibility; desktop menu navigation wired via DesktopNavBridge", "type": "Update"},
-      {"text": "Fixed pre-existing web strict-mode type errors blocking the build; portable exe rebuilt (144 MB) with current WebUI", "type": "Fix"}
+      {
+        "text": "Desktop app rewritten to serve the exact built WebUI via a custom `app://c7ntax` protocol — same interface and session state as the browser; `/api/*` proxied to the API server so the relative API contract works unchanged; SPA fallback for client routing; stable origin keeps localStorage state (login, theme, sidebar) persistent.",
+        "type": "Update"
+      },
+      {
+        "text": "Production packages now bundle the freshly built WebUI (`prebuild` runs `vite build`; `extraResources` copies `web/dist` → `resources/webui`); dev mode loads the Vite dev server with hot reload.",
+        "type": "Update"
+      },
+      {
+        "text": "Window bounds persisted across launches; `npmRebuild` disabled to avoid the pnpm `workspace:` protocol breaking electron-builder; desktop menu navigation wired into the web router via a `DesktopNavBridge` (Settings/New Ticket/New Invoice shortcuts now work).",
+        "type": "Update"
+      },
+      {
+        "text": "Pre-existing web strict-mode type errors blocking the build pipeline: Changelog date parsing non-null assertions, SectionLanding + HomePage icon types widened, Clients sort state typed as SortState, KumoConfigs state arrays typed; web `vite build` verified green.",
+        "type": "Fix"
+      },
+      {
+        "text": "Portable exe rebuilt (144 MB) with the current WebUI and placed in `apps/desktop/dist-electron/`.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -131,8 +264,14 @@
     "date": "2026-08-12",
     "title": "Native Mobile Applications Plan",
     "changes": [
-      {"text": "mobile-native-plan.md — phased plan for native Android (Kotlin + Jetpack Compose) and iOS (Swift + SwiftUI) apps; planning only, no code", "type": "New Feature"},
-      {"text": "Covers foundations/tooling, backend enablement (v1 API, device sessions, push, delta sync, offline queue), app builds, security hardening, and Play/App Store publishing", "type": "New Feature"}
+      {
+        "text": "`mobile-native-plan.md` — comprehensive phased plan for native Android (Kotlin + Jetpack Compose) and iOS (Swift + SwiftUI) apps replicating core C7NTAX desktop functionality; no code implemented (planning only).",
+        "type": "New Feature"
+      },
+      {
+        "text": "Plan covers: Phase 0 foundations/tooling (Gradle version catalogs, Xcode, Fastlane, CI), Phase 1 backend enablement (versioned /api/v1 contract, OpenAPI codegen, device sessions, push via FCM/APNs, delta sync + ETags, offline queue), Phases 2–3 app builds (MVVM, Room/SwiftData offline cache, WorkManager/BackgroundTasks, biometrics), Phase 4 security (certificate pinning, Keystore/Keychain, refresh-token rotation, privacy manifests, data safety), and Phase 5 store publishing (Play App Signing, App Store Connect, Fastlane lanes, review guidelines, maintenance).",
+        "type": "New Feature"
+      }
     ]
   },
   {
@@ -140,9 +279,22 @@
     "date": "2026-08-12",
     "title": "Add Time Entry Button on Dates & Times Card",
     "changes": [
-      {"text": "Restored Add Time Entry button on the Dates & Times card header (renamed from Log Time) with small text-xs cyber styling", "type": "Fix"},
-      {"text": "Card button opens the same Add Time Entry dialog as the Time tab — time can be added from both locations", "type": "Update"},
-      {"text": "Notes & Activity inline toggle relabeled Log Time → Add Time Entry; Time tab functionality unchanged", "type": "Update"}
+      {
+        "text": "Restored the time-entry button on the Dates & Times card — previously labeled \"Log Time\", now labeled \"Add Time Entry\" to match the Time tab; placed in the card header right of the title.",
+        "type": "Fix"
+      },
+      {
+        "text": "Card button keeps the small `text-xs` cyber-styled size (Timer icon, 12px) matching the previous \"Log Time\" styling; opens the same Add Time Entry dialog used by the Time tab, so time can be added from both locations.",
+        "type": "Update"
+      },
+      {
+        "text": "Notes & Activity inline toggle button renamed \"Log Time\" → \"Add Time Entry\" for consistency.",
+        "type": "Update"
+      },
+      {
+        "text": "Time tab functionality unchanged (same dialog, totals, and list).",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -150,11 +302,30 @@
     "date": "2026-08-12",
     "title": "Tab Dialog Data Fully Connected Across the App",
     "changes": [
-      {"text": "Attachments tab uses real TicketAttachment records — new POST/DELETE endpoints, ticket include, real file input dialog, legacy customFields migrated", "type": "New Feature"},
-      {"text": "Configurations carry kind + refId to real assets and Kumo servers with Open links; dialog fetches /kumo/configs/servers", "type": "Update"},
-      {"text": "Links tab shows incoming reverse links; Finance tab includes Products total card", "type": "Update"},
-      {"text": "Kumo server records seeded (5) — Kumo Configurations and link dialog populated; snapshot capture/reseed now include ticketAttachment (43 tables)", "type": "New Feature"},
-      {"text": "seed-full.ts creates real attachments and Kumo servers, links configs to real IDs; migration re-run; snapshot recaptured (259 records)", "type": "Update"}
+      {
+        "text": "Attachments tab now uses real `TicketAttachment` records — new API endpoints `POST /tickets/:id/attachments` and `DELETE /tickets/:id/attachments/:attId`; ticket detail includes attachments; the dialog accepts a real file (name/size/type stored, content storage placeholder); legacy customFields attachments migrated into real records.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Configurations tab — linked configurations now carry `kind` + `refId` pointing to real assets and Kumo servers; each row has an Open link (assets → /assets/:id, Kumo servers → /kumo/configs, Kumo assets → /kumo/assets/:id); the link dialog now fetches the correct `/kumo/configs/servers` endpoint.",
+        "type": "Update"
+      },
+      {
+        "text": "Links tab shows incoming (reverse) links — tickets that link to the current one are computed and displayed with Open buttons, making links two-way.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Finance tab now includes a Products total card (5-card summary).",
+        "type": "Update"
+      },
+      {
+        "text": "Kumo server records seeded (5 servers linked to Kumo assets) so Kumo → Configurations and the link dialog are populated; snapshot capture and reseed lists now include `ticketAttachment` and `kumoServer` (43 tables).",
+        "type": "New Feature"
+      },
+      {
+        "text": "`seed-full.ts` creates real attachments, Kumo server records, and links ticket configurations to real asset/Kumo-asset IDs after entity creation; `seed-ticket-tabs.ts` migration re-run; snapshot recaptured (259 records).",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -162,10 +333,22 @@
     "date": "2026-08-12",
     "title": "Ticket Tab Sample Data Seeded Across All Tickets",
     "changes": [
-      {"text": "Every ticket shows representative content in all toolbar tabs — configs, products, links, attachments, expenses, schedule, history, audit", "type": "New Feature"},
-      {"text": "seed-ticket-tabs.ts — idempotent seeding script; scheduleEntry added to snapshot capture and reseed lists (schedule-entries.json)", "type": "New Feature"},
-      {"text": "seed-full.ts — full reseeds create the same tab data with cleanup for expense, scheduleEntry, and auditLog", "type": "Update"},
-      {"text": "Billing → Time & Expenses now shows an Expenses section — ticket expenses appear with ticket number, category, date, and amount", "type": "Update"}
+      {
+        "text": "Every ticket now shows representative content in all toolbar tabs — seeded per ticket: 2 configurations, 2 products, 2 links, 2 attachments (customFields), 2 expenses (Expense rows), 2 schedule entries (ScheduleEntry rows), 1 History change-log comment, and 2 audit trail entries.",
+        "type": "New Feature"
+      },
+      {
+        "text": "`seed-ticket-tabs.ts` — idempotent seeding script for existing databases; added `scheduleEntry` to snapshot capture and reseed lists so the new data survives the snapshot/reseed cycle (new `schedule-entries.json` fixture, 42 tables total).",
+        "type": "New Feature"
+      },
+      {
+        "text": "`seed-full.ts` — full reseeds now create the same ticket tab data (cleanup added for expense, scheduleEntry, and auditLog).",
+        "type": "Update"
+      },
+      {
+        "text": "Billing → Time & Expenses now shows an Expenses section — a linked ticket expense created in the ticket tab dialog appears there with ticket number, category, date, and amount; expenses total line included.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -173,11 +356,26 @@
     "date": "2026-08-12",
     "title": "Sample Data Toggling",
     "changes": [
-      {"text": "Sample data toggling — pnpm db:sample-off / db:sample-on backed by sample-data-toggle.ts", "type": "New Feature"},
-      {"text": "Disable flow — snapshot captured first, business data wiped (identity + platform config preserved), disabled flag set", "type": "New Feature"},
-      {"text": "While disabled — snapshot captures locked in capture script, auto-snapshot middleware, and snapshot poller; no auto-reseed after changes", "type": "New Feature"},
-      {"text": "Enable flow — reseeds from preserved snapshots via seed-from-snapshots, then clears flag and resumes snapshot-after-change", "type": "New Feature"},
-      {"text": "Command detection — explicit standalone commands only; natural-language mentions treated as normal prompts", "type": "New Feature"}
+      {
+        "text": "Sample data toggling — `pnpm db:sample-off` (disable) and `pnpm db:sample-on` (enable), backed by `apps/api/src/sample-data-toggle.ts`.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Disable flow — captures a snapshot as usual, wipes all business data (identity and platform config preserved so login/RBAC/settings still work), then sets a marker flag (`.sample-data-disabled`).",
+        "type": "New Feature"
+      },
+      {
+        "text": "While disabled — snapshot captures are locked (auto-snapshot middleware, snapshot poller, and the capture script all skip), so the preserved snapshot is never overwritten and no automatic reseed occurs after changes.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Enable flow — reseeds from the preserved snapshot files via the established `seed-from-snapshots` process, then clears the flag so the snapshot-after-change process resumes.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Command detection rule — \"disable sample data\"/\"turn off sample data\" and \"enable sample data\"/\"turn on sample data\" only apply as explicit standalone commands; when those phrases appear inside a natural-language sentence they are ignored and treated as a normal prompt.",
+        "type": "New Feature"
+      }
     ]
   },
   {
@@ -185,9 +383,18 @@
     "date": "2026-08-12",
     "title": "Ticket Detail Two-Column Layout Restored & Compact Tabs",
     "changes": [
-      {"text": "Classification & Details and Client Info cards moved back to the right column beside General (lg:grid-cols-3 with left spanning 2); display and edit modes fully functional", "type": "Fix"},
-      {"text": "Toolbar card spans the full width of both columns per reference screenshot", "type": "Update"},
-      {"text": "Toolbar tab labels compacted — text-xs, px-2 py-1, zero gap — all 12 tabs fit without horizontal scrolling", "type": "Update"}
+      {
+        "text": "Classification & Details and Client Info cards moved back to their original location — right column beside the General card (restored `lg:grid-cols-3` with the left column spanning 2); both cards' display and edit modes fully functional.",
+        "type": "Fix"
+      },
+      {
+        "text": "Toolbar card spans the full width of both columns (General left, Classification & Details right) per the reference screenshot.",
+        "type": "Update"
+      },
+      {
+        "text": "Toolbar tab labels compacted — `text-xs` with `px-2 py-1`, zero gap between tabs — so all 12 tabs fit without horizontal scrolling on desktop widths.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -195,9 +402,18 @@
     "date": "2026-08-12",
     "title": "Square Date Cards on All Calendars",
     "changes": [
-      {"text": "Day cells on Calendar and Time Off pages changed from min-h rectangles to true squares via aspect-square", "type": "Update"},
-      {"text": "Calendar cards constrained to max-w-3xl so square cells stay small and the full month fits on one screen without scrolling", "type": "Update"},
-      {"text": "All existing calendar behavior preserved — navigation, jump-to-today, highlights, event chips, date filtering", "type": "Update"}
+      {
+        "text": "Calendar page and Time Off page day cells changed from `min-h-[60px]` rectangles to true squares via `aspect-square` — cleaner visual style per reference screenshot.",
+        "type": "Update"
+      },
+      {
+        "text": "Calendar cards constrained to `max-w-3xl` so square cells stay small (~100px per cell) and the full month (including 6-week months) fits on a single screen without scrolling.",
+        "type": "Update"
+      },
+      {
+        "text": "All existing behavior preserved: month navigation, jump-to-today, today/selected highlights, event chips with \"+N more\", click-a-date filtering, and clear-filter rows.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -205,12 +421,34 @@
     "date": "2026-08-12",
     "title": "ConnectWise-Style Ticket Detail Toolbar & Tabs",
     "changes": [
-      {"text": "Full-width toolbar card on ticket detail with 12-tab interface (Ticket, Configurations, Products, Activities, Time, Links, Expenses, Schedule, Attachments, History, Finance, Audit Trail); excluded tabs per spec", "type": "New Feature"},
-      {"text": "Icon toolbar below tabs — Refresh, Add Note, Log Time, Attach functional; Email, Print, Follow Up, More Actions as placeholders", "type": "New Feature"},
-      {"text": "General and Classification & Details cards each on their own full-width row under the toolbar", "type": "Update"},
-      {"text": "Configuration dialogs for every tab — link configuration, add product, link ticket, add expense, schedule entry, attach file, add time entry", "type": "New Feature"},
-      {"text": "Lightweight tab data persisted in ticket customFields JSON; tickets PATCH accepts customFields and excludes it from change comments", "type": "Update"},
-      {"text": "Time entry logging fixed to correct /tickets/:id/time endpoint", "type": "Fix"}
+      {
+        "text": "Full-width toolbar card on ticket detail — tabbed interface with 12 tabs (Ticket, Configurations, Products, Activities, Time, Links, Expenses, Schedule, Attachments, History, Finance, Audit Trail); Tasks, Open Tickets, Conversions, Surveys, and RMA excluded per spec.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Icon toolbar below the tabs — Refresh, Add Note, Log Time, and Attach are functional; Email, Print, Follow Up, and More Actions are placeholders with \"coming soon\" toasts.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Ticket detail layout — General and Classification & Details cards now each sit on their own full-width row under the toolbar (single-column stack).",
+        "type": "Update"
+      },
+      {
+        "text": "Configuration dialogs for every tab — Link Configuration (searches assets + Kumo configurations), Add Product (qty/cost with totals), Link Ticket (search + relation type), Add Expense (backed by /billing/expenses), Schedule Entry (backed by /schedule with ticketId), Attach File (metadata placeholder), and Add Time Entry.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Lightweight tab data (linked configurations, products, links, attachments) persisted in the ticket's `customFields` JSON — tickets PATCH now accepts `customFields` and excludes it from change-comment logging.",
+        "type": "Update"
+      },
+      {
+        "text": "Time entry logging now posts to the correct `/tickets/:id/time` endpoint (was `/time-entries`, which does not exist).",
+        "type": "Fix"
+      },
+      {
+        "text": "Activities tab merges notes and time entries into one chronological feed; History tab shows friendly field-change log; Finance tab shows billable/non-billable totals, expenses, and agreement summary; Audit Trail tab lists ticket-scoped system audit records.",
+        "type": "New Feature"
+      }
     ]
   },
   {
@@ -218,8 +456,14 @@
     "date": "2026-08-12",
     "title": "Clear Selected-State Highlight in Navigation",
     "changes": [
-      {"text": "Sidebar selected/active items now use the same light bg-surface-lighter background with white text as the hover state", "type": "Update"},
-      {"text": "Applied consistently across all four nav rendering paths: collapsed icons, collapsed links, parent sections, and leaf links", "type": "Update"}
+      {
+        "text": "Sidebar selected/active items now use the same light `bg-surface-lighter` background with white text as the hover state — replacing the previous faint cyber tint that was hard to distinguish.",
+        "type": "Update"
+      },
+      {
+        "text": "Applied consistently across all four nav rendering paths: collapsed-mode icon buttons, collapsed-mode links, expandable parent sections, and leaf/section links; the existing accent indicators (active chevron and collapsed-mode edge bar) remain as secondary cues.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -227,10 +471,22 @@
     "date": "2026-08-12",
     "title": "Time Off Monthly Calendar",
     "changes": [
-      {"text": "Monthly calendar added to Time Off page above the PTO Requests card — same Outlook-style mini-card design as the Calendar page", "type": "New Feature"},
-      {"text": "PTO requests appear as status-colored chips across their full date span (green approved, red denied, amber pending)", "type": "New Feature"},
-      {"text": "Click-a-date filtering — selecting a calendar date filters the PTO Requests table with clear-filter row", "type": "New Feature"},
-      {"text": "PTO Requests card header shows total or filtered count; request form resets after submission", "type": "Update"}
+      {
+        "text": "Monthly calendar added to the Time Off page above the PTO Requests card — same Outlook-style mini-card design used on the Calendar page (subtle cell borders, top-left date numbers, month navigation, today highlight).",
+        "type": "New Feature"
+      },
+      {
+        "text": "PTO requests appear as status-colored chips across their full date span in the calendar (green = approved, red = denied, amber = pending), up to 2 chips per day with \"+N more\" overflow.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Click-a-date filtering — selecting a calendar date filters the PTO Requests table to requests covering that date, with a clear-filter row.",
+        "type": "New Feature"
+      },
+      {
+        "text": "PTO Requests card now has a header showing total count or filtered count; request form resets after submission.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -238,10 +494,22 @@
     "date": "2026-08-12",
     "title": "Outlook-Style Mini-Card Month Calendar",
     "changes": [
-      {"text": "Monthly calendar redesigned — smaller day cells in mini-card style with subtle borders, rounded corners, and consistent spacing", "type": "Update"},
-      {"text": "Date number moved from center to top-left corner of each day cell; compact uppercase day-of-week headers", "type": "Update"},
-      {"text": "Event dots replaced by Outlook-style event chips showing time and title in event color, with '+N more' overflow", "type": "Update"},
-      {"text": "All existing behavior preserved — month navigation, jump-to-today, date-click filtering, clear filter", "type": "Update"}
+      {
+        "text": "Monthly calendar redesigned — smaller, visually cleaner day cells in mini-card style with subtle borders (`border-surface-border`), rounded corners, and consistent `gap-1` spacing.",
+        "type": "Update"
+      },
+      {
+        "text": "Date number moved from center to top-left corner of each day cell; day-of-week headers compacted to uppercase micro-labels.",
+        "type": "Update"
+      },
+      {
+        "text": "Event dots replaced by Outlook-style event chips — up to 2 chips per cell showing time and title in the event's color, with \"+N more\" overflow text.",
+        "type": "Update"
+      },
+      {
+        "text": "Today highlight (cyber border + tint) and selected-date highlight (stronger cyber border + background) preserved; all existing behavior intact: month navigation, click month/year to jump to today, click-a-date filtering, clear-filter row.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -249,10 +517,22 @@
     "date": "2026-08-12",
     "title": "Friendly Notes & Activity Card in Ticket Details",
     "changes": [
-      {"text": "Ticket change comments no longer contain raw UUIDs or ISO timestamps — API resolves board, assignee, contact, company, and service agreement IDs to friendly names", "type": "Fix"},
-      {"text": "Legacy change-log comments with raw values are rendered friendly in Notes & Activity — UUIDs resolved via lookups, ISO dates formatted, snake_case enums title-cased", "type": "Fix"},
-      {"text": "Comment badges distinguish Email (purple), Internal (amber), Note (blue); email comments use sender email as author fallback", "type": "Update"},
-      {"text": "Author fallbacks — comments and time entries without an author display 'System' instead of 'undefined undefined'", "type": "Update"}
+      {
+        "text": "Ticket change comments no longer contain raw UUIDs or ISO timestamps — the API now resolves board, assignee, contact, company, and service agreement IDs to friendly names, and formats dates as readable strings when generating change-log comments.",
+        "type": "Fix"
+      },
+      {
+        "text": "Legacy change-log comments with raw values (e.g., \"Board: 81f12ded-… → 9e4422d8-…\") are now rendered friendly in the Notes & Activity card — UUIDs are resolved to names from loaded lookups and ticket relations, ISO timestamps become readable dates, and snake_case enums become title case.",
+        "type": "Fix"
+      },
+      {
+        "text": "Comment badges now distinguish Email (purple), Internal (amber), and Note (blue); email-sourced comments show the sender email as author fallback.",
+        "type": "Update"
+      },
+      {
+        "text": "Author/user fallbacks — comments and time entries without an author display \"System\" instead of \"undefined undefined\"; time entries show their entry date.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -260,8 +540,14 @@
     "date": "2026-08-12",
     "title": "Audit Log Username + UserID & Default Expanded Entries",
     "changes": [
-      {"text": "Audit log entries now display both friendly username and UserID prefix — e.g., 'Fiona Ray (a1b2c3d4)'; system entries show only 'System'", "type": "Update"},
-      {"text": "Audit Logs page defaults — top three most recent day groups expanded on open, all others collapsed, independent toggles", "type": "Update"}
+      {
+        "text": "Audit log entries now display both the friendly username and the UserID (8-character prefix) — e.g., \"Fiona Ray (a1b2c3d4)\"; system entries show only \"System\".",
+        "type": "Update"
+      },
+      {
+        "text": "Audit Logs page defaults — the top three most recent day groups are expanded on open; all older groups default to collapsed; each group toggles independently.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -269,9 +555,26 @@
     "date": "2026-08-12",
     "title": "feature_list.json Renamed to BuildNotes.json",
     "changes": [
-      {"text": "Data source renamed from feature_list.json to BuildNotes.json to match BuildNotes.md naming convention", "type": "Update"},
-      {"text": "parseFeatureList() renamed to parseBuildNotes() in API system.ts and web Changelog.tsx", "type": "Update"},
-      {"text": "What's New continuity — all three changelog sources remain in sync after every change", "type": "Fix"}
+      {
+        "text": "Data source rename — `apps/api/src/feature_list.json` renamed to `apps/api/src/BuildNotes.json` to match the BuildNotes.md naming convention.",
+        "type": "Update"
+      },
+      {
+        "text": "API resolver renamed — `parseFeatureList()` renamed to `parseBuildNotes()` in `apps/api/src/routes/system.ts`; the `/api/system/changelog` fallback now loads `../BuildNotes.json`.",
+        "type": "Update"
+      },
+      {
+        "text": "Frontend parser renamed — `parseFeatureList()` renamed to `parseBuildNotes()` in `apps/web/src/pages/Changelog.tsx`.",
+        "type": "Update"
+      },
+      {
+        "text": "Historical changelog references — BuildNotes.md (root and public copies) entries that named `feature_list.json` as the What's New data source now reference `BuildNotes.json`.",
+        "type": "Update"
+      },
+      {
+        "text": "What's New continuity — all three changelog sources (public BuildNotes.md, root BuildNotes.md, BuildNotes.json) remain in sync and are updated after every change.",
+        "type": "Fix"
+      }
     ]
   },
   {
@@ -279,15 +582,185 @@
     "date": "2026-08-12",
     "title": "Calendar, Permissions UX & Human-Readable Audit Logs",
     "changes": [
-      {"text": "Monthly calendar card — Outlook-style month grid above Scheduled Events with prev/next navigation, colored event indicators, today highlighting, and click-a-date filtering", "type": "New Feature"},
-      {"text": "Batch action confirmation — Modify Selected menu uses checkboxes with OK/Cancel so actions only run on explicit confirmation", "type": "New Feature"},
-      {"text": "Audit log user name resolution — GET /system/audit-logs resolves user IDs to full names instead of truncated UUIDs", "type": "New Feature"},
-      {"text": "Human-readable audit log display — raw JSON eliminated; every event renders as a narrative sentence with friendly labels", "type": "Update"},
-      {"text": "Modify Selected menu labels — human-readable action names replace raw machine values", "type": "Update"},
-      {"text": "Schedule events keep their color — schedule POST endpoint now accepts and stores the color field", "type": "Update"},
-      {"text": "Permissions tab false yellow highlight — deviation indicator only appears when permissions actually differ from the assigned role", "type": "Fix"},
-      {"text": "Permissions role-template mismatch — Apply role defaults dropdown no longer drives deviation highlighting", "type": "Fix"},
-      {"text": "Project Calendar loading — Calendar page handles array and wrapped API response shapes; new events display immediately", "type": "Fix"}
+      {
+        "text": "Monthly calendar card — Outlook-style month grid above Scheduled Events on the Calendar page with prev/next month navigation, colored event indicators on each date, today highlighting, and click-a-date filtering of the event list below.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Batch action confirmation — the \"Modify Selected\" ticket menu now shows checkboxes next to each action with an OK button that applies only the checked actions and a Cancel button that dismisses without changes; multiple checked actions run sequentially with per-action success/failure reporting.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Audit log user name resolution — `GET /system/audit-logs` now resolves user IDs to full names (\"Stephen Simmons\") instead of truncated UUID prefixes.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Human-readable audit log display — raw JSON and code blocks eliminated from the Audit Logs page; every event renders as a narrative sentence (e.g., \"updated ticket #a1b2c3d4 — status to in progress\") with friendly entity/field labels, \"enabled/disabled\" for booleans, \"(redacted)\" for masked values, and flattened nested objects.",
+        "type": "Update"
+      },
+      {
+        "text": "Modify Selected menu labels — batch action items now display human-readable names (\"Set Status → In Progress\") instead of raw machine values like `status_in_progress`.",
+        "type": "Update"
+      },
+      {
+        "text": "Schedule events keep their color — the schedule POST endpoint now accepts and stores the `color` field so newly created calendar events render with the chosen color in both the event list and monthly calendar indicators.",
+        "type": "Update"
+      },
+      {
+        "text": "Permissions tab false yellow highlight — the amber deviation indicator on Manage Users permissions no longer appears when loaded permissions exactly match the user's assigned role; comparison is always against the role's actual permissions and updates live while toggling.",
+        "type": "Fix"
+      },
+      {
+        "text": "Permissions role-template mismatch — the \"Apply role defaults\" dropdown no longer drives deviation highlighting; it applies presets only, while the highlight always compares against the assigned role.",
+        "type": "Fix"
+      },
+      {
+        "text": "Project Calendar loading — the Calendar page now handles both array and wrapped API response shapes reliably and resets the create form after adding an event so new events display immediately.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.11.001",
+    "date": "2026-08-11",
+    "title": "CloudConnect, Batch Tickets, Audit Logging & Kumo Fixes",
+    "changes": [
+      {
+        "text": "CloudConnect action screen — clicking a connected integration tile opens a modal with user preview, field mapping, company assignment, and sync controls.",
+        "type": "New Feature"
+      },
+      {
+        "text": "DummyConnect simulator — a persistent, always-active integration for exploring any connector's interface without live credentials. Includes a type selector dropdown with all 16 integration types.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Batch ticket operations — checkbox column on every ticket row with Select All; \"Modify Selected\" dropdown appears when tickets are checked, supporting bulk status and priority changes.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Individual ticket Modify menu — ChevronDown button per row opens a dropdown with Acknowledge, Close, Set Status, and Set Priority actions; excludes predecessor options.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Ticket filter dialog — Filter button opens a modal with Status, Priority, Assigned Technician, and Date Range fields; structured for easy addition of future filter fields.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Comprehensive audit logging — every create, update, and delete operation across the entire application is logged to the AuditLog model with user identity, entity type, change summary, and IP address.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Audit Logs page — now fetches from `GET /system/audit-logs` instead of ad-hoc ticket/invoice queries; displays all operations grouped by date with action type, detail, and user identity.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Auto-incremented IDs in What's New — each BuildNotes entry displays a `#ID` badge for user reference when submitting prompts.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Password generator — \"Generate\" button with eye toggle added to Kumo Passwords create/edit dialogs and Manage Users create/change-password sections.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Super Admin role — `super_admin` system role with all permissions; sessions never expire due to inactivity.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Editable session timeout — Settings page card with configurable inactivity timeout (5–480 minutes, default 30); stored in SystemConfig; sessionAuth middleware reads dynamically.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Snapshot polling system — background service polls at varying intervals with jitter and adaptive backoff; detects new records from any source and triggers snapshot captures.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Admin role permissions expanded from 24 to 79 — now includes Kumo, Assets, Projects, KB, Opportunities, Procurement, Schedule, PTO, Inference, and Security permissions.",
+        "type": "Update"
+      },
+      {
+        "text": "Kumo seed data cleanup fix — Kumo tables now properly deleted in reverse FK order before re-seeding, preventing data accumulation.",
+        "type": "Update"
+      },
+      {
+        "text": "FEATURE_LIST.md renamed to BuildNotes.md — all 16 references updated across the codebase including Vite plugin, fetch paths, API resolver, README, and self-references.",
+        "type": "Update"
+      },
+      {
+        "text": "CloudConnect error fix dialog — clickable error banners open a modal with per-field editable inputs, Test buttons, pass/fail results, and \"OK — Save All Fixes\" when all resolved.",
+        "type": "Update"
+      },
+      {
+        "text": "Credential helpers — `getRequiredCredentials()`, `formatCredLabel()`, `getCredFix()`, `getCredExample()`, `checkCredFormat()` added for all 16 integration kinds.",
+        "type": "Update"
+      },
+      {
+        "text": "Test endpoint enhanced — returns structured `fieldErrors[]` with fix instructions and example values on failure.",
+        "type": "Update"
+      },
+      {
+        "text": "Snapshot capture now includes `auditLog`, `kumoTemplateField`, `kumoAssetFieldValue` tables; 41 tables total.",
+        "type": "Update"
+      },
+      {
+        "text": "Permissions refresh logic — now refreshes on any permission difference (`hasNew || hasLess`), not just count increase.",
+        "type": "Update"
+      },
+      {
+        "text": "Kumo password reveal \"access denied\" — decrypt failures now handled gracefully with placeholder fallback text.",
+        "type": "Fix"
+      },
+      {
+        "text": "Kumo password TOTP setup — IV and authTag now stored delimited in `totpSecret` field; decrypt uses correct per-record encryption params.",
+        "type": "Fix"
+      },
+      {
+        "text": "Kumo password edit flow — save now sends only editable fields in payload; password field clears after save; reveal card refreshes with updated \"last changed by\" after password change.",
+        "type": "Fix"
+      },
+      {
+        "text": "Kumo reveal card stuck on entry switch — `selectPassword()` now clears `revealData` and `showEditPwd` when switching entries.",
+        "type": "Fix"
+      },
+      {
+        "text": "Kumo seed passwords — placeholder `ENC:` values replaced with properly AES-256-GCM-encrypted sample passwords.",
+        "type": "Fix"
+      },
+      {
+        "text": "Kumo PATCH endpoint — `updatedById` now set on every password edit; password change encrypts new value with correct IV/authTag.",
+        "type": "Fix"
+      },
+      {
+        "text": "Manage Roles \"Changed\" indicator — amber badge now only appears when `editPerms` differs from `originalPerms`; no false positives on initial edit open.",
+        "type": "Fix"
+      },
+      {
+        "text": "Manage Roles user count banner — now always visible; \"0 users assigned to this role\" is clickable and opens the member management modal.",
+        "type": "Fix"
+      },
+      {
+        "text": "\"New Board\" button removed from main Service Boards page; board creation now only possible under Administration → Service Boards.",
+        "type": "Fix"
+      },
+      {
+        "text": "Service Boards snapshot — manual data changes now captured; snapshot updated from 3 to 4 boards with correct SLA settings.",
+        "type": "Fix"
+      },
+      {
+        "text": "AutoSnapShot path — `CAPTURE_SCRIPT` corrected from `snapshot-capture.ts` to `../snapshot-capture.ts`, fixing MODULE_NOT_FOUND crash on server start.",
+        "type": "Fix"
+      },
+      {
+        "text": "`Eye`/`EyeOff` imports added to Users.tsx — fixing `ReferenceError: Eye is not defined`.",
+        "type": "Fix"
+      },
+      {
+        "text": "Ticket batch endpoint — `POST /tickets/batch` added to tickets router supporting `updateMany` for status and priority.",
+        "type": "Fix"
+      },
+      {
+        "text": "Retrace.md — expanded from 18 to 37 entries; all prompts standardized with BuildNotes IDs, verbatim text, and detailed change lists.",
+        "type": "Fix"
+      }
     ]
   },
   {
@@ -295,18 +768,62 @@
     "date": "2026-08-10",
     "title": "Header Descriptions & Section Landing Pages",
     "changes": [
-      {"text": "Dynamic section header — every page displays its section name with a brief contextual description on a single line", "type": "New Feature"},
-      {"text": "36 section descriptions mapped across all routes with parent-path fallback for nested routes", "type": "New Feature"},
-      {"text": "Collapsible resizable sidebar — icon-only mode with persistent width and state saved to localStorage", "type": "New Feature"},
-      {"text": "Section landing pages — clicking a parent section in collapsed sidebar opens a card grid of all subsections", "type": "New Feature"},
-      {"text": "Breadcrumb navigation bar — hierarchical path shown on every page with clickable parent segments", "type": "New Feature"},
-      {"text": "Auto-snapshot capture — database state automatically dumped to snapshot fixtures after any successful write operation", "type": "New Feature"},
-      {"text": "Snapshot capture-to-reseed pipeline — capture current DB, wipe, and re-seed from fixtures in dependency order", "type": "New Feature"},
-      {"text": "Recently Viewed tracking — browsing Kumo assets, passwords, configs, and documents records views automatically", "type": "New Feature"},
-      {"text": "Header toolbar — Search, Recent, AI, Help, Settings, and My Account placeholder buttons", "type": "Update"},
-      {"text": "CloudConnect rebrand — Integrations renamed to CloudConnect with updated routes, files, and navigation", "type": "Update"},
-      {"text": "Extended contacts seed — 13 contacts with full PSA fields across 5 companies", "type": "Update"},
-      {"text": "Resequenced version numbering to date-based Year.Month.Day.Build format across all changelogs", "type": "Update"}
+      {
+        "text": "Dynamic section header — every page now displays its section name alongside a brief contextual description rendered on a single line in the top navigation bar, replacing the previous title-only header with a formatted `{Section Name} — {description}` layout that stays on one line and leaves generous spacing before the Search button.",
+        "type": "New Feature"
+      },
+      {
+        "text": "36 section descriptions — mapped across all application routes (e.g., `/`, `/tickets`, `/kumo`, `/billing`) with intelligent parent-path fallback so nested pages (e.g., `/kumo/assets/abc123`) inherit their parent section's description rather than showing nothing.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Collapsible resizable sidebar — icon-only mode (64 px) with persistent width stored in localStorage; drag-to-resize handle on the right edge of the sidebar; clicking a parent section in collapsed mode navigates to a landing page instead of expanding the sidebar.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Section landing pages — clicking any parent section (Administration, Clients, Assets, Users & Roles, Projects, Kumo, Billing, Reports) while the sidebar is collapsed opens a card-grid landing page listing every subsection with its icon, label, and a brief description of its functionality.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Breadcrumb navigation bar — hierarchical path shown on every page with clickable parent segments; the first segment is always \"Home\" with a house icon linking to `/home`; all segments including the current page are clickable.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Auto-snapshot capture — the database state is automatically dumped to 38 snapshot fixture files (`src/snapshots/*.json`) after any successful POST, PUT, PATCH, or DELETE operation, with 5-second debouncing to coalesce rapid consecutive writes into a single capture.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Snapshot capture-to-reseed pipeline — the `pnpm db:capture` and `pnpm db:reseed` scripts provide a full round-trip: wipe the database in dependency order (children before parents), re-seed every table from captured JSON fixtures, and output record counts for verification.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Recently Viewed tracking — browsing Kumo assets (`/kumo/assets/:id`), passwords (`selectPassword()`), configurations (`setSelected()`), and documents (`openDoc()`) now automatically records views via `POST /api/kumo/recently-viewed`; the Kumo Dashboard polls `GET /api/kumo/recently-viewed` every 10 seconds for live updates without full page reload.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Header toolbar — Search, Recent (Clock icon), AI (Sparkles icon), Help (HelpCircle icon), Settings (Settings icon), and My Account (UserCircle icon, cyber-accented) placeholder buttons rendered in the top-right of the application header bar, hidden on mobile screens below the `sm` breakpoint.",
+        "type": "New Feature"
+      },
+      {
+        "text": "CloudConnect rebrand — the \"Integrations\" navigation item (formerly `admin-integrations`, route `/integrations`, API mount `/api/integrations`, component `IntegrationsPage`, file `Integrations.tsx`) has been renamed to \"CloudConnect\" (`admin-cloudconnect`, `/cloudconnect`, `/api/cloudconnect`, `CloudConnectPage`, `CloudConnect.tsx`); all 12 cross-reference files updated including Dashboard quick-links, Settings landing page, and the Administration card grid.",
+        "type": "Update"
+      },
+      {
+        "text": "Extended contacts seed — the database seed script (`seed-full.ts`) now creates 13 contacts across 5 companies (up from 5 contacts) with full PSA-standard fields: phone (`+1-555-XXXX`), mobile, title (IT Director, VP Operations, CEO), department, and `isActive` boolean.",
+        "type": "Update"
+      },
+      {
+        "text": "Resequenced version numbering — all 25 entries in BuildNotes.md and 7 entries in BuildNotes.json (the What's New data source) converted from semantic-like versions (`v1.11.001`) to date-based `Year.Month.Day.Build` format (e.g., `2026.8.10.003`); build number starts at `001` each day and increments sequentially for same-day releases.",
+        "type": "Update"
+      },
+      {
+        "text": "Manage Roles rename — \"Roles & Permissions\" (navigation label, page title `<h2>`, SectionLanding description, BuildNotes.json changelog entries x2, BuildNotes.md sub-item reference) has been renamed to \"Manage Roles\" across the entire codebase; the parent \"Users & Roles\" section and `/roles` route path remain unchanged.",
+        "type": "Update"
+      },
+      {
+        "text": "Home breadcrumb — the top-level breadcrumb label changed from \"Dashboard\" to \"Home\" with a house icon; a new `/home` route renders a `HomePage` with a welcome message and 12-card Getting Started grid linking to Tickets, Boards, Pipeline, Clients, Billing, Projects, Assets, KB, Kumo, Users, Roles, and Administration; the \"Home\" nav section sits fixed at the top of the sidebar and is non-draggable.",
+        "type": "Update"
+      }
     ]
   },
   {
@@ -314,95 +831,824 @@
     "date": "2026-08-10",
     "title": "Recently Viewed on Kumo Dashboard",
     "changes": [
-      {"text": "Recently Viewed card replaces Implementation Status on the Kumo Dashboard", "type": "New Feature"},
-      {"text": "Tracks user access across all Kumo item types: Passwords, Configurations, Flexible Assets, Documents, Domains, Certificates, and Universal Links", "type": "New Feature"},
-      {"text": "New RecentlyViewedItem database model with per-user deduplication", "type": "New Feature"},
-      {"text": "GET /api/kumo/recently-viewed endpoint returns last 20 items for the current user", "type": "New Feature"},
-      {"text": "POST /api/kumo/recently-viewed upserts view records when items are accessed", "type": "New Feature"},
-      {"text": "Real-time 10-second polling keeps the list live without full page reload", "type": "Update"},
-      {"text": "Color-coded type indicators and relative timestamps (just now, 5m ago, 2h ago)", "type": "Update"},
-      {"text": "Click-through navigation — assets link to detail, other types link to list pages", "type": "Update"},
-      {"text": "Preserved C7NTAX dark navy/cyber theme across all new components", "type": "Update"},
-      {"text": "Renamed Integrations navigation → CloudConnect; moved What's New below CloudConnect in Administration menu", "type": "Update"},
-      {"text": "Route /integrations → /cloudconnect; API /api/integrations → /api/cloudconnect; frontend page Integrations.tsx → CloudConnect.tsx", "type": "Update"}
+      {
+        "text": "Recently Viewed card replaces Implementation Status on the Kumo Dashboard",
+        "type": "New Feature"
+      },
+      {
+        "text": "Tracks user access across all Kumo item types: Passwords, Configurations, Flexible Assets, Documents, Domains, Certificates, and Universal Links",
+        "type": "New Feature"
+      },
+      {
+        "text": "New `RecentlyViewedItem` Prisma model with per-user deduplication via `@@unique([userId, entityType, entityId])`",
+        "type": "New Feature"
+      },
+      {
+        "text": "API endpoint `POST /api/kumo/recently-viewed` upserts view records when users access items",
+        "type": "New Feature"
+      },
+      {
+        "text": "API endpoint `GET /api/kumo/recently-viewed` returns last 20 items for the current user, ordered by most recent",
+        "type": "New Feature"
+      },
+      {
+        "text": "Real-time 10-second polling keeps the Recently Viewed list current without manual refresh",
+        "type": "New Feature"
+      },
+      {
+        "text": "Items display with color-coded type indicators (amber=passwords, green=configs, cyber=assets, purple=docs, blue=domains, yellow=certs)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Each entry shows the item name, type label, and relative timestamp (\"just now\", \"5m ago\", \"2h ago\", \"3d ago\")",
+        "type": "New Feature"
+      },
+      {
+        "text": "Clicking an item navigates to its detail page (assets link to specific asset, others link to their list pages)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Preserved C7NTAX dark navy/cyber theme across all new components",
+        "type": "Update"
+      },
+      {
+        "text": "Renamed Integrations navigation → CloudConnect; moved What's New below CloudConnect in Administration menu",
+        "type": "Update"
+      },
+      {
+        "text": "Route /integrations → /cloudconnect; API /api/integrations → /api/cloudconnect; frontend page Integrations.tsx → CloudConnect.tsx",
+        "type": "Update"
+      }
     ]
   },
   {
-    "version": "2026.8.10.001",
-    "date": "2026-08-10",
-    "title": "Kumo IT Documentation + FlowIngest Integration",
+    "version": "2026.8.9.003",
+    "date": "2026-08-09",
+    "title": "Comprehensive Reporting Suite",
     "changes": [
-      {"text": "Kumo Module — IT documentation with flexible asset templates, password vault (AES-256), standard configs, SOPs with revisions, and universal polymorphic linking", "type": "New Feature"},
-      {"text": "Domain Tracking — register and monitor client domains with expiry alerts", "type": "New Feature"},
-      {"text": "Certificate/SSL Tracking — wildcard, DV, OV certificate lifecycle management", "type": "New Feature"},
-      {"text": "Password Vault TOTP — QR-code and manual base32 secret entry with live code generation", "type": "New Feature"},
-      {"text": "Password Strength Indicator — visual bar showing Very Weak through Very Strong", "type": "New Feature"},
-      {"text": "Finance Dashboard — aggregated billing metrics with total invoiced, paid, outstanding, overdue", "type": "New Feature"},
-      {"text": "Client Profile Enriched — Kumo entity counts on client detail pages", "type": "Update"},
-      {"text": "Quotes/Estimates — create quotes with line items, accept into invoices", "type": "New Feature"},
-      {"text": "Recurring Invoices — set monthly/quarterly/annual recurrence on invoices", "type": "New Feature"},
-      {"text": "Expense Tracking — log and categorize business expenses per client", "type": "New Feature"},
-      {"text": "Alerting System — expiry-based alert rules with dismissible alert logs", "type": "New Feature"},
-      {"text": "File Manager — polymorphic file storage for clients, tickets, and assets", "type": "New Feature"},
-      {"text": "CloudConnect — 16 connector types with Test Connection button and inline pass/fail results", "type": "New Feature"},
-      {"text": "Roles & Permissions — 101 granular permissions across 21 categories with interactive editor", "type": "New Feature"},
-      {"text": "Create from Existing — copy roles and users from templates with all settings preserved", "type": "New Feature"}
+      {
+        "text": "Reporting section added to navigation tree with Dashboards, Standard Reports, Analytics sub-items",
+        "type": "New Feature"
+      },
+      {
+        "text": "Dashboard tab: KPI cards (total tickets, SLA response%, revenue, outstanding), ticket status/pie chart, priority distribution, SLA compliance gauges, technician utilization table, monthly revenue bars",
+        "type": "New Feature"
+      },
+      {
+        "text": "Standard Reports tab: 6 pre-built report cards (Ticket Volume, SLA Performance, Revenue Summary, Technician Utilization, Aging Report, Board Summary) with live preview and run capability",
+        "type": "New Feature"
+      },
+      {
+        "text": "Analytics tab: ticket volume by status/priority/board visual bars, SLA met/breached gauges, technician billable hours ranking, monthly revenue history chart",
+        "type": "New Feature"
+      },
+      {
+        "text": "4 new API endpoints: GET /reports/data/ticket-volume, /sla-compliance, /technician-utilization, /revenue-summary",
+        "type": "New Feature"
+      },
+      {
+        "text": "Visual bar charts implemented with pure CSS + JS (no chart library dependency)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Report data refreshes on tab switch",
+        "type": "Update"
+      },
+      {
+        "text": "Consistent card-based layout matching all other application pages",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.9.002",
+    "date": "2026-08-09",
+    "title": "Comprehensive Billing Suite",
+    "changes": [
+      {
+        "text": "Tabbed billing interface: Invoices, Agreements, Payments, Time & Expenses, Reports",
+        "type": "New Feature"
+      },
+      {
+        "text": "Invoices tab: list with status + date filtering, generate from unbilled time, send, PDF, record payment",
+        "type": "New Feature"
+      },
+      {
+        "text": "Agreements tab: service agreement management with billing period, amount, auto-invoice toggles",
+        "type": "New Feature"
+      },
+      {
+        "text": "Payments tab: full payment history with method, reference, linked invoice, client",
+        "type": "New Feature"
+      },
+      {
+        "text": "Time & Expenses tab: billable/non-billable time entries with invoice status, total tracked",
+        "type": "New Feature"
+      },
+      {
+        "text": "Reports tab: revenue summary (total invoiced, collected, overdue), aging summary, quick actions",
+        "type": "New Feature"
+      },
+      {
+        "text": "New API endpoints: GET /billing/payments, GET /billing/reports/revenue",
+        "type": "New Feature"
+      },
+      {
+        "text": "Invoice status badges: Draft, Sent, Partial, Paid, Overdue, Void",
+        "type": "New Feature"
+      },
+      {
+        "text": "Payment method tracking: credit_card, ach, check, wire, flexpoint, other",
+        "type": "New Feature"
+      },
+      {
+        "text": "All pages maintain consistent dark theme design patterns",
+        "type": "Update"
+      }
     ]
   },
   {
     "version": "2026.8.9.001",
     "date": "2026-08-09",
-    "title": "RBAC System & Administration Overhaul",
+    "title": "Past Due Tasks Auto-Update",
     "changes": [
-      {"text": "Granular RBAC — 77 permissions across 20 categories with role management UI", "type": "New Feature"},
-      {"text": "Manage Users — master-detail layout with profile, permissions, and security tabs", "type": "New Feature"},
-      {"text": "Roles & Permissions — interactive role editor with expandable permission categories", "type": "New Feature"},
-      {"text": "Role Member Management — add/remove users from roles via searchable dialog", "type": "New Feature"},
-      {"text": "Permission Template Dropdown — apply role defaults and detect customizations", "type": "New Feature"},
-      {"text": "Sortable Headers — click-to-sort on all table columns across every page", "type": "Update"},
-      {"text": "User Count Badges — clickable role member counts with inline management", "type": "Update"},
-      {"text": "Deactivation Workflow — warning dialogs for user/role deletion", "type": "Update"}
+      {
+        "text": "Added `isOverdue` boolean field to Ticket model in Prisma schema",
+        "type": "New Feature"
+      },
+      {
+        "text": "Worker job `processPastDueTickets` runs every 15 minutes:",
+        "type": "New Feature"
+      },
+      {
+        "text": "\"OVERDUE\" badge displayed on ticket list rows (red background, next to status)",
+        "type": "New Feature"
+      },
+      {
+        "text": "\"OVERDUE\" badge displayed on ticket detail view near the due date",
+        "type": "New Feature"
+      },
+      {
+        "text": "Updated shared Ticket TypeScript interface with `isOverdue: boolean`",
+        "type": "Update"
+      },
+      {
+        "text": "Prisma db push syncs the new column to PostgreSQL",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.8.002",
+    "date": "2026-08-08",
+    "title": "Bug Fixes & Audit",
+    "changes": [
+      {
+        "text": "Fixed user creation: API now looks up Role by systemRole name, uses roleId FK",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed user list display: role field now returned as flat string from API",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed auth route: user.active → user.isActive (2 instances causing login failures)",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed users GET endpoint: properly maps role systemRole + company name",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed dashboard resolvedToday: now fetches resolved tickets count directly",
+        "type": "Fix"
+      },
+      {
+        "text": "Full frontend audit: Dashboard, Settings, Opportunities, Projects, Clients, Integrations, Knowledge Base, Inference — all verified no additional bugs",
+        "type": "Update"
+      }
     ]
   },
   {
     "version": "2026.8.8.001",
     "date": "2026-08-08",
-    "title": "Client Management & PSA Features",
+    "title": "Collapsible Tree Navigation & Section Expansion",
     "changes": [
-      {"text": "Client Detail — contact, agreement, ticket, and invoice tabs with inline editing", "type": "New Feature"},
-      {"text": "Contact Management — create/edit contacts with company assignment", "type": "New Feature"},
-      {"text": "Client List — search, type filter, and sortable table with status indicators", "type": "New Feature"},
-      {"text": "Service Boards — SLA defaults, auto-close, and board management", "type": "New Feature"},
-      {"text": "Billing Dashboard — invoiced, paid, outstanding, and overdue aggregation cards", "type": "New Feature"},
-      {"text": "Enhanced Company Model — PSA-standard fields including territory, region, service level", "type": "Update"}
+      {
+        "text": "Sidebar restructured as collapsible tree with parent sections",
+        "type": "New Feature"
+      },
+      {
+        "text": "Sections: Administration, Clients, Assets, Users & Roles, Projects",
+        "type": "New Feature"
+      },
+      {
+        "text": "Expand/collapse state persisted to localStorage",
+        "type": "New Feature"
+      },
+      {
+        "text": "Administration expanded with: General Settings, Service Boards, Audit Logs, Integrations",
+        "type": "New Feature"
+      },
+      {
+        "text": "New AdminServiceBoardsPage: board list with inline SLA/auto-close/follow-up settings",
+        "type": "New Feature"
+      },
+      {
+        "text": "\"New Board\" button moved to Administration → Service Boards page",
+        "type": "Update"
+      },
+      {
+        "text": "Board settings: SLA response/resolution times, auto-close toggle/days, follow-up toggle/intervals",
+        "type": "Update"
+      },
+      {
+        "text": "Clients section with Client List sub-item",
+        "type": "Update"
+      },
+      {
+        "text": "Assets section with Asset Inventory and Procurement sub-items",
+        "type": "Update"
+      },
+      {
+        "text": "Users & Roles section with Manage Users and Manage Roles sub-items",
+        "type": "Update"
+      },
+      {
+        "text": "Projects section with Project List sub-item",
+        "type": "Update"
+      },
+      {
+        "text": "New Procurement placeholder page created",
+        "type": "New Feature"
+      },
+      {
+        "text": "Administration landing page shows card grid linking to all admin sub-sections",
+        "type": "New Feature"
+      },
+      {
+        "text": "Ticket list header button renamed from \"New Ticket\" to \"Create\"",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.7.004",
+    "date": "2026-08-07",
+    "title": "Service Boards Dashboard & Ticket Board Filtering",
+    "changes": [
+      {
+        "text": "Boards page redesigned: each board is a metric card with 10+ live KPIs",
+        "type": "New Feature"
+      },
+      {
+        "text": "Metric cards show: open, workable, new, on hold, waiting, escalated, avg age",
+        "type": "New Feature"
+      },
+      {
+        "text": "Stale ticket tracking: >3d, >7d, >30d with color-coded severity",
+        "type": "New Feature"
+      },
+      {
+        "text": "Most active client per board (last 30 days)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Real-time polling: metrics refresh every 10 seconds while page is open",
+        "type": "New Feature"
+      },
+      {
+        "text": "Cards are clickable — navigates to tickets filtered by that board",
+        "type": "New Feature"
+      },
+      {
+        "text": "`GET /boards/metrics` API endpoint with all computed stats",
+        "type": "New Feature"
+      },
+      {
+        "text": "Ticket list: added Service Board column",
+        "type": "New Feature"
+      },
+      {
+        "text": "Ticket list: board filter dropdown to switch between boards",
+        "type": "New Feature"
+      },
+      {
+        "text": "Breadcrumb navigation when viewing board-filtered tickets",
+        "type": "New Feature"
+      },
+      {
+        "text": "Sidebar C7 branding updated to red #C42D4B",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.7.003",
+    "date": "2026-08-07",
+    "title": "Invoice PDF & Auth Token in Query",
+    "changes": [
+      {
+        "text": "Double-click any invoice row to open styled PDF invoice in new tab",
+        "type": "New Feature"
+      },
+      {
+        "text": "PDF button in invoice table actions and detail modal",
+        "type": "New Feature"
+      },
+      {
+        "text": "`GET /billing/invoices/:id/pdf` returns dark-themed styled HTML invoice",
+        "type": "New Feature"
+      },
+      {
+        "text": "Invoice PDF shows: C7NTAX branding, bill-to/from, line items, totals, payments, balance",
+        "type": "New Feature"
+      },
+      {
+        "text": "Authenticate middleware now accepts `?token=` query param (for new-tab PDF links)",
+        "type": "New Feature"
+      },
+      {
+        "text": "seed-full.ts restored (was corrupted by cache hygiene)",
+        "type": "Fix"
+      },
+      {
+        "text": "Full database reseeded with 6 users, 5 companies, 8 tickets, etc.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.7.002",
+    "date": "2026-08-07",
+    "title": "Layout Restructure & Client Type",
+    "changes": [
+      {
+        "text": "Merged Classification and Details cards into single right-column card",
+        "type": "Update"
+      },
+      {
+        "text": "Left column now: General, Dates & Times only (cleaner layout)",
+        "type": "Update"
+      },
+      {
+        "text": "Client Type badge displayed under company name (MSP/INT/INF from DB)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Logged Time entries now show \"Time Entry\" activity badge instead of raw date string",
+        "type": "Update"
+      },
+      {
+        "text": "Time entry author names include both firstName and lastName",
+        "type": "Update"
+      },
+      {
+        "text": "Created/Updated dates moved to bottom of combined card with separator",
+        "type": "Update"
+      }
     ]
   },
   {
     "version": "2026.8.7.001",
     "date": "2026-08-07",
-    "title": "Multi-Tenant Foundation & Core Infrastructure",
+    "title": "Notes & Activity Unified Feed",
     "changes": [
-      {"text": "Multi-tenancy — company-scoped data isolation across all modules", "type": "New Feature"},
-      {"text": "JWT Authentication — login, MFA with authenticator app and email backup codes", "type": "New Feature"},
-      {"text": "User Management — create, edit, deactivate users with role assignment", "type": "New Feature"},
-      {"text": "Ticket Management — full CRUD with assignment, status workflow, and time entries", "type": "New Feature"},
-      {"text": "Asset Inventory — hardware tracking with type, status, and assignment", "type": "New Feature"},
-      {"text": "Knowledge Base — internal/external articles with categories, slugs, and view tracking", "type": "New Feature"},
-      {"text": "Dashboard — landing page with ticket counts, status breakdowns, and quick stats", "type": "New Feature"},
-      {"text": "Navigation — drag-and-drop sidebar with collapsible sections and persistent state", "type": "New Feature"}
+      {
+        "text": "Combined comments and time entries into single sorted activity feed",
+        "type": "New Feature"
+      },
+      {
+        "text": "Activity type badges: Note (blue), Internal Note (amber), Email Note (purple), Time Entry (green)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Author names now show firstName + lastName (was previously only firstName)",
+        "type": "Update"
+      },
+      {
+        "text": "Email-sourced notes show fromEmail as author fallback",
+        "type": "Update"
+      },
+      {
+        "text": "API ticket detail now includes contact relation (was missing)",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.6.004",
+    "date": "2026-08-06",
+    "title": "Sidebar Reorganization & Drag-and-Drop",
+    "changes": [
+      {
+        "text": "BuildNotes.md created with full versioning scheme",
+        "type": "New Feature"
+      },
+      {
+        "text": "Administration moved below Integrations in sidebar nav",
+        "type": "Update"
+      },
+      {
+        "text": "Sidebar navigation sections reorderable via drag-and-drop (GripVertical handle)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Nav order persisted to localStorage across sessions",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.6.003",
+    "date": "2026-08-06",
+    "title": "Rebrand to C7NTAX",
+    "changes": [
+      {
+        "text": "All source code, configs, package names rebranded",
+        "type": "Update"
+      },
+      {
+        "text": "Logo updated",
+        "type": "Update"
+      },
+      {
+        "text": "Sidebar branding: NT/NTAX",
+        "type": "Update"
+      },
+      {
+        "text": "Folder renamed from c7-overwatch to C7NTAX",
+        "type": "Update"
+      },
+      {
+        "text": "GitHub repo published at github.com/C7-IMI/c7-overwatch",
+        "type": "Update"
+      },
+      {
+        "text": "Windows desktop app compiled (portable .exe + zip)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Electron 33.2.1 binary download issue resolved",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.6.002",
+    "date": "2026-08-06",
+    "title": "Dashboard & Navigation",
+    "changes": [
+      {
+        "text": "Dashboard stat cards made clickable with pre-applied filters",
+        "type": "Update"
+      },
+      {
+        "text": "9 quick-link modules on dashboard",
+        "type": "New Feature"
+      },
+      {
+        "text": "Cards made clickable on Projects, KB, Clients pages",
+        "type": "Update"
+      },
+      {
+        "text": "Unused imports removed from Billing, Users, Projects, Assets, KB",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.6.001",
+    "date": "2026-08-06",
+    "title": "Bug Fixes",
+    "changes": [
+      {
+        "text": "Fixed prisma.ticketNote → prisma.ticketComment (model name mismatch)",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed prisma.integrationConfig → prisma.integration",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed comment content → body field name",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed worker.ts enabled → isActive",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed ticket comments → notes field name in frontend",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed boardId not recognized by stale Prisma client (regenerated)",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.5.005",
+    "date": "2026-08-05",
+    "title": "Administration Section",
+    "changes": [
+      {
+        "text": "Administration nav item with Shield icon",
+        "type": "New Feature"
+      },
+      {
+        "text": "Logs sub-section: cumulative change log grouped by day",
+        "type": "New Feature"
+      },
+      {
+        "text": "Client IDs (4-digit) and Client Types (MSP, INT, INF) in database",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.5.004",
+    "date": "2026-08-05",
+    "title": "Billing Overhaul",
+    "changes": [
+      {
+        "text": "Billing/invoice API fixes: billingAmount, minutes field names",
+        "type": "Fix"
+      },
+      {
+        "text": "Invoice view modal with line items",
+        "type": "New Feature"
+      },
+      {
+        "text": "Record payment modal with method selector",
+        "type": "New Feature"
+      },
+      {
+        "text": "Send invoice functionality",
+        "type": "New Feature"
+      },
+      {
+        "text": "Company dropdown in generate invoice form",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.5.003",
+    "date": "2026-08-05",
+    "title": "Ticket Detail Overhaul",
+    "changes": [
+      {
+        "text": "Fully editable ticket detail screen with Audit Trail",
+        "type": "New Feature"
+      },
+      {
+        "text": "Inline toggle between view/edit modes",
+        "type": "New Feature"
+      },
+      {
+        "text": "Start time and end time fields",
+        "type": "New Feature"
+      },
+      {
+        "text": "ClientType selector (MSP, INT, INF)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Service agreement auto-display when company selected",
+        "type": "New Feature"
+      },
+      {
+        "text": "Contact dropdown filtered by company",
+        "type": "New Feature"
+      },
+      {
+        "text": "Cumulative time spent display",
+        "type": "New Feature"
+      },
+      {
+        "text": "Log Time modal with start/end time auto-calculation",
+        "type": "New Feature"
+      },
+      {
+        "text": "Inline note posting (Enter to submit)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Ticket numbering scheme: ClientType-ClientID-Sequential",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.5.002",
+    "date": "2026-08-05",
+    "title": "Database & Infrastructure",
+    "changes": [
+      {
+        "text": "PostgreSQL 18 installed via Scoop",
+        "type": "New Feature"
+      },
+      {
+        "text": "Database c7_overwatch created and schema pushed",
+        "type": "New Feature"
+      },
+      {
+        "text": "Sample data populated: 6 users, 5 companies, 5 contacts, 3 boards, 8 tickets, 3 agreements, 4 invoices, 3 projects, 5 assets, 4 KB articles, 3 opportunities",
+        "type": "New Feature"
+      },
+      {
+        "text": "Dev error logger with timestamps, rotation, git commit tracking",
+        "type": "New Feature"
+      },
+      {
+        "text": "Configurable default landing page (/settings)",
+        "type": "Update"
+      }
     ]
   },
   {
     "version": "2026.8.5.001",
     "date": "2026-08-05",
-    "title": "Initial Release — C7NTAX PSA Platform",
+    "title": "Auth Fixes",
     "changes": [
-      {"text": "Application scaffold — monorepo with Turborepo, shared packages, API + Web + Desktop", "type": "New Feature"},
-      {"text": "Database — PostgreSQL 16 with Prisma ORM and auto-generated client", "type": "New Feature"},
-      {"text": "Express API — health check, auth routes, error handling middleware", "type": "New Feature"},
-      {"text": "React SPA — Vite, Tailwind CSS, React Router, dark theme with cyber color scheme", "type": "New Feature"},
-      {"text": "Desktop App — Electron wrapper for native Windows installation", "type": "New Feature"},
-      {"text": "CI/CD — build pipeline with type checking and production bundling", "type": "New Feature"}
+      {
+        "text": "Fixed login: user.active → user.isActive (field name mismatch)",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed login: added include: { role: true } for proper relation loading",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed login: user.role.systemRole instead of user.role as cast",
+        "type": "Fix"
+      },
+      {
+        "text": "Added email + username dual login support",
+        "type": "New Feature"
+      },
+      {
+        "text": "Bypass login link on login page",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.4.004",
+    "date": "2026-08-04",
+    "title": "Bug Fixes: Blank Page, Build Errors",
+    "changes": [
+      {
+        "text": "Fixed @c7-overwatch/shared workspace resolution in Vite",
+        "type": "Fix"
+      },
+      {
+        "text": "Added ErrorBoundary to main.tsx",
+        "type": "New Feature"
+      },
+      {
+        "text": "Fixed 401 interceptor redirect loop on login page",
+        "type": "Fix"
+      },
+      {
+        "text": "Fixed useAuth User type import (inlined locally)",
+        "type": "Fix"
+      },
+      {
+        "text": "Added noscript fallback and critical CSS to index.html",
+        "type": "New Feature"
+      },
+      {
+        "text": "Fixed missing TestTube import in InferenceSettings",
+        "type": "Fix"
+      },
+      {
+        "text": "Created pnpm-workspace.yaml for proper monorepo resolution",
+        "type": "New Feature"
+      },
+      {
+        "text": "Fixed Prisma schema validation errors (ambiguous relations, SQLite incompatibilities)",
+        "type": "Fix"
+      },
+      {
+        "text": "Port changed from 5173 → 3001 → 3003",
+        "type": "Update"
+      },
+      {
+        "text": "Environment config (.env) created",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.4.003",
+    "date": "2026-08-04",
+    "title": "AI Inference Engine",
+    "changes": [
+      {
+        "text": "Pluggable AI provider system (OpenAI, Anthropic, Azure, local keyword search)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Ticket solution suggestions from resolved ticket history",
+        "type": "New Feature"
+      },
+      {
+        "text": "Pattern detection: recurring issues, SLA risks, knowledge gaps",
+        "type": "New Feature"
+      },
+      {
+        "text": "InferencePanel component embedded in ticket detail screen",
+        "type": "New Feature"
+      },
+      {
+        "text": "Admin UI for AI provider configuration (/settings/ai)",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.4.002",
+    "date": "2026-08-04",
+    "title": "CRM, Projects, Inventory, Procurement, PTO, Surveys, KB, Chat, Workflows, Reports, SSO, I18N, Currency, Retention, Calendar, Bulk Ops",
+    "changes": [
+      {
+        "text": "40+ new Prisma models covering all PSA feature areas",
+        "type": "New Feature"
+      },
+      {
+        "text": "Full API routes for all new modules",
+        "type": "New Feature"
+      },
+      {
+        "text": "Frontend pages: Opportunities (CRM pipeline), Projects, Asset Inventory, Knowledge Base",
+        "type": "New Feature"
+      },
+      {
+        "text": "PWA manifest and service worker for mobile/offline support",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.4.001",
+    "date": "2026-08-04",
+    "title": "Core Platform Scaffold",
+    "changes": [
+      {
+        "text": "Monorepo with Turborepo (apps/api, apps/web, apps/desktop, packages/shared, packages/email, packages/billing, packages/integrations)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Express + TypeScript REST API with PostgreSQL via Prisma ORM",
+        "type": "New Feature"
+      },
+      {
+        "text": "React + Vite + Tailwind CSS frontend with dark theme (navy/cyber palette)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Shared Zod schemas and TypeScript types across frontend/backend",
+        "type": "New Feature"
+      },
+      {
+        "text": "JWT authentication with MFA (TOTP authenticator + email codes)",
+        "type": "New Feature"
+      },
+      {
+        "text": "RBAC with 8 roles and 25 granular permissions",
+        "type": "New Feature"
+      },
+      {
+        "text": "Client-scoped data access (company-based isolation)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Ticket management: CRUD, status workflow, auto-follow-up, auto-close",
+        "type": "New Feature"
+      },
+      {
+        "text": "Service boards with email connectors (IMAP ticket ingestion)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Billing engine: service agreements, invoicing, payments, PDF generation",
+        "type": "New Feature"
+      },
+      {
+        "text": "10 third-party integration adapters (Flexpoint, QuickBooks, Pax8, Avanan, Proofpoint, SentinelOne, ITGlue, Microsoft 365, Azure, AWS)",
+        "type": "New Feature"
+      },
+      {
+        "text": "Electron desktop wrapper for Windows",
+        "type": "New Feature"
+      },
+      {
+        "text": "OpenAPI 3.1 specification",
+        "type": "New Feature"
+      }
     ]
   }
 ]
