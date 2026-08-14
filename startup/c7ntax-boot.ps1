@@ -36,9 +36,17 @@ function Test-Port([int]$port) {
     if ($null -ne $c) { return $true } else { return $false }
 }
 
-# Run a node command with a hard timeout; returns exit code (or -1 on timeout)
+# Run a node command with a hard timeout via cmd /c (reliable exit code).
+# All arguments are double-quoted in the command line; redirect to outLog.
+# Returns the process exit code, or -1 on timeout.
 function Invoke-Node([string]$workDir, [string[]]$nodeArgs, [int]$timeoutSec, [string]$outLog, [string]$errLog) {
-    $p = Start-Process -FilePath $Node -ArgumentList $nodeArgs -WorkingDirectory $workDir -WindowStyle Hidden -RedirectStandardOutput $outLog -RedirectStandardError $errLog -PassThru
+    $cmdLine = "`"$Node`" "
+    foreach ($a in $nodeArgs) {
+        $clean = $a -replace '"', ''
+        $cmdLine += "`"$clean`" "
+    }
+    $cmdLine += "> `"$outLog`" 2>&1"
+    $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c", $cmdLine -WorkingDirectory $workDir -WindowStyle Hidden -PassThru
     if (-not $p.WaitForExit($timeoutSec * 1000)) {
         Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
         return -1
@@ -50,7 +58,7 @@ function Invoke-Node([string]$workDir, [string[]]$nodeArgs, [int]$timeoutSec, [s
 # Real database check: spawns a backend, not just a TCP port probe
 function Test-Db {
     Write-Step "  [db] probing backend connectivity..."
-    $code = Invoke-Node $ApiDir @("`"$NpxCli`"", "tsx", "$LogDir/dbcheck.ts") 60 "$LogDir/dbcheck.out.log" "$LogDir/dbcheck.err.log"
+    $code = Invoke-Node $ApiDir @($NpxCli, "tsx", "$LogDir/dbcheck.ts") 60 "$LogDir/dbcheck.out.log" "$LogDir/dbcheck.err.log"
     if ($code -eq 0) { Write-Step "  [db] backend query OK"; return $true }
     Write-Step "  [db] backend query FAILED (exit $code)"
     return $false
@@ -81,7 +89,7 @@ function Restart-Pg {
 
 function Run-Seed([string]$scriptName, [string]$outLog) {
     Write-Step "  [seed] running $scriptName.ts..."
-    $code = Invoke-Node $ApiDir @("`"$NpxCli`"", "tsx", "src/$scriptName.ts") 240 "$LogDir/$outLog" "$LogDir/$outLog.err"
+    $code = Invoke-Node $ApiDir @($NpxCli, "tsx", "src/$scriptName.ts") 240 "$LogDir/$outLog" "$LogDir/$outLog.err"
     if ($code -eq 0) { Write-Step "  [seed] $scriptName.ts OK" } else { Write-Step "  [seed] $scriptName.ts FAILED (exit $code)" }
     return $code
 }
