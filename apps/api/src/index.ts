@@ -90,7 +90,12 @@ const QUIET_POLL_PATHS = [
   "/api/users", "/api/billing/invoices", "/api/boards",
 ];
 app.use(morgan("short", {
-  skip: (req) => !req.headers.authorization && QUIET_POLL_PATHS.includes(req.path),
+  skip: (req) => {
+    const quiet = !req.headers.authorization && QUIET_POLL_PATHS.includes(req.path);
+    // TEMP DEBUG TOKEN-SAVE-01
+    try { require("fs").appendFileSync("skip-debug.log", JSON.stringify({ path: req.path, auth: req.headers.authorization ? 1 : 0, quiet: quiet ? 1 : 0 }) + "\n"); } catch {}
+    return quiet;
+  },
   stream: {
     write: (message: string) => logger.info("http", message.trim()),
   },
