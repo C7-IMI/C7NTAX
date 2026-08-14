@@ -1,167 +1,156 @@
 [
   {
-    "id": "a642d0e6-0816-46c2-84b0-a045efc5a31f",
+    "id": "398c49ff-74a7-4555-a241-341cba35d0c4",
     "body": "Checked Exchange Online — connector is healthy. Investigating transport rules.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-11T06:04:15.110Z",
-    "updatedAt": "2026-08-12T06:04:15.124Z"
+    "ticketId": "d98ec61d-e6dd-430d-b778-0afdda979553",
+    "authorId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "createdAt": "2026-08-13T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.608Z"
   },
   {
-    "id": "a8b240de-b189-4a72-994e-ac4209c1879c",
+    "id": "3ec66b55-87a7-4f04-9fdc-34eebe4dae65",
     "body": "Found the issue — outbound connector was pointing to old smart host IP after ISP change. Updated and testing.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-11T18:04:15.110Z",
-    "updatedAt": "2026-08-12T06:04:15.124Z"
+    "ticketId": "d98ec61d-e6dd-430d-b778-0afdda979553",
+    "authorId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "createdAt": "2026-08-13T16:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.608Z"
   },
   {
-    "id": "e0a136cb-a39a-406f-bcca-3eee718797c9",
+    "id": "a3d2330f-71b2-4721-bb7b-e7dc5b71b733",
     "body": "We've tested VPN from three different locations. Issue appears to be with ISP routing, not our configuration.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "5545e551-f4ac-4412-9934-96e86383d869",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-10T06:04:15.110Z",
-    "updatedAt": "2026-08-12T06:04:15.124Z"
+    "ticketId": "f4a020e9-1f10-4b1d-b03a-c49defce3570",
+    "authorId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "createdAt": "2026-08-12T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.608Z"
   },
   {
-    "id": "3f493b05-4744-4bce-8ac0-9decb6165ceb",
+    "id": "02a3e94d-c98d-452a-8478-4074df161c21",
     "body": "Email was from spoofed domain. Defender has blocked the attachment across all mailboxes. User training scheduled.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
-    "authorId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
-    "createdAt": "2026-08-10T06:04:15.110Z",
-    "updatedAt": "2026-08-12T06:04:15.124Z"
+    "ticketId": "2102e3da-f798-4ad1-9c4a-0cfd6e29444b",
+    "authorId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "createdAt": "2026-08-12T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.608Z"
   },
   {
-    "id": "784d8853-079c-49b4-bcf6-c6d75c9a366e",
+    "id": "38d00a0f-0bf0-4cd4-a3fe-14f841727eb1",
     "body": "Marking as resolved. All checks clear — no compromise detected. User awareness email sent company-wide.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
-    "authorId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
-    "createdAt": "2026-08-11T06:04:15.110Z",
-    "updatedAt": "2026-08-12T06:04:15.124Z"
+    "ticketId": "2102e3da-f798-4ad1-9c4a-0cfd6e29444b",
+    "authorId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "createdAt": "2026-08-13T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.608Z"
   },
   {
-    "id": "25f98022-d0e1-4a36-a79a-f7d8d51ec27e",
+    "id": "e3ddcce0-ae12-434f-9eaa-e7f9d415374d",
     "body": "CEO's MFA configured — Microsoft Authenticator. CFO session scheduled for tomorrow 10:00 AM.",
     "isInternal": false,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "4cf131de-f902-4993-be73-d5d37d924717",
-    "authorId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
-    "createdAt": "2026-08-12T01:16:15.110Z",
-    "updatedAt": "2026-08-12T06:04:15.124Z"
+    "ticketId": "8b24ee22-d71d-4aef-b495-37d65ac56d5d",
+    "authorId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "createdAt": "2026-08-13T23:36:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.608Z"
   },
   {
-    "id": "9875e1ea-c38d-4d9a-a507-bbb1b8fb0601",
-    "body": "Board: 81f12ded-6039-4c63-81b5-3d520ea1e854 → 9e4422d8-18fb-4f5e-b922-5ef5597880f8\nDue Date: 2026-08-13T06:04 → 2026-08-13T11:04",
-    "isInternal": true,
-    "isEmail": false,
-    "fromEmail": null,
-    "ticketId": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
-    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "createdAt": "2026-08-12T07:50:27.089Z",
-    "updatedAt": "2026-08-12T07:50:27.089Z"
-  },
-  {
-    "id": "478e72c4-34ac-4dc5-8a16-af4a38ebd8aa",
+    "id": "77edbc1f-6e44-4a96-9af7-161d4b9c3e73",
     "body": "Status: New → In Progress",
     "isInternal": true,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-05T17:54:21.174Z",
-    "updatedAt": "2026-08-12T17:54:21.175Z"
+    "ticketId": "d98ec61d-e6dd-430d-b778-0afdda979553",
+    "authorId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "createdAt": "2026-08-08T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.636Z"
   },
   {
-    "id": "4e1732a4-9805-40f5-9685-788c4e1b475f",
+    "id": "bcc19259-222a-48b9-912e-b9b1bd5ad1de",
+    "body": "Priority: Medium → Critical",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "9d322ea0-7968-4acc-838b-a907baa7825c",
+    "authorId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "createdAt": "2026-08-09T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.636Z"
+  },
+  {
+    "id": "694a92d3-d211-4be5-b6b3-c003871bda35",
+    "body": "Status: In Progress → Waiting On Client",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "f4a020e9-1f10-4b1d-b03a-c49defce3570",
+    "authorId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "createdAt": "2026-08-10T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.636Z"
+  },
+  {
+    "id": "fcfd16d7-876a-4348-96f7-d66230a17bff",
+    "body": "Status: In Progress → Resolved",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "2102e3da-f798-4ad1-9c4a-0cfd6e29444b",
+    "authorId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "createdAt": "2026-08-13T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.636Z"
+  },
+  {
+    "id": "a991a0d2-3885-40f0-b550-7ff4de843fea",
     "body": "Due Date: (empty) → next business day",
     "isInternal": true,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-07T17:54:21.209Z",
-    "updatedAt": "2026-08-12T17:54:21.210Z"
+    "ticketId": "e7569150-0bff-442a-bcb8-1a42c9ea8e51",
+    "authorId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "createdAt": "2026-08-11T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.636Z"
   },
   {
-    "id": "df2b3d51-3586-48a0-b069-5f13f7e5b5ef",
+    "id": "0b61d644-263c-4d7b-a213-dae17eb9932b",
+    "body": "Priority: Low → Medium",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "3108bedf-241e-42fe-9026-0d70c074cc17",
+    "authorId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "createdAt": "2026-08-12T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.636Z"
+  },
+  {
+    "id": "baca38e2-06b9-497b-a491-936fe1ddd43d",
+    "body": "Status: New → Pending Approval",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "709938ee-a408-4213-964e-3b21cc718d4c",
+    "authorId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "createdAt": "2026-08-12T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.636Z"
+  },
+  {
+    "id": "53feb504-aff0-496c-84f9-3e06d3c62126",
     "body": "Assigned To: (empty) → assigned technician",
     "isInternal": true,
     "isEmail": false,
     "fromEmail": null,
-    "ticketId": "a09d99d5-06d4-4d06-a397-70ba25d7200a",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-08T17:54:21.217Z",
-    "updatedAt": "2026-08-12T17:54:21.218Z"
-  },
-  {
-    "id": "01306f13-4d0d-469c-bff4-e08bb0ce4274",
-    "body": "Status: New → In Progress",
-    "isInternal": true,
-    "isEmail": false,
-    "fromEmail": null,
-    "ticketId": "5545e551-f4ac-4412-9934-96e86383d869",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-09T17:54:21.226Z",
-    "updatedAt": "2026-08-12T17:54:21.227Z"
-  },
-  {
-    "id": "c9883f6c-8fcc-446b-9ea8-15f4e273e09b",
-    "body": "Priority: Medium → High",
-    "isInternal": true,
-    "isEmail": false,
-    "fromEmail": null,
-    "ticketId": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-05T17:54:21.234Z",
-    "updatedAt": "2026-08-12T17:54:21.235Z"
-  },
-  {
-    "id": "33b48235-b8ff-41f9-9dc2-a19e67d15bf0",
-    "body": "Due Date: (empty) → next business day",
-    "isInternal": true,
-    "isEmail": false,
-    "fromEmail": null,
-    "ticketId": "7ba48735-e64d-48b7-b494-b148b6808416",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-06T17:54:21.241Z",
-    "updatedAt": "2026-08-12T17:54:21.242Z"
-  },
-  {
-    "id": "704cd564-b23e-4c9d-84a7-e5073af0603e",
-    "body": "Assigned To: (empty) → assigned technician",
-    "isInternal": true,
-    "isEmail": false,
-    "fromEmail": null,
-    "ticketId": "4cf131de-f902-4993-be73-d5d37d924717",
-    "authorId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "createdAt": "2026-08-07T17:54:21.248Z",
-    "updatedAt": "2026-08-12T17:54:21.249Z"
-  },
-  {
-    "id": "789771db-d90f-41be-a7ea-4bef4a89ef5e",
-    "body": "Start Time: 2026-08-11T18:04 → 2026-08-11T23:04\nContact: (empty) → b6e70376-66b9-400d-9fc7-3afee4b4f80b",
-    "isInternal": true,
-    "isEmail": false,
-    "fromEmail": null,
-    "ticketId": "4cf131de-f902-4993-be73-d5d37d924717",
-    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "createdAt": "2026-08-12T19:05:25.260Z",
-    "updatedAt": "2026-08-12T19:05:25.260Z"
+    "ticketId": "8b24ee22-d71d-4aef-b495-37d65ac56d5d",
+    "authorId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "createdAt": "2026-08-13T04:24:55.590Z",
+    "updatedAt": "2026-08-14T04:24:55.636Z"
   }
 ]

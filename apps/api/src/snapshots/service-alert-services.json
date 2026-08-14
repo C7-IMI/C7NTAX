@@ -1,6 +1,6 @@
 [
   {
-    "id": "b18bb396-1836-47a2-abf4-028e54c40b57",
+    "id": "4dc2064e-bafd-41bf-8b04-c75b6a5621c0",
     "name": "Microsoft 365",
     "category": "cloud",
     "description": "Exchange Online, Teams, SharePoint, OneDrive and Entra ID.",
@@ -10,11 +10,11 @@
     "monitorEnabled": true,
     "enabled": true,
     "sortOrder": 10,
-    "createdAt": "2026-08-13T04:05:42.275Z",
-    "updatedAt": "2026-08-13T04:05:42.275Z"
+    "createdAt": "2026-08-14T04:24:55.816Z",
+    "updatedAt": "2026-08-14T04:24:57.843Z"
   },
   {
-    "id": "408e6253-13a7-4a67-8026-e6e9fe308270",
+    "id": "3f387fc3-5dcc-4f67-8f5f-95119301af14",
     "name": "Azure",
     "category": "cloud",
     "description": "Azure infrastructure, compute, storage and networking services.",
@@ -24,11 +24,11 @@
     "monitorEnabled": true,
     "enabled": true,
     "sortOrder": 20,
-    "createdAt": "2026-08-13T04:05:42.279Z",
-    "updatedAt": "2026-08-13T04:05:42.279Z"
+    "createdAt": "2026-08-14T04:24:55.816Z",
+    "updatedAt": "2026-08-14T04:24:57.846Z"
   },
   {
-    "id": "75713f36-1306-467f-aef9-28e5b359d1a3",
+    "id": "0236a588-f3c5-4b2e-9e4a-8567bf0b4ea0",
     "name": "AWS",
     "category": "cloud",
     "description": "Amazon Web Services global infrastructure and regions.",
@@ -38,11 +38,11 @@
     "monitorEnabled": true,
     "enabled": true,
     "sortOrder": 30,
-    "createdAt": "2026-08-13T04:05:42.279Z",
-    "updatedAt": "2026-08-13T04:05:42.279Z"
+    "createdAt": "2026-08-14T04:24:55.816Z",
+    "updatedAt": "2026-08-14T04:24:57.847Z"
   },
   {
-    "id": "7bc0f125-51fa-481a-901e-1f6d951c0bf7",
+    "id": "61a9c43e-c272-4f0e-a487-2723cafff195",
     "name": "GitHub",
     "category": "cloud",
     "description": "GitHub.com, Actions, Packages and Pages.",
@@ -52,11 +52,11 @@
     "monitorEnabled": true,
     "enabled": true,
     "sortOrder": 40,
-    "createdAt": "2026-08-13T04:05:42.280Z",
-    "updatedAt": "2026-08-13T04:05:42.280Z"
+    "createdAt": "2026-08-14T04:24:55.816Z",
+    "updatedAt": "2026-08-14T04:24:57.848Z"
   },
   {
-    "id": "e7814765-1636-4050-adb5-1798aef8128f",
+    "id": "1d92e892-6aa0-4065-8764-e333b9481be6",
     "name": "Google Workspace",
     "category": "collaboration",
     "description": "Gmail, Google Drive, Calendar, Meet and Docs.",
@@ -66,11 +66,11 @@
     "monitorEnabled": true,
     "enabled": true,
     "sortOrder": 50,
-    "createdAt": "2026-08-13T04:05:42.281Z",
-    "updatedAt": "2026-08-13T04:05:42.281Z"
+    "createdAt": "2026-08-14T04:24:55.816Z",
+    "updatedAt": "2026-08-14T04:24:57.848Z"
   },
   {
-    "id": "5ac89007-8723-4d4c-b057-a44814c986a9",
+    "id": "8ccc2da9-8372-4870-94e4-5317e48fd6ee",
     "name": "Comcast Xfinity",
     "category": "isp",
     "description": "Comcast / Xfinity internet and business services.",
@@ -80,11 +80,11 @@
     "monitorEnabled": true,
     "enabled": true,
     "sortOrder": 60,
-    "createdAt": "2026-08-13T04:05:42.281Z",
-    "updatedAt": "2026-08-13T04:05:42.281Z"
+    "createdAt": "2026-08-14T04:24:55.816Z",
+    "updatedAt": "2026-08-14T04:24:57.849Z"
   },
   {
-    "id": "1fbed61e-da1a-4fb3-adac-9a5f1792aa21",
+    "id": "420e87ba-7b40-4967-83bc-30c1d43f6971",
     "name": "Verizon",
     "category": "isp",
     "description": "Verizon Fios and wireless connectivity.",
@@ -94,11 +94,11 @@
     "monitorEnabled": true,
     "enabled": true,
     "sortOrder": 70,
-    "createdAt": "2026-08-13T04:05:42.282Z",
-    "updatedAt": "2026-08-13T04:05:42.282Z"
+    "createdAt": "2026-08-14T04:24:55.816Z",
+    "updatedAt": "2026-08-14T04:24:57.849Z"
   },
   {
-    "id": "e3a9ae3e-8be9-49cf-b3cb-ea7163c2e5a5",
+    "id": "f184af03-f774-4400-ac1b-a29ae88b04c3",
     "name": "Spectrum",
     "category": "isp",
     "description": "Charter Spectrum internet and business services.",
@@ -108,7 +108,7 @@
     "monitorEnabled": true,
     "enabled": true,
     "sortOrder": 80,
-    "createdAt": "2026-08-13T04:05:42.282Z",
-    "updatedAt": "2026-08-13T04:05:42.282Z"
+    "createdAt": "2026-08-14T04:24:55.816Z",
+    "updatedAt": "2026-08-14T04:24:57.850Z"
   }
 ]

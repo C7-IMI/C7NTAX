@@ -1,6 +1,6 @@
 [
   {
-    "id": "4542970a-cdfa-4489-9d2e-b2c705a35682",
+    "id": "1067afa1-7306-421c-93b6-6d377ed34fa4",
     "firstName": "David",
     "lastName": "Chen",
     "email": "david@acmecorp.com",
@@ -8,31 +8,31 @@
     "mobile": "+1-555-0111",
     "title": "IT Director",
     "department": "Information Technology",
-    "notes": null,
+    "notes": "Primary IT contact. M-F 9-5 EST.",
     "isPrimary": true,
     "isActive": true,
-    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "f0545710-39fe-4f37-9381-820bd9f77aa1",
+    "createdAt": "2026-08-14T04:24:56.812Z",
+    "updatedAt": "2026-08-14T04:24:56.812Z"
   },
   {
-    "id": "c2879221-86a0-4cc7-8a29-ce55c05cb7b2",
+    "id": "0e7da28a-cdf1-4a3f-ade8-dff1849e34fd",
     "firstName": "Maria",
     "lastName": "Garcia",
     "email": "maria@acmecorp.com",
     "phone": "+1-555-0102",
-    "mobile": null,
+    "mobile": "+1-555-0112",
     "title": "HR Manager",
     "department": "Human Resources",
-    "notes": null,
+    "notes": "",
     "isPrimary": false,
     "isActive": true,
-    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "f0545710-39fe-4f37-9381-820bd9f77aa1",
+    "createdAt": "2026-08-14T04:24:56.814Z",
+    "updatedAt": "2026-08-14T04:24:56.814Z"
   },
   {
-    "id": "9ccb3a5f-5970-4cb9-b0c8-f5154f465388",
+    "id": "43b8e224-887a-45d8-90c3-3f311fbe79ba",
     "firstName": "James",
     "lastName": "Wilson",
     "email": "jwilson@acmecorp.com",
@@ -40,15 +40,15 @@
     "mobile": null,
     "title": "CFO",
     "department": "Finance",
-    "notes": null,
+    "notes": "Handles billing and invoice approvals.",
     "isPrimary": false,
     "isActive": true,
-    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "f0545710-39fe-4f37-9381-820bd9f77aa1",
+    "createdAt": "2026-08-14T04:24:56.815Z",
+    "updatedAt": "2026-08-14T04:24:56.815Z"
   },
   {
-    "id": "17d5ab6d-2692-409e-93fb-5526c9bc80eb",
+    "id": "3c72f075-7a30-499d-a2c1-ddca11f91945",
     "firstName": "Emily",
     "lastName": "Johnson",
     "email": "emily@globexind.com",
@@ -56,15 +56,15 @@
     "mobile": "+1-555-0211",
     "title": "VP Operations",
     "department": "Operations",
-    "notes": null,
+    "notes": "Emergency contact after hours.",
     "isPrimary": true,
     "isActive": true,
-    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "f95b6e74-0751-40f6-be75-3775203ca834",
+    "createdAt": "2026-08-14T04:24:56.815Z",
+    "updatedAt": "2026-08-14T04:24:56.815Z"
   },
   {
-    "id": "ec051cca-de38-4417-a3a4-3ba7e54f2757",
+    "id": "3c33b109-eedc-4c60-8cc1-54e1758f9d89",
     "firstName": "Robert",
     "lastName": "Kim",
     "email": "rkim@globexind.com",
@@ -72,15 +72,15 @@
     "mobile": null,
     "title": "Network Admin",
     "department": "IT",
-    "notes": null,
+    "notes": "",
     "isPrimary": false,
     "isActive": true,
-    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "f95b6e74-0751-40f6-be75-3775203ca834",
+    "createdAt": "2026-08-14T04:24:56.816Z",
+    "updatedAt": "2026-08-14T04:24:56.816Z"
   },
   {
-    "id": "74e4a07f-d7d4-4500-8525-9ceb6fb5e171",
+    "id": "69638dd6-a5de-4089-ba3a-150d2a64a1ed",
     "firstName": "Sarah",
     "lastName": "Lee",
     "email": "slee@globexind.com",
@@ -88,15 +88,15 @@
     "mobile": "+1-555-0213",
     "title": "Office Manager",
     "department": "Administration",
-    "notes": null,
+    "notes": "Key holder for Chicago office.",
     "isPrimary": false,
     "isActive": true,
-    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "f95b6e74-0751-40f6-be75-3775203ca834",
+    "createdAt": "2026-08-14T04:24:56.817Z",
+    "updatedAt": "2026-08-14T04:24:56.817Z"
   },
   {
-    "id": "9996bca4-3494-401b-95a9-001a67a85705",
+    "id": "d7844c36-29a4-4a61-9e49-c992c84c5410",
     "firstName": "Michael",
     "lastName": "Brown",
     "email": "mbrown@initech.io",
@@ -104,15 +104,15 @@
     "mobile": null,
     "title": "CEO",
     "department": "Executive",
-    "notes": null,
+    "notes": "Decision maker for major contracts.",
     "isPrimary": true,
     "isActive": true,
-    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "938d24aa-afd6-40df-8038-01aaf38ae116",
+    "createdAt": "2026-08-14T04:24:56.817Z",
+    "updatedAt": "2026-08-14T04:24:56.817Z"
   },
   {
-    "id": "93e741d9-0974-41b4-b7ae-2a848b6cb4c4",
+    "id": "bcaa73fe-27ec-4add-bf5b-1fa301f37dd2",
     "firstName": "Jessica",
     "lastName": "Davis",
     "email": "jdavis@initech.io",
@@ -120,15 +120,15 @@
     "mobile": "+1-555-0312",
     "title": "CTO",
     "department": "Engineering",
-    "notes": null,
+    "notes": "Technical contact for projects.",
     "isPrimary": false,
     "isActive": true,
-    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "938d24aa-afd6-40df-8038-01aaf38ae116",
+    "createdAt": "2026-08-14T04:24:56.818Z",
+    "updatedAt": "2026-08-14T04:24:56.818Z"
   },
   {
-    "id": "ba2d02cf-44ec-40ff-8499-0c049f8735de",
+    "id": "d6421eda-5d1d-402b-bddf-9a029116042a",
     "firstName": "Alice",
     "lastName": "Wong",
     "email": "alice@umbrellacorp.net",
@@ -136,15 +136,15 @@
     "mobile": null,
     "title": "Security Officer",
     "department": "Security",
-    "notes": null,
+    "notes": "Manages security incidents and access requests.",
     "isPrimary": true,
     "isActive": true,
-    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "caaad44a-ab86-4682-aa9f-ddd0f60e736e",
+    "createdAt": "2026-08-14T04:24:56.819Z",
+    "updatedAt": "2026-08-14T04:24:56.819Z"
   },
   {
-    "id": "17e99e78-d345-4955-b607-7bb78601c7fc",
+    "id": "139fd93f-a9be-456c-953a-660606a9c05b",
     "firstName": "Thomas",
     "lastName": "Mueller",
     "email": "tmueller@umbrellacorp.net",
@@ -152,15 +152,15 @@
     "mobile": "+1-555-0412",
     "title": "IT Manager",
     "department": "IT",
-    "notes": null,
+    "notes": "",
     "isPrimary": false,
     "isActive": true,
-    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "caaad44a-ab86-4682-aa9f-ddd0f60e736e",
+    "createdAt": "2026-08-14T04:24:56.819Z",
+    "updatedAt": "2026-08-14T04:24:56.819Z"
   },
   {
-    "id": "2e08aea3-278a-42c9-a59c-4583ea12618b",
+    "id": "31d2bede-476f-4c7e-bae3-71076d7e024b",
     "firstName": "Tony",
     "lastName": "Stark",
     "email": "tony@starkent.com",
@@ -168,15 +168,15 @@
     "mobile": "+1-555-0511",
     "title": "Owner",
     "department": "Executive",
-    "notes": null,
+    "notes": "VIP client — priority handling for all requests.",
     "isPrimary": true,
     "isActive": true,
-    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "a72c88d9-a3b3-4bd2-aae1-1058d47402b7",
+    "createdAt": "2026-08-14T04:24:56.820Z",
+    "updatedAt": "2026-08-14T04:24:56.820Z"
   },
   {
-    "id": "c3a44ddc-1a24-461e-aa1a-c18c84884ebf",
+    "id": "7b67b179-9cce-4b2b-b47a-3dfa0eaa156f",
     "firstName": "Pepper",
     "lastName": "Potts",
     "email": "pepper@starkent.com",
@@ -184,15 +184,15 @@
     "mobile": "+1-555-0512",
     "title": "Operations Director",
     "department": "Operations",
-    "notes": null,
+    "notes": "Handles day-to-day requests and procurement.",
     "isPrimary": false,
     "isActive": true,
-    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "a72c88d9-a3b3-4bd2-aae1-1058d47402b7",
+    "createdAt": "2026-08-14T04:24:56.820Z",
+    "updatedAt": "2026-08-14T04:24:56.820Z"
   },
   {
-    "id": "b6e70376-66b9-400d-9fc7-3afee4b4f80b",
+    "id": "91db91fd-238f-41bd-98bc-a3e2df7106e8",
     "firstName": "Happy",
     "lastName": "Hogan",
     "email": "happy@starkent.com",
@@ -200,11 +200,11 @@
     "mobile": null,
     "title": "Facilities Manager",
     "department": "Facilities",
-    "notes": null,
+    "notes": "On-site contact for physical access.",
     "isPrimary": false,
     "isActive": true,
-    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
+    "companyId": "a72c88d9-a3b3-4bd2-aae1-1058d47402b7",
+    "createdAt": "2026-08-14T04:24:56.821Z",
+    "updatedAt": "2026-08-14T04:24:56.821Z"
   }
 ]
