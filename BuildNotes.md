@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.14.002 | Last Updated: 2026-08-14
+## Version: 2026.8.14.003 | Last Updated: 2026-08-14
 
 ---
 
@@ -11,6 +11,11 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.14.003 — Audit Log Data Recovery & Snapshot Restoration
+- **[Fix]** Missing audit logs recovered: the snapshot reseed (Option 2) had replaced the live audit trail with the older 6-row snapshot, losing several days of `AuditLog` rows. Reconstructed the complete set by unioning all 15 historical git versions of `apps/api/src/snapshots/audit-logs.json` — 63 unique rows spanning 2026-08-06 → 2026-08-14 (ticket updates, kumo password events, board/schedule/service-alert activity).
+- **[Fix]** Restored the 63 rows into the live database (deleteMany + createMany with skipDuplicates); `audit-logs.json` now carries the full union, and verify-post-change re-captured `auditLog: 63 records`, so every future boot reseed restores the complete audit trail.
+- **[New]** `apps/api/src/restore-audit-logs.ts` — idempotent utility to rebuild the audit trail from the snapshot union.
 
 ## 2026.8.14.002 — Snapshot Fixtures Are Now the Seed Source of Truth
 - **[Update]** Boot reseed switched from hardcoded seed scripts to snapshot restore: `c7ntax-boot.ps1` now runs `seed-from-snapshots.ts` (full dataset from `apps/api/src/snapshots/`) plus the idempotent `seed-service-alerts.ts` role-permission backfill, instead of `seed-full.ts` + `seed-contacts.ts` + `seed-service-alerts.ts`.

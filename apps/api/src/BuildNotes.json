@@ -1,5 +1,15 @@
 [
   {
+    "version": "2026.8.14.003",
+    "date": "2026-08-14",
+    "title": "Audit Log Data Recovery & Snapshot Restoration",
+    "changes": [
+      {"text": "Recovered missing audit logs by unioning all 15 historical git versions of apps/api/src/snapshots/audit-logs.json - 63 unique rows spanning 2026-08-06 to 2026-08-14 (ticket updates, kumo password events, board/schedule/service-alert activity)", "type": "Fix"},
+      {"text": "Restored the 63 rows into the live DB (deleteMany + createMany skipDuplicates); audit-logs.json now carries the full union and verify-post-change re-captured auditLog: 63 records so every boot reseed restores the complete audit trail", "type": "Fix"},
+      {"text": "apps/api/src/restore-audit-logs.ts - idempotent utility to rebuild the audit trail from the snapshot union", "type": "New Feature"}
+    ]
+  },
+  {
     "version": "2026.8.14.002",
     "date": "2026-08-14",
     "title": "Snapshot Fixtures Are Now the Seed Source of Truth",

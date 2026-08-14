@@ -756,7 +756,7 @@
 
 ---
 
-**Total Prompts:** 67 | **Completed:** 67 | **In Progress:** 0
+**Total Prompts:** 68 | **Completed:** 68 | **In Progress:** 0
 
 ### Prompt 64 — Service Alerts as direct landing nav item
 **Timestamp:** 2026-08-13 | **Status:** ✅ Completed | **Duration:** ~10 min
@@ -825,3 +825,18 @@
 - manual-restart.md section 3 updated.
 
 **Verified:** boot run green in 20s (snapshot reseed OK, backfill OK, login 200, frontend 200); DB: 4 boards (Infrastructure Service Desk, Intelligence Service Desk, MSP Service Desk, NOC Alerts), 8 tickets, 6 users, 5 companies, 13 contacts, 5 agreements, 0 orphaned ticket board refs, 8 alert services, 3 active alerts; verify-post-change passed and re-captured service-boards.json with 4 records.
+
+
+### Prompt 68 — Audit log data recovery
+**Timestamp:** 2026-08-14 | **Status:** Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.14.003)
+> Context: The audit logs are missing data from the past several days. Tasks: 1) Locate all missing audit log data from the affected period. 2) Restore all missing audit log data completely. 3) After restoration, add the restored data to the snapshot reseed.
+
+**What happened:** The Option-2 snapshot reseed restored the 6-row 9ec9f67-era audit-logs.json, wiping several days of AuditLog rows from the live DB (latest was 8/12 02:27 local instead of 8/14).
+
+**Recovery:**
+1. Located: unioned all 15 historical git versions of apps/api/src/snapshots/audit-logs.json (afd93e9 .. 11f1c26) by id - 63 unique rows spanning 2026-08-06 -> 2026-08-14 (ticket create/update, kumo_passwords create/update, boards:update, schedule:create, tickets:create, service-alerts:create).
+2. Restored: wrote the union to snapshots/audit-logs.json and ran new apps/api/src/restore-audit-logs.ts (deleteMany + createMany skipDuplicates) - DB now 63 rows (was 6), range 8/6 17:54 UTC -> 8/14 06:03 UTC.
+3. Snapshot reseed: verify-post-change re-captured "auditLog: 63 records -> audit-logs.json" - every future boot reseed (seed-from-snapshots) restores the complete audit trail.
+
+**Verified:** verify-post-change "All checks passed. Application is healthy."; scratch files cleaned (collect-audit.sh, union-audit.py, audit-versions/).
