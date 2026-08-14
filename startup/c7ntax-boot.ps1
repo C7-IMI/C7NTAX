@@ -43,13 +43,14 @@ function Invoke-Node([string]$workDir, [string[]]$nodeArgs, [int]$timeoutSec, [s
         Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
         return -1
     }
+    if ($null -eq $p.ExitCode) { return -1 }
     return $p.ExitCode
 }
 
 # Real database check: spawns a backend, not just a TCP port probe
 function Test-Db {
     Write-Step "  [db] probing backend connectivity..."
-    $code = Invoke-Node $ApiDir @("`"$NpxCli`"", "tsx", "-e", "const{PrismaClient}=require('@prisma/client');new PrismaClient().user.count().then(()=>{console.log('DBOK');process.exit(0)}).catch(()=>process.exit(1))") 60 "$LogDir/dbcheck.out.log" "$LogDir/dbcheck.err.log"
+    $code = Invoke-Node $ApiDir @("`"$NpxCli`"", "tsx", "$LogDir/dbcheck.ts") 60 "$LogDir/dbcheck.out.log" "$LogDir/dbcheck.err.log"
     if ($code -eq 0) { Write-Step "  [db] backend query OK"; return $true }
     Write-Step "  [db] backend query FAILED (exit $code)"
     return $false
