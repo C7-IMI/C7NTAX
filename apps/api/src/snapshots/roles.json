@@ -193,11 +193,13 @@
       "inference:view",
       "inference:manage",
       "security:manage",
-      "mfa:enforce"
+      "mfa:enforce",
+      "servicealert:view",
+      "servicealert:manage"
     ],
     "isDefault": true,
     "createdAt": "2026-08-12T06:04:14.720Z",
-    "updatedAt": "2026-08-12T06:04:14.720Z"
+    "updatedAt": "2026-08-14T06:46:29.384Z"
   },
   {
     "id": "f032badc-4d32-463c-973d-5cf0559f273a",
@@ -212,11 +214,12 @@
       "board:view",
       "client:view",
       "integration:view",
-      "report:view"
+      "report:view",
+      "servicealert:view"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.721Z",
-    "updatedAt": "2026-08-12T06:04:14.721Z"
+    "updatedAt": "2026-08-14T06:46:29.388Z"
   },
   {
     "id": "d077b89f-73e4-4f50-ab39-20c9f1f7964a",
@@ -228,11 +231,12 @@
       "ticket:edit",
       "board:view",
       "client:view",
-      "billing:view"
+      "billing:view",
+      "servicealert:view"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.721Z",
-    "updatedAt": "2026-08-12T06:04:14.721Z"
+    "updatedAt": "2026-08-14T06:46:29.390Z"
   },
   {
     "id": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
@@ -242,10 +246,11 @@
       "ticket:view",
       "board:view",
       "client:view",
-      "report:view"
+      "report:view",
+      "servicealert:view"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.722Z",
-    "updatedAt": "2026-08-12T06:04:14.722Z"
+    "updatedAt": "2026-08-14T06:46:29.391Z"
   }
 ]

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.14.001 | Last Updated: 2026-08-14
+## Version: 2026.8.14.002 | Last Updated: 2026-08-14
 
 ---
 
@@ -11,6 +11,12 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.14.002 — Snapshot Fixtures Are Now the Seed Source of Truth
+- **[Update]** Boot reseed switched from hardcoded seed scripts to snapshot restore: `c7ntax-boot.ps1` now runs `seed-from-snapshots.ts` (full dataset from `apps/api/src/snapshots/`) plus the idempotent `seed-service-alerts.ts` role-permission backfill, instead of `seed-full.ts` + `seed-contacts.ts` + `seed-service-alerts.ts`.
+- **[Update]** Restored the 4-service-board snapshot set from git history (commit 9ec9f67: MSP Service Desk, Intelligence Service Desk, Infrastructure Service Desk, NOC Alerts) along with the matching-era tickets/users/companies/agreements; the two HEAD-only cross-era fixtures (ticket-attachments, schedule-entries) were reset to empty so no foreign-key references dangle.
+- **[Fix]** Root cause addressed: `seed-full.ts` hardcodes 3 boards and previously ran on every boot, after which verify/snapshot-poller captures overwrote the richer 4-board snapshot with the 3-board state. With snapshots as the source of truth, reseed now preserves the richer dataset and captures mirror it back.
+- **[Verified]** Boot run green in 20s: snapshot reseed OK, backfill OK, login HTTP 200, frontend HTTP 200; DB shows 4 boards, 8 tickets, 6 users, 5 companies, 13 contacts, 5 agreements, 0 orphaned board references, 8 alert services; verify-post-change "All checks passed" and re-captured service-boards.json with 4 records.
 
 ## 2026.8.14.001 — Full System Audit & Configuration Corrections
 - **[Fix]** `apps/api/.env` — `CORS_ORIGIN` corrected from stale `http://localhost:3001` to `http://localhost:3010` (matches `WEB_ORIGIN`/vite port); preflight now returns `Access-Control-Allow-Origin: http://localhost:3010` with credentials.

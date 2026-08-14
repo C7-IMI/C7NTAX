@@ -756,7 +756,7 @@
 
 ---
 
-**Total Prompts:** 66 | **Completed:** 66 | **In Progress:** 0
+**Total Prompts:** 67 | **Completed:** 67 | **In Progress:** 0
 
 ### Prompt 64 — Service Alerts as direct landing nav item
 **Timestamp:** 2026-08-13 | **Status:** ✅ Completed | **Duration:** ~10 min
@@ -807,3 +807,21 @@
 - Sample data: 6 users, 8 tickets, 3 boards, 5 companies, 13 contacts, 8 alert services; 3 active alerts all legitimate (Azure RSS incident + 2 seeded); all 5 roles carry servicealert:view.
 - git tree clean.
 - Known baseline (documented, left untouched): pre-existing strict-tsc errors in legacy files (seed-ticket-tabs, seed-full, packages/billing, shared/features, KumoConfigs, KumoPasswords, Reports) - runtime-unaffected via tsx; seeds and API verified working at runtime.
+
+
+### Prompt 67 — Snapshot fixtures as seed source of truth (Option 2)
+**Timestamp:** 2026-08-14 | **Status:** Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #1 (2026.8.14.002)
+> Investigate why the sample data is not being pulled from the snapshot that had 4 service boards, and explain what happened. (Follow-up: chose Option 2 - switch boot reseed to seed-from-snapshots.)
+
+**Explanation (what happened):**
+- The 4-board snapshot existed in git (commits d078ee4/9ec9f67, 8/12): MSP Service Desk, Intelligence Service Desk, Infrastructure Service Desk, NOC Alerts.
+- The boot automation reseeded with seed-full.ts (hardcoded 3 boards) instead of seed-from-snapshots.ts; snapshot restore only fires in verify-post-change as an emergency fallback when counts are under minimums (board min 2, seed-full gives 3, so never).
+- After each reseed, verify-post-change (and the API snapshot poller) captured the current 3-board state over the snapshot files, erasing the 4-board version (auto-sync committed that at 08-14 00:41).
+
+**Changes (Option 2 applied):**
+- Restored the full same-era snapshot set from 9ec9f67 (42 files) via git checkout; kept the self-contained service-alert files; reset the two cross-era fixtures (ticket-attachments.json, schedule-entries.json) to [] to avoid dangling FKs.
+- c7ntax-boot.ps1: reseed step now runs seed-from-snapshots.ts + seed-service-alerts.ts (role backfill) instead of seed-full + seed-contacts + seed-service-alerts.
+- manual-restart.md section 3 updated.
+
+**Verified:** boot run green in 20s (snapshot reseed OK, backfill OK, login 200, frontend 200); DB: 4 boards (Infrastructure Service Desk, Intelligence Service Desk, MSP Service Desk, NOC Alerts), 8 tickets, 6 users, 5 companies, 13 contacts, 5 agreements, 0 orphaned ticket board refs, 8 alert services, 3 active alerts; verify-post-change passed and re-captured service-boards.json with 4 records.

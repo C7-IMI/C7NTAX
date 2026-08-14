@@ -120,8 +120,10 @@ curl -s http://localhost:3004/
      restarts it up to 4x if backends cannot spawn (the 0xC0000142 / error-487
      failure mode); ensures Defender exclusions for the PG data/bin dirs.
    - `prisma generate` + `prisma db push`.
-   - **Reseeds sample data** every boot: `seed-full.ts` + `seed-contacts.ts` +
-     `seed-service-alerts.ts` (exit codes checked, one PG-restart retry each).
+   - **Reseeds sample data** every boot from the snapshot fixtures (the source of
+     truth, e.g. the 4 service boards): `seed-from-snapshots.ts` + the idempotent
+     `seed-service-alerts.ts` role-permission backfill (exit codes checked, one
+     PG-restart retry each).
    - Starts API (:4000) and frontend vite (:3010), then verifies login HTTP 200.
    - Logs everything to `startup/boot.log` (server output in `startup/*.log`).
 

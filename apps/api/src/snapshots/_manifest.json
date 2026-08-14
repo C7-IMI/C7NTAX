@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-08-12T07:27:55.933Z",
-  "totalRecords": 166,
+  "capturedAt": "2026-08-14T06:48:13.696Z",
+  "totalRecords": 178,
   "tables": {
     "role": 5,
     "user": 6,
@@ -9,7 +9,9 @@
     "serviceBoard": 4,
     "ticket": 8,
     "ticketComment": 6,
+    "ticketAttachment": 0,
     "timeEntry": 5,
+    "scheduleEntry": 0,
     "serviceAgreement": 5,
     "invoice": 4,
     "invoiceLineItem": 0,
@@ -42,6 +44,8 @@
     "recentlyViewedItem": 12,
     "expense": 0,
     "alertRule": 0,
-    "alertLog": 0
+    "alertLog": 0,
+    "serviceAlertService": 8,
+    "serviceAlert": 4
   }
 }

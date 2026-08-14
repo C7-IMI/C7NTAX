@@ -1,47 +1,5 @@
 [
   {
-    "id": "c8648d24-753b-452f-bbcc-6cd1e8dae5b4",
-    "name": "Microsoft 365",
-    "category": "cloud",
-    "description": "Exchange Online, Teams, SharePoint, OneDrive and Entra ID.",
-    "statusPageUrl": "https://status.cloud.microsoft",
-    "downDetectorUrl": "https://downdetector.com/status/microsoft-365/",
-    "rssUrl": "https://status.cloud.microsoft/rss",
-    "monitorEnabled": true,
-    "enabled": true,
-    "sortOrder": 10,
-    "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-14T05:55:17.121Z"
-  },
-  {
-    "id": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
-    "name": "Azure",
-    "category": "cloud",
-    "description": "Azure infrastructure, compute, storage and networking services.",
-    "statusPageUrl": "https://azure.status.microsoft/en-us/status",
-    "downDetectorUrl": "https://downdetector.com/status/azure/",
-    "rssUrl": "https://azure.status.microsoft/en-us/status/feed/",
-    "monitorEnabled": true,
-    "enabled": true,
-    "sortOrder": 20,
-    "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-14T05:55:17.124Z"
-  },
-  {
-    "id": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
-    "name": "AWS",
-    "category": "cloud",
-    "description": "Amazon Web Services global infrastructure and regions.",
-    "statusPageUrl": "https://health.aws.amazon.com/health/status",
-    "downDetectorUrl": "https://downdetector.com/status/aws-amazon-web-services/",
-    "rssUrl": "https://status.aws.amazon.com/rss/all.rss",
-    "monitorEnabled": true,
-    "enabled": true,
-    "sortOrder": 30,
-    "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-14T05:55:17.125Z"
-  },
-  {
     "id": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "name": "GitHub",
     "category": "cloud",
@@ -53,7 +11,7 @@
     "enabled": true,
     "sortOrder": 40,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-14T05:55:17.125Z"
+    "updatedAt": "2026-08-14T06:46:29.395Z"
   },
   {
     "id": "c2335589-62b0-4bfa-8a39-12b8f0758697",
@@ -67,7 +25,7 @@
     "enabled": true,
     "sortOrder": 50,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-14T05:55:17.126Z"
+    "updatedAt": "2026-08-14T06:46:29.396Z"
   },
   {
     "id": "eda5aa37-2863-4125-b626-468192066ff6",
@@ -81,7 +39,7 @@
     "enabled": true,
     "sortOrder": 60,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-14T05:55:17.127Z"
+    "updatedAt": "2026-08-14T06:46:29.396Z"
   },
   {
     "id": "10630569-8873-4b00-9137-a346046c2b5f",
@@ -95,7 +53,7 @@
     "enabled": true,
     "sortOrder": 70,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-14T05:55:17.128Z"
+    "updatedAt": "2026-08-14T06:46:29.397Z"
   },
   {
     "id": "26106765-a66e-4750-bff9-96454dd9a5cb",
@@ -109,6 +67,48 @@
     "enabled": true,
     "sortOrder": 80,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-14T05:55:17.128Z"
+    "updatedAt": "2026-08-14T06:46:29.398Z"
+  },
+  {
+    "id": "c8648d24-753b-452f-bbcc-6cd1e8dae5b4",
+    "name": "Microsoft 365",
+    "category": "cloud",
+    "description": "Exchange Online, Teams, SharePoint, OneDrive and Entra ID.",
+    "statusPageUrl": "https://status.cloud.microsoft",
+    "downDetectorUrl": "https://downdetector.com/status/microsoft-365/",
+    "rssUrl": "https://status.cloud.microsoft/rss",
+    "monitorEnabled": true,
+    "enabled": true,
+    "sortOrder": 10,
+    "createdAt": "2026-08-14T05:55:14.948Z",
+    "updatedAt": "2026-08-14T06:46:29.392Z"
+  },
+  {
+    "id": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
+    "name": "Azure",
+    "category": "cloud",
+    "description": "Azure infrastructure, compute, storage and networking services.",
+    "statusPageUrl": "https://azure.status.microsoft/en-us/status",
+    "downDetectorUrl": "https://downdetector.com/status/azure/",
+    "rssUrl": "https://azure.status.microsoft/en-us/status/feed/",
+    "monitorEnabled": true,
+    "enabled": true,
+    "sortOrder": 20,
+    "createdAt": "2026-08-14T05:55:14.948Z",
+    "updatedAt": "2026-08-14T06:46:29.394Z"
+  },
+  {
+    "id": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
+    "name": "AWS",
+    "category": "cloud",
+    "description": "Amazon Web Services global infrastructure and regions.",
+    "statusPageUrl": "https://health.aws.amazon.com/health/status",
+    "downDetectorUrl": "https://downdetector.com/status/aws-amazon-web-services/",
+    "rssUrl": "https://status.aws.amazon.com/rss/all.rss",
+    "monitorEnabled": true,
+    "enabled": true,
+    "sortOrder": 30,
+    "createdAt": "2026-08-14T05:55:14.948Z",
+    "updatedAt": "2026-08-14T06:46:29.394Z"
   }
 ]

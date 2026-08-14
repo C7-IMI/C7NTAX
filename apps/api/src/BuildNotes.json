@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.14.002",
+    "date": "2026-08-14",
+    "title": "Snapshot Fixtures Are Now the Seed Source of Truth",
+    "changes": [
+      {"text": "Boot reseed switched from hardcoded seed scripts to snapshot restore: c7ntax-boot.ps1 now runs seed-from-snapshots.ts + idempotent seed-service-alerts.ts backfill instead of seed-full.ts + seed-contacts.ts + seed-service-alerts.ts", "type": "Update"},
+      {"text": "Restored the 4-service-board snapshot set from git (9ec9f67: MSP Service Desk, Intelligence Service Desk, Infrastructure Service Desk, NOC Alerts) with matching-era tickets/users/companies/agreements; cross-era fixtures reset to empty to avoid dangling FKs", "type": "Update"},
+      {"text": "Root cause: seed-full.ts hardcodes 3 boards and ran every boot, after which verify/snapshot-poller captures overwrote the richer 4-board snapshot - snapshots are now the source of truth and captures mirror them back", "type": "Fix"},
+      {"text": "Verified: boot run green in 20s (snapshot reseed OK, backfill OK, login 200, frontend 200); DB has 4 boards, 8 tickets, 6 users, 5 companies, 13 contacts, 5 agreements, 0 orphaned board refs, 8 alert services; verify-post-change passed and re-captured service-boards.json with 4 records", "type": "Audit"}
+    ]
+  },
+  {
     "version": "2026.8.14.001",
     "date": "2026-08-14",
     "title": "Full System Audit & Configuration Corrections",
