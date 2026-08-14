@@ -1,5 +1,14 @@
 [
   {
+    "version": "2026.8.14.004",
+    "date": "2026-08-14",
+    "title": "SOC2.Compliance Plan",
+    "changes": [
+      {"text": "SOC2.Compliance.md - SOC 2 Type II readiness plan for C7NTAX on AWS: numbered items SC-01..OR-04 across Security/Availability/Confidentiality/Processing Integrity/Privacy/Organizational controls, each with why, functional impact, and breakage-risk flags; AWS guidance inline (Secrets Manager, KMS envelope encryption, RDS Multi-AZ + PITR, ALB/ACM/WAF, ECS Fargate, CloudWatch/CloudTrail/GuardDuty/Security Hub/Config); sequencing + open decisions", "type": "New Feature"},
+      {"text": "Top gaps identified: dev secrets in .env, permissive rate limit, JWT without rotation, --accept-data-loss in boot pipeline, reseed-able audit trail, hardcoded crypto fallback key", "type": "Audit"}
+    ]
+  },
+  {
     "version": "2026.8.14.003",
     "date": "2026-08-14",
     "title": "Audit Log Data Recovery & Snapshot Restoration",

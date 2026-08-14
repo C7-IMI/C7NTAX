@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.14.003 | Last Updated: 2026-08-14
+## Version: 2026.8.14.004 | Last Updated: 2026-08-14
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.14.004 — SOC2.Compliance Plan
+- **[New]** `SOC2.Compliance.md` — SOC 2 Type II readiness plan for C7NTAX deployed to AWS: numbered items (SC-01…OR-04) across Security, Availability, Confidentiality, Processing Integrity, Privacy, and Organizational controls; each item includes why, functional impact, and ⚠️ breakage-risk flags; AWS-specific guidance inline (Secrets Manager, KMS envelope encryption, RDS Multi-AZ + PITR, ALB/ACM/WAF, ECS Fargate hardening, CloudWatch/CloudTrail/GuardDuty/Security Hub/Config); recommended sequencing and open decisions (Type I vs II, desktop app scope, AWS org/SCPs, pen-test vendor).
+- **[New]** Top gaps identified: dev secrets in `.env`, permissive rate limit, JWT without rotation, `--accept-data-loss` in the boot pipeline, reseed-able audit trail, hardcoded crypto fallback key.
 
 ## 2026.8.14.003 — Audit Log Data Recovery & Snapshot Restoration
 - **[Fix]** Missing audit logs recovered: the snapshot reseed (Option 2) had replaced the live audit trail with the older 6-row snapshot, losing several days of `AuditLog` rows. Reconstructed the complete set by unioning all 15 historical git versions of `apps/api/src/snapshots/audit-logs.json` — 63 unique rows spanning 2026-08-06 → 2026-08-14 (ticket updates, kumo password events, board/schedule/service-alert activity).

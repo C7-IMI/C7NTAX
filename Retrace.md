@@ -756,7 +756,7 @@
 
 ---
 
-**Total Prompts:** 68 | **Completed:** 68 | **In Progress:** 0
+**Total Prompts:** 69 | **Completed:** 69 | **In Progress:** 0
 
 ### Prompt 64 — Service Alerts as direct landing nav item
 **Timestamp:** 2026-08-13 | **Status:** ✅ Completed | **Duration:** ~10 min
@@ -840,3 +840,21 @@
 3. Snapshot reseed: verify-post-change re-captured "auditLog: 63 records -> audit-logs.json" - every future boot reseed (seed-from-snapshots) restores the complete audit trail.
 
 **Verified:** verify-post-change "All checks passed. Application is healthy."; scratch files cleaned (collect-audit.sh, union-audit.py, audit-versions/).
+
+
+### Prompt 69 — SOC2.Compliance plan
+**Timestamp:** 2026-08-14 | **Status:** Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #1 (2026.8.14.004)
+> Review the C7NTAX codebase and application design/architecture for SOC 2 certification and compliance readiness. Create a plan named `SOC2.Compliance` that lists recommended changes, explains why each change is important, and describes how each change will affect application functionality. Flag any change that could potentially break part or all of the application. Since C7NTAX will eventually run in AWS, include AWS-specific best practices and account for that deployment target in the recommendations.
+
+**Delivered:** `SOC2.Compliance.md` (249 lines) - SOC 2 Type II readiness plan for AWS deployment:
+- Section 0: verified current-state snapshot (strengths + top gaps: dev secrets, 9999/60s rate limit, 12h JWT no rotation, --accept-data-loss boot, reseed-able audit trail, crypto fallback key).
+- Security SC-01..SC-12 (Secrets Manager/SSM, KMS envelope encryption, JWT rotation/revocation, login lockout, MFA enforcement, password policy, TLS/HSTS/ACM+ALB, WAF, container hardening, immutable audit trail w/ CloudTrail+CloudWatch, prod guards against dev boot/reseed).
+- Availability AV-01..AV-03 (RDS Multi-AZ + automated backups + PITR, ALB/ECS auto-scaling + health checks, DR runbook + restore testing).
+- Confidentiality CF-01..CF-03 (S3 SSE-KMS + presigned access, KMS DEK rotation, private subnets/SGs/least-privilege IAM).
+- Processing Integrity PI-01..PI-03 (versioned Prisma migrations in CI, input validation + payment idempotency, env-gated sample-data paths).
+- Privacy PR-01..PR-02 (retention/deletion automation, notice/consent/DSR tooling).
+- Organizational OR-01..OR-04 (policy pack, access reviews, Security Hub/GuardDuty/Config/CloudTrail, IR plan).
+- Sequencing + open decisions (Type I vs II, desktop app scope, AWS org/SCPs, pen-test vendor).
+- Every item has Why / Functional impact / breakage-risk flag (High: SC-02 key migration; Medium: SC-03, PI-01, PR-01, etc.).
+- Changelogs x3 updated with 2026.8.14.004.
