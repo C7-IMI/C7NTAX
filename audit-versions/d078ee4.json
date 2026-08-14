@@ -1,0 +1,26 @@
+[
+  {
+    "id": "0041386d-63b7-4088-a76d-c1d70d0195f1",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "password": "***"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T06:33:08.750Z"
+  },
+  {
+    "id": "f949ffb3-6380-4336-b207-8db51f07a8fb",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T06:33:08.821Z"
+  }
+]

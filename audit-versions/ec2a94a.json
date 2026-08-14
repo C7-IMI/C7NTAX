@@ -1,0 +1,122 @@
+[
+  {
+    "id": "c7c49f39-ff03-474e-887c-eb27b48489d8",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "d98ec61d-e6dd-430d-b778-0afdda979553",
+    "changes": {
+      "status": "in_progress"
+    },
+    "userId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-08T04:24:55.590Z"
+  },
+  {
+    "id": "c6bd6d47-de52-4266-949b-dd86067fe437",
+    "action": "ticket:create",
+    "entity": "ticket",
+    "entityId": "d98ec61d-e6dd-430d-b778-0afdda979553",
+    "changes": {
+      "title": "created"
+    },
+    "userId": "0b088fbb-b604-43bb-bdcf-3cfca313ecb7",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-07T04:24:55.590Z"
+  },
+  {
+    "id": "7bd68b58-22c4-4ffa-ba33-452bdda270c7",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "9d322ea0-7968-4acc-838b-a907baa7825c",
+    "changes": {
+      "priority": "critical"
+    },
+    "userId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-09T04:24:55.590Z"
+  },
+  {
+    "id": "537b7cac-24f0-4be0-870a-e1c44eb1bb38",
+    "action": "ticket:create",
+    "entity": "ticket",
+    "entityId": "9d322ea0-7968-4acc-838b-a907baa7825c",
+    "changes": {
+      "title": "created"
+    },
+    "userId": "dc46f4ff-6810-48eb-ac70-e758adb93d7e",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-08T04:24:55.590Z"
+  },
+  {
+    "id": "c0b3584d-2126-4caa-a512-9fdc5e97fdef",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "f4a020e9-1f10-4b1d-b03a-c49defce3570",
+    "changes": {
+      "status": "waiting_on_client"
+    },
+    "userId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-10T04:24:55.590Z"
+  },
+  {
+    "id": "f228a363-079a-48f0-ab61-a095ff0047e1",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "2102e3da-f798-4ad1-9c4a-0cfd6e29444b",
+    "changes": {
+      "status": "resolved"
+    },
+    "userId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-13T04:24:55.590Z"
+  },
+  {
+    "id": "d14d6a41-058c-40c0-ad3f-6fccad204ea1",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "e7569150-0bff-442a-bcb8-1a42c9ea8e51",
+    "changes": {
+      "dueDate": "set"
+    },
+    "userId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-11T04:24:55.590Z"
+  },
+  {
+    "id": "485daec5-ffd8-4db0-b65d-e24f09dda386",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "3108bedf-241e-42fe-9026-0d70c074cc17",
+    "changes": {
+      "priority": "medium"
+    },
+    "userId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-12T04:24:55.590Z"
+  },
+  {
+    "id": "abfa56cf-a476-4f19-bb0f-6b2dbce7bf1b",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "709938ee-a408-4213-964e-3b21cc718d4c",
+    "changes": {
+      "status": "pending_approval"
+    },
+    "userId": "8065b63f-becb-4fcd-a3fe-d6017eab2cf9",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-12T04:24:55.590Z"
+  },
+  {
+    "id": "5133e6fb-ae87-46e9-aeb5-254e1b8c7722",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "8b24ee22-d71d-4aef-b495-37d65ac56d5d",
+    "changes": {
+      "assignedToId": "assigned"
+    },
+    "userId": "bab1efe9-d3e5-41e9-ba00-cf7410ae31ff",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-13T04:24:55.590Z"
+  }
+]

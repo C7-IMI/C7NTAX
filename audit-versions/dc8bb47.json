@@ -1,0 +1,543 @@
+[
+  {
+    "id": "0041386d-63b7-4088-a76d-c1d70d0195f1",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "password": "***"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T06:33:08.750Z"
+  },
+  {
+    "id": "f949ffb3-6380-4336-b207-8db51f07a8fb",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T06:33:08.821Z"
+  },
+  {
+    "id": "18fa3f8f-7fd9-4105-8972-6450c21ccac3",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T06:48:56.750Z"
+  },
+  {
+    "id": "d77facdb-a815-4ae7-b6f3-e99d7c874673",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "password": "***"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T06:51:02.263Z"
+  },
+  {
+    "id": "d973ab56-c895-4ffc-b6a7-450e50ffefd0",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T06:51:02.322Z"
+  },
+  {
+    "id": "95da3b74-af2c-4e44-8795-63568d8f9b98",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
+    "changes": {
+      "name": "Intelligence Service Desk",
+      "ticketCode": "INT",
+      "description": "",
+      "autoCloseDays": 14,
+      "followUpEnabled": true,
+      "autoCloseEnabled": true,
+      "slaResponseMinutes": 240,
+      "slaResolutionMinutes": 1440
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:27:49.653Z"
+  },
+  {
+    "id": "23e18d2e-7e2d-4514-bf52-af7615851d15",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+    "changes": {
+      "title": "Network drive mapping failure after migration",
+      "status": "new",
+      "boardId": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
+      "dueDate": "2026-08-13T06:04",
+      "endTime": "",
+      "priority": "critical",
+      "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "contactId": "",
+      "startTime": "",
+      "description": "All users in Chicago office lost mapped drives after weekend migration. GPO seems intact.",
+      "assignedToId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+      "serviceAgreementId": ""
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:50:27.093Z"
+  },
+  {
+    "id": "6e8a3250-1430-416a-a10b-57a9fb8d3111",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:51:49.150Z"
+  },
+  {
+    "id": "04ce18fc-39f5-4916-8c88-64f5d2c61457",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "url": "https://acmecorp.com/admin",
+      "email": null,
+      "label": "Acme Domain Admin",
+      "category": "admin",
+      "password": "***",
+      "username": "admin@acmecorp.local"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:51:57.651Z"
+  },
+  {
+    "id": "90769f97-1f90-41b2-9234-b69086a13823",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:51:57.677Z"
+  },
+  {
+    "id": "02e81783-572b-4906-8355-2306ab1771e6",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "url": "https://acmecorp.com/admin",
+      "email": null,
+      "label": "Acme Domain Admin",
+      "category": "admin",
+      "password": "***",
+      "username": "admin@acmecorp.local"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:16.981Z"
+  },
+  {
+    "id": "6208e514-e4d2-44f4-8fe9-4a52baf688e1",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:17.003Z"
+  },
+  {
+    "id": "5d2957bb-04b6-48ff-9c90-0f5545fe1275",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "url": "https://acmecorp.com/admin",
+      "email": null,
+      "label": "Acme Domain Admin",
+      "category": "admin",
+      "password": "***",
+      "username": "admin@acmecorp.local"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:25.630Z"
+  },
+  {
+    "id": "fc6c3efc-2e08-42ef-b6cb-151ba665807b",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:25.648Z"
+  },
+  {
+    "id": "2560335a-83de-4c7d-8667-a86bd9b4f6cc",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:52:29.677Z"
+  },
+  {
+    "id": "a4c7dceb-8ded-4dc7-bba1-b5e8135e2287",
+    "action": "schedule:create",
+    "entity": "schedule",
+    "entityId": "schedule",
+    "changes": {
+      "color": "#3b82d6",
+      "title": "Test",
+      "endTime": "2026-08-28T02:55",
+      "location": "SD",
+      "startTime": "2026-08-24T02:55",
+      "description": "Test"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T07:55:51.121Z"
+  },
+  {
+    "id": "f8e03e4b-07f5-49f9-8384-d9fde896e288",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "batch",
+    "changes": {
+      "status": "waiting_client",
+      "ticketIds": [
+        "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+        "4cf131de-f902-4993-be73-d5d37d924717",
+        "bc93e884-6717-46fd-9a5e-96b59a03b54b",
+        "a09d99d5-06d4-4d06-a397-70ba25d7200a",
+        "7ba48735-e64d-48b7-b494-b148b6808416",
+        "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+        "5545e551-f4ac-4412-9934-96e86383d869",
+        "8da69561-0e86-4082-b323-0bfa64c95e1f"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T08:15:51.766Z"
+  },
+  {
+    "id": "ab654aec-5a9d-4735-aad7-9000578b108a",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "changes": {
+      "status": "in_progress"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-06T17:54:21.186Z"
+  },
+  {
+    "id": "a8c8b086-4fb9-4e48-be19-0bdad0072626",
+    "action": "ticket:create",
+    "entity": "ticket",
+    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "changes": {
+      "title": "sample"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-11T17:54:21.186Z"
+  },
+  {
+    "id": "c3873deb-13cf-4920-b379-4de0a1801f02",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+    "changes": {
+      "priority": "high"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-07T17:54:21.194Z"
+  },
+  {
+    "id": "0b308f21-0181-4f7d-b73b-8acdffe844a0",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "7f6076a4-592a-4b4b-a867-a14d2ea46290",
+    "changes": {
+      "assignedToId": "assigned"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-10T17:54:21.194Z"
+  },
+  {
+    "id": "23a4f24c-1034-4d98-ba72-505bb7c9c89e",
+    "action": "ticket:create",
+    "entity": "ticket",
+    "entityId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
+    "changes": {
+      "title": "sample"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-08T17:54:21.211Z"
+  },
+  {
+    "id": "db1110e6-1f7a-4654-9507-065696a6595c",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
+    "changes": {
+      "status": "in_progress"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-09T17:54:21.211Z"
+  },
+  {
+    "id": "8a39269b-1d1a-4273-a3a4-a7b6d99365b9",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "a09d99d5-06d4-4d06-a397-70ba25d7200a",
+    "changes": {
+      "assignedToId": "assigned"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-09T17:54:21.218Z"
+  },
+  {
+    "id": "4a58e2c4-2d14-4c47-8d20-158c9a0518f0",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "a09d99d5-06d4-4d06-a397-70ba25d7200a",
+    "changes": {
+      "priority": "high"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-11T17:54:21.218Z"
+  },
+  {
+    "id": "44ee6600-1ee2-4240-b3b2-31fdfa86e878",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "5545e551-f4ac-4412-9934-96e86383d869",
+    "changes": {
+      "status": "in_progress"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-10T17:54:21.227Z"
+  },
+  {
+    "id": "e94b4638-a823-4664-b44e-2839add5e7af",
+    "action": "ticket:create",
+    "entity": "ticket",
+    "entityId": "5545e551-f4ac-4412-9934-96e86383d869",
+    "changes": {
+      "title": "sample"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-10T17:54:21.227Z"
+  },
+  {
+    "id": "b9a551e1-ff54-4165-8cbb-d4322160921d",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
+    "changes": {
+      "priority": "high"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-06T17:54:21.235Z"
+  },
+  {
+    "id": "435832e9-9af5-4e05-bf86-6ac0fe36d131",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
+    "changes": {
+      "assignedToId": "assigned"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-09T17:54:21.235Z"
+  },
+  {
+    "id": "2177622c-260d-4784-a3af-e0a5726b555a",
+    "action": "ticket:create",
+    "entity": "ticket",
+    "entityId": "7ba48735-e64d-48b7-b494-b148b6808416",
+    "changes": {
+      "title": "sample"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-07T17:54:21.242Z"
+  },
+  {
+    "id": "c1e91e97-4c52-4ec4-9c04-39f2a7ec1a81",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "7ba48735-e64d-48b7-b494-b148b6808416",
+    "changes": {
+      "status": "in_progress"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-11T17:54:21.242Z"
+  },
+  {
+    "id": "2a455713-0e64-4bca-b7ce-5e69b916e707",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "4cf131de-f902-4993-be73-d5d37d924717",
+    "changes": {
+      "assignedToId": "assigned"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-08T17:54:21.249Z"
+  },
+  {
+    "id": "989641d2-3c39-4686-85f5-703bd9cd7d5c",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "4cf131de-f902-4993-be73-d5d37d924717",
+    "changes": {
+      "priority": "high"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-10T17:54:21.249Z"
+  },
+  {
+    "id": "3658b176-0040-4b17-a015-dacdcf1b8eea",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "4cf131de-f902-4993-be73-d5d37d924717",
+    "changes": {
+      "title": "MFA setup for C-suite execs",
+      "status": "waiting_client",
+      "boardId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+      "dueDate": "",
+      "endTime": "",
+      "priority": "high",
+      "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+      "contactId": "b6e70376-66b9-400d-9fc7-3afee4b4f80b",
+      "startTime": "2026-08-11T18:04",
+      "description": "CEO and CFO need MFA configured on their accounts. Schedule with their EAs for 15-min remote session.",
+      "assignedToId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+      "serviceAgreementId": ""
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-12T19:05:25.266Z"
+  },
+  {
+    "id": "0dbcaf32-e503-4bf3-88ca-ee1b9e703ebc",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "service-alerts",
+    "changes": {
+      "title": "Test manual alert",
+      "severity": "informational",
+      "serviceId": "b18bb396-1836-47a2-abf4-028e54c40b57"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T04:54:31.959Z"
+  },
+  {
+    "id": "39ae798f-d98b-417c-b2f7-2f4f25f49c05",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "b46ff32f-cac4-4480-8c7b-9d11851583f8",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T04:54:32.186Z"
+  },
+  {
+    "id": "b1811cc5-d2ae-4de1-b4b6-d7fdcf9757d0",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T04:55:17.286Z"
+  },
+  {
+    "id": "c8b61764-fb38-4549-9138-5c60dacbcbf9",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T06:13:55.911Z"
+  },
+  {
+    "id": "e226c014-9d3e-4cc6-9db0-498070d380bb",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "d69e3593-a2d1-48d6-a3f4-929856a41ad1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T06:15:24.546Z"
+  },
+  {
+    "id": "61f8e41e-79b7-4356-909e-280c3b609fc8",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "b4e69c8a-ca6e-4995-b0d0-3fa617304217",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T06:15:32.315Z"
+  }
+]
