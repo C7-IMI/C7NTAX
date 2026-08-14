@@ -756,7 +756,7 @@
 
 ---
 
-**Total Prompts:** 63 | **Completed:** 63 | **In Progress:** 0
+**Total Prompts:** 65 | **Completed:** 65 | **In Progress:** 0
 
 ### Prompt 64 — Service Alerts as direct landing nav item
 **Timestamp:** 2026-08-13 | **Status:** ✅ Completed | **Duration:** ~10 min
@@ -767,3 +767,22 @@
 - `apps/web/src/components/Layout.tsx` — Service Alerts nav node flattened from parent-with-child to a single top-level leaf (`to: "/service-alerts"`, no `children`), so clicking it opens the Service Alerts Dashboard directly; nav-order reconciliation keeps it between Dashboard and Tickets; active-alert badge re-added to the leaf row (plus existing collapsed-icon badge)
 - `apps/web/src/pages/SectionLanding.tsx` — removed the now-unused `service-alerts` section landing description block
 - All three changelog sources updated with `2026.8.13.003`
+
+
+### Prompt 65 — Boot automation & loading failure fix
+**Timestamp:** 2026-08-13 | **Status:** Completed | **Duration:** ~2 h
+**BuildNotes IDs:** #1 (2026.8.13.004)
+> Diagnose and fix the application loading failure. Configure the application and any required services or dependencies to start automatically on every machine reboot. Ensure the application is fully functional after each reboot, including automatically reseeding the sample data when the machine restarts.
+
+**Diagnosis:**
+- PostgreSQL, API (:4000), and frontend (:3010) were all down after reboot - nothing auto-started them.
+- PostgreSQL recurring failure mode: a child backend/autovacuum dies with 0xC0000142 (DLL init), postmaster "reinitializes", then every new backend fails with error 487 (invalid shared-memory address) - postmaster accepts TCP but cannot serve. Documented Windows AV/DLL-injection interference; Defender exclusions added for the PG data + bin directories.
+- Pre-existing Windows service "postgresql-c7ntax" (auto-start, LocalSystem) was found stopped - started it and made it the preferred PG runtime.
+
+**Changes:**
+- `startup/c7ntax-boot.ps1` - self-healing boot script: prefers the PostgreSQL Windows service (registers/ensures Automatic start if missing, console fallback), verifies PG with a real backend query (not just the port), restarts PG up to 4x when backends fail, best-effort Defender exclusions (20s-bounded), stops stale servers, prisma generate + db push, reseeds sample data (seed-full + seed-contacts + seed-service-alerts) with exit-code checks and one retry, starts API + vite (logs to startup/*.log), verifies login + frontend HTTP, exits non-zero on failure. All blocking calls time-bounded (cmd /c wrapper with reliable exit codes; duplicate-run guard).
+- `startup/dbcheck.ts` - backend-connectivity probe used by the script.
+- Scheduled task "C7NTAX Boot Startup" (AtStartup + 45s delay, RunLevel Highest, StartWhenAvailable, restart 3x on failure) - verified by running it: LastTaskResult 0.
+- Fixed PowerShell pitfalls encountered: UTF-8 BOM (rewrote as pure ASCII), $args reserved variable, Start-Process argument quoting for paths with spaces, cmd /c outer-quote wrapping for reliable exit codes.
+
+**Verified:** full boot run green (PG OK, 3 seeds OK, API 4000, vite 3010, login HTTP 200); task wiring test LastTaskResult 0; login + service-alerts API + frontend all functional.
