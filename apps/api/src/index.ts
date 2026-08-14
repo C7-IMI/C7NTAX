@@ -100,6 +100,11 @@ app.use(morgan("short", {
     write: (message: string) => logger.info("http", message.trim()),
   },
 }));
+// TEMP DEBUG TOKEN-SAVE-01 probe
+app.use((req, _res, next) => {
+  try { require("fs").appendFileSync("probe-debug.log", JSON.stringify({ path: req.path, method: req.method, auth: req.headers.authorization ? 1 : 0 }) + "\n"); } catch {}
+  next();
+});
 app.use(rateLimiter(9999, 60 * 1000));
 app.use(express.json({ limit: "10mb" }));
 
