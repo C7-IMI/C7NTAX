@@ -3,17 +3,8 @@
 # =========================================================================
 # Registered as the scheduled task "C7NTAX Boot Startup" (AtStartup).
 # Idempotent: safe to run manually at any time.
-#   1. Ensure PostgreSQL is up AND able to serve backends (real query check;
-#      restarts PG up to 4 times - Windows shared-memory/AV failures make a
-#      listening postmaster unable to spawn backends)
-#   2. Best-effort Windows Defender exclusions for the PG data/bin dirs
-#      (0xC0000142 / error-487 family is documented AV interference)
-#   3. Stop stale API/frontend processes
-#   4. Prisma generate + db push
-#   5. Reseed sample data (seed-full + contacts + service-alerts) with
-#      exit-code checks and one PG-restart retry
-#   6. Start API on :4000, start frontend (vite) on :3010
-#   7. Verify login + frontend; log everything to startup/boot.log
+# Every blocking operation is time-bounded and logged so the script can
+# never hang silently.
 # =========================================================================
 
 param([switch]$SkipSeed)
@@ -45,31 +36,42 @@ function Test-Port([int]$port) {
     if ($null -ne $c) { return $true } else { return $false }
 }
 
+# Run a node command with a hard timeout; returns exit code (or -1 on timeout)
+function Invoke-Node([string]$workDir, [string[]]$args, [int]$timeoutSec, [string]$outLog, [string]$errLog) {
+    $p = Start-Process -FilePath $Node -ArgumentList $args -WorkingDirectory $workDir -WindowStyle Hidden -RedirectStandardOutput $outLog -RedirectStandardError $errLog -PassThru
+    if (-not $p.WaitForExit($timeoutSec * 1000)) {
+        Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+        return -1
+    }
+    return $p.ExitCode
+}
+
 # Real database check: spawns a backend, not just a TCP port probe
 function Test-Db {
-    Push-Location $ApiDir
-    $out = & $Node $NpxCli tsx -e "const{PrismaClient}=require('@prisma/client');new PrismaClient().user.count().then(()=>{console.log('DBOK');process.exit(0)}).catch(()=>process.exit(1))" 2>&1
-    $code = $LASTEXITCODE
-    Pop-Location
-    if ($code -eq 0 -and ("$out" -match "DBOK")) { return $true } else { return $false }
+    Write-Step "  [db] probing backend connectivity..."
+    $code = Invoke-Node $ApiDir @("`"$NpxCli`"", "tsx", "-e", "const{PrismaClient}=require('@prisma/client');new PrismaClient().user.count().then(()=>{console.log('DBOK');process.exit(0)}).catch(()=>process.exit(1))") 60 "$LogDir/dbcheck.out.log" "$LogDir/dbcheck.err.log"
+    if ($code -eq 0) { Write-Step "  [db] backend query OK"; return $true }
+    Write-Step "  [db] backend query FAILED (exit $code)"
+    return $false
 }
 
 function Restart-Pg {
-    Write-Step "Restarting PostgreSQL (fast stop + start)..."
+    Write-Step "  [pg] stopping..."
     & "$PgBin/pg_ctl.exe" stop -D $PgDataDir -m fast -t 20 2>&1 | Out-Null
     Start-Sleep -Seconds 3
+    Write-Step "  [pg] starting..."
     & "$PgBin/pg_ctl.exe" start -D $PgDataDir -l "$PgDataDir/logfile" -w -t 40 2>&1 | Out-Null
-    for ($i = 0; $i -lt 15; $i++) {
-        if (Test-Port 5432) { break }
+    for ($i = 0; $i -lt 20; $i++) {
+        if (Test-Port 5432) { Write-Step "  [pg] port 5432 up"; return }
         Start-Sleep -Seconds 2
     }
+    Write-Step "  [pg] WARNING: port 5432 not up after start"
 }
 
 function Run-Seed([string]$scriptName, [string]$outLog) {
-    Push-Location $ApiDir
-    & $Node $NpxCli tsx "src/$scriptName" *> "$LogDir/$outLog"
-    $code = $LASTEXITCODE
-    Pop-Location
+    Write-Step "  [seed] running $scriptName.ts..."
+    $code = Invoke-Node $ApiDir @("`"$NpxCli`"", "tsx", "src/$scriptName.ts") 240 "$LogDir/$outLog" "$LogDir/$outLog.err"
+    if ($code -eq 0) { Write-Step "  [seed] $scriptName.ts OK" } else { Write-Step "  [seed] $scriptName.ts FAILED (exit $code)" }
     return $code
 }
 
@@ -102,18 +104,22 @@ if (-not $dbOk) {
 }
 Write-Step "PostgreSQL OK (port 5432 + backend query)"
 
-# 2. Best-effort Defender exclusions (documented fix for 0xC0000142/487)
+# 2. Best-effort Defender exclusions (bounded to 20s via job)
 try {
-    $prefs = Get-MpPreference -ErrorAction Stop
-    $excl = @($prefs.ExclusionPath)
-    if ($excl -notcontains $PgDataDir) {
-        Add-MpPreference -ExclusionPath $PgDataDir -ErrorAction Stop
-        Write-Step "Defender exclusion added: $PgDataDir"
+    $job = Start-Job -ScriptBlock {
+        param($pgData, $pgBin)
+        $prefs = Get-MpPreference -ErrorAction Stop
+        $excl = @($prefs.ExclusionPath)
+        if ($excl -notcontains $pgData) { Add-MpPreference -ExclusionPath $pgData -ErrorAction Stop }
+        if ($excl -notcontains $pgBin)  { Add-MpPreference -ExclusionPath $pgBin -ErrorAction Stop }
+    } -ArgumentList $PgDataDir, $PgBin
+    if (Wait-Job $job -Timeout 20) {
+        Receive-Job $job | Out-Null
+        Write-Step "Defender exclusions ensured (PG data + bin)"
+    } else {
+        Write-Step "NOTE: Defender check timed out - skipped (PG exclusions may not be set)"
     }
-    if ($excl -notcontains $PgBin) {
-        Add-MpPreference -ExclusionPath $PgBin -ErrorAction Stop
-        Write-Step "Defender exclusion added: $PgBin"
-    }
+    Remove-Job $job -Force -ErrorAction SilentlyContinue
 } catch {
     Write-Step "NOTE: Defender exclusions not changed (no admin rights or Defender unavailable)"
 }
@@ -132,23 +138,24 @@ foreach ($port in 4000, 3010) {
 }
 
 # 4. Prisma client + schema
+Write-Step "Prisma generate + db push..."
 Push-Location $ApiDir
-& $Node $NpxCli prisma generate 2>&1 | Out-Null
-& $Node $NpxCli prisma db push --accept-data-loss 2>&1 | Out-Null
+& $Node "`"$NpxCli`"" prisma generate 2>&1 | Out-Null
+& $Node "`"$NpxCli`"" prisma db push --accept-data-loss 2>&1 | Out-Null
 Pop-Location
 Write-Step "Prisma client + schema synced"
 
 # 5. Reseed sample data (with exit-code checks + one PG-restart retry)
 if (-not $SkipSeed) {
     $seedSteps = @(
-        @{ Name = "seed-full";          Out = "seed-full.out.log" },
-        @{ Name = "seed-contacts";      Out = "seed-contacts.out.log" },
+        @{ Name = "seed-full";           Out = "seed-full.out.log" },
+        @{ Name = "seed-contacts";       Out = "seed-contacts.out.log" },
         @{ Name = "seed-service-alerts"; Out = "seed-service-alerts.out.log" }
     )
     foreach ($step in $seedSteps) {
         $code = Run-Seed $step.Name $step.Out
         if ($code -ne 0) {
-            Write-Step "WARNING: $($step.Name).ts exited $code - restarting PG and retrying once"
+            Write-Step "WARNING: $($step.Name).ts failed - restarting PG and retrying once"
             Restart-Pg
             Start-Sleep -Seconds 3
             $code = Run-Seed $step.Name $step.Out
@@ -157,7 +164,6 @@ if (-not $SkipSeed) {
                 exit 1
             }
         }
-        Write-Step "$($step.Name).ts OK"
     }
     Write-Step "Sample data reseeded"
 } else {
