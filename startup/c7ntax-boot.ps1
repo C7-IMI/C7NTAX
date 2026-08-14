@@ -193,12 +193,13 @@ Push-Location $ApiDir
 Pop-Location
 Write-Step "Prisma client + schema synced"
 
-# 5. Reseed sample data (with exit-code checks + one PG-restart retry)
+# 5. Reseed sample data from snapshots (source of truth), then backfill
+# service-alert role permissions (idempotent). Exit codes checked, one
+# PG-restart retry each.
 if (-not $SkipSeed) {
     $seedSteps = @(
-        @{ Name = "seed-full";           Out = "seed-full.out.log" },
-        @{ Name = "seed-contacts";       Out = "seed-contacts.out.log" },
-        @{ Name = "seed-service-alerts"; Out = "seed-service-alerts.out.log" }
+        @{ Name = "seed-from-snapshots";   Out = "seed-from-snapshots.out.log" },
+        @{ Name = "seed-service-alerts";    Out = "seed-service-alerts.out.log" }
     )
     foreach ($step in $seedSteps) {
         $code = Run-Seed $step.Name $step.Out
