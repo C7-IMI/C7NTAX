@@ -12,6 +12,7 @@ import { Breadcrumbs, buildBreadcrumbs } from "./Breadcrumbs";
 import { useTheme } from "../hooks/useTheme";
 import { Sun, Moon } from "lucide-react";
 import api from "../api";
+import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 
 export type NavNode = {
   id: string;
@@ -264,11 +265,9 @@ export function Layout({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, [dismissedAlerts]);
 
-  useEffect(() => {
-    refreshAlertStatus();
-    const t = setInterval(refreshAlertStatus, 60_000);
-    return () => clearInterval(t);
-  }, [refreshAlertStatus]);
+  // TOKEN-SAVE-06: initial fetch + visibility-gated polling
+  useEffect(() => { refreshAlertStatus(); }, [refreshAlertStatus]);
+  useVisibilityPolling(refreshAlertStatus, 60_000);
 
   const dismissBanner = () => {
     if (!bannerAlert) return;

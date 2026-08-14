@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
+import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 import toast from "react-hot-toast";
 import {
   AlertTriangle, WifiOff, Activity, CheckCircle2, RefreshCw, ExternalLink,
@@ -86,10 +87,8 @@ export function ServiceAlertsPage() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-  useEffect(() => {
-    const t = setInterval(() => void load(true), 60_000);
-    return () => clearInterval(t);
-  }, [load]);
+  // TOKEN-SAVE-06: visibility-gated background refresh
+  useVisibilityPolling(() => void load(true), 60_000);
 
   const enabledServices = services.filter((s) => s.enabled);
   const outageCount = active.filter((a) => a.severity === "outage").length;
