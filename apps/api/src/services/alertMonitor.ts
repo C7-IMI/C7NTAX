@@ -26,6 +26,22 @@ const RESTORED_PATTERNS = [
   /post.?incident/i, /has been fixed/i, /normal service/i,
 ];
 
+// DownDetector page-level classification: positive all-clear only. All-clear
+// phrases are checked BEFORE problem phrases ("no problems at X" contains
+// "problems at", so order matters).
+const DD_ALL_CLEAR_PATTERNS = [
+  /no current problems/i, /no problems at/i, /no problems reported/i,
+  /reports indicate no current problems/i, /indicate no current problems/i,
+  /no known issues/i, /no outages/i, /no reported issues/i,
+  /no widespread issues/i, /no service degradations/i, /no degradations/i,
+];
+const DD_PROBLEM_PATTERNS = [
+  /reports indicate problems/i, /indicate problems/i, /is having issues/i,
+  /are having issues/i, /having issues/i, /possible problems/i,
+  /current problems/i, /widespread outage/i, /outage/i, /degraded performance/i,
+  /service degradation/i,
+];
+
 export interface MonitorSnapshot {
   lastCheckAt: string | null;
   lastRunMs: number | null;
@@ -85,36 +101,65 @@ function classify(text: string): "outage" | "restored" | null {
   return null;
 }
 
-async function checkService(service: { id: string; name: string; rssUrl: string | null }): Promise<void> {
-  if (!service.rssUrl) return; // no RSS feed → no auto-detection (status-page HTML is too noisy for keyword probing)
+async function checkService(service: { id: string; name: string; rssUrl: string | null; downDetectorUrl: string | null }): Promise<void> {
+  if (!service.rssUrl && !service.downDetectorUrl) return; // no monitored source → no auto-detection
 
   let outageText: { title: string; description: string; link: string } | null = null;
   let restoredText: { title: string; description: string; link: string } | null = null;
+  let rssClean = false;   // RSS fetch succeeded with no outage/restored items in window
+  let ddAllClear = false; // DownDetector page positively shows no problems
+  let ddProblems = false; // DownDetector page positively shows problems
 
-  try {
-    const resp = await fetch(service.rssUrl, {
-      signal: AbortSignal.timeout(12000),
-      headers: { "user-agent": "C7NTAX-ServiceAlerts/1.0", accept: "application/rss+xml, application/atom+xml, text/xml, application/xml;q=0.9, */*;q=0.8" },
-    });
-    if (!resp.ok) {
-      snapshot.errors.push(`${service.name}: HTTP ${resp.status} from ${service.rssUrl}`);
-      return;
-    }
-    const body = await resp.text();
-    const items = parseFeedItems(body);
-    const now = Date.now();
-    for (const item of items) {
-      const age = item.pubDate ? now - item.pubDate.getTime() : 0;
-      if (item.pubDate && age > ITEM_WINDOW_MS) continue;
-      const cls = classify(`${item.title} ${item.description}`);
-      if (cls === "outage" && !outageText) {
-        outageText = { title: item.title, description: item.description.slice(0, 500), link: item.link };
-      } else if (cls === "restored" && !restoredText) {
-        restoredText = { title: item.title, description: item.description.slice(0, 500), link: item.link };
+  if (service.rssUrl) {
+    try {
+      const resp = await fetch(service.rssUrl, {
+        signal: AbortSignal.timeout(12000),
+        headers: { "user-agent": "C7NTAX-ServiceAlerts/1.0", accept: "application/rss+xml, application/atom+xml, text/xml, application/xml;q=0.9, */*;q=0.8" },
+      });
+      if (!resp.ok) {
+        snapshot.errors.push(`${service.name}: HTTP ${resp.status} from ${service.rssUrl}`);
+      } else {
+        const body = await resp.text();
+        const items = parseFeedItems(body);
+        const now = Date.now();
+        for (const item of items) {
+          const age = item.pubDate ? now - item.pubDate.getTime() : 0;
+          if (item.pubDate && age > ITEM_WINDOW_MS) continue;
+          const cls = classify(`${item.title} ${item.description}`);
+          if (cls === "outage" && !outageText) {
+            outageText = { title: item.title, description: item.description.slice(0, 500), link: item.link };
+          } else if (cls === "restored" && !restoredText) {
+            restoredText = { title: item.title, description: item.description.slice(0, 500), link: item.link };
+          }
+        }
+        if (!outageText && !restoredText) rssClean = true;
       }
+    } catch (e: any) {
+      snapshot.errors.push(`${service.name}: fetch failed for ${service.rssUrl} (${e?.name || "error"})`);
     }
-  } catch (e: any) {
-    snapshot.errors.push(`${service.name}: fetch failed for ${service.rssUrl} (${e?.name || "error"})`);
+  }
+
+  // DownDetector: page-level check (HTML — no feed available). Only a
+  // POSITIVE "no current problems" signal counts as all-clear; unknown or
+  // unclassifiable pages never auto-resolve anything (fail-safe).
+  if (service.downDetectorUrl) {
+    try {
+      const resp = await fetch(service.downDetectorUrl, {
+        signal: AbortSignal.timeout(12000),
+        headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) C7NTAX-ServiceAlerts/1.0" },
+      });
+      if (!resp.ok) {
+        snapshot.errors.push(`${service.name}: DownDetector HTTP ${resp.status} from ${service.downDetectorUrl}`);
+      } else {
+        const html = await resp.text();
+        const text = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 20000);
+        if (DD_ALL_CLEAR_PATTERNS.some((r) => r.test(text))) ddAllClear = true;
+        else if (DD_PROBLEM_PATTERNS.some((r) => r.test(text))) ddProblems = true;
+        // else: unknown — leave both false (fail-safe, no resolution)
+      }
+    } catch (e: any) {
+      snapshot.errors.push(`${service.name}: DownDetector fetch failed for ${service.downDetectorUrl} (${e?.name || "error"})`);
+    }
   }
 
   const active = await prisma.serviceAlert.findFirst({
@@ -122,9 +167,10 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
     orderBy: { detectedAt: "desc" },
   });
 
-  if (outageText) {
+  if (outageText || ddProblems) {
     clearStreak.delete(service.id);
-    if (active) {
+    if (outageText) {
+      if (active) {
       const sameTitle = active.title === outageText.title;
       await prisma.serviceAlert.update({
         where: { id: active.id },
@@ -151,6 +197,25 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
       });
       snapshot.created++;
       log("warn", `New active alert for ${service.name}: ${outageText.title}`);
+      }
+    } else {
+      // DownDetector reports problems
+      if (!active) {
+        await prisma.serviceAlert.create({
+          data: {
+            serviceId: service.id,
+            title: `Possible service degradation reported for ${service.name} (DownDetector)`,
+            description: `DownDetector is reporting problems for ${service.name}.`,
+            severity: "degraded",
+            status: "active",
+            source: "downdetector",
+            sourceUrl: service.downDetectorUrl,
+            detectedAt: new Date(),
+          },
+        });
+        snapshot.created++;
+        log("warn", `New active alert for ${service.name} (DownDetector)`);
+      }
     }
   } else if (restoredText && active) {
     clearStreak.delete(service.id);
@@ -165,11 +230,19 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
     snapshot.resolved++;
     log("info", `Auto-resolved alert for ${service.name}: ${restoredText.title}`);
   } else if (active && active.source !== "manual") {
-    // All clear: the feed was fetched successfully and contained no current
-    // outage or restored items — the official source shows no active
-    // incidents. Resolve once the all-clear has persisted for two
+    // All clear: every configured monitored source is positively clean —
+    // RSS (no outage/restored items) and/or DownDetector (page says no
+    // current problems). Resolve once the all-clear has persisted for two
     // consecutive polls (anti-flap) and the alert is at least one poll
-    // interval old. Manual alerts are never auto-resolved.
+    // interval old. Manual alerts are never auto-resolved. Any unknown
+    // source state restarts the streak (fail-safe).
+    const rssOk = service.rssUrl ? rssClean : true;
+    const ddOk = service.downDetectorUrl ? ddAllClear : true;
+    const allClear = rssOk && ddOk;
+    if (!allClear) {
+      clearStreak.delete(service.id);
+      return;
+    }
     const MIN_ALERT_AGE_MS = POLL_INTERVAL_MS;
     const streak = (clearStreak.get(service.id) || 0) + 1;
     clearStreak.set(service.id, streak);
@@ -180,7 +253,7 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
         data: {
           status: "resolved",
           resolvedAt: new Date(),
-          description: `Auto-resolved: the official status feed for ${service.name} reports no active incidents (all clear).${active.description ? `\n\n${active.description}` : ""}`,
+          description: `Auto-resolved: monitored sources for ${service.name} report no active incidents or degradations (all clear).${active.description ? `\n\n${active.description}` : ""}`,
         },
       });
       clearStreak.delete(service.id);

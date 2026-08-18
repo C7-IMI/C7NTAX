@@ -1,27 +1,15 @@
 [
   {
-    "id": "ab654aec-5a9d-4735-aad7-9000578b108a",
-    "action": "ticket:update",
-    "entity": "ticket",
-    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "id": "4d33b606-9072-42b6-9b42-dfd8e285b7ba",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
     "changes": {
-      "status": "in_progress"
+      "note": "delete"
     },
-    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-06T17:54:21.186Z"
-  },
-  {
-    "id": "b9a551e1-ff54-4165-8cbb-d4322160921d",
-    "action": "ticket:update",
-    "entity": "ticket",
-    "entityId": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
-    "changes": {
-      "priority": "high"
-    },
-    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-06T17:54:21.235Z"
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-18T23:15:36.721Z"
   },
   {
     "id": "c6bd6d47-de52-4266-949b-dd86067fe437",
@@ -466,6 +454,42 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-18T22:39:40.087Z"
+  },
+  {
+    "id": "269754b6-11a0-42c9-9c81-6f5183903a3d",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-18T23:15:40.306Z"
+  },
+  {
+    "id": "ab654aec-5a9d-4735-aad7-9000578b108a",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "changes": {
+      "status": "in_progress"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-06T17:54:21.186Z"
+  },
+  {
+    "id": "b9a551e1-ff54-4165-8cbb-d4322160921d",
+    "action": "ticket:update",
+    "entity": "ticket",
+    "entityId": "bc93e884-6717-46fd-9a5e-96b59a03b54b",
+    "changes": {
+      "priority": "high"
+    },
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "ipAddress": "127.0.0.1",
+    "createdAt": "2026-08-06T17:54:21.235Z"
   },
   {
     "id": "95da3b74-af2c-4e44-8795-63568d8f9b98",

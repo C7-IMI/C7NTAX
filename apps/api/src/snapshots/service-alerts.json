@@ -59,7 +59,7 @@
     "id": "5e879c8d-eb9d-4c64-97c0-172d8fb12c08",
     "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
     "title": "UPDATE: **Summary:**\nInvestigating access issues with Classroom’s new web homepage.\n**Description:**\nWe are investigating reports of access issues with Classroom’s new web homepage beginning on Thursday, 2026-08-13.\nOur engineering team is currently working on a potential fix while continuing to investigate the full root cause.\nWe will provide an update by Tuesday, 2026-08-18 13:00 PDT with current details.\nWe apologize to all who are affected by the disruption.\n**Symptoms:**\nAdmins and some Teachers may experience permission errors when accessing Classroom’s new web homepage.\n**Workaround:**\nUsers should still be able to navigate to other views from the left hand pane of the interface.",
-    "description": "&lt;p&gt; Incident began at &lt;strong&gt;2026-08-18 19:03&lt;/strong&gt; &lt;span&gt;(times are in &lt;strong&gt;Coordinated Universal Time (UTC)&lt;/strong&gt;).&lt;/span&gt;&lt;/p&gt;&lt;div class=\"cBIRi14aVDP__status-update-text\"&gt;&lt;p&gt;&lt;strong&gt;Summary:&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;Mitigating access issues for Workspace Admins with Classroom’s web homepage.&lt;/p&gt; &lt;p&gt;&lt;strong&gt;Description:&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;Our engineering has identified the cause",
+    "description": "&lt;p&gt; Incident began at &lt;strong&gt;2026-08-18 19:03&lt;/strong&gt; and ended at &lt;strong&gt;2026-08-18 22:30&lt;/strong&gt; &lt;span&gt;(times are in &lt;strong&gt;Coordinated Universal Time (UTC)&lt;/strong&gt;).&lt;/span&gt;&lt;/p&gt;&lt;div class=\"cBIRi14aVDP__status-update-text\"&gt;&lt;p&gt;&lt;strong&gt;Summary:&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;Mitigating access issues for Workspace Admins with Classroom’s web homepage.&lt;/p&gt; &lt;p&gt;&lt;strong&gt;Description:&lt;/strong&gt;&",
     "severity": "degraded",
     "status": "active",
     "source": "rss",
@@ -67,6 +67,6 @@
     "detectedAt": "2026-08-18T22:38:09.445Z",
     "resolvedAt": null,
     "createdAt": "2026-08-18T22:38:09.446Z",
-    "updatedAt": "2026-08-18T22:39:40.077Z"
+    "updatedAt": "2026-08-18T23:15:40.086Z"
   }
 ]
