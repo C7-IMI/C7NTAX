@@ -15,7 +15,11 @@ run_tsc() {
 }
 
 changed_files() {
-  git diff --name-only HEAD -- '*.ts' '*.tsx' 2>/dev/null || true
+  {
+    git diff --name-only HEAD -- '*.ts' '*.tsx' 2>/dev/null || true
+    # include untracked (new) files too, or errors in new files would be skipped
+    git ls-files --others --exclude-standard -- '*.ts' '*.tsx' 2>/dev/null || true
+  } | sort -u
 }
 
 filter_changed() {
