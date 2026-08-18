@@ -1,9 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import api from "../api";
 
-// ── Temporary auth bypass — set to true to re-enable bypass ──
-const TEMP_BYPASS_AUTH = true;
-
 interface User {
   id: string;
   email: string;
@@ -38,34 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [landingPage, setLandingPage] = useState<LandingPage>({ path: "/", label: "Dashboard" });
 
-  useEffect(() => {
-    // ── Temporary bypass: login via API to get a real JWT token ──
-    // Revert: set TEMP_BYPASS_AUTH = false below
-    if (TEMP_BYPASS_AUTH) {
-      localStorage.setItem("c7_bypass", "1");
-      // Clear any stale token and get a fresh one
-      localStorage.removeItem("c7_token");
-      setUser({ id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
-      // Get a real JWT token via login (async — loading completes when done)
-      api.post("/auth/login", { username: "admin", password: "admin" })
-        .then((res) => {
-          if (res.data.token) {
-            localStorage.setItem("c7_token", res.data.token);
-            setToken(res.data.token);
-            setUser(res.data.user || { id: "bypass", email: "admin@C7NTAX.com", firstName: "Admin", lastName: "User", role: "admin" });
-          }
-        })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-      return;
-    }
 
+  useEffect(() => {
     let cancelled = false;
-    // Bypass auth for quick dashboard access
+    // TEMP_BYPASS_AUTH reverted: clear any stale bypass flag left in storage
+    // so the global 401 handler can redirect to /login and a real session
+    // is required.
     if (localStorage.getItem("c7_bypass") === "1") {
-      setUser({ id: "bypass", email: "bypass@local", firstName: "Guest", lastName: "User", role: "admin" });
-      setLoading(false);
-      return;
+      localStorage.removeItem("c7_bypass");
     }
     if (token) {
       api.get("/users/me")
