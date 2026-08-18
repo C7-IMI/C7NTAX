@@ -22,19 +22,33 @@ changed_files() {
   } | sort -u
 }
 
+# git paths are repo-relative; tsc prints paths relative to the app root
+# (apps/api, apps/web) or as ../../packages/... — normalize both to the
+# suffix after the app prefix so reported paths can be matched exactly.
+tsc_fragment() {
+  local f="$1"
+  case "$f" in
+    apps/api/*)  echo "${f#apps/api/}" ;;
+    apps/web/*)  echo "${f#apps/web/}" ;;
+    *)           echo "$f" ;;
+  esac
+}
+
 filter_changed() {
   local logfile="$1"
   local changes="$2"
   if [ -s "$changes" ]; then
-    # Build a grep pattern from changed paths (match on basename + src path fragments)
+    # Build a grep pattern from changed paths, anchored at the start of the
+    # reported path (line start or after a slash) and followed by the (line,col)
+    # position so a changed src/index.ts never matches src/routes/.../index.ts
     local pat=""
     while IFS= read -r f; do
-      local base
-      base=$(basename "$f")
-      pat="${pat:+$pat|}$base"
+      local frag
+      frag=$(tsc_fragment "$f")
+      pat="${pat:+$pat|}$frag"
     done < "$changes"
     if [ -n "$pat" ]; then
-      grep -E "($pat)" "$logfile" || echo "No errors in changed files."
+      grep -E "(^|[ /])($pat)\\([0-9]+,[0-9]+\\)" "$logfile" || echo "No errors in changed files."
     else
       echo "No TS/TSX files changed vs HEAD."
     fi
