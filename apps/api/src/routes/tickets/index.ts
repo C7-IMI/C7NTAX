@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../../middlew
 import { Permission, TicketStatus } from "@C7NTAX/shared";
 import { AppError } from "../../middleware/errorHandler";
 import { onTicketStatusChange, extractPriority } from "./automations";
+import { generateTicketNumber } from "../../services/ticketNumber";
 import { v4 as uuid } from "uuid";
 
 export const ticketsRouter = Router();
@@ -83,16 +84,7 @@ ticketsRouter.post("/", requirePermission(Permission.TicketCreate), async (req: 
     if (!board) throw new AppError("Service board not found", 404);
 
     // Generate ticket number: ClientType-ClientID-Sequential (e.g. MSP-1001-1003)
-    let ticketNumber = `C7-${Date.now().toString(36).toUpperCase()}-${uuid().slice(0, 4).toUpperCase()}`;
-    if (companyId) {
-      const company = await prisma.company.findUnique({ where: { id: companyId }, select: { clientId: true, clientType: true } });
-      if (company?.clientId) {
-        const ct = company.clientType || "MSP";
-        const count = await prisma.ticket.count({ where: { companyId } });
-        const seq = 1000 + count + 1;
-        ticketNumber = `${ct}-${company.clientId}-${seq}`;
-      }
-    }
+    const ticketNumber = await generateTicketNumber(companyId || null);
     const autoPriority = priority || extractPriority(title, description || "");
 
     const ticket = await prisma.ticket.create({

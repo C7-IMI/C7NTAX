@@ -1,4 +1,5 @@
 import { TicketStatus, TicketPriority } from "@C7NTAX/shared";
+import { fetchUnseenEmails } from "./imapFetch";
 
 // ─── Types for processed emails ─────────────────────────────────────
 
@@ -179,6 +180,12 @@ export class EmailConnectorManager {
     }
   }
 
+  /** Trigger one immediate poll for a connector (admin/debug). */
+  pollNow(id: string): void {
+    const config = this.connectors.get(id);
+    if (config) void this.pollMailbox(config);
+  }
+
   /** Get all connector configs (without passwords) */
   listConnectors(): Omit<EmailConnectorConfig, "password">[] {
     return Array.from(this.connectors.values()).map(({ password, ...rest }) => rest);
@@ -187,24 +194,24 @@ export class EmailConnectorManager {
   // ── Private ──
 
   /**
-   * Poll a single IMAP mailbox for unread messages.
-   * In production this would use the `imap` or `mail-notifier` package.
-   * The stub below demonstrates the integration point.
+   * Poll a single IMAP mailbox for unseen messages and process each one.
+   * Fetching is delegated to imapFetch.ts; marking messages seen and
+   * cursor management remain the API layer's responsibility so failures
+   * are retried on the next poll.
    */
   private async pollMailbox(config: EmailConnectorConfig): Promise<void> {
     try {
-      // In production: connect via IMAP, fetch unseen messages, parse them.
-      // const imap = new Imap({ user: config.user, password: config.password, host: config.host, port: config.port, tls: config.secure });
-      // const messages = await fetchUnseen(imap);
-      // for (const raw of messages) {
-      //   const email = await simpleParser(raw);
-      //   await this.processEmail(config.boardId, email);
-      // }
-
-      // Stub: log attempt
-      console.log(
-        `[EmailConnector] Polling ${config.host}:${config.port} for board ${config.boardId}`
-      );
+      const emails = await fetchUnseenEmails({
+        host: config.host,
+        port: config.port,
+        secure: config.secure,
+        user: config.user,
+        password: config.password,
+        folder: config.folder,
+      });
+      for (const email of emails) {
+        await this.processEmail(config.boardId, email);
+      }
     } catch (err) {
       console.error(`[EmailConnector] Poll failed for connector ${config.id}:`, err);
     }
