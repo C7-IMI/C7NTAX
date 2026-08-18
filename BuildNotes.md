@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.001 | Last Updated: 2026-08-18
+## Version: 2026.8.18.002 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,13 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.002 — Calendar Fixes & Scaling, PlanDocs Registry, Email Connector Plan (M365), Changelog Policy
+- **[Fix]** Calendar and Time Off pages restored: their API routes (`/api/schedule`, `/api/schedule/skills`, `/api/pto`, `/api/pto/all`) used Prisma `include` on relations that don't exist on `ScheduleEntry`/`TechnicianSkill`/`PtoRequest` (scalar-only `userId`/`ticketId`/`approvedById`) — every call returned 500. Replaced with manual joins preserving the same response shape; API typecheck improved 186 → 182 errors.
+- **[New]** Dynamic calendar scaling: new `apps/web/src/hooks/useCalendarScale.ts` scales the Calendar and Time Off month grids with the window via uniform CSS transform (`k = max(1, min(availW/baseW, availH/baseH))`) — square day cells and aspect ratio preserved; current size is the minimum (never shrinks below 1), grows to fill the window when maximized.
+- **[New]** `PlanDocs/` plan registry: all 9 project plan documents copied with stable IDs `PLAN-001`…`PLAN-009` (session auth, passkey, multi-tenant, native mobile, native desktop, desktop OSS, SOC 2, token savings, email-to-ticket connector) plus `README.md` index with conventions; originals remain in place.
+- **[New]** `PLAN-Monitored-Mailbox-Email-to-Ticket-Connector.md` (PLAN-009) — Monitored Mailbox Email-to-Ticket Connector implementation plan (AutoTask/ConnectWise Manage/Asio-guided): IMAP polling, field deduction (name/company/contact/subject/description), threading, rollback plan, phased delivery; extended with **Microsoft 365 Exchange mailbox support** (legacy Basic Auth IMAP/EWS with deprecation warnings + modern OAuth 2.0/Microsoft Graph with delegated or app-only flows, shared mailboxes, token rotation).
+- **[New]** Mandatory changelog policy: every change now updates all three records — **What's New** (generated from BuildNotes), **build notes** (`BuildNotes.md`), and **Retrace** (`Retrace.md`) — and today's previously unrecorded changes were backfilled.
 
 ## 2026.8.18.001 — Login Flow Restoration & Token-Savings Hardening
 - **[Fix]** Login loop resolved: the gzip middleware truncated response bodies (the zlib stream flushed after `res.end()`), corrupting the login JWT so `/users/me` returned 401 and the app bounced straight back to the login screen; replaced streaming compression with buffered compress-once-and-end (atomic responses with correct `Content-Length`).
