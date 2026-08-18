@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
+import { useCalendarScale } from "../hooks/useCalendarScale";
 import { Calendar, Clock, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -13,6 +14,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function PTOPage() {
+  const { outerRef, innerRef, scale, scaledW, scaledH } = useCalendarScale<HTMLDivElement, HTMLDivElement>();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -90,8 +92,10 @@ export function PTOPage() {
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Request Time Off</button>
       </div>
 
-      {/* ── Monthly PTO Calendar Card ── */}
-      <div className="card p-3 max-w-3xl">
+      {/* ── Monthly PTO Calendar Card — scales with the window (min: current size) ── */}
+      <div className="card p-3" ref={outerRef}>
+        <div style={{ width: scaledW || undefined, height: scaledH || undefined }}>
+        <div ref={innerRef} className="max-w-3xl" style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}>
         <div className="flex items-center justify-between mb-2">
           <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-surface-lighter text-gray-400 hover:text-white transition-colors">
             <ChevronLeft size={16} />
@@ -153,6 +157,8 @@ export function PTOPage() {
             <button onClick={() => setSelectedDate(null)} className="text-xs text-cyber-400 hover:text-cyber-300">Clear filter</button>
           </div>
         )}
+        </div>
+        </div>
       </div>
 
       {/* ── PTO Requests Card ── */}
