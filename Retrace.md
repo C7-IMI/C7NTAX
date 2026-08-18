@@ -1002,18 +1002,6 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.005 + What's New outputs regenerated (57 versions) + this Retrace entry.
 
 
-### Prompt 86 — Bedrock Agentic RAG AI assistant plan (PLAN-011)
-**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~35 min
-**BuildNotes IDs:** #1 (2026.8.18.007)
-> Create a plan for the following: Building an AI assistant for a PSA platform... Agentic RAG Architecture using Amazon Bedrock...
-
-**Changes:**
-- `PLAN-Bedrock-Agentic-RAG-AI-Assistant.md` (PLAN-011) — Bedrock Agents (Claude 3.5 Sonnet / Llama 3), Knowledge Bases (S3 ticket exports → Titan embeddings → OpenSearch Serverless), Lambda `search_web` Action Group (Tavily/Brave/SerpApi), API Gateway + IAM `InvokeAgent`, EventBridge + Step Functions KB batch generation, Guardrails + tenant_id filtering + PrivateLink; grounded in verified code (`services/inference/*`, `/api/inference`, `/api/kb`, `knowledgeBaseArticle`, PLAN-003/007/010); 8 dependency-ordered phases with risk notes; rollback via `BEDROCK_ENABLED=false` fallback.
-- `PlanDocs/` PLAN-011 copy + registry row.
-- Changelog policy applied: BuildNotes entry 2026.8.18.007 + What's New outputs regenerated (59 versions) + this Retrace entry.
-
-
-
 ### Prompt 85 — AWS Dev/Prod split & sync plan (PLAN-010)
 **Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~20 min
 **BuildNotes IDs:** #1 (2026.8.18.006)
@@ -1025,6 +1013,18 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.006 + What's New outputs regenerated (58 versions) + this Retrace entry.
 
 
+
+
+
+### Prompt 86 — Bedrock Agentic RAG AI assistant plan (PLAN-011)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~35 min
+**BuildNotes IDs:** #1 (2026.8.18.007)
+> Create a plan for the following: Building an AI assistant for a PSA platform... Agentic RAG Architecture using Amazon Bedrock...
+
+**Changes:**
+- `PLAN-Bedrock-Agentic-RAG-AI-Assistant.md` (PLAN-011) — Bedrock Agents (Claude 3.5 Sonnet / Llama 3), Knowledge Bases (S3 ticket exports → Titan embeddings → OpenSearch Serverless), Lambda `search_web` Action Group (Tavily/Brave/SerpApi), API Gateway + IAM `InvokeAgent`, EventBridge + Step Functions KB batch generation, Guardrails + tenant_id filtering + PrivateLink; grounded in verified code (`services/inference/*`, `/api/inference`, `/api/kb`, `knowledgeBaseArticle`, PLAN-003/007/010); 8 dependency-ordered phases with risk notes; rollback via `BEDROCK_ENABLED=false` fallback.
+- `PlanDocs/` PLAN-011 copy + registry row.
+- Changelog policy applied: BuildNotes entry 2026.8.18.007 + What's New outputs regenerated (59 versions) + this Retrace entry.
 
 
 
