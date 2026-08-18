@@ -26,23 +26,6 @@ const RESTORED_PATTERNS = [
   /post.?incident/i, /has been fixed/i, /normal service/i,
 ];
 
-// DownDetector page-level classification: positive all-clear only. All-clear
-// phrases are checked BEFORE problem phrases ("no problems at X" contains
-// "problems at", so order matters).
-const DD_ALL_CLEAR_PATTERNS = [
-  /no current problems/i, /no problems at/i, /no problems reported/i,
-  /reports indicate no current problems/i, /indicate no current problems/i,
-  /no known issues/i, /no outages/i, /no reported issues/i,
-  /no widespread issues/i, /no service degradations/i, /no degradations/i,
-];
-const DD_PROBLEM_PATTERNS = [
-  // Specific user-report phrases only. Generic page chrome (e.g. the site
-  // title "Current problems and outages | Downdetector US") must NOT match,
-  // otherwise every page is classified as problems.
-  /reports indicate problems/i, /indicate problems/i, /possible problems at/i,
-  /is having issues/i, /are having issues/i,
-];
-
 export interface MonitorSnapshot {
   lastCheckAt: string | null;
   lastRunMs: number | null;
@@ -140,27 +123,29 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
     }
   }
 
-  // DownDetector: page-level check (HTML — no feed available). Only a
-  // POSITIVE "no current problems" signal counts as all-clear; unknown or
-  // unclassifiable pages never auto-resolve anything (fail-safe).
+  // DownDetector: page-level check. DownDetector's Cloudflare blocks
+  // non-browser TLS fingerprints (Node fetch gets 403 regardless of UA), so
+  // fetch the public status page through the r.jina.ai reader (base URL is
+  // env-overridable for self-hosting). Only a POSITIVE "no current
+  // problems" status line counts as all-clear; unknown or unclassifiable
+  // pages never auto-resolve anything (fail-safe). Classification uses the
+  // page's own H1 status line only — sidebar tweets about OTHER services
+  // must not trigger false problem alerts.
   if (service.downDetectorUrl) {
     try {
-      const resp = await fetch(service.downDetectorUrl, {
-        signal: AbortSignal.timeout(12000),
-        headers: {
-          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "accept-language": "en-US,en;q=0.9",
-        },
+      const readerBase = process.env.DD_READER_BASE_URL || "https://r.jina.ai/";
+      const resp = await fetch(readerBase + service.downDetectorUrl, {
+        signal: AbortSignal.timeout(20000),
+        headers: { "user-agent": "C7NTAX-ServiceAlerts/1.0" },
       });
       if (!resp.ok) {
-        snapshot.errors.push(`${service.name}: DownDetector HTTP ${resp.status} from ${service.downDetectorUrl}`);
+        snapshot.errors.push(`${service.name}: DownDetector reader HTTP ${resp.status} for ${service.downDetectorUrl}`);
       } else {
-        const html = await resp.text();
-        const text = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 20000);
-        if (DD_ALL_CLEAR_PATTERNS.some((r) => r.test(text))) ddAllClear = true;
-        else if (DD_PROBLEM_PATTERNS.some((r) => r.test(text))) ddProblems = true;
-        // else: unknown — leave both false (fail-safe, no resolution)
+        const body = await resp.text();
+        const h1 = body.match(/^#\s*User reports[^\n]*/m)?.[0] ?? "";
+        if (/no current problems/i.test(h1)) ddAllClear = true;
+        else if (/problems|issues|outage|degraded|disruption/i.test(h1)) ddProblems = true;
+        // else: no recognizable status line — leave both false (fail-safe)
       }
     } catch (e: any) {
       snapshot.errors.push(`${service.name}: DownDetector fetch failed for ${service.downDetectorUrl} (${e?.name || "error"})`);

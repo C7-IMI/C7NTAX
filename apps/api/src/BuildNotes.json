@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.18.008",
+    "date": "2026-08-18",
+    "title": "Service Alerts: DownDetector Auto-Resolution",
+    "changes": [
+      {
+        "text": "`apps/api/src/services/alertMonitor.ts` — extended the all-clear auto-resolve logic to DownDetector: every configured service now checks its `downDetectorUrl` alongside the RSS feed; a page whose own H1 status line says \"no current problems\" counts as all-clear (2-consecutive-poll streak + min alert age, same anti-flap rule), and \"possible problems / issues\" pages create or keep a `downdetector`-sourced alert. DownDetector's Cloudflare blocks non-browser TLS fingerprints (Node fetch 403), so the page is fetched through the r.jina.ai reader (`DD_READER_BASE_URL` env-overridable); classification uses only the page's own H1 so sidebar tweets about other services can't cause false alerts. Verified live: stale Comcast Xfinity alert auto-resolved (page: \"no current problems\"); GitHub correctly got a new degraded alert (page: \"possible problems with GitHub\"); Google Workspace RSS incident still active; 0 monitor errors.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.8.18.007",
     "date": "2026-08-18",
     "title": "PLAN-011: Bedrock Agentic RAG AI Assistant",

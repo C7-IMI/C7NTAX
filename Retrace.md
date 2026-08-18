@@ -1027,4 +1027,16 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.007 + What's New outputs regenerated (59 versions) + this Retrace entry.
 
 
+### Prompt 87 — DownDetector auto-resolution for service alerts
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~40 min
+**BuildNotes IDs:** #1 (2026.8.18.008)
+> Extend the existing alert auto-resolution logic to also auto-resolve alerts when DownDetector is not reporting any outages or service degradations.
+
+**Changes:**
+- `apps/api/src/services/alertMonitor.ts` — extended checkService to monitor `downDetectorUrl` alongside RSS: all configured sources must be positively clean for the existing 2-poll streak auto-resolve; DownDetector pages are fetched via the r.jina.ai reader (`DD_READER_BASE_URL` env-overridable) because DownDetector's Cloudflare blocks non-browser TLS fingerprints (Node fetch 403 regardless of UA — verified empirically); classification uses only the page's own H1 status line ("User reports show no current problems / possible problems …") so sidebar tweets about other services can't cause false alerts; DD problems create a `downdetector`-sourced degraded alert when none is active.
+- Verified live: Comcast Xfinity stale alert auto-resolved (H1 "no current problems"); GitHub correctly created a new degraded alert (H1 "possible problems with GitHub"); Google Workspace RSS incident still active; monitor run 8 services, 0 errors; typecheck at 182 baseline.
+- Changelog policy applied: BuildNotes entry 2026.8.18.008 + What's New outputs regenerated (60 versions) + this Retrace entry.
+
+
+
 

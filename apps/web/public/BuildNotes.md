@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.007 | Last Updated: 2026-08-18
+## Version: 2026.8.18.008 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,9 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.008 — Service Alerts: DownDetector Auto-Resolution
+- **[Update]** `apps/api/src/services/alertMonitor.ts` — extended the all-clear auto-resolve logic to DownDetector: every configured service now checks its `downDetectorUrl` alongside the RSS feed; a page whose own H1 status line says "no current problems" counts as all-clear (2-consecutive-poll streak + min alert age, same anti-flap rule), and "possible problems / issues" pages create or keep a `downdetector`-sourced alert. DownDetector's Cloudflare blocks non-browser TLS fingerprints (Node fetch 403), so the page is fetched through the r.jina.ai reader (`DD_READER_BASE_URL` env-overridable); classification uses only the page's own H1 so sidebar tweets about other services can't cause false alerts. Verified live: stale Comcast Xfinity alert auto-resolved (page: "no current problems"); GitHub correctly got a new degraded alert (page: "possible problems with GitHub"); Google Workspace RSS incident still active; 0 monitor errors.
 
 ## 2026.8.18.007 — PLAN-011: Bedrock Agentic RAG AI Assistant
 - **[New]** `PLAN-Bedrock-Agentic-RAG-AI-Assistant.md` (PLAN-011) — AWS-native Agentic RAG plan for the PSA: Bedrock Agents (Claude 3.5 Sonnet / Llama 3), Knowledge Bases + Titan embeddings + OpenSearch Serverless over RDS→S3 ticket exports, Lambda `search_web` Action Group (Tavily/Brave/SerpApi), API Gateway + IAM `InvokeAgent` integration with the existing `/api/inference` + `/api/kb` code, EventBridge + Step Functions weekly KB batch generation, Bedrock Guardrails + tenant_id vector filtering + PrivateLink. 8 dependency-ordered phases with `Depends on`/`Risk if skipped` notes; rollback (BEDROCK_ENABLED flag falls back to existing provider); verification and open decisions (model, embeddings, search vendor, DMS vs Lambda ETL).

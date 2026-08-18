@@ -1,5 +1,19 @@
 [
   {
+    "id": "3aab0a89-3eda-4b02-a560-3fb9b17a9133",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Possible service degradation reported for GitHub (DownDetector)",
+    "description": "DownDetector is reporting problems for GitHub.",
+    "severity": "degraded",
+    "status": "active",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/github/",
+    "detectedAt": "2026-08-18T23:30:39.470Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-18T23:30:39.472Z",
+    "updatedAt": "2026-08-18T23:30:39.472Z"
+  },
+  {
     "id": "d54ded8b-1295-4a58-8f99-299907e1ffca",
     "serviceId": "c8648d24-753b-452f-bbcc-6cd1e8dae5b4",
     "title": "Possible Service Interruption has been reported for Microsoft 365",
@@ -28,20 +42,6 @@
     "updatedAt": "2026-08-18T22:39:30.863Z"
   },
   {
-    "id": "dbb1caed-3048-40c2-a6e3-4e851420fe67",
-    "serviceId": "eda5aa37-2863-4125-b626-468192066ff6",
-    "title": "Comcast Xfinity — intermittent connectivity reported",
-    "description": "Reports of intermittent internet connectivity across multiple regions. No official statement yet.",
-    "severity": "degraded",
-    "status": "active",
-    "source": "downdetector",
-    "sourceUrl": "https://downdetector.com/status/comcast-xfinity/",
-    "detectedAt": "2026-08-14T04:25:14.951Z",
-    "resolvedAt": null,
-    "createdAt": "2026-08-14T05:55:14.951Z",
-    "updatedAt": "2026-08-14T05:55:14.951Z"
-  },
-  {
     "id": "e4d2eb36-9244-46d3-8ae3-4dcddd37848c",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "GitHub Actions — degraded performance",
@@ -56,6 +56,20 @@
     "updatedAt": "2026-08-14T05:55:14.951Z"
   },
   {
+    "id": "dbb1caed-3048-40c2-a6e3-4e851420fe67",
+    "serviceId": "eda5aa37-2863-4125-b626-468192066ff6",
+    "title": "Comcast Xfinity — intermittent connectivity reported",
+    "description": "Auto-resolved: monitored sources for Comcast Xfinity report no active incidents or degradations (all clear).\n\nReports of intermittent internet connectivity across multiple regions. No official statement yet.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/comcast-xfinity/",
+    "detectedAt": "2026-08-14T04:25:14.951Z",
+    "resolvedAt": "2026-08-18T23:30:50.045Z",
+    "createdAt": "2026-08-14T05:55:14.951Z",
+    "updatedAt": "2026-08-18T23:30:50.046Z"
+  },
+  {
     "id": "5e879c8d-eb9d-4c64-97c0-172d8fb12c08",
     "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
     "title": "UPDATE: **Summary:**\nInvestigating access issues with Classroom’s new web homepage.\n**Description:**\nWe are investigating reports of access issues with Classroom’s new web homepage beginning on Thursday, 2026-08-13.\nOur engineering team is currently working on a potential fix while continuing to investigate the full root cause.\nWe will provide an update by Tuesday, 2026-08-18 13:00 PDT with current details.\nWe apologize to all who are affected by the disruption.\n**Symptoms:**\nAdmins and some Teachers may experience permission errors when accessing Classroom’s new web homepage.\n**Workaround:**\nUsers should still be able to navigate to other views from the left hand pane of the interface.",
@@ -67,6 +81,6 @@
     "detectedAt": "2026-08-18T22:38:09.445Z",
     "resolvedAt": null,
     "createdAt": "2026-08-18T22:38:09.446Z",
-    "updatedAt": "2026-08-18T23:15:40.086Z"
+    "updatedAt": "2026-08-18T23:31:17.893Z"
   }
 ]
