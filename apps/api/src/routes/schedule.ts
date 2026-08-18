@@ -17,8 +17,17 @@ scheduleRouter.get("/", requirePermission(Permission.TicketView), async (req: Au
       if (from) (where.startTime as Record<string, unknown>).gte = new Date(from);
       if (to) (where.startTime as Record<string, unknown>).lte = new Date(to);
     }
-    const entries = await prisma.scheduleEntry.findMany({ where, take: Number(limit), orderBy: { startTime: "asc" }, include: { user: { select: { id: true, firstName: true, lastName: true } }, ticket: { select: { id: true, ticketNumber: true, title: true } } } });
-    res.json(entries);
+    const entries = await prisma.scheduleEntry.findMany({ where, take: Number(limit), orderBy: { startTime: "asc" } });
+    // ScheduleEntry stores userId/ticketId as scalars (no relations) — join manually
+    const userIds = [...new Set(entries.map((e) => e.userId).filter(Boolean))];
+    const ticketIds = [...new Set(entries.map((e) => e.ticketId).filter(Boolean))] as string[];
+    const [users, tickets] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, lastName: true } }),
+      prisma.ticket.findMany({ where: { id: { in: ticketIds } }, select: { id: true, ticketNumber: true, title: true } }),
+    ]);
+    const userMap = new Map(users.map((u) => [u.id, u]));
+    const ticketMap = new Map(tickets.map((t) => [t.id, t]));
+    res.json(entries.map((e) => ({ ...e, user: userMap.get(e.userId) ?? null, ticket: e.ticketId ? ticketMap.get(e.ticketId) ?? null : null })));
   } catch (e) { next(e); }
 });
 
@@ -48,7 +57,12 @@ scheduleRouter.get("/skills", requirePermission(Permission.TicketView), async (r
     const { userId } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
     if (userId) where.userId = userId;
-    res.json(await prisma.technicianSkill.findMany({ where, include: { user: { select: { id: true, firstName: true, lastName: true } } } }));
+    const skills = await prisma.technicianSkill.findMany({ where });
+    // TechnicianSkill stores userId as a scalar (no relation) — join manually
+    const userIds = [...new Set(skills.map((s) => s.userId))];
+    const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, lastName: true } });
+    const userMap = new Map(users.map((u) => [u.id, u]));
+    res.json(skills.map((s) => ({ ...s, user: userMap.get(s.userId) ?? null })));
   } catch (e) { next(e); }
 });
 
