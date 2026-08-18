@@ -59,42 +59,40 @@ export const prisma = new PrismaClient();
 export const app = express();
 
 // TOKEN-SAVE-09: gzip-compress JSON responses (smaller dev payloads) + weak ETags
+// Buffered compression: capture the full body, gzip once, then end the
+// response with the compressed bytes. A streaming pipe implementation
+// truncated bodies because the response could end before the zlib stream
+// flushed (broke login tokens / JSON parsing in browsers).
 import zlib from "zlib";
 app.set("etag", "weak");
 app.use((req, res, next) => {
   if (req.method === "HEAD") return next();
   const accept = String(req.headers["accept-encoding"] || "");
   if (!accept.includes("gzip")) return next();
-  const gzip = zlib.createGzip();
-  gzip.on("error", () => {});
-  let engaged = false;
-  const engage = () => {
-    if (engaged) return;
-    // Never compress bodyless responses (204/304) - piping gzip bytes
-    // onto them corrupts the connection
-    if (res.statusCode === 204 || res.statusCode === 304) return;
-    engaged = true;
-    res.setHeader("Content-Encoding", "gzip");
-    res.removeHeader("Content-Length");
-    const vary = res.getHeader("Vary");
-    res.setHeader("Vary", (vary ? String(vary) + ", " : "") + "Accept-Encoding");
-    gzip.pipe(res);
-  };
-  const rawWrite = res.write.bind(res);
+  const chunks: Buffer[] = [];
   const rawEnd = res.end.bind(res);
-  (res as any).write = (chunk: any, ...args: any[]) => {
-    engage();
-    if (!engaged) return rawWrite(chunk, ...args);
-    const cb = typeof args[args.length - 1] === "function" ? args[args.length - 1] : undefined;
-    return gzip.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)), cb);
+  (res as any).write = (chunk: any) => {
+    if (chunk !== undefined && chunk !== null) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+    return true;
   };
   (res as any).end = (chunk?: any, ...args: any[]) => {
-    engage();
-    if (!engaged) return rawEnd(chunk, ...args);
+    if (chunk !== undefined && chunk !== null) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
     const cb = typeof args[args.length - 1] === "function" ? args[args.length - 1] : undefined;
-    if (chunk !== undefined && chunk !== null) gzip.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)), cb);
-    gzip.end();
-    return rawEnd();
+    const body = Buffer.concat(chunks);
+    const compressible = res.statusCode !== 204 && res.statusCode !== 304 && body.length > 0;
+    if (!compressible) {
+      rawEnd();
+      if (cb) cb();
+      return;
+    }
+    zlib.gzip(body, (err, compressed) => {
+      if (err) return rawEnd(body, cb);
+      res.setHeader("Content-Encoding", "gzip");
+      res.setHeader("Content-Length", String(compressed.length));
+      const vary = res.getHeader("Vary");
+      res.setHeader("Vary", (vary ? String(vary) + ", " : "") + "Accept-Encoding");
+      rawEnd(compressed, cb);
+    });
   };
   next();
 });

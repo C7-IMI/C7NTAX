@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.14.004 | Last Updated: 2026-08-14
+## Version: 2026.8.18.001 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,14 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.001 — Login Flow Restoration & Token-Savings Hardening
+- **[Fix]** Login loop resolved: the gzip middleware truncated response bodies (the zlib stream flushed after `res.end()`), corrupting the login JWT so `/users/me` returned 401 and the app bounced straight back to the login screen; replaced streaming compression with buffered compress-once-and-end (atomic responses with correct `Content-Length`).
+- **[Fix]** Removed the leftover temp auth bypass (`TEMP_BYPASS_AUTH` / `c7_bypass`) that silently cleared real tokens, disabled the 401→login redirect, and left every section polling with invalid auth; real login flow restored and stale bypass flags are now cleared automatically.
+- **[Update]** Implemented the 10-option token-savings plan: quiet morgan polling (401 spam), 5 MB `dev-errors.log` cap + boot rotation, snapshot diff-only captures, `boot.log` rotation + prisma skip-if-unchanged, single-source BuildNotes generation, visibility-gated frontend polling, per-file `typecheck-diff.sh` (untracked files + anchored path matching), inference cheap-model override + 6000-char excerpt + memoized prompt prefix, gzip + weak ETags, additive snapshot delta journal (capped at 100 entries).
+- **[Fix]** Shared package barrel TS2308 duplicate-export conflicts resolved (explicit type re-exports; stale duplicate `sso-etc` feature module removed from the barrel) — `@C7NTAX/shared` now compiles clean.
+- **[Update]** Sample data restored from snapshots via the defined seed process (235 records; all tables match the snapshot manifest); API layer verified serving data (8 tickets, 4 boards, 6 users, 8 alert services).
+- **[Verified]** Boot pipeline green; login HTTP 200; frontend HTTP 200; 304 conditional responses clean; gzip login response byte-identical to the uncompressed response.
 
 ## 2026.8.14.004 — SOC2.Compliance Plan
 - **[New]** `SOC2.Compliance.md` — SOC 2 Type II readiness plan for C7NTAX deployed to AWS: numbered items (SC-01…OR-04) across Security, Availability, Confidentiality, Processing Integrity, Privacy, and Organizational controls; each item includes why, functional impact, and ⚠️ breakage-risk flags; AWS-specific guidance inline (Secrets Manager, KMS envelope encryption, RDS Multi-AZ + PITR, ALB/ACM/WAF, ECS Fargate hardening, CloudWatch/CloudTrail/GuardDuty/Security Hub/Config); recommended sequencing and open decisions (Type I vs II, desktop app scope, AWS org/SCPs, pen-test vendor).
