@@ -444,6 +444,30 @@
     "createdAt": "2026-08-12T06:51:02.322Z"
   },
   {
+    "id": "a8c5e2ba-0244-47d4-9d6e-d18378e67cc6",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-18T22:39:36.616Z"
+  },
+  {
+    "id": "1bcfb540-00fe-49b7-859d-d5966e63acb1",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-18T22:39:40.087Z"
+  },
+  {
     "id": "95da3b74-af2c-4e44-8795-63568d8f9b98",
     "action": "boards:update",
     "entity": "boards",

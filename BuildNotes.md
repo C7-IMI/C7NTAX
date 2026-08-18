@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.004 | Last Updated: 2026-08-18
+## Version: 2026.8.18.005 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,9 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.005 — Service Alerts Auto-Clear on All-Green Sources
+- **[Fix]** `apps/api/src/services/alertMonitor.ts` — active alerts are now auto-resolved when the monitored source shows **all green**: after a successful feed fetch with no outage-classified items, two consecutive all-clear polls (anti-flap streak) and a minimum alert age of one poll interval resolve the alert with an "all clear confirmed" note. Explicit "restored" items still resolve immediately; **manual alerts are never auto-resolved**; services without an RSS feed are untouched. Verified live: stale Microsoft 365 and Azure alerts (active since 2026-08-14) auto-resolved; the genuine Google Workspace incident (current "investigating" item) correctly stays active; Comcast (downdetector-only, no feed) correctly untouched.
 
 ## 2026.8.18.004 — All Plans Reordered: Prerequisites Before Dependents
 - **[Update]** Reviewed all 9 plan documents (`PLAN-001`…`PLAN-009`) against the codebase and renumbered their implementation items into dependency order, preserving every original item name, path, and detail. Added `Depends on:` / `Risk if skipped:` notes to every dependent item: PLAN-001 phases 1–6 (foundation → timeout → TOTP → email → SMS → admin UI; noted `mfaSmsPhone` column already lands in Phase 1), PLAN-002 passkey stages 1–4 (+ cross-plan dep on PLAN-001 MFA flow), PLAN-003 multi-tenant steps 1–3 (foundation → middleware → isolation, with cross-tenant leak risk if middleware precedes columns), PLAN-004 mobile 13-step sequence (Phase 0 → backend enablement → Android/iOS builds → publishing), PLAN-005/006 desktop P0–P5 dependency notes, PLAN-007 SOC 2 dependency-ordered sequencing (SC-12+PI-03 → SC-11+SC-01 → AV-01/02/03/05 → CF-01/03 → SC-02..07 → PI/PR/OR), PLAN-008 token-savings cross-cutting notes (schema-hash regeneration for future schema changes), PLAN-009 email-connector phases 1–7 dependency/risk notes.

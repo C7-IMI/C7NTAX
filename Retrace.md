@@ -990,4 +990,17 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.004 + What's New outputs regenerated (56 versions) + this Retrace entry.
 
 
+### Prompt 84 — Service alerts auto-clear on all-green sources
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #1 (2026.8.18.005)
+> Verify that all service alerts are updating and clearing correctly. The Microsoft 365 alert is still active even though the official Microsoft status page reports all clear. Ensure active alerts are cleared whenever the official status or monitored sources show all green/no outages.
+
+**Changes:**
+- Root cause: `services/alertMonitor.ts` only resolved alerts on explicit "restored" feed items — an all-green feed (no incident items) left alerts active indefinitely (M365 + Azure alerts stale since 2026-08-14).
+- `apps/api/src/services/alertMonitor.ts` — added all-clear auto-resolve: successful fetch + no outage items → per-service streak; resolves on 2 consecutive all-clear polls + alert age ≥ one poll interval; "restored" items still resolve immediately; streak resets on any outage item; manual-source alerts never auto-resolved; no-feed services untouched.
+- Verified live via `/service-alerts/refresh` ×2 + DB: Microsoft 365 and Azure alerts resolved (all clear confirmed); Google Workspace incident correctly still active; Comcast (downdetector-only) untouched; monitor run 8 services, 0 errors.
+- Changelog policy applied: BuildNotes entry 2026.8.18.005 + What's New outputs regenerated (57 versions) + this Retrace entry.
+
+
+
 

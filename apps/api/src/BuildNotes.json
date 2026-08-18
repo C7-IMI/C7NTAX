@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.18.005",
+    "date": "2026-08-18",
+    "title": "Service Alerts Auto-Clear on All-Green Sources",
+    "changes": [
+      {
+        "text": "`apps/api/src/services/alertMonitor.ts` — active alerts are now auto-resolved when the monitored source shows **all green**: after a successful feed fetch with no outage-classified items, two consecutive all-clear polls (anti-flap streak) and a minimum alert age of one poll interval resolve the alert with an \"all clear confirmed\" note. Explicit \"restored\" items still resolve immediately; **manual alerts are never auto-resolved**; services without an RSS feed are untouched. Verified live: stale Microsoft 365 and Azure alerts (active since 2026-08-14) auto-resolved; the genuine Google Workspace incident (current \"investigating\" item) correctly stays active; Comcast (downdetector-only, no feed) correctly untouched.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.8.18.004",
     "date": "2026-08-18",
     "title": "All Plans Reordered: Prerequisites Before Dependents",

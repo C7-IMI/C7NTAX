@@ -48,6 +48,11 @@ let snapshot: MonitorSnapshot = {
   log: [],
 };
 
+// Per-service consecutive "all clear" observations. An active alert is only
+// auto-resolved after two consecutive polls show no outage items, so a single
+// transient fetch gap or missed item can't flap the alert.
+const clearStreak = new Map<string, number>();
+
 export function getMonitorStatus(): MonitorSnapshot {
   return snapshot;
 }
@@ -118,6 +123,7 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
   });
 
   if (outageText) {
+    clearStreak.delete(service.id);
     if (active) {
       const sameTitle = active.title === outageText.title;
       await prisma.serviceAlert.update({
@@ -147,6 +153,7 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
       log("warn", `New active alert for ${service.name}: ${outageText.title}`);
     }
   } else if (restoredText && active) {
+    clearStreak.delete(service.id);
     await prisma.serviceAlert.update({
       where: { id: active.id },
       data: {
@@ -157,6 +164,29 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
     });
     snapshot.resolved++;
     log("info", `Auto-resolved alert for ${service.name}: ${restoredText.title}`);
+  } else if (active && active.source !== "manual") {
+    // All clear: the feed was fetched successfully and contained no current
+    // outage or restored items — the official source shows no active
+    // incidents. Resolve once the all-clear has persisted for two
+    // consecutive polls (anti-flap) and the alert is at least one poll
+    // interval old. Manual alerts are never auto-resolved.
+    const MIN_ALERT_AGE_MS = POLL_INTERVAL_MS;
+    const streak = (clearStreak.get(service.id) || 0) + 1;
+    clearStreak.set(service.id, streak);
+    const alertAge = Date.now() - new Date(active.detectedAt).getTime();
+    if (streak >= 2 && alertAge >= MIN_ALERT_AGE_MS) {
+      await prisma.serviceAlert.update({
+        where: { id: active.id },
+        data: {
+          status: "resolved",
+          resolvedAt: new Date(),
+          description: `Auto-resolved: the official status feed for ${service.name} reports no active incidents (all clear).${active.description ? `\n\n${active.description}` : ""}`,
+        },
+      });
+      clearStreak.delete(service.id);
+      snapshot.resolved++;
+      log("info", `Auto-resolved alert for ${service.name} (all clear confirmed)`);
+    }
   }
 }
 
