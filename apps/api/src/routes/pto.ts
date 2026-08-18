@@ -4,13 +4,23 @@ import { authenticate, type AuthRequest } from "../middleware/auth";
 export const ptoRouter = Router(); ptoRouter.use(authenticate);
 
 ptoRouter.get("/", async (req: AuthRequest, res, next) => {
-  try { res.json(await prisma.ptoRequest.findMany({ where: { userId: req.user!.userId }, orderBy: { startDate: "desc" }, include: { approvedBy: { select: { firstName: true, lastName: true } } } })); }
+  try { res.json(await prisma.ptoRequest.findMany({ where: { userId: req.user!.userId }, orderBy: { startDate: "desc" } })); }
   catch (e) { next(e); }
 });
 
 ptoRouter.get("/all", async (req: AuthRequest, res, next) => {
   try { const { status, userId } = req.query as Record<string, string>; const where: Record<string, unknown> = {}; if (status) where.status = status; if (userId) where.userId = userId;
-    res.json(await prisma.ptoRequest.findMany({ where, orderBy: { startDate: "desc" }, include: { user: { select: { firstName: true, lastName: true } }, approvedBy: { select: { firstName: true, lastName: true } } } })); }
+    const requests = await prisma.ptoRequest.findMany({ where, orderBy: { startDate: "desc" } });
+    // PtoRequest stores userId/approvedById as scalars (no relations) — join manually
+    const userIds = [...new Set(requests.map((r) => r.userId))];
+    const approverIds = [...new Set(requests.map((r) => r.approvedById).filter(Boolean))] as string[];
+    const [users, approvers] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, firstName: true, lastName: true } }),
+      prisma.user.findMany({ where: { id: { in: approverIds } }, select: { id: true, firstName: true, lastName: true } }),
+    ]);
+    const userMap = new Map(users.map((u) => [u.id, u]));
+    const approverMap = new Map(approvers.map((u) => [u.id, u]));
+    res.json(requests.map((r) => ({ ...r, user: userMap.get(r.userId) ?? null, approvedBy: r.approvedById ? approverMap.get(r.approvedById) ?? null : null }))); }
   catch (e) { next(e); }
 });
 
