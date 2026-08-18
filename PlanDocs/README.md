@@ -18,6 +18,8 @@ place at their `Source` paths.
 | PLAN-007 | C7NTAX SOC 2 Readiness Plan | `PLAN-007-SOC2-Compliance.md` | `SOC2.Compliance.md` | 2026-08-14 | Proposed |
 | PLAN-008 | Token Savings — 10 Options Implementation & Rollback Guide | `PLAN-008-Token-Savings.md` | `TOKEN-SAVINGS.md` | 2026-08-14 | Implemented |
 | PLAN-009 | Monitored Mailbox Email-to-Ticket Connector Plan | `PLAN-009-Email-to-Ticket-Connector.md` | `PLAN-Monitored-Mailbox-Email-to-Ticket-Connector.md` | 2026-08-18 | Planning |
+| PLAN-010 | AWS Dev/Prod Split & Sync Plan | `PLAN-010-AWS-Dev-Prod-Split-Sync.md` | `PLAN-AWS-Dev-Prod-Split-and-Sync.md` | 2026-08-18 | Planning |
+| PLAN-011 | Bedrock Agentic RAG AI Assistant for PSA Plan | `PLAN-011-Bedrock-Agentic-RAG-AI-Assistant.md` | `PLAN-Bedrock-Agentic-RAG-AI-Assistant.md` | 2026-08-18 | Planning |
 
 ## Conventions
 

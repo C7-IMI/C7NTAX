@@ -1,5 +1,27 @@
 [
   {
+    "version": "2026.8.18.007",
+    "date": "2026-08-18",
+    "title": "PLAN-011: Bedrock Agentic RAG AI Assistant",
+    "changes": [
+      {
+        "text": "`PLAN-Bedrock-Agentic-RAG-AI-Assistant.md` (PLAN-011) — AWS-native Agentic RAG plan for the PSA: Bedrock Agents (Claude 3.5 Sonnet / Llama 3), Knowledge Bases + Titan embeddings + OpenSearch Serverless over RDS→S3 ticket exports, Lambda `search_web` Action Group (Tavily/Brave/SerpApi), API Gateway + IAM `InvokeAgent` integration with the existing `/api/inference` + `/api/kb` code, EventBridge + Step Functions weekly KB batch generation, Bedrock Guardrails + tenant_id vector filtering + PrivateLink. 8 dependency-ordered phases with `Depends on`/`Risk if skipped` notes; rollback (BEDROCK_ENABLED flag falls back to existing provider); verification and open decisions (model, embeddings, search vendor, DMS vs Lambda ETL).",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.18.006",
+    "date": "2026-08-18",
+    "title": "PLAN-010: AWS Dev/Prod Split & Sync Plan",
+    "changes": [
+      {
+        "text": "`PLAN-AWS-Dev-Prod-Split-and-Sync.md` (PLAN-010) — plan to split into two AWS environments (dev + prod) with prod running alongside dev on a different port (`:3011` vs `:3010`) for browser-refresh verification; separate RDS databases; ECS Fargate + ALB; local→AWS push tooling; **sync-command semantics** (standalone trigger phrases like \"Push to Prod\" sync; negated or mid-sentence occurrences never sync; all other messages work on dev only); 10 dependency-ordered phases with `Depends on`/`Risk if skipped` notes (per PlanDocs convention), rollback plan, verification plan, security (KMS, Secrets Manager, WAF, prod seed guards), and LLM/inference containerization options (vLLM/TGI on ECS or Bedrock with `INFERENCE_BASE_URL` config).",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.8.18.005",
     "date": "2026-08-18",
     "title": "Service Alerts Auto-Clear on All-Green Sources",

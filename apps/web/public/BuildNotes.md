@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.005 | Last Updated: 2026-08-18
+## Version: 2026.8.18.007 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,12 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.007 — PLAN-011: Bedrock Agentic RAG AI Assistant
+- **[New]** `PLAN-Bedrock-Agentic-RAG-AI-Assistant.md` (PLAN-011) — AWS-native Agentic RAG plan for the PSA: Bedrock Agents (Claude 3.5 Sonnet / Llama 3), Knowledge Bases + Titan embeddings + OpenSearch Serverless over RDS→S3 ticket exports, Lambda `search_web` Action Group (Tavily/Brave/SerpApi), API Gateway + IAM `InvokeAgent` integration with the existing `/api/inference` + `/api/kb` code, EventBridge + Step Functions weekly KB batch generation, Bedrock Guardrails + tenant_id vector filtering + PrivateLink. 8 dependency-ordered phases with `Depends on`/`Risk if skipped` notes; rollback (BEDROCK_ENABLED flag falls back to existing provider); verification and open decisions (model, embeddings, search vendor, DMS vs Lambda ETL).
+
+## 2026.8.18.006 — PLAN-010: AWS Dev/Prod Split & Sync Plan
+- **[New]** `PLAN-AWS-Dev-Prod-Split-and-Sync.md` (PLAN-010) — plan to split into two AWS environments (dev + prod) with prod running alongside dev on a different port (`:3011` vs `:3010`) for browser-refresh verification; separate RDS databases; ECS Fargate + ALB; local→AWS push tooling; **sync-command semantics** (standalone trigger phrases like "Push to Prod" sync; negated or mid-sentence occurrences never sync; all other messages work on dev only); 10 dependency-ordered phases with `Depends on`/`Risk if skipped` notes (per PlanDocs convention), rollback plan, verification plan, security (KMS, Secrets Manager, WAF, prod seed guards), and LLM/inference containerization options (vLLM/TGI on ECS or Bedrock with `INFERENCE_BASE_URL` config).
 
 ## 2026.8.18.005 — Service Alerts Auto-Clear on All-Green Sources
 - **[Fix]** `apps/api/src/services/alertMonitor.ts` — active alerts are now auto-resolved when the monitored source shows **all green**: after a successful feed fetch with no outage-classified items, two consecutive all-clear polls (anti-flap streak) and a minimum alert age of one poll interval resolve the alert with an "all clear confirmed" note. Explicit "restored" items still resolve immediately; **manual alerts are never auto-resolved**; services without an RSS feed are untouched. Verified live: stale Microsoft 365 and Azure alerts (active since 2026-08-14) auto-resolved; the genuine Google Workspace incident (current "investigating" item) correctly stays active; Comcast (downdetector-only, no feed) correctly untouched.
