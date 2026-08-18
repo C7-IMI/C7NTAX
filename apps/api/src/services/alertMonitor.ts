@@ -36,10 +36,11 @@ const DD_ALL_CLEAR_PATTERNS = [
   /no widespread issues/i, /no service degradations/i, /no degradations/i,
 ];
 const DD_PROBLEM_PATTERNS = [
-  /reports indicate problems/i, /indicate problems/i, /is having issues/i,
-  /are having issues/i, /having issues/i, /possible problems/i,
-  /current problems/i, /widespread outage/i, /outage/i, /degraded performance/i,
-  /service degradation/i,
+  // Specific user-report phrases only. Generic page chrome (e.g. the site
+  // title "Current problems and outages | Downdetector US") must NOT match,
+  // otherwise every page is classified as problems.
+  /reports indicate problems/i, /indicate problems/i, /possible problems at/i,
+  /is having issues/i, /are having issues/i,
 ];
 
 export interface MonitorSnapshot {
@@ -146,7 +147,11 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
     try {
       const resp = await fetch(service.downDetectorUrl, {
         signal: AbortSignal.timeout(12000),
-        headers: { "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) C7NTAX-ServiceAlerts/1.0" },
+        headers: {
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "accept-language": "en-US,en;q=0.9",
+        },
       });
       if (!resp.ok) {
         snapshot.errors.push(`${service.name}: DownDetector HTTP ${resp.status} from ${service.downDetectorUrl}`);
