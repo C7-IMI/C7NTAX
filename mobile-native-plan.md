@@ -46,6 +46,28 @@ core functionality of the existing C7NTAX desktop client (Electron app + web UI)
 
 ---
 
+## 1.4 Dependency-ordered implementation sequence (prerequisites first)
+
+| Step | Item | Depends on | Risk if prerequisite skipped |
+|---|---|---|---|
+| 1 | §2 Phase 0 — Foundations, Tooling & Repository (2.1 repo layout, 2.2 Android toolchain, 2.3 iOS toolchain, 2.4 CI/CD) | nothing | Later phases have no build/CI to ship from; repo layout changes later force rework. |
+| 2 | §3 Phase 1 — Backend Enablement: 3.1 API design | nothing (server-side) | Mobile clients generate against an unstable contract; client rewrites when API changes. |
+| 3 | §3 Phase 1 — 3.2 Authentication & sessions | PLAN-001 session/MFA phases (login, MFA, session timeout) | Mobile auth calls MFA/session endpoints that don't exist; login unusable. |
+| 4 | §3 Phase 1 — 3.3 Push notifications (new capability) | 3.1 (device/registration endpoints) | FCM/APNs registration has no server endpoint to persist tokens; push silently dead. |
+| 5 | §3 Phase 1 — 3.4 Data sync & offline behavior | 3.1 (list endpoints + sync markers) | Offline engine (Android item 8) has no sync contract to mirror. |
+| 6 | §3 Phase 1 — 3.5 Files & attachments | 3.1 (file endpoints) | Attachment upload/download calls 404; files feature broken. |
+| 7 | §3 Phase 1 — 3.6 Backend migration & deployment notes | Steps 2–6 (all backend changes landed) | Deploying earlier ships half-enablement; clients hit missing endpoints in prod. |
+| 8 | §4 Phase 2/3 — 4.1 Android item 1 (project scaffold: Gradle catalog, Hilt, Compose BOM, Navigation, theming) | Step 1 (Phase 0 tooling/CI) | No buildable app; everything else in 4.1 hangs off it. |
+| 9 | 4.1 Android items 2–7 (auth flow, home, tickets, calendar, PTO, clients/KB/Kumo/Settings) | Step 8 (scaffold) + Steps 2–6 (backend endpoints each screen consumes) | Screens compile against endpoints that don't exist; QA blocks. |
+| 10 | 4.1 Android item 8 (offline engine: Room, WorkManager, connectivity) | Step 5 (3.4 sync contract) | Sync worker has no server semantics; offline mode corrupts or duplicates data. |
+| 11 | 4.1 Android item 9 (push: FCM registration → PushDevice; deep links) | Step 4 (3.3 push backend) | FCM tokens have nowhere to register; pushes never arrive. |
+| 12 | §4.2 iOS build (Swift + SwiftUI), §4.3 shared UI/UX rules | Step 1 + Steps 2–6 (same backend contract) | iOS re-implements against an unstable backend; parity rules arrive after screens, forcing rework. |
+| 13 | §6 Phase 4 — Store publishing & operations | Steps 8–12 (builds exist and are signed/tested) | Publishing ships untested builds; Data Safety forms reference features that don't exist yet. |
+
+All original item names, paths, and details are preserved in their sections; this table only records the revised execution order and the dependency reasons.
+
+---
+
 ## 2. Phase 0 — Foundations, Tooling & Repository
 
 ### 2.1 Repository layout

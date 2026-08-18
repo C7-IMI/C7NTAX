@@ -231,14 +231,41 @@ reseed-able audit trail (demonstrated data loss this sprint), no AWS deployment 
 
 ---
 
-## 7. Suggested sequencing (what to do first)
+## 7. Dependency-ordered sequencing (prerequisites first)
 
-1. **SC-12 + PI-03** (prod guards against dev pipelines) — prevents catastrophic data loss
-2. **SC-11 + SC-01** (secrets + immutable audit) — highest evidence value
-3. **AV-01/AV-02/AV-03** (RDS/ECS/backups) — availability foundation before go-live
-4. **CF-01/CF-03** (S3 + network) — needed for any real file data
-5. **SC-02..SC-07** (auth/crypto hardening) — before onboarding real clients
-6. **PI-01/PI-02, PR-01/PR-02, OR-xx** — complete control set for audit window
+Original item names and control IDs are preserved; the revised order and
+notes explain why each group must follow the previous one.
+
+1. **SC-12 + PI-03** (prod guards against dev pipelines) — no prerequisites.
+   Prevents catastrophic data loss and blocks demo wipe paths before anything
+   else runs in the same environment. **Risk if skipped:** every later step
+   operates next to a live wipe/reseed path; one bad boot can destroy prod data.
+2. **SC-11 + SC-01** (secrets + immutable audit) — SC-11's CloudTrail/KMS-encrypted
+   log bucket depends on SC-01's key/secret management being in place first.
+   **Risk if SC-01 is skipped first:** audit evidence lands unencrypted or
+   appendable, and later controls (SC-02, CF-01, AV-01) have no key store to use.
+3. **AV-01/AV-02/AV-03/AV-05** (RDS/ECS/backups + health endpoint) — AV-01's
+   KMS-encrypted RDS depends on SC-01 (key material); AV-02's ALB target groups
+   depend on AV-05's health endpoint existing. **Risk if skipped:** no
+   availability foundation — later encryption (CF-01 RDS part) has no cluster
+   to encrypt, and CI migrations (PI-01) have no backup safety net.
+4. **CF-01/CF-03** (S3 + network segmentation) — CF-01's at-rest encryption
+   depends on SC-01/SC-02 KMS keys and AV-01 (the RDS/S3 resources must exist
+   before they can be encrypted); CF-03's subnets/WAF depend on AV-02 (ALB/ECS
+   placement). **Risk if skipped:** file data flows before encryption exists;
+   network segmentation is retrofitted onto running workloads.
+5. **SC-02..SC-07** (auth/crypto hardening) — SC-02 depends on SC-01 (KMS key
+   store); SC-03 depends on PLAN-001 session/MFA architecture; SC-05 (MFA/SSO
+   enforcement) depends on SC-03 (token/refresh infra). **Risk if skipped:**
+   real client accounts are onboarded on weak auth; crypto changes later
+   require key migrations on live data.
+6. **PI-01/PI-02, PR-01/PR-02, OR-xx** (complete control set) — PI-01 (versioned
+   migrations) depends on AV-01 (backups/PITR as safety net); PR-01 (retention/
+   deletion) depends on CF-01 (encrypted storage for the data it deletes);
+   OR-03 (Security Hub/GuardDuty/Config/CloudTrail) depends on SC-11 (the audit
+   trail it monitors). OR-01 (policy pack) has **no code dependencies** and may
+   start in parallel with step 1. **Risk if skipped:** the audit window is
+   incomplete and dependent controls have nothing to operate on.
 
 ---
 

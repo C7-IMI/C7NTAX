@@ -159,6 +159,15 @@ support):
 | **P4 — Hardening & co-existence** | Security passes, performance budgets enforced in CI, parallel-versioning scheme shared with the Electron app, feature flags | benchmark reports, release runbook |
 | **P5 — Distribution & maintenance** | Store/channel publishing (WinGet/MSIX, Flathub, direct downloads), auto-update, crash telemetry, update cadence | published channels + runbook |
 
+### Dependency & ordering notes (phases already listed prerequisites-first)
+
+- **P0** — no prerequisites. Skipping it blocks P1–P3: token packs, generated API clients, the parity checklist, and CI runners are all consumed by the per-platform apps.
+- **P1 (Windows native)** — depends on **P0** (tokens, generated clients, parity spec, Windows CI) and the existing backend (login/MFA per PLAN-001). Risk if P0 is skipped: WinUI screens are hand-built against an unsynced theme and untyped API calls; CI can't build MSIX/MSI artifacts.
+- **P2 (Linux native)** — depends on **P0** (tokens, generated clients, parity spec, Linux CI). Independent of P1 (different platform), but sharing P0 avoids re-deriving contracts. Risk if P0 is skipped: same drift as P1.
+- **P3 (macOS native)** — depends on **P0** (tokens, generated clients, parity spec, macOS CI runner). Independent of P1/P2. Risk if P0 is skipped: same drift as P1/P2.
+- **P4 (Hardening & co-existence)** — depends on **P1–P3** (apps must exist before security passes, CI-enforced perf budgets, and parallel-versioning with Electron). Risk if skipped: hardening/benchmarks have no native binaries to audit; parallel-versioning scheme has no releases to version.
+- **P5 (Distribution & maintenance)** — depends on **P4** (signing, runbooks, update mechanism decisions) and **P1–P3** (shippable artifacts). Risk if P4 is skipped: stores receive unsigned/unapproved builds; auto-update ships without a tested update path.
+
 ### Performance budgets (CI-enforced, from cold start, 1080p window, seeded dataset)
 - Launch to interactive: **≤ 1.2 s** (Native AOT Windows target ≤ 800 ms)
 - Idle RAM: Windows ≤ 150 MB · Linux ≤ 90 MB · macOS ≤ 120 MB

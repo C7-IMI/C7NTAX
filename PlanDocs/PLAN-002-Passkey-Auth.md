@@ -320,7 +320,10 @@ Passkeys are **additive, never destructive**. The existing password + MFA path i
 
 ## 11. Implementation Stages
 
+Stages are listed in **dependency order** (prerequisites first).
+
 ### Stage 1 — Server Foundation *(~1 day)*
+- **Dependency note:** no prerequisites beyond the existing `auth.ts` router and JWT session storage. Everything else depends on this stage's endpoints and model.
 
 - [ ] Add `PasskeyCredential` model to `schema.prisma`
 - [ ] Run `prisma db push` / migration
@@ -336,6 +339,7 @@ Passkeys are **additive, never destructive**. The existing password + MFA path i
 **Verification**: POST endpoints return correct JSON shapes; `generateRegistrationOptions` and `generateAuthenticationOptions` produce valid output.
 
 ### Stage 2 — Client Passkey Management *(~1 day)*
+- **Dependency note:** depends on Stage 1 (register/authenticate endpoints + `PasskeyCredential` model). Risk if Stage 1 is skipped: `registerPasskey()`/`loginWithPasskey()` call routes that don't exist and the Settings list has no data source.
 
 - [ ] Install `@simplewebauthn/browser`
 - [ ] Create `hooks/usePasskey.ts`
@@ -348,6 +352,7 @@ Passkeys are **additive, never destructive**. The existing password + MFA path i
 **Verification**: Can register a passkey in Settings; passkey appears in list; can remove it.
 
 ### Stage 3 — Login Page Integration *(~1 day)*
+- **Dependency note:** depends on Stages 1–2 (`loginWithPasskey()` + routes), and on the **Session-Auth plan's MFA flow** (PLAN-001 Phase 3) for the `{ mfaRequired: true }` transition. Risk if skipped: the login button has no handler and the MFA handoff has no challenge flow to enter.
 
 - [ ] Add "Sign in with Passkey" button to `Login.tsx` above the password form
 - [ ] Wire button to `loginWithPasskey()`
@@ -359,6 +364,7 @@ Passkeys are **additive, never destructive**. The existing password + MFA path i
 **Verification**: Full login with passkey works; MFA prompt appears if enabled; password login continues to work.
 
 ### Stage 4 — Conditional UI & Polish *(~0.5 day)*
+- **Dependency note:** depends on Stage 3 (the visible email field + login button the conditional UI augments). Risk if Stage 3 is skipped: conditional mediation has no login surface to attach to and cannot complete a session.
 
 - [ ] Trigger conditional mediation on page load when email field is visible
 - [ ] If conditional UI succeeds → complete login silently

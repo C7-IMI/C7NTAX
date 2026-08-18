@@ -31,6 +31,11 @@ place at their `Source` paths.
 - Each copy carries a header block at the top recording its Plan ID, title,
   source path, and indexing date. The originals are never moved or deleted by
   this registry.
+- **Dependency-ordered items (mandatory for all plans):** every plan must list
+  its implementation items in dependency order (prerequisites first) and add a
+  `Depends on:` / `Risk if skipped:` note to every dependent or reordered item.
+  Preserve original item names, paths, and details when renumbering. Applied to
+  all nine plans on 2026-08-18 (see each plan's dependency notes).
 
 ## Coverage note
 

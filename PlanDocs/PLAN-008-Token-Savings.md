@@ -24,6 +24,28 @@ Implemented: 2026-08-14 (version 2026.8.14.005)
 | 9 | gzip compression for JSON responses + weak ETags | `apps/api/src/index.ts` (TOKEN-SAVE-09 block before helmet) | Delete the gzip middleware block and `app.set("etag", "weak")` |
 | 10 | Snapshot delta journal (`snapshots/deltas/*.delta.jsonl`, capped 100 entries, additive) | `apps/api/src/snapshot-capture.ts` (TOKEN-SAVE-10 block) | Remove the TOKEN-SAVE-10 block; optionally delete `apps/api/src/snapshots/deltas/` |
 
+## Dependency & ordering notes (all 10 options implemented; order was independent)
+
+The 10 options are **independent of each other** — no reordering is needed,
+and each option remains individually reversible per the table above. The
+following cross-cutting notes must be honored by future plans:
+
+- **Any future plan that changes `apps/api/prisma/schema.prisma`** (e.g. PLAN-001
+  session models, PLAN-002 `PasskeyCredential`, PLAN-003 tenant columns) **must
+  also update `startup/.schema.sha256`** (or delete it so the boot script
+  re-syncs once). Option 4 skips `prisma generate` + `db push` when the hash is
+  unchanged — if the hash is stale, new tables/columns never reach the database
+  and runtime queries fail with Prisma "table/column does not exist" errors.
+- **Option 7 (`typecheck-diff.sh`) depends on the `C7NTAX` git repo** (uses
+  `git diff`/`git ls-files`). Future plans must keep their work committed or the
+  script's changed-file filter has nothing to match.
+- **Option 9 (gzip)** was revised 2026-08-18: streaming compression replaced
+  with buffered compress-once-and-end (see BuildNotes 2026.8.18.001/002). Any
+  future middleware work must preserve the 204/304/HEAD bypass.
+- **Option 10 (delta journal)** only records ID add/remove churn; content-only
+  changes intentionally do not create journal entries. Future plans that want
+  full change capture must extend `snapshot-capture.ts`, not rely on deltas.
+
 ## Rollback procedure (example: option 3)
 
 1. Open `apps/api/src/snapshot-capture.ts`.

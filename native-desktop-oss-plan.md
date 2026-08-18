@@ -203,6 +203,15 @@ built into flatpak-builder. **Zero purchase required.**
 | **P4 — Hardening & co-existence** | Security passes, performance budgets enforced in CI, parallel-versioning with the Electron app, feature flags | benchmark reports, release runbook |
 | **P5 — Distribution & maintenance** | WinGet + Flathub + Homebrew Cask channels, auto-update (Velopack/Sparkle/Flathub), GlitchTip telemetry, update cadence | published channels + runbook |
 
+### Dependency & ordering notes (phases already listed prerequisites-first)
+
+- **P0** — no prerequisites. Skipping it blocks P1–P3: token packs, generated API clients, the parity checklist, and self-hosted CI runners are all consumed by the per-platform apps.
+- **P1 (Windows native)** — depends on **P0** (tokens, generated clients, parity spec, Windows CI) and the existing backend (login/MFA per PLAN-001). Risk if P0 is skipped: WinUI screens are hand-built against an unsynced theme and untyped API calls; CI can't build MSIX/MSI artifacts.
+- **P2 (Linux native)** — depends on **P0** (tokens, generated clients, parity spec, Linux CI). Independent of P1. Risk if P0 is skipped: same drift as P1.
+- **P3 (macOS native)** — depends on **P0** (tokens, generated clients, parity spec, macOS runner — requires real Mac hardware). Independent of P1/P2. Risk if P0 is skipped: same drift as P1/P2.
+- **P4 (Hardening & co-existence)** — depends on **P1–P3** (apps must exist before security passes, CI-enforced perf budgets, and parallel-versioning with Electron). Risk if skipped: hardening/benchmarks have no native binaries to audit.
+- **P5 (Distribution & maintenance)** — depends on **P4** (signing decisions, runbooks, update mechanism) and **P1–P3** (shippable artifacts). Risk if P4 is skipped: stores receive unsigned/unapproved builds; auto-update ships without a tested update path.
+
 ---
 
 ## 9. Coexistence with the Existing Electron App (unchanged)

@@ -824,6 +824,7 @@ Admin can override MFA for any user from the Manage Users page:
 - Create `sessionAuth.ts` middleware alongside existing JWT auth
 - Add `User.mfaEnforced`, `User.mfaPreferredMethod`, `User.mfaSmsPhone` columns
 - **Rollback**: `git revert` — new tables deleted, no data loss
+- **Dependency note:** no prerequisites — this is the foundation all other phases build on. Skipping it blocks Phases 2–6 (no `UserSession` table for the middleware, no `mfaEnforced`/`mfaPreferredMethod`/`mfaSmsPhone` columns for MFA logic).
 
 ### Phase 2: Session Timeout & Admin Exemption
 - Implement inactivity check in session middleware
@@ -831,6 +832,7 @@ Admin can override MFA for any user from the Manage Users page:
 - Tenant setting `session.timeoutMinutes` configurable via admin UI
 - Activity monitor hook on frontend with warning modal
 - **Rollback**: Set env `SESSION_TIMEOUT_ENABLED=false`; middleware skips timeout check
+- **Dependency note:** depends on Phase 1 (`sessionAuth.ts` middleware + `UserSession` model + `TenantSetting` storage). Risk if skipped: timeout check has no middleware to attach to and the `session.timeoutMinutes` setting has no table to live in; the activity-monitor hook would call endpoints that don't exist.
 
 ### Phase 3: MFA — TOTP (Authenticator App)
 - Build on existing `mfaSecret`, `mfaEnabled` fields
@@ -838,24 +840,28 @@ Admin can override MFA for any user from the Manage Users page:
 - Update login flow to check MFA status and return `mfaRequired` + challenge token
 - Dynamic MFA prompt on login screen
 - **Rollback**: Set tenant setting `mfa.required=false`; all users bypass MFA
+- **Dependency note:** depends on Phase 1 (`mfaEnforced`/`mfaPreferredMethod` columns) and Phase 2 (tenant settings plumbing). Risk if skipped: the login flow has no columns to read, so `mfaRequired` challenges can never be produced and Phases 4–5 have no dynamic MFA prompt to add methods to.
 
 ### Phase 4: MFA — Email Codes
 - Use existing `mfaEmailCode`, `mfaEmailCodeExpires` fields
 - Send 6-digit code via configured email provider (`@C7NTAX/email` package)
 - Add email method to login MFA prompt
 - **Rollback**: Remove `"email"` from `mfa.allowedMethods` tenant setting
+- **Dependency note:** depends on Phase 3 (dynamic MFA prompt + `mfa.allowedMethods` mechanism) and the existing `@C7NTAX/email` provider. Risk if Phase 3 is skipped: email codes have no prompt to appear in and no method-selection config to gate them; users would never see the email option.
 
 ### Phase 5: MFA — SMS
 - Add `User.mfaSmsPhone` column
 - Integrate SMS provider (Twilio SDK or generic HTTP webhook)
 - Add SMS method to login MFA prompt
 - **Rollback**: Remove `"sms"` from `mfa.allowedMethods` tenant setting
+- **Dependency note:** depends on Phase 3 (MFA prompt/method config). Note: the `User.mfaSmsPhone` column is already added in Phase 1 — Phase 5 only adds the SMS provider integration and prompt wiring. Risk if Phase 3 is skipped: SMS has no prompt/method plumbing to attach to.
 
 ### Phase 6: Admin MFA Management UI
 - Admin user detail panel: MFA status, disable/reset buttons
 - System settings → Security → MFA tab with all tenant-level configs
 - Audit log entries for MFA changes
 - **Rollback**: UI components are additive; removing them leaves no broken functionality
+- **Dependency note:** depends on Phases 3–5 (MFA status fields, enroll/reset endpoints, and method configs the panel displays/edits) and Phase 2 (system settings page plumbing). Risk if skipped: the admin panel would render MFA controls against endpoints that don't exist, and reset/disable actions would 404.
 
 ### Phase 7: Hardening & Edge Cases
 - Backup/recovery codes for MFA (one-time use, 10 codes per user)

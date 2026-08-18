@@ -979,3 +979,15 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.003 + What's New outputs regenerated (55 versions) + this Retrace entry.
 
 
+### Prompt 83 — Reorder plans: prerequisites before dependents
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~75 min
+**BuildNotes IDs:** #1 (2026.8.18.004)
+> Review the plan documents and codebase. Reorder and renumber the planned implementation items so that prerequisites are implemented before dependent items... Add a note explaining why it depends on the other item(s) and what issues could arise... Preserve all original item names, paths, and concrete details... Apply this same process to all future plans and update them accordingly.
+
+**Changes:**
+- All 9 plan sources reordered/renumbered into dependency order with per-item `Depends on:` / `Risk if skipped:` notes; original names, paths, and details preserved: PLAN-001 (phases 1–6 + `mfaSmsPhone` Phase-1 note), PLAN-002 (stages 1–4 + PLAN-001 MFA cross-dep), PLAN-003 (steps 1–3, leak-risk notes), PLAN-004 (13-step sequence table), PLAN-005/006 (P0–P5 notes), PLAN-007 (dependency-ordered control sequencing), PLAN-008 (independence + schema-hash cross-cutting notes), PLAN-009 (phases 1–7 + §3 cross-deps).
+- `PlanDocs/` copies re-synced from updated sources; registry convention added: all future plans must use dependency-ordered items with dependency/risk notes.
+- Changelog policy applied: BuildNotes entry 2026.8.18.004 + What's New outputs regenerated (56 versions) + this Retrace entry.
+
+
+

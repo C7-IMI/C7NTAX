@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.003 | Last Updated: 2026-08-18
+## Version: 2026.8.18.004 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.004 — All Plans Reordered: Prerequisites Before Dependents
+- **[Update]** Reviewed all 9 plan documents (`PLAN-001`…`PLAN-009`) against the codebase and renumbered their implementation items into dependency order, preserving every original item name, path, and detail. Added `Depends on:` / `Risk if skipped:` notes to every dependent item: PLAN-001 phases 1–6 (foundation → timeout → TOTP → email → SMS → admin UI; noted `mfaSmsPhone` column already lands in Phase 1), PLAN-002 passkey stages 1–4 (+ cross-plan dep on PLAN-001 MFA flow), PLAN-003 multi-tenant steps 1–3 (foundation → middleware → isolation, with cross-tenant leak risk if middleware precedes columns), PLAN-004 mobile 13-step sequence (Phase 0 → backend enablement → Android/iOS builds → publishing), PLAN-005/006 desktop P0–P5 dependency notes, PLAN-007 SOC 2 dependency-ordered sequencing (SC-12+PI-03 → SC-11+SC-01 → AV-01/02/03/05 → CF-01/03 → SC-02..07 → PI/PR/OR), PLAN-008 token-savings cross-cutting notes (schema-hash regeneration for future schema changes), PLAN-009 email-connector phases 1–7 dependency/risk notes.
+- **[New]** PlanDocs registry convention added: all future plans must list implementation items in dependency order with `Depends on:`/`Risk if skipped:` notes; originals updated and PlanDocs copies re-synced.
 
 ## 2026.8.18.003 — Calendar Content Scales with Container (Width-Driven)
 - **[Update]** `apps/web/src/hooks/useCalendarScale.ts` — scaling is now width-driven (`k = availW / baseW`, min 1) instead of being capped by remaining viewport height, so the month calendar (date cards + all inner content) grows to fill the calendar container's width on wide windows and scales down with the window; uniform transform keeps square cells and aspect ratio; date cards and their content now scale proportionally with the container. Base measurement loop also made stable (state only updates on real size changes).

@@ -224,31 +224,72 @@ integration flows.
 
 ## 4. Implementation phases (incremental, each independently shippable)
 
-1. **Phase 1 - Package only (no runtime impact).** Implement real IMAP polling
+Phases below are listed in **dependency order** (prerequisites first). Each
+phase is independently shippable only if its listed prerequisites are live.
+
+1. **Phase 1 — Package only (no runtime impact).** Implement real IMAP polling
    in `packages/email` (`imapflow` or `node-imap` + `mailparser`), complete
    `ParsedEmail` building, and `fieldDeduction.ts` pure functions + unit tests.
    Nothing in `apps/api` references it yet.
-2. **Phase 2 - Storage & routes (default off).** Reuse `Integration` rows
+   - **Depends on:** nothing (self-contained).
+2. **Phase 2 — Storage & routes (default off).** Reuse `Integration` rows
    (`kind: "email_connector"`); add `routes/email-connectors.ts` CRUD + test;
    wire router in `index.ts`. No polling started yet.
-3. **Phase 3 - Processing.** `services/ticketNumber.ts` extraction,
+   - **Depends on:** Phase 1 (`ParsedEmail`/`EmailConnectorConfig` types and the
+     transport code the test endpoint exercises).
+   - **Risk if Phase 1 is skipped:** the test endpoint has no real transport to
+     exercise and the config type is untyped; connectors can be stored but
+     never validated, hiding misconfiguration until Phase 3 polling.
+3. **Phase 3 — Processing.** `services/ticketNumber.ts` extraction,
    `services/emailToTicket.ts` (system user, contact/company resolution,
    threading → comments, attachments, dedup cursor), bootstrap hydration +
    guarded polling. Connectors only run when explicitly enabled in config.
+   - **Depends on:** Phase 1 (polling + deduction), Phase 2 (stored configs to
+     hydrate; CRUD to create rows). Also depends on the dedicated "Email
+     Connector" system user being seedable (§3.4).
+   - **Risk if Phase 2 is skipped:** nothing to hydrate at boot — polling never
+     starts, so the feature appears dead; if Phase 1 is skipped there is no
+     mailbox fetch and dedup cursor logic has no source of messages.
 4. **Phase 4 — UI.** CloudConnect "Email Connectors" tab (list/form/test/poll
    now/status).
+   - **Depends on:** Phases 2–3 (endpoints in §3.5 must exist; status data is
+     produced by the running poller).
+   - **Risk if Phases 2–3 are skipped:** the tab renders against missing
+     endpoints (404s), test buttons fail with network errors, and status shows
+     nothing useful.
 5. **Phase 5 — Microsoft 365 modern auth.** Graph transport + OAuth 2.0
    (authorize/callback/refresh endpoints, token storage, Graph polling with
    cursor, shared-mailbox `mailboxAddress`), plus the M365 form variants and
    token status in the UI. `@microsoft/microsoft-graph-client` +
    `@azure/identity` pinned. Legacy IMAP connectors unaffected.
+   - **Depends on:** Phase 2 (credentials storage + validation surface),
+     Phase 3 (bootstrap hydration + `onNewTicket`/`onUpdateTicket` wiring the
+     Graph transport feeds), Phase 4 (UI variants for the M365 form).
+   - **Risk if Phases 2–4 are skipped:** OAuth tokens have no encrypted home
+     (§3.1), the callback route has no connector row to bind to, and the
+     polling loop is never started — M365 connectors can be authorized but
+     never process mail.
 6. **Phase 6 — Microsoft 365 legacy auth.** EWS (`ews-javascript-api`) and/or
    IMAP Basic Auth transport selection, deprecation banner, and test-connection
    per transport. Disabled-by-default behind the same `enabled` flag.
+   - **Depends on:** Phase 5's transport-selection abstraction in the form and
+     per-transport test endpoint (§3.5), plus Phase 3's poller (IMAP path).
+   - **Risk if Phase 5 is skipped:** the transport selector has no shared
+     plumbing, so legacy and modern flows diverge into two code paths and the
+     deprecation-banner gating logic has no hook to attach to.
 7. **Phase 7 — Hardening (optional, same release).** Attachment size caps,
    TLS enforcement (`secure: true` required with a confirm override), backoff
    on repeated auth failures (incl. Graph 429), auto-reply suppression rules,
    outbound acknowledgment email via existing `EmailService` (off by default).
+   - **Depends on:** Phases 3–6 (the running poller and transports the caps,
+     backoff, and suppression rules instrument).
+   - **Risk if Phases 3–6 are skipped:** hardening has no code path to guard;
+     attachment caps/backoff would need to be retrofitted into transports that
+     don't exist yet.
+
+Cross-phase dependency summary: §3.4 (`emailToTicket.ts`) depends on §3.3
+(field deduction); §3.7 (UI) depends on §3.5 (API surface); §3.8 (M365)
+depends on §3.1–§3.2 (config model + per-transport cursors).
 
 ## 5. Rollback plan
 
