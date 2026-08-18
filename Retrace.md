@@ -858,3 +858,124 @@
 - Sequencing + open decisions (Type I vs II, desktop app scope, AWS org/SCPs, pen-test vendor).
 - Every item has Why / Functional impact / breakage-risk flag (High: SC-02 key migration; Medium: SC-03, PI-01, PR-01, etc.).
 - Changelogs x3 updated with 2026.8.14.004.
+
+
+### Prompt 70 — App not loading (gzip 304/204 corruption)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #2 (2026.8.18.001)
+> The app isn't loading. Fix it
+
+**Changes:**
+- `apps/api/src/index.ts` — gzip middleware made 204/304/HEAD-safe (lazy engagement); temp morgan skip/probe debug instrumentation removed; restart via boot task; frontend/login/data endpoints verified 200; 304 conditional round-trip clean.
+
+### Prompt 71 — Verify all token-savings options
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~55 min
+**BuildNotes IDs:** #2 (2026.8.18.001)
+> Verify that all token savings options are applied correctly. If any are missing, incorrect, or incomplete, fix or complete them.
+
+**Changes:**
+- Verified all 10 TOKEN-SAVE options against `TOKEN-SAVINGS.md`; fixed `scripts/typecheck-diff.sh` (untracked files now included via `git ls-files --others`; basename matching replaced with anchored path-fragment matching — probe-tested both directions).
+- `packages/shared/src/features/index.ts` — removed duplicate `export * from "./sso-etc"` (zero unique exports).
+- `packages/shared/src/index.ts` — explicit `export type` re-exports of 9 entity interfaces; all 19 TS2308 barrel conflicts + 9 TS1205 resolved; apps verified importing enums/constants only (no runtime consumers of dropped names).
+
+### Prompt 72 — Reseed sample data
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~40 min
+**BuildNotes IDs:** #2 (2026.8.18.001)
+> All sample data is missing. Reseed it from the last snapshot using the already defined process.
+
+**Changes:**
+- Ran the defined seed process: `seed-from-snapshots.ts` (235 records, replica of snapshot state) + `seed-service-alerts.ts` (8 monitored services) — both exit 0.
+- Verified DB matches `_manifest.json` on all tables; API layer verified with a real session (tickets 8, boards 4, users 6, service-alerts 8); frontend + proxy 200.
+
+### Prompt 73 — App broken, sections not loading (auth bypass)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~45 min
+**BuildNotes IDs:** #2 (2026.8.18.001)
+> The application is broken. None of the sections are loading. fix it and restore the data
+
+**Changes:**
+- `apps/web/src/hooks/useAuth.tsx` — removed leftover `TEMP_BYPASS_AUTH` auto-login block (silently cleared real tokens, set `c7_bypass`, disabled the 401→login redirect); stale `c7_bypass` flags now cleared on load; real login flow restored.
+- Root cause of every-section-401: bypass auto-login used `{username:"admin"}` but users only match by email.
+- Reseed + full verification re-run (boot green, data intact).
+
+### Prompt 74 — Login not working (gzip truncation)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~50 min
+**BuildNotes IDs:** #2 (2026.8.18.001)
+> The login is not working. After submitting credentials, the app just takes me back to the login screen instead of authenticating and proceeding. Investigate the login flow and fix the issue.
+
+**Changes:**
+- Root cause: gzip streaming middleware ended the response before the zlib stream flushed — login JWT truncated (1887 vs 3877 bytes) → `/users/me` 401 → redirect loop.
+- `apps/api/src/index.ts` — replaced streaming compression with buffered compress-once-and-end (atomic, correct Content-Length, 204/304/HEAD bypass preserved).
+- Verified: gzip login response byte-identical to uncompressed; full token passes `/users/me` 200; tickets 200 via gzip; 304 regression clean.
+
+### Prompt 75 — Fix What's New
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #2 (2026.8.18.001)
+> Fix the "What's New" feature: it is not updating to show the changes made today.
+
+**Changes:**
+- `BuildNotes.md` — added 2026.8.18.001 entry + bumped header; regenerated `apps/web/public/BuildNotes.md` and `apps/api/src/BuildNotes.json` (53 versions); verified live vite serves the update.
+
+### Prompt 76 — Monitored Mailbox Email-to-Ticket Connector plan
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #1 (2026.8.18.002)
+> Create a plan only—no implementation—for an email connector that monitors a specific mailbox or email address and automatically creates a new service ticket when an email is received...
+
+**Changes:**
+- `PLAN-Monitored-Mailbox-Email-to-Ticket-Connector.md` (317 lines) — implementation plan grounded in verified code: IMAP polling + dedup (AutoTask model), field deduction incl. name/company/contact/subject/description (ConnectWise Asio model), threading, API surface, guarded bootstrap, CloudConnect UI, 5 phases, rollback plan, verification plan, open decisions.
+
+### Prompt 77 — PlanDocs registry
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.18.002)
+> Create a folder named `PlanDocs`. Identify every plan that has been created or requested since the project began...
+
+**Changes:**
+- `PlanDocs/` created: 9 ID-tagged plan copies (`PLAN-001`…`PLAN-009`) with header blocks + `README.md` registry index (ID, title, file, source, created, status, conventions). Originals left in place; copies verified byte-identical to sources.
+
+### Prompt 78 — M365 Exchange connector extension
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.18.002)
+> Extend the connector configuration to support using a Microsoft 365 Exchange mailbox/login... legacy authentication and modern authentication.
+
+**Changes:**
+- `PLAN-Monitored-Mailbox-Email-to-Ticket-Connector.md` — new §3.8 + model/API/phase updates: M365 Exchange (legacy Basic Auth IMAP/EWS with deprecation banners; modern OAuth 2.0 + Microsoft Graph, delegated or app-only flows, encrypted token storage + rotation), Graph polling cursors, OAuth authorize/callback/refresh endpoints, M365 form variants, prerequisites/decisions.
+
+### Prompt 79 — Calendar / Time Off error
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~35 min
+**BuildNotes IDs:** #1 (2026.8.18.002)
+> Investigate the error that occurs when browsing to Calendar or Time Off... identify the root cause, and fix it.
+
+**Changes:**
+- Root cause: `include` of nonexistent relations (`user`/`ticket` on `ScheduleEntry`, `user` on `TechnicianSkill`, `user`/`approvedBy` on `PtoRequest`) → Prisma error → 500.
+- `apps/api/src/routes/schedule.ts`, `apps/api/src/routes/pto.ts` — replaced with manual joins preserving response shape; endpoints verified 200; API typecheck 186 → 182.
+
+### Prompt 80 — Dynamic calendar scaling
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #1 (2026.8.18.002)
+> Make the calendars in the Calendar and Time Off views dynamically scale as the browser window resizes... Keep the square cell shape and overall aspect ratio unchanged.
+
+**Changes:**
+- `apps/web/src/hooks/useCalendarScale.ts` (new) — uniform transform scale `max(1, min(availW/baseW, availH/baseH))` via ResizeObserver; current size is the minimum.
+- `apps/web/src/pages/Calendar.tsx`, `apps/web/src/pages/PTO.tsx` — calendar cards wired to the hook (spacer + transformed inner wrapper); fixed a missing closing `</div>` caught by tsc/vite; web typecheck at 17-error baseline; both modules transform 200.
+
+### Prompt 81 — Mandatory changelog policy (What's New + build notes + Retrace)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.18.002)
+> For every change you make, update all three of the following: What's New, build notes, and retrace... apply this requirement to all changes made today that have not yet been added to What's New.
+
+**Changes:**
+- `BuildNotes.md` — new entry 2026.8.18.002 (calendar fixes + scaling, PlanDocs, email-connector/M365 plan, changelog policy) + header bump; What's New outputs regenerated (54 versions).
+- `Retrace.md` — prompts 70-81 backfilled for today's session.
+- Policy adopted: every future change updates What's New (generated), build notes (`BuildNotes.md`), and Retrace (`Retrace.md`) before being considered complete.
+
+
+### Prompt 82 — Calendar content scales with container (width-driven)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.18.003)
+> Make the date cards and all content inside the calendar scale proportionally with the calendar container. Refer to the screenshot for the current scaling issue.
+
+**Changes:**
+- `apps/web/src/hooks/useCalendarScale.ts` — scale formula changed from viewport-height-capped (`min(availW/baseW, availH/baseH)`) to width-driven (`availW / baseW`, min 1): the calendar now fills the container width and date cards + all inner content scale proportionally with it; base-measurement state only updates on real size changes (no re-render churn).
+- Verified: web tsc at 17-error baseline (no calendar errors); vite serves the updated hook (200).
+- Changelog policy applied: BuildNotes entry 2026.8.18.003 + What's New outputs regenerated (55 versions) + this Retrace entry.
+
+

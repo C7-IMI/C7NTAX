@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.18.003",
+    "date": "2026-08-18",
+    "title": "Calendar Content Scales with Container (Width-Driven)",
+    "changes": [
+      {
+        "text": "`apps/web/src/hooks/useCalendarScale.ts` — scaling is now width-driven (`k = availW / baseW`, min 1) instead of being capped by remaining viewport height, so the month calendar (date cards + all inner content) grows to fill the calendar container's width on wide windows and scales down with the window; uniform transform keeps square cells and aspect ratio; date cards and their content now scale proportionally with the container. Base measurement loop also made stable (state only updates on real size changes).",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.8.18.002",
     "date": "2026-08-18",
     "title": "Calendar Fixes & Scaling, PlanDocs Registry, Email Connector Plan (M365), Changelog Policy",

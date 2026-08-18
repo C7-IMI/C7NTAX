@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.002 | Last Updated: 2026-08-18
+## Version: 2026.8.18.003 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,9 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.003 — Calendar Content Scales with Container (Width-Driven)
+- **[Update]** `apps/web/src/hooks/useCalendarScale.ts` — scaling is now width-driven (`k = availW / baseW`, min 1) instead of being capped by remaining viewport height, so the month calendar (date cards + all inner content) grows to fill the calendar container's width on wide windows and scales down with the window; uniform transform keeps square cells and aspect ratio; date cards and their content now scale proportionally with the container. Base measurement loop also made stable (state only updates on real size changes).
 
 ## 2026.8.18.002 — Calendar Fixes & Scaling, PlanDocs Registry, Email Connector Plan (M365), Changelog Policy
 - **[Fix]** Calendar and Time Off pages restored: their API routes (`/api/schedule`, `/api/schedule/skills`, `/api/pto`, `/api/pto/all`) used Prisma `include` on relations that don't exist on `ScheduleEntry`/`TechnicianSkill`/`PtoRequest` (scalar-only `userId`/`ticketId`/`approvedById`) — every call returned 500. Replaced with manual joins preserving the same response shape; API typecheck improved 186 → 182 errors.

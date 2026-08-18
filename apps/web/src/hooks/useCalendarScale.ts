@@ -6,8 +6,10 @@ import { useEffect, useRef, useState } from "react";
  * The inner element keeps its natural responsive size (the "current" size —
  * e.g. max-w-3xl on desktop, fluid on narrow screens) and is visually scaled
  * with a uniform CSS transform so square day cells and the overall aspect
- * ratio never distort. Scale is clamped so it never shrinks below 1 (the
- * current size is the minimum) and grows to fill the available window area.
+ * ratio never distort. The scale is width-driven: the calendar fills the
+ * available container width (k = availW / baseW, clamped to ≥ 1 so the
+ * current size is the minimum). Date cards and all inner content scale
+ * together with the container because the transform wraps everything.
  *
  * Usage:
  *   const { outerRef, innerRef, scale, scaledW, scaledH } = useCalendarScale();
@@ -36,13 +38,11 @@ export function useCalendarScale<O extends HTMLElement, I extends HTMLElement>()
       const baseW = inner.offsetWidth;
       const baseH = inner.offsetHeight;
       if (baseW <= 0 || baseH <= 0) return;
-      setBase({ w: baseW, h: baseH });
+      setBase((prev) => (prev.w === baseW && prev.h === baseH ? prev : { w: baseW, h: baseH }));
 
+      // Width-driven: fill the container width; never below the current size.
       const availW = Math.max(outer.clientWidth - 24, baseW); // card p-3 padding
-      const top = outer.getBoundingClientRect().top;
-      const availH = Math.max(window.innerHeight - top - 32, baseH);
-      const k = Math.min(availW / baseW, availH / baseH);
-      setScale(Math.max(1, k));
+      setScale(Math.max(1, availW / baseW));
     };
 
     update();
