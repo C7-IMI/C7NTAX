@@ -62,21 +62,39 @@ export const app = express();
 import zlib from "zlib";
 app.set("etag", "weak");
 app.use((req, res, next) => {
+  if (req.method === "HEAD") return next();
   const accept = String(req.headers["accept-encoding"] || "");
-  if (!accept.includes("gzip") || res.getHeader("Content-Encoding")) return next();
-  res.setHeader("Content-Encoding", "gzip");
-  res.removeHeader("Content-Length");
-  const vary = res.getHeader("Vary");
-  res.setHeader("Vary", (vary ? String(vary) + ", " : "") + "Accept-Encoding");
+  if (!accept.includes("gzip")) return next();
   const gzip = zlib.createGzip();
   gzip.on("error", () => {});
-  gzip.pipe(res);
-  const end = res.end.bind(res);
-  (res as any).write = (chunk: any, ...args: any[]) => gzip.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)), ...args);
+  let engaged = false;
+  const engage = () => {
+    if (engaged) return;
+    // Never compress bodyless responses (204/304) - piping gzip bytes
+    // onto them corrupts the connection
+    if (res.statusCode === 204 || res.statusCode === 304) return;
+    engaged = true;
+    res.setHeader("Content-Encoding", "gzip");
+    res.removeHeader("Content-Length");
+    const vary = res.getHeader("Vary");
+    res.setHeader("Vary", (vary ? String(vary) + ", " : "") + "Accept-Encoding");
+    gzip.pipe(res);
+  };
+  const rawWrite = res.write.bind(res);
+  const rawEnd = res.end.bind(res);
+  (res as any).write = (chunk: any, ...args: any[]) => {
+    engage();
+    if (!engaged) return rawWrite(chunk, ...args);
+    const cb = typeof args[args.length - 1] === "function" ? args[args.length - 1] : undefined;
+    return gzip.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)), cb);
+  };
   (res as any).end = (chunk?: any, ...args: any[]) => {
-    if (chunk !== undefined && chunk !== null) gzip.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+    engage();
+    if (!engaged) return rawEnd(chunk, ...args);
+    const cb = typeof args[args.length - 1] === "function" ? args[args.length - 1] : undefined;
+    if (chunk !== undefined && chunk !== null) gzip.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)), cb);
     gzip.end();
-    return end.call(res, ...args);
+    return rawEnd();
   };
   next();
 });
@@ -90,21 +108,11 @@ const QUIET_POLL_PATHS = [
   "/api/users", "/api/billing/invoices", "/api/boards",
 ];
 app.use(morgan("short", {
-  skip: (req) => {
-    const quiet = !req.headers.authorization && QUIET_POLL_PATHS.includes(req.path);
-    // TEMP DEBUG TOKEN-SAVE-01
-    try { require("fs").appendFileSync("skip-debug.log", JSON.stringify({ path: req.path, auth: req.headers.authorization ? 1 : 0, quiet: quiet ? 1 : 0 }) + "\n"); } catch {}
-    return quiet;
-  },
+  skip: (req) => !req.headers.authorization && QUIET_POLL_PATHS.includes(req.path),
   stream: {
     write: (message: string) => logger.info("http", message.trim()),
   },
 }));
-// TEMP DEBUG TOKEN-SAVE-01 probe
-app.use((req, _res, next) => {
-  try { require("fs").appendFileSync("probe-debug.log", JSON.stringify({ path: req.path, method: req.method, auth: req.headers.authorization ? 1 : 0 }) + "\n"); } catch {}
-  next();
-});
 app.use(rateLimiter(9999, 60 * 1000));
 app.use(express.json({ limit: "10mb" }));
 
