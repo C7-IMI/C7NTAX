@@ -1167,6 +1167,18 @@
 - Changelog policy applied: this Retrace entry (fix folded into BuildNotes 2026.8.18.016).
 
 
+### Prompt 99 — What's New not updating automatically
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.18.017)
+> What's New isn't updating automatically again. Fix it and include all missing changes.
+
+**Changes:**
+- Root cause: `scripts/generate-buildnotes.mjs` had not been re-run after BuildNotes .014–.016, so `apps/web/public/BuildNotes.md` (What's New page data source; Changelog.tsx fetches `/BuildNotes.md`) and `apps/api/src/BuildNotes.json` were stale at .008.
+- Ran the generator: 68 → 69 versions; public md + JSON now include .014–.017; verified live `http://localhost:3010/BuildNotes.md` serves .016/.017.
+- Permanent fix: added boot step 6a to `startup/c7ntax-boot.ps1` — runs `scripts/generate-buildnotes.mjs` on every boot (idempotent) so What's New outputs refresh automatically.
+- Changelog policy applied: BuildNotes entry 2026.8.18.017 + What's New outputs regenerated (69 versions) + this Retrace entry.
+
+
 ### Prompt 100 — Help button + Help nav section with PSA-style docs
 **Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~35 min
 **BuildNotes IDs:** #1 (2026.8.18.018)
@@ -1180,18 +1192,6 @@
 - Design review fixes: removed side-accent (border-l + rounded-r) callout styling in favor of full tinted backgrounds; anchors now derived from actual headings.
 - Verification: web typecheck 17 (baseline, changed files clean); Vite transforms Help.tsx/HelpDoc.tsx (200); `/help` serves 200.
 - Changelog policy applied: BuildNotes entry 2026.8.18.018 + What's New outputs regenerated (70 versions) + this Retrace entry.
-
-
-### Prompt 99 — What's New not updating automatically
-**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~15 min
-**BuildNotes IDs:** #1 (2026.8.18.017)
-> What's New isn't updating automatically again. Fix it and include all missing changes.
-
-**Changes:**
-- Root cause: `scripts/generate-buildnotes.mjs` had not been re-run after BuildNotes .014–.016, so `apps/web/public/BuildNotes.md` (What's New page data source; Changelog.tsx fetches `/BuildNotes.md`) and `apps/api/src/BuildNotes.json` were stale at .008.
-- Ran the generator: 68 → 69 versions; public md + JSON now include .014–.017; verified live `http://localhost:3010/BuildNotes.md` serves .016/.017.
-- Permanent fix: added boot step 6a to `startup/c7ntax-boot.ps1` — runs `scripts/generate-buildnotes.mjs` on every boot (idempotent) so What's New outputs refresh automatically.
-- Changelog policy applied: BuildNotes entry 2026.8.18.017 + What's New outputs regenerated (69 versions) + this Retrace entry.
 
 
 ### Prompt 101 — Help walkthroughs + documentation maintenance rule

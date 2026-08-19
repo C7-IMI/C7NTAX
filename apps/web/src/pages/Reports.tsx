@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import {
   TrendingUp, BarChart3, PieChart, Download, Filter, Clock, CheckCircle,
@@ -335,6 +336,48 @@ function StandardReportsTab() {
 
 function AnalyticsTab() {
   const [revenue, setRevenue] = useState<RevenueData | null>(null);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleReports, setScheduleReports] = useState<Array<{ id: string; name: string }>>([]);
+  const [scheduleForm, setScheduleForm] = useState({ reportId: "", dayOfWeek: "1", timeOfDay: "06:00", recipients: "" });
+  const [scheduleBusy, setScheduleBusy] = useState(false);
+
+  const openSchedule = async () => {
+    try {
+      const r = await api.get("/reports");
+      const list = (r.data || []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name }));
+      setScheduleReports(list);
+      setScheduleForm((f) => ({ ...f, reportId: f.reportId || list[0]?.id || "" }));
+      setShowSchedule(true);
+    } catch { setShowSchedule(true); }
+  };
+
+  const submitSchedule = async () => {
+    if (!scheduleForm.reportId) return;
+    setScheduleBusy(true);
+    try {
+      await api.post(`/reports/${scheduleForm.reportId}/schedules`, {
+        frequency: "weekly",
+        dayOfWeek: Number(scheduleForm.dayOfWeek),
+        timeOfDay: scheduleForm.timeOfDay,
+        recipients: scheduleForm.recipients ? scheduleForm.recipients.split(",").map((s) => s.trim()).filter(Boolean) : [],
+        format: "pdf",
+      });
+      setShowSchedule(false);
+    } catch { /* surfaced by toast on caller */ } finally { setScheduleBusy(false); }
+  };
+
+  const exportDashboardPdf = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16); doc.text("C7NTAX — Dashboard Export", 14, 18);
+    doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
+    const rows: Array<[string, string]> = [
+      ["Total Paid", `$${(revenue?.totalPaid || 0).toLocaleString()}`],
+      ["Total Outstanding", `$${(revenue?.totalOutstanding || 0).toLocaleString()}`],
+      ["Collection Rate", `${revenue?.totalPaid && (revenue.totalPaid + (revenue.totalOutstanding || 0)) > 0 ? Math.round((revenue.totalPaid / (revenue.totalPaid + (revenue.totalOutstanding || 0))) * 100) : 0}%`],
+    ];
+    autoTable(doc, { startY: 32, head: [["Metric", "Value"]], body: rows });
+    doc.save("c7ntax-dashboard.pdf");
+  };
   useEffect(() => { api.get("/reports/data/revenue-summary").then(r => setRevenue(r.data)).catch(() => {}); }, []);
 
   const maxRevenue = Math.max(...(revenue?.monthlyRevenue || []).map(m => m.amount), 1);
@@ -373,12 +416,47 @@ function AnalyticsTab() {
         <div className="card">
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Quick Actions</h3>
           <div className="space-y-2">
-            <button className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Download size={14}/>Export Dashboard PDF</button>
-            <button className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Calendar size={14}/>Schedule Weekly Report</button>
-            <button onClick={() => window.location.href = "/reports/custom"} className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Filter size={14}/>Custom Report Builder</button>
+            <button onClick={exportDashboardPdf} className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Download size={14}/>Export Dashboard PDF</button>
+            <button onClick={openSchedule} className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Calendar size={14}/>Schedule Weekly Report</button>
+            <Link to="/reports/custom" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Filter size={14}/>Custom Report Builder</Link>
           </div>
         </div>
       </div>
+
+      {showSchedule && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+          <div className="card w-full max-w-md p-5 space-y-3">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Schedule Weekly Report</h3>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Report</label>
+              <select className="input-field w-full" value={scheduleForm.reportId} onChange={(e) => setScheduleForm({ ...scheduleForm, reportId: e.target.value })}>
+                <option value="">Select a report…</option>
+                {scheduleReports.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Day of week</label>
+                <select className="input-field w-full" value={scheduleForm.dayOfWeek} onChange={(e) => setScheduleForm({ ...scheduleForm, dayOfWeek: e.target.value })}>
+                  {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d, i) => <option key={i} value={String(i)}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Time</label>
+                <input className="input-field w-full" type="time" value={scheduleForm.timeOfDay} onChange={(e) => setScheduleForm({ ...scheduleForm, timeOfDay: e.target.value })} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Recipients (comma-separated)</label>
+              <input className="input-field w-full" placeholder="finance@example.com, ops@example.com" value={scheduleForm.recipients} onChange={(e) => setScheduleForm({ ...scheduleForm, recipients: e.target.value })} />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button className="btn-secondary text-sm px-3 py-1.5" onClick={() => setShowSchedule(false)}>Cancel</button>
+              <button className="btn-primary text-sm px-3 py-1.5" disabled={scheduleBusy || !scheduleForm.reportId} onClick={submitSchedule}>{scheduleBusy ? "Scheduling…" : "Schedule"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

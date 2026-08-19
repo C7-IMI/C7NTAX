@@ -180,6 +180,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Core ticket workflow", "/help/getting-started"],
         ["Team & boards setup", "/help/getting-started"],
         ["Keyboard shortcuts & batch actions", "/help/walkthroughs/shortcuts"],
+        ["Custom reports, PDF export & weekly scheduling", "/help/walkthroughs/custom-reports"],
       ] },
       { kind: "h", text: "Ticketing & email" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
@@ -534,6 +535,38 @@ export const HELP_SECTIONS: HelpSection[] = [
       { label: "Help Index", to: "/help/index" },
       { label: "Kumo", to: "/kumo" },
       { label: "Knowledge Base", to: "/kb" },
+    ],
+  },
+  {
+    id: "custom-reports", group: "walkthroughs",
+    path: "/help/walkthroughs/custom-reports",
+    title: "Custom Reports & Scheduling",
+    description: "Build custom reports, run them on demand, export dashboard PDFs, and schedule weekly deliveries.",
+    anchors: [{ id: "create-report", label: "Create a report" }, { id: "run-report", label: "Run a report" }, { id: "export-schedule", label: "Export & schedule" }],
+    blocks: [
+      { kind: "h", text: "Create a report" },
+      { kind: "steps", items: [
+        "Open Reporting → Analytics → Custom Report Builder (or /reports/custom).",
+        "Enter a name, pick a type (ticket_summary, revenue, or custom), and optionally a config JSON object.",
+        "Select Create report — it appears in Your reports.",
+      ] },
+      { kind: "h", text: "Run a report" },
+      { kind: "steps", items: [
+        "In the report list, select Run.",
+        "Results render in a table below (up to 500 rows for built-in types).",
+      ] },
+      { kind: "h", text: "Export & schedule" },
+      { kind: "steps", items: [
+        "Analytics → Quick Actions → Export Dashboard PDF downloads a summary PDF.",
+        "Schedule Weekly Report opens a dialog: choose the report, day of week, time, and recipients (comma-separated), then Schedule.",
+        "Schedules are stored per report and delivered in PDF format.",
+      ] },
+    ],
+    related: [
+      { label: "Help Index", to: "/help/index" },
+      { label: "Configuration", to: "/help/configuration" },
+      { label: "Reports", to: "/reports" },
+      { label: "Custom Report Builder", to: "/reports/custom" },
     ],
   },
   {
