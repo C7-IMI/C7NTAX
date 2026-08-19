@@ -300,12 +300,12 @@ export function TicketsPage() {
               title={selectedIds.size === 0 ? "Select one or more tickets to enable" : "Quick Actions"}
               className="btn-secondary text-sm flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Wrench size={14} /> Quick Actions <ChevronDown size={14} />
+              <ChevronDown size={14} /><Wrench size={14} /> Quick Actions
             </button>
             {quickOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setQuickOpen(false)} />
-                <div className="absolute right-0 top-full mt-1 bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 py-1 min-w-[200px]">
+                <div className="absolute left-0 top-full mt-1 w-max bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 py-1">
                   <div className="px-3 py-1.5 text-[10px] text-gray-600 uppercase font-semibold">Quick Actions</div>
                   <button onClick={() => quickApply("acknowledge")} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Acknowledge</button>
                   <button onClick={() => quickApply("close")} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Close</button>

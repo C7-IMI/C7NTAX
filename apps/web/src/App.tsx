@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Routes, Route, Navigate, useParams, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Layout } from "./components/Layout";
+import { GlobalTooltip } from "./components/GlobalTooltip";
 import { LoginPage } from "./pages/Login";
 import { DashboardPage } from "./pages/Dashboard";
 import { TicketsPage, TicketDetailPage } from "./pages/Tickets";
@@ -167,6 +168,7 @@ function DesktopNavBridge() {
 export default function App() {
   return (
     <AuthProvider>
+      <GlobalTooltip />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/*" element={<ProtectedRoutes />} />
