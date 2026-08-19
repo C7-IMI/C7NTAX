@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.017 | Last Updated: 2026-08-18
+## Version: 2026.8.18.018 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,14 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.018 — Help section (button + nav + PSA-style docs)
+- **[New]** `pages/Help.tsx` — Help landing page: hero + 4 subsection cards (icon, title, description) + quick links.
+- **[New]** `pages/HelpDoc.tsx` — PSA-style documentation frame modeled on Autotask / ConnectWise Asio / HaloPSA help centers: left rail (section navigation + on-page anchors), content blocks (headings, numbered steps, note/tip/warn callouts, tables), and a "Related topics" cross-reference box linking help sections and app pages. Content for Getting Started, FAQ, Configuration, Index (data-driven `HELP_SECTIONS`).
+- **[Update]** `components/Layout.tsx` — Help button (top right) converted from placeholder to a `Link` to `/help`; new parent nav section "Help" in `NAV_TREE` with subsections Help Home, Getting Started, FAQ, Configuration, Index; header descriptions added for the five `/help*` routes; `Settings2`/`ListOrdered` icons imported.
+- **[Update]** `App.tsx` — routes for `/help` + 4 subsections; removed a duplicate `/quotes` route.
+- **[Fix]** Callout styles: removed side-accent borders (border-l + rounded-r) in favor of full tinted backgrounds per design review.
+- **[Verification]** web typecheck 17 (baseline; changed files clean); Vite transforms both new modules (200); `/help` SPA route serves 200.
 
 ## 2026.8.18.017 — What's New auto-refresh fix
 - **[Fix]** What's New stopped updating: `scripts/generate-buildnotes.mjs` had not been re-run after BuildNotes entries .014–.016, so `apps/web/public/BuildNotes.md` (the What's New page data source) and `apps/api/src/BuildNotes.json` stalled at .008. Regenerated both (68 versions, through .016); verified `/BuildNotes.md` serves .016 and `BuildNotes.json` contains .014–.016.

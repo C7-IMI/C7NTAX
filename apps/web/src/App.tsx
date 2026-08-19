@@ -45,6 +45,8 @@ import { QuotesPage } from "./pages/Quotes";
 import { MonitorsPage } from "./pages/Monitors";
 import { WebhooksPage } from "./pages/Webhooks";
 import { AiActionsPage } from "./pages/AiActions";
+import { HelpPage } from "./pages/Help";
+import { HelpGettingStarted, HelpFaq, HelpConfiguration, HelpIndex } from "./pages/HelpDoc";
 
 function ProtectedRoutes() {
   const navigate = useNavigate();
@@ -75,7 +77,6 @@ function ProtectedRoutes() {
         <Route path="/service-alerts/monitors" element={<MonitorsPage />} />
         <Route path="/admin/webhooks" element={<WebhooksPage />} />
         <Route path="/ai-actions" element={<AiActionsPage />} />
-        <Route path="/quotes" element={<QuotesPage />} />
         <Route path="/admin/service-alerts" element={<ServiceAlertsSettingsPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
@@ -110,6 +111,11 @@ function ProtectedRoutes() {
         <Route path="/admin/changelog" element={<ChangelogPage />} />
         <Route path="/billing/dashboard" element={<FinanceDashboardPage />} />
         <Route path="/quotes" element={<QuotesPage />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="/help/getting-started" element={<HelpGettingStarted />} />
+        <Route path="/help/faq" element={<HelpFaq />} />
+        <Route path="/help/configuration" element={<HelpConfiguration />} />
+        <Route path="/help/index" element={<HelpIndex />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/pto" element={<PTOPage />} />
         <Route path="/settings/ai" element={<InferenceSettingsPage />} />

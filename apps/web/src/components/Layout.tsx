@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, UserCircle, Home,
-  AlertTriangle, XCircle,
+  AlertTriangle, XCircle, Settings2, ListOrdered,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs } from "./Breadcrumbs";
@@ -92,6 +92,15 @@ export const NAV_TREE: NavNode[] = [
       { id: "reports-analytics", to: "/reports/analytics", icon: BarChart3, label: "Analytics" },
     ],
   },
+  {
+    id: "help", icon: HelpCircle, label: "Help", children: [
+      { id: "help-home", to: "/help", icon: HelpCircle, label: "Help Home" },
+      { id: "help-getting-started", to: "/help/getting-started", icon: BookOpen, label: "Getting Started" },
+      { id: "help-faq", to: "/help/faq", icon: HelpCircle, label: "FAQ" },
+      { id: "help-configuration", to: "/help/configuration", icon: Settings2, label: "Configuration" },
+      { id: "help-index", to: "/help/index", icon: ListOrdered, label: "Index" },
+    ],
+  },
 ];
 
 function loadExpanded(): Set<string> {
@@ -172,6 +181,11 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/reports": "KPI dashboards with real-time ticket, SLA, and technician metrics.",
   "/reports/standard": "Pre-built reports: ticket volume, SLA, revenue, utilization.",
   "/reports/analytics": "Advanced analytics with visual charts and trend data.",
+  "/help": "Documentation home — guided setup, FAQ, configuration reference, and a cross-linked index.",
+  "/help/getting-started": "First login, the core ticket workflow, and team & boards setup.",
+  "/help/faq": "Answers to common questions about tickets, billing, integrations, and Kumo.",
+  "/help/configuration": "Reference for service boards, uptime monitors, CloudConnect connectors, and identity settings.",
+  "/help/index": "Index of every help topic mapped to its product area.",
   "/settings": "Configure your landing page, personal preferences, and account settings.",
   "/settings/ai": "Manage AI inference providers and model configurations.",
   "/mfa-setup": "Set up multi-factor authentication for your account.",
@@ -620,10 +634,10 @@ export function Layout({ children }: { children: ReactNode }) {
               <Sparkles size={14} />
               <span>AI</span>
             </button>
-            <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Help">
+            <Link to="/help" className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Help">
               <HelpCircle size={14} />
               <span>Help</span>
-            </button>
+            </Link>
             <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Settings">
               <Settings size={14} />
               <span>Settings</span>

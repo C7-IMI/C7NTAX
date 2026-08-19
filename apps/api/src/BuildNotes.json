@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.8.18.018",
+    "date": "2026-08-18",
+    "title": "Help section (button + nav + PSA-style docs)",
+    "changes": [
+      {
+        "text": "`pages/Help.tsx` — Help landing page: hero + 4 subsection cards (icon, title, description) + quick links.",
+        "type": "New Feature"
+      },
+      {
+        "text": "`pages/HelpDoc.tsx` — PSA-style documentation frame modeled on Autotask / ConnectWise Asio / HaloPSA help centers: left rail (section navigation + on-page anchors), content blocks (headings, numbered steps, note/tip/warn callouts, tables), and a \"Related topics\" cross-reference box linking help sections and app pages. Content for Getting Started, FAQ, Configuration, Index (data-driven `HELP_SECTIONS`).",
+        "type": "New Feature"
+      },
+      {
+        "text": "`components/Layout.tsx` — Help button (top right) converted from placeholder to a `Link` to `/help`; new parent nav section \"Help\" in `NAV_TREE` with subsections Help Home, Getting Started, FAQ, Configuration, Index; header descriptions added for the five `/help*` routes; `Settings2`/`ListOrdered` icons imported.",
+        "type": "Update"
+      },
+      {
+        "text": "`App.tsx` — routes for `/help` + 4 subsections; removed a duplicate `/quotes` route.",
+        "type": "Update"
+      },
+      {
+        "text": "Callout styles: removed side-accent borders (border-l + rounded-r) in favor of full tinted backgrounds per design review.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.8.18.017",
     "date": "2026-08-18",
     "title": "What's New auto-refresh fix",
