@@ -1140,6 +1140,22 @@
 - Changelog policy applied: this Retrace entry (workspace-level file, not a C7NTAX code change).
 
 
+### Prompt 97 — Implement the now-deployable backlog (12 items) incrementally
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~4h
+**BuildNotes IDs:** #1 (2026.8.18.016)
+> Implement the currently deployable backlog items incrementally, one backlog item at a time, keeping all changes non-breaking. For each backlog item: ensure the feature can be rolled back individually; ensure the entire set can be rolled back as one unit; verify the current feature works and the entire application still functions before moving on; create new sample data, add it to the reseed snapshot, and confirm it remains intact and is reseeded after completion. After all items: verify the application runs correctly with no connection refused errors and does not get stuck on the loading screen. Update any documentation or requirements that C7NTRL would need to begin its build.
+
+**Changes:**
+- Schema (additive): Quote/QuoteLineItem/WebauthnCredential/PushDevice/AiAction/AiActionAudit/AlertWebhookDelivery/OutlookAddinToken; EmailConnector transport fields; ServiceAlertService monitorKind/monitorUrl/monitorConfig; db push synced.
+- Backend routes: quotes, push, aiActions (risk tiers, critical blocked), alertWebhooks, outlookAddin (fixed ParsedEmail shape + SystemConfig dedup), ssoExchange (OIDC JWKS, no new deps), webauthn (@simplewebauthn/server); billing generate-from-tickets (draft-only); alertMonitor website/ssl/dns kinds (2-poll streak); emailConnectorRuntime Graph transport; auth 15-min JWT + bcrypt rehash behind AUTH_HARDENING_ENABLED; startup/security-scanners.ps1 + boot hook.
+- Web: Quotes/Monitors/Webhooks/AiActions pages + routes; Login SSO + passkey + ?token= callback; FinanceDashboard generate-from-tickets; keyboard shortcut T; skeleton CSS. Multiple mid-flight type errors found and fixed (ParsedEmail mismatch, Permission enum names, WebhookConfig fields, signToken payload shape, simplewebauthn v13 API, BufferEncoding). Typechecks: api 177 / web 17 — all errors in pre-existing files; changed files clean.
+- Sample data: seed-backlog.ts (quote, AI action, uptime monitor, webhook, push device) → rows created → snapshot-capture fixtures extended (5 new JSON files) → seed-from-snapshots SEED_ORDER extended (parents before children) → boot reseed confirmed ("Sample data reseeded").
+- Rollback: ROLLBACK-BACKLOG-2026-08-18.md (12 flags + per-item + unified checklist).
+- Boot verification: killed stale servers via scheduled task "C7NTAX Boot Startup" (direct kill lacked elevation; c7ntax-restart.ps1 has a pre-existing parse bug — noted, not fixed), fresh API PID 36224 / frontend PID 16568; /api/health 200, web / 200, login check 200; new routes live (quotes/ai-actions/webhooks/push 401 auth-gated; /api/auth/sso/status 200 {"enabled":false}). No connection refused, no stuck loading.
+- C7NTRL docs: DEV-HANDOFF.md integration-surface section rewritten with live status + Phase 4 guidance (use C7NTAX alert webhooks; bump contract v0.2); committed + pushed to develop (72ffdcf).
+- Changelog policy applied: BuildNotes entry 2026.8.18.016 + this Retrace entry.
+
+
 
 
 
