@@ -1118,6 +1118,28 @@
 - PlanDocs PLAN-015 copy + registry row; changelog policy applied (BuildNotes 2026.8.18.014 + this Retrace entry).
 
 
+### Prompt 95 — PLAN-015: strict dependency-order refactor & renumbering
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.18.015)
+> Refactor and renumber the provided plan list using the updated information so that all plans/features are in dependency order. For each item, clearly define what must be implemented in what order and describe the associated risks if that item is skipped, following the same risk-description style used previously. Preserve all original intent, constraints, names, paths, and concrete details from the updated information. Do not add or remove requirements; only reorganize, renumber, and update ordering/risk notes.
+
+**Changes:**
+- `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` (PLAN-015 §2) — reorganized the 16-item plan into Phase A (billing chain #1→#2→#3, sequential), Phase B (#4–#13, independent upgrades with no unresolved prerequisites, parallel-safe), Phase C (#14–#16, externally gated on C7NTRL phase 7 / PLAN-003+PLAN-002 / PLAN-010). SMS verification moved #14→#13 (ungated item precedes externally gated item). All `Depends on`/`Risk if skipped` notes updated in the established style using the verified statuses (✅ batch ops, QB Realm ID, file manager; ⚠️ connection fix/re-test, per-service RSS/DownDetector). No items added or removed; names, paths, details preserved; header + PlanDocs copy carry revision notes; renumbering rationale documented in the plan.
+- Changelog policy applied: BuildNotes entry 2026.8.18.015 + this Retrace entry.
+
+
+### Prompt 96 — Sanitized prompt library copy (NewProjectPrompts)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** — (workspace-level file, outside C7NTAX; no BuildNotes entry per rule scope)
+> Locate the existing project prompts file/library. Create a separate file named NewProjectPrompts containing a sanitized version of the prompt library. In the sanitized copy, remove application-specific references such as C7NTAX and C7NTRL, and replace any similar identifiers with generic names or labels. Preserve the original intent and goal of each prompt. Do not modify the current project prompts file.
+
+**Changes:**
+- Located `PROMPT-LIBRARY.md` (Kun workspace root).
+- `NewProjectPrompts.md` (Kun workspace root, 137 lines) — sanitized copy: C7NTAX/C7NTRL references removed and replaced with generic labels ("App A ↔ App B — e.g., a PSA app and its companion RMM app", `INTEGRATION_ENABLED`, "the primary app's integration surface", "reference project baseline: API 176 / WEB 17", "PLAN-008" → "all 10 options implemented in the reference project", thread ID removed); third-party license examples (Endar/NetLock/Breeze) retained as they are external reference cases, not app identifiers. Verified: 0 occurrences of C7NTAX/C7NTRL/thread ID in the sanitized file.
+- `PROMPT-LIBRARY.md` left unmodified (verified by content hash).
+- Changelog policy applied: this Retrace entry (workspace-level file, not a C7NTAX code change).
+
+
 
 
 

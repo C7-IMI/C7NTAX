@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.014 | Last Updated: 2026-08-18
+## Version: 2026.8.18.015 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,9 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.015 — PLAN-015: strict dependency-order renumbering
+- **[Update]** `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` (PLAN-015 §2) — reorganized the 16-item implementation plan into strict dependency order: Phase A billing chain (#1 agreements/time engine → #2 expenses → #3 bill-through batch invoicing), Phase B independent upgrades (#4–#13, no unresolved prerequisites, parallel-safe), Phase C externally gated (#14 remote-session notes ← C7NTRL phase 7; #15 client portal ← PLAN-003 Step 2/PLAN-002; #16 infrastructure ← PLAN-010). SMS verification moved #14 → #13 (ungated before gated). All `Depends on` / `Risk if skipped` notes updated with the verified statuses (batch ops ✅, QB Realm ID ✅, file manager ✅, connection fix/re-test ⚠️, per-service RSS/DownDetector ⚠️). No items added or removed; names, paths, and details preserved. PlanDocs copy re-synced with revision note.
 
 ## 2026.8.18.014 — PLAN-015: Feature Backlog (UI, Billing, Kumo, Integrations, Infrastructure)
 - **[New]** `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` (PLAN-015) — status-mapped all 24 requested features against the verified codebase (✅ batch ticket ops via `bulk.ts` + Tickets.tsx selection, QuickBooks Realm ID fields, Kumo file manager; ⚠️ partials: invoice generate, report writer, CloudConnect fix/re-test dialog, M365 sync, service alerts; 📋 planned elsewhere: client portal FI0042 → PLAN-013 #3, remote-session notes → C7NTRL-001 phase 7 / PLAN-014, serverless/OpenTofu/dev=prod → PLAN-010; ❌ new: 16-item dependency-ordered implementation plan — agreements/time engine (block/cyberCare/spot rates, 1.5x overtime after 18:00, midnight split, 1.5:1 block deduction), expenses tab, bill-through batch invoicing with preview/approve, per-user dashboard, board drag-and-drop, Kumo audit log, MFA QR upload, Outage Board, CloudConnect live statuses, report fix + client value template, AI KB auto-generation, M365 inactivity/offboarding, SMS verification) with `Depends on`/`Risk if skipped` notes, moved/appended notes, frontend items, rollback (flag-gated), verification, and open decisions.
