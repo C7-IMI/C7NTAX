@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission, TicketStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { encryptPassword } from "../services/emailConnectorCrypto";
 
 export const boardsRouter = Router();
 boardsRouter.use(authenticate);
@@ -107,7 +108,7 @@ boardsRouter.get("/:id", requirePermission(Permission.BoardView), async (req: Au
       include: {
         _count: { select: { tickets: true } },
         emailConnectors: {
-          select: { id: true, email: true, host: true, port: true, secure: true, folder: true, pollIntervalSeconds: true, enabled: true, lastCheckedAt: true },
+          select: { id: true, host: true, port: true, secure: true, user: true, folder: true, pollIntervalSec: true, enabled: true, lastPollAt: true },
         },
       },
     });
@@ -153,7 +154,7 @@ boardsRouter.get("/:boardId/connectors", requirePermission(Permission.BoardView)
   try {
     const connectors = await prisma.emailConnector.findMany({
       where: { boardId: req.params.boardId },
-      select: { id: true, email: true, host: true, port: true, secure: true, folder: true, pollIntervalSeconds: true, enabled: true, lastCheckedAt: true },
+      select: { id: true, host: true, port: true, secure: true, user: true, folder: true, pollIntervalSec: true, enabled: true, lastPollAt: true },
     });
     res.json(connectors);
   } catch (e) { next(e); }
@@ -162,17 +163,25 @@ boardsRouter.get("/:boardId/connectors", requirePermission(Permission.BoardView)
 // Create email connector
 boardsRouter.post("/:boardId/connectors", requirePermission(Permission.BoardManage), async (req: AuthRequest, res, next) => {
   try {
-    const { email, host, port, secure, folder, user, password, pollIntervalSeconds } = req.body;
-    if (!email || !host || !user || !password) throw new AppError("email, host, user, and password required");
-    const existing = await prisma.emailConnector.findUnique({ where: { email } });
-    if (existing) throw new AppError("An email connector with that address already exists", 409);
+    const { host, port, secure, folder, user, password, pollIntervalSec } = req.body;
+    if (!host || !user || !password) throw new AppError("host, user, and password required");
+    const board = await prisma.serviceBoard.findUnique({ where: { id: String(req.params.boardId) } });
+    if (!board) throw new AppError("Service board not found", 404);
+    const existing = await prisma.emailConnector.findFirst({ where: { user: String(user), boardId: String(req.params.boardId) } });
+    if (existing) throw new AppError("An email connector for that user already exists on this board", 409);
     const connector = await prisma.emailConnector.create({
       data: {
-        boardId: req.params.boardId, email, host, port: port || 993, secure: secure ?? true,
-        folder: folder || "INBOX", user, password, pollIntervalSeconds: pollIntervalSeconds || 60,
+        boardId: board.id,
+        host: String(host),
+        port: Number(port) || 993,
+        secure: secure ?? true,
+        folder: folder || "INBOX",
+        user: String(user),
+        passwordEncrypted: encryptPassword(String(password)),
+        pollIntervalSec: Number(pollIntervalSec) || 300,
       },
     });
-    const { password: _, ...safe } = connector;
+    const { passwordEncrypted: _p, ...safe } = connector;
     res.status(201).json(safe);
   } catch (e) { next(e); }
 });
@@ -180,11 +189,17 @@ boardsRouter.post("/:boardId/connectors", requirePermission(Permission.BoardMana
 // Update email connector
 boardsRouter.patch("/:boardId/connectors/:connectorId", requirePermission(Permission.BoardManage), async (req: AuthRequest, res, next) => {
   try {
-    const allowed = ["host", "port", "secure", "folder", "user", "password", "pollIntervalSeconds", "enabled"];
     const updates: Record<string, unknown> = {};
-    for (const key of allowed) if (req.body[key] !== undefined) updates[key] = req.body[key];
-    const connector = await prisma.emailConnector.update({ where: { id: req.params.connectorId }, data: updates });
-    const { password: _, ...safe } = connector;
+    if (req.body.host !== undefined) updates.host = String(req.body.host);
+    if (req.body.port !== undefined) updates.port = Number(req.body.port) || 993;
+    if (req.body.secure !== undefined) updates.secure = req.body.secure !== false;
+    if (req.body.folder !== undefined) updates.folder = String(req.body.folder);
+    if (req.body.user !== undefined) updates.user = String(req.body.user);
+    if (req.body.password !== undefined) updates.passwordEncrypted = encryptPassword(String(req.body.password));
+    if (req.body.pollIntervalSec !== undefined) updates.pollIntervalSec = Math.max(30, Number(req.body.pollIntervalSec) || 300);
+    if (req.body.enabled !== undefined) updates.enabled = Boolean(req.body.enabled);
+    const connector = await prisma.emailConnector.update({ where: { id: req.params.connectorId }, data: updates as any });
+    const { passwordEncrypted: _p, ...safe } = connector;
     res.json(safe);
   } catch (e) { next(e); }
 });

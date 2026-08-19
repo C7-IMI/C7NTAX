@@ -24,8 +24,8 @@ export function deduceName(displayName: string, emailAddress: string): { firstNa
   const name = (displayName || "").trim();
   if (name) {
     const parts = name.split(/\s+/).filter(Boolean);
-    if (parts.length === 1) return { firstName: parts[0], lastName: "" };
-    return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+    if (parts.length === 1) return { firstName: parts[0]!, lastName: "" };
+    return { firstName: parts[0]!, lastName: parts.slice(1).join(" ") };
   }
   const local = (emailAddress || "").split("@")[0] || "";
   const cleaned = local.replace(/[._-]+/g, " ").trim();
@@ -33,7 +33,8 @@ export function deduceName(displayName: string, emailAddress: string): { firstNa
     .split(" ")
     .filter(Boolean)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+    .join(" ")
+    .trim();
   return capitalized ? { firstName: capitalized, lastName: "" } : { firstName: "Unknown", lastName: "Sender" };
 }
 

@@ -1,6 +1,6 @@
 /**
- * Email connector management API (Integration rows with kind "email_connector").
- * Credentials are stored in Integration.credentials and never returned.
+ * Email connector management API (Prisma EmailConnector model).
+ * Mailbox passwords are encrypted with kumoCrypto and never returned.
  */
 import { Router } from "express";
 import { prisma } from "../index";
@@ -8,34 +8,27 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { fetchUnseenEmails } from "@C7NTAX/email";
+import { encryptPassword, decryptPassword } from "../services/emailConnectorCrypto";
 import { emailConnectorManager } from "../services/emailConnectorRuntime";
 
 export const emailConnectorsRouter = Router();
 emailConnectorsRouter.use(authenticate);
 
-const KIND = "email_connector";
+type ConnectorRow = {
+  id: string; boardId: string; host: string; port: number; secure: boolean;
+  user: string; folder: string; pollIntervalSec: number; enabled: boolean;
+  lastPollAt: Date | null; createdAt: Date; updatedAt: Date;
+};
 
-function toPublic(row: { id: string; name: string; enabled: boolean; credentials: unknown; settings: unknown; status: string; errorMessage: string | null; lastSyncAt: Date | null; createdAt: Date; updatedAt: Date }) {
-  const creds = (row.credentials || {}) as Record<string, unknown>;
-  const settings = (row.settings || {}) as Record<string, unknown>;
-  return {
-    id: row.id,
-    name: row.name,
-    enabled: row.enabled,
-    hasCredentials: Boolean(creds.host && creds.user),
-    settings,
-    status: row.status,
-    errorMessage: row.errorMessage,
-    lastSyncAt: row.lastSyncAt,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
+function toPublic(row: ConnectorRow) {
+  const { ...rest } = row;
+  return { ...rest, hasCredentials: Boolean(row.host && row.user) };
 }
 
 // ── List ──
 emailConnectorsRouter.get("/", requirePermission(Permission.IntegrationView), async (_req: AuthRequest, res, next) => {
   try {
-    const rows = await prisma.integration.findMany({ where: { kind: KIND }, orderBy: { createdAt: "asc" } });
+    const rows = await prisma.emailConnector.findMany({ orderBy: { createdAt: "asc" } });
     res.json({ data: rows.map(toPublic) });
   } catch (e) { next(e); }
 });
@@ -43,17 +36,21 @@ emailConnectorsRouter.get("/", requirePermission(Permission.IntegrationView), as
 // ── Create ──
 emailConnectorsRouter.post("/", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
-    const { name, host, port, secure, user, password, folder, pollIntervalSeconds, boardId } = req.body || {};
-    if (!name || !host || !user || !password || !boardId) throw new AppError("name, host, user, password and boardId are required", 400);
+    const { host, port, secure, user, password, folder, pollIntervalSec, boardId } = req.body || {};
+    if (!host || !user || !password || !boardId) throw new AppError("host, user, password and boardId are required", 400);
     const board = await prisma.serviceBoard.findUnique({ where: { id: boardId } });
     if (!board) throw new AppError("Service board not found", 404);
-    const row = await prisma.integration.create({
+    const row = await prisma.emailConnector.create({
       data: {
-        kind: KIND,
-        name: String(name),
+        boardId: String(boardId),
+        host: String(host),
+        port: Number(port) || 993,
+        secure: secure !== false,
+        user: String(user),
+        passwordEncrypted: encryptPassword(String(password)),
+        folder: folder ? String(folder) : "INBOX",
+        pollIntervalSec: Math.max(30, Number(pollIntervalSec) || 300),
         enabled: false,
-        credentials: { host: String(host), port: Number(port) || 993, secure: secure !== false, user: String(user), password: String(password) },
-        settings: { boardId, folder: folder || "INBOX", pollIntervalSeconds: Math.max(30, Number(pollIntervalSeconds) || 300) },
       },
     });
     res.status(201).json(toPublic(row));
@@ -63,44 +60,35 @@ emailConnectorsRouter.post("/", requirePermission(Permission.IntegrationManage),
 // ── Update ──
 emailConnectorsRouter.patch("/:id", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
-    const row = await prisma.integration.findUnique({ where: { id: req.params.id } });
-    if (!row || row.kind !== KIND) throw new AppError("Connector not found", 404);
-    const { name, enabled, host, port, secure, user, password, folder, pollIntervalSeconds, boardId } = req.body || {};
-    const credentials = { ...(row.credentials as Record<string, unknown>) };
-    if (host !== undefined) credentials.host = String(host);
-    if (port !== undefined) credentials.port = Number(port) || 993;
-    if (secure !== undefined) credentials.secure = secure !== false;
-    if (user !== undefined) credentials.user = String(user);
-    if (password !== undefined) credentials.password = String(password);
-    const settings = { ...(row.settings as Record<string, unknown>) };
-    if (folder !== undefined) settings.folder = String(folder);
-    if (pollIntervalSeconds !== undefined) settings.pollIntervalSeconds = Math.max(30, Number(pollIntervalSeconds) || 300);
-    if (boardId !== undefined) settings.boardId = String(boardId);
+    const row = await prisma.emailConnector.findUnique({ where: { id: req.params.id } });
+    if (!row) throw new AppError("Connector not found", 404);
+    const { host, port, secure, user, password, folder, pollIntervalSec, boardId, enabled } = req.body || {};
+    const data: Record<string, unknown> = {};
+    if (host !== undefined) data.host = String(host);
+    if (port !== undefined) data.port = Number(port) || 993;
+    if (secure !== undefined) data.secure = secure !== false;
+    if (user !== undefined) data.user = String(user);
+    if (password !== undefined) data.passwordEncrypted = encryptPassword(String(password));
+    if (folder !== undefined) data.folder = String(folder);
+    if (pollIntervalSec !== undefined) data.pollIntervalSec = Math.max(30, Number(pollIntervalSec) || 300);
+    if (boardId !== undefined) data.boardId = String(boardId);
+    if (enabled !== undefined) data.enabled = Boolean(enabled);
 
-    const updated = await prisma.integration.update({
-      where: { id: row.id },
-      data: {
-        name: name !== undefined ? String(name) : row.name,
-        enabled: enabled !== undefined ? Boolean(enabled) : row.enabled,
-        credentials,
-        settings,
-        errorMessage: null,
-      },
-    });
+    const updated = await prisma.emailConnector.update({ where: { id: row.id }, data: data as any });
 
     // Sync runtime
     emailConnectorManager.removeConnector(row.id);
-    if (updated.enabled && credentials.host && credentials.user && settings.boardId) {
+    if (updated.enabled) {
       emailConnectorManager.addConnector({
-        id: row.id,
-        boardId: String(settings.boardId),
-        host: String(credentials.host),
-        port: Number(credentials.port) || 993,
-        secure: credentials.secure !== false,
-        user: String(credentials.user),
-        password: String(credentials.password || ""),
-        folder: settings.folder ? String(settings.folder) : undefined,
-        pollIntervalSeconds: Math.max(30, Number(settings.pollIntervalSeconds) || 300),
+        id: updated.id,
+        boardId: updated.boardId,
+        host: updated.host,
+        port: updated.port,
+        secure: updated.secure,
+        user: updated.user,
+        password: decryptPassword(updated.passwordEncrypted),
+        folder: updated.folder,
+        pollIntervalSeconds: Math.max(30, updated.pollIntervalSec || 300),
         enabled: true,
       });
     }
@@ -111,8 +99,8 @@ emailConnectorsRouter.patch("/:id", requirePermission(Permission.IntegrationMana
 // ── Delete ──
 emailConnectorsRouter.delete("/:id", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
-    emailConnectorManager.removeConnector(req.params.id);
-    await prisma.integration.deleteMany({ where: { id: req.params.id, kind: KIND } });
+    emailConnectorManager.removeConnector(String(req.params.id));
+    await prisma.emailConnector.deleteMany({ where: { id: String(req.params.id) } });
     res.json({ message: "Deleted" });
   } catch (e) { next(e); }
 });
@@ -120,23 +108,20 @@ emailConnectorsRouter.delete("/:id", requirePermission(Permission.IntegrationMan
 // ── Test connection ──
 emailConnectorsRouter.post("/:id/test", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
-    const row = await prisma.integration.findUnique({ where: { id: req.params.id } });
-    if (!row || row.kind !== KIND) throw new AppError("Connector not found", 404);
-    const creds = row.credentials as Record<string, unknown>;
-    if (!creds.host || !creds.user) throw new AppError("Credentials incomplete", 400);
+    const row = await prisma.emailConnector.findUnique({ where: { id: req.params.id } });
+    if (!row) throw new AppError("Connector not found", 404);
     try {
       const emails = await fetchUnseenEmails({
-        host: String(creds.host),
-        port: Number(creds.port) || 993,
-        secure: creds.secure !== false,
-        user: String(creds.user),
-        password: String(creds.password || ""),
-        folder: ((row.settings as Record<string, unknown>)?.folder as string) || "INBOX",
+        host: row.host,
+        port: row.port,
+        secure: row.secure,
+        user: row.user,
+        password: decryptPassword(row.passwordEncrypted),
+        folder: row.folder,
       });
-      await prisma.integration.update({ where: { id: row.id }, data: { status: "connected", errorMessage: null, lastSyncAt: new Date() } });
+      await prisma.emailConnector.update({ where: { id: row.id }, data: { lastPollAt: new Date() } });
       res.json({ ok: true, unseenMessages: emails.length });
     } catch (e: any) {
-      await prisma.integration.update({ where: { id: row.id }, data: { status: "error", errorMessage: String(e?.message || e).slice(0, 500) } });
       res.status(502).json({ ok: false, error: String(e?.message || e).slice(0, 300) });
     }
   } catch (e) { next(e); }
@@ -145,8 +130,8 @@ emailConnectorsRouter.post("/:id/test", requirePermission(Permission.Integration
 // ── Poll now ──
 emailConnectorsRouter.post("/:id/poll", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
-    const row = await prisma.integration.findUnique({ where: { id: req.params.id } });
-    if (!row || row.kind !== KIND) throw new AppError("Connector not found", 404);
+    const row = await prisma.emailConnector.findUnique({ where: { id: req.params.id } });
+    if (!row) throw new AppError("Connector not found", 404);
     if (!row.enabled) throw new AppError("Connector is disabled — enable it first", 400);
     emailConnectorManager.pollNow(row.id);
     res.json({ ok: true });
@@ -156,8 +141,8 @@ emailConnectorsRouter.post("/:id/poll", requirePermission(Permission.Integration
 // ── Status ──
 emailConnectorsRouter.get("/:id/status", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
-    const row = await prisma.integration.findUnique({ where: { id: req.params.id } });
-    if (!row || row.kind !== KIND) throw new AppError("Connector not found", 404);
-    res.json({ id: row.id, status: row.status, errorMessage: row.errorMessage, lastSyncAt: row.lastSyncAt });
+    const row = await prisma.emailConnector.findUnique({ where: { id: req.params.id } });
+    if (!row) throw new AppError("Connector not found", 404);
+    res.json({ id: row.id, enabled: row.enabled, lastPollAt: row.lastPollAt });
   } catch (e) { next(e); }
 });

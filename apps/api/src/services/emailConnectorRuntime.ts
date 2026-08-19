@@ -1,10 +1,11 @@
 /**
  * Email connector runtime — owns the EmailConnectorManager singleton, hydrates
- * enabled connectors from the Integration table at boot, and wires the
- * create/update ticket handlers with Message-ID dedup.
+ * enabled EmailConnector rows at boot, and wires the create/update ticket
+ * handlers with Message-ID dedup.
  */
 import { EmailConnectorManager, type EmailConnectorConfig, type ParsedEmail } from "@C7NTAX/email";
 import { prisma } from "../index";
+import { decryptPassword } from "./emailConnectorCrypto";
 import { createTicketFromEmail, appendEmailToTicket } from "./emailToTicket";
 
 export const emailConnectorManager = new EmailConnectorManager();
@@ -34,19 +35,23 @@ async function withDedup(scopeKey: string, messageId: string, fn: () => Promise<
   }
 }
 
-/** Load enabled email_connector integrations and start polling (guarded). */
+/** Load enabled EmailConnector rows and start polling (guarded). */
 export async function hydrateEmailConnectors(): Promise<void> {
   if (process.env.EMAIL_CONNECTORS_ENABLED === "false") return;
 
-  emailConnectorManager.onNewTicket(async ({ boardId, email }: { boardId: string; email: ParsedEmail }) => {
+  emailConnectorManager.onNewTicket(async ({ boardId, email }: { boardId: string; email: ParsedEmail }): Promise<string> => {
     try {
+      let createdId = "";
       await withDedup(`email_connector:${boardId}:seen`, email.messageId, async () => {
         const id = await createTicketFromEmail(boardId, email);
         if (id) console.log(`[EmailConnector] Created ticket ${id} from ${email.from.email}`);
+        createdId = id;
         return id;
       });
+      return createdId;
     } catch (e) {
       console.error(`[EmailConnector] Ticket creation failed for ${email.from.email}:`, e);
+      return "";
     }
   });
 
@@ -61,29 +66,24 @@ export async function hydrateEmailConnectors(): Promise<void> {
     }
   });
 
-  const rows = await prisma.integration.findMany({ where: { kind: "email_connector" } });
+  const rows = await prisma.emailConnector.findMany({ where: { enabled: true } });
   for (const row of rows) {
     try {
-      const creds = (row.credentials || {}) as Record<string, unknown>;
-      const settings = (row.settings || {}) as Record<string, unknown>;
-      if (!row.enabled) continue;
-      if (!creds.host || !creds.user || !settings.boardId) continue;
       const config: EmailConnectorConfig = {
         id: row.id,
-        boardId: String(settings.boardId),
-        host: String(creds.host),
-        port: Number(creds.port) || 993,
-        secure: creds.secure !== false,
-        user: String(creds.user),
-        password: String(creds.password || ""),
-        folder: settings.folder ? String(settings.folder) : undefined,
-        pollIntervalSeconds: Math.max(30, Number(settings.pollIntervalSeconds) || 300),
+        boardId: row.boardId,
+        host: row.host,
+        port: row.port,
+        secure: row.secure,
+        user: row.user,
+        password: decryptPassword(row.passwordEncrypted),
+        folder: row.folder,
+        pollIntervalSeconds: Math.max(30, row.pollIntervalSec || 300),
         enabled: true,
       };
       emailConnectorManager.addConnector(config);
     } catch (e) {
       console.error(`[EmailConnector] Failed to hydrate connector ${row.id}:`, e);
-      await prisma.integration.update({ where: { id: row.id }, data: { errorMessage: `Hydration failed: ${(e as Error).message}` } }).catch(() => {});
     }
   }
 }

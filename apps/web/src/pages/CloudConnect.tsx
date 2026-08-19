@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { EmailConnectorsPanel } from "../components/EmailConnectorsPanel";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -295,6 +296,9 @@ export function CloudConnectPage() {
         <div><h2 className="text-lg font-semibold text-white">CloudConnect</h2><p className="text-sm text-gray-400 mt-0.5">Connect third-party services — 16 connectors available</p></div>
         {!showAdd && <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Connection</button>}
       </div>
+
+      {/* Email connectors (IMAP → tickets) */}
+      <EmailConnectorsPanel />
 
       {/* Type Selection Grid */}
       {showAdd && !selectedType && (
