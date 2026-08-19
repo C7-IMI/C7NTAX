@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import api from "../api";
 import { InferencePanel } from "../components/InferencePanel";
@@ -86,6 +87,7 @@ export function TicketsPage() {
   const [batchDropdown, setBatchDropdown] = useState(false);
   const [batchApplying, setBatchApplying] = useState(false);
   const [checkedActions, setCheckedActions] = useState<Set<string>>(new Set());
+  const [quickOpen, setQuickOpen] = useState(false);
 
   // ── Filter dialog ──
   const [showFilter, setShowFilter] = useState(false);
@@ -218,6 +220,19 @@ export function TicketsPage() {
     fetchTickets();
   };
 
+  // ── Quick Actions: apply one action to all selected tickets ──
+  const quickApply = async (action: string) => {
+    if (selectedIds.size === 0) return;
+    setQuickOpen(false);
+    setBatchApplying(true);
+    const ok = await applyBatchAction(action);
+    setBatchApplying(false);
+    if (ok) toast.success(`Applied to ${selectedIds.size} ticket${selectedIds.size !== 1 ? "s" : ""}`);
+    else toast.error("Failed to apply action");
+    setSelectedIds(new Set());
+    fetchTickets();
+  };
+
   // ── Individual ticket action ──
   const ticketAction = async (ticketId: string, action: string) => {
     try {
@@ -278,6 +293,34 @@ export function TicketsPage() {
           <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus size={16}/>Create</button>
         </div>
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              onClick={() => { if (selectedIds.size > 0) setQuickOpen(!quickOpen); }}
+              disabled={selectedIds.size === 0}
+              title={selectedIds.size === 0 ? "Select one or more tickets to enable" : "Quick Actions"}
+              className="btn-secondary text-sm flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Wrench size={14} /> Quick Actions <ChevronDown size={14} />
+            </button>
+            {quickOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setQuickOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 py-1 min-w-[200px]">
+                  <div className="px-3 py-1.5 text-[10px] text-gray-600 uppercase font-semibold">Quick Actions</div>
+                  <button onClick={() => quickApply("acknowledge")} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Acknowledge</button>
+                  <button onClick={() => quickApply("close")} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Close</button>
+                  <div className="border-t border-surface-border my-1" />
+                  {TICKET_STATUSES.filter(s => s !== "closed" && s !== "cancelled").slice(0,5).map(s => (
+                    <button key={s} onClick={() => quickApply(`status_${s}`)} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Set Status → {s.replace(/_/g, " ")}</button>
+                  ))}
+                  <div className="border-t border-surface-border my-1" />
+                  {TICKET_PRIORITIES.map(p => (
+                    <button key={p} onClick={() => quickApply(`priority_${p}`)} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Priority → {p}</button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <button onClick={() => setShowFilter(true)} className="btn-secondary text-sm flex items-center gap-1.5">
             <Filter size={14} /> Filter
           </button>
@@ -453,22 +496,31 @@ export function TicketsPage() {
   );
 }
 
-// ── Individual ticket "Modify Selected" dropdown menu ──
+// ── Individual ticket "Quick Actions" dropdown menu (portal + fixed at far left so it never clips) ──
 function TicketActionMenu({ ticketId, currentStatus, currentPriority, onAction }: {
   ticketId: string; currentStatus: string; currentPriority: string;
   onAction: (id: string, action: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: Math.min(r.bottom + 4, window.innerHeight - 420) });
+    }
+    setOpen(o => !o);
+  };
   return (
     <div className="relative">
-      <button onClick={() => setOpen(!open)} className="text-gray-500 hover:text-white p-1 rounded" title="Modify">
+      <button ref={btnRef} onClick={toggle} className="text-gray-500 hover:text-white p-1 rounded" title="Quick Actions">
         <ChevronDown size={14} />
       </button>
-      {open && (
+      {open && createPortal(
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 py-1 min-w-[180px]">
-            <div className="px-3 py-1.5 text-[10px] text-gray-600 uppercase font-semibold">Modify Ticket</div>
+          <div className="fixed z-50 py-1 min-w-[200px] bg-navy-800 border border-surface-border rounded-lg shadow-xl" style={{ top: pos?.top ?? 0, left: 8 }}>
+            <div className="px-3 py-1.5 text-[10px] text-gray-600 uppercase font-semibold">Quick Actions</div>
             {currentStatus !== "in_progress" && (
               <button onClick={() => { onAction(ticketId, "acknowledge"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Acknowledge</button>
             )}
@@ -484,7 +536,8 @@ function TicketActionMenu({ ticketId, currentStatus, currentPriority, onAction }
               <button key={p} onClick={() => { onAction(ticketId, `priority_${p}`); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Priority → {p}</button>
             ))}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
