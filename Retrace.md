@@ -1404,6 +1404,19 @@
 - Changelog policy applied: BuildNotes entry 2026.8.19.011 + What's New (live via API) + this Retrace entry.
 
 
+### Prompt 119 — Sample ticket data for every Service Board + reseed snapshot
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~50 min
+**BuildNotes IDs:** #1 (2026.8.19.012)
+> Add sample ticket data to the reseed snapshot. Create at least 20 additional tickets per service board, covering a variety of ticket types and statuses so the service board badges populate. Use the attached screenshot as the reference for ticket types, statuses, and badge counts. Ensure every badge or count that is currently zero becomes a non-zero value, and vary the numbers across different badge types rather than using the same value. Keep existing data intact and include all new sample data in the reseed snapshot.
+
+**Changes:**
+- `apps/api/src/seed-ticket-samples.ts` — new idempotent seeder (own PrismaClient, no server import): 88 tickets added (MSP +24, Infrastructure +20, NOC +21, Intelligence +23) with per-board status/priority/source/title plans and stale-age schedules so every badge (New, Workable, On Hold, Waiting, Escalated, open, stale 3/7/30, Avg Age) is non-zero and varied; per-board targets make re-runs no-ops; existing tickets untouched.
+- Renumbered 7 legacy tickets whose ticketNumber prefix didn't match their board code (they were invisible in board-filtered lists): MSP-*/INT-*/INF-* → INF-1901..1905, NOC-1901..1902. Badge counts now equal filtered list counts (25/25/23/23).
+- `apps/api/src/snapshots/tickets.json` — re-captured with all 96 tickets (diff-only capture; other tables unchanged; capture total 416 records / 88 tables). Verified snapshot ↔ DB id sets identical.
+- Verification: `/boards/metrics` all badges non-zero and varied (e.g. Infra new 6 / workable 10 / on hold 2 / waiting 4 / escalated 3 / stale 8-5-1); `seed-ticket-samples` re-run adds 0; API typecheck clean for the new file.
+- Changelog policy applied: BuildNotes entry 2026.8.19.012 + What's New (live via API) + this Retrace entry.
+
+
 
 
 

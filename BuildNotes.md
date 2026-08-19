@@ -14,6 +14,12 @@
 
 ---
 
+## 2026.8.19.012 — Sample ticket data for every Service Board
+- **[New]** `apps/api/src/seed-ticket-samples.ts` — idempotent sample-ticket seeding: 88 new tickets across all 4 active boards (MSP +24, Infrastructure +20, NOC +21, Intelligence +23; every board ≥20 additions) with varied statuses, priorities, sources, and ages so every board badge (New, Workable, On Hold, Waiting, Escalated, open, stale 3/7/30-day, Avg Age) is non-zero with varied numbers. Per-board target counts make re-runs no-ops; existing tickets are never touched.
+- **[Fix]** Renumbered 7 legacy tickets whose ticketNumber prefix did not match their board's ticketCode, which had hidden them from board-filtered ticket lists. Badge counts now equal the filtered list counts (Infra 25, MSP 25, NOC 23, INT 23).
+- **[Update]** Reseed snapshot re-captured: `tickets.json` now holds all 96 tickets (88 new + 8 existing, existing data intact); capture total 416 records across 88 tables; diff-only writer left unchanged tables untouched.
+- **[Verification]** `/boards/metrics` (auth): all badges non-zero and varied — Infra: new 6, workable 10, on hold 2, waiting 4, escalated 3, stale 8/5/1 · MSP: 7/7/3/5/2 stale 4/2/1 · NOC: 4/7/1/3/1 stale 5/4/1 · INT: 5/5/2/5/1 stale 3/2/1; board-filtered lists match badge counts; snapshot ↔ DB ticket ids identical (96/96); idempotency re-run adds 0.
+
 ## 2026.8.19.011 — Tickets UX polish series + self-updating What's New pipeline
 - **[New]** Tickets toolbar reorganized: board selector + Create pinned far left, Filter + Choose Columns on the right, all on one row (`pages/Tickets.tsx`).
 - **[New]** Quick Actions: the per-row "Modify Ticket" menu was renamed to Quick Actions and now renders through a portal pinned to the viewport's far left so it can never be clipped by the table's overflow containers; a selection-gated Quick Actions button was added to the toolbar row (disabled until one or more tickets are checked, then applies Acknowledge / Close / Set Status / Set Priority to all selected tickets via `POST /tickets/batch`).

@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.8.19.012",
+    "date": "2026-08-19",
+    "title": "Sample ticket data for every Service Board",
+    "changes": [
+      {
+        "text": "`apps/api/src/seed-ticket-samples.ts` — idempotent sample-ticket seeding: 88 new tickets across all 4 active boards (MSP +24, Infrastructure +20, NOC +21, Intelligence +23; every board ≥20 additions) with varied statuses, priorities, sources, and ages so every board badge (New, Workable, On Hold, Waiting, Escalated, open, stale 3/7/30-day, Avg Age) is non-zero with varied numbers. Per-board target counts make re-runs no-ops; existing tickets are never touched.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Renumbered 7 legacy tickets whose ticketNumber prefix did not match their board's ticketCode, which had hidden them from board-filtered ticket lists. Badge counts now equal the filtered list counts (Infra 25, MSP 25, NOC 23, INT 23).",
+        "type": "Fix"
+      },
+      {
+        "text": "Reseed snapshot re-captured: `tickets.json` now holds all 96 tickets (88 new + 8 existing, existing data intact); capture total 416 records across 88 tables; diff-only writer left unchanged tables untouched.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.8.19.011",
     "date": "2026-08-19",
     "title": "Tickets UX polish series + self-updating What's New pipeline",
