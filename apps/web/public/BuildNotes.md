@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.015 | Last Updated: 2026-08-18
+## Version: 2026.8.18.017 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,20 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.017 — What's New auto-refresh fix
+- **[Fix]** What's New stopped updating: `scripts/generate-buildnotes.mjs` had not been re-run after BuildNotes entries .014–.016, so `apps/web/public/BuildNotes.md` (the What's New page data source) and `apps/api/src/BuildNotes.json` stalled at .008. Regenerated both (68 versions, through .016); verified `/BuildNotes.md` serves .016 and `BuildNotes.json` contains .014–.016.
+- **[Update]** `startup/c7ntax-boot.ps1` — added step 6a: runs `scripts/generate-buildnotes.mjs` on every boot so What's New outputs refresh automatically from the root BuildNotes.md (idempotent).
+
+## 2026.8.18.016 — Now-deployable backlog implemented (12 items, non-breaking, verified)
+- **[New]** Backend: `Quote`/`QuoteLineItem`/`WebauthnCredential`/`PushDevice`/`AiAction`/`AiActionAudit`/`AlertWebhookDelivery`/`OutlookAddinToken` models + `EmailConnector.transport/clientId/clientSecretEncrypted/tenantId` + `ServiceAlertService.monitorKind/monitorUrl/monitorConfig` (additive, `db push` synced).
+- **[New]** Routes: `quotes.ts` (CRUD + convert-to-invoice), `push.ts` (device registration + sync markers), `aiActions.ts` (risk-tier propose/decide; critical blocked), `alertWebhooks.ts` (webhook CRUD + delivery log), `outlookAddin.ts` (batch email→ticket with messageId dedup), `ssoExchange.ts` (env-gated OIDC login, JWKS RS256 verify, user auto-provision), `webauthn.ts` (@simplewebauthn passkey register/login). `billing.ts` gains `POST /invoices/generate-from-tickets` (draft-only).
+- **[Update]** `alertMonitor.ts`: website/ssl/dns monitor kinds with the existing 2-poll clear-streak rule; `serviceAlerts.ts` field whitelist extended.
+- **[Update]** `emailConnectorRuntime.ts`: M365 Graph transport (client-credentials OAuth + Graph mail API) beside IMAP.
+- **[Update]** Auth: `signToken` 15-min expiry + bcrypt cost-12 rehash-on-login behind `AUTH_HARDENING_ENABLED`; `startup/security-scanners.ps1` (optional gitleaks/trivy) wired into boot.
+- **[New]** Web: `Quotes`, `Monitors`, `Webhooks`, `AiActions` pages + routes; Login gains SSO button, passkey sign-in/register, `?token=` SSO callback; FinanceDashboard gains generate-from-tickets; keyboard shortcut `T`→tickets; skeleton CSS (reduced-motion safe).
+- **[New]** `ROLLBACK-BACKLOG-2026-08-18.md` (per-item + unified rollback; all flags listed). `seed-backlog.ts` + snapshot fixtures for new tables (capture + seed-from-snapshots lists extended).
+- **[Verify]** Boot (scheduled task) → API PID fresh, `/api/health` 200, web `/` 200, login check 200; new routes live (quotes/ai-actions/webhooks/push = 401 auth-gated, sso/status 200 `{"enabled":false}`); typechecks: api 177 / web 17 (all errors in pre-existing files; changed files clean). C7NTRL `docs/DEV-HANDOFF.md` updated + pushed (commit 72ffdcf): prerequisites fulfilled, Phase 4 should target C7NTAX alert webhooks.
 
 ## 2026.8.18.015 — PLAN-015: strict dependency-order renumbering
 - **[Update]** `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` (PLAN-015 §2) — reorganized the 16-item implementation plan into strict dependency order: Phase A billing chain (#1 agreements/time engine → #2 expenses → #3 bill-through batch invoicing), Phase B independent upgrades (#4–#13, no unresolved prerequisites, parallel-safe), Phase C externally gated (#14 remote-session notes ← C7NTRL phase 7; #15 client portal ← PLAN-003 Step 2/PLAN-002; #16 infrastructure ← PLAN-010). SMS verification moved #14 → #13 (ungated before gated). All `Depends on` / `Risk if skipped` notes updated with the verified statuses (batch ops ✅, QB Realm ID ✅, file manager ✅, connection fix/re-test ⚠️, per-service RSS/DownDetector ⚠️). No items added or removed; names, paths, and details preserved. PlanDocs copy re-synced with revision note.

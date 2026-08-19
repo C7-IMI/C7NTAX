@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.016 | Last Updated: 2026-08-18
+## Version: 2026.8.18.017 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.017 — What's New auto-refresh fix
+- **[Fix]** What's New stopped updating: `scripts/generate-buildnotes.mjs` had not been re-run after BuildNotes entries .014–.016, so `apps/web/public/BuildNotes.md` (the What's New page data source) and `apps/api/src/BuildNotes.json` stalled at .008. Regenerated both (68 versions, through .016); verified `/BuildNotes.md` serves .016 and `BuildNotes.json` contains .014–.016.
+- **[Update]** `startup/c7ntax-boot.ps1` — added step 6a: runs `scripts/generate-buildnotes.mjs` on every boot so What's New outputs refresh automatically from the root BuildNotes.md (idempotent).
 
 ## 2026.8.18.016 — Now-deployable backlog implemented (12 items, non-breaking, verified)
 - **[New]** Backend: `Quote`/`QuoteLineItem`/`WebauthnCredential`/`PushDevice`/`AiAction`/`AiActionAudit`/`AlertWebhookDelivery`/`OutlookAddinToken` models + `EmailConnector.transport/clientId/clientSecretEncrypted/tenantId` + `ServiceAlertService.monitorKind/monitorUrl/monitorConfig` (additive, `db push` synced).

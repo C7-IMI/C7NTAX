@@ -1156,6 +1156,29 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.016 + this Retrace entry.
 
 
+### Prompt 98 — "Fix this" (screenshot: type errors in outlookAddin.ts)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~10 min
+**BuildNotes IDs:** — (covered by 2026.8.18.016)
+> [Attached screenshot] Fix this
+
+**Changes:**
+- Diagnosed the attached error screenshot as TypeScript errors in the just-written `apps/api/src/routes/outlookAddin.ts`: the `ParsedEmail` shape (from `@C7NTAX/email`) was mismatched (`fromEmail`/`emailMessageId`/`receivedAt` vs `from: {name,email}`, `messageId`, `date`, `to/cc/references`), `Ticket.emailMessageId` does not exist, and `createTicketFromEmail(boardId, email)` returns `Promise<string>`.
+- Rewrote `outlookAddin.ts` to build correct `ParsedEmail` objects and dedup via `SystemConfig` key `outlook-addin-seen` (capped 100), mirroring the runtime's withDedup. Verified: zero errors in the file; api total stayed at baseline.
+- Changelog policy applied: this Retrace entry (fix folded into BuildNotes 2026.8.18.016).
+
+
+### Prompt 99 — What's New not updating automatically
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.18.017)
+> What's New isn't updating automatically again. Fix it and include all missing changes.
+
+**Changes:**
+- Root cause: `scripts/generate-buildnotes.mjs` had not been re-run after BuildNotes .014–.016, so `apps/web/public/BuildNotes.md` (What's New page data source; Changelog.tsx fetches `/BuildNotes.md`) and `apps/api/src/BuildNotes.json` were stale at .008.
+- Ran the generator: 68 → 69 versions; public md + JSON now include .014–.017; verified live `http://localhost:3010/BuildNotes.md` serves .016/.017.
+- Permanent fix: added boot step 6a to `startup/c7ntax-boot.ps1` — runs `scripts/generate-buildnotes.mjs` on every boot (idempotent) so What's New outputs refresh automatically.
+- Changelog policy applied: BuildNotes entry 2026.8.18.017 + What's New outputs regenerated (69 versions) + this Retrace entry.
+
+
 
 
 

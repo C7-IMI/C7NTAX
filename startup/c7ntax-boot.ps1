@@ -239,6 +239,12 @@ if (-not $SkipSeed) {
     Write-Step "Reseed skipped (-SkipSeed)"
 }
 
+# 6a. Refresh What's New outputs from BuildNotes.md (single source of truth)
+if (Test-Path "$ProjectRoot\scripts\generate-buildnotes.mjs") {
+    & $Node "$ProjectRoot\scripts\generate-buildnotes.mjs" | Out-Null
+    Write-Step "What's New outputs refreshed (public/BuildNotes.md + BuildNotes.json)"
+}
+
 # 6. Start API (:4000)
 if (Test-Port 4000) {
     Write-Step "API already running"
