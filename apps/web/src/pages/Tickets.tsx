@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import api from "../api";
 import { InferencePanel } from "../components/InferencePanel";
-import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User } from "lucide-react";
+import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical } from "lucide-react";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 
@@ -30,6 +30,28 @@ const BATCH_ACTIONS = [
 
 const TICKET_STATUSES = ["new","in_progress","waiting_on_client","on_hold","pending_approval","resolved","closed","cancelled"];
 const TICKET_PRIORITIES = ["low","medium","high","critical"];
+
+// ── Configurable ticket list columns (PSA-style: Autotask / ConnectWise / HaloPSA reference) ──
+// Priority is available but unchecked by default.
+type TicketColumnDef = { id: string; label: string; defaultVisible: boolean; sortField?: string };
+const TICKET_COLUMNS: TicketColumnDef[] = [
+  { id: "number", label: "Ticket #", defaultVisible: true, sortField: "ticketNumber" },
+  { id: "title", label: "Summary", defaultVisible: true, sortField: "title" },
+  { id: "status", label: "Status", defaultVisible: true, sortField: "status" },
+  { id: "board", label: "Board", defaultVisible: true, sortField: "board.name" },
+  { id: "client", label: "Client", defaultVisible: true, sortField: "company.name" },
+  { id: "technician", label: "Technician", defaultVisible: true },
+  { id: "priority", label: "Priority", defaultVisible: false },
+  { id: "timestamp", label: "Timestamp", defaultVisible: true, sortField: "updatedAt" },
+];
+
+function loadTicketColumns(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem("c7_ticket_columns") || "null");
+    if (Array.isArray(v) && v.length > 0) return v.filter((id) => TICKET_COLUMNS.some((c) => c.id === id));
+  } catch { /* ignore */ }
+  return TICKET_COLUMNS.filter((c) => c.defaultVisible).map((c) => c.id);
+}
 
 // ── Ticket detail tabs (ConnectWise-style toolbar; Tasks/Open Tickets/Conversions/Surveys/RMA excluded) ──
 const TICKET_DETAIL_TABS = [
@@ -69,6 +91,43 @@ export function TicketsPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [filterForm, setFilterForm] = useState<Record<string,string>>({ status: "", priority: "", assignedToId: "", dateFrom: "", dateTo: "" });
   const [users, setUsers] = useState<Array<{id:string;firstName:string;lastName:string}>>([]);
+
+  // ── Column display state (Choose Columns + drag reorder, persisted per user) ──
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(loadTicketColumns);
+  const [showColumnModal, setShowColumnModal] = useState(false);
+  const [dragCol, setDragCol] = useState<string | null>(null);
+
+  const saveColumns = (cols: string[]) => { setVisibleColumns(cols); localStorage.setItem("c7_ticket_columns", JSON.stringify(cols)); };
+  const toggleColumn = (id: string) => { saveColumns(visibleColumns.includes(id) ? visibleColumns.filter((c) => c !== id) : [...visibleColumns, id]); };
+  const moveColumn = (from: string, to: string) => {
+    const a = [...visibleColumns]; const fi = a.indexOf(from); const ti = a.indexOf(to);
+    if (fi < 0 || ti < 0 || fi === ti) return;
+    a.splice(fi, 1); a.splice(ti, 0, from); saveColumns(a);
+  };
+
+  const renderTicketCell = (t: any, colId: string) => {
+    switch (colId) {
+      case "number": return <td key={colId} className="px-2 py-3"><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium">{t.ticketNumber}</Link></td>;
+      case "title": return <td key={colId} className="px-3 py-3"><Link to={`/tickets/${t.id}`} className="text-gray-300 hover:text-white text-sm leading-snug">{t.title}</Link></td>;
+      case "status": return <td key={colId} className="px-3 py-3"><span className={`badge ${STATUS_COLORS[t.status]||""}`}>{(t.status)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5">OVERDUE</span> : null}</td>;
+      case "board": return <td key={colId} className="px-3 py-3 text-gray-400 text-xs">{(t.board as {name?:string})?.name||"-"}</td>;
+      case "client": return <td key={colId} className="px-3 py-3 text-gray-400">{(t.company as {name?:string})?.name||"-"}</td>;
+      case "technician": return <td key={colId} className="px-3 py-3 text-gray-300 text-sm">{t.assignedTo ? `${(t.assignedTo as {firstName?:string;lastName?:string}).firstName||""} ${(t.assignedTo as {firstName?:string;lastName?:string}).lastName||""}`.trim() || "-" : "-"}</td>;
+      case "priority": return <td key={colId} className="px-3 py-3"><span className="badge bg-surface-lighter text-gray-300 capitalize">{t.priority || "medium"}</span></td>;
+      case "timestamp": {
+        const created = t.createdAt ? new Date(t.createdAt) : null;
+        const updated = t.updatedAt ? new Date(t.updatedAt) : null;
+        const changed = created && updated && updated.getTime() > created.getTime();
+        return (
+          <td key={colId} className="px-3 py-3 text-gray-500 text-xs"
+            title={changed ? `Created ${created!.toLocaleString()} · Last updated ${updated!.toLocaleString()}` : `Created ${created?.toLocaleString() || "-"}`}>
+            {changed ? updated!.toLocaleString() : (created?.toLocaleString() || "-")}
+          </td>
+        );
+      }
+      default: return null;
+    }
+  };
 
   const fetchBoards = () => { api.get("/boards").then(r=>setBoards(Array.isArray(r.data)?r.data:(r.data?.data||r.data||[]))).catch(()=>{}); };
 
@@ -332,29 +391,59 @@ export function TicketsPage() {
         </div>
       )}
 
-      <div className="card overflow-hidden p-0">
+              <div className="flex justify-end mb-2">
+          <button onClick={() => setShowColumnModal(true)} className="btn-secondary text-xs flex items-center gap-1.5"><Columns3 size={14} /> Choose Columns</button>
+        </div>
+        <div className="card overflow-hidden p-0">
         {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
             <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white">{selectedIds.size === tickets.length ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>
-            <SortableHeader field="ticketNumber" label="Ticket #" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-2 py-3 w-32" />
-            <SortableHeader field="status" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden md:table-cell" />
-            <SortableHeader field="board.name" label="Board" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" />
-            <SortableHeader field="company.name" label="Client" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" />
-            <SortableHeader field="updatedAt" label="Updated" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden sm:table-cell" />
+            {visibleColumns.map((colId) => {
+              const def = TICKET_COLUMNS.find((c) => c.id === colId);
+              if (!def) return null;
+              return (
+                <th key={colId}
+                  draggable
+                  onDragStart={() => setDragCol(colId)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => { if (dragCol && dragCol !== colId) moveColumn(dragCol, colId); setDragCol(null); }}
+                  onDragEnd={() => setDragCol(null)}
+                  onClick={() => { if (def.sortField) setSort(nextSort(sort, def.sortField)); }}
+                  className={`px-3 py-3 select-none ${dragCol === colId ? "opacity-50" : ""} ${def.sortField ? "cursor-pointer hover:text-white" : ""}`}
+                  title={def.sortField ? "Click to sort · drag to reorder" : "Drag to reorder"}
+                >
+                  <span className="inline-flex items-center gap-1.5 text-xs uppercase font-semibold">{def.label} <GripVertical size={12} className="text-gray-600 cursor-grab" /></span>
+                </th>
+              );
+            })}
             <th className="px-4 py-3 w-10"></th>
           </tr></thead>
             <tbody>{sortData(tickets as Array<Record<string,unknown>>, sort?.field || "updatedAt", sort?.direction || "desc").map((t:any)=>(<tr key={t.id} className={`border-b border-surface-border/50 hover:bg-surface-light/50 ${selectedIds.has(t.id) ? "bg-cyber-600/10" : ""}`}>
               <td className="px-4 py-3"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white">{selectedIds.has(t.id) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></td>
-              <td className="px-2 py-3"><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium">{t.ticketNumber}</Link><p className="text-gray-500 text-xs mt-0.5 truncate max-w-xs">{(t.title)?.slice(0,60)}</p></td>
-              <td className="px-4 py-3 hidden md:table-cell"><span className={`badge ${STATUS_COLORS[t.status]||""}`}>{(t.status)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5">OVERDUE</span> : null}</td>
-              <td className="px-4 py-3 hidden lg:table-cell text-gray-400 text-xs">{(t.board as {name?:string})?.name||"-"}</td>
-              <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{(t.company as {name?:string})?.name||"-"}</td>
-              <td className="px-4 py-3 hidden sm:table-cell text-gray-500 text-xs">{t.updatedAt?new Date(t.updatedAt).toLocaleDateString():"-"}</td>
+              {visibleColumns.map((colId) => renderTicketCell(t, colId))}
               <td className="px-4 py-3">
                 <TicketActionMenu ticketId={t.id} currentStatus={t.status} currentPriority={t.priority} onAction={ticketAction} />
               </td>
             </tr>))}</tbody></table></div>)}
       </div>
+
+      {showColumnModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowColumnModal(false)}>
+          <div className="card w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Choose Columns</h3>
+            <div className="space-y-1 max-h-80 overflow-y-auto">
+              {TICKET_COLUMNS.map((c) => (
+                <label key={c.id} className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer py-1">
+                  <input type="checkbox" checked={visibleColumns.includes(c.id)} onChange={() => toggleColumn(c.id)} className="accent-cyber-500" />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-600 mt-3">Drag column headers to reorder. Column visibility and order are saved per user.</p>
+            <div className="flex justify-end mt-4"><button className="btn-primary text-sm px-3 py-1.5" onClick={() => setShowColumnModal(false)}>Done</button></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,37 @@
 [
   {
+    "id": "8c92eb4b-4694-4bef-8b89-c12c62d5618f",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "super_admin",
+      "email": "jason.redwine@cyber7group.com",
+      "lastName": "Redwine",
+      "password": "***",
+      "firstName": "Jason"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-19T15:53:05.957Z"
+  },
+  {
+    "id": "673f1a22-dfc4-4760-a6c5-efaf1d6dcf18",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "super_admin",
+      "email": "stephen.simmons@cyber7group.com",
+      "lastName": "Simmons",
+      "password": "***",
+      "firstName": "Stephen"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-19T15:54:06.947Z"
+  },
+  {
     "id": "a4e6764a-f589-4a60-94a6-5dac4ebe633b",
     "action": "email-connectors:create",
     "entity": "email-connectors",
@@ -378,6 +410,22 @@
     "userId": "1c60b37d-3caa-4aaf-a32a-84f1dba2b820",
     "ipAddress": "127.0.0.1",
     "createdAt": "2026-08-13T05:55:14.870Z"
+  },
+  {
+    "id": "629331d9-76b7-4dcd-8d25-f7207c12b3f0",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "admin",
+      "email": "jonathan.redwine@cyber7group.com",
+      "lastName": "Redwine",
+      "password": "***",
+      "firstName": "Jonathan"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-19T15:53:41.047Z"
   },
   {
     "id": "e1a8a368-f06c-4f0b-ba10-88650304c1a6",

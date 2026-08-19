@@ -1,22 +1,5 @@
 [
   {
-    "id": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
-    "name": "GitHub",
-    "category": "cloud",
-    "description": "GitHub.com, Actions, Packages and Pages.",
-    "statusPageUrl": "https://www.githubstatus.com",
-    "downDetectorUrl": "https://downdetector.com/status/github/",
-    "rssUrl": "https://www.githubstatus.com/history.rss",
-    "monitorKind": "vendor",
-    "monitorUrl": null,
-    "monitorConfig": null,
-    "monitorEnabled": true,
-    "enabled": true,
-    "sortOrder": 40,
-    "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-19T00:10:05.200Z"
-  },
-  {
     "id": "c2335589-62b0-4bfa-8a39-12b8f0758697",
     "name": "Google Workspace",
     "category": "collaboration",
@@ -31,7 +14,7 @@
     "enabled": true,
     "sortOrder": 50,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-19T00:10:05.201Z"
+    "updatedAt": "2026-08-19T15:13:01.912Z"
   },
   {
     "id": "eda5aa37-2863-4125-b626-468192066ff6",
@@ -48,7 +31,7 @@
     "enabled": true,
     "sortOrder": 60,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-19T00:10:05.202Z"
+    "updatedAt": "2026-08-19T15:13:01.913Z"
   },
   {
     "id": "10630569-8873-4b00-9137-a346046c2b5f",
@@ -65,7 +48,7 @@
     "enabled": true,
     "sortOrder": 70,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-19T00:10:05.203Z"
+    "updatedAt": "2026-08-19T15:13:01.914Z"
   },
   {
     "id": "26106765-a66e-4750-bff9-96454dd9a5cb",
@@ -82,7 +65,7 @@
     "enabled": true,
     "sortOrder": 80,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-19T00:10:05.203Z"
+    "updatedAt": "2026-08-19T15:13:01.915Z"
   },
   {
     "id": "d2abce0b-f02e-46c4-86c4-441a23f69571",
@@ -118,7 +101,7 @@
     "enabled": true,
     "sortOrder": 10,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-19T00:10:05.196Z"
+    "updatedAt": "2026-08-19T15:13:01.906Z"
   },
   {
     "id": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
@@ -135,7 +118,7 @@
     "enabled": true,
     "sortOrder": 20,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-19T00:10:05.199Z"
+    "updatedAt": "2026-08-19T15:13:01.909Z"
   },
   {
     "id": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
@@ -152,6 +135,23 @@
     "enabled": true,
     "sortOrder": 30,
     "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-19T00:10:05.200Z"
+    "updatedAt": "2026-08-19T15:13:01.911Z"
+  },
+  {
+    "id": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "name": "GitHub",
+    "category": "cloud",
+    "description": "GitHub.com, Actions, Packages and Pages.",
+    "statusPageUrl": "https://www.githubstatus.com",
+    "downDetectorUrl": "https://downdetector.com/status/github/",
+    "rssUrl": "https://www.githubstatus.com/history.rss",
+    "monitorKind": "vendor",
+    "monitorUrl": null,
+    "monitorConfig": null,
+    "monitorEnabled": true,
+    "enabled": true,
+    "sortOrder": 40,
+    "createdAt": "2026-08-14T05:55:14.948Z",
+    "updatedAt": "2026-08-19T15:13:01.912Z"
   }
 ]

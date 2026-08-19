@@ -129,7 +129,7 @@
     "id": "5e879c8d-eb9d-4c64-97c0-172d8fb12c08",
     "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
     "title": "UPDATE: **Summary**\nSome customers may experience slowness while using Google Drive.\n**Description**\nWe are experiencing an issue with Google Drive beginning Tuesday, 2026-08-18 16:58 PDT.\nOur engineering team is currently working on a potential fix while continuing to investigate the full root cause.\nWe will provide an update by Tuesday, 2026-08-18 22:00 PDT with current details.\nWe apologize to all who are affected by the disruption.\n**Symptoms**\nAffected customers may experience slowness while using Google Drive.\n**Workaround**\nNone at this time.",
-    "description": "&lt;p&gt; Incident began at &lt;strong&gt;2026-08-18 23:58&lt;/strong&gt; &lt;span&gt;(times are in &lt;strong&gt;Coordinated Universal Time (UTC)&lt;/strong&gt;).&lt;/span&gt;&lt;/p&gt;&lt;div class=\"cBIRi14aVDP__status-update-text\"&gt;&lt;p&gt;&lt;strong&gt;Summary&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;Multiple customers in Australia and New Zealand may experience slowness or errors while accessing Google Drive.&lt;/p&gt; &lt;p&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;We are ",
+    "description": "&lt;p&gt; Incident began at &lt;strong&gt;2026-08-18 23:58&lt;/strong&gt; and ended at &lt;strong&gt;2026-08-19 12:40&lt;/strong&gt; &lt;span&gt;(times are in &lt;strong&gt;Coordinated Universal Time (UTC)&lt;/strong&gt;).&lt;/span&gt;&lt;/p&gt;&lt;div class=\"cBIRi14aVDP__status-update-text\"&gt;&lt;p&gt;&lt;strong&gt;Summary&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;Multiple customers in Australia and New Zealand may experience slowness or errors while accessing Google Drive.&lt;/p&gt; &lt;p&gt;&lt;stro",
     "severity": "degraded",
     "status": "active",
     "source": "rss",
@@ -137,6 +137,34 @@
     "detectedAt": "2026-08-18T22:38:09.445Z",
     "resolvedAt": null,
     "createdAt": "2026-08-18T22:38:09.446Z",
-    "updatedAt": "2026-08-19T07:20:24.646Z"
+    "updatedAt": "2026-08-19T15:53:28.740Z"
+  },
+  {
+    "id": "184777f9-6f60-46f6-8e3d-23a92ed5961f",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Possible service degradation reported for GitHub (DownDetector)",
+    "description": "Auto-resolved: monitored sources for GitHub report no active incidents or degradations (all clear).\n\nDownDetector is reporting problems for GitHub.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/github/",
+    "detectedAt": "2026-08-19T15:13:39.406Z",
+    "resolvedAt": "2026-08-19T15:43:16.754Z",
+    "createdAt": "2026-08-19T15:13:39.408Z",
+    "updatedAt": "2026-08-19T15:43:16.755Z"
+  },
+  {
+    "id": "6a527461-5669-4974-b1d6-a02579e7e8b4",
+    "serviceId": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
+    "title": "Service impact: Increased Error Rates",
+    "description": "We are investigating an issue that is impacting launching new EC2 instances and resources in a newly launched Availability Zone (euw2-az4) in the EU-WEST-2 Region. During this time, affected customers may experience issues when creating or modifying resources in the Region. Other AWS services may also be impacted. For immediate recovery, we recommend that customers use alternative Availability Zones (euw2-az1, euw2-az2, and euw2-az3) where applicable. Existing running instances and resources are",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.aws.amazon.com/",
+    "detectedAt": "2026-08-19T15:18:17.558Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-19T15:18:17.560Z",
+    "updatedAt": "2026-08-19T15:53:27.560Z"
   }
 ]
