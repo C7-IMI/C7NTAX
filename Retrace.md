@@ -1074,6 +1074,18 @@
 - PlanDocs PLAN-013 copy + registry row; changelog policy applied (BuildNotes 2026.8.18.011, What's New regenerated 63 versions, this Retrace entry).
 
 
+### Prompt 91 — Now-deployable backlog review (no AWS, non-breaking)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.18.012)
+> Review the application and its existing feature plans/backlog. Identify all planned features that can be implemented and deployed now without requiring an AWS migration first and without breaking the current application. For each feature, provide a brief implementation approach that uses the current infrastructure, preserves all existing functionality, and keeps the application usable. Exclude any feature that depends on AWS or poses a risk of breaking the app.
+
+**Changes:**
+- Verified live state (Tenant model only, PLAN-001/008 implemented, PLAN-009 phases 1–4 in production, inference/alertMonitor/emailToTicket services present) and reviewed all 13 plan documents.
+- `PLAN-C7NTAX-Now-Deployable-Backlog.md` (88 lines) — 12 now-deployable features each with a non-breaking implementation approach on current infra (quotes/service catalog, time→invoice lines, website/SSL/DNS monitoring, alert severity/webhooks, provider-agnostic AI risk-classified actions, SAML/OIDC SSO, WebAuthn passkey, Outlook add-in backend, M365 Graph transport, mobile backend enablement, SOC 2 non-AWS hardening, UI/UX modernization) + explicit exclusion table with reasons (AWS-dependent or break-risk: PLAN-010, PLAN-011, RMM device line, multi-tenant RLS Steps 2–3, tenant-gated portal, mobile store publishing).
+- Changelog policy applied: BuildNotes entry 2026.8.18.012 + this Retrace entry.
+
+
+
 
 
 

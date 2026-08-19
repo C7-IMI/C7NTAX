@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.011 | Last Updated: 2026-08-18
+## Version: 2026.8.18.012 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,9 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.012 — Now-Deployable Backlog Review (No AWS, Non-Breaking)
+- **[New]** `PLAN-C7NTAX-Now-Deployable-Backlog.md` — reviewed all 13 plans + live codebase and identified 12 features deployable now without AWS migration and without breaking the app, each with an implementation approach that preserves existing functionality (quotes/service catalog, time→invoice lines, website/SSL/DNS monitoring, alert severity/webhooks, provider-agnostic AI risk-classified actions, SAML/OIDC SSO, WebAuthn passkey, Outlook add-in backend, M365 Graph transport, mobile backend enablement, SOC 2 non-AWS hardening, UI/UX modernization). Explicit exclusion table with reasons (AWS-dependent or break-risk items deferred).
 
 ## 2026.8.18.011 — PLAN-013: Competitive Review & Modernization
 - **[New]** `PLAN-C7NTAX-Competitive-Review-and-Modernization.md` (PLAN-013) — in-depth review of Endar, NetLock RMM, and Breeze vs C7NTAX: full feature inventories for all four; comparison tables (common features across the three, unique per app, vs C7NTAX); gap analysis (RMM device agents/monitoring, patch management, remote tools, SSO, quoting→invoice, customer portal, backup, risk-classified AI actions, MCP, RLS multi-tenancy, UI modernization); dependency-ordered incremental implementation plan with per-phase `Depends on`/`Risk if skipped` notes, explicit moved-items notes (AI risk engine → extends PLAN-011; SSO → links PLAN-002; multi-tenant RLS → links PLAN-003; device agents deferred until PLAN-010 AWS infra), frontend items (dialogs, settings, sections), design modernization preserving C7NTAX theming, and performance tradeoff justifications.
