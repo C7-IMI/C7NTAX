@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { readFileSync } from "fs";
+import { readFileSync, statSync } from "fs";
 import { resolve } from "path";
 import { authenticate, type AuthRequest } from "../middleware/auth";
 import { prisma } from "../index";
@@ -266,11 +266,39 @@ function parseBuildNotes(mdPath: string): VersionEntry[] {
   return versions;
 }
 
+/**
+ * Locate the root BuildNotes.md. Walks up from this file's location so the
+ * parse works whether the API runs from src (tsx/dev), from dist, or from a
+ * packaged desktop build, and honors C7NTAX_ROOT when set.
+ */
+function findBuildNotes(): string | null {
+  const candidates: string[] = [];
+  const envRoot = process.env.C7NTAX_ROOT;
+  if (envRoot) candidates.push(resolve(envRoot, "BuildNotes.md"));
+  let dir = __dirname;
+  for (let i = 0; i < 10; i++) {
+    candidates.push(resolve(dir, "BuildNotes.md"));
+    const parent = resolve(dir, "..");
+    if (parent === dir) break;
+    dir = parent;
+  }
+  for (const p of candidates) {
+    try {
+      if (statSync(p).isFile()) return p;
+    } catch { /* keep searching */ }
+  }
+  return null;
+}
+
 systemRouter.get("/changelog", (_req, res) => {
   try {
-    const mdPath = resolve(__dirname, "../../../../BuildNotes.md");
-    const data = parseBuildNotes(mdPath);
-    res.json(data);
+    const mdPath = findBuildNotes();
+    if (mdPath) {
+      const data = parseBuildNotes(mdPath);
+      res.json(data);
+      return;
+    }
+    throw new Error("BuildNotes.md not found");
   } catch {
     // Fallback to static JSON if MD not available
     try {

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.19.010 | Last Updated: 2026-08-19
+## Version: 2026.8.19.011 | Last Updated: 2026-08-19
 
 ---
 
@@ -10,8 +10,22 @@
 - **The date octets MUST be the actual current date when the entry is written** (derived, never typed). Use `node scripts/next-version.mjs` to compute the next version; the build number resets to `001` on a new day.
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
+- **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.8.19.011 — Tickets UX polish series + self-updating What's New pipeline
+- **[New]** Tickets toolbar reorganized: board selector + Create pinned far left, Filter + Choose Columns on the right, all on one row (`pages/Tickets.tsx`).
+- **[New]** Quick Actions: the per-row "Modify Ticket" menu was renamed to Quick Actions and now renders through a portal pinned to the viewport's far left so it can never be clipped by the table's overflow containers; a selection-gated Quick Actions button was added to the toolbar row (disabled until one or more tickets are checked, then applies Acknowledge / Close / Set Status / Set Priority to all selected tickets via `POST /tickets/batch`).
+- **[New]** Quick Actions dropdown polish: chevron moved to the far left of the trigger button, the menu opens left-aligned directly underneath the arrow, and the menu width is content-sized (`w-max` grid) with no blank space on the right — it grows and shrinks automatically as options appear or disappear.
+- **[New]** Global hover tooltips: a single event-delegated `components/GlobalTooltip.tsx` (mounted once in App.tsx) shows themed tooltips for every button, link, input, select and textarea across the app, deriving labels from `data-tooltip`, `aria-label`, `title`, labels/placeholders, lucide icon names, or visible text. Native titles are temporarily suppressed while the custom tooltip is open so they never double-show.
+- **[New]** Service board cards: the New, Workable, On Hold, Waiting and Escalated metrics are now clickable links that open `/tickets` filtered to that board + status (Workable → in_progress, Waiting → waiting_on_client + waiting_on_third_party, Escalated → open + critical); hover ring + underline marks them clickable. Board name and "View tickets →" remain links to the board.
+- **[Update]** Tickets list filters are now URL-param driven (`status`, `priority`, `assignedToId`, `dateFrom`, `dateTo`), so deep links from boards load pre-filtered. The API list endpoint accepts comma-separated multi-value status/priority and the literal `status=open` (everything not closed/cancelled).
+- **[New]** Filter dialog: "Filter By" quick filter (Workable / Escalated / Waiting / On Hold / New) added above Status, mapping to the matching underlying filters; all filter options now use proper capitalization ("Closed", "In Progress", "Waiting On Client", …).
+- **[Fix]** Quick action chevron column moved from the far right of the ticket table to immediately left of Ticket #; dropdown blank space removed.
+- **[Fix]** What's New stopped updating — root cause: the page read a static build-time copy (`apps/web/public` → `dist/BuildNotes.md`) while the root `BuildNotes.md` is the live source, and the copy step ran only manually. The page now fetches `GET /api/system/changelog`, which parses the root file on every request (path resolution hardened to walk up from the API location + `C7NTAX_ROOT` env); a pre-commit git hook regenerates the static fallbacks (public MD + JSON) automatically; the static-file fallback remains for offline use.
+- **[Update]** Changelog policy documented: a change is complete only when Build Notes, Retrace, and What's New have all been updated.
+- **[Verification]** web typecheck (changed files clean); vite build success; `/api/system/changelog` serves the newest entry; 80 versions regenerated.
 
 ## 2026.8.19.010 — Reseed snapshot refreshed with all manual changes
 - **[Update]** Re-ran `snapshot-capture.ts` to capture the latest application state: users.json now holds all 9 users (including the newly added ones); all other changed tables re-captured. Capture total: 313 records across 86 tables; unchanged tables skipped by the diff-only writer.

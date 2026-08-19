@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Calendar, Sparkles, Zap, RefreshCw, Bug, Search, X } from "lucide-react";
+import api from "../api";
 
 interface ChangeItem {
   text: string;
@@ -61,13 +62,30 @@ export function ChangelogPage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    // Fetch raw BuildNotes.md from Vite's public directory — no server needed
-    fetch("/BuildNotes.md")
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
-      .then(raw => {
-        const parsed = parseBuildNotes(raw);
-        if (parsed.length === 0) throw new Error("No version entries found in BuildNotes.md");
+    // Primary source: the API parses the root BuildNotes.md on every request,
+    // so What's New always reflects the latest entries with no copy step.
+    api.get("/system/changelog")
+      .then(r => {
+        const entries = Array.isArray(r.data) ? r.data : (r.data?.data ?? []);
+        const parsed: Version[] = entries.map((e: { version: string; date: string; title: string; changes: ChangeItem[] }, i: number) => ({
+          id: i + 1,
+          version: e.version,
+          date: e.date,
+          title: e.title,
+          changes: e.changes ?? [],
+        }));
+        if (parsed.length === 0) throw new Error("No version entries found");
         setVersions(parsed);
+      })
+      .catch(() => {
+        // Fallback: static copy from the public directory (offline / API down)
+        return fetch("/BuildNotes.md")
+          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+          .then(raw => {
+            const parsed = parseBuildNotes(raw);
+            if (parsed.length === 0) throw new Error("No version entries found in BuildNotes.md");
+            setVersions(parsed);
+          });
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
@@ -78,7 +96,7 @@ export function ChangelogPage() {
   if (error) return (
     <div className="text-center py-12">
       <p className="text-red-400 text-sm">Could not load changelog: {error}</p>
-      <p className="text-gray-500 text-xs mt-2">Ensure BuildNotes.md exists in the public/ directory.</p>
+      <p className="text-gray-500 text-xs mt-2">Could not reach the changelog endpoint or find BuildNotes.md.</p>
     </div>
   );
 

@@ -1,6 +1,8 @@
 # C7NTAX — Retrace Prompt Log
 ## Tracking all user prompts, timestamps, and completion metrics
 
+- **Definition of done:** a change is complete only when Build Notes (`BuildNotes.md`), this Retrace log, and What's New (served live from BuildNotes via `GET /api/system/changelog`) have all been updated.
+
 ---
 
 ### Prompt 1 — Build C7 Overwatch PSA Platform
@@ -1312,6 +1314,94 @@
 - Fixed Prisma client names kBArticleVersion/kBArticleAttachment.
 - Verification: delete+re-insert reseed round-trip (71 inserts); after reseed users 9 / tickets 8 / kumo assets 5 — all manual data intact.
 - Changelog policy applied: BuildNotes entry 2026.8.19.010 + What's New outputs regenerated (79 versions) + this Retrace entry.
+
+
+### Prompt 111 — Move Tickets toolbar controls onto the Choose Columns row
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~10 min
+**BuildNotes IDs:** #1 (2026.8.19.011)
+> Move the board selector, filter button, and create button down to the same row as the Choose Columns button. Board selector + Create on the far left; Filter on the right next to Choose Columns.
+
+**Changes:**
+- `apps/web/src/pages/Tickets.tsx` — toolbar reorganized into one row: board selector + Create on the left, Filter + Choose Columns on the right; title/subtitle moved to their own row; old standalone Choose Columns row removed.
+- Changelog policy applied: BuildNotes entry 2026.8.19.011 + What's New (live via API) + this Retrace entry.
+
+
+### Prompt 112 — Fix Modify Ticket menu; add selection-gated Quick Actions; rename
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.19.011)
+> Fix the Modify Ticket menu so it displays fully (was clipped and required scrolling), move it to the far left, add a Quick Actions button on the Choose Columns row that is disabled until tickets are selected and then shows the same options, and rename Modify Ticket to Quick Actions.
+
+**Changes:**
+- `apps/web/src/pages/Tickets.tsx` — row menu portalized (`createPortal` to body, fixed at viewport far-left, bottom-clamped) so table overflow can no longer clip it; renamed to Quick Actions; toolbar Quick Actions button added (disabled/grayed until ≥1 checkbox selected; applies Acknowledge/Close/Set Status/Set Priority to all selected via `POST /tickets/batch`).
+- Changelog policy applied: BuildNotes entry 2026.8.19.011 + What's New (live via API) + this Retrace entry.
+
+
+### Prompt 113 — Quick Actions dropdown arrow position and alignment
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~10 min
+**BuildNotes IDs:** #1 (2026.8.19.011)
+> Update the Quick Actions dropdown so the arrow is at the far left, align the menu directly underneath the arrow when opened, and remove blank space on the right of the menu.
+
+**Changes:**
+- `apps/web/src/pages/Tickets.tsx` — chevron moved to the front of the trigger (▼ 🔧 Quick Actions); dropdown changed `right-0` → `left-0` so it opens under the arrow; `min-w-[200px]` → `w-max`.
+- Changelog policy applied: BuildNotes entry 2026.8.19.011 + What's New (live via API) + this Retrace entry.
+
+
+### Prompt 114 — Hover tooltips for every input, button, and link
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.19.011)
+> Implement hover tooltips for every input field, clickable button, and clickable link across the entire application.
+
+**Changes:**
+- `apps/web/src/components/GlobalTooltip.tsx` — new global tooltip system (event delegation on document for buttons/links/inputs/selects/textareas; label from data-tooltip → aria-label → title → label/placeholder → lucide icon name → text; 450ms hover delay, instant on focus; viewport clamping + flip; native title suppression to avoid double tooltips).
+- `apps/web/src/App.tsx` — mounts `<GlobalTooltip />` once at the app root, so it covers all pages, modals, and portals.
+- Changelog policy applied: BuildNotes entry 2026.8.19.011 + What's New (live via API) + this Retrace entry.
+
+
+### Prompt 115 — Clickable board card statuses + Filter By field
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #1 (2026.8.19.011)
+> Make the status items on each Service board card (New, Workable, On Hold, Waiting, Escalated) clickable, navigating to the tickets section filtered by that status for that board — like clicking the board name. In the ticket summary add a "Filter By" field above Status with options Workable, Escalated, Waiting, On Hold, New, with proper capitalization everywhere.
+
+**Changes:**
+- `apps/web/src/pages/Boards.tsx` — card restructured: board name + "View tickets →" are links; the five status metrics are clickable `StatusBadge` links with hover ring/underline → `/tickets?boardId=…&status=…` (Workable→in_progress, Waiting→waiting_on_client,waiting_on_third_party, Escalated→status=open&priority=critical).
+- `apps/api/src/routes/tickets/index.ts` — list endpoint accepts comma-separated multi-value status/priority and literal `status=open` (notIn closed/cancelled).
+- `apps/web/src/pages/Tickets.tsx` — filters refactored to URL params (fetch effect keyed on params); filter dialog seeds from URL; "Filter By" quick-filter select added above Status; capitalized Status/Priority labels (statusLabel/priorityLabel helpers).
+- Changelog policy applied: BuildNotes entry 2026.8.19.011 + What's New (live via API) + this Retrace entry.
+
+
+### Prompt 116 — Move quick action chevron left of Ticket #; fix dropdown blank space
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~10 min
+**BuildNotes IDs:** #1 (2026.8.19.011)
+> Move the quick action chevron to the left of the ticket # column (it was to the right of Timestamp), and fix the blank space in the dropdown menu inside the ticket card.
+
+**Changes:**
+- `apps/web/src/pages/Tickets.tsx` — Quick Actions column moved to immediately left of Ticket # in header and rows (trailing column removed); row dropdown `min-w-[200px]` → `w-max`.
+- Changelog policy applied: BuildNotes entry 2026.8.19.011 + What's New (live via API) + this Retrace entry.
+
+
+### Prompt 117 — Quick Actions menu width fit-to-content
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~10 min
+**BuildNotes IDs:** #1 (2026.8.19.011)
+> Fix the Quick Actions menu width so it is only as wide as its longest text entry (e.g. "Set Status → Pending Approval"), removing extra spacing on the right, with the menu dynamically adjusting as actions are added or removed and consistent padding on all sides.
+
+**Changes:**
+- `apps/web/src/pages/Tickets.tsx` — both Quick Actions menus: container `w-max grid` (content-sized, grid stretches item hovers full-width) + items `whitespace-nowrap` without `w-full`; width now equals longest entry + px-4 padding.
+- Changelog policy applied: BuildNotes entry 2026.8.19.011 + What's New (live via API) + this Retrace entry.
+
+
+### Prompt 118 — Fix What's New auto-updating; backfill changelog
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~35 min
+**BuildNotes IDs:** #1 (2026.8.19.011)
+> Investigate why What's New stopped updating, identify the root cause, fix it so What's New updates automatically after every change, backfill missing entries, and enforce that a change is complete only when Build Notes, Retrace, and What's New have all been updated.
+
+**Changes:**
+- Root cause: What's New (`Changelog.tsx`) read the static build-time copy `/BuildNotes.md` (Vite public → `apps/web/dist`), while edits land in the root `BuildNotes.md`; the copy step (`scripts/generate-buildnotes.mjs`) ran only manually, so the desktop app (which serves `apps/web/dist`) kept showing a frozen changelog.
+- `apps/web/src/pages/Changelog.tsx` — now fetches `GET /system/changelog` from the API (parses root BuildNotes.md on every request, no copy step); static `/BuildNotes.md` retained as offline fallback.
+- `apps/api/src/routes/system.ts` — `findBuildNotes()` walks up from `__dirname` (10 levels) + honors `C7NTAX_ROOT`; JSON fallback unchanged.
+- `.git/hooks/pre-commit` — new hook: regenerates public BuildNotes.md + BuildNotes.json from the root file and stages them on every commit (automatic static sync).
+- Policy: definition of done documented in BuildNotes.md + Retrace.md headers.
+- Backfill: BuildNotes entry 2026.8.19.011 + Retrace prompts 111–118 + What's New outputs regenerated (80 versions) + web dist rebuilt so the desktop app picks up the live-fetch page.
+- Changelog policy applied: BuildNotes entry 2026.8.19.011 + What's New (live via API) + this Retrace entry.
 
 
 
