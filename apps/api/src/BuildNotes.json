@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.8.18.020",
+    "date": "2026-08-18",
+    "title": "Broken buttons/links audit & fixes",
+    "changes": [
+      {
+        "text": "Audited the entire web app for non-functional buttons/links (grep sweeps for href=\"#\", no-op onClick, handler-less button blocks, and Link targets vs registered routes). All nav Links verified against App.tsx routes; all multiline buttons in Users/Roles/Tickets/ServiceAlerts/Settings verified to have handlers. Top-right header placeholders excluded per instruction.",
+        "type": "Fix"
+      },
+      {
+        "text": "`Reports.tsx` Analytics → Quick Actions: \"Export Dashboard PDF\" now generates a real PDF (jsPDF + autoTable with revenue metrics); \"Schedule Weekly Report\" now opens a working dialog (report select, day, time, recipients) posting to `POST /api/reports/:id/schedules`; \"Custom Report Builder\" was navigating to a dead SPA route (`window.location.href = \"/reports/custom\"`) — now a `Link` to the new route.",
+        "type": "Fix"
+      },
+      {
+        "text": "`pages/CustomReports.tsx` + route `/reports/custom` — list/create custom reports (name, type ticket_summary/revenue/custom, config JSON validated), Run (uses `GET /api/reports/:id/run`) with results table.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Help docs (maintenance rule): added \"Custom Reports & Scheduling\" walkthrough + Index rows in the same change.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.8.18.019",
     "date": "2026-08-18",
     "title": "Help walkthroughs + documentation maintenance rule",

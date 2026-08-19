@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.019 | Last Updated: 2026-08-18
+## Version: 2026.8.18.020 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,13 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.020 — Broken buttons/links audit & fixes
+- **[Fix]** Audited the entire web app for non-functional buttons/links (grep sweeps for href="#", no-op onClick, handler-less button blocks, and Link targets vs registered routes). All nav Links verified against App.tsx routes; all multiline buttons in Users/Roles/Tickets/ServiceAlerts/Settings verified to have handlers. Top-right header placeholders excluded per instruction.
+- **[Fix]** `Reports.tsx` Analytics → Quick Actions: "Export Dashboard PDF" now generates a real PDF (jsPDF + autoTable with revenue metrics); "Schedule Weekly Report" now opens a working dialog (report select, day, time, recipients) posting to `POST /api/reports/:id/schedules`; "Custom Report Builder" was navigating to a dead SPA route (`window.location.href = "/reports/custom"`) — now a `Link` to the new route.
+- **[New]** `pages/CustomReports.tsx` + route `/reports/custom` — list/create custom reports (name, type ticket_summary/revenue/custom, config JSON validated), Run (uses `GET /api/reports/:id/run`) with results table.
+- **[Update]** Help docs (maintenance rule): added "Custom Reports & Scheduling" walkthrough + Index rows in the same change.
+- **[Verification]** web typecheck 17 (baseline; one transient noUncheckedIndexedAccess error fixed in CustomReports); `/reports/custom` and `/help/walkthroughs/custom-reports` serve 200.
 
 ## 2026.8.18.019 — Help walkthroughs + documentation maintenance rule
 - **[New]** Feature walkthroughs in the Help docs (`pages/HelpDoc.tsx`, 12 new sections under `/help/walkthroughs/*`): Email-to-Ticket Setup, Quotes & Convert to Invoice, Billing & Agreements (block/Cyber Care/spot, overtime, midnight split, bill-through), Uptime Monitors (website/SSL/DNS), Service Alerts & Outage Monitoring, Alert Webhooks, AI Actions (risk-classified), MFA/SSO/Passkeys, Outlook Add-in, CloudConnect Integrations, Kumo (passwords/documents/audit/file manager), UI Shortcuts & Batch Actions. Each includes step-by-step configuration instructions where configuration is required, and clickable related-content links.

@@ -1207,6 +1207,20 @@
 - Also fixed the accidental out-of-order insertion of Prompt 100 before Prompt 99 (now chronological).
 
 
+### Prompt 102 — Fix broken buttons/links across the app
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~35 min
+**BuildNotes IDs:** #1 (2026.8.18.020)
+> Task: Find every button or link in the app that is currently broken or does not function. For each one, either fix the existing code or build out the necessary code and dialogs needed to make it functional. Scope: Entire app. Exclusion: Do not fix or modify the placeholder buttons at the top right of the screen for now.
+
+**Changes:**
+- Audit: grep sweeps for href="#", no-op onClicks, handler-less button blocks, and Link targets vs App.tsx routes; verified multiline buttons in Users/Roles/Tickets/ServiceAlerts/Settings all have handlers; all nav Link targets match registered routes; top-right header placeholders excluded per instruction.
+- Fixed the three broken Analytics → Quick Actions buttons in `Reports.tsx`: Export Dashboard PDF (jsPDF + autoTable summary download), Schedule Weekly Report (working modal: report/day/time/recipients → `POST /api/reports/:id/schedules`), Custom Report Builder (was `window.location.href` to a nonexistent SPA route → `Link` to the new `/reports/custom`).
+- Built `pages/CustomReports.tsx` (list/create custom reports with JSON-validated config, Run via `GET /api/reports/:id/run` with results table) + route + App.tsx import; fixed one noUncheckedIndexedAccess error.
+- Help docs updated in the same change per the maintenance rule: new "Custom Reports & Scheduling" walkthrough + Index rows.
+- Verification: web typecheck 17 (baseline); `/reports/custom` and `/help/walkthroughs/custom-reports` serve 200.
+- Changelog policy applied: BuildNotes entry 2026.8.18.020 + What's New outputs regenerated (72 versions) + this Retrace entry.
+
+
 
 
 
