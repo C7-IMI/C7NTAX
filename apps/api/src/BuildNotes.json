@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.18.021",
+    "date": "2026-08-18",
+    "title": "Service Alerts: Add Service button fixed",
+    "changes": [
+      {
+        "text": "`ServiceAlertsSettings.tsx` — the Add Service button appeared to do nothing: the editor dialog rendered only when `form.name !== \"\" || editing`, but `openNew()` reset the form to an empty name, so the dialog never opened. Added a dedicated `showForm` state — `openNew`/`openEdit` set it true, save/Cancel/backdrop close it via a new `closeForm()` — and the dialog now renders on `showForm`. Save still posts to the existing `POST /api/service-alerts/services` (verified the route + SERVICE_FIELDS whitelist already include the form's fields).",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.8.18.020",
     "date": "2026-08-18",
     "title": "Broken buttons/links audit & fixes",

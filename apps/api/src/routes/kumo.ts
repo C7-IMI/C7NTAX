@@ -101,6 +101,20 @@ kumoRouter.delete("/templates/:id", requirePermission(Permission.KumoAssetManage
 });
 
 // ═══════════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════════
+
+kumoRouter.get("/dashboard", async (_req: AuthRequest, res, next) => {
+  try {
+    const [assets, passwords, documents, servers, folders] = await Promise.all([
+      prisma.kumoAsset.count(), prisma.kumoPassword.count(), prisma.kumoDocument.count(),
+      prisma.kumoServer.count(), prisma.kumoFolder.count(),
+    ]);
+    res.json({ data: { assets, passwords, documents, servers, folders } });
+  } catch (e) { next(e); }
+});
+
+// ═══════════════════════════════════════════════════════════════════
 //  ASSETS
 // ═══════════════════════════════════════════════════════════════════
 

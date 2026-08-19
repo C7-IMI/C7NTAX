@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.020 | Last Updated: 2026-08-18
+## Version: 2026.8.18.021 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.021 — Service Alerts: Add Service button fixed
+- **[Fix]** `ServiceAlertsSettings.tsx` — the Add Service button appeared to do nothing: the editor dialog rendered only when `form.name !== "" || editing`, but `openNew()` reset the form to an empty name, so the dialog never opened. Added a dedicated `showForm` state — `openNew`/`openEdit` set it true, save/Cancel/backdrop close it via a new `closeForm()` — and the dialog now renders on `showForm`. Save still posts to the existing `POST /api/service-alerts/services` (verified the route + SERVICE_FIELDS whitelist already include the form's fields).
+- **[Verification]** web typecheck 17 (baseline, changed file clean); `/admin/service-alerts` serves 200.
 
 ## 2026.8.18.020 — Broken buttons/links audit & fixes
 - **[Fix]** Audited the entire web app for non-functional buttons/links (grep sweeps for href="#", no-op onClick, handler-less button blocks, and Link targets vs registered routes). All nav Links verified against App.tsx routes; all multiline buttons in Users/Roles/Tickets/ServiceAlerts/Settings verified to have handlers. Top-right header placeholders excluded per instruction.

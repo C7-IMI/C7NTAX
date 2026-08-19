@@ -8,6 +8,28 @@ import { getRetryCount, getRecoveryLog, resetPoller, isPaused } from "../service
 export const systemRouter = Router();
 systemRouter.use(authenticate);
 
+// ── Failover state (backed by SystemConfig; survives restarts) ─────
+const FAILOVER_KEY = "failover_state";
+
+systemRouter.get("/failover/status", async (_req: AuthRequest, res, next) => {
+  try {
+    const row = await prisma.systemConfig.findUnique({ where: { key: FAILOVER_KEY } });
+    const v = (row?.value || {}) as { count?: number; lastResetAt?: string | null };
+    res.json({ count: v.count || 0, lastResetAt: v.lastResetAt || null });
+  } catch (e) { next(e); }
+});
+
+systemRouter.post("/failover/reset", async (_req: AuthRequest, res, next) => {
+  try {
+    await prisma.systemConfig.upsert({
+      where: { key: FAILOVER_KEY },
+      update: { value: { count: 0, lastResetAt: new Date().toISOString() } },
+      create: { key: FAILOVER_KEY, value: { count: 0, lastResetAt: new Date().toISOString() } },
+    });
+    res.json({ count: 0, lastResetAt: new Date().toISOString() });
+  } catch (e) { next(e); }
+});
+
 // I18N / translations
 systemRouter.get("/locales", async (_req: AuthRequest, res, next) => {
   try { res.json(await prisma.locale.findMany({ include: { _count: { select: { translations: true } } } })); }

@@ -485,7 +485,7 @@ export function TicketDetailPage() {
     if (activeTab === "expenses") api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((e: any) => e.ticketId === id))).catch(() => {});
     if (activeTab === "schedule") api.get("/schedule?limit=200").then(r => setSchedEntries((Array.isArray(r.data) ? r.data : (r.data?.data || [])).filter((e: any) => e.ticketId === id))).catch(() => {});
     if (activeTab === "audittrail") api.get("/system/audit-logs").then(r => setAuditEntries((r.data?.data || []).filter((a: any) => a.entity === "ticket" && a.entityId === id))).catch(() => {});
-    if (activeTab === "configurations") { api.get("/assets?limit=50").then(r => setAssetResults(r.data?.data || r.data || [])).catch(() => {}); api.get("/kumo/configs/servers").then(r => setKumoConfigResults(r.data?.data || r.data || [])).catch(() => {}); }
+    if (activeTab === "configurations") { api.get("/kumo/assets?limit=50").then(r => setAssetResults(r.data?.data || r.data || [])).catch(() => {}); api.get("/kumo/configs/servers").then(r => setKumoConfigResults(r.data?.data || r.data || [])).catch(() => {}); }
     if (activeTab === "links") { api.get("/tickets?limit=200").then(r => { const all = r.data?.data || []; setIncomingLinks(all.filter((t: any) => t.id !== id && Array.isArray(t.customFields?.ticketLinks) && t.customFields.ticketLinks.some((l: any) => l.ticketId === id)).map((t: any) => ({ ticketId: t.id, ticketNumber: t.ticketNumber, title: t.title }))); }).catch(() => {}); }
   }, [activeTab, id]);
 

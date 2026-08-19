@@ -1221,6 +1221,18 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.020 + What's New outputs regenerated (72 versions) + this Retrace entry.
 
 
+### Prompt 103 — Service Alerts: fix Add Service button
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.18.021)
+> Fix the Add Service button in Service Alerts. Currently nothing happens when pressed. Use the attached screenshot to understand the issue and make the button perform its intended action when clicked. [attached screenshot of Service Alerts settings]
+
+**Changes:**
+- Root cause: `ServiceAlertsSettings.tsx` rendered the editor dialog only when `form.name !== "" || editing`; `openNew()` reset the form (empty name) and never opened the dialog, so the Add Service button appeared dead.
+- Fix: dedicated `showForm` state — `openNew`/`openEdit` open it, `closeForm()` closes it from save success, Cancel, and backdrop click; dialog now renders on `showForm`. Save posts to the existing `POST /api/service-alerts/services` (route verified; SERVICE_FIELDS whitelist covers the form's fields).
+- Verification: web typecheck 17 (baseline; changed file clean); `/admin/service-alerts` serves 200.
+- Changelog policy applied: BuildNotes entry 2026.8.18.021 + What's New outputs regenerated (73 versions) + this Retrace entry.
+
+
 
 
 
