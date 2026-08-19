@@ -5,13 +5,15 @@ import { Mail, Plus, RefreshCw, Trash2, Power } from "lucide-react";
 
 interface Connector {
   id: string;
-  name: string;
+  boardId: string;
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  folder: string;
+  pollIntervalSec: number;
   enabled: boolean;
-  hasCredentials: boolean;
-  settings: { boardId?: string; folder?: string; pollIntervalSeconds?: number };
-  status: string;
-  errorMessage: string | null;
-  lastSyncAt: string | null;
+  lastPollAt: string | null;
 }
 
 interface Board {
@@ -88,8 +90,8 @@ export function EmailConnectorsPanel() {
         <div key={c.id} className="border border-surface-border rounded-lg p-3 space-y-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-medium text-sm">{c.name}</p>
-              <p className="text-xs text-gray-500">Board: {c.settings.boardId || "—"} · Folder: {c.settings.folder || "INBOX"} · {c.status}{c.errorMessage ? ` · ${c.errorMessage.slice(0, 80)}` : ""}</p>
+              <p className="text-white font-medium text-sm">{c.user} → {c.host}</p>
+              <p className="text-xs text-gray-500">Board: {c.boardId || "—"} · Folder: {c.folder || "INBOX"} · Poll: {c.pollIntervalSec}s{c.lastPollAt ? ` · Last: ${new Date(c.lastPollAt).toLocaleString()}` : ""}</p>
             </div>
             <div className="flex items-center gap-2">
               <button title={c.enabled ? "Disable" : "Enable"} onClick={() => toggle(c)} disabled={busy === c.id}
