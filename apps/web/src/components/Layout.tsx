@@ -260,24 +260,28 @@ export function Layout({ children }: { children: ReactNode }) {
   }
   const [alertCount, setAlertCount] = useState(0);
   const [bannerAlert, setBannerAlert] = useState<BannerAlert | null>(null);
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
+
+  // Dismissed alert ids are read FRESH from localStorage on every poll and
+  // dismissal, so no stale closure can resurrect a dismissed banner.
+  const loadDismissed = (): Set<string> => {
     try {
       const saved = localStorage.getItem("c7_sa_dismissed");
       if (saved) return new Set(JSON.parse(saved) as string[]);
-    } catch {}
+    } catch { /* ignore */ }
     return new Set<string>();
-  });
+  };
 
   const refreshAlertStatus = useCallback(() => {
     api.get("/service-alerts/status")
       .then(r => {
         const { activeCount, top } = r.data || {};
         setAlertCount(Number(activeCount) || 0);
-        if (top && !dismissedAlerts.has(top.id)) setBannerAlert(top);
+        const dismissed = loadDismissed();
+        if (top && !dismissed.has(top.id)) setBannerAlert(top);
         else setBannerAlert(null);
       })
       .catch(() => {});
-  }, [dismissedAlerts]);
+  }, []);
 
   // TOKEN-SAVE-06: initial fetch + visibility-gated polling
   useEffect(() => { refreshAlertStatus(); }, [refreshAlertStatus]);
@@ -285,18 +289,12 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const dismissBanner = () => {
     if (!bannerAlert) return;
-    setDismissedAlerts(prev => {
-      const next = new Set(prev);
-      next.add(bannerAlert.id);
-      if (next.size > 50) {
-        const arr = [...next];
-        while (arr.length > 50) arr.shift();
-        localStorage.setItem("c7_sa_dismissed", JSON.stringify(arr));
-      } else {
-        localStorage.setItem("c7_sa_dismissed", JSON.stringify([...next]));
-      }
-      return next;
-    });
+    // Persist the dismissal synchronously FIRST, then hide.
+    const next = loadDismissed();
+    next.add(bannerAlert.id);
+    const arr = [...next];
+    while (arr.length > 50) arr.shift();
+    localStorage.setItem("c7_sa_dismissed", JSON.stringify(arr));
     setBannerAlert(null);
   };
 

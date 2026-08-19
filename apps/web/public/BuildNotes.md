@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.19.006 | Last Updated: 2026-08-19
+## Version: 2026.8.19.008 | Last Updated: 2026-08-19
 
 ---
 
@@ -12,6 +12,19 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.19.008 — Service alert banner: reliable per-alert dismissal
+- **[Fix]** `components/Layout.tsx` — banner dismissal raced with the visibility-gated poller: the polling callback captured a stale `dismissedAlerts` state closure, so a poll that started before dismissal could resurrect the same banner within the next minute. Rewrote the logic to read the dismissed-alert set FRESH from localStorage on every poll (`loadDismissed()`), made the poll callback identity-stable (`useCallback([])`), and made `dismissBanner` persist the dismissal synchronously to localStorage (capped at 50 ids) before hiding the banner. Result: the close button reliably hides the banner, the same alert never reappears, and a NEW alert (different id) shows the banner again immediately.
+- **[Verification]** web typecheck 17 (baseline; changed file clean); Vite transforms Layout.tsx (200); next version computed via `scripts/next-version.mjs` (2026.8.19.008).
+
+## 2026.8.19.007 — Ticket list: configurable columns, drag reorder, Timestamp/Technician/Summary
+- **[New]** `pages/Tickets.tsx` — PSA-style configurable ticket list (Autotask/ConnectWise/HaloPSA/Kantata/Scoro/NinjaOne/Atera reference):
+  - Timestamp column: shows creation time; switches to last-updated time once the ticket has changed (tooltip shows both).
+  - Summary (ticket subject) moved to its own column; Technician column added (assignee from the API's existing `assignedTo` include).
+  - Columns are draggable via header drag-and-drop to reorder; click a header to sort (supported fields keep sorting).
+  - Choose Columns button above the ticket card opens a modal with a checkbox list of all columns; displayed columns are pre-checked; Priority is available but unchecked by default. Visibility + order persist per user via localStorage (`c7_ticket_columns`).
+- **[Update]** Help docs: "Ticket list columns" steps added to the UI Shortcuts & Batch Actions walkthrough + Index row (maintenance rule).
+- **[Verification]** web typecheck 17 (baseline; changed file clean); Vite transforms Tickets.tsx (200); `/tickets` serves 200; version computed via `scripts/next-version.mjs` (2026.8.19.007).
 
 ## 2026.8.19.006 — Date/version generation logic fixed permanently
 - **[Fix]** Entries 2026.8.18.018–.022 were created on 2026-08-19 but carried the previous day's date octets (manually typed). Renumbered to 2026.8.19.001–.005 per the scheme (build resets to 001 on a new day). Header Last Updated corrected to 2026-08-19; Retrace references updated to match.

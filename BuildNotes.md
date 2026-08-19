@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.19.007 | Last Updated: 2026-08-19
+## Version: 2026.8.19.008 | Last Updated: 2026-08-19
 
 ---
 
@@ -12,6 +12,10 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.19.008 — Service alert banner: reliable per-alert dismissal
+- **[Fix]** `components/Layout.tsx` — banner dismissal raced with the visibility-gated poller: the polling callback captured a stale `dismissedAlerts` state closure, so a poll that started before dismissal could resurrect the same banner within the next minute. Rewrote the logic to read the dismissed-alert set FRESH from localStorage on every poll (`loadDismissed()`), made the poll callback identity-stable (`useCallback([])`), and made `dismissBanner` persist the dismissal synchronously to localStorage (capped at 50 ids) before hiding the banner. Result: the close button reliably hides the banner, the same alert never reappears, and a NEW alert (different id) shows the banner again immediately.
+- **[Verification]** web typecheck 17 (baseline; changed file clean); Vite transforms Layout.tsx (200); next version computed via `scripts/next-version.mjs` (2026.8.19.008).
 
 ## 2026.8.19.007 — Ticket list: configurable columns, drag reorder, Timestamp/Technician/Summary
 - **[New]** `pages/Tickets.tsx` — PSA-style configurable ticket list (Autotask/ConnectWise/HaloPSA/Kantata/Scoro/NinjaOne/Atera reference):

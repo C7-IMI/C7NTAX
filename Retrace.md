@@ -1263,6 +1263,31 @@
 - Changelog policy applied: BuildNotes entry 2026.8.19.006 + What's New outputs regenerated (75 versions) + this Retrace entry.
 
 
+### Prompt 106 — Ticket list columns (Timestamp/Summary/Technician, draggable, Choose Columns)
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~45 min
+**BuildNotes IDs:** #1 (2026.8.19.007)
+> Enhance the tickets summary section as follows: Add a Timestamp column... Move the ticket summary/subject into its own separate column. Add a Technician column... Make the columns draggable... Add a Choose Columns button/menu just above the ticket card... Add a Priority column but do not display it initially... Use AutoTaskPSA, ConnectWise Asio, HaloPSA, Kantata, Scoro, NinjaOne, Atera, and ConnectWise PSA as layout and functionality references... [attached screenshot]
+
+**Changes:**
+- `pages/Tickets.tsx`: TICKET_COLUMNS registry (number/title/status/board/client/technician/priority/timestamp; priority defaultVisible false); Timestamp column renders createdAt and switches to updatedAt once the ticket changed (tooltip shows both); Summary moved to its own column; Technician renders assignee from the list API's `assignedTo` include; draggable headers (HTML5 dnd) reorder columns, click-to-sort retained for sortable fields; Choose Columns button above the ticket card opens a modal with pre-checked visible columns; visibility + order persisted per user in localStorage (`c7_ticket_columns`).
+- Help docs updated per maintenance rule (Ticket list columns steps in the shortcuts walkthrough + Index row).
+- Version computed via `scripts/next-version.mjs` (2026.8.19.007) per the corrected scheme.
+- Verification: web typecheck 17 (baseline); Vite transforms Tickets.tsx (200); `/tickets` serves 200.
+- Changelog policy applied: BuildNotes entry 2026.8.19.007 + What's New outputs regenerated (76 versions) + this Retrace entry.
+
+
+### Prompt 107 — Service alert banner: reliable per-alert dismissal
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.19.008)
+> When the user manually closes the service alert banner, hide it and keep it hidden until a new service alert is detected; then show the banner again. Ensure the close button reliably dismisses the banner and prevents it from reappearing for the same alert.
+
+**Changes:**
+- Root cause: `components/Layout.tsx` banner poller captured a stale `dismissedAlerts` state closure, so a poll that began before dismissal could re-show the same banner within the next minute; the callback identity also changed on every dismissal.
+- Fix: dismissed-alert ids read FRESH from localStorage on every poll (`loadDismissed()`); poll callback made identity-stable (`useCallback([])`); `dismissBanner` persists the dismissal synchronously (capped 50 ids) before hiding. Same alert can never reappear; a new alert (different id) shows the banner again.
+- Verification: web typecheck 17 (baseline); Vite transforms Layout.tsx (200); version via `scripts/next-version.mjs` (2026.8.19.008).
+- Changelog policy applied: BuildNotes entry 2026.8.19.008 + What's New outputs regenerated (77 versions) + this Retrace entry.
+
+
 
 
 
