@@ -1194,6 +1194,19 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.017 + What's New outputs regenerated (69 versions) + this Retrace entry.
 
 
+### Prompt 101 — Help walkthroughs + documentation maintenance rule
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~40 min
+**BuildNotes IDs:** #1 (2026.8.18.019)
+> When creating new features or functionality, also create walkthrough/instructions for configuring and using the feature. Add the documentation to the Index subsection in Help. Treat this as technical documentation: keep it detailed and concise. If the feature requires configuration, provide step-by-step instructions. Review the current application and feature list, then retroactively create missing walkthroughs/instructions for existing features. Organize the Help Index in a logical format based on sections and/or related feature sets, whichever is more logical. In the documentation, include clickable links to related or relevant content elsewhere in the Help section when applicable. Whenever a feature or function is added, updated, changed, or removed, automatically update the new and/or relevant documentation so the walkthroughs/instructions remain accurate.
+
+**Changes:**
+- `pages/HelpDoc.tsx` — restructured `HELP_SECTIONS` with `group: "core" | "walkthroughs"`; added 12 retroactive feature walkthroughs under `/help/walkthroughs/*` (email-tickets, quotes-invoices, billing-agreements, uptime-monitors, service-alerts, alert-webhooks, ai-actions, identity-security, outlook-addin, cloudconnect, kumo, shortcuts) each with step-by-step configuration instructions where required + related-content links; rebuilt the Index with feature-set groups and rows linking to walkthroughs/app pages; added `HelpWalkthrough` pathname-resolved component + `/help/walkthroughs/:slug` route in App.tsx; Help landing now renders core sections + a Feature walkthroughs grid.
+- Durable documentation-maintenance rule recorded in `PROMPT-LIBRARY.md` P3 and `NewProjectPrompts.md` P3 (walkthroughs created/updated in the same change as every feature add/update/change/remove; Index rows and related links kept accurate).
+- Verification: web typecheck 17 (baseline); Vite transforms Help/HelpDoc (200); `/help/walkthroughs/email-tickets` serves 200.
+- Changelog policy applied: BuildNotes entry 2026.8.18.019 + What's New outputs regenerated (71 versions) + this Retrace entry.
+- Also fixed the accidental out-of-order insertion of Prompt 100 before Prompt 99 (now chronological).
+
+
 
 
 
