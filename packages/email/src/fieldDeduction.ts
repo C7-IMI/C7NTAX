@@ -42,8 +42,12 @@ export function deduceName(displayName: string, emailAddress: string): { firstNa
 export function extractDomain(value: string | null | undefined): string {
   if (!value) return "";
   let v = value.trim().toLowerCase();
-  if (v.includes("@")) v = v.split("@")[1];
-  v = v.replace(/^[a-z]+:\/\//, "").split(/[/?#]/)[0].replace(/^www\./, "");
+  if (v.includes("@")) {
+    const at = v.split("@")[1];
+    if (at) v = at;
+  }
+  const domain = v.replace(/^[a-z]+:\/\//, "").split(/[/?#]/)[0];
+  v = domain ? domain.replace(/^www\./, "") : v;
   return v;
 }
 

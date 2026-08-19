@@ -1,5 +1,36 @@
 [
   {
+    "id": "a4e6764a-f589-4a60-94a6-5dac4ebe633b",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "host": "imap.example.com",
+      "port": 993,
+      "user": "probe@example.com",
+      "folder": "INBOX",
+      "secure": true,
+      "boardId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+      "password": "***",
+      "pollIntervalSec": 300
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-19T00:12:41.498Z"
+  },
+  {
+    "id": "d7f9435b-17cb-4bf2-9a6c-9ca453e9518b",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "dffd658a-1580-4413-a8ad-ea67d094039f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-19T00:12:41.920Z"
+  },
+  {
     "id": "750a90e2-6cde-41f3-8cc9-14e7e9d57c72",
     "action": "service-alerts:create",
     "entity": "service-alerts",

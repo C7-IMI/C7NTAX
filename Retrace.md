@@ -1038,5 +1038,32 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.008 + What's New outputs regenerated (60 versions) + this Retrace entry.
 
 
+### Prompt 88 — Implement monitored mailbox plan (PLAN-009, phases 1–4)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~90 min
+**BuildNotes IDs:** #1 (2026.8.18.009)
+> Implement the monitored mailbox plan now if there are no prerequisites from other plans. First, check for any prerequisites or dependencies from other plans. If none exist, proceed with implementation immediately. If prerequisites do exist, list them out for me to review, and do not implement until I confirm it is okay to proceed.
+
+**Changes:**
+- Prerequisite check: no cross-plan prerequisites for PLAN-009 phases 1–4 (self-contained; reuses existing `EmailConnector` Prisma model + node-imap/mailparser deps already present). Proceeded immediately.
+- Implemented phases 1–4: `packages/email/src/imapFetch.ts` + `fieldDeduction.ts` + `EmailConnector.pollNow()`; `apps/api` — `services/ticketNumber.ts` (extracted from ticket route), `services/emailToTicket.ts`, `services/emailConnectorRuntime.ts`, `services/emailConnectorCrypto.ts`, `routes/email-connectors.ts` (CRUD/test/poll/status), index.ts wiring (mount + guarded hydration); CloudConnect `EmailConnectorsPanel` UI.
+- Fixed adjacent pre-existing `routes/boards.ts` EmailConnector queries to the real model (6 baseline tsc errors removed: 182 → 176); circular-import avoided via `emailConnectorCrypto.ts`.
+- Verified: smoke tests list/create/test/boards-nested/delete all pass; boot green; web tsc at 17 baseline.
+- Phases 5–6 (M365 modern/legacy) NOT implemented — external prerequisites listed for user review (Azure AD app registration, tenant ids, M365 mailbox, Basic-Auth-enabled tenant for legacy).
+- Changelog policy applied: BuildNotes entry 2026.8.18.009 + What's New outputs regenerated (61 versions) + this Retrace entry.
+
+
+### Prompt 89 — Outlook add-in email-to-ticket plan (PLAN-012)
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.18.010)
+> Create a detailed implementation plan for an Outlook plugin/extension that generates a service ticket from an email... Provide the plan only; do not implement code.
+
+**Changes:**
+- `PLAN-Outlook-Addin-Email-to-Ticket.md` (153 lines, PLAN-012) — Office Web Add-in recommendation (MessageReadCommandSurface + ExecuteFunction + taskpane, cross-platform, TS/React stack fit); API flow reusing PLAN-009 implementation (`createTicketFromEmail` via new `POST /api/outlook-addin/tickets` batch endpoint with internetMessageId dedup + `/api/auth/office-sso` SSO exchange); email→ticket field mapping table; auth (SSO + manual-login fallback); C7 icon from the Composite asset sheet at 16/32/80 px; selection behavior (multi-select → one ticket per email via `getSelectedItemsAsync`; single open/previewed message → that message); testing (unit + Outlook desktop/web E2E) and deployment (sideload → Integrated Apps/AppSource); 7 dependency-ordered phases with risk notes; rollback + open decisions.
+- `PlanDocs/PLAN-012-Outlook-Addin-Email-to-Ticket.md` copy + registry row added.
+- Changelog policy applied: BuildNotes entry 2026.8.18.010 + What's New outputs regenerated (62 versions) + this Retrace entry.
+
+
+
+
 
 

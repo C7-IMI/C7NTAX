@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.008 | Last Updated: 2026-08-18
+## Version: 2026.8.18.010 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,15 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.010 — PLAN-012: Outlook Add-in Email-to-Ticket Generator
+- **[New]** `PLAN-Outlook-Addin-Email-to-Ticket.md` (PLAN-012) — detailed plan for an Outlook plugin that creates service tickets from emails: recommends an **Office Web Add-in** (MessageReadCommandSurface + ExecuteFunction + taskpane) for cross-platform reach matching the C7NTAX TS/React stack; reuses PLAN-009's implemented machinery (`createTicketFromEmail`, deduction, `EmailConnector` patterns) via a new `POST /api/outlook-addin/tickets` batch endpoint with internetMessageId dedup; full email→ticket field mapping table; SSO auth (Office SSO → `/api/auth/office-sso` exchange → C7NTAX JWT) with manual-login fallback; C7 icon from the Composite asset sheet at 16/32/80 px; selection behavior spec (multi-select → one ticket per email via `getSelectedItemsAsync`; single open/previewed message → that message); testing (unit + Outlook desktop/web E2E) and deployment (sideload → Integrated Apps/AppSource) steps; 7 dependency-ordered phases with `Depends on`/`Risk if skipped` notes; rollback + open decisions.
+
+## 2026.8.18.009 — Monitored Mailbox Email-to-Ticket Connector (PLAN-009 Phases 1–4)
+- **[New]** Implemented the email-to-ticket connector core (no cross-plan prerequisites existed): `packages/email/src/imapFetch.ts` (real IMAP polling via node-imap + mailparser; process-then-mark contract left to API), `packages/email/src/fieldDeduction.ts` (subject stripping, name/domain deduction, quoted-reply stripping, priority, auto-reply detection), `EmailConnector.pollNow()`; `apps/api/src/services/ticketNumber.ts` (extracted from ticket routes), `services/emailToTicket.ts` (system user `connector@c7ntax.local`, contact/company resolution, ticket + email-comment creation, threaded replies), `services/emailConnectorRuntime.ts` (manager singleton, boot hydration guarded by `EMAIL_CONNECTORS_ENABLED`, Message-ID dedup cursors), `services/emailConnectorCrypto.ts` (kumoCrypto-backed password encryption), `routes/email-connectors.ts` (CRUD/test/poll/status on the existing `EmailConnector` Prisma model), CloudConnect `EmailConnectorsPanel` UI (list/create/test/enable/poll/delete).
+- **[Fix]** `routes/boards.ts` pre-existing broken `EmailConnector` queries corrected to the real model fields (select/create/update; `boardId` validation) — 6 baseline tsc errors removed (182 → 176).
+- **[Verified]** Smoke-tested: list/create/test(502 graceful on unreachable host)/nested board list/delete all pass; typecheck at baseline; boot green.
+- **[Pending]** PLAN-009 Phases 5–6 (M365 modern/legacy auth) NOT implemented — external prerequisites listed for review: Azure AD app registration, tenant ids, M365 test mailbox.
 
 ## 2026.8.18.008 — Service Alerts: DownDetector Auto-Resolution
 - **[Update]** `apps/api/src/services/alertMonitor.ts` — extended the all-clear auto-resolve logic to DownDetector: every configured service now checks its `downDetectorUrl` alongside the RSS feed; a page whose own H1 status line says "no current problems" counts as all-clear (2-consecutive-poll streak + min alert age, same anti-flap rule), and "possible problems / issues" pages create or keep a `downdetector`-sourced alert. DownDetector's Cloudflare blocks non-browser TLS fingerprints (Node fetch 403), so the page is fetched through the r.jina.ai reader (`DD_READER_BASE_URL` env-overridable); classification uses only the page's own H1 so sidebar tweets about other services can't cause false alerts. Verified live: stale Comcast Xfinity alert auto-resolved (page: "no current problems"); GitHub correctly got a new degraded alert (page: "possible problems with GitHub"); Google Workspace RSS incident still active; 0 monitor errors.
