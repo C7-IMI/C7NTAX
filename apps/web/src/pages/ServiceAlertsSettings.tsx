@@ -52,6 +52,7 @@ export function ServiceAlertsSettingsPage() {
   const [monitor, setMonitor] = useState<MonitorSnapshot | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [form, setForm] = useState<typeof emptyForm>({ ...emptyForm });
+  const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [manual, setManual] = useState({ serviceId: "", title: "", severity: "degraded" });
@@ -87,7 +88,8 @@ export function ServiceAlertsSettingsPage() {
     }
   };
 
-  const openNew = () => { setForm({ ...emptyForm }); setEditing(false); };
+  const openNew = () => { setForm({ ...emptyForm }); setEditing(false); setShowForm(true); };
+  const closeForm = () => { setShowForm(false); setForm({ ...emptyForm }); setEditing(false); };
   const openEdit = (s: AlertService) => {
     setForm({
       id: s.id, name: s.name, category: s.category, description: s.description || "",
@@ -95,6 +97,7 @@ export function ServiceAlertsSettingsPage() {
       rssUrl: s.rssUrl || "", monitorEnabled: s.monitorEnabled, enabled: s.enabled, sortOrder: s.sortOrder,
     });
     setEditing(true);
+    setShowForm(true);
   };
 
   const save = async () => {
@@ -119,7 +122,7 @@ export function ServiceAlertsSettingsPage() {
         await api.post("/service-alerts/services", payload);
         toast.success("Service added");
       }
-      setForm({ ...emptyForm }); setEditing(false);
+      setForm({ ...emptyForm }); setEditing(false); setShowForm(false);
       await load();
     } catch (e: any) {
       toast.error(e?.response?.data?.error || "Save failed");
@@ -317,8 +320,8 @@ export function ServiceAlertsSettingsPage() {
       </div>
 
       {/* Editor dialog */}
-      {(form.name !== "" || editing) && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setForm({ ...emptyForm })}>
+      {showForm && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={closeForm}>
           <div className="card w-full max-w-2xl" onClick={e => e.stopPropagation()}>
             <h3 className="text-base font-semibold text-white mb-4">{editing ? "Edit Service" : "Add Service"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -364,7 +367,7 @@ export function ServiceAlertsSettingsPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-5">
-              <button onClick={() => setForm({ ...emptyForm })} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={closeForm} className="btn-secondary text-sm">Cancel</button>
               <button onClick={() => void save()} disabled={saving} className="btn-primary text-sm">{saving ? "Saving…" : "Save Service"}</button>
             </div>
           </div>
