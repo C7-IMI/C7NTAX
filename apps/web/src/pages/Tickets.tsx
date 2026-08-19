@@ -377,7 +377,7 @@ export function TicketsPage() {
 
             <div>
               <label className="text-xs text-gray-500 block mb-1">Filter By</label>
-              <select className="input-field" value={filterByFor(filterForm.status, filterForm.priority)} onChange={e => applyFilterBy(e.target.value || "")}>
+              <select className="input-field" value={filterByFor(filterForm.status || "", filterForm.priority || "")} onChange={e => applyFilterBy(e.target.value || "")}>
                 <option value="">Any</option>
                 {FILTER_BY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
