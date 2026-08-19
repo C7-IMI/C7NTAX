@@ -19,3 +19,6 @@ new_models.prisma
 *.db-journal
 dist/
 dist-electron/
+
+# local scratch: login test payload
+.login-body.json
