@@ -133,5 +133,14 @@
     "entityName": "FW-PRIMARY",
     "entityIcon": "monitor",
     "viewedAt": "2026-08-19T17:16:28.888Z"
+  },
+  {
+    "id": "09c80c6e-58e8-4d33-bc05-f5612054d0ff",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "d69e3593-a2d1-48d6-a3f4-929856a41ad1",
+    "entityName": "Globex VPN Credential",
+    "entityIcon": "key",
+    "viewedAt": "2026-08-19T19:06:06.546Z"
   }
 ]

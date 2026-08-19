@@ -14,6 +14,48 @@
     "updatedAt": "2026-08-19T17:08:23.256Z"
   },
   {
+    "id": "2addc3fb-e089-45aa-a524-b91acf0472df",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Possible service degradation reported for GitHub (DownDetector)",
+    "description": "DownDetector is reporting problems for GitHub.",
+    "severity": "degraded",
+    "status": "active",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/github/",
+    "detectedAt": "2026-08-19T17:48:41.663Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-19T17:48:41.664Z",
+    "updatedAt": "2026-08-19T17:48:41.664Z"
+  },
+  {
+    "id": "ee190836-de96-4cdf-ac12-51b30ae3baa0",
+    "serviceId": "eda5aa37-2863-4125-b626-468192066ff6",
+    "title": "Possible service degradation reported for Comcast Xfinity (DownDetector)",
+    "description": "DownDetector is reporting problems for Comcast Xfinity.",
+    "severity": "degraded",
+    "status": "active",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/comcast-xfinity/",
+    "detectedAt": "2026-08-19T18:48:30.142Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-19T18:48:30.144Z",
+    "updatedAt": "2026-08-19T18:48:30.144Z"
+  },
+  {
+    "id": "90fa0286-2aef-4b63-934c-85c16cf67ce5",
+    "serviceId": "10630569-8873-4b00-9137-a346046c2b5f",
+    "title": "Possible service degradation reported for Verizon (DownDetector)",
+    "description": "DownDetector is reporting problems for Verizon.",
+    "severity": "degraded",
+    "status": "active",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/verizon/",
+    "detectedAt": "2026-08-19T18:53:48.874Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-19T18:53:48.875Z",
+    "updatedAt": "2026-08-19T18:53:48.875Z"
+  },
+  {
     "id": "e4d2eb36-9244-46d3-8ae3-4dcddd37848c",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "GitHub Actions — degraded performance",
@@ -81,7 +123,7 @@
     "detectedAt": "2026-08-19T15:18:17.558Z",
     "resolvedAt": null,
     "createdAt": "2026-08-19T15:18:17.560Z",
-    "updatedAt": "2026-08-19T17:13:20.201Z"
+    "updatedAt": "2026-08-19T19:03:25.155Z"
   },
   {
     "id": "76dec28c-dee8-4e15-9430-1890d4df016d",
@@ -179,6 +221,6 @@
     "detectedAt": "2026-08-18T22:38:09.445Z",
     "resolvedAt": null,
     "createdAt": "2026-08-18T22:38:09.446Z",
-    "updatedAt": "2026-08-19T17:13:24.488Z"
+    "updatedAt": "2026-08-19T19:03:27.976Z"
   }
 ]
