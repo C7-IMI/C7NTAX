@@ -23,6 +23,7 @@ place at their `Source` paths.
 | PLAN-012 | Outlook Add-in Email-to-Ticket Generator Plan | `PLAN-012-Outlook-Addin-Email-to-Ticket.md` | `PLAN-Outlook-Addin-Email-to-Ticket.md` | 2026-08-18 | Planning |
 | PLAN-013 | C7NTAX Competitive Review & Modernization Plan | `PLAN-013-Competitive-Review-and-Modernization.md` | `PLAN-C7NTAX-Competitive-Review-and-Modernization.md` | 2026-08-18 | Planning |
 | PLAN-014 | C7NTRL RMM Product Line & PSA Integration Plan | `PLAN-014-C7NTRL-RMM-Product-Line-and-PSA-Integration.md` | `PLAN-C7NTRL-RMM-Product-Line-and-PSA-Integration.md` | 2026-08-18 | Planning |
+| PLAN-015 | C7NTAX Feature Backlog — UI, Billing, Kumo, Integrations & Infrastructure | `PLAN-015-Feature-Backlog-UI-Billing-Kumo-Integrations.md` | `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` | 2026-08-18 | Planning |
 
 ## Conventions
 

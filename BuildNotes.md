@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.013 | Last Updated: 2026-08-18
+## Version: 2026.8.18.014 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,9 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.014 — PLAN-015: Feature Backlog (UI, Billing, Kumo, Integrations, Infrastructure)
+- **[New]** `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` (PLAN-015) — status-mapped all 24 requested features against the verified codebase (✅ batch ticket ops via `bulk.ts` + Tickets.tsx selection, QuickBooks Realm ID fields, Kumo file manager; ⚠️ partials: invoice generate, report writer, CloudConnect fix/re-test dialog, M365 sync, service alerts; 📋 planned elsewhere: client portal FI0042 → PLAN-013 #3, remote-session notes → C7NTRL-001 phase 7 / PLAN-014, serverless/OpenTofu/dev=prod → PLAN-010; ❌ new: 16-item dependency-ordered implementation plan — agreements/time engine (block/cyberCare/spot rates, 1.5x overtime after 18:00, midnight split, 1.5:1 block deduction), expenses tab, bill-through batch invoicing with preview/approve, per-user dashboard, board drag-and-drop, Kumo audit log, MFA QR upload, Outage Board, CloudConnect live statuses, report fix + client value template, AI KB auto-generation, M365 inactivity/offboarding, SMS verification) with `Depends on`/`Risk if skipped` notes, moved/appended notes, frontend items, rollback (flag-gated), verification, and open decisions.
 
 ## 2026.8.18.013 — PLAN-014: C7NTRL RMM split-out + GitHub repo created
 - **[New]** `PLAN-C7NTRL-RMM-Product-Line-and-PSA-Integration.md` (PLAN-014) — C7NTAX stays PSA-only; the RMM product line from PLAN-013 is split into a separate application **C7NTRL** with its own GitHub repository (`C7-IMI/C7NTRL`, private, `main`+`develop` branches pushed) and mirrored plan C7NTRL-001 (architecture: Node/Express server + React console reusing the C7NTAX theme, Go agent; 10 dependency-ordered phases derived from re-reviewing Endar/NetLock/Breeze with clean-room reuse only — Endar CC BY-NC-ND, NetLock & Breeze AGPL).

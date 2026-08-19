@@ -1107,6 +1107,17 @@
 - Changelog policy applied: this Retrace entry (workspace-level file, not a C7NTAX code change).
 
 
+### Prompt 94 — PLAN-015: Feature backlog plan with status mapping
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~45 min
+**BuildNotes IDs:** #1 (2026.8.18.014)
+> Create a plan to implement the following features. Make sure to reference existing plan docs. If the feature has already been implemented, something similar exists in the application or already exists in one of the plan docs, then clearly mark it. [24 features across UI/Dashboard, Ticketing/Service Boards, Time Entry/Expenses, Agreements/Billing, Knowledge Base (Kumo), Integrations/AI/Automations, Infrastructure/Deployment]
+
+**Changes:**
+- Verified each requested feature against the live monorepo (apps/api + apps/web): ✅ implemented — batch ticket ops (`routes/bulk.ts` + Tickets.tsx selection/checked actions), QuickBooks Online Realm ID + access tokens (`cloudconnect.ts:79`), Kumo file manager (`kumo.ts` /files + /files/upload + KumoFile); ⚠️ similar/partial — single-invoice generate (`billing.ts:65`), report writer (`reports.ts` config JSON), CloudConnect per-field fix + re-test dialog (`CloudConnect.tsx`), M365 user sync, per-service service alerts with DownDetector; 📋 planned elsewhere — remote-session notes (C7NTRL-001 phase 7 / PLAN-014), client portal FI0042 (PLAN-013 #3, gated on PLAN-003 Step 2; FI0042 string absent from repo — noted), serverless/OpenTofu/dev=prod (PLAN-010).
+- `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` (PLAN-015, 93 lines) — status table for all 24 features + 16-item dependency-ordered implementation plan with `Depends on`/`Risk if skipped` notes (agreements/time engine foundation, expenses, bill-through batch + preview/approve, per-user dashboard, board drag-and-drop, Kumo audit log, MFA QR upload, Outage Board, CloudConnect live statuses, report fix + client value template, AI KB auto-generation, M365 inactivity/offboarding, remote-session notes PSA side, SMS verification, portal, infrastructure→PLAN-010), moved/appended notes, frontend items, rollback (flag-gated), verification, open decisions.
+- PlanDocs PLAN-015 copy + registry row; changelog policy applied (BuildNotes 2026.8.18.014 + this Retrace entry).
+
+
 
 
 
