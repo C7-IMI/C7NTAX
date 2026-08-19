@@ -20,8 +20,20 @@ ticketsRouter.get("/", requirePermission(Permission.TicketView), async (req: Aut
     if (!req.user!.permissions.includes(Permission.TicketViewAll) && req.user!.companyId) {
       where.companyId = req.user!.companyId;
     }
-    if (status) where.status = status;
-    if (priority) where.priority = priority;
+    if (status) {
+      // Supports comma-separated multi-values (e.g. "waiting_on_client,waiting_on_third_party")
+      // and the literal "open" for everything not closed/cancelled.
+      if (status === "open") {
+        where.status = { notIn: [TicketStatus.Closed, TicketStatus.Cancelled] };
+      } else {
+        const statuses = status.split(",").map(s => s.trim()).filter(Boolean);
+        where.status = statuses.length > 1 ? { in: statuses } : statuses[0];
+      }
+    }
+    if (priority) {
+      const priorities = priority.split(",").map(p => p.trim()).filter(Boolean);
+      where.priority = priorities.length > 1 ? { in: priorities } : priorities[0];
+    }
     if (boardId) {
       where.boardId = boardId;
       // If the board has a ticketCode, prefix-filter ticket numbers

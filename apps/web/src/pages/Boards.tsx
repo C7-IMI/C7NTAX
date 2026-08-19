@@ -57,17 +57,19 @@ export function BoardsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {boards.map((board) => {
           const m = board.metrics;
+          const boardUrl = `/tickets?boardId=${board.boardId}`;
           return (
-            <Link
+            <div
               key={board.boardId}
-              to={`/tickets?boardId=${board.boardId}`}
               className="card hover:border-cyber-600/30 transition-colors group cursor-pointer space-y-4"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-white group-hover:text-cyber-400 transition-colors">
-                    {board.boardName}
-                  </h3>
+                  <Link to={boardUrl} title={`View all tickets on ${board.boardName}`}>
+                    <h3 className="text-base font-semibold text-white group-hover:text-cyber-400 transition-colors hover:underline">
+                      {board.boardName}
+                    </h3>
+                  </Link>
                   {board.boardDescription && (
                     <p className="text-xs text-gray-500 mt-0.5">{board.boardDescription}</p>
                   )}
@@ -75,15 +77,15 @@ export function BoardsPage() {
                 <span className="text-[10px] text-gray-600 font-mono">{m.open} open</span>
               </div>
 
-              {/* Primary metrics row */}
+              {/* Primary metrics row — status items are clickable and filter tickets */}
               <div className="grid grid-cols-3 gap-2">
-                <MetricBadge icon={Inbox} label="New" value={m.new} color="text-blue-400" bg="bg-blue-600/15" />
-                <MetricBadge icon={Clock} label="Workable" value={m.workable} color="text-cyber-400" bg="bg-cyber-600/15" />
-                <MetricBadge icon={Pause} label="On Hold" value={m.onHold} color="text-purple-400" bg="bg-purple-600/15" />
+                <StatusBadge to={`${boardUrl}&status=new`} icon={Inbox} label="New" value={m.new} color="text-blue-400" bg="bg-blue-600/15" />
+                <StatusBadge to={`${boardUrl}&status=in_progress`} icon={Clock} label="Workable" value={m.workable} color="text-cyber-400" bg="bg-cyber-600/15" />
+                <StatusBadge to={`${boardUrl}&status=on_hold`} icon={Pause} label="On Hold" value={m.onHold} color="text-purple-400" bg="bg-purple-600/15" />
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <MetricBadge icon={MessageSquare} label="Waiting" value={m.waitingOnResponse} color="text-amber-400" bg="bg-amber-600/15" />
-                <MetricBadge icon={AlertTriangle} label="Escalated" value={m.escalations} color="text-red-400" bg="bg-red-600/15" />
+                <StatusBadge to={`${boardUrl}&status=waiting_on_client,waiting_on_third_party`} icon={MessageSquare} label="Waiting" value={m.waitingOnResponse} color="text-amber-400" bg="bg-amber-600/15" />
+                <StatusBadge to={`${boardUrl}&status=open&priority=critical`} icon={AlertTriangle} label="Escalated" value={m.escalations} color="text-red-400" bg="bg-red-600/15" />
                 <MetricBadge icon={TrendingUp} label="Avg Age" value={`${m.averageAgeDays}d`} color="text-gray-400" bg="bg-gray-600/15" />
               </div>
 
@@ -110,15 +112,32 @@ export function BoardsPage() {
               )}
 
               <div className="text-right">
-                <span className="text-xs text-cyber-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Link to={boardUrl} className="text-xs text-cyber-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   View tickets →
-                </span>
+                </Link>
               </div>
-            </Link>
+            </div>
           );
         })}
       </div>
     </div>
+  );
+}
+
+// Clickable status metric — navigates to tickets filtered by that status for this board.
+function StatusBadge({ to, icon: Icon, label, value, color, bg }: { to: string; icon: LucideIcon; label: string; value: number | string; color: string; bg: string }) {
+  return (
+    <Link
+      to={to}
+      title={`View ${label} tickets on this board`}
+      className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5 cursor-pointer transition-all border border-transparent hover:border-cyber-600/50 hover:ring-1 hover:ring-cyber-500/30 group/badge`}
+    >
+      <div className="flex items-center gap-1">
+        <Icon size={11} className={color} />
+        <span className={`text-[10px] font-semibold ${color} group-hover/badge:underline underline-offset-2`}>{label}</span>
+      </div>
+      <span className={`text-lg font-bold ${color}`}>{value}</span>
+    </Link>
   );
 }
 

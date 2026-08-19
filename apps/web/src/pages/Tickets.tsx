@@ -9,7 +9,8 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
-  waiting_on_client: "bg-amber-600/20 text-amber-400", on_hold: "bg-purple-600/20 text-purple-400",
+  waiting_on_client: "bg-amber-600/20 text-amber-400", waiting_on_third_party: "bg-amber-600/20 text-amber-400",
+  on_hold: "bg-purple-600/20 text-purple-400",
   resolved: "bg-green-600/20 text-green-400", closed: "bg-gray-600/20 text-gray-400", cancelled: "bg-red-600/20 text-red-400",
   pending_approval: "bg-yellow-600/20 text-yellow-400",
 };
@@ -29,8 +30,23 @@ const BATCH_ACTIONS = [
   { value: "priority_critical", label: "Set Priority → Critical" },
 ];
 
-const TICKET_STATUSES = ["new","in_progress","waiting_on_client","on_hold","pending_approval","resolved","closed","cancelled"];
+const TICKET_STATUSES = ["new","in_progress","waiting_on_client","waiting_on_third_party","on_hold","pending_approval","resolved","closed","cancelled"];
 const TICKET_PRIORITIES = ["low","medium","high","critical"];
+
+// ── Properly capitalized display labels ──
+const statusLabel = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+const priorityLabel = (p: string) => p.charAt(0).toUpperCase() + p.slice(1);
+
+// ── "Filter By" quick filters — mirrors the Service Board card status items ──
+const FILTER_BY_OPTIONS = [
+  { value: "workable", label: "Workable", status: "in_progress", priority: "" },
+  { value: "escalated", label: "Escalated", status: "open", priority: "critical" },
+  { value: "waiting", label: "Waiting", status: "waiting_on_client,waiting_on_third_party", priority: "" },
+  { value: "on_hold", label: "On Hold", status: "on_hold", priority: "" },
+  { value: "new", label: "New", status: "new", priority: "" },
+];
+const filterByFor = (status: string, priority: string) =>
+  FILTER_BY_OPTIONS.find(o => o.status === status && o.priority === priority)?.value || "";
 
 // ── Configurable ticket list columns (PSA-style: Autotask / ConnectWise / HaloPSA reference) ──
 // Priority is available but unchecked by default.
@@ -73,6 +89,11 @@ const TICKET_DETAIL_TABS = [
 export function TicketsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const boardId = searchParams.get("boardId") || "";
+  const statusParam = searchParams.get("status") || "";
+  const priorityParam = searchParams.get("priority") || "";
+  const assignedParam = searchParams.get("assignedToId") || "";
+  const dateFromParam = searchParams.get("dateFrom") || "";
+  const dateToParam = searchParams.get("dateTo") || "";
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
@@ -136,16 +157,17 @@ export function TicketsPage() {
   const fetchTickets = () => {
     let url = "/tickets?limit=200";
     if (boardId) url += `&boardId=${boardId}`;
-    // Apply active filters
-    if (filterForm.status) url += `&status=${filterForm.status}`;
-    if (filterForm.priority) url += `&priority=${filterForm.priority}`;
-    if (filterForm.assignedToId) url += `&assignedToId=${filterForm.assignedToId}`;
-    if (filterForm.dateFrom) url += `&dateFrom=${filterForm.dateFrom}`;
-    if (filterForm.dateTo) url += `&dateTo=${filterForm.dateTo}`;
+    // Apply active filters (search params are the source of truth)
+    if (statusParam) url += `&status=${encodeURIComponent(statusParam)}`;
+    if (priorityParam) url += `&priority=${encodeURIComponent(priorityParam)}`;
+    if (assignedParam) url += `&assignedToId=${encodeURIComponent(assignedParam)}`;
+    if (dateFromParam) url += `&dateFrom=${encodeURIComponent(dateFromParam)}`;
+    if (dateToParam) url += `&dateTo=${encodeURIComponent(dateToParam)}`;
     api.get(url).then(r=>setTickets(r.data.data||[])).catch(()=>{}).finally(()=>setLoading(false));
   };
 
-  useEffect(()=>{fetchBoards();fetchTickets();},[boardId]);
+  useEffect(()=>{fetchBoards();},[]);
+  useEffect(()=>{fetchTickets();},[boardId, statusParam, priorityParam, assignedParam, dateFromParam, dateToParam]);
   useEffect(()=>{api.get("/users?limit=200").then(r=>setUsers(r.data.data||[])).catch(()=>{});},[]);
 
   // Auto-open new ticket form when navigated from contact
@@ -251,15 +273,31 @@ export function TicketsPage() {
   };
 
   // ── Filter ──
+  // Sync the dialog draft from URL filters (e.g. when navigating from Service Boards)
+  useEffect(() => {
+    setFilterForm({ status: statusParam, priority: priorityParam, assignedToId: assignedParam, dateFrom: dateFromParam, dateTo: dateToParam });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusParam, priorityParam, assignedParam, dateFromParam, dateToParam]);
+
   const applyFilters = () => {
-    fetchTickets();
     setShowFilter(false);
+    const params: Record<string, string> = {};
+    if (boardId) params.boardId = boardId;
+    if (filterForm.status) params.status = filterForm.status;
+    if (filterForm.priority) params.priority = filterForm.priority;
+    if (filterForm.assignedToId) params.assignedToId = filterForm.assignedToId;
+    if (filterForm.dateFrom) params.dateFrom = filterForm.dateFrom;
+    if (filterForm.dateTo) params.dateTo = filterForm.dateTo;
+    setSearchParams(params);
+  };
+  const applyFilterBy = (v: string) => {
+    const opt = FILTER_BY_OPTIONS.find(o => o.value === v);
+    setFilterForm(prev => ({ ...prev, status: opt?.status || "", priority: opt?.priority || "" }));
   };
   const clearFilters = () => {
     setFilterForm({ status: "", priority: "", assignedToId: "", dateFrom: "", dateTo: "" });
     setShowFilter(false);
-    // re-fetch without filters
-    setTimeout(() => fetchTickets(), 50);
+    setSearchParams(boardId ? { boardId } : {});
   };
 
   return (
@@ -338,10 +376,19 @@ export function TicketsPage() {
             </div>
 
             <div>
+              <label className="text-xs text-gray-500 block mb-1">Filter By</label>
+              <select className="input-field" value={filterByFor(filterForm.status, filterForm.priority)} onChange={e => applyFilterBy(e.target.value || "")}>
+                <option value="">Any</option>
+                {FILTER_BY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+
+            <div>
               <label className="text-xs text-gray-500 block mb-1">Status</label>
               <select className="input-field" value={filterForm.status} onChange={e => setFilterForm({...filterForm, status: e.target.value})}>
                 <option value="">Any</option>
-                {TICKET_STATUSES.map(s => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
+                {filterForm.status === "open" && <option value="open">Open</option>}
+                {TICKET_STATUSES.map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
               </select>
             </div>
 
@@ -349,7 +396,7 @@ export function TicketsPage() {
               <label className="text-xs text-gray-500 block mb-1">Priority</label>
               <select className="input-field" value={filterForm.priority} onChange={e => setFilterForm({...filterForm, priority: e.target.value})}>
                 <option value="">Any</option>
-                {TICKET_PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+                {TICKET_PRIORITIES.map(p => <option key={p} value={p}>{priorityLabel(p)}</option>)}
               </select>
             </div>
 
