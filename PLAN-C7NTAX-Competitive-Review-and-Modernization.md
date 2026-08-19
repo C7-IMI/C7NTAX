@@ -130,7 +130,7 @@ Ordering scheme: same phase table format as prior plans; each item lists affecte
 | 7 | **AI action layer + MCP (merge into PLAN-011):** risk-classified action engine (suggest→execute with approval prompt; block critical ops), approval dialog component in ticket detail; MCP server endpoint (OAuth 2.1 + PKCE) exposing ticket/device queries to external agents | PLAN-011 phases (Bedrock agent), #1/#2 UI patterns | AI can only suggest, not act — Breeze parity unachievable; MCP interop missing. |
 | 8 | **Security hardening:** RLS enforcement pass once PLAN-003 lands; JWT 15-min + refresh rotation; password-hash review (Argon2id); CI scanners (gitleaks/Trivy) in the boot/CI pipeline | PLAN-003, PLAN-007 SC-03 | Multi-tenant queries leak; long-lived tokens raise SOC 2 risk (PLAN-007). |
 | 9 | **UI/UX modernization pass (incremental, theme-preserving):** advanced filter bar on Tickets/Clients (Breeze-style query chips), bulk actions on ticket list, card density toggle + compact tables, skeletons instead of spinners, consistent empty states, breadcrumb header parity, keyboard shortcuts (T=new ticket), collapsible sidebar groups, dark-theme focus/contrast fixes, responsive table→card transforms on mobile | — (can run parallel after #2) | Usability gaps compound as features land; accessibility/contrast issues remain. |
-| 10 | **RMM product line (decision gate):** scoping doc only — endpoint agent, remote shell/desktop, patch mgmt, sensors/SNMP, application/USB control, network discovery, backup. Deliberately NOT scheduled for implementation; adopt via a future plan after user approval | PLAN-010 AWS infra (when approved) | Attempting it now would destabilize the PSA core and double the codebase. |
+| 10 | **RMM product line** → **split OUT to C7NTRL** (separate repo `C7-IMI/C7NTRL`, plan C7NTRL-001; mirrored in C7NTAX as **PLAN-014**): endpoint agent, remote shell/desktop, patch mgmt, sensors/SNMP, application/USB control, network discovery, uptime monitoring. C7NTAX stays PSA-only. | C7NTRL phases 1–10; PLAN-014 §3 lists C7NTAX counterpart changes | Attempting it in the PSA would destabilize production and double the codebase; separate repo keeps C7NTAX releasable independently. |
 
 **Frontend items (all affected surfaces):**
 - New: **Quotes** page + create/edit dialog (line items, markups), ticket-detail "Create Quote" action, quote widget on Finance dashboard.
@@ -141,8 +141,8 @@ Ordering scheme: same phase table format as prior plans; each item lists affecte
 - **AI action engine + MCP server** → appended to **PLAN-011** (Bedrock AI plan) as its new Phase 9; PLAN-011's existing phases unchanged.
 - **SSO (SAML/OIDC)** → appended to **PLAN-002** (identity plan) as an additional stage; implemented here as phase #6 with a note to re-sync PLAN-002.
 - **Multi-tenant RLS enforcement** → appended to **PLAN-003** (multi-tenant plan) as a new Phase 4; referenced by phase #8 here (do not duplicate).
-- **RMM endpoint-agent features** → intentionally split OUT of this plan into a future decision-gate plan (phase #10) because they constitute a separate product line; PSA-core risk otherwise.
-- **Website/SSL/DNS monitoring** stays in this plan (phase #4) — it extends the existing Service Alerts subsystem, not the RMM line.
+- **RMM endpoint-agent features** → split OUT into **C7NTRL** (separate repo `C7-IMI/C7NTRL`, plan C7NTRL-001; mirrored here as **PLAN-014**). Originally a decision gate (phase #10); decision now made: C7NTAX stays PSA-only, C7NTRL is the RMM.
+- **Website/SSL/DNS monitoring** → **moved to C7NTRL phase 8** (PLAN-014); C7NTAX Service Alerts remains vendor-status-only (RSS/DownDetector).
 
 **Design elements (preserve C7NTAX theme):**
 - Keep the dark cyber-blue token set from `DESIGN.md`; adopt Breeze's clean density and NetLock's information hierarchy (status-first rows, secondary metadata muted).

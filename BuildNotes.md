@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.012 | Last Updated: 2026-08-18
+## Version: 2026.8.18.013 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,12 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.013 — PLAN-014: C7NTRL RMM split-out + GitHub repo created
+- **[New]** `PLAN-C7NTRL-RMM-Product-Line-and-PSA-Integration.md` (PLAN-014) — C7NTAX stays PSA-only; the RMM product line from PLAN-013 is split into a separate application **C7NTRL** with its own GitHub repository (`C7-IMI/C7NTRL`, private, `main`+`develop` branches pushed) and mirrored plan C7NTRL-001 (architecture: Node/Express server + React console reusing the C7NTAX theme, Go agent; 10 dependency-ordered phases derived from re-reviewing Endar/NetLock/Breeze with clean-room reuse only — Endar CC BY-NC-ND, NetLock & Breeze AGPL).
+- **[New]** `docs/INTEGRATION-CONTRACT.md` v0.1 committed to both repos: versioned endpoints, HMAC-signed webhooks, shared-JWT trust, contract fixtures + `integration-contract` CI jobs enforcing bidirectional change checks (C7NTAX changes validated against C7NTRL and vice versa).
+- **[Update]** `PLAN-C7NTAX-Competitive-Review-and-Modernization.md` (PLAN-013) — phase #10 RMM line now split OUT to C7NTRL/PLAN-014; website/SSL/DNS monitoring moved to C7NTRL phase 8 (C7NTAX Service Alerts stays vendor-only).
+- **[New]** Reference clones of endar / NetLock-RMM / breeze under `../_ref/` (study only, never merged).
 
 ## 2026.8.18.012 — Now-Deployable Backlog Review (No AWS, Non-Breaking)
 - **[New]** `PLAN-C7NTAX-Now-Deployable-Backlog.md` — reviewed all 13 plans + live codebase and identified 12 features deployable now without AWS migration and without breaking the app, each with an implementation approach that preserves existing functionality (quotes/service catalog, time→invoice lines, website/SSL/DNS monitoring, alert severity/webhooks, provider-agnostic AI risk-classified actions, SAML/OIDC SSO, WebAuthn passkey, Outlook add-in backend, M365 Graph transport, mobile backend enablement, SOC 2 non-AWS hardening, UI/UX modernization). Explicit exclusion table with reasons (AWS-dependent or break-risk items deferred).

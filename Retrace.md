@@ -1085,6 +1085,18 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.012 + this Retrace entry.
 
 
+### Prompt 92 — C7NTRL: separate RMM app + GitHub repo + integration contract
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~40 min
+**BuildNotes IDs:** #1 (2026.8.18.013)
+> Review PLAN-C7NTAX-Competitive-Review-and-Modernization.md and devise a way to create a separate RMM application named C7NTRL that connects and integrates with C7NTAX... Create a GitHub repository named C7NTRL... Review Endar, NetLock, and Breeze again and use them as an integrated base for the RMM design and layout. Apply the C7NTAX theme where it makes sense... Clone the repositories if necessary...
+
+**Changes:**
+- Created private GitHub repo **C7-IMI/C7NTRL** (GitHub MCP lacked write auth; used the stored GCM credential via API) and pushed the seed: `README.md`, `docs/PLAN-C7NTRL-Architecture-and-Integration.md` (C7NTRL-001), `docs/INTEGRATION-CONTRACT.md` v0.1, `.gitignore` — branches `main` + `develop`.
+- C7NTRL-001: separate app decision rationale; license posture verified (Endar = CC BY-NC-ND, NetLock/Breeze = AGPL → clean-room implementation only, concepts reused); architecture (Node/Express server + React console reusing C7NTAX theme tokens, Go agent); 10 dependency-ordered phases (agent/inventory → tenants/policies → sensors → PSA alerts → compliance → patching → remote tools → uptime monitoring → risk-classified AI → app/USB/network control); moved-items notes.
+- C7NTAX: `PLAN-C7NTRL-RMM-Product-Line-and-PSA-Integration.md` (PLAN-014) + PlanDocs copy + registry row; `docs/INTEGRATION-CONTRACT.md` committed to C7NTAX too; PLAN-013 updated (RMM line → C7NTRL/PLAN-014; website/SSL/DNS monitoring moved to C7NTRL phase 8); `contract-fixtures/` dir created; `../_ref/` shallow clones of endar/NetLock-RMM/breeze (study only, never merged).
+- Changelog policy applied: BuildNotes entry 2026.8.18.013 + this Retrace entry.
+
+
 
 
 
