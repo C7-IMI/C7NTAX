@@ -41,6 +41,7 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { HomePage } from "./pages/HomePage";
 import { ServiceAlertsPage } from "./pages/ServiceAlerts";
 import { ServiceAlertsSettingsPage } from "./pages/ServiceAlertsSettings";
+import { QuotesPage } from "./pages/Quotes";
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
@@ -89,6 +90,7 @@ function ProtectedRoutes() {
         <Route path="/admin" element={<AuditLogsSection />} />
         <Route path="/admin/changelog" element={<ChangelogPage />} />
         <Route path="/billing/dashboard" element={<FinanceDashboardPage />} />
+        <Route path="/quotes" element={<QuotesPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/pto" element={<PTOPage />} />
         <Route path="/settings/ai" element={<InferenceSettingsPage />} />

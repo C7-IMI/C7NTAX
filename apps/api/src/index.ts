@@ -50,6 +50,7 @@ import { kumoRouter } from "./routes/kumo";
 import { alertsRouter } from "./routes/alerts";
 import { serviceAlertsRouter } from "./routes/serviceAlerts";
 import { emailConnectorsRouter } from "./routes/email-connectors";
+import { quotesRouter } from "./routes/quotes";
 import { setupWebSocket } from "./ws";
 import { WEB_ORIGIN } from "@C7NTAX/shared";
 import { startWorkers } from "./worker";
@@ -156,6 +157,7 @@ app.use("/api/kumo", kumoRouter);
 app.use("/api/alerts", alertsRouter);
 app.use("/api/service-alerts", serviceAlertsRouter);
 app.use("/api/email-connectors", emailConnectorsRouter);
+app.use("/api/quotes", quotesRouter);
 
 app.use(errorHandler);
 

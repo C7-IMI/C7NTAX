@@ -113,6 +113,39 @@ billingRouter.post("/invoices/generate", requirePermission(Permission.InvoiceCre
   } catch (e) { next(e); }
 });
 
+// Backlog item 2 — batch generate from unbilled time entries (gated by BILLING_FROM_TICKETS_ENABLED)
+billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
+  try {
+    if (process.env.BILLING_FROM_TICKETS_ENABLED === "false") throw new AppError("Generate-from-tickets disabled", 404);
+    const { companyId, agreementId } = req.body;
+    if (!companyId) throw new AppError("companyId required");
+    const agreement = agreementId
+      ? await prisma.serviceAgreement.findUnique({ where: { id: agreementId } })
+      : await prisma.serviceAgreement.findFirst({ where: { companyId } });
+    if (!agreement) throw new AppError("No service agreement found");
+    const timeEntries = await prisma.timeEntry.findMany({ where: { ticket: { companyId }, invoiceId: null, billable: true } });
+    if (timeEntries.length === 0) throw new AppError("No unbilled time entries found");
+    const hourlyRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
+    const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
+    const dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);
+    const lineItems = timeEntries.map((te) => {
+      const qty = +(te.minutes / 60).toFixed(2);
+      return { description: te.description || `Time entry ${te.id.slice(0, 8)}`, quantity: qty, unitPrice: hourlyRate, total: +(qty * hourlyRate).toFixed(2) };
+    });
+    const subtotal = +lineItems.reduce((s, li) => s + li.total, 0).toFixed(2);
+    const invoice = await prisma.invoice.create({
+      data: {
+        invoiceNumber, companyId, agreementId: agreement.id, issueDate: new Date(), dueDate,
+        subtotal, taxRate: 0, taxTotal: 0, total: subtotal, status: InvoiceStatus.Draft,
+        lineItems: { create: lineItems },
+      },
+      include: { lineItems: true },
+    });
+    await prisma.timeEntry.updateMany({ where: { id: { in: timeEntries.map((te) => te.id) } }, data: { invoiceId: invoice.id } });
+    res.status(201).json({ invoice, entriesIncluded: timeEntries.length });
+  } catch (e) { next(e); }
+});
+
 billingRouter.post("/invoices/:id/send", requirePermission(Permission.InvoiceSend), async (req: AuthRequest, res, next) => {
   try {
     const invoice = await prisma.invoice.findUnique({ where: { id: req.params.id }, include: { company: true, lineItems: true } });
