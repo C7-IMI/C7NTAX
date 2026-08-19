@@ -1181,7 +1181,7 @@
 
 ### Prompt 100 — Help button + Help nav section with PSA-style docs
 **Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~35 min
-**BuildNotes IDs:** #1 (2026.8.18.018)
+**BuildNotes IDs:** #1 (2026.8.19.001)
 > Implement the existing Help button placeholder at the top right of the screen as a functioning button/menu. Create a new parent section in the navigation pane called Help with these subsections: Getting Started, FAQ, Configuration, and Index. Clicking the Help button should navigate to a Help landing page that displays the subsections along with descriptions. Use other PSA documentation such as AutotaskPSA, ConnectWise Asio, and HaloPSA as a reference for structure, layout, navigation, and cross-referencing of docs.
 
 **Changes:**
@@ -1191,25 +1191,25 @@
 - `App.tsx` — 5 help routes; removed duplicate `/quotes` route found during wiring.
 - Design review fixes: removed side-accent (border-l + rounded-r) callout styling in favor of full tinted backgrounds; anchors now derived from actual headings.
 - Verification: web typecheck 17 (baseline, changed files clean); Vite transforms Help.tsx/HelpDoc.tsx (200); `/help` serves 200.
-- Changelog policy applied: BuildNotes entry 2026.8.18.018 + What's New outputs regenerated (70 versions) + this Retrace entry.
+- Changelog policy applied: BuildNotes entry 2026.8.19.001 + What's New outputs regenerated (70 versions) + this Retrace entry.
 
 
 ### Prompt 101 — Help walkthroughs + documentation maintenance rule
 **Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~40 min
-**BuildNotes IDs:** #1 (2026.8.18.019)
+**BuildNotes IDs:** #1 (2026.8.19.002)
 > When creating new features or functionality, also create walkthrough/instructions for configuring and using the feature. Add the documentation to the Index subsection in Help. Treat this as technical documentation: keep it detailed and concise. If the feature requires configuration, provide step-by-step instructions. Review the current application and feature list, then retroactively create missing walkthroughs/instructions for existing features. Organize the Help Index in a logical format based on sections and/or related feature sets, whichever is more logical. In the documentation, include clickable links to related or relevant content elsewhere in the Help section when applicable. Whenever a feature or function is added, updated, changed, or removed, automatically update the new and/or relevant documentation so the walkthroughs/instructions remain accurate.
 
 **Changes:**
 - `pages/HelpDoc.tsx` — restructured `HELP_SECTIONS` with `group: "core" | "walkthroughs"`; added 12 retroactive feature walkthroughs under `/help/walkthroughs/*` (email-tickets, quotes-invoices, billing-agreements, uptime-monitors, service-alerts, alert-webhooks, ai-actions, identity-security, outlook-addin, cloudconnect, kumo, shortcuts) each with step-by-step configuration instructions where required + related-content links; rebuilt the Index with feature-set groups and rows linking to walkthroughs/app pages; added `HelpWalkthrough` pathname-resolved component + `/help/walkthroughs/:slug` route in App.tsx; Help landing now renders core sections + a Feature walkthroughs grid.
 - Durable documentation-maintenance rule recorded in `PROMPT-LIBRARY.md` P3 and `NewProjectPrompts.md` P3 (walkthroughs created/updated in the same change as every feature add/update/change/remove; Index rows and related links kept accurate).
 - Verification: web typecheck 17 (baseline); Vite transforms Help/HelpDoc (200); `/help/walkthroughs/email-tickets` serves 200.
-- Changelog policy applied: BuildNotes entry 2026.8.18.019 + What's New outputs regenerated (71 versions) + this Retrace entry.
+- Changelog policy applied: BuildNotes entry 2026.8.19.002 + What's New outputs regenerated (71 versions) + this Retrace entry.
 - Also fixed the accidental out-of-order insertion of Prompt 100 before Prompt 99 (now chronological).
 
 
 ### Prompt 102 — Fix broken buttons/links across the app
 **Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~35 min
-**BuildNotes IDs:** #1 (2026.8.18.020)
+**BuildNotes IDs:** #1 (2026.8.19.003)
 > Task: Find every button or link in the app that is currently broken or does not function. For each one, either fix the existing code or build out the necessary code and dialogs needed to make it functional. Scope: Entire app. Exclusion: Do not fix or modify the placeholder buttons at the top right of the screen for now.
 
 **Changes:**
@@ -1218,19 +1218,49 @@
 - Built `pages/CustomReports.tsx` (list/create custom reports with JSON-validated config, Run via `GET /api/reports/:id/run` with results table) + route + App.tsx import; fixed one noUncheckedIndexedAccess error.
 - Help docs updated in the same change per the maintenance rule: new "Custom Reports & Scheduling" walkthrough + Index rows.
 - Verification: web typecheck 17 (baseline); `/reports/custom` and `/help/walkthroughs/custom-reports` serve 200.
-- Changelog policy applied: BuildNotes entry 2026.8.18.020 + What's New outputs regenerated (72 versions) + this Retrace entry.
+- Changelog policy applied: BuildNotes entry 2026.8.19.003 + What's New outputs regenerated (72 versions) + this Retrace entry.
 
 
 ### Prompt 103 — Service Alerts: fix Add Service button
 **Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~15 min
-**BuildNotes IDs:** #1 (2026.8.18.021)
+**BuildNotes IDs:** #1 (2026.8.19.004)
 > Fix the Add Service button in Service Alerts. Currently nothing happens when pressed. Use the attached screenshot to understand the issue and make the button perform its intended action when clicked. [attached screenshot of Service Alerts settings]
 
 **Changes:**
 - Root cause: `ServiceAlertsSettings.tsx` rendered the editor dialog only when `form.name !== "" || editing`; `openNew()` reset the form (empty name) and never opened the dialog, so the Add Service button appeared dead.
 - Fix: dedicated `showForm` state — `openNew`/`openEdit` open it, `closeForm()` closes it from save success, Cancel, and backdrop click; dialog now renders on `showForm`. Save posts to the existing `POST /api/service-alerts/services` (route verified; SERVICE_FIELDS whitelist covers the form's fields).
 - Verification: web typecheck 17 (baseline; changed file clean); `/admin/service-alerts` serves 200.
-- Changelog policy applied: BuildNotes entry 2026.8.18.021 + What's New outputs regenerated (73 versions) + this Retrace entry.
+- Changelog policy applied: BuildNotes entry 2026.8.19.004 + What's New outputs regenerated (73 versions) + this Retrace entry.
+
+
+### Prompt 104 — Same button check applied app-wide
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.19.005)
+> Apply the same button check and fix to every button in all sections and subsections throughout the entire application.
+
+**Changes:**
+- Cross-checked every web API path (buttons/dialogs/tabs across all pages) against mounted API routes. Four silent-404 breakages fixed:
+  - Added `GET /api/kumo/dashboard` (Kumo stats: asset/password/document/server/folder counts).
+  - Added `GET/POST /api/system/failover/status|reset` (SystemConfig-backed failover counter + reset).
+  - Tickets → configurations tab: `/assets?limit=50` (no /api/assets mount) → `/kumo/assets?limit=50`.
+  - Verified all remaining web API calls resolve (cloudconnect/types, billing/expenses, kumo/configs/servers, inference/suggestions, system/audit-logs + config routes, service-alerts/monitor-status, tickets/batch, inventory/assets/import, etc.).
+- Verification: api typecheck 177 / web 17 (baselines; changed files clean); scheduled-task boot clean; fixed endpoints return 401 (auth route exists) instead of 404; `/api/health` 200.
+- Changelog policy applied: BuildNotes entry 2026.8.19.005 + What's New outputs regenerated (74 versions) + this Retrace entry.
+
+
+### Prompt 105 — Fix What's New date/version generation logic permanently
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.19.006)
+> Investigate the logic that generates the dates and version numbers in the "What's New" entries. The dates are currently wrong. Ensure the entries use the correct dates and follow the previously defined version numbering scheme. Fix the underlying logic permanently so this does not recur, and make sure "What's New" is automatically updated after every change.
+
+**Changes:**
+- Root cause: entries 2026.8.18.018–.022 were written on 2026-08-19 but carried the previous day's manually-typed date octets; per the scheme the build number resets to 001 on a new day.
+- Renumbered those five entries to 2026.8.19.001–.005 (BuildNotes headings + header Last Updated 2026-08-19 + Retrace BuildNotes IDs/changelog references), preserving all content.
+- Added `scripts/next-version.mjs` — derives the next version from the actual system date and the highest existing build for that day (printed 2026.8.19.007 correctly during testing).
+- Wired automatic What's New refresh into `apps/api/src/verify-post-change.ts` (new step 4: runs `scripts/generate-buildnotes.mjs` after every post-change verification, in addition to boot step 6a).
+- Updated the Versioning Scheme in BuildNotes and P2 in `PROMPT-LIBRARY.md` + `NewProjectPrompts.md`: date octets must be derived from the current date, never typed.
+- Verified: 75 versions regenerated; top entries carry 2026-08-19 dates; live `/BuildNotes.md` serves 2026.8.19.006.
+- Changelog policy applied: BuildNotes entry 2026.8.19.006 + What's New outputs regenerated (75 versions) + this Retrace entry.
 
 
 

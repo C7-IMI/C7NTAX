@@ -1,7 +1,41 @@
 [
   {
-    "version": "2026.8.18.021",
-    "date": "2026-08-18",
+    "version": "2026.8.19.006",
+    "date": "2026-08-19",
+    "title": "Date/version generation logic fixed permanently",
+    "changes": [
+      {
+        "text": "Entries 2026.8.18.018–.022 were created on 2026-08-19 but carried the previous day's date octets (manually typed). Renumbered to 2026.8.19.001–.005 per the scheme (build resets to 001 on a new day). Header Last Updated corrected to 2026-08-19; Retrace references updated to match.",
+        "type": "Fix"
+      },
+      {
+        "text": "`scripts/next-version.mjs` — computes the next version from the actual system date + the highest existing build for that day; eliminates manual date errors permanently.",
+        "type": "New Feature"
+      },
+      {
+        "text": "`apps/api/src/verify-post-change.ts` — now also runs `scripts/generate-buildnotes.mjs` automatically, so What's New outputs refresh after every post-change verification (in addition to the boot step 6a).",
+        "type": "Update"
+      },
+      {
+        "text": "Versioning Scheme + `PROMPT-LIBRARY.md`/`NewProjectPrompts.md` P2 — version date octets must be derived from the current date, never typed.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.19.005",
+    "date": "2026-08-19",
+    "title": "App-wide button/endpoint audit (all sections & subsections)",
+    "changes": [
+      {
+        "text": "Cross-checked every API path used by web buttons/dialogs against the mounted API routes. Four silent-404 breakages found and fixed:",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.8.19.004",
+    "date": "2026-08-19",
     "title": "Service Alerts: Add Service button fixed",
     "changes": [
       {
@@ -11,8 +45,8 @@
     ]
   },
   {
-    "version": "2026.8.18.020",
-    "date": "2026-08-18",
+    "version": "2026.8.19.003",
+    "date": "2026-08-19",
     "title": "Broken buttons/links audit & fixes",
     "changes": [
       {
@@ -34,8 +68,8 @@
     ]
   },
   {
-    "version": "2026.8.18.019",
-    "date": "2026-08-18",
+    "version": "2026.8.19.002",
+    "date": "2026-08-19",
     "title": "Help walkthroughs + documentation maintenance rule",
     "changes": [
       {
@@ -53,8 +87,8 @@
     ]
   },
   {
-    "version": "2026.8.18.018",
-    "date": "2026-08-18",
+    "version": "2026.8.19.001",
+    "date": "2026-08-19",
     "title": "Help section (button + nav + PSA-style docs)",
     "changes": [
       {

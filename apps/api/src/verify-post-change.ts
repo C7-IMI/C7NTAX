@@ -139,7 +139,20 @@ async function main() {
     console.log(`  ✗ Snapshot capture failed: ${(e as Error).message}`);
   }
 
-  // 4. Final re-check
+  // 4. Regenerate What's New outputs (BuildNotes → public md + JSON)
+  console.log("\n[Verify] Regenerating What's New outputs...");
+  try {
+    execSync("node scripts/generate-buildnotes.mjs", {
+      cwd: path.resolve(__dirname, "..", ".."),
+      stdio: "inherit",
+      timeout: 15000
+    });
+    console.log("  ✓ What's New outputs regenerated");
+  } catch (e) {
+    console.log(`  ✗ What's New regeneration failed: ${(e as Error).message}`);
+  }
+
+  // 5. Final re-check
   const finalFailures = await verifyData();
   if (finalFailures.length > 0) {
     console.log("\n[Verify] ✗ Data still missing after remediation:");

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.021 | Last Updated: 2026-08-18
+## Version: 2026.8.19.006 | Last Updated: 2026-08-19
 
 ---
 
@@ -7,29 +7,44 @@
 - Date-based: `Year.Month.Day.Build` (e.g., `2026.8.10.001`)
 - First three octets set to the release date
 - Build number starts at `001` each day, increments sequentially for same-day entries
+- **The date octets MUST be the actual current date when the entry is written** (derived, never typed). Use `node scripts/next-version.mjs` to compute the next version; the build number resets to `001` on a new day.
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
 
-## 2026.8.18.021 — Service Alerts: Add Service button fixed
+## 2026.8.19.006 — Date/version generation logic fixed permanently
+- **[Fix]** Entries 2026.8.18.018–.022 were created on 2026-08-19 but carried the previous day's date octets (manually typed). Renumbered to 2026.8.19.001–.005 per the scheme (build resets to 001 on a new day). Header Last Updated corrected to 2026-08-19; Retrace references updated to match.
+- **[New]** `scripts/next-version.mjs` — computes the next version from the actual system date + the highest existing build for that day; eliminates manual date errors permanently.
+- **[Update]** `apps/api/src/verify-post-change.ts` — now also runs `scripts/generate-buildnotes.mjs` automatically, so What's New outputs refresh after every post-change verification (in addition to the boot step 6a).
+- **[Update]** Versioning Scheme + `PROMPT-LIBRARY.md`/`NewProjectPrompts.md` P2 — version date octets must be derived from the current date, never typed.
+
+## 2026.8.19.005 — App-wide button/endpoint audit (all sections & subsections)
+- **[Fix]** Cross-checked every API path used by web buttons/dialogs against the mounted API routes. Four silent-404 breakages found and fixed:
+  - `GET /api/kumo/dashboard` missing → added (Kumo dashboard stats: asset/password/document/server/folder counts).
+  - `GET/POST /api/system/failover/status|reset` missing → added (SystemConfig-backed failover counter + reset, survives restarts).
+  - `GET /api/assets?limit=50` (Tickets → configurations tab) → repointed to existing `/kumo/assets?limit=50`.
+  - Verified all other web API calls resolve (cloudconnect/types, billing/expenses, kumo/configs/servers, inference/suggestions, system/audit-logs, service-alerts/monitor-status, tickets/batch, inventory/assets/import, etc.).
+- **[Verification]** api typecheck 177 / web 17 (both baseline; changed files clean). Boot via scheduled task clean; the three fixed endpoints now return 401 (auth-gated route exists) instead of 404; `/api/health` 200.
+
+## 2026.8.19.004 — Service Alerts: Add Service button fixed
 - **[Fix]** `ServiceAlertsSettings.tsx` — the Add Service button appeared to do nothing: the editor dialog rendered only when `form.name !== "" || editing`, but `openNew()` reset the form to an empty name, so the dialog never opened. Added a dedicated `showForm` state — `openNew`/`openEdit` set it true, save/Cancel/backdrop close it via a new `closeForm()` — and the dialog now renders on `showForm`. Save still posts to the existing `POST /api/service-alerts/services` (verified the route + SERVICE_FIELDS whitelist already include the form's fields).
 - **[Verification]** web typecheck 17 (baseline, changed file clean); `/admin/service-alerts` serves 200.
 
-## 2026.8.18.020 — Broken buttons/links audit & fixes
+## 2026.8.19.003 — Broken buttons/links audit & fixes
 - **[Fix]** Audited the entire web app for non-functional buttons/links (grep sweeps for href="#", no-op onClick, handler-less button blocks, and Link targets vs registered routes). All nav Links verified against App.tsx routes; all multiline buttons in Users/Roles/Tickets/ServiceAlerts/Settings verified to have handlers. Top-right header placeholders excluded per instruction.
 - **[Fix]** `Reports.tsx` Analytics → Quick Actions: "Export Dashboard PDF" now generates a real PDF (jsPDF + autoTable with revenue metrics); "Schedule Weekly Report" now opens a working dialog (report select, day, time, recipients) posting to `POST /api/reports/:id/schedules`; "Custom Report Builder" was navigating to a dead SPA route (`window.location.href = "/reports/custom"`) — now a `Link` to the new route.
 - **[New]** `pages/CustomReports.tsx` + route `/reports/custom` — list/create custom reports (name, type ticket_summary/revenue/custom, config JSON validated), Run (uses `GET /api/reports/:id/run`) with results table.
 - **[Update]** Help docs (maintenance rule): added "Custom Reports & Scheduling" walkthrough + Index rows in the same change.
 - **[Verification]** web typecheck 17 (baseline; one transient noUncheckedIndexedAccess error fixed in CustomReports); `/reports/custom` and `/help/walkthroughs/custom-reports` serve 200.
 
-## 2026.8.18.019 — Help walkthroughs + documentation maintenance rule
+## 2026.8.19.002 — Help walkthroughs + documentation maintenance rule
 - **[New]** Feature walkthroughs in the Help docs (`pages/HelpDoc.tsx`, 12 new sections under `/help/walkthroughs/*`): Email-to-Ticket Setup, Quotes & Convert to Invoice, Billing & Agreements (block/Cyber Care/spot, overtime, midnight split, bill-through), Uptime Monitors (website/SSL/DNS), Service Alerts & Outage Monitoring, Alert Webhooks, AI Actions (risk-classified), MFA/SSO/Passkeys, Outlook Add-in, CloudConnect Integrations, Kumo (passwords/documents/audit/file manager), UI Shortcuts & Batch Actions. Each includes step-by-step configuration instructions where configuration is required, and clickable related-content links.
 - **[Update]** Help Index reorganized into feature-set groups (Getting started & UI, Ticketing & email, Billing & agreements, Monitoring & alerts, Integrations, AI, Identity & security, Kumo & KB, Mobile) with rows linking to walkthroughs and app pages. Help landing page now shows the 4 core sections plus a Feature walkthroughs grid.
 - **[New]** Documentation maintenance rule (durable): whenever a feature or function is added, updated, changed, or removed, create/update its walkthrough in the same change and keep its Help Index rows and related-content links accurate. Rule recorded in `PROMPT-LIBRARY.md` (P3) and `NewProjectPrompts.md` (P3).
 - **[Verification]** web typecheck 17 (baseline); Vite transforms HelpDoc/Help (200); `/help/walkthroughs/email-tickets` serves 200.
 
-## 2026.8.18.018 — Help section (button + nav + PSA-style docs)
+## 2026.8.19.001 — Help section (button + nav + PSA-style docs)
 - **[New]** `pages/Help.tsx` — Help landing page: hero + 4 subsection cards (icon, title, description) + quick links.
 - **[New]** `pages/HelpDoc.tsx` — PSA-style documentation frame modeled on Autotask / ConnectWise Asio / HaloPSA help centers: left rail (section navigation + on-page anchors), content blocks (headings, numbered steps, note/tip/warn callouts, tables), and a "Related topics" cross-reference box linking help sections and app pages. Content for Getting Started, FAQ, Configuration, Index (data-driven `HELP_SECTIONS`).
 - **[Update]** `components/Layout.tsx` — Help button (top right) converted from placeholder to a `Link` to `/help`; new parent nav section "Help" in `NAV_TREE` with subsections Help Home, Getting Started, FAQ, Configuration, Index; header descriptions added for the five `/help*` routes; `Settings2`/`ListOrdered` icons imported.
