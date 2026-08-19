@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.8.19.010",
+    "date": "2026-08-19",
+    "title": "Reseed snapshot refreshed with all manual changes",
+    "changes": [
+      {
+        "text": "Re-ran `snapshot-capture.ts` to capture the latest application state: users.json now holds all 9 users (including the newly added ones); all other changed tables re-captured. Capture total: 313 records across 86 tables; unchanged tables skipped by the diff-only writer.",
+        "type": "Update"
+      },
+      {
+        "text": "Added 15 previously-uncaptured tables to the snapshot pipeline (`snapshot-capture.ts` TABLES + `seed-from-snapshots.ts` SEED_ORDER): emailConnector, ssoConfig, webhookConfig, aiProviderConfig, calendarSyncConfig, technicianSkill, projectTaskDependency, kumoPasswordAccessLog, kumoDocumentRevision, kBArticleVersion, kBArticleAttachment, kumoWorkstation, kumoNetworkDevice, currency, alertWebhookDelivery — secret-bearing fields excluded via select (email passwords, client secrets, webhook secrets, AI API keys, calendar tokens, SSO config payloads).",
+        "type": "New Feature"
+      },
+      {
+        "text": "Corrected Prisma client names for KB article version/attachment (kBArticleVersion / kBArticleAttachment).",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.8.19.009",
     "date": "2026-08-19",
     "title": "Sample data coverage for every section & subsection",

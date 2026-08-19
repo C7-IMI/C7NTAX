@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.19.009 | Last Updated: 2026-08-19
+## Version: 2026.8.19.010 | Last Updated: 2026-08-19
 
 ---
 
@@ -12,6 +12,12 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.19.010 — Reseed snapshot refreshed with all manual changes
+- **[Update]** Re-ran `snapshot-capture.ts` to capture the latest application state: users.json now holds all 9 users (including the newly added ones); all other changed tables re-captured. Capture total: 313 records across 86 tables; unchanged tables skipped by the diff-only writer.
+- **[New]** Added 15 previously-uncaptured tables to the snapshot pipeline (`snapshot-capture.ts` TABLES + `seed-from-snapshots.ts` SEED_ORDER): emailConnector, ssoConfig, webhookConfig, aiProviderConfig, calendarSyncConfig, technicianSkill, projectTaskDependency, kumoPasswordAccessLog, kumoDocumentRevision, kBArticleVersion, kBArticleAttachment, kumoWorkstation, kumoNetworkDevice, currency, alertWebhookDelivery — secret-bearing fields excluded via select (email passwords, client secrets, webhook secrets, AI API keys, calendar tokens, SSO config payloads).
+- **[Fix]** Corrected Prisma client names for KB article version/attachment (kBArticleVersion / kBArticleAttachment).
+- **[Verification]** Full delete + re-insert reseed round-trip (71 fixture inserts); after reseed: users 9, tickets 8, kumo assets 5 — all manual data intact.
 
 ## 2026.8.19.009 — Sample data coverage for every section & subsection
 - **[New]** `apps/api/src/seed-coverage.ts` — idempotent per-table guards (creates only when count is 0) seeding sample rows for every previously-empty area: Calendar (scheduleEntry), Procurement (vendor, purchaseOrder, pOLineItem), Payments (payment), Analytics (report + reportSchedule), PTO & Holidays, Contracts + milestones, Sales activities, KB categories, Chat (session + messages), Workflows (rule + action + execution), Locales + translations, Surveys (survey/question/response/answer), M365 (user/group/subscription), Sync logs + synced entities, Expenses, Alert rules + log, Notifications, Kumo Configurations (kumoServer), Kumo domains/certificates/links, and Project phases + tasks. 39 tables verified non-empty after reseed.

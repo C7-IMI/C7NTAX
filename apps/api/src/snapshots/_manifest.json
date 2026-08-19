@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-08-19T16:29:19.397Z",
-  "totalRecords": 312,
+  "capturedAt": "2026-08-19T16:36:56.203Z",
+  "totalRecords": 313,
   "tables": {
     "role": 5,
     "user": 9,
@@ -74,6 +74,21 @@
     "workflowExecution": 1,
     "locale": 2,
     "translation": 1,
-    "projectTask": 2
+    "projectTask": 2,
+    "emailConnector": 0,
+    "ssoConfig": 0,
+    "webhookConfig": 1,
+    "aiProviderConfig": 0,
+    "calendarSyncConfig": 0,
+    "technicianSkill": 0,
+    "projectTaskDependency": 0,
+    "kumoPasswordAccessLog": 0,
+    "kumoDocumentRevision": 0,
+    "kBArticleVersion": 0,
+    "kBArticleAttachment": 0,
+    "kumoWorkstation": 0,
+    "kumoNetworkDevice": 0,
+    "currency": 0,
+    "alertWebhookDelivery": 0
   }
 }

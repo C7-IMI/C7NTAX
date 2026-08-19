@@ -259,8 +259,13 @@ export function TicketsPage() {
           <span className="text-white font-medium">{boards.find(b=>b.id===boardId)?.name||"Board"}</span>
         </div>
       )}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div><h2 className="text-lg font-semibold text-white">Tickets</h2><p className="text-sm text-gray-400">{boardId ? `Filtered by board` : "Manage service tickets"}</p></div>
+      <div>
+        <h2 className="text-lg font-semibold text-white">Tickets</h2>
+        <p className="text-sm text-gray-400">{boardId ? `Filtered by board` : "Manage service tickets"}</p>
+      </div>
+
+      {/* Toolbar: board selector + Create on the left, Filter + Choose Columns on the right */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <select
             className="input-field text-sm py-1.5"
@@ -270,10 +275,13 @@ export function TicketsPage() {
             <option value="">All Boards</option>
             {boards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
+          <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus size={16}/>Create</button>
+        </div>
+        <div className="flex items-center gap-2">
           <button onClick={() => setShowFilter(true)} className="btn-secondary text-sm flex items-center gap-1.5">
             <Filter size={14} /> Filter
           </button>
-          <button onClick={openNew} className="btn-primary flex items-center gap-2 self-start"><Plus size={16}/>Create</button>
+          <button onClick={() => setShowColumnModal(true)} className="btn-secondary text-xs flex items-center gap-1.5"><Columns3 size={14} /> Choose Columns</button>
         </div>
       </div>
 
@@ -391,10 +399,7 @@ export function TicketsPage() {
         </div>
       )}
 
-              <div className="flex justify-end mb-2">
-          <button onClick={() => setShowColumnModal(true)} className="btn-secondary text-xs flex items-center gap-1.5"><Columns3 size={14} /> Choose Columns</button>
-        </div>
-        <div className="card overflow-hidden p-0">
+      <div className="card overflow-hidden p-0">
         {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
             <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white">{selectedIds.size === tickets.length ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>

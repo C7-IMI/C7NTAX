@@ -1301,6 +1301,19 @@
 - Changelog policy applied: BuildNotes entry 2026.8.19.009 + What's New outputs regenerated (78 versions) + this Retrace entry.
 
 
+### Prompt 110 — Refresh reseed snapshot with current app data (incl. new users)
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.19.010)
+> Update the reseed sample data snapshot to match the current state of the application data. Capture all manually added, removed, or changed data in the snapshot so reseeding uses the latest data. Include the new users I added and any other changes made in the application.
+
+**Changes:**
+- Re-ran `snapshot-capture.ts`: all changed tables re-captured (users.json now 9 rows = the new users included; 313 records across 86 tables; unchanged skipped by the diff-only writer).
+- Added 15 previously-uncaptured user-configurable tables to TABLES + SEED_ORDER (emailConnector, ssoConfig, webhookConfig, aiProviderConfig, calendarSyncConfig, technicianSkill, projectTaskDependency, kumoPasswordAccessLog, kumoDocumentRevision, kBArticleVersion, kBArticleAttachment, kumoWorkstation, kumoNetworkDevice, currency, alertWebhookDelivery) with secret fields excluded via select.
+- Fixed Prisma client names kBArticleVersion/kBArticleAttachment.
+- Verification: delete+re-insert reseed round-trip (71 inserts); after reseed users 9 / tickets 8 / kumo assets 5 — all manual data intact.
+- Changelog policy applied: BuildNotes entry 2026.8.19.010 + What's New outputs regenerated (79 versions) + this Retrace entry.
+
+
 
 
 

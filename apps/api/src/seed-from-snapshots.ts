@@ -93,6 +93,22 @@ const SEED_ORDER: { fileName: string; model: string }[] = [
   { fileName: "locales.json", model: "locale" },
   { fileName: "translations.json", model: "translation" },
   { fileName: "project-tasks.json", model: "projectTask" },
+  // Manual-change coverage 2026-08-19 (parents before children)
+  { fileName: "email-connectors.json", model: "emailConnector" },
+  { fileName: "sso-configs.json", model: "ssoConfig" },
+  { fileName: "webhook-configs.json", model: "webhookConfig" },
+  { fileName: "ai-provider-configs.json", model: "aiProviderConfig" },
+  { fileName: "calendar-sync-configs.json", model: "calendarSyncConfig" },
+  { fileName: "technician-skills.json", model: "technicianSkill" },
+  { fileName: "project-task-dependencies.json", model: "projectTaskDependency" },
+  { fileName: "kumo-password-access-logs.json", model: "kumoPasswordAccessLog" },
+  { fileName: "kumo-document-revisions.json", model: "kumoDocumentRevision" },
+  { fileName: "kb-article-versions.json", model: "kBArticleVersion" },
+  { fileName: "kb-article-attachments.json", model: "kBArticleAttachment" },
+  { fileName: "kumo-workstations.json", model: "kumoWorkstation" },
+  { fileName: "kumo-network-devices.json", model: "kumoNetworkDevice" },
+  { fileName: "currencies.json", model: "currency" },
+  { fileName: "alert-webhook-deliveries.json", model: "alertWebhookDelivery" },
 ];
 
 // Reverse order for clean deletion

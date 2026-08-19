@@ -101,6 +101,27 @@ const TABLES: TableDef[] = [
   { name: "locale", fileName: "locales.json" },
   { name: "translation", fileName: "translations.json" },
   { name: "projectTask", fileName: "project-tasks.json" },
+  // Manual-change coverage 2026-08-19 (secrets excluded via select)
+  { name: "emailConnector", fileName: "email-connectors.json",
+    select: { id: true, boardId: true, host: true, port: true, secure: true, user: true, folder: true, transport: true, clientId: true, tenantId: true, pollIntervalSec: true, enabled: true, lastPollAt: true, createdAt: true, updatedAt: true } },
+  { name: "ssoConfig", fileName: "sso-configs.json",
+    select: { id: true, name: true, provider: true, isActive: true, domains: true, createdAt: true, updatedAt: true } },
+  { name: "webhookConfig", fileName: "webhook-configs.json",
+    select: { id: true, name: true, url: true, events: true, isActive: true, retryCount: true, createdAt: true } },
+  { name: "aiProviderConfig", fileName: "ai-provider-configs.json",
+    select: { id: true, name: true, provider: true, isActive: true, isDefault: true, apiEndpoint: true, model: true, maxTokens: true, createdAt: true, updatedAt: true } },
+  { name: "calendarSyncConfig", fileName: "calendar-sync-configs.json",
+    select: { id: true, userId: true, provider: true, calendarId: true, syncScheduleEntries: true, syncPto: true, tokenExpiry: true, createdAt: true, updatedAt: true } },
+  { name: "technicianSkill", fileName: "technician-skills.json" },
+  { name: "projectTaskDependency", fileName: "project-task-dependencies.json" },
+  { name: "kumoPasswordAccessLog", fileName: "kumo-password-access-logs.json" },
+  { name: "kumoDocumentRevision", fileName: "kumo-document-revisions.json" },
+  { name: "kBArticleVersion", fileName: "kb-article-versions.json" },
+  { name: "kBArticleAttachment", fileName: "kb-article-attachments.json" },
+  { name: "kumoWorkstation", fileName: "kumo-workstations.json" },
+  { name: "kumoNetworkDevice", fileName: "kumo-network-devices.json" },
+  { name: "currency", fileName: "currencies.json" },
+  { name: "alertWebhookDelivery", fileName: "alert-webhook-deliveries.json" },
 ];
 
 async function main(): Promise<void> {

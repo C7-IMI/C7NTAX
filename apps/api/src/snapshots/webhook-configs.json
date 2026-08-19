@@ -1,0 +1,14 @@
+[
+  {
+    "id": "webhook-sample-001",
+    "name": "Sample alert webhook",
+    "url": "https://example.com/hooks/alerts",
+    "events": [
+      "alert.opened",
+      "alert.resolved"
+    ],
+    "isActive": true,
+    "retryCount": 3,
+    "createdAt": "2026-08-19T07:21:59.115Z"
+  }
+]
