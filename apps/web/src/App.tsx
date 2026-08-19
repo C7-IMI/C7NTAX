@@ -46,7 +46,7 @@ import { MonitorsPage } from "./pages/Monitors";
 import { WebhooksPage } from "./pages/Webhooks";
 import { AiActionsPage } from "./pages/AiActions";
 import { HelpPage } from "./pages/Help";
-import { HelpGettingStarted, HelpFaq, HelpConfiguration, HelpIndex } from "./pages/HelpDoc";
+import { HelpGettingStarted, HelpFaq, HelpConfiguration, HelpIndex, HelpWalkthrough } from "./pages/HelpDoc";
 
 function ProtectedRoutes() {
   const navigate = useNavigate();
@@ -116,6 +116,7 @@ function ProtectedRoutes() {
         <Route path="/help/faq" element={<HelpFaq />} />
         <Route path="/help/configuration" element={<HelpConfiguration />} />
         <Route path="/help/index" element={<HelpIndex />} />
+        <Route path="/help/walkthroughs/:slug" element={<HelpWalkthrough />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/pto" element={<PTOPage />} />
         <Route path="/settings/ai" element={<InferenceSettingsPage />} />

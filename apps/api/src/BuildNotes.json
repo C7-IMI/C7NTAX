@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.8.18.019",
+    "date": "2026-08-18",
+    "title": "Help walkthroughs + documentation maintenance rule",
+    "changes": [
+      {
+        "text": "Feature walkthroughs in the Help docs (`pages/HelpDoc.tsx`, 12 new sections under `/help/walkthroughs/*`): Email-to-Ticket Setup, Quotes & Convert to Invoice, Billing & Agreements (block/Cyber Care/spot, overtime, midnight split, bill-through), Uptime Monitors (website/SSL/DNS), Service Alerts & Outage Monitoring, Alert Webhooks, AI Actions (risk-classified), MFA/SSO/Passkeys, Outlook Add-in, CloudConnect Integrations, Kumo (passwords/documents/audit/file manager), UI Shortcuts & Batch Actions. Each includes step-by-step configuration instructions where configuration is required, and clickable related-content links.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Help Index reorganized into feature-set groups (Getting started & UI, Ticketing & email, Billing & agreements, Monitoring & alerts, Integrations, AI, Identity & security, Kumo & KB, Mobile) with rows linking to walkthroughs and app pages. Help landing page now shows the 4 core sections plus a Feature walkthroughs grid.",
+        "type": "Update"
+      },
+      {
+        "text": "Documentation maintenance rule (durable): whenever a feature or function is added, updated, changed, or removed, create/update its walkthrough in the same change and keep its Help Index rows and related-content links accurate. Rule recorded in `PROMPT-LIBRARY.md` (P3) and `NewProjectPrompts.md` (P3).",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.8.18.018",
     "date": "2026-08-18",
     "title": "Help section (button + nav + PSA-style docs)",

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.018 | Last Updated: 2026-08-18
+## Version: 2026.8.18.019 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,12 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.019 — Help walkthroughs + documentation maintenance rule
+- **[New]** Feature walkthroughs in the Help docs (`pages/HelpDoc.tsx`, 12 new sections under `/help/walkthroughs/*`): Email-to-Ticket Setup, Quotes & Convert to Invoice, Billing & Agreements (block/Cyber Care/spot, overtime, midnight split, bill-through), Uptime Monitors (website/SSL/DNS), Service Alerts & Outage Monitoring, Alert Webhooks, AI Actions (risk-classified), MFA/SSO/Passkeys, Outlook Add-in, CloudConnect Integrations, Kumo (passwords/documents/audit/file manager), UI Shortcuts & Batch Actions. Each includes step-by-step configuration instructions where configuration is required, and clickable related-content links.
+- **[Update]** Help Index reorganized into feature-set groups (Getting started & UI, Ticketing & email, Billing & agreements, Monitoring & alerts, Integrations, AI, Identity & security, Kumo & KB, Mobile) with rows linking to walkthroughs and app pages. Help landing page now shows the 4 core sections plus a Feature walkthroughs grid.
+- **[New]** Documentation maintenance rule (durable): whenever a feature or function is added, updated, changed, or removed, create/update its walkthrough in the same change and keep its Help Index rows and related-content links accurate. Rule recorded in `PROMPT-LIBRARY.md` (P3) and `NewProjectPrompts.md` (P3).
+- **[Verification]** web typecheck 17 (baseline); Vite transforms HelpDoc/Help (200); `/help/walkthroughs/email-tickets` serves 200.
 
 ## 2026.8.18.018 — Help section (button + nav + PSA-style docs)
 - **[New]** `pages/Help.tsx` — Help landing page: hero + 4 subsection cards (icon, title, description) + quick links.
