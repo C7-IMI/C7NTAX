@@ -49,6 +49,9 @@ model User {
   comments        TicketComment[]
   timeEntries     TimeEntry[]
   notifications   Notification[]
+  webauthnCredentials WebauthnCredential[]
+  pushDevices     PushDevice[]
+  outlookAddinTokens OutlookAddinToken[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
@@ -143,6 +146,7 @@ model Company {
   // Relationships
   users           User[]
   contacts        Contact[]
+  quotes          Quote[]
   tickets         Ticket[]
   serviceAgreements ServiceAgreement[]
   invoices        Invoice[]
@@ -225,6 +229,10 @@ model EmailConnector {
   user              String
   passwordEncrypted String
   folder            String   @default("INBOX")
+  transport         String   @default("imap") // imap, graph
+  clientId          String?  // Graph OAuth (transport=graph)
+  clientSecretEncrypted String?
+  tenantId          String?  // Graph tenant or "common"
   pollIntervalSec   Int      @default(60)
   enabled           Boolean  @default(true)
   lastPollAt        DateTime?
@@ -1630,6 +1638,9 @@ model ServiceAlertService {
   statusPageUrl   String?  // official status page
   downDetectorUrl String?  // DownDetector status page
   rssUrl          String?  // RSS feed polled by the alert monitor
+  monitorKind     String   @default("vendor") // vendor, website, ssl, dns
+  monitorUrl      String?  // target URL/host for website/ssl/dns kinds
+  monitorConfig   Json?    // e.g. { checkIntervalMin, expectStatus, sslWarnDays }
   monitorEnabled  Boolean  @default(true)
   enabled         Boolean  @default(true)
   sortOrder       Int      @default(0)
@@ -1657,4 +1668,109 @@ model ServiceAlert {
 
   @@index([serviceId])
   @@index([status])
+}
+
+// ─── Backlog 2026-08-18 (feature-gated, additive) ───────────────────
+
+model Quote {
+  id          String          @id @default(uuid())
+  quoteNumber String          @unique
+  companyId   String
+  company     Company         @relation(fields: [companyId], references: [id])
+  contactId   String?
+  title       String
+  status      String          @default("draft") // draft, sent, accepted, rejected, converted
+  subtotal    Float           @default(0)
+  taxRate     Float           @default(0)
+  taxTotal    Float           @default(0)
+  total       Float           @default(0)
+  notes       String?
+  createdById String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  lineItems   QuoteLineItem[]
+
+  @@index([companyId])
+}
+
+model QuoteLineItem {
+  id          String @id @default(uuid())
+  quoteId     String
+  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float  @default(1)
+  unitPrice   Float  @default(0)
+  total       Float  @default(0)
+  sortOrder   Int    @default(0)
+}
+
+model WebauthnCredential {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String   @unique
+  publicKey    String
+  counter      Int      @default(0)
+  transports   String   @default("[]")
+  createdAt    DateTime @default(now())
+}
+
+model PushDevice {
+  id         String    @id @default(uuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  token      String    @unique
+  platform   String    @default("web") // web, ios, android
+  lastSeenAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model AiAction {
+  id            String          @id @default(uuid())
+  entityType    String          // ticket, device, client
+  entityId      String?
+  title         String
+  summary       String
+  riskTier      String          @default("low") // low, medium, high, critical
+  payload       Json?
+  status        String          @default("pending") // pending, approved, executed, rejected, blocked
+  requestedById String?
+  decidedById   String?
+  decidedAt     DateTime?
+  audit         AiActionAudit[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([status])
+}
+
+model AiActionAudit {
+  id       String   @id @default(uuid())
+  actionId String
+  action   AiAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  event    String   // proposed, approved, rejected, executed, blocked
+  userId   String?
+  detail   String?
+  at       DateTime @default(now())
+}
+
+model AlertWebhookDelivery {
+  id        String   @id @default(uuid())
+  webhookId String
+  event     String
+  payload   String
+  status    String   @default("pending") // pending, delivered, failed
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([status])
+}
+
+model OutlookAddinToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
