@@ -133,3 +133,8 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; 
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Backlog item 12 — skeleton loaders (respect reduced motion) */
+.skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.4s ease infinite; border-radius: 6px; }
+@keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }

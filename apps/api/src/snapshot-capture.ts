@@ -71,6 +71,12 @@ const TABLES: TableDef[] = [
   { name: "alertLog", fileName: "alert-logs.json" },
   { name: "serviceAlertService", fileName: "service-alert-services.json" },
   { name: "serviceAlert", fileName: "service-alerts.json" },
+  // Backlog 2026-08-18 sample data
+  { name: "quote", fileName: "quotes.json" },
+  { name: "quoteLineItem", fileName: "quote-line-items.json" },
+  { name: "aiAction", fileName: "ai-actions.json" },
+  { name: "aiActionAudit", fileName: "ai-action-audits.json" },
+  { name: "pushDevice", fileName: "push-devices.json" },
 ];
 
 async function main(): Promise<void> {

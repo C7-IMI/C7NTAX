@@ -63,6 +63,12 @@ const SEED_ORDER: { fileName: string; model: string }[] = [
   { fileName: "alert-logs.json", model: "alertLog" },
   { fileName: "service-alert-services.json", model: "serviceAlertService" },
   { fileName: "service-alerts.json", model: "serviceAlert" },
+  // Backlog 2026-08-18 (parents before children)
+  { fileName: "quotes.json", model: "quote" },
+  { fileName: "quote-line-items.json", model: "quoteLineItem" },
+  { fileName: "ai-actions.json", model: "aiAction" },
+  { fileName: "ai-action-audits.json", model: "aiActionAudit" },
+  { fileName: "push-devices.json", model: "pushDevice" },
 ];
 
 // Reverse order for clean deletion

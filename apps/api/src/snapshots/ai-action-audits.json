@@ -1,0 +1,10 @@
+[
+  {
+    "id": "a6be9712-a22f-499d-9dca-ef4f75229d00",
+    "actionId": "ai-action-sample-001",
+    "event": "proposed",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "detail": "Seeded sample action",
+    "at": "2026-08-19T07:21:59.107Z"
+  }
+]

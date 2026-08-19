@@ -1,0 +1,19 @@
+[
+  {
+    "id": "ai-action-sample-001",
+    "entityType": "ticket",
+    "entityId": null,
+    "title": "Sample: close stale tickets",
+    "summary": "Proposed action to close 3 stale low-priority tickets.",
+    "riskTier": "medium",
+    "payload": {
+      "count": 3
+    },
+    "status": "pending",
+    "requestedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "decidedById": null,
+    "decidedAt": null,
+    "createdAt": "2026-08-19T07:21:59.107Z",
+    "updatedAt": "2026-08-19T07:21:59.107Z"
+  }
+]

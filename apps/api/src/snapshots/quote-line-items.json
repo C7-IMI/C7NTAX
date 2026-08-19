@@ -1,0 +1,11 @@
+[
+  {
+    "id": "efec631a-4658-4e58-ae03-c3d9b5a87b97",
+    "quoteId": "4afdef04-0b43-4693-8c0a-0d2ea28249b3",
+    "description": "Managed services block (10 hrs)",
+    "quantity": 10,
+    "unitPrice": 150,
+    "total": 1500,
+    "sortOrder": 1
+  }
+]

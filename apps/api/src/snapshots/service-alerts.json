@@ -1,33 +1,5 @@
 [
   {
-    "id": "5e879c8d-eb9d-4c64-97c0-172d8fb12c08",
-    "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
-    "title": "UPDATE: **Summary:**\nInvestigating access issues with Classroom’s new web homepage.\n**Description:**\nWe are investigating reports of access issues with Classroom’s new web homepage beginning on Thursday, 2026-08-13.\nOur engineering team is currently working on a potential fix while continuing to investigate the full root cause.\nWe will provide an update by Tuesday, 2026-08-18 13:00 PDT with current details.\nWe apologize to all who are affected by the disruption.\n**Symptoms:**\nAdmins and some Teachers may experience permission errors when accessing Classroom’s new web homepage.\n**Workaround:**\nUsers should still be able to navigate to other views from the left hand pane of the interface.",
-    "description": "&lt;p&gt; Incident began at &lt;strong&gt;2026-08-18 19:03&lt;/strong&gt; and ended at &lt;strong&gt;2026-08-18 22:30&lt;/strong&gt; &lt;span&gt;(times are in &lt;strong&gt;Coordinated Universal Time (UTC)&lt;/strong&gt;).&lt;/span&gt;&lt;/p&gt;&lt;div class=\"cBIRi14aVDP__status-update-text\"&gt;&lt;p&gt;&lt;strong&gt;Summary:&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;Mitigating access issues for Workspace Admins with Classroom’s web homepage.&lt;/p&gt; &lt;p&gt;&lt;strong&gt;Description:&lt;/strong&gt;&",
-    "severity": "degraded",
-    "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://www.google.com/appsstatus/dashboard/incidents/MpR24eKjibRq1YEEaTfp",
-    "detectedAt": "2026-08-18T22:38:09.445Z",
-    "resolvedAt": null,
-    "createdAt": "2026-08-18T22:38:09.446Z",
-    "updatedAt": "2026-08-19T00:10:45.710Z"
-  },
-  {
-    "id": "3aab0a89-3eda-4b02-a560-3fb9b17a9133",
-    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
-    "title": "Possible service degradation reported for GitHub (DownDetector)",
-    "description": "DownDetector is reporting problems for GitHub.",
-    "severity": "degraded",
-    "status": "active",
-    "source": "downdetector",
-    "sourceUrl": "https://downdetector.com/status/github/",
-    "detectedAt": "2026-08-18T23:30:39.470Z",
-    "resolvedAt": null,
-    "createdAt": "2026-08-18T23:30:39.472Z",
-    "updatedAt": "2026-08-18T23:30:39.472Z"
-  },
-  {
     "id": "d54ded8b-1295-4a58-8f99-299907e1ffca",
     "serviceId": "c8648d24-753b-452f-bbcc-6cd1e8dae5b4",
     "title": "Possible Service Interruption has been reported for Microsoft 365",
@@ -56,6 +28,20 @@
     "updatedAt": "2026-08-18T22:39:30.863Z"
   },
   {
+    "id": "3aab0a89-3eda-4b02-a560-3fb9b17a9133",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Possible service degradation reported for GitHub (DownDetector)",
+    "description": "Auto-resolved: Intermittent failures in runner group and runner-related permissions pages\n\nDownDetector is reporting problems for GitHub.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/github/",
+    "detectedAt": "2026-08-18T23:30:39.470Z",
+    "resolvedAt": "2026-08-19T00:20:41.197Z",
+    "createdAt": "2026-08-18T23:30:39.472Z",
+    "updatedAt": "2026-08-19T00:20:41.198Z"
+  },
+  {
     "id": "e4d2eb36-9244-46d3-8ae3-4dcddd37848c",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "GitHub Actions — degraded performance",
@@ -82,5 +68,75 @@
     "resolvedAt": "2026-08-18T23:30:50.045Z",
     "createdAt": "2026-08-14T05:55:14.951Z",
     "updatedAt": "2026-08-18T23:30:50.046Z"
+  },
+  {
+    "id": "49cf7144-0d84-4488-8fcf-08cbbf295c15",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Possible service degradation reported for GitHub (DownDetector)",
+    "description": "Auto-resolved: Intermittent failures in runner group and runner-related permissions pages\n\nDownDetector is reporting problems for GitHub.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/github/",
+    "detectedAt": "2026-08-19T00:30:28.701Z",
+    "resolvedAt": "2026-08-19T01:40:43.426Z",
+    "createdAt": "2026-08-19T00:30:28.702Z",
+    "updatedAt": "2026-08-19T01:40:43.427Z"
+  },
+  {
+    "id": "6b417ff3-27aa-41a5-9d48-4da4accce400",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Possible service degradation reported for GitHub (DownDetector)",
+    "description": "Auto-resolved: Intermittent failures in runner group and runner-related permissions pages\n\nDownDetector is reporting problems for GitHub.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/github/",
+    "detectedAt": "2026-08-19T01:45:44.040Z",
+    "resolvedAt": "2026-08-19T03:55:36.457Z",
+    "createdAt": "2026-08-19T01:45:44.042Z",
+    "updatedAt": "2026-08-19T03:55:36.459Z"
+  },
+  {
+    "id": "76dec28c-dee8-4e15-9430-1890d4df016d",
+    "serviceId": "10630569-8873-4b00-9137-a346046c2b5f",
+    "title": "Possible service degradation reported for Verizon (DownDetector)",
+    "description": "Auto-resolved: monitored sources for Verizon report no active incidents or degradations (all clear).\n\nDownDetector is reporting problems for Verizon.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/verizon/",
+    "detectedAt": "2026-08-19T03:55:45.503Z",
+    "resolvedAt": "2026-08-19T05:00:45.620Z",
+    "createdAt": "2026-08-19T03:55:45.504Z",
+    "updatedAt": "2026-08-19T05:00:45.623Z"
+  },
+  {
+    "id": "70210a73-63a2-49a3-9101-d7d11e44b2c4",
+    "serviceId": "c8648d24-753b-452f-bbcc-6cd1e8dae5b4",
+    "title": "Possible service degradation reported for Microsoft 365 (DownDetector)",
+    "description": "Auto-resolved: monitored sources for Microsoft 365 report no active incidents or degradations (all clear).\n\nDownDetector is reporting problems for Microsoft 365.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/microsoft-365/",
+    "detectedAt": "2026-08-19T06:00:21.433Z",
+    "resolvedAt": "2026-08-19T07:10:13.888Z",
+    "createdAt": "2026-08-19T06:00:21.435Z",
+    "updatedAt": "2026-08-19T07:10:13.889Z"
+  },
+  {
+    "id": "5e879c8d-eb9d-4c64-97c0-172d8fb12c08",
+    "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
+    "title": "UPDATE: **Summary**\nSome customers may experience slowness while using Google Drive.\n**Description**\nWe are experiencing an issue with Google Drive beginning Tuesday, 2026-08-18 16:58 PDT.\nOur engineering team is currently working on a potential fix while continuing to investigate the full root cause.\nWe will provide an update by Tuesday, 2026-08-18 22:00 PDT with current details.\nWe apologize to all who are affected by the disruption.\n**Symptoms**\nAffected customers may experience slowness while using Google Drive.\n**Workaround**\nNone at this time.",
+    "description": "&lt;p&gt; Incident began at &lt;strong&gt;2026-08-18 23:58&lt;/strong&gt; &lt;span&gt;(times are in &lt;strong&gt;Coordinated Universal Time (UTC)&lt;/strong&gt;).&lt;/span&gt;&lt;/p&gt;&lt;div class=\"cBIRi14aVDP__status-update-text\"&gt;&lt;p&gt;&lt;strong&gt;Summary&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;Multiple customers in Australia and New Zealand may experience slowness or errors while accessing Google Drive.&lt;/p&gt; &lt;p&gt;&lt;strong&gt;Description&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;We are ",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://www.google.com/appsstatus/dashboard/incidents/sjDiph2NXGAfkYYLfK7T",
+    "detectedAt": "2026-08-18T22:38:09.445Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-18T22:38:09.446Z",
+    "updatedAt": "2026-08-19T07:20:24.646Z"
   }
 ]

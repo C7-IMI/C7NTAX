@@ -1,0 +1,18 @@
+[
+  {
+    "id": "4afdef04-0b43-4693-8c0a-0d2ea28249b3",
+    "quoteNumber": "QT-SAMPLE-001",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "contactId": null,
+    "title": "Sample Managed Services Quote",
+    "status": "draft",
+    "subtotal": 1500,
+    "taxRate": 0,
+    "taxTotal": 0,
+    "total": 1500,
+    "notes": "Sample quote created by the backlog seed (2026-08-18).",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-19T07:21:59.100Z",
+    "updatedAt": "2026-08-19T07:21:59.100Z"
+  }
+]

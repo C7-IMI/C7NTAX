@@ -136,6 +136,26 @@ export function LoginPage() {
           </button>
         </form>
 
+        {(ssoEnabled || passkeyEnabled) && (
+          <div className="mt-4 space-y-2">
+            {ssoEnabled && (
+              <button className="btn-secondary w-full" type="button" onClick={handleSso} disabled={loading}>
+                Sign in with SSO (OIDC)
+              </button>
+            )}
+            {passkeyEnabled && (
+              <>
+                <button className="btn-secondary w-full" type="button" onClick={handlePasskeyLogin} disabled={loading}>
+                  {loading ? "Waiting for passkey..." : "Sign in with passkey"}
+                </button>
+                <button className="btn-secondary w-full" type="button" onClick={handlePasskeyRegister} disabled={loading}>
+                  Register passkey on this device
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Service health status */}
         <div className="mt-6 pt-4 border-t border-surface-border/50">
           <ServiceHealthPanel />

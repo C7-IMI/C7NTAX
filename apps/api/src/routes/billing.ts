@@ -146,6 +146,25 @@ billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permissi
   } catch (e) { next(e); }
 });
 
+billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const { companyId } = req.body;
+    if (!companyId) throw new AppError("companyId required");
+    if (process.env.BILLING_FROM_TICKETS_ENABLED === "false") throw new AppError("Billing-from-tickets disabled");
+    const entries = await prisma.timeEntry.findMany({ where: { ticket: { companyId }, invoiceId: null, billable: true }, include: { ticket: { select: { ticketNumber: true } } } });
+    if (entries.length === 0) throw new AppError("No unbilled time entries for this company");
+    const agreement = await prisma.serviceAgreement.findFirst({ where: { companyId } });
+    const rate = agreement && agreement.billingAmount > 0 ? agreement.billingAmount : 150;
+    const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
+    const dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);
+    const lineItems = entries.map((te) => ({ description: te.description || `Ticket ${te.ticket?.ticketNumber || ""} time`, quantity: +(te.minutes / 60).toFixed(2), unitPrice: rate, total: +(te.minutes / 60 * rate).toFixed(2) }));
+    const subtotal = lineItems.reduce((s, li) => s + li.total, 0);
+    const invoice = await prisma.invoice.create({ data: { invoiceNumber, companyId, agreementId: agreement?.id || null, issueDate: new Date(), dueDate, subtotal, taxRate: 0, taxTotal: 0, total: subtotal, status: InvoiceStatus.Draft, lineItems: { create: lineItems } } });
+    await prisma.timeEntry.updateMany({ where: { id: { in: entries.map((x) => x.id) } }, data: { invoiceId: invoice.id } });
+    res.status(201).json({ invoiceNumber: invoice.invoiceNumber, lineItems: lineItems.length, invoiceId: invoice.id });
+  } catch (e) { next(e); }
+});
+
 billingRouter.post("/invoices/:id/send", requirePermission(Permission.InvoiceSend), async (req: AuthRequest, res, next) => {
   try {
     const invoice = await prisma.invoice.findUnique({ where: { id: req.params.id }, include: { company: true, lineItems: true } });

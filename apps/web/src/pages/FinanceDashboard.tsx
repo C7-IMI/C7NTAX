@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import { DollarSign, TrendingUp, Clock, AlertTriangle, Receipt, CreditCard } from "lucide-react";
+import toast from "react-hot-toast";
 
 export function FinanceDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [genCompanyId, setGenCompanyId] = useState("");
+  const [genLoading, setGenLoading] = useState(false);
 
   useEffect(() => {
     api.get("/billing/dashboard").then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
@@ -44,6 +47,29 @@ export function FinanceDashboardPage() {
             <StatusBadge label="Overdue Status" status={data.totalOverdue === 0 ? "good" : data.totalOverdue < 10000 ? "warning" : "critical"} />
             <StatusBadge label="Invoice Pipeline" status={data.invoiceCount > 0 ? "good" : "warning"} />
           </div>
+        </div>
+      </div>
+
+      {/* Backlog item 2 — generate invoice from unbilled ticket time (draft, non-breaking) */}
+      <div className="card">
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Generate from tickets</h3>
+        <div className="flex items-center gap-3">
+          <input className="input-field flex-1" type="text" value={genCompanyId} onChange={(e) => setGenCompanyId(e.target.value)} placeholder="Company ID" />
+          <button
+            className="btn-primary"
+            disabled={genLoading || !genCompanyId}
+            onClick={async () => {
+              setGenLoading(true);
+              try {
+                const r = await api.post("/billing/invoices/generate-from-tickets", { companyId: genCompanyId });
+                toast.success(`Draft invoice ${r.data.invoiceNumber} generated (${r.data.lineItems} line items)`);
+              } catch (err: unknown) {
+                toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Generate failed");
+              } finally { setGenLoading(false); }
+            }}
+          >
+            {genLoading ? "Generating..." : "Generate draft invoice"}
+          </button>
         </div>
       </div>
     </div>

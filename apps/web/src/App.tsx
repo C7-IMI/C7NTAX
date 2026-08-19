@@ -42,8 +42,23 @@ import { HomePage } from "./pages/HomePage";
 import { ServiceAlertsPage } from "./pages/ServiceAlerts";
 import { ServiceAlertsSettingsPage } from "./pages/ServiceAlertsSettings";
 import { QuotesPage } from "./pages/Quotes";
+import { MonitorsPage } from "./pages/Monitors";
+import { WebhooksPage } from "./pages/Webhooks";
+import { AiActionsPage } from "./pages/AiActions";
 
 function ProtectedRoutes() {
+  const navigate = useNavigate();
+
+  // Backlog item 12 — global keyboard shortcuts (skip when typing in a field).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "t" || e.key === "T") navigate("/tickets");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navigate]);
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
@@ -57,6 +72,10 @@ function ProtectedRoutes() {
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
         <Route path="/boards" element={<BoardsPage />} />
         <Route path="/service-alerts" element={<ServiceAlertsPage />} />
+        <Route path="/service-alerts/monitors" element={<MonitorsPage />} />
+        <Route path="/admin/webhooks" element={<WebhooksPage />} />
+        <Route path="/ai-actions" element={<AiActionsPage />} />
+        <Route path="/quotes" element={<QuotesPage />} />
         <Route path="/admin/service-alerts" element={<ServiceAlertsSettingsPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
