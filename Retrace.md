@@ -1097,6 +1097,16 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.013 + this Retrace entry.
 
 
+### Prompt 93 — Rules inventory + reusable prompt library
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** — (workspace-level file, outside C7NTAX; no BuildNotes entry per rule scope)
+> List the rules and requirements that have been created for the current development process and project, including automatic build note updates, token savings, and similar process rules. Then create a reusable set of prompts that can be applied to each new project from the very beginning so those rules and requirements are enforced. For each prompt, recommend whether it should be a persistent system prompt applied at all times or a project-specific prompt. Keep all concrete details intact and do not add requirements I did not ask for.
+
+**Changes:**
+- `PROMPT-LIBRARY.md` (Kun workspace root, 136 lines) — Part 1: rules inventory (A changelog/versioning scheme, B Retrace session-log format, C PlanDocs registry conventions, D plan-document conventions, E all 10 token-savings options, F verification gates, G cross-repo two-sided rules, H reference-code license posture, I theme/design rules, J pinned system constraints). Part 2: seven reusable prompts P1–P7 with per-prompt classification (P1 = persistent system prompt; P2–P7 = project-specific) and a classification summary table. No new rules added beyond those established.
+- Changelog policy applied: this Retrace entry (workspace-level file, not a C7NTAX code change).
+
+
 
 
 
