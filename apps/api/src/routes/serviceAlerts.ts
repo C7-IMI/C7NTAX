@@ -22,7 +22,7 @@ import { getMonitorStatus, runAlertCheck } from "../services/alertMonitor";
 export const serviceAlertsRouter = Router();
 serviceAlertsRouter.use(authenticate);
 
-const SERVICE_FIELDS = ["name", "category", "description", "statusPageUrl", "downDetectorUrl", "rssUrl", "monitorEnabled", "enabled", "sortOrder"] as const;
+const SERVICE_FIELDS = ["name", "category", "description", "statusPageUrl", "downDetectorUrl", "rssUrl", "monitorKind", "monitorUrl", "monitorConfig", "monitorEnabled", "enabled", "sortOrder"] as const;
 
 // ── Read: active alerts ──
 serviceAlertsRouter.get("/", requirePermission(Permission.ServiceAlertView), async (_req: AuthRequest, res, next) => {

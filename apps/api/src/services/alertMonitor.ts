@@ -8,6 +8,8 @@
  * Keeps a lightweight in-memory status snapshot for the UI.
  */
 import { prisma } from "../index";
+import tls from "node:tls";
+import { promises as dns } from "node:dns";
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
 const ITEM_WINDOW_MS = 24 * 60 * 60 * 1000; // consider items from last 24h
@@ -253,6 +255,76 @@ async function checkService(service: { id: string; name: string; rssUrl: string 
   }
 }
 
+// Backlog item 3 — website / ssl / dns monitor kinds (gated by UPTIME_MONITORS_ENABLED).
+// Uses the same 2-poll clear-streak anti-flap rule as vendor feeds.
+async function checkNetworkService(service: { id: string; name: string; monitorKind: string; monitorUrl: string | null; monitorConfig: unknown }): Promise<void> {
+  if (!service.monitorUrl) return;
+  const cfg = (service.monitorConfig || {}) as { expectStatus?: number; sslWarnDays?: number };
+  let problem: string | null = null;
+  let severity: "outage" | "degraded" | "informational" = "degraded";
+  let source = "manual";
+  try {
+    if (service.monitorKind === "website") {
+      source = "statuspage";
+      const resp = await fetch(service.monitorUrl, { signal: AbortSignal.timeout(15000) });
+      const expect = cfg.expectStatus || 200;
+      if (resp.status !== expect) { problem = `HTTP ${resp.status} (expected ${expect})`; severity = "outage"; }
+    } else if (service.monitorKind === "ssl") {
+      source = "statuspage";
+      const u = new URL(service.monitorUrl);
+      const host = u.hostname; const port = u.port ? Number(u.port) : 443;
+      const days = await new Promise<number>((resolve, reject) => {
+        const socket = tls.connect({ host, port, servername: host, rejectUnauthorized: false }, () => {
+          const cert = socket.getPeerCertificate();
+          socket.destroy();
+          const ms = Date.parse(String(cert.valid_to));
+          if (isNaN(ms)) return reject(new Error("no certificate"));
+          resolve(Math.floor((ms - Date.now()) / 86400000));
+        });
+        socket.on("error", reject);
+      });
+      const warnDays = cfg.sslWarnDays || 30;
+      if (days <= 0) { problem = "SSL certificate expired"; severity = "outage"; }
+      else if (days <= warnDays) { problem = `SSL certificate expires in ${days} days`; severity = "informational"; }
+    } else if (service.monitorKind === "dns") {
+      source = "statuspage";
+      const u = new URL(service.monitorUrl);
+      await dns.resolve4(u.hostname);
+    }
+  } catch (e: any) {
+    problem = `${service.monitorKind} check failed: ${e?.message || e}`;
+    severity = "outage";
+  }
+  const active = await prisma.serviceAlert.findFirst({
+    where: { serviceId: service.id, status: "active" },
+    orderBy: { detectedAt: "desc" },
+  });
+  if (problem) {
+    clearStreak.delete(service.id);
+    if (!active) {
+      await prisma.serviceAlert.create({
+        data: {
+          serviceId: service.id, title: `${service.name}: ${problem}`,
+          description: `${service.monitorKind} monitor (${service.monitorUrl})`,
+          severity, status: "active", source, sourceUrl: service.monitorUrl, detectedAt: new Date(),
+        },
+      });
+      snapshot.created++;
+      log("warn", `New network alert for ${service.name}: ${problem}`);
+    }
+    return;
+  }
+  if (!active || active.source === "manual") return;
+  const streak = (clearStreak.get(service.id) || 0) + 1;
+  clearStreak.set(service.id, streak);
+  if (streak >= 2) {
+    await prisma.serviceAlert.update({ where: { id: active.id }, data: { status: "resolved", resolvedAt: new Date() } });
+    clearStreak.delete(service.id);
+    snapshot.resolved++;
+    log("info", `Auto-resolved network alert for ${service.name}`);
+  }
+}
+
 export async function runAlertCheck(): Promise<MonitorSnapshot> {
   const started = Date.now();
   snapshot.checkedServices = 0;
@@ -267,7 +339,11 @@ export async function runAlertCheck(): Promise<MonitorSnapshot> {
     });
     for (const service of services) {
       snapshot.checkedServices++;
-      await checkService(service);
+      if (service.monitorKind !== "vendor" && process.env.UPTIME_MONITORS_ENABLED !== "false") {
+        await checkNetworkService(service);
+      } else {
+        await checkService(service);
+      }
     }
     snapshot.lastCheckAt = new Date().toISOString();
     snapshot.lastRunMs = Date.now() - started;

@@ -51,6 +51,12 @@ import { alertsRouter } from "./routes/alerts";
 import { serviceAlertsRouter } from "./routes/serviceAlerts";
 import { emailConnectorsRouter } from "./routes/email-connectors";
 import { quotesRouter } from "./routes/quotes";
+import { outlookAddinRouter } from "./routes/outlookAddin";
+import { pushRouter } from "./routes/push";
+import { aiActionsRouter } from "./routes/aiActions";
+import { alertWebhooksRouter } from "./routes/alertWebhooks";
+import { ssoExchangeRouter } from "./routes/ssoExchange";
+import { webauthnRouter } from "./routes/webauthn";
 import { setupWebSocket } from "./ws";
 import { WEB_ORIGIN } from "@C7NTAX/shared";
 import { startWorkers } from "./worker";
@@ -127,6 +133,8 @@ app.use(auditMiddleware);
 app.get("/api/health", (_req, res) => res.json({ status: "ok", version: "1.0.0" }));
 
 // Core routes
+app.use("/api/auth/sso", ssoExchangeRouter);
+app.use("/api/auth/webauthn", webauthnRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/roles", rolesRouter);
@@ -158,6 +166,10 @@ app.use("/api/alerts", alertsRouter);
 app.use("/api/service-alerts", serviceAlertsRouter);
 app.use("/api/email-connectors", emailConnectorsRouter);
 app.use("/api/quotes", quotesRouter);
+app.use("/api/outlook-addin", outlookAddinRouter);
+app.use("/api/push", pushRouter);
+app.use("/api/ai-actions", aiActionsRouter);
+app.use("/api/alert-webhooks", alertWebhooksRouter);
 
 app.use(errorHandler);
 
