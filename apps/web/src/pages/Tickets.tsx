@@ -343,17 +343,17 @@ export function TicketsPage() {
             {quickOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setQuickOpen(false)} />
-                <div className="absolute left-0 top-full mt-1 w-max bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 py-1">
+                <div className="absolute left-0 top-full mt-1 w-max grid bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 py-1">
                   <div className="px-3 py-1.5 text-[10px] text-gray-600 uppercase font-semibold">Quick Actions</div>
-                  <button onClick={() => quickApply("acknowledge")} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Acknowledge</button>
-                  <button onClick={() => quickApply("close")} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Close</button>
+                  <button onClick={() => quickApply("acknowledge")} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Acknowledge</button>
+                  <button onClick={() => quickApply("close")} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Close</button>
                   <div className="border-t border-surface-border my-1" />
                   {TICKET_STATUSES.filter(s => s !== "closed" && s !== "cancelled").slice(0,5).map(s => (
-                    <button key={s} onClick={() => quickApply(`status_${s}`)} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Set Status → {s.replace(/_/g, " ")}</button>
+                    <button key={s} onClick={() => quickApply(`status_${s}`)} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Set Status → {s.replace(/_/g, " ")}</button>
                   ))}
                   <div className="border-t border-surface-border my-1" />
                   {TICKET_PRIORITIES.map(p => (
-                    <button key={p} onClick={() => quickApply(`priority_${p}`)} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Priority → {p}</button>
+                    <button key={p} onClick={() => quickApply(`priority_${p}`)} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Priority → {p}</button>
                   ))}
                 </div>
               </>
@@ -493,6 +493,7 @@ export function TicketsPage() {
         {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
             <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white">{selectedIds.size === tickets.length ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>
+            <th className="px-4 py-3 w-10"></th>
             {visibleColumns.map((colId) => {
               const def = TICKET_COLUMNS.find((c) => c.id === colId);
               if (!def) return null;
@@ -511,14 +512,13 @@ export function TicketsPage() {
                 </th>
               );
             })}
-            <th className="px-4 py-3 w-10"></th>
           </tr></thead>
             <tbody>{sortData(tickets as Array<Record<string,unknown>>, sort?.field || "updatedAt", sort?.direction || "desc").map((t:any)=>(<tr key={t.id} className={`border-b border-surface-border/50 hover:bg-surface-light/50 ${selectedIds.has(t.id) ? "bg-cyber-600/10" : ""}`}>
               <td className="px-4 py-3"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white">{selectedIds.has(t.id) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></td>
-              {visibleColumns.map((colId) => renderTicketCell(t, colId))}
               <td className="px-4 py-3">
                 <TicketActionMenu ticketId={t.id} currentStatus={t.status} currentPriority={t.priority} onAction={ticketAction} />
               </td>
+              {visibleColumns.map((colId) => renderTicketCell(t, colId))}
             </tr>))}</tbody></table></div>)}
       </div>
 
@@ -566,21 +566,21 @@ function TicketActionMenu({ ticketId, currentStatus, currentPriority, onAction }
       {open && createPortal(
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed z-50 py-1 min-w-[200px] bg-navy-800 border border-surface-border rounded-lg shadow-xl" style={{ top: pos?.top ?? 0, left: 8 }}>
+          <div className="fixed z-50 py-1 w-max grid bg-navy-800 border border-surface-border rounded-lg shadow-xl" style={{ top: pos?.top ?? 0, left: 8 }}>
             <div className="px-3 py-1.5 text-[10px] text-gray-600 uppercase font-semibold">Quick Actions</div>
             {currentStatus !== "in_progress" && (
-              <button onClick={() => { onAction(ticketId, "acknowledge"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Acknowledge</button>
+              <button onClick={() => { onAction(ticketId, "acknowledge"); setOpen(false); }} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Acknowledge</button>
             )}
             {currentStatus !== "closed" && (
-              <button onClick={() => { onAction(ticketId, "close"); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Close</button>
+              <button onClick={() => { onAction(ticketId, "close"); setOpen(false); }} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Close</button>
             )}
             <div className="border-t border-surface-border my-1" />
             {TICKET_STATUSES.filter(s => s !== currentStatus && s !== "closed" && s !== "cancelled").slice(0,5).map(s => (
-              <button key={s} onClick={() => { onAction(ticketId, `status_${s}`); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Set Status → {s.replace(/_/g, " ")}</button>
+              <button key={s} onClick={() => { onAction(ticketId, `status_${s}`); setOpen(false); }} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Set Status → {s.replace(/_/g, " ")}</button>
             ))}
             <div className="border-t border-surface-border my-1" />
             {TICKET_PRIORITIES.filter(p => p !== currentPriority).map(p => (
-              <button key={p} onClick={() => { onAction(ticketId, `priority_${p}`); setOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Priority → {p}</button>
+              <button key={p} onClick={() => { onAction(ticketId, `priority_${p}`); setOpen(false); }} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Priority → {p}</button>
             ))}
           </div>
         </>,
