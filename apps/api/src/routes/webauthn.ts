@@ -6,6 +6,7 @@ import {
   generateRegistrationOptions, verifyRegistrationResponse,
   generateAuthenticationOptions, verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
+import { SystemRole } from "@C7NTAX/shared";
 
 // Backlog item 7 — Passkey (WebAuthn). Gated by PASSKEY_ENABLED.
 export const webauthnRouter = Router();
@@ -37,7 +38,7 @@ webauthnRouter.post("/register/options", authenticate, async (req: AuthRequest, 
       userName: user.email,
       userDisplayName: `${user.firstName} ${user.lastName}`.trim(),
       attestationType: "none",
-      excludeCredentials: existing.map((c) => ({ id: Buffer.from(c.credentialId, "base64url"), type: "public-key" })),
+      excludeCredentials: existing.map((c) => ({ id: c.credentialId })),
       authenticatorSelection: { userVerification: "preferred" },
     });
     challenges.set(user.id, options.challenge);
@@ -77,7 +78,7 @@ webauthnRouter.post("/login/options", async (req, res, next) => {
     if (credentials.length === 0) throw new AppError("No passkeys registered for this user");
     const options = await generateAuthenticationOptions({
       rpID: RP_ID,
-      allowCredentials: credentials.map((c) => ({ id: Buffer.from(c.credentialId, "base64url"), type: "public-key" })),
+      allowCredentials: credentials.map((c) => ({ id: c.credentialId })),
       userVerification: "preferred",
     });
     challenges.set(`login:${user.id}`, options.challenge);
@@ -87,7 +88,7 @@ webauthnRouter.post("/login/options", async (req, res, next) => {
 
 webauthnRouter.post("/login/verify", async (req, res, next) => {
   try {
-    const { userId, response } = req.body as { userId: string; response: unknown };
+    const { userId, response } = req.body as { userId: string; response: Parameters<typeof verifyAuthenticationResponse>[0]["response"] };
     const expectedChallenge = challenges.get(`login:${userId}`);
     if (!expectedChallenge) throw new AppError("No pending authentication");
     const credential = await prisma.webauthnCredential.findFirst({ where: { userId } });
@@ -95,7 +96,7 @@ webauthnRouter.post("/login/verify", async (req, res, next) => {
     const verification = await verifyAuthenticationResponse({
       response, expectedChallenge, expectedOrigin: ORIGIN, expectedRPID: RP_ID,
       credential: {
-        id: Buffer.from(credential.credentialId, "base64url"),
+        id: credential.credentialId,
         publicKey: Buffer.from(credential.publicKey, "base64url"),
         counter: credential.counter,
         transports: JSON.parse(credential.transports || "[]"),
@@ -107,8 +108,8 @@ webauthnRouter.post("/login/verify", async (req, res, next) => {
       data: { counter: verification.authenticationInfo.newCounter },
     });
     challenges.delete(`login:${userId}`);
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findUnique({ where: { id: userId }, include: { role: true } });
     if (!user) throw new AppError("User not found", 404);
-    res.json({ token: signToken(user.id, user.email) });
+    res.json({ token: signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole }) });
   } catch (e) { next(e); }
 });

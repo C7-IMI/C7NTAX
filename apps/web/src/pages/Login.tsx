@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { ServiceHealthPanel } from "../components/ServiceHealthPanel";
+import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
+import api from "../api";
 import toast from "react-hot-toast";
 
 export function LoginPage() {
@@ -12,6 +14,54 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+  const [ssoEnabled, setSsoEnabled] = useState(false);
+  const [passkeyEnabled, setPasskeyEnabled] = useState(false);
+
+  // SSO callback: accept ?token= from the OIDC exchange and store it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("c7_token", token);
+      window.history.replaceState({}, "", "/login");
+      navigate("/");
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    api.get("/auth/sso/status").then(r => setSsoEnabled(!!r.data?.enabled)).catch(() => {});
+    setPasskeyEnabled(true); // backend gates the endpoints; button shows and errors cleanly if disabled
+  }, []);
+
+  const handleSso = () => { window.location.href = "/api/auth/sso/oidc/start"; };
+
+  const handlePasskeyLogin = async () => {
+    if (!loginId) { toast.error("Enter your email first"); return; }
+    setLoading(true);
+    try {
+      const { data } = await api.post("/auth/webauthn/login/options", { email: loginId });
+      const auth = await startAuthentication(data.options);
+      const verify = await api.post("/auth/webauthn/login/verify", { userId: data.userId, response: auth });
+      localStorage.setItem("c7_token", verify.data.token);
+      navigate("/");
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message || "Passkey login failed";
+      toast.error(msg);
+    } finally { setLoading(false); }
+  };
+
+  const handlePasskeyRegister = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.post("/auth/webauthn/register/options");
+      const reg = await startRegistration(data);
+      await api.post("/auth/webauthn/register/verify", reg);
+      toast.success("Passkey registered for this device");
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message || "Passkey registration failed (sign in with password first)";
+      toast.error(msg);
+    } finally { setLoading(false); }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

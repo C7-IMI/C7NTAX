@@ -114,7 +114,7 @@ export function signToken(payload: SignTokenPayload): string {
       permissions: payload.permissions ?? [],
     } satisfies AuthUser,
     JWT_SECRET,
-    { expiresIn: "12h" }
+    { expiresIn: process.env.AUTH_HARDENING_ENABLED === "true" ? "15m" : "12h" }
   );
 }
 

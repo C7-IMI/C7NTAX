@@ -286,6 +286,9 @@ try {
     $allGood = $false
 }
 
+# Backlog item 11 — optional security scanners (skip when tools absent or hardening flag off).
+try { & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot/security-scanners.ps1" | Out-Null } catch { Write-Step "Security scanners skipped: $($_.Exception.Message)" }
+
 if ($allGood) {
     Write-Step "=== Boot sequence complete - app ready at http://localhost:3010 ==="
 } else {

@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { signToken } from "../middleware/auth";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import { SystemRole } from "@C7NTAX/shared";
 
 // Backlog item 6 — SSO OIDC login path (env-gated; no new dependencies).
 // Supports Keycloak / Entra ID / Okta / Auth0 via standard OIDC discovery.
@@ -14,7 +15,7 @@ function base64url(input: string | Buffer): string {
   return Buffer.from(input).toString("base64url");
 }
 
-async function jwksKey(issuer: string, kid: string): Promise<crypto.KeyObject> {
+async function jwksKey(issuer: string, kid: string): Promise<string> {
   const discovery = await fetch(`${issuer.replace(/\/$/, "")}/.well-known/openid-configuration`);
   if (!discovery.ok) throw new Error("OIDC discovery failed");
   const { jwks_uri } = (await discovery.json()) as { jwks_uri: string };
@@ -26,13 +27,14 @@ async function jwksKey(issuer: string, kid: string): Promise<crypto.KeyObject> {
     kty: key.kty, n: key.n, e: key.e,
     alg: "RS256", use: "sig", kid: key.kid,
   };
-  return crypto.createPublicKey({ key: jwk as crypto.JsonWebKey, format: "jwk" });
+  const pub = crypto.createPublicKey({ key: jwk as any, format: "jwk" });
+  return pub.export({ type: "spki", format: "pem" }) as string;
 }
 
-async function verifyIdToken(idToken: string, issuer: string, clientId: string): Promise<{ sub: string; email?: string; name?: string; preferred_username?: string }> {
-  const header = JSON.parse(Buffer.from(idToken.split(".")[0], "base64url").toString());
+async function verifyIdToken(idToken: string, issuer: string, clientId: string): Promise<{ sub: string; email?: string; name?: string; preferred_username?: string; aud?: string | string[] }> {
+  const header = JSON.parse(Buffer.from(idToken.split(".")[0], "base64url" as BufferEncoding).toString());
   const key = await jwksKey(issuer, header.kid);
-  const payload = jwt.verify(idToken, key, { algorithms: ["RS256"], issuer }) as { sub: string; email?: string; name?: string; preferred_username?: string };
+  const payload = (jwt.verify as any)(idToken, key, { algorithms: ["RS256"], issuer }) as { sub: string; email?: string; name?: string; preferred_username?: string; aud?: string | string[] };
   if (Array.isArray(payload.aud) ? !payload.aud.includes(clientId) : payload.aud !== clientId) throw new Error("Invalid audience");
   return payload;
 }
@@ -79,10 +81,10 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
     const email = (claims.email || claims.preferred_username || "").toLowerCase();
     if (!email) return res.status(401).json({ error: "No email in ID token" });
 
-    let user = await prisma.user.findUnique({ where: { email } });
+    let user = await prisma.user.findUnique({ where: { email }, include: { role: true } });
     if (!user) {
       const role = await prisma.role.findFirst({ where: { systemRole: "admin" } });
-      user = await prisma.user.create({
+      const created = await prisma.user.create({
         data: {
           email,
           passwordHash: `sso:${crypto.randomBytes(24).toString("hex")}`,
@@ -92,8 +94,10 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
           emailVerified: true,
         },
       });
+      user = await prisma.user.findUnique({ where: { id: created.id }, include: { role: true } });
     }
-    const token = signToken(user.id, user.email);
+    if (!user) return res.status(500).json({ error: "User provisioning failed" });
+    const token = signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole });
     res.redirect(`${process.env.WEB_ORIGIN || "http://localhost:3010"}/login?token=${encodeURIComponent(token)}`);
   } catch (e) { next(e); }
 });

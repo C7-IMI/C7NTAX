@@ -35,6 +35,12 @@ authRouter.post("/login", async (req, res, next) => {
       return;
     }
 
+    // SOC 2 hardening (backlog item 11): rehash-on-login when enabled and hash cost < 12.
+    if (process.env.AUTH_HARDENING_ENABLED === "true" && !user.passwordHash.startsWith("$2b$12$")) {
+      const upgraded = await bcrypt.hash(password, 12);
+      await prisma.user.update({ where: { id: user.id }, data: { passwordHash: upgraded } });
+    }
+
     // If MFA is enabled, send back a temporary token
     if (user.mfaEnabled) {
       const mfaToken = signMfaToken(user.id);
