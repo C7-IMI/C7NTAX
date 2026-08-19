@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.19.008 | Last Updated: 2026-08-19
+## Version: 2026.8.19.009 | Last Updated: 2026-08-19
 
 ---
 
@@ -12,6 +12,12 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.19.009 — Sample data coverage for every section & subsection
+- **[New]** `apps/api/src/seed-coverage.ts` — idempotent per-table guards (creates only when count is 0) seeding sample rows for every previously-empty area: Calendar (scheduleEntry), Procurement (vendor, purchaseOrder, pOLineItem), Payments (payment), Analytics (report + reportSchedule), PTO & Holidays, Contracts + milestones, Sales activities, KB categories, Chat (session + messages), Workflows (rule + action + execution), Locales + translations, Surveys (survey/question/response/answer), M365 (user/group/subscription), Sync logs + synced entities, Expenses, Alert rules + log, Notifications, Kumo Configurations (kumoServer), Kumo domains/certificates/links, and Project phases + tasks. 39 tables verified non-empty after reseed.
+- **[Update]** Snapshot pipeline: added the 23 new tables to `snapshot-capture.ts` TABLES and `seed-from-snapshots.ts` SEED_ORDER in dependency order (parents before children: vendor→purchaseOrder→pOLineItem, survey→question→response→answer, contract→milestone, workflowRule→action/execution, locale→translation, chatSession→chatMessage, projectPhase→projectTask). Corrected Prisma client names for two models (pOLineItem, kBCategory). Captured all new fixtures; full delete+re-insert reseed round-trip verified (71 fixture inserts).
+- **[Fix]** Notification sample fields corrected to the schema (type instead of severity); m365Group/m365Subscription guarded separately so partial states self-heal.
+- **[Verification]** `ALL COVERED (39 tables)` after reseed; fixture files present with expected row counts; version computed via `scripts/next-version.mjs` (2026.8.19.009).
 
 ## 2026.8.19.008 — Service alert banner: reliable per-alert dismissal
 - **[Fix]** `components/Layout.tsx` — banner dismissal raced with the visibility-gated poller: the polling callback captured a stale `dismissedAlerts` state closure, so a poll that started before dismissal could resurrect the same banner within the next minute. Rewrote the logic to read the dismissed-alert set FRESH from localStorage on every poll (`loadDismissed()`), made the poll callback identity-stable (`useCallback([])`), and made `dismissBanner` persist the dismissal synchronously to localStorage (capped at 50 ids) before hiding the banner. Result: the close button reliably hides the banner, the same alert never reappears, and a NEW alert (different id) shows the banner again immediately.

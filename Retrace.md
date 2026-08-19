@@ -1288,6 +1288,19 @@
 - Changelog policy applied: BuildNotes entry 2026.8.19.008 + What's New outputs regenerated (77 versions) + this Retrace entry.
 
 
+### Prompt 109 — Sample data for every section/subsection + reseed snapshot
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~50 min
+**BuildNotes IDs:** #1 (2026.8.19.009)
+> Create sample data for every section and subsection in the application that currently does not have any. Ensure sample data is present in every location, no matter where a user clicks. For example, Kumo Configurations currently has no sample data. Apply this to all sections and subsections, including calendars, procurement, payments, analytics, and others. Add the sample data to the reseed snapshot.
+
+**Changes:**
+- Audited DB counts: 21 tables empty (scheduleEntry, vendor, purchaseOrder, payment, report, survey chain, ptoRequest, holiday, contract, salesActivity, kbCategory, chat, workflows, locales, m365, sync, expense, alertRule, notification, kumoServer/domain/certificate/link, projectPhase/task).
+- `apps/api/src/seed-coverage.ts` — idempotent per-table seeding (create only when count is 0) for all empty tables with correct FK chains; fixed Notification fields (type not severity) and separate m365 per-table guards after a partial-state issue.
+- Snapshot pipeline: 23 new tables added to `snapshot-capture.ts` TABLES + `seed-from-snapshots.ts` SEED_ORDER in dependency order; corrected Prisma client names (pOLineItem, kBCategory); captured fixtures; full delete+re-insert reseed round-trip verified.
+- Final verification: ALL COVERED (39 tables non-empty) after reseed; 78 versions regenerated.
+- Changelog policy applied: BuildNotes entry 2026.8.19.009 + What's New outputs regenerated (78 versions) + this Retrace entry.
+
+
 
 
 

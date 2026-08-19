@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "id": "d5d4cffc-4122-460c-99c0-654fd7a92048",
+    "description": "Parking — client site",
+    "amount": 12,
+    "category": "parking",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "ticketId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
+    "invoiceId": null,
+    "receiptUrl": null,
+    "expenseDate": "2026-08-19T16:15:28.960Z",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-19T16:15:29.044Z",
+    "updatedAt": "2026-08-19T16:15:29.044Z"
+  },
+  {
+    "id": "d6e55749-1e54-4e1e-bc7a-6ecc4362dcaf",
+    "description": "Replacement keyboard",
+    "amount": 89,
+    "category": "hardware",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "ticketId": null,
+    "invoiceId": null,
+    "receiptUrl": null,
+    "expenseDate": "2026-08-19T16:15:28.960Z",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-19T16:15:29.044Z",
+    "updatedAt": "2026-08-19T16:15:29.044Z"
+  }
+]

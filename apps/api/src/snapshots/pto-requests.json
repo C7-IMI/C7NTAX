@@ -1,0 +1,32 @@
+[
+  {
+    "id": "a4a5fcfb-e4d8-4aa8-b830-906949c8ea10",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "type": "vacation",
+    "status": "approved",
+    "startDate": "2026-08-29T16:15:28.986Z",
+    "endDate": "2026-08-31T16:15:28.986Z",
+    "hours": 24,
+    "reason": "Family trip",
+    "approvedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "approvedAt": "2026-08-19T16:15:28.960Z",
+    "deniedReason": null,
+    "createdAt": "2026-08-19T16:15:28.987Z",
+    "updatedAt": "2026-08-19T16:15:28.987Z"
+  },
+  {
+    "id": "b960f67f-362a-483d-9048-937995c3092a",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "type": "sick",
+    "status": "pending",
+    "startDate": "2026-08-22T16:15:28.986Z",
+    "endDate": "2026-08-22T16:15:28.986Z",
+    "hours": 8,
+    "reason": null,
+    "approvedById": null,
+    "approvedAt": null,
+    "deniedReason": null,
+    "createdAt": "2026-08-19T16:15:28.987Z",
+    "updatedAt": "2026-08-19T16:15:28.987Z"
+  }
+]

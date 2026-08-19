@@ -1,0 +1,20 @@
+[
+  {
+    "id": "2471da05-83dc-497f-ae38-6a61bfd17c74",
+    "name": "Escalate high-priority tickets",
+    "description": null,
+    "entity": "ticket",
+    "trigger": "on_create",
+    "conditions": [
+      {
+        "op": "eq",
+        "field": "priority",
+        "value": "critical"
+      }
+    ],
+    "isActive": true,
+    "priority": 0,
+    "createdAt": "2026-08-19T16:15:29.011Z",
+    "updatedAt": "2026-08-19T16:15:29.011Z"
+  }
+]

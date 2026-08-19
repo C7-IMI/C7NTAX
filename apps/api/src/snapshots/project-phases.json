@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "9227a82c-323d-4cab-881c-5e0aa7319ec5",
+    "projectId": "793480c3-a4cb-4770-949d-aab5a393703d",
+    "name": "Discovery",
+    "description": "Requirements gathering",
+    "sortOrder": 1,
+    "startDate": null,
+    "endDate": null,
+    "status": "completed",
+    "createdAt": "2026-08-19T16:16:58.590Z",
+    "updatedAt": "2026-08-19T16:16:58.590Z"
+  }
+]

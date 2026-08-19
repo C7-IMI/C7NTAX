@@ -1,0 +1,17 @@
+[
+  {
+    "id": "39c8383e-de0b-4db7-8e6c-15b8df90591b",
+    "surveyId": "6dc81f0e-6a5e-448f-ad03-0b03e4faeecb",
+    "text": "How satisfied are you with the resolution?",
+    "type": "rating",
+    "required": true,
+    "sortOrder": 0,
+    "choices": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+    ]
+  }
+]

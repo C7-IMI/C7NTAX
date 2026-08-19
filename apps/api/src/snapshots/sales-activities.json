@@ -1,0 +1,24 @@
+[
+  {
+    "id": "6060030e-6faf-49f0-b73e-87ca3fd0b49e",
+    "opportunityId": "f117d3fd-dbdd-426c-b0d3-dd06f2dbfa94",
+    "type": "call",
+    "subject": "Discovery call",
+    "body": "Discussed requirements.",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "scheduledAt": "2026-08-20T16:15:28.997Z",
+    "completedAt": null,
+    "createdAt": "2026-08-19T16:15:28.999Z"
+  },
+  {
+    "id": "5df9392f-1e44-4ce2-aa16-49efe6ee5ce0",
+    "opportunityId": "f117d3fd-dbdd-426c-b0d3-dd06f2dbfa94",
+    "type": "email",
+    "subject": "Proposal follow-up",
+    "body": null,
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "scheduledAt": null,
+    "completedAt": "2026-08-19T16:15:28.960Z",
+    "createdAt": "2026-08-19T16:15:28.999Z"
+  }
+]

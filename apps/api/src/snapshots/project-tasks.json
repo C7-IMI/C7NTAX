@@ -1,0 +1,34 @@
+[
+  {
+    "id": "c6e3f02b-c908-4094-b18d-7a657fc8edcd",
+    "phaseId": "9227a82c-323d-4cab-881c-5e0aa7319ec5",
+    "name": "Kickoff meeting",
+    "description": null,
+    "sortOrder": 1,
+    "status": "completed",
+    "estimatedHours": null,
+    "actualHours": null,
+    "assignedToId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "startDate": null,
+    "endDate": null,
+    "ticketId": null,
+    "createdAt": "2026-08-19T16:16:58.592Z",
+    "updatedAt": "2026-08-19T16:16:58.592Z"
+  },
+  {
+    "id": "1799473e-775c-484e-a70b-cc8e9e372ba4",
+    "phaseId": "9227a82c-323d-4cab-881c-5e0aa7319ec5",
+    "name": "Deliver SOW",
+    "description": null,
+    "sortOrder": 2,
+    "status": "pending",
+    "estimatedHours": null,
+    "actualHours": null,
+    "assignedToId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "startDate": null,
+    "endDate": null,
+    "ticketId": null,
+    "createdAt": "2026-08-19T16:16:58.594Z",
+    "updatedAt": "2026-08-19T16:16:58.594Z"
+  }
+]

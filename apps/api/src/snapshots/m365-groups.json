@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "f9a9622b-5fb8-43bd-8cd6-c2ac2b1fbc9b",
+    "integrationId": "b8552ba7-054c-4c91-9a25-e5bb5c2e4ee7",
+    "azureObjectId": "azure-sample-group-001",
+    "displayName": "Finance Team",
+    "description": null,
+    "mail": "finance@client.example",
+    "visibility": "Private",
+    "memberCount": 0,
+    "raw": {},
+    "lastSyncedAt": "2026-08-19T16:25:41.575Z",
+    "createdAt": "2026-08-19T16:25:41.575Z",
+    "updatedAt": "2026-08-19T16:25:41.575Z"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "d491ab44-02e4-41a6-acc9-000cacb08c93",
+    "name": "Managed Services Contract",
+    "contractNumber": "CTR-2026-001",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "type": "service",
+    "status": "active",
+    "startDate": "2026-07-20T16:15:28.992Z",
+    "endDate": "2027-07-20T16:15:28.992Z",
+    "renewalDate": null,
+    "autoRenew": true,
+    "value": 48000,
+    "currency": "USD",
+    "billingPeriod": "monthly",
+    "serviceAgreementId": null,
+    "notifiedAt": null,
+    "notes": null,
+    "createdAt": "2026-08-19T16:15:28.994Z",
+    "updatedAt": "2026-08-19T16:15:28.994Z"
+  }
+]

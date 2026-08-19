@@ -1,47 +1,5 @@
 [
   {
-    "id": "d54ded8b-1295-4a58-8f99-299907e1ffca",
-    "serviceId": "c8648d24-753b-452f-bbcc-6cd1e8dae5b4",
-    "title": "Possible Service Interruption has been reported for Microsoft 365",
-    "description": "Auto-resolved: the official status feed for Microsoft 365 reports no active incidents (all clear).\n\nUsers may be unable to access Exchange Online and Teams. Microsoft is investigating degraded service availability.",
-    "severity": "outage",
-    "status": "resolved",
-    "source": "rss",
-    "sourceUrl": "https://status.cloud.microsoft",
-    "detectedAt": "2026-08-14T05:10:14.951Z",
-    "resolvedAt": "2026-08-18T22:39:29.817Z",
-    "createdAt": "2026-08-14T05:55:14.951Z",
-    "updatedAt": "2026-08-18T22:39:29.818Z"
-  },
-  {
-    "id": "6ab5a0fa-c2a4-4343-ada8-ab9f9fd5cd07",
-    "serviceId": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
-    "title": "Active -Azure Portal access  issues affecting Australia Regions",
-    "description": "Auto-resolved: the official status feed for Azure reports no active incidents (all clear).\n\nWe are aware of an issue affecting access to the Azure portal in the Australia regions. Our engineers are actively investigating the cause and impact. Further updates will be provided as more information becomes available.",
-    "severity": "degraded",
-    "status": "resolved",
-    "source": "rss",
-    "sourceUrl": "https://azure.status.microsoft/en-us/status/",
-    "detectedAt": "2026-08-14T05:55:39.758Z",
-    "resolvedAt": "2026-08-18T22:39:30.862Z",
-    "createdAt": "2026-08-14T05:55:39.759Z",
-    "updatedAt": "2026-08-18T22:39:30.863Z"
-  },
-  {
-    "id": "3aab0a89-3eda-4b02-a560-3fb9b17a9133",
-    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
-    "title": "Possible service degradation reported for GitHub (DownDetector)",
-    "description": "Auto-resolved: Intermittent failures in runner group and runner-related permissions pages\n\nDownDetector is reporting problems for GitHub.",
-    "severity": "degraded",
-    "status": "resolved",
-    "source": "downdetector",
-    "sourceUrl": "https://downdetector.com/status/github/",
-    "detectedAt": "2026-08-18T23:30:39.470Z",
-    "resolvedAt": "2026-08-19T00:20:41.197Z",
-    "createdAt": "2026-08-18T23:30:39.472Z",
-    "updatedAt": "2026-08-19T00:20:41.198Z"
-  },
-  {
     "id": "e4d2eb36-9244-46d3-8ae3-4dcddd37848c",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "GitHub Actions — degraded performance",
@@ -126,20 +84,6 @@
     "updatedAt": "2026-08-19T07:10:13.889Z"
   },
   {
-    "id": "5e879c8d-eb9d-4c64-97c0-172d8fb12c08",
-    "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
-    "title": "UPDATE: **Summary**\nSome customers may experience slowness while using Google Drive.\n**Description**\nWe are experiencing an issue with Google Drive beginning Tuesday, 2026-08-18 16:58 PDT.\nOur engineering team is currently working on a potential fix while continuing to investigate the full root cause.\nWe will provide an update by Tuesday, 2026-08-18 22:00 PDT with current details.\nWe apologize to all who are affected by the disruption.\n**Symptoms**\nAffected customers may experience slowness while using Google Drive.\n**Workaround**\nNone at this time.",
-    "description": "&lt;p&gt; Incident began at &lt;strong&gt;2026-08-18 23:58&lt;/strong&gt; and ended at &lt;strong&gt;2026-08-19 12:40&lt;/strong&gt; &lt;span&gt;(times are in &lt;strong&gt;Coordinated Universal Time (UTC)&lt;/strong&gt;).&lt;/span&gt;&lt;/p&gt;&lt;div class=\"cBIRi14aVDP__status-update-text\"&gt;&lt;p&gt;&lt;strong&gt;Summary&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;Multiple customers in Australia and New Zealand may experience slowness or errors while accessing Google Drive.&lt;/p&gt; &lt;p&gt;&lt;stro",
-    "severity": "degraded",
-    "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://www.google.com/appsstatus/dashboard/incidents/sjDiph2NXGAfkYYLfK7T",
-    "detectedAt": "2026-08-18T22:38:09.445Z",
-    "resolvedAt": null,
-    "createdAt": "2026-08-18T22:38:09.446Z",
-    "updatedAt": "2026-08-19T15:53:28.740Z"
-  },
-  {
     "id": "184777f9-6f60-46f6-8e3d-23a92ed5961f",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Possible service degradation reported for GitHub (DownDetector)",
@@ -154,6 +98,48 @@
     "updatedAt": "2026-08-19T15:43:16.755Z"
   },
   {
+    "id": "d54ded8b-1295-4a58-8f99-299907e1ffca",
+    "serviceId": "c8648d24-753b-452f-bbcc-6cd1e8dae5b4",
+    "title": "Possible Service Interruption has been reported for Microsoft 365",
+    "description": "Auto-resolved: the official status feed for Microsoft 365 reports no active incidents (all clear).\n\nUsers may be unable to access Exchange Online and Teams. Microsoft is investigating degraded service availability.",
+    "severity": "outage",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://status.cloud.microsoft",
+    "detectedAt": "2026-08-14T05:10:14.951Z",
+    "resolvedAt": "2026-08-18T22:39:29.817Z",
+    "createdAt": "2026-08-14T05:55:14.951Z",
+    "updatedAt": "2026-08-18T22:39:29.818Z"
+  },
+  {
+    "id": "6ab5a0fa-c2a4-4343-ada8-ab9f9fd5cd07",
+    "serviceId": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
+    "title": "Active -Azure Portal access  issues affecting Australia Regions",
+    "description": "Auto-resolved: the official status feed for Azure reports no active incidents (all clear).\n\nWe are aware of an issue affecting access to the Azure portal in the Australia regions. Our engineers are actively investigating the cause and impact. Further updates will be provided as more information becomes available.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://azure.status.microsoft/en-us/status/",
+    "detectedAt": "2026-08-14T05:55:39.758Z",
+    "resolvedAt": "2026-08-18T22:39:30.862Z",
+    "createdAt": "2026-08-14T05:55:39.759Z",
+    "updatedAt": "2026-08-18T22:39:30.863Z"
+  },
+  {
+    "id": "3aab0a89-3eda-4b02-a560-3fb9b17a9133",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Possible service degradation reported for GitHub (DownDetector)",
+    "description": "Auto-resolved: Intermittent failures in runner group and runner-related permissions pages\n\nDownDetector is reporting problems for GitHub.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/github/",
+    "detectedAt": "2026-08-18T23:30:39.470Z",
+    "resolvedAt": "2026-08-19T00:20:41.197Z",
+    "createdAt": "2026-08-18T23:30:39.472Z",
+    "updatedAt": "2026-08-19T00:20:41.198Z"
+  },
+  {
     "id": "6a527461-5669-4974-b1d6-a02579e7e8b4",
     "serviceId": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
     "title": "Service impact: Increased Error Rates",
@@ -165,6 +151,20 @@
     "detectedAt": "2026-08-19T15:18:17.558Z",
     "resolvedAt": null,
     "createdAt": "2026-08-19T15:18:17.560Z",
-    "updatedAt": "2026-08-19T15:53:27.560Z"
+    "updatedAt": "2026-08-19T16:28:15.095Z"
+  },
+  {
+    "id": "5e879c8d-eb9d-4c64-97c0-172d8fb12c08",
+    "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
+    "title": "UPDATE: **Summary**\nSome customers may experience slowness while using Google Drive.\n**Description**\nWe are experiencing an issue with Google Drive beginning Tuesday, 2026-08-18 16:58 PDT.\nOur engineering team is currently working on a potential fix while continuing to investigate the full root cause.\nWe will provide an update by Tuesday, 2026-08-18 22:00 PDT with current details.\nWe apologize to all who are affected by the disruption.\n**Symptoms**\nAffected customers may experience slowness while using Google Drive.\n**Workaround**\nNone at this time.",
+    "description": "&lt;p&gt; Incident began at &lt;strong&gt;2026-08-18 23:58&lt;/strong&gt; and ended at &lt;strong&gt;2026-08-19 12:40&lt;/strong&gt; &lt;span&gt;(times are in &lt;strong&gt;Coordinated Universal Time (UTC)&lt;/strong&gt;).&lt;/span&gt;&lt;/p&gt;&lt;div class=\"cBIRi14aVDP__status-update-text\"&gt;&lt;p&gt;&lt;strong&gt;Summary&lt;/strong&gt;&lt;/p&gt; &lt;p&gt;Multiple customers in Australia and New Zealand may experience slowness or errors while accessing Google Drive.&lt;/p&gt; &lt;p&gt;&lt;stro",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://www.google.com/appsstatus/dashboard/incidents/sjDiph2NXGAfkYYLfK7T",
+    "detectedAt": "2026-08-18T22:38:09.445Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-18T22:38:09.446Z",
+    "updatedAt": "2026-08-19T16:28:17.052Z"
   }
 ]

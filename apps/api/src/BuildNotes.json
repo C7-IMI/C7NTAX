@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.8.19.009",
+    "date": "2026-08-19",
+    "title": "Sample data coverage for every section & subsection",
+    "changes": [
+      {
+        "text": "`apps/api/src/seed-coverage.ts` — idempotent per-table guards (creates only when count is 0) seeding sample rows for every previously-empty area: Calendar (scheduleEntry), Procurement (vendor, purchaseOrder, pOLineItem), Payments (payment), Analytics (report + reportSchedule), PTO & Holidays, Contracts + milestones, Sales activities, KB categories, Chat (session + messages), Workflows (rule + action + execution), Locales + translations, Surveys (survey/question/response/answer), M365 (user/group/subscription), Sync logs + synced entities, Expenses, Alert rules + log, Notifications, Kumo Configurations (kumoServer), Kumo domains/certificates/links, and Project phases + tasks. 39 tables verified non-empty after reseed.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Snapshot pipeline: added the 23 new tables to `snapshot-capture.ts` TABLES and `seed-from-snapshots.ts` SEED_ORDER in dependency order (parents before children: vendor→purchaseOrder→pOLineItem, survey→question→response→answer, contract→milestone, workflowRule→action/execution, locale→translation, chatSession→chatMessage, projectPhase→projectTask). Corrected Prisma client names for two models (pOLineItem, kBCategory). Captured all new fixtures; full delete+re-insert reseed round-trip verified (71 fixture inserts).",
+        "type": "Update"
+      },
+      {
+        "text": "Notification sample fields corrected to the schema (type instead of severity); m365Group/m365Subscription guarded separately so partial states self-heal.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.8.19.008",
     "date": "2026-08-19",
     "title": "Service alert banner: reliable per-alert dismissal",

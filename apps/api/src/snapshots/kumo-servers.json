@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "bb23fdbf-829e-421b-bd9d-89330fc85d2d",
+    "kumoAssetId": "75a17625-21ff-483c-9449-1834ba6081b3",
+    "hostname": "srv-dc01",
+    "fqdn": "srv-dc01.client.local",
+    "operatingSystem": "Windows Server 2022",
+    "osVersion": null,
+    "cpuCores": 8,
+    "ramGb": 32,
+    "storageGb": 512,
+    "ipAddress": null,
+    "macAddress": null,
+    "virtualization": null,
+    "hypervisorHost": null,
+    "lastPatchedAt": null
+  }
+]

@@ -68,6 +68,23 @@
     "updatedAt": "2026-08-19T15:13:01.915Z"
   },
   {
+    "id": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "name": "GitHub",
+    "category": "cloud",
+    "description": "GitHub.com, Actions, Packages and Pages.",
+    "statusPageUrl": "https://www.githubstatus.com",
+    "downDetectorUrl": "https://downdetector.com/status/github/",
+    "rssUrl": "https://www.githubstatus.com/history.rss",
+    "monitorKind": "vendor",
+    "monitorUrl": null,
+    "monitorConfig": null,
+    "monitorEnabled": true,
+    "enabled": true,
+    "sortOrder": 40,
+    "createdAt": "2026-08-14T05:55:14.948Z",
+    "updatedAt": "2026-08-19T15:13:01.912Z"
+  },
+  {
     "id": "d2abce0b-f02e-46c4-86c4-441a23f69571",
     "name": "Sample Website Monitor",
     "category": "uptime",
@@ -136,22 +153,5 @@
     "sortOrder": 30,
     "createdAt": "2026-08-14T05:55:14.948Z",
     "updatedAt": "2026-08-19T15:13:01.911Z"
-  },
-  {
-    "id": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
-    "name": "GitHub",
-    "category": "cloud",
-    "description": "GitHub.com, Actions, Packages and Pages.",
-    "statusPageUrl": "https://www.githubstatus.com",
-    "downDetectorUrl": "https://downdetector.com/status/github/",
-    "rssUrl": "https://www.githubstatus.com/history.rss",
-    "monitorKind": "vendor",
-    "monitorUrl": null,
-    "monitorConfig": null,
-    "monitorEnabled": true,
-    "enabled": true,
-    "sortOrder": 40,
-    "createdAt": "2026-08-14T05:55:14.948Z",
-    "updatedAt": "2026-08-19T15:13:01.912Z"
   }
 ]

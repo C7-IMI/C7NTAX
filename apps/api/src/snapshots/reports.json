@@ -1,0 +1,24 @@
+[
+  {
+    "id": "a78d1e07-5ec7-45ae-9768-be02f6387c76",
+    "name": "Monthly Ticket Volume",
+    "description": "Standard ticket volume report",
+    "type": "ticket_summary",
+    "config": {},
+    "isSystem": false,
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-19T16:15:28.982Z",
+    "updatedAt": "2026-08-19T16:15:28.982Z"
+  },
+  {
+    "id": "300f7292-d13a-462f-b3c7-445e03c626dc",
+    "name": "Client Value Report",
+    "description": "Value delivered per client",
+    "type": "revenue",
+    "config": {},
+    "isSystem": false,
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-19T16:15:28.983Z",
+    "updatedAt": "2026-08-19T16:15:28.983Z"
+  }
+]

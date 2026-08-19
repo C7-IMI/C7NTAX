@@ -1,0 +1,32 @@
+[
+  {
+    "id": "683cde29-08f6-41b2-83b2-a6f63d5c17dd",
+    "name": "TechSupply Co",
+    "contactName": "Dana Reyes",
+    "email": "sales@techsupply.example",
+    "phone": null,
+    "website": null,
+    "address": null,
+    "taxId": null,
+    "paymentTerms": "Net 30",
+    "isActive": true,
+    "notes": null,
+    "createdAt": "2026-08-19T16:15:28.969Z",
+    "updatedAt": "2026-08-19T16:15:28.969Z"
+  },
+  {
+    "id": "8204b6b1-324d-413b-a561-52736c3291e6",
+    "name": "HardwareHub",
+    "contactName": "Sam Ortiz",
+    "email": "orders@hardwarehub.example",
+    "phone": null,
+    "website": null,
+    "address": null,
+    "taxId": null,
+    "paymentTerms": "Net 15",
+    "isActive": true,
+    "notes": null,
+    "createdAt": "2026-08-19T16:15:28.969Z",
+    "updatedAt": "2026-08-19T16:15:28.969Z"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "id": "a150bd54-a826-4309-9520-e23aff91e607",
+    "ruleId": "2471da05-83dc-497f-ae38-6a61bfd17c74",
+    "type": "notify",
+    "config": {
+      "recipients": [
+        "ops@example.com"
+      ]
+    },
+    "sortOrder": 1
+  }
+]

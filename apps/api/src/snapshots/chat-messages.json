@@ -1,0 +1,22 @@
+[
+  {
+    "id": "8028ed14-4ab5-46ff-b621-a70ba9db2d89",
+    "sessionId": "cff987f6-d980-4a98-bf2e-57915c9db2a0",
+    "senderType": "customer",
+    "senderId": null,
+    "content": "Hi — my VPN is down.",
+    "contentType": "text",
+    "isRead": false,
+    "createdAt": "2026-08-19T16:15:29.007Z"
+  },
+  {
+    "id": "ca87bfe3-b61f-4d64-b4a8-4af1a1d78dc7",
+    "sessionId": "cff987f6-d980-4a98-bf2e-57915c9db2a0",
+    "senderType": "agent",
+    "senderId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "content": "On it — checking now.",
+    "contentType": "text",
+    "isRead": false,
+    "createdAt": "2026-08-19T16:15:29.007Z"
+  }
+]

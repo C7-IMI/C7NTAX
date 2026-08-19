@@ -1,0 +1,13 @@
+[
+  {
+    "id": "6dc81f0e-6a5e-448f-ad03-0b03e4faeecb",
+    "name": "CSAT — Post-Ticket",
+    "description": "Sent after ticket resolution",
+    "type": "csat",
+    "isActive": true,
+    "sendOnResolve": true,
+    "sendDelayHours": 1,
+    "createdAt": "2026-08-19T16:15:29.026Z",
+    "updatedAt": "2026-08-19T16:15:29.026Z"
+  }
+]

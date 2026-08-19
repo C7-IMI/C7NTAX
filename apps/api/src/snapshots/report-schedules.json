@@ -1,0 +1,18 @@
+[
+  {
+    "id": "e7977d21-328f-4b04-9db1-30b0f0d71da7",
+    "reportId": "a78d1e07-5ec7-45ae-9768-be02f6387c76",
+    "frequency": "weekly",
+    "dayOfWeek": 1,
+    "dayOfMonth": null,
+    "timeOfDay": "06:00",
+    "recipients": [
+      "ops@example.com"
+    ],
+    "format": "pdf",
+    "isActive": true,
+    "lastSentAt": null,
+    "createdAt": "2026-08-19T16:15:28.984Z",
+    "updatedAt": "2026-08-19T16:15:28.984Z"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "id": "3cdbd03e-a881-4a89-8783-847fad424979",
+    "ruleId": "2471da05-83dc-497f-ae38-6a61bfd17c74",
+    "entityId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
+    "status": "completed",
+    "result": {
+      "actions": 1
+    },
+    "startedAt": "2026-08-19T16:15:29.016Z",
+    "completedAt": "2026-08-19T16:15:28.960Z"
+  }
+]

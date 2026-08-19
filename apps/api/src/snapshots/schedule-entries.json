@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": "26a1512c-9e0e-487c-b945-d46bf9cbed54",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ticketId": null,
+    "title": "Onsite visit — Acme Corp",
+    "description": "Quarterly onsite maintenance",
+    "startTime": "2026-08-20T16:15:28.963Z",
+    "endTime": "2026-08-20T16:15:28.963Z",
+    "status": "scheduled",
+    "location": "Acme HQ",
+    "travelTime": null,
+    "color": null,
+    "createdAt": "2026-08-19T16:15:28.965Z",
+    "updatedAt": "2026-08-19T16:15:28.965Z"
+  },
+  {
+    "id": "38028e1c-9448-49fa-8262-2a30964ef320",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ticketId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
+    "title": "Server firmware update",
+    "description": null,
+    "startTime": "2026-08-21T16:15:28.963Z",
+    "endTime": "2026-08-21T16:15:28.963Z",
+    "status": "scheduled",
+    "location": null,
+    "travelTime": null,
+    "color": null,
+    "createdAt": "2026-08-19T16:15:28.965Z",
+    "updatedAt": "2026-08-19T16:15:28.965Z"
+  }
+]

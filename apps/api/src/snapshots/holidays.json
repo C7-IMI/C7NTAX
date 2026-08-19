@@ -1,0 +1,20 @@
+[
+  {
+    "id": "52e3eecf-425d-48fa-8f6d-65c0c061b444",
+    "name": "New Year's Day",
+    "date": "2026-01-01T06:00:00.000Z",
+    "recurring": true,
+    "country": "US",
+    "region": null,
+    "createdAt": "2026-08-19T16:15:28.990Z"
+  },
+  {
+    "id": "777093f4-9f40-4325-bc9c-b5b8dd637ff0",
+    "name": "Independence Day",
+    "date": "2026-07-04T05:00:00.000Z",
+    "recurring": true,
+    "country": "US",
+    "region": null,
+    "createdAt": "2026-08-19T16:15:28.990Z"
+  }
+]

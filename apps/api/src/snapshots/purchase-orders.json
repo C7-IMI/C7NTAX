@@ -1,0 +1,20 @@
+[
+  {
+    "id": "8e9b288f-257c-4996-a989-58efee651240",
+    "poNumber": "PO-1001",
+    "vendorId": "683cde29-08f6-41b2-83b2-a6f63d5c17dd",
+    "status": "ordered",
+    "subtotal": 2400,
+    "taxTotal": 0,
+    "total": 2400,
+    "currency": "USD",
+    "orderedAt": "2026-08-19T16:15:28.960Z",
+    "expectedAt": "2026-08-26T16:15:28.973Z",
+    "receivedAt": null,
+    "approvedById": null,
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "notes": "Replacement SSDs",
+    "createdAt": "2026-08-19T16:15:28.975Z",
+    "updatedAt": "2026-08-19T16:15:28.975Z"
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "cff987f6-d980-4a98-bf2e-57915c9db2a0",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "userId": null,
+    "guestName": "Casey Customer",
+    "guestEmail": "casey@client.example",
+    "assignedToId": null,
+    "ticketId": null,
+    "startedAt": "2026-08-19T16:15:29.006Z",
+    "closedAt": null,
+    "createdAt": "2026-08-19T16:15:29.006Z",
+    "updatedAt": "2026-08-19T16:15:29.006Z"
+  }
+]

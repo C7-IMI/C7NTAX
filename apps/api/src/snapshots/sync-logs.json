@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "5bcd1127-eb92-4526-bf70-fe8ab632bd23",
+    "integrationId": "b8552ba7-054c-4c91-9a25-e5bb5c2e4ee7",
+    "status": "success",
+    "entityType": "user",
+    "recordsProcessed": 12,
+    "recordsCreated": 12,
+    "recordsUpdated": 0,
+    "recordsFailed": 0,
+    "errorMessage": null,
+    "startedAt": "2026-08-19T16:15:29.036Z",
+    "completedAt": "2026-08-19T16:15:28.960Z",
+    "createdAt": "2026-08-19T16:15:29.036Z"
+  }
+]

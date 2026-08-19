@@ -1,0 +1,20 @@
+[
+  {
+    "id": "fafdc678-d104-44e2-9724-0380d2c0c86a",
+    "code": "en-US",
+    "name": "English (US)",
+    "isActive": true,
+    "isDefault": true,
+    "direction": "ltr",
+    "createdAt": "2026-08-19T16:15:29.020Z"
+  },
+  {
+    "id": "b2c12c21-038e-4318-a5e4-d29b505a2057",
+    "code": "es-MX",
+    "name": "Spanish (Mexico)",
+    "isActive": true,
+    "isDefault": false,
+    "direction": "ltr",
+    "createdAt": "2026-08-19T16:15:29.020Z"
+  }
+]

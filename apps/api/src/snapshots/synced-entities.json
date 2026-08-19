@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "61e052a8-4988-426b-9f31-3fa47fa4d7fd",
+    "integrationId": "b8552ba7-054c-4c91-9a25-e5bb5c2e4ee7",
+    "entityKind": "microsoft365",
+    "entityType": "user",
+    "externalId": "azure-sample-user-001",
+    "displayName": "Alex Rivera",
+    "data": {},
+    "linkedContactId": null,
+    "linkedCompanyId": null,
+    "lastSyncedAt": "2026-08-19T16:15:29.037Z",
+    "createdAt": "2026-08-19T16:15:29.037Z",
+    "updatedAt": "2026-08-19T16:15:29.037Z"
+  }
+]

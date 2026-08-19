@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "f58122c6-839e-482b-ac75-0842d64f3061",
+    "type": "system",
+    "title": "Welcome to C7NTAX",
+    "body": "Sample notification — explore Tickets, Billing, and Kumo.",
+    "isRead": false,
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ticketId": null,
+    "createdAt": "2026-08-19T16:16:58.571Z"
+  },
+  {
+    "id": "732bdb32-f055-41af-acb2-045e8a1cc71f",
+    "type": "invoice_sent",
+    "title": "Invoice overdue",
+    "body": "Sample invoice is past due.",
+    "isRead": false,
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ticketId": "8da69561-0e86-4082-b323-0bfa64c95e1f",
+    "createdAt": "2026-08-19T16:16:58.571Z"
+  }
+]

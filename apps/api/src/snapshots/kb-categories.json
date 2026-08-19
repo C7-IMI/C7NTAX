@@ -1,0 +1,22 @@
+[
+  {
+    "id": "3eda292d-9004-4f65-abb8-b6c4f9afbbab",
+    "name": "How-To",
+    "slug": "how-to",
+    "description": "Step-by-step guides",
+    "parentId": null,
+    "sortOrder": 1,
+    "createdAt": "2026-08-19T16:15:29.003Z",
+    "updatedAt": "2026-08-19T16:15:29.003Z"
+  },
+  {
+    "id": "80bc09ad-8293-4d60-a8e5-31a55ab53a84",
+    "name": "Troubleshooting",
+    "slug": "troubleshooting",
+    "description": "Diagnosis and fixes",
+    "parentId": null,
+    "sortOrder": 2,
+    "createdAt": "2026-08-19T16:15:29.003Z",
+    "updatedAt": "2026-08-19T16:15:29.003Z"
+  }
+]

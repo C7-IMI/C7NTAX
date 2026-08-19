@@ -1,0 +1,14 @@
+[
+  {
+    "id": "8b880b55-7593-4d93-a8d2-42f4753e0be6",
+    "contractId": "d491ab44-02e4-41a6-acc9-000cacb08c93",
+    "name": "Annual review",
+    "description": "Client business review",
+    "dueDate": "2026-12-17T16:15:28.994Z",
+    "completedAt": null,
+    "amount": null,
+    "status": "pending",
+    "createdAt": "2026-08-19T16:15:28.995Z",
+    "updatedAt": "2026-08-19T16:15:28.995Z"
+  }
+]
