@@ -21,6 +21,7 @@ place at their `Source` paths.
 | PLAN-010 | AWS Dev/Prod Split & Sync Plan | `PLAN-010-AWS-Dev-Prod-Split-Sync.md` | `PLAN-AWS-Dev-Prod-Split-and-Sync.md` | 2026-08-18 | Planning |
 | PLAN-011 | Bedrock Agentic RAG AI Assistant for PSA Plan | `PLAN-011-Bedrock-Agentic-RAG-AI-Assistant.md` | `PLAN-Bedrock-Agentic-RAG-AI-Assistant.md` | 2026-08-18 | Planning |
 | PLAN-012 | Outlook Add-in Email-to-Ticket Generator Plan | `PLAN-012-Outlook-Addin-Email-to-Ticket.md` | `PLAN-Outlook-Addin-Email-to-Ticket.md` | 2026-08-18 | Planning |
+| PLAN-013 | C7NTAX Competitive Review & Modernization Plan | `PLAN-013-Competitive-Review-and-Modernization.md` | `PLAN-C7NTAX-Competitive-Review-and-Modernization.md` | 2026-08-18 | Planning |
 
 ## Conventions
 

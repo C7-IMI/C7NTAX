@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.18.010 | Last Updated: 2026-08-18
+## Version: 2026.8.18.011 | Last Updated: 2026-08-18
 
 ---
 
@@ -11,6 +11,9 @@
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 
 ---
+
+## 2026.8.18.011 — PLAN-013: Competitive Review & Modernization
+- **[New]** `PLAN-C7NTAX-Competitive-Review-and-Modernization.md` (PLAN-013) — in-depth review of Endar, NetLock RMM, and Breeze vs C7NTAX: full feature inventories for all four; comparison tables (common features across the three, unique per app, vs C7NTAX); gap analysis (RMM device agents/monitoring, patch management, remote tools, SSO, quoting→invoice, customer portal, backup, risk-classified AI actions, MCP, RLS multi-tenancy, UI modernization); dependency-ordered incremental implementation plan with per-phase `Depends on`/`Risk if skipped` notes, explicit moved-items notes (AI risk engine → extends PLAN-011; SSO → links PLAN-002; multi-tenant RLS → links PLAN-003; device agents deferred until PLAN-010 AWS infra), frontend items (dialogs, settings, sections), design modernization preserving C7NTAX theming, and performance tradeoff justifications.
 
 ## 2026.8.18.010 — PLAN-012: Outlook Add-in Email-to-Ticket Generator
 - **[New]** `PLAN-Outlook-Addin-Email-to-Ticket.md` (PLAN-012) — detailed plan for an Outlook plugin that creates service tickets from emails: recommends an **Office Web Add-in** (MessageReadCommandSurface + ExecuteFunction + taskpane) for cross-platform reach matching the C7NTAX TS/React stack; reuses PLAN-009's implemented machinery (`createTicketFromEmail`, deduction, `EmailConnector` patterns) via a new `POST /api/outlook-addin/tickets` batch endpoint with internetMessageId dedup; full email→ticket field mapping table; SSO auth (Office SSO → `/api/auth/office-sso` exchange → C7NTAX JWT) with manual-login fallback; C7 icon from the Composite asset sheet at 16/32/80 px; selection behavior spec (multi-select → one ticket per email via `getSelectedItemsAsync`; single open/previewed message → that message); testing (unit + Outlook desktop/web E2E) and deployment (sideload → Integrated Apps/AppSource) steps; 7 dependency-ordered phases with `Depends on`/`Risk if skipped` notes; rollback + open decisions.

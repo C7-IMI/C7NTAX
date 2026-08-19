@@ -1063,6 +1063,22 @@
 - Changelog policy applied: BuildNotes entry 2026.8.18.010 + What's New outputs regenerated (62 versions) + this Retrace entry.
 
 
+### Prompt 90 — Competitive review: Endar / NetLock RMM / Breeze vs C7NTAX + modernization plan
+**Timestamp:** 2026-08-18 | **Status:** ✅ Completed | **Duration:** ~55 min
+**BuildNotes IDs:** #1 (2026.8.18.011)
+> Perform an in-depth review of the following three repositories... Deliverables: 1. A comprehensive feature/function inventory... 2. A comparison... 3. A gap analysis... Then create an implementation plan... Return the comparison and implementation plan in a clear, structured format.
+
+**Changes:**
+- Reviewed the three repos (Endar: Python/Flask compliance+monitoring RMM, alpha; NetLock RMM: C#/Blazor open-core RMM, 350+ sensors/patch/remote tools/SSO/app control; Breeze: Go+React AGPL RMM+PSA+AI operator, risk-classified actions, MCP server, quotes/billing, backup, RLS security) and the current C7NTAX codebase + 13 pending plans.
+- `PLAN-C7NTAX-Competitive-Review-and-Modernization.md` (PLAN-013, 177 lines) — inventories for all four apps; common/unique feature comparison tables vs C7NTAX; gap analysis; dependency-ordered incremental implementation plan with per-phase `Depends on`/`Risk if skipped` notes and moved-items annotations (AI risk engine extends PLAN-011; SSO links PLAN-002; RLS links PLAN-003; device agents deferred until PLAN-010 infra); frontend item lists (dialogs, settings, sections); design modernization preserving C7NTAX theming; performance tradeoffs justified.
+- PlanDocs PLAN-013 copy + registry row; changelog policy applied (BuildNotes 2026.8.18.011, What's New regenerated 63 versions, this Retrace entry).
+
+
+
+
+
+
+
 
 
 
