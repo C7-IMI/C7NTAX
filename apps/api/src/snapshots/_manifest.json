@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-08-20T00:04:39.197Z",
-  "totalRecords": 417,
+  "capturedAt": "2026-08-20T00:39:28.137Z",
+  "totalRecords": 418,
   "tables": {
     "role": 5,
     "user": 9,
@@ -46,7 +46,7 @@
     "alertRule": 1,
     "alertLog": 1,
     "serviceAlertService": 9,
-    "serviceAlert": 19,
+    "serviceAlert": 20,
     "quote": 1,
     "quoteLineItem": 1,
     "aiAction": 1,
