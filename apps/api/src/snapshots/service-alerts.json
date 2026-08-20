@@ -168,20 +168,6 @@
     "updatedAt": "2026-08-19T00:20:41.198Z"
   },
   {
-    "id": "6a527461-5669-4974-b1d6-a02579e7e8b4",
-    "serviceId": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
-    "title": "Service impact: Increased Error Rates",
-    "description": "We are investigating an issue that is impacting launching new EC2 instances and resources in a newly launched Availability Zone (euw2-az4) in the EU-WEST-2 Region. During this time, affected customers may experience issues when creating or modifying resources in the Region. Other AWS services may also be impacted. For immediate recovery, we recommend that customers use alternative Availability Zones (euw2-az1, euw2-az2, and euw2-az3) where applicable. Existing running instances and resources are",
-    "severity": "degraded",
-    "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://status.aws.amazon.com/",
-    "detectedAt": "2026-08-19T15:18:17.558Z",
-    "resolvedAt": null,
-    "createdAt": "2026-08-19T15:18:17.560Z",
-    "updatedAt": "2026-08-20T00:34:40.545Z"
-  },
-  {
     "id": "90fa0286-2aef-4b63-934c-85c16cf67ce5",
     "serviceId": "10630569-8873-4b00-9137-a346046c2b5f",
     "title": "Possible service degradation reported for Verizon (DownDetector)",
@@ -196,18 +182,32 @@
     "updatedAt": "2026-08-20T00:15:11.306Z"
   },
   {
+    "id": "6a527461-5669-4974-b1d6-a02579e7e8b4",
+    "serviceId": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
+    "title": "Service impact: Increased Error Rates",
+    "description": "We are investigating an issue that is impacting launching new EC2 instances and resources in a newly launched Availability Zone (euw2-az4) in the EU-WEST-2 Region. During this time, affected customers may experience issues when creating or modifying resources in the Region. Other AWS services may also be impacted. For immediate recovery, we recommend that customers use alternative Availability Zones (euw2-az1, euw2-az2, and euw2-az3) where applicable. Existing running instances and resources are",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.aws.amazon.com/",
+    "detectedAt": "2026-08-19T15:18:17.558Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-19T15:18:17.560Z",
+    "updatedAt": "2026-08-20T03:59:41.686Z"
+  },
+  {
     "id": "ea17b912-f9ad-4693-86b1-a9265719b71a",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Possible service degradation reported for GitHub (DownDetector)",
-    "description": "DownDetector is reporting problems for GitHub.",
+    "description": "Auto-resolved: monitored sources for GitHub report no active incidents or degradations (all clear).\n\nDownDetector is reporting problems for GitHub.",
     "severity": "degraded",
-    "status": "active",
+    "status": "resolved",
     "source": "downdetector",
     "sourceUrl": "https://downdetector.com/status/github/",
     "detectedAt": "2026-08-20T00:14:57.867Z",
-    "resolvedAt": null,
+    "resolvedAt": "2026-08-20T01:24:52.124Z",
     "createdAt": "2026-08-20T00:14:57.868Z",
-    "updatedAt": "2026-08-20T00:14:57.868Z"
+    "updatedAt": "2026-08-20T01:24:52.125Z"
   },
   {
     "id": "5e879c8d-eb9d-4c64-97c0-172d8fb12c08",
@@ -221,7 +221,21 @@
     "detectedAt": "2026-08-18T22:38:09.445Z",
     "resolvedAt": null,
     "createdAt": "2026-08-18T22:38:09.446Z",
-    "updatedAt": "2026-08-20T00:34:42.716Z"
+    "updatedAt": "2026-08-20T03:59:42.915Z"
+  },
+  {
+    "id": "ace31957-728b-4a04-98f2-9a515e0a8f8a",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Possible service degradation reported for GitHub (DownDetector)",
+    "description": "DownDetector is reporting problems for GitHub.",
+    "severity": "degraded",
+    "status": "active",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/github/",
+    "detectedAt": "2026-08-20T02:24:58.301Z",
+    "resolvedAt": null,
+    "createdAt": "2026-08-20T02:24:58.303Z",
+    "updatedAt": "2026-08-20T02:24:58.303Z"
   },
   {
     "id": "d1257d6d-e67b-4104-92ef-1d09ef33d6ff",

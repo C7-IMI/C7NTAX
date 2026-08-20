@@ -9,6 +9,15 @@
     "viewedAt": "2026-08-20T00:39:21.151Z"
   },
   {
+    "id": "0ecb409e-f25c-4a5a-8bcc-557e395e6c34",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "document",
+    "entityId": "626b9f7b-c83b-494c-8612-bd8c9d513738",
+    "entityName": "Server Reboot Procedure",
+    "entityIcon": "book",
+    "viewedAt": "2026-08-20T04:03:03.385Z"
+  },
+  {
     "id": "a609140c-653e-44e7-9b88-50e68c53deb6",
     "userId": "f918a052-ea24-465a-814c-416308ffddb7",
     "entityType": "asset",
