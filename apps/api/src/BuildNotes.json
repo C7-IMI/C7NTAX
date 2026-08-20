@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.8.19.014",
+    "date": "2026-08-19",
+    "title": "Ticket list pagination + Show All in filtered board view",
+    "changes": [
+      {
+        "text": "`pages/Tickets.tsx` — client-side pagination for the ticket listing: page-size selector (10 / 25 / 50 / 100 / All, default 25) on the right of a new list footer below the table card; when more tickets exist than the page size, pagination controls appear with jump-to-first/last (`«` / `»`), prev/next arrows, and a page-number window with gap ellipses (`1 … 4 5 6 … 9`); active page highlighted in cyber theming; page resets to 1 when filters/board change and when the page size changes.",
+        "type": "New Feature"
+      },
+      {
+        "text": "\"Show All\" link on the bottom-left of the same footer (visible when any status/priority/technician/date filter is active) — clears all filters and shows every ticket on the current board, the same as clicking the board name.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Select-all checkbox now operates on the currently visible page (standard paginated-table behavior); the footer shows the total ticket count for the active filter.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.8.19.013",
     "date": "2026-08-19",
     "title": "Every ticket has a contact; contact email/phone on ticket details",

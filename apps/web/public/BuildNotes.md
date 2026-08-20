@@ -14,6 +14,12 @@
 
 ---
 
+## 2026.8.19.014 — Ticket list pagination + Show All in filtered board view
+- **[New]** `pages/Tickets.tsx` — client-side pagination for the ticket listing: page-size selector (10 / 25 / 50 / 100 / All, default 25) on the right of a new list footer below the table card; when more tickets exist than the page size, pagination controls appear with jump-to-first/last (`«` / `»`), prev/next arrows, and a page-number window with gap ellipses (`1 … 4 5 6 … 9`); active page highlighted in cyber theming; page resets to 1 when filters/board change and when the page size changes.
+- **[New]** "Show All" link on the bottom-left of the same footer (visible when any status/priority/technician/date filter is active) — clears all filters and shows every ticket on the current board, the same as clicking the board name.
+- **[Update]** Select-all checkbox now operates on the currently visible page (standard paginated-table behavior); the footer shows the total ticket count for the active filter.
+- **[Verification]** web typecheck (changed file clean); Vite dev server serving the updated page ("Show All" present in transformed module).
+
 ## 2026.8.19.013 — Every ticket has a contact; contact email/phone on ticket details
 - **[Update]** Sample data: every ticket now has an assigned contact. 7 legacy tickets with no contact were assigned appropriate contacts (primary/first contact of their company); `seed-ticket-samples.ts` now guarantees a contact for every seeded ticket (company contact, falling back to any contact). 0 tickets remain contactless; reseed snapshot re-captured (tickets.json 96 rows).
 - **[New]** Ticket details client info card now shows the assigned contact's **email** and **phone** alongside the contact name; `GET /tickets/:id` includes `contact.phone` in its select.

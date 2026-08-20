@@ -1431,6 +1431,17 @@
 - Changelog policy applied: BuildNotes entry 2026.8.19.013 + What's New (live via API) + this Retrace entry.
 
 
+### Prompt 121 — Pagination + Show All in the filtered board ticket view
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.19.014)
+> Implement in the filtered view shown when clicking a service board badge: a "Show All" link/button at the bottom-left underneath the tickets listing that shows all tickets for that board; pagination options on the same row on the right with page sizes 10, 25, 50, 100, All; pagination controls with arrows and page numbers when there are more tickets than the current selection; page-by-page navigation and jump to beginning/end (`<< < 1 2 3 > >>` style); consistent C7NTAX theming.
+
+**Changes:**
+- `apps/web/src/pages/Tickets.tsx` — new list footer under the table card: "Show All" (bottom-left, shown when any status/priority/technician/date filter is active; clears filters keeping the board) + page-size selector (10/25/50/100/All, default 25) + total ticket count; pagination controls (first/prev/page-number window with gap ellipses/next/last) appear whenever pages > 1; active page highlighted; page resets on filter/board/size changes; select-all now scopes to the visible page.
+- Sorted list computed once and sliced per page (`sortData` + safePage clamp).
+- Changelog policy applied: BuildNotes entry 2026.8.19.014 + What's New (live via API) + this Retrace entry.
+
+
 
 
 
