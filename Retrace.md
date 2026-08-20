@@ -1442,6 +1442,19 @@
 - Changelog policy applied: BuildNotes entry 2026.8.19.014 + What's New (live via API) + this Retrace entry.
 
 
+### Prompt 122 — IT Glue security review → Kumo security/encryption plans
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~45 min
+**BuildNotes IDs:** #1 (2026.8.19.015)
+> Review the IT Glue security and password-security/encryption whitepapers; compare their security, password security, and encryption practices to the current C7NTAX codebase, existing functionality, and all current implementation plans. Devise a plan to add/update/harden C7NTAX similarly, with particular focus on Kumo. Append aligned changes to existing plans, create separate plans otherwise, and reorganize/renumber for dependencies. Return only the final updated plan structure.
+
+**Changes:**
+- Reviewed both documents (IT Glue Security Whitepaper via text proxy; Kaseya password security page) and verified current state: single-master-key AES-256-GCM Kumo crypto, reveal + access log exist, no versioning/ACLs/TTL/vault mode/workflow/report.
+- Created `PLAN-015-Kumo-Vault-Security-and-Encryption.md` — 11 dependency-ordered phases (per-password DEKs + RSA-2048 KEK outside DB, rotation, hygiene, versioning/rollback, reveal TTL, ACLs, host-proof vault, access workflow, at-risk report, generator policy, snapshot/reseed/verify) + rollback/verification/open decisions.
+- Updated `PLAN-C7NTAX-Competitive-Review-and-Modernization.md` — gap item 14; new phase #11 (Kumo vault parity integration); phase #6 appended enforced MFA + SSO-only mode + login rate limiting; phase #8 re-scoped; frontend surfaces + appended notes updated.
+- Updated `PLAN-AWS-Dev-Prod-Split-and-Sync.md` — new §11 Security & compliance controls (IT Glue parity, items 11.1–11.6); old §11/§12 renumbered to §12/§13; §12 port reference → §13.
+- Changelog policy applied: BuildNotes entry 2026.8.19.015 + What's New (live via API) + this Retrace entry.
+
+
 
 
 

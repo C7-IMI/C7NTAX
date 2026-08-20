@@ -14,6 +14,11 @@
 
 ---
 
+## 2026.8.19.015 — IT Glue security comparison → PLAN-015 Kumo vault plan + plan updates
+- **[New]** Reviewed IT Glue Security Whitepaper + Kaseya "About password security and encryption" and compared to C7NTAX. Created **PLAN-015 (Kumo Vault Security & Encryption Upgrade)**: 11 dependency-ordered phases — per-password AES-256-GCM data keys + RSA-2048 KEK (private key passphrase-encrypted outside the DB), key rotation, decrypted-data hygiene, password versioning/rollback (`kumoPasswordVersion`), reveal TTL, granular `kumoPasswordAccess` ACLs, host-proof vault mode (browser-only decryption), sensitive-password access workflow, at-risk password report, 32-char generator policy, snapshot/reseed + verification. Includes rollback, verification, and open decisions.
+- **[Update]** PLAN-013: gap analysis item 14 (Kumo encryption parity); new phase #11 (Kumo vault security parity, PLAN-015 integration surface); phase #6 extended with enforced MFA, SSO-only mode + per-user overrides, login brute-force rate limiting; phase #8 scoped to app-wide items (Kumo crypto → PLAN-015); frontend surfaces and moved/appended notes updated.
+- **[Update]** PLAN-010: new §11 "Security & compliance controls (IT Glue parity)" with 11.1–11.6 (WAF + rate limiting, IP access control, network segmentation, vuln-scan/pen-test calendar, backups + restore tests + replication/failover, SOC 2 change management); old §11/§12 renumbered to §12/§13 and the §12 port reference updated to §13.
+
 ## 2026.8.19.014 — Ticket list pagination + Show All in filtered board view
 - **[New]** `pages/Tickets.tsx` — client-side pagination for the ticket listing: page-size selector (10 / 25 / 50 / 100 / All, default 25) on the right of a new list footer below the table card; when more tickets exist than the page size, pagination controls appear with jump-to-first/last (`«` / `»`), prev/next arrows, and a page-number window with gap ellipses (`1 … 4 5 6 … 9`); active page highlighted in cyber theming; page resets to 1 when filters/board change and when the page size changes.
 - **[New]** "Show All" link on the bottom-left of the same footer (visible when any status/priority/technician/date filter is active) — clears all filters and shows every ticket on the current board, the same as clicking the board name.

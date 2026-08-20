@@ -63,7 +63,7 @@ Local dev (Win) ──deploy.sh / AWS CLI──▶ AWS (VPC)
 - **One codebase, one image** (`NODE_ENV`/env-var driven). Dev and prod run the
   same container with different environment configuration. Prod verification =
   open the ALB prod port in the browser and refresh.
-- **Ports:** dev `3010`, prod `3011` on the same ALB (final choice in §12).
+- **Ports:** dev `3010`, prod `3011` on the same ALB (final choice in §13).
 - **Databases:** two separate RDS instances (dev never touches prod data;
   prod keeps Multi-AZ + automated backups + PITR per PLAN-007 AV-01). Schema
   moves dev→prod via `prisma migrate deploy`; sample data via the defined
@@ -176,7 +176,20 @@ Classifier rules: message trimmed of punctuation must equal a trigger phrase
 - **Regression:** local boot pipeline, snapshot reseed, service-alert monitor,
   typecheck baselines unchanged.
 
-## 11. Considerations & recommendations summary
+## 11. Security & compliance controls (IT Glue parity)
+
+Appended from the IT Glue security comparison (2026-08). Each item is dependency-ordered within this section; WAF/segmentation land with the environments (phases 1–2), scanning/backups follow once prod exists.
+
+| # | Item | Depends on | Notes |
+|---|---|---|---|
+| 11.1 | **WAF + rate limiting + brute-force protection:** AWS WAF on the ALB — managed rule sets (SQLi/XSS/bot), per-IP rate limiting on `/api/auth/login`, `/api/auth/sso/*`, and Kumo reveal endpoints; block malicious traffic before it reaches ECS. | Phases 1–2 (ALB exists) | Mirrors IT Glue "AWS WAF + rate-limiting to prevent brute-force attacks"; complements app-level lockout (PLAN-013 #6). |
+| 11.2 | **IP Access Control:** optional allowlist of IPs/CIDRs at the ALB (env-driven, off by default); deny-list mode for API access; vendor/whitelist note for integrations. | 11.1 | IT Glue "IP Access Control" parity — optional, admin-configured, not on by default. |
+| 11.3 | **Network segmentation & hardened hosts:** separate VPCs/subnets + security groups per env (dev/test/prod); private prod RDS (no public ingress); bastion/key-based SSH only; egress whitelisting. | Phase 1 (env split) | IT Glue "layered security system: firewalls, network segmentation, hardened servers". |
+| 11.4 | **Vulnerability scanning & pen-test calendar:** quarterly internal dependency/vuln scans (Trivy + npm audit in CI, plus scheduled), quarterly third-party scans, annual external penetration test, annual hardening review — recorded in a `SECURITY.md` compliance calendar with evidence links. | 11.3, prod env up | IT Glue SOC 2 scanning/pen-test cadence. |
+| 11.5 | **Backups, restore tests & replication/failover:** daily automated RDS backups (monitored; alert on failure), weekly restore-test from backup, real-time cross-region replication (primary→secondary region) with a documented failover runbook (target seconds–minutes cutover; IT Glue's ~1.5s regional cutover as reference, not requirement), DRP tested annually. | Phases 2–3 (RDS exists) | IT Glue "daily backups, replication between regions, DRP tested at least annually". |
+| 11.6 | **SOC 2 change management controls:** segregated dev/test/prod change path (already the sync pipeline), mandatory ≥2-reviewer code review + risk assessment + QA before prod deploy, incident documentation (containment, RCA, long-term fix, evidence), high-severity RCA process. | Phase 2 (sync pipeline) | Mirrors IT Glue SOC 2 change management; aligns with existing PLAN-007 audit/evidence work. |
+
+## 12. Considerations & recommendations summary
 
 - **Databases:** separate dev/prod RDS (never share). Schema via migrations;
   sample data via snapshots. Prod: Multi-AZ + PITR + KMS-encrypted.
@@ -188,7 +201,7 @@ Classifier rules: message trimmed of punctuation must equal a trigger phrase
 - **Tooling:** Terraform (or CDK) for IaC; GitHub Actions/Forgejo for CI;
   `deploy-env.sh` for local pushes; ECS blue/green for prod.
 
-## 12. Open decisions to confirm before implementation
+## 13. Open decisions to confirm before implementation
 
 1. Prod port: `3011` (ALB) vs 443-path routing — recommend port-based per the
    requirement.
