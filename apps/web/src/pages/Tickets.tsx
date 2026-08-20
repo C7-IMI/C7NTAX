@@ -903,6 +903,8 @@ export function TicketDetailPage() {
             </div>) : (<div className="space-y-2">
               <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Company</span><span className="text-white text-xs">{(ticket.company as {name?:string})?.name||"-"}</span></div>
               <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Contact</span><span className="text-white text-xs">{ticket.contact?`${(ticket.contact as any).firstName} ${(ticket.contact as any).lastName}`:"-"}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Contact Email</span><span className="text-cyber-400 text-xs">{(ticket.contact as any)?.email||"-"}</span></div>
+              <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Contact Phone</span><span className="text-white text-xs">{(ticket.contact as any)?.phone||"-"}</span></div>
               <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Assigned To</span><span className="text-white text-xs">{ticket.assignedTo?`${(ticket.assignedTo as any).firstName} ${(ticket.assignedTo as any).lastName}`:"-"}</span></div>
             </div>)}
           </div>

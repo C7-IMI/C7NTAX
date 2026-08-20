@@ -67,7 +67,7 @@
     "detectedAt": "2026-08-18T22:38:09.445Z",
     "resolvedAt": null,
     "createdAt": "2026-08-18T22:38:09.446Z",
-    "updatedAt": "2026-08-19T23:43:29.032Z"
+    "updatedAt": "2026-08-20T00:03:19.854Z"
   },
   {
     "id": "90fa0286-2aef-4b63-934c-85c16cf67ce5",
@@ -82,6 +82,20 @@
     "resolvedAt": null,
     "createdAt": "2026-08-19T18:53:48.875Z",
     "updatedAt": "2026-08-19T18:53:48.875Z"
+  },
+  {
+    "id": "e729943a-18e5-4329-8836-99219d95abb6",
+    "serviceId": "d2abce0b-f02e-46c4-86c4-441a23f69571",
+    "title": "Sample Website Monitor: website check failed: fetch failed",
+    "description": "website monitor (https://example.com)",
+    "severity": "outage",
+    "status": "resolved",
+    "source": "statuspage",
+    "sourceUrl": "https://example.com",
+    "detectedAt": "2026-08-19T23:48:37.397Z",
+    "resolvedAt": "2026-08-19T23:58:24.144Z",
+    "createdAt": "2026-08-19T23:48:37.399Z",
+    "updatedAt": "2026-08-19T23:58:24.145Z"
   },
   {
     "id": "e4d2eb36-9244-46d3-8ae3-4dcddd37848c",
@@ -249,6 +263,6 @@
     "detectedAt": "2026-08-19T15:18:17.558Z",
     "resolvedAt": null,
     "createdAt": "2026-08-19T15:18:17.560Z",
-    "updatedAt": "2026-08-19T23:43:25.695Z"
+    "updatedAt": "2026-08-20T00:03:16.676Z"
   }
 ]

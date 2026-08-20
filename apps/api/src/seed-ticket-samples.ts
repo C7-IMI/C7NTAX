@@ -249,6 +249,9 @@ async function main() {
     const data: Prisma.TicketCreateManyInput[] = specsList.map((s, i) => {
       const company = companies[i % companies.length]!;
       const companyContacts = contactsByCompany.get(company.id) ?? [];
+      // Every sample ticket gets a contact: prefer one from its company,
+      // otherwise fall back to any contact so no ticket is contactless.
+      const contactId = companyContacts[i % Math.max(companyContacts.length, 1) % 1000] ?? contacts[0]?.id ?? null;
       // stale tickets get old createdAt/updatedAt; fresh ones are 1–48h old.
       // New tickets are excluded from staleness so old "New" badges don't look odd.
       const isStale = !["resolved", "closed", "new"].includes(s.status) && staleIdx < staleDays.length;
@@ -264,7 +267,7 @@ async function main() {
         source: s.source,
         boardId: board.id,
         companyId: company.id,
-        contactId: companyContacts[i % Math.max(companyContacts.length, 1) % 1000] ?? null,
+        contactId: contactId,
         assignedToId: users[i % users.length]!.id,
         createdById: admin!.id,
         createdAt: ts,

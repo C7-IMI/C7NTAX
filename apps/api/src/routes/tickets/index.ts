@@ -71,7 +71,7 @@ ticketsRouter.get("/:id", requirePermission(Permission.TicketView), async (req: 
     const ticket = await prisma.ticket.findUnique({
       where: { id: req.params.id },
       include: {
-        company: true, contact: { select: { id: true, firstName: true, lastName: true, email: true } }, assignedTo: true, board: true,
+        company: true, contact: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } }, assignedTo: true, board: true,
         comments: { orderBy: { createdAt: "desc" }, include: { author: { select: { id: true, firstName: true, lastName: true } } } },
         timeEntries: { orderBy: { date: "desc" }, include: { user: { select: { id: true, firstName: true, lastName: true } } } },
         attachments: { orderBy: { createdAt: "desc" } },
