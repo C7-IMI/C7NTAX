@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import api from "../api";
 import { InferencePanel } from "../components/InferencePanel";
-import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical } from "lucide-react";
+import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical } from "lucide-react";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 
@@ -47,6 +47,21 @@ const FILTER_BY_OPTIONS = [
 ];
 const filterByFor = (status: string, priority: string) =>
   FILTER_BY_OPTIONS.find(o => o.status === status && o.priority === priority)?.value || "";
+
+// ── Pagination page-number window with gap markers: 1 … 4 5 6 … 20 ──
+function pageWindow(current: number, total: number): (number | "gap")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const wanted = new Set([1, total, current - 1, current, current + 1]);
+  const pages = [...wanted].filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out: (number | "gap")[] = [];
+  let prev = 0;
+  for (const p of pages) {
+    if (p - prev > 1) out.push("gap");
+    out.push(p);
+    prev = p;
+  }
+  return out;
+}
 
 // ── Configurable ticket list columns (PSA-style: Autotask / ConnectWise / HaloPSA reference) ──
 // Priority is available but unchecked by default.
@@ -109,6 +124,10 @@ export function TicketsPage() {
   const [batchApplying, setBatchApplying] = useState(false);
   const [checkedActions, setCheckedActions] = useState<Set<string>>(new Set());
   const [quickOpen, setQuickOpen] = useState(false);
+
+  // ── Pagination state ──
+  const [pageSize, setPageSize] = useState<number | "all">(25);
+  const [page, setPage] = useState(1);
 
   // ── Filter dialog ──
   const [showFilter, setShowFilter] = useState(false);
@@ -200,10 +219,22 @@ export function TicketsPage() {
     catch { toast.error("Failed"); }
   };
 
+  // ── Sorted + paginated view of the fetched tickets ──
+  const sortedTickets = sortData(tickets as Array<Record<string,unknown>>, sort?.field || "updatedAt", sort?.direction || "desc") as any[];
+  const totalPages = pageSize === "all" ? 1 : Math.max(1, Math.ceil(sortedTickets.length / pageSize));
+  const safePage = Math.min(Math.max(page, 1), totalPages);
+  const paged = pageSize === "all" ? sortedTickets : sortedTickets.slice((safePage - 1) * pageSize, safePage * pageSize);
+
   // ── Batch actions ──
   const toggleSelect = (id: string) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleSelectAll = () => {
-    setSelectedIds(prev => prev.size === tickets.length ? new Set() : new Set(tickets.map(t => t.id)));
+    const pageIds = new Set(paged.map((t: any) => t.id));
+    const allSelected = paged.length > 0 && [...pageIds].every(id => selectedIds.has(id));
+    setSelectedIds(prev => {
+      const n = new Set(prev);
+      if (allSelected) pageIds.forEach(id => n.delete(id)); else pageIds.forEach(id => n.add(id));
+      return n;
+    });
   };
   const applyBatchAction = async (action: string) => {
     if (selectedIds.size === 0) return false;
@@ -276,6 +307,7 @@ export function TicketsPage() {
   // Sync the dialog draft from URL filters (e.g. when navigating from Service Boards)
   useEffect(() => {
     setFilterForm({ status: statusParam, priority: priorityParam, assignedToId: assignedParam, dateFrom: dateFromParam, dateTo: dateToParam });
+    setPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusParam, priorityParam, assignedParam, dateFromParam, dateToParam]);
 
@@ -492,7 +524,7 @@ export function TicketsPage() {
       <div className="card overflow-hidden p-0">
         {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
-            <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white">{selectedIds.size === tickets.length ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>
+            <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white">{paged.length > 0 && paged.every((t: any) => selectedIds.has(t.id)) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>
             <th className="px-4 py-3 w-10"></th>
             {visibleColumns.map((colId) => {
               const def = TICKET_COLUMNS.find((c) => c.id === colId);
@@ -513,7 +545,7 @@ export function TicketsPage() {
               );
             })}
           </tr></thead>
-            <tbody>{sortData(tickets as Array<Record<string,unknown>>, sort?.field || "updatedAt", sort?.direction || "desc").map((t:any)=>(<tr key={t.id} className={`border-b border-surface-border/50 hover:bg-surface-light/50 ${selectedIds.has(t.id) ? "bg-cyber-600/10" : ""}`}>
+            <tbody>{paged.map((t:any)=>(<tr key={t.id} className={`border-b border-surface-border/50 hover:bg-surface-light/50 ${selectedIds.has(t.id) ? "bg-cyber-600/10" : ""}`}>
               <td className="px-4 py-3"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white">{selectedIds.has(t.id) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></td>
               <td className="px-4 py-3">
                 <TicketActionMenu ticketId={t.id} currentStatus={t.status} currentPriority={t.priority} onAction={ticketAction} />
@@ -521,6 +553,50 @@ export function TicketsPage() {
               {visibleColumns.map((colId) => renderTicketCell(t, colId))}
             </tr>))}</tbody></table></div>)}
       </div>
+
+      {/* ── List footer: Show All + pagination ── */}
+      {!loading && tickets.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
+            {(statusParam || priorityParam || assignedParam || dateFromParam || dateToParam) && (
+              <button
+                onClick={() => setSearchParams(boardId ? { boardId } : {})}
+                className="text-xs text-cyber-400 hover:text-cyber-300 hover:underline transition-colors"
+                title="Show all tickets on this board"
+              >
+                Show All
+              </button>
+            )}
+            <span className="text-xs text-gray-600">{sortedTickets.length} ticket{sortedTickets.length !== 1 ? "s" : ""}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span>Show</span>
+              <select
+                className="input-field text-xs py-1 w-auto"
+                value={String(pageSize)}
+                onChange={e => { const v = e.target.value; setPage(1); setPageSize(v === "all" ? "all" : Number(v)); }}
+              >
+                {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
+                <option value="all">All</option>
+              </select>
+              <span>per page</span>
+            </div>
+            {pageSize !== "all" && totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button onClick={() => setPage(1)} disabled={safePage === 1} className="p-1 rounded text-gray-500 hover:text-white hover:bg-surface-lighter disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="First page"><ChevronsLeft size={14} /></button>
+                <button onClick={() => setPage(safePage - 1)} disabled={safePage === 1} className="p-1 rounded text-gray-500 hover:text-white hover:bg-surface-lighter disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Previous page"><ChevronLeft size={14} /></button>
+                {pageWindow(safePage, totalPages).map((p, i) => p === "gap"
+                  ? <span key={`gap-${i}`} className="px-1 text-gray-600 text-xs">…</span>
+                  : <button key={p} onClick={() => setPage(p)} className={`min-w-[26px] h-6 px-1.5 rounded text-xs transition-colors ${p === safePage ? "bg-cyber-600/30 text-cyber-300 font-semibold" : "text-gray-400 hover:text-white hover:bg-surface-lighter"}`}>{p}</button>
+                )}
+                <button onClick={() => setPage(safePage + 1)} disabled={safePage === totalPages} className="p-1 rounded text-gray-500 hover:text-white hover:bg-surface-lighter disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Next page"><ChevronRight size={14} /></button>
+                <button onClick={() => setPage(totalPages)} disabled={safePage === totalPages} className="p-1 rounded text-gray-500 hover:text-white hover:bg-surface-lighter disabled:opacity-30 disabled:cursor-not-allowed transition-colors" title="Last page"><ChevronsRight size={14} /></button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {showColumnModal && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowColumnModal(false)}>
