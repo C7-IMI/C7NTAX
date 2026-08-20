@@ -14,6 +14,11 @@
 
 ---
 
+## 2026.8.19.013 — Every ticket has a contact; contact email/phone on ticket details
+- **[Update]** Sample data: every ticket now has an assigned contact. 7 legacy tickets with no contact were assigned appropriate contacts (primary/first contact of their company); `seed-ticket-samples.ts` now guarantees a contact for every seeded ticket (company contact, falling back to any contact). 0 tickets remain contactless; reseed snapshot re-captured (tickets.json 96 rows).
+- **[New]** Ticket details client info card now shows the assigned contact's **email** and **phone** alongside the contact name; `GET /tickets/:id` includes `contact.phone` in its select.
+- **[Verification]** DB check 0 tickets without contact; detail endpoint returns contact name + email + phone (e.g. Tony Stark / tony@starkent.com / +1-555-0501); web typecheck clean; API restarted via boot task and serves the new field; Vite dev (3010) serves the updated page.
+
 ## 2026.8.19.012 — Sample ticket data for every Service Board
 - **[New]** `apps/api/src/seed-ticket-samples.ts` — idempotent sample-ticket seeding: 88 new tickets across all 4 active boards (MSP +24, Infrastructure +20, NOC +21, Intelligence +23; every board ≥20 additions) with varied statuses, priorities, sources, and ages so every board badge (New, Workable, On Hold, Waiting, Escalated, open, stale 3/7/30-day, Avg Age) is non-zero with varied numbers. Per-board target counts make re-runs no-ops; existing tickets are never touched.
 - **[Fix]** Renumbered 7 legacy tickets whose ticketNumber prefix did not match their board's ticketCode, which had hidden them from board-filtered ticket lists. Badge counts now equal the filtered list counts (Infra 25, MSP 25, NOC 23, INT 23).

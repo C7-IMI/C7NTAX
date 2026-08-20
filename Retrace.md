@@ -1417,6 +1417,20 @@
 - Changelog policy applied: BuildNotes entry 2026.8.19.012 + What's New (live via API) + this Retrace entry.
 
 
+### Prompt 120 — Contact on every ticket + contact email/phone on ticket details
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.8.19.013)
+> Update the sample data so every ticket has a contact assigned. For any ticket currently missing a contact, assign an appropriate contact and include that assignment in the sample data. On the ticket details screen, in the client info card, also display the assigned contact's email address and phone number for quick reference.
+
+**Changes:**
+- Assigned contacts to the 7 tickets that had none (primary/first contact of each ticket's company: Tony Stark ×2, David Chen, Michael Brown ×2, Emily Johnson, Alice Wong). DB check: 0 tickets without contact.
+- `apps/api/src/seed-ticket-samples.ts` — contact assignment now guaranteed for every seeded ticket (company's contacts, else any contact) instead of `?? null`.
+- `apps/api/src/routes/tickets/index.ts` — `GET /tickets/:id` contact select adds `phone`.
+- `apps/web/src/pages/Tickets.tsx` — ticket details Client Info card adds "Contact Email" and "Contact Phone" rows under Contact.
+- Reseed snapshot re-captured (tickets.json 96 rows, all with contacts). API restarted via the C7NTAX Boot Startup task and verified serving contact email + phone; Vite dev server (3010) serving the updated page.
+- Changelog policy applied: BuildNotes entry 2026.8.19.013 + What's New (live via API) + this Retrace entry.
+
+
 
 
 

@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.8.19.013",
+    "date": "2026-08-19",
+    "title": "Every ticket has a contact; contact email/phone on ticket details",
+    "changes": [
+      {
+        "text": "Sample data: every ticket now has an assigned contact. 7 legacy tickets with no contact were assigned appropriate contacts (primary/first contact of their company); `seed-ticket-samples.ts` now guarantees a contact for every seeded ticket (company contact, falling back to any contact). 0 tickets remain contactless; reseed snapshot re-captured (tickets.json 96 rows).",
+        "type": "Update"
+      },
+      {
+        "text": "Ticket details client info card now shows the assigned contact's **email** and **phone** alongside the contact name; `GET /tickets/:id` includes `contact.phone` in its select.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.8.19.012",
     "date": "2026-08-19",
     "title": "Sample ticket data for every Service Board",
