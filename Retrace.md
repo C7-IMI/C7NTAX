@@ -1455,6 +1455,18 @@
 - Changelog policy applied: BuildNotes entry 2026.8.19.015 + What's New (live via API) + this Retrace entry.
 
 
+### Prompt 123 — Incorporate Claude Sonnet 5 peer review into considerations & planning
+**Timestamp:** 2026-08-19 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.8.19.016)
+> Add this information to the considerations and planning (Claude Sonnet 5 review: WAF ≠ DDoS — add CloudFront + Shield; SSE-KMS insufficient for vault data — SC-02 envelope encryption with per-tenant DEKs/CMKs is the control; CloudTrail must be tamper-evident; skip bastions — use SSM Session Manager; lock multi-tenant SaaS vs single-tenant before the SC-02 migration).
+
+**Changes:**
+- `PLAN-AWS-Dev-Prod-Split-and-Sync.md` — architecture diagram + §4 security bullet: CloudFront + Shield Standard before the ALB, S3 annotated (SSE-KMS baseline only), tamper-evident CloudTrail bucket, SSM Session Manager admin access; §11.1 rewritten (edge WAF/rate limiting), §11.3 bastion→SSM, new §11.7 tamper-evident audit + §11.8 envelope encryption (per-tenant keys); §12 peer-review notes bullet; §13 decisions #7 tenancy model (before SC-02) + #8 CloudFront adoption.
+- `PLAN-015-Kumo-Vault-Security-and-Encryption.md` — phase 1 peer-review gate (per-tenant KEKs/CMKs if multi-tenant; decide before migration); open decisions #1 (KEK scope ↔ tenancy decision) and #2 (KMS provider → per-tenant CMKs) updated.
+- `MultiTenant.md` (PLAN-003) — new Step 0 tenancy-model decision gate (multi-tenant vs single-tenant; RLS vs schema-per-tenant; per-tenant KMS keys) blocking the SC-02/PLAN-015 migration.
+- Changelog policy applied: BuildNotes entry 2026.8.19.016 + What's New (live via API) + this Retrace entry.
+
+
 
 
 

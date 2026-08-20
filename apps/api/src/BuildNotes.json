@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.8.19.016",
+    "date": "2026-08-19",
+    "title": "Peer review (Claude Sonnet 5) incorporated into AWS + Kumo plans",
+    "changes": [
+      {
+        "text": "PLAN-010: architecture diagram + §4 security bullet revised — CloudFront + AWS Shield Standard in front of the ALB (WAF is L7 rules, not volumetric DDoS), S3 buckets annotated (bucket SSE-KMS is baseline; vault data depends on envelope encryption), tamper-evident CloudTrail bucket (S3 Object Lock compliance mode / dedicated log account), SSM Session Manager admin access (no bastion/SSH, no inbound ports).",
+        "type": "Update"
+      },
+      {
+        "text": "PLAN-010 §11: 11.1 rewritten as edge-layer WAF/rate limiting (CloudFront + Shield + WAF); 11.3 replaces bastion SSH with SSM Session Manager; new 11.7 (tamper-evident audit trail) and 11.8 (envelope encryption for vault data — per-record and per-tenant DEKs wrapped by per-tenant KMS CMKs once tenancy decided). §12 gains a peer-review notes bullet; §13 gains decisions #7 (tenancy model: multi-tenant SaaS vs single-tenant — decide BEFORE SC-02 migration) and #8 (adopt CloudFront + Shield).",
+        "type": "Update"
+      },
+      {
+        "text": "PLAN-015: phase 1 gains a peer-review gate (per-tenant KEKs/CMKs if multi-tenant; decide tenancy before the migration); open decision #1 ties KEK scope to the PLAN-010 §13.7 / PLAN-003 Step 0 decision; #2 notes KMS provider enables per-tenant CMKs (aligns with PLAN-010 §11.8).",
+        "type": "Update"
+      },
+      {
+        "text": "PLAN-003 (MultiTenant.md): new Step 0 — tenancy model decision gate (multi-tenant SaaS vs single-tenant; RLS vs schema-per-tenant; per-tenant KMS keys) that blocks the PLAN-015 phase-1/SC-02 envelope-encryption migration; Steps 1–3 unchanged.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.8.19.015",
     "date": "2026-08-19",
     "title": "IT Glue security comparison → PLAN-015 Kumo vault plan + plan updates",

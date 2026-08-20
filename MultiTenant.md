@@ -9,6 +9,12 @@ The `Tenant` model has been added to Prisma schema with `tenantId` on the Compan
 
 ## Dependency-ordered implementation steps (prerequisites first)
 
+### Step 0 — Tenancy model decision gate *(blocking decision — added from peer review, 2026-08)*
+- [ ] Decide: **multi-tenant SaaS** (multiple MSPs' client data in one shared Postgres/S3) vs **single-tenant deployment per customer**.
+- [ ] If multi-tenant: choose isolation mechanism — **row-level security** vs **schema-per-tenant** — and plan **per-tenant KMS keys** for vault data.
+- [ ] Record the decision here and in PLAN-010 §13.7.
+- **Dependency note:** this gate BLOCKS the PLAN-015 phase-1 (SC-02-style envelope-encryption) migration and PLAN-010 §11.8 — a late decision forces a re-migration of every wrapped data key and possibly a data-model rework. Steps 1–3 themselves are unaffected and may continue in parallel with the decision.
+
 ### Step 1 — Tenant foundation *(Complete)*
 - [x] `Tenant` model (id, name, domain, settings, isActive)
 - [x] `Company.tenantId` foreign key
