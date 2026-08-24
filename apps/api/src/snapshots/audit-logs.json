@@ -398,6 +398,30 @@
     "createdAt": "2026-08-12T07:51:49.150Z"
   },
   {
+    "id": "6ae608ee-1731-4eee-a7e5-acdc99243e13",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-13T06:39:48.610Z"
+  },
+  {
+    "id": "fca4182a-19f8-4dcf-858c-f9a4eb66f844",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-18T23:20:59.727Z"
+  },
+  {
     "id": "767e46d9-630f-4439-9db3-10613c197508",
     "action": "tickets:update",
     "entity": "tickets",
@@ -468,30 +492,6 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-13T06:15:32.315Z"
-  },
-  {
-    "id": "6ae608ee-1731-4eee-a7e5-acdc99243e13",
-    "action": "service-alerts:create",
-    "entity": "service-alerts",
-    "entityId": "refresh",
-    "changes": {
-      "note": "delete"
-    },
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "ipAddress": "::1",
-    "createdAt": "2026-08-13T06:39:48.610Z"
-  },
-  {
-    "id": "fca4182a-19f8-4dcf-858c-f9a4eb66f844",
-    "action": "service-alerts:create",
-    "entity": "service-alerts",
-    "entityId": "refresh",
-    "changes": {
-      "note": "delete"
-    },
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "ipAddress": "::1",
-    "createdAt": "2026-08-18T23:20:59.727Z"
   },
   {
     "id": "0f0b70f9-d35a-4ecc-b7bf-258251321001",

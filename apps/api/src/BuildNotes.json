@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.8.24.001",
+    "date": "2026-08-24",
+    "title": "App outage fixed: boot script stranded frontend + self-heal poller false-degraded",
+    "changes": [
+      {
+        "text": "App was down (screenshot: frontend connection failure). Root cause 1: `startup/c7ntax-boot.ps1` started the API but waited only 60s for it to bind :4000, then `exit 1` BEFORE the frontend step — a slow API cold start stranded the web with no :3010 listener. Hardened: API start now retries twice with a 120s window per attempt, and on failure the boot logs CRITICAL but continues to start the frontend instead of aborting (never strands the web again).",
+        "type": "Fix"
+      },
+      {
+        "text": "Root cause 2: `apps/api/src/services/poller.ts` health check GETs `/api/auth/login`, which is POST-only → permanent 404 → poller reported \"degraded\" and ran a useless repair loop every 30s. Replaced that check with `GET /api/health`; health check now reports \"up\" and the loop is silent.",
+        "type": "Fix"
+      },
+      {
+        "text": "Restarted the stack via the C7NTAX Boot Startup task: boot completed clean (API attempt 1 OK, frontend OK, login 200, frontend check 200). Verified: `/api/health` 200, auth-gated routes 401 (alive), web :3010 200, poller no longer logs degraded.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.8.19.016",
     "date": "2026-08-19",
     "title": "Peer review (Claude Sonnet 5) incorporated into AWS + Kumo plans",

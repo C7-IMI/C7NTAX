@@ -43,7 +43,10 @@ async function checkApiEndpoint(url: string): Promise<boolean> {
 
 async function runHealthCheck(): Promise<HealthResult> {
   const checks: HealthResult["checks"] = [];
-  const endpoints = ["/api/auth/login", "/api/tickets?limit=1", "/api/clients?limit=1", "/api/users?limit=1", "/api/billing/invoices?limit=1", "/api/boards"];
+  // GET-only endpoints that respond without auth (ok or 401 = route alive).
+  // /api/auth/login is POST-only, so a GET there always 404s and would keep
+  // the poller "degraded" forever — use /api/health for liveness instead.
+  const endpoints = ["/api/health", "/api/tickets?limit=1", "/api/clients?limit=1", "/api/users?limit=1", "/api/billing/invoices?limit=1", "/api/boards"];
   let allUp = true;
   let anyUp = false;
 
