@@ -1467,6 +1467,19 @@
 - Changelog policy applied: BuildNotes entry 2026.8.19.016 + What's New (live via API) + this Retrace entry.
 
 
+### Prompt 124 — Fix the app (outage: frontend down)
+**Timestamp:** 2026-08-24 | **Status:** ✅ Completed | **Duration:** ~40 min
+**BuildNotes IDs:** #1 (2026.8.24.001)
+> Fix the app. Use the attached screenshot to diagnose the problem and resolve it.
+
+**Changes:**
+- Diagnosis: frontend was down (no :3010 listener) — the boot script had aborted at the API step (`exit 1` after a 60s bind timeout) before ever starting Vite; screenshot showed the connection failure. Secondary bug: the self-heal poller GETs POST-only `/api/auth/login` → permanent 404 → endless false "degraded" repair loop.
+- `startup/c7ntax-boot.ps1` — API start hardened: two attempts, 120s window each; on failure logs CRITICAL and continues to start the frontend instead of aborting (never strands the web).
+- `apps/api/src/services/poller.ts` — health check replaces GET `/api/auth/login` with GET `/api/health`; poller now reports "up" and stays silent.
+- Restarted the stack via the C7NTAX Boot Startup task: boot complete (API attempt 1 OK, frontend OK, login 200, frontend check 200). Verified `/api/health` 200, auth-gated routes 401 (alive), web :3010 200, no further degraded logs.
+- Changelog policy applied: BuildNotes entry 2026.8.24.001 + What's New (live via API) + this Retrace entry.
+
+
 
 
 
