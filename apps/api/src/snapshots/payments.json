@@ -16,5 +16,14 @@
     "processedAt": "2026-08-19T16:15:28.960Z",
     "invoiceId": "3b0be0b8-82ef-4c37-84bf-ae60db0fbe3e",
     "createdAt": "2026-08-19T16:15:28.979Z"
+  },
+  {
+    "id": "b760a640-8562-4301-b7c0-521360c02be4",
+    "amount": 3788.75,
+    "method": "ach",
+    "reference": "0001",
+    "processedAt": "2026-08-22T03:41:24.339Z",
+    "invoiceId": "994ba00f-417f-4c62-9647-8f707f73d154",
+    "createdAt": "2026-08-22T03:41:24.342Z"
   }
 ]

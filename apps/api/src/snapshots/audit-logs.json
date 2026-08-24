@@ -1,5 +1,58 @@
 [
   {
+    "id": "0f3ce8fc-b735-47e4-a478-01f397596567",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "994ba00f-417f-4c62-9647-8f707f73d154",
+    "changes": {
+      "amount": 3788.75,
+      "method": "ach",
+      "invoiceId": "994ba00f-417f-4c62-9647-8f707f73d154",
+      "reference": "0001"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-22T03:41:24.348Z"
+  },
+  {
+    "id": "d2c5f445-b663-42de-b435-16118614bd61",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "title": "Indicators of compromise enrichment",
+      "status": "on_hold",
+      "boardId": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
+      "dueDate": "",
+      "endTime": "",
+      "priority": "medium",
+      "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+      "contactId": "93e741d9-0974-41b4-b7ae-2a848b6cb4c4",
+      "startTime": "",
+      "description": "Sample in progress ticket for Intelligence Service Desk (seeded by seed-ticket-samples).",
+      "assignedToId": "7ce93cee-bd43-4a5c-86a6-9bf3c11d839c",
+      "serviceAgreementId": ""
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-22T03:49:51.644Z"
+  },
+  {
+    "id": "1d5171e4-753b-4f10-b929-656c4dbc0d24",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "size": 8824,
+      "filename": "TestAttach.xlsx",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "storagePath": "pending-upload"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-22T03:46:32.532Z"
+  },
+  {
     "id": "f949ffb3-6380-4336-b207-8db51f07a8fb",
     "action": "kumo_passwords:create",
     "entity": "kumo_passwords",
@@ -343,6 +396,66 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-12T07:51:49.150Z"
+  },
+  {
+    "id": "767e46d9-630f-4439-9db3-10613c197508",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "customFields": {
+        "ticketConfigurations": [
+          {
+            "id": "mt3u9d8g2neltt",
+            "kind": "asset",
+            "name": "WS-ENG-07",
+            "type": "Asset",
+            "refId": "30a3be64-352e-47c7-b2d0-8e4526963967",
+            "linkedAt": "2026-08-22T03:48:41.920Z"
+          }
+        ]
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-22T03:48:41.946Z"
+  },
+  {
+    "id": "3a604e3b-4174-4909-b950-cbadfaaa6e4c",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "customFields": {
+        "ticketConfigurations": []
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-22T03:48:58.953Z"
+  },
+  {
+    "id": "5cb6e7e3-60ce-4287-8694-4428310a7861",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "customFields": {
+        "ticketConfigurations": [
+          {
+            "id": "mt3u9s7sscp8zz",
+            "kind": "asset",
+            "name": "SRV-DC-01",
+            "type": "Asset",
+            "refId": "75a17625-21ff-483c-9449-1834ba6081b3",
+            "linkedAt": "2026-08-22T03:49:01.336Z"
+          }
+        ]
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-22T03:49:01.351Z"
   },
   {
     "id": "61f8e41e-79b7-4356-909e-280c3b609fc8",
@@ -1026,5 +1139,19 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-13T06:15:24.546Z"
+  },
+  {
+    "id": "786d4ce7-3e29-4e9d-9036-35e45e4ffbd1",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "customFields": {
+        "ticketConfigurations": []
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-08-22T03:49:20.904Z"
   }
 ]

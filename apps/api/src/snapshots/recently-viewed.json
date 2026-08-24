@@ -126,15 +126,6 @@
     "viewedAt": "2026-08-12T06:00:51.147Z"
   },
   {
-    "id": "4a0e1172-6cbf-4e40-9e46-149d21070cbe",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "config",
-    "entityId": "bb23fdbf-829e-421b-bd9d-89330fc85d2d",
-    "entityName": "SRV-DC-01",
-    "entityIcon": "server",
-    "viewedAt": "2026-08-19T17:16:11.386Z"
-  },
-  {
     "id": "7ec2cabc-94f4-4e62-8fab-b4eab90a914d",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "document",
@@ -151,5 +142,23 @@
     "entityName": "FW-PRIMARY",
     "entityIcon": "monitor",
     "viewedAt": "2026-08-19T17:16:28.888Z"
+  },
+  {
+    "id": "4a0e1172-6cbf-4e40-9e46-149d21070cbe",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "config",
+    "entityId": "bb23fdbf-829e-421b-bd9d-89330fc85d2d",
+    "entityName": "SRV-DC-01",
+    "entityIcon": "server",
+    "viewedAt": "2026-08-24T21:44:59.059Z"
+  },
+  {
+    "id": "f0ea577b-751d-415f-af92-43136bc5673d",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "30a3be64-352e-47c7-b2d0-8e4526963967",
+    "entityName": "WS-ENG-07",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-08-24T21:45:02.560Z"
   }
 ]

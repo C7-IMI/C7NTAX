@@ -64,5 +64,16 @@
     "authorId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "createdAt": "2026-08-12T01:16:15.110Z",
     "updatedAt": "2026-08-12T06:04:15.124Z"
+  },
+  {
+    "id": "bb961bfe-b8bc-48d7-9e63-1256a493745e",
+    "body": "Status: In Progress → On Hold",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-22T03:49:51.634Z",
+    "updatedAt": "2026-08-22T03:49:51.634Z"
   }
 ]

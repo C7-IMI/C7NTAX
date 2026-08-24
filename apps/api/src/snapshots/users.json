@@ -229,7 +229,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-08-20T00:10:52.252Z",
+    "lastLoginAt": "2026-08-24T21:43:00.162Z",
     "emailVerified": true,
     "mfaEnabled": false,
     "mfaSecret": null,
@@ -240,6 +240,6 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-08-20T00:10:52.254Z"
+    "updatedAt": "2026-08-24T21:43:00.163Z"
   }
 ]

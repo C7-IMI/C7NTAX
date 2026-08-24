@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "id": "f5d20928-a006-4cca-ad71-4235ad1b2eae",
+    "filename": "TestAttach.xlsx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "size": 8824,
+    "storagePath": "pending-upload",
+    "ticketId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-22T03:46:32.491Z"
+  }
+]

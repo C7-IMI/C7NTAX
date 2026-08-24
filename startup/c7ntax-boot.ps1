@@ -245,20 +245,32 @@ if (Test-Path "$ProjectRoot\scripts\generate-buildnotes.mjs") {
     Write-Step "What's New outputs refreshed (public/BuildNotes.md + BuildNotes.json)"
 }
 
-# 6. Start API (:4000)
-if (Test-Port 4000) {
-    Write-Step "API already running"
-} else {
-    $api = Start-Process -FilePath $Node -ArgumentList "`"$NpxCli`"", "tsx", "src/index.ts" -WorkingDirectory $ApiDir -WindowStyle Hidden -RedirectStandardOutput "$LogDir/api.out.log" -RedirectStandardError "$LogDir/api.err.log" -PassThru
-    Write-Step "API starting (PID $($api.Id))"
-}
+# 6. Start API (:4000) — retry once with a longer window; never strand the web
+$apiFailed = $false
 $apiUp = $false
-for ($i = 0; $i -lt 30; $i++) {
-    if (Test-Port 4000) { $apiUp = $true; break }
-    Start-Sleep -Seconds 2
+for ($attempt = 1; $attempt -le 2 -and -not $apiUp; $attempt++) {
+    if (Test-Port 4000) {
+        Write-Step "API already running"
+        $apiUp = $true
+        break
+    }
+    $api = Start-Process -FilePath $Node -ArgumentList "`"$NpxCli`"", "tsx", "src/index.ts" -WorkingDirectory $ApiDir -WindowStyle Hidden -RedirectStandardOutput "$LogDir/api.out.log" -RedirectStandardError "$LogDir/api.err.log" -PassThru
+    Write-Step "API starting (attempt $attempt, PID $($api.Id))"
+    for ($i = 0; $i -lt 40; $i++) {
+        if (Test-Port 4000) { $apiUp = $true; break }
+        Start-Sleep -Seconds 3
+    }
+    if (-not $apiUp) {
+        Stop-Process -Id $api.Id -Force -ErrorAction SilentlyContinue
+        Write-Step "WARNING: API attempt $attempt did not bind :4000 within 120s"
+    }
 }
-if (-not $apiUp) { Write-Step "FATAL: API did not come up on 4000 - see startup/api.err.log"; exit 1 }
-Write-Step "API OK (port 4000)"
+if (-not $apiUp) {
+    $apiFailed = $true
+    Write-Step "CRITICAL: API did not come up on 4000 - see startup/api.err.log (continuing to start frontend)"
+} else {
+    Write-Step "API OK (port 4000)"
+}
 
 # 7. Start frontend (:3010)
 if (Test-Port 3010) {
