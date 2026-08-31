@@ -1480,6 +1480,18 @@
 - Changelog policy applied: BuildNotes entry 2026.8.24.001 + What's New (live via API) + this Retrace entry.
 
 
+### Prompt 125 — Fix the app: connection refused (stack restart)
+**Timestamp:** 2026-08-31 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.8.31.001)
+> the app is broken. getting error connection refused
+
+**Changes:**
+- Diagnosis: both API (:4000) and frontend (:3010) had no listeners; last boot (2026-08-29) had finished with errors; processes were gone by 2026-08-31.
+- Ran the C7NTAX Boot Startup scheduled task: boot completed clean (API attempt 1 OK, frontend OK, login 200, frontend check 200).
+- Verified: `/api/health` 200; login returns a valid token; `/api/tickets?limit=5` 200; web :3010 200.
+- Changelog policy applied: BuildNotes entry 2026.8.31.001 + What's New (live via API) + this Retrace entry.
+
+
 
 
 
