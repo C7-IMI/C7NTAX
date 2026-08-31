@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.8.31.001",
+    "date": "2026-08-31",
+    "title": "Outage recovery: full stack restarted via boot task",
+    "changes": [
+      {
+        "text": "App reported \"connection refused\": both API (:4000) and frontend (:3010) had no listeners (last boot 2026-08-29 had finished with errors; processes were gone by 2026-08-31). Ran the C7NTAX Boot Startup scheduled task — boot completed clean: API attempt 1 OK, frontend OK, login 200, frontend check 200.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.8.24.001",
     "date": "2026-08-24",
     "title": "App outage fixed: boot script stranded frontend + self-heal poller false-degraded",

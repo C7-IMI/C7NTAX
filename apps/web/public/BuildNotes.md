@@ -14,6 +14,10 @@
 
 ---
 
+## 2026.8.31.001 — Outage recovery: full stack restarted via boot task
+- **[Fix]** App reported "connection refused": both API (:4000) and frontend (:3010) had no listeners (last boot 2026-08-29 had finished with errors; processes were gone by 2026-08-31). Ran the C7NTAX Boot Startup scheduled task — boot completed clean: API attempt 1 OK, frontend OK, login 200, frontend check 200.
+- **[Verification]** `/api/health` 200; login returns a valid token; `/api/tickets?limit=5` 200; web :3010 200.
+
 ## 2026.8.24.001 — App outage fixed: boot script stranded frontend + self-heal poller false-degraded
 - **[Fix]** App was down (screenshot: frontend connection failure). Root cause 1: `startup/c7ntax-boot.ps1` started the API but waited only 60s for it to bind :4000, then `exit 1` BEFORE the frontend step — a slow API cold start stranded the web with no :3010 listener. Hardened: API start now retries twice with a 120s window per attempt, and on failure the boot logs CRITICAL but continues to start the frontend instead of aborting (never strands the web again).
 - **[Fix]** Root cause 2: `apps/api/src/services/poller.ts` health check GETs `/api/auth/login`, which is POST-only → permanent 404 → poller reported "degraded" and ran a useless repair loop every 30s. Replaced that check with `GET /api/health`; health check now reports "up" and the loop is silent.
