@@ -160,5 +160,14 @@
     "entityName": "SRV-DC-01",
     "entityIcon": "server",
     "viewedAt": "2026-08-24T21:58:09.934Z"
+  },
+  {
+    "id": "03ad733b-2345-4b62-abb5-9538948703b4",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "b4e69c8a-ca6e-4995-b0d0-3fa617304217",
+    "entityName": "Office 365 Global Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-09-13T18:34:04.185Z"
   }
 ]
