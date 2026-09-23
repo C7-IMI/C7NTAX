@@ -587,6 +587,38 @@
     "createdAt": "2026-08-18T23:31:18.997Z"
   },
   {
+    "id": "a3200f13-050e-48ec-8a85-4acc4ed326be",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "services",
+    "changes": {
+      "name": "Claude",
+      "rssUrl": "https://status.claude.com/history.rss",
+      "enabled": true,
+      "category": "other",
+      "sortOrder": 5,
+      "description": "Claude AI by Anthropic is an AI assistant platform offering conversational models including Opus, Sonnet and Haiku, with access through the Claude API for developers and enterprises requiring advanced...",
+      "statusPageUrl": "https://status.claude.com/",
+      "monitorEnabled": true,
+      "downDetectorUrl": "https://downdetector.com/status/claude-ai/"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-09-22T02:47:08.955Z"
+  },
+  {
+    "id": "fdc76fe8-c4e8-4eba-8788-976b9c8bb9b2",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-09-22T02:47:40.676Z"
+  },
+  {
     "id": "4d33b606-9072-42b6-9b42-dfd8e285b7ba",
     "action": "service-alerts:create",
     "entity": "service-alerts",
@@ -640,6 +672,78 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-12T07:27:49.653Z"
+  },
+  {
+    "id": "4d39af3b-6e81-4db6-8d11-6ed601677718",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "services",
+    "changes": {
+      "name": "Gemini",
+      "rssUrl": null,
+      "enabled": true,
+      "category": "other",
+      "sortOrder": 5,
+      "description": "Google Gemini is an AI chatbot and conversational assistant integrated across Google Search, Google Workspace, Google One and Google Cloud, providing instant AI-powered responses, content generation a...",
+      "statusPageUrl": "https://aistudio.google.com/status",
+      "monitorEnabled": true,
+      "downDetectorUrl": "https://downdetector.com/status/googlegemini/"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-09-22T02:49:18.525Z"
+  },
+  {
+    "id": "e318a69b-c6f7-4d07-9da4-9cee57ebad6a",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "services",
+    "changes": {
+      "name": "OpenAI",
+      "rssUrl": "https://status.openai.com/feed.rss",
+      "enabled": true,
+      "category": "other",
+      "sortOrder": 6,
+      "description": "OpenAI delivers artificial intelligence solutions including ChatGPT for conversational AI, DALL-E for image generation, GPT-4 language models and the OpenAI API platform for developers seeking advance...",
+      "statusPageUrl": "https://status.openai.com/",
+      "monitorEnabled": true,
+      "downDetectorUrl": "https://downdetector.com/status/openai/"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-09-22T02:52:17.278Z"
+  },
+  {
+    "id": "bf5cc541-d4e7-4d94-b775-9a4fa917d169",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-09-22T02:53:13.922Z"
+  },
+  {
+    "id": "55bb9dd3-e5be-44c3-aaf1-b80e6d752f4e",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "services",
+    "changes": {
+      "name": "Deepseek",
+      "rssUrl": "https://status.deepseek.com/feed.rss",
+      "enabled": true,
+      "category": "other",
+      "sortOrder": 3,
+      "description": "DeepSeek is an artificial intelligence company that provides open-source large language models and AI platform services for natural language processing, code generation, reasoning and conversational A...",
+      "statusPageUrl": "https://status.deepseek.com/",
+      "monitorEnabled": true,
+      "downDetectorUrl": "https://downdetector.com/status/deepseek/"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-09-22T02:50:49.347Z"
   },
   {
     "id": "23e18d2e-7e2d-4514-bf52-af7615851d15",

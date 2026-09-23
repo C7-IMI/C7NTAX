@@ -546,6 +546,20 @@
     "updatedAt": "2026-08-20T06:45:17.753Z"
   },
   {
+    "id": "a1f8f1fc-3824-4eb3-93e8-2c51f9eb135e",
+    "serviceId": "d2abce0b-f02e-46c4-86c4-441a23f69571",
+    "title": "Sample Website Monitor: website check failed: fetch failed",
+    "description": "website monitor (https://example.com)",
+    "severity": "outage",
+    "status": "resolved",
+    "source": "statuspage",
+    "sourceUrl": "https://example.com",
+    "detectedAt": "2026-09-21T21:31:57.181Z",
+    "resolvedAt": "2026-09-21T21:42:22.204Z",
+    "createdAt": "2026-09-21T21:31:57.183Z",
+    "updatedAt": "2026-09-21T21:42:22.206Z"
+  },
+  {
     "id": "0d217f1f-7a47-4219-99fb-fc3b03bee0af",
     "serviceId": "d2abce0b-f02e-46c4-86c4-441a23f69571",
     "title": "Sample Website Monitor: website check failed: fetch failed",
@@ -600,6 +614,20 @@
     "resolvedAt": "2026-09-03T03:33:48.856Z",
     "createdAt": "2026-09-03T00:13:59.213Z",
     "updatedAt": "2026-09-03T03:33:48.857Z"
+  },
+  {
+    "id": "49c295d9-3697-4791-98a3-95fcc8259b95",
+    "serviceId": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
+    "title": "Service impact: Increased Error Rates",
+    "description": "We are investigating increased API error rates in the US-EAST-1 Region.",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.aws.amazon.com/",
+    "detectedAt": "2026-09-21T23:32:11.844Z",
+    "resolvedAt": null,
+    "createdAt": "2026-09-21T23:32:11.846Z",
+    "updatedAt": "2026-09-22T02:53:02.421Z"
   },
   {
     "id": "20e2f64b-c7f8-488e-87ea-588fad8fb449",
