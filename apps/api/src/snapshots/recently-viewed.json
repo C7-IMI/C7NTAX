@@ -171,15 +171,6 @@
     "viewedAt": "2026-10-06T08:24:19.625Z"
   },
   {
-    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "organization",
-    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "entityName": "Acme Corporation",
-    "entityIcon": "building",
-    "viewedAt": "2026-10-06T08:31:49.356Z"
-  },
-  {
     "id": "03ad733b-2345-4b62-abb5-9538948703b4",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "password",
@@ -196,5 +187,23 @@
     "entityName": "SRV-DC-01",
     "entityIcon": "server",
     "viewedAt": "2026-10-06T08:36:32.441Z"
+  },
+  {
+    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "organization",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "entityName": "Acme Corporation",
+    "entityIcon": "building",
+    "viewedAt": "2026-10-06T08:44:16.871Z"
+  },
+  {
+    "id": "7f4ec52c-8497-4f8f-b18a-504508ddd3ff",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "organization",
+    "entityId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "entityName": "Globex Industries",
+    "entityIcon": "building",
+    "viewedAt": "2026-10-06T08:45:26.068Z"
   }
 ]
