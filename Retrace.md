@@ -1970,3 +1970,13 @@
 - `UI-PALETTE-ROLLBACK.md` — the Level 3 file list no longer names the picker, and the Level 2 note now says `VITE_UI_PALETTE=false` hides the only palette control left in the UI.
 - **Self-inflicted detour worth recording:** my first two edits to `Layout.tsx` had `new_str` and `old_str` inverted, so instead of deleting the one `{UI_PALETTE && <PalettePicker />}` line I duplicated it — ending up with four. Caught it by grepping the file for the component name rather than trusting the edit result, removed all four in one targeted edit, and confirmed zero remaining references. The transient `ReferenceError: UI_PALETTE is not defined` seen in the browser was that same mid-edit state (JSX present, import removed), not a live fault — a clean reload afterwards logged no errors.
 - **Verification:** live, authenticated. The header toolbar exposes no palette button (`Compact spacing, Switch to Light Mode, Search, Recent Items, AI Assistant, Settings, My Account`), while the My Account menu still lists all five dark schemes; clicking a scheme there drove `data-palette-dark` `crimson → rose`, and reselecting the first entry restored `crimson`. No console or page errors on a clean reload. Typecheck unchanged (26 pre-existing errors); token lint unchanged at 117.
+
+### Prompt 164 — Remove the header dark/light mode button
+**Timestamp:** 2026-10-06 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.10.6.012)
+> GO ahead and remove the dark/light mode button at the top as well. I like how it looks in the My account Menu.
+
+**Changes:**
+- `components/Layout.tsx` — the header toolbar's theme toggle is gone (16 lines), so the toolbar is now density, Search, Recent, AI, Help, Settings, My Account. Light/dark switches from the Appearance block of the My Account menu, alongside the colour schemes.
+- Dropped the now-unused `import { Sun, Moon } from "lucide-react"`. Deliberately kept `useTheme()`: `theme`/`toggleTheme` still feed the command palette's "Switch to light/dark mode" action, so the theme is reachable from ⌘K as well as the menu — this was the reason to check for other consumers before deleting rather than just removing the button.
+- **Verification:** live, authenticated. The header toolbar exposes no theme button (`Compact spacing, Search (Ctrl/⌘ K), Recent Items, AI Assistant, Settings, My Account` — the palette button and theme toggle are both gone), while the My Account menu's chips still drive `data-theme`; toggled it `dark → light → dark` and left it as found. No console or page errors on a clean reload. Typecheck unchanged (26 pre-existing errors); token lint unchanged at 117.

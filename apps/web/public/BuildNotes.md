@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.011 | Last Updated: 2026-10-06
+## Version: 2026.10.6.012 | Last Updated: 2026-10-06
 
 ---
 
@@ -11,6 +11,13 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.6.012 — Removed the header dark/light toggle
+- **[Update]** **The theme toggle is gone from the header toolbar.** Light/dark now switches from the Appearance section of the My Account menu, matching where the colour schemes are chosen. The header is down to the density toggle, Search, Recent, AI, Help, Settings and My Account.
+- **[Update]** Dropped the now-unused `Sun`/`Moon` icon import from `Layout.tsx`. `useTheme` stays: the command palette still offers "Switch to light/dark mode" as an action, so the theme remains reachable from ⌘K as well as the menu.
+- **[Verification]** Live, authenticated: the header toolbar exposes **no theme button** (`Compact spacing, Search (Ctrl/⌘ K), Recent Items, AI Assistant, Settings, My Account`), and the My Account menu's chips still drive the theme — `data-theme` went `dark → light → dark` when toggled from the menu and was left as found. No console or page errors on a clean reload; `apps/web` typecheck unchanged (26 pre-existing errors); design-token lint unchanged at 117 legacy occurrences.
 
 ---
 
