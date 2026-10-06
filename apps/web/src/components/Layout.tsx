@@ -14,7 +14,7 @@ import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 import { CommandPalette, type PaletteItem } from "./CommandPalette";
 import { MyAccountMenu } from "./MyAccountMenu";
-import { UI_P1, UI_P2, setUiP1, setUiP2 } from "../lib/uiFlags";
+import { UI_P1, UI_P2, UI_KUMO_ORGS, setUiP1, setUiP2 } from "../lib/uiFlags";
 import { getDensity, setDensity, type Density } from "../lib/density";
 
 export type NavNode = {
@@ -72,6 +72,7 @@ export const NAV_TREE: NavNode[] = [
   {
     id: "kumo", icon: Database, label: "Kumo", children: [
       { id: "kumo-dashboard", to: "/kumo", icon: LayoutDashboard, label: "Dashboard" },
+      ...(UI_KUMO_ORGS ? [{ id: "kumo-organizations", to: "/kumo/organizations", icon: Building2, label: "Organizations" }] : []),
       { id: "kumo-assets", to: "/kumo/assets", icon: Monitor, label: "Assets" },
       { id: "kumo-passwords", to: "/kumo/passwords", icon: Shield, label: "Passwords" },
       { id: "kumo-configs", to: "/kumo/configs", icon: Server, label: "Configurations" },
@@ -171,6 +172,7 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/pto": "Manage time-off requests and team availability.",
   "/kb": "Search and browse internal and external knowledge base articles.",
   "/kumo": "IT documentation overview — assets, passwords, configurations, and SOPs.",
+  "/kumo/organizations": "Client list with per-client Kumo documentation coverage.",
   "/kumo/assets": "Flexible assets with custom templates and dynamic fields.",
   "/kumo/passwords": "AES-256 encrypted password vault with TOTP and access logs.",
   "/kumo/configs": "Server, workstation, and network device configurations.",

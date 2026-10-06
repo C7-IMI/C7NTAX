@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api";
-import { Shield, Monitor, FileText, Link2, Server, Database, Clock, Key, BookOpen, Globe, ShieldCheck } from "lucide-react";
+import { Shield, Monitor, FileText, Link2, Server, Database, Clock, Key, BookOpen, Globe, ShieldCheck, Building2 } from "lucide-react";
+import { UI_KUMO_ORGS } from "../lib/uiFlags";
 
 interface RecentItem {
   id: string;
@@ -14,13 +15,25 @@ interface RecentItem {
 export function KumoDashboardPage() {
   const [stats, setStats] = useState({ assets: 0, passwords: 0, configs: 0, documents: 0, links: 0 });
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
+  const [orgCount, setOrgCount] = useState<number | null>(null);
 
   const fetchRecent = useCallback(() => {
     api.get("/kumo/recently-viewed").then(r => setRecentItems(r.data?.data || [])).catch(() => {});
   }, []);
 
   useEffect(() => {
-    api.get("/kumo/dashboard").then(r => setStats(r.data)).catch(() => {});
+    api.get("/kumo/dashboard").then(r => {
+      // The endpoint wraps its payload in `data` and counts servers, not configs.
+      const d = r.data?.data ?? r.data ?? {};
+      setStats({
+        assets: d.assets ?? 0,
+        passwords: d.passwords ?? 0,
+        configs: d.servers ?? 0,
+        documents: d.documents ?? 0,
+        links: d.links ?? 0,
+      });
+    }).catch(() => {});
+    if (UI_KUMO_ORGS) api.get("/kumo/organizations", { params: { limit: 1 } }).then(r => setOrgCount(r.data?.total ?? 0)).catch(() => {});
     fetchRecent();
     // Poll for live updates every 10 seconds
     const interval = setInterval(fetchRecent, 10000);
@@ -39,7 +52,9 @@ export function KumoDashboardPage() {
         <Card icon={Shield} title="Password Vault" description={`${stats.passwords} passwords • AES-256 encrypted`} to="/kumo/passwords" color="amber" />
         <Card icon={Server} title="Configurations" description={`${stats.configs} servers • Workstations & networks`} to="/kumo/configs" color="green" />
         <Card icon={FileText} title="Documents & SOPs" description={`${stats.documents} documents • Folders & revisions`} to="/kumo/documents" color="purple" />
-        <Card icon={Link2} title="Universal Links" description={`${stats.links} links • Universal relationship mapping`} to="/kumo" color="blue" />
+        {UI_KUMO_ORGS
+          ? <Card icon={Building2} title="Organizations" description={`${orgCount ?? "All"} organizations • Client documentation coverage`} to="/kumo/organizations" color="blue" />
+          : <Card icon={Link2} title="Universal Links" description={`${stats.links} links • Universal relationship mapping`} to="/kumo" color="blue" />}
       </div>
 
       <div className="card">
@@ -116,6 +131,7 @@ function getIcon(entityIcon: string, entityType: string) {
     link: <Link2 size={15} />,
     document: <FileText size={15} />,
     server: <Server size={15} />,
+    organization: <Building2 size={15} />,
   };
   return map[entityIcon] || map[entityType] || <FileText size={15} />;
 }
@@ -129,6 +145,7 @@ function getTypeLabel(entityType: string): string {
     domain: "Domain",
     certificate: "Certificate",
     link: "Universal Link",
+    organization: "Organization",
   };
   return map[entityType] || entityType;
 }
@@ -142,6 +159,7 @@ function getTypeColor(entityType: string): string {
     domain: "bg-blue-600/10 text-blue-400",
     certificate: "bg-yellow-600/10 text-yellow-400",
     link: "bg-gray-600/10 text-gray-400",
+    organization: "bg-cyber-600/10 text-cyber-400",
   };
   return map[entityType] || "bg-gray-600/10 text-gray-400";
 }
@@ -155,6 +173,7 @@ function getEntityLink(entityType: string, entityId: string): string {
     domain: `/kumo`,
     certificate: `/kumo`,
     link: `/kumo`,
+    organization: `/clients/${entityId}`,
   };
   return map[entityType] || `/kumo`;
 }

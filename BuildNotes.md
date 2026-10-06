@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.012 | Last Updated: 2026-10-06
+## Version: 2026.10.6.013 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,13 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.013 — Organizations in Kumo: the client list with its documentation coverage
+- **[New]** **A new Organizations view inside Kumo — every client, annotated with how much Kumo documentation it actually has.** `GET /api/kumo/organizations` returns a page of companies with grouped counts for assets, passwords, documents, domains and certificates, merged from five `companyId` groupings so the page costs a fixed number of queries instead of one lookup per row. The new `/kumo/organizations` page is built in the C7NTAX table style rather than a copy of another product: an IT Glue-style Recents strip of initials avatars, a debounced server-side filter beside an `n of total` counter, and a sortable table (organization, type, contacts, assets, passwords, documents, domains, certs, status). Clicking a row opens the client record and records the organization in Recents.
+- **[Update]** **Kumo gains an Organizations entry directly after Dashboard** in the sidebar, and the Kumo dashboard's card for it replaces the old **Universal Links** card — which pointed at `/kumo` (itself) and counted a `links` field the dashboard endpoint never returns, so it always read "0 links". Organizations also now appear in Recently Viewed on the Kumo dashboard, with their own icon, label and colour.
+- **[Fix]** **The Kumo dashboard's module cards showed "undefined assets" and "0 servers".** `/kumo/dashboard` answers with a nested payload (`{ data: { assets, passwords, documents, servers, folders } }`) and counts `servers`, while the cards read a flat `assets`/`configs`. The cards now read the nested payload and map `servers` to the Configurations card, so they show real numbers: 5 assets, 5 passwords, 1 server, 4 documents.
+- **[Update]** Rollback is one switch — `localStorage.setItem("c7_ui_kumo_orgs", "0")`, or `VITE_UI_KUMO_ORGS=false` for a deployment-wide change — which hides the nav entry, the route and the dashboard card and restores the previous behaviour exactly. Full details in `KUMO-ORGANIZATIONS-ROLLBACK.md`, including the file list for removing it outright.
+- **Verification:** route registration proved on the real router (41 registered routes, `GET /organizations` present); the payload was checked against the live database (5 clients, all 5 carrying coverage); the page rendered 5 rows whose counts match the API exactly, every column sorts both directions, and the rollback switch was exercised in the browser both ways — nav entry and route gone, Universal Links card restored. No page-level layout overflow at 1440×900. Typecheck unchanged (web 26, api 178 pre-existing errors); token lint unchanged at 117.
 
 ## 2026.10.6.012 — Removed the header dark/light toggle
 - **[Update]** **The theme toggle is gone from the header toolbar.** Light/dark now switches from the Appearance section of the My Account menu, matching where the colour schemes are chosen. The header is down to the density toggle, Search, Recent, AI, Help, Settings and My Account.

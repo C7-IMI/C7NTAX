@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.6.013",
+    "date": "2026-10-06",
+    "title": "Organizations in Kumo: the client list with its documentation coverage",
+    "changes": [
+      {
+        "text": "**A new Organizations view inside Kumo — every client, annotated with how much Kumo documentation it actually has.** `GET /api/kumo/organizations` returns a page of companies with grouped counts for assets, passwords, documents, domains and certificates, merged from five `companyId` groupings so the page costs a fixed number of queries instead of one lookup per row. The new `/kumo/organizations` page is built in the C7NTAX table style rather than a copy of another product: an IT Glue-style Recents strip of initials avatars, a debounced server-side filter beside an `n of total` counter, and a sortable table (organization, type, contacts, assets, passwords, documents, domains, certs, status). Clicking a row opens the client record and records the organization in Recents.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Kumo gains an Organizations entry directly after Dashboard** in the sidebar, and the Kumo dashboard's card for it replaces the old **Universal Links** card — which pointed at `/kumo` (itself) and counted a `links` field the dashboard endpoint never returns, so it always read \"0 links\". Organizations also now appear in Recently Viewed on the Kumo dashboard, with their own icon, label and colour.",
+        "type": "Update"
+      },
+      {
+        "text": "**The Kumo dashboard's module cards showed \"undefined assets\" and \"0 servers\".** `/kumo/dashboard` answers with a nested payload (`{ data: { assets, passwords, documents, servers, folders } }`) and counts `servers`, while the cards read a flat `assets`/`configs`. The cards now read the nested payload and map `servers` to the Configurations card, so they show real numbers: 5 assets, 5 passwords, 1 server, 4 documents.",
+        "type": "Fix"
+      },
+      {
+        "text": "Rollback is one switch — `localStorage.setItem(\"c7_ui_kumo_orgs\", \"0\")`, or `VITE_UI_KUMO_ORGS=false` for a deployment-wide change — which hides the nav entry, the route and the dashboard card and restores the previous behaviour exactly. Full details in `KUMO-ORGANIZATIONS-ROLLBACK.md`, including the file list for removing it outright.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.012",
     "date": "2026-10-06",
     "title": "Removed the header dark/light toggle",

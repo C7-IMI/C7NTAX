@@ -20,6 +20,7 @@ import { KumoAssetDetailPage } from "./pages/KumoAssetDetail";
 import { KumoPasswordsPage } from "./pages/KumoPasswords";
 import { KumoDocumentsPage } from "./pages/KumoDocuments";
 import { KumoConfigsPage } from "./pages/KumoConfigs";
+import { KumoOrganizationsPage } from "./pages/KumoOrganizations";
 import { SettingsPage } from "./pages/Settings";
 import { MFASetupPage } from "./pages/MFASetup";
 import { OpportunitiesPage } from "./pages/Opportunities";
@@ -49,6 +50,7 @@ import { WebhooksPage } from "./pages/Webhooks";
 import { AiActionsPage } from "./pages/AiActions";
 import { HelpPage } from "./pages/Help";
 import { HelpGettingStarted, HelpFaq, HelpConfiguration, HelpIndex, HelpWalkthrough } from "./pages/HelpDoc";
+import { UI_KUMO_ORGS } from "./lib/uiFlags";
 
 function ProtectedRoutes() {
   const navigate = useNavigate();
@@ -102,6 +104,7 @@ function ProtectedRoutes() {
         <Route path="/users" element={<UsersPage />} />
         <Route path="/roles" element={<RolesPage />} />
         <Route path="/kumo" element={<KumoDashboardPage />} />
+        {UI_KUMO_ORGS && <Route path="/kumo/organizations" element={<KumoOrganizationsPage />} />}
         <Route path="/kumo/assets/:id" element={<KumoAssetDetailPage />} />
         <Route path="/kumo/assets" element={<KumoAssetsPage />} />
         <Route path="/kumo/passwords" element={<KumoPasswordsPage />} />
