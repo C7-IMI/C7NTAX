@@ -1734,6 +1734,16 @@
 - **Verification:** ran the job twice, pushing `38399a2` (30 files) and `ac5c89a`; `origin/main` now matches local (`0/0`); confirmed no `.env`/`.login-body.json` staged (gitignored); task shows `Ready` with a 15-minute recurrence and a scheduled next run.
 
 
+### Prompt 148 — Modernize the look and feel (suggestions)
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** None (advisory design review; no project change)
+> Suggest changes to modernize the look and feel of the application.
+
+**Changes:**
+- Reviewed the design system (`DESIGN.md`, `tailwind.config.js`, `apps/web/src/index.css`), the shell (`apps/web/src/components/Layout.tsx`), and the live app, and quantified drift: 78 hand-rolled page headers, 66 section labels, 75 hardcoded hex colors and inline styles across 12 `.tsx` files, plus ad-hoc empty/loading states.
+- Suggested a prioritized modernization: P0 design-system consolidation (shared `PageHeader`/`Section`/`StatCard`/`DataTable`/`EmptyState`/`Tabs`/`Dialog` primitives; remove hardcoded colors/inline styles; lint rule for raw hex), P1 shell (command palette ⌘K, header search/notifications, active-nav rail, table/filter-chip standardization, standardized states), P2 polish (elevation/hover lift, tighter type scale + tabular-nums, sticky table headers, density toggle, contrast fix for muted text ~3.4:1), P3 brand/charts. No code or documentation changes.
+
+
 
 
 

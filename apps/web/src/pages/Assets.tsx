@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api";
+import { PageHeader } from "../components/ui";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, Search, Monitor, Server, Laptop, Smartphone, Network, Database, Wrench, FileText, Upload, Download, AlertTriangle, CheckCircle, XCircle, ArrowUpDown, Wifi } from "lucide-react";
@@ -130,13 +131,10 @@ export function AssetsPage() {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div><h2 className="text-lg font-semibold text-white">Asset Inventory</h2><p className="text-sm text-gray-400 mt-0.5">Manage hardware, software, and licenses</p></div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => { setShowImport(true); setImportResult(null); setImportFile(null); }} className="btn-secondary flex items-center gap-1.5"><Upload size={14} /> Import</button>
-          <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Asset</button>
-        </div>
-      </div>
+      <PageHeader title="Asset Inventory" subtitle="Manage hardware, software, and licenses">
+        <button onClick={() => { setShowImport(true); setImportResult(null); setImportFile(null); }} className="btn-secondary flex items-center gap-1.5"><Upload size={14} /> Import</button>
+        <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Asset</button>
+      </PageHeader>
 
       {/* Filters + Sort */}
       <div className="flex items-center gap-2 flex-wrap">

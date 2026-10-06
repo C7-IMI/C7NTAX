@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api";
+import { PageHeader } from "../components/ui";
 import { FileText, ChevronDown, ChevronRight, Shield, Clock, User, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -200,10 +201,9 @@ export function ServiceBoardsSection() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
-      <div className="flex items-center justify-between">
-        <div><h2 className="text-lg font-semibold text-white">Service Boards</h2><p className="text-sm text-gray-400 mt-0.5">Manage board SLAs, auto-close, and follow-up settings</p></div>
+      <PageHeader title="Service Boards" subtitle="Manage board SLAs, auto-close, and follow-up settings">
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> New Board</button>
-      </div>
+      </PageHeader>
 
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>

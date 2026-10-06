@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import api from "../api";
+import { PageHeader } from "../components/ui";
 import toast from "react-hot-toast";
 import { useCalendarScale } from "../hooks/useCalendarScale";
 import { Calendar, Clock, MapPin, Plus, ChevronLeft, ChevronRight } from "lucide-react";
@@ -72,10 +73,9 @@ export function CalendarPage() {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div><h2 className="text-lg font-semibold text-white">Calendar</h2><p className="text-sm text-gray-400">{entries.length} events</p></div>
+      <PageHeader title="Calendar" subtitle={`${entries.length} events`}>
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Add Event</button>
-      </div>
+      </PageHeader>
 
       {/* ── Monthly Calendar Card — scales with the window (min: current size) ── */}
       <div className="card p-3" ref={outerRef}>
