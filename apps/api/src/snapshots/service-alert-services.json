@@ -238,5 +238,22 @@
     "sortOrder": 20,
     "createdAt": "2026-08-14T05:55:14.948Z",
     "updatedAt": "2026-10-06T19:17:36.374Z"
+  },
+  {
+    "id": "f297a768-3882-4900-81cc-a9a81152eb6c",
+    "name": "__Probe Service (resolver test)",
+    "category": "other",
+    "description": "Temporary service used to verify the resolver; safe to delete.",
+    "statusPageUrl": "http://127.0.0.1:4599/",
+    "downDetectorUrl": null,
+    "rssUrl": "http://127.0.0.1:4599/feed.xml",
+    "monitorKind": "vendor",
+    "monitorUrl": null,
+    "monitorConfig": null,
+    "monitorEnabled": true,
+    "enabled": true,
+    "sortOrder": 999,
+    "createdAt": "2026-10-06T22:11:28.680Z",
+    "updatedAt": "2026-10-06T22:11:28.680Z"
   }
 ]

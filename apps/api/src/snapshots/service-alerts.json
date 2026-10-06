@@ -140,20 +140,6 @@
     "updatedAt": "2026-09-03T03:33:48.857Z"
   },
   {
-    "id": "49c295d9-3697-4791-98a3-95fcc8259b95",
-    "serviceId": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
-    "title": "Service impact: Increased Error Rates",
-    "description": "We are investigating increased API error rates in the US-EAST-1 Region.",
-    "severity": "degraded",
-    "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://status.aws.amazon.com/",
-    "detectedAt": "2026-09-21T23:32:11.844Z",
-    "resolvedAt": null,
-    "createdAt": "2026-09-21T23:32:11.846Z",
-    "updatedAt": "2026-09-22T02:53:02.421Z"
-  },
-  {
     "id": "20e2f64b-c7f8-488e-87ea-588fad8fb449",
     "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
     "title": "Possible service degradation reported for Google Workspace (DownDetector)",
@@ -166,20 +152,6 @@
     "resolvedAt": "2026-09-03T07:29:00.258Z",
     "createdAt": "2026-09-03T05:14:05.491Z",
     "updatedAt": "2026-09-03T07:29:00.259Z"
-  },
-  {
-    "id": "4c8d89ba-a587-41b5-9faf-96646ecb84a5",
-    "serviceId": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
-    "title": "Active - Network Infrastructure impacting event in East US",
-    "description": "We are investigating an issue affecting a subset of infrastructure within the East US region. Customers may experience service degradation for dependent Azure services. Our teams are actively investigating the cause and working to restore normal operations. More information will be provided as it becomes available.",
-    "severity": "degraded",
-    "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://azure.status.microsoft/en-us/status/",
-    "detectedAt": "2026-09-03T10:08:58.276Z",
-    "resolvedAt": null,
-    "createdAt": "2026-09-03T10:08:58.277Z",
-    "updatedAt": "2026-09-03T10:28:58.998Z"
   },
   {
     "id": "536886bd-c075-47e7-8a26-c03b6dd5fe74",
@@ -222,6 +194,20 @@
     "resolvedAt": "2026-08-21T20:24:59.537Z",
     "createdAt": "2026-08-21T20:14:56.200Z",
     "updatedAt": "2026-08-21T20:24:59.538Z"
+  },
+  {
+    "id": "49c295d9-3697-4791-98a3-95fcc8259b95",
+    "serviceId": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
+    "title": "Service impact: Increased Error Rates",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for AWS (rss clear, statuspage unknown, downdetector unknown).\n\nWe are investigating increased API error rates in the US-EAST-1 Region.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://status.aws.amazon.com/",
+    "detectedAt": "2026-09-21T23:32:11.844Z",
+    "resolvedAt": "2026-10-06T22:01:29.698Z",
+    "createdAt": "2026-09-21T23:32:11.846Z",
+    "updatedAt": "2026-10-06T22:01:29.699Z"
   },
   {
     "id": "07f922e1-7881-4c4d-9400-a67cb1af2df9",
@@ -488,6 +474,48 @@
     "resolvedAt": "2026-08-21T00:39:46.548Z",
     "createdAt": "2026-08-20T14:49:43.963Z",
     "updatedAt": "2026-08-21T00:39:46.550Z"
+  },
+  {
+    "id": "4c8d89ba-a587-41b5-9faf-96646ecb84a5",
+    "serviceId": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
+    "title": "Active - Network Infrastructure impacting event in East US",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Azure (rss clear, statuspage unknown, downdetector unknown).\n\nWe are investigating an issue affecting a subset of infrastructure within the East US region. Customers may experience service degradation for dependent Azure services. Our teams are actively investigating the cause and working to restore normal operations. More information will be provided as it becomes available.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://azure.status.microsoft/en-us/status/",
+    "detectedAt": "2026-09-03T10:08:58.276Z",
+    "resolvedAt": "2026-10-06T22:01:27.043Z",
+    "createdAt": "2026-09-03T10:08:58.277Z",
+    "updatedAt": "2026-10-06T22:01:27.045Z"
+  },
+  {
+    "id": "6aef60d7-67d1-4a2d-a4e9-dcaad0eb570f",
+    "serviceId": "f297a768-3882-4900-81cc-a9a81152eb6c",
+    "title": "Service disruption: increased error rates",
+    "description": "Auto-resolved: Resolved: elevated error rates\n\nWe are investigating elevated error rates.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "http://127.0.0.1:4599/incident/1",
+    "detectedAt": "2026-10-06T22:12:00.844Z",
+    "resolvedAt": "2026-10-06T22:12:50.493Z",
+    "createdAt": "2026-10-06T22:12:00.845Z",
+    "updatedAt": "2026-10-06T22:12:50.494Z"
+  },
+  {
+    "id": "a6c926e7-727b-47fa-860b-499958f4b5ad",
+    "serviceId": "f297a768-3882-4900-81cc-a9a81152eb6c",
+    "title": "Partial Service Degradation",
+    "description": "http://127.0.0.1:4599 reports \"Partial Service Degradation\".",
+    "severity": "degraded",
+    "status": "active",
+    "source": "statuspage",
+    "sourceUrl": "http://127.0.0.1:4599/",
+    "detectedAt": "2026-10-06T22:13:24.061Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-06T22:13:24.063Z",
+    "updatedAt": "2026-10-06T22:14:22.572Z"
   },
   {
     "id": "753697f6-7b02-465b-8894-f58d2a18ad39",

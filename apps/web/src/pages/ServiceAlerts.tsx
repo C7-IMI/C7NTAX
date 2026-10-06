@@ -153,7 +153,11 @@ export function ServiceAlertsPage() {
   const degradedCount = active.filter((a) => a.severity === "degraded").length;
   const operational = enabledServices.filter((s) => s.alerts.length === 0);
   const statusOf = (serviceId: string) => enabledServices.find((s) => s.id === serviceId)?.sourceStatus ?? null;
-  const unreadable = enabledServices.filter((s) => s.sourceStatus?.sources.some((src) => src.verdict === "unknown")).length;
+  const unreadableBySource = new Map<string, number>();
+  enabledServices.forEach((s) => s.sourceStatus?.sources.forEach((src) => {
+    if (src.verdict === "unknown") unreadableBySource.set(src.source, (unreadableBySource.get(src.source) ?? 0) + 1);
+  }));
+  const unreadable = [...unreadableBySource.entries()].sort((a, b) => b[1] - a[1]);
 
   if (loading) {
     return <div className="flex items-center justify-center py-24 text-gray-500">Loading Service Alerts…</div>;
@@ -188,9 +192,11 @@ export function ServiceAlertsPage() {
             Polled {monitor.checkedServices || enabledServices.length} services{" "}
             {monitor.lastCheckAt ? timeAgo(monitor.lastCheckAt) : "—"} · every {Math.max(1, Math.round(monitor.pollIntervalMs / 60000))} min
           </span>
-          <span className="inline-flex items-center gap-1.5" title="Sources that could not be read are never treated as 'all clear', and never counted against an alert">
-            <Radio size={13} className={unreadable > 0 ? "text-amber-400" : "text-gray-500"} />
-            {unreadable > 0 ? `${unreadable} service${unreadable === 1 ? "" : "s"} with an unreadable source` : "Every source is readable"}
+          <span className="inline-flex items-center gap-1.5" title="A source that cannot be read is reported as unknown: it can never be mistaken for an all-clear, and it never blocks the resolution the readable sources agree on">
+            <Radio size={13} className={unreadable.length > 0 ? "text-amber-400" : "text-gray-500"} />
+            {unreadable.length === 0
+              ? "Every configured source is readable"
+              : `Unreadable: ${unreadable.map(([source, count]) => `${SOURCE_LABELS[source] || source} ×${count}`).join(", ")}`}
           </span>
           <span className="inline-flex items-center gap-1.5" title="The resolver needs every readable source to agree before it retires an alert, and gives up on an alert nothing has reported for this long">
             <CheckCircle2 size={13} className="text-emerald-400" />
