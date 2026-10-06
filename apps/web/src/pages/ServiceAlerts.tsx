@@ -21,6 +21,22 @@ interface ServiceAlertItem {
   service: { id: string; name: string; category: string; statusPageUrl: string | null; downDetectorUrl: string | null; rssUrl: string | null; sortOrder: number };
 }
 
+type SourceVerdict = "problem" | "restored" | "clear" | "unknown";
+
+interface ServiceSourceStatus {
+  name: string;
+  checkedAt: string;
+  verdict: SourceVerdict;
+  sources: Array<{ source: string; verdict: SourceVerdict; detail: string }>;
+}
+
+interface MonitorSummary {
+  lastCheckAt: string | null;
+  checkedServices: number;
+  pollIntervalMs: number;
+  staleAfterHours: number;
+}
+
 interface AlertService {
   id: string;
   name: string;
@@ -32,6 +48,7 @@ interface AlertService {
   monitorEnabled: boolean;
   enabled: boolean;
   sortOrder: number;
+  sourceStatus: ServiceSourceStatus | null;
   alerts: ServiceAlertItem[];
 }
 
@@ -57,13 +74,49 @@ const SOURCE_LABELS: Record<string, string> = {
   rss: "RSS Feed",
   statuspage: "Status Page",
   downdetector: "DownDetector",
+  website: "Website",
+  ssl: "SSL",
+  dns: "DNS",
   manual: "Manual",
 };
+
+const VERDICT_STYLE: Record<SourceVerdict, { dot: string; text: string; word: string }> = {
+  clear: { dot: "bg-emerald-500", text: "text-emerald-300", word: "clear" },
+  problem: { dot: "bg-red-500", text: "text-red-300", word: "reporting a problem" },
+  restored: { dot: "bg-cyber-500", text: "text-cyber-300", word: "reports it recovered" },
+  unknown: { dot: "bg-gray-600", text: "text-gray-500", word: "not readable" },
+};
+
+/** What each of a service's sources reported on the last poll. */
+function SourceChips({ status }: { status: ServiceSourceStatus | null }) {
+  if (!status) return null;
+  if (status.sources.length === 0) {
+    return <span className="text-xs text-gray-600">No monitored sources configured</span>;
+  }
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      {status.sources.map((s) => {
+        const v = VERDICT_STYLE[s.verdict];
+        return (
+          <span
+            key={s.source}
+            className={`inline-flex items-center gap-1.5 text-xs ${v.text}`}
+            title={`${SOURCE_LABELS[s.source] || s.source}: ${v.word} — ${s.detail}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${v.dot}`} />
+            {SOURCE_LABELS[s.source] || s.source}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
 
 export function ServiceAlertsPage() {
   const [services, setServices] = useState<AlertService[]>([]);
   const [active, setActive] = useState<ServiceAlertItem[]>([]);
   const [resolved, setResolved] = useState<ServiceAlertItem[]>([]);
+  const [monitor, setMonitor] = useState<MonitorSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -77,6 +130,7 @@ export function ServiceAlertsPage() {
       setActive(alertsRes.data?.data || []);
       setResolved(alertsRes.data?.resolved || []);
       setServices(servicesRes.data?.data || []);
+      setMonitor(servicesRes.data?.monitor || null);
     } catch {
       if (!silent) toast.error("Could not load Service Alerts");
     } finally {
@@ -98,6 +152,8 @@ export function ServiceAlertsPage() {
   const outageCount = active.filter((a) => a.severity === "outage").length;
   const degradedCount = active.filter((a) => a.severity === "degraded").length;
   const operational = enabledServices.filter((s) => s.alerts.length === 0);
+  const statusOf = (serviceId: string) => enabledServices.find((s) => s.id === serviceId)?.sourceStatus ?? null;
+  const unreadable = enabledServices.filter((s) => s.sourceStatus?.sources.some((src) => src.verdict === "unknown")).length;
 
   if (loading) {
     return <div className="flex items-center justify-center py-24 text-gray-500">Loading Service Alerts…</div>;
@@ -110,7 +166,7 @@ export function ServiceAlertsPage() {
         <div>
           <h2 className="text-lg font-semibold text-white">Service Alerts</h2>
           <p className="text-sm text-gray-400">
-            Live status of critical cloud, SaaS, and ISP services monitored from RSS feeds, status pages, and DownDetector.
+            Live status of critical cloud, SaaS, and ISP services, resolved from their vendor feeds, status-page APIs, DownDetector, and uptime monitors.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -123,6 +179,25 @@ export function ServiceAlertsPage() {
           </button>
         </div>
       </div>
+
+      {/* Monitor strip — how the poller is reading the sources right now */}
+      {monitor && (
+        <div className="card !py-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-400">
+          <span className="inline-flex items-center gap-1.5">
+            <Activity size={13} className="text-cyber-400" />
+            Polled {monitor.checkedServices || enabledServices.length} services{" "}
+            {monitor.lastCheckAt ? timeAgo(monitor.lastCheckAt) : "—"} · every {Math.max(1, Math.round(monitor.pollIntervalMs / 60000))} min
+          </span>
+          <span className="inline-flex items-center gap-1.5" title="Sources that could not be read are never treated as 'all clear', and never counted against an alert">
+            <Radio size={13} className={unreadable > 0 ? "text-amber-400" : "text-gray-500"} />
+            {unreadable > 0 ? `${unreadable} service${unreadable === 1 ? "" : "s"} with an unreadable source` : "Every source is readable"}
+          </span>
+          <span className="inline-flex items-center gap-1.5" title="The resolver needs every readable source to agree before it retires an alert, and gives up on an alert nothing has reported for this long">
+            <CheckCircle2 size={13} className="text-emerald-400" />
+            Auto-resolves when every readable source agrees, or after {monitor.staleAfterHours}h with nothing reporting the incident
+          </span>
+        </div>
+      )}
 
       {/* Summary strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -192,6 +267,11 @@ export function ServiceAlertsPage() {
                     View source <ExternalLink size={12} />
                   </a>
                 )}
+                {statusOf(a.service.id) && (
+                  <div className="mt-2 pt-2 border-t border-surface-border/60">
+                    <SourceChips status={statusOf(a.service.id)} />
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -240,25 +320,28 @@ export function ServiceAlertsPage() {
                   <p className="text-xs text-gray-500 flex-1">{s.description || "No active alerts for this service."}</p>
                 )}
 
-                <div className="flex items-center gap-3 pt-1 border-t border-surface-border">
-                  {s.statusPageUrl && (
-                    <a href={s.statusPageUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-cyber-300 transition-colors" title="Official status page">
-                      <Globe size={13} /> Status
-                    </a>
-                  )}
-                  {s.downDetectorUrl && (
-                    <a href={s.downDetectorUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-cyber-300 transition-colors" title="DownDetector">
-                      <Radio size={13} /> DownDetector
-                    </a>
-                  )}
-                  {s.rssUrl && (
-                    <span className="inline-flex items-center gap-1 text-xs text-gray-600" title="RSS monitored">
-                      <CircleDot size={13} /> RSS
-                    </span>
-                  )}
-                  {!s.monitorEnabled && (
-                    <span className="inline-flex items-center gap-1 text-xs text-gray-600"><Info size={13} /> Manual</span>
-                  )}
+                <div className="space-y-2 pt-1 border-t border-surface-border">
+                  <SourceChips status={s.sourceStatus} />
+                  <div className="flex items-center gap-3">
+                    {s.statusPageUrl && (
+                      <a href={s.statusPageUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-cyber-300 transition-colors" title="Official status page">
+                        <Globe size={13} /> Status
+                      </a>
+                    )}
+                    {s.downDetectorUrl && (
+                      <a href={s.downDetectorUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-cyber-300 transition-colors" title="DownDetector">
+                        <Radio size={13} /> DownDetector
+                      </a>
+                    )}
+                    {s.rssUrl && (
+                      <span className="inline-flex items-center gap-1 text-xs text-gray-600" title="RSS monitored">
+                        <CircleDot size={13} /> RSS
+                      </span>
+                    )}
+                    {!s.monitorEnabled && (
+                      <span className="inline-flex items-center gap-1 text-xs text-gray-600"><Info size={13} /> Manual</span>
+                    )}
+                  </div>
                 </div>
               </div>
             );

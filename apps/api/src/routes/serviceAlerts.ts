@@ -69,8 +69,12 @@ serviceAlertsRouter.get("/status", requirePermission(Permission.ServiceAlertView
 });
 
 // ── Read: configured services ──
+// Each service carries what its sources reported on the monitor's last poll
+// (`sourceStatus`), so a screen can show why nothing is being detected for it —
+// an unreadable feed or a challenged DownDetector page is visible, not silent.
 serviceAlertsRouter.get("/services", requirePermission(Permission.ServiceAlertView), async (_req: AuthRequest, res, next) => {
   try {
+    const monitor = getMonitorStatus();
     const services = await prisma.serviceAlertService.findMany({
       include: {
         alerts: {
@@ -81,7 +85,15 @@ serviceAlertsRouter.get("/services", requirePermission(Permission.ServiceAlertVi
       },
       orderBy: [{ enabled: "desc" }, { sortOrder: "asc" }, { name: "asc" }],
     });
-    res.json({ data: services });
+    res.json({
+      data: services.map((s) => ({ ...s, sourceStatus: monitor.sourceStatus[s.id] ?? null })),
+      monitor: {
+        lastCheckAt: monitor.lastCheckAt,
+        checkedServices: monitor.checkedServices,
+        pollIntervalMs: monitor.pollIntervalMs,
+        staleAfterHours: monitor.staleAfterHours,
+      },
+    });
   } catch (e) { next(e); }
 });
 

@@ -1,10 +1,30 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
 import {
   AlertTriangle, Plus, Pencil, Trash2, RefreshCw, Globe, Rss, TrendingDown,
   Power, EyeOff, Activity, TerminalSquare,
 } from "lucide-react";
+
+const VERDICT_DOT: Record<string, string> = {
+  clear: "bg-emerald-500",
+  problem: "bg-red-500",
+  restored: "bg-cyber-500",
+  unknown: "bg-gray-600",
+};
+
+/** A configured source with the verdict it returned on the monitor's last poll. */
+function SourceBadge({ label, icon, verdict, detail }: { label: string; icon: ReactNode; verdict?: string; detail?: string }) {
+  return (
+    <span
+      className="badge bg-surface-lighter text-gray-300"
+      title={verdict ? `${label}: ${verdict}${detail ? ` — ${detail}` : ""}` : `${label} configured`}
+    >
+      {verdict && <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${VERDICT_DOT[verdict] || "bg-gray-600"}`} />}
+      {icon} {label}
+    </span>
+  );
+}
 
 interface AlertService {
   id: string;
@@ -27,7 +47,11 @@ interface MonitorSnapshot {
   created: number;
   updated: number;
   resolved: number;
+  staleResolved: number;
   errors: string[];
+  pollIntervalMs: number;
+  staleAfterHours: number;
+  sourceStatus: Record<string, { name: string; checkedAt: string; verdict: string; sources: Array<{ source: string; verdict: string; detail: string }> }>;
   log: Array<{ at: string; level: string; msg: string }>;
 }
 
@@ -185,12 +209,14 @@ export function ServiceAlertsSettingsPage() {
 
       {/* Monitor status */}
       <div className="card">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
           <Activity size={16} className="text-cyber-400" />
           <h3 className="text-sm font-semibold text-white">Alerting Mechanism</h3>
-          <span className="badge bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active — polls RSS feeds every 5 minutes</span>
+          <span className="badge bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            Active — feeds, status-page APIs and DownDetector every {Math.max(1, Math.round((monitor?.pollIntervalMs ?? 300000) / 60000))} min
+          </span>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 text-sm">
           <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Last check</p>
             <p className="text-white font-medium">{monitor?.lastCheckAt ? new Date(monitor.lastCheckAt).toLocaleString() : "Not run yet"}</p>
@@ -204,14 +230,26 @@ export function ServiceAlertsSettingsPage() {
             <p className="text-white font-medium">{monitor?.created ?? 0}</p>
           </div>
           <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
+            <p className="text-gray-500 text-xs">Alerts refreshed (last run)</p>
+            <p className="text-white font-medium">{monitor?.updated ?? 0}</p>
+          </div>
+          <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Auto-resolved (last run)</p>
-            <p className="text-white font-medium">{monitor?.resolved ?? 0}</p>
+            <p className="text-white font-medium">
+              {monitor?.resolved ?? 0}
+              {(monitor?.staleResolved ?? 0) > 0 && <span className="text-gray-500 font-normal"> ({monitor?.staleResolved} stale)</span>}
+            </p>
           </div>
           <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Active alerts</p>
             <p className={`font-medium ${activeAlerts > 0 ? "text-red-400" : "text-emerald-400"}`}>{activeAlerts}</p>
           </div>
         </div>
+        <p className="text-xs text-gray-500 mt-3">
+          A service is polled from every source it has configured. An alert is retired once the readable sources agree nothing is wrong — a source that
+          cannot be read counts as unknown, never as all-clear — and in any case once nothing has reported the incident for{" "}
+          {monitor?.staleAfterHours ?? 72}h.
+        </p>
         {(monitor?.errors?.length ?? 0) > 0 && (
           <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 max-h-32 overflow-y-auto">
             <p className="text-xs font-medium text-amber-400 mb-1 flex items-center gap-1.5"><TerminalSquare size={12} /> Feed errors from last check</p>
@@ -266,10 +304,10 @@ export function ServiceAlertsSettingsPage() {
                 <tr className="text-left text-xs text-gray-500 border-b border-surface-border">
                   <th className="px-5 py-3 font-medium">Service</th>
                   <th className="px-3 py-3 font-medium">Category</th>
-                  <th className="px-3 py-3 font-medium">Sources</th>
+                  <th className="px-3 py-3 font-medium">Sources (last poll)</th>
                   <th className="px-3 py-3 font-medium">Active Alerts</th>
                   <th className="px-3 py-3 font-medium">Visible</th>
-                  <th className="px-3 py-3 font-medium">Feed Polling</th>
+                  <th className="px-3 py-3 font-medium">Source Polling</th>
                   <th className="px-3 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
@@ -283,9 +321,22 @@ export function ServiceAlertsSettingsPage() {
                     <td className="px-3 py-3 text-gray-400 capitalize">{s.category}</td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        {s.rssUrl && <span className="badge bg-surface-lighter text-gray-300"><Rss size={11} /> RSS</span>}
-                        {s.statusPageUrl && <span className="badge bg-surface-lighter text-gray-300"><Globe size={11} /> Status</span>}
-                        {s.downDetectorUrl && <span className="badge bg-surface-lighter text-gray-300"><TrendingDown size={11} /> DownDetector</span>}
+                        {s.rssUrl && (
+                          <SourceBadge label="RSS" icon={<Rss size={11} />}
+                            verdict={monitor?.sourceStatus[s.id]?.sources.find(x => x.source === "rss")?.verdict}
+                            detail={monitor?.sourceStatus[s.id]?.sources.find(x => x.source === "rss")?.detail} />
+                        )}
+                        {s.statusPageUrl && (
+                          <SourceBadge label="Status" icon={<Globe size={11} />}
+                            verdict={monitor?.sourceStatus[s.id]?.sources.find(x => x.source === "statuspage")?.verdict}
+                            detail={monitor?.sourceStatus[s.id]?.sources.find(x => x.source === "statuspage")?.detail} />
+                        )}
+                        {s.downDetectorUrl && (
+                          <SourceBadge label="DownDetector" icon={<TrendingDown size={11} />}
+                            verdict={monitor?.sourceStatus[s.id]?.sources.find(x => x.source === "downdetector")?.verdict}
+                            detail={monitor?.sourceStatus[s.id]?.sources.find(x => x.source === "downdetector")?.detail} />
+                        )}
+                        {!s.rssUrl && !s.statusPageUrl && !s.downDetectorUrl && <span className="text-xs text-gray-600">None configured</span>}
                       </div>
                     </td>
                     <td className="px-3 py-3">

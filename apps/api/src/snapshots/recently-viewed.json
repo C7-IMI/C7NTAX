@@ -250,5 +250,14 @@
     "entityName": "QA probe backup job",
     "entityIcon": "monitor",
     "viewedAt": "2026-10-06T21:17:06.608Z"
+  },
+  {
+    "id": "ca310e74-f8ec-45fc-b421-66ed52542c2a",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "50311441-469b-4d71-bb09-26cc968e0a84",
+    "entityName": "Acme Corporation — VOICE VLAN",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-06T21:51:31.989Z"
   }
 ]

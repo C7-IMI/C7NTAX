@@ -1,18 +1,43 @@
 /**
- * FI-060 — Service Alerts monitor
+ * FI-060 - Service Alerts monitor
  *
- * Polls configured RSS/status feeds on a schedule and maintains
- * ServiceAlert records:
- *  - outage/degraded keywords  → create or update an ACTIVE alert
- *  - restored/resolved keywords → auto-resolve the active alert
- * Keeps a lightweight in-memory status snapshot for the UI.
+ * Each poll gathers an independent observation from every source a service has
+ * configured - its RSS/Atom feed, the Statuspage.io API behind its status page,
+ * its DownDetector page (via the reader), and its website/ssl/dns monitor -
+ * and keeps ServiceAlert records in step with what those sources actually say:
+ *
+ *   - any source reporting a problem       -> create or refresh an ACTIVE alert
+ *   - a source reporting the incident over -> auto-resolve
+ *   - every readable source clear          -> auto-resolve (after two clear
+ *                                             polls in a row, anti-flap)
+ *   - no source readable at all            -> keep the alert, but never past
+ *                                             the stale ceiling, so a blocked
+ *                                             source cannot pin an incident
+ *                                             from weeks ago to the banner
+ *
+ * An unreadable source is "unknown", never "not clear": it cannot veto the
+ * resolution the readable sources agree on, and it is reported per service so
+ * the UI can show exactly which source went silent and why.
  */
 import { prisma } from "../index";
 import tls from "node:tls";
 import { promises as dns } from "node:dns";
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
-const ITEM_WINDOW_MS = 24 * 60 * 60 * 1000; // consider items from last 24h
+const ITEM_WINDOW_MS = 24 * 60 * 60 * 1000; // consider feed items from last 24h
+const MIN_ALERT_AGE_MS = POLL_INTERVAL_MS; // never resolve on the poll that created it
+const REQUIRED_CLEAR_POLLS = 2; // consecutive all-clear polls before resolving
+const USER_AGENT = "C7NTAX-ServiceAlerts/1.0";
+
+function positiveIntFromEnv(name: string, fallback: number): number {
+  const raw = Number(process.env[name]);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : fallback;
+}
+
+// Hard ceiling on how long an alert may stay active without any source
+// confirming it. Only reached when every configured source is unreadable.
+const STALE_AFTER_MS = positiveIntFromEnv("SERVICE_ALERT_STALE_HOURS", 72) * 60 * 60 * 1000;
+const STALE_AFTER_HOURS = Math.round(STALE_AFTER_MS / 3600000);
 
 const OUTAGE_PATTERNS = [
   /major outage/i, /outage/i, /degraded performance/i, /degraded/i, /service disruption/i,
@@ -28,6 +53,26 @@ const RESTORED_PATTERNS = [
   /post.?incident/i, /has been fixed/i, /normal service/i,
 ];
 
+export type SourceVerdict = "problem" | "restored" | "clear" | "unknown";
+
+export interface SourceObservation {
+  source: "rss" | "statuspage" | "downdetector" | "website" | "ssl" | "dns";
+  verdict: SourceVerdict;
+  /** Human-readable reason, shown per source in the UI. */
+  detail: string;
+  title?: string;
+  body?: string;
+  link?: string | null;
+  severity?: "outage" | "degraded" | "informational";
+}
+
+export interface ServiceSourceStatus {
+  name: string;
+  checkedAt: string;
+  verdict: SourceVerdict;
+  sources: Array<{ source: string; verdict: SourceVerdict; detail: string }>;
+}
+
 export interface MonitorSnapshot {
   lastCheckAt: string | null;
   lastRunMs: number | null;
@@ -35,25 +80,38 @@ export interface MonitorSnapshot {
   created: number;
   updated: number;
   resolved: number;
+  /** Alerts retired by the stale ceiling rather than by a positive all-clear. */
+  staleResolved: number;
   errors: string[];
+  pollIntervalMs: number;
+  staleAfterHours: number;
+  /** serviceId -> what each of that service's sources reported on the last poll. */
+  sourceStatus: Record<string, ServiceSourceStatus>;
   log: Array<{ at: string; level: "info" | "warn" | "error"; msg: string }>;
 }
 
-let snapshot: MonitorSnapshot = {
+const snapshot: MonitorSnapshot = {
   lastCheckAt: null,
   lastRunMs: null,
   checkedServices: 0,
   created: 0,
   updated: 0,
   resolved: 0,
+  staleResolved: 0,
   errors: [],
+  pollIntervalMs: POLL_INTERVAL_MS,
+  staleAfterHours: STALE_AFTER_HOURS,
+  sourceStatus: {},
   log: [],
 };
 
 // Per-service consecutive "all clear" observations. An active alert is only
 // auto-resolved after two consecutive polls show no outage items, so a single
-// transient fetch gap or missed item can't flap the alert.
+// transient fetch gap or missed item cannot flap the alert.
 const clearStreak = new Map<string, number>();
+
+/** Counted during a run, flushed into `errors` as one line instead of one per service. */
+let downDetectorBlocked = 0;
 
 export function getMonitorStatus(): MonitorSnapshot {
   return snapshot;
@@ -87,192 +145,179 @@ function classify(text: string): "outage" | "restored" | null {
   return null;
 }
 
-async function checkService(service: { id: string; name: string; rssUrl: string | null; downDetectorUrl: string | null }): Promise<void> {
-  if (!service.rssUrl && !service.downDetectorUrl) return; // no monitored source → no auto-detection
+function looksLikeChallenge(body: string): boolean {
+  return /just a moment|requiring CAPTCHA|cf-chl|enable javascript and cookies to continue/i.test(body);
+}
 
-  let outageText: { title: string; description: string; link: string } | null = null;
-  let restoredText: { title: string; description: string; link: string } | null = null;
-  let rssClean = false;   // RSS fetch succeeded with no outage/restored items in window
-  let ddAllClear = false; // DownDetector page positively shows no problems
-  let ddProblems = false; // DownDetector page positively shows problems
-
-  if (service.rssUrl) {
-    try {
-      const resp = await fetch(service.rssUrl, {
-        signal: AbortSignal.timeout(12000),
-        headers: { "user-agent": "C7NTAX-ServiceAlerts/1.0", accept: "application/rss+xml, application/atom+xml, text/xml, application/xml;q=0.9, */*;q=0.8" },
-      });
-      if (!resp.ok) {
-        snapshot.errors.push(`${service.name}: HTTP ${resp.status} from ${service.rssUrl}`);
-      } else {
-        const body = await resp.text();
-        const items = parseFeedItems(body);
-        const now = Date.now();
-        for (const item of items) {
-          const age = item.pubDate ? now - item.pubDate.getTime() : 0;
-          if (item.pubDate && age > ITEM_WINDOW_MS) continue;
-          const cls = classify(`${item.title} ${item.description}`);
-          if (cls === "outage" && !outageText) {
-            outageText = { title: item.title, description: item.description.slice(0, 500), link: item.link };
-          } else if (cls === "restored" && !restoredText) {
-            restoredText = { title: item.title, description: item.description.slice(0, 500), link: item.link };
-          }
-        }
-        if (!outageText && !restoredText) rssClean = true;
-      }
-    } catch (e: any) {
-      snapshot.errors.push(`${service.name}: fetch failed for ${service.rssUrl} (${e?.name || "error"})`);
-    }
-  }
-
-  // DownDetector: page-level check. DownDetector's Cloudflare blocks
-  // non-browser TLS fingerprints (Node fetch gets 403 regardless of UA), so
-  // fetch the public status page through the r.jina.ai reader (base URL is
-  // env-overridable for self-hosting). Only a POSITIVE "no current
-  // problems" status line counts as all-clear; unknown or unclassifiable
-  // pages never auto-resolve anything (fail-safe). Classification uses the
-  // page's own H1 status line only — sidebar tweets about OTHER services
-  // must not trigger false problem alerts.
-  if (service.downDetectorUrl) {
-    try {
-      const readerBase = process.env.DD_READER_BASE_URL || "https://r.jina.ai/";
-      const resp = await fetch(readerBase + service.downDetectorUrl, {
-        signal: AbortSignal.timeout(20000),
-        headers: { "user-agent": "C7NTAX-ServiceAlerts/1.0" },
-      });
-      if (!resp.ok) {
-        snapshot.errors.push(`${service.name}: DownDetector reader HTTP ${resp.status} for ${service.downDetectorUrl}`);
-      } else {
-        const body = await resp.text();
-        const h1 = body.match(/^#\s*User reports[^\n]*/m)?.[0] ?? "";
-        if (/no current problems/i.test(h1)) ddAllClear = true;
-        else if (/problems|issues|outage|degraded|disruption/i.test(h1)) ddProblems = true;
-        // else: no recognizable status line — leave both false (fail-safe)
-      }
-    } catch (e: any) {
-      snapshot.errors.push(`${service.name}: DownDetector fetch failed for ${service.downDetectorUrl} (${e?.name || "error"})`);
-    }
-  }
-
-  const active = await prisma.serviceAlert.findFirst({
-    where: { serviceId: service.id, status: "active" },
-    orderBy: { detectedAt: "desc" },
-  });
-
-  if (outageText || ddProblems) {
-    clearStreak.delete(service.id);
-    if (outageText) {
-      if (active) {
-      const sameTitle = active.title === outageText.title;
-      await prisma.serviceAlert.update({
-        where: { id: active.id },
-        data: {
-          title: outageText.title || active.title,
-          description: outageText.description || active.description,
-          sourceUrl: outageText.link || active.sourceUrl,
-          severity: active.severity === "informational" ? "degraded" : active.severity,
-        },
-      });
-      if (!sameTitle) snapshot.updated++;
-    } else {
-      await prisma.serviceAlert.create({
-        data: {
-          serviceId: service.id,
-          title: outageText.title || `Possible outage reported for ${service.name}`,
-          description: outageText.description || null,
-          severity: /major|down\b|unavailable/i.test(`${outageText.title} ${outageText.description}`) ? "outage" : "degraded",
-          status: "active",
-          source: "rss",
-          sourceUrl: outageText.link || null,
-          detectedAt: new Date(),
-        },
-      });
-      snapshot.created++;
-      log("warn", `New active alert for ${service.name}: ${outageText.title}`);
-      }
-    } else {
-      // DownDetector reports problems
-      if (!active) {
-        await prisma.serviceAlert.create({
-          data: {
-            serviceId: service.id,
-            title: `Possible service degradation reported for ${service.name} (DownDetector)`,
-            description: `DownDetector is reporting problems for ${service.name}.`,
-            severity: "degraded",
-            status: "active",
-            source: "downdetector",
-            sourceUrl: service.downDetectorUrl,
-            detectedAt: new Date(),
-          },
-        });
-        snapshot.created++;
-        log("warn", `New active alert for ${service.name} (DownDetector)`);
-      }
-    }
-  } else if (restoredText && active) {
-    clearStreak.delete(service.id);
-    await prisma.serviceAlert.update({
-      where: { id: active.id },
-      data: {
-        status: "resolved",
-        resolvedAt: new Date(),
-        description: `Auto-resolved: ${restoredText.title}${active.description ? `\n\n${active.description}` : ""}`,
-      },
+/** Vendor incident feed. An item inside the 24h window decides; otherwise the feed is positively clear. */
+async function observeFeed(service: { name: string; rssUrl: string | null }): Promise<SourceObservation | null> {
+  if (!service.rssUrl) return null;
+  try {
+    const resp = await fetch(service.rssUrl, {
+      signal: AbortSignal.timeout(12000),
+      headers: { "user-agent": USER_AGENT, accept: "application/rss+xml, application/atom+xml, text/xml, application/xml;q=0.9, */*;q=0.8" },
     });
-    snapshot.resolved++;
-    log("info", `Auto-resolved alert for ${service.name}: ${restoredText.title}`);
-  } else if (active && active.source !== "manual") {
-    // All clear: every configured monitored source is positively clean —
-    // RSS (no outage/restored items) and/or DownDetector (page says no
-    // current problems). Resolve once the all-clear has persisted for two
-    // consecutive polls (anti-flap) and the alert is at least one poll
-    // interval old. Manual alerts are never auto-resolved. Any unknown
-    // source state restarts the streak (fail-safe).
-    const rssOk = service.rssUrl ? rssClean : true;
-    const ddOk = service.downDetectorUrl ? ddAllClear : true;
-    const allClear = rssOk && ddOk;
-    if (!allClear) {
-      clearStreak.delete(service.id);
-      return;
+    if (!resp.ok) {
+      snapshot.errors.push(`${service.name}: HTTP ${resp.status} from ${service.rssUrl}`);
+      return { source: "rss", verdict: "unknown", detail: `feed returned HTTP ${resp.status}` };
     }
-    const MIN_ALERT_AGE_MS = POLL_INTERVAL_MS;
-    const streak = (clearStreak.get(service.id) || 0) + 1;
-    clearStreak.set(service.id, streak);
-    const alertAge = Date.now() - new Date(active.detectedAt).getTime();
-    if (streak >= 2 && alertAge >= MIN_ALERT_AGE_MS) {
-      await prisma.serviceAlert.update({
-        where: { id: active.id },
-        data: {
-          status: "resolved",
-          resolvedAt: new Date(),
-          description: `Auto-resolved: monitored sources for ${service.name} report no active incidents or degradations (all clear).${active.description ? `\n\n${active.description}` : ""}`,
-        },
-      });
-      clearStreak.delete(service.id);
-      snapshot.resolved++;
-      log("info", `Auto-resolved alert for ${service.name} (all clear confirmed)`);
+    const body = await resp.text();
+    if (!/<(?:rss|feed|channel)[\s>]/i.test(body)) {
+      return { source: "rss", verdict: "unknown", detail: "feed URL did not return a feed document" };
     }
+    const now = Date.now();
+    let problem: SourceObservation | null = null;
+    let restored: SourceObservation | null = null;
+    let youngest: number | null = null;
+    for (const item of parseFeedItems(body)) {
+      if (item.pubDate) {
+        const age = now - item.pubDate.getTime();
+        if (age > ITEM_WINDOW_MS) continue;
+        if (youngest === null || age < youngest) youngest = age;
+      }
+      const cls = classify(`${item.title} ${item.description}`);
+      if (cls === "outage" && !problem) {
+        problem = {
+          source: "rss",
+          verdict: "problem",
+          title: item.title,
+          body: item.description.slice(0, 500),
+          link: item.link,
+          severity: /major|down\b|unavailable/i.test(`${item.title} ${item.description}`) ? "outage" : "degraded",
+          detail: `incident item published ${item.pubDate ? item.pubDate.toISOString().slice(0, 16).replace("T", " ") + "Z" : "undated"}`,
+        };
+      } else if (cls === "restored" && !restored) {
+        restored = { source: "rss", verdict: "restored", title: item.title, link: item.link, detail: "resolution item published" };
+      }
+    }
+    if (problem) return problem;
+    if (restored) return restored;
+    return {
+      source: "rss",
+      verdict: "clear",
+      detail: youngest === null ? "no incidents in the feed" : `no incidents in the last 24h (newest item ${Math.round(youngest / 3600000)}h old)`,
+    };
+  } catch (e: any) {
+    snapshot.errors.push(`${service.name}: fetch failed for ${service.rssUrl} (${e?.name || "error"})`);
+    return { source: "rss", verdict: "unknown", detail: `feed unreachable (${e?.name || "error"})` };
   }
 }
 
-// Backlog item 3 — website / ssl / dns monitor kinds (gated by UPTIME_MONITORS_ENABLED).
-// Uses the same 2-poll clear-streak anti-flap rule as vendor feeds.
-async function checkNetworkService(service: { id: string; name: string; monitorKind: string; monitorUrl: string | null; monitorConfig: unknown }): Promise<void> {
-  if (!service.monitorUrl) return;
-  const cfg = (service.monitorConfig || {}) as { expectStatus?: number; sslWarnDays?: number };
-  let problem: string | null = null;
-  let severity: "outage" | "degraded" | "informational" = "degraded";
-  let source = "manual";
+/**
+ * Statuspage.io JSON API behind the service's status page. This is the one
+ * source that states the vendor's current state directly, and unlike
+ * DownDetector it is not behind a bot challenge - so it keeps the resolver
+ * honest when a feed is empty and the DownDetector page is unreadable. Status
+ * pages that are not Statuspage.io answer 404/HTML and stay unknown.
+ */
+async function observeStatusPage(service: { statusPageUrl: string | null }): Promise<SourceObservation | null> {
+  if (!service.statusPageUrl) return null;
+  let origin: string;
   try {
-    if (service.monitorKind === "website") {
-      source = "statuspage";
+    const parsed = new URL(service.statusPageUrl);
+    if (!/^https?:$/.test(parsed.protocol)) return null;
+    origin = parsed.origin;
+  } catch {
+    return { source: "statuspage", verdict: "unknown", detail: "status page URL is not a valid URL" };
+  }
+  try {
+    const resp = await fetch(`${origin}/api/v2/status.json`, {
+      signal: AbortSignal.timeout(12000),
+      headers: { "user-agent": USER_AGENT, accept: "application/json" },
+    });
+    const contentType = resp.headers.get("content-type") || "";
+    if (!resp.ok || !contentType.includes("json")) {
+      return { source: "statuspage", verdict: "unknown", detail: `no Statuspage.io API (HTTP ${resp.status})` };
+    }
+    const json: any = await resp.json().catch(() => null);
+    const indicator = String(json?.status?.indicator ?? "");
+    const description = String(json?.status?.description ?? "").trim();
+    if (indicator === "none") {
+      return { source: "statuspage", verdict: "clear", detail: description || "all systems operational" };
+    }
+    if (indicator === "minor" || indicator === "major" || indicator === "critical") {
+      return {
+        source: "statuspage",
+        verdict: "problem",
+        severity: indicator === "minor" ? "degraded" : "outage",
+        title: description || `Status page reports a ${indicator} incident`,
+        body: `${origin} reports "${description || indicator}".`,
+        link: service.statusPageUrl,
+        detail: `status indicator: ${indicator}`,
+      };
+    }
+    return { source: "statuspage", verdict: "unknown", detail: `unrecognised status indicator "${indicator || "missing"}"` };
+  } catch (e: any) {
+    return { source: "statuspage", verdict: "unknown", detail: `status API unreachable (${e?.name || "error"})` };
+  }
+}
+
+/**
+ * DownDetector user-report page through the r.jina.ai reader (DownDetector's
+ * Cloudflare blocks non-browser TLS fingerprints). The page's own H1 status
+ * line decides - sidebar chatter about other services must not raise an alert.
+ * A challenge page is "unknown", never "no reports".
+ */
+async function observeDownDetector(service: { name: string; downDetectorUrl: string | null }): Promise<SourceObservation | null> {
+  if (!service.downDetectorUrl) return null;
+  try {
+    const readerBase = process.env.DD_READER_BASE_URL || "https://r.jina.ai/";
+    const resp = await fetch(readerBase + service.downDetectorUrl, {
+      signal: AbortSignal.timeout(20000),
+      headers: { "user-agent": USER_AGENT },
+    });
+    if (!resp.ok) {
+      snapshot.errors.push(`${service.name}: DownDetector reader HTTP ${resp.status} for ${service.downDetectorUrl}`);
+      return { source: "downdetector", verdict: "unknown", detail: `reader returned HTTP ${resp.status}` };
+    }
+    const body = await resp.text();
+    const h1 = body.match(/^#\s*User reports[^\n]*/m)?.[0] ?? "";
+    if (/no current problems/i.test(h1)) {
+      return { source: "downdetector", verdict: "clear", detail: "page reports no current problems" };
+    }
+    if (/problems|issues|outage|degraded|disruption/i.test(h1)) {
+      return {
+        source: "downdetector",
+        verdict: "problem",
+        severity: "degraded",
+        title: `Possible service degradation reported for ${service.name} (DownDetector)`,
+        body: `DownDetector is reporting problems for ${service.name}.`,
+        link: service.downDetectorUrl,
+        detail: h1.replace(/^#\s*/, ""),
+      };
+    }
+    const blocked = looksLikeChallenge(body);
+    if (blocked) downDetectorBlocked++;
+    return {
+      source: "downdetector",
+      verdict: "unknown",
+      detail: blocked ? "challenge page - source blocked" : "no recognisable status line",
+    };
+  } catch (e: any) {
+    snapshot.errors.push(`${service.name}: DownDetector fetch failed for ${service.downDetectorUrl} (${e?.name || "error"})`);
+    return { source: "downdetector", verdict: "unknown", detail: `page unreachable (${e?.name || "error"})` };
+  }
+}
+
+/** website / ssl / dns monitors (gated by UPTIME_MONITORS_ENABLED). */
+async function observeMonitor(service: { name: string; monitorKind: string; monitorUrl: string | null; monitorConfig: unknown }): Promise<SourceObservation | null> {
+  if (service.monitorKind === "vendor" || !service.monitorUrl) return null;
+  if (process.env.UPTIME_MONITORS_ENABLED === "false") return null;
+  const kind = service.monitorKind as "website" | "ssl" | "dns";
+  const cfg = (service.monitorConfig || {}) as { expectStatus?: number; sslWarnDays?: number };
+  try {
+    if (kind === "website") {
       const resp = await fetch(service.monitorUrl, { signal: AbortSignal.timeout(15000) });
       const expect = cfg.expectStatus || 200;
-      if (resp.status !== expect) { problem = `HTTP ${resp.status} (expected ${expect})`; severity = "outage"; }
-    } else if (service.monitorKind === "ssl") {
-      source = "statuspage";
+      if (resp.status !== expect) {
+        return { source: "website", verdict: "problem", severity: "outage", title: `${service.name}: HTTP ${resp.status} (expected ${expect})`, body: `website monitor (${service.monitorUrl})`, link: service.monitorUrl, detail: `HTTP ${resp.status}` };
+      }
+      return { source: "website", verdict: "clear", detail: `HTTP ${resp.status} as expected` };
+    }
+    if (kind === "ssl") {
       const u = new URL(service.monitorUrl);
-      const host = u.hostname; const port = u.port ? Number(u.port) : 443;
+      const host = u.hostname;
+      const port = u.port ? Number(u.port) : 443;
       const days = await new Promise<number>((resolve, reject) => {
         const socket = tls.connect({ host, port, servername: host, rejectUnauthorized: false }, () => {
           const cert = socket.getPeerCertificate();
@@ -284,45 +329,160 @@ async function checkNetworkService(service: { id: string; name: string; monitorK
         socket.on("error", reject);
       });
       const warnDays = cfg.sslWarnDays || 30;
-      if (days <= 0) { problem = "SSL certificate expired"; severity = "outage"; }
-      else if (days <= warnDays) { problem = `SSL certificate expires in ${days} days`; severity = "informational"; }
-    } else if (service.monitorKind === "dns") {
-      source = "statuspage";
-      const u = new URL(service.monitorUrl);
-      await dns.resolve4(u.hostname);
+      if (days <= 0) {
+        return { source: "ssl", verdict: "problem", severity: "outage", title: `${service.name}: SSL certificate expired`, body: `ssl monitor (${service.monitorUrl})`, link: service.monitorUrl, detail: "certificate expired" };
+      }
+      if (days <= warnDays) {
+        return { source: "ssl", verdict: "problem", severity: "informational", title: `${service.name}: SSL certificate expires in ${days} days`, body: `ssl monitor (${service.monitorUrl})`, link: service.monitorUrl, detail: `${days} days left` };
+      }
+      return { source: "ssl", verdict: "clear", detail: `certificate valid for ${days} more days` };
     }
+    const u = new URL(service.monitorUrl);
+    await dns.resolve4(u.hostname);
+    return { source: "dns", verdict: "clear", detail: `${u.hostname} resolves` };
   } catch (e: any) {
-    problem = `${service.monitorKind} check failed: ${e?.message || e}`;
-    severity = "outage";
+    return {
+      source: kind,
+      verdict: "problem",
+      severity: "outage",
+      title: `${service.name}: ${kind} check failed: ${e?.message || e}`,
+      body: `${kind} monitor (${service.monitorUrl})`,
+      link: service.monitorUrl,
+      detail: e?.message || String(e),
+    };
   }
+}
+
+const SEVERITY_RANK: Record<string, number> = { informational: 0, degraded: 1, outage: 2 };
+
+function severityRank(severity: string): number {
+  return SEVERITY_RANK[severity] ?? 0;
+}
+
+/** The report worth showing as the alert: a titled source beats DownDetector's generic line. */
+function primaryProblem(problems: SourceObservation[]): SourceObservation {
+  const titled = problems.find((o) => o.source !== "downdetector" && o.title) ?? problems.find((o) => o.title);
+  return titled ?? problems[0] ?? { source: "rss", verdict: "problem", detail: "unclassified problem report" };
+}
+
+function overallVerdict(observations: SourceObservation[]): SourceVerdict {
+  if (observations.some((o) => o.verdict === "problem")) return "problem";
+  if (observations.some((o) => o.verdict === "restored")) return "restored";
+  if (observations.some((o) => o.verdict === "clear")) return "clear";
+  return "unknown";
+}
+
+function describeSources(observations: SourceObservation[]): string {
+  return observations.map((o) => `${o.source} ${o.verdict}`).join(", ") || "no monitored sources configured";
+}
+
+async function applyObservations(service: { id: string; name: string }, observations: SourceObservation[]): Promise<void> {
+  const problems = observations.filter((o) => o.verdict === "problem");
+  const restored = observations.filter((o) => o.verdict === "restored");
+  const clears = observations.filter((o) => o.verdict === "clear");
+
   const active = await prisma.serviceAlert.findFirst({
     where: { serviceId: service.id, status: "active" },
     orderBy: { detectedAt: "desc" },
   });
-  if (problem) {
+
+  if (problems.length) {
     clearStreak.delete(service.id);
+    const primary = primaryProblem(problems);
+    const severity = problems.reduce<string>(
+      (worst, p) => (severityRank(p.severity || "degraded") > severityRank(worst) ? p.severity || "degraded" : worst),
+      "informational",
+    );
     if (!active) {
       await prisma.serviceAlert.create({
         data: {
-          serviceId: service.id, title: `${service.name}: ${problem}`,
-          description: `${service.monitorKind} monitor (${service.monitorUrl})`,
-          severity, status: "active", source, sourceUrl: service.monitorUrl, detectedAt: new Date(),
+          serviceId: service.id,
+          title: primary.title || `Possible outage reported for ${service.name}`,
+          description: primary.body || null,
+          severity,
+          status: "active",
+          source: primary.source,
+          sourceUrl: primary.link || null,
+          detectedAt: new Date(),
         },
       });
       snapshot.created++;
-      log("warn", `New network alert for ${service.name}: ${problem}`);
+      log("warn", `New active alert for ${service.name}: ${primary.title} (${describeSources(problems)})`);
+      return;
+    }
+    if (active.source === "manual") return; // a human is tracking this one
+    const nextTitle = primary.title || active.title;
+    const nextDescription = primary.body || active.description;
+    const nextUrl = primary.link || active.sourceUrl;
+    if (nextTitle !== active.title || nextDescription !== active.description || nextUrl !== active.sourceUrl || severity !== active.severity || primary.source !== active.source) {
+      await prisma.serviceAlert.update({
+        where: { id: active.id },
+        data: { title: nextTitle, description: nextDescription, sourceUrl: nextUrl, severity, source: primary.source },
+      });
+      snapshot.updated++;
     }
     return;
   }
-  if (!active || active.source === "manual") return;
-  const streak = (clearStreak.get(service.id) || 0) + 1;
-  clearStreak.set(service.id, streak);
-  if (streak >= 2) {
-    await prisma.serviceAlert.update({ where: { id: active.id }, data: { status: "resolved", resolvedAt: new Date() } });
+
+  if (!active || active.source === "manual") {
     clearStreak.delete(service.id);
-    snapshot.resolved++;
-    log("info", `Auto-resolved network alert for ${service.name}`);
+    return;
   }
+
+  const append = (reason: string) => `${reason}${active.description ? `\n\n${active.description}` : ""}`;
+
+  const restoredItem = restored[0];
+  if (restoredItem) {
+    clearStreak.delete(service.id);
+    await prisma.serviceAlert.update({
+      where: { id: active.id },
+      data: { status: "resolved", resolvedAt: new Date(), description: append(`Auto-resolved: ${restoredItem.title}`) },
+    });
+    snapshot.resolved++;
+    log("info", `Auto-resolved alert for ${service.name}: ${restoredItem.title}`);
+    return;
+  }
+
+  const alertAge = Date.now() - new Date(active.detectedAt).getTime();
+
+  if (clears.length) {
+    // At least one source is readable and positively clear and none reports a
+    // problem - an unreadable source does not veto that. Two polls in a row,
+    // so a single missed item cannot flap the alert off and on.
+    const streak = (clearStreak.get(service.id) || 0) + 1;
+    clearStreak.set(service.id, streak);
+    if (streak >= REQUIRED_CLEAR_POLLS && alertAge >= MIN_ALERT_AGE_MS) {
+      await prisma.serviceAlert.update({
+        where: { id: active.id },
+        data: {
+          status: "resolved",
+          resolvedAt: new Date(),
+          description: append(`Auto-resolved: no monitored source reports an active incident or degradation for ${service.name} (${describeSources(observations)}).`),
+        },
+      });
+      clearStreak.delete(service.id);
+      snapshot.resolved++;
+      log("info", `Auto-resolved alert for ${service.name} (all clear from ${clears.map((c) => c.source).join(", ")})`);
+    }
+    return;
+  }
+
+  // Nothing readable: no source can confirm or deny the incident. Hold the
+  // alert - but not past the ceiling, or a permanently blocked source would
+  // keep an incident from weeks ago on the banner.
+  clearStreak.delete(service.id);
+  if (alertAge < STALE_AFTER_MS) return;
+  await prisma.serviceAlert.update({
+    where: { id: active.id },
+    data: {
+      status: "resolved",
+      resolvedAt: new Date(),
+      description: append(`Auto-resolved as stale: no monitored source has reported this incident in the last ${STALE_AFTER_HOURS}h, so it is treated as over (${describeSources(observations)}).`),
+    },
+  });
+  snapshot.staleResolved++;
+  snapshot.resolved++;
+  log("info", `Auto-resolved stale alert for ${service.name} (${STALE_AFTER_HOURS}h with no readable source: ${describeSources(observations)})`);
 }
 
 export async function runAlertCheck(): Promise<MonitorSnapshot> {
@@ -331,7 +491,10 @@ export async function runAlertCheck(): Promise<MonitorSnapshot> {
   snapshot.created = 0;
   snapshot.updated = 0;
   snapshot.resolved = 0;
+  snapshot.staleResolved = 0;
   snapshot.errors = [];
+  const sourceStatus: Record<string, ServiceSourceStatus> = {};
+  downDetectorBlocked = 0;
   try {
     const services = await prisma.serviceAlertService.findMany({
       where: { enabled: true, monitorEnabled: true },
@@ -339,15 +502,33 @@ export async function runAlertCheck(): Promise<MonitorSnapshot> {
     });
     for (const service of services) {
       snapshot.checkedServices++;
-      if (service.monitorKind !== "vendor" && process.env.UPTIME_MONITORS_ENABLED !== "false") {
-        await checkNetworkService(service);
-      } else {
-        await checkService(service);
+      try {
+        const observations = (
+          await Promise.all([
+            observeFeed(service),
+            observeStatusPage(service),
+            observeDownDetector(service),
+            observeMonitor(service),
+          ])
+        ).filter((o): o is SourceObservation => o !== null);
+        sourceStatus[service.id] = {
+          name: service.name,
+          checkedAt: new Date().toISOString(),
+          verdict: overallVerdict(observations),
+          sources: observations.map((o) => ({ source: o.source, verdict: o.verdict, detail: o.detail })),
+        };
+        await applyObservations(service, observations);
+      } catch (e: any) {
+        snapshot.errors.push(`${service.name}: ${e?.message || String(e)}`);
       }
     }
+    if (downDetectorBlocked > 0) {
+      snapshot.errors.push(`DownDetector: ${downDetectorBlocked} page(s) returned a challenge page - treated as unknown, they no longer block auto-resolution`);
+    }
+    snapshot.sourceStatus = sourceStatus;
     snapshot.lastCheckAt = new Date().toISOString();
     snapshot.lastRunMs = Date.now() - started;
-    log("info", `Check finished: ${services.length} services, ${snapshot.created} created, ${snapshot.resolved} resolved, ${snapshot.errors.length} errors`);
+    log("info", `Check finished: ${services.length} services, ${snapshot.created} created, ${snapshot.updated} updated, ${snapshot.resolved} resolved (${snapshot.staleResolved} stale), ${snapshot.errors.length} errors`);
   } catch (e: any) {
     snapshot.lastCheckAt = new Date().toISOString();
     snapshot.lastRunMs = Date.now() - started;
@@ -358,7 +539,7 @@ export async function runAlertCheck(): Promise<MonitorSnapshot> {
 }
 
 export function startAlertMonitor(): void {
-  log("info", "Service Alerts monitor started (5-minute interval)");
+  log("info", `Service Alerts monitor started (${POLL_INTERVAL_MS / 60000}-minute interval, ${STALE_AFTER_HOURS}h stale ceiling)`);
   // First run shortly after boot so the dashboard is populated quickly.
   setTimeout(() => { void runAlertCheck(); }, 20_000);
   setInterval(() => { void runAlertCheck(); }, POLL_INTERVAL_MS);
