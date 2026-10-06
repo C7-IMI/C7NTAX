@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { ServiceHealthPanel } from "../components/ServiceHealthPanel";
+import { BrandMark } from "../components/BrandMark";
+import { Wordmark } from "../components/Wordmark";
 import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
 import api from "../api";
 import toast from "react-hot-toast";
@@ -98,12 +100,10 @@ export function LoginPage() {
 
   if (mfaToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-surface px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-xl bg-cyber-600 flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-lg">C7</span>
-            </div>
+            <BrandMark size={48} className="mx-auto mb-4" />
             <h1 className="text-xl font-semibold text-white">Two-Factor Authentication</h1>
             <p className="text-gray-400 text-sm mt-2">Enter the 6-digit code from your authenticator app or email</p>
           </div>
@@ -119,14 +119,14 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-surface px-4 py-8">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <img src="/icon-192.png" alt="" className="w-14 h-14 rounded-xl mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white">
-            C<span className="text-cyber-400">7</span>NTAX
+          <BrandMark size={56} className="mx-auto mb-4" />
+          <h1 className="flex justify-center">
+            <Wordmark height={40} className="text-white" />
           </h1>
-          <p className="text-gray-400 text-sm mt-1">Sign in to your PSA dashboard</p>
+          <p className="text-gray-400 text-sm mt-2">Sign in to your PSA dashboard</p>
         </div>
         <form onSubmit={handleLogin} className="card space-y-4">
           <input className="input-field" type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} placeholder="Email or username" required autoFocus />
