@@ -2334,20 +2334,6 @@
     "createdAt": "2026-10-06T10:00:27.704Z"
   },
   {
-    "id": "fd454fb5-df63-41f0-a917-03f56724cdd0",
-    "action": "crm:create",
-    "entity": "crm",
-    "entityId": "cecff448-03ec-4803-a037-a0333c2f0ec2",
-    "changes": {
-      "body": "probe",
-      "type": "call",
-      "subject": "Sweep probe activity"
-    },
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "ipAddress": "::1",
-    "createdAt": "2026-10-06T10:00:27.715Z"
-  },
-  {
     "id": "31a13426-29c7-41ec-8bae-a8e0977e89d0",
     "action": "surveys:create",
     "entity": "surveys",

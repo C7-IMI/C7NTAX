@@ -69,7 +69,7 @@ export const projectSchema = z.object({
   description: z.string().nullable(),
   companyId: z.string().uuid(),
   status: projectStatusEnum.default("planning"),
-  priority: z.nativeEnum(z.enum(["low","medium","high","critical"])).default("medium"),
+  priority: z.enum(["low","medium","high","critical"]).default("medium"),
   startDate: z.string().datetime().nullable(),
   endDate: z.string().datetime().nullable(),
   budget: z.number().min(0).default(0),

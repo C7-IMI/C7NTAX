@@ -17,7 +17,7 @@ export function KumoConfigsPage() {
   const searchRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<any>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [templates, setTemplates] = useState([]);
+  const [templates, setTemplates] = useState<Array<{ id: string; name: string }>>([]);
   const [form, setForm] = useState({name:"",hostname:"",templateId:"",companyId:"",os:"",cpu:"",ram:"",storage:"",ip:"",virt:""});
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -241,6 +241,6 @@ export function KumoConfigsPage() {
     </div>
   );
 }
-function KV({ label, value }) {
+function KV({ label, value }: { label: string; value?: string | number | null }) {
   return <div><label className="text-xs text-gray-500 block mb-1">{label}</label><p className="text-sm text-white">{value || "-"}</p></div>;
 }

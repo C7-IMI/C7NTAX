@@ -24,9 +24,9 @@ export function KumoPasswordsPage() {
   const [form, setForm] = useState({ label: "", username: "", password: "", email: "", url: "", category: "", companyId: "" });
   const [revealData, setRevealData] = useState<any>(null);
   const [totpSetup, setTotpSetup] = useState<any>(null);
-  const [totpCode, setTotpCode] = useState<{code:string;remaining:number} | null>(null);
+  const [totpCode, setTotpCode] = useState<{ enabled: boolean; code: string; remaining: number } | null>(null);
   const [manualSecret, setManualSecret] = useState("");
-  const [manualTotpCode, setManualTotpCode] = useState<{code:string;remaining:number} | null>(null);
+  const [manualTotpCode, setManualTotpCode] = useState<{ enabled: boolean; code: string; remaining: number } | null>(null);
   const [showNewPwd, setShowNewPwd] = useState(false);
   const [showEditPwd, setShowEditPwd] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -110,7 +110,7 @@ export function KumoPasswordsPage() {
       fetch();
       selectPassword({ ...selected, ...editForm, password: undefined });
       if (changedPwd) {
-        setEditForm(prev => ({ ...prev, password: "" }));
+        setEditForm((prev: Record<string, unknown>) => ({ ...prev, password: "" }));
         const r = await api.post(`/kumo/passwords/${selected.id}/reveal`);
         setRevealData(r.data);
         setTimeout(() => setRevealData(null), 30000);

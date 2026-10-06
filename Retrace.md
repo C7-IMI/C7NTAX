@@ -2331,3 +2331,37 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Typecheck unchanged (web 26, api 178 pre-existing, none in the touched files); design-token lint unchanged (117 legacy hex, none new).
 - Cleanup: the probe payment and probe time entry used to prove those tables were reachable were deleted; `app_settings` left as found.
 - One self-inflicted incident: an edit joined a comment to `billingRouter.get("/payments")` and took the API down for a minute. Caught by the web app's health panel, fixed, and the API typecheck re-run against the baseline before continuing.
+---
+
+### Prompt 182 — Connect the dead Kumo search boxes, then scan the codebase for bugs and fix them
+**Timestamp:** 2026-10-06 | **Status:** Done — every fix verified live | **Duration:** ~2 h
+**BuildNotes IDs:** 2026.10.6.026 - Fourteen API endpoints that never worked, and a codebase bug sweep
+> Yes, connect them. Then scan the codebase for bugs and fix any you find
+
+**The search boxes, first**
+- Kumo Passwords and Kumo Configurations both rendered a search input wired to `onChange={() => {}}` — the box was decoration. Both now filter (label/username/email/URL/category, and name/hostname/FQDN/IP/OS), their section menus gained *Focus search*, and *Clear filters* clears the query too. Kumo Documents has no search box, so there was nothing to connect. Verified live: Passwords 5 items → "zzzznomatch" → 0 with the empty state → "a" → 4 → cleared → 5 again.
+
+**The sweep, and how it was run**
+- Wrote two throwaway scripts outside the repo: one that compiles `schema.prisma` into model/relation tables and checks every `prisma.<model>.<op>({ include/select })` in `apps/api/src` against it (the first version reported zero findings because its depth counter treated the argument object as level 2 — fixed, it produced 42 hits), and one that greps for smells (empty catches, unguarded `[0]`, `Math.max(...[])`, unawaited promises). The Prisma sweep's `_count` hits were false positives *except* where the counted relation does not exist.
+- The authoritative cross-check was the API's own typecheck: Prisma's generated types flag the same mistakes as `'…' is not assignable to type 'never'` or unknown-property errors, and they catch things a regex misses. That is what surfaced `billing.ts`'s `autoRenew`, the `items`/`lineItems` mismatch and the `_count` cases I had wrongly dismissed.
+
+**What was actually broken (all fourteen endpoints returned 500 on every call)**
+- The route handlers passed Prisma `include`/nested `create` arguments for relations the schema never declares — `Report.createdBy`, `PurchaseOrder.vendor`/`lineItems`, `Contract.company`, `Project.phases`/`tickets`/`manager`, `KnowledgeBaseArticle.author`/`category`/`versions`/`linkedTickets`, `KBCategory.children`, `Survey.questions`/`responses`, `SurveyResponse.answers`/`ticket`, `WorkflowRule.actions`, `SalesActivity.user`, `Locale._count.translations`, `ExchangeRate.from`/`to`, `ChatSession._count.messages`. The schema models these tables with FK scalar columns (`companyId`, `vendorId`, …) but no relation fields, so Prisma rejects the query before it reaches the database. Each was rebuilt with its own query and an in-memory join, preserving the shape the route intended. No schema change, no migration.
+- `POST /billing/invoices/:id/send` wrote `sentAt` (not a column) — the Send button in Finance → Invoices only ever produced "Failed". `POST /billing/agreements` wrote `autoRenew` and its PATCH wrote `price`, `cancellationDays` and `status` — all non-existent, so New Service Agreement always failed. `POST /procurement/orders` nested `lineItems: { create }` into the create call, and the UI posts `items` anyway, so the field name never matched either.
+- `GET /kb/categories` was shadowed by `GET /kb/:slug` — "categories" was looked up as an article slug.
+- `GET /contracts` also broke Finance → Contracts, and `GET /reports` broke the custom reports screen.
+- **The background worker was mailing nobody.** `startWorkers()` runs inside the API process; invoice reminders called `emailService.sendInvoiceReminder`, which does not exist, and follow-ups passed a single options object to `sendTicketFollowUp(email, ticketNumber, ticketTitle, daysWaiting, portalUrl)`, which expects five positional arguments — it would have sent `to: undefined`. Both jobs had been failing silently every 6 hours and 30 minutes. Now correct, with portal links from `WEB_ORIGIN`.
+- `projectSchema` built priority with `z.nativeEnum(z.enum([...]))`; a Zod enum is not an enum object, so `"low"` and `"high"` both failed validation. Confirmed against zod 4.3.6 before fixing.
+- Manage Roles drew a button inside a button (the member-count chip) — invalid markup, a React `validateDOMNesting` warning on every visit. The ticket detail toolbar's Email and Schedule handlers read `ticket.contact` unguarded, which throws if clicked while the ticket is still loading.
+
+**Left alone, deliberately**
+- `middleware/sessionAuth.ts` references `prisma.userSession`, which does not exist — but nothing imports the file, and the `Session` model has no `lastActivityAt`/`invalidatedAt`/`sessionToken` columns, so the middleware cannot be made to work without a schema change. Reported, not touched.
+- `packages/billing`'s `BillingEngine` and `InvoicePdf` reference fields that do not exist on the Prisma models, and `apps/api` imports `BillingEngine` without using it. Dead code, not reachable.
+- The pre-existing api typecheck remainder (156) is null-safety noise (`noUncheckedIndexedAccess`) plus two orphan seed scripts; the web and shared packages are now clean.
+
+**Verification (live)**
+- All fourteen endpoints re-probed over HTTP: 200 with real data (Contracts 1, Reports 2, PO with vendor + line item, workflow rules with actions and execution counts, survey with a real answer and its question, KB article with author, KB categories, locales, exchange rates, chat sessions).
+- Writes proven end to end and then removed: purchase order (subtotal 500, one line), service agreement, workflow rule with two actions, CRM activity, survey response with its answer, and an invoice sent draft → sent and restored to draft.
+- Full browser crawl, logged in, of all 51 static routes: **0 failed API responses, 0 console errors, 0 DOM-nesting warnings** — previously two 500s (/reports, /procurement/orders) and the /roles nesting warning.
+- Typecheck now: web **0** (was 26), shared **0** (was 1), api 156 (was 178). Design-token lint unchanged.
+- Cleanup: every probe row deleted and the invoice status restored, verified in the database and through the API; the one audit-log row the sweep created was deleted and the snapshots re-captured so they match the clean database; temporary sweep scripts deleted from `%TEMP%`.

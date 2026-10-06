@@ -11,7 +11,7 @@ import autoTable from "jspdf-autotable";
 
 interface TicketVolume { total: number; byStatus: Array<{ status: string; count: number }>; byPriority: Array<{ priority: string; count: number }>; byBoard: Array<{ board: string; count: number }>; }
 interface SlaData { metResponse: number; breachedResponse: number; metResolution: number; breachedResolution: number; totalTickets: number; }
-interface Utilization { userId: string; name: string; billable: number; nonBillable: number; }[]
+interface Utilization { userId: string; name: string; billable: number; nonBillable: number; }
 interface RevenueData { totalPaid: number; totalOutstanding: number; monthlyRevenue: Array<{ month: string; amount: number }>; }
 
 const TABS: Array<{ id: string; label: string; icon: LucideIcon; to: string }> = [
@@ -74,7 +74,7 @@ export function ReportsPage({ tab: initialTab }: { tab?: string }) {
 function DashboardTab() {
   const [ticketVolume, setTicketVolume] = useState<TicketVolume | null>(null);
   const [sla, setSla] = useState<SlaData | null>(null);
-  const [utilization, setUtilization] = useState<Utilization>([]);
+  const [utilization, setUtilization] = useState<Utilization[]>([]);
   const [revenue, setRevenue] = useState<RevenueData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -516,7 +516,7 @@ function ReportPreview({ data, type, compact }: { data: unknown; type: string; c
   if (Array.isArray(data)) {
     const arr = data as Array<Record<string,unknown>>;
     if (arr.length === 0) return <p className="text-gray-500 text-sm">No records found</p>;
-    const cols = Object.keys(arr[0]).filter(k => !k.startsWith("_"));
+    const cols = Object.keys(arr[0] ?? {}).filter(k => !k.startsWith("_"));
     return (
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
@@ -588,6 +588,6 @@ function renderTable(data: unknown): string {
   const obj = data as Record<string,unknown>;
   const arr = (Array.isArray(obj.data) ? obj.data : Array.isArray(obj) ? obj : []) as Array<Record<string,unknown>>;
   if (!arr.length) return "<p>No records</p>";
-  const keys = Object.keys(arr[0]);
+  const keys = Object.keys(arr[0] ?? {});
   return '<table><thead><tr>'+keys.map(k=>'<th>'+k+'</th>').join("")+'</tr></thead><tbody>'+arr.map(row=>'<tr>'+keys.map(k=>'<td>'+(typeof row[k]==="object"?JSON.stringify(row[k]):String(row[k]??""))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';
 }

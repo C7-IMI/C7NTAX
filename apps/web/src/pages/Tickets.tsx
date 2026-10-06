@@ -981,7 +981,7 @@ export function TicketDetailPage() {
   useEffect(() => {
     if (activeTab === "expenses" || activeTab === "finance") api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((e: any) => e.ticketId === id))).catch(() => {});
     if (activeTab === "schedule") api.get("/schedule?limit=200").then(r => setSchedEntries((Array.isArray(r.data) ? r.data : (r.data?.data || [])).filter((e: any) => e.ticketId === id))).catch(() => {});
-    if (activeTab === "audittrail") api.get(`/system/audit-logs?entity=tickets&entityId=${encodeURIComponent(id)}`).then(r => setAuditEntries(r.data?.data || [])).catch(() => {});
+    if (activeTab === "audittrail") api.get(`/system/audit-logs?entity=tickets&entityId=${encodeURIComponent(id ?? "")}`).then(r => setAuditEntries(r.data?.data || [])).catch(() => {});
     if (activeTab === "configurations") { api.get("/kumo/assets?limit=50").then(r => setAssetResults(r.data?.data || r.data || [])).catch(() => {}); api.get("/kumo/configs/servers").then(r => setKumoConfigResults(r.data?.data || r.data || [])).catch(() => {}); }
     if (activeTab === "links") { api.get("/tickets?limit=200").then(r => { const all = r.data?.data || []; setIncomingLinks(all.filter((t: any) => t.id !== id && Array.isArray(t.customFields?.ticketLinks) && t.customFields.ticketLinks.some((l: any) => l.ticketId === id)).map((t: any) => ({ ticketId: t.id, ticketNumber: t.ticketNumber, title: t.title }))); }).catch(() => {}); }
   }, [activeTab, id, tabRefresh]);
@@ -1096,6 +1096,7 @@ export function TicketDetailPage() {
   };
 
   const openEmailDialog = () => {
+    if (!ticket) return;
     const contact = ticket.contact as any;
     if (!contact?.email) { toast.error("This ticket has no contact email address"); return; }
     setEmailForm({ subject: `Re: ${ticket.ticketNumber || id} — ${ticket.title || ""}`, body: "" });
@@ -1119,6 +1120,7 @@ export function TicketDetailPage() {
   };
 
   const openFollowUp = () => {
+    if (!ticket) return;
     const start = new Date();
     start.setDate(start.getDate() + 1);
     start.setHours(9, 0, 0, 0);
@@ -1379,7 +1381,7 @@ export function TicketDetailPage() {
                 <button role="menuitem" onClick={copyTicketLink} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white rounded">Copy ticket link</button>
                 <div className="border-t border-surface-border my-1" />
                 <p className="px-3 py-1 text-[10px] uppercase text-gray-500">Set status</p>
-                {[["new", "New"], ["in_progress", "In Progress"], ["waiting_on_client", "Waiting on Client"], ["on_hold", "On Hold"], ["resolved", "Resolved"], ["closed", "Closed"]].map(([value, label]) => (
+                {([["new", "New"], ["in_progress", "In Progress"], ["waiting_on_client", "Waiting on Client"], ["on_hold", "On Hold"], ["resolved", "Resolved"], ["closed", "Closed"]] as Array<[string, string]>).map(([value, label]) => (
                   <button key={value} role="menuitem" disabled={moreActionsBusy || ticket.status === value} onClick={() => void applyTicketField("status", value)} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white disabled:opacity-40 rounded">{label}</button>
                 ))}
                 <div className="border-t border-surface-border my-1" />

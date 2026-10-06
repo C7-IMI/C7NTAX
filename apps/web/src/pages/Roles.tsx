@@ -275,35 +275,40 @@ export function RolesPage() {
               <div className="p-6 text-center text-gray-500 text-sm">No roles found</div>
             ) : (
               roles.map(r => (
-                <button
+                <div
                   key={r.id}
-                  onClick={() => selectRole(r)}
                   onContextMenu={(e) => menu.open(e, roleMenuEntries(r), roleMenuHeader(r))}
-                  onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, roleMenuEntries(r), roleMenuHeader(r))}
-                  className={`w-full text-left px-4 py-3 border-b border-surface-border/50 last:border-0 transition-colors hover:bg-surface-lighter/50 ${
+                  className={`relative border-b border-surface-border/50 last:border-0 ${
                     selected?.id === r.id ? "bg-cyber-600/10 border-l-2 border-l-cyber-500" : ""
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-1.5 rounded ${r.isDefault ? "bg-cyber-600/20" : "bg-surface-lighter"}`}>
-                      <Shield size={16} className={r.isDefault ? "text-cyber-400" : "text-gray-400"} />
+                  <button
+                    onClick={() => selectRole(r)}
+                    onContextMenu={(e) => menu.open(e, roleMenuEntries(r), roleMenuHeader(r))}
+                    onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, roleMenuEntries(r), roleMenuHeader(r))}
+                    className="w-full text-left px-4 py-3 pr-16 transition-colors hover:bg-surface-lighter/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-1.5 rounded ${r.isDefault ? "bg-cyber-600/20" : "bg-surface-lighter"}`}>
+                        <Shield size={16} className={r.isDefault ? "text-cyber-400" : "text-gray-400"} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{r.name}</p>
+                        <p className="text-xs text-gray-500 capitalize">{r.systemRole.replace(/_/g, " ")}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{r.name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{r.systemRole.replace(/_/g, " ")}</p>
-                    </div>
-                    {r._count?.users !== undefined && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); selectRole(r); setTimeout(openMembers, 50); }}
-                        className="flex items-center gap-1 text-xs font-medium bg-cyber-600/10 text-cyber-400 hover:bg-cyber-600/25 hover:text-cyber-300 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
-                        title="Manage role members"
-                      >
-                        <Users size={10} />
-                        {r._count.users}
-                      </button>
-                    )}
-                  </div>
-                </button>
+                  </button>
+                  {r._count?.users !== undefined && (
+                    <button
+                      onClick={() => { selectRole(r); setTimeout(openMembers, 50); }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-medium bg-cyber-600/10 text-cyber-400 hover:bg-cyber-600/25 hover:text-cyber-300 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                      title="Manage role members"
+                    >
+                      <Users size={10} />
+                      {r._count.users}
+                    </button>
+                  )}
+                </div>
               ))
             )}
           </div>
