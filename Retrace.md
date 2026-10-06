@@ -1492,6 +1492,94 @@
 - Changelog policy applied: BuildNotes entry 2026.8.31.001 + What's New (live via API) + this Retrace entry.
 
 
+### Prompt 126 — Troubleshoot dark/light mode toggle
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~10 min
+**BuildNotes IDs:** None (diagnosis only; no source change in this prompt)
+> troubleshoto why dark/light mode is not functionting properly. when clicking on the icon at the top of the app, the color scheme does not change
+
+**Changes:**
+- Traced `ThemeProvider`, the top-bar toggle, Tailwind color variables, and the light-theme CSS; verified persisted light mode changes computed surface colors.
+- The actual top-bar click could not be tested in the unauthenticated browser session; the following prompt requested and received the contrast/style changes.
+
+
+### Prompt 127 — Improve light-mode contrast and keep alert banner red
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #1 (2026.10.5.001)
+> adjust light mode css so that everyting is more legible. I can't see the borders very well and some of the text is hard to read. esepcially the links. Do this throughout the app. THe service alerts banner should always be red as it is in dark mode
+
+**Changes:**
+- `apps/web/src/index.css` — darkened light-mode link colors, muted text, and surface borders; added theme-specific service-alert banner colors.
+- `apps/web/src/hooks/useTheme.tsx` — removed duplicate dynamically injected light-theme declarations; `index.css` is the single source of theme tokens.
+- `apps/web/src/components/Layout.tsx` — applied dedicated banner classes for readable red styling in both themes.
+- Live computed-style checks confirmed the light palette and preserved dark banner colors.
+
+
+### Prompt 128 — Sync changes to GitHub
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~5 min
+**BuildNotes IDs:** None (GitHub sync only; no additional source change)
+> sync changes to github
+
+**Changes:**
+- Committed and pushed the light-theme and banner changes to `origin/main` as `89bed28` (`Improve light theme contrast`).
+- Left the build-generated `apps/web/tsconfig.tsbuildinfo` change unstaged.
+
+
+### Prompt 129 — Remove Configure from the Service Alerts display page
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~5 min
+**BuildNotes IDs:** #2 (2026.10.5.002)
+> remove the configure button from the Service alerts page. Do not touch the service alerts configuration section in adminstration. The service alerts page should be only for displaying alerts that have been configured in administration
+
+**Changes:**
+- `apps/web/src/pages/ServiceAlerts.tsx` — removed the Configure link and unused imports; kept Refresh and did not change the Administration configuration section.
+- Live page check confirmed the Configure link is absent and Refresh remains.
+
+
+### Prompt 130 — Apply configured sort order to Service Alerts
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** #3 (2026.10.5.003)
+> the sort order does not work when configure service alerts. no matter what number I put the order does not change on the service alerts page.
+
+**Changes:**
+- `apps/web/src/pages/ServiceAlerts.tsx` — explicitly sorts monitored service cards by configured `sortOrder` (name as tie-breaker) and active alerts by related service order (newest detection as tie-breaker); recently resolved alerts remain chronological.
+- Verified the authenticated API returned configured order values and the live page rendered active alerts as Azure then AWS and service cards in configured order.
+
+
+### Prompt 131 — Standardize and backfill change records
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #4 (2026.10.5.004)
+> check to make sure What's New and the buildNotes are being updated after every change made. update them accordingly if not. This will be the standard from now on. Also, every prompt should be logged in Retrace. View the files to understand timestamps and verbosity. do it retroactively for everything so far
+
+**Changes:**
+- Added `.github/copilot-instructions.md` to make per-prompt Retrace logging and per-change BuildNotes/What's New updates the ongoing repository standard.
+- Added BuildNotes entries for the three code-change groups and this policy/backfill; What's New remains sourced from root `BuildNotes.md`.
+- Backfilled Prompts 126–131 here with original wording, timestamps, completion status, duration, changes, and BuildNotes references where applicable.
+- Regenerated the static What's New fallbacks from the root BuildNotes source.
+
+
+### Prompt 132 — Audit and complete ticket-detail actions and tabs
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~60 min
+**BuildNotes IDs:** #1 (2026.10.5.005)
+> Under ticket details review each button and tab to see which one does not work and hasn't been implemented. Build out the features and functionality of all the missing ones. Build out the features and options using ConnectWise Asio, HaloPSA, Kantata, Scoro, and AutoTaskPSA, ConnectWise PSA as layout and functionality references. See screenshot for reference
+
+**Changes:**
+- Audited all 12 ticket-detail tabs and toolbar actions against the screenshot and live page. Found the note UI posting to a missing endpoint, Audit Trail filtering only after a global 500-row limit, metadata-only attachments, placeholder Email/Print/Follow Up/More Actions controls, incomplete refresh behavior, and a time-entry modal that closed on failure.
+- `apps/web/src/pages/Tickets.tsx` — implemented contact email composition, ticket printing, follow-up scheduling with assignee and notes, More Actions status/priority controls, actual attachment upload/download, stable accessible names, reliable Add Note focus, and refresh/data-loading fixes.
+- `apps/api/src/routes/tickets/index.ts` — added ticket-scoped comment and SMTP email endpoints; implemented authenticated attachment storage/download/delete with a 5 MB upload limit and access checks.
+- `apps/api/src/routes/system.ts` — added server-side entity/entityId filters for audit logs; `apps/web/src/index.css` adds print-only ticket styles; `.gitignore` excludes runtime attachment files.
+- Live browser checks confirmed all 12 tabs render, action dialogs expose their expected fields, More Actions lists ticket operations, and the Add Note action focuses its input. Restarted API/web with `startup/c7ntax-boot.ps1 -SkipSeed` after confirming the schema hash was unchanged; comment/email/attachment validation requests now reach their handlers, and the Audit Trail displays the ticket's six existing records. No email was sent or test record created.
+- API lint is not clean repository-wide due to existing errors in changelog parsing, legacy ticket routes, seeds, and inference modules; changed API route bodies report no editor diagnostics.
+
+
+### Prompt 133 — Sync changes to GitHub
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~5 min
+**BuildNotes IDs:** None (GitHub sync only; no additional project change)
+> sync to github
+
+**Changes:**
+- Staged the reviewed application, documentation, generated What's New, and repository instruction changes for `main`.
+- Excluded the generated `apps/web/tsconfig.tsbuildinfo` file from the commit.
+
+
 
 
 

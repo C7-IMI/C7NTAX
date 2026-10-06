@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 import toast from "react-hot-toast";
 import {
   AlertTriangle, WifiOff, Activity, CheckCircle2, RefreshCw, ExternalLink,
-  Globe, TrendingDown, Info, ShieldCheck, CircleDot, Radio, Settings,
+  Globe, TrendingDown, Info, ShieldCheck, CircleDot, Radio,
 } from "lucide-react";
 
 interface ServiceAlertItem {
@@ -19,7 +18,7 @@ interface ServiceAlertItem {
   sourceUrl: string | null;
   detectedAt: string;
   resolvedAt: string | null;
-  service: { id: string; name: string; category: string; statusPageUrl: string | null; downDetectorUrl: string | null; rssUrl: string | null };
+  service: { id: string; name: string; category: string; statusPageUrl: string | null; downDetectorUrl: string | null; rssUrl: string | null; sortOrder: number };
 }
 
 interface AlertService {
@@ -90,7 +89,12 @@ export function ServiceAlertsPage() {
   // TOKEN-SAVE-06: visibility-gated background refresh
   useVisibilityPolling(() => void load(true), 60_000);
 
-  const enabledServices = services.filter((s) => s.enabled);
+  const enabledServices = services
+    .filter((s) => s.enabled)
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+  const orderedActive = [...active].sort((a, b) =>
+    a.service.sortOrder - b.service.sortOrder || new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime()
+  );
   const outageCount = active.filter((a) => a.severity === "outage").length;
   const degradedCount = active.filter((a) => a.severity === "degraded").length;
   const operational = enabledServices.filter((s) => s.alerts.length === 0);
@@ -110,9 +114,6 @@ export function ServiceAlertsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/admin/service-alerts" className="btn-secondary text-sm flex items-center gap-1.5">
-            <Settings size={15} /> Configure
-          </Link>
           <button
             className="btn-secondary text-sm flex items-center gap-1.5"
             onClick={() => { setRefreshing(true); void load(true); }}
@@ -159,7 +160,7 @@ export function ServiceAlertsPage() {
       {active.length > 0 && (
         <section className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Active Alerts</h3>
-          {active.map((a) => (
+          {orderedActive.map((a) => (
             <div
               key={a.id}
               className={`card border-l-4 flex items-start gap-4 ${

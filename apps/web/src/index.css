@@ -158,3 +158,33 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; 
 .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.4s ease infinite; border-radius: 6px; }
 @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+.ticket-print-only { display: none; }
+
+@media print {
+  @page { margin: 16mm; }
+  body { background: #ffffff !important; color: #111111 !important; }
+  body * { visibility: hidden !important; }
+  .ticket-print-only,
+  .ticket-print-only * { visibility: visible !important; }
+  .ticket-print-only {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 0;
+    color: #111111 !important;
+    background: #ffffff !important;
+    font: 12pt/1.5 Georgia, serif;
+  }
+  .ticket-print-only h1 { font-size: 20pt; margin-bottom: 4pt; }
+  .ticket-print-only h2 { font-size: 16pt; margin-bottom: 8pt; }
+  .ticket-print-only h3 { font-size: 13pt; margin: 16pt 0 6pt; }
+  .ticket-print-only dl { display: grid; grid-template-columns: 1fr 1fr; gap: 6pt 18pt; margin: 14pt 0; }
+  .ticket-print-only dl div { display: flex; gap: 6pt; }
+  .ticket-print-only dt { font-weight: 700; }
+  .ticket-print-only dd { margin: 0; }
+  .ticket-print-activity { border-top: 1px solid #cccccc; padding: 6pt 0; break-inside: avoid; }
+  .ticket-print-activity p { white-space: pre-wrap; margin: 3pt 0; }
+  .ticket-print-activity small { color: #555555; }
+}

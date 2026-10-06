@@ -1,0 +1,7 @@
+# Repository Change Logging
+
+- Log every user prompt in `Retrace.md`, including questions, investigations, operational requests, and prompts that result in no code change. Append the next sequential Prompt number and preserve the user's prompt text verbatim in a blockquote. Follow the existing timestamp, status, duration, changes, and BuildNotes ID format.
+- For every completed project change, add a dated, versioned entry to the root `BuildNotes.md`. Use `node scripts/next-version.mjs` to obtain the next version; do not manually guess the date or build number. Include concise `[New]`, `[Update]`, or `[Fix]` bullets and verification where relevant.
+- The root `BuildNotes.md` is the source of truth for What's New. After changing it, run `node scripts/generate-buildnotes.mjs` to refresh `apps/web/public/BuildNotes.md` and `apps/api/src/BuildNotes.json`. Do not edit those generated files directly. The live What's New page reads BuildNotes through the API.
+- Include the corresponding BuildNotes version in each Retrace entry for a project change. For prompts with no project change, log the prompt in Retrace and state that no BuildNotes entry applies.
+- Before finishing a task, verify the new BuildNotes entry appears at the top, the generated fallbacks match it, and the prompt has been recorded in Retrace.

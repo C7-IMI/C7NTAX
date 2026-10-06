@@ -1,14 +1,44 @@
 import { Router } from "express";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { prisma } from "../../index";
 import { authenticate, requirePermission, type AuthRequest } from "../../middleware/auth";
 import { Permission, TicketStatus } from "@C7NTAX/shared";
 import { AppError } from "../../middleware/errorHandler";
 import { onTicketStatusChange, extractPriority } from "./automations";
 import { generateTicketNumber } from "../../services/ticketNumber";
+import { EmailService } from "@C7NTAX/email";
 import { v4 as uuid } from "uuid";
 
 export const ticketsRouter = Router();
 ticketsRouter.use(authenticate);
+
+const emailService = new EmailService();
+const maxAttachmentBytes = 5 * 1024 * 1024;
+const apiRoot = process.env.C7NTAX_ROOT
+  ? path.resolve(process.env.C7NTAX_ROOT, "apps", "api")
+  : path.basename(process.cwd()).toLowerCase() === "api"
+    ? process.cwd()
+    : path.resolve(process.cwd(), "apps", "api");
+const ticketAttachmentRoot = path.resolve(
+  process.env.TICKET_ATTACHMENT_DIR || path.join(apiRoot, "data", "ticket-attachments")
+);
+
+function canAccessTicket(req: AuthRequest, companyId: string | null): boolean {
+  return req.user!.permissions.includes(Permission.TicketViewAll) || !req.user!.companyId || req.user!.companyId === companyId;
+}
+
+function resolveStoredAttachment(storagePath: string): string | null {
+  if (!storagePath || storagePath === "pending-upload") return null;
+  const filePath = path.resolve(ticketAttachmentRoot, ...storagePath.split(/[\\/]/));
+  const relativePath = path.relative(ticketAttachmentRoot, filePath);
+  if (!relativePath || relativePath.startsWith("..") || path.isAbsolute(relativePath)) return null;
+  return filePath;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[char]!);
+}
 
 // ── List tickets ──
 ticketsRouter.get("/", requirePermission(Permission.TicketView), async (req: AuthRequest, res, next) => {
@@ -196,6 +226,21 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
 });
 
 // ── Add comment to ticket ──
+ticketsRouter.post("/:id/comments", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const body = typeof req.body?.body === "string" ? req.body.body.trim() : "";
+    if (!body) throw new AppError("Comment is required", 400);
+    const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { id: true, companyId: true } });
+    if (!ticket) throw new AppError("Ticket not found", 404);
+    if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
+    const comment = await prisma.ticketComment.create({
+      data: { ticketId: ticket.id, body, authorId: req.user!.userId, isInternal: Boolean(req.body.isInternal) },
+      include: { author: { select: { id: true, firstName: true, lastName: true } } },
+    });
+    res.status(201).json(comment);
+  } catch (e) { next(e); }
+});
+
 ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
     const { content, isInternal } = req.body;
@@ -207,30 +252,104 @@ ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async
   } catch (e) { next(e); }
 });
 
-// ── Attachments (real TicketAttachment records) ──
-ticketsRouter.post("/:id/attachments", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+// ── Email ticket contact ──
+ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    const { filename, mimeType, size, storagePath } = req.body;
-    if (!filename) throw new AppError("filename required");
-    const att = await prisma.ticketAttachment.create({
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: req.params.id },
+      include: { contact: { select: { email: true } }, company: { select: { name: true } } },
+    });
+    if (!ticket) throw new AppError("Ticket not found", 404);
+    if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
+    const recipient = ticket.contact?.email?.trim();
+    if (!recipient) throw new AppError("This ticket has no contact email address", 400);
+    const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 200) : "";
+    const body = typeof req.body?.body === "string" ? req.body.body.trim() : "";
+    if (!subject || !body) throw new AppError("Subject and message are required", 400);
+    if (body.length > 20_000) throw new AppError("Message is too long", 400);
+
+    await emailService.send({
+      to: recipient,
+      subject: `[${ticket.ticketNumber}] ${subject}`,
+      html: `<p>${escapeHtml(body).replace(/\r?\n/g, "<br>")}</p><hr><p>Ticket: ${escapeHtml(ticket.ticketNumber)} — ${escapeHtml(ticket.title)}<br>Client: ${escapeHtml(ticket.company?.name || "")}</p>`,
+    });
+    await prisma.ticketComment.create({
       data: {
-        ticketId: req.params.id,
-        filename,
-        mimeType: mimeType || "application/octet-stream",
-        size: Number(size) || 0,
-        storagePath: storagePath || "pending-upload",
-        uploadedById: req.user!.userId,
+        ticketId: ticket.id,
+        body: `To: ${recipient}\nSubject: ${subject}\n\n${body}`,
+        authorId: req.user!.userId,
+        isEmail: true,
       },
     });
-    res.status(201).json(att);
+    res.json({ sent: true, recipient });
+  } catch (e) { next(e); }
+});
+
+// ── Attachments ──
+ticketsRouter.post("/:id/attachments", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { id: true, companyId: true } });
+    if (!ticket) throw new AppError("Ticket not found", 404);
+    if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
+    const filename = typeof req.body?.filename === "string"
+      ? req.body.filename.replace(/\\/g, "/").split("/").pop()?.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 255)
+      : "";
+    const contentBase64 = req.body?.contentBase64;
+    if (!filename || typeof contentBase64 !== "string") throw new AppError("filename and file content are required", 400);
+    if (contentBase64.length > Math.ceil(maxAttachmentBytes / 3) * 4 + 4) throw new AppError("Attachment exceeds the 5 MB limit", 413);
+    const content = Buffer.from(contentBase64, "base64");
+    if (content.length > maxAttachmentBytes || content.toString("base64").replace(/=+$/, "") !== contentBase64.replace(/=+$/, "")) {
+      throw new AppError("Invalid file content or attachment exceeds the 5 MB limit", 400);
+    }
+
+    const storagePath = `${ticket.id}/${uuid()}`;
+    const filePath = resolveStoredAttachment(storagePath)!;
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, content, { flag: "wx" });
+    try {
+      const attachment = await prisma.ticketAttachment.create({
+        data: {
+          ticketId: ticket.id,
+          filename,
+          mimeType: typeof req.body.mimeType === "string" ? req.body.mimeType.slice(0, 150) : "application/octet-stream",
+          size: content.length,
+          storagePath,
+          uploadedById: req.user!.userId,
+        },
+      });
+      res.status(201).json(attachment);
+    } catch (e) {
+      await unlink(filePath).catch(() => {});
+      throw e;
+    }
+  } catch (e) { next(e); }
+});
+
+ticketsRouter.get("/:id/attachments/:attId/download", requirePermission(Permission.TicketView), async (req: AuthRequest, res, next) => {
+  try {
+    const attachment = await prisma.ticketAttachment.findFirst({
+      where: { id: req.params.attId, ticketId: req.params.id },
+      include: { ticket: { select: { companyId: true } } },
+    });
+    if (!attachment) throw new AppError("Attachment not found", 404);
+    if (!canAccessTicket(req, attachment.ticket?.companyId || null)) throw new AppError("Not authorized", 403);
+    const filePath = resolveStoredAttachment(attachment.storagePath);
+    if (!filePath) throw new AppError("File content is not available for this attachment", 404);
+    res.type(attachment.mimeType).download(filePath, attachment.filename, (e) => { if (e) next(e); });
   } catch (e) { next(e); }
 });
 
 ticketsRouter.delete("/:id/attachments/:attId", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    const att = await prisma.ticketAttachment.findFirst({ where: { id: req.params.attId, ticketId: req.params.id } });
+    const att = await prisma.ticketAttachment.findFirst({
+      where: { id: req.params.attId, ticketId: req.params.id },
+      include: { ticket: { select: { companyId: true } } },
+    });
     if (!att) throw new AppError("Attachment not found", 404);
+    if (!canAccessTicket(req, att.ticket?.companyId || null)) throw new AppError("Not authorized", 403);
     await prisma.ticketAttachment.delete({ where: { id: att.id } });
+    const filePath = resolveStoredAttachment(att.storagePath);
+    if (filePath) await unlink(filePath).catch((e: NodeJS.ErrnoException) => { if (e.code !== "ENOENT") throw e; });
     res.json({ message: "Deleted" });
   } catch (e) { next(e); }
 });

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.8.24.001 | Last Updated: 2026-08-24
+## Version: 2026.10.5.005 | Last Updated: 2026-10-05
 
 ---
 
@@ -13,6 +13,29 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.5.005 — Complete ticket-detail actions and workflows
+- **[New]** Ticket details now provide an SMTP-backed contact email composer, a print-ready ticket summary, scheduled follow-ups with date/time/assignee/notes, and a More Actions menu for editing, copying the ticket link, and changing status or priority.
+- **[New]** Ticket attachments now upload actual files (5 MB maximum) to API-managed storage and download them through authenticated ticket-scoped routes; legacy metadata-only attachments are marked unavailable, and runtime uploads are excluded from Git.
+- **[Fix]** Added the missing ticket comment endpoint used by the Notes UI; Audit Trail now filters records server-side by ticket; Refresh reloads the active tab, Finance loads its expense totals, and failed time saves keep the entry dialog open.
+- **[Verification]** All 12 ticket tabs and the action dialogs were exercised in the live web app; Add Note focus was verified. API source lint remains blocked by unrelated existing strict-TypeScript errors.
+
+## 2026.10.5.004 — Change history and prompt logging standard
+- **[Update]** Added `.github/copilot-instructions.md` to require a Retrace entry for every user prompt and a BuildNotes/What's New entry for every completed project change; documented version generation and static fallback regeneration.
+- **[Update]** Backfilled the theme, Service Alerts, and GitHub-sync work from this conversation into BuildNotes and Retrace.
+
+## 2026.10.5.003 — Service Alerts respect configured sort order
+- **[Fix]** `apps/web/src/pages/ServiceAlerts.tsx` now sorts monitored service cards by configured `sortOrder` (then name) and active alert cards by the related service's `sortOrder` (then newest detection), so administration ordering is reflected on the display page. Recently resolved alerts remain chronological.
+- **[Verification]** Live API values and rendered cards were checked; configured order was reflected in both sections.
+
+## 2026.10.5.002 — Keep Service Alerts page display-only
+- **[Update]** Removed the Configure link from `apps/web/src/pages/ServiceAlerts.tsx`; alert display and Refresh remain, while service configuration stays in Administration.
+- **[Verification]** Live page check confirmed no Configure link and Refresh remains available.
+
+## 2026.10.5.001 — Improve light-mode contrast and alert banner
+- **[Fix]** Darkened shared light-theme link, muted-text, and border colors in `apps/web/src/index.css`; removed duplicate injected light-theme CSS from `apps/web/src/hooks/useTheme.tsx` so the stylesheet is the single source of theme values.
+- **[Update]** `apps/web/src/components/Layout.tsx` now styles the global service-alert banner red in both themes, with dark red text and border on light surfaces.
+- **[Verification]** Live computed styles confirmed improved light-theme colors and preserved dark-theme banner colors.
 
 ## 2026.8.31.001 — Outage recovery: full stack restarted via boot task
 - **[Fix]** App reported "connection refused": both API (:4000) and frontend (:3010) had no listeners (last boot 2026-08-29 had finished with errors; processes were gone by 2026-08-31). Ran the C7NTAX Boot Startup scheduled task — boot completed clean: API attempt 1 OK, frontend OK, login 200, frontend check 200.

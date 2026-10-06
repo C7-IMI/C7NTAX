@@ -311,9 +311,14 @@ systemRouter.get("/changelog", (_req, res) => {
 });
 
 // ── Audit logs ──
-systemRouter.get("/audit-logs", async (_req: AuthRequest, res, next) => {
+systemRouter.get("/audit-logs", async (req: AuthRequest, res, next) => {
   try {
+    const { entity, entityId } = req.query as Record<string, string>;
+    const where: Record<string, unknown> = {};
+    if (entity) where.entity = entity;
+    if (entityId) where.entityId = entityId;
     const logs = await prisma.auditLog.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       take: 500,
     });

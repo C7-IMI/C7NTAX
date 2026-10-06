@@ -63,6 +63,22 @@ function pageWindow(current: number, total: number): (number | "gap")[] {
   return out;
 }
 
+function toLocalDateTimeValue(date: Date): string {
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      resolve(dataUrl.slice(dataUrl.indexOf(",") + 1));
+    };
+    reader.onerror = () => reject(reader.error || new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 // ── Configurable ticket list columns (PSA-style: Autotask / ConnectWise / HaloPSA reference) ──
 // Priority is available but unchecked by default.
 type TicketColumnDef = { id: string; label: string; defaultVisible: boolean; sortField?: string };
@@ -674,6 +690,8 @@ export function TicketDetailPage() {
   const [saving, setSaving] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [posting, setPosting] = useState(false);
+  const noteInputRef = useRef<HTMLInputElement>(null);
+    const [focusNoteRequested, setFocusNoteRequested] = useState(false);
   const [showTimeEntry, setShowTimeEntry] = useState(false);
   const [timeForm, setTimeForm] = useState({ startTime: "", endTime: "", calculated: "", description: "", billable: true });
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
@@ -737,10 +755,18 @@ export function TicketDetailPage() {
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [expenseForm, setExpenseForm] = useState({ description: "", amount: "", category: "other", expenseDate: "" });
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState({ title: "", startTime: "", endTime: "", location: "" });
+  const [scheduleForm, setScheduleForm] = useState({ title: "", startTime: "", endTime: "", location: "", description: "", userId: "" });
+  const [schedulePurpose, setSchedulePurpose] = useState<"schedule" | "follow-up">("schedule");
   const [showAttachDialog, setShowAttachDialog] = useState(false);
   const [attachForm, setAttachForm] = useState<{ file: File | null }>({ file: null });
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [showTimeTabAdd, setShowTimeTabAdd] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailForm, setEmailForm] = useState({ subject: "", body: "" });
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [showMoreActions, setShowMoreActions] = useState(false);
+  const [moreActionsBusy, setMoreActionsBusy] = useState(false);
+  const [tabRefresh, setTabRefresh] = useState(0);
 
   const cfArr = (key: string): any[] => Array.isArray(cf[key]) ? cf[key] : [];
   const persistCF = async (key: string, value: any[]) => {
@@ -752,12 +778,19 @@ export function TicketDetailPage() {
   const uuidish = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
   useEffect(() => {
-    if (activeTab === "expenses") api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((e: any) => e.ticketId === id))).catch(() => {});
+    if (activeTab === "expenses" || activeTab === "finance") api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((e: any) => e.ticketId === id))).catch(() => {});
     if (activeTab === "schedule") api.get("/schedule?limit=200").then(r => setSchedEntries((Array.isArray(r.data) ? r.data : (r.data?.data || [])).filter((e: any) => e.ticketId === id))).catch(() => {});
-    if (activeTab === "audittrail") api.get("/system/audit-logs").then(r => setAuditEntries((r.data?.data || []).filter((a: any) => a.entity === "ticket" && a.entityId === id))).catch(() => {});
+    if (activeTab === "audittrail") api.get(`/system/audit-logs?entity=tickets&entityId=${encodeURIComponent(id)}`).then(r => setAuditEntries(r.data?.data || [])).catch(() => {});
     if (activeTab === "configurations") { api.get("/kumo/assets?limit=50").then(r => setAssetResults(r.data?.data || r.data || [])).catch(() => {}); api.get("/kumo/configs/servers").then(r => setKumoConfigResults(r.data?.data || r.data || [])).catch(() => {}); }
     if (activeTab === "links") { api.get("/tickets?limit=200").then(r => { const all = r.data?.data || []; setIncomingLinks(all.filter((t: any) => t.id !== id && Array.isArray(t.customFields?.ticketLinks) && t.customFields.ticketLinks.some((l: any) => l.ticketId === id)).map((t: any) => ({ ticketId: t.id, ticketNumber: t.ticketNumber, title: t.title }))); }).catch(() => {}); }
-  }, [activeTab, id]);
+  }, [activeTab, id, tabRefresh]);
+
+  useEffect(() => {
+    if (activeTab === "ticket" && focusNoteRequested) {
+      noteInputRef.current?.focus();
+      setFocusNoteRequested(false);
+    }
+  }, [activeTab, focusNoteRequested]);
 
   const load = () => {
     if(!id) return;
@@ -802,7 +835,7 @@ export function TicketDetailPage() {
     finally{setPosting(false);}
   };
 
-  const handleTimeEntry = async (e: React.FormEvent) => {
+  const handleTimeEntry = async (e: React.FormEvent): Promise<boolean> => {
     e.preventDefault();
     let mins = 0;
     if (timeForm.startTime && timeForm.endTime) {
@@ -812,14 +845,146 @@ export function TicketDetailPage() {
       toast.success("Time logged"); setShowTimeEntry(false);
       setTimeForm({ startTime: "", endTime: "", calculated: "", description: "", billable: true });
       load();
-    } catch { toast.error("Failed"); }
+      return true;
+    } catch { toast.error("Failed to log time"); return false; }
   };
 
-  const calcDuration = () => {
-    if (timeForm.startTime && timeForm.endTime) {
-      const mins = Math.round((new Date(timeForm.endTime).getTime() - new Date(timeForm.startTime).getTime()) / 60000);
-      const h = Math.floor(mins / 60), m = mins % 60;
-      setTimeForm(prev => ({ ...prev, calculated: `${h}h ${m}m` }));
+  const updateTimeForm = (field: "startTime" | "endTime", value: string) => {
+    const next = { ...timeForm, [field]: value };
+    if (next.startTime && next.endTime) {
+      const mins = Math.round((new Date(next.endTime).getTime() - new Date(next.startTime).getTime()) / 60000);
+      next.calculated = mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "";
+    } else {
+      next.calculated = "";
+    }
+    setTimeForm(next);
+  };
+
+  const refreshDetails = () => {
+    load();
+    setTabRefresh((value) => value + 1);
+  };
+
+  const openEmailDialog = () => {
+    const contact = ticket.contact as any;
+    if (!contact?.email) { toast.error("This ticket has no contact email address"); return; }
+    setEmailForm({ subject: `Re: ${ticket.ticketNumber || id} — ${ticket.title || ""}`, body: "" });
+    setShowEmailDialog(true);
+  };
+
+  const sendContactEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSendingEmail(true);
+    try {
+      await api.post(`/tickets/${id}/email`, emailForm);
+      toast.success("Email sent to contact");
+      setShowEmailDialog(false);
+      setEmailForm({ subject: "", body: "" });
+      load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Could not send email");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const openFollowUp = () => {
+    const start = new Date();
+    start.setDate(start.getDate() + 1);
+    start.setHours(9, 0, 0, 0);
+    const end = new Date(start.getTime() + 30 * 60_000);
+    const contact = ticket.contact as any;
+    const contactName = contact ? `${contact.firstName || ""} ${contact.lastName || ""}`.trim() : "the client";
+    setSchedulePurpose("follow-up");
+    setScheduleForm({
+      title: `Follow-up: ${ticket.ticketNumber || id}`,
+      startTime: toLocalDateTimeValue(start),
+      endTime: toLocalDateTimeValue(end),
+      location: "",
+      description: `Follow up with ${contactName} regarding ${ticket.title || "this ticket"}.`,
+      userId: String(ticket.assignedToId || ""),
+    });
+    setShowScheduleDialog(true);
+  };
+
+  const closeScheduleDialog = () => {
+    setShowScheduleDialog(false);
+    setSchedulePurpose("schedule");
+    setScheduleForm({ title: "", startTime: "", endTime: "", location: "", description: "", userId: "" });
+  };
+
+  const handleScheduleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scheduleForm.title || !scheduleForm.startTime || !scheduleForm.endTime) return;
+    try {
+      await api.post("/schedule", { ...scheduleForm, userId: scheduleForm.userId || undefined, ticketId: id });
+      toast.success(schedulePurpose === "follow-up" ? "Follow-up scheduled" : "Scheduled");
+      setShowScheduleDialog(false);
+      setSchedulePurpose("schedule");
+      setScheduleForm({ title: "", startTime: "", endTime: "", location: "", description: "", userId: "" });
+      setTabRefresh((value) => value + 1);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Could not create schedule entry");
+    }
+  };
+
+  const applyTicketField = async (field: "status" | "priority", value: string) => {
+    setMoreActionsBusy(true);
+    try {
+      await api.patch(`/tickets/${id}`, { [field]: value });
+      toast.success(`${field === "status" ? "Status" : "Priority"} updated`);
+      setShowMoreActions(false);
+      load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || `Could not update ${field}`);
+    } finally {
+      setMoreActionsBusy(false);
+    }
+  };
+
+  const copyTicketLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Ticket link copied");
+    } catch {
+      toast.error("Could not copy ticket link");
+    }
+    setShowMoreActions(false);
+  };
+
+  const uploadAttachment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const file = attachForm.file;
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Attachments are limited to 5 MB"); return; }
+    setUploadingAttachment(true);
+    try {
+      const contentBase64 = await fileToBase64(file);
+      await api.post(`/tickets/${id}/attachments`, { filename: file.name, mimeType: file.type, contentBase64 });
+      toast.success("File attached");
+      setShowAttachDialog(false);
+      setAttachForm({ file: null });
+      load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Could not attach file");
+    } finally {
+      setUploadingAttachment(false);
+    }
+  };
+
+  const downloadAttachment = async (attachment: any) => {
+    try {
+      const response = await api.get(`/tickets/${id}/attachments/${attachment.id}/download`, { responseType: "blob" });
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = attachment.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Could not download file");
     }
   };
 
@@ -867,18 +1032,55 @@ export function TicketDetailPage() {
 
         {/* Icon toolbar */}
         <div className="flex items-center gap-1 flex-wrap">
-          <button onClick={() => load()} title="Refresh" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><RotateCw size={16} /></button>
-          <button onClick={() => setActiveTab("ticket")} title="Add Note" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><MessageSquare size={16} /></button>
-          <button onClick={() => { setActiveTab("time"); setShowTimeTabAdd(true); }} title="Log Time" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Timer size={16} /></button>
-          <button onClick={() => { setActiveTab("attachments"); setShowAttachDialog(true); }} title="Attach File" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Paperclip size={16} /></button>
-          <button onClick={() => toast("Email integration coming soon")} title="Email Contact (placeholder)" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Mail size={16} /></button>
-          <button onClick={() => toast("Print coming soon")} title="Print (placeholder)" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Printer size={16} /></button>
-          <button onClick={() => toast("Follow-up coming soon")} title="Follow Up (placeholder)" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Bell size={16} /></button>
-          <button onClick={() => toast("More actions coming soon")} title="More Actions (placeholder)" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><MoreHorizontal size={16} /></button>
+          <button onClick={refreshDetails} title="Refresh" aria-label="Refresh" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><RotateCw size={16} /></button>
+          <button onClick={() => { setFocusNoteRequested(true); setActiveTab("ticket"); }} title="Add Note" aria-label="Add Note" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><MessageSquare size={16} /></button>
+          <button onClick={() => { setActiveTab("time"); setShowTimeTabAdd(true); }} title="Log Time" aria-label="Log Time" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Timer size={16} /></button>
+          <button onClick={() => { setActiveTab("attachments"); setShowAttachDialog(true); }} title="Attach File" aria-label="Attach File" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Paperclip size={16} /></button>
+          <button onClick={openEmailDialog} title="Email Contact" aria-label="Email Contact" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Mail size={16} /></button>
+          <button onClick={() => window.print()} title="Print Ticket" aria-label="Print Ticket" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Printer size={16} /></button>
+          <button onClick={openFollowUp} title="Schedule Follow-up" aria-label="Schedule Follow-up" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Bell size={16} /></button>
+          <div className="relative">
+            <button onClick={() => setShowMoreActions(open => !open)} title="More Actions" aria-label="More Actions" aria-expanded={showMoreActions} className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><MoreHorizontal size={16} /></button>
+            {showMoreActions && (
+              <div role="menu" className="absolute right-0 top-full z-40 mt-1 w-56 max-h-[70vh] overflow-y-auto rounded-lg border border-surface-border bg-surface p-1 shadow-xl">
+                <button role="menuitem" onClick={() => { setActiveTab("ticket"); setEditing(true); setShowMoreActions(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white rounded">Edit ticket</button>
+                <button role="menuitem" onClick={copyTicketLink} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white rounded">Copy ticket link</button>
+                <div className="border-t border-surface-border my-1" />
+                <p className="px-3 py-1 text-[10px] uppercase text-gray-500">Set status</p>
+                {[["new", "New"], ["in_progress", "In Progress"], ["waiting_on_client", "Waiting on Client"], ["on_hold", "On Hold"], ["resolved", "Resolved"], ["closed", "Closed"]].map(([value, label]) => (
+                  <button key={value} role="menuitem" disabled={moreActionsBusy || ticket.status === value} onClick={() => void applyTicketField("status", value)} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white disabled:opacity-40 rounded">{label}</button>
+                ))}
+                <div className="border-t border-surface-border my-1" />
+                <p className="px-3 py-1 text-[10px] uppercase text-gray-500">Set priority</p>
+                {TICKET_PRIORITIES.map(value => (
+                  <button key={value} role="menuitem" disabled={moreActionsBusy || ticket.priority === value} onClick={() => void applyTicketField("priority", value)} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white disabled:opacity-40 rounded">{priorityLabel(value)}</button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {activeTab === "ticket" && (
+      <section className="ticket-print-only" aria-hidden="true">
+              <h1>{(ticket.ticketNumber as string) || `Ticket ${id}`}</h1>
+              <h2>{(ticket.title as string) || "Untitled ticket"}</h2>
+              <p>{(ticket.description as string) || "No description provided."}</p>
+              <dl>
+                <div><dt>Status</dt><dd>{String(ticket.status || "-").replace(/_/g, " ")}</dd></div>
+                <div><dt>Priority</dt><dd>{String(ticket.priority || "-")}</dd></div>
+                <div><dt>Board</dt><dd>{(ticket.board as any)?.name || "-"}</dd></div>
+                <div><dt>Client</dt><dd>{(ticket.company as any)?.name || "-"}</dd></div>
+                <div><dt>Contact</dt><dd>{`${(ticket.contact as any)?.firstName || ""} ${(ticket.contact as any)?.lastName || ""}`.trim() || "-"}</dd></div>
+                <div><dt>Assigned To</dt><dd>{`${(ticket.assignedTo as any)?.firstName || ""} ${(ticket.assignedTo as any)?.lastName || ""}`.trim() || "-"}</dd></div>
+                <div><dt>Due</dt><dd>{ticket.dueDate ? new Date(ticket.dueDate as string).toLocaleString() : "-"}</dd></div>
+              </dl>
+              <h3>Recent Activity</h3>
+              {((ticket.comments as any[]) || []).slice(0, 10).map((comment: any) => (
+                <div key={comment.id} className="ticket-print-activity"><strong>{comment.isEmail ? "Email" : comment.isInternal ? "Internal Note" : "Note"}</strong><p>{comment.body || comment.content}</p><small>{comment.author?.firstName || "System"} · {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}</small></div>
+              ))}
+          </section>
+
+          {activeTab === "ticket" && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
           {/* General */}
@@ -920,15 +1122,15 @@ export function TicketDetailPage() {
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Notes & Activity</h3>
             <form onSubmit={handlePostNote} className="flex gap-2">
-              <input className="input-field flex-1 text-sm" placeholder="Add a note... (Enter to submit)" value={noteText} onChange={e=>setNoteText(e.target.value)} />
+              <input ref={noteInputRef} className="input-field flex-1 text-sm" placeholder="Add a note... (Enter to submit)" value={noteText} onChange={e=>setNoteText(e.target.value)} />
               <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Post"}</button>
             </form>
             <button onClick={() => setShowTimeEntry(!showTimeEntry)} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>
             {showTimeEntry && (
               <form onSubmit={handleTimeEntry} className="bg-surface-lighter rounded-lg p-3 space-y-2">
                 <div className="grid grid-cols-3 gap-2">
-                  <input className="input-field text-xs" type="datetime-local" value={timeForm.startTime} onChange={e=>{setTimeForm({...timeForm,startTime:e.target.value});setTimeout(calcDuration,0);}} placeholder="Start"/>
-                  <input className="input-field text-xs" type="datetime-local" value={timeForm.endTime} onChange={e=>{setTimeForm({...timeForm,endTime:e.target.value});setTimeout(calcDuration,0);}} placeholder="End"/>
+                  <input className="input-field text-xs" type="datetime-local" value={timeForm.startTime} onChange={e=>updateTimeForm("startTime",e.target.value)} placeholder="Start"/>
+                  <input className="input-field text-xs" type="datetime-local" value={timeForm.endTime} onChange={e=>updateTimeForm("endTime",e.target.value)} placeholder="End"/>
                   <input className="input-field text-xs" readOnly value={timeForm.calculated} placeholder="Duration"/>
                 </div>
                 <div className="flex gap-2">
@@ -1175,7 +1377,7 @@ export function TicketDetailPage() {
         <div className="card space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Schedule</h3>
-            <button onClick={() => setShowScheduleDialog(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={12} /> Schedule Entry</button>
+            <button onClick={() => { closeScheduleDialog(); setShowScheduleDialog(true); }} className="btn-primary text-xs flex items-center gap-1"><Plus size={12} /> Schedule Entry</button>
           </div>
           {schedEntries.length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">No scheduled entries for this ticket.</p> : (
             <div className="space-y-2">
@@ -1212,7 +1414,7 @@ export function TicketDetailPage() {
                     <p className="text-white text-xs font-medium truncate">{a.filename}</p>
                     <p className="text-gray-500 text-[10px]">{a.size ? (a.size < 1024 ? `${a.size} B` : a.size < 1048576 ? `${(a.size / 1024).toFixed(1)} KB` : `${(a.size / 1048576).toFixed(1)} MB`) : "—"} · {a.mimeType} · {a.createdAt ? new Date(a.createdAt).toLocaleString() : ""}</p>
                   </div>
-                  <button onClick={() => toast("Download coming soon")} className="text-gray-500 hover:text-white"><Download size={14} /></button>
+                  <button disabled={!a.storagePath || a.storagePath === "pending-upload"} onClick={() => void downloadAttachment(a)} className="text-gray-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed" title={a.storagePath === "pending-upload" ? "File content is unavailable for this legacy attachment" : `Download ${a.filename}`} aria-label={`Download ${a.filename}`}><Download size={14} /></button>
                   <button onClick={async () => { try { await api.delete(`/tickets/${id}/attachments/${a.id}`); toast.success("Deleted"); load(); } catch { toast.error("Failed"); } }} className="text-gray-500 hover:text-red-400"><Trash2 size={14} /></button>
                 </div>
               ))}
@@ -1291,6 +1493,19 @@ export function TicketDetailPage() {
       )}
 
       {/* ── Dialogs ── */}
+      {showEmailDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowEmailDialog(false)}>
+          <form className="card w-full max-w-lg space-y-3" onClick={e => e.stopPropagation()} onSubmit={sendContactEmail}>
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Mail size={16} /> Email Contact</h3>
+            <label className="block text-xs text-gray-400">To<input className="input-field mt-1" value={(ticket.contact as any)?.email || ""} readOnly /></label>
+            <label className="block text-xs text-gray-400">Subject<input className="input-field mt-1" value={emailForm.subject} onChange={e => setEmailForm({ ...emailForm, subject: e.target.value })} maxLength={200} required /></label>
+            <label className="block text-xs text-gray-400">Message<textarea className="input-field mt-1" value={emailForm.body} onChange={e => setEmailForm({ ...emailForm, body: e.target.value })} rows={7} maxLength={20000} required /></label>
+            <p className="text-xs text-gray-500">The sent email is recorded in ticket activity. Sending requires the configured SMTP service.</p>
+            <div className="flex justify-end gap-2"><button type="button" onClick={() => setShowEmailDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" disabled={sendingEmail || !emailForm.subject.trim() || !emailForm.body.trim()} className="btn-primary text-sm">{sendingEmail ? "Sending…" : "Send Email"}</button></div>
+          </form>
+        </div>
+      )}
+
       {showConfigDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowConfigDialog(false)}>
           <div className="card w-full max-w-md mx-4 space-y-3 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -1367,35 +1582,38 @@ export function TicketDetailPage() {
       )}
 
       {showScheduleDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowScheduleDialog(false)}>
-          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); if (!scheduleForm.title || !scheduleForm.startTime || !scheduleForm.endTime) return; try { await api.post("/schedule", { ...scheduleForm, ticketId: id }); toast.success("Scheduled"); setShowScheduleDialog(false); setScheduleForm({ title: "", startTime: "", endTime: "", location: "" }); api.get("/schedule?limit=200").then(r => setSchedEntries((Array.isArray(r.data) ? r.data : (r.data?.data || [])).filter((x: any) => x.ticketId === id))).catch(() => {}); } catch { toast.error("Failed"); } }}>
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Clock size={16} /> Schedule Entry</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeScheduleDialog}>
+          <form className="card w-full max-w-sm mx-4 space-y-3 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} onSubmit={handleScheduleSubmit}>
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Clock size={16} /> {schedulePurpose === "follow-up" ? "Schedule Follow-up" : "Schedule Entry"}</h3>
             <input className="input-field" placeholder="Title *" value={scheduleForm.title} onChange={e => setScheduleForm({ ...scheduleForm, title: e.target.value })} required />
             <div className="grid grid-cols-2 gap-2"><input className="input-field text-xs" type="datetime-local" value={scheduleForm.startTime} onChange={e => setScheduleForm({ ...scheduleForm, startTime: e.target.value })} required /><input className="input-field text-xs" type="datetime-local" value={scheduleForm.endTime} onChange={e => setScheduleForm({ ...scheduleForm, endTime: e.target.value })} required /></div>
             <input className="input-field" placeholder="Location (optional)" value={scheduleForm.location} onChange={e => setScheduleForm({ ...scheduleForm, location: e.target.value })} />
-            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowScheduleDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Schedule</button></div>
+            <textarea className="input-field" rows={3} placeholder="Description or follow-up notes" value={scheduleForm.description} onChange={e => setScheduleForm({ ...scheduleForm, description: e.target.value })} />
+            <select className="input-field" aria-label="Assign schedule entry" value={scheduleForm.userId} onChange={e => setScheduleForm({ ...scheduleForm, userId: e.target.value })}><option value="">Assign to me</option>{users.map(user => <option key={user.id} value={user.id}>{user.firstName} {user.lastName}</option>)}</select>
+            <div className="flex gap-2 justify-end"><button type="button" onClick={closeScheduleDialog} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">{schedulePurpose === "follow-up" ? "Schedule Follow-up" : "Schedule"}</button></div>
           </form>
         </div>
       )}
 
       {showAttachDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAttachDialog(false)}>
-          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); const f = attachForm.file; if (!f) return; try { await api.post(`/tickets/${id}/attachments`, { filename: f.name, mimeType: f.type || "application/octet-stream", size: f.size, storagePath: "pending-upload" }); toast.success("Attached"); setShowAttachDialog(false); setAttachForm({ file: null }); load(); } catch { toast.error("Failed"); } }}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={uploadAttachment}>
             <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Paperclip size={16} /> Attach File</h3>
-            <p className="text-xs text-gray-500">The attachment record is stored with the ticket and synced app-wide; file content storage remains a placeholder.</p>
+            <p className="text-xs text-gray-500">Upload a file up to 5 MB. File contents are stored with the API.</p>
             <input type="file" className="input-field" onChange={e => setAttachForm({ file: e.target.files?.[0] || null })} />
-            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowAttachDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" disabled={!attachForm.file} className="btn-primary text-sm">Attach</button></div>
+            {attachForm.file && <p className="text-xs text-gray-400">{attachForm.file.name} · {(attachForm.file.size / 1024).toFixed(1)} KB</p>}
+            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowAttachDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" disabled={!attachForm.file || uploadingAttachment} className="btn-primary text-sm">{uploadingAttachment ? "Uploading…" : "Attach"}</button></div>
           </form>
         </div>
       )}
 
       {showTimeTabAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowTimeTabAdd(false)}>
-          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); await handleTimeEntry(e); setShowTimeTabAdd(false); }}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { if (await handleTimeEntry(e)) setShowTimeTabAdd(false); }}>
             <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Timer size={16} /> Add Time Entry</h3>
             <div className="grid grid-cols-2 gap-2">
-              <input className="input-field text-xs" type="datetime-local" value={timeForm.startTime} onChange={e => { setTimeForm({ ...timeForm, startTime: e.target.value }); setTimeout(calcDuration, 0); }} required />
-              <input className="input-field text-xs" type="datetime-local" value={timeForm.endTime} onChange={e => { setTimeForm({ ...timeForm, endTime: e.target.value }); setTimeout(calcDuration, 0); }} required />
+              <input className="input-field text-xs" type="datetime-local" value={timeForm.startTime} onChange={e => updateTimeForm("startTime", e.target.value)} required />
+              <input className="input-field text-xs" type="datetime-local" value={timeForm.endTime} onChange={e => updateTimeForm("endTime", e.target.value)} required />
             </div>
             <input className="input-field text-xs" readOnly value={timeForm.calculated} placeholder="Duration" />
             <input className="input-field" placeholder="Description" value={timeForm.description} onChange={e => setTimeForm({ ...timeForm, description: e.target.value })} />

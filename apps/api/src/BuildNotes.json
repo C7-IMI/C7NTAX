@@ -1,5 +1,76 @@
 [
   {
+    "version": "2026.10.5.005",
+    "date": "2026-10-05",
+    "title": "Complete ticket-detail actions and workflows",
+    "changes": [
+      {
+        "text": "Ticket details now provide an SMTP-backed contact email composer, a print-ready ticket summary, scheduled follow-ups with date/time/assignee/notes, and a More Actions menu for editing, copying the ticket link, and changing status or priority.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Ticket attachments now upload actual files (5 MB maximum) to API-managed storage and download them through authenticated ticket-scoped routes; legacy metadata-only attachments are marked unavailable, and runtime uploads are excluded from Git.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Added the missing ticket comment endpoint used by the Notes UI; Audit Trail now filters records server-side by ticket; Refresh reloads the active tab, Finance loads its expense totals, and failed time saves keep the entry dialog open.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.5.004",
+    "date": "2026-10-05",
+    "title": "Change history and prompt logging standard",
+    "changes": [
+      {
+        "text": "Added `.github/copilot-instructions.md` to require a Retrace entry for every user prompt and a BuildNotes/What's New entry for every completed project change; documented version generation and static fallback regeneration.",
+        "type": "Update"
+      },
+      {
+        "text": "Backfilled the theme, Service Alerts, and GitHub-sync work from this conversation into BuildNotes and Retrace.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.5.003",
+    "date": "2026-10-05",
+    "title": "Service Alerts respect configured sort order",
+    "changes": [
+      {
+        "text": "`apps/web/src/pages/ServiceAlerts.tsx` now sorts monitored service cards by configured `sortOrder` (then name) and active alert cards by the related service's `sortOrder` (then newest detection), so administration ordering is reflected on the display page. Recently resolved alerts remain chronological.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.5.002",
+    "date": "2026-10-05",
+    "title": "Keep Service Alerts page display-only",
+    "changes": [
+      {
+        "text": "Removed the Configure link from `apps/web/src/pages/ServiceAlerts.tsx`; alert display and Refresh remain, while service configuration stays in Administration.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.5.001",
+    "date": "2026-10-05",
+    "title": "Improve light-mode contrast and alert banner",
+    "changes": [
+      {
+        "text": "Darkened shared light-theme link, muted-text, and border colors in `apps/web/src/index.css`; removed duplicate injected light-theme CSS from `apps/web/src/hooks/useTheme.tsx` so the stylesheet is the single source of theme values.",
+        "type": "Fix"
+      },
+      {
+        "text": "`apps/web/src/components/Layout.tsx` now styles the global service-alert banner red in both themes, with dark red text and border on light surfaces.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.8.31.001",
     "date": "2026-08-31",
     "title": "Outage recovery: full stack restarted via boot task",

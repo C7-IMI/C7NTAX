@@ -22,3 +22,4 @@ dist-electron/
 
 # local scratch: login test payload
 .login-body.json
+apps/api/data/ticket-attachments/
