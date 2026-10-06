@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.10.6.029",
+    "date": "2026-10-06",
+    "title": "The note submit button reads \"Add Note\"",
+    "changes": [
+      {
+        "text": "**\"Post\" is now \"Add Note\"** on the ticket note composer, so the button names the thing it creates rather than the act of publishing it. Everything else about the control is unchanged — it stays right-aligned next to the *Internal* checkbox, is disabled until there is text, shows \"...\" while the request is in flight, and still submits by button or Ctrl/Cmd+Enter.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.028",
     "date": "2026-10-06",
     "title": "The note box says plainly what will happen when you post",

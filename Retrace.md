@@ -2418,3 +2418,16 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Verification (live)**
 - Measured on ticket `e28544bc`: status flush to the card's left content edge (x=301) with its icon, checkbox and Post grouped right (checkbox right edge 827, card right edge 973), all vertically centred on one line with no shift between states. Toggling changed both the sentence and the colour — `rgb(96,165,250)` (blue-400) for customer-facing, `rgb(251,191,36)` (amber-400) for internal — at 11px in both cases.
 - Web typecheck: 0 errors. Styling and copy only, so it reverts with one `git revert` alongside Prompt 184.
+---
+
+### Prompt 186 — Rename the note submit button to "Add Note"
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~10 min
+**BuildNotes IDs:** 2026.10.6.029 - The note submit button reads "Add Note"
+> Change the word Post to Add Note.
+
+**What changed**
+- The composer's submit button now says **Add Note** instead of **Post**. One word, one line: the button names what it creates rather than the act of publishing.
+- The in-flight label ("..."), the disabled-until-there-is-text rule, the placement next to the *Internal* checkbox, Ctrl/Cmd+Enter and the toast wording are all untouched. (`Retrace`/`BuildNotes` note it because they record the change, not because anything else moved.)
+
+**Verification (live)**
+- Ticket `e28544bc`: the button rendered "Add Note" (95px wide, right edge 952 against the card's 973 — still right-aligned), disabled while the box was empty, enabled after typing, and submitting added the note under the blue *Note* badge and cleared the box. The probe note and its audit row were then deleted and the snapshots re-captured, leaving the ticket on its three original comments. Web typecheck: 0 errors.

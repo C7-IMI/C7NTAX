@@ -1505,7 +1505,7 @@ export function TicketDetailPage() {
                     <input type="checkbox" checked={noteInternal} onChange={e=>setNoteInternal(e.target.checked)} />
                     Internal
                   </label>
-                  <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Post"}</button>
+                  <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Add Note"}</button>
                 </div>
               </div>
             </form>

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.028 | Last Updated: 2026-10-06
+## Version: 2026.10.6.029 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,11 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.029 — The note submit button reads "Add Note"
+- **[Update]** **"Post" is now "Add Note"** on the ticket note composer, so the button names the thing it creates rather than the act of publishing it. Everything else about the control is unchanged — it stays right-aligned next to the *Internal* checkbox, is disabled until there is text, shows "..." while the request is in flight, and still submits by button or Ctrl/Cmd+Enter.
+- **Verification (live):** on ticket `e28544bc` the button rendered as "Add Note" (95px wide, right edge 952 against the card's 973), disabled while empty and enabled once text was typed; submitting added the note with the blue *Note* badge and cleared the box. The probe note was then deleted and the snapshots re-captured, leaving the ticket on its three original comments.
+- **Rollback:** one word — no API, schema or data change.
 
 ## 2026.10.6.028 — The note box says plainly what will happen when you post
 - **[Update]** **The composer footer now leads with the outcome instead of burying it in a label.** The status sits on the left — "Will be emailed to the ticket contact" or "Internal only — the customer is not emailed" — and the *Internal* checkbox moved to the right, in front of Post, so the switch and the sentence it controls are no longer run together as one grey label.
