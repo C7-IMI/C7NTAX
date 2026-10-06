@@ -9,6 +9,7 @@ import { UI_P1, UI_PALETTE } from "../lib/uiFlags";
 import { getDensity, setDensity, type Density } from "../lib/density";
 import { getPalette, setPalette, type PaletteMode } from "../lib/palette";
 import { PaletteSchemeList } from "./PaletteSchemeList";
+import { Wordmark } from "./Wordmark";
 
 type MenuUser = {
   firstName?: string | null;
@@ -110,6 +111,11 @@ export function MyAccountMenu() {
 
       {open && (
         <div role="menu" className="absolute right-0 mt-2 w-80 rounded-lg border border-surface-border bg-surface shadow-lg z-50 overflow-hidden">
+          {/* Brand */}
+          <div className="px-3 pt-3 pb-2.5 border-b border-surface-border text-white">
+            <Wordmark height={26} />
+          </div>
+
           {/* Identity */}
           <div className="flex items-center gap-3 p-3 border-b border-surface-border">
             <div className="w-9 h-9 rounded-full bg-cyber-600/20 text-cyber-400 flex items-center justify-center text-xs font-semibold shrink-0">

@@ -28,6 +28,9 @@ html {
   --cyber-800: #0077a9;
   --cyber-900: #00507d;
 
+  /* Brand constant — used by the logo, never by a colour scheme. */
+  --brand-crimson: #c00000;
+
   --surface: #0f1a2e;
   --surface-light: #162238;
   --surface-lighter: #1e2d48;
@@ -427,3 +430,45 @@ html[data-theme="light"][data-palette-light="contrast"] {
 .scheme-swatch--brand    { --scheme-bg: #ffffff; --scheme-accent: #c00000; }
 .scheme-swatch--rosetint { --scheme-bg: #fdf6f8; --scheme-accent: #c00000; }
 .scheme-swatch--contrast { --scheme-bg: #ffffff; --scheme-accent: #a30000; }
+
+/* ── Brand wordmark ──────────────────────────────────────────────────────────
+   The C7NTAX logotype, keyed out of the brand sheet's metallic plate into two
+   alpha masks, so there is no plate behind it and it reads on any surface:
+   the letters are painted with the element's `color` (i.e. the active scheme's
+   text colour) and the 7 is overprinted in brand crimson.
+
+   Geometry comes from the masks: 327 x 78 at native resolution. Set a height
+   (or width) on `.c7-wordmark` and the other axis follows the aspect ratio. */
+.c7-wordmark {
+  display: inline-block;
+  position: relative;
+  aspect-ratio: 327 / 78;
+  height: 1.25rem;
+}
+
+/* Each layer is masked on its own element: a mask on the wrapper would clip
+   the layers inside it as well, so the crimson would never show through. */
+.c7-wordmark > span {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* Letters: painted with the inherited text colour, so they follow the scheme. */
+.c7-wordmark__letters {
+  background-color: currentColor;
+  -webkit-mask-image: url("/brand/wordmark-mask.png");
+  mask-image: url("/brand/wordmark-mask.png");
+}
+
+/* The crimson 7, kept at the brand colour whatever the scheme does to --text-* */
+.c7-wordmark__seven {
+  background-color: var(--brand-crimson);
+  -webkit-mask-image: url("/brand/wordmark-7-mask.png");
+  mask-image: url("/brand/wordmark-7-mask.png");
+}

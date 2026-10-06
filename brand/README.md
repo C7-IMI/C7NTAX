@@ -20,6 +20,8 @@ placeholder art, not as production artwork.
 | `shield-light.png` | Icon variation — shield on white tile | 73×74 |
 | `shield-glyph.png` | The shield + "7" glyph, cropped inside the black tile | 60×60 |
 | `colour-palette-and-typeface.png` | Colour palette + C7NTAX SANS specimen | 330×150 |
+| `wordmark-on-dark.png` | Wordmark rendered for dark surfaces — white letters, crimson 7 | 654×156 |
+| `wordmark-on-light.png` | Wordmark rendered for light surfaces — near-black letters, crimson 7 | 654×156 |
 
 ### Quality caveats — please read before using these in product
 
@@ -56,6 +58,40 @@ Inside the black tile the shield's strict bounding box is x 559–604, y 439–4
 carries no checkerboard and no glow. `shield-glyph.png` is that interior crop
 (60×60, centred on the shield), and is the source for the app icons.
 
+### Wordmark, keyed to transparency (2026-10-06)
+
+The wordmark variations are all the same logotype — **C 7 N T A X** — rendered at
+several sizes down the sheet's left column. When they were first sliced they were
+cut short at the bottom, so the geometry below was re-measured. On the sheet the
+logotype is:
+
+| Element | Sheet bounds |
+|---|---|
+| Full logotype (incl. the 7's tail) | x 51–377, y 449–526 (327×78) |
+| Letters `C N T A X` (cap height) | y 449–498 |
+| The `7` — crimson, with a descending tail | x 101–155, y 449–~525 |
+
+Two things make this awkward to key out:
+
+1. **The letters are pure white** (`#FFFFFF`) on a mid-tone plate (luma ≈ 100–160),
+   so they separate cleanly on luminance.
+2. **The 7 is crimson — and so is the plate behind it**, because the mockup's red
+   glow washes that whole area pink. The 7's *hue* overlaps the wash; only its
+   **saturation** separates them (the stroke sits at `G/R ≈ 0.15`, the wash at
+   `0.4–0.9`). Keying the 7 therefore uses a saturation threshold, not luminance.
+
+The 7's tail runs ~25px below the letters' baseline. That is not a slicing
+error — the standalone `mark-7-core.png` is 82×140, i.e. taller than it is wide,
+so a long-tailed 7 is the brand's own treatment.
+
+**App assets** live in `apps/web/public/brand/` and are used as CSS masks rather
+than as pictures, which is what removes the plate: `wordmark-mask.png` (letters)
+paints with the inherited text colour, and `wordmark-7-mask.png` (the 7) paints
+with `--brand-crimson`. One pair of files therefore works on every surface — no
+plate, and no separate light/dark copies. The flat `wordmark-on-dark.png` /
+`wordmark-on-light.png` in this folder are for places that cannot use CSS masks
+(email templates, docs).
+
 **Recommended path:** supply the original vector (SVG/AI) or the high-resolution
 source referenced on the sheet ("High Res Source: <IMAGE 0>"). With that, the
 web icons, sidebar mark, login wordmark and email header can all be regenerated
@@ -71,9 +107,12 @@ The app does **not** hot-link the mockup crops. It uses:
   at 88% of the plate, so the glyph is centred with an even margin and the plate
   edges stay crisp. When changing these, verify the art clears the plate edge —
   a clipped "7" is the failure mode to watch for.
-- The **wordmark as text** in the sidebar and on the login page —
-  `C` + a brand-crimson `7` + `NTAX` — which matches the sheet's letterform
-  treatment, stays crisp at any size and follows the active colour scheme.
+- The **wordmark logotype** as a reusable `<Wordmark>` component
+  (`apps/web/src/components/Wordmark.tsx`, styled by `.c7-wordmark` in
+  `index.css`) — the sheet's own letterforms via the two masks above, so it has
+  no plate behind it and follows the active scheme. The sidebar and login page
+  render the wordform as **text** (`C` + a brand-crimson `7` + `NTAX`), which
+  stays crisp at any size; both treatments are in use.
 - The **brand palette** (`#C00000` / `#EE5483` / `#662428` / `#801550`) across
   the eight colour schemes — see `UI-PALETTE-ROLLBACK.md`.
 

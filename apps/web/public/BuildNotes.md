@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.007 | Last Updated: 2026-10-06
+## Version: 2026.10.6.008 | Last Updated: 2026-10-06
 
 ---
 
@@ -11,6 +11,16 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.6.008 — Brand wordmark in the My Account menu, with the metallic plate removed
+- **[New]** **The brand wordmark now heads the My Account menu.** It is the sheet's own logotype — the letters keyed out of their metallic plate into two alpha masks — so there is no plate behind it and no separate light/dark artwork. It was built as a reusable `<Wordmark>` component with a `.c7-wordmark` style block, ready to drop anywhere else the logotype is wanted.
+- **[New]** `apps/web/public/brand/wordmark-mask.png` + `wordmark-7-mask.png` — the logotype at 327×78, taken from sheet x 51–377 / y 449–526. They are consumed as **CSS masks**, not pictures: the letters paint with the inherited text colour and the 7 with a new `--brand-crimson` token, so a single pair of files renders correctly on every surface and in all eight colour schemes. Also added flat `brand/wordmark-on-dark.png` / `wordmark-on-light.png` for contexts that cannot use masks (email, docs).
+- **[Fix]** Extracting the logotype needed two different keys, and the reason is worth recording: the letters are pure `#FFFFFF` on a mid-tone plate, so luminance separates them, but **the crimson 7 sits on a plate that the mockup's red glow has already washed pink** — their hues overlap, and only saturation (`G/R ≈ 0.15` for the stroke against `0.4–0.9` for the wash) tells them apart. Keying the 7 by brightness or by hue yields either nothing or a rectangle of plate.
+- **[Fix]** A CSS `mask` on an element also clips its own pseudo-elements, so the first cut of this — one masked element with the 7 drawn by `::after` — rendered the letters and silently dropped the crimson entirely. The two layers are now sibling elements, each masked on itself.
+- **[Update]** `brand/README.md` — records the logotype's measured geometry, both keying methods and why each is needed, and notes that the 7's ~25px descender is the brand's own treatment (the standalone `mark-7-core.png` is 82×140, taller than wide), not a slicing error.
+- **[Verification]** Verified from the browser's own pixels, not from the source files: at 2× the element captures 218×52 with the letters in the theme text colour (`rgb(247,248,248)` dark / `rgb(26,17,20)` light) and the 7 in `rgb(192,0,0)` — landing at x 35–68 against an expected 33–69 slot — with 72% of the box left unpainted, i.e. the plate really is gone. Both masks load at 327×78, no console errors on a clean reload, `apps/web` typecheck unchanged (26 pre-existing errors) and the design-token lint unchanged at 117 legacy occurrences.
 
 ---
 
