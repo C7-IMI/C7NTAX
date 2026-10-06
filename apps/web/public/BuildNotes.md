@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.037 | Last Updated: 2026-10-06
+## Version: 2026.10.6.038 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.038 — The warning bubble is now compact throughout
+- **[Update]** **Warning text down to 10px** (from 11px, and 14px where it started) with a 12.5px line height, and everything around it shrank to match: the orange marker is 10px with an 8px glyph, the gap, padding and corner radius are all a step tighter, and the shadow is lighter. The bubble is roughly a third smaller than it was at the start — 35px tall for two lines instead of 55px.
+- **[Update]** The sentence itself is unchanged, as are the amber outline on the field and the *Send anyway* confirmation. Every surface that borrows the component still inherits it: To/Cc/Bcc, the note composer's recipients, the ticket's *Add contact* box and the new-ticket *Also* field.
+- **Verification (live):** measured on the bubble under the Cc row — 10px / 12.5px line height, 10px marker, 4px/8px padding, 35px tall. Same text, no layout shift beneath it. Web typecheck 0; design-token lint unchanged.
+- **Rollback:** type scale and spacing in one component — no API, schema or data change.
 
 ## 2026.10.6.037 — Smaller again: the warning matches the app's field-note size
 - **[Update]** **The warning text drops to 11px** (from 12px, and 14px originally), so it now matches the hint text under the other fields rather than reading as body copy. The orange marker shrinks with it — 12px box with a 10px glyph — and the padding tightens slightly, so the bubble takes noticeably less room under the chips.

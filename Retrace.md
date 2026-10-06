@@ -2630,3 +2630,19 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Verification (live)**
 - The bubble under the Cc row measured **11px / 15.125px line height** with a 12px marker, same sentence, and nothing below it moved. Screenshot captured.
 - Web typecheck 0; design-token lint unchanged. No data was written by the check.
+
+---
+
+### Prompt 195 — Compact warning bubble at 10px
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~5 m
+**BuildNotes IDs:** 2026.10.6.038 - The warning bubble is now compact throughout
+> Make the font smaller
+
+**What changed**
+- `apps/web/src/components/FieldWarning.tsx`: message **11px → 10px** with a 12.5px line height, and the rest of the bubble brought down with it rather than left looking heavy around tiny text — marker 12px → **10px** (glyph 8px), gap 8px → 6px, padding 6px/10px → **4px/8px**, radius `lg` → `md`, and a lighter shadow. Two lines now occupy 35px where the original occupied about 55px.
+- Wording, the amber outline and the *Send anyway* confirmation are untouched; the change is inherited by every surface using the component.
+
+**Verification (live)**
+- Measured on the bubble under the Cc row: 10px font, 12.5px line height, 10px marker, 4px/8px padding, 35px tall, same sentence, and the fields below did not move. Screenshot captured.
+- Worth recording for the next measurement: the bubble contains **two** `span[aria-hidden]` elements — the pointer arrow and the marker — so querying the first one reports the arrow's 12px and looks like the marker did not resize. It did (the second span measures 10px).
+- Web typecheck 0; design-token lint unchanged. The check wrote no data.
