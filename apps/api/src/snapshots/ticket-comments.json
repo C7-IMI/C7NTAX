@@ -1,5 +1,16 @@
 [
   {
+    "id": "d54ff51a-518b-4a03-8990-70c94c85c9fd",
+    "body": "Priority: High → Medium",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T17:57:10.200Z",
+    "updatedAt": "2026-10-06T17:57:10.200Z"
+  },
+  {
     "id": "a642d0e6-0816-46c2-84b0-a045efc5a31f",
     "body": "Checked Exchange Online — connector is healthy. Investigating transport rules.",
     "isInternal": false,

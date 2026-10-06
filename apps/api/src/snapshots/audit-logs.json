@@ -2350,5 +2350,17 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T10:00:32.871Z"
+  },
+  {
+    "id": "f8591407-df90-4140-8b44-fabf237cad99",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "changes": {
+      "priority": "medium"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T17:57:10.204Z"
   }
 ]

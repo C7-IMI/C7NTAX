@@ -1540,6 +1540,20 @@
     "updatedAt": "2026-10-06T01:36:40.057Z"
   },
   {
+    "id": "da139364-29e6-47f9-8e89-022067530304",
+    "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
+    "title": "Elevated errors for Claude Opus 5.5",
+    "description": "Auto-resolved: Elevated errors for Claude Opus 5.5\n\n&lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 6&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;12:37&lt;/var&gt; UTC&lt;/small&gt;&lt;br&gt; &lt;strong&gt;Identified&lt;/strong&gt; - We have identified the cause of elevated errors on requests to Claude Opus 5.5 and are working on a fix. We will provide an update as soon as possible. &lt;/p&gt; &lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 6&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;12:24&lt;/var&g",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://status.claude.com/incidents/ch27pb90bn85",
+    "detectedAt": "2026-10-06T12:28:42.271Z",
+    "resolvedAt": "2026-10-06T12:43:39.600Z",
+    "createdAt": "2026-10-06T12:28:42.272Z",
+    "updatedAt": "2026-10-06T12:43:39.602Z"
+  },
+  {
     "id": "dcc8f032-ca4b-4131-bf07-3038ae82fc09",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Elevated errors in API Platform login and administration APIs.",
@@ -1552,6 +1566,20 @@
     "resolvedAt": "2026-10-06T01:36:25.554Z",
     "createdAt": "2026-10-06T00:46:58.609Z",
     "updatedAt": "2026-10-06T01:36:25.555Z"
+  },
+  {
+    "id": "2e54e0cd-eb75-4668-b537-d6ba5d161549",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "Elevated error rates in ChatGPT Go conversations",
+    "description": "Auto-resolved: Elevated errors across ChatGPT, Codex, and the API including the Agents API\n\nStatus: Investigating We are investigating the issue for the listed services. Affected components Conversations (Degraded performance)",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://status.openai.com//incidents/01M48PT6B8SDTW023NC9XZTBC0",
+    "detectedAt": "2026-10-06T13:43:51.010Z",
+    "resolvedAt": "2026-10-06T13:58:59.815Z",
+    "createdAt": "2026-10-06T13:43:51.011Z",
+    "updatedAt": "2026-10-06T13:58:59.816Z"
   },
   {
     "id": "4e84909b-ec2c-46b4-a02e-6ac7729e474a",
@@ -1720,5 +1748,19 @@
     "resolvedAt": "2026-10-06T01:02:56.799Z",
     "createdAt": "2026-10-06T00:53:17.752Z",
     "updatedAt": "2026-10-06T01:02:56.801Z"
+  },
+  {
+    "id": "e0d0fd8a-a577-4105-9e4d-feecbf83ae0e",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "Computer Use Is Experiencing Issues",
+    "description": "Status: Investigating We are investigating issues for agents api and computer use. Affected components Agents (Degraded performance)",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.openai.com//incidents/01M493CZ0CB14KPC0EER83MNVB",
+    "detectedAt": "2026-10-06T15:53:47.100Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-06T15:53:47.102Z",
+    "updatedAt": "2026-10-06T17:53:48.361Z"
   }
 ]
