@@ -37,7 +37,8 @@ const TABS = [
 export function BillingPage({ tab: initialTab }: { tab?: string }) {
   const [activeTab, setActiveTab] = useState(initialTab || "invoices");
 
-  useEffect(() => { if (initialTab) setActiveTab(initialTab); }, [initialTab]);
+  // The route owns the tab, including /billing itself (no tab prop).
+  useEffect(() => { setActiveTab(initialTab || "invoices"); }, [initialTab]);
   const [companies, setCompanies] = useState<Company[]>([]);
 
   useEffect(() => {

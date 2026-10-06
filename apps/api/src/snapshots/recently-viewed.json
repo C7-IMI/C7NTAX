@@ -180,15 +180,6 @@
     "viewedAt": "2026-10-06T08:36:32.441Z"
   },
   {
-    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "organization",
-    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "entityName": "Acme Corporation",
-    "entityIcon": "building",
-    "viewedAt": "2026-10-06T08:44:16.871Z"
-  },
-  {
     "id": "7f4ec52c-8497-4f8f-b18a-504508ddd3ff",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "organization",
@@ -205,5 +196,14 @@
     "entityName": "Acme Network Topology Overview",
     "entityIcon": "book",
     "viewedAt": "2026-10-06T08:48:53.260Z"
+  },
+  {
+    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "organization",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "entityName": "Acme Corporation",
+    "entityIcon": "building",
+    "viewedAt": "2026-10-06T09:21:42.663Z"
   }
 ]

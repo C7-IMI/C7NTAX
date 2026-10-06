@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import {
   TrendingUp, BarChart3, PieChart, Download, Filter, Clock, CheckCircle,
@@ -14,10 +14,10 @@ interface SlaData { metResponse: number; breachedResponse: number; metResolution
 interface Utilization { userId: string; name: string; billable: number; nonBillable: number; }[]
 interface RevenueData { totalPaid: number; totalOutstanding: number; monthlyRevenue: Array<{ month: string; amount: number }>; }
 
-const TABS = [
-  { id: "dashboard", label: "Dashboards", icon: BarChart3 },
-  { id: "standard", label: "Standard Reports", icon: ClipboardList },
-  { id: "analytics", label: "Analytics", icon: TrendingUp },
+const TABS: Array<{ id: string; label: string; icon: LucideIcon; to: string }> = [
+  { id: "dashboard", label: "Dashboards", icon: BarChart3, to: "/reports" },
+  { id: "standard", label: "Standard Reports", icon: ClipboardList, to: "/reports/standard" },
+  { id: "analytics", label: "Analytics", icon: TrendingUp, to: "/reports/analytics" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -31,7 +31,14 @@ function formatMinutes(m: number) { return `${(m / 60).toFixed(1)}h`; }
 function formatCurrency(n: number) { return `$${n.toLocaleString()}`; }
 
 export function ReportsPage({ tab: initialTab }: { tab?: string }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(initialTab || "dashboard");
+
+  // The route owns the tab: /reports, /reports/standard and /reports/analytics all
+  // render this component, so moving between them re-renders it with a new prop
+  // rather than remounting it. Without this the screen stayed on whichever
+  // subsection was opened first.
+  useEffect(() => { setActiveTab(initialTab || "dashboard"); }, [initialTab]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -46,7 +53,7 @@ export function ReportsPage({ tab: initialTab }: { tab?: string }) {
         {TABS.map(tab => {
           const Icon = tab.icon;
           return (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${activeTab === tab.id ? "bg-surface border border-b-0 border-surface-border text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter/50"}`}>
+            <button key={tab.id} onClick={() => navigate(tab.to)} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${activeTab === tab.id ? "bg-surface border border-b-0 border-surface-border text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter/50"}`}>
               <Icon size={15} />{tab.label}
             </button>
           );
@@ -381,6 +388,10 @@ function AnalyticsTab() {
   useEffect(() => { api.get("/reports/data/revenue-summary").then(r => setRevenue(r.data)).catch(() => {}); }, []);
 
   const maxRevenue = Math.max(...(revenue?.monthlyRevenue || []).map(m => m.amount), 1);
+  /** Tallest bar, in pixels. A percentage height here is a percentage of a flex
+   *  column whose own height comes from its content, which resolves to nothing —
+   *  the bars rendered with zero height and the chart looked empty. */
+  const BAR_MAX_PX = 140;
 
   return (
     <div className="space-y-6">
@@ -390,11 +401,11 @@ function AnalyticsTab() {
           <div className="space-y-3">
             <div className="flex items-end gap-2 h-48">
               {revenue.monthlyRevenue.map(m => {
-                const h = Math.round((m.amount / maxRevenue) * 100);
+                const barHeight = Math.max(4, Math.round((m.amount / maxRevenue) * BAR_MAX_PX));
                 return (
                   <div key={m.month} className="flex-1 flex flex-col items-center gap-1 group cursor-pointer">
                     <span className="text-xs text-gray-500 opacity-0 group-hover:opacity-100">${m.amount.toLocaleString()}</span>
-                    <div className="w-full bg-cyber-500 rounded-t hover:bg-cyber-400 transition-colors" style={{ height: `${h}%` }} />
+                    <div className="w-full bg-cyber-500 rounded-t hover:bg-cyber-400 transition-colors" style={{ height: `${barHeight}px` }} />
                     <span className="text-[10px] text-gray-600">{m.month}</span>
                   </div>
                 );

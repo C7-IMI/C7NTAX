@@ -1764,6 +1764,31 @@
     "createdAt": "2026-10-06T09:15:32.452Z"
   },
   {
+    "id": "14190ff5-ae30-4495-9508-0f031d1a94a8",
+    "action": "roles:create",
+    "entity": "roles",
+    "entityId": "roles",
+    "changes": {
+      "name": "ZZ Menu Probe Role",
+      "systemRole": "technician"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:15:43.158Z"
+  },
+  {
+    "id": "ccf2811f-3c22-4c3a-803c-ba0c4c3bb477",
+    "action": "roles:delete",
+    "entity": "roles",
+    "entityId": "c511592f-7a9a-4044-a4e0-26f8ae3ec92c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:15:51.050Z"
+  },
+  {
     "id": "3658b176-0040-4b17-a015-dacdcf1b8eea",
     "action": "tickets:update",
     "entity": "tickets",
@@ -2126,5 +2151,70 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T03:32:49.250Z"
+  },
+  {
+    "id": "f59ced0a-87fc-47e9-8fcf-ad887a38eb87",
+    "action": "schedule:create",
+    "entity": "schedule",
+    "entityId": "schedule",
+    "changes": {
+      "title": "ZZ menu probe event",
+      "endTime": "2026-10-09T05:17:14.3986902-05:00",
+      "location": "Probe",
+      "ticketId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+      "startTime": "2026-10-09T04:17:14.3956984-05:00",
+      "description": "context menu probe"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:17:14.413Z"
+  },
+  {
+    "id": "651b5f06-16c2-4466-a640-6ede47cff2cc",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "ec30042d-0fbb-4cfb-9fa5-159ca6b2a0e4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:17:40.190Z"
+  },
+  {
+    "id": "f18efff5-199b-436e-a924-04a403c453f1",
+    "action": "users:update",
+    "entity": "users",
+    "entityId": "ec30042d-0fbb-4cfb-9fa5-159ca6b2a0e4",
+    "changes": {
+      "isActive": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:17:47.591Z"
+  },
+  {
+    "id": "91bfebf8-bd0a-461c-aed1-2799b4e726e1",
+    "action": "contact:update",
+    "entity": "contact",
+    "entityId": "4542970a-cdfa-4489-9d2e-b2c705a35682",
+    "changes": {
+      "isActive": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:18:07.463Z"
+  },
+  {
+    "id": "b0c1b379-cd79-472b-ab0f-c881c23b104f",
+    "action": "contact:update",
+    "entity": "contact",
+    "entityId": "4542970a-cdfa-4489-9d2e-b2c705a35682",
+    "changes": {
+      "isActive": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:18:09.894Z"
   }
 ]

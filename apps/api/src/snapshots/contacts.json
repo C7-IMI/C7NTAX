@@ -1,21 +1,5 @@
 [
   {
-    "id": "4542970a-cdfa-4489-9d2e-b2c705a35682",
-    "firstName": "David",
-    "lastName": "Chen",
-    "email": "david@acmecorp.com",
-    "phone": "+1-555-0101",
-    "mobile": "+1-555-0111",
-    "title": "IT Director",
-    "department": "Information Technology",
-    "notes": null,
-    "isPrimary": true,
-    "isActive": true,
-    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "createdAt": "2026-08-12T06:04:15.106Z",
-    "updatedAt": "2026-08-12T06:04:15.106Z"
-  },
-  {
     "id": "c2879221-86a0-4cc7-8a29-ce55c05cb7b2",
     "firstName": "Maria",
     "lastName": "Garcia",
@@ -206,5 +190,21 @@
     "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
     "createdAt": "2026-08-12T06:04:15.106Z",
     "updatedAt": "2026-08-12T06:04:15.106Z"
+  },
+  {
+    "id": "4542970a-cdfa-4489-9d2e-b2c705a35682",
+    "firstName": "David",
+    "lastName": "Chen",
+    "email": "david@acmecorp.com",
+    "phone": "+1-555-0101",
+    "mobile": "+1-555-0111",
+    "title": "IT Director",
+    "department": "Information Technology",
+    "notes": null,
+    "isPrimary": true,
+    "isActive": true,
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "createdAt": "2026-08-12T06:04:15.106Z",
+    "updatedAt": "2026-10-06T09:18:09.889Z"
   }
 ]
