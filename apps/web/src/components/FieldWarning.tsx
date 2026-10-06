@@ -16,13 +16,13 @@ export function FieldWarning({ message, tone = "warning" }: { message: ReactNode
       <div className="flex items-start gap-2 rounded-lg border border-black/5 bg-white px-2.5 py-1.5 shadow-xl">
         <span
           aria-hidden="true"
-          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded text-[11px] font-bold leading-none text-white ${
+          className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm text-[10px] font-bold leading-none text-white ${
             tone === "error" ? "bg-red-500" : "bg-orange-500"
           }`}
         >
           !
         </span>
-        <p className="text-xs leading-snug text-gray-800">{message}</p>
+        <p className="text-[11px] leading-snug text-gray-800">{message}</p>
       </div>
     </div>
   );

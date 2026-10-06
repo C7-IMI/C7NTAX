@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.6.037",
+    "date": "2026-10-06",
+    "title": "Smaller again: the warning matches the app's field-note size",
+    "changes": [
+      {
+        "text": "**The warning text drops to 11px** (from 12px, and 14px originally), so it now matches the hint text under the other fields rather than reading as body copy. The orange marker shrinks with it — 12px box with a 10px glyph — and the padding tightens slightly, so the bubble takes noticeably less room under the chips.",
+        "type": "Update"
+      },
+      {
+        "text": "Nothing else about the warning changes: the wording, the amber outline on the field, and the *Send anyway* confirmation all behave as before, on every surface that borrows the component (To/Cc/Bcc, note recipients, the ticket's *Add contact* box and the new-ticket *Also* field).",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.036",
     "date": "2026-10-06",
     "title": "Smaller type in the outside-organisation warning",

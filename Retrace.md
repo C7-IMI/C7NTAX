@@ -2615,3 +2615,18 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Verification (live)**
 - Under the Cc row of the Email Contact dialog the bubble measured **12px / 16.5px line height** (previously 14px) with the same sentence, and the fields below it did not move.
 - Web typecheck 0; design-token lint unchanged. Nothing to clean up — the check was a screenshot and a measurement, no data was written.
+
+---
+
+### Prompt 194 — Smaller again: 11px warning text
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~5 m
+**BuildNotes IDs:** 2026.10.6.037 - Smaller again: the warning matches the app's field-note size
+> Make the font smaller
+
+**What changed**
+- `apps/web/src/components/FieldWarning.tsx`: the message went from 12px to **11px** with a matching line height, the orange marker from a 16px box/11px glyph to **12px box / 10px glyph**, and the padding tightened a step — so the bubble now reads at the same size as the hint text under the other fields instead of as body copy. Wording, amber outline and the *Send anyway* confirmation are untouched.
+- Inherited everywhere the component is used: To/Cc/Bcc, the note composer's recipients, the ticket's *Add contact* box and the new-ticket *Also* field.
+
+**Verification (live)**
+- The bubble under the Cc row measured **11px / 15.125px line height** with a 12px marker, same sentence, and nothing below it moved. Screenshot captured.
+- Web typecheck 0; design-token lint unchanged. No data was written by the check.

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.036 | Last Updated: 2026-10-06
+## Version: 2026.10.6.037 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.037 — Smaller again: the warning matches the app's field-note size
+- **[Update]** **The warning text drops to 11px** (from 12px, and 14px originally), so it now matches the hint text under the other fields rather than reading as body copy. The orange marker shrinks with it — 12px box with a 10px glyph — and the padding tightens slightly, so the bubble takes noticeably less room under the chips.
+- **[Update]** Nothing else about the warning changes: the wording, the amber outline on the field, and the *Send anyway* confirmation all behave as before, on every surface that borrows the component (To/Cc/Bcc, note recipients, the ticket's *Add contact* box and the new-ticket *Also* field).
+- **Verification (live):** the bubble measured **11px / 15.125px line height** with a 12px marker under the Cc row, same sentence, no layout shift below it. Web typecheck 0; design-token lint unchanged.
+- **Rollback:** type scale in one component — no API, schema or data change.
 
 ## 2026.10.6.036 — Smaller type in the outside-organisation warning
 - **[Update]** **The warning bubble's text is smaller.** It was set at the body size (14px) and read as a message rather than a field note; it is now **12px** with the line height tightened to match, and the orange marker scaled down with it so the bubble sits under a field without dwarfing the chips above it. The wording, the amber field outline and the *Send anyway* confirmation are unchanged.
