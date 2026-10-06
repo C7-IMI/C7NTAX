@@ -18,18 +18,21 @@ export function KumoAssetsPage() {
   const [templateFilter, setTemplateFilter] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [form, setForm] = useState<Record<string, any>>({ name: "" });
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({});
   const navigate = useNavigate();
 
   const fetchAll = async () => {
     try {
-      const [aRes, tRes] = await Promise.all([
+      const [aRes, tRes, cRes] = await Promise.all([
         api.get("/kumo/assets"),
         api.get("/kumo/templates"),
+        api.get("/clients?limit=100"),
       ]);
       setAssets(aRes.data.data || []);
       setTemplates(tRes.data.data || []);
+      setCompanies(cRes.data.data || []);
     } catch { toast.error("Failed to load"); }
     finally { setLoading(false); }
   };
@@ -43,7 +46,7 @@ export function KumoAssetsPage() {
 
   const startCreate = (tpl?: any) => {
     setSelectedTemplate(tpl || null);
-    setForm({ name: "" });
+    setForm({ name: "", companyId: "" });
     setFieldValues({});
     setShowCreate(true);
     if (tpl) {
@@ -62,6 +65,7 @@ export function KumoAssetsPage() {
         templateId: selectedTemplate.id,
         name: form.name,
         fieldValues,
+        companyId: form.companyId || undefined,
       });
       toast.success("Asset created");
       setShowCreate(false);
@@ -183,6 +187,13 @@ export function KumoAssetsPage() {
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">Name *</label>
                   <input className="input-field" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required autoFocus />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Client</label>
+                  <select className="input-field" value={form.companyId || ""} onChange={e => setForm({ ...form, companyId: e.target.value })}>
+                    <option value="">No client</option>
+                    {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
                 </div>
                 {selectedTemplate.fields?.map((f: any) => (
                   <div key={f.key}>

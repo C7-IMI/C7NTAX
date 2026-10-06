@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.013 | Last Updated: 2026-10-06
+## Version: 2026.10.6.014 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.014 — Kumo now tags new records to the client you choose, and the duplicate dashboard route is gone
+- **[Fix]** **Kumo ignored the client selected when creating a record.** The password, asset, configuration/server, document and folder handlers all wrote `companyId: req.user!.companyId`, so the client chosen in the form was overwritten: every new record was tagged to the creator's own company, and nothing new could appear under the client it belonged to. All five now resolve the company through one helper — an explicit `companyId` wins, otherwise the record follows the creator's company exactly as before, and an unknown id is rejected with a 400 rather than written. (The asset handler previously stored `null` when no client was sent, so assets never appeared under any organization.)
+- **[Update]** **The Assets, Configurations and Documents create forms now offer the client picker the Passwords form already had.** The missing picker was why a client choice could not be honoured: Assets, New Doc, New Folder and Add Server now send `companyId`, and "No client" keeps the previous behaviour of following your own company.
+- **[Fix]** **`kumo.ts` registered `/dashboard` twice.** The first, unguarded copy — returning `{ data: { … servers, folders } }` — shadowed the permission-guarded copy further down the file, so the guarded route was dead code and the endpoint answered without its `KumoView` check. The duplicate is deleted and the surviving guarded route returns `{ assets, passwords, configs, documents, links }`; the dashboard cards accept either shape.
+- **Verification:** an integration harness booted the real Kumo router on a spare port (with the dev port occupied, so no workers or pollers started) and drove it over real HTTP with a real signed token — all five creates stored the chosen client, an unknown `companyId` returned 400, exactly one `/dashboard` route was registered, it returned the flat five-key payload with a token and 401 without one, and the passwords/assets/documents/folders/servers row counts were identical before and after, with the harness deleting everything it created. In the browser the cards read the new payload (5 assets, 5 passwords, 1 server, 4 documents) and all four create forms expose a client picker. Typecheck unchanged (web 26, api 178 pre-existing errors); token lint unchanged at 117.
 
 ## 2026.10.6.013 — Organizations in Kumo: the client list with its documentation coverage
 - **[New]** **A new Organizations view inside Kumo — every client, annotated with how much Kumo documentation it actually has.** `GET /api/kumo/organizations` returns a page of companies with grouped counts for assets, passwords, documents, domains and certificates, merged from five `companyId` groupings so the page costs a fixed number of queries instead of one lookup per row. The new `/kumo/organizations` page is built in the C7NTAX table style rather than a copy of another product: an IT Glue-style Recents strip of initials avatars, a debounced server-side filter beside an `n of total` counter, and a sortable table (organization, type, contacts, assets, passwords, documents, domains, certs, status). Clicking a row opens the client record and records the organization in Recents.

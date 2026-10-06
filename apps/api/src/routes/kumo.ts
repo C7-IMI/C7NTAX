@@ -10,6 +10,20 @@ import QRCode from "qrcode";
 export const kumoRouter = Router();
 kumoRouter.use(authenticate);
 
+/**
+ * Which organization a new record belongs to. An explicitly chosen client wins;
+ * otherwise the record follows the creating user's own company. Unknown ids are
+ * rejected rather than written, since companyId is a foreign key.
+ */
+async function resolveCompanyId(requested: unknown, fallback: string | null | undefined): Promise<string | null> {
+  if (typeof requested === "string" && requested.trim()) {
+    const company = await prisma.company.findUnique({ where: { id: requested.trim() }, select: { id: true } });
+    if (!company) throw new AppError("Unknown companyId", 400);
+    return company.id;
+  }
+  return fallback ?? null;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 //  TEMPLATES
 // ═══════════════════════════════════════════════════════════════════
@@ -101,20 +115,6 @@ kumoRouter.delete("/templates/:id", requirePermission(Permission.KumoAssetManage
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  DASHBOARD
-// ═══════════════════════════════════════════════════════════════════
-
-kumoRouter.get("/dashboard", async (_req: AuthRequest, res, next) => {
-  try {
-    const [assets, passwords, documents, servers, folders] = await Promise.all([
-      prisma.kumoAsset.count(), prisma.kumoPassword.count(), prisma.kumoDocument.count(),
-      prisma.kumoServer.count(), prisma.kumoFolder.count(),
-    ]);
-    res.json({ data: { assets, passwords, documents, servers, folders } });
-  } catch (e) { next(e); }
-});
-
-// ═══════════════════════════════════════════════════════════════════
 //  ASSETS
 // ═══════════════════════════════════════════════════════════════════
 
@@ -158,7 +158,7 @@ kumoRouter.post("/assets", requirePermission(Permission.KumoAssetCreate), async 
 
     const asset = await prisma.kumoAsset.create({
       data: {
-        templateId, name, companyId: companyId || null,
+        templateId, name, companyId: await resolveCompanyId(companyId, req.user!.companyId),
         tags: tags || [], createdById: req.user!.userId,
         fieldValues: values ? {
           create: Object.entries(values).map(([key, val]) => {
@@ -285,12 +285,13 @@ kumoRouter.get("/passwords/:id", requirePermission(Permission.KumoPasswordsView)
 
 kumoRouter.post("/passwords", requirePermission(Permission.KumoPasswordsCreate), async (req: AuthRequest, res, next) => {
   try {
-    const { label, username, password, email, url, category, notes } = req.body;
+    const { label, username, password, email, url, category, notes, companyId } = req.body;
     if (!label) throw new AppError("label required", 400);
     if (!password) throw new AppError("password required", 400);
     const { ciphertext, iv, authTag } = encrypt(password);
+    const ownerCompanyId = await resolveCompanyId(companyId, req.user!.companyId);
     const pw = await prisma.kumoPassword.create({
-      data: { label, username, email, url, category, notes: notes || null, encryptedPassword: ciphertext, encryptionKeyId: "v1", iv, authTag, companyId: req.user!.companyId, createdById: req.user!.userId },
+      data: { label, username, email, url, category, notes: notes || null, encryptedPassword: ciphertext, encryptionKeyId: "v1", iv, authTag, companyId: ownerCompanyId, createdById: req.user!.userId },
       select: { id: true, label: true, username: true, email: true, url: true, category: true, createdAt: true },
     });
     res.status(201).json(pw);
@@ -475,9 +476,10 @@ kumoRouter.get("/configs/servers", requirePermission(Permission.KumoConfigView),
 
 kumoRouter.post("/configs/servers", requirePermission(Permission.KumoConfigCreate), async (req: AuthRequest, res, next) => {
   try {
-    const { name, hostname, templateId, ...fields } = req.body;
+    const { name, hostname, templateId, companyId, ...fields } = req.body;
     if (!name || !hostname || !templateId) throw new AppError("name, hostname, templateId required", 400);
-    const asset = await prisma.kumoAsset.create({ data: { name, templateId, companyId: req.user!.companyId, createdById: req.user!.userId } });
+    const ownerCompanyId = await resolveCompanyId(companyId, req.user!.companyId);
+    const asset = await prisma.kumoAsset.create({ data: { name, templateId, companyId: ownerCompanyId, createdById: req.user!.userId } });
     const server = await prisma.kumoServer.create({ data: { kumoAssetId: asset.id, hostname, ...fields } });
     res.status(201).json({ ...asset, server });
   } catch (e) { next(e); }
@@ -496,10 +498,11 @@ kumoRouter.get("/documents/folders", requirePermission(Permission.KumoDocumentVi
 
 kumoRouter.post("/documents/folders", requirePermission(Permission.KumoDocumentCreate), async (req: AuthRequest, res, next) => {
   try {
-    const { name, parentId } = req.body;
+    const { name, parentId, companyId } = req.body;
     if (!name) throw new AppError("name required", 400);
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    const folder = await prisma.kumoFolder.create({ data: { name, slug, parentId: parentId || null, companyId: req.user!.companyId } });
+    const ownerCompanyId = await resolveCompanyId(companyId, req.user!.companyId);
+    const folder = await prisma.kumoFolder.create({ data: { name, slug, parentId: parentId || null, companyId: ownerCompanyId } });
     res.status(201).json(folder);
   } catch (e) { next(e); }
 });
@@ -528,11 +531,11 @@ kumoRouter.get("/documents/:id", requirePermission(Permission.KumoDocumentView),
 
 kumoRouter.post("/documents", requirePermission(Permission.KumoDocumentCreate), async (req: AuthRequest, res, next) => {
   try {
-    const { title, content, folderId, visibility } = req.body;
+    const { title, content, folderId, visibility, companyId } = req.body;
     if (!title || !content) throw new AppError("title and content required", 400);
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Date.now().toString(36);
     const doc = await prisma.kumoDocument.create({
-      data: { title, slug, currentContent: content, currentVersion: 1, folderId: folderId || null, visibility: visibility || "internal", companyId: req.user!.companyId, authorId: req.user!.userId },
+      data: { title, slug, currentContent: content, currentVersion: 1, folderId: folderId || null, visibility: visibility || "internal", companyId: await resolveCompanyId(companyId, req.user!.companyId), authorId: req.user!.userId },
     });
     await prisma.kumoDocumentRevision.create({ data: { documentId: doc.id, version: 1, content, authorId: req.user!.userId } });
     res.status(201).json(doc);

@@ -10,18 +10,22 @@ export function KumoDocumentsPage() {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showFolder, setShowFolder] = useState(false);
-  const [form, setForm] = useState({ title: "", content: "", folderId: "" });
+  const [form, setForm] = useState({ title: "", content: "", folderId: "", companyId: "" });
   const [folderName, setFolderName] = useState("");
+  const [folderCompanyId, setFolderCompanyId] = useState("");
+  const [companies, setCompanies] = useState<any[]>([]);
   const [viewDoc, setViewDoc] = useState<any>(null);
 
   const fetchAll = async () => {
     try {
-      const [fRes, dRes] = await Promise.all([
+      const [fRes, dRes, cRes] = await Promise.all([
         api.get("/kumo/documents/folders"),
         api.get(`/kumo/documents${selectedFolder ? `?folderId=${selectedFolder}` : ""}`),
+        api.get("/clients?limit=100"),
       ]);
       setFolders(fRes.data.data || []);
       setDocuments(dRes.data.data || []);
+      setCompanies(cRes.data.data || []);
     } catch { toast.error("Failed to load"); }
     finally { setLoading(false); }
   };
@@ -33,7 +37,7 @@ export function KumoDocumentsPage() {
       await api.post("/kumo/documents", { ...form, folderId: selectedFolder || form.folderId });
       toast.success("Document created");
       setShowCreate(false);
-      setForm({ title: "", content: "", folderId: "" });
+      setForm({ title: "", content: "", folderId: "", companyId: "" });
       fetchAll();
     } catch { toast.error("Failed"); }
   };
@@ -41,10 +45,11 @@ export function KumoDocumentsPage() {
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
     try {
-      await api.post("/kumo/documents/folders", { name: folderName });
+      await api.post("/kumo/documents/folders", { name: folderName, companyId: folderCompanyId || undefined });
       toast.success("Folder created");
       setShowFolder(false);
       setFolderName("");
+      setFolderCompanyId("");
       fetchAll();
     } catch { toast.error("Failed"); }
   };
@@ -117,6 +122,10 @@ export function KumoDocumentsPage() {
               <option value="">No folder</option>
               {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
             </select>
+            <select className="input-field" value={form.companyId} onChange={e => setForm({...form, companyId: e.target.value})}>
+              <option value="">No client</option>
+              {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
               <button type="submit" className="btn-primary text-sm">Create</button>
@@ -130,6 +139,10 @@ export function KumoDocumentsPage() {
           <div className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-white">New Folder</h3>
             <input className="input-field" placeholder="Folder name" value={folderName} onChange={e => setFolderName(e.target.value)} autoFocus />
+            <select className="input-field" value={folderCompanyId} onChange={e => setFolderCompanyId(e.target.value)}>
+              <option value="">No client</option>
+              {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setShowFolder(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleCreateFolder} className="btn-primary text-sm">Create</button>

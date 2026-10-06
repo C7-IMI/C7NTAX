@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.6.014",
+    "date": "2026-10-06",
+    "title": "Kumo now tags new records to the client you choose, and the duplicate dashboard route is gone",
+    "changes": [
+      {
+        "text": "**Kumo ignored the client selected when creating a record.** The password, asset, configuration/server, document and folder handlers all wrote `companyId: req.user!.companyId`, so the client chosen in the form was overwritten: every new record was tagged to the creator's own company, and nothing new could appear under the client it belonged to. All five now resolve the company through one helper — an explicit `companyId` wins, otherwise the record follows the creator's company exactly as before, and an unknown id is rejected with a 400 rather than written. (The asset handler previously stored `null` when no client was sent, so assets never appeared under any organization.)",
+        "type": "Fix"
+      },
+      {
+        "text": "**The Assets, Configurations and Documents create forms now offer the client picker the Passwords form already had.** The missing picker was why a client choice could not be honoured: Assets, New Doc, New Folder and Add Server now send `companyId`, and \"No client\" keeps the previous behaviour of following your own company.",
+        "type": "Update"
+      },
+      {
+        "text": "**`kumo.ts` registered `/dashboard` twice.** The first, unguarded copy — returning `{ data: { … servers, folders } }` — shadowed the permission-guarded copy further down the file, so the guarded route was dead code and the endpoint answered without its `KumoView` check. The duplicate is deleted and the surviving guarded route returns `{ assets, passwords, configs, documents, links }`; the dashboard cards accept either shape.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.013",
     "date": "2026-10-06",
     "title": "Organizations in Kumo: the client list with its documentation coverage",

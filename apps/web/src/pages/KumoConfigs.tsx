@@ -11,7 +11,7 @@ export function KumoConfigsPage() {
   const [selected, setSelected] = useState<any>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [templates, setTemplates] = useState([]);
-  const [form, setForm] = useState({name:"",hostname:"",templateId:"",os:"",cpu:"",ram:"",storage:"",ip:"",virt:""});
+  const [form, setForm] = useState({name:"",hostname:"",templateId:"",companyId:"",os:"",cpu:"",ram:"",storage:"",ip:"",virt:""});
 
   const fetch = () => {
     api.get("/kumo/configs/servers").then(r => setConfigs(r.data.data||[])).catch(() => toast.error("Failed")).finally(() => setLoading(false));
@@ -28,6 +28,7 @@ export function KumoConfigsPage() {
     e.preventDefault();
     api.post("/kumo/configs/servers", {
       name: form.name, hostname: form.hostname, templateId: form.templateId,
+      companyId: form.companyId || undefined,
       operatingSystem: form.os, cpuCores: Number(form.cpu)||0, ramGb: Number(form.ram)||0,
       storageGb: Number(form.storage)||0, ipAddress: form.ip, virtualization: form.virt
     }).then(() => { toast.success("Created"); setShowCreate(false); fetch(); }).catch(() => toast.error("Failed"));
@@ -97,6 +98,10 @@ export function KumoConfigsPage() {
             <select className="input-field" value={form.templateId} onChange={e => setForm({...form, templateId: e.target.value})} required>
               <option value="">Select template*</option>
               {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+            <select className="input-field" value={form.companyId} onChange={e => setForm({...form, companyId: e.target.value})}>
+              <option value="">No client</option>
+              {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <div className="grid grid-cols-2 gap-2">
               <input className="input-field" placeholder="OS" value={form.os} onChange={e => setForm({...form, os: e.target.value})} />

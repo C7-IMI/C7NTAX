@@ -23,12 +23,12 @@ export function KumoDashboardPage() {
 
   useEffect(() => {
     api.get("/kumo/dashboard").then(r => {
-      // The endpoint wraps its payload in `data` and counts servers, not configs.
+      // Tolerate both payload shapes: { data: { … servers } } and the flat { … configs }.
       const d = r.data?.data ?? r.data ?? {};
       setStats({
         assets: d.assets ?? 0,
         passwords: d.passwords ?? 0,
-        configs: d.servers ?? 0,
+        configs: d.configs ?? d.servers ?? 0,
         documents: d.documents ?? 0,
         links: d.links ?? 0,
       });
