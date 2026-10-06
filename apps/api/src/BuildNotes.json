@@ -13,7 +13,7 @@
         "type": "New Feature"
       },
       {
-        "text": "**Sample data for every asset type, for every organization.** The seeder now walks the type templates and gives each client two records of each type with values that read like a real environment — a domain controller and a file server, Veeam job and Microsoft 365 backup, core and access switches, the primary fibre circuit and its 4G failover, corporate and guest SSIDs, and so on — with the fields filled from a per-key value map (16 cores, 500/500 Mbps, \"Net 30\", a 214-day contract end, a verified restore). That is **210 configurations and 1,020 field values** across the five clients, and the loop means a new type is populated the next time it runs. The three original types still create their legacy detail rows, so Configurations keeps working.",
+        "text": "**Sample data for every asset type, for every organization.** The seeder now walks the type templates and gives each client two records of each type with values that read like a real environment — a domain controller and a file server, Veeam job and Microsoft 365 backup, core and access switches, the primary fibre circuit and its 4G failover, corporate and guest SSIDs, and so on — with the fields filled from a per-key value map (16 cores, 500/500 Mbps, \"Net 30\", a 214-day contract end, a verified restore). That is **210 configurations and 1,020 field values** across the five clients, and the loop means a new type is populated the next time it runs. Records left over from the first pass, which were named \"Client Type\", are renamed to match so a type panel reads consistently. The three original types still create their legacy detail rows, so Configurations keeps working.",
         "type": "New Feature"
       },
       {

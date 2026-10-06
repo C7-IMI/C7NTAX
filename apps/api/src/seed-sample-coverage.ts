@@ -531,6 +531,11 @@ async function main() {
     // type templates, so a type added later is covered without touching this.
     const typedAssets = assetTypeTemplates.filter((t) => !promotedTypeSlugs.has(t.name.trim().toLowerCase()));
     for (const tpl of typedAssets) {
+      // Rename records left by the first pass, which used "Client Type".
+      await prisma.kumoAsset.updateMany({
+        where: { companyId: client.id, templateId: tpl.id, name: `${client.name} ${tpl.name}` },
+        data: { name: typeAssetNames(tpl.name, client.name)[0]! },
+      });
       const existing = await prisma.kumoAsset.count({ where: { companyId: client.id, templateId: tpl.id } });
       if (existing >= ASSETS_PER_TYPE) continue;
       const names = typeAssetNames(tpl.name, client.name).slice(existing);
