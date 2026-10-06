@@ -614,7 +614,7 @@ kumoRouter.post("/recently-viewed", requirePermission(Permission.KumoView), asyn
   try {
     const { entityType, entityId, entityName, entityIcon } = req.body;
     if (!entityType || !entityId || !entityName) throw new AppError("entityType, entityId, and entityName are required", 400);
-    const validTypes = ["password", "config", "asset", "document", "domain", "certificate", "link"];
+    const validTypes = ["password", "config", "asset", "document", "domain", "certificate", "link", "organization"];
     if (!validTypes.includes(entityType)) throw new AppError(`Invalid entityType. Must be one of: ${validTypes.join(", ")}`, 400);
     const item = await prisma.recentlyViewedItem.upsert({
       where: { userId_entityType_entityId: { userId: req.user!.userId, entityType, entityId } },
@@ -622,5 +622,75 @@ kumoRouter.post("/recently-viewed", requirePermission(Permission.KumoView), asyn
       update: { entityName, entityIcon: entityIcon || "document", viewedAt: new Date() },
     });
     res.status(201).json(item);
+  } catch (e) { next(e); }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  ORGANIZATIONS — the client list, with its Kumo documentation coverage
+// ═══════════════════════════════════════════════════════════════════
+
+kumoRouter.get("/organizations", requirePermission(Permission.KumoView), async (req: AuthRequest, res, next) => {
+  try {
+    const { search = "", limit = "200", offset = "0", sort = "name" } = req.query as Record<string, string>;
+    const where: Record<string, unknown> = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { legalName: { contains: search } },
+        { city: { contains: search } },
+        { industry: { contains: search } },
+      ];
+    }
+    const orderField = ["name", "companyType", "createdAt", "city", "industry"].includes(sort) ? sort : "name";
+
+    // One grouped count per documentation type, then merged onto the page of
+    // organizations — this keeps it to a fixed number of queries rather than
+    // one lookup per row.
+    const [companies, total, assetRows, passwordRows, documentRows, domainRows, certificateRows] = await Promise.all([
+      prisma.company.findMany({
+        where,
+        skip: Number(offset),
+        take: Number(limit),
+        orderBy: { [orderField]: "asc" },
+        select: {
+          id: true, name: true, companyType: true, industry: true, city: true, state: true,
+          isActive: true, updatedAt: true,
+          _count: { select: { contacts: true, tickets: true, serviceAgreements: true } },
+        },
+      }),
+      prisma.company.count({ where }),
+      prisma.kumoAsset.groupBy({ by: ["companyId"], _count: { _all: true } }),
+      prisma.kumoPassword.groupBy({ by: ["companyId"], _count: { _all: true } }),
+      prisma.kumoDocument.groupBy({ by: ["companyId"], _count: { _all: true } }),
+      prisma.kumoDomain.groupBy({ by: ["companyId"], _count: { _all: true } }),
+      prisma.kumoCertificate.groupBy({ by: ["companyId"], _count: { _all: true } }),
+    ]);
+
+    const toMap = (rows: { companyId: string | null; _count: { _all: number } }[]) => {
+      const map = new Map<string, number>();
+      for (const row of rows) if (row.companyId) map.set(row.companyId, row._count._all);
+      return map;
+    };
+    const assets = toMap(assetRows);
+    const passwords = toMap(passwordRows);
+    const documents = toMap(documentRows);
+    const domains = toMap(domainRows);
+    const certificates = toMap(certificateRows);
+
+    res.json({
+      data: companies.map((c) => ({
+        ...c,
+        kumo: {
+          assets: assets.get(c.id) ?? 0,
+          passwords: passwords.get(c.id) ?? 0,
+          documents: documents.get(c.id) ?? 0,
+          domains: domains.get(c.id) ?? 0,
+          certificates: certificates.get(c.id) ?? 0,
+        },
+      })),
+      total,
+      limit: Number(limit),
+      offset: Number(offset),
+    });
   } catch (e) { next(e); }
 });

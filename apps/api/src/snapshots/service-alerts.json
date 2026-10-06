@@ -3,15 +3,15 @@
     "id": "0975752a-323d-4fb1-a251-eff655fee224",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Elevated errors affecting multiple products including ChatGPT (conversations), Image generations, Spaces and Pages, API rehydration, and Dots.",
-    "description": "Status: Monitoring We have applied the mitigation and are monitoring the recovery. Affected components Image Generation (Degraded performance) ChatGPT Work (Degraded performance) Space (Degraded performance) dots (Degraded performance) Conversations (Degraded performance)",
+    "description": "Auto-resolved: Elevated errors affecting multiple products including ChatGPT (conversations), Image generations, Spaces and Pages, API rehydration, and Dots.\n\nStatus: Monitoring We have applied the mitigation and are monitoring the recovery. Affected components Image Generation (Degraded performance) ChatGPT Work (Degraded performance) Space (Degraded performance) dots (Degraded performance) Conversations (Degraded performance)",
     "severity": "degraded",
-    "status": "active",
+    "status": "resolved",
     "source": "rss",
     "sourceUrl": "https://status.openai.com//incidents/01M47HC9SGHGFPBN44KGC6SKAQ",
     "detectedAt": "2026-10-06T02:46:25.900Z",
-    "resolvedAt": null,
+    "resolvedAt": "2026-10-06T03:21:33.020Z",
     "createdAt": "2026-10-06T02:46:25.901Z",
-    "updatedAt": "2026-10-06T03:17:02.755Z"
+    "updatedAt": "2026-10-06T03:21:33.021Z"
   },
   {
     "id": "d0965043-ce63-4fb7-b1a3-70b6a8ded9d5",

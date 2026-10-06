@@ -162,12 +162,21 @@
     "viewedAt": "2026-08-24T21:58:09.934Z"
   },
   {
+    "id": "c528fede-3b74-4d84-819a-5828427845ef",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "entityName": "Acme Domain Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-10-06T06:49:30.591Z"
+  },
+  {
     "id": "03ad733b-2345-4b62-abb5-9538948703b4",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "password",
     "entityId": "b4e69c8a-ca6e-4995-b0d0-3fa617304217",
     "entityName": "Office 365 Global Admin",
     "entityIcon": "key",
-    "viewedAt": "2026-09-13T18:34:04.185Z"
+    "viewedAt": "2026-10-06T06:49:34.385Z"
   }
 ]

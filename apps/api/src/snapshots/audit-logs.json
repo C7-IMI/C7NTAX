@@ -1363,6 +1363,21 @@
     "createdAt": "2026-08-12T08:15:51.766Z"
   },
   {
+    "id": "11a8c612-267c-4d5a-82ba-c3ddbd9de6c6",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "minutes": 90,
+      "workRole": "Technician",
+      "workType": "Remote Support",
+      "description": "smoke work done"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:32:49.264Z"
+  },
+  {
     "id": "b0cf4294-1734-463f-8ffe-ac60ac9276d7",
     "action": "tickets:create",
     "entity": "tickets",
@@ -1402,6 +1417,70 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T03:16:38.211Z"
+  },
+  {
+    "id": "8455f280-0986-4eaa-ad5f-aabeb90fc012",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "minutes": 60,
+      "workType": "Onsite",
+      "description": ""
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:32:49.274Z"
+  },
+  {
+    "id": "b1f89271-e1ea-4695-a78a-f8221c4d1644",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "body": "refactor check public",
+      "isInternal": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:35:48.435Z"
+  },
+  {
+    "id": "f8c2c4a6-3d34-4be3-920f-e4230fe991ee",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "body": "refactor check internal",
+      "isInternal": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:35:48.447Z"
+  },
+  {
+    "id": "1d87ea0d-9d28-4357-9cb7-e02af783da4b",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "status": "in_progress"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:35:48.462Z"
+  },
+  {
+    "id": "b9eb6150-ec0a-4120-bdb3-3e99830b0e6e",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "status": "on_hold"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:35:48.474Z"
   },
   {
     "id": "3658b176-0040-4b17-a015-dacdcf1b8eea",
@@ -1688,5 +1767,83 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T03:15:47.382Z"
+  },
+  {
+    "id": "6933ae74-6435-4209-8be2-ac1945432921",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "body": "smoke internal note",
+      "isInternal": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:32:29.769Z"
+  },
+  {
+    "id": "00607c5c-ba5a-4854-8259-657f03fa474a",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "body": "smoke public note\nline two",
+      "isInternal": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:32:29.967Z"
+  },
+  {
+    "id": "653b855a-232d-4a9e-b34f-39e2b57cfba1",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "status": "in_progress"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:32:29.979Z"
+  },
+  {
+    "id": "cbdcf8f1-06eb-4b03-a241-97d39fbf68f4",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "minutes": 45,
+      "workRole": "Technician",
+      "workType": "Remote Support",
+      "description": "smoke work done"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:32:29.993Z"
+  },
+  {
+    "id": "520ceb00-8750-44ff-a21c-1f2774146415",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "body": "smoke public note\nline two & <tags>",
+      "isInternal": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:32:49.221Z"
+  },
+  {
+    "id": "dcc99090-046a-421d-b762-ebd39b5288da",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "status": "on_hold"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:32:49.250Z"
   }
 ]
