@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-10-06T19:00:07.995Z",
-  "totalRecords": 734,
+  "capturedAt": "2026-10-06T19:00:59.972Z",
+  "totalRecords": 732,
   "tables": {
     "role": 5,
     "user": 9,
@@ -8,8 +8,8 @@
     "contact": 13,
     "serviceBoard": 4,
     "ticket": 96,
-    "ticketComment": 9,
-    "ticketAttachment": 2,
+    "ticketComment": 8,
+    "ticketAttachment": 1,
     "timeEntry": 5,
     "scheduleEntry": 2,
     "serviceAgreement": 5,

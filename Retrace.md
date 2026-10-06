@@ -2481,3 +2481,34 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Two testing gotchas worth remembering: the sink had to advertise `PIPELINING` before nodemailer would complete a DATA transaction against it, and `document.querySelector('form button[type=submit]')` matched the Notes composer's *Add Note* button rather than the dialog's *Send Email*.
 - Typecheck: web 0, api 156 (baseline) — unchanged. Design-token lint unchanged.
 - Cleanup: three probe comments, three attachment rows, their files, two audit rows and every temp file removed; snapshots re-captured so they match. Nothing was ever relayed off the machine — the sink only wrote to a temp file.
+---
+
+### Prompt 189 — Word paste fidelity, inline images, and a context menu inside the email editor
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live end to end | **Duration:** ~1 h 30 m
+**BuildNotes IDs:** 2026.10.6.032 - Pasting from Word keeps its formatting, images go inline, and the editor gets its own right-click menu
+> Would it be better if the editor were an HTML editor instead of rich text? I want to be able to paste something in there from say a Word document and the formatting be preserved or an image gets inserted inline, instead of as an attachment. If it's a non-image file, then pasting it or dragging and dropping will just add it as an attachment.  If rich text will get the job done, then leave it as is. Otherwise I need the functionality above implemented
+>
+> Also enable a context relevant right-click menu in the e-mail editor
+
+**The answer to the question, and why no rewrite was needed**
+- Rich text *is* an HTML editor here: the composer is a `contenteditable` surface, so the browser already hands it real HTML with real inline styles on paste — the same architecture OWA and Gmail use. The gap was never the storage format, it was that the paste handler deliberately flattened everything it received, and that images had nowhere to go but the attachment strip.
+- So the fix was to teach the existing pipeline about richness rather than replace the editor: a Word-aware paste cleaner on the client, a style allowlist in the existing server-side sanitiser, and an inline-image (CID) path through the mailer. No new dependency, no change to how messages are stored or how the Attachments tab works.
+
+**Where it went**
+- `apps/web/src/components/RichTextEditor.tsx`: `cleanPastedHtml` / `cleanPastedStyle` / `cleanPastedAttrs` / `fontTagToSpan` (Word fidelity, `mso-*` and conditional-comment stripping), `fileToDataUrl`, `handleIncomingFiles` (images inline, everything else to chips), the same routing for paste and drop, `saveSelection`/`restoreSelection` so an image lands where the caret was, an **Insert image** toolbar button with a hidden file input, `openEditorMenu` building the context-menu entries from what the caret is actually on, image/table CSS, and `onInlineImageError` so a broken image says so instead of leaving a gap.
+- `apps/api/src/services/emailHtml.ts`: allowlisted inline styles preserved on the way out, data-URI `img src` accepted for image types with a length cap, `extractInlineImages()` splitting embedded images into `cid:` parts, and the two void-tag/limit fixes below.
+- `apps/api/src/routes/tickets/index.ts`: inline images sent as `Content-ID` parts with `contentDisposition: "inline"` ahead of the file attachments.
+- `apps/web/src/components/ContextMenu.tsx`: `open()` gained `{ allowInTextEntry?: boolean }`, so the editor can claim the app menu while normal inputs keep the browser's native menu (spell-check and paste suggestions included).
+- `packages/email/src/EmailService.ts`: attachment type extended with `cid?` and `contentDisposition?`.
+
+**What was actually broken along the way**
+- **Every inline image went out as `<img>` with no `src`.** The sanitizer's void-element branch emitted `img`/`br`/`hr` as bare tag names, dropping all attributes — so the very thing being added was invisible in the sent message while looking perfect in the composer. Caught only by capturing the real outbound MIME; an `<img>` whose `src` does not survive is now dropped entirely instead of shipping broken.
+- **Long data URIs were silently truncated.** `MAX_HTML_LENGTH` was 200 KB, so a base64 image was cut mid-payload before `extractInlineImages` ran — the image would have been mangled rather than rejected. Raised to 10 MB to match `express.json({ limit: "10mb" })`, with a per-URI cap so one oversized image fails cleanly.
+
+**Verification (live)**
+- Paste from a Word-shaped clipboard: `font-size: 11.0pt`, `font-family: Calibri`, `color: #1F3864`, `<b>` and `margin-left: 36.0pt` all preserved; `<font>` converted to a styled `span`; `mso-*`, `class="MsoNormal"` and `<!--[if ...]-->` gone.
+- Pasted image → one inline `data:image/png`, **no** attachment chip. Dropped `.txt` → chip reading "dropped-notes.txt 20 B" with the *1 file attached* toast. Right-click menu listed every editor entry; on a link it led with *Open link* / *Copy link address* / *Edit link…* / *Remove link*, and **Bold** applied from the menu.
+- The send was captured at a throwaway SMTP sink on `localhost:587`: `multipart/mixed` → `multipart/alternative` → `text/plain` + **`multipart/related`** holding the HTML and an `image/png` part with `Content-ID: <img-1-…@c7ntax>` and `Content-Disposition: inline`, with `dropped-notes.txt` as its own `Content-Disposition: attachment` part. The HTML referenced `src="cid:img-1-…@c7ntax"`, kept the Word styling, and contained no `data:` URI, `mso-` declaration, `class=` or `<script>`.
+- Database: exactly **one** `TicketAttachment` row (the dropped file, 20 B) and **no** row for the inline image, so the Attachments tab gained only the real file; the Notes entry showed the email with "(Attached: dropped-notes.txt)". The image file was never written to `data/ticket-attachments`.
+- Server-side checks by script: `data:text/html` URI dropped, script stripped, 3 MB image dropped with no broken `src` left behind, ordinary `http` image kept, `onerror` stripped, typechecks web 0 / api 156 (baseline) and design-token lint unchanged.
+- Cleanup: probe comment, attachment row, file and audit rows removed; snapshots re-captured; sink stopped and its script and capture file deleted with port 587 free. Nothing left the machine — the sink only wrote to a temp file.
