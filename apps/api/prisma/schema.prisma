@@ -159,6 +159,7 @@ model Company {
   serviceAgreements ServiceAgreement[]
   invoices        Invoice[]
   checklists      Checklist[]
+  emailConnectorDefaults EmailConnector[] @relation("EmailConnectorDefaultCompany")
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -241,10 +242,28 @@ model EmailConnector {
   user              String
   passwordEncrypted String
   folder            String   @default("INBOX")
-  transport         String   @default("imap") // imap, graph
+  transport         String   @default("imap") // imap, ews, graph
+  authType          String   @default("basic") // basic (imap/ews), clientSecret | delegated (graph)
   clientId          String?  // Graph OAuth (transport=graph)
   clientSecretEncrypted String?
   tenantId          String?  // Graph tenant or "common"
+
+  // Delegated OAuth ("Connect to Microsoft", authorization code + PKCE). Only the
+  // signed-in account's own mailbox is read, so no app-only permission is needed;
+  // the refresh token is rotated on every use and stored encrypted.
+  oauthRefreshTokenEncrypted String?
+  oauthAccount      String?  // UPN the consent was granted for
+  oauthScopes       String?
+  oauthConnectedAt  DateTime?
+
+  // Ingestion rules (how a sender that matches nothing is attributed)
+  defaultCompanyId  String?
+  defaultCompany    Company? @relation("EmailConnectorDefaultCompany", fields: [defaultCompanyId], references: [id], onDelete: SetNull)
+  autoCreateCompany Boolean  @default(false)
+  autoCreateContact Boolean  @default(true)
+  markSeenOnSuccess Boolean  @default(true)
+  ignoreAutoReplies Boolean  @default(true)
+
   pollIntervalSec   Int      @default(60)
   enabled           Boolean  @default(true)
   lastPollAt        DateTime?
