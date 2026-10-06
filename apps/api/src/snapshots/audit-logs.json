@@ -2390,5 +2390,27 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T18:47:27.980Z"
+  },
+  {
+    "id": "d04919a1-43a7-44a3-8c5c-b1e671d30fc8",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "changes": {
+      "body": "Investigation summary\n\nHigh risk – spoofed sender\n\nTrace ID 8842\n\nhttps://example.com/report",
+      "html": "<p style=\"font-size: 11.0pt; font-family: Calibri,sans-serif; color: #1F3864\"><b>Investigation summary</b></p><p style=\"margin-left: 36.0pt\"><span style=\"color: #C00000\">High risk</span> – spoofed sen...",
+      "subject": "Re: NOC-1902 — Phishing alert: suspicious email circulating",
+      "attachments": [
+        {
+          "size": 20,
+          "filename": "dropped-notes.txt",
+          "mimeType": "text/plain",
+          "contentBase64": "ZHJvcHBlZCB0ZXh0IHBheWxvYWQ="
+        }
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T19:00:01.365Z"
   }
 ]

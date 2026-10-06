@@ -56,9 +56,11 @@ export function useContextMenu() {
   const enabled = useContextMenusEnabled();
 
   const open = useCallback(
-    (event: React.MouseEvent, entries: MenuEntry[], header?: { title?: string; subtitle?: string }) => {
+    (event: React.MouseEvent, entries: MenuEntry[], header?: { title?: string; subtitle?: string }, options?: { allowInTextEntry?: boolean }) => {
       if (!enabled) return;
-      if (isTextEntryTarget(event.target)) return;
+      // Plain fields keep the browser menu (cut/copy/paste, spell-check). A purpose-built editor
+      // can opt back in, since it supplies its own clipboard and formatting entries.
+      if (!options?.allowInTextEntry && isTextEntryTarget(event.target)) return;
       event.preventDefault();
       event.stopPropagation();
       setMenuState({ x: event.clientX, y: event.clientY, entries, ...header });

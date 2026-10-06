@@ -41,7 +41,14 @@ export class EmailService {
     text?: string;
     cc?: string[];
     bcc?: string[];
-    attachments?: { filename: string; content: Buffer | string; contentType?: string }[];
+    attachments?: {
+      filename: string;
+      content: Buffer | string;
+      contentType?: string;
+      /** Content-ID for images referenced inline in the HTML (`<img src="cid:…">`). */
+      cid?: string;
+      contentDisposition?: "inline" | "attachment";
+    }[];
   }): Promise<{ messageId: string }> {
     const info = await this.transporter.sendMail({
       from: this.defaultFrom,

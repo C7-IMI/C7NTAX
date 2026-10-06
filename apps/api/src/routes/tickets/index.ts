@@ -10,7 +10,7 @@ import { generateTicketNumber } from "../../services/ticketNumber";
 import { EmailService } from "@C7NTAX/email";
 import { notifyTicketContact, notifyTicketStatusChange } from "../../services/ticketNotifications";
 import { v4 as uuid } from "uuid";
-import { sanitizeEmailHtml, htmlToText } from "../../services/emailHtml";
+import { sanitizeEmailHtml, htmlToText, extractInlineImages } from "../../services/emailHtml";
 import { logger } from "../../services/logger";
 
 export const ticketsRouter = Router();
@@ -357,16 +357,26 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
     const messageHtml = richHtml
       ? sanitizeEmailHtml(richHtml)
       : `<p>${escapeHtml(plainBody).replace(/\r?\n/g, "<br>")}</p>`;
-    const messageText = plainBody || htmlToText(messageHtml);
+    // Images pasted into the message travel as embedded parts rather than data URIs, which most
+    // mail clients refuse to render.
+    const inlined = extractInlineImages(messageHtml);
+    const messageText = plainBody || htmlToText(inlined.html);
 
     let sent;
     try {
       sent = await emailService.send({
         to: recipient,
         subject: `[${ticket.ticketNumber}] ${subject}`,
-        html: `${messageHtml}<hr><p>Ticket: ${escapeHtml(ticket.ticketNumber)} — ${escapeHtml(ticket.title)}<br>Client: ${escapeHtml(ticket.company?.name || "")}</p>`,
+        html: `${inlined.html}<hr><p>Ticket: ${escapeHtml(ticket.ticketNumber)} — ${escapeHtml(ticket.title)}<br>Client: ${escapeHtml(ticket.company?.name || "")}</p>`,
         text: `${messageText}\n\n---\nTicket: ${ticket.ticketNumber} — ${ticket.title}\nClient: ${ticket.company?.name || ""}`,
-        ...(files.length ? { attachments: files.map((f: PreparedAttachment) => ({ filename: f.filename, content: f.buffer, contentType: f.mimeType })) } : {}),
+        ...(files.length || inlined.images.length
+          ? {
+              attachments: [
+                ...inlined.images.map((img) => ({ filename: img.filename, content: img.buffer, contentType: img.contentType, cid: img.cid, contentDisposition: "inline" as const })),
+                ...files.map((f: PreparedAttachment) => ({ filename: f.filename, content: f.buffer, contentType: f.mimeType })),
+              ],
+            }
+          : {}),
       });
     } catch (sendError) {
       // Nothing is recorded when the mail cannot leave: no phantom "sent" entry, no orphan files.

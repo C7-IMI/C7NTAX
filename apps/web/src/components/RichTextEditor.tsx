@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import {
   Bold, Italic, Underline, Strikethrough, List, ListOrdered, Quote, Link2, Link2Off,
   RemoveFormatting, Undo2, Redo2, Paperclip, X, FileText, Image as ImageIcon, Loader2,
+  Copy, ExternalLink, Scissors, ClipboardPaste, CheckSquare, Trash2,
 } from "lucide-react";
+import { ContextMenu, useContextMenu, type MenuEntry } from "./ContextMenu";
 
 export interface EmailAttachmentDraft {
   filename: string;
@@ -12,6 +14,8 @@ export interface EmailAttachmentDraft {
 }
 
 export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+/** Inline images are embedded in the message, so they are kept smaller than a file attachment. */
+export const MAX_INLINE_IMAGE_BYTES = 2 * 1024 * 1024;
 
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -20,30 +24,104 @@ export function formatBytes(bytes: number): string {
 }
 
 /** Tags pasted rich text is allowed to keep before it reaches the editor. */
-const PASTE_TAGS = ["b", "strong", "i", "em", "u", "s", "strike", "ul", "ol", "li", "br", "p", "div", "blockquote", "h1", "h2", "h3", "a"];
-const PASTE_SAFE_HREF = /^(https?:|mailto:|\/)/i;
+const PASTE_TAGS = ["b", "strong", "i", "em", "u", "s", "strike", "del", "sub", "sup", "ul", "ol", "li", "br", "p", "div", "blockquote", "h1", "h2", "h3", "h4", "a", "img", "span", "hr", "pre", "code", "table", "thead", "tbody", "tr", "td", "th"];
+const PASTE_SAFE_HREF = /^(https?:|mailto:|tel:|\/|#)/i;
+const PASTE_SAFE_SRC = /^(https?:|\/|data:image\/(png|jpe?g|gif|webp|bmp);base64,)/i;
+/** Inline properties kept from a paste — enough for a Word document to look like itself. */
+const PASTE_STYLE_PROPS = new Set([
+  "color", "background-color", "font-family", "font-size", "font-weight", "font-style",
+  "text-decoration", "text-align", "line-height", "margin-left", "padding-left", "vertical-align",
+]);
 
-/** Keeps basic structure and emphasis from a paste, discards scripts, styles and layout markup. */
+function cleanPastedStyle(style: string): string {
+  return style
+    .split(";")
+    .map((declaration) => declaration.trim())
+    .filter(Boolean)
+    .map((declaration) => {
+      const [property = "", ...rest] = declaration.split(":");
+      const name = property.trim().toLowerCase();
+      const value = rest.join(":").trim();
+      // Word sprinkles mso-* properties and junk values around; neither travels well.
+      if (!name || name.startsWith("mso-") || name.startsWith("--")) return "";
+      if (!PASTE_STYLE_PROPS.has(name) || !value) return "";
+      if (/expression|javascript:|url\s*\(|@import|\\|inherit/i.test(value)) return "";
+      return `${name}: ${value}`;
+    })
+    .filter(Boolean)
+    .join("; ");
+}
+
+function cleanPastedAttrs(rawAttrs: string, tag: string): string {
+  const out: string[] = [];
+  const attrRe = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s"'>]+))?/g;
+  let match: RegExpExecArray | null;
+  while ((match = attrRe.exec(rawAttrs))) {
+    const name = (match[1] ?? "").toLowerCase();
+    const value = (match[2] ?? "").replace(/^["']|["']$/g, "").trim();
+    if (!name || name.startsWith("on") || name.startsWith("mso") || name === "class" || name === "id" || name === "style" || name === "dir" || name === "lang") continue;
+    if ((name === "href" && tag === "a") || (name === "src" && tag === "img")) {
+      const pattern = name === "href" ? PASTE_SAFE_HREF : PASTE_SAFE_SRC;
+      if (pattern.test(value)) out.push(`${name}="${value.replace(/"/g, "&quot;")}"`);
+      continue;
+    }
+    if (name === "target" && tag === "a") { out.push('target="_blank"'); continue; }
+    if (name === "alt" || name === "title") { out.push(`${name}="${value.slice(0, 200).replace(/"/g, "&quot;")}"`); continue; }
+    if ((name === "colspan" || name === "rowspan" || name === "width" || name === "height" || name === "start") && /^\d{1,4}$/.test(value)) {
+      out.push(`${name}="${value}"`);
+    }
+  }
+  const styleMatch = rawAttrs.match(/\sstyle\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/i);
+  const style = styleMatch ? cleanPastedStyle(styleMatch[2] ?? styleMatch[3] ?? styleMatch[4] ?? "") : "";
+  if (style) out.push(`style="${style.replace(/"/g, "&quot;")}"`);
+  return out.length ? ` ${out.join(" ")}` : "";
+}
+
+function fontTagToSpan(attrs: string): string {
+  const color = attrs.match(/\scolor\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/i);
+  const face = attrs.match(/\sface\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/i);
+  const parts: string[] = [];
+  const colorValue = color?.[2] ?? color?.[3] ?? color?.[4];
+  const faceValue = face?.[2] ?? face?.[3] ?? face?.[4];
+  if (colorValue && /^(#[0-9a-f]{3,8}|[a-z]+)$/i.test(colorValue)) parts.push(`color: ${colorValue}`);
+  if (faceValue) parts.push(`font-family: ${faceValue}`);
+  return parts.length ? `<span style="${parts.join("; ")}">` : "<span>";
+}
+
+/**
+ * Keeps what a person means by "paste with formatting": Word and Google Docs send a lot of
+ * machine-specific markup (mso-* styles, class names, conditional comments, font tags). This
+ * strips that, keeps the structure and the safe inline styling, and drops anything executable.
+ */
 export function cleanPastedHtml(html: string): string {
-  let out = String(html ?? "").slice(0, 100_000);
+  let out = String(html ?? "").slice(0, 200_000);
   out = out.replace(/<!--[\s\S]*?-->/g, "");
-  out = out.replace(/<(script|style|iframe|object|embed|svg|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "");
-  out = out.replace(/<(script|style|iframe|object|embed|svg|template|link|meta)\b[^>]*\/?>/gi, "");
-  out = out.replace(/<(span|font|center|o:p|st1:[a-z0-9]+)\b[^>]*>/gi, "");
-  out = out.replace(/<\/(span|font|center|o:p|st1:[a-z0-9]+)>/gi, "");
-  out = out.replace(/\s(style|class|id|dir|lang|face|color|size)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
-  out = out.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
-  out = out.replace(/<a\b[^>]*href\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)[^>]*>/gi, (match, href: string) => {
-    const url = href.replace(/^["']|["']$/g, "").trim();
-    return PASTE_SAFE_HREF.test(url) ? `<a href="${url}" target="_blank">` : "<a>";
-  });
-  out = out.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/g, (match, tag: string, attrs: string) => {
+  out = out.replace(/<\?xml[\s\S]*?>/gi, "");
+  out = out.replace(/<(script|style|iframe|object|embed|svg|template|meta|link|xml|o:p|w:[a-z0-9]+)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "");
+  out = out.replace(/<(script|style|iframe|object|embed|svg|template|meta|link|xml|o:p|w:[a-z0-9]+)\b[^>]*\/?>/gi, "");
+  out = out.replace(/<font\b([^>]*)>/gi, (_m, attrs: string) => fontTagToSpan(attrs));
+  out = out.replace(/<\/font>/gi, "</span>");
+  out = out.replace(/<\/?([a-zA-Z][a-zA-Z0-9:]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/g, (match, tag: string, attrs: string) => {
     const lower = tag.toLowerCase();
     if (!PASTE_TAGS.includes(lower)) return "";
-    if (lower === "br") return "<br>";
-    return match.includes("/") ? `</${lower}>` : `<${lower}${attrs}>`;
+    if (lower === "br" || lower === "hr") return `<${lower}>`;
+    if (lower === "img") return `<img${cleanPastedAttrs(attrs, "img")}>`;
+    const closing = match.startsWith("</");
+    return closing ? `</${lower}>` : `<${lower}${cleanPastedAttrs(attrs, lower)}>`;
   });
-  return out;
+  // Word wraps everything in a single paragraph div; leaving it is fine, double breaks are not.
+  out = out.replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>");
+  return out.trim();
+}
+
+/** Reads a File into a data URL for inline insertion. */
+export function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.readAsDataURL(file);
+  });
 }
 
 interface ToolbarButtonProps {
@@ -84,14 +162,17 @@ interface RichTextEditorProps {
   onAttachFiles: (files: File[]) => void;
   onRemoveAttachment: (index: number) => void;
   onRequestSend?: () => void;
+  /** Told when an image could not be embedded (too large or unreadable) so the dialog can toast it. */
+  onInlineImageError?: (message: string) => void;
   disabled?: boolean;
   attaching?: boolean;
 }
 
 /**
- * Rich text composer for outbound email — formatting toolbar, link editing, attachment chips and
- * drag-and-drop, in the shape people expect from Outlook on the web or Gmail. The DOM is kept
- * uncontrolled (only written on mount) so the caret never jumps while typing.
+ * Rich text composer for outbound email — formatting toolbar, link editing, inline images,
+ * attachment chips, drag-and-drop and an editor-specific context menu, in the shape people expect
+ * from Outlook on the web or Gmail. The DOM is kept uncontrolled (only written on mount) so the
+ * caret never jumps while typing.
  */
 export function RichTextEditor({
   onChange,
@@ -101,11 +182,14 @@ export function RichTextEditor({
   onAttachFiles,
   onRemoveAttachment,
   onRequestSend,
+  onInlineImageError,
   disabled,
   attaching,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const { menuState, open: openMenu, close: closeMenu } = useContextMenu();
   const [active, setActive] = useState<Record<string, boolean>>({});
   const [dragging, setDragging] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
@@ -118,6 +202,43 @@ export function RichTextEditor({
     if (!el) return;
     onChange(el.innerHTML, el.innerText.replace(/\n{3,}/g, "\n\n").trim());
   }, [onChange]);
+
+  const saveSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    if (!editorRef.current?.contains(range.commonAncestorContainer)) return;
+    setSavedRange(range.cloneRange());
+  }, []);
+
+  const restoreSelection = useCallback(() => {
+    const selection = window.getSelection();
+    if (savedRange && selection) {
+      selection.removeAllRanges();
+      selection.addRange(savedRange);
+    }
+  }, [savedRange]);
+
+  /** Reads image files and drops them into the message at the caret; all other files become attachments. */
+  const handleIncomingFiles = useCallback(async (files: File[]) => {
+    const images = files.filter((f) => f.type.startsWith("image/"));
+    const others = files.filter((f) => !f.type.startsWith("image/"));
+    if (others.length) onAttachFiles(others);
+    if (!images.length) return;
+    const oversized = images.filter((f) => f.size > MAX_INLINE_IMAGE_BYTES);
+    const usable = images.filter((f) => f.size <= MAX_INLINE_IMAGE_BYTES);
+    if (oversized.length) onInlineImageError?.(`${oversized.map((f) => f.name).join(", ")} is too large to embed (limit ${formatBytes(MAX_INLINE_IMAGE_BYTES)})`);
+    if (!usable.length) return;
+    try {
+      const dataUrls = await Promise.all(usable.map(fileToDataUrl));
+      editorRef.current?.focus();
+      restoreSelection();
+      for (const url of dataUrls) document.execCommand("insertHTML", false, `<img src="${url}" alt="">`);
+      emit();
+    } catch (error) {
+      onInlineImageError?.(error instanceof Error ? error.message : "Could not embed that image");
+    }
+  }, [emit, onAttachFiles, onInlineImageError, restoreSelection]);
 
   const refreshState = useCallback(() => {
     const el = editorRef.current;
@@ -191,15 +312,18 @@ export function RichTextEditor({
 
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     const files = Array.from(e.clipboardData?.files ?? []);
-    if (files.length) { e.preventDefault(); onAttachFiles(files); return; }
+    if (files.length) {
+      // A copied image becomes part of the message; anything else is attached as a file.
+      e.preventDefault();
+      void handleIncomingFiles(files);
+      return;
+    }
     const html = e.clipboardData?.getData("text/html");
     const text = e.clipboardData?.getData("text/plain") ?? "";
     e.preventDefault();
-    if (html && /<(b|strong|i|em|u|ul|ol|li|a|blockquote|h[1-3]|p|div|br)\b/i.test(html)) {
-      document.execCommand("insertHTML", false, cleanPastedHtml(html));
-    } else {
-      document.execCommand("insertText", false, text);
-    }
+    // Word and Google Docs send markup; keep its structure and styling, drop the machine parts.
+    if (html && /<[a-z]/i.test(html)) document.execCommand("insertHTML", false, cleanPastedHtml(html));
+    else document.execCommand("insertText", false, text);
     emit();
   };
 
@@ -208,8 +332,71 @@ export function RichTextEditor({
     setDragging(false);
     if (!files.length) return;
     e.preventDefault();
-    onAttachFiles(files);
+    void handleIncomingFiles(files);
   };
+
+  const insertImageFiles = async (files: File[]) => {
+    const images = files.filter((f) => f.type.startsWith("image/"));
+    if (!images.length) return;
+    await handleIncomingFiles(images);
+  };
+
+  /** Editor-specific right-click menu: clipboard, formatting, link and image actions. */
+  const openEditorMenu = (e: React.MouseEvent) => {
+    if (disabled) return;
+    saveSelection();
+    const anchor = closestAnchor(e.target as Node);
+    const image = (e.target as HTMLElement)?.closest?.("img") ?? null;
+    if (!anchor && !image) {
+      // Put the caret where the click landed so the menu acts on that point.
+      try { document.execCommand("insertText", false, ""); } catch { /* ignore */ }
+    }
+    const hasSelection = !(window.getSelection()?.isCollapsed ?? true);
+    const entries: MenuEntry[] = [];
+    if (anchor) {
+      entries.push(
+        { label: "Open link", icon: ExternalLink, onSelect: () => window.open(anchor.getAttribute("href") || "", "_blank", "noopener") },
+        { label: "Copy link address", icon: Copy, onSelect: () => { void navigator.clipboard?.writeText(anchor.getAttribute("href") || "").catch(() => {}); } },
+        { label: "Edit link…", icon: Link2, onSelect: () => openLinkPopover() },
+        { label: "Remove link", icon: Link2Off, onSelect: () => applyLink(true) },
+        "separator",
+      );
+    } else if (image) {
+      entries.push({ label: "Remove image", icon: Trash2, danger: true, onSelect: () => { image.remove(); emit(); } }, "separator");
+    }
+    entries.push(
+      { label: "Cut", icon: Scissors, hint: "Ctrl+X", disabled: !hasSelection, onSelect: () => { restoreSelection(); exec("cut"); } },
+      { label: "Copy", icon: Copy, hint: "Ctrl+C", disabled: !hasSelection, onSelect: () => { restoreSelection(); exec("copy"); } },
+      { label: "Paste as plain text", icon: ClipboardPaste, hint: "Ctrl+Shift+V", onSelect: () => { void pastePlainText(); } },
+      { label: "Select all", icon: CheckSquare, hint: "Ctrl+A", onSelect: () => exec("selectAll") },
+      "separator",
+      { label: "Bold", icon: Bold, hint: "Ctrl+B", checked: active.bold, onSelect: () => { restoreSelection(); exec("bold"); } },
+      { label: "Italic", icon: Italic, hint: "Ctrl+I", checked: active.italic, onSelect: () => { restoreSelection(); exec("italic"); } },
+      { label: "Underline", icon: Underline, hint: "Ctrl+U", checked: active.underline, onSelect: () => { restoreSelection(); exec("underline"); } },
+      "separator",
+      { label: "Insert link…", icon: Link2, hint: "Ctrl+K", onSelect: () => openLinkPopover() },
+      { label: "Insert image…", icon: ImageIcon, onSelect: () => imageInputRef.current?.click() },
+      { label: "Attach file…", icon: Paperclip, onSelect: () => fileInputRef.current?.click() },
+      { label: "Clear formatting", icon: RemoveFormatting, onSelect: () => { restoreSelection(); exec("removeFormat"); exec("formatBlock", "<div>"); } },
+      "separator",
+      { label: "Undo", icon: Undo2, hint: "Ctrl+Z", onSelect: () => exec("undo") },
+      { label: "Redo", icon: Redo2, hint: "Ctrl+Y", onSelect: () => exec("redo") },
+    );
+    openMenu(e, entries, { title: "Message" }, { allowInTextEntry: true });
+  };
+
+  async function pastePlainText() {
+    editorRef.current?.focus();
+    restoreSelection();
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) document.execCommand("insertText", false, text);
+      emit();
+    } catch {
+      // Clipboard read needs permission; the browser's own Ctrl+Shift+V still works.
+      onInlineImageError?.("Clipboard access was blocked — use Ctrl+Shift+V");
+    }
+  }
 
   const iconFor = (mimeType: string) => (mimeType.startsWith("image/") ? <ImageIcon size={13} /> : <FileText size={13} />);
 
@@ -257,6 +444,18 @@ export function RichTextEditor({
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
+            onClick={() => imageInputRef.current?.click()}
+            disabled={disabled}
+            title="Insert image"
+            aria-label="Insert image"
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-surface-lighter hover:text-white disabled:opacity-40"
+          >
+            <ImageIcon size={14} />
+            Image
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || attaching}
             title="Attach files"
@@ -273,6 +472,14 @@ export function RichTextEditor({
             className="hidden"
             onChange={(e) => { onAttachFiles(Array.from(e.target.files ?? [])); e.target.value = ""; }}
           />
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => { void insertImageFiles(Array.from(e.target.files ?? [])); e.target.value = ""; }}
+          />
         </div>
       </div>
 
@@ -287,6 +494,7 @@ export function RichTextEditor({
         onBlur={emit}
         onKeyUp={refreshState}
         onMouseUp={refreshState}
+        onContextMenu={openEditorMenu}
         onPaste={handlePaste}
         onDragOver={(e) => { if (e.dataTransfer?.types.includes("Files")) { e.preventDefault(); setDragging(true); } }}
         onDragLeave={() => setDragging(false)}
@@ -296,7 +504,7 @@ export function RichTextEditor({
           if (e.key === "k" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); openLinkPopover(); }
         }}
         style={{ minHeight }}
-        className="prose-invert max-w-none overflow-y-auto px-3.5 py-3 text-sm text-gray-200 outline-none empty:before:pointer-events-none empty:before:text-gray-600 empty:before:content-[attr(data-placeholder)] [&_a]:text-cyber-400 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-surface-border [&_blockquote]:pl-3 [&_blockquote]:text-gray-400 [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:rounded [&_pre]:bg-surface-lighter [&_pre]:p-2 [&_ul]:list-disc [&_ul]:pl-5"
+        className="prose-invert max-w-none overflow-y-auto px-3.5 py-3 text-sm text-gray-200 outline-none empty:before:pointer-events-none empty:before:text-gray-600 empty:before:content-[attr(data-placeholder)] [&_a]:text-cyber-400 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-surface-border [&_blockquote]:pl-3 [&_blockquote]:text-gray-400 [&_img]:my-1 [&_img]:max-w-full [&_img]:rounded [&_img]:align-middle [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:rounded [&_pre]:bg-surface-lighter [&_pre]:p-2 [&_table]:w-full [&_td]:border [&_td]:border-surface-border [&_td]:p-1.5 [&_th]:border [&_th]:border-surface-border [&_th]:p-1.5 [&_ul]:list-disc [&_ul]:pl-5"
       />
 
       {attachments.length > 0 && (
@@ -319,6 +527,8 @@ export function RichTextEditor({
           ))}
         </div>
       )}
+
+      <ContextMenu state={menuState} onClose={closeMenu} />
     </div>
   );
 }
