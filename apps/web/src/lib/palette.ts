@@ -24,13 +24,13 @@ export type PaletteDef = {
 export const CLASSIC = "classic";
 
 export const PALETTES: PaletteDef[] = [
-  { id: "midnight", label: "Midnight Slate", mode: "dark", blurb: "Neutral graphite, keeps the brand cyan" },
-  { id: "violet", label: "Deep Violet", mode: "dark", blurb: "Near-black surfaces with a violet accent" },
-  { id: "carbon", label: "Warm Carbon", mode: "dark", blurb: "Warm graphite with an amber accent" },
-  { id: "oled", label: "True Black (OLED)", mode: "dark", blurb: "Pure black, easiest on OLED displays" },
-  { id: "ocean", label: "Ocean Teal", mode: "dark", blurb: "Deep teal surfaces with an aqua accent" },
-  { id: "paper", label: "Cool Paper", mode: "light", blurb: "Faintly cool white, AA-clean accents" },
-  { id: "stone", label: "Warm Stone", mode: "light", blurb: "Warm paper tones with a teal accent" },
+  { id: "crimson", label: "Brand Crimson", mode: "dark", blurb: "Near-black surfaces, C7NTAX crimson accent" },
+  { id: "rose", label: "Crimson Rose", mode: "dark", blurb: "Noir surfaces with the brand rose accent" },
+  { id: "maroon", label: "Deep Maroon", mode: "dark", blurb: "Surfaces tinted from the brand maroon" },
+  { id: "plum", label: "Plum Noir", mode: "dark", blurb: "Surfaces tinted from the brand plum" },
+  { id: "oled", label: "True Black (OLED)", mode: "dark", blurb: "Pure black with the brand crimson" },
+  { id: "brand", label: "Brand Light", mode: "light", blurb: "White surfaces with the C7NTAX crimson" },
+  { id: "rosetint", label: "Rose Tint", mode: "light", blurb: "Soft rose-tinted whites, crimson accents" },
   { id: "contrast", label: "High Contrast", mode: "light", blurb: "AAA-leaning text, crisp borders" },
 ];
 

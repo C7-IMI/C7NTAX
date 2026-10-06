@@ -8,15 +8,19 @@ dark and three light alternates. A scheme only sets CSS custom properties
 | Mode | id | Name | Character |
 |---|---|---|---|
 | dark | *(none)* | Classic | The original navy + cyber-blue theme |
-| dark | `midnight` | Midnight Slate | Neutral graphite surfaces, keeps the brand cyan |
-| dark | `violet` | Deep Violet | Near-black surfaces with a violet accent |
-| dark | `carbon` | Warm Carbon | Warm graphite with an amber accent |
-| dark | `oled` | True Black | Pure black surfaces, easiest on OLED displays |
-| dark | `ocean` | Ocean Teal | Deep teal surfaces with an aqua accent |
+| dark | `crimson` | Brand Crimson | Near-black neutral surfaces, brand crimson accent |
+| dark | `rose` | Crimson Rose | Noir surfaces with the brand rose accent |
+| dark | `maroon` | Deep Maroon | Surfaces tinted from the brand maroon (`#662428`) |
+| dark | `plum` | Plum Noir | Surfaces tinted from the brand plum (`#801550`) |
+| dark | `oled` | True Black | Pure black surfaces with the brand crimson |
 | light | *(none)* | Classic | The original neutral light theme |
-| light | `paper` | Cool Paper | Faintly cool white, AA-clean accents and status colours |
-| light | `stone` | Warm Stone | Warm paper tones with a teal accent |
+| light | `brand` | Brand Light | White surfaces with the brand crimson |
+| light | `rosetint` | Rose Tint | Soft rose-tinted whites, crimson accents |
 | light | `contrast` | High Contrast | AAA-leaning text with crisp borders |
+
+All schemes are built from the brand palette in the brand asset composite sheet —
+**`#C00000`** crimson, **`#EE5483`** rose, **`#662428`** maroon, **`#801550`**
+plum, plus black and white.
 
 Dark and light are chosen independently: the scheme that applies is the one
 matching the active theme.
@@ -25,11 +29,16 @@ matching the active theme.
 
 - Click the **palette icon** in the header toolbar (next to the density and
   theme controls) and pick a scheme for the current mode.
-- Every alternate scheme is audited to **>= 4.5:1 (WCAG AA)** for body text,
-  muted text, accent-on-surface and the primary-button label — 96/96 checks.
-  Note the built-in Classic theme's dark primary button is **2.68:1** (white on
-  `#00aae0`); the alternates fix this via `--btn-primary-fg`. Say the word if you
-  want the Classic palette corrected too.
+- Every scheme is audited to **>= 4.5:1 (WCAG AA)** for body text, secondary,
+  tertiary and muted text, accent-on-surface and the primary-button label —
+  **112/112 checks** pass.
+- Why the dark accents are not `#C00000` directly: the brand crimson is only
+  **3.0:1** against a near-black surface, so it cannot be used for text there.
+  The dark schemes therefore use the lighter crimson tints (`#ff5c5c`) or the
+  rose for accent text/icons, and reserve `#C00000` for fills that carry a
+  **white label (6.48:1)** — which is exactly how the brand sheet uses it.
+- The built-in Classic theme's dark primary button remains white on `#00aae0`
+  at **2.68:1**; every brand scheme fixes its own button via `--btn-primary-fg`.
 
 ## Rollback
 

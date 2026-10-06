@@ -1839,6 +1839,21 @@
 - **Verification:** typecheck unchanged at 26 pre-existing errors (zero new); token lint passes; live check confirmed each scheme's computed surfaces/borders/muted text/button colours, per-mode persistence, Classic restoring the exact original tokens (`--surface #0f1a2e`), the picker listing the right schemes per mode, and no console errors across `/`, `/tickets`, `/clients`, `/assets`, `/billing/dashboard`. The app was left on Classic.
 
 
+### Prompt 156 — Rebuild the dark schemes from the brand asset sheet
+**Timestamp:** 2026-10-06 | **Status:** ✅ Completed | **Duration:** ~40 min
+**BuildNotes IDs:** #1 (2026.10.6.004)
+> use the attached image as a reference for the dark mode themes
+
+**Changes:**
+- Read the brand composite sheet's palette (`#C00000` crimson, `#EE5483` rose, `#662428` maroon, `#801550` plum, black, white); sampled the sheet's swatch pixels to confirm the rendered colours are darkened by the composite lighting, so the printed hex labels are the source of truth.
+- `apps/web/src/index.css` — all eight scheme blocks rebuilt on the brand ramp. Dark: Brand Crimson (near-black neutral surfaces), Crimson Rose, Deep Maroon (surfaces tinted from `#662428`), Plum Noir (tinted from `#801550`, buttons filled with the brand plum), True Black (OLED). Light: Brand Light, Rose Tint, High Contrast — the previous cyan/teal light schemes were replaced so both modes stay on-brand.
+- `apps/web/src/lib/palette.ts` — catalogue ids/labels/blurbs updated; picker swatches restyled to the brand black/crimson pairing.
+- `UI-PALETTE-ROLLBACK.md` — scheme table, brand rationale and the `#C00000`-on-dark constraint documented.
+- Contrast work: `#C00000` is only 3.0:1 on near-black, so dark schemes use `#ff5c5c`/rose for accent text and keep `#C00000` for fills with white labels (6.48:1); plum fills take white at 9.81:1.
+- **Verification:** an audit script reading the shipped CSS confirms 80/80 AA pairs across the eight scheme blocks (worst 4.54:1); typecheck unchanged at 26 pre-existing errors; token lint passes with no new hex in `.tsx`; live checks applied all eight schemes (correct `--surface`) and confirmed the picker contents per mode, then reset both modes to Classic; `/`, `/tickets`, `/clients`, `/assets`, `/reports` all render with no console errors.
+
+
+
 
 
 

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.003 | Last Updated: 2026-10-06
+## Version: 2026.10.6.004 | Last Updated: 2026-10-06
 
 ---
 
@@ -14,7 +14,13 @@
 
 ---
 
-## 2026.10.6.003 — Selectable colour schemes (5 dark + 3 light) with instant rollback
+## 2026.10.6.004 — Colour schemes rebuilt on the C7NTAX brand palette
+- **[Update]** All eight alternate schemes now derive from the brand asset sheet's palette — **`#C00000`** crimson, **`#EE5483`** rose, **`#662428`** maroon, **`#801550`** plum, plus black and white — replacing the previous navy/violet/amber/teal set. Dark: **Brand Crimson**, **Crimson Rose**, **Deep Maroon**, **Plum Noir**, **True Black (OLED)**. Light: **Brand Light**, **Rose Tint**, **High Contrast**. Classic remains the default and is untouched.
+- **[Fix]** `#C00000` only reaches **3.0:1** against a near-black surface, so it cannot carry accent text on dark. The dark schemes therefore use lighter crimson tints (`#ff5c5c`) or the brand rose for accent text/icons and reserve `#C00000` for fills that carry a **white label (6.48:1)** — mirroring how the brand sheet itself uses the red. Plum fills use white at 9.81:1.
+- **[Update]** Scheme swatches in the picker now preview the brand black/crimson pairing, and the light schemes carry brand-crimson status colours (`--alert-red #a30000`).
+- **[Verification]** `apps/web` typecheck unchanged (26 pre-existing errors, zero new); design-token lint passes (no raw hex added to any `.tsx` — all scheme colours remain in `index.css`); an audit reading the shipped CSS confirms **80/80 contrast checks pass** across the eight scheme blocks (text, secondary, tertiary, muted, accent on all three surfaces, and primary-button label at rest and hover; worst pair 4.54:1); live check applied all eight schemes and confirmed the expected `--surface`, border, accent and button colours with no console errors, verified the picker lists the right schemes per mode, reset both modes to Classic, and re-checked `/`, `/tickets`, `/clients`, `/assets`, `/reports`.
+
+
 - **[New]** **Colour scheme picker** in the header toolbar (next to the density and theme controls): choose a scheme per mode from **Classic** plus eight alternates — dark **Midnight Slate**, **Deep Violet**, **Warm Carbon**, **True Black (OLED)**, **Ocean Teal**; light **Cool Paper**, **Warm Stone**, **High Contrast**. Dark and light are chosen independently and each applies to its own theme.
 - **[New]** `apps/web/src/lib/palette.ts` (catalogue, per-mode persistence, `applyPalettes()` before first paint) and `apps/web/src/components/PalettePicker.tsx`. A scheme is pure CSS applied via `data-palette-dark` / `data-palette-light` on `<html>` — no data, routing or behaviour is touched, and **Classic means "no attribute"**, so the built-in theme is never modified.
 - **[Update]** Every alternate scheme is **WCAG AA audited (96/96 checks)**: body text, secondary/tertiary/muted text, accent-on-surface and the primary-button label all stay ≥ 4.5:1.
