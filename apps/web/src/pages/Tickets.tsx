@@ -4,10 +4,11 @@ import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom"
 import api from "../api";
 import { useAuth } from "../hooks/useAuth";
 import { InferencePanel } from "../components/InferencePanel";
-import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical, ExternalLink, AppWindow, SquareArrowOutUpRight, UserCheck, Flag, CircleDot, Copy, Eraser, Check, AlertTriangle } from "lucide-react";
+import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical, ExternalLink, AppWindow, SquareArrowOutUpRight, UserCheck, Flag, CircleDot, Copy, Eraser, Check, AlertTriangle, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { RichTextEditor, toAttachmentDraft, type EmailAttachmentDraft } from "../components/RichTextEditor";
 import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
@@ -977,7 +978,9 @@ export function TicketDetailPage() {
   const [attachForm, setAttachForm] = useState<{ file: File | null }>({ file: null });
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [emailForm, setEmailForm] = useState({ subject: "", body: "" });
+  const [emailForm, setEmailForm] = useState({ subject: "", body: "", html: "" });
+  const [emailAttachments, setEmailAttachments] = useState<EmailAttachmentDraft[]>([]);
+  const [attachingEmailFiles, setAttachingEmailFiles] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showMoreActions, setShowMoreActions] = useState(false);  const [moreActionsBusy, setMoreActionsBusy] = useState(false);
   const [tabRefresh, setTabRefresh] = useState(0);
@@ -1129,18 +1132,39 @@ export function TicketDetailPage() {
     if (!ticket) return;
     const contact = ticket.contact as any;
     if (!contact?.email) { toast.error("This ticket has no contact email address"); return; }
-    setEmailForm({ subject: `Re: ${ticket.ticketNumber || id} — ${ticket.title || ""}`, body: "" });
+    setEmailForm({ subject: `Re: ${ticket.ticketNumber || id} — ${ticket.title || ""}`, body: "", html: "" });
+    setEmailAttachments([]);
     setShowEmailDialog(true);
+  };
+
+  const attachEmailFiles = async (files: File[]) => {
+    if (!files.length) return;
+    setAttachingEmailFiles(true);
+    try {
+      const drafts = await Promise.all(files.map(toAttachmentDraft));
+      setEmailAttachments(prev => [...prev, ...drafts]);
+      toast.success(`${drafts.length} file${drafts.length === 1 ? "" : "s"} attached`);
+    } catch (error: any) {
+      toast.error(error?.message || "Could not attach that file");
+    } finally {
+      setAttachingEmailFiles(false);
+    }
   };
 
   const sendContactEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!emailForm.subject.trim() || (!emailForm.body.trim() && !emailForm.html.trim())) {
+      toast.error("Add a subject and a message");
+      return;
+    }
     setSendingEmail(true);
     try {
-      await api.post(`/tickets/${id}/email`, emailForm);
-      toast.success("Email sent to contact");
+      const response = await api.post(`/tickets/${id}/email`, { ...emailForm, attachments: emailAttachments });
+      const count = Number(response.data?.attachments || 0);
+      toast.success(count ? `Email sent with ${count} attachment${count === 1 ? "" : "s"}` : "Email sent to contact");
       setShowEmailDialog(false);
-      setEmailForm({ subject: "", body: "" });
+      setEmailForm({ subject: "", body: "", html: "" });
+      setEmailAttachments([]);
       load();
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Could not send email");
@@ -1891,14 +1915,49 @@ export function TicketDetailPage() {
 
       {/* ── Dialogs ── */}
       {showEmailDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowEmailDialog(false)}>
-          <form className="card w-full max-w-lg space-y-3" onClick={e => e.stopPropagation()} onSubmit={sendContactEmail}>
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Mail size={16} /> Email Contact</h3>
-            <label className="block text-xs text-gray-400">To<input className="input-field mt-1" value={(ticket.contact as any)?.email || ""} readOnly /></label>
-            <label className="block text-xs text-gray-400">Subject<input className="input-field mt-1" value={emailForm.subject} onChange={e => setEmailForm({ ...emailForm, subject: e.target.value })} maxLength={200} required /></label>
-            <label className="block text-xs text-gray-400">Message<textarea className="input-field mt-1" value={emailForm.body} onChange={e => setEmailForm({ ...emailForm, body: e.target.value })} rows={7} maxLength={20000} required /></label>
-            <p className="text-xs text-gray-500">The sent email is recorded in ticket activity. Sending requires the configured SMTP service.</p>
-            <div className="flex justify-end gap-2"><button type="button" onClick={() => setShowEmailDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" disabled={sendingEmail || !emailForm.subject.trim() || !emailForm.body.trim()} className="btn-primary text-sm">{sendingEmail ? "Sending…" : "Send Email"}</button></div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowEmailDialog(false)}>
+          <form className="card flex w-full max-w-3xl flex-col gap-3" onClick={e => e.stopPropagation()} onSubmit={sendContactEmail}>
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Mail size={16} /> Email Contact</h3>
+              <button type="button" onClick={() => setShowEmailDialog(false)} title="Close" aria-label="Close" className="rounded p-1 text-gray-500 transition-colors hover:bg-surface-lighter hover:text-white"><X size={16} /></button>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-lg border border-surface-border bg-surface-input px-3 py-2">
+              <span className="text-xs text-gray-500">To</span>
+              <span className="rounded-full bg-surface-lighter px-2 py-0.5 text-xs text-gray-200">{(ticket.contact as any)?.firstName ? `${(ticket.contact as any).firstName} ${(ticket.contact as any).lastName || ""}`.trim() : "Contact"}</span>
+              <span className="truncate text-xs text-gray-400">{(ticket.contact as any)?.email || ""}</span>
+              <span className="ml-auto hidden text-[11px] text-gray-600 sm:block">Replies return to the shared mailbox</span>
+            </div>
+
+            <label className="block text-xs text-gray-400">
+              Subject
+              <input className="input-field mt-1" value={emailForm.subject} onChange={e => setEmailForm({ ...emailForm, subject: e.target.value })} maxLength={200} required />
+            </label>
+
+            <div>
+              <span className="mb-1 block text-xs text-gray-400">Message</span>
+              <RichTextEditor
+                onChange={(html, text) => setEmailForm(prev => ({ ...prev, html, body: text }))}
+                placeholder="Write your message… (Ctrl+Enter to send)"
+                attachments={emailAttachments}
+                onAttachFiles={attachEmailFiles}
+                onRemoveAttachment={(index) => setEmailAttachments(prev => prev.filter((_, i) => i !== index))}
+                onRequestSend={() => { if (!sendingEmail) void sendContactEmail(new Event("submit") as unknown as React.FormEvent); }}
+                disabled={sendingEmail}
+                attaching={attachingEmailFiles}
+              />
+            </div>
+
+            <p className="text-xs text-gray-500">
+              Formatting is sent as rich text with a plain-text fallback. Files you attach are stored on the ticket, so they also appear under <span className="text-gray-400">Attachments</span>. Sending requires the configured SMTP service.
+            </p>
+
+            <div className="flex items-center justify-end gap-2">
+              <button type="button" onClick={() => setShowEmailDialog(false)} className="btn-secondary text-sm">Cancel</button>
+              <button type="submit" disabled={sendingEmail || !emailForm.subject.trim() || (!emailForm.body.trim() && !emailForm.html.trim())} className="btn-primary text-sm flex items-center gap-2">
+                {sendingEmail ? <><Loader2 size={14} className="animate-spin" /> Sending…</> : "Send Email"}
+              </button>
+            </div>
           </form>
         </div>
       )}

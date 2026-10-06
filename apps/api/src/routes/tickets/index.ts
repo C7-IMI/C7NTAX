@@ -10,6 +10,7 @@ import { generateTicketNumber } from "../../services/ticketNumber";
 import { EmailService } from "@C7NTAX/email";
 import { notifyTicketContact, notifyTicketStatusChange } from "../../services/ticketNotifications";
 import { v4 as uuid } from "uuid";
+import { sanitizeEmailHtml, htmlToText } from "../../services/emailHtml";
 
 export const ticketsRouter = Router();
 ticketsRouter.use(authenticate);
@@ -35,6 +36,62 @@ function resolveStoredAttachment(storagePath: string): string | null {
   const relativePath = path.relative(ticketAttachmentRoot, filePath);
   if (!relativePath || relativePath.startsWith("..") || path.isAbsolute(relativePath)) return null;
   return filePath;
+}
+
+interface PreparedAttachment { filename: string; mimeType: string; buffer: Buffer }
+
+/**
+ * Validates a base64 upload (name, size, encoding) without touching disk, so a request can be
+ * rejected before anything is sent or written.
+ */
+function prepareAttachment(filenameRaw: unknown, mimeTypeRaw: unknown, contentBase64: unknown): PreparedAttachment {
+  const filename = typeof filenameRaw === "string"
+    ? filenameRaw.replace(/\\/g, "/").split("/").pop()?.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 255)
+    : "";
+  if (!filename || typeof contentBase64 !== "string") throw new AppError("filename and file content are required", 400);
+  if (contentBase64.length > Math.ceil(maxAttachmentBytes / 3) * 4 + 4) throw new AppError("Attachment exceeds the 5 MB limit", 413);
+  const buffer = Buffer.from(contentBase64, "base64");
+  if (buffer.length > maxAttachmentBytes || buffer.toString("base64").replace(/=+$/, "") !== contentBase64.replace(/=+$/, "")) {
+    throw new AppError("Invalid file content or attachment exceeds the 5 MB limit", 400);
+  }
+  return {
+    filename,
+    mimeType: typeof mimeTypeRaw === "string" && mimeTypeRaw.trim() ? mimeTypeRaw.slice(0, 150) : "application/octet-stream",
+    buffer,
+  };
+}
+
+/** Writes prepared files to disk and records them, cleaning up if any write or insert fails. */
+async function storeAttachments(
+  files: PreparedAttachment[],
+  meta: { ticketId: string; uploadedById: string; commentId?: string | null },
+) {
+  const written: string[] = [];
+  try {
+    const rows = [];
+    for (const file of files) {
+      const storagePath = `${meta.ticketId}/${uuid()}`;
+      const filePath = resolveStoredAttachment(storagePath)!;
+      await mkdir(path.dirname(filePath), { recursive: true });
+      await writeFile(filePath, file.buffer, { flag: "wx" });
+      written.push(filePath);
+      rows.push(await prisma.ticketAttachment.create({
+        data: {
+          ticketId: meta.ticketId,
+          commentId: meta.commentId ?? undefined,
+          filename: file.filename,
+          mimeType: file.mimeType,
+          size: file.buffer.length,
+          storagePath,
+          uploadedById: meta.uploadedById,
+        },
+      }));
+    }
+    return rows;
+  } catch (e) {
+    await Promise.all(written.map((p) => unlink(p).catch(() => {})));
+    throw e;
+  }
 }
 
 function escapeHtml(value: string): string {
@@ -286,24 +343,40 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
     const recipient = ticket.contact?.email?.trim();
     if (!recipient) throw new AppError("This ticket has no contact email address", 400);
     const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 200) : "";
-    const body = typeof req.body?.body === "string" ? req.body.body.trim() : "";
-    if (!subject || !body) throw new AppError("Subject and message are required", 400);
-    if (body.length > 20_000) throw new AppError("Message is too long", 400);
+    const richHtml = typeof req.body?.html === "string" ? req.body.html.trim() : "";
+    const plainBody = typeof req.body?.body === "string" ? req.body.body.trim() : "";
+    if (!subject || (!richHtml && !plainBody)) throw new AppError("Subject and message are required", 400);
+    if (plainBody.length > 20_000 || richHtml.length > 200_000) throw new AppError("Message is too long", 400);
+
+    // Attachments are validated before anything is sent, so a bad upload cannot half-send.
+    const incoming = Array.isArray(req.body?.attachments) ? req.body.attachments.slice(0, 10) : [];
+    const files = incoming.map((a: { filename?: unknown; mimeType?: unknown; contentBase64?: unknown }) =>
+      prepareAttachment(a?.filename, a?.mimeType, a?.contentBase64));
+
+    const messageHtml = richHtml
+      ? sanitizeEmailHtml(richHtml)
+      : `<p>${escapeHtml(plainBody).replace(/\r?\n/g, "<br>")}</p>`;
+    const messageText = plainBody || htmlToText(messageHtml);
 
     await emailService.send({
       to: recipient,
       subject: `[${ticket.ticketNumber}] ${subject}`,
-      html: `<p>${escapeHtml(body).replace(/\r?\n/g, "<br>")}</p><hr><p>Ticket: ${escapeHtml(ticket.ticketNumber)} — ${escapeHtml(ticket.title)}<br>Client: ${escapeHtml(ticket.company?.name || "")}</p>`,
+      html: `${messageHtml}<hr><p>Ticket: ${escapeHtml(ticket.ticketNumber)} — ${escapeHtml(ticket.title)}<br>Client: ${escapeHtml(ticket.company?.name || "")}</p>`,
+      text: `${messageText}\n\n---\nTicket: ${ticket.ticketNumber} — ${ticket.title}\nClient: ${ticket.company?.name || ""}`,
+      ...(files.length ? { attachments: files.map((f: PreparedAttachment) => ({ filename: f.filename, content: f.buffer, contentType: f.mimeType })) } : {}),
     });
-    await prisma.ticketComment.create({
+
+    // Sent mail is recorded in activity; the files that went with it also join the attachments tab.
+    const comment = await prisma.ticketComment.create({
       data: {
         ticketId: ticket.id,
-        body: `To: ${recipient}\nSubject: ${subject}\n\n${body}`,
+        body: `To: ${recipient}\nSubject: ${subject}\n\n${messageText}${files.length ? `\n\n(Attached: ${files.map((f: PreparedAttachment) => f.filename).join(", ")})` : ""}`,
         authorId: req.user!.userId,
         isEmail: true,
       },
     });
-    res.json({ sent: true, recipient });
+    const stored = await storeAttachments(files, { ticketId: ticket.id, uploadedById: req.user!.userId, commentId: comment.id });
+    res.json({ sent: true, recipient, attachments: stored.length, commentId: comment.id });
   } catch (e) { next(e); }
 });
 
@@ -313,37 +386,9 @@ ticketsRouter.post("/:id/attachments", requirePermission(Permission.TicketEdit),
     const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { id: true, companyId: true } });
     if (!ticket) throw new AppError("Ticket not found", 404);
     if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
-    const filename = typeof req.body?.filename === "string"
-      ? req.body.filename.replace(/\\/g, "/").split("/").pop()?.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 255)
-      : "";
-    const contentBase64 = req.body?.contentBase64;
-    if (!filename || typeof contentBase64 !== "string") throw new AppError("filename and file content are required", 400);
-    if (contentBase64.length > Math.ceil(maxAttachmentBytes / 3) * 4 + 4) throw new AppError("Attachment exceeds the 5 MB limit", 413);
-    const content = Buffer.from(contentBase64, "base64");
-    if (content.length > maxAttachmentBytes || content.toString("base64").replace(/=+$/, "") !== contentBase64.replace(/=+$/, "")) {
-      throw new AppError("Invalid file content or attachment exceeds the 5 MB limit", 400);
-    }
-
-    const storagePath = `${ticket.id}/${uuid()}`;
-    const filePath = resolveStoredAttachment(storagePath)!;
-    await mkdir(path.dirname(filePath), { recursive: true });
-    await writeFile(filePath, content, { flag: "wx" });
-    try {
-      const attachment = await prisma.ticketAttachment.create({
-        data: {
-          ticketId: ticket.id,
-          filename,
-          mimeType: typeof req.body.mimeType === "string" ? req.body.mimeType.slice(0, 150) : "application/octet-stream",
-          size: content.length,
-          storagePath,
-          uploadedById: req.user!.userId,
-        },
-      });
-      res.status(201).json(attachment);
-    } catch (e) {
-      await unlink(filePath).catch(() => {});
-      throw e;
-    }
+    const file = prepareAttachment(req.body?.filename, req.body?.mimeType, req.body?.contentBase64);
+    const [attachment] = await storeAttachments([file], { ticketId: ticket.id, uploadedById: req.user!.userId });
+    res.status(201).json(attachment);
   } catch (e) { next(e); }
 });
 

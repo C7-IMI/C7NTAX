@@ -37,6 +37,8 @@ export class EmailService {
     to: string | string[];
     subject: string;
     html: string;
+    /** Optional plain-text alternative (multipart/alternative) for clients that block HTML. */
+    text?: string;
     cc?: string[];
     bcc?: string[];
     attachments?: { filename: string; content: Buffer | string; contentType?: string }[];
@@ -48,6 +50,7 @@ export class EmailService {
       bcc: options.bcc,
       subject: options.subject,
       html: options.html,
+      ...(options.text ? { text: options.text } : {}),
       attachments: options.attachments,
     });
     return { messageId: info.messageId };
