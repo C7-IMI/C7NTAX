@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown } from "lucide-react";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown, ExternalLink, AppWindow, SquareArrowOutUpRight, Copy, Download, RotateCw, Eraser, Ticket, Cloud, KeyRound, Server } from "lucide-react";
 
 const TYPE_COLORS: Record<string, string> = {
   Client: "bg-cyber-600/20 text-cyber-400", Prospect: "bg-amber-600/20 text-amber-400",
@@ -23,6 +26,8 @@ export function ClientsPage() {
   const [sort, setSort] = useState<SortState | null>(null);
   const [showNew, setShowNew] = useState(false);
   const navigate = useNavigate();
+  const menu = useContextMenu();
+  const searchRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<Record<string, string>>({ name: "", email: "", phone: "", city: "", state: "", companyType: "Client", industry: "" });
 
   const fetch = () => {
@@ -39,8 +44,96 @@ export function ClientsPage() {
     catch { toast.error("Failed"); }
   };
 
+  // ── Right-click menu: the Client List ──
+  const csvColumns: CsvColumn<Record<string, any>>[] = [
+    { key: "name", label: "Company", value: c => c.name ?? "" },
+    { key: "type", label: "Type", value: c => c.companyType ?? "" },
+    { key: "contact", label: "Contact", value: c => c.contacts?.[0] ? `${c.contacts[0].firstName} ${c.contacts[0].lastName}`.trim() : "" },
+    { key: "phone", label: "Phone", value: c => c.phone || c.contacts?.[0]?.phone || "" },
+    { key: "location", label: "Location", value: c => [c.city, c.state].filter(Boolean).join(", ") },
+    { key: "industry", label: "Industry", value: c => c.industry ?? "" },
+    { key: "status", label: "Status", value: c => (c.isActive ? "Active" : "Inactive") },
+  ];
+
+  const exportCsv = () => {
+    if (clients.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-clients-${fileStamp()}.csv`, toCsv(clients, csvColumns));
+    toast.success(`Exported ${clients.length} client${clients.length === 1 ? "" : "s"}`);
+  };
+
+  const clientMenuHeader = (c: Record<string, any>) => ({
+    title: String(c.name ?? "Client"),
+    subtitle: [c.companyType, [c.city, c.state].filter(Boolean).join(", "), c.isActive ? "Active" : "Inactive"].filter(Boolean).join(" · "),
+  });
+
+  const clientMenuEntries = (c: Record<string, any>): MenuEntry[] => {
+    const id = String(c.id);
+    const contact = (c.contacts as Array<Record<string, any>> | undefined)?.[0];
+    return [
+      { label: "Open client", icon: ExternalLink, hint: "⏎", onSelect: () => navigate(`/clients/${id}`) },
+      { label: "Open in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(`/clients/${id}`) },
+      { label: "Open in new window", icon: AppWindow, onSelect: () => openInNewWindow(`/clients/${id}`) },
+      "separator",
+      { label: "New ticket", icon: Ticket, onSelect: () => navigate(`/tickets?new=1&companyId=${id}`) },
+      { label: "View tickets", icon: FileText, onSelect: () => navigate(`/tickets?companyId=${id}`) },
+      { label: "View contacts", icon: Users, onSelect: () => navigate(`/clients/contacts?companyId=${id}`) },
+      contact && {
+        label: `Open contact ${String(contact.firstName ?? "")} ${String(contact.lastName ?? "")}`.trim(),
+        icon: Users,
+        onSelect: () => navigate(`/clients/contacts?select=${contact.id}&companyId=${id}`),
+      },
+      {
+        label: "Kumo", icon: Cloud,
+        items: [
+          { label: "Organization", icon: Cloud, onSelect: () => navigate(`/kumo/organizations/${id}`) },
+          { label: "Passwords", icon: KeyRound, onSelect: () => navigate(`/kumo/passwords?companyId=${id}`) },
+          { label: "Configurations", icon: Server, onSelect: () => navigate(`/kumo/configs?companyId=${id}`) },
+          { label: "Documents", icon: FileText, onSelect: () => navigate(`/kumo/documents?companyId=${id}`) },
+        ],
+      },
+      "separator",
+      c.companyType && {
+        label: `Show only ${String(c.companyType)} records`, icon: Building2,
+        onSelect: () => setTypeFilter(String(c.companyType)),
+      },
+      "separator",
+      { label: "Copy client name", icon: Copy, onSelect: () => void copyText(String(c.name ?? ""), "Client name") },
+      { label: "Copy email", icon: Copy, disabled: !c.email, onSelect: () => void copyText(String(c.email ?? ""), "Email") },
+      {
+        label: "Copy phone", icon: Copy, disabled: !(c.phone || contact?.phone),
+        onSelect: () => void copyText(String(c.phone || contact?.phone || ""), "Phone"),
+      },
+    ].filter(Boolean) as MenuEntry[];
+  };
+
+  const sectionMenuEntries = (): MenuEntry[] => {
+    const sortField = sort?.field ?? "name";
+    return [
+      { label: "New client", icon: Plus, onSelect: () => setShowNew(true) },
+      { label: "Refresh list", icon: RotateCw, onSelect: () => fetch() },
+      { label: "Focus search", icon: Search, onSelect: () => searchRef.current?.focus() },
+      "separator",
+      {
+        label: "Clear filters", icon: Eraser, disabled: !search && !typeFilter && !sort,
+        onSelect: () => { setSearch(""); setTypeFilter(""); setSort(null); },
+      },
+      {
+        label: "Sort by", icon: ArrowUpDown,
+        items: SORT_OPTIONS.map(o => ({ label: o.label, checked: sortField === o.value, onSelect: () => setSort({ field: o.value, direction: "asc" }) })),
+      },
+      "separator",
+      { label: "Export as CSV", icon: Download, hint: `${clients.length} row${clients.length === 1 ? "" : "s"}`, disabled: clients.length === 0, onSelect: exportCsv },
+      "separator",
+      ...viewMenuEntries(),
+    ];
+  };
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h2 className="text-lg font-semibold text-white">Clients</h2><p className="text-sm text-gray-400">{clients.length} clients</p></div>
         <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Client</button>
@@ -48,7 +141,7 @@ export function ClientsPage() {
 
       {/* Filters + Sort */}
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input className="input-field pl-9" placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+        <div className="relative flex-1 max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input ref={searchRef} className="input-field pl-9" placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} /></div>
         <select className="input-field text-sm py-1.5 w-auto" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
           <option value="">All Types</option>
           <option value="Client">Client</option><option value="Prospect">Prospect</option>
@@ -95,7 +188,12 @@ export function ClientsPage() {
             </tr></thead>
             <tbody>
               {clients.map(c => (
-                <tr key={c.id} className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer" onClick={() => navigate(`/clients/${c.id}`)}>
+                <tr key={c.id} tabIndex={0}
+                  className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer focus:outline-none focus:bg-surface-light/50"
+                  onClick={() => navigate(`/clients/${c.id}`)}
+                  onContextMenu={(e) => menu.open(e, clientMenuEntries(c), clientMenuHeader(c))}
+                  onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, clientMenuEntries(c), clientMenuHeader(c))}
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="p-1.5 rounded bg-cyber-600/10"><Building2 size={16} className="text-cyber-400" /></div>

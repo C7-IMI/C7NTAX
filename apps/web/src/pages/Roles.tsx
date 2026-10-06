@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Shield, Edit3, Trash2, Save, X, AlertTriangle, ChevronDown, ChevronRight, Users, CheckSquare, Copy, UserPlus, UserMinus, Search } from "lucide-react";
+import { Plus, Shield, Edit3, Trash2, Save, X, AlertTriangle, ChevronDown, ChevronRight, Users, CheckSquare, Copy, UserPlus, UserMinus, Search, ExternalLink, Download, RotateCw } from "lucide-react";
 import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from "@C7NTAX/shared";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 interface RoleRow {
   id: string; name: string; systemRole: string; permissions: string[];
@@ -35,6 +38,7 @@ export function RolesPage() {
   const [allUsers, setAllUsers] = useState<Array<{id:string;email:string;firstName:string|null;lastName:string|null;roleId:string;role?:{systemRole?:string}}>>([]);
   const [memberSearch, setMemberSearch] = useState("");
   const [membersLoading, setMembersLoading] = useState(false);
+  const menu = useContextMenu();
 
   const fetch = useCallback(async () => {
     try { const r = await api.get("/roles"); setRoles(r.data.data); }
@@ -118,6 +122,55 @@ export function RolesPage() {
     } catch { toast.error("Failed to delete"); }
   };
 
+  // ── Right-click menu: Manage Roles ──
+  const csvColumns: CsvColumn<RoleRow>[] = [
+    { key: "name", label: "Role", value: r => r.name },
+    { key: "systemRole", label: "System Role", value: r => r.systemRole },
+    { key: "users", label: "Users", value: r => r._count?.users ?? 0 },
+    { key: "permissions", label: "Permissions", value: r => r.permissions.length },
+    { key: "default", label: "Default", value: r => (r.isDefault ? "Yes" : "No") },
+    { key: "permissionList", label: "Permission List", value: r => r.permissions.join(" ") },
+  ];
+
+  const exportCsv = () => {
+    if (roles.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-roles-${fileStamp()}.csv`, toCsv(roles, csvColumns));
+    toast.success(`Exported ${roles.length} role${roles.length === 1 ? "" : "s"}`);
+  };
+
+  const roleMenuHeader = (r: RoleRow) => ({
+    title: r.name,
+    subtitle: [r.systemRole.replace(/_/g, " "), `${r.permissions.length} permissions`, `${r._count?.users ?? 0} users`, r.isDefault ? "Default" : null].filter(Boolean).join(" · "),
+  });
+
+  const roleMenuEntries = (r: RoleRow): MenuEntry[] => {
+    const assigned = r._count?.users ?? 0;
+    return [
+      { label: "Show permissions", icon: ExternalLink, hint: "⏎", onSelect: () => selectRole(r) },
+      { label: "Edit role", icon: Edit3, onSelect: () => { selectRole(r); setEditing(true); } },
+      { label: `Manage members${assigned ? ` (${assigned})` : ""}`, icon: Users, onSelect: () => { selectRole(r); setTimeout(openMembers, 50); } },
+      "separator",
+      { label: "Copy role name", icon: Copy, onSelect: () => void copyText(r.name, "Role name") },
+      { label: "Copy permission list", icon: Copy, hint: `${r.permissions.length}`, onSelect: () => void copyText(r.permissions.join("\n"), "Permission list") },
+      "separator",
+      {
+        label: "Delete role…", icon: Trash2, danger: true, disabled: assigned > 0,
+        hint: assigned > 0 ? "reassign users first" : undefined,
+        onSelect: () => { selectRole(r); setShowDeleteConfirm(r.id); },
+      },
+    ];
+  };
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "Create role", icon: Plus, onSelect: () => { setNewRole({ name: "", systemRole: "technician", permissions: undefined }); setShowCreate(true); } },
+    { label: "Create from existing role…", icon: Copy, onSelect: () => setShowCopyRole(true) },
+    { label: "Refresh list", icon: RotateCw, onSelect: () => void fetch() },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${roles.length} row${roles.length === 1 ? "" : "s"}`, disabled: roles.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   // ── Member management ──
   const openMembers = async () => {
     if (!selected) return;
@@ -175,7 +228,11 @@ export function RolesPage() {
   if (loading) return <div className="text-center py-12 text-gray-500">Loading roles...</div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">Manage Roles</h2>
@@ -221,6 +278,8 @@ export function RolesPage() {
                 <button
                   key={r.id}
                   onClick={() => selectRole(r)}
+                  onContextMenu={(e) => menu.open(e, roleMenuEntries(r), roleMenuHeader(r))}
+                  onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, roleMenuEntries(r), roleMenuHeader(r))}
                   className={`w-full text-left px-4 py-3 border-b border-surface-border/50 last:border-0 transition-colors hover:bg-surface-lighter/50 ${
                     selected?.id === r.id ? "bg-cyber-600/10 border-l-2 border-l-cyber-500" : ""
                   }`}

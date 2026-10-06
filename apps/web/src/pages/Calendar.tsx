@@ -2,8 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import api from "../api";
 import { PageHeader } from "../components/ui";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import { useCalendarScale } from "../hooks/useCalendarScale";
-import { Calendar, Clock, MapPin, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, viewMenuEntries } from "../lib/menuActions";
+import { Calendar, Clock, MapPin, Plus, ChevronLeft, ChevronRight, Ticket, Copy, Download, RotateCw, Eraser, Eye } from "lucide-react";
 
 interface ScheduleEntry {
   id: string; title: string; description?: string; startTime: string; endTime: string;
@@ -21,6 +24,8 @@ export function CalendarPage() {
   const [form, setForm] = useState({ title: "", description: "", startTime: "", endTime: "", location: "", color: "#3b82d6" });
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const menu = useContextMenu();
 
   const fetch = async () => {
     try { const r = await api.get("/schedule?limit=500"); setEntries(Array.isArray(r.data) ? r.data : (r.data.data || [])); }
@@ -71,8 +76,87 @@ export function CalendarPage() {
   const dateKey = (day: number) => `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   const todayKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
 
+  // ── Right-click menu: Calendar ──
+  /** The date part of an entry's start, in the same form as a day cell's key. */
+  const entryDateKey = (e: ScheduleEntry) => {
+    const d = new Date(e.startTime);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  /** Opens the create dialog with the clicked day already filled in (9–10am). */
+  const addEventOn = (dateKey: string) => {
+    setForm(prev => ({ ...prev, startTime: `${dateKey}T09:00`, endTime: `${dateKey}T10:00` }));
+    setShowCreate(true);
+  };
+
+  const dayMenuHeader = (dateKey: string) => {
+    const day = new Date(`${dateKey}T00:00:00`);
+    const count = eventsByDate[dateKey]?.length ?? 0;
+    return {
+      title: day.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
+      subtitle: `${count} event${count === 1 ? "" : "s"}`,
+    };
+  };
+
+  const dayMenuEntries = (dateKey: string): MenuEntry[] => [
+    { label: "Add event on this date…", icon: Plus, onSelect: () => addEventOn(dateKey) },
+    { label: "Show events on this date", icon: Eye, onSelect: () => setSelectedDate(dateKey) },
+    {
+      label: "Clear date filter", icon: Eraser, disabled: !selectedDate,
+      onSelect: () => setSelectedDate(null),
+    },
+    "separator",
+    { label: "Previous month", icon: ChevronLeft, onSelect: () => setViewDate(new Date(year, month - 1, 1)) },
+    { label: "Next month", icon: ChevronRight, onSelect: () => setViewDate(new Date(year, month + 1, 1)) },
+    { label: "Go to today", icon: Calendar, onSelect: () => { setViewDate(new Date()); setSelectedDate(null); } },
+  ];
+
+  const eventMenuHeader = (e: ScheduleEntry) => ({
+    title: e.title || "Event",
+    subtitle: [new Date(e.startTime).toLocaleString(), e.location, e.ticket ? `Ticket ${e.ticket.ticketNumber}` : null].filter(Boolean).join(" · "),
+  });
+
+  const eventMenuEntries = (e: ScheduleEntry): MenuEntry[] => {
+    const dayKey = entryDateKey(e);
+    const details = [
+      e.title,
+      `${new Date(e.startTime).toLocaleString()} – ${new Date(e.endTime).toLocaleTimeString()}`,
+      e.location ? `Location: ${e.location}` : null,
+      e.ticket ? `Ticket: ${e.ticket.ticketNumber} ${e.ticket.title}` : null,
+      e.description || null,
+    ].filter(Boolean) as string[];
+    return [
+      e.ticket && { label: "Open linked ticket", icon: Ticket, hint: `#${e.ticket.ticketNumber}`, onSelect: () => navigate(`/tickets/${e.ticket!.id}`) },
+      { label: "Show events on this date", icon: Eye, onSelect: () => setSelectedDate(dayKey) },
+      "separator",
+      { label: "Add event on this date…", icon: Plus, onSelect: () => addEventOn(dayKey) },
+      "separator",
+      { label: "Copy event details", icon: Copy, onSelect: () => void copyText(details.join("\n"), "Event details") },
+      { label: "Copy title", icon: Copy, onSelect: () => void copyText(e.title, "Title") },
+    ].filter(Boolean) as MenuEntry[];
+  };
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "New event", icon: Plus, onSelect: () => setShowCreate(true) },
+    { label: "Refresh", icon: RotateCw, onSelect: () => void fetch() },
+    "separator",
+    { label: "Previous month", icon: ChevronLeft, onSelect: () => setViewDate(new Date(year, month - 1, 1)) },
+    { label: "Next month", icon: ChevronRight, onSelect: () => setViewDate(new Date(year, month + 1, 1)) },
+    { label: "Go to today", icon: Calendar, onSelect: () => { setViewDate(new Date()); setSelectedDate(null); } },
+    {
+      label: "Clear date filter", icon: Eraser, disabled: !selectedDate,
+      onSelect: () => setSelectedDate(null),
+    },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <PageHeader title="Calendar" subtitle={`${entries.length} events`}>
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Add Event</button>
       </PageHeader>
@@ -112,6 +196,8 @@ export function CalendarPage() {
               <button
                 key={dk}
                 onClick={() => setSelectedDate(isSelected ? null : dk)}
+                onContextMenu={(e) => menu.open(e, dayMenuEntries(dk), dayMenuHeader(dk))}
+                onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, dayMenuEntries(dk), dayMenuHeader(dk))}
                 className={`aspect-square rounded-md border p-1 flex flex-col items-start text-left transition-colors
                   ${isSelected ? "border-cyber-500/60 bg-cyber-600/20" :
                     isToday ? "border-cyber-500/40 bg-cyber-600/10" :
@@ -158,7 +244,10 @@ export function CalendarPage() {
         ) : (
           <div className="space-y-2">
             {filteredEntries.map(e => (
-              <div key={e.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-surface-lighter transition-colors group">
+              <div key={e.id} tabIndex={0}
+                onContextMenu={(ev) => menu.open(ev, eventMenuEntries(e), eventMenuHeader(e))}
+                onKeyDown={(ev) => menu.onKeyDown(ev, ev.currentTarget, eventMenuEntries(e), eventMenuHeader(e))}
+                className="flex items-start gap-3 p-2 rounded-lg hover:bg-surface-lighter focus:outline-none focus:bg-surface-lighter transition-colors group">
                 <div className="p-2 rounded-lg shrink-0" style={{ backgroundColor: (e.color || "#3b82d6") + "20" }}>
                   <Calendar size={16} style={{ color: e.color || "#3b82d6" }} />
                 </div>

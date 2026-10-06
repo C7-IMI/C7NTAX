@@ -8,6 +8,7 @@ import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, C
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -364,21 +365,6 @@ export function TicketsPage() {
   // ── Right-click menu: the Tickets section ──
   const menu = useContextMenu();
 
-  const absoluteUrl = (path: string) => `${window.location.origin}${path}`;
-  const openInNewTab = (path: string) => window.open(absoluteUrl(path), "_blank", "noopener");
-  // Window features make this a real popup window rather than another tab —
-  // which is also a separate window in the desktop shell.
-  const openInNewWindow = (path: string) => window.open(absoluteUrl(path), "_blank", "noopener,width=1280,height=880,left=80,top=60");
-
-  const copyText = async (value: string, what: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success(`${what} copied`);
-    } catch {
-      toast.error("Could not copy to the clipboard");
-    }
-  };
-
   const assignTicket = async (ticketId: string, userId: string | null) => {
     try {
       await api.patch(`/tickets/${ticketId}`, { assignedToId: userId });
@@ -512,8 +498,7 @@ export function TicketsPage() {
       "separator",
       { label: "Export as CSV", icon: Download, hint: `${sortedTickets.length} row${sortedTickets.length === 1 ? "" : "s"}`, disabled: sortedTickets.length === 0, onSelect: exportCsv },
       "separator",
-      { label: "Open this view in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(view) },
-      { label: "Open this view in new window", icon: AppWindow, onSelect: () => openInNewWindow(view) },
+      ...viewMenuEntries(view),
     ];
   };
 
@@ -1240,8 +1225,8 @@ export function TicketDetailPage() {
     if (!current) return [];
     const path = `/tickets/${id}`;
     return [
-      { label: "Open in new tab", icon: SquareArrowOutUpRight, onSelect: () => window.open(`${window.location.origin}${path}`, "_blank", "noopener") },
-      { label: "Open in new window", icon: AppWindow, onSelect: () => window.open(`${window.location.origin}${path}`, "_blank", "noopener,width=1280,height=880,left=80,top=60") },
+      { label: "Open in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(path) },
+      { label: "Open in new window", icon: AppWindow, onSelect: () => openInNewWindow(path) },
       "separator",
       {
         label: "Change status", icon: CircleDot,
@@ -1271,21 +1256,12 @@ export function TicketDetailPage() {
       { label: "Print ticket", icon: Printer, hint: "Ctrl+P", onSelect: () => window.print() },
       "separator",
       { label: "Refresh", icon: RotateCw, onSelect: () => void load() },
-      { label: "Copy ticket number", icon: Copy, hint: String(current.ticketNumber ?? ""), onSelect: () => void copyText(String(current.ticketNumber ?? "")) },
+      { label: "Copy ticket number", icon: Copy, hint: String(current.ticketNumber ?? ""), onSelect: () => void copyText(String(current.ticketNumber ?? ""), "Ticket number") },
       { label: "Copy link", icon: Link2, onSelect: () => void copyTicketLink() },
       "separator",
       { label: "Back to ticket list", icon: ChevronLeft, onSelect: () => navigate("/tickets") },
       { label: "Delete ticket…", icon: Trash2, danger: true, onSelect: () => setDeleteOpen(true) },
     ];
-  };
-
-  const copyText = async (value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success("Ticket number copied");
-    } catch {
-      toast.error("Could not copy to the clipboard");
-    }
   };
 
   // Deep links from the list's right-click menu (?action=note|time|email|attach|print).

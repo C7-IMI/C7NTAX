@@ -1,8 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock, Plus, Ticket } from "lucide-react";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock, Plus, Ticket, Users, ExternalLink, UserCheck, UserX, Copy, Download, RotateCw, Eraser } from "lucide-react";
 
 interface Contact {
   id: string; firstName: string; lastName: string; email: string;
@@ -26,6 +29,8 @@ export function ContactsPage() {
   const [newContact, setNewContact] = useState({ firstName: "", lastName: "", email: "", phone: "", companyId: "", title: "" });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const menu = useContextMenu();
+  const searchRef = useRef<HTMLInputElement>(null);
 
   // Set by the organization screen, e.g. /clients/contacts?select=<id>
   const selectId = searchParams.get("select");
@@ -55,17 +60,36 @@ export function ContactsPage() {
     const match = contacts.find(c => c.id === selectId);
     if (match && selected?.id !== match.id) selectContact(match);
   }, [selectId, contacts]);
+  /** Every editable field of a contact, so a menu and the Edit button agree. */
+  const contactEditForm = (c: Contact) => ({
+    firstName: c.firstName || "", lastName: c.lastName || "", email: c.email || "",
+    phone: c.phone || "", mobile: c.mobile || "", title: c.title || "",
+    department: c.department || "", isPrimary: c.isPrimary, isActive: c.isActive,
+    address: c.address || "", city: c.city || "", state: c.state || "",
+    zip: c.zip || "", country: c.country || "US", notes: c.notes || "",
+    website: c.website || "",
+  });
+
   const startEdit = () => {
     if (!selected) return;
-    setEditForm({
-      firstName: selected.firstName || "", lastName: selected.lastName || "", email: selected.email || "",
-      phone: selected.phone || "", mobile: selected.mobile || "", title: selected.title || "",
-      department: selected.department || "", isPrimary: selected.isPrimary, isActive: selected.isActive,
-      address: selected.address || "", city: selected.city || "", state: selected.state || "",
-      zip: selected.zip || "", country: selected.country || "US", notes: selected.notes || "",
-      website: selected.website || "",
-    });
+    setEditForm(contactEditForm(selected));
     setEditing(true);
+  };
+
+  /** Selects and opens the same contact for editing, in one step. */
+  const editContact = (c: Contact) => {
+    setSelected(c);
+    setEditForm(contactEditForm(c));
+    setEditing(true);
+  };
+
+  const setContactField = async (c: Contact, patch: Record<string, unknown>, message: string) => {
+    try {
+      await api.patch(`/clients/contacts/${c.id}`, patch);
+      toast.success(message);
+      if (selected?.id === c.id) setSelected({ ...c, ...patch } as Contact);
+      fetch();
+    } catch { toast.error("Failed to update contact"); }
   };
 
   const handleSave = async () => {
@@ -93,19 +117,96 @@ export function ContactsPage() {
     navigate(`/tickets?new=1&${params.toString()}`);
   };
 
+  // ── Right-click menu: Contacts ──
+  const csvColumns: CsvColumn<Contact>[] = [
+    { key: "name", label: "Name", value: c => `${c.firstName} ${c.lastName}`.trim() },
+    { key: "title", label: "Title", value: c => c.title ?? "" },
+    { key: "company", label: "Company", value: c => c.company?.name ?? "" },
+    { key: "email", label: "Email", value: c => c.email ?? "" },
+    { key: "phone", label: "Phone", value: c => c.phone ?? "" },
+    { key: "mobile", label: "Mobile", value: c => c.mobile ?? "" },
+    { key: "primary", label: "Primary", value: c => (c.isPrimary ? "Yes" : "No") },
+    { key: "status", label: "Status", value: c => (c.isActive ? "Active" : "Inactive") },
+  ];
+
+  const exportCsv = () => {
+    if (filtered.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-contacts-${fileStamp()}.csv`, toCsv(filtered, csvColumns));
+    toast.success(`Exported ${filtered.length} contact${filtered.length === 1 ? "" : "s"}`);
+  };
+
+  const contactMenuHeader = (c: Contact) => ({
+    title: `${c.firstName} ${c.lastName}`.trim() || "Contact",
+    subtitle: [c.title, c.company?.name, c.isPrimary ? "Primary" : null, c.isActive ? "Active" : "Inactive"].filter(Boolean).join(" · "),
+  });
+
+  const contactMenuEntries = (c: Contact): MenuEntry[] => {
+    const companyId = c.company?.id;
+    return [
+      { label: "Show details", icon: ExternalLink, hint: "⏎", onSelect: () => selectContact(c) },
+      { label: "Edit contact", icon: Edit3, onSelect: () => editContact(c) },
+      "separator",
+      { label: "Create ticket", icon: Ticket, onSelect: () => createTicket(c) },
+      { label: "Open client", icon: Building2, disabled: !companyId, onSelect: () => navigate(`/clients/${companyId}`) },
+      { label: "View client's tickets", icon: Ticket, disabled: !companyId, onSelect: () => navigate(`/tickets?companyId=${companyId}`) },
+      {
+        label: "Filter by this company", icon: Users, disabled: !companyId,
+        onSelect: () => setCompanyFilter(String(companyId)),
+      },
+      "separator",
+      {
+        label: "Make primary contact", icon: Star, disabled: c.isPrimary,
+        onSelect: () => void setContactField(c, { isPrimary: true }, "Primary contact updated"),
+      },
+      c.isActive
+        ? { label: "Deactivate contact", icon: UserX, onSelect: () => void setContactField(c, { isActive: false }, "Contact deactivated") }
+        : { label: "Reactivate contact", icon: UserCheck, onSelect: () => void setContactField(c, { isActive: true }, "Contact reactivated") },
+      "separator",
+      { label: "Copy name", icon: Copy, onSelect: () => void copyText(`${c.firstName} ${c.lastName}`.trim(), "Name") },
+      { label: "Copy email", icon: Copy, disabled: !c.email, onSelect: () => void copyText(c.email, "Email") },
+      {
+        label: "Copy phone", icon: Copy, disabled: !(c.phone || c.mobile),
+        onSelect: () => void copyText(String(c.phone || c.mobile || ""), "Phone"),
+      },
+    ];
+  };
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "New contact", icon: Plus, onSelect: () => setShowCreate(true) },
+    { label: "Refresh list", icon: RotateCw, onSelect: () => fetch() },
+    { label: "Focus search", icon: Search, onSelect: () => searchRef.current?.focus() },
+    "separator",
+    {
+      label: "Clear filters", icon: Eraser, disabled: !search && !companyFilter,
+      onSelect: () => { setSearch(""); setCompanyFilter(""); },
+    },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${filtered.length} row${filtered.length === 1 ? "" : "s"}`, disabled: filtered.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between"><div><h2 className="text-lg font-semibold text-white">Contacts</h2><p className="text-sm text-gray-400">{filtered.length} contacts</p></div><button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Contact</button></div>
 
       <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input className="input-field pl-9" placeholder="Search contacts..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+        <div className="relative flex-1 min-w-[200px]"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input ref={searchRef} className="input-field pl-9" placeholder="Search contacts..." value={search} onChange={e => setSearch(e.target.value)} /></div>
         <select className="input-field text-sm py-1.5 w-auto" value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}><option value="">All Companies</option>{companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-2">
           {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : filtered.length === 0 ? <div className="text-center py-12 card"><Mail size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No contacts</p></div> : filtered.map(c => (
-            <div key={c.id} className={`card hover:border-cyber-500/30 transition-colors cursor-pointer ${selected?.id === c.id ? "border-cyber-500/30" : ""}`} onClick={() => selectContact(c)}>
+            <div key={c.id} tabIndex={0} className={`card hover:border-cyber-500/30 transition-colors cursor-pointer focus:outline-none focus:border-cyber-500/50 ${selected?.id === c.id ? "border-cyber-500/30" : ""}`}
+              onClick={() => selectContact(c)}
+              onContextMenu={(e) => menu.open(e, contactMenuEntries(c), contactMenuHeader(c))}
+              onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, contactMenuEntries(c), contactMenuHeader(c))}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-cyber-600/30 text-cyber-400 flex items-center justify-center text-sm font-bold shrink-0">{c.firstName[0]}{c.lastName[0]}</div>

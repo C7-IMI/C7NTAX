@@ -1,13 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
 import {
   Plus, Search, Shield, X, Save, Edit3, Check, AlertTriangle,
   Mail, Phone, Building2, Clock, KeyRound, UserCheck, UserX, ShieldAlert,
   ChevronLeft, ChevronDown, Copy, Key, Eye, EyeOff,
+  ExternalLink, UserCog, Lock, Unlock, Download, RotateCw, Eraser, ShieldCheck,
 } from "lucide-react";
 import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from "@C7NTAX/shared";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { generatePassword } from "../lib/generatePassword";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -29,6 +33,33 @@ interface UserFull {
 }
 
 interface RoleOption { id: string; name: string; systemRole: string; permissions: string[]; }
+
+/** Confirmation for the destructive actions a right-click menu can start. */
+function MenuConfirmDialog({ state, busy, onCancel, onConfirm }: {
+  state: { title: string; body: string; confirmLabel: string } | null;
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!state) return null;
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60" onClick={onCancel}>
+      <div role="dialog" aria-modal="true" aria-label={state.title} className="card w-full max-w-sm mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+        <div className="flex items-start gap-3">
+          <ShieldAlert size={24} className="text-red-400 shrink-0" />
+          <div>
+            <h3 className="text-white font-semibold">{state.title}</h3>
+            <p className="text-sm text-gray-400 mt-1">{state.body}</p>
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button onClick={onCancel} className="btn-secondary text-sm">Cancel</button>
+          <button onClick={onConfirm} disabled={busy} className="bg-red-600/20 text-red-400 hover:bg-red-600/30 px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">{busy ? "Working…" : state.confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function UsersPage() {
   const [users, setUsers] = useState<UserFull[]>([]);
@@ -53,6 +84,8 @@ export function UsersPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCreatePwd, setShowCreatePwd] = useState(false);
   const [showChangePwd, setShowChangePwd] = useState(false);
+  const menu = useContextMenu();
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -188,11 +221,121 @@ export function UsersPage() {
     } catch { toast.error("Failed to update status"); }
   };
 
+  // ── Right-click menu: Manage Users ──
+  /** A destructive menu action that asks first (see MenuConfirmDialog below). */
+  const [menuConfirm, setMenuConfirm] = useState<{ title: string; body: string; confirmLabel: string; run: () => Promise<void> } | null>(null);
+  const [menuConfirmBusy, setMenuConfirmBusy] = useState(false);
+
+  const runMenuConfirm = async () => {
+    if (!menuConfirm) return;
+    setMenuConfirmBusy(true);
+    try { await menuConfirm.run(); }
+    finally { setMenuConfirmBusy(false); setMenuConfirm(null); }
+  };
+
+  const csvColumns: CsvColumn<UserFull>[] = [
+    { key: "name", label: "Name", value: u => `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() },
+    { key: "email", label: "Email", value: u => u.email },
+    { key: "role", label: "Role", value: u => u.role?.name ?? "" },
+    { key: "systemRole", label: "System Role", value: u => u.role?.systemRole ?? "" },
+    { key: "company", label: "Company", value: u => u.company?.name ?? "" },
+    { key: "mfa", label: "MFA", value: u => (u.mfaEnabled ? "Enabled" : "Disabled") },
+    { key: "status", label: "Status", value: u => (u.isActive ? "Active" : "Inactive") },
+    { key: "lastLogin", label: "Last Login", value: u => u.lastLoginAt ?? "" },
+  ];
+
+  const exportCsv = () => {
+    const rows = sortData(users, sort?.field || "firstName", sort?.direction || "asc");
+    if (rows.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-users-${fileStamp()}.csv`, toCsv(rows, csvColumns));
+    toast.success(`Exported ${rows.length} user${rows.length === 1 ? "" : "s"}`);
+  };
+
+  const setUserActive = async (u: UserFull, isActive: boolean) => {
+    try {
+      await api.patch(`/users/${u.id}`, { isActive });
+      toast.success(`User ${isActive ? "activated" : "deactivated"}`);
+      await fetchUsers();
+      if (selected?.id === u.id) setSelected({ ...u, isActive });
+    } catch { toast.error("Failed to update status"); }
+  };
+
+  const setUserLocked = async (u: UserFull, locked: boolean) => {
+    try {
+      await api.post(`/users/${u.id}/lock`, { locked });
+      toast.success(locked ? "Account locked" : "Account unlocked");
+      await fetchUsers();
+      if (selected?.id === u.id) setSelected({ ...u, isLocked: locked });
+    } catch { toast.error("Failed to update the lock"); }
+  };
+
+  const userMenuHeader = (u: UserFull) => ({
+    title: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email,
+    subtitle: [u.email, u.role?.name, u.company?.name, u.isActive ? "Active" : "Inactive", u.isLocked ? "Locked" : null].filter(Boolean).join(" · "),
+  });
+
+  const userMenuEntries = (u: UserFull): MenuEntry[] => [
+    { label: "Open user details", icon: ExternalLink, hint: "⏎", onSelect: () => openDetail(u) },
+    { label: "Edit user", icon: Edit3, onSelect: () => { openDetail(u); setEditing(true); } },
+    { label: "Open permissions", icon: Shield, onSelect: () => { openDetail(u); setTab("permissions"); } },
+    { label: "Open security", icon: KeyRound, onSelect: () => { openDetail(u); setTab("security"); } },
+    "separator",
+    u.isActive
+      ? { label: "Deactivate user", icon: UserX, onSelect: () => void setUserActive(u, false) }
+      : { label: "Activate user", icon: UserCheck, onSelect: () => void setUserActive(u, true) },
+    u.isLocked
+      ? { label: "Unlock account", icon: Unlock, onSelect: () => void setUserLocked(u, false) }
+      : { label: "Lock account", icon: Lock, onSelect: () => void setUserLocked(u, true) },
+    {
+      label: "Reset MFA", icon: ShieldCheck, disabled: !u.mfaEnabled, hint: u.mfaEnabled ? undefined : "not enrolled",
+      onSelect: () => setMenuConfirm({
+        title: "Reset MFA?",
+        body: `${`${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email} will need to enrol an authenticator again at their next sign-in.`,
+        confirmLabel: "Reset MFA",
+        run: async () => {
+          try {
+            await api.post(`/users/${u.id}/reset-mfa`);
+            toast.success("MFA reset");
+            await fetchUsers();
+            if (selected?.id === u.id) setSelected({ ...u, mfaEnabled: false });
+          } catch (e: any) { toast.error(e?.response?.data?.error?.message || "Failed to reset MFA"); }
+        },
+      }),
+    },
+    "separator",
+    { label: "Copy email", icon: Copy, onSelect: () => void copyText(u.email, "Email") },
+    { label: "Copy name", icon: Copy, onSelect: () => void copyText(`${u.firstName ?? ""} ${u.lastName ?? ""}`.trim(), "Name") },
+  ];
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    {
+      label: "New user", icon: Plus,
+      onSelect: () => { setCreateForm({ email: "", password: "", firstName: "", lastName: "", role: "technician" }); setShowCreate(true); },
+    },
+    { label: "Create from existing user…", icon: UserCog, onSelect: () => setShowCopyUser(true) },
+    { label: "Refresh list", icon: RotateCw, onSelect: () => void fetchUsers() },
+    { label: "Focus search", icon: Search, onSelect: () => searchRef.current?.focus() },
+    "separator",
+    {
+      label: "Clear filters", icon: Eraser, disabled: !search && !roleFilter && !sort,
+      onSelect: () => { setSearch(""); setRoleFilter(""); setSort(null); },
+    },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${users.length} row${users.length === 1 ? "" : "s"}`, disabled: users.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   // ── Render ──
   if (loading) return <div className="text-center py-12 text-gray-500">Loading users...</div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
+      <MenuConfirmDialog state={menuConfirm} busy={menuConfirmBusy} onCancel={() => setMenuConfirm(null)} onConfirm={runMenuConfirm} />
       {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -232,7 +375,7 @@ export function UsersPage() {
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 max-w-xs">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input className="input-field pl-9" placeholder="Search users..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input ref={searchRef} className="input-field pl-9" placeholder="Search users..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input-field text-sm py-1.5 w-auto" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
           <option value="">All Roles</option>
@@ -255,9 +398,12 @@ export function UsersPage() {
             </thead>
             <tbody>
               {sortData(users, sort?.field || "firstName", sort?.direction || "asc").map(u => (
-                <tr key={u.id}
-                  className={`border-b border-surface-border/50 hover:bg-surface-lighter/30 transition-colors cursor-pointer ${selected?.id === u.id ? "bg-cyber-600/10 border-l-2 border-l-cyber-400" : ""}`}
-                  onClick={() => openDetail(u)}>
+                <tr key={u.id} tabIndex={0}
+                  className={`border-b border-surface-border/50 hover:bg-surface-lighter/30 transition-colors cursor-pointer focus:outline-none focus:bg-surface-lighter/30 ${selected?.id === u.id ? "bg-cyber-600/10 border-l-2 border-l-cyber-400" : ""}`}
+                  onClick={() => openDetail(u)}
+                  onContextMenu={(e) => menu.open(e, userMenuEntries(u), userMenuHeader(u))}
+                  onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, userMenuEntries(u), userMenuHeader(u))}
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-cyber-600/30 text-cyber-400 flex items-center justify-center text-xs font-bold shrink-0">
