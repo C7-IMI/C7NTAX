@@ -58,7 +58,13 @@ export function KumoAssetDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {asset.template.fields.map((f: any) => {
               const raw = asset.values?.[f.key];
-              const val = raw === null || raw === undefined || raw === "" ? "" : Array.isArray(raw) ? raw.join(", ") : String(raw);
+              const val = f.fieldType === "boolean"
+                ? (raw === true ? "Yes" : raw === false ? "No" : "")
+                : raw === null || raw === undefined || raw === ""
+                  ? ""
+                  : f.fieldType === "date"
+                    ? new Date(String(raw)).toLocaleDateString()
+                    : Array.isArray(raw) ? raw.join(", ") : String(raw);
               return (
                 <div key={f.id}>
                   <label className="text-xs text-gray-500 block mb-1">

@@ -2757,3 +2757,32 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 **Notes for next time**
 - Kumo asset *record* pages (/kumo/assets/:id) still trail as *Kumo › Assets › name*: they are reached by id from anywhere, and the record payload carries no client name to label the segment with. Left as is rather than inventing a lookup; worth revisiting if the record trail should carry the client too.
+
+---
+
+### Prompt 200 — Every asset type: its own configuration dialog, and its own records
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live across all 22 type panels | **Duration:** ~1.5 h
+**BuildNotes IDs:** 2026.10.6.043 - Every asset type has its own configuration dialog and its own records
+> Yes, I want it there, too.
+>
+> Also in Kumo:
+> I need sample data for every option under asset types for each organization, too. Build out the relevant confguration dialogs for them according to how ITGlue and LionGuard does it as well.
+
+**What "configuration dialogs like IT Glue" turned into**
+- The types were already described properly in the database — 21 templates with 3-6 fields each, already mixing text, number, boolean, select and date. What was missing was the dialog: creating went through a generic modal reached by navigating away from the organization, every field was a text box (a date field arrived as a text box, a boolean as a checkbox with no label association, a select only if the template happened to carry options), and nothing was grouped or validated by name.
+- So the work became one shared `KumoAssetDialog` — add and edit in one component — used by the type panel (in place, with a per-row pencil), the assets list (type picker first) and the record page's Edit. It renders the type's identity (icon, colour, description, field count), the client (locked when opened from an organization so a record cannot land on the wrong client), a status, then the fields by kind: single-line text, multi-line for `steps`/`targets`/`permissions`/`findings`-style keys, number, checkbox, dropdown, multi-select checkbox group, and a real date input for date fields. Required fields are marked and validated, every control is associated with its label, and URL/email keys get the matching input type.
+- A promoted-type guard came out of the same pass: the old Checklists *asset type* was reachable by URL and showed an empty legacy panel, so it now says it moved and links to the client's checklists section.
+
+**Sample data**
+- `seed-sample-coverage.ts` now loops the type templates instead of naming three of them: for every client, two records per type with values from a per-key map (`srv-…` hostnames, 16 cores, 500/500 Mbps, "Net 30", a verified restore, corporate and guest SSIDs, and so on), plus the legacy server/workstation/network-device detail rows for the three original types. Result: **210 configurations, 1,020 field values**, two per type per client, and a new type is covered automatically next run.
+
+**Bugs found while verifying**
+- **An organization's Kumo asset list showed "0 assets".** `/kumo/assets` is capped at 50 rows server-side and the page filtered client-side, so any client whose records were not in the newest 50 saw an empty list. The scope (and the type filter) now go with the request; Acme went from 0 to 42.
+- **The record's breadcrumb lost the client**: it read *Kumo › Assets › name* whatever the record belonged to. It now trails *Kumo › Organizations › Client › Type › name* — the asset model stores the client as a plain id, so the API names it on the record payload rather than through a relation (there is none to include).
+
+**Verification (live)**
+- All 22 type panels opened for Acme Corporation: 21 show two records each with their details, the 22nd is the promoted Checklists card.
+- Create through the dialog: the POST carried exactly what was typed (`product`, `targets`, `schedule`, `retention`, `last_verified`, `restore_tested` each on their own field), the panel refreshed to *3 records*, and the record page rendered the values (date formatted, boolean as Yes). Edit pre-filled from the record, saved a changed retention and status, and the probe record was deleted afterwards — the delta journal shows the add and the removal.
+- Assets list: *210 assets* unscoped, *42* for one client, *2* for one client's type. Configurations still lists its servers, and the drawer's breadcrumb still carries the client.
+- A 46-route crawl found no empty-state text anywhere. Web typecheck 0, api 156 (baseline). Snapshot captured at 3,198 records across 101 tables.
+- One test-only gotcha worth remembering: Playwright's `input[type='text']` matches only elements with a literal `type="text"` attribute, so it skipped the Name field and made a correct form look broken for a while. The dialog now has proper label association, and the verification targets fields by label.

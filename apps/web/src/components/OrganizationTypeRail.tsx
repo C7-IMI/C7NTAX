@@ -56,10 +56,13 @@ const CORE_ASSET_TYPES: Array<{ slug: string; to?: (orgId: string) => string }> 
   { slug: "checklists", to: (orgId) => `/kumo/checklists?companyId=${orgId}` },
 ];
 
-const coreAssetLink = (type: AssetType, orgId: string) =>
+const coreAssetLink = (type: { id: string; name: string }, orgId: string) =>
   CORE_ASSET_TYPES.find(
     (entry) => entry.slug === type.id.trim().toLowerCase() || entry.slug === type.name.trim().toLowerCase(),
   );
+
+/** Types promoted into Core Assets, which own a section instead of a panel. */
+export const promotedTypeLink = (type: { id: string; name: string }, orgId: string) => coreAssetLink(type, orgId);
 
 const isCoreAssetType = (type: AssetType) => Boolean(coreAssetLink(type, ""));
 

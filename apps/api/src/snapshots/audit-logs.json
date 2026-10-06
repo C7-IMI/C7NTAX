@@ -45,6 +45,51 @@
     "createdAt": "2026-10-06T21:11:15.400Z"
   },
   {
+    "id": "cbb837bb-8cc5-4242-aba4-545c7c6fee2e",
+    "action": "kumo_assets:create",
+    "entity": "kumo_assets",
+    "entityId": "assets",
+    "changes": {
+      "name": "QA probe backup job",
+      "status": "active",
+      "values": {
+        "product": "Veeam Backup & Replication 12.1",
+        "targets": "SRV-DC-01, SRV-FILE-01",
+        "schedule": "Nightly 22:00",
+        "retention": "30 days on disk",
+        "last_verified": "2026-10-01",
+        "restore_tested": true
+      },
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T21:15:58.688Z"
+  },
+  {
+    "id": "7e9dfc2d-4850-436b-84a4-f8007ea2b48b",
+    "action": "kumo_assets:update",
+    "entity": "kumo_assets",
+    "entityId": "78102045-2381-4c39-a536-882c867cb078",
+    "changes": {
+      "name": "QA probe backup job",
+      "status": "maintenance",
+      "values": {
+        "product": "Veeam Backup & Replication 12.1",
+        "targets": "SRV-DC-01, SRV-FILE-01",
+        "schedule": "Nightly 22:00",
+        "retention": "60 days on disk and 12 months in cloud",
+        "last_verified": "2026-10-01T00:00:00.000Z",
+        "restore_tested": true
+      },
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T21:16:34.430Z"
+  },
+  {
     "id": "b9a551e1-ff54-4165-8cbb-d4322160921d",
     "action": "ticket:update",
     "entity": "ticket",
@@ -67,6 +112,18 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-14T06:03:16.928Z"
+  },
+  {
+    "id": "ff91b164-e5a7-4f6b-aa91-78a9ea19f058",
+    "action": "kumo_assets:delete",
+    "entity": "kumo_assets",
+    "entityId": "78102045-2381-4c39-a536-882c867cb078",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T21:17:08.980Z"
   },
   {
     "id": "2e083963-6c91-4c5d-bbd5-877b9609deff",

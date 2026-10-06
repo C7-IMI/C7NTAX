@@ -241,5 +241,14 @@
     "entityName": "QA probe backup job",
     "entityIcon": "monitor",
     "viewedAt": "2026-10-06T21:11:15.418Z"
+  },
+  {
+    "id": "4316040c-3d6f-4aac-b5c9-278f66542f6b",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "78102045-2381-4c39-a536-882c867cb078",
+    "entityName": "QA probe backup job",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-06T21:17:06.608Z"
   }
 ]

@@ -10,7 +10,7 @@ import {
 import { initials, avatarColor, timeAgo, formatDate, formatDateShort, daysUntil } from "../lib/format";
 import { UI_KUMO_TYPES } from "../lib/uiFlags";
 import { OrganizationTypePanel } from "../components/OrganizationTypePanel";
-import { OrganizationTypeRail, type AssetType } from "../components/OrganizationTypeRail";
+import { OrganizationTypeRail, promotedTypeLink, type AssetType } from "../components/OrganizationTypeRail";
 import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 
 interface Organization {
@@ -242,7 +242,17 @@ export function KumoOrganizationDetailPage() {
   const documentationTotal = counts.documents + counts.domains + counts.certificates;
   const location = [org.city, org.state].filter(Boolean).join(", ");
 
-  const panel = activeTemplate ? (
+  const panel = activeTemplate && promotedTypeLink(activeTemplate, org.id) ? (
+    <div className="card space-y-2">
+      <h3 className="text-sm font-semibold text-white">{activeTemplate.name}</h3>
+      <p className="text-sm text-gray-500">
+        {activeTemplate.name} moved into Core Assets and has a section of its own, so this type no longer holds records.
+      </p>
+      <Link to={promotedTypeLink(activeTemplate, org.id)!.to!(org.id)} className="btn-primary text-sm inline-flex items-center gap-2">
+        Open {activeTemplate.name}
+      </Link>
+    </div>
+  ) : activeTemplate ? (
     <OrganizationTypePanel
       orgId={org.id}
       orgName={org.name}

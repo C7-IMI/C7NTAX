@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.6.043",
+    "date": "2026-10-06",
+    "title": "Every asset type has its own configuration dialog and its own records",
+    "changes": [
+      {
+        "text": "**One configuration dialog for every asset type, opened by the option itself.** The organization's type panel now adds and edits **in place**: *Add Active Directory* opens a dialog built from that type's own template — its name, icon, colour and description, the client (locked, so a record cannot land on the wrong one), a status, and then the type's fields. Editing a row is the pencil beside it, and the same dialog sits behind *Edit* on the record and behind *New Asset* in Kumo Assets (which first asks which type). Only the field definitions differ per type, so a type added later gets a dialog without any new code.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Fields are rendered by kind, not as a wall of text boxes:** single-line text, multi-line for the free-text keys (`steps`, `targets`, `permissions`, `findings`…), number, checkbox for booleans, dropdown for selects, multi-select as a checkbox group, real **date pickers** for `date` fields (which previously arrived as raw text), URL/email input types where the key implies it, plus placeholders, help text, required markers — and validation that names the missing field rather than just refusing to save. Every control is properly labelled, so the form is reachable by name as well as by position.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Sample data for every asset type, for every organization.** The seeder now walks the type templates and gives each client two records of each type with values that read like a real environment — a domain controller and a file server, Veeam job and Microsoft 365 backup, core and access switches, the primary fibre circuit and its 4G failover, corporate and guest SSIDs, and so on — with the fields filled from a per-key value map (16 cores, 500/500 Mbps, \"Net 30\", a 214-day contract end, a verified restore). That is **210 configurations and 1,020 field values** across the five clients, and the loop means a new type is populated the next time it runs. The three original types still create their legacy detail rows, so Configurations keeps working.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A Kumo asset record now trails the client and the type it was filed under** — *Kumo › Organizations › Acme Corporation › Backup › Veeam job* instead of *Kumo › Assets › …*, and the segment links back to that client's list filtered to the type. The asset model stores the client as a plain id, so the record payload names it.",
+        "type": "Fix"
+      },
+      {
+        "text": "**An organization's Kumo asset list read \"0 assets\".** The list endpoint is capped at 50 rows per request while the client filter was applied in the browser, so a client whose records were not in the newest 50 saw nothing. The scope (and the type filter) now travel with the request and the page asks for enough rows; Acme's list went from 0 to 42.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The old Checklists *asset type* is no longer an empty legacy panel.** It was promoted into Core Assets last week but could still be opened by URL or a stale link; it now explains that it moved and links straight to that client's checklists.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.042",
     "date": "2026-10-06",
     "title": "Organization options stay inside the organization, and the trail says which one",

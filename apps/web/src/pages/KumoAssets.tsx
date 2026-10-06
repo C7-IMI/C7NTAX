@@ -33,7 +33,15 @@ export function KumoAssetsPage() {
   const fetchAll = async () => {
     try {
       const [aRes, tRes, cRes] = await Promise.all([
-        api.get("/kumo/assets"),
+        // The list is capped server-side, so the scope travels with the request —
+        // filtering a page of 50 client-side shows nothing for an older client.
+        api.get("/kumo/assets", {
+          params: {
+            companyId: searchParams.get("companyId") || undefined,
+            templateId: searchParams.get("templateId") || undefined,
+            limit: 500,
+          },
+        }),
         api.get("/kumo/templates"),
         api.get("/clients?limit=100"),
       ]);
