@@ -1,5 +1,51 @@
 [
   {
+    "version": "2026.10.6.047",
+    "date": "2026-10-06",
+    "title": "Service board cards: visible edges, and an Avg Age card that colours by age",
+    "changes": [
+      {
+        "text": "**The Avg Age card is colour-coded by what it measures**: up to 7 days green, 8 to 14 days amber, more than 14 days red — background, border and text together, with a tooltip that names the band and the exact average (\"Average age of open tickets on this board: 52 days (over two weeks)\"). It reads at a glance instead of being one more grey number. On today's data every board sits at 51-52 days, so all four show red; the green and amber states were exercised by shifting the thresholds and restoring them.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The Workable card had no tint and no border, which is why it looked like plain text beside the tinted cards.** Its background class was `bg-cyber-600/15`, and the `cyber` palette is defined as `var(--cyber-*)` — Tailwind cannot apply an opacity modifier to a CSS variable, so the class was never generated and the tile fell back to a transparent background. It now uses a `color-mix()` tint and border derived from the same accent variable, so it keeps following the active theme and finally reads as a card.",
+        "type": "Fix"
+      },
+      {
+        "text": "Both cards the request named now carry a thin border: Workable in the theme accent, Avg Age in its band colour. The other four status tiles (New, On Hold, Waiting, Escalated) are unchanged.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.6.046",
+    "date": "2026-10-06",
+    "title": "Service alerts resolve on what the sources actually say",
+    "changes": [
+      {
+        "text": "**Alerts from weeks ago are gone, because a source that cannot be read can no longer veto a resolution.** The resolver demanded a positive all-clear from *every* configured source before retiring an alert. DownDetector now answers the reader with a Cloudflare challenge page (HTTP 200, no status line), which read as \"not clear\" — so on the 11 services carrying a DownDetector URL nothing could ever auto-resolve, and two live alerts sat there saying an outage was ongoing: AWS at 15 days and Azure at 33 days. A source is now recorded as **unknown** when it cannot be read: it never counts as all-clear, and it no longer blocks the clear that the readable sources agree on. Both alerts auto-resolved within two polls, each recording why.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A third source, and one that is not behind a bot challenge: the status page's Statuspage.io API.** Where a service's status page is Statuspage.io, the monitor reads `/api/v2/status.json` and takes the vendor's own indicator — `none` is a positive all-clear, `minor`/`major`/`critical` raises or refreshes an alert with the page's own wording and severity. Status pages that are not Statuspage.io simply answer 404 and stay unknown, so nothing is inferred from them. Claude, GitHub, OpenAI and Meraki answer today, which is what made the AWS and Azure resolutions possible on the same poll as the empty feeds.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Every source is observed independently, and every source reports back.** A service is polled from all of its sources in parallel — RSS/Atom feed, status-page API, DownDetector, and its website/ssl/dns monitor — instead of one branch chosen per service. The monitor snapshot and `GET /service-alerts/services` now carry, per service, what each source said on the last poll (`clear`, `problem`, `restored` or `unknown`) with the reason, so a silent source is visible instead of invisible.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A stale ceiling, so nothing can be pinned to the banner indefinitely.** `SERVICE_ALERT_STALE_HOURS` (default 72, env-overridable) retires an alert that no source has reported for that long — the case where every source for a service is unreadable. The reason written into the record names the ceiling and the source verdicts (\"no monitored source has reported this incident in the last 72h… (rss unknown, statuspage unknown)\"). The two-poll anti-flap rule, the one-poll minimum age, and the rule that manual alerts are never auto-resolved are all unchanged.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The page shows the polling honestly.** A strip above the summary reports when sources were last polled, the cadence, which sources are unreadable and how many services that affects (today: \"Unreadable: DownDetector ×13, Status Page ×8, RSS Feed ×1\"), and the auto-resolve rule; each service card carries its source verdicts, and each active alert lists them too, so \"is this outage still real?\" is answerable from the row. The settings screen's service table shows the same verdicts per source (coloured, with the reason on hover), adds refreshed/stale tiles, and collapses the blocked DownDetector pages into one summary error line instead of one per service.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.045",
     "date": "2026-10-06",
     "title": "Commit identity changed to C7-Intelligence",

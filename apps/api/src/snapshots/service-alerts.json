@@ -490,34 +490,6 @@
     "updatedAt": "2026-10-06T22:01:27.045Z"
   },
   {
-    "id": "6aef60d7-67d1-4a2d-a4e9-dcaad0eb570f",
-    "serviceId": "f297a768-3882-4900-81cc-a9a81152eb6c",
-    "title": "Service disruption: increased error rates",
-    "description": "Auto-resolved: Resolved: elevated error rates\n\nWe are investigating elevated error rates.",
-    "severity": "degraded",
-    "status": "resolved",
-    "source": "rss",
-    "sourceUrl": "http://127.0.0.1:4599/incident/1",
-    "detectedAt": "2026-10-06T22:12:00.844Z",
-    "resolvedAt": "2026-10-06T22:12:50.493Z",
-    "createdAt": "2026-10-06T22:12:00.845Z",
-    "updatedAt": "2026-10-06T22:12:50.494Z"
-  },
-  {
-    "id": "a6c926e7-727b-47fa-860b-499958f4b5ad",
-    "serviceId": "f297a768-3882-4900-81cc-a9a81152eb6c",
-    "title": "Partial Service Degradation",
-    "description": "http://127.0.0.1:4599 reports \"Partial Service Degradation\".",
-    "severity": "degraded",
-    "status": "active",
-    "source": "statuspage",
-    "sourceUrl": "http://127.0.0.1:4599/",
-    "detectedAt": "2026-10-06T22:13:24.061Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-06T22:13:24.063Z",
-    "updatedAt": "2026-10-06T22:14:22.572Z"
-  },
-  {
     "id": "753697f6-7b02-465b-8894-f58d2a18ad39",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Incident with Grok Copilot AI Model Provider",

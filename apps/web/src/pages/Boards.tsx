@@ -58,6 +58,14 @@ export function BoardsPage() {
         {boards.map((board) => {
           const m = board.metrics;
           const boardUrl = `/tickets?boardId=${board.boardId}`;
+          // Average age of open tickets: under a week is healthy, up to two
+          // weeks needs attention, beyond that the board is backing up.
+          const avgAge = m.averageAgeDays;
+          const avgAgeTone = avgAge <= 7
+            ? { color: "text-emerald-400", bg: "bg-emerald-600/15", border: "border-emerald-600/40", note: "under a week" }
+            : avgAge <= 14
+              ? { color: "text-amber-300", bg: "bg-amber-500/15", border: "border-amber-500/40", note: "one to two weeks" }
+              : { color: "text-red-300", bg: "bg-red-600/15", border: "border-red-600/40", note: "over two weeks" };
           return (
             <div
               key={board.boardId}
@@ -80,13 +88,14 @@ export function BoardsPage() {
               {/* Primary metrics row — status items are clickable and filter tickets */}
               <div className="grid grid-cols-3 gap-2">
                 <StatusBadge to={`${boardUrl}&status=new`} icon={Inbox} label="New" value={m.new} color="text-blue-400" bg="bg-blue-600/15" />
-                <StatusBadge to={`${boardUrl}&status=in_progress`} icon={Clock} label="Workable" value={m.workable} color="text-cyber-400" bg="bg-cyber-600/15" />
+                <StatusBadge to={`${boardUrl}&status=in_progress`} icon={Clock} label="Workable" value={m.workable} color="text-cyber-400"
+                  bg="bg-[color-mix(in_srgb,var(--cyber-500)_15%,transparent)]" border="border-[color-mix(in_srgb,var(--cyber-500)_40%,transparent)]" />
                 <StatusBadge to={`${boardUrl}&status=on_hold`} icon={Pause} label="On Hold" value={m.onHold} color="text-purple-400" bg="bg-purple-600/15" />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <StatusBadge to={`${boardUrl}&status=waiting_on_client,waiting_on_third_party`} icon={MessageSquare} label="Waiting" value={m.waitingOnResponse} color="text-amber-400" bg="bg-amber-600/15" />
                 <StatusBadge to={`${boardUrl}&status=open&priority=critical`} icon={AlertTriangle} label="Escalated" value={m.escalations} color="text-red-400" bg="bg-red-600/15" />
-                <MetricBadge icon={TrendingUp} label="Avg Age" value={`${m.averageAgeDays}d`} color="text-gray-400" bg="bg-gray-600/15" />
+                <MetricBadge icon={TrendingUp} label="Avg Age" value={`${m.averageAgeDays}d`} color={avgAgeTone.color} bg={avgAgeTone.bg} border={avgAgeTone.border} title={`Average age of open tickets on this board: ${m.averageAgeDays} day${m.averageAgeDays === 1 ? "" : "s"} (${avgAgeTone.note})`} />
               </div>
 
               {/* Stale ticket warnings */}
@@ -125,12 +134,12 @@ export function BoardsPage() {
 }
 
 // Clickable status metric — navigates to tickets filtered by that status for this board.
-function StatusBadge({ to, icon: Icon, label, value, color, bg }: { to: string; icon: LucideIcon; label: string; value: number | string; color: string; bg: string }) {
+function StatusBadge({ to, icon: Icon, label, value, color, bg, border = "border-transparent" }: { to: string; icon: LucideIcon; label: string; value: number | string; color: string; bg: string; border?: string }) {
   return (
     <Link
       to={to}
       title={`View ${label} tickets on this board`}
-      className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5 cursor-pointer transition-all border border-transparent hover:border-cyber-600/50 hover:ring-1 hover:ring-cyber-500/30 group/badge`}
+      className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5 cursor-pointer transition-all border ${border} hover:border-cyber-600/50 hover:ring-1 hover:ring-cyber-500/30 group/badge`}
     >
       <div className="flex items-center gap-1">
         <Icon size={11} className={color} />
@@ -141,9 +150,9 @@ function StatusBadge({ to, icon: Icon, label, value, color, bg }: { to: string; 
   );
 }
 
-function MetricBadge({ icon: Icon, label, value, color, bg }: { icon: LucideIcon; label: string; value: number | string; color: string; bg: string }) {
+function MetricBadge({ icon: Icon, label, value, color, bg, border = "border-transparent", title }: { icon: LucideIcon; label: string; value: number | string; color: string; bg: string; border?: string; title?: string }) {
   return (
-    <div className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5`}>
+    <div title={title} className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5 border ${border}`}>
       <div className="flex items-center gap-1">
         <Icon size={11} className={color} />
         <span className={`text-[10px] font-semibold ${color}`}>{label}</span>
