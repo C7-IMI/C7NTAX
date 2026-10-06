@@ -1,5 +1,23 @@
 [
   {
+    "id": "541b5457-d22e-4046-9207-e2566b1e1228",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "ac19c64c-0047-46bd-8ec8-ca06a760ee79",
+    "entityName": "Acme Corporation Network Device",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-06T20:33:46.375Z"
+  },
+  {
+    "id": "22a0b983-c878-4d5a-8322-69bb8eb5a06a",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "8c3f3ec5-c44a-4d69-a621-bf7b5b3dec9e",
+    "entityName": "Initech Solutions Workstation",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-06T20:33:48.266Z"
+  },
+  {
     "id": "09c80c6e-58e8-4d33-bc05-f5612054d0ff",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "password",
@@ -214,14 +232,5 @@
     "entityName": "Acme Corporation",
     "entityIcon": "building",
     "viewedAt": "2026-10-06T19:50:29.048Z"
-  },
-  {
-    "id": "541b5457-d22e-4046-9207-e2566b1e1228",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "asset",
-    "entityId": "ac19c64c-0047-46bd-8ec8-ca06a760ee79",
-    "entityName": "Acme Corporation Network Device",
-    "entityIcon": "monitor",
-    "viewedAt": "2026-10-06T20:27:44.008Z"
   }
 ]

@@ -646,7 +646,9 @@ async function main() {
   // filters do not recognise, so they render as raw text.
   for (const [from, to] of [["Network", "network"], ["Laptop", "laptop"], ["Server", "server"], ["Firewall", "firewall"], ["Switch", "switch"], ["Access Point", "access_point"]] as const) {
     await prisma.asset.updateMany({ where: { type: from }, data: { type: to } });
-  }  const companiesMissingNotes = await prisma.company.findMany({
+  }
+
+  const companiesMissingNotes = await prisma.company.findMany({
     where: { OR: [{ notes: null }, { notes: "" }] },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
@@ -668,11 +670,7 @@ async function main() {
   }
 
   // ── Kumo asset field values ────────────────────────────────────────
-  // Assets seeded earlier used display-cased types that the asset type map and
-  // filters do not recognise, so they render as raw text.
-  for (const [from, to] of [["Network", "network"], ["Laptop", "laptop"], ["Server", "server"], ["Firewall", "firewall"], ["Switch", "switch"], ["Access Point", "access_point"]] as const) {
-    await prisma.asset.updateMany({ where: { type: from }, data: { type: to } });
-  }
+  // Assets created without values render every template field as "—".
   const assetsMissingFieldValues = await prisma.kumoAsset.findMany({
     where: { fieldValues: { none: {} } },
     orderBy: { name: "asc" },
@@ -1025,6 +1023,7 @@ async function main() {
   if (clientIds.length) {
     await addMissing("opportunities", "opportunity", [
       { name: "MFA rollout for all staff", companyId: clientIds[2 % clientIds.length]!, stage: "proposal", probability: 65, amount: 14500, currency: "USD", expectedCloseDate: daysFromNow(21), assignedToId: people[1]?.id ?? primary.id, notes: "Security review flagged this as the next step after the phishing wave." },
+      { name: "Teams telephony trial", companyId: clientIds[0]!, stage: "prospect", probability: 15, amount: 7800, currency: "USD", expectedCloseDate: daysFromNow(96), assignedToId: people[2]?.id ?? primary.id, notes: "Came up on the last quarterly review — no budget confirmed yet." },
       { name: "Server hardware refresh", companyId: clientIds[0]!, stage: "qualified", probability: 35, amount: 22600, currency: "USD", expectedCloseDate: daysFromNow(74), assignedToId: primary.id, notes: "Four hosts are out of warranty in the spring." },
       { name: "Backup service upgrade", companyId: clientIds[1 % clientIds.length]!, stage: "won", probability: 100, amount: 9600, currency: "USD", expectedCloseDate: daysAgo(18), closedAt: daysAgo(16), wonReason: "Best fit on recovery time and price.", assignedToId: primary.id, notes: "Signed for three years of immutable cloud backup." },
       { name: "Legacy phone system replacement", companyId: clientIds[2 % clientIds.length]!, stage: "lost", probability: 0, amount: 31000, currency: "USD", expectedCloseDate: daysAgo(30), closedAt: daysAgo(28), lostReason: "Incumbent matched the price on hardware they already owned.", assignedToId: people[1]?.id ?? primary.id, notes: "Lost on price — revisit at renewal." },

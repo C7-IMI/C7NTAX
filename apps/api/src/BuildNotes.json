@@ -1,5 +1,52 @@
 [
   {
+    "version": "2026.10.6.041",
+    "date": "2026-10-06",
+    "title": "Sample data in every corner, and a reseed that keeps it",
+    "changes": [
+      {
+        "text": "**A coverage seeder — `apps/api/src/seed-sample-coverage.ts`, run with `npm run db:seed-coverage`.** It walks the app area by area and fills only what is empty, so it is safe to run again and again: every block counts its own collection first (or that client's slice of it) and either fills it or reports \"already has N\". It refuses to run while sample data is switched off, so a locked snapshot is never contaminated.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Reference and configuration areas:** currencies and exchange rates, ticket categories per board, technician skills (1–5 scale), retention policies, field permissions, email connectors, alert webhooks with delivery history, the AI provider config, calendar sync configs, a disabled SSO config, and bulk operations — so the settings and admin screens open on real rows instead of empty states.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Every client now has the full depth of a managed customer:** a domain and a certificate, at least two contacts, Kumo Server/Workstation/Network Device configurations with their template fields filled in, a password, a document with revisions, assets with assignment history, an invoice with line items, two checklists with tasks, and a project with three phases, four tasks and their dependencies.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Every ticket now has a story:** a technician note, an internal note and an emailed note, field-change history entries (the *History* tab reads comments shaped `Field: old → new`), two time entries, a similar-ticket link, CC/additional contacts, and — for a decent share of them — an attachment with a **real file on disk**, so download works rather than 404s.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The rest of the surfaces that were empty:** KB articles each with two versions, an attachment and a linked ticket; reports with a schedule; workflow rules; a closed chat session with its messages; detected patterns; AI actions; the inference cache; vendors; a purchase order; quotes with line items; opportunities in **every** pipeline stage; a contract; expenses; PTO requests; holidays; and calendar/schedule entries.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Detail screens that rendered dashes now render data.** Kumo assets with no field values showed every template field as \"—\" — assets are now filled from their template (hostname, OS, cores, RAM, IP, serial and friends, by key then by field type). The Kumo organization *Quick Notes* card read \"No notes yet\" for every client — each company now carries an operational note.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Thirteen tables were invisible to the snapshot pipeline**, so anything written into them was lost on the next reseed and absent from the fixtures: checklists, checklist tasks, ticket contacts, ticket similarities, ticket categories, exchange rates, retention policies, field permissions, detected patterns, the inference cache, bulk operations, asset assignments and KB↔ticket links. All thirteen are now captured (`snapshot-capture.ts`) and restored (`seed-from-snapshots.ts`).",
+        "type": "Fix"
+      },
+      {
+        "text": "**Five model names in the sample-data wipe list were misspelled** (`kbArticleTicket`, `kbArticleAttachment`, `kbArticleVersion`, `kbCategory`, `poLineItem`), so those destroy calls silently did nothing — the correct Prisma names are `kBArticle…`, `kBCategory` and `pOLineItem`. Checklists, checklist tasks, ticket contacts and webhook deliveries were missing from the list entirely and were added in the right wipe order.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A reseed silently emptied three tables.** The connector, webhook and calendar-sync fixtures deliberately omit their secrets, but the columns are required, so every reseed failed on them and left the tables empty. The fixtures are now rehydrated with placeholders when seeded, so the rows come back.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Two sample values did not match the enums the UI understands:** opportunities stored as `qualification` (not a pipeline stage, so those deals never appeared on the board) and assets typed `Network`/`Laptop`, which the asset type map does not recognise. Both are normalised, and the seeder now writes the stage/type values the app expects.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.040",
     "date": "2026-10-06",
     "title": "Checklists become a real section, on one shared rich text editor",
