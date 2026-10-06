@@ -43,5 +43,6 @@ git commit -m "auto-sync: $stamp" 2>&1 | ForEach-Object { Write-SyncLog $_ }
 $branchNow = (git rev-parse --abbrev-ref HEAD 2>$null)
 if ([string]::IsNullOrWhiteSpace($branchNow)) { $branchNow = $Branch }
 
-$push = (git push origin $branchNow 2>&1 | Out-String).Trim() -replace "\r?\n", " | "
+# cmd /c avoids PowerShell surfacing git's stderr progress as NativeCommandError
+$push = (& cmd /c "git push origin $branchNow 2>&1" | Out-String).Trim() -replace "\r?\n", " | "
 Write-SyncLog ("push origin {0}: {1}" -f $branchNow, $push)
