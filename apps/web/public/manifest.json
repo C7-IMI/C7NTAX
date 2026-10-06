@@ -1,16 +1,17 @@
 {
   "name": "C7NTAX",
-  "short_name": "Overwatch",
+  "short_name": "C7NTAX",
   "description": "Professional Services Automation Platform",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a1628",
-  "theme_color": "#0a1628",
+  "background_color": "#0d0d0f",
+  "theme_color": "#c00000",
   "orientation": "any",
   "icons": [
-    { "src": "/favicon.svg", "sizes": "32x32", "type": "image/svg+xml" },
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/favicon.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ],
   "categories": ["business", "productivity"],
   "lang": "en-US",

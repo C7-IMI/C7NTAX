@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a1628" />
+    <meta name="theme-color" content="#0d0d0f" />
     <meta name="description" content="C7NTAX — Professional Services Automation" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,8 +13,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <title>C7NTAX</title>
     <style>
-      /* Inline critical CSS so something renders before JS loads */
-      body { margin: 0; background: #0a1628; color: #e2e8f0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+      /* Inline critical CSS so something renders before JS loads.
+         Backgrounds match the brand palette (#0d0d0f surface) so the splash
+         doesn't flash the old navy before the app mounts. */
+      body { margin: 0; background: #0d0d0f; color: #e2e8f0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
       #root:empty::after {
         content: "Loading C7NTAX…";
         display: flex; align-items: center; justify-content: center;

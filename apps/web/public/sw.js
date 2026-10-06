@@ -1,7 +1,7 @@
 /* C7NTAX Service Worker — PWA offline support + caching */
 
 const CACHE_NAME = "C7NTAX-v1";
-const STATIC_ASSETS = ["/", "/index.html", "/favicon.svg", "/manifest.json"];
+const STATIC_ASSETS = ["/", "/index.html", "/icon-192.png", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -27,7 +27,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => { const clone = res.clone(); caches.open(CACHE_NAME).then((c) => c.put(req, clone)); return res; })
-        .catch(() => caches.match(req) as Promise<Response>)
+        .catch(() => caches.match(req))
     );
     return;
   }
@@ -46,8 +46,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/favicon.svg",
-      badge: "/favicon.svg",
+      icon: "/icon-192.png",
+      badge: "/favicon.png",
       tag: data.tag || "default",
       data: data.url || "/",
     })
