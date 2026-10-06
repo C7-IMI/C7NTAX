@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../hooks/useAuth";
 import { InferencePanel } from "../components/InferencePanel";
-import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical } from "lucide-react";
+import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical, ExternalLink, AppWindow, SquareArrowOutUpRight, UserCheck, Flag, CircleDot, Copy, Eraser, Check, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
@@ -126,6 +128,32 @@ const TICKET_DETAIL_TABS = [
   { id: "audittrail", label: "Audit Trail" },
 ];
 
+/** Right-click deletion confirmation, shared by the list and the detail screen. */
+function DeleteTicketDialog({ target, busy, onCancel, onConfirm }: {
+  target: { ticketNumber?: string; title?: string } | null;
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!target) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onCancel}>
+      <div role="dialog" aria-modal="true" aria-label="Delete ticket" className="card w-full max-w-md space-y-3" onClick={e => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold text-white flex items-center gap-2"><AlertTriangle size={16} className="text-red-400" /> Delete ticket</h3>
+        <p className="text-sm text-gray-300">
+          Delete <span className="text-white font-medium">{target.ticketNumber || "this ticket"}</span>
+          {target.title ? ` — ${target.title}` : ""}?
+        </p>
+        <p className="text-xs text-gray-500">Notes, attachments and time entries on this ticket are deleted with it. This cannot be undone.</p>
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onCancel} className="btn-secondary text-sm">Cancel</button>
+          <button type="button" onClick={onConfirm} disabled={busy} className="px-3 py-1.5 rounded-md bg-red-600 hover:bg-red-500 text-white text-sm font-medium disabled:opacity-50">{busy ? "Deleting…" : "Delete ticket"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TicketsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const boardId = searchParams.get("boardId") || "";
@@ -136,6 +164,8 @@ export function TicketsPage() {
   const dateToParam = searchParams.get("dateTo") || "";
   // The organization rail's Change Control entry scopes the list to one client.
   const companyParam = searchParams.get("companyId") || "";
+  const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
@@ -331,6 +361,162 @@ export function TicketsPage() {
     } catch { toast.error("Failed"); }
   };
 
+  // ── Right-click menu: the Tickets section ──
+  const menu = useContextMenu();
+
+  const absoluteUrl = (path: string) => `${window.location.origin}${path}`;
+  const openInNewTab = (path: string) => window.open(absoluteUrl(path), "_blank", "noopener");
+  // Window features make this a real popup window rather than another tab —
+  // which is also a separate window in the desktop shell.
+  const openInNewWindow = (path: string) => window.open(absoluteUrl(path), "_blank", "noopener,width=1280,height=880,left=80,top=60");
+
+  const copyText = async (value: string, what: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${what} copied`);
+    } catch {
+      toast.error("Could not copy to the clipboard");
+    }
+  };
+
+  const assignTicket = async (ticketId: string, userId: string | null) => {
+    try {
+      await api.patch(`/tickets/${ticketId}`, { assignedToId: userId });
+      toast.success(userId ? "Assigned" : "Unassigned");
+      fetchTickets();
+    } catch { toast.error("Could not assign"); }
+  };
+
+  // ── Delete ticket ──
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; ticketNumber?: string; title?: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDeleteTicket = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/tickets/${deleteTarget.id}`);
+      toast.success(`${deleteTarget.ticketNumber || "Ticket"} deleted`);
+      setDeleteTarget(null);
+      fetchTickets();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Could not delete ticket");
+    } finally { setDeleting(false); }
+  };
+
+  // ── Export CSV ──
+  /** Plain-text cell values matching what the table renders for each column. */
+  const csvCellValue = (t: Record<string, any>, colId: string): string => {
+    const person = t.assignedTo as { firstName?: string; lastName?: string } | null;
+    switch (colId) {
+      case "number": return String(t.ticketNumber ?? "");
+      case "title": return String(t.title ?? "");
+      case "status": return String(t.status ?? "").replace(/_/g, " ");
+      case "board": return String((t.board as { name?: string } | null)?.name ?? "");
+      case "client": return String((t.company as { name?: string } | null)?.name ?? "");
+      case "technician": return person ? `${person.firstName || ""} ${person.lastName || ""}`.trim() : "";
+      case "priority": return String(t.priority ?? "");
+      case "timestamp": {
+        const created = t.createdAt ? new Date(t.createdAt as string) : null;
+        const updated = t.updatedAt ? new Date(t.updatedAt as string) : null;
+        const shown = created && updated && updated.getTime() > created.getTime() ? updated : created;
+        return shown ? shown.toISOString() : "";
+      }
+      default: return "";
+    }
+  };
+
+  const exportCsv = () => {
+    const rows = sortedTickets;
+    if (rows.length === 0) { toast.error("Nothing to export"); return; }
+    const columns: CsvColumn<Record<string, any>>[] = visibleColumns
+      .map(colId => TICKET_COLUMNS.find(c => c.id === colId))
+      .filter((c): c is TicketColumnDef => !!c)
+      .map(c => ({ key: c.id, label: c.label, value: (t: Record<string, any>) => csvCellValue(t, c.id) }));
+    downloadCsv(`c7ntax-tickets-${fileStamp()}.csv`, toCsv(rows, columns));
+    toast.success(`Exported ${rows.length} ticket${rows.length === 1 ? "" : "s"}${rows.length >= 200 ? " (API limit is 200)" : ""}`);
+  };
+
+  const ticketMenuHeader = (t: Record<string, any>) => ({
+    title: `${t.ticketNumber ?? "Ticket"} · ${t.title || "Untitled ticket"}`,
+    subtitle: [
+      (t.company as { name?: string } | null)?.name,
+      (t.status as string | undefined)?.replace(/_/g, " "),
+      priorityLabel(t.priority as string),
+      t.assignedTo ? `${(t.assignedTo as { firstName?: string }).firstName ?? ""} ${(t.assignedTo as { lastName?: string }).lastName ?? ""}`.trim() : "Unassigned",
+    ].filter(Boolean).join(" · "),
+  });
+
+  const ticketMenuEntries = (t: Record<string, any>): MenuEntry[] => {
+    const status = (t.status as string) ?? "";
+    const priority = (t.priority as string) ?? "";
+    return [
+      { label: "Open ticket", icon: ExternalLink, hint: "⏎", onSelect: () => navigate(`/tickets/${t.id}`) },
+      { label: "Open in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(`/tickets/${t.id}`) },
+      { label: "Open in new window", icon: AppWindow, onSelect: () => openInNewWindow(`/tickets/${t.id}`) },
+      "separator",
+      {
+        label: "Change status", icon: CircleDot,
+        items: TICKET_STATUSES.map(s => ({
+          label: s.replace(/_/g, " "), checked: status === s, onSelect: () => ticketAction(t.id, `status_${s}`),
+        })),
+      },
+      {
+        label: "Change priority", icon: Flag,
+        items: TICKET_PRIORITIES.map(p => ({
+          label: priorityLabel(p), checked: priority === p, onSelect: () => ticketAction(t.id, `priority_${p}`),
+        })),
+      },
+      {
+        label: "Assign to", icon: UserCheck,
+        items: [
+          { label: "Unassigned", checked: !t.assignedToId, onSelect: () => assignTicket(t.id, null) },
+          ...users.map(u => ({
+            label: `${u.firstName} ${u.lastName}`.trim(), checked: t.assignedToId === u.id, onSelect: () => assignTicket(t.id, u.id),
+          })),
+        ],
+      },
+      "separator",
+      {
+        label: "Assign to me", icon: UserCheck,
+        disabled: !currentUser || t.assignedToId === currentUser.id,
+        hint: t.assignedToId === currentUser?.id ? "already yours" : undefined,
+        onSelect: () => currentUser && assignTicket(t.id, currentUser.id),
+      },
+      "separator",
+      { label: "Acknowledge", icon: CheckSquare, disabled: status === "in_progress" || status === "closed", onSelect: () => ticketAction(t.id, "acknowledge") },
+      { label: "Close ticket", icon: X, disabled: status === "closed", onSelect: () => ticketAction(t.id, "close") },
+      "separator",
+      { label: "Add note", icon: MessageSquare, onSelect: () => navigate(`/tickets/${t.id}?action=note`) },
+      { label: "Log time entry", icon: Timer, onSelect: () => navigate(`/tickets/${t.id}?action=time`) },
+      { label: "Email customer contact", icon: Mail, onSelect: () => navigate(`/tickets/${t.id}?action=email`) },
+      { label: "Print ticket", icon: Printer, onSelect: () => navigate(`/tickets/${t.id}?action=print`) },
+      "separator",
+      { label: "Copy ticket number", icon: Copy, hint: t.ticketNumber, onSelect: () => copyText(String(t.ticketNumber ?? ""), "Ticket number") },
+      { label: "Copy link", icon: Link2, onSelect: () => copyText(absoluteUrl(`/tickets/${t.id}`), "Link") },
+      "separator",
+      { label: "Delete ticket…", icon: Trash2, danger: true, onSelect: () => setDeleteTarget({ id: t.id, ticketNumber: t.ticketNumber, title: t.title }) },
+    ];
+  };
+
+  const sectionMenuEntries = (): MenuEntry[] => {
+    const hasFilters = !!(boardId || statusParam || priorityParam || assignedParam || dateFromParam || dateToParam);
+    const view = `${window.location.pathname}${window.location.search}`;
+    return [
+      { label: "New ticket", icon: Plus, onSelect: () => setShowNew(true) },
+      { label: "Refresh list", icon: RotateCw, onSelect: () => fetchTickets() },
+      "separator",
+      { label: "Filter tickets…", icon: Filter, onSelect: () => setShowFilter(true) },
+      { label: "Clear filters", icon: Eraser, hint: hasFilters ? "active" : undefined, disabled: !hasFilters, onSelect: () => clearFilters() },
+      { label: "Choose columns…", icon: Columns3, onSelect: () => setShowColumnModal(true) },
+      "separator",
+      { label: "Export as CSV", icon: Download, hint: `${sortedTickets.length} row${sortedTickets.length === 1 ? "" : "s"}`, disabled: sortedTickets.length === 0, onSelect: exportCsv },
+      "separator",
+      { label: "Open this view in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(view) },
+      { label: "Open this view in new window", icon: AppWindow, onSelect: () => openInNewWindow(view) },
+    ];
+  };
+
   // ── Filter ──
   // Sync the dialog draft from URL filters (e.g. when navigating from Service Boards)
   useEffect(() => {
@@ -361,7 +547,12 @@ export function TicketsPage() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
+      <DeleteTicketDialog target={deleteTarget} busy={deleting} onCancel={() => setDeleteTarget(null)} onConfirm={confirmDeleteTicket} />
       {/* Breadcrumb */}
       {boardId && (
         <div className="flex items-center gap-2 text-sm">
@@ -577,7 +768,10 @@ export function TicketsPage() {
               );
             })}
           </tr></thead>
-            <tbody>{paged.map((t:any)=>(<tr key={t.id} className={`border-b border-surface-border/50 hover:bg-surface-light/50 ${selectedIds.has(t.id) ? "bg-cyber-600/10" : ""}`}>
+            <tbody>{paged.map((t:any)=>(<tr key={t.id} tabIndex={0}
+              onContextMenu={(e) => menu.open(e, ticketMenuEntries(t), ticketMenuHeader(t))}
+              onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, ticketMenuEntries(t), ticketMenuHeader(t))}
+              className={`border-b border-surface-border/50 hover:bg-surface-light/50 focus:outline-none focus:bg-surface-lighter/40 ${selectedIds.has(t.id) ? "bg-cyber-600/10" : ""}`}>
               <td className="px-4 py-3"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white">{selectedIds.has(t.id) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></td>
               <td className="px-4 py-3">
                 <TicketActionMenu ticketId={t.id} currentStatus={t.status} currentPriority={t.priority} onAction={ticketAction} />
@@ -700,6 +894,9 @@ function TicketActionMenu({ ticketId, currentStatus, currentPriority, onAction }
 
 export function TicketDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const menu = useContextMenu();
   const { user: currentUser } = useAuth();
   const [ticket, setTicket] = useState<Record<string,unknown>|null>(null);
   const [editing, setEditing] = useState(false);
@@ -784,8 +981,7 @@ export function TicketDetailPage() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailForm, setEmailForm] = useState({ subject: "", body: "" });
   const [sendingEmail, setSendingEmail] = useState(false);
-  const [showMoreActions, setShowMoreActions] = useState(false);
-  const [moreActionsBusy, setMoreActionsBusy] = useState(false);
+  const [showMoreActions, setShowMoreActions] = useState(false);  const [moreActionsBusy, setMoreActionsBusy] = useState(false);
   const [tabRefresh, setTabRefresh] = useState(0);
 
   const cfArr = (key: string): any[] => Array.isArray(cf[key]) ? cf[key] : [];
@@ -1001,6 +1197,112 @@ export function TicketDetailPage() {
     setShowMoreActions(false);
   };
 
+  // ── Right-click menu: this ticket ──
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const assignTicketTo = async (userId: string | null) => {
+    try {
+      await api.patch(`/tickets/${id}`, { assignedToId: userId });
+      toast.success(userId ? "Assigned" : "Unassigned");
+      load();
+    } catch (error: any) { toast.error(error?.response?.data?.error || "Could not assign"); }
+  };
+
+  const confirmDeleteTicket = async () => {
+    setDeleting(true);
+    try {
+      await api.delete(`/tickets/${id}`);
+      toast.success("Ticket deleted");
+      navigate("/tickets");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Could not delete ticket");
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
+  };
+
+  const detailMenuHeader = () => {
+    const current = ticket as Record<string, any> | null;
+    return {
+      title: `${current?.ticketNumber ?? "Ticket"} · ${current?.title || "Untitled ticket"}`,
+      subtitle: [
+        (current?.company as { name?: string } | null)?.name,
+        String(current?.status ?? "").replace(/_/g, " "),
+        priorityLabel(String(current?.priority ?? "")),
+        current?.assignedTo ? `${(current.assignedTo as { firstName?: string }).firstName ?? ""} ${(current.assignedTo as { lastName?: string }).lastName ?? ""}`.trim() : "Unassigned",
+      ].filter(Boolean).join(" · "),
+    };
+  };
+
+  const detailMenuEntries = (): MenuEntry[] => {
+    const current = ticket as Record<string, any> | null;
+    if (!current) return [];
+    const path = `/tickets/${id}`;
+    return [
+      { label: "Open in new tab", icon: SquareArrowOutUpRight, onSelect: () => window.open(`${window.location.origin}${path}`, "_blank", "noopener") },
+      { label: "Open in new window", icon: AppWindow, onSelect: () => window.open(`${window.location.origin}${path}`, "_blank", "noopener,width=1280,height=880,left=80,top=60") },
+      "separator",
+      {
+        label: "Change status", icon: CircleDot,
+        items: TICKET_STATUSES.map(s => ({ label: s.replace(/_/g, " "), checked: current.status === s, disabled: moreActionsBusy, onSelect: () => void applyTicketField("status", s) })),
+      },
+      {
+        label: "Change priority", icon: Flag,
+        items: TICKET_PRIORITIES.map(p => ({ label: priorityLabel(p), checked: current.priority === p, disabled: moreActionsBusy, onSelect: () => void applyTicketField("priority", p) })),
+      },
+      {
+        label: "Assign to", icon: UserCheck,
+        items: [
+          { label: "Unassigned", checked: !current.assignedToId, onSelect: () => void assignTicketTo(null) },
+          ...users.map(u => ({ label: `${u.firstName} ${u.lastName}`.trim(), checked: current.assignedToId === u.id, onSelect: () => void assignTicketTo(u.id) })),
+        ],
+      },
+      {
+        label: "Assign to me", icon: UserCheck,
+        disabled: !currentUser || current.assignedToId === currentUser.id,
+        onSelect: () => currentUser && void assignTicketTo(currentUser.id),
+      },
+      "separator",
+      { label: "Add note", icon: MessageSquare, onSelect: () => { setActiveTab("ticket"); setFocusNoteRequested(true); } },
+      { label: "Log time entry", icon: Timer, onSelect: openTimeEntryModal },
+      { label: "Email customer contact", icon: Mail, onSelect: openEmailDialog },
+      { label: "Attach file…", icon: Paperclip, onSelect: () => setShowAttachDialog(true) },
+      { label: "Print ticket", icon: Printer, hint: "Ctrl+P", onSelect: () => window.print() },
+      "separator",
+      { label: "Refresh", icon: RotateCw, onSelect: () => void load() },
+      { label: "Copy ticket number", icon: Copy, hint: String(current.ticketNumber ?? ""), onSelect: () => void copyText(String(current.ticketNumber ?? "")) },
+      { label: "Copy link", icon: Link2, onSelect: () => void copyTicketLink() },
+      "separator",
+      { label: "Back to ticket list", icon: ChevronLeft, onSelect: () => navigate("/tickets") },
+      { label: "Delete ticket…", icon: Trash2, danger: true, onSelect: () => setDeleteOpen(true) },
+    ];
+  };
+
+  const copyText = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success("Ticket number copied");
+    } catch {
+      toast.error("Could not copy to the clipboard");
+    }
+  };
+
+  // Deep links from the list's right-click menu (?action=note|time|email|attach|print).
+  useEffect(() => {
+    const action = searchParams.get("action");
+    if (!action || !ticket) return;
+    if (action === "note") { setActiveTab("ticket"); setFocusNoteRequested(true); }
+    else if (action === "time") openTimeEntryModal();
+    else if (action === "email") openEmailDialog();
+    else if (action === "attach") setShowAttachDialog(true);
+    else if (action === "print") setTimeout(() => window.print(), 60);
+    const next = new URLSearchParams(searchParams);
+    next.delete("action");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, ticket]);
+
   const uploadAttachment = async (e: React.FormEvent) => {
     e.preventDefault();
     const file = attachForm.file;
@@ -1040,7 +1342,12 @@ export function TicketDetailPage() {
   if(!ticket) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl">
+    <div
+      className="space-y-6 animate-fade-in max-w-4xl"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, detailMenuEntries(), detailMenuHeader()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
+      <DeleteTicketDialog target={deleteOpen ? { ticketNumber: String(ticket?.ticketNumber ?? ""), title: String(ticket?.title ?? "") } : null} busy={deleting} onCancel={() => setDeleteOpen(false)} onConfirm={confirmDeleteTicket} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2">

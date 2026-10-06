@@ -7,6 +7,7 @@
  *   localStorage.setItem("c7_ui_kumo_orgs", "0"); location.reload() // disable Kumo Organizations
  *   localStorage.setItem("c7_ui_kumo_types", "0"); location.reload() // disable the organization type rail
  *   localStorage.setItem("c7_ui_kumo_crumbs", "0"); location.reload() // disable the Kumo breadcrumb trail
+ *   localStorage.setItem("c7_ui_context_menus", "0"); location.reload() // disable the app right-click menus
  *   localStorage.removeItem("c7_ui_p1");   location.reload()   // back to default
  * Or the window.c7UiP1 / window.c7UiP2 helpers, or the command palette actions.
  *
@@ -14,7 +15,7 @@
  * apps/web/.env.local) and restart the web server; or run
  * scripts/rollback-ui-p1.ps1 -Part P1|P2|All.
  */
-type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2" | "c7_ui_palette" | "c7_ui_kumo_orgs" | "c7_ui_kumo_types" | "c7_ui_kumo_crumbs";
+type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2" | "c7_ui_palette" | "c7_ui_kumo_orgs" | "c7_ui_kumo_types" | "c7_ui_kumo_crumbs" | "c7_ui_context_menus";
 
 const UI_P1_STORAGE_KEY: FlagStorageKey = "c7_ui_p1";
 const UI_P2_STORAGE_KEY: FlagStorageKey = "c7_ui_p2";
@@ -22,6 +23,7 @@ const UI_PALETTE_STORAGE_KEY: FlagStorageKey = "c7_ui_palette";
 const UI_KUMO_ORGS_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_orgs";
 const UI_KUMO_TYPES_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_types";
 const UI_KUMO_BREADCRUMBS_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_crumbs";
+const UI_CONTEXT_MENUS_STORAGE_KEY: FlagStorageKey = "c7_ui_context_menus";
 
 function readFlag(key: FlagStorageKey, envName: string): boolean {
   try {
@@ -68,6 +70,12 @@ export const UI_KUMO_TYPES = readFlag(UI_KUMO_TYPES_STORAGE_KEY, "VITE_UI_KUMO_T
  */
 export const UI_KUMO_BREADCRUMBS = readFlag(UI_KUMO_BREADCRUMBS_STORAGE_KEY, "VITE_UI_KUMO_BREADCRUMBS");
 
+/**
+ * The application-style right-click menu, currently on the Tickets section
+ * (default: on). Off restores the browser's own menu everywhere.
+ */
+export const UI_CONTEXT_MENUS = readFlag(UI_CONTEXT_MENUS_STORAGE_KEY, "VITE_UI_CONTEXT_MENUS");
+
 export function setUiP1(enabled: boolean): void {
   writeFlag(UI_P1_STORAGE_KEY, enabled);
 }
@@ -92,7 +100,12 @@ export function setUiKumoBreadcrumbs(enabled: boolean): void {
   writeFlag(UI_KUMO_BREADCRUMBS_STORAGE_KEY, enabled);
 }
 
+export function setUiContextMenus(enabled: boolean): void {
+  writeFlag(UI_CONTEXT_MENUS_STORAGE_KEY, enabled);
+}
+
 export {
   UI_P1_STORAGE_KEY, UI_P2_STORAGE_KEY, UI_PALETTE_STORAGE_KEY,
   UI_KUMO_ORGS_STORAGE_KEY, UI_KUMO_TYPES_STORAGE_KEY, UI_KUMO_BREADCRUMBS_STORAGE_KEY,
+  UI_CONTEXT_MENUS_STORAGE_KEY,
 };

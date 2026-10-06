@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
+import { primeContextMenusSetting } from "../hooks/useContextMenusEnabled";
 import { Save, RotateCw, Shield, Mail, Database, Radio, Wrench, AlertTriangle, CheckCircle, XCircle, Clock, Activity, type LucideIcon } from "lucide-react";
 
 const TABS = [
@@ -13,7 +14,7 @@ const TABS = [
 ];
 
 interface SystemSettings {
-  general: { companyName: string; timezone: string; dateFormat: string; defaultLanguage: string; sessionTimeout: number; homepageDashboard: string };
+  general: { companyName: string; timezone: string; dateFormat: string; defaultLanguage: string; sessionTimeout: number; homepageDashboard: string; contextMenus: boolean };
   email: { smtpHost: string; smtpPort: number; smtpUser: string; smtpPass: string; fromAddress: string; emailFooter: string; alertRecipient: string };
   security: { passwordMinLength: number; requireMfa: boolean; ipWhitelist: string; auditRetentionDays: number; sessionLockoutMinutes: number };
   integration: { apiKeys: string; webhookUrl: string; webhookSecret: string };
@@ -23,7 +24,7 @@ interface FailoverStatus { running: boolean; cycles: number; maxRetries: number;
 
 export function SystemSettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
-  const [settings, setSettings] = useState<SystemSettings>({ general: { companyName: "C7NTAX", timezone: "America/Chicago", dateFormat: "MM/DD/YYYY", defaultLanguage: "en", sessionTimeout: 30, homepageDashboard: "/" }, email: { smtpHost: "", smtpPort: 587, smtpUser: "", smtpPass: "", fromAddress: "noreply@c7ntax.com", emailFooter: "C7NTAX – Professional Services Automation", alertRecipient: "admin@c7ntax.com" }, security: { passwordMinLength: 8, requireMfa: false, ipWhitelist: "", auditRetentionDays: 90, sessionLockoutMinutes: 15 }, integration: { apiKeys: "", webhookUrl: "", webhookSecret: "" }, database: { backupSchedule: "0 2 * * *", retentionPolicy: "30d", connectionString: "postgresql://localhost:5432/c7_overwatch" } });
+  const [settings, setSettings] = useState<SystemSettings>({ general: { companyName: "C7NTAX", timezone: "America/Chicago", dateFormat: "MM/DD/YYYY", defaultLanguage: "en", sessionTimeout: 30, homepageDashboard: "/", contextMenus: true }, email: { smtpHost: "", smtpPort: 587, smtpUser: "", smtpPass: "", fromAddress: "noreply@c7ntax.com", emailFooter: "C7NTAX – Professional Services Automation", alertRecipient: "admin@c7ntax.com" }, security: { passwordMinLength: 8, requireMfa: false, ipWhitelist: "", auditRetentionDays: 90, sessionLockoutMinutes: 15 }, integration: { apiKeys: "", webhookUrl: "", webhookSecret: "" }, database: { backupSchedule: "0 2 * * *", retentionPolicy: "30d", connectionString: "postgresql://localhost:5432/c7_overwatch" } });
   const [saving, setSaving] = useState(false);
   const [failover, setFailover] = useState<FailoverStatus>({ running: true, cycles: 0, maxRetries: 10, lastCheck: new Date().toISOString(), lastResult: "healthy", history: [] });
 
@@ -37,6 +38,9 @@ export function SystemSettingsPage() {
     setSaving(true);
     try {
       await api.patch("/system/config/app_settings", { value: JSON.stringify(settings) });
+      // Right-click menus resolve their state from this config, so push the new
+      // value to anything already mounted instead of waiting for a reload.
+      primeContextMenusSetting(settings.general.contextMenus !== false);
       toast.success("Settings saved");
     } catch { toast.error("Failed to save"); }
     finally { setSaving(false); }
@@ -78,6 +82,15 @@ function GeneralTab({ s, f }: { s: (section: "general", key: string, value: unkn
     <Field label="Default Language"><input className="input-field" value={String(g.defaultLanguage || "")} onChange={e => s("general", "defaultLanguage", e.target.value)} /></Field>
     <Field label="Session Timeout (minutes)"><input className="input-field" type="number" value={String(g.sessionTimeout || "")} onChange={e => s("general", "sessionTimeout", Number(e.target.value))} /></Field>
     <Field label="Homepage Dashboard"><input className="input-field" value={String(g.homepageDashboard || "/")} onChange={e => s("general", "homepageDashboard", e.target.value)} /></Field>
+    <div className="col-span-2">
+      <Field label="Interface">
+        <label className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+          <input type="checkbox" checked={g.contextMenus !== false} onChange={e => s("general", "contextMenus", e.target.checked)} />
+          Application right-click menus (Tickets, and other enabled sections)
+        </label>
+      </Field>
+      <p className="text-xs text-gray-500 mt-1">When off, right-clicking anywhere in those sections shows the browser menu instead of the C7NTAX menu. Text fields always keep the browser menu.</p>
+    </div>
   </div>);
 }
 

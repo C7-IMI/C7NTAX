@@ -376,6 +376,31 @@ ticketsRouter.delete("/:id/attachments/:attId", requirePermission(Permission.Tic
   } catch (e) { next(e); }
 });
 
+// ── Delete a ticket ──
+// Comments, attachments and time entries cascade; notifications keep their row
+// and lose the link (SetNull), so nothing else in the database dangles.
+ticketsRouter.delete("/:id", requirePermission(Permission.TicketDelete), async (req: AuthRequest, res, next) => {
+  try {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: req.params.id },
+      select: {
+        id: true, ticketNumber: true, title: true, companyId: true,
+        _count: { select: { comments: true, attachments: true, timeEntries: true } },
+      },
+    });
+    if (!ticket) throw new AppError("Ticket not found", 404);
+    if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
+
+    await prisma.ticket.delete({ where: { id: ticket.id } });
+    res.json({
+      message: `Ticket ${ticket.ticketNumber} deleted`,
+      id: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      removed: ticket._count,
+    });
+  } catch (e) { next(e); }
+});
+
 // ── Add time entry ──
 ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
