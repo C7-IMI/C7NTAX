@@ -1,162 +1,311 @@
 /**
- * Email connector runtime — owns the EmailConnectorManager singleton, hydrates
- * enabled EmailConnector rows at boot, and wires the create/update ticket
- * handlers with Message-ID dedup.
+ * Email connector runtime — hydrates enabled EmailConnector rows at boot and
+ * keeps one poller running per connector, chosen by transport:
+ *
+ *   imap  → EmailConnectorManager (node-imap + a mailbox password; still fine
+ *           for mailboxes that accept one, but not for Microsoft 365)
+ *   graph → Microsoft Graph, app-only. Exchange Online has Basic authentication
+ *           disabled in every tenant, so this is the transport an M365 mailbox
+ *           has to use. See graphFetch.ts for the endpoints and the app
+ *           registration/permission requirements.
+ *
+ * Both transports share one processing path: match the message to a ticket,
+ * create a ticket or append a reply, record it as processed, and only then mark
+ * it read in the mailbox. Anything that fails stays unread, so the next poll
+ * retries it instead of losing the email.
  */
-import { EmailConnectorManager, type EmailConnectorConfig, type ParsedEmail } from "@C7NTAX/email";
+import {
+  EmailConnectorManager,
+  type EmailConnectorConfig,
+  type IncomingEmail,
+  GraphError,
+  acquireGraphToken,
+  fetchGraphUnread,
+  markGraphMessageRead,
+  probeGraphMailbox,
+  normalizeGraphFolder,
+  isAutoReply,
+} from "@C7NTAX/email";
 import { prisma } from "../index";
 import { decryptPassword } from "./emailConnectorCrypto";
 import { createTicketFromEmail, appendEmailToTicket } from "./emailToTicket";
 
 export const emailConnectorManager = new EmailConnectorManager();
 
-async function getCursor(key: string): Promise<string[]> {
-  const row = await prisma.systemConfig.findUnique({ where: { key } });
-  if (!row?.value) return [];
-  const v = row.value as { seen?: string[] };
-  return Array.isArray(v.seen) ? v.seen : [];
+/** The columns the runtime needs; routes pass whole EmailConnector rows. */
+export interface ConnectorRow {
+  id: string;
+  boardId: string;
+  transport: string | null;
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  passwordEncrypted: string;
+  folder: string;
+  pollIntervalSec: number;
+  tenantId: string | null;
+  clientId: string | null;
+  clientSecretEncrypted: string | null;
 }
 
-async function recordCursor(key: string, messageIds: string[]): Promise<void> {
-  const capped = messageIds.slice(-100);
+export interface ConnectorState {
+  /** Message ids already dealt with, newest last. */
+  processed: string[];
+  lastError: string | null;
+  lastErrorAt: string | null;
+  lastProcessedAt: string | null;
+}
+
+const PROCESSED_CAP = 500;
+const EMPTY_STATE: ConnectorState = { processed: [], lastError: null, lastErrorAt: null, lastProcessedAt: null };
+
+export function isGraphTransport(row: { transport: string | null }): boolean {
+  return (row.transport || "imap").toLowerCase() === "graph";
+}
+
+function stateKey(id: string): string {
+  return `email_connector:${id}:state`;
+}
+
+export async function readConnectorState(id: string): Promise<ConnectorState> {
+  const row = await prisma.systemConfig.findUnique({ where: { key: stateKey(id) } });
+  const value = (row?.value || {}) as Partial<ConnectorState>;
+  return {
+    processed: Array.isArray(value.processed) ? value.processed : [],
+    lastError: value.lastError ?? null,
+    lastErrorAt: value.lastErrorAt ?? null,
+    lastProcessedAt: value.lastProcessedAt ?? null,
+  };
+}
+
+async function writeConnectorState(id: string, patch: Partial<ConnectorState>): Promise<ConnectorState> {
+  const current = await readConnectorState(id);
+  const defined = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined));
+  const next: ConnectorState = { ...current, ...defined } as ConnectorState;
   await prisma.systemConfig.upsert({
-    where: { key },
-    update: { value: { seen: capped } },
-    create: { key, value: { seen: capped } },
+    where: { key: stateKey(id) },
+    update: { value: next as any },
+    create: { key: stateKey(id), value: next as any },
   });
+  return next;
 }
 
-async function withDedup(scopeKey: string, messageId: string, fn: () => Promise<string>): Promise<void> {
-  const seen = await getCursor(scopeKey);
-  if (seen.includes(messageId)) return;
-  const id = await fn();
-  if (id) {
-    await recordCursor(scopeKey, [...seen, messageId]);
+async function rememberProcessed(id: string, messageId: string): Promise<void> {
+  const state = await readConnectorState(id);
+  if (state.processed.includes(messageId)) return;
+  const processed = [...state.processed, messageId].slice(-PROCESSED_CAP);
+  await writeConnectorState(id, { processed, lastProcessedAt: new Date().toISOString() });
+}
+
+/**
+ * The single processing path shared by both transports. Returns true only when
+ * the message is finished with (ticket created, reply appended, or deliberately
+ * ignored) — the caller marks the message read on true and leaves it otherwise.
+ */
+async function processIncoming({ connectorId, boardId, email, match }: IncomingEmail): Promise<boolean> {
+  const state = await readConnectorState(connectorId);
+  if (state.processed.includes(email.messageId)) return true;
+
+  if (isAutoReply(email.subject, email.bodyText)) {
+    await rememberProcessed(connectorId, email.messageId);
+    return true;
+  }
+
+  if (match.action === "update" && match.ticketId) {
+    const appended = await appendEmailToTicket(match.ticketId, email);
+    if (appended) {
+      await rememberProcessed(connectorId, email.messageId);
+      return true;
+    }
+    // The subject quoted a ticket that does not exist — fall through and raise a
+    // new ticket rather than dropping the email.
+    console.warn(`[EmailConnector] ${email.from.email} quoted ticket "${match.ticketId}", which was not found — creating a ticket instead`);
+  }
+
+  const ticketId = await createTicketFromEmail(boardId, email);
+  if (!ticketId) throw new Error("ticket creation returned no ticket");
+  console.log(`[EmailConnector] Created ticket ${ticketId} from ${email.from.email}`);
+  await rememberProcessed(connectorId, email.messageId);
+  return true;
+}
+
+emailConnectorManager.onEmail(processIncoming);
+
+// ── IMAP transport ──────────────────────────────────────────────────
+
+function imapConfig(row: ConnectorRow): EmailConnectorConfig {
+  return {
+    id: row.id,
+    boardId: row.boardId,
+    host: row.host,
+    port: row.port,
+    secure: row.secure,
+    user: row.user,
+    password: decryptPassword(row.passwordEncrypted),
+    folder: row.folder,
+    pollIntervalSeconds: Math.max(30, row.pollIntervalSec || 300),
+    enabled: true,
+  };
+}
+
+// ── Graph transport ─────────────────────────────────────────────────
+
+const graphTimers = new Map<string, ReturnType<typeof setInterval>>();
+/** Per-connector throttling/backoff deadline (Graph 429s and hard failures). */
+const graphBackoff = new Map<string, number>();
+
+function graphConfig(row: ConnectorRow) {
+  return {
+    tenantId: (row.tenantId || "common").trim() || "common",
+    clientId: row.clientId || "",
+    clientSecret: row.clientSecretEncrypted ? decryptPassword(row.clientSecretEncrypted) : "",
+    mailbox: row.user,
+    folder: normalizeGraphFolder(row.folder),
+  };
+}
+
+async function pollGraphOnce(row: ConnectorRow): Promise<void> {
+  const until = graphBackoff.get(row.id) || 0;
+  if (Date.now() < until) return;
+
+  const config = graphConfig(row);
+  try {
+    const { token } = await acquireGraphToken(config);
+    const messages = await fetchGraphUnread(config, token);
+    let handled = 0;
+    for (const message of messages) {
+      // processed through the same path as IMAP, including reply matching
+      const ok = await emailConnectorManager.processEmail(row.id, row.boardId, message.email);
+      if (!ok) continue;
+      handled++;
+      try {
+        await markGraphMessageRead(config, token, message.graphId);
+      } catch (e: any) {
+        // The ticket exists; a failed mark means the next poll re-sees an
+        // already-processed message, which the cursor then skips.
+        console.error(`[EmailConnector] Could not mark message read for connector ${row.id}:`, e?.message || e);
+      }
+    }
+    await prisma.emailConnector.update({ where: { id: row.id }, data: { lastPollAt: new Date() } }).catch(() => {});
+    await writeConnectorState(row.id, { lastError: null, lastErrorAt: null });
+    if (handled > 0) console.log(`[EmailConnector] Graph poll handled ${handled} message(s) for ${config.mailbox}`);
+  } catch (e: any) {
+    const message = String(e?.message || e).slice(0, 400);
+    const retry = e instanceof GraphError && e.retryAfterMs > 0 ? e.retryAfterMs : 60_000;
+    graphBackoff.set(row.id, Date.now() + retry);
+    await writeConnectorState(row.id, { lastError: message, lastErrorAt: new Date().toISOString() });
+    console.error(`[EmailConnector] Graph poll failed for connector ${row.id}: ${message}`);
   }
 }
 
-/** Load enabled EmailConnector rows and start polling (guarded). */
+function startGraphPoller(row: ConnectorRow): void {
+  const intervalMs = Math.max(30, row.pollIntervalSec || 300) * 1000;
+  const tick = () => { void pollGraphOnce(row).catch((e) => console.error(`[EmailConnector] Graph poll crashed for ${row.id}:`, e?.message || e)); };
+  graphTimers.set(row.id, setInterval(tick, intervalMs));
+  setTimeout(tick, 5_000);
+}
+
+// ── Lifecycle ───────────────────────────────────────────────────────
+
+export function stopEmailConnector(id: string): void {
+  emailConnectorManager.removeConnector(id);
+  const timer = graphTimers.get(id);
+  if (timer) {
+    clearInterval(timer);
+    graphTimers.delete(id);
+  }
+  graphBackoff.delete(id);
+}
+
+/** Start (or restart) the poller that matches the connector's transport. */
+export function startEmailConnector(row: ConnectorRow): void {
+  stopEmailConnector(row.id);
+  if (isGraphTransport(row)) {
+    if (process.env.EMAIL_GRAPH_ENABLED === "false") return;
+    startGraphPoller(row);
+    return;
+  }
+  emailConnectorManager.addConnector(imapConfig(row));
+}
+
+/**
+ * Connection test used by the UI. IMAP: open the folder and count unseen mail.
+ * Graph: acquire a token and read the folder the connector points at — which
+ * also proves the app registration, the permission and the mailbox scope.
+ * The outcome is recorded either way, so the connector row can show why it last
+ * failed without anyone reading a log.
+ */
+export async function testEmailConnector(row: ConnectorRow): Promise<
+  { ok: true; transport: "imap" | "graph"; unseen: number; folder: string; detail: string }
+  | { ok: false; transport: "imap" | "graph"; error: string }
+> {
+  if (isGraphTransport(row)) {
+    try {
+      const config = graphConfig(row);
+      const probe = await probeGraphMailbox(config);
+      await writeConnectorState(row.id, { lastError: null, lastErrorAt: null });
+      return {
+        ok: true,
+        transport: "graph",
+        unseen: probe.unread,
+        folder: probe.folder,
+        detail: `Connected to ${probe.mailbox} — ${probe.folder}: ${probe.unread} unread of ${probe.total}`,
+      };
+    } catch (e: any) {
+      const error = String(e?.message || e).slice(0, 300);
+      await writeConnectorState(row.id, { lastError: error, lastErrorAt: new Date().toISOString() });
+      return { ok: false, transport: "graph", error };
+    }
+  }
+  const { fetchUnseenEmails } = await import("@C7NTAX/email");
+  try {
+    const emails = await fetchUnseenEmails({
+      host: row.host,
+      port: row.port,
+      secure: row.secure,
+      user: row.user,
+      password: decryptPassword(row.passwordEncrypted),
+      folder: row.folder,
+    });
+    await writeConnectorState(row.id, { lastError: null, lastErrorAt: null });
+    return {
+      ok: true,
+      transport: "imap",
+      unseen: emails.length,
+      folder: row.folder || "INBOX",
+      detail: `Connected to ${row.user}@${row.host} — ${emails.length} unseen message(s)`,
+    };
+  } catch (e: any) {
+    const error = String(e?.message || e).slice(0, 300);
+    await writeConnectorState(row.id, { lastError: error, lastErrorAt: new Date().toISOString() });
+    return { ok: false, transport: "imap", error };
+  }
+}
+
+/** Poll one connector immediately, whichever transport it uses. */
+export async function pollEmailConnectorNow(row: ConnectorRow): Promise<void> {
+  if (isGraphTransport(row)) {
+    graphBackoff.delete(row.id);
+    await pollGraphOnce(row);
+    return;
+  }
+  await emailConnectorManager.pollOnce(imapConfig(row));
+}
+
+/** Load enabled EmailConnector rows and start polling each one. */
 export async function hydrateEmailConnectors(): Promise<void> {
   if (process.env.EMAIL_CONNECTORS_ENABLED === "false") return;
-
-  const handleNewEmail = async (boardId: string, email: ParsedEmail): Promise<string> => {
-    try {
-      let createdId = "";
-      await withDedup(`email_connector:${boardId}:seen`, email.messageId, async () => {
-        const id = await createTicketFromEmail(boardId, email);
-        if (id) console.log(`[EmailConnector] Created ticket ${id} from ${email.from.email}`);
-        createdId = id;
-        return id;
-      });
-      return createdId;
-    } catch (e) {
-      console.error(`[EmailConnector] Ticket creation failed for ${email.from.email}:`, e);
-      return "";
-    }
-  };
-
-  emailConnectorManager.onNewTicket(async ({ boardId, email }: { boardId: string; email: ParsedEmail }): Promise<string> => handleNewEmail(boardId, email));
-
-  emailConnectorManager.onUpdateTicket(async ({ ticketId, email }: { ticketId: string; email: ParsedEmail }) => {
-    try {
-      await withDedup(`email_connector:reply:seen`, email.messageId, async () => {
-        await appendEmailToTicket(ticketId, email);
-        return email.messageId;
-      });
-    } catch (e) {
-      console.error(`[EmailConnector] Reply append failed for ${email.from.email}:`, e);
-    }
-  });
-
   const rows = await prisma.emailConnector.findMany({ where: { enabled: true } });
   for (const row of rows) {
     try {
-      if (row.transport === "graph" && process.env.EMAIL_GRAPH_ENABLED !== "false") {
-        startGraphPoll(row);
-        continue;
-      }
-      const config: EmailConnectorConfig = {
-        id: row.id,
-        boardId: row.boardId,
-        host: row.host,
-        port: row.port,
-        secure: row.secure,
-        user: row.user,
-        password: decryptPassword(row.passwordEncrypted),
-        folder: row.folder,
-        pollIntervalSeconds: Math.max(30, row.pollIntervalSec || 300),
-        enabled: true,
-      };
-      emailConnectorManager.addConnector(config);
+      startEmailConnector(row);
     } catch (e) {
       console.error(`[EmailConnector] Failed to hydrate connector ${row.id}:`, e);
     }
   }
-}
-
-// Backlog item 9 — M365 Graph transport for email connectors (gated by EMAIL_GRAPH_ENABLED).
-// Uses client-credentials OAuth + the Graph mail API; IMAP connectors are untouched.
-async function graphToken(row: { tenantId: string | null; clientId: string | null; clientSecretEncrypted: string | null }): Promise<string> {
-  const tenant = row.tenantId || "common";
-  const resp = await fetch(`https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`, {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: row.clientId || "",
-      client_secret: row.clientSecretEncrypted ? decryptPassword(row.clientSecretEncrypted) : "",
-      scope: "https://graph.microsoft.com/.default",
-    }),
-  });
-  if (!resp.ok) throw new Error(`Graph token HTTP ${resp.status}`);
-  const data = (await resp.json()) as { access_token: string };
-  if (!data.access_token) throw new Error("No access_token in Graph response");
-  return data.access_token;
-}
-
-async function pollGraphOnce(row: {
-  id: string; boardId: string; user: string; folder: string;
-  tenantId: string | null; clientId: string | null; clientSecretEncrypted: string | null;
-}): Promise<void> {
-  const token = await graphToken(row);
-  const folder = row.folder || "Inbox";
-  const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(row.user)}/mailFolders/${encodeURIComponent(folder)}/messages?$filter=isRead eq false&$top=25&$select=internetMessageId,from,subject,body,receivedDateTime`;
-  const resp = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
-  if (!resp.ok) throw new Error(`Graph mail HTTP ${resp.status}`);
-  const data = (await resp.json()) as {
-    value?: Array<{
-      internetMessageId?: string;
-      from?: { emailAddress?: { address?: string; name?: string } };
-      subject?: string;
-      body?: { content?: string; contentType?: string };
-      receivedDateTime?: string;
-    }>;
-  };
-  for (const m of data.value || []) {
-    const messageId = m.internetMessageId || `graph-${m.receivedDateTime || ""}-${m.subject || ""}`;
-    const isHtml = m.body?.contentType === "html";
-    const email: ParsedEmail = {
-      messageId,
-      from: { name: m.from?.emailAddress?.name || "", email: m.from?.emailAddress?.address || "" },
-      to: [], cc: [],
-      subject: m.subject || "(no subject)",
-      bodyText: isHtml ? "" : (m.body?.content || ""),
-      bodyHtml: isHtml ? (m.body?.content || "") : "",
-      attachments: [],
-      date: m.receivedDateTime ? new Date(m.receivedDateTime) : new Date(),
-      inReplyTo: null,
-      references: [],
-    };
-    await withDedup(`email_connector:${row.boardId}:seen`, messageId, () => createTicketFromEmail(row.boardId, email));
+  if (rows.length > 0) {
+    const graphCount = rows.filter((r) => isGraphTransport(r)).length;
+    console.log(`[EmailConnector] Polling ${rows.length} connector(s) (${graphCount} via Microsoft Graph)`);
   }
-}
-
-function startGraphPoll(row: {
-  id: string; boardId: string; user: string; folder: string; pollIntervalSec: number;
-  tenantId: string | null; clientId: string | null; clientSecretEncrypted: string | null;
-}): void {
-  const intervalMs = Math.max(60, row.pollIntervalSec || 300) * 1000;
-  const tick = () => { void pollGraphOnce(row).catch((e) => console.error(`[EmailConnector] Graph poll failed for ${row.id}:`, e?.message || e)); };
-  setTimeout(tick, 10_000);
-  setInterval(tick, intervalMs);
 }

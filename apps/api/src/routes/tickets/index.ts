@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { unlink } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "../../index";
 import { authenticate, requirePermission, type AuthRequest } from "../../middleware/auth";
@@ -13,47 +13,33 @@ import { addTicketContact, listTicketContacts, removeTicketContact, resolveRecip
 import { v4 as uuid } from "uuid";
 import { sanitizeEmailHtml, htmlToText, extractInlineImages } from "../../services/emailHtml";
 import { logger } from "../../services/logger";
+import {
+  MAX_TICKET_ATTACHMENT_BYTES,
+  sanitizeAttachmentFilename,
+  resolveStoredAttachment,
+  storeTicketAttachments,
+  type PreparedAttachment,
+} from "../../services/ticketAttachments";
 
 export const ticketsRouter = Router();
 ticketsRouter.use(authenticate);
 
 const emailService = new EmailService();
-const maxAttachmentBytes = 5 * 1024 * 1024;
-const apiRoot = process.env.C7NTAX_ROOT
-  ? path.resolve(process.env.C7NTAX_ROOT, "apps", "api")
-  : path.basename(process.cwd()).toLowerCase() === "api"
-    ? process.cwd()
-    : path.resolve(process.cwd(), "apps", "api");
-const ticketAttachmentRoot = path.resolve(
-  process.env.TICKET_ATTACHMENT_DIR || path.join(apiRoot, "data", "ticket-attachments")
-);
 
 function canAccessTicket(req: AuthRequest, companyId: string | null): boolean {
   return req.user!.permissions.includes(Permission.TicketViewAll) || !req.user!.companyId || req.user!.companyId === companyId;
 }
-
-function resolveStoredAttachment(storagePath: string): string | null {
-  if (!storagePath || storagePath === "pending-upload") return null;
-  const filePath = path.resolve(ticketAttachmentRoot, ...storagePath.split(/[\\/]/));
-  const relativePath = path.relative(ticketAttachmentRoot, filePath);
-  if (!relativePath || relativePath.startsWith("..") || path.isAbsolute(relativePath)) return null;
-  return filePath;
-}
-
-interface PreparedAttachment { filename: string; mimeType: string; buffer: Buffer }
 
 /**
  * Validates a base64 upload (name, size, encoding) without touching disk, so a request can be
  * rejected before anything is sent or written.
  */
 function prepareAttachment(filenameRaw: unknown, mimeTypeRaw: unknown, contentBase64: unknown): PreparedAttachment {
-  const filename = typeof filenameRaw === "string"
-    ? filenameRaw.replace(/\\/g, "/").split("/").pop()?.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 255)
-    : "";
+  const filename = sanitizeAttachmentFilename(filenameRaw);
   if (!filename || typeof contentBase64 !== "string") throw new AppError("filename and file content are required", 400);
-  if (contentBase64.length > Math.ceil(maxAttachmentBytes / 3) * 4 + 4) throw new AppError("Attachment exceeds the 5 MB limit", 413);
+  if (contentBase64.length > Math.ceil(MAX_TICKET_ATTACHMENT_BYTES / 3) * 4 + 4) throw new AppError("Attachment exceeds the 5 MB limit", 413);
   const buffer = Buffer.from(contentBase64, "base64");
-  if (buffer.length > maxAttachmentBytes || buffer.toString("base64").replace(/=+$/, "") !== contentBase64.replace(/=+$/, "")) {
+  if (buffer.length > MAX_TICKET_ATTACHMENT_BYTES || buffer.toString("base64").replace(/=+$/, "") !== contentBase64.replace(/=+$/, "")) {
     throw new AppError("Invalid file content or attachment exceeds the 5 MB limit", 400);
   }
   return {
@@ -64,37 +50,6 @@ function prepareAttachment(filenameRaw: unknown, mimeTypeRaw: unknown, contentBa
 }
 
 /** Writes prepared files to disk and records them, cleaning up if any write or insert fails. */
-async function storeAttachments(
-  files: PreparedAttachment[],
-  meta: { ticketId: string; uploadedById: string; commentId?: string | null },
-) {
-  const written: string[] = [];
-  try {
-    const rows = [];
-    for (const file of files) {
-      const storagePath = `${meta.ticketId}/${uuid()}`;
-      const filePath = resolveStoredAttachment(storagePath)!;
-      await mkdir(path.dirname(filePath), { recursive: true });
-      await writeFile(filePath, file.buffer, { flag: "wx" });
-      written.push(filePath);
-      rows.push(await prisma.ticketAttachment.create({
-        data: {
-          ticketId: meta.ticketId,
-          commentId: meta.commentId ?? undefined,
-          filename: file.filename,
-          mimeType: file.mimeType,
-          size: file.buffer.length,
-          storagePath,
-          uploadedById: meta.uploadedById,
-        },
-      }));
-    }
-    return rows;
-  } catch (e) {
-    await Promise.all(written.map((p) => unlink(p).catch(() => {})));
-    throw e;
-  }
-}
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[char]!);
@@ -535,7 +490,7 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
         isEmail: true,
       },
     });
-    const stored = await storeAttachments(files, { ticketId: ticket.id, uploadedById: req.user!.userId, commentId: comment.id });
+    const stored = await storeTicketAttachments(files, { ticketId: ticket.id, uploadedById: req.user!.userId, commentId: comment.id });
     res.json({ sent: true, recipient, to, cc, bcc, attachments: stored.length, commentId: comment.id, addedContacts: recipients.added });
   } catch (e) { next(e); }
 });
@@ -547,7 +502,7 @@ ticketsRouter.post("/:id/attachments", requirePermission(Permission.TicketEdit),
     if (!ticket) throw new AppError("Ticket not found", 404);
     if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
     const file = prepareAttachment(req.body?.filename, req.body?.mimeType, req.body?.contentBase64);
-    const [attachment] = await storeAttachments([file], { ticketId: ticket.id, uploadedById: req.user!.userId });
+    const [attachment] = await storeTicketAttachments([file], { ticketId: ticket.id, uploadedById: req.user!.userId });
     res.status(201).json(attachment);
   } catch (e) { next(e); }
 });
@@ -672,3 +627,4 @@ ticketsRouter.post("/batch", requirePermission(Permission.TicketEdit), async (re
     res.json({ updated: result.count, ticketIds });
   } catch (e) { next(e); }
 });
+

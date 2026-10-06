@@ -1,5 +1,5 @@
 import { TicketStatus, TicketPriority } from "@C7NTAX/shared";
-import { fetchUnseenEmails } from "./imapFetch";
+import { fetchUnseenEmails, markEmailsSeen } from "./imapFetch";
 
 // ─── Types for processed emails ─────────────────────────────────────
 
@@ -27,6 +27,14 @@ export interface TicketMatchResult {
   ticketId?: string;
   action: "create" | "update" | "ignore";
   confidence: number;
+}
+
+/** What a transport hands to the connector manager for one incoming message. */
+export interface IncomingEmail {
+  connectorId: string;
+  boardId: string;
+  email: ParsedEmail;
+  match: TicketMatchResult;
 }
 
 export interface EmailConnectorConfig {
@@ -121,27 +129,16 @@ export function extractPriority(email: ParsedEmail): TicketPriority {
 export class EmailConnectorManager {
   private connectors: Map<string, EmailConnectorConfig> = new Map();
   private intervals: Map<string, ReturnType<typeof setInterval>> = new Map();
-  private onTicketCreate?: (data: {
-    boardId: string;
-    email: ParsedEmail;
-  }) => Promise<string>;
-  private onTicketUpdate?: (data: {
-    ticketId: string;
-    email: ParsedEmail;
-  }) => Promise<void>;
+  private handler?: (data: IncomingEmail) => Promise<boolean>;
 
-  /** Register a callback invoked when a new ticket should be created */
-  onNewTicket(
-    handler: (data: { boardId: string; email: ParsedEmail }) => Promise<string>
-  ): void {
-    this.onTicketCreate = handler;
-  }
-
-  /** Register a callback invoked when an existing ticket should be updated */
-  onUpdateTicket(
-    handler: (data: { ticketId: string; email: ParsedEmail }) => Promise<void>
-  ): void {
-    this.onTicketUpdate = handler;
+  /**
+   * Register the single handler that turns a matched email into ticket work.
+   * It returns true when the message was dealt with (ticket created, reply
+   * appended, or deliberately ignored) — only then is the message marked seen,
+   * so a failure leaves it unread for the next poll.
+   */
+  onEmail(handler: (data: IncomingEmail) => Promise<boolean>): void {
+    this.handler = handler;
   }
 
   /** Add and optionally start an email connector */
@@ -186,6 +183,11 @@ export class EmailConnectorManager {
     if (config) void this.pollMailbox(config);
   }
 
+  /** Poll a mailbox once without taking on a schedule (used by "poll now"). */
+  async pollOnce(config: EmailConnectorConfig): Promise<void> {
+    await this.pollMailbox(config);
+  }
+
   /** Get all connector configs (without passwords) */
   listConnectors(): Omit<EmailConnectorConfig, "password">[] {
     return Array.from(this.connectors.values()).map(({ password, ...rest }) => rest);
@@ -194,23 +196,30 @@ export class EmailConnectorManager {
   // ── Private ──
 
   /**
-   * Poll a single IMAP mailbox for unseen messages and process each one.
-   * Fetching is delegated to imapFetch.ts; marking messages seen and
-   * cursor management remain the API layer's responsibility so failures
-   * are retried on the next poll.
+   * Poll the mailbox for unseen messages, hand each one to the handler, and
+   * mark the ones that were handled as seen. A message whose handler fails
+   * stays unread (and is skipped by the caller's cursor) so it is retried.
    */
   private async pollMailbox(config: EmailConnectorConfig): Promise<void> {
     try {
-      const emails = await fetchUnseenEmails({
+      const connection = {
         host: config.host,
         port: config.port,
         secure: config.secure,
         user: config.user,
         password: config.password,
         folder: config.folder,
-      });
+      };
+      const emails = await fetchUnseenEmails(connection);
+      const handled: number[] = [];
       for (const email of emails) {
-        await this.processEmail(config.boardId, email);
+        const ok = await this.processEmail(config.id, config.boardId, email);
+        if (ok) handled.push(email.uid);
+      }
+      if (handled.length > 0) {
+        await markEmailsSeen(connection, handled).catch((e) =>
+          console.error(`[EmailConnector] Could not mark ${handled.length} message(s) seen for connector ${config.id}:`, e?.message || e),
+        );
       }
     } catch (err) {
       console.error(`[EmailConnector] Poll failed for connector ${config.id}:`, err);
@@ -218,15 +227,17 @@ export class EmailConnectorManager {
   }
 
   /**
-   * Process a single parsed email: match to ticket, then create or update.
+   * Route one parsed email: match it to a ticket, then let the handler create
+   * or append. Returns whether the message was handled (safe to mark seen).
    */
-  async processEmail(boardId: string, email: ParsedEmail): Promise<void> {
+  async processEmail(connectorId: string, boardId: string, email: ParsedEmail): Promise<boolean> {
+    if (!this.handler) return false;
     const match = matchEmailToTicket(email);
-
-    if (match.action === "update" && match.ticketId && this.onTicketUpdate) {
-      await this.onTicketUpdate({ ticketId: match.ticketId, email });
-    } else if (match.action === "create" && this.onTicketCreate) {
-      await this.onTicketCreate({ boardId, email });
+    try {
+      return await this.handler({ connectorId, boardId, email, match });
+    } catch (e: any) {
+      console.error(`[EmailConnector] Handler failed for connector ${connectorId} (${email.from.email}):`, e?.message || e);
+      return false;
     }
   }
 }

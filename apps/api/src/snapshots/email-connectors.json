@@ -32,5 +32,22 @@
     "lastPollAt": null,
     "createdAt": "2026-10-06T20:15:46.062Z",
     "updatedAt": "2026-10-06T20:15:46.062Z"
+  },
+  {
+    "id": "63eea520-ff8f-4ef5-9966-69e8fc091c32",
+    "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "host": "",
+    "port": 443,
+    "secure": true,
+    "user": "servicedesk@cyber7group.com",
+    "folder": "INBOX",
+    "transport": "graph",
+    "clientId": "11111111-2222-3333-4444-555555555555",
+    "tenantId": "cyber7group.onmicrosoft.com",
+    "pollIntervalSec": 30,
+    "enabled": false,
+    "lastPollAt": null,
+    "createdAt": "2026-10-06T23:14:09.674Z",
+    "updatedAt": "2026-10-06T23:14:09.674Z"
   }
 ]

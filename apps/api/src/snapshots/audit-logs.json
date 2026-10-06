@@ -35,6 +35,18 @@
     "createdAt": "2026-10-06T22:17:02.443Z"
   },
   {
+    "id": "7602de62-4e6a-410b-b1d6-b3715c3ec5a9",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "undefined",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:14:09.842Z"
+  },
+  {
     "id": "fafd8487-924b-4f3b-a3f5-baac7079c3c7",
     "action": "kumo_assets:update",
     "entity": "kumo_assets",
