@@ -207,15 +207,6 @@
     "viewedAt": "2026-10-06T19:44:08.563Z"
   },
   {
-    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "organization",
-    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "entityName": "Acme Corporation",
-    "entityIcon": "building",
-    "viewedAt": "2026-10-06T19:50:29.048Z"
-  },
-  {
     "id": "c528fede-3b74-4d84-819a-5828427845ef",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "password",
@@ -232,5 +223,23 @@
     "entityName": "Acme Network Topology Overview",
     "entityIcon": "book",
     "viewedAt": "2026-10-06T20:57:19.804Z"
+  },
+  {
+    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "organization",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "entityName": "Acme Corporation",
+    "entityIcon": "building",
+    "viewedAt": "2026-10-06T21:00:43.577Z"
+  },
+  {
+    "id": "6aa75c1c-25e9-4c20-a76b-2e3e17892645",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "fbd0ff4d-33d0-42fb-9dc6-79d2ff171e66",
+    "entityName": "QA probe backup job",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-06T21:11:15.418Z"
   }
 ]

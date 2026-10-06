@@ -25,5 +25,50 @@
     "serialNumber": "PF3XK92L",
     "assignedUserId": null,
     "lastCheckInAt": "2026-10-05T20:16:16.417Z"
+  },
+  {
+    "id": "a895e02f-95e2-4046-bd6e-50f7a4db76fe",
+    "kumoAssetId": "47ef9e99-4166-4b7a-92f0-9f3e777b3ab9",
+    "hostname": "WS-ACME-015",
+    "operatingSystem": "Windows 11 Pro 23H2",
+    "serialNumber": "PF3XK91L",
+    "assignedUserId": null,
+    "lastCheckInAt": "2026-10-05T21:09:16.689Z"
+  },
+  {
+    "id": "14e37636-8a80-4952-8ca7-cd6fe7012c68",
+    "kumoAssetId": "d237bd54-8953-4673-b132-bfa51ada55b1",
+    "hostname": "WS-GLOBEX-015",
+    "operatingSystem": "Windows 11 Pro 23H2",
+    "serialNumber": "PF3XK91L",
+    "assignedUserId": null,
+    "lastCheckInAt": "2026-10-05T21:09:16.689Z"
+  },
+  {
+    "id": "2bb69fcb-dc22-4012-a57b-a427b4678f7b",
+    "kumoAssetId": "36ad6cf5-2257-4ed8-82ac-37fafe9d1a49",
+    "hostname": "WS-INITECH-015",
+    "operatingSystem": "Windows 11 Pro 23H2",
+    "serialNumber": "PF3XK91L",
+    "assignedUserId": null,
+    "lastCheckInAt": "2026-10-05T21:09:16.689Z"
+  },
+  {
+    "id": "e83d4ce0-88b5-4f7f-903c-1907dedd138f",
+    "kumoAssetId": "c6db726c-1a23-47aa-b907-0c8bbf18f839",
+    "hostname": "WS-STARK-015",
+    "operatingSystem": "Windows 11 Pro 23H2",
+    "serialNumber": "PF3XK91L",
+    "assignedUserId": null,
+    "lastCheckInAt": "2026-10-05T21:09:16.689Z"
+  },
+  {
+    "id": "61b26264-2c3d-4c4f-af81-9aadc1f2fa3a",
+    "kumoAssetId": "d12a0776-e311-4386-8041-6e176c6d7b8d",
+    "hostname": "WS-UMBRELLA-015",
+    "operatingSystem": "Windows 11 Pro 23H2",
+    "serialNumber": "PF3XK91L",
+    "assignedUserId": null,
+    "lastCheckInAt": "2026-10-05T21:09:16.689Z"
   }
 ]

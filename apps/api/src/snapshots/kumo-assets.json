@@ -1,5 +1,201 @@
 [
   {
+    "id": "25cde33c-578b-4abe-8fe9-a8eed1bf30b8",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Acme Corporation — domain admin account",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.853Z",
+    "updatedAt": "2026-10-06T21:09:16.853Z"
+  },
+  {
+    "id": "d2b49bdd-c39c-463f-8039-b03d740c1f0d",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Acme Corporation — backup service account",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.885Z",
+    "updatedAt": "2026-10-06T21:09:16.885Z"
+  },
+  {
+    "id": "11bc79f7-2d80-4efd-86b4-fef7f843f3b6",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Acme Corporation DC01",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.888Z",
+    "updatedAt": "2026-10-06T21:09:16.888Z"
+  },
+  {
+    "id": "8024a705-bb6f-420d-8b07-dd91548fd9e7",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Acme Corporation DC02",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.890Z",
+    "updatedAt": "2026-10-06T21:09:16.890Z"
+  },
+  {
+    "id": "e2349d9c-d607-40b6-8ec0-68cf9eef2c93",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Acme Corporation — finance package",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.892Z",
+    "updatedAt": "2026-10-06T21:09:16.892Z"
+  },
+  {
+    "id": "9eeff0f2-945b-48f0-a55f-99e921221ffb",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Acme Corporation — practice management",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.894Z",
+    "updatedAt": "2026-10-06T21:09:16.894Z"
+  },
+  {
+    "id": "9b905d7b-f825-4138-821f-5cbbfffb2990",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Acme Corporation — nightly backup job",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.899Z",
+    "updatedAt": "2026-10-06T21:09:16.899Z"
+  },
+  {
+    "id": "83895e38-77f7-4b9e-9e73-13be4b75b1d7",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Acme Corporation — Microsoft 365 backup",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.902Z",
+    "updatedAt": "2026-10-06T21:09:16.902Z"
+  },
+  {
+    "id": "a77103c4-69f1-48cc-af0b-f7658a99e5a3",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Acme Corporation — Microsoft 365 tenant",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.904Z",
+    "updatedAt": "2026-10-06T21:09:16.904Z"
+  },
+  {
+    "id": "0b48dd50-b172-42a3-be7f-1161806164fa",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Acme Corporation — mail filtering",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.906Z",
+    "updatedAt": "2026-10-06T21:09:16.906Z"
+  },
+  {
+    "id": "2a27d650-c3f4-4841-93c0-e17bde55e611",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Acme Corporation — Finance share",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.908Z",
+    "updatedAt": "2026-10-06T21:09:16.908Z"
+  },
+  {
+    "id": "647e5140-2103-4bfc-956e-ba8151d246f7",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Acme Corporation — Projects share",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.910Z",
+    "updatedAt": "2026-10-06T21:09:16.910Z"
+  },
+  {
+    "id": "f12ad062-9a88-41e7-9c2b-da84f66202f6",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Acme Corporation — primary fibre circuit",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.912Z",
+    "updatedAt": "2026-10-06T21:09:16.912Z"
+  },
+  {
+    "id": "78b1269f-c9c7-4be4-ab43-de67d4a985cc",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Acme Corporation — 4G failover",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.913Z",
+    "updatedAt": "2026-10-06T21:09:16.913Z"
+  },
+  {
     "id": "e39343b5-0842-475a-ac17-8f16213607e6",
     "templateId": "46116d72-67f4-4916-bd2f-968a3206b7b4",
     "name": "Globex Industries Workstation",
@@ -198,5 +394,2551 @@
     "updatedById": null,
     "createdAt": "2026-08-12T06:04:15.147Z",
     "updatedAt": "2026-08-12T06:04:15.147Z"
+  },
+  {
+    "id": "17e851ea-5f98-4c4a-b19f-f0221b0e9496",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Acme Corporation — core switch",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.915Z",
+    "updatedAt": "2026-10-06T21:09:16.915Z"
+  },
+  {
+    "id": "a1016aca-f145-4e6d-9404-75752e68453c",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Acme Corporation — access switch",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.918Z",
+    "updatedAt": "2026-10-06T21:09:16.918Z"
+  },
+  {
+    "id": "652eabcf-b283-41fe-aa36-3176625e8d03",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Acme Corporation — Microsoft 365 licences",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.920Z",
+    "updatedAt": "2026-10-06T21:09:16.920Z"
+  },
+  {
+    "id": "f55ea2a4-d7c5-483d-a090-55378a73e7fa",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Acme Corporation — endpoint protection licences",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.922Z",
+    "updatedAt": "2026-10-06T21:09:16.922Z"
+  },
+  {
+    "id": "e261207b-79a7-459f-be74-6bdc056f3d60",
+    "templateId": "25d2a8f2-a85a-4c2e-84ec-860869631bd7",
+    "name": "Acme Corporation — core switch",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.924Z",
+    "updatedAt": "2026-10-06T21:09:16.924Z"
+  },
+  {
+    "id": "768fe326-a752-4997-b69f-5c3971ff4c40",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Acme Corporation — CORP-DATA VLAN",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.928Z",
+    "updatedAt": "2026-10-06T21:09:16.928Z"
+  },
+  {
+    "id": "50311441-469b-4d71-bb09-26cc968e0a84",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Acme Corporation — VOICE VLAN",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.931Z",
+    "updatedAt": "2026-10-06T21:09:16.931Z"
+  },
+  {
+    "id": "d8968771-1e50-4263-a250-2505aaf6d00c",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Acme Corporation — finance printer",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.934Z",
+    "updatedAt": "2026-10-06T21:09:16.934Z"
+  },
+  {
+    "id": "86fe2041-7361-4c41-9192-7bbf24a50cb2",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Acme Corporation — reception printer",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.937Z",
+    "updatedAt": "2026-10-06T21:09:16.937Z"
+  },
+  {
+    "id": "1a3c1210-d4aa-48d3-bf68-d633cfc42cdb",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Acme Corporation — RD Gateway",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.939Z",
+    "updatedAt": "2026-10-06T21:09:16.939Z"
+  },
+  {
+    "id": "b3a23929-f9ef-4034-83e0-f6ac91ced271",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Acme Corporation — support remote tool",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.941Z",
+    "updatedAt": "2026-10-06T21:09:16.941Z"
+  },
+  {
+    "id": "0d47c637-c1af-42a6-8dcc-48aad8a2cec3",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Acme Corporation — managed services billing",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.943Z",
+    "updatedAt": "2026-10-06T21:09:16.943Z"
+  },
+  {
+    "id": "5022e2d3-0f9f-4238-a568-3e8d420d30a2",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Acme Corporation — hardware resale account",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.945Z",
+    "updatedAt": "2026-10-06T21:09:16.945Z"
+  },
+  {
+    "id": "b6133bad-2277-4fc9-83b3-0d33a142b873",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Acme Corporation — endpoint protection",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.947Z",
+    "updatedAt": "2026-10-06T21:09:16.947Z"
+  },
+  {
+    "id": "c6e5e16a-51e2-4086-9470-9640f794282f",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Acme Corporation — email security",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.949Z",
+    "updatedAt": "2026-10-06T21:09:16.949Z"
+  },
+  {
+    "id": "c07947ca-032a-47f0-ab7e-7b8883597f0d",
+    "templateId": "14e185e6-81d4-4a89-a1b5-83e7f2e838d5",
+    "name": "Acme Corporation — file server",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.950Z",
+    "updatedAt": "2026-10-06T21:09:16.950Z"
+  },
+  {
+    "id": "8a2f437e-a278-4875-ab9f-feff5bd7f3d8",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Acme Corporation — head office tunnel",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.955Z",
+    "updatedAt": "2026-10-06T21:09:16.955Z"
+  },
+  {
+    "id": "6eb11312-34d8-4bed-aa9f-0a0c0eab02cf",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Acme Corporation — site-to-site tunnel",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.957Z",
+    "updatedAt": "2026-10-06T21:09:16.957Z"
+  },
+  {
+    "id": "837d8738-fe9b-4639-bcf0-43907c3550d8",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Acme Corporation — production cluster",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.958Z",
+    "updatedAt": "2026-10-06T21:09:16.958Z"
+  },
+  {
+    "id": "85ab90ad-3b58-469b-9b85-02d5f02b5a2c",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Acme Corporation — backup host",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.960Z",
+    "updatedAt": "2026-10-06T21:09:16.960Z"
+  },
+  {
+    "id": "adaec31e-2dc9-4582-9065-fe15a9c8d71e",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Acme Corporation — phone system",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.962Z",
+    "updatedAt": "2026-10-06T21:09:16.962Z"
+  },
+  {
+    "id": "caeb06c5-54ac-4d3b-a613-6093947e637e",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Acme Corporation — SIP trunk",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.965Z",
+    "updatedAt": "2026-10-06T21:09:16.965Z"
+  },
+  {
+    "id": "e2f9f4e3-cd8a-4e50-972f-546f936183c3",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Acme Corporation — corporate SSID",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.968Z",
+    "updatedAt": "2026-10-06T21:09:16.968Z"
+  },
+  {
+    "id": "8f562847-705f-4a1d-b98f-c75dfa63dd48",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Acme Corporation — guest SSID",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.969Z",
+    "updatedAt": "2026-10-06T21:09:16.969Z"
+  },
+  {
+    "id": "47ef9e99-4166-4b7a-92f0-9f3e777b3ab9",
+    "templateId": "46116d72-67f4-4916-bd2f-968a3206b7b4",
+    "name": "Acme Corporation — design laptop",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.971Z",
+    "updatedAt": "2026-10-06T21:09:16.971Z"
+  },
+  {
+    "id": "1e3f33c3-75bd-4ec1-8fd9-84810ed78292",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Globex Industries — domain admin account",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.989Z",
+    "updatedAt": "2026-10-06T21:09:16.989Z"
+  },
+  {
+    "id": "0dcecc71-b3fe-479a-a320-66133a4ad6df",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Globex Industries — backup service account",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.991Z",
+    "updatedAt": "2026-10-06T21:09:16.991Z"
+  },
+  {
+    "id": "112db4c0-001a-4449-add1-56a30be64291",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Globex Industries DC01",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.993Z",
+    "updatedAt": "2026-10-06T21:09:16.993Z"
+  },
+  {
+    "id": "565820ac-1fee-476b-8278-bb6abe4ea52e",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Globex Industries DC02",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.995Z",
+    "updatedAt": "2026-10-06T21:09:16.995Z"
+  },
+  {
+    "id": "520493ff-b051-4879-926b-d6c206b26a66",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Globex Industries — finance package",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:16.998Z",
+    "updatedAt": "2026-10-06T21:09:16.998Z"
+  },
+  {
+    "id": "19c0b2c7-3e0b-48f4-b50d-6d1340aa2b48",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Globex Industries — practice management",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.001Z",
+    "updatedAt": "2026-10-06T21:09:17.001Z"
+  },
+  {
+    "id": "cfeb7e63-dad6-4d04-a5ba-4c32e24d1516",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Globex Industries — nightly backup job",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.003Z",
+    "updatedAt": "2026-10-06T21:09:17.003Z"
+  },
+  {
+    "id": "71d0fafc-83ce-47fa-8973-327792a16196",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Globex Industries — Microsoft 365 backup",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.005Z",
+    "updatedAt": "2026-10-06T21:09:17.005Z"
+  },
+  {
+    "id": "85518ae3-bb2f-49c6-8435-66f4a0ad9bf1",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Globex Industries — Microsoft 365 tenant",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.008Z",
+    "updatedAt": "2026-10-06T21:09:17.008Z"
+  },
+  {
+    "id": "2683e84d-12fa-472d-9520-3abfb8f99fc0",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Globex Industries — mail filtering",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.009Z",
+    "updatedAt": "2026-10-06T21:09:17.009Z"
+  },
+  {
+    "id": "39cc6936-9246-4f34-81e9-cefcaf20da1f",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Globex Industries — Finance share",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.011Z",
+    "updatedAt": "2026-10-06T21:09:17.011Z"
+  },
+  {
+    "id": "24a765a3-bd36-4bde-900c-a5a44905206b",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Globex Industries — Projects share",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.013Z",
+    "updatedAt": "2026-10-06T21:09:17.013Z"
+  },
+  {
+    "id": "ba10357d-bba8-4d09-91aa-1bcbc11da6ff",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Globex Industries — primary fibre circuit",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.015Z",
+    "updatedAt": "2026-10-06T21:09:17.015Z"
+  },
+  {
+    "id": "5b625bd7-e354-49f3-9218-219ea679df85",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Globex Industries — 4G failover",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.016Z",
+    "updatedAt": "2026-10-06T21:09:17.016Z"
+  },
+  {
+    "id": "73dd7fe1-97d2-45ad-aa5b-23790d73ff10",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Globex Industries — core switch",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.020Z",
+    "updatedAt": "2026-10-06T21:09:17.020Z"
+  },
+  {
+    "id": "302fd66a-27b1-454d-b3a4-7882b5074b00",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Globex Industries — access switch",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.022Z",
+    "updatedAt": "2026-10-06T21:09:17.022Z"
+  },
+  {
+    "id": "35a4cdc9-1d26-47e4-8b3c-c8d1161c27b9",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Globex Industries — Microsoft 365 licences",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.024Z",
+    "updatedAt": "2026-10-06T21:09:17.024Z"
+  },
+  {
+    "id": "57e4e457-3bc9-4fe9-bd26-53d95af7092e",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Globex Industries — endpoint protection licences",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.027Z",
+    "updatedAt": "2026-10-06T21:09:17.027Z"
+  },
+  {
+    "id": "fcf0f5df-a748-4286-b4e8-81dd1c3964d8",
+    "templateId": "25d2a8f2-a85a-4c2e-84ec-860869631bd7",
+    "name": "Globex Industries — core switch",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.029Z",
+    "updatedAt": "2026-10-06T21:09:17.029Z"
+  },
+  {
+    "id": "ca1e062f-2fc3-4eea-adef-71ae20b11f3f",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Globex Industries — CORP-DATA VLAN",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.034Z",
+    "updatedAt": "2026-10-06T21:09:17.034Z"
+  },
+  {
+    "id": "864bd716-1baa-40a7-9caf-848e4824e72c",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Globex Industries — VOICE VLAN",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.036Z",
+    "updatedAt": "2026-10-06T21:09:17.036Z"
+  },
+  {
+    "id": "71e766d1-c896-44d0-84bc-06040924443c",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Globex Industries — finance printer",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.039Z",
+    "updatedAt": "2026-10-06T21:09:17.039Z"
+  },
+  {
+    "id": "87188aed-8ebe-41e3-bcab-b0646cad70df",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Globex Industries — reception printer",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.041Z",
+    "updatedAt": "2026-10-06T21:09:17.041Z"
+  },
+  {
+    "id": "e3bf6a5f-4db1-4edd-8e01-9d702774e378",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Globex Industries — RD Gateway",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.044Z",
+    "updatedAt": "2026-10-06T21:09:17.044Z"
+  },
+  {
+    "id": "104e07ae-ccee-472c-89b3-8db827ff1b94",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Globex Industries — support remote tool",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.046Z",
+    "updatedAt": "2026-10-06T21:09:17.046Z"
+  },
+  {
+    "id": "4eb44213-6465-43f8-8d0d-ec5494d4c740",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Globex Industries — managed services billing",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.049Z",
+    "updatedAt": "2026-10-06T21:09:17.049Z"
+  },
+  {
+    "id": "ae4a7842-3062-42bb-807f-9da8ba1131a3",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Globex Industries — hardware resale account",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.051Z",
+    "updatedAt": "2026-10-06T21:09:17.051Z"
+  },
+  {
+    "id": "7e173757-7421-482d-be84-67c283520628",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Globex Industries — endpoint protection",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.054Z",
+    "updatedAt": "2026-10-06T21:09:17.054Z"
+  },
+  {
+    "id": "ec88ab37-f583-4ce0-92e6-db2d1029c30b",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Globex Industries — email security",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.058Z",
+    "updatedAt": "2026-10-06T21:09:17.058Z"
+  },
+  {
+    "id": "178a1a5b-9877-402a-992f-854904fb70c9",
+    "templateId": "14e185e6-81d4-4a89-a1b5-83e7f2e838d5",
+    "name": "Globex Industries — file server",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.061Z",
+    "updatedAt": "2026-10-06T21:09:17.061Z"
+  },
+  {
+    "id": "213be79c-bbe3-434a-9f94-7e4bea3d72c2",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Globex Industries — head office tunnel",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.066Z",
+    "updatedAt": "2026-10-06T21:09:17.066Z"
+  },
+  {
+    "id": "fb7c87ca-8f2c-4f40-8040-2468fb5f767c",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Globex Industries — site-to-site tunnel",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.069Z",
+    "updatedAt": "2026-10-06T21:09:17.069Z"
+  },
+  {
+    "id": "87e01454-efef-446a-ae10-ea4792b5c4b1",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Globex Industries — production cluster",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.072Z",
+    "updatedAt": "2026-10-06T21:09:17.072Z"
+  },
+  {
+    "id": "7b60c351-2ffd-4bd2-96e1-225718efa581",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Globex Industries — backup host",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.074Z",
+    "updatedAt": "2026-10-06T21:09:17.074Z"
+  },
+  {
+    "id": "6ee836fb-225c-4eef-ad34-44c15def9d18",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Globex Industries — phone system",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.077Z",
+    "updatedAt": "2026-10-06T21:09:17.077Z"
+  },
+  {
+    "id": "f8bcba95-4cdb-492e-a2ab-f9af30db4d7f",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Globex Industries — SIP trunk",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.079Z",
+    "updatedAt": "2026-10-06T21:09:17.079Z"
+  },
+  {
+    "id": "a11fcb90-351d-48fc-955f-d32050cd54d2",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Globex Industries — corporate SSID",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.082Z",
+    "updatedAt": "2026-10-06T21:09:17.082Z"
+  },
+  {
+    "id": "9af1dbd1-ddee-4736-8c6d-51551fe61050",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Globex Industries — guest SSID",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.084Z",
+    "updatedAt": "2026-10-06T21:09:17.084Z"
+  },
+  {
+    "id": "d237bd54-8953-4673-b132-bfa51ada55b1",
+    "templateId": "46116d72-67f4-4916-bd2f-968a3206b7b4",
+    "name": "Globex Industries — design laptop",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.088Z",
+    "updatedAt": "2026-10-06T21:09:17.088Z"
+  },
+  {
+    "id": "169047b8-b45f-421e-9e46-729d3fee656c",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Initech Solutions — domain admin account",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.096Z",
+    "updatedAt": "2026-10-06T21:09:17.096Z"
+  },
+  {
+    "id": "929f062b-d08d-4be5-a938-7f74eefa0463",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Initech Solutions — backup service account",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.099Z",
+    "updatedAt": "2026-10-06T21:09:17.099Z"
+  },
+  {
+    "id": "ae85706c-f95d-4c52-b763-72d100aa68ec",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Initech Solutions DC01",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.103Z",
+    "updatedAt": "2026-10-06T21:09:17.103Z"
+  },
+  {
+    "id": "e0ea06cc-ac88-4465-9140-d4554ba6bbd8",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Initech Solutions DC02",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.105Z",
+    "updatedAt": "2026-10-06T21:09:17.105Z"
+  },
+  {
+    "id": "0f57fb48-a1eb-452d-a9d2-d311dcefc445",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Initech Solutions — finance package",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.108Z",
+    "updatedAt": "2026-10-06T21:09:17.108Z"
+  },
+  {
+    "id": "dc1635cc-af9e-49a2-b623-54fdbb21e067",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Initech Solutions — practice management",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.110Z",
+    "updatedAt": "2026-10-06T21:09:17.110Z"
+  },
+  {
+    "id": "d7ad79f5-f53b-4dc1-acea-ba2f0b21354e",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Initech Solutions — nightly backup job",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.113Z",
+    "updatedAt": "2026-10-06T21:09:17.113Z"
+  },
+  {
+    "id": "f18fc8d2-fbc0-4f45-9426-6de9439c2e52",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Initech Solutions — Microsoft 365 backup",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.115Z",
+    "updatedAt": "2026-10-06T21:09:17.115Z"
+  },
+  {
+    "id": "ac64a4de-08e4-4e8d-ba0a-83e5427830df",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Initech Solutions — Microsoft 365 tenant",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.118Z",
+    "updatedAt": "2026-10-06T21:09:17.118Z"
+  },
+  {
+    "id": "681eba10-c576-4ed1-b41a-d1dbf8a54fd8",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Initech Solutions — mail filtering",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.122Z",
+    "updatedAt": "2026-10-06T21:09:17.122Z"
+  },
+  {
+    "id": "068e7575-9cb6-4e81-9687-a5ba8001d35d",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Initech Solutions — Finance share",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.125Z",
+    "updatedAt": "2026-10-06T21:09:17.125Z"
+  },
+  {
+    "id": "ac045053-e4b2-4677-919d-76f51ff6cc0a",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Initech Solutions — Projects share",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.127Z",
+    "updatedAt": "2026-10-06T21:09:17.127Z"
+  },
+  {
+    "id": "0011c4af-78ec-429e-860d-2fbc760cdf1b",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Initech Solutions — primary fibre circuit",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.129Z",
+    "updatedAt": "2026-10-06T21:09:17.129Z"
+  },
+  {
+    "id": "e1243894-adad-433f-b25d-43240259b3ef",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Initech Solutions — 4G failover",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.132Z",
+    "updatedAt": "2026-10-06T21:09:17.132Z"
+  },
+  {
+    "id": "5ca266df-1534-42df-863d-af58badc4f83",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Initech Solutions — core switch",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.135Z",
+    "updatedAt": "2026-10-06T21:09:17.135Z"
+  },
+  {
+    "id": "7d1ef83b-80ff-4bda-bb2c-88e783fa9688",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Initech Solutions — access switch",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.137Z",
+    "updatedAt": "2026-10-06T21:09:17.137Z"
+  },
+  {
+    "id": "c420d639-5efb-4c42-9741-ea4baa56433c",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Initech Solutions — Microsoft 365 licences",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.140Z",
+    "updatedAt": "2026-10-06T21:09:17.140Z"
+  },
+  {
+    "id": "a6eaaca1-a3fc-4319-b466-dddd904fd52b",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Initech Solutions — endpoint protection licences",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.142Z",
+    "updatedAt": "2026-10-06T21:09:17.142Z"
+  },
+  {
+    "id": "e8fbe3f2-3afa-4594-9d4e-c1d77bd54017",
+    "templateId": "25d2a8f2-a85a-4c2e-84ec-860869631bd7",
+    "name": "Initech Solutions — core switch",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.145Z",
+    "updatedAt": "2026-10-06T21:09:17.145Z"
+  },
+  {
+    "id": "2e090362-945b-4685-a738-35a034bbae6d",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Initech Solutions — CORP-DATA VLAN",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.149Z",
+    "updatedAt": "2026-10-06T21:09:17.149Z"
+  },
+  {
+    "id": "77ed6da5-e61f-4fce-bc58-2d8b4d48fa2b",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Initech Solutions — VOICE VLAN",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.151Z",
+    "updatedAt": "2026-10-06T21:09:17.151Z"
+  },
+  {
+    "id": "c14d583f-e912-4682-9aaf-2659f9d86d2f",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Initech Solutions — finance printer",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.153Z",
+    "updatedAt": "2026-10-06T21:09:17.153Z"
+  },
+  {
+    "id": "0905040e-53e7-44c7-bd39-ff51103b1b37",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Initech Solutions — reception printer",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.156Z",
+    "updatedAt": "2026-10-06T21:09:17.156Z"
+  },
+  {
+    "id": "44f9ccea-97e5-4749-a8be-f0ee0018e0b1",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Initech Solutions — RD Gateway",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.159Z",
+    "updatedAt": "2026-10-06T21:09:17.159Z"
+  },
+  {
+    "id": "697c4f7b-9511-4983-9f13-874867fecf47",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Initech Solutions — support remote tool",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.161Z",
+    "updatedAt": "2026-10-06T21:09:17.161Z"
+  },
+  {
+    "id": "7447f5a1-aca1-487d-a65f-361f45ae8018",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Initech Solutions — managed services billing",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.166Z",
+    "updatedAt": "2026-10-06T21:09:17.166Z"
+  },
+  {
+    "id": "050342f5-edb4-4fdd-a981-a7195bceae9a",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Initech Solutions — hardware resale account",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.169Z",
+    "updatedAt": "2026-10-06T21:09:17.169Z"
+  },
+  {
+    "id": "3c86471c-34c0-4f10-8c1e-e11dbd54aa72",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Initech Solutions — endpoint protection",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.171Z",
+    "updatedAt": "2026-10-06T21:09:17.171Z"
+  },
+  {
+    "id": "5f412524-51ac-4c14-a47e-4b49a6385b6f",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Initech Solutions — email security",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.174Z",
+    "updatedAt": "2026-10-06T21:09:17.174Z"
+  },
+  {
+    "id": "4847554b-a409-4433-8fc7-e684b92cd793",
+    "templateId": "14e185e6-81d4-4a89-a1b5-83e7f2e838d5",
+    "name": "Initech Solutions — file server",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.177Z",
+    "updatedAt": "2026-10-06T21:09:17.177Z"
+  },
+  {
+    "id": "07dfdc0a-d18d-48ae-9a6a-1fd6db42fea5",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Initech Solutions — head office tunnel",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.181Z",
+    "updatedAt": "2026-10-06T21:09:17.181Z"
+  },
+  {
+    "id": "237bdb60-031a-4e1a-b01e-de7f790a766f",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Initech Solutions — site-to-site tunnel",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.183Z",
+    "updatedAt": "2026-10-06T21:09:17.183Z"
+  },
+  {
+    "id": "91fd6da1-fc9c-4fb1-b735-4186f4856a41",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Initech Solutions — production cluster",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.186Z",
+    "updatedAt": "2026-10-06T21:09:17.186Z"
+  },
+  {
+    "id": "4aeaa086-ba2e-44e8-a89f-de19cdc099fe",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Initech Solutions — backup host",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.189Z",
+    "updatedAt": "2026-10-06T21:09:17.189Z"
+  },
+  {
+    "id": "9082aeb4-a433-487e-908e-bf9d424f9e10",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Initech Solutions — phone system",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.191Z",
+    "updatedAt": "2026-10-06T21:09:17.191Z"
+  },
+  {
+    "id": "93cd7b55-3e33-48c7-a26b-2c7332c9d674",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Initech Solutions — SIP trunk",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.193Z",
+    "updatedAt": "2026-10-06T21:09:17.193Z"
+  },
+  {
+    "id": "3c45e603-e823-4824-bb16-3ec1c0483473",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Initech Solutions — corporate SSID",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.196Z",
+    "updatedAt": "2026-10-06T21:09:17.196Z"
+  },
+  {
+    "id": "b1d0c7ef-5d40-4f15-b8db-288830c9a285",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Initech Solutions — guest SSID",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.200Z",
+    "updatedAt": "2026-10-06T21:09:17.200Z"
+  },
+  {
+    "id": "36ad6cf5-2257-4ed8-82ac-37fafe9d1a49",
+    "templateId": "46116d72-67f4-4916-bd2f-968a3206b7b4",
+    "name": "Initech Solutions — design laptop",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.202Z",
+    "updatedAt": "2026-10-06T21:09:17.202Z"
+  },
+  {
+    "id": "31d8169f-34e8-48ea-923a-da1852180fed",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Stark Enterprises — domain admin account",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.211Z",
+    "updatedAt": "2026-10-06T21:09:17.211Z"
+  },
+  {
+    "id": "6c660060-ddd8-4e31-8f3e-38dc066eefe5",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Stark Enterprises — backup service account",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.213Z",
+    "updatedAt": "2026-10-06T21:09:17.213Z"
+  },
+  {
+    "id": "d93e4ccd-248d-42a7-9b1b-b6383ae06877",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Stark Enterprises DC01",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.216Z",
+    "updatedAt": "2026-10-06T21:09:17.216Z"
+  },
+  {
+    "id": "44aaa604-971b-41a0-a80e-638c9684e8dd",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Stark Enterprises DC02",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.218Z",
+    "updatedAt": "2026-10-06T21:09:17.218Z"
+  },
+  {
+    "id": "677a4fd0-c23c-4027-a16d-253a0d455421",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Stark Enterprises — finance package",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.221Z",
+    "updatedAt": "2026-10-06T21:09:17.221Z"
+  },
+  {
+    "id": "f73894e1-ab0f-4532-a33b-279f536b0fad",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Stark Enterprises — practice management",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.223Z",
+    "updatedAt": "2026-10-06T21:09:17.223Z"
+  },
+  {
+    "id": "438a2686-886e-42f8-a722-2882ae5619a0",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Stark Enterprises — nightly backup job",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.226Z",
+    "updatedAt": "2026-10-06T21:09:17.226Z"
+  },
+  {
+    "id": "9aa15a83-7ec7-4d6e-b96f-4943d863b162",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Stark Enterprises — Microsoft 365 backup",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.228Z",
+    "updatedAt": "2026-10-06T21:09:17.228Z"
+  },
+  {
+    "id": "a51f4597-f231-4234-880a-684f2396f799",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Stark Enterprises — Microsoft 365 tenant",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.231Z",
+    "updatedAt": "2026-10-06T21:09:17.231Z"
+  },
+  {
+    "id": "cce280bd-cd40-4835-bbc9-e5c4aad23a3f",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Stark Enterprises — mail filtering",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.233Z",
+    "updatedAt": "2026-10-06T21:09:17.233Z"
+  },
+  {
+    "id": "1005db0f-b1ea-4851-828d-4a8340609851",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Stark Enterprises — Finance share",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.236Z",
+    "updatedAt": "2026-10-06T21:09:17.236Z"
+  },
+  {
+    "id": "7147e480-072a-44e2-a748-e59110aef2bd",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Stark Enterprises — Projects share",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.238Z",
+    "updatedAt": "2026-10-06T21:09:17.238Z"
+  },
+  {
+    "id": "2be2d4a1-617d-4682-b14f-d9640365f7db",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Stark Enterprises — primary fibre circuit",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.240Z",
+    "updatedAt": "2026-10-06T21:09:17.240Z"
+  },
+  {
+    "id": "7d6af065-afa3-4dbd-a280-f3999206e015",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Stark Enterprises — 4G failover",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.242Z",
+    "updatedAt": "2026-10-06T21:09:17.242Z"
+  },
+  {
+    "id": "49bfd9f1-dd0c-46fb-86b5-0fe66f89c937",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Stark Enterprises — core switch",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.245Z",
+    "updatedAt": "2026-10-06T21:09:17.245Z"
+  },
+  {
+    "id": "09614dce-8a3c-4178-a3e9-39be6981b657",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Stark Enterprises — access switch",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.247Z",
+    "updatedAt": "2026-10-06T21:09:17.247Z"
+  },
+  {
+    "id": "344af631-97dd-40c2-8f90-e742239a1c78",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Stark Enterprises — Microsoft 365 licences",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.249Z",
+    "updatedAt": "2026-10-06T21:09:17.249Z"
+  },
+  {
+    "id": "d238ec14-2af0-4b51-835e-57d8f519c069",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Stark Enterprises — endpoint protection licences",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.251Z",
+    "updatedAt": "2026-10-06T21:09:17.251Z"
+  },
+  {
+    "id": "1b04d94c-0ee9-42fc-a964-8631bb3b0ce1",
+    "templateId": "25d2a8f2-a85a-4c2e-84ec-860869631bd7",
+    "name": "Stark Enterprises — core switch",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.253Z",
+    "updatedAt": "2026-10-06T21:09:17.253Z"
+  },
+  {
+    "id": "c6ac45f9-e2cc-43a0-bdac-4e51f378fbc8",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Stark Enterprises — CORP-DATA VLAN",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.256Z",
+    "updatedAt": "2026-10-06T21:09:17.256Z"
+  },
+  {
+    "id": "e952335f-2016-49ab-b44a-10a276d44175",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Stark Enterprises — VOICE VLAN",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.258Z",
+    "updatedAt": "2026-10-06T21:09:17.258Z"
+  },
+  {
+    "id": "6c273786-7104-4c15-9359-c7bf5b3c1613",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Stark Enterprises — finance printer",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.261Z",
+    "updatedAt": "2026-10-06T21:09:17.261Z"
+  },
+  {
+    "id": "ab305021-c025-436d-9800-ba10e111629b",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Stark Enterprises — reception printer",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.264Z",
+    "updatedAt": "2026-10-06T21:09:17.264Z"
+  },
+  {
+    "id": "ad261b74-1893-4f36-992d-9d94c86b5003",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Stark Enterprises — RD Gateway",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.267Z",
+    "updatedAt": "2026-10-06T21:09:17.267Z"
+  },
+  {
+    "id": "3df7b5c0-1e6c-431e-b76e-bc1310fa0ef8",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Stark Enterprises — support remote tool",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.269Z",
+    "updatedAt": "2026-10-06T21:09:17.269Z"
+  },
+  {
+    "id": "304847f5-d816-4891-958b-7c98603533b3",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Stark Enterprises — managed services billing",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.272Z",
+    "updatedAt": "2026-10-06T21:09:17.272Z"
+  },
+  {
+    "id": "9f725c15-7249-4577-9bd8-daef011846b6",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Stark Enterprises — hardware resale account",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.274Z",
+    "updatedAt": "2026-10-06T21:09:17.274Z"
+  },
+  {
+    "id": "1ffbf6fe-92b2-4639-b3e7-33e1d0fc07df",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Stark Enterprises — endpoint protection",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.277Z",
+    "updatedAt": "2026-10-06T21:09:17.277Z"
+  },
+  {
+    "id": "b322c0f3-2ef4-49fa-ab04-00b8725ba0de",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Stark Enterprises — email security",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.279Z",
+    "updatedAt": "2026-10-06T21:09:17.279Z"
+  },
+  {
+    "id": "f4a7d9d5-ed8f-491b-85cc-f3bd3d703f4b",
+    "templateId": "14e185e6-81d4-4a89-a1b5-83e7f2e838d5",
+    "name": "Stark Enterprises — file server",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.282Z",
+    "updatedAt": "2026-10-06T21:09:17.282Z"
+  },
+  {
+    "id": "5b65613a-d239-44bd-92bd-6a59340b1a74",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Stark Enterprises — head office tunnel",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.285Z",
+    "updatedAt": "2026-10-06T21:09:17.285Z"
+  },
+  {
+    "id": "0011fb39-9055-4e67-84bf-ebb56d455019",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Stark Enterprises — site-to-site tunnel",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.288Z",
+    "updatedAt": "2026-10-06T21:09:17.288Z"
+  },
+  {
+    "id": "de40348e-4f3e-4559-bdda-9e46616dfe10",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Stark Enterprises — production cluster",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.291Z",
+    "updatedAt": "2026-10-06T21:09:17.291Z"
+  },
+  {
+    "id": "f021c827-1247-4a95-a23d-0fe2715ffeee",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Stark Enterprises — backup host",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.293Z",
+    "updatedAt": "2026-10-06T21:09:17.293Z"
+  },
+  {
+    "id": "b874b0cc-899e-417a-a14d-45c1f2e9f392",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Stark Enterprises — phone system",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.295Z",
+    "updatedAt": "2026-10-06T21:09:17.295Z"
+  },
+  {
+    "id": "3f59497d-7ba8-42c3-b861-4b00672c76a6",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Stark Enterprises — SIP trunk",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.298Z",
+    "updatedAt": "2026-10-06T21:09:17.298Z"
+  },
+  {
+    "id": "278b3c56-9d3d-446c-ac18-f4294cab2301",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Stark Enterprises — corporate SSID",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.301Z",
+    "updatedAt": "2026-10-06T21:09:17.301Z"
+  },
+  {
+    "id": "ca65bc22-f34e-4fde-ae37-f6a437ee3d7a",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Stark Enterprises — guest SSID",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.303Z",
+    "updatedAt": "2026-10-06T21:09:17.303Z"
+  },
+  {
+    "id": "c6db726c-1a23-47aa-b907-0c8bbf18f839",
+    "templateId": "46116d72-67f4-4916-bd2f-968a3206b7b4",
+    "name": "Stark Enterprises — design laptop",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.306Z",
+    "updatedAt": "2026-10-06T21:09:17.306Z"
+  },
+  {
+    "id": "56b2df4d-56a2-4196-867c-1f90c0057031",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Umbrella Corp — domain admin account",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.314Z",
+    "updatedAt": "2026-10-06T21:09:17.314Z"
+  },
+  {
+    "id": "28e0d608-3f66-45bb-8624-61fb813813f6",
+    "templateId": "11283785-a4ff-453a-bee1-9d54ba48fd74",
+    "name": "Umbrella Corp — backup service account",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.325Z",
+    "updatedAt": "2026-10-06T21:09:17.325Z"
+  },
+  {
+    "id": "f150532f-9f0b-454f-b027-2ff360014d3c",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Umbrella Corp DC01",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.328Z",
+    "updatedAt": "2026-10-06T21:09:17.328Z"
+  },
+  {
+    "id": "dc3124f5-2fb8-47e7-823f-3c0487e5027b",
+    "templateId": "8dd74abb-fc6f-4fb1-9e25-fa8075a3e83f",
+    "name": "Umbrella Corp DC02",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.330Z",
+    "updatedAt": "2026-10-06T21:09:17.330Z"
+  },
+  {
+    "id": "bde6f6d0-6e2a-48a2-9a82-9d705ecfd5f0",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Umbrella Corp — finance package",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.334Z",
+    "updatedAt": "2026-10-06T21:09:17.334Z"
+  },
+  {
+    "id": "7fc3ecf8-ba0a-45f5-8e8c-b9aace679272",
+    "templateId": "28683693-7a1e-4892-9800-b56e771cede1",
+    "name": "Umbrella Corp — practice management",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.338Z",
+    "updatedAt": "2026-10-06T21:09:17.338Z"
+  },
+  {
+    "id": "fdc7fe35-e49c-4d2a-9b16-ce3960b73f52",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Umbrella Corp — nightly backup job",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.368Z",
+    "updatedAt": "2026-10-06T21:09:17.368Z"
+  },
+  {
+    "id": "e7855a12-0311-470a-b033-db9b347cde71",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "Umbrella Corp — Microsoft 365 backup",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.385Z",
+    "updatedAt": "2026-10-06T21:09:17.385Z"
+  },
+  {
+    "id": "87633d75-04a4-41e2-990d-06bd93f5e668",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Umbrella Corp — Microsoft 365 tenant",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.389Z",
+    "updatedAt": "2026-10-06T21:09:17.389Z"
+  },
+  {
+    "id": "22b58a8d-fd80-48a9-bada-8b315d838472",
+    "templateId": "f490e494-2f83-4f9e-ac25-62320f046ea6",
+    "name": "Umbrella Corp — mail filtering",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.391Z",
+    "updatedAt": "2026-10-06T21:09:17.391Z"
+  },
+  {
+    "id": "5a6d6a6e-e123-4d7d-9e6b-8bfc4d814a53",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Umbrella Corp — Finance share",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.394Z",
+    "updatedAt": "2026-10-06T21:09:17.394Z"
+  },
+  {
+    "id": "1c44777a-5942-4f84-af0d-be2887335457",
+    "templateId": "156eab5d-a670-46e4-883f-7ffe11affeda",
+    "name": "Umbrella Corp — Projects share",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.397Z",
+    "updatedAt": "2026-10-06T21:09:17.397Z"
+  },
+  {
+    "id": "fc404eb4-8806-465b-8851-cf9d67fb8b0e",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Umbrella Corp — primary fibre circuit",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.400Z",
+    "updatedAt": "2026-10-06T21:09:17.400Z"
+  },
+  {
+    "id": "f3487865-147d-462f-96df-116af903e733",
+    "templateId": "fed0b681-21b1-4665-9eac-8def55669bd3",
+    "name": "Umbrella Corp — 4G failover",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.402Z",
+    "updatedAt": "2026-10-06T21:09:17.402Z"
+  },
+  {
+    "id": "b3b3a753-e34a-42f5-ba25-809a7caf2bd1",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Umbrella Corp — core switch",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.405Z",
+    "updatedAt": "2026-10-06T21:09:17.405Z"
+  },
+  {
+    "id": "a7703dd7-036d-40f1-9ded-d98fea946fb2",
+    "templateId": "aea28402-74af-45be-9ddb-6eac267f1d67",
+    "name": "Umbrella Corp — access switch",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.407Z",
+    "updatedAt": "2026-10-06T21:09:17.407Z"
+  },
+  {
+    "id": "a532f17d-6229-4167-afe5-ea34674f1e3e",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Umbrella Corp — Microsoft 365 licences",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.410Z",
+    "updatedAt": "2026-10-06T21:09:17.410Z"
+  },
+  {
+    "id": "c3a41d43-1ba7-4cf8-85b4-3a6b9ec1dd86",
+    "templateId": "e6a63d55-1fc6-4654-86f8-4b1bf0a4ec96",
+    "name": "Umbrella Corp — endpoint protection licences",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.412Z",
+    "updatedAt": "2026-10-06T21:09:17.412Z"
+  },
+  {
+    "id": "1c7db88e-e664-4f53-b273-50adf9723279",
+    "templateId": "25d2a8f2-a85a-4c2e-84ec-860869631bd7",
+    "name": "Umbrella Corp — core switch",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.414Z",
+    "updatedAt": "2026-10-06T21:09:17.414Z"
+  },
+  {
+    "id": "06f35263-7a6c-4a3c-8df7-7704e0210f25",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Umbrella Corp — CORP-DATA VLAN",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.418Z",
+    "updatedAt": "2026-10-06T21:09:17.418Z"
+  },
+  {
+    "id": "fc7003e5-59c1-4bcb-8994-4fcd651b96b4",
+    "templateId": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Umbrella Corp — VOICE VLAN",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.420Z",
+    "updatedAt": "2026-10-06T21:09:17.420Z"
+  },
+  {
+    "id": "bb7147a6-b3c7-4f72-b5ed-1d2b842fa049",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Umbrella Corp — finance printer",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.422Z",
+    "updatedAt": "2026-10-06T21:09:17.422Z"
+  },
+  {
+    "id": "e9a2151a-a507-4ccf-8ac7-3b4569c61b73",
+    "templateId": "380a58a6-39f0-4a73-8b8b-4027d9ae2aa5",
+    "name": "Umbrella Corp — reception printer",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.424Z",
+    "updatedAt": "2026-10-06T21:09:17.424Z"
+  },
+  {
+    "id": "8a8bea34-148e-4468-998a-636357ffe89a",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Umbrella Corp — RD Gateway",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.427Z",
+    "updatedAt": "2026-10-06T21:09:17.427Z"
+  },
+  {
+    "id": "5741923f-88d8-4ca1-910b-13e90103e572",
+    "templateId": "364fe3b7-5f65-40ca-b275-95015efa8ffc",
+    "name": "Umbrella Corp — support remote tool",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.430Z",
+    "updatedAt": "2026-10-06T21:09:17.430Z"
+  },
+  {
+    "id": "b00ec34c-5df2-4b32-9f52-8764d2d75805",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Umbrella Corp — managed services billing",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.433Z",
+    "updatedAt": "2026-10-06T21:09:17.433Z"
+  },
+  {
+    "id": "f04d85de-418d-4a75-a8ba-f1e100e51a6b",
+    "templateId": "b6df4a7c-8432-4694-b1fb-6eed915d0d79",
+    "name": "Umbrella Corp — hardware resale account",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.435Z",
+    "updatedAt": "2026-10-06T21:09:17.435Z"
+  },
+  {
+    "id": "3ecf0781-6e88-4098-b4b6-8065cd38eabd",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Umbrella Corp — endpoint protection",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.438Z",
+    "updatedAt": "2026-10-06T21:09:17.438Z"
+  },
+  {
+    "id": "137fa348-bf02-4c25-9c02-6b79e3111d55",
+    "templateId": "87a9ca21-e4be-4bcf-8d96-687045d80ac6",
+    "name": "Umbrella Corp — email security",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.439Z",
+    "updatedAt": "2026-10-06T21:09:17.439Z"
+  },
+  {
+    "id": "ddabc058-70f6-4282-91f6-7025c612c085",
+    "templateId": "14e185e6-81d4-4a89-a1b5-83e7f2e838d5",
+    "name": "Umbrella Corp — file server",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.442Z",
+    "updatedAt": "2026-10-06T21:09:17.442Z"
+  },
+  {
+    "id": "ab68d4e5-0982-46f0-a3ed-9642e967e24a",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Umbrella Corp — head office tunnel",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.445Z",
+    "updatedAt": "2026-10-06T21:09:17.445Z"
+  },
+  {
+    "id": "db314f7b-4f97-40b7-a0f5-f881e2ade41d",
+    "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac",
+    "name": "Umbrella Corp — site-to-site tunnel",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.447Z",
+    "updatedAt": "2026-10-06T21:09:17.447Z"
+  },
+  {
+    "id": "bf260015-2abd-4137-9d92-21ced599a886",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Umbrella Corp — production cluster",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.449Z",
+    "updatedAt": "2026-10-06T21:09:17.449Z"
+  },
+  {
+    "id": "31fc21da-cfb5-4ec7-845b-884c4c102d21",
+    "templateId": "137644aa-867f-41b8-8a15-28b9b17d1fb6",
+    "name": "Umbrella Corp — backup host",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.451Z",
+    "updatedAt": "2026-10-06T21:09:17.451Z"
+  },
+  {
+    "id": "85d7e864-d11d-43ff-840d-fb87bbddad35",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Umbrella Corp — phone system",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.453Z",
+    "updatedAt": "2026-10-06T21:09:17.453Z"
+  },
+  {
+    "id": "60070a35-85ed-4631-98b2-b1ada095201e",
+    "templateId": "c1a6d058-637b-4ddd-ad3c-6935ba213eff",
+    "name": "Umbrella Corp — SIP trunk",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.455Z",
+    "updatedAt": "2026-10-06T21:09:17.455Z"
+  },
+  {
+    "id": "cc621e38-ec7c-4008-8b88-802a9c64a3b3",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Umbrella Corp — corporate SSID",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.457Z",
+    "updatedAt": "2026-10-06T21:09:17.457Z"
+  },
+  {
+    "id": "55dcead7-e101-4df2-88e8-7e07b3b7400b",
+    "templateId": "951fbed0-baaf-429b-8077-4105b582581e",
+    "name": "Umbrella Corp — guest SSID",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.459Z",
+    "updatedAt": "2026-10-06T21:09:17.459Z"
+  },
+  {
+    "id": "d12a0776-e311-4386-8041-6e176c6d7b8d",
+    "templateId": "46116d72-67f4-4916-bd2f-968a3206b7b4",
+    "name": "Umbrella Corp — design laptop",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T21:09:17.461Z",
+    "updatedAt": "2026-10-06T21:09:17.461Z"
+  },
+  {
+    "id": "fbd0ff4d-33d0-42fb-9dc6-79d2ff171e66",
+    "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944",
+    "name": "QA probe backup job",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T21:11:03.579Z",
+    "updatedAt": "2026-10-06T21:11:15.395Z"
   }
 ]

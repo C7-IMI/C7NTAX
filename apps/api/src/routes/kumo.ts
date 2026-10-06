@@ -196,9 +196,15 @@ kumoRouter.get("/assets/:id", requirePermission(Permission.KumoAssetView), async
       },
     });
     if (!asset) throw new AppError("Asset not found", 404);
+    // The client is a plain id on this model, so it is named here for the
+    // record's breadcrumb rather than through a relation.
+    const company = asset.companyId
+      ? await prisma.company.findUnique({ where: { id: asset.companyId }, select: { id: true, name: true } })
+      : null;
     res.json({
       ...asset,
-      values: Object.fromEntries(asset.fieldValues.map(v => [v.field.key, v.valueText ?? v.valueNum ?? v.valueBool ?? v.valueDate ?? v.valueJson])),
+      company,
+      values: Object.fromEntries(asset.fieldValues.map((v) => [v.field.key, v.valueText ?? v.valueNum ?? v.valueBool ?? v.valueDate ?? v.valueJson])),
       fieldValues: undefined,
     });
   } catch (e) { next(e); }

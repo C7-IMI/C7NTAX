@@ -52,29 +52,186 @@ async function writeAttachmentFile(storagePath: string, content: string) {
 }
 
 /** Plausible value for a Kumo asset template field, matched on key then field type. */
-function sampleFieldValue(key: string, fieldType: string, label: string, assetName: string, index: number) {
+function sampleFieldValue(key: string, fieldType: string, label: string, assetName: string, index: number, options?: unknown) {
+  const option = Array.isArray(options) ? String(options[0]) : undefined;
   const host = assetName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  const octet = 20 + (index % 200);
-  const texts: Record<string, string> = {
+  const text: Record<string, string> = {
+    system: "Windows Server 2022 domain controller",
+    account_type: "Service account",
+    owner: "IT manager",
+    domain: `${host}.local`,
+    forest_level: "Windows Server 2016",
+    dc_hostname: `${host}.local`,
+    site: "Default-First-Site-Name",
+    backup_schedule: "System state, nightly 02:00",
+    vendor: "Microsoft",
+    version: "2024.1",
+    licence_type: "Subscription",
+    support_contact: "Vendor support desk",
+    product: "Veeam Backup & Replication 12.1",
+    targets: "SRV-DC-01, SRV-FILE-01",
+    schedule: "Nightly 22:00",
+    retention: "30 days on disk, 12 months in cloud",
+    platform: "Microsoft 365",
+    spam_filter: "Exchange Online Protection",
+    share_name: "Finance",
+    path: "\\\\SRV-FILE-01\\Finance",
+    permissions: "Finance group — modify · Domain Admins — full control",
+    size: "420 GB",
+    provider: "Telstra",
+    circuit_id: "TEL-4482-01",
+    bandwidth: "500/500 Mbps",
+    static_ips: "203.0.113.24/29",
+    switch_model: "Cisco Catalyst 9200-48P",
+    vlans: "10 management · 20 data · 30 voice · 40 guest",
+    management_ip: `10.20.${index % 12}.2`,
     hostname: `${host}.corp.local`,
-    os: index % 3 === 0 ? "Windows 11 Enterprise 23H2" : "Windows Server 2022",
-    ip: `10.20.${index % 12}.${octet}`,
-    mgmt_ip: `10.20.${index % 12}.${octet}`,
-    serial: `SN-${100_000 + index * 137}`,
-    deviceType: index % 2 === 0 ? "Access switch" : "Firewall",
-    network_name: `CORP-VLAN${10 + (index % 20)}`,
+    deviceType: "Access switch",
+    mgmt_ip: `10.20.${index % 12}.2`,
+    network_name: `CORP-DATA-${10 + (index % 20)}`,
     subnet: `10.20.${index % 12}.0/24`,
     gateway: `10.20.${index % 12}.1`,
     dhcp_scope: `10.20.${index % 12}.100 - 10.20.${index % 12}.200`,
+    model: "HP LaserJet Enterprise M507",
+    ip_address: `10.20.${index % 12}.40`,
+    driver: "Universal Print Driver PCL 6",
+    print_server: "SRV-PRINT-01",
+    toner_model: "HP 89A",
+    tool: "Remote Desktop Gateway",
+    access_method: "VPN + RDP",
+    users: "All staff",
+    portal_url: `https://rdp.${host}.com`,
+    account_owner: "IT manager",
+    billing_contact: "Finance manager",
+    billing_cycle: "Monthly in advance",
+    payment_terms: "Net 30",
+    control: "Microsoft Defender for Business",
+    findings: "No critical findings. Two medium items were closed at the last review.",
+    os: index % 3 === 0 ? "Windows 11 Enterprise 23H2" : "Windows Server 2022",
+    ip: `10.20.${index % 12}.${20 + (index % 200)}`,
+    serial: `SN-${100_000 + index * 137}`,
+    peers: "Head office, Branch office",
+    tunnel_subnet: "10.30.0.0/24",
+    cluster: "CLUSTER-A",
+    extensions: "100-140",
+    did_range: "+1 555 010 0100 - 0140",
+    sip_trunk: "SIP trunk — 2 channels",
+    ssid: "Corp-WiFi",
+    controller: "Cisco 9800-L",
+    category: "Onboarding",
+    frequency: "Monthly",
+    notes: "Break-glass account. Use only with approval and log the change.",
+    steps: "1. Confirm the change window\n2. Apply and verify\n3. Update this record",
+    steps_detail: "1. Confirm the change window\n2. Apply and verify\n3. Update this record",
   };
-  const numbers: Record<string, number> = { cpu: 8, ram: 32, vlan_id: 10 + (index % 20) };
-  if (key in texts) return { valueText: texts[key]! };
-  if (key in numbers) return { valueNum: numbers[key]! };
-  if (/bool|checkbox|switch|toggle/i.test(fieldType)) return { valueBool: true };
-  if (/date|time/i.test(fieldType)) return { valueDate: daysFromNow(120) };
-  if (/multi|list|json|tag/i.test(fieldType)) return { valueJson: [label] };
-  if (/number|int|float|decimal|currency|percent/i.test(fieldType)) return { valueNum: 1 };
-  return { valueText: `${label} sample` };
+  const numbers: Record<string, number> = {
+    cpu: 16, ram: 64, ports: 48, quantity: 25, users: 28, vlan_id: 10 + (index % 20),
+    mailbox_count: 65, vm_count: 12,
+  };
+  const booleans: Record<string, boolean> = {
+    mfa_enabled: true, poe: true, hosted: index % 2 === 0, restore_tested: true, guest_network: true,
+  };
+  const dates: Record<string, Date> = {
+    last_verified: daysAgo(4), contract_end: daysFromNow(214), renewal_date: daysFromNow(96),
+    last_review: daysAgo(38), last_completed: daysAgo(9),
+  };
+
+  if (key in dates || fieldType === "date") return { valueDate: dates[key] ?? daysFromNow(120) };
+  if (key in booleans || fieldType === "boolean") return { valueBool: booleans[key] ?? true };
+  if (key in numbers || fieldType === "number") return { valueNum: numbers[key] ?? 1 };
+  const value = text[key] ?? `${label} sample`;
+  if (fieldType === "select" || fieldType === "multi_select" || fieldType === "json") return { valueJson: text[key] ?? option ?? label };
+  return { valueText: text[key] ?? `${label} sample` };
+}
+
+/**
+ * The records a type gets for one client, so each panel reads like a real
+ * environment rather than "Server 1". Names carry the client, since a type panel
+ * is already scoped to one.
+ */
+function typeAssetNames(typeName: string, clientName: string): string[] {
+  const names: Record<string, string[]> = {
+    "Account Management": [`${clientName} — domain admin account`, `${clientName} — backup service account`],
+    "Active Directory": [`${clientName} DC01`, `${clientName} DC02`],
+    Applications: [`${clientName} — finance package`, `${clientName} — practice management`],
+    Backup: [`${clientName} — nightly backup job`, `${clientName} — Microsoft 365 backup`],
+    Email: [`${clientName} — Microsoft 365 tenant`, `${clientName} — mail filtering`],
+    "File Sharing": [`${clientName} — Finance share`, `${clientName} — Projects share`],
+    "Internet / WAN": [`${clientName} — primary fibre circuit`, `${clientName} — 4G failover`],
+    LAN: [`${clientName} — core switch`, `${clientName} — access switch`],
+    Licensing: [`${clientName} — Microsoft 365 licences`, `${clientName} — endpoint protection licences`],
+    "Network Device": [`${clientName} — edge firewall`, `${clientName} — core switch`],
+    Networks: [`${clientName} — CORP-DATA VLAN`, `${clientName} — VOICE VLAN`],
+    Printing: [`${clientName} — finance printer`, `${clientName} — reception printer`],
+    "Remote Access": [`${clientName} — RD Gateway`, `${clientName} — support remote tool`],
+    "Sales & Finance": [`${clientName} — managed services billing`, `${clientName} — hardware resale account`],
+    Security: [`${clientName} — endpoint protection`, `${clientName} — email security`],
+    Server: [`${clientName} — domain controller`, `${clientName} — file server`],
+    VPN: [`${clientName} — head office tunnel`, `${clientName} — site-to-site tunnel`],
+    Virtualization: [`${clientName} — production cluster`, `${clientName} — backup host`],
+    "Voice / PBX": [`${clientName} — phone system`, `${clientName} — SIP trunk`],
+    Wireless: [`${clientName} — corporate SSID`, `${clientName} — guest SSID`],
+    Workstation: [`${clientName} — reception desktop`, `${clientName} — design laptop`],
+  };
+  return names[typeName] ?? [`${clientName} — ${typeName.toLowerCase()} 1`, `${clientName} — ${typeName.toLowerCase()} 2`];
+}
+
+/** How many records each asset type gets per client. */
+const ASSETS_PER_TYPE = 2;
+
+/** Types promoted out of the type list into Core Assets (they own a section). */
+const promotedTypeSlugs = new Set(["checklists"]);
+
+/**
+ * The three original types also carry a legacy detail row that the
+ * Configurations screen reads, so a new record of those types needs one too.
+ */
+async function legacyConfigRows(typeName: string, assetId: string, client: { id: string; name: string }, index: number) {
+  const slug = client.name.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const short = client.name.split(" ")[0]!.toLowerCase();
+  try {
+    if (typeName === "Server") {
+      await prisma.kumoServer.create({
+        data: {
+          kumoAssetId: assetId,
+          hostname: `srv-${short}-0${index + 1}`,
+          fqdn: `srv-0${index + 1}.${slug}.local`,
+          operatingSystem: "Windows Server 2022",
+          osVersion: "21H2",
+          cpuCores: 16,
+          ramGb: 64,
+          storageGb: 2048,
+          ipAddress: `10.20.30.1${index + 1}`,
+          macAddress: "00-15-5D-31-2A-11",
+          virtualization: "VMware",
+          lastPatchedAt: daysAgo(12),
+        },
+      });
+    } else if (typeName === "Workstation") {
+      await prisma.kumoWorkstation.create({
+        data: {
+          kumoAssetId: assetId,
+          hostname: `WS-${short.toUpperCase()}-0${index + 14}`,
+          operatingSystem: "Windows 11 Pro 23H2",
+          serialNumber: `PF3XK9${index}L`.toUpperCase(),
+          lastCheckInAt: daysAgo(1),
+        },
+      });
+    } else if (typeName === "Network Device") {
+      await prisma.kumoNetworkDevice.create({
+        data: {
+          kumoAssetId: assetId,
+          deviceType: index === 0 ? "Firewall" : "Switch",
+          managementIp: `10.20.30.${index + 1}`,
+          macAddress: "00-15-5D-31-2A-01",
+          firmwareVersion: "7.4.3",
+          portCount: index === 0 ? 8 : 48,
+          serialNumber: `FGT60F000000000${index + 1}`,
+          rackPosition: `U${index + 1}`,
+        },
+      });
+    }
+  } catch { /* the record already has its detail row */ }
 }
 
 /** Adds only the rows whose `key` value is not in the table yet, so re-runs never duplicate. */
@@ -121,6 +278,13 @@ async function main() {
   const primary = people[0]!;
   const templateId = (name: string) => templates.find((t) => t.name.toLowerCase() === name.toLowerCase())?.id;
   const boardId = boards[0]!.id;
+
+  // The global asset types and their fields — what every client gets documented.
+  const assetTypeTemplates = await prisma.kumoAssetTemplate.findMany({
+    where: { isActive: true, companyId: null },
+    orderBy: { name: "asc" },
+    include: { fields: { orderBy: { sortOrder: "asc" } } },
+  });
 
   // ── Money and reference data ───────────────────────────────────────
   await ensure("currencies", () => prisma.currency.count(), async () => {
@@ -363,68 +527,31 @@ async function main() {
       log(`${clientTrain} ✓ ${extras.length} contact${extras.length === 1 ? "" : "s"}`);
     }
 
-    // Kumo configurations: server, workstation and network device
-    const seedConfig = async (templateName: string, make: (assetId: string) => Promise<void>) => {
-      const template = templateId(templateName);
-      if (!template) return;
-      const existing = await prisma.kumoAsset.count({ where: { companyId: client.id, templateId: template } });
-      if (existing > 0) return;
-      const asset = await prisma.kumoAsset.create({
-        data: {
-          templateId: template,
-          name: `${client.name} ${templateName}`,
-          status: "active",
-          companyId: client.id,
-          createdById: primary.id,
-          tags: ["sample"],
-        },
-      });
-      await make(asset.id);
-      log(`${clientTrain} ✓ ${templateName.toLowerCase()}`);
-    };
-
-    await seedConfig("Server", (assetId) =>
-      prisma.kumoServer.create({
-        data: {
-          kumoAssetId: assetId,
-          hostname: `srv-${client.name.split(" ")[0]!.toLowerCase()}-01`,
-          fqdn: `srv-01.${client.name.toLowerCase().replace(/[^a-z0-9]+/g, "")}.local`,
-          operatingSystem: "Windows Server 2022",
-          osVersion: "21H2",
-          cpuCores: 16,
-          ramGb: 64,
-          storageGb: 2048,
-          ipAddress: "10.20.30.11",
-          macAddress: "00-15-5D-31-2A-11",
-          virtualization: "VMware",
-          lastPatchedAt: daysAgo(12),
-        },
-      }).then(() => undefined));
-
-    await seedConfig("Workstation", (assetId) =>
-      prisma.kumoWorkstation.create({
-        data: {
-          kumoAssetId: assetId,
-          hostname: `WS-${client.name.split(" ")[0]!.toUpperCase()}-014`,
-          operatingSystem: "Windows 11 Pro 23H2",
-          serialNumber: "PF3XK92L",
-          lastCheckInAt: daysAgo(1),
-        },
-      }).then(() => undefined));
-
-    await seedConfig("Network Device", (assetId) =>
-      prisma.kumoNetworkDevice.create({
-        data: {
-          kumoAssetId: assetId,
-          deviceType: "Firewall",
-          managementIp: "10.20.30.1",
-          macAddress: "00-15-5D-31-2A-01",
-          firmwareVersion: "7.4.3",
-          portCount: 8,
-          serialNumber: "FGT60F0000000001",
-          rackPosition: "U1",
-        },
-      }).then(() => undefined));
+    // Every asset type, documented for this client. The loop is driven by the
+    // type templates, so a type added later is covered without touching this.
+    const typedAssets = assetTypeTemplates.filter((t) => !promotedTypeSlugs.has(t.name.trim().toLowerCase()));
+    for (const tpl of typedAssets) {
+      const existing = await prisma.kumoAsset.count({ where: { companyId: client.id, templateId: tpl.id } });
+      if (existing >= ASSETS_PER_TYPE) continue;
+      const names = typeAssetNames(tpl.name, client.name).slice(existing);
+      for (const [index, name] of names.entries()) {
+        const asset = await prisma.kumoAsset.create({
+          data: { templateId: tpl.id, name, status: "active", companyId: client.id, createdById: primary.id, tags: ["sample"] },
+        });
+        const fields = tpl.fields.filter((f) => !f.isSensitive);
+        if (fields.length) {
+          await prisma.kumoAssetFieldValue.createMany({
+            data: fields.map((f) => ({
+              assetId: asset.id,
+              fieldId: f.id,
+              ...sampleFieldValue(f.key, f.fieldType, f.label, name, existing + index, f.options),
+            })),
+          });
+        }
+        await legacyConfigRows(tpl.name, asset.id, client, existing + index);
+      }
+    }
+    log(`${clientTrain} ✓ ${typedAssets.length} asset type${typedAssets.length === 1 ? "" : "s"}`);
 
     // Passwords
     const passwordCount = await prisma.kumoPassword.count({ where: { companyId: client.id } });

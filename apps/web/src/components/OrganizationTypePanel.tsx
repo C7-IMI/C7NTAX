@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ExternalLink, Plus, Search } from "lucide-react";
+import { ExternalLink, Pencil, Plus, Search } from "lucide-react";
 import api from "../api";
 import { templateIcon } from "../lib/kumoIcons";
 import { timeAgo } from "../lib/format";
+import { KumoAssetDialog, type AssetTemplate } from "./KumoAssetDialog";
 
 interface Asset {
   id: string;
@@ -35,15 +36,26 @@ export function OrganizationTypePanel({
   const [assets, setAssets] = useState<Asset[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [template, setTemplate] = useState<AssetTemplate | null>(null);
+  const [dialog, setDialog] = useState<{ editing: Asset | null } | null>(null);
   const Icon = templateIcon(templateIconName);
 
-  useEffect(() => {
+  const load = () => {
     setLoading(true);
     api.get("/kumo/assets", { params: { templateId, companyId: orgId, limit: 200 } })
       .then((r) => setAssets(r.data?.data ?? []))
       .catch(() => setAssets([]))
       .finally(() => setLoading(false));
-  }, [templateId, orgId]);
+  };
+
+  useEffect(() => { load(); }, [templateId, orgId]);
+
+  // The type's own field definitions drive the configuration dialog.
+  useEffect(() => {
+    api.get(`/kumo/templates/${templateId}`)
+      .then((r) => setTemplate(r.data ?? null))
+      .catch(() => setTemplate(null));
+  }, [templateId]);
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -55,8 +67,11 @@ export function OrganizationTypePanel({
     });
   }, [assets, search]);
 
-  const createLink = `/kumo/assets?new=1&templateId=${templateId}&companyId=${orgId}`;
   const addLabel = `Add ${templateName.replace(/s$/, "")}`;
+  const dialogTemplate: AssetTemplate = template ?? {
+    id: templateId, name: templateName, description: templateDescription,
+    icon: templateIconName, color: templateColor, fields: [],
+  };
 
   return (
     <div className="card space-y-3">
@@ -76,9 +91,9 @@ export function OrganizationTypePanel({
             </p>
           </div>
         </div>
-        <Link to={createLink} className="btn-primary text-sm flex items-center gap-2 shrink-0">
+        <button type="button" onClick={() => setDialog({ editing: null })} className="btn-primary text-sm flex items-center gap-2 shrink-0">
           <Plus size={14} /> {addLabel}
-        </Link>
+        </button>
       </div>
 
       {assets.length > 3 && (
@@ -103,9 +118,9 @@ export function OrganizationTypePanel({
               : `Nothing matches “${search}”.`}
           </p>
           {assets.length === 0 && (
-            <Link to={createLink} className="btn-secondary text-xs py-1.5 inline-flex items-center gap-1.5">
+            <button type="button" onClick={() => setDialog({ editing: null })} className="btn-secondary text-xs py-1.5 inline-flex items-center gap-1.5">
               <Plus size={12} /> {addLabel}
-            </Link>
+            </button>
           )}
         </div>
       ) : (
@@ -116,26 +131,43 @@ export function OrganizationTypePanel({
               .filter(Boolean)
               .slice(0, 3);
             return (
-              <Link
-                key={a.id}
-                to={`/kumo/assets/${a.id}`}
-                title={`Open ${a.name}`}
-                className="flex items-center gap-3 py-2 -mx-1.5 px-1.5 rounded-lg group hover:bg-surface-lighter"
-              >
+              <div key={a.id} className="flex items-center gap-3 py-2 -mx-1.5 px-1.5 rounded-lg group hover:bg-surface-lighter">
                 <Icon size={14} className="text-gray-500 shrink-0" />
-                <span className="min-w-0 flex-1">
+                <Link to={`/kumo/assets/${a.id}`} title={`Open ${a.name}`} className="min-w-0 flex-1">
                   <span className="text-sm text-gray-300 block truncate group-hover:text-cyber-300">{a.name}</span>
                   {details.length > 0 && <span className="text-[10px] text-gray-600 block truncate">{details.join(" · ")}</span>}
-                </span>
+                </Link>
                 {a.status && a.status !== "active" && (
                   <span className="badge text-[10px] bg-gray-600/20 text-gray-400 shrink-0">{a.status}</span>
                 )}
                 <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(a.updatedAt)}</span>
-                <ExternalLink size={11} className="text-gray-600 group-hover:text-cyber-400 shrink-0" />
-              </Link>
+                <button
+                  type="button"
+                  onClick={() => setDialog({ editing: a })}
+                  title={`Edit ${a.name}`}
+                  aria-label={`Edit ${a.name}`}
+                  className="text-gray-600 hover:text-cyber-400 shrink-0"
+                >
+                  <Pencil size={12} />
+                </button>
+                <Link to={`/kumo/assets/${a.id}`} title={`Open ${a.name}`} className="shrink-0">
+                  <ExternalLink size={11} className="text-gray-600 group-hover:text-cyber-400" />
+                </Link>
+              </div>
             );
           })}
         </div>
+      )}
+
+      {dialog && (
+        <KumoAssetDialog
+          template={dialogTemplate}
+          asset={dialog.editing}
+          companies={[{ id: orgId, name: orgName }]}
+          clientId={orgId}
+          onSaved={load}
+          onClose={() => setDialog(null)}
+        />
       )}
     </div>
   );

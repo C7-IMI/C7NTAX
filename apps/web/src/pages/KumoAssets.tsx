@@ -4,6 +4,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Search, Monitor, Server, Laptop, Wifi, Edit3, Trash2, AlertTriangle, ExternalLink, SquareArrowOutUpRight, AppWindow, Copy, Download, RotateCw, Eraser } from "lucide-react";
 import { templateIcon } from "../lib/kumoIcons";
+import { KumoAssetDialog } from "../components/KumoAssetDialog";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
@@ -20,11 +21,9 @@ export function KumoAssetsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [templateFilter, setTemplateFilter] = useState("");
-  const [showCreate, setShowCreate] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [dialog, setDialog] = useState<{ template: any; asset: any | null; clientId: string } | null>(null);
+  const [templatePicker, setTemplatePicker] = useState(false);
   const [companies, setCompanies] = useState<any[]>([]);
-  const [form, setForm] = useState<Record<string, any>>({ name: "" });
-  const [fieldValues, setFieldValues] = useState<Record<string, any>>({});
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // The organization rail hands us the type and client, e.g.
@@ -49,7 +48,7 @@ export function KumoAssetsPage() {
         if (templateIdParam && searchParams.get("new") === "1") {
           const tpl = tpls.find((t: any) => t.id === templateIdParam);
           if (tpl) {
-            startCreate(tpl, companyIdParam);
+            setDialog({ template: tpl, asset: null, clientId: companyIdParam });
             deepLinkApplied.current = true;
           }
         } else if (templateIdParam) {
@@ -145,33 +144,10 @@ export function KumoAssetsPage() {
     ...viewMenuEntries(),
   ];
 
-  const startCreate = (tpl?: any, companyId = "") => {
-    setSelectedTemplate(tpl || null);
-    setForm({ name: "", companyId });
-    setFieldValues({});
-    setShowCreate(true);
-    if (tpl) {
-      const defaults: Record<string, any> = {};
-      tpl.fields?.forEach((f: any) => {
-        if (f.defaultValue !== undefined && f.defaultValue !== null) defaults[f.key] = f.defaultValue;
-      });
-      setFieldValues(defaults);
-    }
-  };
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await api.post("/kumo/assets", {
-        templateId: selectedTemplate.id,
-        name: form.name,
-        values: fieldValues,
-        companyId: form.companyId || undefined,
-      });
-      toast.success("Asset created");
-      setShowCreate(false);
-      fetchAll();
-    } catch { toast.error("Failed to create"); }
+  /** Opens the type's configuration dialog — with no type chosen, the picker first. */
+  const startCreate = (tpl?: any, companyId = companyScope) => {
+    if (!tpl) { setTemplatePicker(true); return; }
+    setDialog({ template: tpl, asset: null, clientId: companyId ?? "" });
   };
 
   const handleDelete = async (id: string) => {
@@ -268,73 +244,51 @@ export function KumoAssetsPage() {
         </div>
       </div>}
 
-      {/* Create modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
-          <form className="card w-full max-w-lg mx-4 space-y-3 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()} onSubmit={handleCreate}>
-            <h3 className="text-lg font-semibold text-white">
-              {selectedTemplate ? `New ${selectedTemplate.name}` : "New Asset"}
-            </h3>
-            {!selectedTemplate ? (
-              <div className="space-y-1">
-                <label className="text-xs text-gray-500">Select Template</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {templates.filter((t:any) => t.isActive).map((tpl: any) => (
-                    <button type="button" key={tpl.id} onClick={() => startCreate(tpl)}
-                      className="card p-3 text-left hover:border-cyber-500/30 transition-colors">
-                      <p className="text-sm text-white">{tpl.name}</p>
-                      <p className="text-xs text-gray-500">{tpl.description?.slice(0, 40)}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Name *</label>
-                  <input className="input-field" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required autoFocus />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 block mb-1">Client</label>
-                  <select className="input-field" value={form.companyId || ""} onChange={e => setForm({ ...form, companyId: e.target.value })}>
-                    <option value="">No client</option>
-                    {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-                {selectedTemplate.fields?.map((f: any) => (
-                  <div key={f.key}>
-                    <label className="text-xs text-gray-500 block mb-1">
-                      {f.label} {f.required && <span className="text-red-400">*</span>}
-                    </label>
-                    {f.fieldType === "boolean" ? (
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={fieldValues[f.key] === true}
-                          onChange={e => setFieldValues(p => ({ ...p, [f.key]: e.target.checked }))} />
-                        <span className="text-sm text-gray-300">{f.helpText || f.label}</span>
-                      </label>
-                    ) : f.fieldType === "select" && f.options ? (
-                      <select className="input-field" value={fieldValues[f.key] || ""}
-                        onChange={e => setFieldValues(p => ({ ...p, [f.key]: e.target.value }))}>
-                        <option value="">—</option>
-                        {(Array.isArray(f.options) ? f.options : []).map((o: string) => <option key={o} value={o}>{o}</option>)}
-                      </select>
-                    ) : (
-                      <input className="input-field" type={f.fieldType === "number" ? "number" : "text"}
-                        placeholder={f.placeholder || ""}
-                        value={fieldValues[f.key] || ""}
-                        onChange={e => setFieldValues(p => ({ ...p, [f.key]: f.fieldType === "number" ? Number(e.target.value) : e.target.value }))}
-                        required={f.required} />
-                    )}
-                    {f.helpText && <p className="text-[10px] text-gray-600 mt-0.5">{f.helpText}</p>}
-                  </div>
-                ))}
-              </>
-            )}
-            <div className="flex gap-2 justify-end pt-2 border-t border-surface-border">
-              <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
-              {selectedTemplate && <button type="submit" className="btn-primary text-sm">Create</button>}
+      {/* Create/edit modal — one dialog for every type, driven by the template */}
+      {dialog && (
+        <KumoAssetDialog
+          template={dialog.template}
+          asset={dialog.asset}
+          companies={companies.map((c: any) => ({ id: c.id, name: c.name }))}
+          clientId={dialog.clientId}
+          onSaved={fetchAll}
+          onClose={() => setDialog(null)}
+        />
+      )}
+
+      {/* Type picker — every type is described the same way once one is chosen */}
+      {templatePicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setTemplatePicker(false)}>
+          <div className="card w-full max-w-3xl max-h-[85vh] overflow-y-auto space-y-3" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <h3 className="text-lg font-semibold text-white">New configuration</h3>
+              <p className="text-xs text-gray-500">Pick the asset type — each one has its own fields.</p>
             </div>
-          </form>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {templates.filter((t: any) => t.isActive).map((tpl: any) => {
+                const TplIcon = templateIcon(tpl.icon);
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => { setTemplatePicker(false); setDialog({ template: tpl, asset: null, clientId: companyScope }); }}
+                    className="card p-3 text-left hover:border-cyber-500/30 transition-colors flex items-start gap-2.5"
+                  >
+                    <span className="w-7 h-7 rounded-lg grid place-items-center bg-surface-lighter shrink-0">
+                      <TplIcon size={14} style={tpl.color ? { color: tpl.color } : undefined} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="text-sm text-white block truncate">{tpl.name}</span>
+                      <span className="text-xs text-gray-500 block truncate">{tpl.description || `${tpl._count?.fields ?? 0} fields`}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex justify-end border-t border-surface-border pt-3">
+              <button type="button" onClick={() => setTemplatePicker(false)} className="btn-secondary text-sm">Cancel</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

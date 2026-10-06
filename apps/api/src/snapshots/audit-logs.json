@@ -1,5 +1,50 @@
 [
   {
+    "id": "af05f9e0-b6f6-4f51-b2a9-56976d3efea6",
+    "action": "kumo_assets:create",
+    "entity": "kumo_assets",
+    "entityId": "assets",
+    "changes": {
+      "name": "QA probe backup job",
+      "status": "active",
+      "values": {
+        "product": "",
+        "targets": "",
+        "schedule": "",
+        "retention": "QA product 1.0",
+        "last_verified": "2026-10-01",
+        "restore_tested": true
+      },
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "templateId": "ef57d23f-91a2-48d1-b3e8-647089ae7944"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T21:11:03.586Z"
+  },
+  {
+    "id": "fafd8487-924b-4f3b-a3f5-baac7079c3c7",
+    "action": "kumo_assets:update",
+    "entity": "kumo_assets",
+    "entityId": "fbd0ff4d-33d0-42fb-9dc6-79d2ff171e66",
+    "changes": {
+      "name": "QA probe backup job",
+      "status": "active",
+      "values": {
+        "product": "",
+        "targets": "",
+        "schedule": "",
+        "retention": "QA product 2.0",
+        "last_verified": "2026-10-01T00:00:00.000Z",
+        "restore_tested": true
+      },
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T21:11:15.400Z"
+  },
+  {
     "id": "b9a551e1-ff54-4165-8cbb-d4322160921d",
     "action": "ticket:update",
     "entity": "ticket",

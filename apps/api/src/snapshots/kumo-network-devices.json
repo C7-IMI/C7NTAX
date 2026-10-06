@@ -42,5 +42,60 @@
     "portCount": 8,
     "serialNumber": "FGT60F0000000001",
     "rackPosition": "U1"
+  },
+  {
+    "id": "dea9f659-8ba0-4213-abcf-428b4d37beba",
+    "kumoAssetId": "e261207b-79a7-459f-be74-6bdc056f3d60",
+    "deviceType": "Switch",
+    "managementIp": "10.20.30.2",
+    "macAddress": "00-15-5D-31-2A-01",
+    "firmwareVersion": "7.4.3",
+    "portCount": 48,
+    "serialNumber": "FGT60F0000000002",
+    "rackPosition": "U2"
+  },
+  {
+    "id": "dbb68895-e0b9-41d1-82ed-bb9f776dfa49",
+    "kumoAssetId": "fcf0f5df-a748-4286-b4e8-81dd1c3964d8",
+    "deviceType": "Switch",
+    "managementIp": "10.20.30.2",
+    "macAddress": "00-15-5D-31-2A-01",
+    "firmwareVersion": "7.4.3",
+    "portCount": 48,
+    "serialNumber": "FGT60F0000000002",
+    "rackPosition": "U2"
+  },
+  {
+    "id": "7073c199-d3e3-4a5b-a04e-f7b03b09bef2",
+    "kumoAssetId": "e8fbe3f2-3afa-4594-9d4e-c1d77bd54017",
+    "deviceType": "Switch",
+    "managementIp": "10.20.30.2",
+    "macAddress": "00-15-5D-31-2A-01",
+    "firmwareVersion": "7.4.3",
+    "portCount": 48,
+    "serialNumber": "FGT60F0000000002",
+    "rackPosition": "U2"
+  },
+  {
+    "id": "49095dfe-fbc0-49ee-acaa-5618194d0c95",
+    "kumoAssetId": "1b04d94c-0ee9-42fc-a964-8631bb3b0ce1",
+    "deviceType": "Switch",
+    "managementIp": "10.20.30.2",
+    "macAddress": "00-15-5D-31-2A-01",
+    "firmwareVersion": "7.4.3",
+    "portCount": 48,
+    "serialNumber": "FGT60F0000000002",
+    "rackPosition": "U2"
+  },
+  {
+    "id": "dde17f83-0432-48ad-9f5e-7891333e6304",
+    "kumoAssetId": "1c7db88e-e664-4f53-b273-50adf9723279",
+    "deviceType": "Switch",
+    "managementIp": "10.20.30.2",
+    "macAddress": "00-15-5D-31-2A-01",
+    "firmwareVersion": "7.4.3",
+    "portCount": 48,
+    "serialNumber": "FGT60F0000000002",
+    "rackPosition": "U2"
   }
 ]
