@@ -179,7 +179,7 @@ async function main(): Promise<void> {
     log("m365Group seeded");
   }
   if (integration && (await count("m365Subscription")) === 0) {
-    await p.m365Subscription.create({ data: { integrationId: integration.id, skuId: "ENTERPRISEPREMIUM", skuPartNumber: "Microsoft 365 E5", activeUnits: 25 } });
+    await p.m365Subscription.create({ data: { integrationId: integration.id, skuId: "ENTERPRISEPREMIUM", skuPartNumber: "Microsoft 365 E5", displayName: "Microsoft 365 E5", enabled: 25, assigned: 25 } });
     log("m365Subscription seeded");
   }
   if (integration && (await count("syncLog")) === 0) {

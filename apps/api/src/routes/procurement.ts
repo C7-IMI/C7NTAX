@@ -27,32 +27,42 @@ procurementRouter.get("/orders", requirePermission(Permission.BillingView), asyn
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
     if (vendorId) where.vendorId = vendorId;
-    const [data, total] = await Promise.all([
-      prisma.purchaseOrder.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" }, include: { vendor: { select: { id: true, name: true } }, lineItems: true } }),
+    const [orders, total] = await Promise.all([
+      prisma.purchaseOrder.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" } }),
       prisma.purchaseOrder.count({ where }),
     ]);
+    const [vendors, lineItems] = await Promise.all([
+      prisma.vendor.findMany({ where: { id: { in: [...new Set(orders.map(o => o.vendorId))] } }, select: { id: true, name: true } }),
+      prisma.pOLineItem.findMany({ where: { poId: { in: orders.map(o => o.id) } } }),
+    ]);
+    const vendorById = new Map(vendors.map(v => [v.id, v]));
+    const data = orders.map(o => ({
+      ...o,
+      vendor: vendorById.get(o.vendorId) ?? null,
+      lineItems: lineItems.filter(li => li.poId === o.id),
+    }));
     res.json({ data, total });
   } catch (e) { next(e); }
 });
 
 procurementRouter.post("/orders", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
   try {
-    const { vendorId, lineItems } = req.body;
+    const { vendorId, lineItems, items: bodyItems } = req.body;
     if (!vendorId) throw new AppError("vendorId required");
     const poNumber = `PO-${Date.now().toString(36).toUpperCase()}`;
     let subtotal = 0;
-    const items = (lineItems || []).map((li: { description: string; quantity: number; unitPrice: number }) => {
+    const items = [...(lineItems || []), ...(bodyItems || [])].map((li: { description: string; quantity: number; unitPrice: number }) => {
       const total = li.quantity * li.unitPrice;
       subtotal += total;
       return { description: li.description, quantity: li.quantity, unitPrice: li.unitPrice, total };
     });
     const po = await prisma.purchaseOrder.create({
-      data: { poNumber, vendorId, subtotal, taxTotal: 0, total: subtotal, createdById: req.user!.userId,
-        lineItems: { create: items },
-      },
-      include: { lineItems: true },
+      data: { poNumber, vendorId, subtotal, taxTotal: 0, total: subtotal, createdById: req.user!.userId },
     });
-    res.status(201).json(po);
+    const created = items.length
+      ? await prisma.$transaction(items.map(li => prisma.pOLineItem.create({ data: { poId: po.id, ...li } })))
+      : [];
+    res.status(201).json({ ...po, lineItems: created });
   } catch (e) { next(e); }
 });
 

@@ -46,8 +46,10 @@ crmRouter.patch("/opportunities/:id", requirePermission(Permission.TicketEdit), 
 // ── Sales Activities ──
 crmRouter.get("/opportunities/:id/activities", requirePermission(Permission.TicketView), async (req: AuthRequest, res, next) => {
   try {
-    const activities = await prisma.salesActivity.findMany({ where: { opportunityId: req.params.id }, orderBy: { createdAt: "desc" }, include: { user: { select: { id: true, firstName: true, lastName: true } } } });
-    res.json(activities);
+    const activities = await prisma.salesActivity.findMany({ where: { opportunityId: req.params.id }, orderBy: { createdAt: "desc" } });
+    const users = await prisma.user.findMany({ where: { id: { in: [...new Set(activities.map(a => a.userId))] } }, select: { id: true, firstName: true, lastName: true } });
+    const userById = new Map(users.map(u => [u.id, u]));
+    res.json(activities.map(a => ({ ...a, user: userById.get(a.userId) ?? null })));
   } catch (e) { next(e); }
 });
 

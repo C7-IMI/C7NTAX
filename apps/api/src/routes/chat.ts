@@ -7,7 +7,10 @@ export const chatRouter = Router(); chatRouter.use(authenticate);
 chatRouter.get("/sessions", async (req: AuthRequest, res, next) => {
   try { const { status } = req.query as Record<string, string>; const where: Record<string, unknown> = {};
     if (status) where.status = status; else where.status = { in: ["active","waiting"] };
-    res.json(await prisma.chatSession.findMany({ where, orderBy: { startedAt: "desc" }, include: { _count: { select: { messages: true } } } })); }
+    const sessions = await prisma.chatSession.findMany({ where, orderBy: { startedAt: "desc" } });
+    const messageCounts = await prisma.chatMessage.groupBy({ by: ["sessionId"], _count: { _all: true } });
+    const messageCount = new Map(messageCounts.map(c => [c.sessionId, c._count._all]));
+    res.json(sessions.map(s => ({ ...s, _count: { messages: messageCount.get(s.id) ?? 0 } }))); }
   catch (e) { next(e); }
 });
 

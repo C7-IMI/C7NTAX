@@ -2232,5 +2232,137 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T09:41:05.063Z"
+  },
+  {
+    "id": "43b3e004-96b7-47b5-aff1-40c235074520",
+    "action": "procurement:create",
+    "entity": "procurement",
+    "entityId": "orders",
+    "changes": {
+      "items": [
+        {
+          "quantity": 2,
+          "unitPrice": 250,
+          "description": "Sweep probe item"
+        }
+      ],
+      "subtotal": 500,
+      "vendorId": "683cde29-08f6-41b2-83b2-a6f63d5c17dd"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:59:07.918Z"
+  },
+  {
+    "id": "022fe726-52d5-4e0a-8c47-83e8cd593603",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "agreements",
+    "changes": {
+      "name": "Sweep probe agreement",
+      "price": 100,
+      "endDate": "",
+      "autoRenew": true,
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "startDate": "2026-10-01",
+      "description": "",
+      "billingPeriod": "monthly"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:59:07.950Z"
+  },
+  {
+    "id": "07fe9082-dec0-4a98-8e1f-0dbc62dc41f9",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "398b8098-a2a8-4734-be6e-9a9a587aa2f4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:59:12.113Z"
+  },
+  {
+    "id": "01a51765-1846-4664-babe-314172af653b",
+    "action": "workflows:create",
+    "entity": "workflows",
+    "entityId": "rules",
+    "changes": {
+      "name": "Sweep probe rule",
+      "entity": "ticket",
+      "actions": [
+        {
+          "type": "notify",
+          "config": {
+            "channel": "email"
+          },
+          "sortOrder": 0
+        },
+        {
+          "type": "tag",
+          "config": {
+            "tag": "probe"
+          },
+          "sortOrder": 1
+        }
+      ],
+      "trigger": "created",
+      "isActive": false,
+      "priority": 99,
+      "conditions": []
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T10:00:21.192Z"
+  },
+  {
+    "id": "b1e253c6-54aa-44d7-9ab9-5ef408a730a0",
+    "action": "crm:create",
+    "entity": "crm",
+    "entityId": "opportunities",
+    "changes": {
+      "name": "Sweep probe opp",
+      "stage": "qualification",
+      "amount": 1000,
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "probability": 20
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T10:00:27.704Z"
+  },
+  {
+    "id": "fd454fb5-df63-41f0-a917-03f56724cdd0",
+    "action": "crm:create",
+    "entity": "crm",
+    "entityId": "cecff448-03ec-4803-a037-a0333c2f0ec2",
+    "changes": {
+      "body": "probe",
+      "type": "call",
+      "subject": "Sweep probe activity"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T10:00:27.715Z"
+  },
+  {
+    "id": "31a13426-29c7-41ec-8bae-a8e0977e89d0",
+    "action": "surveys:create",
+    "entity": "surveys",
+    "entityId": "6dc81f0e-6a5e-448f-ad03-0b03e4faeecb",
+    "changes": {
+      "answers": [
+        {
+          "value": "5",
+          "questionId": "39c8383e-de0b-4db7-8e6c-15b8df90591b"
+        }
+      ],
+      "npsScore": 9
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T10:00:32.871Z"
   }
 ]

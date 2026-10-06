@@ -4,7 +4,15 @@ import { authenticate, type AuthRequest } from "../middleware/auth";
 export const reportsRouter = Router(); reportsRouter.use(authenticate);
 
 reportsRouter.get("/", async (_req: AuthRequest, res, next) => {
-  try { res.json(await prisma.report.findMany({ orderBy: { name: "asc" }, include: { createdBy: { select: { firstName: true, lastName: true } }, schedules: true } })); }
+  try {
+    const reports = await prisma.report.findMany({ orderBy: { name: "asc" } });
+    const [authors, schedules] = await Promise.all([
+      prisma.user.findMany({ where: { id: { in: [...new Set(reports.map(r => r.createdById))] } }, select: { id: true, firstName: true, lastName: true } }),
+      prisma.reportSchedule.findMany({ where: { reportId: { in: reports.map(r => r.id) } } }),
+    ]);
+    const authorById = new Map(authors.map(a => [a.id, a]));
+    res.json(reports.map(r => ({ ...r, createdBy: authorById.get(r.createdById) ?? null, schedules: schedules.filter(s => s.reportId === r.id) })));
+  }
   catch (e) { next(e); }
 });
 

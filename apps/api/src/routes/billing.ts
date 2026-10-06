@@ -23,10 +23,12 @@ billingRouter.get("/agreements", requirePermission(Permission.BillingView), asyn
 
 billingRouter.post("/agreements", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
   try {
-    const { name, companyId, description, billingPeriod, price, startDate, endDate, autoRenew, cancellationDays } = req.body;
+    const { name, companyId, description, billingPeriod, price, startDate, endDate, cancellationDays } = req.body;
     if (!name || !companyId) throw new AppError("name and companyId required");
     const agreement = await prisma.serviceAgreement.create({
-      data: { name, companyId, description: description || "", billingPeriod: billingPeriod || "monthly", billingAmount: price || 0, startDate: new Date(startDate), endDate: endDate ? new Date(endDate) : null, autoRenew: autoRenew ?? true, followUpIntervalDays: cancellationDays || 30 },
+      // `autoRenew` from the client is not a ServiceAgreement column; `autoInvoiceEnabled` is the
+      // persisted "keep billing automatically" switch, so it is left at its default.
+      data: { name, companyId, description: description || "", billingPeriod: billingPeriod || "monthly", billingAmount: price || 0, startDate: startDate ? new Date(startDate) : new Date(), endDate: endDate ? new Date(endDate) : null, followUpIntervalDays: cancellationDays || 30 },
     });
     res.status(201).json(agreement);
   } catch (e) { next(e); }
@@ -34,10 +36,14 @@ billingRouter.post("/agreements", requirePermission(Permission.BillingManage), a
 
 billingRouter.patch("/agreements/:id", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
   try {
-    const allowed = ["name", "description", "billingPeriod", "price", "endDate", "autoRenew", "cancellationDays", "status"];
+    const allowed = ["name", "description", "billingPeriod", "endDate", "isActive"];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) if (req.body[key] !== undefined) updates[key] = req.body[key];
+    if (req.body.price !== undefined) updates.billingAmount = req.body.price;
+    if (req.body.cancellationDays !== undefined) updates.followUpIntervalDays = req.body.cancellationDays;
+    if (req.body.status !== undefined) updates.isActive = req.body.status === "active";
     if (req.body.startDate) updates.startDate = new Date(req.body.startDate);
+    if (req.body.endDate) updates.endDate = new Date(req.body.endDate);
     const agreement = await prisma.serviceAgreement.update({ where: { id: req.params.id }, data: updates });
     res.json(agreement);
   } catch (e) { next(e); }
@@ -181,7 +187,7 @@ billingRouter.post("/invoices/:id/send", requirePermission(Permission.InvoiceSen
     }
     const updated = await prisma.invoice.update({
       where: { id: req.params.id },
-      data: { status: InvoiceStatus.Sent, sentAt: new Date() },
+      data: { status: InvoiceStatus.Sent },
     });
     res.json({ message: "Invoice sent", invoice: updated });
   } catch (e) { next(e); }

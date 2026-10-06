@@ -32,9 +32,19 @@ projectsRouter.post("/", requirePermission(Permission.TicketCreate), async (req:
 
 projectsRouter.get("/:id", requirePermission(Permission.TicketView), async (req: AuthRequest, res, next) => {
   try {
-    const p = await prisma.project.findUnique({ where: { id: req.params.id }, include: { phases: { orderBy: { sortOrder: "asc" }, include: { tasks: { orderBy: { sortOrder: "asc" } } } }, tickets: { select: { id: true, ticketNumber: true, title: true, status: true } }, company: true, manager: { select: { id: true, firstName: true, lastName: true } } } });
+    const p = await prisma.project.findUnique({ where: { id: req.params.id } });
     if (!p) throw new AppError("Not found", 404);
-    res.json(p);
+    const phases = await prisma.projectPhase.findMany({ where: { projectId: p.id }, orderBy: { sortOrder: "asc" } });
+    const tasks = phases.length
+      ? await prisma.projectTask.findMany({ where: { phaseId: { in: phases.map(ph => ph.id) } }, orderBy: { sortOrder: "asc" } })
+      : [];
+    const linkedTicketIds = tasks.map(t => t.ticketId).filter((id): id is string => Boolean(id));
+    const [tickets, company, manager] = await Promise.all([
+      linkedTicketIds.length ? prisma.ticket.findMany({ where: { id: { in: linkedTicketIds } }, select: { id: true, ticketNumber: true, title: true, status: true } }) : Promise.resolve([]),
+      prisma.company.findUnique({ where: { id: p.companyId } }),
+      p.managerId ? prisma.user.findUnique({ where: { id: p.managerId }, select: { id: true, firstName: true, lastName: true } }) : Promise.resolve(null),
+    ]);
+    res.json({ ...p, phases: phases.map(ph => ({ ...ph, tasks: tasks.filter(t => t.phaseId === ph.id) })), tickets, company, manager });
   } catch (e) { next(e); }
 });
 

@@ -4,18 +4,27 @@ import { authenticate, type AuthRequest } from "../middleware/auth";
 export const workflowsRouter = Router(); workflowsRouter.use(authenticate);
 
 workflowsRouter.get("/rules", async (_req: AuthRequest, res, next) => {
-  try { res.json(await prisma.workflowRule.findMany({ orderBy: { priority: "asc" }, include: { actions: { orderBy: { sortOrder: "asc" } }, _count: { select: { executions: true } } } })); }
+  try {
+    const rules = await prisma.workflowRule.findMany({ orderBy: { priority: "asc" } });
+    const [actions, executionCounts] = await Promise.all([
+      prisma.workflowRuleAction.findMany({ where: { ruleId: { in: rules.map(r => r.id) } }, orderBy: { sortOrder: "asc" } }),
+      prisma.workflowExecution.groupBy({ by: ["ruleId"], _count: { _all: true } }),
+    ]);
+    const executionCount = new Map(executionCounts.map(c => [c.ruleId, c._count._all]));
+    res.json(rules.map(r => ({ ...r, actions: actions.filter(a => a.ruleId === r.id), _count: { executions: executionCount.get(r.id) ?? 0 } })));
+  }
   catch (e) { next(e); }
 });
 
 workflowsRouter.post("/rules", async (req: AuthRequest, res, next) => {
   try { const rule = await prisma.workflowRule.create({
-    data: { name: req.body.name, description: req.body.description || null, entity: req.body.entity, trigger: req.body.trigger, conditions: req.body.conditions || [], isActive: req.body.isActive ?? true, priority: req.body.priority || 0,
-      actions: req.body.actions ? { create: req.body.actions.map((a: { type: string; config: unknown; sortOrder: number }) => ({ type: a.type, config: a.config || {}, sortOrder: a.sortOrder || 0 })) } : undefined,
-    },
-    include: { actions: true },
+    data: { name: req.body.name, description: req.body.description || null, entity: req.body.entity, trigger: req.body.trigger, conditions: req.body.conditions || [], isActive: req.body.isActive ?? true, priority: req.body.priority || 0 },
   });
-    res.status(201).json(rule); }
+    const incoming: { type: string; config: unknown; sortOrder: number }[] = req.body.actions || [];
+    const actions = incoming.length
+      ? await prisma.$transaction(incoming.map(a => prisma.workflowRuleAction.create({ data: { ruleId: rule.id, type: a.type, config: (a.config ?? {}) as object, sortOrder: a.sortOrder || 0 } })))
+      : [];
+    res.status(201).json({ ...rule, actions }); }
   catch (e) { next(e); }
 });
 

@@ -7,6 +7,9 @@ import { notifyTicketStatusChange } from "./services/ticketNotifications";
 
 const emailService = new EmailService();
 
+/** Base URL used for portal links inside outbound email. */
+const WEB_ORIGIN = process.env.WEB_ORIGIN || "http://localhost:3010";
+
 /**
  * Background job runner for ticket and invoice automations.
  * In production this would use BullMQ with Redis.
@@ -74,14 +77,13 @@ async function processTicketFollowUps(): Promise<void> {
       if (hoursWaiting >= (ticket.followUpCount + 1) * 24) {
         const contactEmail = ticket.company?.email || ticket.company?.billingEmail;
         if (contactEmail) {
-          await emailService.sendTicketFollowUp({
-            to: contactEmail,
-            ticketNumber: ticket.ticketNumber,
-            ticketTitle: ticket.title,
-            ticketId: ticket.id,
-            daysWaiting: Math.floor(hoursWaiting / 24),
-            clientName: ticket.company?.name || "Client",
-          });
+          await emailService.sendTicketFollowUp(
+            contactEmail,
+            ticket.ticketNumber,
+            ticket.title,
+            Math.floor(hoursWaiting / 24),
+            `${WEB_ORIGIN}/tickets/${ticket.id}`,
+          );
 
           // Notify assigned tech
           if (ticket.assignedToId) {
@@ -187,14 +189,13 @@ async function processInvoiceReminders(): Promise<void> {
 
       // Send reminder every 7 days when overdue
       if (daysOverdue > 0 && daysOverdue % 7 === 0 && invoice.company?.email) {
-        await emailService.sendInvoiceReminder({
-          to: invoice.company.email,
-          invoiceNumber: invoice.invoiceNumber,
-          amount: invoice.total,
-          dueDate: invoice.dueDate,
+        await emailService.sendOverdueReminder(
+          invoice.company.email,
+          invoice.invoiceNumber,
+          invoice.total,
           daysOverdue,
-          clientName: invoice.company.name,
-        });
+          `${WEB_ORIGIN}/billing?invoice=${invoice.id}`,
+        );
       }
     }
   } catch (err) {

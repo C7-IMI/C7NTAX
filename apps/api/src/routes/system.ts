@@ -32,7 +32,12 @@ systemRouter.post("/failover/reset", async (_req: AuthRequest, res, next) => {
 
 // I18N / translations
 systemRouter.get("/locales", async (_req: AuthRequest, res, next) => {
-  try { res.json(await prisma.locale.findMany({ include: { _count: { select: { translations: true } } } })); }
+  try {
+    const locales = await prisma.locale.findMany();
+    const translationCounts = await prisma.translation.groupBy({ by: ["localeCode"], _count: { _all: true } });
+    const translationCount = new Map(translationCounts.map(c => [c.localeCode, c._count._all]));
+    res.json(locales.map(l => ({ ...l, _count: { translations: translationCount.get(l.code) ?? 0 } })));
+  }
   catch (e) { next(e); }
 });
 
@@ -62,7 +67,12 @@ systemRouter.get("/currencies", async (_req: AuthRequest, res, next) => {
 });
 
 systemRouter.get("/exchange-rates", async (_req: AuthRequest, res, next) => {
-  try { res.json(await prisma.exchangeRate.findMany({ include: { from: true, to: true } })); }
+  try {
+    const rates = await prisma.exchangeRate.findMany();
+    const currencies = await prisma.currency.findMany();
+    const currencyByCode = new Map(currencies.map(c => [c.code, c]));
+    res.json(rates.map(r => ({ ...r, from: currencyByCode.get(r.fromCurrency) ?? null, to: currencyByCode.get(r.toCurrency) ?? null })));
+  }
   catch (e) { next(e); }
 });
 

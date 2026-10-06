@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
@@ -13,6 +13,8 @@ export function KumoConfigsPage() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyFilter, setCompanyFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<any>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [templates, setTemplates] = useState([]);
@@ -49,7 +51,15 @@ export function KumoConfigsPage() {
     if (match && selected?.id !== match.id) setSelected(match);
   }, [selectId, configs]);
 
-  const filtered = companyFilter ? configs.filter(c => c.kumoAsset?.companyId === companyFilter) : configs;
+  const filtered = configs.filter(c => {
+    if (companyFilter && c.kumoAsset?.companyId !== companyFilter) return false;
+    if (search) {
+      const haystack = [c.kumoAsset?.name, c.hostname, c.fqdn, c.ipAddress, c.operatingSystem]
+        .filter(Boolean).join(" ").toLowerCase();
+      if (!haystack.includes(search.toLowerCase())) return false;
+    }
+    return true;
+  });
 
   // ── Right-click menu: Kumo Configurations ──
   const menu = useContextMenu();
@@ -116,8 +126,12 @@ export function KumoConfigsPage() {
   const sectionMenuEntries = (): MenuEntry[] => [
     { label: "Add server", icon: Plus, onSelect: () => setShowCreate(true) },
     { label: "Refresh list", icon: RotateCw, onSelect: () => fetch() },
+    { label: "Focus search", icon: Search, onSelect: () => searchRef.current?.focus() },
     "separator",
-    { label: "Clear client filter", icon: Eraser, disabled: !companyFilter, onSelect: () => setCompanyFilter("") },
+    {
+      label: "Clear filters", icon: Eraser, disabled: !companyFilter && !search,
+      onSelect: () => { setCompanyFilter(""); setSearch(""); },
+    },
     "separator",
     { label: "Export as CSV", icon: Download, hint: `${filtered.length} row${filtered.length === 1 ? "" : "s"}`, disabled: filtered.length === 0, onSelect: exportCsv },
     "separator",
@@ -145,7 +159,7 @@ export function KumoConfigsPage() {
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Server</button>
       </div>
       <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input className="input-field pl-9" placeholder="Search..." onChange={() => {}} /></div>
+        <div className="relative flex-1 max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input ref={searchRef} className="input-field pl-9" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} /></div>
         <select className="input-field text-sm py-1.5 w-auto" value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}>
           <option value="">All Clients</option>
           {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}

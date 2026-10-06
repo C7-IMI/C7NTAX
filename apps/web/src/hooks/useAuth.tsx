@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [landingPage]);
 
   const loginMfa = useCallback(async (mfaToken: string, code: string) => {
-    const res = await api.post("/auth/verify-mfa", { token: mfaToken, code });
+    const res = await api.post("/auth/mfa/verify", { mfaToken, code });
     localStorage.setItem("c7_token", res.data.token);
     setToken(res.data.token);
     setUser(res.data.user);

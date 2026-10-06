@@ -178,6 +178,18 @@ clientsRouter.delete("/:id", async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ── Get a client's service agreements (used by the ticket form) ──────
+clientsRouter.get("/:id/agreements", async (req: AuthRequest, res, next) => {
+  try {
+    const agreements = await prisma.serviceAgreement.findMany({
+      where: { companyId: req.params.id },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, billingPeriod: true, billingAmount: true, isActive: true },
+    });
+    res.json(agreements);
+  } catch (e) { next(e); }
+});
+
 // ── Get client contacts ──────────────────────────────────────────────
 clientsRouter.get("/:id/contacts", async (req: AuthRequest, res, next) => {
   try {

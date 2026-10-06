@@ -15,10 +15,12 @@ contractsRouter.get("/", requirePermission(Permission.BillingView), async (req: 
     if (companyId) where.companyId = companyId;
     if (type) where.type = type;
     const [data, total] = await Promise.all([
-      prisma.contract.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { endDate: "asc" }, include: { company: { select: { id: true, name: true } } } }),
+      prisma.contract.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { endDate: "asc" } }),
       prisma.contract.count({ where }),
     ]);
-    res.json({ data, total });
+    const companies = await prisma.company.findMany({ where: { id: { in: [...new Set(data.map(c => c.companyId))] } }, select: { id: true, name: true } });
+    const companyById = new Map(companies.map(c => [c.id, c]));
+    res.json({ data: data.map(c => ({ ...c, company: companyById.get(c.companyId) ?? null })), total });
   } catch (e) { next(e); }
 });
 

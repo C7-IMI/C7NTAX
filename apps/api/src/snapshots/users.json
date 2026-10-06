@@ -13,10 +13,10 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-06T09:41:04.853Z",
+    "lastLoginAt": "2026-10-06T10:00:32.815Z",
     "emailVerified": true,
     "mfaEnabled": false,
-    "mfaSecret": null,
+    "mfaSecret": "HQ7TS5KTHI3WGVDWJVPEI33FHI5EOVBQGA6D4MDMGEXS4M2HKRYQ",
     "mfaBackupCodes": [],
     "mfaEmailCode": null,
     "mfaEmailCodeExpires": null,
@@ -24,7 +24,7 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-10-06T09:41:04.856Z"
+    "updatedAt": "2026-10-06T10:00:32.818Z"
   },
   {
     "id": "3d9729a2-baa0-48bb-b536-3da8b08a7269",

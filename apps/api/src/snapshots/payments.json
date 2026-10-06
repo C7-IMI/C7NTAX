@@ -25,14 +25,5 @@
     "processedAt": "2026-08-22T03:41:24.339Z",
     "invoiceId": "994ba00f-417f-4c62-9647-8f707f73d154",
     "createdAt": "2026-08-22T03:41:24.342Z"
-  },
-  {
-    "id": "probe-payment-menu-0001",
-    "amount": 12.34,
-    "method": "check",
-    "reference": "PROBE-MENU",
-    "processedAt": "2026-10-06T04:39:39.686Z",
-    "invoiceId": "398b8098-a2a8-4734-be6e-9a9a587aa2f4",
-    "createdAt": "2026-10-06T04:39:39.686Z"
   }
 ]

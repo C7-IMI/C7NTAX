@@ -23,11 +23,32 @@ kbRouter.post("/", async (req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
+kbRouter.get("/categories", async (_req: AuthRequest, res, next) => {
+  try {
+    const categories = await prisma.kBCategory.findMany({ orderBy: { sortOrder: "asc" } });
+    res.json(categories.map(c => ({ ...c, children: categories.filter(x => x.parentId === c.id) })));
+  }
+  catch (e) { next(e); }
+});
+
+kbRouter.post("/categories", async (req: AuthRequest, res, next) => {
+  try { const c = await prisma.kBCategory.create({ data: { name: req.body.name, slug: req.body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), description: req.body.description || null, parentId: req.body.parentId || null, sortOrder: req.body.sortOrder || 0 } }); res.status(201).json(c); }
+  catch (e) { next(e); }
+});
+
 kbRouter.get("/:slug", async (req: AuthRequest, res, next) => {
-  try { const article = await prisma.knowledgeBaseArticle.findUnique({ where: { slug: req.params.slug }, include: { author: { select: { firstName: true, lastName: true } }, category: true, versions: { orderBy: { version: "desc" }, take: 5 }, linkedTickets: { include: { ticket: { select: { ticketNumber: true, title: true } } } } } });
+  try { const article = await prisma.knowledgeBaseArticle.findUnique({ where: { slug: req.params.slug } });
     if (!article) throw new AppError("Not found", 404);
+    const [author, category, versions, links] = await Promise.all([
+      prisma.user.findUnique({ where: { id: article.authorId }, select: { firstName: true, lastName: true } }),
+      article.categoryId ? prisma.kBCategory.findUnique({ where: { id: article.categoryId } }) : Promise.resolve(null),
+      prisma.kBArticleVersion.findMany({ where: { articleId: article.id }, orderBy: { version: "desc" }, take: 5 }),
+      prisma.kBArticleTicket.findMany({ where: { articleId: article.id } }),
+    ]);
+    const tickets = await prisma.ticket.findMany({ where: { id: { in: links.map(l => l.ticketId) } }, select: { id: true, ticketNumber: true, title: true } });
+    const ticketById = new Map(tickets.map(t => [t.id, t]));
     await prisma.knowledgeBaseArticle.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
-    res.json(article); }
+    res.json({ ...article, author, category, versions, linkedTickets: links.map(l => ({ ...l, ticket: ticketById.get(l.ticketId) ?? null })) }); }
   catch (e) { next(e); }
 });
 
@@ -38,16 +59,5 @@ kbRouter.patch("/:id", async (req: AuthRequest, res, next) => {
     if (content) { updates.content = content; const latest = await prisma.kBArticleVersion.findFirst({ where: { articleId: req.params.id }, orderBy: { version: "desc" } });
       await prisma.kBArticleVersion.create({ data: { articleId: req.params.id, version: (latest?.version || 0) + 1, content, changeNote: req.body.changeNote || null, authorId: req.user!.userId } }); }
     res.json(await prisma.knowledgeBaseArticle.update({ where: { id: req.params.id }, data: updates })); }
-  catch (e) { next(e); }
-});
-
-// Categories
-kbRouter.get("/categories", async (_req: AuthRequest, res, next) => {
-  try { res.json(await prisma.kBCategory.findMany({ orderBy: { sortOrder: "asc" }, include: { children: true } })); }
-  catch (e) { next(e); }
-});
-
-kbRouter.post("/categories", async (req: AuthRequest, res, next) => {
-  try { const c = await prisma.kBCategory.create({ data: { name: req.body.name, slug: req.body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), description: req.body.description || null, parentId: req.body.parentId || null, sortOrder: req.body.sortOrder || 0 } }); res.status(201).json(c); }
   catch (e) { next(e); }
 });

@@ -15,7 +15,7 @@ export function MFASetupPage() {
 
   const fetchMfaSetup = async () => {
     try {
-      const res = await api.post("/auth/setup-mfa");
+      const res = await api.post("/auth/mfa/setup");
       setQrCode(res.data.qrCode);
       setSecret(res.data.secret);
     } catch { toast.error("Failed to load MFA setup"); }
@@ -25,7 +25,7 @@ export function MFASetupPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post("/auth/verify-mfa-setup", { code });
+      await api.post("/auth/mfa/verify-setup", { code });
       toast.success("MFA enabled successfully");
     } catch { toast.error("Invalid code"); }
     finally { setLoading(false); }
