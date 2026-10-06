@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.019 | Last Updated: 2026-10-06
+## Version: 2026.10.6.020 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,13 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.020 — Kumo gets its own breadcrumb trail, and the global one goes back to normal
+- **[New]** **Kumo now has its own breadcrumb trail, with a back button**, shown at the top of the Kumo content area: *Kumo › Organizations › Acme Corporation › Server* on a client's asset type, *Kumo › Assets › SRV-DC-01* on an asset, *Kumo › Organizations › Acme Corporation › Passwords* on a client-scoped list, and the active filter where there is one (*Kumo › Documents › Stale*, *… › Domains & Certs › Certificates*). It appears on Kumo screens only and starts at *Kumo*, since the header already carries the app-level *Home*.
+- **[Update]** **The global header trail is back to how it was** — no back button, no Kumo-specific segments, built from the navigation tree alone, and shown everywhere as before. The two trails now do different jobs: the header one tells you where you are in the app, Kumo's tells you where you are in the client's documentation.
+- **[Fix]** One correction remains in the global trail, because it was plainly wrong: `buildBreadcrumbs` accepted the **first** navigation child whose path was a prefix of the URL, and a section's root (`/kumo`) is a prefix of every one of its children. Every Kumo sub-page therefore read "Dashboard", and the invoices list at `/billing` read "Finance Dashboard". The **deepest** match now wins. Reverting just that function restores the previous behaviour byte for byte if ever wanted.
+- **[Update]** Kumo screens that have nothing dynamic to add (the dashboard, Organizations, the Assets list) fall back to the navigation tree's trail, so all nine Kumo screens have a trail rather than only the six that register one.
+- **Verification:** walked live — the header trail renders on every section with **no** back button (`Home › Kumo › Passwords`, `Home › Tickets`, `Home › Billing › Invoices`, `Home › Clients › Client List`), while Kumo's trail renders on Kumo routes only (`Kumo › Dashboard`, `Kumo › Organizations`, `Kumo › Organizations › Acme Corporation`, `… › Locations`, `Kumo › Assets`, `Kumo › Organizations › Acme Corporation › Passwords`, `Kumo › Documents › Stale`) and is absent on `/tickets` and `/billing`. The back button was driven in sequence — list → client → type → back → client → back → list — returning one step at a time through history; it sits above the page title with no overlap (checked by geometry and hit-testing), and Kumo's trail carries no duplicated Home icon. Typecheck unchanged (web 26, api 178 pre-existing errors). Screenshots: `files/live-kumo-trail.png`, `files/live-kumo-trail-scoped.png`.
 
 ## 2026.10.6.019 — Breadcrumb trails for every Kumo screen, with a back button
 - **[New]** **The breadcrumb in the header now resolves for every Kumo screen and names what you are looking at.** Previously every Kumo sub-page collapsed to "Dashboard" — the trail matched the first navigation child whose path was a prefix of the URL, and `/kumo` (Dashboard) is a prefix of all of its siblings, so Passwords, Documents, Assets and the rest all read "Kumo › Dashboard". Matching now keeps the **deepest** match, which fixes every section, not just Kumo: the invoices list reads "Home › Billing › Invoices" instead of "Finance Dashboard".

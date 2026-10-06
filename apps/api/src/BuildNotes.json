@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.6.020",
+    "date": "2026-10-06",
+    "title": "Kumo gets its own breadcrumb trail, and the global one goes back to normal",
+    "changes": [
+      {
+        "text": "**Kumo now has its own breadcrumb trail, with a back button**, shown at the top of the Kumo content area: *Kumo › Organizations › Acme Corporation › Server* on a client's asset type, *Kumo › Assets › SRV-DC-01* on an asset, *Kumo › Organizations › Acme Corporation › Passwords* on a client-scoped list, and the active filter where there is one (*Kumo › Documents › Stale*, *… › Domains & Certs › Certificates*). It appears on Kumo screens only and starts at *Kumo*, since the header already carries the app-level *Home*.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The global header trail is back to how it was** — no back button, no Kumo-specific segments, built from the navigation tree alone, and shown everywhere as before. The two trails now do different jobs: the header one tells you where you are in the app, Kumo's tells you where you are in the client's documentation.",
+        "type": "Update"
+      },
+      {
+        "text": "One correction remains in the global trail, because it was plainly wrong: `buildBreadcrumbs` accepted the **first** navigation child whose path was a prefix of the URL, and a section's root (`/kumo`) is a prefix of every one of its children. Every Kumo sub-page therefore read \"Dashboard\", and the invoices list at `/billing` read \"Finance Dashboard\". The **deepest** match now wins. Reverting just that function restores the previous behaviour byte for byte if ever wanted.",
+        "type": "Fix"
+      },
+      {
+        "text": "Kumo screens that have nothing dynamic to add (the dashboard, Organizations, the Assets list) fall back to the navigation tree's trail, so all nine Kumo screens have a trail rather than only the six that register one.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.019",
     "date": "2026-10-06",
     "title": "Breadcrumb trails for every Kumo screen, with a back button",

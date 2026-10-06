@@ -15,7 +15,10 @@ export function KumoTrail({ segments }: { segments: TrailSegment[] }) {
   const navigate = useNavigate();
   const location = useLocation();
   const registered = useRegisteredTrail();
-  const trail = registered.length > 0 ? registered : segments;
+  const source = registered.length > 0 ? registered : segments;
+  // The header already carries the app-level "Home" crumb, so Kumo's trail
+  // starts at the module root instead of repeating it.
+  const trail = source.filter((seg, i) => !(i === 0 && seg.label.toLowerCase() === "home"));
 
   // Kumo only — never shown on another module's screens.
   const inKumo =
@@ -47,7 +50,7 @@ export function KumoTrail({ segments }: { segments: TrailSegment[] }) {
         {trail.map((seg, i) => {
           const isLast = i === trail.length - 1;
           const label =
-            i === 0 ? (
+            i === 0 && seg.label.toLowerCase() === "home" ? (
               <span className="flex items-center gap-1">
                 <Home size={12} />
                 {seg.label}

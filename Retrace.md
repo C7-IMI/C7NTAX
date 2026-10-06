@@ -2149,3 +2149,28 @@
 - No `Rendered fewer hooks than expected` or any other React error on any route — the hook-order risk in the organization screen was specifically checked.
 - `c7_ui_kumo_crumbs=0` → trail falls back to the navigation tree (`Home › Kumo › Organizations`); removing the flag restores the full trail. Documented in the rollback guide, including how to revert the shared component.
 - Typecheck unchanged (web 26, api 178 pre-existing), no errors in any changed file. Screenshots: `files/live-breadcrumb-scoped-list.png`, `files/live-breadcrumb-org-type.png`.
+
+### Prompt 174 — Kumo-only, then two trails: global restored and Kumo's own
+**Timestamp:** 2026-10-06 | **Status:** ✅ Implemented and verified | **Duration:** ~35 min
+**BuildNotes IDs:** 2026.10.6.020
+> Kumo-Only
+>
+> Keep the original global breadcrumb, but Kumo needs it's own
+
+Two messages, one destination: the trail I had moved into the global header was wrong for the job. First the scope was narrowed to Kumo, then — better — the global trail was restored to its original self and Kumo was given a trail of its own.
+
+**What was done**
+- `apps/web/src/components/Breadcrumbs.tsx` — the global component is back to its original rendering: built from the navigation tree, every segment a link, no back button, and it no longer consumes page-supplied segments. The trail context, `useBreadcrumbTrail`, `useRegisteredTrail`, `kumoTrail` / `kumoClientTrail` and the new `TrailSegment` type (a segment without a link, for the current page) live alongside it for Kumo's bar to use. The `BreadcrumbSegment` contract is untouched.
+- `apps/web/src/components/KumoTrail.tsx` (new) — Kumo's own trail, rendered at the top of `<main>` and gated to Kumo routes: `/kumo`, `/kumo/*` and `/section/kumo`. It carries the back button (history when there is history, nearest parent otherwise), drops the leading *Home* crumb because the header already has it, and marks the current page with `aria-current="page"`.
+- `apps/web/src/components/Layout.tsx` — keeps the provider, renders `<KumoTrail segments={buildBreadcrumbs(NAV_TREE, location.pathname)} />` as the first child of `<main>`, and returns the header to the original `<Breadcrumbs />`.
+- The six Kumo screens that register dynamic segments needed **no changes** — they already call `useBreadcrumbTrail`, and the trail bar reads the same context. Screens that register nothing (dashboard, Organizations, Assets) fall back to the navigation tree.
+
+**Only remaining deviation from "original"**
+- `buildBreadcrumbs` keeps the deepest-match correction. Without it the header claims "Kumo › Dashboard" on every Kumo sub-page and "Finance Dashboard" on the invoices list, which is a bug rather than a design. It is called out in the rollback guide as a one-function revert if the exact previous behaviour is wanted.
+
+**Verification (live)**
+- Header trail on every section, never with a back button: `Home › Kumo › Dashboard`, `Home › Kumo › Organizations`, `Home › Kumo › Assets`, `Home › Kumo › Passwords`, `Home › Tickets`, `Home › Billing › Invoices`, `Home › Clients › Client List`.
+- Kumo trail on Kumo routes only: `Kumo › Dashboard`, `Kumo › Organizations`, `Kumo › Organizations › Acme Corporation`, `… › Locations`, `Kumo › Assets`, `Kumo › Organizations › Acme Corporation › Passwords`, `Kumo › Documents › Stale`; absent on `/tickets` and `/billing`.
+- Back button driven in sequence through the client screen: list → client → type → back → client → back → list.
+- Placed and hit-tested by geometry: the bar sits inside the scroll container below the header (header bottom 91px, main top 136px, trail top 160px) with `elementFromPoint` resolving to the button itself, so nothing overlaps it. The trail's SVG set is one arrow plus chevrons — no duplicated Home icon.
+- Typecheck unchanged (web 26, api 178 pre-existing), no errors in any changed file. Rollback guide rewritten for the two-trail design, including how to revert the global function, the Kumo bar, and the provider/hook plumbing separately.
