@@ -126,15 +126,6 @@
     "viewedAt": "2026-08-12T06:00:51.147Z"
   },
   {
-    "id": "3753e0a7-10dc-4ca4-bc41-a9dd48f0095a",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "asset",
-    "entityId": "a5a9fd5d-36ea-481b-8d0c-d9efa1f38826",
-    "entityName": "FW-PRIMARY",
-    "entityIcon": "monitor",
-    "viewedAt": "2026-08-19T17:16:28.888Z"
-  },
-  {
     "id": "f0ea577b-751d-415f-af92-43136bc5673d",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "asset",
@@ -196,5 +187,14 @@
     "entityName": "Acme Domain Admin",
     "entityIcon": "key",
     "viewedAt": "2026-10-06T07:42:15.034Z"
+  },
+  {
+    "id": "3753e0a7-10dc-4ca4-bc41-a9dd48f0095a",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "a5a9fd5d-36ea-481b-8d0c-d9efa1f38826",
+    "entityName": "FW-PRIMARY",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-06T07:45:33.586Z"
   }
 ]
