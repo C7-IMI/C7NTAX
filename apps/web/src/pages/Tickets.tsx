@@ -900,8 +900,9 @@ export function TicketDetailPage() {
   const [editForm, setEditForm] = useState<Record<string,string>>({});
   const [saving, setSaving] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const [noteInternal, setNoteInternal] = useState(false);
   const [posting, setPosting] = useState(false);
-  const noteInputRef = useRef<HTMLInputElement>(null);
+  const noteInputRef = useRef<HTMLTextAreaElement>(null);
     const [focusNoteRequested, setFocusNoteRequested] = useState(false);
   const [showTimeEntry, setShowTimeEntry] = useState(false);
   const [timeForm, setTimeForm] = useState({
@@ -1043,10 +1044,27 @@ export function TicketDetailPage() {
     if(e)e.preventDefault();
     if(!noteText.trim())return;
     setPosting(true);
-    try{await api.post(`/tickets/${id}/comments`,{body:noteText});setNoteText("");load();toast.success("Posted");}
+    const internal = noteInternal;
+    try{await api.post(`/tickets/${id}/comments`,{body:noteText, isInternal:internal});setNoteText("");setNoteInternal(false);load();toast.success(internal?"Internal note posted":"Note posted");}
     catch{toast.error("Failed");}
     finally{setPosting(false);}
   };
+
+  // Notes keep correspondence and hand-written context; Activity keeps logged time and the
+  // automatic field-change records, merged newest-first.
+  const ticketComments = ((ticket?.comments as any[]) || []);
+  const ticketTimeEntries = ((ticket?.timeEntries as any[]) || []);
+  const noteEntries = ticketComments.filter((c: any) => !isSystemActivity(c.body ?? c.content));
+  const activityEntries: any[] = [
+    ...ticketComments.filter((c: any) => isSystemActivity(c.body ?? c.content)).map((c: any) => ({
+      id: c.id, kind: "change", body: c.body ?? c.content, at: c.createdAt,
+      userName: (c.author?.firstName || c.author?.lastName) ? `${c.author.firstName||""} ${c.author.lastName||""}`.trim() : (c.fromEmail || "System"),
+    })),
+    ...ticketTimeEntries.map((te: any) => ({
+      ...te, kind: "time", at: te.date || te.createdAt,
+      userName: (te.user?.firstName || te.user?.lastName) ? `${te.user.firstName||""} ${te.user.lastName||""}`.trim() : "System",
+    })),
+  ].sort((a, b) => (Date.parse(b.at) || 0) - (Date.parse(a.at) || 0));
 
   const timeMinutes = () => {
     if (!timeForm.startTime || !timeForm.endTime) return 0;
@@ -1464,27 +1482,68 @@ export function TicketDetailPage() {
             </div>
           </div>
 
-          {/* Notes & Activity */}
+          {/* Notes */}
           <div className="card space-y-3">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Notes & Activity</h3>
-            <form onSubmit={handlePostNote} className="flex gap-2">
-              <input ref={noteInputRef} className="input-field flex-1 text-sm" placeholder="Add a note... (Enter to submit)" value={noteText} onChange={e=>setNoteText(e.target.value)} />
-              <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Post"}</button>
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Notes</h3>
+            <form onSubmit={handlePostNote} className="space-y-2">
+              <textarea
+                ref={noteInputRef}
+                rows={4}
+                className="input-field w-full text-sm resize-y min-h-[6.5rem]"
+                placeholder={noteInternal ? "Add an internal note... (Ctrl+Enter to submit)" : "Add a note for the customer... (Ctrl+Enter to submit)"}
+                value={noteText}
+                onChange={e=>setNoteText(e.target.value)}
+                onKeyDown={e=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaKey)) handlePostNote(e); }}
+              />
+              <div className="flex items-center justify-between gap-3">
+                <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
+                  <input type="checkbox" checked={noteInternal} onChange={e=>setNoteInternal(e.target.checked)} />
+                  Internal
+                  <span className="text-gray-600">{noteInternal ? "· not emailed to the customer" : "· emailed to the ticket contact"}</span>
+                </label>
+                <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Post"}</button>
+              </div>
             </form>
-            <button onClick={openTimeEntryModal} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>
             <div className="space-y-3">
-              {(ticket.comments as Array<Record<string,unknown>>)?.map((c:any,i:number)=>(
+              {noteEntries.length === 0 && <p className="text-xs text-gray-600">No notes yet.</p>}
+              {noteEntries.map((c:any,i:number)=>(
                 <div key={c.id||i} className="flex gap-2 text-xs">
                   <span className={`badge shrink-0 mt-0.5 ${c.isEmail?"bg-purple-600/20 text-purple-400":c.isInternal?"bg-amber-600/20 text-amber-400":"bg-blue-600/20 text-blue-400"}`}>{c.isEmail?"Email":c.isInternal?"Internal":"Note"}</span>
                   <div className="min-w-0"><p className="text-gray-300 whitespace-pre-wrap">{friendlyActivityBody(c.body||c.content)}</p><p className="text-gray-600 mt-0.5">{(c.author?.firstName||c.author?.lastName) ? `${c.author.firstName||""} ${c.author.lastName||""}`.trim() : (c.fromEmail||"System")} · {c.createdAt?new Date(c.createdAt).toLocaleString():""}</p></div>
                 </div>
-              ))||null}
-              {(ticket.timeEntries as Array<Record<string,unknown>>)?.map((te:any,i:number)=>(
-                <div key={te.id||i} className="flex gap-2 text-xs">
-                  <span className="badge bg-green-600/20 text-green-400 shrink-0 mt-0.5">Time</span>
-                  <div className="min-w-0"><p className="text-gray-300">{te.description}{te.minutes ? ` (${Math.floor(te.minutes/60)}h ${te.minutes%60}m)` : ""} · {timeBillingLabel(te)}</p>{timeEntryMeta(te) && <p className="text-gray-500 mt-0.5">{timeEntryMeta(te)}</p>}<p className="text-gray-600 mt-0.5">{(te.user?.firstName||te.user?.lastName) ? `${te.user.firstName||""} ${te.user.lastName||""}`.trim() : "System"} · {(te.date||te.createdAt)?new Date((te.date||te.createdAt) as string).toLocaleString():""}</p></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Activity */}
+          <div className="card space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Activity</h3>
+              <button onClick={openTimeEntryModal} className="btn-secondary text-xs flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>
+            </div>
+            <div className="space-y-3">
+              {activityEntries.length === 0 && <p className="text-xs text-gray-600">No activity recorded yet.</p>}
+              {activityEntries.map((entry:any,i:number)=>(
+                <div key={entry.id||i} className="flex gap-2 text-xs">
+                  {entry.kind === "time" ? (
+                    <span className="badge bg-green-600/20 text-green-400 shrink-0 mt-0.5">Time</span>
+                  ) : (
+                    <span className="badge bg-slate-600/20 text-slate-300 shrink-0 mt-0.5">Change</span>
+                  )}
+                  {entry.kind === "time" ? (
+                    <div className="min-w-0">
+                      <p className="text-gray-300">{entry.description}{entry.minutes ? ` (${Math.floor(entry.minutes/60)}h ${entry.minutes%60}m)` : ""} · {timeBillingLabel(entry)}</p>
+                      {timeEntryMeta(entry) && <p className="text-gray-500 mt-0.5">{timeEntryMeta(entry)}</p>}
+                      <p className="text-gray-600 mt-0.5">{entry.userName} · {entry.at ? new Date(entry.at).toLocaleString() : ""}</p>
+                    </div>
+                  ) : (
+                    <div className="min-w-0">
+                      <p className="text-gray-300 whitespace-pre-wrap">{friendlyActivityBody(entry.body)}</p>
+                      <p className="text-gray-600 mt-0.5">{entry.userName} · {entry.at ? new Date(entry.at).toLocaleString() : ""}</p>
+                    </div>
+                  )}
                 </div>
-              ))||null}
+              ))}
             </div>
           </div>
         </div>

@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.6.027",
+    "date": "2026-10-06",
+    "title": "Notes and Activity are separate cards, with an Internal switch on the note box",
+    "changes": [
+      {
+        "text": "**The ticket detail's \"Notes & Activity\" card is now two cards.** **Notes** holds the composer and the note stream; **Activity** holds logged time and the automatic field-change records that used to be buried in the same list. Both sit in the same column with the usual 20px gap, and the split is presentational only — the dedicated **Activities** tab still shows the complete merged timeline.",
+        "type": "Update"
+      },
+      {
+        "text": "**The note box is a proper multi-line composer.** It was a one-line input sized to the card; it is now a four-row textarea (≈104px tall) that spans the full card width, so a paragraph is visible while it is written. Enter inserts a newline and **Ctrl+Enter (⌘+Enter) posts** — the placeholder says which, and the Post button still works.",
+        "type": "Update"
+      },
+      {
+        "text": "**An Internal checkbox decides whether a note is customer-facing.** Unchecked (the default) posts a customer-facing note that carries the blue *Note* badge and goes to the ticket contact through the existing notification path; checked, it posts an internal note with the amber *Internal* badge that is never emailed. The label states which it is at that moment (\"· emailed to the ticket contact\" / \"· not emailed to the customer\"), the placeholder switches between \"Add a note for the customer…\" and \"Add an internal note…\", and the box clears and resets to customer-facing after posting.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"Add Time Entry\" no longer looks like part of Notes.** The red text link that sat directly under the compose row is gone from there; the Activity card now carries it as a secondary button in its own header, next to the heading.",
+        "type": "Update"
+      },
+      {
+        "text": "**Field changes are labelled as changes.** The automatic records the API writes on every edit (\"Priority: High → Medium\") now appear in Activity under a *Change* badge rather than being mixed in with correspondence. They are recognised by the generated `Label: old → new` shape and the auto-close sentence, because `TicketComment` has no system flag to filter on; anything a technician typed stays in Notes.",
+        "type": "Fix"
+      },
+      {
+        "text": "Neither card shows an empty shell: Notes reads \"No notes yet.\" and Activity \"No activity recorded yet.\"",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.026",
     "date": "2026-10-06",
     "title": "Fourteen API endpoints that never worked, and a codebase bug sweep",

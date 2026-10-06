@@ -2376,3 +2376,27 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Verified against the remote: `HEAD` and `origin/main` are both `199cb30` ("fix(api): repair fourteen endpoints that returned 500 on every call"), 0 commits ahead and 0 behind.
 - Working tree clean — 0 modified, 0 untracked, 0 stashes — so there was nothing left to push. The pre-commit hook had already pushed the sweep commit, and the remote tip is the sweep commit itself.
 - This entry is the only change this prompt produced: logging it keeps the Retrace prompt count continuous. No code, data or snapshot files were touched.
+---
+
+### Prompt 184 — Split Notes and Activity into their own cards, with an Internal switch on the note box
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~1 h
+**BuildNotes IDs:** 2026.10.6.027 - Notes and Activity are separate cards, with an Internal switch on the note box
+> I need to separate Notes & Activity into their own cards. I want to remove the Add Time Entry look from underneath Notes.
+> I want the Note entry box to be a bit bigger.
+> I need to an option to pick whether the Note entry is internal or if it will be customer facing. Perhaps just a checkbox that says Internal.
+
+**What the single card did before**
+- One card titled "Notes & Activity" held a one-line note input, a red "Add Time Entry" text link, and one list that merged comments (Email/Internal/Note) with time entries (Time) in that order.
+
+**What changed**
+- **Two cards.** *Notes* keeps the composer and the note stream; *Activity* keeps logged time plus the automatic field-change records. Both are in the same column with the existing 20px `space-y-5` gap. The split is presentational only — the **Activities** tab still renders the complete merged timeline, and the printable "Recent Activity" block is untouched.
+- **Bigger box.** The `<input>` became a four-row `<textarea>` that spans the card: 104px tall instead of a single line. Enter inserts a newline and **Ctrl/Cmd+Enter posts** (the handler checks the modifier, the placeholder says so, and the Post button still submits). The `noteInputRef` type moved to `HTMLTextAreaElement`, which keeps the toolbar's Add Note button and the `?action=note` deep link focusing the composer.
+- **Internal checkbox.** Sits in the composer footer next to Post. Unchecked (default) posts customer-facing: blue *Note* badge and the existing notification path emails the ticket contact. Checked, it posts `isInternal: true`: amber *Internal* badge, no email. The hint text and placeholder both flip with the state, and posting clears the text and resets the checkbox to customer-facing.
+- **Add Time Entry moved.** The red link under the compose row is gone; the Activity card header carries a secondary *Add Time Entry* button instead, so the control lives with the time entries it creates.
+- **Classifying the entries.** `TicketComment` has no system flag, so a comment is treated as activity when every line of its body matches the `Label: old → new` shape the ticket PATCH handler generates (the only producer of those records), plus the auto-close worker's fixed sentence. Anything a person typed — including emails ingested from the mailbox — stays in Notes. Both branches have an explicit empty state instead of rendering nothing.
+
+**Verification (live)**
+- Ticket `e28544bc` (the one open in the browser): Notes card `[Note, Note]` with composer and checkbox, Activity card `[Change, Time, Time]` with the *Add Time Entry* button — i.e. the "Priority: High → Medium" record moved from the note list into Activity and the two real notes stayed put. Textarea 104px tall, 4 rows, full card width; the two cards measured 20px apart; Post right-aligned in the composer footer.
+- Typing "PROBE line one" + Enter + "PROBE line two" left a single entry containing a newline and posted nothing. Ticking Internal flipped the placeholder to "Add an internal note…" and the hint to "· not emailed to the customer"; Ctrl+Enter then posted with the toast "Internal note posted", the amber *Internal* badge, a cleared box and an unchecked box. Using the Post button unchecked produced the blue *Note* badge and "Note posted".
+- Both probe notes were confirmed in the database as `isInternal=true` and `isInternal=false`, then deleted along with their two audit rows — the ticket is back to its three original comments and the snapshots were re-captured to match.
+- Web typecheck: 0 errors (unchanged). No API, schema or data change, so the whole thing reverts with one `git revert`.
