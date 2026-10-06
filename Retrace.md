@@ -2448,3 +2448,36 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Verification (live)**
 - Ticket `e28544bc`, measured before and after: gap 24px → 11px with no overlap of the box; row 36px, button 0–36px, checkbox at 12px in both runs; textarea 104px. The card still renders its two notes (`Note`, `Note`) and the Activity card its three entries (`Change`, `Time`, `Time`), and the same 11px holds with the Internal box ticked. Web typecheck: 0 errors.
 - Two utility classes on one element, so the whole thing reverts with one `git revert`.
+---
+
+### Prompt 188 — Rich text Email Contact dialog, with attachments that also join the ticket
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live end to end | **Duration:** ~2 h
+**BuildNotes IDs:** 2026.10.6.031 - The Email Contact dialog is a real compose window, and attachments land on the ticket
+> I want the make the e-mail contact dialog a rich text editor. Use Outlook Web Access, GMail, etc for design references as well as features and functionality.
+>
+>
+> Also for things like file attachments. If I attach a file in the e-mail, it should also be added to the attachments tab, etc.
+
+**Design references, and what was taken from them**
+- OWA/Gmail shape: formatting toolbar over a large writing area, recipient chip at the top, attachments as chips with size and a remove button, drag-and-drop and paste-to-attach, shortcuts on hover, Ctrl+Enter to send, and a plain-text alternative for clients that refuse HTML.
+- Built without a new dependency: the editor is a `contenteditable` surface driven by `document.execCommand`, with `document.queryCommandState` keeping the toolbar honest, and a small inline popover for links (normalising a bare host to `https://`). The repo already ships a heavy bundle; adding TipTap/Quill for a mail composer was not worth it.
+
+**Where it went**
+- `apps/web/src/components/RichTextEditor.tsx` (new): toolbar, link popover, attachment chips, paste sanitising, drag-and-drop, Ctrl+K links, Ctrl+Enter send, `toAttachmentDraft()` reader with the 5 MB rule.
+- `apps/api/src/services/emailHtml.ts` (new): the outbound allowlist sanitiser and `htmlToText`. Moved out of the route so it can be tested on its own — which is how the 16-payload check was run.
+- `apps/api/src/routes/tickets/index.ts`: the email route now accepts `html` and an `attachments` array, validates every file *before* sending, sanitises the HTML, sends multipart (HTML + text) with MIME attachment parts, records the activity comment, then stores the files. `prepareAttachment()` and `storeAttachments()` are shared with the standalone Attach File route so size, filename and base64 rules live in one place; `storeAttachments` unlinks anything it wrote if a later step fails.
+- `apps/web/src/pages/Tickets.tsx`: dialog rebuilt (recipient chip, editor, chips, footer hint), attachment state, toasts that name the count, and an API error message that reads the error object instead of printing it.
+- `packages/email/src/EmailService.ts`: optional `text` on `send()` for the multipart alternative.
+
+**What was actually broken along the way**
+- **The global `t` shortcut hijacked the editor.** The key handler in `App.tsx` skipped only `INPUT`/`TEXTAREA`/`SELECT`, so a `contenteditable` surface counted as page background: typing a word containing a "t" in the composer navigated to the ticket list mid-sentence. Found by instrumenting `history.pushState` and reading the captured stack (`onKey` at `App.tsx:80`). Now editable targets and modifier combinations are ignored.
+- **A failed SMTP send produced a bare 500** and, before this change, nothing said which service was missing. It now returns 502 naming the System Settings location, and the send is ordered so a failure records no activity entry, no attachment row and no file on disk.
+
+**Verification (live)**
+- Stood up a throwaway SMTP sink on `localhost:587` (the API's configured host) and captured what actually left: `multipart/mixed` → `multipart/alternative` → `text/plain` + `text/html` → attachment parts; the decoded HTML kept `<ul><li>` structure and the link, and the two base64 payloads decoded back to the exact probe files.
+- Database: the email comment carried `isEmail: true` with **2 linked `TicketAttachment` rows** and both files on disk. Attachments tab rendered `screenshot.png 89 B · image/png` and `diagnostics.txt 67 B · text/plain`; Notes showed the entry under an **Email** badge, so it also reads as activity.
+- Sanitiser unit checks (16 payloads) reported zero dangerous output: script/iframe/svg/form dropped with content, `onerror`/`onload` stripped, `javascript:` href removed, `position:fixed` style discarded while `color:red` survived, unknown tags unwrapped with text kept, unbalanced tags auto-closed.
+- The same hostile payload pushed through **the real endpoint**: the captured HTML contained no `<script>`, no `on*` handler, no `iframe` and no `javascript:` URL. 6 MB attachment → 413. With the sink stopped → 502, and the database counts proved nothing was written.
+- Two testing gotchas worth remembering: the sink had to advertise `PIPELINING` before nodemailer would complete a DATA transaction against it, and `document.querySelector('form button[type=submit]')` matched the Notes composer's *Add Note* button rather than the dialog's *Send Email*.
+- Typecheck: web 0, api 156 (baseline) — unchanged. Design-token lint unchanged.
+- Cleanup: three probe comments, three attachment rows, their files, two audit rows and every temp file removed; snapshots re-captured so they match. Nothing was ever relayed off the machine — the sink only wrote to a temp file.

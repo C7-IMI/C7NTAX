@@ -11,6 +11,7 @@ import { EmailService } from "@C7NTAX/email";
 import { notifyTicketContact, notifyTicketStatusChange } from "../../services/ticketNotifications";
 import { v4 as uuid } from "uuid";
 import { sanitizeEmailHtml, htmlToText } from "../../services/emailHtml";
+import { logger } from "../../services/logger";
 
 export const ticketsRouter = Router();
 ticketsRouter.use(authenticate);
@@ -358,13 +359,21 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
       : `<p>${escapeHtml(plainBody).replace(/\r?\n/g, "<br>")}</p>`;
     const messageText = plainBody || htmlToText(messageHtml);
 
-    await emailService.send({
-      to: recipient,
-      subject: `[${ticket.ticketNumber}] ${subject}`,
-      html: `${messageHtml}<hr><p>Ticket: ${escapeHtml(ticket.ticketNumber)} — ${escapeHtml(ticket.title)}<br>Client: ${escapeHtml(ticket.company?.name || "")}</p>`,
-      text: `${messageText}\n\n---\nTicket: ${ticket.ticketNumber} — ${ticket.title}\nClient: ${ticket.company?.name || ""}`,
-      ...(files.length ? { attachments: files.map((f: PreparedAttachment) => ({ filename: f.filename, content: f.buffer, contentType: f.mimeType })) } : {}),
-    });
+    let sent;
+    try {
+      sent = await emailService.send({
+        to: recipient,
+        subject: `[${ticket.ticketNumber}] ${subject}`,
+        html: `${messageHtml}<hr><p>Ticket: ${escapeHtml(ticket.ticketNumber)} — ${escapeHtml(ticket.title)}<br>Client: ${escapeHtml(ticket.company?.name || "")}</p>`,
+        text: `${messageText}\n\n---\nTicket: ${ticket.ticketNumber} — ${ticket.title}\nClient: ${ticket.company?.name || ""}`,
+        ...(files.length ? { attachments: files.map((f: PreparedAttachment) => ({ filename: f.filename, content: f.buffer, contentType: f.mimeType })) } : {}),
+      });
+    } catch (sendError) {
+      // Nothing is recorded when the mail cannot leave: no phantom "sent" entry, no orphan files.
+      logger.error("ticket.email", sendError instanceof Error ? sendError : new Error(String(sendError)));
+      throw new AppError("The email could not be sent — check the SMTP configuration under Administration → System Settings", 502);
+    }
+    if (!sent) throw new AppError("The email could not be sent", 502);
 
     // Sent mail is recorded in activity; the files that went with it also join the attachments tab.
     const comment = await prisma.ticketComment.create({

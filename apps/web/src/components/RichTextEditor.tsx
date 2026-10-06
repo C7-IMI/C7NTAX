@@ -260,6 +260,7 @@ export function RichTextEditor({
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || attaching}
             title="Attach files"
+            aria-label="Attach files"
             className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-surface-lighter hover:text-white disabled:opacity-40"
           >
             {attaching ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />}

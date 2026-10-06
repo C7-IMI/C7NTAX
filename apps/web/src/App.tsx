@@ -60,8 +60,11 @@ function ProtectedRoutes() {
   // Backlog item 12 — global keyboard shortcuts (skip when typing in a field).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      // Never hijack typing: inputs, selects and rich-text editors (contenteditable) are all fields.
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target?.isContentEditable) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === "t" || e.key === "T") navigate("/tickets");
     };
     window.addEventListener("keydown", onKey);

@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.6.031",
+    "date": "2026-10-06",
+    "title": "The Email Contact dialog is a real compose window, and attachments land on the ticket",
+    "changes": [
+      {
+        "text": "**The Email Contact dialog is now a rich text composer** in the shape people know from Outlook on the web and Gmail: a formatting toolbar over a large writing area, with **bold, italic, underline, strikethrough, bulleted and numbered lists, blockquote, insert/remove link, clear formatting, undo and redo**, each button showing its shortcut on hover and its active state as you move the caret. Links get a small inline popover instead of a browser prompt — type `example.com/x` and it is normalised to `https://`, or select text first to turn the selection into a link, and *Remove link* unwraps it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Attachments work like a mail client.** Paperclip button, drag-and-drop onto the message, or paste a file from the clipboard; each file appears as a chip with an icon, its size and a remove button. Files over **5 MB** are refused with a toast (the same limit the API enforces), and the message cannot be sent until there is a subject and a body.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A file attached to the email also joins the ticket's Attachments tab.** The API writes the same `TicketAttachment` row it would for the Attach File dialog — linked to the ticket *and* to the email comment — so it shows up in the Attachments tab, downloads normally, and appears as a real MIME part on the message that goes out. The email comment in Notes lists what was attached.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Outbound HTML is rewritten to a safe subset** by a new `apps/api/src/services/emailHtml.ts`: `script`, `style`, `iframe`, `svg`, `form` and friends are dropped with their content, unknown tags are unwrapped while keeping their text, `on*` handlers and `javascript:`/`data:` URLs are removed, and inline styles are filtered to a safe property list (`color`, `font-size`, alignment…). Messages now go out as **multipart/alternative** — the rich HTML plus a plain-text rendering — so clients that block HTML still see the message. The composer panel says so, and that the formatting is sanitised.",
+        "type": "Update"
+      },
+      {
+        "text": "**A failed send no longer leaves a trace, and says why.** If the mailer cannot reach SMTP the request now returns 502 with \"The email could not be sent — check the SMTP configuration under Administration → System Settings\", and **nothing is recorded** — no phantom *Email* entry in activity and no orphan attachment rows or files on disk. The dialog surfaces the API's message instead of printing an object.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The global `t` shortcut no longer hijacks typing in a rich text editor.** The handler only skipped `INPUT`, `TEXTAREA` and `SELECT`, so any `contenteditable` area counted as page background — typing a \"t\" in the composer jumped straight to the ticket list. Editable targets (`isContentEditable`) are now skipped, as are modifier combinations.",
+        "type": "Fix"
+      },
+      {
+        "text": "The recipient row reads as a chip with the contact's name and address (\"replies return to the shared mailbox\"), and the footer keeps the existing note that the sent email is recorded in activity. The standalone Attach File dialog and its route are unchanged; the two now share one validated storage helper (`prepareAttachment` + `storeAttachments`), so the size, filename and encoding rules cannot drift apart.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.030",
     "date": "2026-10-06",
     "title": "The note status sits closer to the entry box",

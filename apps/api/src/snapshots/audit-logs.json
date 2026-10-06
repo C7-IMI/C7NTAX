@@ -2362,5 +2362,33 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T17:57:10.204Z"
+  },
+  {
+    "id": "1ca77f38-56f7-46d4-8966-6118c55ca28a",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "changes": {
+      "body": "Hi Alice,\nTrace summary attached, findings in the bullets below.\nRules reviewed\nTraining booked",
+      "html": "Hi Alice,<div>Trace summary attached, findings in the bullets below.</div><div><ul><li>Rules reviewed</li><li>Training booked</li></ul></div>",
+      "subject": "Re: NOC-1902 — Phishing alert: suspicious email circulating",
+      "attachments": [
+        {
+          "size": 67,
+          "filename": "diagnostics.txt",
+          "mimeType": "text/plain",
+          "contentBase64": "QzdOVEFYIGVtYWlsIGF0dGFjaG1lbnQgcHJvYmUgLSB0ZXh0IGZpbGUuCkxpbmUgdHdvIG9mIHRoZSBwcm9iZS4NCg=="
+        },
+        {
+          "size": 89,
+          "filename": "screenshot.png",
+          "mimeType": "image/png",
+          "contentBase64": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII="
+        }
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T18:47:27.980Z"
   }
 ]

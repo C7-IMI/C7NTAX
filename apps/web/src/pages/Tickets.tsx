@@ -1167,7 +1167,8 @@ export function TicketDetailPage() {
       setEmailAttachments([]);
       load();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Could not send email");
+      const apiError = error?.response?.data?.error;
+      toast.error(typeof apiError === "string" ? apiError : apiError?.message || "Could not send email");
     } finally {
       setSendingEmail(false);
     }
