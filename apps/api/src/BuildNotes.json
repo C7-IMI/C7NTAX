@@ -1,5 +1,48 @@
 [
   {
+    "version": "2026.10.6.024",
+    "date": "2026-10-06",
+    "title": "Right-click menus for Client List, Contacts, Manage Users, Manage Roles and Calendar",
+    "changes": [
+      {
+        "text": "**Five more sections now answer a right-click with a C7NTAX menu instead of the browser's** — Client List, Contacts, Manage Users, Manage Roles and Calendar — each with an item menu and a section menu, on the same surface, with the same keyboard handling and the same switch as Tickets (Administration → System Settings → General → *Application right-click menus*).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Client List** — a row offers open, open in new tab or a new window, new ticket, the client's tickets, the client's contacts, the primary contact's record, and a **Kumo** submenu (organization, passwords, configurations, documents, each scoped to that client). It can narrow the list to the row's own type, and copy the name, email or phone.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Contacts** — show details, edit (opens the same form the Edit button does), create ticket, open the client or the client's tickets, filter the list to that company, *Make primary contact*, deactivate or reactivate, and copy.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Manage Users** — details, edit, jump straight to the Permissions or Security tab, activate or deactivate, lock or unlock the account, *Reset MFA* (which asks first), and copy the email or name.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Manage Roles** — show permissions, edit, manage members, copy the role name or its full permission list, and *Delete role…*, which is disabled with \"reassign users first\" while the role still has users.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Calendar** — right-click a day for *Add event on this date…* (the dialog opens prefilled for 9–10am on that day), show or clear that date's events, month navigation and today. Right-click an event for its linked ticket, its date's events, and copying the title or the whole detail block.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Every section menu ends with the same pair** — *Open this view in new tab* and *Open this view in new window*, current filters included — and each list screen can export exactly what is on screen as CSV (Clients, Contacts, Users and Roles).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Actions that would do nothing are disabled and say why**: *Reset MFA* when the user has no authenticator enrolled, *Delete role…* while users are assigned, *Make primary contact* for a contact who already is one, *Clear filters* when nothing is filtered. Labels follow the item's state, so *Lock account* becomes *Unlock account* and *Deactivate* becomes *Activate* as soon as it changes.",
+        "type": "Update"
+      },
+      {
+        "text": "The pieces every menu shares now live in `apps/web/src/lib/menuActions.ts` (open in tab/window, copy with its toast, the view pair), and Tickets uses them too, so the six sections cannot drift apart.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.023",
     "date": "2026-10-06",
     "title": "An application right-click menu in Tickets, with a switch in System Settings",

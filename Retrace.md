@@ -2275,3 +2275,29 @@ Three things were **rejected** rather than mocked because the app has no such ca
 - Also re-verified after the gating change: focus-return, Escape, Shift+F10, submenus, the text-field bypass and the CSV export.
 - Restored the `app_settings` config row to its pre-test state (`value: null`) afterwards, and deleted the throwaway tickets.
 - Typecheck unchanged (web 26, api 178 pre-existing, none in the new files); design-token lint unchanged (117 legacy hex, none new).
+
+### Prompt 180 - Right-click menus for Client List, Contacts, Manage Users, Manage Roles and Calendar
+**Timestamp:** 2026-10-06 | **Status:** Done - implemented and verified live | **Duration:** ~2 h
+**BuildNotes IDs:** 2026.10.6.024 - Right-click menus for Client List, Contacts, Manage Users, Manage Roles and Calendar
+> create similar right click menus for Client List, Contacts, Manage Users, Manage Roles, and Calendar within their respective contexts.
+
+**Grounding first - what each area can actually do**
+Read the API surface before writing any entry, so nothing is offered that does not exist: clients have GET/POST/PATCH/DELETE plus contact PATCH; users have GET/POST/PATCH/`DELETE` (which only sets `isActive: false` - it returns "User deactivated"), `/lock` and `/reset-mfa`; roles have POST/PATCH/`DELETE` (refused while users are assigned); `/schedule` has GET/POST/PATCH and no delete at all. Two consequences: the user action is labelled *Deactivate user* rather than delete, and four candidate entries were left out deliberately (contact delete, client delete, hard user delete, calendar delete) and written up in the rollback doc instead.
+
+**What changed**
+- `apps/web/src/lib/menuActions.ts` (new) - the shared pieces: `openInNewTab`, `openInNewWindow`, `copyText` (with its toast), `currentView()` and `viewMenuEntries()`. `Tickets.tsx` was switched to them so the six sections cannot drift.
+- `Clients.tsx` - row menu (open, new tab/window, new ticket, tickets, contacts, primary contact, a Kumo submenu scoped to the client, type filter, copy) and section menu (new client, refresh, focus search, clear filters, sort by, export CSV, view pair). Search input got a ref so the menu can focus it.
+- `Contacts.tsx` - card menu (details, edit, create ticket, client, client's tickets, company filter, make primary, deactivate/reactivate, copy) and section menu. The edit-form builder was extracted so `startEdit` and the menu's *Edit contact* build identical state; `setContactField` does the single-field PATCHes and keeps the detail panel in step.
+- `Users.tsx` - row menu (details, edit, permissions tab, security tab, activate/deactivate, lock/unlock, reset MFA, copy) and section menu, plus a local `MenuConfirmDialog` for the one action that asks first. Each mutating action calls `fetchUsers()` and updates `selected` when it is the same user.
+- `Roles.tsx` - role menu (show permissions, edit, manage members, copy name, copy permission list, delete) reusing the page's existing `selectRole` / `openMembers` / `showDeleteConfirm` / `handleDeleteRole` rather than adding parallel state.
+- `Calendar.tsx` - day-cell menu (add event on this date with the dialog prefilled 9-10am, show events, clear filter, month navigation, today), event menu (linked ticket when there is one, that date's events, copy details/title) and section menu.
+- `CONTEXT-MENUS-ROLLBACK.md` - retitled from Tickets-only, with a table of what is in each section's menu, the four known gaps and their reasons, updated rollback steps and notes for adding a seventh section.
+
+**Verification (live)**
+- Client List: 12 row entries, header "Acme Corporation", Kumo submenu of 4, section menu of 8, CSV header `Company,Type,Contact,Phone,Location,Industry,Status` over 5 rows with `"New York, NY"` quoted; Escape closes, text fields keep the browser menu.
+- Contacts: 11 card entries; *Edit contact* opened the form for the clicked card; section menu exported 13 rows.
+- Users: 9 row entries; *Lock account* -> toast, header gained "Locked", item flipped to *Unlock account*, then unlocked again; *Reset MFA* (probe user with MFA set in the DB for the test) asked "Reset MFA? Zz MenuProbe will need to enrol an authenticator again at their next sign-in.", cleared the MFA column and disabled itself again; *Deactivate user* flipped the header to "Inactive" and the item to *Activate user*.
+- Roles: Admin's *Delete role…* disabled with "reassign users first" (3 users); a role with none was deleted through the menu end to end (confirmation panel, toast, gone from the list).
+- Calendar: day 11 menu with header "Sunday, October 11, 2026" and prefill `2026-10-11T09:00`/`10:00`; 4-entry event menu; the ticket-linked event showed *Open linked ticket #INT-2008* and navigated to it; *Clear date filter* disabled once cleared.
+- Re-checked Tickets after the shared-helper refactor: 16 row, 8 section, 16 detail entries, unchanged. Typecheck web 26 (baseline, none in touched files); design-token lint unchanged.
+- Cleanup: the throwaway user, role, MFA flag and ticket-linked event created for these checks were deleted; `app_settings` left as found.
