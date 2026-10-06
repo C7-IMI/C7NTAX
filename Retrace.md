@@ -2512,3 +2512,23 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Database: exactly **one** `TicketAttachment` row (the dropped file, 20 B) and **no** row for the inline image, so the Attachments tab gained only the real file; the Notes entry showed the email with "(Attached: dropped-notes.txt)". The image file was never written to `data/ticket-attachments`.
 - Server-side checks by script: `data:text/html` URI dropped, script stripped, 3 MB image dropped with no broken `src` left behind, ordinary `http` image kept, `onerror` stripped, typechecks web 0 / api 156 (baseline) and design-token lint unchanged.
 - Cleanup: probe comment, attachment row, file and audit rows removed; snapshots re-captured; sink stopped and its script and capture file deleted with port 587 free. Nothing left the machine — the sink only wrote to a temp file.
+
+---
+
+### Prompt 190 — Drop the density toggle from the header, keep it in My Account
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~10 m
+**BuildNotes IDs:** 2026.10.6.033 - The display-density toggle lives in My Account only
+> remove the toggle display density button from the header. I like it where it's at on the My Account Menu
+
+**What it was**
+- The header toolbar in `apps/web/src/components/Layout.tsx` carried a second density switch — a narrow button with an `AlignJustify` glyph, sitting between the page title and *Search*, before the entry that the *My Account* menu already offers. Two controls for one preference, and the header one had no label beyond a tooltip.
+
+**What changed**
+- Removed that button (and the now-unused `AlignJustify` import). The toolbar reads *Search · Recent · AI · Help · Settings · My Account*.
+- Deliberately left alone: the density state and `setDensity` in `Layout.tsx` (the command-palette *Use compact spacing* action still uses them), `lib/density.ts`, the `html[data-density="compact"]` rules in `index.css`, and `MyAccountMenu.tsx`.
+
+**Verification (live)**
+- Header on `/tickets/e28544bc`: no element matching `[aria-label="Toggle display density"]`; toolbar labels exactly *Search ⌘K, Recent, AI, Help, Settings, My Account*.
+- My Account → **Use compact spacing**: `data-density` went `comfortable → compact → comfortable` and `localStorage.c7_density` tracked it, then reverted to leave the preference as found.
+- A reload with response monitoring showed **no** 5xx (the four 500s in the console log predated this change and came from the earlier email probe while the SMTP sink was down).
+- Web typecheck 0 errors; design-token lint unchanged (no new raw hex).

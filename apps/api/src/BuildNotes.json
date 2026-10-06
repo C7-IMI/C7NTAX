@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.6.033",
+    "date": "2026-10-06",
+    "title": "The display-density toggle lives in My Account only",
+    "changes": [
+      {
+        "text": "**The density toggle is gone from the header toolbar.** The narrow `≡` button that sat between the page title and *Search* has been removed, so the toolbar now runs *Search · Recent · AI · Help · Settings · My Account* with no switch that needs explaining. Spacing is still a user choice — it just lives where the rest of the appearance settings are, under **My Account → Appearance → Use compact/comfortable spacing**, unchanged.",
+        "type": "Update"
+      },
+      {
+        "text": "Nothing else about density moved: the preference still persists to `localStorage` and is applied before first paint, compact mode still tightens the main padding, card padding, input padding and table rows, and the *Use compact spacing* entry is still available from the command palette.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.032",
     "date": "2026-10-06",
     "title": "Pasting from Word keeps its formatting, images go inline, and the editor gets its own right-click menu",

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
-  AlertTriangle, XCircle, Settings2, ListOrdered, AlignJustify, Globe,
+  AlertTriangle, XCircle, Settings2, ListOrdered, Globe,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
@@ -684,20 +684,6 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           {/* Header toolbar */}
           <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
-            {UI_P1 && (
-              <button
-                onClick={() => {
-                  const next: Density = density === "compact" ? "comfortable" : "compact";
-                  setDensityState(next);
-                  setDensity(next);
-                }}
-                className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"
-                title={density === "compact" ? "Comfortable spacing" : "Compact spacing"}
-                aria-label="Toggle display density"
-              >
-                <AlignJustify size={14} />
-              </button>
-            )}
             <button
               onClick={() => { if (UI_P1) setPaletteOpen(true); }}
               className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"

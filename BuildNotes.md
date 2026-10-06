@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.032 | Last Updated: 2026-10-06
+## Version: 2026.10.6.033 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.033 — The display-density toggle lives in My Account only
+- **[Update]** **The density toggle is gone from the header toolbar.** The narrow `≡` button that sat between the page title and *Search* has been removed, so the toolbar now runs *Search · Recent · AI · Help · Settings · My Account* with no switch that needs explaining. Spacing is still a user choice — it just lives where the rest of the appearance settings are, under **My Account → Appearance → Use compact/comfortable spacing**, unchanged.
+- **[Update]** Nothing else about density moved: the preference still persists to `localStorage` and is applied before first paint, compact mode still tightens the main padding, card padding, input padding and table rows, and the *Use compact spacing* entry is still available from the command palette.
+- **Verification (live):** the header rendered without the toggle (`Toggle display density` no longer present; toolbar labels *Search ⌘K, Recent, AI, Help, Settings, My Account*), and **My Account → Use compact spacing** still flipped `data-density` `comfortable → compact → comfortable` and wrote it back to `localStorage`. Web typecheck 0; design-token lint unchanged.
+- **Rollback:** one button block plus an unused icon import — no API, schema or data change.
 
 ## 2026.10.6.032 — Pasting from Word keeps its formatting, images go inline, and the editor gets its own right-click menu
 - **[New]** **Pasting from Word (or Outlook, or a web page) now keeps its formatting.** The composer used to strip pasted markup down to plain text, so a formatted message arrived as a paragraph of flat text. Paste now runs through a Word-aware cleaner: font, size, colour, bold/italic/underline, lists, alignment, indentation, links and tables survive; Word's `<font>` tags are converted to `span` style so the declaration is not thrown away on the next paste, and its private `mso-*` declarations, `class="MsoNormal"` noise and `<!--[if ...]-->` comments are dropped along with anything outside a safe inline-style allowlist. The same cleaner runs on drag-and-drop and on `contenteditable` input, so the result is identical however the content arrived.
