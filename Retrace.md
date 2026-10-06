@@ -2365,3 +2365,14 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Full browser crawl, logged in, of all 51 static routes: **0 failed API responses, 0 console errors, 0 DOM-nesting warnings** — previously two 500s (/reports, /procurement/orders) and the /roles nesting warning.
 - Typecheck now: web **0** (was 26), shared **0** (was 1), api 156 (was 178). Design-token lint unchanged.
 - Cleanup: every probe row deleted and the invoice status restored, verified in the database and through the API; the one audit-log row the sweep created was deleted and the snapshots re-captured so they match the clean database; temporary sweep scripts deleted from `%TEMP%`.
+---
+
+### Prompt 183 — Sync to GitHub
+**Timestamp:** 2026-10-06 | **Status:** Done — nothing was outstanding | **Duration:** under a minute
+**BuildNotes IDs:** none — operational request, no project change, so no BuildNotes entry applies
+> sync to github
+
+**Result**
+- Verified against the remote: `HEAD` and `origin/main` are both `199cb30` ("fix(api): repair fourteen endpoints that returned 500 on every call"), 0 commits ahead and 0 behind.
+- Working tree clean — 0 modified, 0 untracked, 0 stashes — so there was nothing left to push. The pre-commit hook had already pushed the sweep commit, and the remote tip is the sweep commit itself.
+- This entry is the only change this prompt produced: logging it keeps the Retrace prompt count continuous. No code, data or snapshot files were touched.
