@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.5.012",
+    "date": "2026-10-05",
+    "title": "Automatic GitHub sync (auto-commit + push)",
+    "changes": [
+      {
+        "text": "Added `scripts/auto-sync.ps1` and registered the scheduled task **\"C7NTAX Auto-Sync\"** (every 15 minutes, run while signed in): stages working-tree changes (respecting `.gitignore`), commits `auto-sync: <timestamp>` when there is something to commit, and pushes to `origin main`. Skips when there is nothing to commit, when a merge/rebase is in progress, or when the git index is locked.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Complements the existing hooks — `pre-commit` regenerates and stages the What's New fallbacks, `post-commit` pushes after a commit; the missing piece was auto-committing, which this job adds.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.5.011",
     "date": "2026-10-05",
     "title": "Cloud provider recommendation reference doc",

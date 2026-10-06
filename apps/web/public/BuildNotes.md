@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.5.011 | Last Updated: 2026-10-05
+## Version: 2026.10.5.012 | Last Updated: 2026-10-05
 
 ---
 
@@ -13,6 +13,11 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.5.012 — Automatic GitHub sync (auto-commit + push)
+- **[New]** Added `scripts/auto-sync.ps1` and registered the scheduled task **"C7NTAX Auto-Sync"** (every 15 minutes, run while signed in): stages working-tree changes (respecting `.gitignore`), commits `auto-sync: <timestamp>` when there is something to commit, and pushes to `origin main`. Skips when there is nothing to commit, when a merge/rebase is in progress, or when the git index is locked.
+- **[Update]** Complements the existing hooks — `pre-commit` regenerates and stages the What's New fallbacks, `post-commit` pushes after a commit; the missing piece was auto-committing, which this job adds.
+- **[Verification]** Ran the job twice: pushed `38399a2` (30 files) and `ac5c89a`; `origin/main` now matches local (`0/0`), no `.env` or `.login-body.json` was staged, and the task shows `Ready` with a 15-minute recurrence and its next run scheduled.
 
 ## 2026.10.5.011 — Cloud provider recommendation reference doc
 - **[New]** Added `cloud-provider-recommendation.md` — a standalone reference of the AWS-vs-Azure recommendation (recommend **Azure** for this codebase/product), with the rationale, where AWS wins, the deciding-factor table, and the practical notes (no cloud SDK lock-in; Front Door port caveat).

@@ -1722,6 +1722,18 @@
 - Logged BuildNotes `2026.10.5.011` and regenerated the What's New fallbacks.
 
 
+### Prompt 147 — Enable automatic GitHub sync
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~20 min
+**BuildNotes IDs:** #1 (2026.10.5.012)
+> are these changes auto-syncing to github? if not, enable that
+
+**Changes:**
+- Diagnosed the sync path: the repo has `pre-commit` (regenerates + stages the What's New fallbacks) and `post-commit` (pushes to `origin main`) hooks, but nothing auto-commits — so uncommitted work (including this session's changes) was never reaching GitHub (`main` was level with `origin/main`, everything still local).
+- Added `scripts/auto-sync.ps1`: stages the working tree (respecting `.gitignore`), commits `auto-sync: <timestamp>` when there are changes, and pushes; skips when there is nothing to commit or a merge/rebase or `.git/index.lock` is present.
+- Registered the scheduled task **"C7NTAX Auto-Sync"** — every 15 minutes, interactive principal (needs the user's SSH credentials).
+- **Verification:** ran the job twice, pushing `38399a2` (30 files) and `ac5c89a`; `origin/main` now matches local (`0/0`); confirmed no `.env`/`.login-body.json` staged (gitignored); task shows `Ready` with a 15-minute recurrence and a scheduled next run.
+
+
 
 
 
