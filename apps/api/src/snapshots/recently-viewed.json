@@ -135,33 +135,6 @@
     "viewedAt": "2026-08-24T21:45:02.560Z"
   },
   {
-    "id": "4a0e1172-6cbf-4e40-9e46-149d21070cbe",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "config",
-    "entityId": "bb23fdbf-829e-421b-bd9d-89330fc85d2d",
-    "entityName": "SRV-DC-01",
-    "entityIcon": "server",
-    "viewedAt": "2026-08-24T21:58:09.934Z"
-  },
-  {
-    "id": "03ad733b-2345-4b62-abb5-9538948703b4",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "password",
-    "entityId": "b4e69c8a-ca6e-4995-b0d0-3fa617304217",
-    "entityName": "Office 365 Global Admin",
-    "entityIcon": "key",
-    "viewedAt": "2026-10-06T06:49:34.385Z"
-  },
-  {
-    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "organization",
-    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "entityName": "Acme Corporation",
-    "entityIcon": "building",
-    "viewedAt": "2026-10-06T07:38:52.794Z"
-  },
-  {
     "id": "7ec2cabc-94f4-4e62-8fab-b4eab90a914d",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "document",
@@ -196,5 +169,32 @@
     "entityName": "FW-PRIMARY",
     "entityIcon": "monitor",
     "viewedAt": "2026-10-06T07:45:33.586Z"
+  },
+  {
+    "id": "03ad733b-2345-4b62-abb5-9538948703b4",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "b4e69c8a-ca6e-4995-b0d0-3fa617304217",
+    "entityName": "Office 365 Global Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-10-06T07:45:43.321Z"
+  },
+  {
+    "id": "4a0e1172-6cbf-4e40-9e46-149d21070cbe",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "config",
+    "entityId": "bb23fdbf-829e-421b-bd9d-89330fc85d2d",
+    "entityName": "SRV-DC-01",
+    "entityIcon": "server",
+    "viewedAt": "2026-10-06T07:45:47.057Z"
+  },
+  {
+    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "organization",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "entityName": "Acme Corporation",
+    "entityIcon": "building",
+    "viewedAt": "2026-10-06T07:46:42.100Z"
   }
 ]

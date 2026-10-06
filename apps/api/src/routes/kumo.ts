@@ -120,9 +120,10 @@ kumoRouter.delete("/templates/:id", requirePermission(Permission.KumoAssetManage
 
 kumoRouter.get("/assets", requirePermission(Permission.KumoAssetView), async (req: AuthRequest, res, next) => {
   try {
-    const { templateId, search, limit = "50", offset = "0" } = req.query as Record<string, string>;
+    const { templateId, companyId, search, limit = "50", offset = "0" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
     if (templateId) where.templateId = templateId;
+    if (companyId) where.companyId = companyId;
     if (search) where.name = { contains: search };
     const [assets, total] = await Promise.all([
       prisma.kumoAsset.findMany({
@@ -692,8 +693,9 @@ kumoRouter.get("/domains", requirePermission(Permission.KumoView), async (req: A
 
 kumoRouter.get("/organizations", requirePermission(Permission.KumoView), async (req: AuthRequest, res, next) => {
   try {
-    const { search = "", limit = "200", offset = "0", sort = "name" } = req.query as Record<string, string>;
+    const { search = "", limit = "200", offset = "0", sort = "name", companyType = "" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
+    if (companyType) where.companyType = companyType;
     if (search) {
       where.OR = [
         { name: { contains: search } },
@@ -902,6 +904,38 @@ kumoRouter.get("/organizations/:id", requirePermission(Permission.KumoView), asy
       by: e.byId ? actorName.get(e.byId) ?? null : null,
     }));
 
+    // The rail's asset types: every active template (global, or owned by this
+    // client) with its asset count for this client. Templates with no assets
+    // stay in the list so the rail can still offer them as an empty type.
+    const [templates, templateUsage, changeBoard, serverCount] = await Promise.all([
+      prisma.kumoAssetTemplate.findMany({
+        where: { isActive: true, OR: [{ companyId: null }, { companyId }] },
+        select: {
+          id: true, name: true, description: true, icon: true, color: true,
+          isBuiltIn: true, companyId: true, _count: { select: { fields: true } },
+        },
+        orderBy: { name: "asc" },
+      }),
+      prisma.kumoAsset.groupBy({ by: ["templateId"], where: { companyId }, _count: { _all: true } }),
+      prisma.serviceBoard.findFirst({
+        where: { isActive: true, name: { contains: "change", mode: "insensitive" } },
+        select: { id: true, name: true },
+      }),
+      prisma.kumoServer.count({ where: { kumoAsset: { companyId } } }),
+    ]);
+    const templateUsageByTemplate = new Map(templateUsage.map((r) => [r.templateId, r._count._all]));
+    const assetTypes = templates.map((t) => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      icon: t.icon,
+      color: t.color,
+      isBuiltIn: t.isBuiltIn,
+      ownedByClient: t.companyId === companyId,
+      fieldCount: t._count.fields,
+      count: templateUsageByTemplate.get(t.id) ?? 0,
+    }));
+
     // A recent is only kept when the item it points at belongs to this client.
     const recentIds = recentItems.map((i) => i.entityId);
     const [ownedAssets, ownedPasswords, ownedDocuments, ownedDomains, ownedCertificates, ownedServers] = recentIds.length
@@ -922,7 +956,7 @@ kumoRouter.get("/organizations/:id", requirePermission(Permission.KumoView), asy
       organization: org,
       counts: {
         assets: assetCount, passwords: passwordCount, documents: documentCount,
-        domains: domainCount, certificates: certificateCount,
+        domains: domainCount, certificates: certificateCount, configs: serverCount,
       },
       passwordStrength,
       documentation: {
@@ -940,6 +974,8 @@ kumoRouter.get("/organizations/:id", requirePermission(Permission.KumoView), asy
       upcomingExpirations,
       activity,
       subOrganizations: children,
+      assetTypes,
+      changeBoard,
     });
   } catch (e) { next(e); }
 });

@@ -19,6 +19,8 @@
     "db:reseed": "tsx src/snapshot-capture.ts && tsx src/seed-from-snapshots.ts",
     "db:sample-off": "tsx src/sample-data-toggle.ts off",
     "db:sample-on": "tsx src/sample-data-toggle.ts on",
+    "db:types-off": "tsx src/kumo-types-toggle.ts off",
+    "db:types-on": "tsx src/kumo-types-toggle.ts on",
     "verify": "tsx src/verify-post-change.ts",
     "db:snapshot": "tsx src/seed-automation.ts",
     "clean": "rimraf dist"
