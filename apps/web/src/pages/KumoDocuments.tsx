@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Folder, FileText, ChevronRight, X, Save, Clock } from "lucide-react";
+import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 
 export function KumoDocumentsPage() {
   const [folders, setFolders] = useState<any[]>([]);
@@ -80,6 +81,20 @@ export function KumoDocumentsPage() {
       : documents;
   // The organization rail opens the document list scoped to one client.
   const visibleDocuments = companyParam ? byFilter.filter((d: any) => d.companyId === companyParam) : byFilter;
+
+  const docFilterLabel = docFilter === "unviewed" ? "Not viewed" : docFilter === "stale" ? "Stale" : "";
+  useBreadcrumbTrail(
+    companyParam
+      ? kumoClientTrail(
+          companyParam,
+          companies.find((c: any) => c.id === companyParam)?.name,
+          { label: "Documents", to: docFilterLabel ? "/kumo/documents" : undefined },
+          ...(docFilterLabel ? [{ label: docFilterLabel }] : [])
+        )
+      : docFilterLabel
+        ? kumoTrail({ label: "Documents", to: "/kumo/documents" }, { label: docFilterLabel })
+        : null
+  );
 
   const clearCompanyFilter = () => {
     const next = new URLSearchParams(searchParams);

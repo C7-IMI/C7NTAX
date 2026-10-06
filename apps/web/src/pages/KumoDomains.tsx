@@ -4,6 +4,8 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Globe, Lock, CalendarClock, Building2, RefreshCw, ExternalLink, ShieldCheck } from "lucide-react";
 import { daysUntil, formatDate } from "../lib/format";
+import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
+
 
 interface DomainRow {
   kind: "Domain" | "Certificate";
@@ -60,6 +62,22 @@ export function KumoDomainsPage() {
     // Domain Tracker and SSL Tracker are the same page, narrowed by ?kind=.
     return kind ? scoped.filter((r) => r.kind.toLowerCase() === kind.toLowerCase()) : scoped;
   }, [rows, companyId, kind]);
+
+  // Named after the visible row because the payload carries the client's name;
+  // it needs the filtered rows, so this runs after `visible`.
+  const kindLabel = kind ? (kind === "Certificate" ? "Certificates" : "Domains") : "";
+  useBreadcrumbTrail(
+    companyId
+      ? kumoClientTrail(
+          companyId,
+          visible[0]?.companyName,
+          { label: "Domains & Certs", to: kindLabel ? "/kumo/domains" : undefined },
+          ...(kindLabel ? [{ label: kindLabel }] : [])
+        )
+      : kindLabel
+        ? kumoTrail({ label: "Domains & Certs", to: "/kumo/domains" }, { label: kindLabel })
+        : null
+  );
 
   // Deep link: /kumo/domains?select=<id> opens straight onto that record.
   useEffect(() => {

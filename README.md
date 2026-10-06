@@ -64,8 +64,9 @@ Every user-visible change ships with a way back, without a code change:
 4. **Every feature gets a rollback doc** at the repo root, named `<AREA>-ROLLBACK.md`, listing
    its flag, its files, its data reversal and a "if the app breaks" checklist. See
    [UI-P1-ROLLBACK.md](UI-P1-ROLLBACK.md), [UI-PALETTE-ROLLBACK.md](UI-PALETTE-ROLLBACK.md),
-   [KUMO-ORGANIZATIONS-ROLLBACK.md](KUMO-ORGANIZATIONS-ROLLBACK.md) and
-   [KUMO-TYPES-ROLLBACK.md](KUMO-TYPES-ROLLBACK.md).
+   [KUMO-ORGANIZATIONS-ROLLBACK.md](KUMO-ORGANIZATIONS-ROLLBACK.md),
+   [KUMO-TYPES-ROLLBACK.md](KUMO-TYPES-ROLLBACK.md) and
+   [KUMO-BREADCRUMBS-ROLLBACK.md](KUMO-BREADCRUMBS-ROLLBACK.md).
 
 ## Architecture
 

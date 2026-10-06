@@ -2124,3 +2124,28 @@
 - Live measurement after the fix: vertical gaps `[20,20,20,20,20]` and horizontal gaps `[20,20,20]` — uniform. Confirmed the fresh module was actually running (`bodyClass` reported `space-y-5`, not `contents`) by unregistering the old worker and clearing its cache first.
 - Re-checked afterwards that nothing else regressed: the rail (11 links with empty types hidden, 32 shown), the type view, the Locations panel, all ten deep links, and the `UI_KUMO_TYPES` rollback all behave as in Prompt 171. Typecheck unchanged at web 26 / api 178 pre-existing errors.
 - Screenshot of the corrected screen: `files/live-org-spacing-fixed.png`.
+
+### Prompt 173 — Breadcrumb trail and back button for every Kumo option
+**Timestamp:** 2026-10-06 | **Status:** ✅ Implemented and verified | **Duration:** ~50 min
+**BuildNotes IDs:** 2026.10.6.019
+> I need a breadcrumb trail for all of the options in Kumo along with a back button. See the screenshot
+
+**What the request uncovered**
+- The app already had a header breadcrumb ([Breadcrumbs.tsx](apps/web/src/components/Breadcrumbs.tsx), rendered once by the layout), and it was **broken for every Kumo sub-page**. `buildBreadcrumbs` walked the navigation tree and took the first child whose path was a *prefix* of the current URL; `/kumo` (Dashboard) is a prefix of `/kumo/passwords`, `/kumo/assets` and all the rest, so every Kumo screen read "Home › Kumo › Dashboard". The same bug affected other sections — the invoices list at `/billing` showed "Finance Dashboard".
+- So the work was not "add a breadcrumb" but "make the existing one correct, then extend it with what the navigation tree cannot know, and give it a back button".
+
+**Changes**
+- `apps/web/src/components/Breadcrumbs.tsx` — rewritten. Matching now keeps the **longest** match (deepest node) instead of the first; a back button was added that uses history when React Router reports a position in it (`history.state.idx > 0`) and otherwise follows the nearest parent in the trail; `BreadcrumbSegment.to` is now optional so the current page renders as text with `aria-current="page"`; a provider plus `useBreadcrumbTrail` let a screen replace the derived trail with its own, and the `kumoTrail` / `kumoClientTrail` helpers build the common shapes.
+- `apps/web/src/components/Layout.tsx` — wraps the shell in `BreadcrumbTrailProvider`; the trail stays a single one in the header.
+- `apps/web/src/pages/KumoOrganizationDetail.tsx` — contributes `Organizations › <client>` plus the selected type (or Locations). This needed care: the call sits **above** the loading guards, because a hook must run on every render, so the type/panel derivation moved up with it and reads through `detail?.`.
+- `apps/web/src/pages/KumoAssetDetail.tsx`, `KumoPasswords.tsx`, `KumoConfigs.tsx`, `KumoDocuments.tsx`, `KumoDomains.tsx` — contribute the record name, the client, and the active filter.
+- `apps/web/src/lib/uiFlags.ts` — `UI_KUMO_BREADCRUMBS` (`c7_ui_kumo_crumbs`) switches the page-supplied segments off.
+- `KUMO-BREADCRUMBS-ROLLBACK.md` (new) + a link from README's reversibility section.
+- An earlier draft added a second, page-level trail component (`KumoBreadcrumb`) to all nine Kumo screens. Once the layout trail was found and fixed, that was **deleted** rather than shipped: two trails on one screen would be redundant. The net change is one shared component instead of nine duplicated ones.
+
+**Verification (live app)**
+- Trails read back from the DOM for all Kumo routes: `/kumo` → Home › Kumo › Dashboard; Organizations → Home › Kumo › Organizations; a client → … › Acme Corporation; `?type=<Server>` → … › Acme Corporation › Server; `?type=locations` → … › Locations; Assets → Home › Kumo › Assets; an asset → … › Assets › SRV-DC-01; Passwords → Home › Kumo › Passwords; `?companyId=` → Home › Kumo › Organizations › Acme Corporation › Passwords (same for Configurations, Documents, Domains & Certs); `?filter=stale` → … › Documents › Stale; `?kind=Certificate` → … › Domains & Certs › Certificates. Non-Kumo sections checked as well: `/tickets` → Home › Tickets, `/billing` → Home › Billing › Invoices (the pre-existing bug, now fixed).
+- Back button driven in sequence: list → client → type → back → client → back → list, returning one step at a time through history. From a cold-loaded deep link (fresh tab, no history) the button's title read "Back to Organizations" and it landed on `/kumo/organizations` as designed.
+- No `Rendered fewer hooks than expected` or any other React error on any route — the hook-order risk in the organization screen was specifically checked.
+- `c7_ui_kumo_crumbs=0` → trail falls back to the navigation tree (`Home › Kumo › Organizations`); removing the flag restores the full trail. Documented in the rollback guide, including how to revert the shared component.
+- Typecheck unchanged (web 26, api 178 pre-existing), no errors in any changed file. Screenshots: `files/live-breadcrumb-scoped-list.png`, `files/live-breadcrumb-org-type.png`.

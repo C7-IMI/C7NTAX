@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { Plus, Shield, Eye, EyeOff, Search, X, Save, Clock, Edit3, Trash2, Copy, Building2, Key } from "lucide-react";
 import { generatePassword } from "../lib/generatePassword";
 import { PASSWORD_STRENGTH_LEVELS, scorePassword, passwordStrengthLevel } from "@C7NTAX/shared";
+import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 
 export function KumoPasswordsPage() {
   const [passwords, setPasswords] = useState<any[]>([]);
@@ -32,6 +33,12 @@ export function KumoPasswordsPage() {
 
   // The organization rail opens the vault pre-filtered to one client.
   useEffect(() => { if (companyParam) setCompanyFilter(companyParam); }, [companyParam]);
+
+  useBreadcrumbTrail(
+    companyParam
+      ? kumoClientTrail(companyParam, companies.find((c) => c.id === companyParam)?.name, { label: "Passwords" })
+      : null
+  );
 
   const fetch = async () => {
     try {

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Server, Search } from "lucide-react";
+import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 
 export function KumoConfigsPage() {
   const [configs, setConfigs] = useState<any[]>([]);
@@ -21,6 +22,12 @@ export function KumoConfigsPage() {
 
   // The organization rail opens the list pre-filtered to one client.
   useEffect(() => { if (companyParam) setCompanyFilter(companyParam); }, [companyParam]);
+
+  useBreadcrumbTrail(
+    companyFilter
+      ? kumoClientTrail(companyFilter, companies.find((c: { id: string; name: string }) => c.id === companyFilter)?.name, { label: "Configurations" })
+      : null
+  );
 
   const fetch = () => {
     api.get("/kumo/configs/servers").then(r => setConfigs(r.data.data||[])).catch(() => toast.error("Failed")).finally(() => setLoading(false));

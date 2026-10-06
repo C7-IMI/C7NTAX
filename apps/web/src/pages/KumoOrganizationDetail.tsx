@@ -11,6 +11,7 @@ import { initials, avatarColor, timeAgo, formatDate, daysUntil } from "../lib/fo
 import { UI_KUMO_TYPES } from "../lib/uiFlags";
 import { OrganizationTypePanel } from "../components/OrganizationTypePanel";
 import { OrganizationTypeRail, type AssetType } from "../components/OrganizationTypeRail";
+import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 
 interface Organization {
   id: string;
@@ -172,6 +173,33 @@ export function KumoOrganizationDetailPage() {
     }
   };
 
+  // The rail drives this screen through ?type=: a template id shows that
+  // client's records of that type, "locations" the address panel, and no value
+  // the dashboard below. Unknown values fall back to the dashboard, and the
+  // whole thing is inert when the rail is switched off.
+  const requestedType = searchParams.get("type") ?? "";
+  const activeType = UI_KUMO_TYPES ? requestedType : "";
+  const activeTemplate = activeType && activeType !== LOCATIONS_TYPE
+    ? detail?.assetTypes?.find((t) => t.id === activeType) ?? null
+    : null;
+
+  // The trail names what the navigation tree cannot: this client, and the type
+  // (or address panel) the rail has open. Kept above the loading guards so the
+  // hook runs on every render.
+  useBreadcrumbTrail(
+    detail?.organization
+      ? kumoClientTrail(
+          detail.organization.id,
+          detail.organization.name,
+          ...(activeTemplate
+            ? [{ label: activeTemplate.name }]
+            : activeType === LOCATIONS_TYPE
+              ? [{ label: "Locations" }]
+              : [])
+        )
+      : null
+  );
+
   if (loading) return <div className="p-10 text-center text-gray-500">Loading…</div>;
   if (error || !detail) {
     return (
@@ -190,15 +218,6 @@ export function KumoOrganizationDetailPage() {
   const documentationTotal = counts.documents + counts.domains + counts.certificates;
   const location = [org.city, org.state].filter(Boolean).join(", ");
 
-  // The rail drives this screen through ?type=: a template id shows that
-  // client's records of that type, "locations" the address panel, and no value
-  // the dashboard below. Unknown values fall back to the dashboard, and the
-  // whole thing is inert when the rail is switched off.
-  const requestedType = searchParams.get("type") ?? "";
-  const activeType = UI_KUMO_TYPES ? requestedType : "";
-  const activeTemplate = activeType && activeType !== LOCATIONS_TYPE
-    ? detail.assetTypes.find((t) => t.id === activeType) ?? null
-    : null;
   const panel = activeTemplate ? (
     <OrganizationTypePanel
       orgId={org.id}
@@ -219,9 +238,6 @@ export function KumoOrganizationDetailPage() {
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link to="/kumo/organizations" className="text-xs text-gray-500 hover:text-cyber-300 inline-flex items-center gap-1">
-            <ArrowLeft size={12} /> Organizations
-          </Link>
           <h2 className="text-2xl font-semibold text-white mt-1 truncate">{org.name}</h2>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-gray-400">
             <span className="inline-flex items-center gap-1.5">

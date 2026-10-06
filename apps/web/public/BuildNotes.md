@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.018 | Last Updated: 2026-10-06
+## Version: 2026.10.6.019 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.019 — Breadcrumb trails for every Kumo screen, with a back button
+- **[New]** **The breadcrumb in the header now resolves for every Kumo screen and names what you are looking at.** Previously every Kumo sub-page collapsed to "Dashboard" — the trail matched the first navigation child whose path was a prefix of the URL, and `/kumo` (Dashboard) is a prefix of all of its siblings, so Passwords, Documents, Assets and the rest all read "Kumo › Dashboard". Matching now keeps the **deepest** match, which fixes every section, not just Kumo: the invoices list reads "Home › Billing › Invoices" instead of "Finance Dashboard".
+- **[New]** **A back button sits in front of the trail.** It steps back through your history when there is history to step back to, and otherwise follows the nearest parent in the trail — so a bookmarked deep link still has a way back instead of a dead button.
+- **[New]** **Screens name their own context,** which the navigation tree cannot know: *Home › Kumo › Organizations › Acme Corporation › Server* on a client's asset type, *Home › Kumo › Assets › SRV-DC-01* on an asset, *Home › Kumo › Organizations › Acme Corporation › Passwords* on a client-scoped list, and the active filter where there is one (*Documents › Stale*, *Domains & Certs › Certificates*). A screen's trail replaces the derived one and is withdrawn on navigation, so nothing leaks between pages.
+- **[Update]** There is now exactly **one** trail, in the header, instead of a second one inside the page. The organization screen's old single back link ("← Organizations") is replaced by the shared trail, and every Kumo page picks the feature up without its own markup.
+- **[Update]** Every segment except the current page is a link, and the current page is marked `aria-current="page"`.
+- **Verification:** on the live app every Kumo route was walked and the trail read back: `/kumo`, Organizations, a client, a client's type, Locations, Assets, an asset, Passwords, Configurations, Documents, Documents filtered to Stale, and the tracker narrowed to Certificates — all showing the expected trail with a back button and **no React hook-order errors**. The back button was driven in sequence (list → client → type → back → client → back → list) and returned through history one step at a time; from a cold-loaded deep link with no history it returned to Organizations, as designed. Non-Kumo sections were checked too (`/tickets`, `/billing`). With `c7_ui_kumo_crumbs=0` the trail falls back to the navigation tree, and it is restored when the flag is removed. Typecheck unchanged (web 26, api 178 pre-existing errors), no errors in the changed files.
 
 ## 2026.10.6.018 — Card spacing on the organization screen, and a service worker that no longer hides updates
 - **[Fix]** **The organization screen's cards were touching each other.** The wrapper added around the dashboard used `display: contents`, and Tailwind's `space-y-*` only matches direct DOM children — so every card lost its vertical spacing. Measured on the live screen: **0px** between all six card rows, which is the bunching that was reported. The wrapper now carries its own rhythm instead of relying on the parent, so cards sit 20px apart.

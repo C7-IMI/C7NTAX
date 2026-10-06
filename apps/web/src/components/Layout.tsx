@@ -8,7 +8,7 @@ import {
   AlertTriangle, XCircle, Settings2, ListOrdered, AlignJustify, Globe,
   type LucideIcon,
 } from "lucide-react";
-import { Breadcrumbs, buildBreadcrumbs } from "./Breadcrumbs";
+import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
 import { useTheme } from "../hooks/useTheme";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
@@ -580,6 +580,7 @@ export function Layout({ children }: { children: ReactNode }) {
     : { width: `${sidebarWidth}px` };
 
   return (
+    <BreadcrumbTrailProvider>
     <div
       className="flex h-screen overflow-hidden bg-navy-950"
       data-ui-p1={UI_P1 ? "true" : "false"}
@@ -755,5 +756,6 @@ export function Layout({ children }: { children: ReactNode }) {
       </div>
       {UI_P1 && <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={paletteItems} />}
     </div>
+    </BreadcrumbTrailProvider>
   );
 }

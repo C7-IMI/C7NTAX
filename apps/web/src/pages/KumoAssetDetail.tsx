@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { ChevronLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
+import { kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 
 export function KumoAssetDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [asset, setAsset] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -19,6 +19,8 @@ export function KumoAssetDetailPage() {
     finally { setLoading(false); }
   };
   useEffect(() => { load(); }, [id]);
+
+  useBreadcrumbTrail(asset ? kumoTrail({ label: "Assets", to: "/kumo/assets" }, { label: asset.name }) : null);
 
   const handleSave = async () => {
     try {
@@ -34,9 +36,6 @@ export function KumoAssetDetailPage() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
-      <div className="flex items-center gap-2 text-sm">
-        <button onClick={() => navigate("/kumo/assets")} className="text-gray-500 hover:text-white flex items-center gap-1"><ChevronLeft size={14} /> Assets</button>
-      </div>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">{asset.name}</h2>

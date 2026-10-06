@@ -6,6 +6,7 @@
  *   localStorage.setItem("c7_ui_p2", "0"); location.reload()   // disable P2
  *   localStorage.setItem("c7_ui_kumo_orgs", "0"); location.reload() // disable Kumo Organizations
  *   localStorage.setItem("c7_ui_kumo_types", "0"); location.reload() // disable the organization type rail
+ *   localStorage.setItem("c7_ui_kumo_crumbs", "0"); location.reload() // disable the Kumo breadcrumb trail
  *   localStorage.removeItem("c7_ui_p1");   location.reload()   // back to default
  * Or the window.c7UiP1 / window.c7UiP2 helpers, or the command palette actions.
  *
@@ -13,13 +14,14 @@
  * apps/web/.env.local) and restart the web server; or run
  * scripts/rollback-ui-p1.ps1 -Part P1|P2|All.
  */
-type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2" | "c7_ui_palette" | "c7_ui_kumo_orgs" | "c7_ui_kumo_types";
+type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2" | "c7_ui_palette" | "c7_ui_kumo_orgs" | "c7_ui_kumo_types" | "c7_ui_kumo_crumbs";
 
 const UI_P1_STORAGE_KEY: FlagStorageKey = "c7_ui_p1";
 const UI_P2_STORAGE_KEY: FlagStorageKey = "c7_ui_p2";
 const UI_PALETTE_STORAGE_KEY: FlagStorageKey = "c7_ui_palette";
 const UI_KUMO_ORGS_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_orgs";
 const UI_KUMO_TYPES_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_types";
+const UI_KUMO_BREADCRUMBS_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_crumbs";
 
 function readFlag(key: FlagStorageKey, envName: string): boolean {
   try {
@@ -60,6 +62,12 @@ export const UI_KUMO_ORGS = readFlag(UI_KUMO_ORGS_STORAGE_KEY, "VITE_UI_KUMO_ORG
  */
 export const UI_KUMO_TYPES = readFlag(UI_KUMO_TYPES_STORAGE_KEY, "VITE_UI_KUMO_TYPES");
 
+/**
+ * Kumo → every screen: the breadcrumb trail and its back button (default: on).
+ * Off removes the trail and the back button from all Kumo screens.
+ */
+export const UI_KUMO_BREADCRUMBS = readFlag(UI_KUMO_BREADCRUMBS_STORAGE_KEY, "VITE_UI_KUMO_BREADCRUMBS");
+
 export function setUiP1(enabled: boolean): void {
   writeFlag(UI_P1_STORAGE_KEY, enabled);
 }
@@ -80,4 +88,11 @@ export function setUiKumoTypes(enabled: boolean): void {
   writeFlag(UI_KUMO_TYPES_STORAGE_KEY, enabled);
 }
 
-export { UI_P1_STORAGE_KEY, UI_P2_STORAGE_KEY, UI_PALETTE_STORAGE_KEY, UI_KUMO_ORGS_STORAGE_KEY, UI_KUMO_TYPES_STORAGE_KEY };
+export function setUiKumoBreadcrumbs(enabled: boolean): void {
+  writeFlag(UI_KUMO_BREADCRUMBS_STORAGE_KEY, enabled);
+}
+
+export {
+  UI_P1_STORAGE_KEY, UI_P2_STORAGE_KEY, UI_PALETTE_STORAGE_KEY,
+  UI_KUMO_ORGS_STORAGE_KEY, UI_KUMO_TYPES_STORAGE_KEY, UI_KUMO_BREADCRUMBS_STORAGE_KEY,
+};
