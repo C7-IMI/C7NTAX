@@ -2302,8 +2302,8 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Re-checked Tickets after the shared-helper refactor: 16 row, 8 section, 16 detail entries, unchanged. Typecheck web 26 (baseline, none in touched files); design-token lint unchanged.
 - Cleanup: the throwaway user, role, MFA flag and ticket-linked event created for these checks were deleted; `app_settings` left as found.
 
-### Prompt 181 - Kumo and Finance right-click menus, plus the Analytics chart and Reporting nav bugs
-**Timestamp:** 2026-10-06 | **Status:** Done - implemented and verified live | **Duration:** ~3 h
+### Prompt 181 — Kumo and Finance right-click menus, plus the Analytics chart and Reporting nav bugs
+**Timestamp:** 2026-10-06 | **Status:** Done — implemented and verified live | **Duration:** ~3 h
 **BuildNotes IDs:** 2026.10.6.025 - Right-click menus across Kumo and Finance, and four screens that showed nothing
 > create similar right click menus for every subsection in Kumo (except Dashboard), every subsection within fInance (except Dashboard) within their respective contexts.
 >
