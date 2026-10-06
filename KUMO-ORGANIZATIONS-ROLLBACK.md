@@ -13,6 +13,8 @@ layout, theme tokens and table conventions.
 | Kumo nav (`KUMO` section) | New child **Organizations** → `/kumo/organizations`, directly after *Dashboard* |
 | Route | `/kumo/organizations` → `KumoOrganizationsPage` |
 | Route | `/kumo/organizations/:id` → `KumoOrganizationDetailPage` (the organization dashboard) |
+| Route | `/kumo/domains` → `KumoDomainsPage` (the expiry tracker the dashboard links into) |
+| Kumo nav (`KUMO` section) | New child **Domains & Certs** → `/kumo/domains`, after *Documents* |
 | Kumo dashboard | The redundant **Universal Links** card is replaced by an **Organizations** card |
 | Recents | Organizations can be recorded in *Recently Viewed*; clicking one opens its organization screen |
 | API | `GET /api/kumo/organizations` and `GET /api/kumo/organizations/:id` (additive) |
@@ -69,6 +71,29 @@ round trip, all scoped to that client:
 - **Sub-Organizations** — child companies that report into this one, creatable
   from the header menu or the section, each opening its own organization screen.
 
+## Opening a specific item
+
+Every entry in every card is a link to that record, not to a list. The URL
+contract these links rely on:
+
+| Item | Opens |
+|---|---|
+| Asset | `/kumo/assets/:id` (existing detail page) |
+| Password | `/kumo/passwords?select=<id>` — selects it in the vault |
+| Configuration | `/kumo/configs?select=<id>` — selects the server |
+| Document | `/kumo/documents?doc=<id>` — opens the document |
+| Domain or certificate | `/kumo/domains?select=<id>` — selects it in the tracker |
+| Contact | `/clients/contacts?select=<id>` — selects it on the contacts page |
+| Organization | `/kumo/organizations/:id` |
+
+Each target page reads its query param once its list arrives, so a deep link
+works on a cold load. Aggregates link to the matching filtered view instead:
+strength buckets → `/kumo/passwords?strength=<level>` (scored server-side only
+when asked), the Stale and Not Viewed rings → `/kumo/documents?filter=stale|unviewed`,
+the Expired ring and *View All* → `/kumo/domains?filter=expired|upcoming`
+(the latter also passes `companyId` to scope it to the client). Each filtered
+page shows a chip that clears the filter.
+
 ## Instant rollback (no rebuild, no code changes)
 
 Browser console, then reload:
@@ -91,34 +116,43 @@ server. The flag is read once at module load in `apps/web/src/lib/uiFlags.ts`.
 
 1. `apps/web/src/pages/KumoOrganizations.tsx` and
    `apps/web/src/pages/KumoOrganizationDetail.tsx` — delete.
-2. `apps/web/src/lib/format.ts` — delete (only those two pages use it; the
-   `getPageTitle` prefix fix in step 3 can stay on its own merits).
-3. `apps/web/src/App.tsx` — remove both imports and the two
+2. `apps/web/src/pages/KumoDomains.tsx` — delete, along with its nav entry in
+   `Layout.tsx` (the same `...(UI_KUMO_ORGS ? [...] : [])` spread that adds
+   Organizations), its `"/kumo/domains"` section description, its route in
+   `App.tsx`, and the `DOMAINS & CERTIFICATES` block in
+   `apps/api/src/routes/kumo.ts`.
+3. `apps/web/src/lib/format.ts` — delete (only the Kumo organization and domain
+   pages use it; the `getPageTitle` prefix fix in step 4 can stay on its own merits).
+4. `apps/web/src/App.tsx` — remove the three imports and the three
    `{UI_KUMO_ORGS && <Route path="/kumo/organizations…" … />}` lines.
-4. `apps/web/src/components/Layout.tsx` — remove the `...(UI_KUMO_ORGS ? [...] : [])`
-   spread in the `kumo` nav node, the `UI_KUMO_ORGS` import, and the
-   `"/kumo/organizations"` entry in the section-description map. `getPageTitle`
-   can keep matching the most specific route — that change fixes the header title
-   on every nested page, not just these.
-5. `apps/web/src/pages/Kumo.tsx` — restore the plain *Universal Links* card in
+5. `apps/web/src/components/Layout.tsx` — remove the `...(UI_KUMO_ORGS ? [...] : [])`
+   spreads in the `kumo` nav node, the `UI_KUMO_ORGS` import, and the
+   `"/kumo/organizations"` and `"/kumo/domains"` section descriptions.
+   `getPageTitle` can keep matching the most specific route — that change fixes
+   the header title on every nested page, not just these.
+6. `apps/web/src/pages/Kumo.tsx` — restore the plain *Universal Links* card in
    place of the conditional pair, drop the `orgCount` state and its fetch, and
    remove the `organization` keys from `getIcon` / `getTypeLabel` / `getTypeColor`
    / `getEntityLink`.
-6. `apps/web/src/lib/uiFlags.ts` — remove `UI_KUMO_ORGS`, its storage key, the
+7. The query-param deep links in steps below can go too: the `select` / `doc` /
+   `strength` / `filter` handling in `KumoPasswords.tsx`, `KumoDocuments.tsx`,
+   `KumoConfigs.tsx` and `Contacts.tsx`, and the `strength` branch of
+   `GET /api/kumo/passwords`.
+8. `apps/web/src/lib/uiFlags.ts` — remove `UI_KUMO_ORGS`, its storage key, the
    `setUiKumoOrgs` setter and the `c7_ui_kumo_orgs` union member.
-7. `apps/api/src/routes/kumo.ts` — delete the `ORGANIZATIONS` block (both routes
+9. `apps/api/src/routes/kumo.ts` — delete the `ORGANIZATIONS` block (both routes
    and the `resolveCompanyId` helper if nothing else needs it) and drop
    `"organization"` from the `validTypes` array in `POST /recently-viewed`.
    Nothing else consumes either one, so the API can also simply be left alone.
-8. Sub-organizations only: remove `parentId` / `parent` / `children` and
-   `@@index([parentId])` from the `Company` model in
-   `apps/api/prisma/schema.prisma`, then `npx prisma db push`, and drop `"parentId"`
-   plus the two guards from `POST` and `PATCH /api/clients` in
-   `apps/api/src/routes/clients.ts`.
-9. `packages/shared/src/passwordStrength.ts` — the vault refactor can stay (it is
-   behaviour-identical apart from a full-strength password now reading
-   *Very Strong* instead of *Strong*); to unwind it, restore the local
-   `passwordStrength()` helper in `apps/web/src/pages/KumoPasswords.tsx`.
+10. Sub-organizations only: remove `parentId` / `parent` / `children` and
+    `@@index([parentId])` from the `Company` model in
+    `apps/api/prisma/schema.prisma`, then `npx prisma db push`, and drop `"parentId"`
+    plus the two guards from `POST` and `PATCH /api/clients` in
+    `apps/api/src/routes/clients.ts`.
+11. `packages/shared/src/passwordStrength.ts` — the vault refactor can stay (it is
+    behaviour-identical apart from a full-strength password now reading
+    *Very Strong* instead of *Strong*); to unwind it, restore the local
+    `passwordStrength()` helper in `apps/web/src/pages/KumoPasswords.tsx`.
 
 ## Notes
 

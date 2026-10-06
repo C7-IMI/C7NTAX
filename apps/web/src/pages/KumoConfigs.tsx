@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Server, Search } from "lucide-react";
@@ -12,6 +13,10 @@ export function KumoConfigsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [form, setForm] = useState({name:"",hostname:"",templateId:"",companyId:"",os:"",cpu:"",ram:"",storage:"",ip:"",virt:""});
+  const [searchParams] = useSearchParams();
+
+  // Set by the organization screen, e.g. /kumo/configs?select=<id>
+  const selectId = searchParams.get("select");
 
   const fetch = () => {
     api.get("/kumo/configs/servers").then(r => setConfigs(r.data.data||[])).catch(() => toast.error("Failed")).finally(() => setLoading(false));
@@ -21,6 +26,13 @@ export function KumoConfigsPage() {
     api.get("/clients?limit=100").then(r => setCompanies(r.data.data||[])).catch(() => {});
     api.get("/kumo/templates").then(r => setTemplates(r.data.data||[])).catch(() => {});
   }, []);
+
+  // Open the server a deep link points at.
+  useEffect(() => {
+    if (!selectId) return;
+    const match = configs.find((c: any) => c.id === selectId);
+    if (match && selected?.id !== match.id) setSelected(match);
+  }, [selectId, configs]);
 
   const filtered = companyFilter ? configs.filter(c => c.kumoAsset?.companyId === companyFilter) : configs;
 

@@ -82,6 +82,25 @@ function typeIcon(type: string, size = 14) {
   return map[type] ?? <FileText size={size} />;
 }
 
+/** Where an item opens: its own screen, selected by query param. */
+function itemLink(type: string, id: string): string {
+  switch (type.toLowerCase()) {
+    case "asset": return `/kumo/assets/${id}`;
+    case "config":
+    case "configuration": return `/kumo/configs?select=${id}`;
+    case "password": return `/kumo/passwords?select=${id}`;
+    case "document": return `/kumo/documents?doc=${id}`;
+    case "domain":
+    case "certificate": return `/kumo/domains?select=${id}`;
+    case "organization": return `/kumo/organizations/${id}`;
+    default: return "/kumo";
+  }
+}
+
+function itemTitle(type: string): string {
+  return type.toLowerCase() === "config" ? "Open the configuration" : `Open this ${type.toLowerCase()}`;
+}
+
 export function KumoOrganizationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -294,14 +313,19 @@ export function KumoOrganizationDetailPage() {
               ))}
           </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-7 gap-y-2 gap-x-1">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-y-1 gap-x-1">
             {STRENGTH_LEVELS.map((l) => (
-              <div key={l.key} className="text-center">
+              <Link
+                key={l.key}
+                to={`/kumo/passwords?strength=${encodeURIComponent(l.key)}`}
+                title={`Show the ${l.key.toLowerCase()} credentials`}
+                className="text-center rounded-lg py-1 hover:bg-surface-lighter transition-colors"
+              >
                 <p className="text-[10px] text-gray-500 leading-tight">{l.key}</p>
                 <p className={`text-xs mt-0.5 inline-flex items-center gap-1 ${l.dot}`}>
                   <Shield size={11} /> <span className="text-gray-300">{passwordStrength[l.key] ?? 0}</span>
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
 
@@ -319,9 +343,9 @@ export function KumoOrganizationDetailPage() {
             {documentationTotal} tracked items across {counts.documents} documents, {counts.domains} domains and {counts.certificates} certificates
           </p>
           <div className="flex items-start justify-around gap-2 pt-1">
-            <HealthRing value={documentation.stale} total={documentationTotal} label="Stale" tone="stroke-amber-400" />
-            <HealthRing value={documentation.notViewed} total={documentationTotal} label="Not Viewed" tone="stroke-cyber-400" />
-            <HealthRing value={documentation.expired} total={documentationTotal} label="Expired" tone="stroke-red-400" />
+            <HealthRing value={documentation.stale} total={documentationTotal} label="Stale" tone="stroke-amber-400" to="/kumo/documents?filter=stale" />
+            <HealthRing value={documentation.notViewed} total={documentationTotal} label="Not Viewed" tone="stroke-cyber-400" to="/kumo/documents?filter=unviewed" />
+            <HealthRing value={documentation.expired} total={documentationTotal} label="Expired" tone="stroke-red-400" to="/kumo/domains?filter=expired" />
           </div>
           <p className="text-[10px] text-gray-600">
             Stale = a document untouched for {documentation.staleAfterDays} days. Expired = a domain or certificate past its expiry date.
@@ -340,11 +364,16 @@ export function KumoOrganizationDetailPage() {
           ) : (
             <div className="space-y-1.5">
               {detail.recentlyViewed.map((item) => (
-                <div key={item.id} className="flex items-center gap-2 text-sm">
+                <Link
+                  key={item.id}
+                  to={itemLink(item.entityType, item.entityId)}
+                  title={itemTitle(item.entityType)}
+                  className="flex items-center gap-2 text-sm rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter group"
+                >
                   <span className="text-gray-500 shrink-0">{typeIcon(item.entityIcon, 13)}</span>
-                  <span className="text-gray-300 truncate flex-1">{item.entityName}</span>
+                  <span className="text-gray-300 truncate flex-1 group-hover:text-cyber-300">{item.entityName}</span>
                   <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(item.viewedAt)}</span>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -360,18 +389,23 @@ export function KumoOrganizationDetailPage() {
           ) : (
             <div className="space-y-2">
               {detail.importantContacts.map((c) => (
-                <div key={c.id} className="flex items-center gap-2">
+                <Link
+                  key={c.id}
+                  to={`/clients/contacts?select=${c.id}`}
+                  title="Open this contact"
+                  className="flex items-center gap-2 rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter group"
+                >
                   <span className={`w-7 h-7 rounded-lg grid place-items-center text-[10px] font-semibold shrink-0 ${avatarColor(c.firstName + c.lastName)}`}>
                     {initials(`${c.firstName} ${c.lastName}`)}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm text-white truncate">
+                    <p className="text-sm text-white truncate group-hover:text-cyber-300">
                       {c.firstName} {c.lastName}
                       {c.isPrimary && <span className="badge text-[10px] ml-1.5 bg-cyber-600/20 text-cyber-400">Primary</span>}
                     </p>
                     <p className="text-xs text-gray-500 truncate">{c.title || c.email}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -383,11 +417,16 @@ export function KumoOrganizationDetailPage() {
           ) : (
             <div className="space-y-1.5">
               {detail.recentlyUpdated.map((item) => (
-                <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 text-sm">
+                <Link
+                  key={`${item.type}-${item.id}`}
+                  to={itemLink(item.type, item.id)}
+                  title={itemTitle(item.type)}
+                  className="flex items-center gap-2 text-sm rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter group"
+                >
                   <span className="text-gray-500 shrink-0">{typeIcon(item.type, 13)}</span>
-                  <span className="text-gray-300 truncate flex-1">{item.name}</span>
+                  <span className="text-gray-300 truncate flex-1 group-hover:text-cyber-300">{item.name}</span>
                   <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(item.updatedAt)}</span>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -406,7 +445,12 @@ export function KumoOrganizationDetailPage() {
           ) : (
             <div className="space-y-1.5">
               {detail.popularPasswords.map((p) => (
-                <Link key={p.id} to="/kumo/passwords" className="flex items-center gap-2 text-sm group">
+                <Link
+                  key={p.id}
+                  to={`/kumo/passwords?select=${p.id}`}
+                  title="Open this credential"
+                  className="flex items-center gap-2 text-sm group rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter"
+                >
                   <Key size={13} className="text-gray-500 shrink-0" />
                   <span className="text-gray-300 truncate flex-1 group-hover:text-cyber-300">{p.label}</span>
                   {p.username && <span className="text-[10px] text-gray-600 shrink-0 truncate max-w-[45%]">{p.username}</span>}
@@ -419,7 +463,7 @@ export function KumoOrganizationDetailPage() {
         <SectionCard
           icon={CalendarClock}
           title="Upcoming Expirations"
-          action={<Link to="/kumo/passwords" className="text-xs text-cyber-400 hover:text-cyber-300">View All</Link>}
+          action={<Link to={`/kumo/domains?filter=upcoming&companyId=${org.id}`} className="text-xs text-cyber-400 hover:text-cyber-300">View All</Link>}
         >
           {detail.upcomingExpirations.length === 0 ? (
             <p className="text-sm text-gray-500">Nothing to show.</p>
@@ -428,13 +472,18 @@ export function KumoOrganizationDetailPage() {
               {detail.upcomingExpirations.map((item) => {
                 const when = daysUntil(item.expiresAt);
                 return (
-                  <div key={`${item.type}-${item.id}`} className="flex items-center gap-2 text-sm">
+                  <Link
+                    key={`${item.type}-${item.id}`}
+                    to={itemLink(item.type, item.id)}
+                    title={itemTitle(item.type)}
+                    className="flex items-center gap-2 text-sm group rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter"
+                  >
                     <span className="text-gray-500 shrink-0">{typeIcon(item.type, 13)}</span>
-                    <span className="text-gray-300 truncate flex-1">{item.name}</span>
+                    <span className="text-gray-300 truncate flex-1 group-hover:text-cyber-300">{item.name}</span>
                     <span className={`text-[10px] shrink-0 ${when.days <= 30 ? "text-amber-400" : "text-gray-600"}`} title={formatDate(item.expiresAt)}>
                       {when.label}
                     </span>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
@@ -482,15 +531,20 @@ export function KumoOrganizationDetailPage() {
         ) : (
           <div className="mt-3 divide-y divide-surface-border/50">
             {detail.activity.map((e) => (
-              <div key={`${e.type}-${e.id}-${e.at}`} className="flex items-center gap-3 py-2">
+              <Link
+                key={`${e.type}-${e.id}-${e.at}`}
+                to={itemLink(e.type, e.id)}
+                title={itemTitle(e.type)}
+                className="flex items-center gap-3 py-2 group hover:bg-surface-lighter rounded-lg px-1.5 -mx-1.5"
+              >
                 <span className="text-gray-500 shrink-0">{typeIcon(e.type, 14)}</span>
                 <p className="text-sm text-gray-300 flex-1 truncate">
-                  <span className="text-white">{e.name}</span>
+                  <span className="text-white group-hover:text-cyber-300">{e.name}</span>
                   <span className="text-gray-500"> — {e.type.toLowerCase()} {e.action}</span>
                   {e.by && <span className="text-gray-500"> by {e.by}</span>}
                 </p>
                 <span className="text-[10px] text-gray-600 shrink-0">{timeAgo(e.at)}</span>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -596,12 +650,16 @@ function SectionCard({
 }
 
 /** Proportional ring: the count sits in the middle, the arc shows its share. */
-function HealthRing({ value, total, label, tone }: { value: number; total: number; label: string; tone: string }) {
+function HealthRing({ value, total, label, tone, to }: { value: number; total: number; label: string; tone: string; to: string }) {
   const pct = total > 0 ? Math.min(1, value / total) : 0;
   const radius = 18;
   const circumference = 2 * Math.PI * radius;
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <Link
+      to={to}
+      title={`Show the ${label.toLowerCase()} items`}
+      className="flex flex-col items-center gap-1.5 rounded-lg px-2 py-1 hover:bg-surface-lighter transition-colors"
+    >
       <div className="relative w-14 h-14">
         <svg viewBox="0 0 44 44" className="w-14 h-14 -rotate-90">
           <circle cx="22" cy="22" r={radius} fill="none" strokeWidth="4" className="stroke-surface-lighter" />
@@ -615,6 +673,6 @@ function HealthRing({ value, total, label, tone }: { value: number; total: numbe
         <span className="absolute inset-0 grid place-items-center text-sm font-semibold text-white">{value}</span>
       </div>
       <span className="text-[11px] text-gray-400 text-center leading-tight">{label}</span>
-    </div>
+    </Link>
   );
 }

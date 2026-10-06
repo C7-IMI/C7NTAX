@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock, Plus, Ticket } from "lucide-react";
@@ -25,6 +25,10 @@ export function ContactsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newContact, setNewContact] = useState({ firstName: "", lastName: "", email: "", phone: "", companyId: "", title: "" });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Set by the organization screen, e.g. /clients/contacts?select=<id>
+  const selectId = searchParams.get("select");
 
   const fetch = () => {
     Promise.all([api.get("/clients?limit=100"), api.get("/clients/contacts?limit=500")])
@@ -40,6 +44,13 @@ export function ContactsPage() {
   });
 
   const selectContact = (c: Contact) => { setSelected(c); setEditing(false); };
+
+  // Open the contact a deep link points at.
+  useEffect(() => {
+    if (!selectId) return;
+    const match = contacts.find(c => c.id === selectId);
+    if (match && selected?.id !== match.id) selectContact(match);
+  }, [selectId, contacts]);
   const startEdit = () => {
     if (!selected) return;
     setEditForm({

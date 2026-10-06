@@ -1535,6 +1535,18 @@
     "createdAt": "2026-10-06T07:29:14.413Z"
   },
   {
+    "id": "6d183ca1-b2fe-4662-84f6-699ce7f7e77e",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T07:31:00.976Z"
+  },
+  {
     "id": "3658b176-0040-4b17-a015-dacdcf1b8eea",
     "action": "tickets:update",
     "entity": "tickets",

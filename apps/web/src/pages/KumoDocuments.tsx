@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Folder, FileText, ChevronRight, X, Save, Clock } from "lucide-react";
@@ -15,6 +16,11 @@ export function KumoDocumentsPage() {
   const [folderCompanyId, setFolderCompanyId] = useState("");
   const [companies, setCompanies] = useState<any[]>([]);
   const [viewDoc, setViewDoc] = useState<any>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Set by the organization screen, e.g. /kumo/documents?doc=<id>&filter=unviewed
+  const docId = searchParams.get("doc");
+  const docFilter = searchParams.get("filter") ?? "";
 
   const fetchAll = async () => {
     try {
@@ -60,14 +66,39 @@ export function KumoDocumentsPage() {
     catch { toast.error("Failed to load"); }
   };
 
+  // Open the document a deep link points at.
+  useEffect(() => {
+    if (docId) openDoc(docId);
+  }, [docId]);
+
+  const staleBefore = Date.now() - 90 * 86_400_000;
+  const visibleDocuments = docFilter === "unviewed"
+    ? documents.filter((d: any) => (d.viewCount ?? 0) === 0)
+    : docFilter === "stale"
+      ? documents.filter((d: any) => new Date(d.updatedAt).getTime() < staleBefore)
+      : documents;
+
+  const clearDocFilter = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("filter");
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">Kumo Documents</h2>
-          <p className="text-sm text-gray-400">{documents.length} documents</p>
+          <p className="text-sm text-gray-400">
+            {docFilter ? `${visibleDocuments.length} of ${documents.length} documents` : `${documents.length} documents`}
+          </p>
         </div>
         <div className="flex gap-2">
+          {docFilter && (
+            <button onClick={clearDocFilter} className="btn-secondary text-sm flex items-center gap-1" title="Clear the filter">
+              {docFilter === "unviewed" ? "Not viewed" : "Stale"} ✕
+            </button>
+          )}
           <button onClick={() => setShowFolder(true)} className="btn-secondary text-sm flex items-center gap-1"><Folder size={14} /> New Folder</button>
           <button onClick={() => setShowCreate(true)} className="btn-primary text-sm flex items-center gap-1"><Plus size={14} /> New Doc</button>
         </div>
@@ -90,9 +121,9 @@ export function KumoDocumentsPage() {
 
         <div className="lg:col-span-3">
           {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> :
-           documents.length === 0 ? <div className="text-center py-12 card"><FileText size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No documents</p></div> :
+           visibleDocuments.length === 0 ? <div className="text-center py-12 card"><FileText size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">{docFilter ? "No documents match this filter" : "No documents"}</p></div> :
            <div className="space-y-2">
-            {documents.map(d => (
+            {visibleDocuments.map(d => (
               <div key={d.id} className="card hover:border-cyber-500/30 transition-colors cursor-pointer p-4" onClick={() => openDoc(d.id)}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">

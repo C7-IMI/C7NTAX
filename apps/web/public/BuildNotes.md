@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.015 | Last Updated: 2026-10-06
+## Version: 2026.10.6.016 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.016 — Every item on the organization screen opens its own record
+- **[New]** **Clicking any entry on the organization screen now opens that specific record rather than a list.** Assets open their detail page, passwords open selected in the vault, configurations selected in Configurations, documents open in the reader, domains and certificates selected in the new tracker, contacts selected on the Contacts page, and sub-organizations on their own dashboard. The aggregates link to the matching filtered view too: a password-strength bucket opens the vault filtered by that strength (scored server-side only when the filter is asked for), the Stale and Not Viewed rings open Documents filtered, and the Expired ring and *View All* open the expiry tracker.
+- **[New]** **Domains & Certificates** — a page in Kumo (nav entry after *Documents*) listing domains and certificates with their client, expiry date and renewal status, with All / Expiring soon / Expired filters and a detail panel. Certificates and domains previously existed only as counts, so this is what the expiry links land on.
+- **[Update]** The Passwords, Configurations, Documents and Contacts pages accept a `select` / `doc` / `strength` / `filter` query param, so a link from the organization screen opens the item directly even on a cold load. Filtered views show a chip that clears the filter.
+- **Verification:** on the live screen every entry was checked for a correct destination, then ten of them were opened and confirmed — password, configuration, document, domain, certificate, contact and asset all arrived with that record selected (the detail pane heading matched the item), a strength bucket opened the vault showing "Strength: Strong", the Not Viewed ring opened Documents at "Not viewed", and *View All* opened the tracker scoped to that client. Typecheck unchanged (web 26, api 178 pre-existing errors); token lint unchanged at 117.
 
 ## 2026.10.6.015 — The Organization dashboard in Kumo, and sub-organizations
 - **[New]** **Clicking an organization in Kumo now opens a full documentation dashboard for that client.** `GET /api/kumo/organizations/:id` answers with everything the screen needs in one round trip: **Quick Notes** (the client record's notes, editable in place), **Password Strength** for the whole vault using the same ladder the vault uses, a **Documentation Health Summary** of stale / never-viewed / expired items, your **Recently Viewed By You** items for that client, its **Important Contacts**, **Recently Updated** records, **Popular Passwords**, **Upcoming Expirations**, **Locations** and a client **Activity Feed**. It is built from C7NTAX cards, tokens and icons rather than a copy of another product's chrome.

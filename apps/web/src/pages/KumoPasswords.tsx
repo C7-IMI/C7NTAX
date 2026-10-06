@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Shield, Eye, EyeOff, Search, X, Save, Clock, Edit3, Trash2, Copy, Building2, Key } from "lucide-react";
@@ -22,16 +23,34 @@ export function KumoPasswordsPage() {
   const [manualTotpCode, setManualTotpCode] = useState<{code:string;remaining:number} | null>(null);
   const [showNewPwd, setShowNewPwd] = useState(false);
   const [showEditPwd, setShowEditPwd] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Set by the organization screen, e.g. /kumo/passwords?select=<id>&strength=Very+Strong
+  const selectId = searchParams.get("select");
+  const strengthFilter = searchParams.get("strength") ?? "";
 
   const fetch = async () => {
-    try { const r = await api.get("/kumo/passwords"); setPasswords(r.data.data || []); }
+    try {
+      const r = await api.get("/kumo/passwords", { params: strengthFilter ? { strength: strengthFilter } : {} });
+      setPasswords(r.data.data || []);
+    }
     catch { toast.error("Failed to load"); } finally { setLoading(false); }
   };
 
   useEffect(() => {
     fetch();
+  }, [strengthFilter]);
+
+  useEffect(() => {
     api.get("/clients?limit=100").then(r => setCompanies(r.data.data || [])).catch(() => {});
   }, []);
+
+  // Open the credential a deep link points at.
+  useEffect(() => {
+    if (!selectId) return;
+    const match = passwords.find((p: any) => p.id === selectId);
+    if (match && selected?.id !== match.id) selectPassword(match);
+  }, [selectId, passwords]);
 
   useEffect(() => {
     if (!manualTotpCode?.enabled) return;
@@ -123,6 +142,15 @@ export function KumoPasswordsPage() {
           <option value="">All Clients</option>
           {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+        {strengthFilter && (
+          <button
+            onClick={() => { const next = new URLSearchParams(searchParams); next.delete("strength"); setSearchParams(next, { replace: true }); }}
+            className="btn-secondary text-xs py-1.5 flex items-center gap-1.5"
+            title="Clear the strength filter"
+          >
+            <Shield size={12} /> Strength: {strengthFilter} ✕
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

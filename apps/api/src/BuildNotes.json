@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.6.016",
+    "date": "2026-10-06",
+    "title": "Every item on the organization screen opens its own record",
+    "changes": [
+      {
+        "text": "**Clicking any entry on the organization screen now opens that specific record rather than a list.** Assets open their detail page, passwords open selected in the vault, configurations selected in Configurations, documents open in the reader, domains and certificates selected in the new tracker, contacts selected on the Contacts page, and sub-organizations on their own dashboard. The aggregates link to the matching filtered view too: a password-strength bucket opens the vault filtered by that strength (scored server-side only when the filter is asked for), the Stale and Not Viewed rings open Documents filtered, and the Expired ring and *View All* open the expiry tracker.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Domains & Certificates** — a page in Kumo (nav entry after *Documents*) listing domains and certificates with their client, expiry date and renewal status, with All / Expiring soon / Expired filters and a detail panel. Certificates and domains previously existed only as counts, so this is what the expiry links land on.",
+        "type": "New Feature"
+      },
+      {
+        "text": "The Passwords, Configurations, Documents and Contacts pages accept a `select` / `doc` / `strength` / `filter` query param, so a link from the organization screen opens the item directly even on a cold load. Filtered views show a chip that clears the filter.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.015",
     "date": "2026-10-06",
     "title": "The Organization dashboard in Kumo, and sub-organizations",

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
-  AlertTriangle, XCircle, Settings2, ListOrdered, AlignJustify,
+  AlertTriangle, XCircle, Settings2, ListOrdered, AlignJustify, Globe,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs } from "./Breadcrumbs";
@@ -77,6 +77,7 @@ export const NAV_TREE: NavNode[] = [
       { id: "kumo-passwords", to: "/kumo/passwords", icon: Shield, label: "Passwords" },
       { id: "kumo-configs", to: "/kumo/configs", icon: Server, label: "Configurations" },
       { id: "kumo-documents", to: "/kumo/documents", icon: BookOpen, label: "Documents" },
+      ...(UI_KUMO_ORGS ? [{ id: "kumo-domains", to: "/kumo/domains", icon: Globe, label: "Domains & Certs" }] : []),
     ],
   },
   {
@@ -181,6 +182,7 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/kumo/passwords": "AES-256 encrypted password vault with TOTP and access logs.",
   "/kumo/configs": "Server, workstation, and network device configurations.",
   "/kumo/documents": "SOPs and documentation with folder organization and revision history.",
+  "/kumo/domains": "Domains and certificates with their expiry dates and renewal status.",
   "/billing/dashboard": "Financial overview with invoiced, paid, outstanding, and overdue metrics.",
   "/billing": "Create, send, and track invoices with line items and payment processing.",
   "/billing/agreements": "Manage recurring service agreements and billing schedules.",

@@ -262,13 +262,27 @@ kumoRouter.delete("/assets/:id", requirePermission(Permission.KumoAssetDelete), 
 
 kumoRouter.get("/passwords", requirePermission(Permission.KumoPasswordsView), async (req: AuthRequest, res, next) => {
   try {
-    const data = await prisma.kumoPassword.findMany({
+    const { strength } = req.query as Record<string, string>;
+    const rows = await prisma.kumoPassword.findMany({
       where: { isActive: true },
       orderBy: { updatedAt: "desc" },
-      select: { id: true, label: true, username: true, email: true, url: true, category: true, strength: true, companyId: true, totpEnabled: true, expiresAt: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true, label: true, username: true, email: true, url: true, category: true, strength: true,
+        companyId: true, totpEnabled: true, expiresAt: true, createdAt: true, updatedAt: true,
+        encryptedPassword: true, iv: true, authTag: true,
+      },
       take: 200,
     });
-    res.json({ data });
+    // The ciphertext is dropped in both paths; strength is only scored when a
+    // strength filter is asked for, which is the one case that needs plaintext.
+    const data = rows.map(({ encryptedPassword, iv, authTag, ...rest }) => {
+      if (!strength) return rest as Record<string, unknown>;
+      let plaintext = "";
+      try { plaintext = decrypt(encryptedPassword, iv, authTag); } catch { plaintext = ""; }
+      const computedStrength = !plaintext || plaintext.startsWith("ENC:") ? "Not evaluated" : passwordStrengthLevel(plaintext);
+      return { ...rest, computedStrength } as Record<string, unknown>;
+    });
+    res.json({ data: strength ? data.filter((p) => p.computedStrength === strength) : data });
   } catch (e) { next(e); }
 });
 
@@ -625,6 +639,50 @@ kumoRouter.post("/recently-viewed", requirePermission(Permission.KumoView), asyn
       update: { entityName, entityIcon: entityIcon || "document", viewedAt: new Date() },
     });
     res.status(201).json(item);
+  } catch (e) { next(e); }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  DOMAINS & CERTIFICATES — one list, since both are expiry-driven
+// ═══════════════════════════════════════════════════════════════════
+
+const UPCOMING_EXPIRY_DAYS = 90;
+
+kumoRouter.get("/domains", requirePermission(Permission.KumoView), async (req: AuthRequest, res, next) => {
+  try {
+    const { filter = "all", companyId } = req.query as Record<string, string>;
+    const where = companyId ? { companyId } : {};
+    const [domains, certificates] = await Promise.all([
+      prisma.kumoDomain.findMany({ where, orderBy: { expiryDate: "asc" }, take: 200 }),
+      prisma.kumoCertificate.findMany({ where, orderBy: { expiryDate: "asc" }, take: 200 }),
+    ]);
+
+    const companyIds = [...new Set([...domains, ...certificates].map((r) => r.companyId).filter((c): c is string => !!c))];
+    const companies = companyIds.length
+      ? await prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, name: true } })
+      : [];
+    const companyNames = new Map(companies.map((c) => [c.id, c.name]));
+
+    const now = Date.now();
+    const upcomingBefore = now + UPCOMING_EXPIRY_DAYS * 86_400_000;
+    const data = [
+      ...certificates.map((c) => ({
+        kind: "Certificate", id: c.id, name: c.name, target: c.domain, issuer: c.issuer,
+        expiryDate: c.expiryDate, autoRenew: c.autoRenew, companyId: c.companyId, companyName: c.companyId ? companyNames.get(c.companyId) ?? null : null,
+      })),
+      ...domains.map((d) => ({
+        kind: "Domain", id: d.id, name: d.domainName, target: d.domainName, issuer: d.registrar,
+        expiryDate: d.expiryDate, autoRenew: d.autoRenew, companyId: d.companyId, companyName: d.companyId ? companyNames.get(d.companyId) ?? null : null,
+      })),
+    ]
+      .filter((r) => {
+        if (filter === "expired") return !!r.expiryDate && r.expiryDate.getTime() < now;
+        if (filter === "upcoming") return !!r.expiryDate && r.expiryDate.getTime() >= now && r.expiryDate.getTime() <= upcomingBefore;
+        return true;
+      })
+      .sort((a, b) => (a.expiryDate?.getTime() ?? Number.MAX_SAFE_INTEGER) - (b.expiryDate?.getTime() ?? Number.MAX_SAFE_INTEGER));
+
+    res.json({ data, total: data.length, upcomingDays: UPCOMING_EXPIRY_DAYS });
   } catch (e) { next(e); }
 });
 
