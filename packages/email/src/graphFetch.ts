@@ -25,6 +25,7 @@
  * messages processed when the caller says the work succeeded. Nothing is
  * written back to the mailbox before that.
  */
+import { createHash, randomBytes } from "node:crypto";
 import type { ParsedEmail } from "./EmailConnector";
 
 const GRAPH_BASE = (process.env.GRAPH_API_BASE || "https://graph.microsoft.com/v1.0").replace(/\/+$/, "");
@@ -40,6 +41,25 @@ export interface GraphConfig {
   mailbox: string;
   /** Well-known folder name (Inbox), a folder id, or a mailFolder path. */
   folder?: string;
+  /**
+   * `clientSecret` (app-only, the unattended watcher default) or `delegated`
+   * (a signed-in account's own mailbox, refreshed from a stored refresh token).
+   */
+  authType?: "clientSecret" | "delegated";
+  /** Stored, encrypted elsewhere; only ever passed in for `authType: delegated`. */
+  refreshToken?: string;
+  /** Overrides the token's mailbox path (`/me` when the mailbox is empty). */
+  endpointBase?: string;
+}
+
+/** Default delegated scope set: read/write mail plus the account's own profile. */
+export const DELEGATED_GRAPH_SCOPES =
+  "offline_access openid profile email https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read";
+
+/** `/users/<mailbox>` for a named mailbox, `/me` for the signed-in account. */
+export function mailboxBase(config: Pick<GraphConfig, "mailbox">): string {
+  const mailbox = (config.mailbox || "").trim();
+  return mailbox ? `/users/${encodeURIComponent(mailbox)}` : "/me";
 }
 
 export interface GraphMessage {
@@ -113,29 +133,167 @@ export interface GraphToken {
   expiresAt: number;
 }
 
-/** Client-credentials token for the app registration. */
-export async function acquireGraphToken(config: Pick<GraphConfig, "tenantId" | "clientId" | "clientSecret">): Promise<GraphToken> {
-  const tenant = (config.tenantId || "").trim() || "common";
-  if (!config.clientId || !config.clientSecret) {
-    throw new GraphError("Graph needs a tenant id, a client id and a client secret", 0, 0);
-  }
-  const resp = await graphFetch(
+/** Token endpoint parameters shared by every grant type. */
+function tokenRequest(tenantId: string, params: Record<string, string>): Promise<Response> {
+  const tenant = (tenantId || "").trim() || "common";
+  return graphFetch(
     `${TOKEN_BASE}/${encodeURIComponent(tenant)}/oauth2/v2.0/token`,
     {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "client_credentials",
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-        scope: "https://graph.microsoft.com/.default",
-      }),
+      body: new URLSearchParams(params),
     },
     "Graph token",
   );
-  const data = (await resp.json()) as { access_token?: string; expires_in?: number };
+}
+
+async function readTokenResponse(resp: Response): Promise<GraphOAuthTokens> {
+  const data = (await resp.json()) as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    scope?: string;
+  };
   if (!data.access_token) throw new GraphError("Graph token response carried no access_token", 0, 0);
-  return { token: data.access_token, expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000 };
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token || null,
+    scope: data.scope || "",
+    expiresIn: data.expires_in ?? 3600,
+  };
+}
+
+/** Client-credentials token for the app registration. */
+export async function acquireGraphToken(config: Pick<GraphConfig, "tenantId" | "clientId" | "clientSecret">): Promise<GraphToken> {
+  if (!config.clientId || !config.clientSecret) {
+    throw new GraphError("Graph needs a tenant id, a client id and a client secret", 0, 0);
+  }
+  const resp = await tokenRequest(config.tenantId, {
+    grant_type: "client_credentials",
+    client_id: config.clientId,
+    client_secret: config.clientSecret,
+    scope: "https://graph.microsoft.com/.default",
+  });
+  const tokens = await readTokenResponse(resp);
+  return { token: tokens.accessToken, expiresAt: Date.now() + tokens.expiresIn * 1000 };
+}
+
+// ── Delegated OAuth (authorization code + PKCE) ──────────────────────
+// "Connect to Microsoft": an administrator signs in, consents to Mail.ReadWrite
+// for their own mailbox, and the connector polls that mailbox with the refresh
+// token. No application permission or Exchange RBAC scoping is involved, which
+// makes this the quick way to watch a genuine mailbox; the app-only flow stays
+// the right choice for a shared mailbox nobody is signed into.
+
+export interface GraphOAuthTokens {
+  accessToken: string;
+  refreshToken: string | null;
+  scope: string;
+  expiresIn: number;
+}
+
+export interface PkcePair {
+  verifier: string;
+  challenge: string;
+}
+
+/** PKCE verifier/challenge pair (S256) for the authorization-code flow. */
+export function createPkcePair(): PkcePair {
+  const verifier = randomBytes(48).toString("base64url");
+  const challenge = createHash("sha256").update(verifier).digest("base64url");
+  return { verifier, challenge };
+}
+
+/** Consent URL to send the administrator's browser to. */
+export function buildGraphAuthorizeUrl(options: {
+  tenantId?: string | null;
+  clientId: string;
+  redirectUri: string;
+  state: string;
+  codeChallenge: string;
+  scope?: string;
+  loginHint?: string | null;
+}): string {
+  const tenant = (options.tenantId || "common").trim() || "common";
+  const params = new URLSearchParams({
+    client_id: options.clientId,
+    response_type: "code",
+    redirect_uri: options.redirectUri,
+    response_mode: "query",
+    scope: options.scope || DELEGATED_GRAPH_SCOPES,
+    state: options.state,
+    code_challenge: options.codeChallenge,
+    code_challenge_method: "S256",
+    prompt: "select_account",
+  });
+  if (options.loginHint) params.set("login_hint", options.loginHint);
+  return `${TOKEN_BASE}/${encodeURIComponent(tenant)}/oauth2/v2.0/authorize?${params.toString()}`;
+}
+
+/** Trade the authorization code for a first access/refresh token pair. */
+export async function exchangeGraphCode(options: {
+  tenantId?: string | null;
+  clientId: string;
+  clientSecret?: string | null;
+  code: string;
+  redirectUri: string;
+  codeVerifier: string;
+}): Promise<GraphOAuthTokens> {
+  const params: Record<string, string> = {
+    grant_type: "authorization_code",
+    client_id: options.clientId,
+    code: options.code,
+    redirect_uri: options.redirectUri,
+    code_verifier: options.codeVerifier,
+    scope: DELEGATED_GRAPH_SCOPES,
+  };
+  // Confidential clients send their secret; public clients rely on PKCE alone.
+  if (options.clientSecret) params.client_secret = options.clientSecret;
+  return readTokenResponse(await tokenRequest(options.tenantId || "common", params));
+}
+
+/** Refresh an expired delegated access token (the refresh token rotates). */
+export async function refreshGraphToken(options: {
+  tenantId?: string | null;
+  clientId: string;
+  clientSecret?: string | null;
+  refreshToken: string;
+}): Promise<GraphOAuthTokens> {
+  const params: Record<string, string> = {
+    grant_type: "refresh_token",
+    client_id: options.clientId,
+    refresh_token: options.refreshToken,
+    scope: DELEGATED_GRAPH_SCOPES,
+  };
+  if (options.clientSecret) params.client_secret = options.clientSecret;
+  try {
+    return readTokenResponse(await tokenRequest(options.tenantId || "common", params));
+  } catch (e) {
+    // invalid_grant means the consent is gone (password change, revoked, or the
+    // refresh token expired) — the connector needs re-connecting, not retrying.
+    const message = e instanceof Error ? e.message : String(e);
+    if (/invalid_grant|AADSTS70008|AADSTS50173|AADSTS65001/i.test(message)) {
+      throw new GraphError(`Microsoft sign-in has expired or was revoked — reconnect the connector. (${message.slice(0, 200)})`, 401, 0);
+    }
+    throw e;
+  }
+}
+
+/** The signed-in account, recorded so the UI can show whose mailbox is watched. */
+export async function getGraphAccount(
+  accessToken: string,
+): Promise<{ userPrincipalName: string | null; mail: string | null; displayName: string | null }> {
+  const resp = await graphFetch(
+    `${GRAPH_BASE}/me?$select=userPrincipalName,mail,displayName`,
+    { headers: { authorization: `Bearer ${accessToken}` } },
+    "Graph account",
+  );
+  const data = (await resp.json()) as { userPrincipalName?: string; mail?: string; displayName?: string };
+  return {
+    userPrincipalName: data.userPrincipalName || null,
+    mail: data.mail || null,
+    displayName: data.displayName || null,
+  };
 }
 
 interface GraphRecipient { emailAddress?: { name?: string; address?: string } }
@@ -175,7 +333,7 @@ export async function fetchGraphAttachments(
   token: string,
   messageId: string,
 ): Promise<ParsedEmail["attachments"]> {
-  const url = `${GRAPH_BASE}/users/${encodeURIComponent(config.mailbox)}/messages/${encodeURIComponent(messageId)}`
+  const url = `${GRAPH_BASE}${mailboxBase(config)}/messages/${encodeURIComponent(messageId)}`
     + "/attachments?$select=id,name,contentType,size,isInline,contentBytes";
   const resp = await graphFetch(url, { headers: { authorization: `Bearer ${token}` } }, "Graph attachments");
   const data = (await resp.json()) as {
@@ -201,7 +359,7 @@ export async function fetchGraphAttachments(
 /** Unread messages in the configured folder, oldest first, with attachments. */
 export async function fetchGraphUnread(config: GraphConfig, token: string, top = 25): Promise<GraphMessage[]> {
   const folder = normalizeGraphFolder(config.folder);
-  const url = `${GRAPH_BASE}/users/${encodeURIComponent(config.mailbox)}/mailFolders/${encodeURIComponent(folder)}/messages`
+  const url = `${GRAPH_BASE}${mailboxBase(config)}/mailFolders/${encodeURIComponent(folder)}/messages`
     + `?$filter=${encodeURIComponent("isRead eq false")}&$top=${top}&$orderby=${encodeURIComponent("receivedDateTime asc")}&$select=${MESSAGE_SELECT}`;
   const resp = await graphFetch(url, { headers: { authorization: `Bearer ${token}` } }, "Graph message list");
   const data = (await resp.json()) as { value?: GraphMessagePayload[] };
@@ -236,7 +394,7 @@ export async function fetchGraphUnread(config: GraphConfig, token: string, top =
 /** Mark one message as read — called only after the ticket work succeeded. */
 export async function markGraphMessageRead(config: GraphConfig, token: string, messageId: string): Promise<void> {
   await graphFetch(
-    `${GRAPH_BASE}/users/${encodeURIComponent(config.mailbox)}/messages/${encodeURIComponent(messageId)}`,
+    `${GRAPH_BASE}${mailboxBase(config)}/messages/${encodeURIComponent(messageId)}`,
     {
       method: "PATCH",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
@@ -246,12 +404,19 @@ export async function markGraphMessageRead(config: GraphConfig, token: string, m
   );
 }
 
-/** Connection probe for the UI: token first, then the folder the connector points at. */
-export async function probeGraphMailbox(config: GraphConfig): Promise<{ mailbox: string; folder: string; unread: number; total: number }> {
-  const { token } = await acquireGraphToken(config);
+/**
+ * Connection probe for the UI: token first, then the folder the connector points
+ * at. A caller that already holds a delegated token passes it in, so the probe
+ * never has to fall back to client credentials.
+ */
+export async function probeGraphMailbox(
+  config: GraphConfig,
+  existingToken?: string,
+): Promise<{ mailbox: string; folder: string; unread: number; total: number }> {
+  const token = existingToken || (await acquireGraphToken(config)).token;
   const folder = normalizeGraphFolder(config.folder);
   const resp = await graphFetch(
-    `${GRAPH_BASE}/users/${encodeURIComponent(config.mailbox)}/mailFolders/${encodeURIComponent(folder)}?$select=displayName,totalItemCount,unreadItemCount`,
+    `${GRAPH_BASE}${mailboxBase(config)}/mailFolders/${encodeURIComponent(folder)}?$select=displayName,totalItemCount,unreadItemCount`,
     { headers: { authorization: `Bearer ${token}` } },
     "Graph folder lookup",
   );

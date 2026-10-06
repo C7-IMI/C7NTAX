@@ -2969,3 +2969,36 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - `GET /api/boards` returns a bare array, not `{ data: [...] }` — `$boards.data[0].id` is null. This cost one probe run before it was spotted; the tickets list does use `{ data }`.
 - A connector's first poll is a 5 s `setTimeout`, so any test that enables and immediately deletes leaves a state row unless that timeout is tracked — which is exactly how the orphan row appeared.
 - Sender attribution is still the oldest client with a server warning when the domain matches nothing; a per-connector default company is the obvious next step, and CONNECTING the mailbox is now purely an Entra task.
+
+---
+
+### Prompt 208 — Attribution rules, EWS and delegated Microsoft sign-in, plus the OAuth app runbook
+**Timestamp:** 2026-10-06 | **Status:** Done — 69/69 new end-to-end checks, 37/37 regression, driven in the browser | **Duration:** ~2 h 30 min
+**BuildNotes IDs:** 2026.10.6.050 - Email connector: where unknown senders go, Exchange on-premises, and signing in as yourself
+> Fix these:
+>
+> - A sender whose domain matches no client is still filed against the **oldest** client, with a server warning — a per-connector default company / auto-create-company is the natural next step.
+> - No EWS transport and no delegated "Connect to Microsoft" sign-in flow.
+>
+> Then write me a plan doc for building and deplyoing the Oauth app like the screenshot says it needs
+
+**What changed**
+- **Attribution is now a per-connector decision.** `resolveSender` tries, in order: the contact's own client, a client whose email/website carries the sender's domain, the connector's **default client**, a client **created for the domain** (opt-in), and finally the oldest client with the warning it always had. Consumer domains are excluded from both domain matching and auto-creation — filing a gmail sender under whichever client happens to mention "gmail.com", or creating a client called "Gmail", are both worse than the fallback.
+- **EWS** (`packages/email/src/ewsFetch.ts`): native SOAP over `node:https` with Basic auth — `FindItem` (unread, oldest first, restricted with `message:IsRead=false`), `GetItem` with `IncludeMimeContent` so the message is parsed from its own MIME, and `UpdateItem` (`message:IsRead=true`) after the ticket work succeeds. No new dependency; the MIME is handed to the same mailparser mapping IMAP uses, which was extracted into `parseMail.ts` for that reason. On-premises Exchange is the target (Microsoft is retiring EWS for Exchange Online).
+- **Delegated sign-in** (`/oauth/start` + a public `/oauth/callback`, authorization code + PKCE): the refresh token is stored encrypted and **written back whenever Microsoft rotates it**, the account is recorded from `/me`, and polling refreshes it a minute early. A revoked consent becomes an instruction (*reconnect the connector*) instead of `invalid_grant`.
+- **Two more switches**: `markSeenOnSuccess` (file the mail but leave it unread) and `ignoreAutoReplies`.
+- **Ticket numbering had a real landmine.** `generateTicketNumber` derived the next sequence from a row **count**; a deleted ticket sends the count backwards, so the next insert could pick a number that already existed and die on the unique constraint. That is what was failing when the connector filed a burst — and it was invisible in the UI as "no ticket". Numbers now continue from the **highest existing** for that client, and the email path retries a genuine race.
+- **Plan doc** `PLAN-017-Microsoft-365-OAuth-App-Setup.md`: both identity arrangements end to end, Entra steps + `az`/Exchange PowerShell equivalents, the RBAC-for-Applications scope with the two `Test-ServicePrincipalAuthorization` calls that prove it *is* scoped, redirect URIs, secret rotation, the environment variables, a troubleshooting table of the AADSTS/Graph errors, rollback and acceptance criteria.
+
+**Verification**
+- New probe (`probe-connector-v2.mjs`, 69 checks) against the stub: attribution fallback / default client / auto-created client (name from the domain) / consumer-domain safety / contact opt-out; EWS folder guard, test counts, poll → ticket with the MIME body and its attachment, mark-read via `UpdateItem`, no duplicate on a repeat poll, and the `ErrorInvalidServerVersion` failure surfaced to the status endpoint; delegated consent URL (PKCE S256, `Mail.ReadWrite` + `offline_access`, exact redirect URI), callback redirect + **replayed state refused**, refresh token stored and rotated, `authorization_code` and `refresh_token` grants visible at the stub, the delegated mailbox read and marked read, and the status endpoint reporting the account.
+- Regression: the original 37-check connector probe still passes after all of this.
+- Extra checks outside the probes: revoked consent → *reconnect the connector*; `markSeenOnSuccess=false` (ticket created, message unread, no PATCH sent); `ignoreAutoReplies` on (skipped) vs off (filed and marked read).
+- Browser: all three transports and both Graph sign-in modes render the right banners and fields, a delegated connector was created from the panel, **Connect to Microsoft** produced the consent URL, the callback landed back with *Connected to Microsoft as servicedesk@cyber7group.com*, the card flipped to *Signed in as …*, then disconnect and delete both worked.
+- Typechecks: web 0, API unchanged at its pre-existing 155 (none in the touched files), `packages/email` unchanged. The API restarted on the real Microsoft endpoints with a clean boot, and the database was left with the two seeded (disabled) connectors, no state rows, no probe tickets/contacts/companies and no orphaned attachment folders.
+
+**Notes for next time**
+- Two probe failures were my own test harness, not the product, and both cost time: a count-based duplicate check was fooled by tickets left from an earlier run (now scoped to the current run by `createdAt`), and a sender address reused across runs was pinned to the client its *old contact* belonged to — which is correct behaviour (an existing contact's client wins). Send every synthetic message from a unique address.
+- The EWS parser matched bare tag names while Exchange prefixes everything (`<t:RootFolder>`), so every response silently parsed to zero items. The stub made that obvious in one run; a real tenant would have shown it as "connected, 0 unread".
+- This app rewrites `title` attributes to `data-kun-title` for its own tooltips, so `getByTitle` finds a *tooltip*, not the button — use `button[data-kun-title="…"]`, and never `.first()` on a generic selector inside a list (that is how a seeded demo connector got deleted and had to be restored).
+- `prisma db push` needs the API stopped on Windows: the running process holds the query-engine DLL and `generate` fails with EPERM.

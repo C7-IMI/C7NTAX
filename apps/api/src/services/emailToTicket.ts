@@ -22,6 +22,39 @@ import { storeTicketAttachments, sanitizeAttachmentFilename, MAX_TICKET_ATTACHME
 const SYSTEM_USER_EMAIL = "connector@c7ntax.local";
 const MAX_ATTACHMENTS_PER_EMAIL = 20;
 
+/**
+ * Per-connector ingestion rules, set on the connector row.
+ * `defaultCompanyId` decides where a sender that matches nothing is filed;
+ * without it (or with `autoCreateCompany`) the connector falls back to
+ * auto-creating a client for the sender's domain, then to the oldest client.
+ */
+export interface EmailIngestOptions {
+  defaultCompanyId?: string | null;
+  autoCreateCompany?: boolean;
+  autoCreateContact?: boolean;
+  /** Out-of-office/auto-reply mail is skipped unless this is switched off. */
+  ignoreAutoReplies?: boolean;
+}
+
+/**
+ * Consumer mailbox domains. A sender at one of these has no company domain to
+ * match on, so they must never be attributed to a client that happens to carry
+ * "gmail.com" somewhere, and auto-creating a client called "Gmail" would be
+ * nonsense — these fall through to the configured default instead.
+ */
+const CONSUMER_DOMAINS = new Set([
+  "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "live.com", "msn.com",
+  "yahoo.com", "ymail.com", "aol.com", "icloud.com", "me.com", "mac.com",
+  "proton.me", "protonmail.com", "gmx.com", "gmx.de", "mail.com", "zoho.com",
+  "comcast.net", "verizon.net", "att.net", "sbcglobal.net", "shaw.ca", "bell.net",
+]);
+
+/** "initech.example" → "Initech"; "acme.co.uk" → "Acme". */
+function companyNameFromDomain(domain: string): string {
+  const label = domain.replace(/^www\./, "").split(".")[0] || domain;
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 /** Resolve (or lazily create) the system user that owns connector tickets. */
 export async function resolveSystemUser(): Promise<{ id: string }> {
   const existing = await prisma.user.findUnique({ where: { email: SYSTEM_USER_EMAIL } });
@@ -40,10 +73,11 @@ export async function resolveSystemUser(): Promise<{ id: string }> {
   });
 }
 
-/** Resolve contact + company for a sender email (lookup-first, then create). */
-async function resolveSender(from: ParsedEmail["from"]) {
+/** Resolve contact + company for a sender (lookup-first, then create). */
+async function resolveSender(from: ParsedEmail["from"], options: EmailIngestOptions = {}) {
   const email = (from.email || "").trim().toLowerCase();
   const domain = extractDomain(email);
+  const matchableDomain = domain && !CONSUMER_DOMAINS.has(domain) ? domain : "";
 
   let contact = await prisma.contact.findFirst({
     where: { email: { equals: email, mode: "insensitive" } },
@@ -53,28 +87,49 @@ async function resolveSender(from: ParsedEmail["from"]) {
     ? await prisma.company.findUnique({ where: { id: contact.companyId } })
     : null;
 
+  // The connector's configured default wins over guessing when nothing matched.
+  if (!company && options.defaultCompanyId) {
+    company = await prisma.company.findUnique({ where: { id: options.defaultCompanyId } });
+    if (!company) {
+      console.warn(`[EmailConnector] Connector default company ${options.defaultCompanyId} no longer exists — falling back`);
+    }
+  }
+
+  if (!company && matchableDomain) {
+    company = await prisma.company.findFirst({
+      where: {
+        OR: [
+          { email: { contains: matchableDomain, mode: "insensitive" } },
+          { website: { contains: matchableDomain, mode: "insensitive" } },
+        ],
+      },
+    });
+  }
+
+  if (!company && options.autoCreateCompany && matchableDomain) {
+    company = await prisma.company.create({
+      data: {
+        name: companyNameFromDomain(matchableDomain),
+        website: `https://${matchableDomain}`,
+        notes: `Created automatically by the email connector from an inbound email (${matchableDomain}).`,
+      },
+    });
+    console.log(`[EmailConnector] Created client "${company.name}" for domain ${matchableDomain}`);
+  }
+
   if (!company) {
-    company =
-      (await prisma.company.findFirst({
-        where: {
-          OR: [
-            { email: { contains: domain, mode: "insensitive" } },
-            { website: { contains: domain, mode: "insensitive" } },
-          ],
-        },
-      })) ||
-      (await prisma.company.findFirst({ orderBy: { createdAt: "asc" } }));
+    company = await prisma.company.findFirst({ orderBy: { createdAt: "asc" } });
     if (company) {
-      // The sender's domain matched nothing, so the ticket is filed against a
-      // fallback client rather than lost. Worth a line in the log: the fix is a
-      // Contact (or a Company website/email) for that domain.
-      console.warn(`[EmailConnector] No client matched "${domain}" — filing the ticket under "${company.name}"; add the contact or the client's domain to attribute it correctly`);
+      // Nothing matched, so the ticket is filed against a fallback client rather
+      // than lost. Worth a line in the log: the fix is a Contact (or a Company
+      // website/email) for that domain, or a default company on the connector.
+      console.warn(`[EmailConnector] No client matched "${domain || email}" — filing the ticket under "${company.name}"; set a default company on the connector, enable auto-create, or add the contact/client domain`);
     }
   }
 
   if (!company) throw new Error("No company available to attach the email ticket (default company missing)");
 
-  if (!contact) {
+  if (!contact && options.autoCreateContact !== false) {
     const { firstName, lastName } = deduceName(from.name, from.email);
     contact = await prisma.contact.create({
       data: {
@@ -126,55 +181,82 @@ async function attachEmailFiles(ticketId: string, email: ParsedEmail, uploadedBy
 }
 
 /** Create a ticket from an email; returns the new ticket id. */
-export async function createTicketFromEmail(boardId: string, email: ParsedEmail): Promise<string> {
-  if (isAutoReply(email.subject, email.bodyText)) return "";
+export async function createTicketFromEmail(boardId: string, email: ParsedEmail, options: EmailIngestOptions = {}): Promise<string> {
+  // Auto-replies are dropped by default; a connector can opt to file them.
+  if (options.ignoreAutoReplies !== false && isAutoReply(email.subject, email.bodyText)) return "";
 
   const title = stripSubjectPrefixes(email.subject) || `Email from ${email.from.email || "unknown"}`;
   const description = emailBody(email).slice(0, 20000) || "(no message body)";
   const priority = deducePriority(email.subject, description);
   const systemUser = await resolveSystemUser();
-  const { contact, company } = await resolveSender(email.from);
+  const { contact, company } = await resolveSender(email.from, options);
 
-  const ticket = await prisma.$transaction(async (tx) => {
-    const ticketNumber = await generateTicketNumber(company.id);
-    const created = await tx.ticket.create({
-      data: {
-        ticketNumber,
-        title,
-        description,
-        boardId,
-        companyId: company.id,
-        contactId: contact.id,
-        priority,
-        source: "email",
-        status: TicketStatus.New,
-        createdById: systemUser.id,
-        customFields: {
-          email: {
-            messageId: email.messageId,
-            from: email.from.email,
-            to: email.to,
-            cc: email.cc,
-            date: email.date,
-          },
-        },
-      },
-    });
-    await tx.ticketComment.create({
-      data: {
-        ticketId: created.id,
-        body: `Email received from ${email.from.email} (Message-ID: ${email.messageId})\n\n${description}`,
-        authorId: systemUser.id,
-        isInternal: false,
-        isEmail: true,
-        fromEmail: email.from.email || null,
-      },
-    });
-    return created;
-  });
+  const ticket = await createTicketWithNumber(boardId, email, company.id, contact?.id ?? null, title, description, priority, systemUser.id);
 
   await attachEmailFiles(ticket.id, email, systemUser.id);
   return ticket.id;
+}
+
+/**
+ * Insert the ticket and its email comment, retrying on a ticket-number
+ * collision. Two connectors (or a connector and a person) can pick the same next
+ * number in the same instant; the retry is what keeps an email from being dropped
+ * over a numbering race.
+ */
+async function createTicketWithNumber(
+  boardId: string,
+  email: ParsedEmail,
+  companyId: string,
+  contactId: string | null,
+  title: string,
+  description: string,
+  priority: string,
+  systemUserId: string,
+) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const ticketNumber = await generateTicketNumber(companyId, attempt);
+        const created = await tx.ticket.create({
+          data: {
+            ticketNumber,
+            title,
+            description,
+            boardId,
+            companyId,
+            contactId,
+            priority,
+            source: "email",
+            status: TicketStatus.New,
+            createdById: systemUserId,
+            customFields: {
+              email: {
+                messageId: email.messageId,
+                from: email.from.email,
+                to: email.to,
+                cc: email.cc,
+                date: email.date,
+              },
+            },
+          },
+        });
+        await tx.ticketComment.create({
+          data: {
+            ticketId: created.id,
+            body: `Email received from ${email.from.email} (Message-ID: ${email.messageId})\n\n${description}`,
+            authorId: systemUserId,
+            isInternal: false,
+            isEmail: true,
+            fromEmail: email.from.email || null,
+          },
+        });
+        return created;
+      });
+    } catch (e: any) {
+      if (e?.code !== "P2002" || attempt >= 4) throw e;
+      console.warn(`[EmailConnector] Ticket number was taken for ${companyId} — retrying (attempt ${attempt + 2})`);
+    }
+  }
 }
 
 /** Append an email as a comment to an existing ticket. Returns false when the

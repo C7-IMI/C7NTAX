@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.6.050",
+    "date": "2026-10-06",
+    "title": "Email connector: where unknown senders go, Exchange on-premises, and signing in as yourself",
+    "changes": [
+      {
+        "text": "**Each connector now decides where a sender that matches nothing is filed.** A **default client** on the connector is tried first, then a client created automatically for the sender's domain (off by default — switch it on per connector), and only then the old oldest-client fallback, which logs a warning naming the domain. Consumer mailboxes (gmail, outlook, icloud and friends) are never turned into clients and never matched against a client's domain, so a personal address can't accidentally be filed under whichever client happens to carry \"gmail.com\". The panel lists the rule in plain language, and the default company is a picker rather than free text.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Exchange Web Services (EWS) transport for on-premises Exchange.** EWS is what an on-prem/hybrid server still speaks (Microsoft is retiring it for Exchange Online, where Graph is the supported path): the connector lists unread mail with `FindItem`, pulls the messages as real MIME with `GetItem`, and marks them read with `UpdateItem` — the same process-then-mark contract as the other transports, so a failure leaves the mail unread and retried. Credentials are the mailbox username and password over Basic auth, with an optional self-signed-certificate allowance for internal servers.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**“Connect to Microsoft” — a delegated sign-in for a mailbox you can log into.** Instead of an app-only registration with Exchange RBAC scoping, an administrator presses the link button, signs in, and consents: the connector then reads *their* mailbox with a refresh token (stored encrypted and rotated on every use, never returned by the API). The panel shows who is signed in and since when, or **Not connected to Microsoft yet**, and a revoked or expired consent reports `Microsoft sign-in has expired or was revoked — reconnect the connector` rather than a raw OAuth error. The consent flow is authorization-code with PKCE and a single-use state, so a replayed callback is refused.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Two more per-connector switches**, both on by default: **Mark mail read after filing** (leave it off to keep the original mail unread while still creating tickets) and **Ignore auto-replies** (out-of-office mail is skipped; switch it off and the auto-reply becomes a ticket).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Ticket numbers could be handed out twice, and the insert then failed.** The next number came from a row *count*, which goes backwards when a ticket is deleted, so a new ticket could collide with an existing number and be rejected by the unique constraint — most visible when the connector filed several emails at once. Numbers now continue from the highest the client already has, and the email path retries if two inserts still pick the same one in the same instant.",
+        "type": "Fix"
+      },
+      {
+        "text": "A connector stopped or deleted while a poll was in flight no longer writes its state row back afterwards (that left orphaned state rows behind and could poll a connector that no longer existed).",
+        "type": "Fix"
+      },
+      {
+        "text": "**PLAN-017** documents building and deploying the Microsoft 365 OAuth app end to end: both identity arrangements, the exact Entra steps and CLI/PowerShell equivalents, the Exchange RBAC scope that keeps an app-only app to a single mailbox (including how to prove it is scoped), redirect URIs, secret rotation, a troubleshooting table of the AADSTS/Graph errors you can actually hit, the environment variables, rollback, and acceptance criteria.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.049",
     "date": "2026-10-06",
     "title": "Microsoft 365 email connector: working email → ticket ingestion, and the two bugs that would have made it fail silently",

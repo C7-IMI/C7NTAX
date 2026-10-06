@@ -59,6 +59,355 @@
     "createdAt": "2026-10-06T23:23:46.793Z"
   },
   {
+    "id": "91fc3aa6-3d9e-4fae-9138-0ac30ea597f5",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.292Z"
+  },
+  {
+    "id": "22bfafe2-951e-42f1-b1d8-499a1892a0ad",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "d48e87a7-ec82-42e5-8f0e-e7fdadb80bdb",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.334Z"
+  },
+  {
+    "id": "0961313d-b28b-46bf-a3aa-4d39682763b5",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "d48e87a7-ec82-42e5-8f0e-e7fdadb80bdb",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.432Z"
+  },
+  {
+    "id": "357eb867-b989-4f53-b3d9-a271f27b6ead",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-2",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.461Z"
+  },
+  {
+    "id": "8ac1fba3-e777-469b-a815-ccefa49d1cf8",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "43819765-6fe6-474b-851c-1e2b4704bd27",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.478Z"
+  },
+  {
+    "id": "47ca9986-3886-4ad6-8a04-d9857c9d5b08",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "43819765-6fe6-474b-851c-1e2b4704bd27",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.604Z"
+  },
+  {
+    "id": "00bd026f-c7b7-408a-9d57-7eec14eae222",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "3e4877e4-6222-4d0f-9798-b171fdcf629c",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.659Z"
+  },
+  {
+    "id": "e75a6415-b0b0-448a-8c1b-42694e78ff14",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-4",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.875Z"
+  },
+  {
+    "id": "2dec01c6-f8b7-40d5-a3a6-ceb229c450ac",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "56eeba0a-cdc1-4b3d-97f2-2723ff8575be",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.929Z"
+  },
+  {
+    "id": "3b3735db-a769-4d1a-ae27-4a99337780bd",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "56eeba0a-cdc1-4b3d-97f2-2723ff8575be",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.037Z"
+  },
+  {
+    "id": "0b34c3c7-c849-4322-9e06-8e9faced56c1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "host": "127.0.0.1",
+      "port": 4600,
+      "user": "svc@onprem.example",
+      "folder": "Inbox",
+      "secure": false,
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "password": "***",
+      "transport": "ews",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.159Z"
+  },
+  {
+    "id": "c5d9db86-ba81-4038-8b1e-534bd5117919",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "718b397f-cec5-457f-8bff-bdeb23dbc182",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.632Z"
+  },
+  {
+    "id": "ad24d700-df6f-4e59-9a39-2ffb88ab68c1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "718b397f-cec5-457f-8bff-bdeb23dbc182",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.649Z"
+  },
+  {
+    "id": "1ac6f2a4-d0eb-4433-ac61-e897bffc5299",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "authType": "delegated",
+      "clientId": "delegated-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.704Z"
+  },
+  {
+    "id": "4ee5eb96-d0b9-4708-b740-11813fd19c15",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "e5089f12-e9ea-49a7-b18b-124feaef3da2",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.848Z"
+  },
+  {
+    "id": "8bbd2979-e3ed-45c1-a187-766bc207c18f",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "d48e87a7-ec82-42e5-8f0e-e7fdadb80bdb",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.925Z"
+  },
+  {
+    "id": "ed9a07b5-ab91-4805-a7f5-e6f4d97dcdb2",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "43819765-6fe6-474b-851c-1e2b4704bd27",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.930Z"
+  },
+  {
+    "id": "e948bf2b-17f8-4b95-9e0a-5d0f50da1280",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "3e4877e4-6222-4d0f-9798-b171fdcf629c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.938Z"
+  },
+  {
+    "id": "a55a42d1-a71a-41ca-b5ef-77a69571124c",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "56eeba0a-cdc1-4b3d-97f2-2723ff8575be",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.945Z"
+  },
+  {
+    "id": "62576271-3001-4626-86fd-25ad06f5a1f2",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "9e704ed9-c7c0-4ecb-a585-669ad481ef42",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.951Z"
+  },
+  {
+    "id": "52fa4344-6ffb-432f-9118-c3666679a9e3",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "718b397f-cec5-457f-8bff-bdeb23dbc182",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.958Z"
+  },
+  {
+    "id": "2487b5a9-82cd-4731-961f-584bbbdf6c29",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "e5089f12-e9ea-49a7-b18b-124feaef3da2",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.966Z"
+  },
+  {
+    "id": "fe13c2f9-5c60-49c6-afdb-ee0ab167b8ea",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "24ff5951-cfed-4ffa-bc1c-5a4fae4975e5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.984Z"
+  },
+  {
+    "id": "3763fc3e-ff12-4cf7-b17c-1eb5986f18c8",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "3593677e-5b17-44a3-abbd-67a9727191ef",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.993Z"
+  },
+  {
+    "id": "e0d2e56c-b353-4b71-872c-bf48c0b71056",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "13086864-72dd-4a73-a554-5366b9ac77fd",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.007Z"
+  },
+  {
+    "id": "e8fdd482-6262-4263-aa70-9b319800fe7f",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "ca78450a-519c-4f93-b2a2-932d7dd86632",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.019Z"
+  },
+  {
     "id": "fafd8487-924b-4f3b-a3f5-baac7079c3c7",
     "action": "kumo_assets:update",
     "entity": "kumo_assets",
@@ -251,6 +600,215 @@
     "createdAt": "2026-10-06T23:24:32.169Z"
   },
   {
+    "id": "92e04bbd-247c-495f-91a1-6ba59f45b71e",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-3",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.634Z"
+  },
+  {
+    "id": "d29486d3-d708-4f76-969f-201c7f2a44ca",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "3e4877e4-6222-4d0f-9798-b171fdcf629c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:11.836Z"
+  },
+  {
+    "id": "cef50df8-3e77-48d7-8898-61016a176378",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-5",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "autoCreateContact": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.063Z"
+  },
+  {
+    "id": "0452804f-dcb8-4b5d-a383-a5d8514aa076",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "9e704ed9-c7c0-4ecb-a585-669ad481ef42",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.082Z"
+  },
+  {
+    "id": "d8d1fe19-2f97-4228-acbd-401fdd577e6c",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "9e704ed9-c7c0-4ecb-a585-669ad481ef42",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.098Z"
+  },
+  {
+    "id": "4f6ba967-5a0a-439f-9e6f-2ffefe590040",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "718b397f-cec5-457f-8bff-bdeb23dbc182",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.209Z"
+  },
+  {
+    "id": "e20af0a3-7dfc-4965-95ea-641dc3458733",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "718b397f-cec5-457f-8bff-bdeb23dbc182",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.272Z"
+  },
+  {
+    "id": "0a23a7fc-2480-421d-98be-45e4216434da",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "718b397f-cec5-457f-8bff-bdeb23dbc182",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.332Z"
+  },
+  {
+    "id": "82c1fdea-a3f6-40e4-8539-4e4103186d78",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "718b397f-cec5-457f-8bff-bdeb23dbc182",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.555Z"
+  },
+  {
+    "id": "c8a5c2ec-7fbf-4cab-bf67-b262ff8ee6eb",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "718b397f-cec5-457f-8bff-bdeb23dbc182",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.694Z"
+  },
+  {
+    "id": "ee6f2b43-597c-46f6-96ba-ce6373ceefa2",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "e5089f12-e9ea-49a7-b18b-124feaef3da2",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.723Z"
+  },
+  {
+    "id": "637d660c-eb8d-4830-b991-9c8fe9d5c442",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "e5089f12-e9ea-49a7-b18b-124feaef3da2",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.863Z"
+  },
+  {
+    "id": "142c8930-dbdb-4266-a0d4-c06fad2eb458",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "e5089f12-e9ea-49a7-b18b-124feaef3da2",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:12.905Z"
+  },
+  {
+    "id": "78fd2e6b-7e41-4794-93fb-bdaae2fdce8d",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "5efe8f0e-a84a-4283-a579-42fb961edce1",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.719Z"
+  },
+  {
+    "id": "b166baf6-4027-49e6-b02c-34c59e3227f1",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "449fd5c6-a8a3-4712-9d67-f05ac174c2db",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.016Z"
+  },
+  {
+    "id": "9db4dce7-4c2a-4761-b138-a93f72714312",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "449fd5c6-a8a3-4712-9d67-f05ac174c2db",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.041Z"
+  },
+  {
     "id": "cbb837bb-8cc5-4242-aba4-545c7c6fee2e",
     "action": "kumo_assets:create",
     "entity": "kumo_assets",
@@ -354,6 +912,276 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-06T23:24:32.164Z"
+  },
+  {
+    "id": "df82893c-8322-495c-bdab-752240dee544",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "927f0515-2fd7-433b-ba56-99e6687785d7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.026Z"
+  },
+  {
+    "id": "65ed3f75-b462-424f-9cdd-a9435ec4d622",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "2be2c8c8-5cca-4d20-acef-68c0fe61b917",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.034Z"
+  },
+  {
+    "id": "97f9c21a-81fc-414a-a4bf-3d8c1a9c31ae",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "a2c6c13b-5224-4d27-9333-04b2c17c08e0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.041Z"
+  },
+  {
+    "id": "e9833f84-4317-4dbf-8c61-70f00052a82d",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "9ef44e43-a8b9-4b0a-b21e-8e740e69c54c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.052Z"
+  },
+  {
+    "id": "d14fd9a3-3b80-4858-8778-3bf73e2e5709",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "e3a1c0e7-1baa-4b62-bebf-2c13bd7a4848",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.061Z"
+  },
+  {
+    "id": "1e470e36-8d14-4c3a-9d6b-ff92dc5cff08",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "4b157c52-b87e-4628-9de9-5bc7d281373a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.068Z"
+  },
+  {
+    "id": "cdaa7836-e8cd-4053-b515-fc124f047d7e",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "f76f9a07-9499-49ed-a0a6-c3714dbc78e5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.096Z"
+  },
+  {
+    "id": "5ee33a5e-3e58-4ef1-9976-56a0fbe43292",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "a0f6570a-5028-4d37-ab3e-b40e614a3723",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:13.116Z"
+  },
+  {
+    "id": "5fac629c-2428-47bc-a4a5-bfbbce4e2795",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-2",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.779Z"
+  },
+  {
+    "id": "241cbea0-e124-414d-9e7c-145d19e0370f",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "d1081964-8586-47b6-888d-a98d768aa79e",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.793Z"
+  },
+  {
+    "id": "9e5fba86-f421-4e10-9fc0-d37c47cf321a",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "d1081964-8586-47b6-888d-a98d768aa79e",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.825Z"
+  },
+  {
+    "id": "71b596db-b925-440e-9ee6-792a3928ea18",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-3",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.842Z"
+  },
+  {
+    "id": "fc89bae7-126c-4f67-8cb3-d2c11ed51f42",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "006464c7-2ce7-4046-9771-9c3e9cdd2414",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.849Z"
+  },
+  {
+    "id": "01e9ad7a-08d5-4581-b720-e20c51a43aa4",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "006464c7-2ce7-4046-9771-9c3e9cdd2414",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.880Z"
+  },
+  {
+    "id": "a0b63efc-10ca-4df8-b647-673d66b9be07",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-4",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.916Z"
+  },
+  {
+    "id": "7ca95a8f-9069-48e5-a9ef-88f88043d178",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "e8387ced-2d54-44fe-a1e4-3f8cff2d7b84",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.209Z"
+  },
+  {
+    "id": "9ebad716-97ed-427e-902e-4902da376c65",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "e8387ced-2d54-44fe-a1e4-3f8cff2d7b84",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.226Z"
+  },
+  {
+    "id": "7d2001aa-917d-4905-87c7-b73b5c05046a",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "e8387ced-2d54-44fe-a1e4-3f8cff2d7b84",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.237Z"
+  },
+  {
+    "id": "801a1d7e-a54b-45af-94cb-9b609f9464a1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "authType": "delegated",
+      "clientId": "delegated-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.246Z"
+  },
+  {
+    "id": "c6bd0734-d112-4bfb-bd0e-71c861c196f6",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "b4003972-dcb0-4ea8-b900-bd1b5accbf6d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.252Z"
   },
   {
     "id": "b9a551e1-ff54-4165-8cbb-d4322160921d",
@@ -508,6 +1336,262 @@
     "createdAt": "2026-10-06T23:25:21.503Z"
   },
   {
+    "id": "9a2b403c-c144-4e75-a3f7-b754fa63880a",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "dbg",
+      "tenantId": "t",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "autoCreateContact": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:51.614Z"
+  },
+  {
+    "id": "bbb9dcfa-913f-4011-b08e-6c264c7fe4b3",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "8638c556-8b4d-4580-a85f-debd418912bb",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:51.733Z"
+  },
+  {
+    "id": "932b9caf-6e4b-41e3-a37c-dad71fa02839",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "60f28489-73da-4414-b474-281108d887d9",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:51.742Z"
+  },
+  {
+    "id": "861503c5-4f42-409a-8c00-0e55533b0543",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.081Z"
+  },
+  {
+    "id": "45d1ef96-b36d-41a0-b438-f3764297e42a",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "2dbd7702-e062-446b-a50a-302b75160084",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.088Z"
+  },
+  {
+    "id": "1b2b6ae2-eb70-4c05-997d-ee8c4bf01762",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "2dbd7702-e062-446b-a50a-302b75160084",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.127Z"
+  },
+  {
+    "id": "8f6f2edf-a610-4825-97fc-a42340992378",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-2",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.147Z"
+  },
+  {
+    "id": "8a50df6a-483a-40cf-9fbb-20c0345f7e28",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-3",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.204Z"
+  },
+  {
+    "id": "6a71f7eb-fae3-4fe8-920a-a8da7d07eeb4",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "host": "127.0.0.1",
+      "port": 4600,
+      "user": "svc@onprem.example",
+      "folder": "Inbox",
+      "secure": false,
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "password": "***",
+      "transport": "ews",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.857Z"
+  },
+  {
+    "id": "cdbed2e3-4b6a-4737-8481-bb72ed28b69e",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "45dbb4cd-895a-49cb-9378-ba602e3d1e1a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.875Z"
+  },
+  {
+    "id": "d54aad71-a695-47f9-a6c1-3bfbe43329bf",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "45dbb4cd-895a-49cb-9378-ba602e3d1e1a",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.933Z"
+  },
+  {
+    "id": "c8f7d478-3a43-4c0c-b25c-b364ec4f3663",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "45dbb4cd-895a-49cb-9378-ba602e3d1e1a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.974Z"
+  },
+  {
+    "id": "8048de2d-015c-4f4a-9821-41387086008d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "bdf085f6-b045-44c9-a313-1a068daacda5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.964Z"
+  },
+  {
+    "id": "e53c7790-ecb3-44de-8d10-d274b8477599",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "b4003972-dcb0-4ea8-b900-bd1b5accbf6d",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.290Z"
+  },
+  {
+    "id": "01c5b9c2-26fc-4e72-a771-e007f3474bbe",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "b4003972-dcb0-4ea8-b900-bd1b5accbf6d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.301Z"
+  },
+  {
+    "id": "ecad841d-f85d-4562-a81a-d6cecb9652ac",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "b4003972-dcb0-4ea8-b900-bd1b5accbf6d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.326Z"
+  },
+  {
+    "id": "613034e5-5c14-447b-be1c-0c47d27e2378",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "5efe8f0e-a84a-4283-a579-42fb961edce1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.346Z"
+  },
+  {
+    "id": "2ed0752c-fd0f-46dc-a531-76e8fbe5a762",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "d1081964-8586-47b6-888d-a98d768aa79e",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.352Z"
+  },
+  {
     "id": "f0f196e6-fa97-4987-9de7-62c448e55e99",
     "action": "service-alerts:create",
     "entity": "service-alerts",
@@ -566,6 +1650,352 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-06T23:25:22.224Z"
+  },
+  {
+    "id": "b516cfd4-e4ab-4742-bf1c-3948df250476",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "60f28489-73da-4414-b474-281108d887d9",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:51.623Z"
+  },
+  {
+    "id": "3892a377-08bf-4188-9e40-b4eae420f26d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "60f28489-73da-4414-b474-281108d887d9",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:39:51.709Z"
+  },
+  {
+    "id": "f8c7ad2b-5084-4a4d-a22d-114a808a9164",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "6274d7bb-5496-4c32-92ea-c7e8eccdce3d",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.152Z"
+  },
+  {
+    "id": "ed4b0ea5-f20b-4014-9936-e059ae3a02fc",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6274d7bb-5496-4c32-92ea-c7e8eccdce3d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.191Z"
+  },
+  {
+    "id": "a94882d1-a47a-4981-981c-e69930d3c598",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "dfdd3571-5328-4432-a5fb-d43e15a51584",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.212Z"
+  },
+  {
+    "id": "32aa5d38-ab2d-4d60-9342-806c35dd7d1b",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "dfdd3571-5328-4432-a5fb-d43e15a51584",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.337Z"
+  },
+  {
+    "id": "677bbf83-c9b1-4b41-b81e-adfb509616c1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-4",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.406Z"
+  },
+  {
+    "id": "1f151c5f-4aa7-4b02-88f8-2514146e8c88",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "147a1101-df50-4bac-b6a5-b72e989357b1",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.437Z"
+  },
+  {
+    "id": "4ccb3f53-4e55-41a7-98db-1c3b5caf2116",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "147a1101-df50-4bac-b6a5-b72e989357b1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.565Z"
+  },
+  {
+    "id": "4d41bbb7-f39a-45b6-906a-a5891fbc9a46",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-5",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "autoCreateContact": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.595Z"
+  },
+  {
+    "id": "4e512ea5-1d0f-4a17-9d7b-74ad7af32c96",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "30fd7bf7-f67d-482c-a743-db45c9c7bc45",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.601Z"
+  },
+  {
+    "id": "bb2b47c4-58b1-46d1-b5b0-197eb45b83c8",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "30fd7bf7-f67d-482c-a743-db45c9c7bc45",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.826Z"
+  },
+  {
+    "id": "a0beda53-1f8f-4bd1-943e-47fc65c2d41f",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "45dbb4cd-895a-49cb-9378-ba602e3d1e1a",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:40:01.887Z"
+  },
+  {
+    "id": "f2c87b99-faff-4e14-afaa-9f85a7c71ede",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-5",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "autoCreateContact": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.009Z"
+  },
+  {
+    "id": "e98744a5-78e5-4bc3-96e2-92574a362660",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "host": "127.0.0.1",
+      "port": 4600,
+      "user": "svc@onprem.example",
+      "folder": "Inbox",
+      "secure": false,
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "password": "***",
+      "transport": "ews",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.082Z"
+  },
+  {
+    "id": "68b9de7d-b836-403c-9a67-33ec3abac4f3",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "e8387ced-2d54-44fe-a1e4-3f8cff2d7b84",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.094Z"
+  },
+  {
+    "id": "fede6cd3-07d1-4a15-bf62-39bfe44e0ad9",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "e8387ced-2d54-44fe-a1e4-3f8cff2d7b84",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.104Z"
+  },
+  {
+    "id": "af1ddb49-9e53-4d14-a845-7212934d13e8",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "e8387ced-2d54-44fe-a1e4-3f8cff2d7b84",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.111Z"
+  },
+  {
+    "id": "e9545c8e-33d6-4148-b158-1eb56db0230f",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "e8387ced-2d54-44fe-a1e4-3f8cff2d7b84",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.165Z"
+  },
+  {
+    "id": "1d41e23d-fb1c-4aff-9d22-a244a873a23f",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "006464c7-2ce7-4046-9771-9c3e9cdd2414",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.358Z"
+  },
+  {
+    "id": "053de6c4-b442-4102-ae58-59afb90dfce0",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "bdf085f6-b045-44c9-a313-1a068daacda5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.364Z"
+  },
+  {
+    "id": "4f68da9f-f70e-4af3-b6ef-5cd90746b8df",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "449fd5c6-a8a3-4712-9d67-f05ac174c2db",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.370Z"
+  },
+  {
+    "id": "f30dbce4-8d02-4f23-8536-2c5134c28783",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "e8387ced-2d54-44fe-a1e4-3f8cff2d7b84",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.376Z"
+  },
+  {
+    "id": "7e1210c5-3875-4bd2-b28e-975949f66b8d",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "b4003972-dcb0-4ea8-b900-bd1b5accbf6d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.385Z"
+  },
+  {
+    "id": "200125a7-c305-49d4-8038-f0925e972eb6",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "0e8d5af4-4edf-459d-9a93-32748c78b515",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.400Z"
+  },
+  {
+    "id": "b48e7c07-a0b8-4132-a481-5382112d9a1d",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "95aeb4ad-0fc6-419c-bbd8-be5416840dbc",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.408Z"
   },
   {
     "id": "0530c10f-6f56-4136-979e-e510edfd864b",
@@ -667,6 +2097,243 @@
     "createdAt": "2026-10-06T23:22:29.500Z"
   },
   {
+    "id": "07a51f84-f809-4cd4-bae6-9e0467367c90",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.138Z"
+  },
+  {
+    "id": "84560ed5-0d3b-4ecc-af7e-b9cb38cf1af4",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "host": "127.0.0.1",
+      "port": 4600,
+      "user": "svc@onprem.example",
+      "folder": "Inbox",
+      "secure": false,
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "password": "***",
+      "transport": "ews",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.284Z"
+  },
+  {
+    "id": "7832f018-63cc-490d-a5f4-2ffac359649f",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6453ddb8-bf4a-4bc8-b580-46f61be9748b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.304Z"
+  },
+  {
+    "id": "58f53ec7-e996-4bf4-83f8-6f64154bc170",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "6453ddb8-bf4a-4bc8-b580-46f61be9748b",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.311Z"
+  },
+  {
+    "id": "8576abdb-9f91-45dc-bc14-4ab1c37dc438",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6453ddb8-bf4a-4bc8-b580-46f61be9748b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.320Z"
+  },
+  {
+    "id": "faaa42e4-c6eb-417d-9003-aace67f27b01",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6453ddb8-bf4a-4bc8-b580-46f61be9748b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.361Z"
+  },
+  {
+    "id": "85b74b63-ca79-441c-bc07-87852b8ec926",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "6453ddb8-bf4a-4bc8-b580-46f61be9748b",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.435Z"
+  },
+  {
+    "id": "3963c6bd-9a70-46bf-8809-b3f833f21f13",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "authType": "delegated",
+      "clientId": "delegated-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.444Z"
+  },
+  {
+    "id": "e2f8a3b2-0976-406a-bcc2-5b01ecb2591c",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "4891de69-4a5b-43d6-b4ae-5e65155da165",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.452Z"
+  },
+  {
+    "id": "57148ce7-4f01-4fef-a0a4-d96c5985126f",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "4891de69-4a5b-43d6-b4ae-5e65155da165",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.550Z"
+  },
+  {
+    "id": "987fe99e-45b5-4514-ad4f-8a974c45ee0e",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "4891de69-4a5b-43d6-b4ae-5e65155da165",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.564Z"
+  },
+  {
+    "id": "ff412cfd-4eee-4694-b2ad-7c14c53a3a59",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "fbc43f19-5586-4354-9b22-c908846b3faa",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.732Z"
+  },
+  {
+    "id": "64d994a2-bfb2-4942-91b2-f4827420cc55",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "cf7d1b6c-2c00-4e34-b3ae-6cf8b8e5d875",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.737Z"
+  },
+  {
+    "id": "f6e99622-3453-4b90-8156-5cec856bce97",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "c18fd332-502c-478f-9dd4-9933836e7e3e",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.742Z"
+  },
+  {
+    "id": "53de1231-0242-4bb7-a768-82b592ae02f6",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "5202fd77-a5f4-44ef-827b-162b7ef78d1f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.747Z"
+  },
+  {
+    "id": "4e2ce00c-1bed-4aa8-b3be-f9b8c462c63f",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "9b344e5f-7e89-43f6-b319-f5836c0ab6b3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.753Z"
+  },
+  {
+    "id": "6456901d-e22f-4551-a82a-ab4ef4c80d2c",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "6453ddb8-bf4a-4bc8-b580-46f61be9748b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.760Z"
+  },
+  {
+    "id": "e2bfcece-1e60-42e6-8405-347dc7441b3e",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "4891de69-4a5b-43d6-b4ae-5e65155da165",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.765Z"
+  },
+  {
     "id": "2e083963-6c91-4c5d-bbd5-877b9609deff",
     "action": "kumo_passwords:create",
     "entity": "kumo_passwords",
@@ -677,6 +2344,61 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-08-14T06:03:18.388Z"
+  },
+  {
+    "id": "fd63a70b-84e4-4561-999b-5d773c21bb9f",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "73c94237-dfc9-4d25-b0fc-1a51ed8b2c0f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.782Z"
+  },
+  {
+    "id": "6c2963c7-75d0-47b5-8b1c-ec52fad714d5",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.711Z"
+  },
+  {
+    "id": "fa9b3c6d-63e7-4438-b12c-9d444f926dce",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "5efe8f0e-a84a-4283-a579-42fb961edce1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.755Z"
+  },
+  {
+    "id": "8e86db64-e96d-48ca-a85b-ddc8eed28b12",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "bdf085f6-b045-44c9-a313-1a068daacda5",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:36.930Z"
   },
   {
     "id": "953693a7-7709-4c0c-8086-2117092342d0",
@@ -737,6 +2459,46 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T23:22:44.214Z"
+  },
+  {
+    "id": "bee53876-b7b1-4c04-9885-4a271bf16fe5",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-2",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.169Z"
+  },
+  {
+    "id": "65d4312e-de5d-435f-8d24-bf5663513989",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-3",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.192Z"
   },
   {
     "id": "e9ed35cc-441f-458e-a550-d4aeb396ed51",
@@ -3497,5 +5259,3246 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-06T23:23:46.797Z"
+  },
+  {
+    "id": "0c7316f9-3400-41dd-b175-4ea77bfd8843",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-4",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.226Z"
+  },
+  {
+    "id": "858959a4-615a-4407-b9ed-281412796d32",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-5",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "autoCreateContact": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.256Z"
+  },
+  {
+    "id": "0e3238a0-49d3-479d-9cff-5f2fde5f7e95",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6453ddb8-bf4a-4bc8-b580-46f61be9748b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.404Z"
+  },
+  {
+    "id": "5231ec48-6004-4ddb-aab5-b1dece6f5498",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "4891de69-4a5b-43d6-b4ae-5e65155da165",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:37:20.707Z"
+  },
+  {
+    "id": "d2f82708-cc92-4090-984c-08c0dfeb1b73",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "c82fb87c-9a56-4981-9a12-1371ac6c6c6a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.419Z"
+  },
+  {
+    "id": "9ef1e1ad-95d7-419f-a079-b73c3539b73c",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "ff4c03f2-2ee5-4ea9-ada8-40221275529a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.429Z"
+  },
+  {
+    "id": "44107048-f8fe-4b17-9563-2906c76366bf",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "72de9b48-5187-490b-b853-8c5dc2a4cd6d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.438Z"
+  },
+  {
+    "id": "e06d6006-a825-4799-8145-f03c4d3624ca",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "ce284961-c22e-41ce-9738-3ebd28fc9830",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.447Z"
+  },
+  {
+    "id": "954e06bc-ed32-4b15-abf3-38c3c694a5cd",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "ba9c43ac-d804-4368-8d16-59b589a22bb6",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:37.454Z"
+  },
+  {
+    "id": "d8c32852-8df4-4fd3-b2cb-a199b7808ba1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.444Z"
+  },
+  {
+    "id": "f94c2b1c-42df-44c7-8902-8b410e4ef481",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "93d294e0-1920-4a30-87d8-0f9f80f97147",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.450Z"
+  },
+  {
+    "id": "0e9d4c77-dfc0-4dbe-905f-5f78ef4ce342",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "93d294e0-1920-4a30-87d8-0f9f80f97147",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.483Z"
+  },
+  {
+    "id": "0841ec94-1572-4a8d-9169-c7d34c9623ac",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-3",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.570Z"
+  },
+  {
+    "id": "0f4fa952-dac2-4cc4-933a-8bc09b93dcf2",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "07f9e534-da7d-451b-98b2-1e92fdf6dc2a",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.576Z"
+  },
+  {
+    "id": "51e3756a-9826-4973-ab0f-d5d301b743d5",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "07f9e534-da7d-451b-98b2-1e92fdf6dc2a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.632Z"
+  },
+  {
+    "id": "a0715c63-3aa3-4433-a4df-65ce2ec51a67",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-4",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.657Z"
+  },
+  {
+    "id": "9ebd442e-111a-41b9-a4d0-bea75327f75d",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "4a103e89-0bb9-405b-94f0-d5361532b3cf",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.663Z"
+  },
+  {
+    "id": "3c38cff0-edfb-4072-a555-075afdc09247",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "4a103e89-0bb9-405b-94f0-d5361532b3cf",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.722Z"
+  },
+  {
+    "id": "f0ebbcd6-530f-4b3c-9bcc-6a4c777a033c",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "036bc993-b052-40b6-b9ed-3f6c4db0d958",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.752Z"
+  },
+  {
+    "id": "13235f26-ff43-4f6d-861f-37317b14d8c9",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "036bc993-b052-40b6-b9ed-3f6c4db0d958",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.821Z"
+  },
+  {
+    "id": "0312cab6-77fa-4431-9d19-f8ab6f662674",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "host": "127.0.0.1",
+      "port": 4600,
+      "user": "svc@onprem.example",
+      "folder": "Inbox",
+      "secure": false,
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "password": "***",
+      "transport": "ews",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.840Z"
+  },
+  {
+    "id": "28ebe7a5-7c2a-4ed4-9e3b-50991e491e6b",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "052d5cc5-e604-4146-8c13-1b968fa4ca7a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.851Z"
+  },
+  {
+    "id": "d4ab5edb-b3dd-4404-bc7a-d756ce0b8509",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "052d5cc5-e604-4146-8c13-1b968fa4ca7a",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.858Z"
+  },
+  {
+    "id": "9a75792a-4fb2-4088-bf19-752ca4c28236",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "052d5cc5-e604-4146-8c13-1b968fa4ca7a",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.864Z"
+  },
+  {
+    "id": "30367b98-931b-4468-80f5-6c748dc07f76",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "052d5cc5-e604-4146-8c13-1b968fa4ca7a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.894Z"
+  },
+  {
+    "id": "7eec9d70-a6e3-41b3-b943-b5c5d2cfa6d1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "052d5cc5-e604-4146-8c13-1b968fa4ca7a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.931Z"
+  },
+  {
+    "id": "f41b9f1f-0290-4193-8b24-4a89be1f44c1",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "93d294e0-1920-4a30-87d8-0f9f80f97147",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.150Z"
+  },
+  {
+    "id": "77665448-90e3-46fd-aa2d-757d287dfdaa",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "43b5baf4-7103-4881-9051-3b7c459e70c0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.156Z"
+  },
+  {
+    "id": "411d9d19-e81d-46f5-9347-a0c67ecd9af0",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "07f9e534-da7d-451b-98b2-1e92fdf6dc2a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.162Z"
+  },
+  {
+    "id": "b56b5fdb-ce67-42d3-880c-dc6f8d150df6",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "4a103e89-0bb9-405b-94f0-d5361532b3cf",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.167Z"
+  },
+  {
+    "id": "bcc05ffd-66ac-45dc-bf74-dae7ae89e177",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "036bc993-b052-40b6-b9ed-3f6c4db0d958",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.173Z"
+  },
+  {
+    "id": "22ebd834-6342-4d11-ada9-043346cf662e",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "052d5cc5-e604-4146-8c13-1b968fa4ca7a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.179Z"
+  },
+  {
+    "id": "16a1f5d9-483a-4b1f-96a6-31435423b2dd",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "9e579cab-b33d-4e3f-8ba9-e41e34927ae1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.184Z"
+  },
+  {
+    "id": "4aae766f-b9a2-4534-be33-52e3a67a31db",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "9ccaac3b-0466-4d7f-a592-1f79664428d7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.191Z"
+  },
+  {
+    "id": "34b8a9b6-d26e-41c7-aeb2-ab0ca03b9699",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "351de1da-6038-404e-8eb5-186b4827aaa2",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.198Z"
+  },
+  {
+    "id": "6adc1a57-3916-498e-bce1-e95f1b811bef",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "60c4b871-3ed2-438e-8959-ec3dc2584c8f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.206Z"
+  },
+  {
+    "id": "e56b9cde-96dd-4ca8-b3a8-776fde23e98b",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-2",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.502Z"
+  },
+  {
+    "id": "efa65301-47a6-4297-a51e-2c8c08a01563",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "43b5baf4-7103-4881-9051-3b7c459e70c0",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.509Z"
+  },
+  {
+    "id": "be9a5565-2747-46b8-bb15-f8ee98d6f4d5",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "43b5baf4-7103-4881-9051-3b7c459e70c0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.555Z"
+  },
+  {
+    "id": "a5381f05-0e85-4eba-84da-485c726743ed",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-5",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "autoCreateContact": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.746Z"
+  },
+  {
+    "id": "572c54ad-a473-43ea-8b9e-627b0ab94340",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "052d5cc5-e604-4146-8c13-1b968fa4ca7a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.950Z"
+  },
+  {
+    "id": "cd15e69b-62d6-441b-b91c-239ab63e25e0",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "052d5cc5-e604-4146-8c13-1b968fa4ca7a",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.966Z"
+  },
+  {
+    "id": "11e85748-92c7-475f-a2b9-ab6aeeeba704",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "authType": "delegated",
+      "clientId": "delegated-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.974Z"
+  },
+  {
+    "id": "178590a9-a58f-46cf-9c3c-0a160e01369d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "9e579cab-b33d-4e3f-8ba9-e41e34927ae1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:50.981Z"
+  },
+  {
+    "id": "2b5d9c7e-8b1f-4329-afd2-7ea207f49902",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "9e579cab-b33d-4e3f-8ba9-e41e34927ae1",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.017Z"
+  },
+  {
+    "id": "05fff950-a363-41ab-bb2b-6d22e0b82e27",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "9e579cab-b33d-4e3f-8ba9-e41e34927ae1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.030Z"
+  },
+  {
+    "id": "9981ca1d-97ee-4b46-a453-9d3cddd07721",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "9e579cab-b33d-4e3f-8ba9-e41e34927ae1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.122Z"
+  },
+  {
+    "id": "dc062db7-0464-40bd-bba6-48e80a316978",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "cc48b247-fc70-406c-a262-de4334fcc88e",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.214Z"
+  },
+  {
+    "id": "f6b42470-19fe-443f-973f-e983f151f640",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "34d522ea-3aca-4a43-95ac-7f32d38b0e0e",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.221Z"
+  },
+  {
+    "id": "3b1507d4-4a3b-4b56-9cab-43c1257aa39f",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "7666bca8-4e9d-4d8e-9d73-a0da7f9e58c4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.230Z"
+  },
+  {
+    "id": "98abbc55-6240-4d2d-922a-d8cf411ae203",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "9162db3b-df41-488b-8061-463becc0d4aa",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:42:51.237Z"
+  },
+  {
+    "id": "b66b09e7-232b-4237-bfe9-61f7319869b9",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "INBOX",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "11111111-2222-3333-4444-555555555555",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "office365",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:05.645Z"
+  },
+  {
+    "id": "5956e066-c44e-4809-a80d-713ece41fb38",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0d48f428-9187-474c-b4dd-3384bc3ad0f3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:05.671Z"
+  },
+  {
+    "id": "87382f78-cdd3-4d1f-99b1-8ed8f7a56ca4",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "0d48f428-9187-474c-b4dd-3384bc3ad0f3",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:05.680Z"
+  },
+  {
+    "id": "4ce642cb-49b5-4ec0-a1e6-4fd1f1664994",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0d48f428-9187-474c-b4dd-3384bc3ad0f3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:05.724Z"
+  },
+  {
+    "id": "ecb8dbe0-ac4f-441a-9f76-174aea98782a",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0d48f428-9187-474c-b4dd-3384bc3ad0f3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:05.796Z"
+  },
+  {
+    "id": "16f3a3db-a328-40f8-b105-1f974e110d02",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0d48f428-9187-474c-b4dd-3384bc3ad0f3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:05.842Z"
+  },
+  {
+    "id": "fb662883-2a0d-4458-8104-4ce8954d0f2c",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "635ef4c4-ddf1-48b0-976b-72336f04fda1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:05.874Z"
+  },
+  {
+    "id": "9930e900-e783-4a94-9b8b-24b258ed1cc5",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "0d48f428-9187-474c-b4dd-3384bc3ad0f3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:05.880Z"
+  },
+  {
+    "id": "4632f81e-e482-4b41-a8b9-b5da145866a6",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "authType": "delegated",
+      "clientId": "revoked-test",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:13.888Z"
+  },
+  {
+    "id": "57fef859-4fee-41b4-a35a-5cc7344adde8",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "4cf14999-6ae0-4fee-aa23-745d2eaaf181",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:13.900Z"
+  },
+  {
+    "id": "7292e7ae-d0b1-417f-924b-9c33f39a15d6",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "4cf14999-6ae0-4fee-aa23-745d2eaaf181",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:43:13.983Z"
+  },
+  {
+    "id": "6a201ec2-edb2-4c76-a29d-903d843f1e52",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.424Z"
+  },
+  {
+    "id": "885dc556-899a-4b8b-a353-1ef92d2c0610",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "4a608cc4-fbae-4100-82f1-4d4750d749cd",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.431Z"
+  },
+  {
+    "id": "147c13fa-67dd-4743-978e-7aa034947c9f",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "4a608cc4-fbae-4100-82f1-4d4750d749cd",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.460Z"
+  },
+  {
+    "id": "e4d79112-c31c-444b-97a2-a2f842ee97c2",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-2",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.477Z"
+  },
+  {
+    "id": "bf1426b5-0e98-4008-8ce8-ef52a1f7b22e",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "198fd6b1-f7c9-49fc-8f24-f7145a0954fe",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.481Z"
+  },
+  {
+    "id": "b30caf8c-7394-483a-8256-6d345e95c1a3",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "198fd6b1-f7c9-49fc-8f24-f7145a0954fe",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.498Z"
+  },
+  {
+    "id": "586e556b-deb1-411b-abc6-4d26830187ea",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-3",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.509Z"
+  },
+  {
+    "id": "0ea95a74-6d8d-4e1a-9ef2-5fd0b6a7148e",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "2a20cfd3-e0db-464c-9d38-cb720f7635e4",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.513Z"
+  },
+  {
+    "id": "09bbeaad-dd40-4f42-a211-a88fdc4e5f9e",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "2a20cfd3-e0db-464c-9d38-cb720f7635e4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.529Z"
+  },
+  {
+    "id": "d394da7d-5691-40a0-a6c5-6de34908236a",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-4",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.547Z"
+  },
+  {
+    "id": "726f1fe1-5077-48c5-beae-a80acb8210ef",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "dcace433-aaac-4d2c-b624-8c6ae5ae5432",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.551Z"
+  },
+  {
+    "id": "dacf44f8-3c4e-42bb-bfcf-a46aa3326b77",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "dcace433-aaac-4d2c-b624-8c6ae5ae5432",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.567Z"
+  },
+  {
+    "id": "4b74ffe6-57a8-4bbe-8104-a2ac823b8bbe",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-5",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "autoCreateContact": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.586Z"
+  },
+  {
+    "id": "88b1cb1b-546a-4089-80e8-8a4a54193477",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "a503847f-a901-4021-8564-e3989f32e86b",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.590Z"
+  },
+  {
+    "id": "f33b23e8-1389-49dc-b510-41a0c651f0cf",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "a503847f-a901-4021-8564-e3989f32e86b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.604Z"
+  },
+  {
+    "id": "4d7ff66c-b6bb-4c7c-a46c-b350b1719469",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "24d522ad-1ed1-4628-b820-7941270ddc58",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.719Z"
+  },
+  {
+    "id": "ad3b5a3c-1afc-4fa4-8dae-10bf5d12a006",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "24d522ad-1ed1-4628-b820-7941270ddc58",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.727Z"
+  },
+  {
+    "id": "1d7b2f0c-e393-4631-b020-76653f63a595",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "authType": "delegated",
+      "clientId": "delegated-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.731Z"
+  },
+  {
+    "id": "1f38fb9b-5ca3-466e-8dde-68198a43b6c6",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "bcaa0461-0496-4b1b-9235-b64a121cea7c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.736Z"
+  },
+  {
+    "id": "d91c3ae6-d0d2-41b8-9ea6-af4ec9371677",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "bcaa0461-0496-4b1b-9235-b64a121cea7c",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.760Z"
+  },
+  {
+    "id": "7782a41b-9952-4ba1-b75f-086d8e994a1a",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "bcaa0461-0496-4b1b-9235-b64a121cea7c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.767Z"
+  },
+  {
+    "id": "6ddfb9a9-8933-4ef6-8f4e-7aa142f2f9dc",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "bcaa0461-0496-4b1b-9235-b64a121cea7c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.781Z"
+  },
+  {
+    "id": "2dad2231-7988-457e-a5b7-c82bfd3c3774",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "2a20cfd3-e0db-464c-9d38-cb720f7635e4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.803Z"
+  },
+  {
+    "id": "a4f60e08-2c7c-42b4-8aed-40b02f4a8743",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "dcace433-aaac-4d2c-b624-8c6ae5ae5432",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.807Z"
+  },
+  {
+    "id": "1e37a6d3-1feb-447f-ad31-21e5ef73e6fc",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "a503847f-a901-4021-8564-e3989f32e86b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.811Z"
+  },
+  {
+    "id": "21e9677f-5c42-4b9e-88a7-53f538d77ab7",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "24d522ad-1ed1-4628-b820-7941270ddc58",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.814Z"
+  },
+  {
+    "id": "dd72c9a8-f1c9-447e-affe-1da8c6a0ec3a",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "bcaa0461-0496-4b1b-9235-b64a121cea7c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.817Z"
+  },
+  {
+    "id": "d86f5081-c768-482a-9307-4addf913e604",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "f8b1a23a-2307-42ab-a6b2-efd272004d97",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.823Z"
+  },
+  {
+    "id": "d11e93e7-89a3-45c0-8f43-2457d8515fe4",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "4c335bbc-e001-42e6-8ba6-3e0b47072db3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.827Z"
+  },
+  {
+    "id": "d250ceef-dc09-49c7-982f-642c5c3b769c",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "6d7656ce-94d1-42ff-9194-612154d47e51",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.832Z"
+  },
+  {
+    "id": "1e803c53-1370-4366-9bd0-6da08b710bde",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "c8d41e12-1a4c-4501-9c87-d63f434621ac",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.837Z"
+  },
+  {
+    "id": "d804b84e-68e0-4486-8a4c-38fc36c7ed6e",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "b695742d-01fc-4ab5-9bf6-cd715ddc2ea0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.841Z"
+  },
+  {
+    "id": "5f613e1c-610f-4986-951b-717cdcd9054b",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "c57829aa-1178-4cd4-9cdf-f9a85a32e555",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.847Z"
+  },
+  {
+    "id": "134aa100-e85c-4e68-aeca-374594e3cba4",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "e6d19dbf-56d8-49f5-b3c0-d327c283141b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.852Z"
+  },
+  {
+    "id": "18247bbb-9fa7-4795-8a46-0015659c05a7",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "INBOX",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "11111111-2222-3333-4444-555555555555",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "office365",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:29.040Z"
+  },
+  {
+    "id": "f27209cc-9f5f-4b93-838d-d7bf13443ea7",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0716bfa0-fc57-4d5a-bc9d-64f9b523217b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:29.048Z"
+  },
+  {
+    "id": "889305bc-ca0a-4bd8-9d7a-454c003d5b22",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "0716bfa0-fc57-4d5a-bc9d-64f9b523217b",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:29.056Z"
+  },
+  {
+    "id": "f9c778a5-0d98-40cc-b9c8-fb49af481e95",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0716bfa0-fc57-4d5a-bc9d-64f9b523217b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:29.064Z"
+  },
+  {
+    "id": "8b1d26d5-703e-4fcb-bb28-1c9c003e635d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0716bfa0-fc57-4d5a-bc9d-64f9b523217b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:29.090Z"
+  },
+  {
+    "id": "f2a12dfe-4da3-483c-9dd7-70fe983ec2f0",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "0716bfa0-fc57-4d5a-bc9d-64f9b523217b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:29.110Z"
+  },
+  {
+    "id": "b27fc940-fae3-4285-a3ce-5f5e8a40ab29",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "fe09a387-4cef-4be7-bb7e-7ee18187cc72",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:46.644Z"
+  },
+  {
+    "id": "2be65db3-1109-4378-8cea-0b7f7dc9b9ed",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "be2310c9-e3f8-45b7-a6d6-3df636846c92",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:46.647Z"
+  },
+  {
+    "id": "64e62b3d-9160-4fa3-98c4-2f85584346e3",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "host": "127.0.0.1",
+      "port": 4600,
+      "user": "svc@onprem.example",
+      "folder": "Inbox",
+      "secure": false,
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "password": "***",
+      "transport": "ews",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.622Z"
+  },
+  {
+    "id": "bc235e3d-05e3-48b1-8fa4-28927ac3c82c",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "24d522ad-1ed1-4628-b820-7941270ddc58",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.632Z"
+  },
+  {
+    "id": "633f5dde-1141-47d6-b458-b581847b7e09",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "24d522ad-1ed1-4628-b820-7941270ddc58",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.637Z"
+  },
+  {
+    "id": "ca603668-f468-4f96-a293-7a40dcd7a838",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "24d522ad-1ed1-4628-b820-7941270ddc58",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.642Z"
+  },
+  {
+    "id": "c4d39d12-736b-4bcc-bedc-46e278f2d075",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "24d522ad-1ed1-4628-b820-7941270ddc58",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.679Z"
+  },
+  {
+    "id": "32fb5ac9-70be-4cf0-8e6c-663da1882aa1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "24d522ad-1ed1-4628-b820-7941270ddc58",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.707Z"
+  },
+  {
+    "id": "2934a80d-0568-41f1-89d9-685ae59debd1",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "4a608cc4-fbae-4100-82f1-4d4750d749cd",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.792Z"
+  },
+  {
+    "id": "29d7f93c-3b17-426b-9bc8-b54d846a127e",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "198fd6b1-f7c9-49fc-8f24-f7145a0954fe",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:28.797Z"
+  },
+  {
+    "id": "ec34a79f-c46a-4f54-b708-b85a6cdcb5c7",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "INBOX",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "11111111-2222-3333-4444-555555555555",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "office365",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:46.514Z"
+  },
+  {
+    "id": "906a4f2a-4ff4-40ae-8fea-eeee25c39411",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "be2310c9-e3f8-45b7-a6d6-3df636846c92",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:46.525Z"
+  },
+  {
+    "id": "82ad6b4e-be7c-40b7-9a1b-a986451668f4",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "be2310c9-e3f8-45b7-a6d6-3df636846c92",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:46.532Z"
+  },
+  {
+    "id": "03bd76e8-d00c-4fac-8c9e-820a81496d51",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "be2310c9-e3f8-45b7-a6d6-3df636846c92",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:46.552Z"
+  },
+  {
+    "id": "01023a60-0d85-42de-be68-f5a4372dc33b",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "be2310c9-e3f8-45b7-a6d6-3df636846c92",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:46.592Z"
+  },
+  {
+    "id": "20fd68cf-4971-4f5f-a95e-74aefed9523c",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "be2310c9-e3f8-45b7-a6d6-3df636846c92",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:44:46.622Z"
+  },
+  {
+    "id": "0666cd52-46e8-475b-a3a6-fddaf30776e1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "authType": "delegated",
+      "clientId": "ui-delegated-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 300,
+      "defaultCompanyId": null,
+      "autoCreateCompany": false,
+      "autoCreateContact": true,
+      "ignoreAutoReplies": true,
+      "markSeenOnSuccess": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T23:45:21.593Z"
+  },
+  {
+    "id": "dbec34be-edee-45a2-a1a9-16eb5da8bfc8",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8aa270d1-4568-47a5-92e5-af943393e0f0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T23:45:33.054Z"
+  },
+  {
+    "id": "629167a1-bd37-4e29-b07f-3471edcd3a5f",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8aa270d1-4568-47a5-92e5-af943393e0f0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T23:45:51.586Z"
+  },
+  {
+    "id": "0c3adadf-b1fd-409d-86dc-8fd5406af621",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8aa270d1-4568-47a5-92e5-af943393e0f0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T23:45:54.120Z"
+  },
+  {
+    "id": "1edab733-7170-4461-891e-29b5990f1f29",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8aa270d1-4568-47a5-92e5-af943393e0f0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T23:46:44.520Z"
+  },
+  {
+    "id": "28cb8435-3780-46e9-96f3-5423d1da022a",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8aa270d1-4568-47a5-92e5-af943393e0f0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T23:48:03.252Z"
+  },
+  {
+    "id": "5ce098b0-3eee-457d-9c93-a56c18f5731d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8aa270d1-4568-47a5-92e5-af943393e0f0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T23:48:35.388Z"
+  },
+  {
+    "id": "0795dafd-ce62-45e3-8d09-c80725c0f53c",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "a6902cf1-7549-4dae-9029-6138122b440f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T23:48:36.953Z"
+  },
+  {
+    "id": "baf1c63f-7d56-4bb1-a18e-5ee4e2665868",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "flag-1",
+      "tenantId": "t",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "markSeenOnSuccess": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.866Z"
+  },
+  {
+    "id": "99bdc1a9-93c5-4fc4-84fc-6a60ca11d830",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "111254d0-4e45-49ce-bda0-4c7c57358777",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.872Z"
+  },
+  {
+    "id": "c36629d1-61bd-4664-a6fc-4e2737adb799",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "111254d0-4e45-49ce-bda0-4c7c57358777",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.898Z"
+  },
+  {
+    "id": "5cf20b03-7221-4a60-9359-255a2fdc4d4a",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "111254d0-4e45-49ce-bda0-4c7c57358777",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.919Z"
+  },
+  {
+    "id": "5c490baf-7613-4a47-a4cc-773fc06df937",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "flag-2",
+      "tenantId": "t",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "ignoreAutoReplies": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.929Z"
+  },
+  {
+    "id": "7b9fd3b0-54a0-4f13-a509-50956e573aeb",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "d2e52802-e705-4b41-a93c-3c693f62162f",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.935Z"
+  },
+  {
+    "id": "3743b9de-9ea1-4664-8cc7-885f92240345",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "d2e52802-e705-4b41-a93c-3c693f62162f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.956Z"
+  },
+  {
+    "id": "045b2477-bba9-4c83-b4a9-c6e688f3eeee",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "111254d0-4e45-49ce-bda0-4c7c57358777",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.964Z"
+  },
+  {
+    "id": "5cfc27f2-3c9b-49ef-9754-8b88c5ca1925",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "d2e52802-e705-4b41-a93c-3c693f62162f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.968Z"
+  },
+  {
+    "id": "d61aadb2-e1bf-4874-8e2c-0175819d05ef",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "3d981849-e9cd-4fb5-ad16-ce96acf10ade",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.983Z"
+  },
+  {
+    "id": "ca9d2c98-9567-4403-afb9-64a80381831b",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "e7026b2d-ae03-4627-b893-daaa9261f721",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:50:10.987Z"
+  },
+  {
+    "id": "2cd6a3a3-6e50-4839-bc70-ea6c310da1f1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "flag-3",
+      "tenantId": "t",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "ignoreAutoReplies": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:51:48.924Z"
+  },
+  {
+    "id": "0f95789a-302d-4d6e-89c5-660c3155ab77",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "e105967a-0616-4637-a650-c97ec560ed2b",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:51:48.931Z"
+  },
+  {
+    "id": "03c688fb-7993-443b-ae4a-9b741ae71644",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "e105967a-0616-4637-a650-c97ec560ed2b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:51:48.974Z"
+  },
+  {
+    "id": "b760fe77-8f39-4e0f-8c1d-4b904cd347a2",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "e105967a-0616-4637-a650-c97ec560ed2b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:51:48.986Z"
+  },
+  {
+    "id": "785616e7-de4a-44a5-b98f-c48c2ea9c512",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "6b947a9d-7f88-414e-843e-f11611301522",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:51:49.003Z"
+  },
+  {
+    "id": "4aa9af42-cfb2-4c7d-9eae-9a5a7f1c8111",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "85ad8792-2344-42f5-ada6-7b45c2a562a7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:51:49.008Z"
+  },
+  {
+    "id": "3062e245-cba4-4cc9-a368-fcd0046e0647",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "c7f578af-bf98-4da2-8476-bd16f55b453f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:51:49.013Z"
+  },
+  {
+    "id": "3d553e51-88aa-4b19-ba25-96430ac327af",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.479Z"
+  },
+  {
+    "id": "24512fe1-c52e-494e-823c-acb107b6989b",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "0a86ac1c-e1bd-4070-a046-7a082f44d884",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.484Z"
+  },
+  {
+    "id": "339d3616-a0a0-4e8e-82b0-b3563f56f1f0",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0a86ac1c-e1bd-4070-a046-7a082f44d884",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.517Z"
+  },
+  {
+    "id": "0fef55cf-c7f9-4a46-b53a-60b2092c3718",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-2",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "e82b67cc-147e-4458-8528-d8640b59b2af"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.531Z"
+  },
+  {
+    "id": "f4962733-1007-4a0c-8365-f5d485f5928d",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "43e49927-784a-4f78-88e3-1422382c12d3",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.536Z"
+  },
+  {
+    "id": "e40cd02b-7e97-4b19-a0b1-39a5103c0cab",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "43e49927-784a-4f78-88e3-1422382c12d3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.555Z"
+  },
+  {
+    "id": "8cf7241f-23b0-4df7-9f15-8ba7d83aeef0",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-3",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.567Z"
+  },
+  {
+    "id": "6f241e04-ff6b-478a-b928-b9fd93512343",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "3f1461af-67e4-4ed2-8ee0-82b79d1246f7",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.572Z"
+  },
+  {
+    "id": "a287e43c-a7d9-4bee-95a3-d8e341b74481",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "3f1461af-67e4-4ed2-8ee0-82b79d1246f7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.587Z"
+  },
+  {
+    "id": "4b4cc5ea-941c-43f3-a693-4908d6238196",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-4",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.605Z"
+  },
+  {
+    "id": "34ef508e-4779-478a-93e0-72f3e2c08b25",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "13c64835-0a7f-4614-ba1f-8c176bed3b0f",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.609Z"
+  },
+  {
+    "id": "eac32c52-fadb-43b2-903b-57f432a05697",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "13c64835-0a7f-4614-ba1f-8c176bed3b0f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.624Z"
+  },
+  {
+    "id": "abdaafd4-0afc-4957-9358-12d8bea02943",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-5",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "e82b67cc-147e-4458-8528-d8640b59b2af",
+      "autoCreateContact": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.641Z"
+  },
+  {
+    "id": "a2b819c5-8b12-4df6-864e-c0f2b5399030",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "a5c71fa5-5021-4335-9ab8-a59a61a1dca0",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.645Z"
+  },
+  {
+    "id": "0cc3161c-ebe0-4545-882a-0465253ce8f9",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "a5c71fa5-5021-4335-9ab8-a59a61a1dca0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.659Z"
+  },
+  {
+    "id": "fc0ae62d-3774-4231-9864-2cb3185488db",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "host": "127.0.0.1",
+      "port": 4600,
+      "user": "svc@onprem.example",
+      "folder": "Inbox",
+      "secure": false,
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "password": "***",
+      "transport": "ews",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.677Z"
+  },
+  {
+    "id": "44387c81-dde0-4072-a437-f6ce60b92c9f",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6704d047-370d-4312-8412-54067cb795f1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.688Z"
+  },
+  {
+    "id": "32aef39a-ddda-445c-b84e-a1032b790262",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "6704d047-370d-4312-8412-54067cb795f1",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.693Z"
+  },
+  {
+    "id": "64f21d4d-ccac-4e8b-bac6-dc91b2126650",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "6704d047-370d-4312-8412-54067cb795f1",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.697Z"
+  },
+  {
+    "id": "7e5aa378-8d43-4134-886c-4cbf542a0c92",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6704d047-370d-4312-8412-54067cb795f1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.730Z"
+  },
+  {
+    "id": "6ee298e1-a27e-4e5b-95a8-5c659a9ef3f2",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "0a86ac1c-e1bd-4070-a046-7a082f44d884",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.847Z"
+  },
+  {
+    "id": "754f1fb8-52c5-4ffd-8107-f4a5eccd7d81",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "43e49927-784a-4f78-88e3-1422382c12d3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.850Z"
+  },
+  {
+    "id": "058f5e80-f1ba-4b17-97c6-2ce6b7882e6f",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "3f1461af-67e4-4ed2-8ee0-82b79d1246f7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.853Z"
+  },
+  {
+    "id": "856f2188-d92f-4d62-9a4b-6f6980ca140d",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "13c64835-0a7f-4614-ba1f-8c176bed3b0f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.857Z"
+  },
+  {
+    "id": "752a02d9-b59a-41ad-bdc3-2feee06bb7ac",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "a5c71fa5-5021-4335-9ab8-a59a61a1dca0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.860Z"
+  },
+  {
+    "id": "4fff6467-c34d-42c7-8479-e3f1abc075f4",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "6704d047-370d-4312-8412-54067cb795f1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.864Z"
+  },
+  {
+    "id": "cebea441-4449-4f3b-9472-d4e743f5634a",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "d8c5e441-015e-404e-b6fa-ec6b77695d78",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.867Z"
+  },
+  {
+    "id": "e3292698-d712-4d22-b8cf-658969617af4",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "940c49ae-6805-4874-9dee-2e8d65a0b1ab",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.877Z"
+  },
+  {
+    "id": "6d2944d6-299e-4ca4-8a92-106512304d54",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "d3eb85c4-3294-48c3-9e66-22a8d5c5a1a4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.882Z"
+  },
+  {
+    "id": "c6b4c4ec-c2d3-4bb5-907f-c45da8006d64",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "8e160145-0529-494d-8226-2af9ae4716b6",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.887Z"
+  },
+  {
+    "id": "9a47138d-1035-45ee-a8de-1fa791522b05",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "207b21a4-ef73-4184-8622-9a5c198a8e76",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.891Z"
+  },
+  {
+    "id": "02bf4cd0-e44f-44ee-81be-87e6dd1e8e85",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "b67889d5-702b-4bd7-90a3-88ede6f0b9b7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.896Z"
+  },
+  {
+    "id": "8f36fe4e-7cd6-4bed-9ddb-de9137ddc514",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "07c1357d-d6c7-4371-b8cd-e2df2dd363fa",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.901Z"
+  },
+  {
+    "id": "8aa4db71-91db-4d49-ba76-1f12ff38e0f7",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "a92b82c8-150a-44cc-8eb7-6d991a4ba9c4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.906Z"
+  },
+  {
+    "id": "ae72b400-4c23-459d-920e-c0e83f8264a9",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-2",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.931Z"
+  },
+  {
+    "id": "162888b4-256d-4ca8-9199-d900f9e0f1f7",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "70857f2a-8e33-4d4e-9359-e787cf600c29",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.935Z"
+  },
+  {
+    "id": "7be05508-e0ce-412d-bffb-c21e820d1cd8",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "70857f2a-8e33-4d4e-9359-e787cf600c29",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.952Z"
+  },
+  {
+    "id": "8a177f54-a7f1-4894-bbb8-be2aa7ee2494",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-4",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.998Z"
+  },
+  {
+    "id": "7d40f439-1f69-412c-8232-33864a71b567",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "e3922f97-72f4-401f-96f9-ba99a21a5b45",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.002Z"
+  },
+  {
+    "id": "2355aa3a-ec6a-4807-b222-3e77121f3979",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "e3922f97-72f4-401f-96f9-ba99a21a5b45",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.019Z"
+  },
+  {
+    "id": "94d7806f-21e3-46a0-be38-bf4d0543e39d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-5",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "defaultCompanyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+      "autoCreateContact": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.032Z"
+  },
+  {
+    "id": "fa7eb532-3e2a-4f7a-9cfd-4edcf84c4fc6",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "fbfa5055-c68a-4c2d-b03f-ca9b452cc1e5",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.036Z"
+  },
+  {
+    "id": "cb66f98c-26e4-4d05-a193-3c7b701bf7e1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "fbfa5055-c68a-4c2d-b03f-ca9b452cc1e5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.051Z"
+  },
+  {
+    "id": "bb1505a2-df12-4fd2-b07e-4a8c94aa730d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0c661f3c-a664-4558-a4cf-fc79d39fa943",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.134Z"
+  },
+  {
+    "id": "35380ee3-2ac9-420b-b51a-415103c9e09e",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "0c661f3c-a664-4558-a4cf-fc79d39fa943",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.143Z"
+  },
+  {
+    "id": "dbbb186e-6856-4388-a168-da6be1e7d503",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "authType": "delegated",
+      "clientId": "delegated-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.148Z"
+  },
+  {
+    "id": "99d96663-5ecc-4259-ac89-43426eee3c04",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "fd4cab5b-df07-46ab-80e2-027fd13e6bb0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.152Z"
+  },
+  {
+    "id": "f145066c-9e14-4c70-88c7-3e7dc062ff69",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "fd4cab5b-df07-46ab-80e2-027fd13e6bb0",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.176Z"
+  },
+  {
+    "id": "54c85e05-729b-461a-8b74-a5c3c55d6adc",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "fd4cab5b-df07-46ab-80e2-027fd13e6bb0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.186Z"
+  },
+  {
+    "id": "6fd994aa-443a-4ec5-8f8a-f502d30fd185",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "fd4cab5b-df07-46ab-80e2-027fd13e6bb0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.198Z"
+  },
+  {
+    "id": "bf64920f-a031-4b03-b405-8507bbeac49d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6704d047-370d-4312-8412-54067cb795f1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.758Z"
+  },
+  {
+    "id": "63dcae34-cfd2-4a93-ad65-a5c3066449c9",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6704d047-370d-4312-8412-54067cb795f1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.772Z"
+  },
+  {
+    "id": "72f3a828-2d86-40c2-8bc9-0e4ff5b0b5bb",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "6704d047-370d-4312-8412-54067cb795f1",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.781Z"
+  },
+  {
+    "id": "b8b6d2be-5897-491a-b527-e53c9754b43c",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "authType": "delegated",
+      "clientId": "delegated-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.786Z"
+  },
+  {
+    "id": "07f96ae6-6718-447b-a7d5-44ea320c0623",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "d8c5e441-015e-404e-b6fa-ec6b77695d78",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.790Z"
+  },
+  {
+    "id": "e30ffc28-77a4-46c1-b246-4674ef41c8dc",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "d8c5e441-015e-404e-b6fa-ec6b77695d78",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.815Z"
+  },
+  {
+    "id": "a1e9b5b2-655f-42fc-ac6f-4ac103c4e0eb",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "d8c5e441-015e-404e-b6fa-ec6b77695d78",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.822Z"
+  },
+  {
+    "id": "7eefee0a-18ce-43a2-ad43-bd1791fe4d0c",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "d8c5e441-015e-404e-b6fa-ec6b77695d78",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:52:19.833Z"
+  },
+  {
+    "id": "e15f849f-b051-4cd3-8d81-9180a02bad6e",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-1",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.881Z"
+  },
+  {
+    "id": "cdc89299-47f2-4be0-94e7-496059d0d2d6",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "f18820d9-3f23-4669-a850-bfaf3c616ba2",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.886Z"
+  },
+  {
+    "id": "6e20e011-e957-4977-acf3-d0b0f8aab9f2",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "f18820d9-3f23-4669-a850-bfaf3c616ba2",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.919Z"
+  },
+  {
+    "id": "e5dcb073-b9b9-48cb-b72b-fc7db1415435",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "Inbox",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "attribution-3",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 30,
+      "autoCreateCompany": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.961Z"
+  },
+  {
+    "id": "03009781-1dc1-44e9-a4c5-9759003b303d",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "0fea51a2-84cb-4072-bc0e-a98c9ec1abe4",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.965Z"
+  },
+  {
+    "id": "3e623b56-8836-41f8-9bfa-07b4ff4aae26",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0fea51a2-84cb-4072-bc0e-a98c9ec1abe4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:38.980Z"
+  },
+  {
+    "id": "95873baf-8d6a-4ad6-991e-4b35fedbb120",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "host": "127.0.0.1",
+      "port": 4600,
+      "user": "svc@onprem.example",
+      "folder": "Inbox",
+      "secure": false,
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "password": "***",
+      "transport": "ews",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.065Z"
+  },
+  {
+    "id": "5f21dd4a-6986-4830-9a5f-79b18e6a70c1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0c661f3c-a664-4558-a4cf-fc79d39fa943",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.072Z"
+  },
+  {
+    "id": "08bf5a48-a5db-4211-8cd4-419bcde87115",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "0c661f3c-a664-4558-a4cf-fc79d39fa943",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.078Z"
+  },
+  {
+    "id": "f770cde8-3e0b-464f-a926-d566fcd05c04",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "0c661f3c-a664-4558-a4cf-fc79d39fa943",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.081Z"
+  },
+  {
+    "id": "b3d34a2e-2d1c-43c6-aeb8-a1e640ac2fd8",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0c661f3c-a664-4558-a4cf-fc79d39fa943",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.097Z"
+  },
+  {
+    "id": "afe59d5d-20e2-4953-bb06-f44d20abec50",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0c661f3c-a664-4558-a4cf-fc79d39fa943",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.120Z"
+  },
+  {
+    "id": "a73ee50b-a2d2-48f4-b9f7-d4ef7fb4781b",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8c53e383-c652-4623-a3e0-6c0e72bf51c0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:53.069Z"
+  },
+  {
+    "id": "9869104b-c38c-4849-bf65-8abb55b9d439",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "f18820d9-3f23-4669-a850-bfaf3c616ba2",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.212Z"
+  },
+  {
+    "id": "549792ec-9877-43c5-abbd-8b7293aa4164",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "70857f2a-8e33-4d4e-9359-e787cf600c29",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.215Z"
+  },
+  {
+    "id": "d0a55a84-4477-45c3-8e06-feb45e5e4b61",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "0fea51a2-84cb-4072-bc0e-a98c9ec1abe4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.218Z"
+  },
+  {
+    "id": "88232a7b-3c6c-4d64-b47f-d6bf37df7f7b",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "e3922f97-72f4-401f-96f9-ba99a21a5b45",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.221Z"
+  },
+  {
+    "id": "0f6dd242-1e5f-4026-883f-b7a00bc92ad3",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "fbfa5055-c68a-4c2d-b03f-ca9b452cc1e5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.225Z"
+  },
+  {
+    "id": "f164352f-4de6-4dde-af08-488bdffb6f1a",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "0c661f3c-a664-4558-a4cf-fc79d39fa943",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.228Z"
+  },
+  {
+    "id": "8dd15dda-f892-4039-a7fb-055166bfca2e",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "fd4cab5b-df07-46ab-80e2-027fd13e6bb0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.231Z"
+  },
+  {
+    "id": "4d48c7bb-f2e7-499e-a433-a84828d890c9",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "ccada420-ebb8-47cb-b1f7-1eb10bd8ab8a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.235Z"
+  },
+  {
+    "id": "40f34dce-b705-4f60-820b-aaf242a299ff",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "8bb432c6-b5bd-4702-99e5-80a483ded758",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.240Z"
+  },
+  {
+    "id": "c872ee3d-40d2-4209-9f82-739d868ddd7b",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "7fbd57bd-e1a4-4ecd-9726-cff3b1e29609",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.245Z"
+  },
+  {
+    "id": "163ddb49-d3e8-400e-ba87-a397c2bad37a",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "5ad7bc0e-c8f9-487f-b227-19f3dde1b5b3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.249Z"
+  },
+  {
+    "id": "6767827e-f454-4053-9fe3-7b90d5549c18",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "7a01579a-fdfb-4967-bae5-ecce9f004e12",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.253Z"
+  },
+  {
+    "id": "4a975aaa-84ee-4f5e-9189-3811e1c44e8b",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "da959be3-d5a8-47fb-99f1-bcebbd8a6f25",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.258Z"
+  },
+  {
+    "id": "9938ba35-f064-46c8-a028-5e6d88a61688",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "8c6cb342-6698-40c2-89cc-893563a218b2",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:39.262Z"
+  },
+  {
+    "id": "b2d1cc28-522d-48d7-a4ff-0fda7192af0d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "INBOX",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "11111111-2222-3333-4444-555555555555",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "office365",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:52.962Z"
+  },
+  {
+    "id": "4851e445-d75e-4c90-9bf5-ab19f09487ac",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8c53e383-c652-4623-a3e0-6c0e72bf51c0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:52.977Z"
+  },
+  {
+    "id": "98286dc6-be0d-4361-b58c-4c3c8f83b14f",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "8c53e383-c652-4623-a3e0-6c0e72bf51c0",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:52.983Z"
+  },
+  {
+    "id": "535a8aae-eff5-4125-8be2-d3335e4072a0",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8c53e383-c652-4623-a3e0-6c0e72bf51c0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:52.999Z"
+  },
+  {
+    "id": "a2d77403-4541-4254-9d5e-3e836c526d9d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "8c53e383-c652-4623-a3e0-6c0e72bf51c0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:53.041Z"
+  },
+  {
+    "id": "dac633ed-42ae-4782-87a7-37882e711aa9",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "bd01b78f-515e-4679-a6e8-751b0c7d415e",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:53.090Z"
+  },
+  {
+    "id": "654d4730-1c4c-4e07-b6a5-b7efa666edab",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "8c53e383-c652-4623-a3e0-6c0e72bf51c0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:53:53.094Z"
+  },
+  {
+    "id": "8771fdf1-fadb-4b5a-8e94-4efbfa057177",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "INBOX",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "11111111-2222-3333-4444-555555555555",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "office365",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:54:28.338Z"
+  },
+  {
+    "id": "a1394c99-25d9-48a7-a216-75dcc55552e3",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "2a903a6b-8d05-4a5b-9de7-2d6d8a1cf440",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:54:28.351Z"
+  },
+  {
+    "id": "0650e7a2-e3c3-4b62-aeb4-9305475cce38",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "2a903a6b-8d05-4a5b-9de7-2d6d8a1cf440",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:54:28.357Z"
+  },
+  {
+    "id": "c3bed8b5-4a9c-4c06-ae0f-cf53d4139fb1",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "2a903a6b-8d05-4a5b-9de7-2d6d8a1cf440",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:54:28.377Z"
+  },
+  {
+    "id": "888f4d33-dc24-464c-adc6-413bf5f9cfd0",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "2a903a6b-8d05-4a5b-9de7-2d6d8a1cf440",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:54:28.414Z"
+  },
+  {
+    "id": "ab65a550-0729-4501-83a6-8d3a3eaa87aa",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "2a903a6b-8d05-4a5b-9de7-2d6d8a1cf440",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:54:28.441Z"
+  },
+  {
+    "id": "602affb3-f83a-409b-b490-ed3f17a37406",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "8f603763-7f4e-479c-af47-18da2f0ace0f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:54:28.461Z"
+  },
+  {
+    "id": "66b74b8a-11ab-4e89-990b-9713fad44f39",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "2a903a6b-8d05-4a5b-9de7-2d6d8a1cf440",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-06T23:54:28.464Z"
   }
 ]

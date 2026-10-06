@@ -12,6 +12,7 @@
 import Imap from "imap";
 import { simpleParser } from "mailparser";
 import type { ParsedEmail } from "./EmailConnector";
+import { parseMailToEmail } from "./parseMail";
 
 export interface ImapConnectionConfig {
   host: string;
@@ -84,25 +85,7 @@ export function fetchUnseenEmails(config: ImapConnectionConfig): Promise<Fetched
                   const parsed = await simpleParser(Buffer.concat(chunks));
                   results.push({
                     uid,
-                    messageId: parsed.messageId || `${config.user}-${uid || seqno}`,
-                    from: {
-                      name: parsed.from?.value?.[0]?.name || "",
-                      email: parsed.from?.value?.[0]?.address || "",
-                    },
-                    to: (parsed.to?.value || []).map((a) => a.address || ""),
-                    cc: (parsed.cc?.value || []).map((a) => a.address || ""),
-                    subject: parsed.subject || "",
-                    bodyText: parsed.text || "",
-                    bodyHtml: parsed.html || "",
-                    attachments: (parsed.attachments || []).map((a) => ({
-                      filename: a.filename || "attachment",
-                      contentType: a.contentType || "application/octet-stream",
-                      size: a.size || 0,
-                      content: a.content instanceof Buffer ? a.content : Buffer.alloc(0),
-                    })),
-                    date: parsed.date || new Date(),
-                    inReplyTo: parsed.inReplyTo || null,
-                    references: Array.isArray(parsed.references) ? (parsed.references as string[]) : [],
+                    ...parseMailToEmail(parsed, `${config.user}-${uid || seqno}`),
                   });
                 } catch {
                   // skip unparseable messages

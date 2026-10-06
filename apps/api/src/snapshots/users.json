@@ -333,7 +333,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-06T23:25:21.470Z",
+    "lastLoginAt": "2026-10-06T23:54:28.311Z",
     "emailVerified": true,
     "mfaEnabled": false,
     "mfaSecret": "HQ7TS5KTHI3WGVDWJVPEI33FHI5EOVBQGA6D4MDMGEXS4M2HKRYQ",
@@ -344,7 +344,7 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-10-06T23:25:21.472Z"
+    "updatedAt": "2026-10-06T23:54:28.312Z"
   },
   {
     "id": "38f63d60-ef50-49f7-821e-c67115d6814e",
