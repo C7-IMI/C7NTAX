@@ -1853,6 +1853,21 @@
 - **Verification:** an audit script reading the shipped CSS confirms 80/80 AA pairs across the eight scheme blocks (worst 4.54:1); typecheck unchanged at 26 pre-existing errors; token lint passes with no new hex in `.tsx`; live checks applied all eight schemes (correct `--surface`) and confirmed the picker contents per mode, then reset both modes to Classic; `/`, `/tickets`, `/clients`, `/assets`, `/reports` all render with no console errors.
 
 
+### Prompt 157 — Brand defaults, drop Classic, build the My Account menu
+**Timestamp:** 2026-10-06 | **Status:** ✅ Completed | **Duration:** ~45 min
+**BuildNotes IDs:** #1 (2026.10.6.005)
+> Make Brand Crimson the default dark theme. Make Rose Tint the default Light. Remove Classic for both dark and light. Duplicate the palette swap button and add it as an option under the My Account menu. Build the menu out if necessary using common options for logged in user context menu (sign out, theme, Profile, etc.). The current palette swap button should remain for now. Use Connectwise ASIO, AutoTaskPSA, Scoro, NinjaRMM as references for the My Account menu design.
+
+**Changes:**
+- `apps/web/src/components/MyAccountMenu.tsx` (new) — account menu on the header's existing My Account button: identity block (initials, name, email, role chip), My Profile, Security & two-factor (MFA state), Preferences, Appearance (dark/light, colour schemes, density), Help & Support, What's New, Sign out. Modelled on the user menus in ConnectWise Manage, Autotask PSA, Scoro and NinjaOne.
+- `apps/web/src/components/PaletteSchemeList.tsx` (new) — the scheme list extracted so the header picker and My Account render the same component.
+- `apps/web/src/lib/palette.ts` — `DEFAULTS` (`crimson` dark / `rosetint` light) replaces `CLASSIC`; both attributes are always set; invalid stored ids fall back to the default; `resetPalettes()` now resets to the defaults.
+- `apps/web/src/components/PalettePicker.tsx` / `apps/web/src/index.css` — Classic row and the two Classic swatch rules removed.
+- `apps/web/src/main.tsx` — `c7Palette.list()` marks the defaults; `apps/web/src/pages/Settings.tsx` — section anchors + hash scroll so the menu's deep links work.
+- **Verification:** typecheck unchanged at 26 pre-existing errors (zero new); token lint passes; live check with cleared storage confirmed Brand Crimson/Rose Tint defaults and no Classic in either list; exercised the menu (scheme pick, light/dark swap, density, My Profile deep link scrolling to `#profile`); five routes render with no console errors.
+
+
+
 
 
 

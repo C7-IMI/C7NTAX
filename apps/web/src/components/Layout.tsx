@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
-  Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, UserCircle, Home,
+  Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
   AlertTriangle, XCircle, Settings2, ListOrdered, AlignJustify,
   type LucideIcon,
 } from "lucide-react";
@@ -15,6 +15,7 @@ import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 import { CommandPalette, type PaletteItem } from "./CommandPalette";
 import { PalettePicker } from "./PalettePicker";
+import { MyAccountMenu } from "./MyAccountMenu";
 import { UI_P1, UI_P2, UI_PALETTE, setUiP1, setUiP2 } from "../lib/uiFlags";
 import { getDensity, setDensity, type Density } from "../lib/density";
 
@@ -730,10 +731,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <Settings size={14} />
               <span>Settings</span>
             </button>
-            <button className="px-3 py-1.5 text-xs text-cyber-400 hover:text-cyber-300 hover:bg-cyber-600/10 rounded-md transition-colors flex items-center gap-1.5" title="My Account">
-              <UserCircle size={14} />
-              <span>My Account</span>
-            </button>
+            <MyAccountMenu />
           </div>
           <div className="sm:hidden w-8" />
         </header>

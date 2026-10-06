@@ -4,13 +4,13 @@
  * A scheme only sets CSS custom properties, applied through the
  * data-palette-dark / data-palette-light attributes on <html>; the definitions
  * live in the "Colour schemes" block at the end of apps/web/src/index.css.
- * "classic" means "no attribute", i.e. the built-in theme, which is never
- * modified by this feature.
+ * The brand defaults are Brand Crimson (dark) and Rose Tint (light) — there is
+ * no "unstyled" option, so one scheme is always active for each mode.
  *
- * Instant rollback — browser console, then reload:
- *   c7Palette.reset()                                  // back to Classic
- *   localStorage.removeItem("c7_palette_dark")         // dark only
- *   localStorage.removeItem("c7_palette_light")        // light only
+ * Instant rollback — browser console:
+ *   c7Palette.reset()                            // back to the brand defaults
+ *   c7Palette.set("dark", "plum")                // any id from c7Palette.list()
+ *   localStorage.removeItem("c7_palette_dark")   // dark back to default on reload
  */
 export type PaletteMode = "dark" | "light";
 
@@ -21,7 +21,11 @@ export type PaletteDef = {
   blurb: string;
 };
 
-export const CLASSIC = "classic";
+/** Brand defaults, used when nothing valid is stored. */
+export const DEFAULTS: Record<PaletteMode, string> = {
+  dark: "crimson",
+  light: "rosetint",
+};
 
 export const PALETTES: PaletteDef[] = [
   { id: "crimson", label: "Brand Crimson", mode: "dark", blurb: "Near-black surfaces, C7NTAX crimson accent" },
@@ -53,8 +57,7 @@ export function paletteById(id: string): PaletteDef | undefined {
 }
 
 /** Swatch class for the picker preview (colours live in CSS, not in .tsx). */
-export function swatchClass(id: string, mode: PaletteMode): string {
-  if (id === CLASSIC) return mode === "light" ? "scheme-swatch--classic-light" : "scheme-swatch--classic";
+export function swatchClass(id: string): string {
   return `scheme-swatch--${id}`;
 }
 
@@ -63,15 +66,13 @@ export function getPalette(mode: PaletteMode): string {
     const saved = localStorage.getItem(STORAGE_KEY[mode]);
     if (saved && paletteById(saved)?.mode === mode) return saved;
   } catch {
-    /* localStorage unavailable — fall back to Classic */
+    /* localStorage unavailable — fall back to the brand default */
   }
-  return CLASSIC;
+  return DEFAULTS[mode];
 }
 
 function applyOne(mode: PaletteMode, id: string): void {
-  const root = document.documentElement;
-  if (id === CLASSIC) root.removeAttribute(ATTRIBUTE[mode]);
-  else root.setAttribute(ATTRIBUTE[mode], id);
+  document.documentElement.setAttribute(ATTRIBUTE[mode], id);
 }
 
 /** Applies both stored selections — called before first paint in main.tsx. */
@@ -80,13 +81,11 @@ export function applyPalettes(): void {
   applyOne("light", getPalette("light"));
 }
 
-/** Stores and applies a scheme for one mode. Returns the id that took effect. */
+/** Stores and applies a scheme for one mode. Invalid ids fall back to the default. */
 export function setPalette(mode: PaletteMode, id: string): string {
-  const valid = id === CLASSIC || paletteById(id)?.mode === mode;
-  const next = valid ? id : CLASSIC;
+  const next = paletteById(id)?.mode === mode ? id : DEFAULTS[mode];
   try {
-    if (next === CLASSIC) localStorage.removeItem(STORAGE_KEY[mode]);
-    else localStorage.setItem(STORAGE_KEY[mode], next);
+    localStorage.setItem(STORAGE_KEY[mode], next);
   } catch {
     /* ignore */
   }
@@ -94,8 +93,8 @@ export function setPalette(mode: PaletteMode, id: string): string {
   return next;
 }
 
-/** Back to the built-in theme for both modes. */
+/** Back to the brand defaults for both modes. */
 export function resetPalettes(): void {
-  setPalette("dark", CLASSIC);
-  setPalette("light", CLASSIC);
+  setPalette("dark", DEFAULTS.dark);
+  setPalette("light", DEFAULTS.light);
 }

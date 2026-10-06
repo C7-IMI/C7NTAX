@@ -419,7 +419,6 @@ html[data-theme="light"][data-palette-light="contrast"] {
 
 /* Scheme swatch previews for the palette picker (no raw hex in .tsx) */
 .scheme-swatch { background-image: linear-gradient(135deg, var(--scheme-bg) 0 58%, var(--scheme-accent) 58% 100%); }
-.scheme-swatch--classic  { --scheme-bg: #0f1a2e; --scheme-accent: #00c0f4; }
 .scheme-swatch--crimson  { --scheme-bg: #0d0d0f; --scheme-accent: #c00000; }
 .scheme-swatch--rose     { --scheme-bg: #0f0d11; --scheme-accent: #ee5483; }
 .scheme-swatch--maroon   { --scheme-bg: #170f10; --scheme-accent: #662428; }
@@ -428,4 +427,3 @@ html[data-theme="light"][data-palette-light="contrast"] {
 .scheme-swatch--brand    { --scheme-bg: #ffffff; --scheme-accent: #c00000; }
 .scheme-swatch--rosetint { --scheme-bg: #fdf6f8; --scheme-accent: #c00000; }
 .scheme-swatch--contrast { --scheme-bg: #ffffff; --scheme-accent: #a30000; }
-.scheme-swatch--classic-light { --scheme-bg: #ffffff; --scheme-accent: #0284c7; }

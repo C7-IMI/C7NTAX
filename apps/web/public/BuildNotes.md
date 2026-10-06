@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.004 | Last Updated: 2026-10-06
+## Version: 2026.10.6.005 | Last Updated: 2026-10-06
 
 ---
 
@@ -14,7 +14,15 @@
 
 ---
 
-## 2026.10.6.004 — Colour schemes rebuilt on the C7NTAX brand palette
+## 2026.10.6.005 — My Account menu + brand colour schemes as the defaults
+- **[New]** **My Account menu** — the header's previously inert *My Account* button now opens an account menu following the ConnectWise Manage / Autotask PSA / Scoro / NinjaOne pattern: identity block (initials avatar, name, email, role chip), **My Profile**, **Security & two-factor** (shows the current MFA state), **Preferences**, an **Appearance** section (dark/light switch, colour scheme list, density), **Help & Support**, **What's New**, and **Sign out**.
+- **[Update]** **Brand Crimson is now the default dark theme and Rose Tint the default light theme.** `palette.ts` gained a `DEFAULTS` map; both `data-palette-*` attributes are always set, so a scheme is always active and an unknown/retired stored id falls back to the brand default.
+- **[Update]** **Classic is gone** — removed from the picker, from the catalogue and from the CSS swatches. The base theme blocks stay as the token foundation the schemes override.
+- **[Update]** The header palette button remains, but it and the My Account menu now share one `PaletteSchemeList` component so the two lists cannot drift apart.
+- **[Update]** `Settings.tsx` gained section anchors (`#profile`, `#landing`, `#security`, `#session`, `#system`) with `scroll-mt-6`, and scrolls to the anchor on mount so the menu's deep links land in the right place.
+- **[Verification]** `apps/web` typecheck unchanged (26 pre-existing errors, zero new); design-token lint passes (no raw hex in `.tsx`); live check with empty storage confirmed the defaults (`data-palette-dark="crimson"`, `data-palette-light="rosetint"`, `--surface #0d0d0f`) and a picker with no Classic entry; the My Account menu was driven end-to-end — Plum Noir applied from inside the menu (`--surface #180f16`), the light/dark switch swapped the list to the light schemes and applied Rose Tint, and **My Profile** navigated to `/settings#profile` with the Profile section scrolled into view; no console errors across `/`, `/tickets`, `/clients`, `/assets`, `/reports`.
+
+
 - **[Update]** All eight alternate schemes now derive from the brand asset sheet's palette — **`#C00000`** crimson, **`#EE5483`** rose, **`#662428`** maroon, **`#801550`** plum, plus black and white — replacing the previous navy/violet/amber/teal set. Dark: **Brand Crimson**, **Crimson Rose**, **Deep Maroon**, **Plum Noir**, **True Black (OLED)**. Light: **Brand Light**, **Rose Tint**, **High Contrast**. Classic remains the default and is untouched.
 - **[Fix]** `#C00000` only reaches **3.0:1** against a near-black surface, so it cannot carry accent text on dark. The dark schemes therefore use lighter crimson tints (`#ff5c5c`) or the brand rose for accent text/icons and reserve `#C00000` for fills that carry a **white label (6.48:1)** — mirroring how the brand sheet itself uses the red. Plum fills use white at 9.81:1.
 - **[Update]** Scheme swatches in the picker now preview the brand black/crimson pairing, and the light schemes carry brand-crimson status colours (`--alert-red #a30000`).

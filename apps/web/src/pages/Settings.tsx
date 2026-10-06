@@ -27,6 +27,14 @@ export function SettingsPage() {
 
   useEffect(() => { setSelectedPath(landingPage.path); }, [landingPage.path]);
 
+  // Deep links such as /settings#security come from the My Account menu; the
+  // browser can't scroll to the anchor before React has rendered it.
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (!id) return;
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   // Load session timeout on mount
   useEffect(() => {
     api.get("/system/config/session_timeout").then(r => {
@@ -58,7 +66,7 @@ export function SettingsPage() {
     <div className="space-y-6 animate-fade-in max-w-2xl">
       <div><h2 className="text-lg font-semibold text-white">Settings</h2><p className="text-sm text-gray-400 mt-0.5">Account and system configuration</p></div>
 
-      <div className="card">
+      <div className="card scroll-mt-6" id="profile">
         <h3 className="font-semibold text-white mb-4">Profile</h3>
         <div className="space-y-3">
           <div>
@@ -76,7 +84,7 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card scroll-mt-6" id="landing">
         <h3 className="font-semibold text-white mb-4">Default Landing Page</h3>
         <p className="text-xs text-gray-500 mb-3">Choose which section opens after login</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -100,7 +108,7 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card scroll-mt-6" id="security">
         <h3 className="font-semibold text-white mb-4">Security</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -115,7 +123,7 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card scroll-mt-6" id="session">
         <h3 className="font-semibold text-white mb-4">Session Timeout</h3>
         <p className="text-xs text-gray-500 mb-3">Inactivity timeout in minutes before users are logged out. Super Admin and Admin users are never timed out.</p>
         <div className="flex items-center gap-3">
@@ -151,7 +159,7 @@ export function SettingsPage() {
         </div>
       </Link>
 
-      <div className="card">
+      <div className="card scroll-mt-6" id="system">
         <h3 className="font-semibold text-white mb-4">System</h3>
         <div className="space-y-3 text-sm text-gray-400">
           <div className="flex justify-between"><span>Version</span><span className="text-white">1.0.0</span></div>

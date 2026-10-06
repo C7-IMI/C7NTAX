@@ -7,7 +7,7 @@ import App from "./App";
 import { ThemeProvider } from "./hooks/useTheme";
 import { UI_P1, UI_P2, setUiP1, setUiP2 } from "./lib/uiFlags";
 import { applyDensity, getDensity } from "./lib/density";
-import { PALETTES, applyPalettes, getPalette, resetPalettes, setPalette, type PaletteMode } from "./lib/palette";
+import { DEFAULTS, PALETTES, applyPalettes, getPalette, resetPalettes, setPalette, type PaletteMode } from "./lib/palette";
 import "./index.css";
 
 // Apply the persisted density + colour scheme before first paint (avoids a
@@ -29,7 +29,7 @@ applyPalettes();
   disable: () => setUiP2(false),
 };
 (window as unknown as { c7Palette?: unknown }).c7Palette = {
-  list: () => PALETTES.map(p => `${p.mode.padEnd(5)} ${p.id.padEnd(9)} ${p.label} — ${p.blurb}`),
+  list: () => PALETTES.map(p => `${p.mode.padEnd(5)} ${p.id.padEnd(9)} ${p.label} — ${p.blurb}${DEFAULTS[p.mode] === p.id ? "  [default]" : ""}`),
   get: (mode: PaletteMode) => getPalette(mode),
   set: (mode: PaletteMode, id: string) => setPalette(mode, id),
   reset: () => resetPalettes(),
