@@ -333,7 +333,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-06T23:14:09.605Z",
+    "lastLoginAt": "2026-10-06T23:25:21.470Z",
     "emailVerified": true,
     "mfaEnabled": false,
     "mfaSecret": "HQ7TS5KTHI3WGVDWJVPEI33FHI5EOVBQGA6D4MDMGEXS4M2HKRYQ",
@@ -344,6 +344,33 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-10-06T23:14:09.606Z"
+    "updatedAt": "2026-10-06T23:25:21.472Z"
+  },
+  {
+    "id": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "email": "connector@c7ntax.local",
+    "username": null,
+    "passwordHash": "!connector-disabled",
+    "firstName": "Email",
+    "lastName": "Connector",
+    "phone": null,
+    "mobile": null,
+    "title": null,
+    "avatarUrl": null,
+    "isActive": true,
+    "isLocked": false,
+    "loginAttempts": 0,
+    "lastLoginAt": null,
+    "emailVerified": false,
+    "mfaEnabled": false,
+    "mfaSecret": null,
+    "mfaBackupCodes": [],
+    "mfaEmailCode": null,
+    "mfaEmailCodeExpires": null,
+    "roleId": "52f22c12-60e7-4489-a606-f82710131221",
+    "permissions": [],
+    "companyId": null,
+    "createdAt": "2026-10-06T23:17:57.482Z",
+    "updatedAt": "2026-10-06T23:17:57.482Z"
   }
 ]

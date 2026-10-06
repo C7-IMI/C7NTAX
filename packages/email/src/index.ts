@@ -1,5 +1,5 @@
 export { EmailService } from "./EmailService";
-export { EmailConnectorManager } from "./EmailConnector";
+export { EmailConnectorManager, matchEmailToTicket } from "./EmailConnector";
 export type { ParsedEmail, TicketMatchResult, EmailConnectorConfig, IncomingEmail } from "./EmailConnector";
 export { fetchUnseenEmails, markEmailsSeen } from "./imapFetch";
 export type { ImapConnectionConfig, FetchedImapEmail } from "./imapFetch";

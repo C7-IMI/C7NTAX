@@ -18,6 +18,7 @@ import {
   sanitizeAttachmentFilename,
   resolveStoredAttachment,
   storeTicketAttachments,
+  removeTicketAttachments,
   type PreparedAttachment,
 } from "../../services/ticketAttachments";
 
@@ -552,6 +553,7 @@ ticketsRouter.delete("/:id", requirePermission(Permission.TicketDelete), async (
     if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
 
     await prisma.ticket.delete({ where: { id: ticket.id } });
+    await removeTicketAttachments(ticket.id);
     res.json({
       message: `Ticket ${ticket.ticketNumber} deleted`,
       id: ticket.id,

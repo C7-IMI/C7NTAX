@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.6.049",
+    "date": "2026-10-06",
+    "title": "Microsoft 365 email connector: working email → ticket ingestion, and the two bugs that would have made it fail silently",
+    "changes": [
+      {
+        "text": "**The Microsoft 365 mailbox path is complete and live-ready.** Exchange Online has Basic authentication disabled in every tenant, so the IMAP-with-password connector the UI shipped with could never read a Microsoft 365 mailbox. The connector now speaks **Microsoft Graph app-only** (`tenantId` + `clientId` + `clientSecret`), lists unread mail oldest-first, fetches attachments, files the ticket, and only then marks the message read — a failure leaves the message unread so the next poll retries it instead of losing the email.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The connector panel asks which transport you mean.** Choosing \"Microsoft 365 / Exchange Online\" shows the mailbox to watch plus the tenant, client id and secret, with a banner describing the Entra app, the application permission `Mail.ReadWrite` (write is needed to mark messages processed) and Exchange Online RBAC for Applications scoping the app to that one mailbox. Choosing \"IMAP (username + password)\" keeps the old fields and warns that it will not work for Microsoft 365.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Each connector reports its own health**: whether a mailbox is being watched, when it last polled, how many messages it has processed, and the last error with its timestamp — plus a connection test that names the mailbox and its unread count.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Email attachments become ticket attachments** through the same storage path the ticket screen uses (5 MB per file, 20 files per email), and an HTML-only email is flattened to text instead of landing as \"(no message body)\".",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Connectors could not be created at all: the API rejected the transport the UI sends.** Its alias list accepted `office365`, `o365`, `m365` and `microsoftgraph` but not `graph` itself, so every save failed with \"Unsupported transport \"graph\"\". A guard test against a stubbed Microsoft endpoint caught it before anyone hit it by hand.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Replies never threaded, so every customer reply raised a duplicate ticket.** Ticket numbers are `C7-<stamp>-<4 chars>` (or `MSP-1001-1003` when the client has an id), but the matcher only looked for `[C7-12345678]` — a shape this app never generates. Replies are now matched on the real tag in the subject, in `In-Reply-To`/`References`, and as a last resort in the quoted body, and the tag is stripped from titles in either order (`\"[MSP-1001-1003] RE: …\"` used to leave a bare `RE:` behind). When a quoted number does not resolve, the email is raised as a new ticket rather than dropped.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Deleting a ticket left its files behind on disk.** Attachment rows cascade with the ticket, the stored files did not — they are removed now (four orphaned folders from earlier deletes were cleaned up too).",
+        "type": "Fix"
+      },
+      {
+        "text": "**Stopping or deleting a connector cancelled only its interval, not its first poll** — the deferred tick could poll a connector that no longer existed and recreate its state row. Both timers are tracked and cleared now.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.048",
     "date": "2026-10-06",
     "title": "Board cards, take two: outlined Workable and Escalated, plain Avg Age",

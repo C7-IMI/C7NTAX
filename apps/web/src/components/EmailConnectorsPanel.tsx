@@ -54,6 +54,12 @@ const emptyForm = {
 const graphDefaults = { folder: "Inbox" };
 const imapDefaults = { folder: "INBOX" };
 
+/** The API returns { error: { message, status } }; show the message, not the object. */
+function errText(e: any, fallback: string): string {
+  const raw = e?.response?.data?.error;
+  return (typeof raw === "string" ? raw : raw?.message) || e?.message || fallback;
+}
+
 /** Email connector management panel (kind=email_connector integrations). */
 export function EmailConnectorsPanel() {
   const [connectors, setConnectors] = useState<Connector[]>([]);
@@ -101,7 +107,7 @@ export function EmailConnectorsPanel() {
       setForm({ ...emptyForm });
       load();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Create failed");
+      toast.error(errText(err, "Create failed"));
     } finally { setBusy(null); }
   };
 
@@ -111,7 +117,7 @@ export function EmailConnectorsPanel() {
       await api.patch(`/email-connectors/${c.id}`, { enabled: !c.enabled });
       load();
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Toggle failed");
+      toast.error(errText(err, "Toggle failed"));
     } finally { setBusy(null); }
   };
 
@@ -122,12 +128,8 @@ export function EmailConnectorsPanel() {
       toast.success(r.data?.detail || "Connected");
     } catch (err: any) {
       const data = err?.response?.data;
-      if (data?.error) {
-        const prefix = data.transport === "graph" ? "Microsoft Graph: " : "IMAP: ";
-        toast.error(`${prefix}${data.error}`, { duration: 9000 });
-      } else {
-        toast.error("Test failed");
-      }
+      const prefix = data?.transport === "graph" ? "Microsoft Graph: " : data?.transport === "imap" ? "IMAP: " : "";
+      toast.error(`${prefix}${errText(err, "Test failed")}`, { duration: 9000 });
     } finally { setBusy(null); load(); }
   };
 
@@ -137,14 +139,14 @@ export function EmailConnectorsPanel() {
       const r = await api.post(`/email-connectors/${c.id}/poll`);
       if (r.data?.lastError) toast.error(r.data.lastError, { duration: 9000 });
       else toast.success("Polled the mailbox");
-    } catch (err: any) { toast.error(err?.response?.data?.error || "Poll failed"); }
+    } catch (err: any) { toast.error(errText(err, "Poll failed")); }
     finally { setBusy(null); load(); }
   };
 
   const remove = async (c: Connector) => {
     setBusy(c.id);
     try { await api.delete(`/email-connectors/${c.id}`); toast.success("Deleted"); load(); }
-    catch { toast.error("Delete failed"); } finally { setBusy(null); }
+    catch (err: any) { toast.error(errText(err, "Delete failed")); } finally { setBusy(null); }
   };
 
   const boardName = (id: string) => boards.find((b) => b.id === id)?.name || id;

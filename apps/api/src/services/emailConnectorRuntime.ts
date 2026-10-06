@@ -152,6 +152,10 @@ function imapConfig(row: ConnectorRow): EmailConnectorConfig {
 // ── Graph transport ─────────────────────────────────────────────────
 
 const graphTimers = new Map<string, ReturnType<typeof setInterval>>();
+/** The deferred first tick a new poller fires shortly after start. Tracked so
+ *  switching a connector off (or deleting it) cannot leave that tick running —
+ *  it would poll a connector that no longer exists and recreate its state row. */
+const graphBootTimers = new Map<string, ReturnType<typeof setTimeout>>();
 /** Per-connector throttling/backoff deadline (Graph 429s and hard failures). */
 const graphBackoff = new Map<string, number>();
 
@@ -203,7 +207,7 @@ function startGraphPoller(row: ConnectorRow): void {
   const intervalMs = Math.max(30, row.pollIntervalSec || 300) * 1000;
   const tick = () => { void pollGraphOnce(row).catch((e) => console.error(`[EmailConnector] Graph poll crashed for ${row.id}:`, e?.message || e)); };
   graphTimers.set(row.id, setInterval(tick, intervalMs));
-  setTimeout(tick, 5_000);
+  graphBootTimers.set(row.id, setTimeout(() => { graphBootTimers.delete(row.id); tick(); }, 5_000));
 }
 
 // ── Lifecycle ───────────────────────────────────────────────────────
@@ -214,6 +218,11 @@ export function stopEmailConnector(id: string): void {
   if (timer) {
     clearInterval(timer);
     graphTimers.delete(id);
+  }
+  const boot = graphBootTimers.get(id);
+  if (boot) {
+    clearTimeout(boot);
+    graphBootTimers.delete(id);
   }
   graphBackoff.delete(id);
 }

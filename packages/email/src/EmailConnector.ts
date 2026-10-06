@@ -53,15 +53,28 @@ export interface EmailConnectorConfig {
 // ─── Ticket Matching Logic ──────────────────────────────────────────
 
 const TICKET_ID_PATTERN = /\[?#?(TKT|TICKET)[-_\s]?(\w{6,12})\]?/i;
-const TICKET_ID_SUBJECT_PATTERN = /\[C7-(\d{5,10})\]/i;
 
 /**
- * Determines whether an incoming email matches an existing ticket
- * by examining subject, in-reply-to headers, and references.
+ * The tag this app puts on every outbound ticket subject, `[<ticketNumber>]`.
+ * Ticket numbers come from `generateTicketNumber`, which yields either
+ * `C7-<base36 stamp>-<4 chars>` (client without a clientId) or
+ * `<ClientType>-<clientId>-<sequence>` (e.g. `MSP-1001-1003`), so matching
+ * `\[C7-\d+\]` alone would never thread a real reply.
+ */
+const TICKET_TAG_PATTERN = /\[((?:c7-[a-z0-9]{3,}(?:-[a-z0-9]{2,})?)|(?:[a-z]{2,6}-\d{1,8}(?:-\d{1,8})?))\]/i;
+
+/**
+ * Determines whether an incoming email matches an existing ticket by examining
+ * the subject tag, the in-reply-to header, and finally the quoted body (a reply
+ * that quotes our notification carries the number in the quoted text even when
+ * the subject tag was stripped somewhere along the way).
+ *
+ * A returned `ticketId` is resolved by the caller; when it does not resolve, the
+ * email is raised as a new ticket instead of being dropped.
  */
 export function matchEmailToTicket(email: ParsedEmail): TicketMatchResult {
-  // Check for ticket ID in subject (e.g. [C7-12345678])
-  const subjectMatch = TICKET_ID_SUBJECT_PATTERN.exec(email.subject);
+  // Check for our ticket tag in the subject (e.g. [MSP-1001-1003])
+  const subjectMatch = TICKET_TAG_PATTERN.exec(email.subject);
   if (subjectMatch && subjectMatch[1]) {
     return {
       matched: true,
@@ -71,7 +84,7 @@ export function matchEmailToTicket(email: ParsedEmail): TicketMatchResult {
     };
   }
 
-  // Check for ticket ID anywhere in subject
+  // Check for a TKT/TICKET reference anywhere in subject
   const looseMatch = TICKET_ID_PATTERN.exec(email.subject);
   if (looseMatch && looseMatch[2]) {
     return {
@@ -82,9 +95,19 @@ export function matchEmailToTicket(email: ParsedEmail): TicketMatchResult {
     };
   }
 
-  // Check in-reply-to header for ticket thread
-  if (email.inReplyTo) {
-    const replyMatch = TICKET_ID_PATTERN.exec(email.inReplyTo);
+  // Check in-reply-to / references headers for ticket thread
+  for (const header of [email.inReplyTo, ...(email.references || [])]) {
+    if (!header) continue;
+    const headerTag = TICKET_TAG_PATTERN.exec(header);
+    if (headerTag && headerTag[1]) {
+      return {
+        matched: true,
+        ticketId: headerTag[1],
+        action: "update",
+        confidence: 0.85,
+      };
+    }
+    const replyMatch = TICKET_ID_PATTERN.exec(header);
     if (replyMatch && replyMatch[2]) {
       return {
         matched: true,
@@ -93,6 +116,18 @@ export function matchEmailToTicket(email: ParsedEmail): TicketMatchResult {
         confidence: 0.85,
       };
     }
+  }
+
+  // Last resort: the tag in the quoted body (HTML included — the tag is plain
+  // text there too, and an HTML-only reply has no text part to search)
+  const bodyTag = TICKET_TAG_PATTERN.exec(`${email.bodyText || ""} ${email.bodyHtml || ""}`);
+  if (bodyTag && bodyTag[1]) {
+    return {
+      matched: true,
+      ticketId: bodyTag[1],
+      action: "update",
+      confidence: 0.6,
+    };
   }
 
   // No match — create new ticket

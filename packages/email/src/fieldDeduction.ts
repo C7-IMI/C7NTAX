@@ -8,13 +8,16 @@ export function stripSubjectPrefixes(subject: string): string {
   let s = (subject || "").trim();
   // Remove leading RE:/FW:/AW: chains (optionally numbered, e.g. "RE[3]:")
   const chain = /^(?:(?:re|fw|aw)\s*\[\d+\]\s*:|\s*(?:re|fw|aw)\s*:)+/i;
+  // Ticket tags we (or another PSA) may have put on the subject:
+  // [C7-<stamp>-<chars>], [MSP-1001-1003], [TKT-abc123]
+  const tag = /\[(?:[a-z]{2,6}-\d{1,8}(?:-\d{1,8})?|c7-[a-z0-9-]+|tkt[-_\s]?\w{6,12})\]/gi;
+  // The two sit in either order ("[MSP-1001-1003] RE: Printer down"), so
+  // alternate until the subject stops changing.
   let prev = "";
   while (prev !== s) {
     prev = s;
-    s = s.replace(chain, "").trim();
+    s = s.replace(tag, "").replace(chain, "").trim();
   }
-  // Remove existing ticket tags like [C7-12345678] / [TKT-abc123]
-  s = s.replace(/\[(?:c7-\d{5,10}|tkt[-_\s]?\w{6,12})\]/gi, "").trim();
   s = s.replace(/^\s*[-–—:]\s*/, "").trim();
   return s;
 }

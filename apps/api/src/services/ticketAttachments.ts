@@ -8,7 +8,7 @@
  * root and resolved defensively before any read or write.
  */
 import path from "node:path";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile, rm } from "node:fs/promises";
 import { v4 as uuid } from "uuid";
 import { prisma } from "../index";
 
@@ -77,4 +77,17 @@ export async function storeTicketAttachments(
     await Promise.all(written.map((p) => unlink(p).catch(() => {})));
     throw e;
   }
+}
+
+/**
+ * Drop a ticket's stored files. The ticket's attachment rows cascade away with
+ * the ticket itself, but files on disk do not — without this the folder (and
+ * every email attachment the connector filed under it) leaks on delete.
+ */
+export async function removeTicketAttachments(ticketId: string): Promise<void> {
+  const dir = resolveStoredAttachment(`${ticketId}/x`);
+  if (!dir) return;
+  await rm(path.dirname(dir), { recursive: true, force: true }).catch((e) =>
+    console.error(`[TicketAttachments] Could not remove stored files for ticket ${ticketId}:`, e?.message || e),
+  );
 }

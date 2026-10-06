@@ -2928,3 +2928,44 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The integrated browser would not report `:hover` from `element.matches(":hover")` after a Playwright hover, so the hover state was verified through the generated CSS rules instead — which is the more durable check anyway, since it also proves the class was generated at all.
 
+
+---
+
+### Prompt 207 — Audited the Office 365 connector and made email → ticket work today
+**Timestamp:** 2026-10-06 | **Status:** Done — 37/37 end-to-end checks against a stubbed Microsoft endpoint, then proven against the real token endpoint | **Duration:** ~3 h 30 min
+**BuildNotes IDs:** 2026.10.6.049 - Microsoft 365 email connector: working email → ticket ingestion, and the two bugs that would have made it fail silently
+> audit the service connector for office 365 and make sure that it will actually function if I attempt to configure it. Ensure the the underlying code is present to make this go live right now if I chose.
+>
+> The goal is to have this as the watcher service so when someone emails for example servicedesk@cyber7group.com, it will ingest it and create a ticket from that e-mail.
+>
+>  Use the Microsoft API documentation as a reference.
+
+**What the audit found**
+- **The connector as shipped could never read a Microsoft 365 mailbox.** Exchange Online has Basic authentication disabled in every tenant (Microsoft: "Basic authentication is now disabled in all tenants"), and the connector was IMAP + username/password with `outlook.office365.com` pre-filled in the UI. The transport itself was the blocker, not the configuration.
+- **The API refused the transport the UI sends.** `normalizeTransport` accepted `office365`, `o365`, `m365` and `microsoftgraph` but not `graph` — so creating a connector from the panel failed with `Unsupported transport "graph"`, and the same bug would have hit anyone using the API directly.
+- **Threading could never work.** `matchEmailToTicket` looked for `[C7-12345678]`, but `generateTicketNumber` produces `C7-<base36 stamp>-<4 chars>` (or `MSP-1001-1003` when the client has an id). Every customer reply therefore raised a second ticket instead of appending to the first.
+- **A connector could not be switched on safely**: a PATCH would start an IMAP poller regardless of the row's transport, secrets came back in the config payload, and "Name" and the poll interval were silently dropped by the API.
+- **Two smaller things the walk-through exposed**: deleting a ticket left its attachment files on disk, and stopping a connector left its deferred first poll running.
+
+**What changed**
+- **New `packages/email/src/graphFetch.ts`** — app-only token (`client_credentials`, `https://graph.microsoft.com/.default`), unread list oldest-first with `$select`/`$top`/`$orderby`, attachments with a size and count cap, `PATCH {isRead:true}`, and a folder probe for the connection test. `GraphError` carries Graph's `Retry-After` so the poller can back off on a 429. `GRAPH_API_BASE`/`GRAPH_TOKEN_BASE` are overridable, which is what let the whole path be tested without a tenant.
+- **`EmailConnector.ts`** now has one `onEmail` handler and one `processEmail` for both transports: match → append or create → record in the cursor → mark read/seen only on success. `imapFetch.ts` gained UID-addressed `markEmailsSeen`, turned TLS verification **on** by default (`EMAIL_IMAP_ALLOW_SELF_SIGNED` to opt out) and opens the mailbox read-write so messages can actually be marked.
+- **`emailConnectorRuntime.ts`** rewritten: transport dispatch, per-connector state in `SystemConfig` under `email_connector:<id>:state` (500-id processed cursor, last error, last processed), a Graph poller with backoff, and `start`/`stop`/`test`/`pollNow` — a reply whose quoted number does not resolve raises a ticket rather than vanishing.
+- **`routes/email-connectors.ts`** rewritten: transport aliases with `graph` included, per-transport validation, secrets never returned (`hasPassword`/`hasClientSecret` instead), test/poll/status per transport, and list responses carrying last error and processed count.
+- **`emailToTicket.ts`**: attachments stored on the ticket (5 MB / 20 files), HTML-only bodies flattened via `emailBody()`, `appendEmailToTicket` returning a boolean so an unresolvable reply can fall through, and a warning naming the domain when no client matches.
+- **`EmailConnectorsPanel.tsx`**: transport selector, Graph fields, the Entra guidance banner, health display, and error toasts that show the API's message instead of `[object Object]` (the panel was passing the error object to `toast.error`).
+- **`ticketAttachments.ts`** extracted as the shared storage helper, plus `removeTicketAttachments` so deleting a ticket takes its files with it.
+
+**Verification**
+- A stub of the Microsoft identity + Graph endpoints (`stub-microsoft.mjs`, session folder) and a driver (`probe-email-connector.mjs`) exercised the whole path against the real API: **37/37 checks**, covering alias normalisation, secrets never returned, disabled-until-tested, the token request's grant type/scope/tenant, the folder probe, poll → ticket on the connector's board, HTML flattened to text, the attachment stored and downloadable by filename, the comment carrying the email, `PATCH {"isRead":true}`, a repeat poll creating nothing, a reply appending to the same ticket (exactly one ticket for the subject, checked by title rather than a limit-50 count), and the status endpoint's cursor.
+- The matcher and subject stripper were checked directly for both real number formats plus the header and quoted-body fallbacks (8/8 and 5/5).
+- The panel was driven in the browser against the stub API: create → test → Watching → poll → ticket `MSP-1001-1022` ("Laptop will not boot", source email, right board) → delete, with the toasts read back ("Connected to servicedesk@cyber7group.com — Inbox: 1 unread of 3").
+- Finally the API was restarted with the real endpoints and a throwaway connector returned `AADSTS700016: Application with identifier '1111…' was not found in the directory '1fc90ce3-4e5f-44ea-a083-37991b0db2ee'` — the C7 tenant, resolved live. The wiring is correct end to end; only the Entra app registration is outstanding.
+- Cleanup verified: back to the 2 pre-existing (disabled) connectors, no connector state rows, no probe tickets, no probe contacts, no orphaned attachment folders; the API restarted clean without the stub environment.
+- Typechecks: web 0, API unchanged at its pre-existing 155, `packages/email` unchanged (its 12 errors are the pre-existing `rootDir` complaint about importing `@C7NTAX/shared`).
+
+**Notes for next time**
+- The stubbed endpoint is the cheap way to test anything OAuth-shaped: two environment variables (`GRAPH_API_BASE`, `GRAPH_TOKEN_BASE`) and one request-body assertion on the token request caught a wrong `grant_type`, a wrong scope and a wrong tenant without a tenant to test against.
+- `GET /api/boards` returns a bare array, not `{ data: [...] }` — `$boards.data[0].id` is null. This cost one probe run before it was spotted; the tickets list does use `{ data }`.
+- A connector's first poll is a 5 s `setTimeout`, so any test that enables and immediately deletes leaves a state row unless that timeout is tracked — which is exactly how the orphan row appeared.
+- Sender attribution is still the oldest client with a server warning when the domain matches nothing; a per-connector default company is the obvious next step, and CONNECTING the mailbox is now purely an Entra task.

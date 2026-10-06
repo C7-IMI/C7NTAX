@@ -36,7 +36,7 @@ type Transport = (typeof TRANSPORTS)[number];
 function normalizeTransport(value: unknown, fallback: Transport = "imap"): Transport {
   const raw = String(value ?? "").trim().toLowerCase();
   if (!raw) return fallback;
-  if (raw === "microsoftgraph" || raw === "o365" || raw === "office365" || raw === "m365") return "graph";
+  if (raw === "graph" || raw === "microsoftgraph" || raw === "microsoft-graph" || raw === "o365" || raw === "office365" || raw === "m365") return "graph";
   if (raw === "imap") return "imap";
   throw new AppError(`Unsupported transport "${raw}" — use "imap" or "graph"`, 400);
 }
@@ -131,7 +131,6 @@ emailConnectorsRouter.get("/", requirePermission(Permission.IntegrationView), as
 emailConnectorsRouter.post("/", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
     const body = (req.body || {}) as Record<string, unknown>;
-    console.log("[DEBUG email-connector] keys=" + JSON.stringify(Object.keys(body)));
     const transport = normalizeTransport(body.transport);
     validateConfig(body, transport, null);
     const board = await prisma.serviceBoard.findUnique({ where: { id: String(body.boardId) } });
