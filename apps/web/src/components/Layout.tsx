@@ -594,11 +594,13 @@ export function Layout({ children }: { children: ReactNode }) {
       >
         {/* Logo + Collapse Toggle */}
         <div className={`flex items-center h-16 border-b border-surface-border shrink-0 ${collapsed ? "justify-center px-2" : "justify-between px-4"}`}>
-          <Link to="/" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#C42D4B" }}>
-              <span className="text-white font-bold text-sm">C7</span>
-            </div>
-            {!collapsed && <span className="font-semibold text-base text-white tracking-tight">NTAX</span>}
+          <Link to="/" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)} aria-label="C7NTAX">
+            <img src="/icon-192.png" alt="" className="w-8 h-8 rounded-lg shrink-0" />
+            {!collapsed && (
+              <span className="font-semibold text-base text-white tracking-tight">
+                C<span className="text-cyber-400">7</span>NTAX
+              </span>
+            )}
           </Link>
           <div className="flex items-center gap-1">
             <button

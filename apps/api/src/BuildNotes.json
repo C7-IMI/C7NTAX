@@ -1,9 +1,37 @@
 [
   {
-    "version": "2026.10.6.005",
+    "version": "2026.10.6.006",
     "date": "2026-10-06",
-    "title": "My Account menu + brand colour schemes as the defaults",
+    "title": "Brand assets extracted from the composite sheet and wired into the app",
     "changes": [
+      {
+        "text": "`brand/` — eleven slices cut from the supplied brand asset composite sheet (primary wordmark, the three wordmark variations, the core \"7\" marks, the app-icon grid, the three shield variations, the palette/typeface specimen) plus `brand/README.md`, which records provenance **and the quality caveats**: the sheet is a rendered mockup, so the transparency checkerboard is baked into the pixels, a red glow is composited over the panels (the black shield tile reads `#020202` at the bottom but `#9E8684`/`#CCAFB2` at the top), and the largest icon is only ~74px.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Real app icons**: `favicon.png` (2 KB), `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` built from the shield slice on a flat near-black plate with a rounded mask — so the plate edges stay crisp, the glow is minimised and the files compress. `index.html` gained the apple-touch-icon link and a brand `theme-color`, and the pre-JS splash background now matches the brand surface (`#0d0d0f`) instead of the old navy.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Broken PWA install**: `manifest.json` referenced `/icon-192.png` and `/icon-512.png`, which did not exist, and still carried `short_name: \"Overwatch\"` with navy theme colours. It now lists the four real icons and uses the brand colours (`background #0d0d0f`, `theme #c00000`).",
+        "type": "Fix"
+      },
+      {
+        "text": "`sw.js` contained TypeScript syntax in a JavaScript file (`caches.match(req) as Promise<Response>`), which is a parse error — the service worker could never have installed. Fixed, and its notification icon/badge now use the brand PNGs; `node --check` passes.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Sidebar and login page** now show the extracted mark with the wordmark as text (`C` + a brand-crimson `7` + `NTAX`), which stays crisp at any size and follows the active colour scheme. This also removed the last hardcoded hex (`#C42D4B`) from `Layout.tsx` — the design-token allowlist count drops from 118 to 117.",
+        "type": "Update"
+      },
+      {
+        "text": "**Email templates** (`packages/email`): the off-brand cyan header bands and call-to-action buttons became brand crimson `#c00000` with white text, and cyan accent text became `#ff5c5c`; the semantic status bands (amber \"Action Required\", slate \"Ticket Closed\", red \"Payment Overdue\") are deliberately unchanged.",
+        "type": "Update"
+      },
+      {
+        "text": "Desktop build icon (`apps/desktop/build/icon.png` + electron-builder `win.icon`).",
+        "type": "New Feature"
+      },
       {
         "text": "**My Account menu** — the header's previously inert *My Account* button now opens an account menu following the ConnectWise Manage / Autotask PSA / Scoro / NinjaOne pattern: identity block (initials avatar, name, email, role chip), **My Profile**, **Security & two-factor** (shows the current MFA state), **Preferences**, an **Appearance** section (dark/light switch, colour scheme list, density), **Help & Support**, **What's New**, and **Sign out**.",
         "type": "New Feature"

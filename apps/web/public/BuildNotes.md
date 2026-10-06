@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.005 | Last Updated: 2026-10-06
+## Version: 2026.10.6.006 | Last Updated: 2026-10-06
 
 ---
 
@@ -14,7 +14,17 @@
 
 ---
 
-## 2026.10.6.005 — My Account menu + brand colour schemes as the defaults
+## 2026.10.6.006 — Brand assets extracted from the composite sheet and wired into the app
+- **[New]** `brand/` — eleven slices cut from the supplied brand asset composite sheet (primary wordmark, the three wordmark variations, the core "7" marks, the app-icon grid, the three shield variations, the palette/typeface specimen) plus `brand/README.md`, which records provenance **and the quality caveats**: the sheet is a rendered mockup, so the transparency checkerboard is baked into the pixels, a red glow is composited over the panels (the black shield tile reads `#020202` at the bottom but `#9E8684`/`#CCAFB2` at the top), and the largest icon is only ~74px.
+- **[New]** **Real app icons**: `favicon.png` (2 KB), `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` built from the shield slice on a flat near-black plate with a rounded mask — so the plate edges stay crisp, the glow is minimised and the files compress. `index.html` gained the apple-touch-icon link and a brand `theme-color`, and the pre-JS splash background now matches the brand surface (`#0d0d0f`) instead of the old navy.
+- **[Fix]** **Broken PWA install**: `manifest.json` referenced `/icon-192.png` and `/icon-512.png`, which did not exist, and still carried `short_name: "Overwatch"` with navy theme colours. It now lists the four real icons and uses the brand colours (`background #0d0d0f`, `theme #c00000`).
+- **[Fix]** `sw.js` contained TypeScript syntax in a JavaScript file (`caches.match(req) as Promise<Response>`), which is a parse error — the service worker could never have installed. Fixed, and its notification icon/badge now use the brand PNGs; `node --check` passes.
+- **[Update]** **Sidebar and login page** now show the extracted mark with the wordmark as text (`C` + a brand-crimson `7` + `NTAX`), which stays crisp at any size and follows the active colour scheme. This also removed the last hardcoded hex (`#C42D4B`) from `Layout.tsx` — the design-token allowlist count drops from 118 to 117.
+- **[Update]** **Email templates** (`packages/email`): the off-brand cyan header bands and call-to-action buttons became brand crimson `#c00000` with white text, and cyan accent text became `#ff5c5c`; the semantic status bands (amber "Action Required", slate "Ticket Closed", red "Payment Overdue") are deliberately unchanged.
+- **[New]** Desktop build icon (`apps/desktop/build/icon.png` + electron-builder `win.icon`).
+- **[Verification]** `apps/web` typecheck unchanged (26 pre-existing errors, zero new); design-token lint passes; `manifest.json` and `apps/desktop/package.json` parse as valid JSON and `sw.js` passes `node --check`; the four icons, the manifest and the deleted `favicon.svg` were checked over HTTP; live check confirmed the sidebar mark loads at 32×32 with the wordmark "C7NTAX", the login page renders the mark and the crimson `7` (`rgb(255, 92, 92)`), the old hardcoded tile is gone, and `/assets` renders with no console errors.
+
+
 - **[New]** **My Account menu** — the header's previously inert *My Account* button now opens an account menu following the ConnectWise Manage / Autotask PSA / Scoro / NinjaOne pattern: identity block (initials avatar, name, email, role chip), **My Profile**, **Security & two-factor** (shows the current MFA state), **Preferences**, an **Appearance** section (dark/light switch, colour scheme list, density), **Help & Support**, **What's New**, and **Sign out**.
 - **[Update]** **Brand Crimson is now the default dark theme and Rose Tint the default light theme.** `palette.ts` gained a `DEFAULTS` map; both `data-palette-*` attributes are always set, so a scheme is always active and an unknown/retired stored id falls back to the brand default.
 - **[Update]** **Classic is gone** — removed from the picker, from the catalogue and from the CSS swatches. The base theme blocks stay as the token foundation the schemes override.

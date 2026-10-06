@@ -1868,6 +1868,24 @@
 - **Changelog repair:** validating the generated `BuildNotes.json` exposed that earlier BuildNotes edits had overwritten the `## 2026.10.5.014`, `## 2026.10.5.015` and `## 2026.10.6.001`–`004` headings, merging those entries into one and dropping them from What's New. Headings restored; the changelog now parses 107 separate versions with all five of today's entries present and no duplicates.
 
 
+### Prompt 158 — Extract the composite sheet's assets and wire them into the app
+**Timestamp:** 2026-10-06 | **Status:** ✅ Completed | **Duration:** ~50 min
+**BuildNotes IDs:** #1 (2026.10.6.006)
+> Are you able to extract the individual assets from this composite sheet and then incorporate them into the application where it makes sense?
+
+**Changes:**
+- Measured the sheet first: pixel-run scans and colour sampling showed the composite is a **rendered mockup** — the transparency checkerboard is baked into the pixels, a red glow is composited over the panels (the black shield tile goes `#020202` bottom vs `#9E8684`/`#CCAFB2` top, and the wordmark panel reads as pink wash), and the largest icon is ~74px. Recorded all of this in `brand/README.md`.
+- `brand/` — extracted 11 slices (primary wordmark, three logo variations, core "7" + small "7", app-icon grid, three shield variants, palette/typeface specimen) plus the shield glyph used for the app icons.
+- `apps/web/public/` — rebuilt `favicon.png` (2 KB), `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` from the shield on a flat near-black rounded plate (crisp edges, minimised glow, compressed); deleted the off-brand cyan `favicon.svg`.
+- `apps/web/index.html` — apple-touch-icon link, brand `theme-color`, splash background `#0a1628` → `#0d0d0f`.
+- `apps/web/public/manifest.json` — fixed the two icons that did not exist, the stale `short_name: "Overwatch"` and the navy theme colours.
+- `apps/web/public/sw.js` — removed TypeScript syntax from the JS file (`as Promise<Response>`, a parse error that prevented the worker from installing) and pointed the notification icon/badge at the brand PNGs.
+- `apps/web/src/components/Layout.tsx` + `pages/Login.tsx` — mark + wordmark-as-text with a brand-crimson `7`; removed the hardcoded `#C42D4B` tile (allowlist 118 → 117).
+- `packages/email/src/EmailService.ts` — cyan header bands/CTAs → brand crimson with white text; accent text → `#ff5c5c`; semantic status bands untouched. `apps/desktop` — added the build icon.
+- **Verification:** typecheck unchanged at 26 pre-existing errors (zero new); token lint passes; manifest/package.json valid JSON, `sw.js` passes `node --check`; icons + manifest serve 200 over HTTP and `favicon.svg` is gone from disk; live check confirmed the sidebar mark (32×32, loaded) and wordmark, the login mark plus crimson `7` (`rgb(255, 92, 92)`), no hardcoded tile remaining, and `/assets` error-free.
+
+
+
 
 
 

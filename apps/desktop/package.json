@@ -36,7 +36,7 @@
       "target": [
         "portable"
       ],
-      
+      "icon": "build/icon.png",
       "artifactName": "C7NTAX-${version}.${ext}"
     },
     "nsis": {
