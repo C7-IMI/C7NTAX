@@ -1757,6 +1757,21 @@
 - **Verification:** `apps/web` typecheck unchanged (26 pre-existing errors, none in the new/migrated files); token lint passes; live check confirmed `/assets` and `/calendar` render the new header with no console errors.
 
 
+### Prompt 150 — Implement UI modernization P1 (with rollback)
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~60 min
+**BuildNotes IDs:** #1 (2026.10.5.014)
+> Implement P1. ENsure that these changes can be easily rolled back, in the event that the application breaks or the visualize style is not what I want.
+
+**Changes:**
+- `apps/web/src/lib/uiFlags.ts` — single P1 kill switch (`VITE_UI_P1` build flag + `localStorage.c7_ui_p1` runtime override, exposed as `c7UiP1` helpers in `main.tsx`).
+- `apps/web/src/components/CommandPalette.tsx` — new ⌘K/Ctrl-K palette over the nav tree + quick actions; mounted only when P1 is on.
+- `apps/web/src/lib/density.ts` + `apps/web/src/main.tsx` — density (comfortable/compact) persisted and applied pre-paint.
+- `apps/web/src/components/Layout.tsx` — ⌘K listener, palette render, header density toggle, Search button → palette, `data-ui-p1` root attribute, `nav-item`/`nav-item--active` classes.
+- `apps/web/src/index.css` — P1 CSS block gated by `[data-ui-p1="true"]` (nav accent rail/gradient) plus opt-in density rules.
+- `UI-P1-ROLLBACK.md` + `scripts/rollback-ui-p1.ps1` — documented/automated rollback (instant browser toggle, deployment env flag, or full code revert).
+- **Verification:** web typecheck unchanged (26 pre-existing errors, zero in new files); design-token lint passes; live check: Ctrl-K opens the palette, filtering/navigation works (`calendar` → `/calendar`), density toggles `comfortable`↔`compact`, and turning the flag off restores the original UI with no palette/density control.
+
+
 
 
 

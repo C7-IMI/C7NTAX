@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.5.013 | Last Updated: 2026-10-05
+## Version: 2026.10.5.014 | Last Updated: 2026-10-05
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.5.014 — UI modernization P1 (command palette, density, nav accents) + rollback switch
+- **[New]** **Command palette** (⌘K / Ctrl-K): searches every page in the nav tree plus quick actions (New Ticket, toggle theme, toggle density, turn off P1); arrow keys + Enter + Esc, mouse hover, scroll-into-view. The existing header **Search** button now opens it.
+- **[New]** **Density toggle** (comfortable / compact) in the header toolbar; persisted per browser and applied before first paint.
+- **[Update]** Sidebar active items gain a cyber-blue accent rail + gradient (P1-scoped CSS).
+- **[New]** Single **kill switch** — `apps/web/src/lib/uiFlags.ts`. Deployment-wide via `VITE_UI_P1=false`, or instantly in the browser via `localStorage.c7_ui_p1=0` / `c7UiP1.disable()` + reload. With it off, the app renders exactly as before (all P1 JSX/CSS is gated by `data-ui-p1`).
+- **[New]** `UI-P1-ROLLBACK.md` (3 rollback levels) and `scripts/rollback-ui-p1.ps1` (`-Restart`, `-Enable`).
+- **[Verification]** `apps/web` typecheck unchanged (26 pre-existing errors, zero in the new files); design-token lint passes; live check: Ctrl-K opens the palette, filtering+navigation works (`calendar` → `/calendar`), density toggles `comfortable`↔`compact`, and with the flag off `data-ui-p1="false"` with no palette/density control (original UI), re-enabling restores P1 — all with no console errors.
 
 ## 2026.10.5.013 — Design-system primitives + token/contrast cleanup (UI modernization P0)
 - **[New]** Added shared UI primitives under `apps/web/src/components/ui/` — `PageHeader`, `Section`, `StatCard`, `EmptyState`, `Skeleton`/`TableSkeleton` — to replace the hand-rolled header/section/state markup duplicated across pages (78 page headers, 66 section labels).

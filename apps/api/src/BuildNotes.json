@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.5.014",
+    "date": "2026-10-05",
+    "title": "UI modernization P1 (command palette, density, nav accents) + rollback switch",
+    "changes": [
+      {
+        "text": "**Command palette** (⌘K / Ctrl-K): searches every page in the nav tree plus quick actions (New Ticket, toggle theme, toggle density, turn off P1); arrow keys + Enter + Esc, mouse hover, scroll-into-view. The existing header **Search** button now opens it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Density toggle** (comfortable / compact) in the header toolbar; persisted per browser and applied before first paint.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Sidebar active items gain a cyber-blue accent rail + gradient (P1-scoped CSS).",
+        "type": "Update"
+      },
+      {
+        "text": "Single **kill switch** — `apps/web/src/lib/uiFlags.ts`. Deployment-wide via `VITE_UI_P1=false`, or instantly in the browser via `localStorage.c7_ui_p1=0` / `c7UiP1.disable()` + reload. With it off, the app renders exactly as before (all P1 JSX/CSS is gated by `data-ui-p1`).",
+        "type": "New Feature"
+      },
+      {
+        "text": "`UI-P1-ROLLBACK.md` (3 rollback levels) and `scripts/rollback-ui-p1.ps1` (`-Restart`, `-Enable`).",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.5.013",
     "date": "2026-10-05",
     "title": "Design-system primitives + token/contrast cleanup (UI modernization P0)",

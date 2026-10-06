@@ -189,3 +189,31 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; 
   .ticket-print-activity p { white-space: pre-wrap; margin: 3pt 0; }
   .ticket-print-activity small { color: #555555; }
 }
+
+/* ── P1 modernization ─────────────────────────────────────────────────────
+   All rules below are gated by [data-ui-p1="true"] (or the density attribute)
+   and are inert when the P1 flag is off. Kill switch: apps/web/src/lib/uiFlags.ts */
+html { --nav-accent: rgb(0 192 244 / 0.16); }
+html[data-theme="light"] { --nav-accent: rgb(14 165 233 / 0.12); }
+
+[data-ui-p1="true"] .nav-item { position: relative; border-radius: 0.5rem; }
+[data-ui-p1="true"] .nav-item--active {
+  background-image: linear-gradient(90deg, var(--nav-accent), transparent 65%);
+}
+[data-ui-p1="true"] .nav-item--active::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 9999px;
+  background: var(--cyber-500);
+}
+
+/* Density (opt-in; default is comfortable = no change) */
+html[data-density="compact"] main { padding: 0.75rem; }
+html[data-density="compact"] .card { padding: 0.75rem; }
+html[data-density="compact"] .input-field { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+html[data-density="compact"] table td,
+html[data-density="compact"] table th { padding-top: 0.375rem; padding-bottom: 0.375rem; }

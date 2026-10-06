@@ -1,11 +1,11 @@
-import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, UserCircle, Home,
-  AlertTriangle, XCircle, Settings2, ListOrdered,
+  AlertTriangle, XCircle, Settings2, ListOrdered, AlignJustify,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs } from "./Breadcrumbs";
@@ -13,6 +13,9 @@ import { useTheme } from "../hooks/useTheme";
 import { Sun, Moon } from "lucide-react";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
+import { CommandPalette, type PaletteItem } from "./CommandPalette";
+import { UI_P1, setUiP1 } from "../lib/uiFlags";
+import { getDensity, setDensity, type Density } from "../lib/density";
 
 export type NavNode = {
   id: string;
@@ -214,7 +217,59 @@ export function Layout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState<boolean>(loadCollapsed);
   const [sidebarWidth, setSidebarWidth] = useState<number>(loadSidebarWidth);
   const [resizing, setResizing] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [density, setDensityState] = useState<Density>(getDensity);
   const sidebarRef = useRef<HTMLElement>(null);
+
+  // ── P1: command palette items (pages from the nav tree + quick actions) ──
+  const paletteItems = useMemo<PaletteItem[]>(() => {
+    const pages: PaletteItem[] = [];
+    const walk = (nodes: NavNode[], group?: string) => {
+      for (const n of nodes) {
+        if (n.to) pages.push({ id: n.id, label: n.label, group: group ?? "Pages", keywords: n.id, run: () => navigate(n.to as string) });
+        if (n.children) walk(n.children, n.label);
+      }
+    };
+    walk(NAV_TREE);
+    const actions: PaletteItem[] = [
+      { id: "act-new-ticket", label: "New Ticket", group: "Actions", keywords: "create ticket new", run: () => navigate("/tickets") },
+      { id: "act-theme", label: theme === "dark" ? "Switch to light mode" : "Switch to dark mode", group: "Actions", run: toggleTheme },
+      {
+        id: "act-density",
+        label: density === "compact" ? "Use comfortable spacing" : "Use compact spacing",
+        group: "Actions",
+        run: () => {
+          const next: Density = density === "compact" ? "comfortable" : "compact";
+          setDensityState(next);
+          setDensity(next);
+        },
+      },
+      {
+        id: "act-ui-p1",
+        label: "Turn off modern UI (P1)",
+        group: "Actions",
+        keywords: "rollback revert disable",
+        run: () => {
+          setUiP1(false);
+          window.location.reload();
+        },
+      },
+    ];
+    return [...pages, ...actions];
+  }, [navigate, theme, toggleTheme, density]);
+
+  // ── P1: ⌘K / Ctrl-K toggles the command palette ──
+  useEffect(() => {
+    if (!UI_P1) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // ── Drag-and-drop nav order ────────────────────────────────────
   // Saved order is reconciled with NAV_TREE on load: unknown ids are dropped
@@ -453,8 +508,8 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
             <button
               onClick={() => { toggle(node.id); navigate(`/section/${node.id}`); }}
-              className={`flex-1 flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${
-                active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+              className={`nav-item flex-1 flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${
+                active ? "nav-item--active bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
               style={{ paddingLeft: `${12 + depth * 12}px` }}
             >
@@ -480,8 +535,8 @@ export function Layout({ children }: { children: ReactNode }) {
               to={linkTo}
               onClick={() => setMobileOpen(false)}
               style={{ paddingLeft: `${12 + depth * 12}px` }}
-              className={`flex-1 flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
-                active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+              className={`nav-item flex-1 flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
+                active ? "nav-item--active bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
               <node.icon size={18} />
@@ -507,7 +562,7 @@ export function Layout({ children }: { children: ReactNode }) {
     : { width: `${sidebarWidth}px` };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-navy-950">
+    <div className="flex h-screen overflow-hidden bg-navy-950" data-ui-p1={UI_P1 ? "true" : "false"}>
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)} />
@@ -601,8 +656,22 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
             <Breadcrumbs segments={buildBreadcrumbs(NAV_TREE, location.pathname)} />
           </div>
-          {/* Header toolbar — placeholders only */}
+          {/* Header toolbar */}
           <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
+            {UI_P1 && (
+              <button
+                onClick={() => {
+                  const next: Density = density === "compact" ? "comfortable" : "compact";
+                  setDensityState(next);
+                  setDensity(next);
+                }}
+                className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"
+                title={density === "compact" ? "Comfortable spacing" : "Compact spacing"}
+                aria-label="Toggle display density"
+              >
+                <AlignJustify size={14} />
+              </button>
+            )}
             <button
               onClick={toggleTheme}
               className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"
@@ -620,9 +689,14 @@ export function Layout({ children }: { children: ReactNode }) {
                 </>
               )}
             </button>
-            <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Search">
+            <button
+              onClick={() => { if (UI_P1) setPaletteOpen(true); }}
+              className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"
+              title={UI_P1 ? "Search (Ctrl/⌘ K)" : "Search"}
+            >
               <Search size={14} />
               <span>Search</span>
+              {UI_P1 && <kbd className="hidden lg:inline text-[10px] text-gray-500 border border-surface-border rounded px-1">⌘K</kbd>}
             </button>
             <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Recent Items">
               <Clock size={14} />
@@ -675,6 +749,7 @@ export function Layout({ children }: { children: ReactNode }) {
         )}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
+      {UI_P1 && <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={paletteItems} />}
     </div>
   );
 }
