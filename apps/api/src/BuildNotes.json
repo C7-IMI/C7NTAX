@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.10.6.036",
+    "date": "2026-10-06",
+    "title": "Smaller type in the outside-organisation warning",
+    "changes": [
+      {
+        "text": "**The warning bubble's text is smaller.** It was set at the body size (14px) and read as a message rather than a field note; it is now **12px** with the line height tightened to match, and the orange marker scaled down with it so the bubble sits under a field without dwarfing the chips above it. The wording, the amber field outline and the *Send anyway* confirmation are unchanged.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.035",
     "date": "2026-10-06",
     "title": "Address fields only offer the ticket's own client, and warn about anyone else",

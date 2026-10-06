@@ -198,12 +198,21 @@
     "viewedAt": "2026-10-06T08:48:53.260Z"
   },
   {
+    "id": "72e96b4b-96a4-418f-a6ea-4c01419d2b52",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "223c22b4-8355-4eb9-a51b-452f198a10eb",
+    "entityName": "Onboarding",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-06T19:44:08.563Z"
+  },
+  {
     "id": "e12c91db-d55d-4283-8615-78e5e613d603",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "organization",
     "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
     "entityName": "Acme Corporation",
     "entityIcon": "building",
-    "viewedAt": "2026-10-06T09:21:42.663Z"
+    "viewedAt": "2026-10-06T19:44:46.399Z"
   }
 ]

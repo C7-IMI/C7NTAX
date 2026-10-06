@@ -14,6 +14,11 @@
 
 ---
 
+## 2026.10.6.036 — Smaller type in the outside-organisation warning
+- **[Update]** **The warning bubble's text is smaller.** It was set at the body size (14px) and read as a message rather than a field note; it is now **12px** with the line height tightened to match, and the orange marker scaled down with it so the bubble sits under a field without dwarfing the chips above it. The wording, the amber field outline and the *Send anyway* confirmation are unchanged.
+- **Verification (live):** the bubble under the Cc row rendered at 12px / 16.5px line height (was 14px) with the same text — "admin@c7ntax.com is not a contact at Umbrella Corp. You can still send it — just make sure it is intentional." — and the layout below it was unaffected. Web typecheck 0; design-token lint unchanged.
+- **Rollback:** type scale in one component — no API, schema or data change.
+
 ## 2026.10.6.035 — Address fields only offer the ticket's own client, and warn about anyone else
 - **[New]** **Recipient search is scoped to the ticket's organisation.** The To, Cc and Bcc fields, the note composer's recipients and the ticket's *Add contact* box only suggest contacts of the client the ticket belongs to, and name matching is limited to them — so on an Initech ticket, typing "John" offers Initech's John Smith and never the same-named John Smith at Stark Enterprises. (The new-ticket form scopes to the company being selected, and re-scopes if you change it.)
 - **[New]** **An address outside that client gets a warning, not a block.** Type or paste one — `admin@c7ntax.com` on an Umbrella Corp ticket — and a white validation bubble appears under the field in the same style as the form validators, the field outline turns amber, and it stays until the address is removed: *"admin@c7ntax.com is not a contact at Umbrella Corp. You can still send it — just make sure it is intentional."* When we know who the address really belongs to, the warning names them: **"john@starkenterprises.com belongs to Stark Enterprises, not Umbrella Corp."** — which is exactly the wrong-John-Smith case.

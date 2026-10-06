@@ -2403,5 +2403,32 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T19:28:13.134Z"
+  },
+  {
+    "id": "581b9612-69b6-4399-8e8e-768be0ed8819",
+    "action": "kumo_assets:create",
+    "entity": "kumo_assets",
+    "entityId": "assets",
+    "changes": {
+      "name": "Onboarding",
+      "values": {},
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "templateId": "29f111fb-d48f-42a4-8e1b-8b507c06636d"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T19:44:03.499Z"
+  },
+  {
+    "id": "33667bde-0629-4c36-9f9c-6d7cb7a2b71d",
+    "action": "kumo_assets:delete",
+    "entity": "kumo_assets",
+    "entityId": "223c22b4-8355-4eb9-a51b-452f198a10eb",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T19:44:35.691Z"
   }
 ]
