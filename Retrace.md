@@ -2400,3 +2400,21 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Typing "PROBE line one" + Enter + "PROBE line two" left a single entry containing a newline and posted nothing. Ticking Internal flipped the placeholder to "Add an internal note…" and the hint to "· not emailed to the customer"; Ctrl+Enter then posted with the toast "Internal note posted", the amber *Internal* badge, a cleared box and an unchecked box. Using the Post button unchecked produced the blue *Note* badge and "Note posted".
 - Both probe notes were confirmed in the database as `isInternal=true` and `isInternal=false`, then deleted along with their two audit rows — the ticket is back to its three original comments and the snapshots were re-captured to match.
 - Web typecheck: 0 errors (unchanged). No API, schema or data change, so the whole thing reverts with one `git revert`.
+---
+
+### Prompt 185 — Lead the note composer with the outcome, and move Internal to the right
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~25 min
+**BuildNotes IDs:** 2026.10.6.028 - The note box says plainly what will happen when you post
+> This looks confusing. Maybe reverse the two so that the status is on the left and the Checkbox along with Internal is on the right. Make the status font a smaller with a different color so that it's clearly displayed what will happen with the note once submitted.
+
+**What was confusing**
+- The checkbox and its consequence were one run-together grey label: `[ ] Internal · emailed to the ticket contact`, left-aligned next to the Post button. The "·" made the outcome look like part of the checkbox caption rather than a statement about the note.
+
+**What changed**
+- The status now leads the footer, left-aligned: **Will be emailed to the ticket contact** or **Internal only — the customer is not emailed**. The *Internal* checkbox sits on the right with Post, so the control and its sentence are separated by the full width of the card.
+- The status is set at 11px against the 12px around it and coloured to match the badges in the list below — **blue** with an envelope icon for customer-facing, **amber** with a shield for internal — so the outcome is readable before posting and consistent with how the note will appear once it is there.
+- No behavioural change: the checkbox still posts `isInternal: true`, the placeholder still flips, and posting still clears the box and resets to customer-facing.
+
+**Verification (live)**
+- Measured on ticket `e28544bc`: status flush to the card's left content edge (x=301) with its icon, checkbox and Post grouped right (checkbox right edge 827, card right edge 973), all vertically centred on one line with no shift between states. Toggling changed both the sentence and the colour — `rgb(96,165,250)` (blue-400) for customer-facing, `rgb(251,191,36)` (amber-400) for internal — at 11px in both cases.
+- Web typecheck: 0 errors. Styling and copy only, so it reverts with one `git revert` alongside Prompt 184.

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.027 | Last Updated: 2026-10-06
+## Version: 2026.10.6.028 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.028 — The note box says plainly what will happen when you post
+- **[Update]** **The composer footer now leads with the outcome instead of burying it in a label.** The status sits on the left — "Will be emailed to the ticket contact" or "Internal only — the customer is not emailed" — and the *Internal* checkbox moved to the right, in front of Post, so the switch and the sentence it controls are no longer run together as one grey label.
+- **[Update]** **The status is smaller and colour-coded**, and carries an icon: **blue** with an envelope for a customer-facing note, **amber** with a shield for an internal one. The colours match the *Note* and *Internal* badges in the list below, so the note's visibility is readable at a glance before it is posted. It is set at 11px against the 12px around it, so it reads as a status line rather than another form label.
+- **Verification (live):** measured on ticket `e28544bc` — status text flush to the card's left edge (x=301) with an icon, the checkbox and Post grouped on the right (checkbox edge at 827, card edge at 973), both vertically centred on one line. Toggling the box switched the sentence and its colour (`rgb(96,165,250)` blue → `rgb(251,191,36)` amber) at 11px in both states, with no layout shift.
+- **Rollback:** styling and copy only — no API, schema or data change.
 
 ## 2026.10.6.027 — Notes and Activity are separate cards, with an Internal switch on the note box
 - **[Update]** **The ticket detail's "Notes & Activity" card is now two cards.** **Notes** holds the composer and the note stream; **Activity** holds logged time and the automatic field-change records that used to be buried in the same list. Both sit in the same column with the usual 20px gap, and the split is presentational only — the dedicated **Activities** tab still shows the complete merged timeline.

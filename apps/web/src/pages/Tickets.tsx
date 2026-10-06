@@ -1496,12 +1496,17 @@ export function TicketDetailPage() {
                 onKeyDown={e=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaKey)) handlePostNote(e); }}
               />
               <div className="flex items-center justify-between gap-3">
-                <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
-                  <input type="checkbox" checked={noteInternal} onChange={e=>setNoteInternal(e.target.checked)} />
-                  Internal
-                  <span className="text-gray-600">{noteInternal ? "· not emailed to the customer" : "· emailed to the ticket contact"}</span>
-                </label>
-                <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Post"}</button>
+                <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${noteInternal?"text-amber-400":"text-blue-400"}`}>
+                  {noteInternal ? <ShieldCheck size={11}/> : <Mail size={11}/>}
+                  {noteInternal ? "Internal only — the customer is not emailed" : "Will be emailed to the ticket contact"}
+                </span>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
+                    <input type="checkbox" checked={noteInternal} onChange={e=>setNoteInternal(e.target.checked)} />
+                    Internal
+                  </label>
+                  <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Post"}</button>
+                </div>
               </div>
             </form>
             <div className="space-y-3">

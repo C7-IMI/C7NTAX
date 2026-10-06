@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.6.028",
+    "date": "2026-10-06",
+    "title": "The note box says plainly what will happen when you post",
+    "changes": [
+      {
+        "text": "**The composer footer now leads with the outcome instead of burying it in a label.** The status sits on the left — \"Will be emailed to the ticket contact\" or \"Internal only — the customer is not emailed\" — and the *Internal* checkbox moved to the right, in front of Post, so the switch and the sentence it controls are no longer run together as one grey label.",
+        "type": "Update"
+      },
+      {
+        "text": "**The status is smaller and colour-coded**, and carries an icon: **blue** with an envelope for a customer-facing note, **amber** with a shield for an internal one. The colours match the *Note* and *Internal* badges in the list below, so the note's visibility is readable at a glance before it is posted. It is set at 11px against the 12px around it, so it reads as a status line rather than another form label.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.027",
     "date": "2026-10-06",
     "title": "Notes and Activity are separate cards, with an Internal switch on the note box",
