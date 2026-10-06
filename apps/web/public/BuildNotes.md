@@ -25,6 +25,7 @@
 - **[Verification]** `apps/web` typecheck unchanged (26 pre-existing errors, zero new); design-token lint passes; `manifest.json` and `apps/desktop/package.json` parse as valid JSON and `sw.js` passes `node --check`; the four icons, the manifest and the deleted `favicon.svg` were checked over HTTP; live check confirmed the sidebar mark loads at 32×32 with the wordmark "C7NTAX", the login page renders the mark and the crimson `7` (`rgb(255, 92, 92)`), the old hardcoded tile is gone, and `/assets` renders with no console errors.
 
 
+## 2026.10.6.005 — My Account menu + brand colour schemes as the defaults
 - **[New]** **My Account menu** — the header's previously inert *My Account* button now opens an account menu following the ConnectWise Manage / Autotask PSA / Scoro / NinjaOne pattern: identity block (initials avatar, name, email, role chip), **My Profile**, **Security & two-factor** (shows the current MFA state), **Preferences**, an **Appearance** section (dark/light switch, colour scheme list, density), **Help & Support**, **What's New**, and **Sign out**.
 - **[Update]** **Brand Crimson is now the default dark theme and Rose Tint the default light theme.** `palette.ts` gained a `DEFAULTS` map; both `data-palette-*` attributes are always set, so a scheme is always active and an unknown/retired stored id falls back to the brand default.
 - **[Update]** **Classic is gone** — removed from the picker, from the catalogue and from the CSS swatches. The base theme blocks stay as the token foundation the schemes override.

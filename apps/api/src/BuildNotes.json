@@ -31,7 +31,14 @@
       {
         "text": "Desktop build icon (`apps/desktop/build/icon.png` + electron-builder `win.icon`).",
         "type": "New Feature"
-      },
+      }
+    ]
+  },
+  {
+    "version": "2026.10.6.005",
+    "date": "2026-10-06",
+    "title": "My Account menu + brand colour schemes as the defaults",
+    "changes": [
       {
         "text": "**My Account menu** — the header's previously inert *My Account* button now opens an account menu following the ConnectWise Manage / Autotask PSA / Scoro / NinjaOne pattern: identity block (initials avatar, name, email, role chip), **My Profile**, **Security & two-factor** (shows the current MFA state), **Preferences**, an **Appearance** section (dark/light switch, colour scheme list, density), **Help & Support**, **What's New**, and **Sign out**.",
         "type": "New Feature"
