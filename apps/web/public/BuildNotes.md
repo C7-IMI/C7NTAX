@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.047 | Last Updated: 2026-10-06
+## Version: 2026.10.6.048 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.048 — Board cards, take two: outlined Workable and Escalated, plain Avg Age
+- **[Update]** **Workable is an outlined card now** — the tint from the previous entry is gone and the thin border stands on its own.
+- **[Update]** **Escalated gained the same thin border**, keeping its red tint.
+- **[Update]** **Avg Age lost its border**: the age-banded background and text are what carry the meaning, so the extra edge was noise.
+- **[Update]** **One orange for both, chosen against both themes rather than just the dark one.** orange-600 measures **5.45:1** against the dark card and **3.56:1** against the white light-mode card — clearing the 3:1 non-text contrast guideline in each, and unmistakably orange beside the red it sits next to. orange-500 was tried first: brighter on dark (6.9:1) but only 2.80:1 on white, under the guideline. The row's red hover rule would also have flipped these two borders red on hover, so they now brighten to orange-500 instead, with the existing hover ring left as the cue.
+- **Verification (live):** measured in the browser in both themes — Workable transparent with a 1px orange border, Escalated red tint plus the same border, Avg Age red band tint with no border at 52 days, and New/On Hold/Waiting unchanged; the generated CSS was checked for the border and hover rules, and the theme was switched to light to measure it and left as it was found. Web typecheck 0.
+- **Rollback:** one front-end file, `apps/web/src/pages/Boards.tsx`.
 
 ## 2026.10.6.047 — Service board cards: visible edges, and an Avg Age card that colours by age
 - **[New]** **The Avg Age card is colour-coded by what it measures**: up to 7 days green, 8 to 14 days amber, more than 14 days red — background, border and text together, with a tooltip that names the band and the exact average ("Average age of open tickets on this board: 52 days (over two weeks)"). It reads at a glance instead of being one more grey number. On today's data every board sits at 51-52 days, so all four show red; the green and amber states were exercised by shifting the thresholds and restoring them.

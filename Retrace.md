@@ -2905,3 +2905,26 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - The API restarts during this session invalidated the browser session (the SPA clears its token on a 401), so the page had to be logged back in. The credentials were fed in through a temporary script file loaded with `addScriptTag` and deleted afterwards, which keeps them out of the transcript — worth reusing.
 - `cyber/*` colors are `var()` references, so `bg-cyber-500/15`, `border-cyber-600/40` and friends silently do nothing. Where an accent tint or border is needed, use `color-mix(in_srgb,var(--cyber-500)_15%,transparent)`.
 
+
+---
+
+### Prompt 206 — Outlined Workable and Escalated in orange, plain Avg Age
+**Timestamp:** 2026-10-06 | **Status:** Done — measured in both themes | **Duration:** ~25 min
+**BuildNotes IDs:** 2026.10.6.048 - Board cards, take two: outlined Workable and Escalated, plain Avg Age
+> remove the background color from workable and just leave the border. Also remove the border from avg age, but add one to Escalated. Make the border color for both Workable and Escalated orange so it contrasts the red in both dark and light mode
+
+**What changed**
+- Workable: the tint that was fixed in the previous prompt is gone; the thin border stays. Escalated keeps its red tint and gains the same border. Avg Age keeps the age-banded background and text and loses its border.
+- **Which orange was the real question.** orange-500 was the first pick — brighter on the dark card at 6.9:1 — but on the white light-mode card it only reached **2.80:1**, under the 3:1 guideline for a UI boundary, and the request was explicitly about both modes. orange-600 measures **5.45:1** on the dark card and **3.56:1** on white, so it is the one that actually satisfies "in both dark and light mode" while still reading unmistakably orange rather than red.
+- One knock-on the request implied but did not mention: the row's shared hover rule (`hover:border-cyber-600/50`, red in this theme) would have flipped both borders back to red the moment the pointer touched them. The hover border is now a prop, and these two brighten to orange-500 on hover instead, leaving the existing hover ring as the rest of the cue.
+
+**Verification**
+- The theme was switched to light and back to measure both, and left as it was found (`c7_theme` back to `dark`, `data-theme="dark"`).
+- Computed styles, dark card `rgb(13,13,15)`: Workable `bg=rgba(0,0,0,0)` with `border=rgb(234,88,12)` (5.45:1), Escalated `bg=rgba(220,38,38,0.15)` with the same border (5.45:1), Avg Age `bg=rgba(220,38,38,0.15)` with a transparent border, New/On Hold/Waiting untouched.
+- Computed styles, light card `rgb(255,255,255)`: the same two borders at `rgb(234,88,12)` (3.56:1) and Avg Age still borderless.
+- The generated stylesheet was read back to confirm both rules exist and that the hover rule is orange, not red: `.border-orange-600`, `.hover\:border-orange-500:hover`, with the two tiles' class lists carrying `border border-orange-600 hover:border-orange-500` and no background class on Workable.
+- Web typecheck 0.
+
+**Notes for next time**
+- The integrated browser would not report `:hover` from `element.matches(":hover")` after a Playwright hover, so the hover state was verified through the generated CSS rules instead — which is the more durable check anyway, since it also proves the class was generated at all.
+

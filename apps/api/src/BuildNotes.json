@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.6.048",
+    "date": "2026-10-06",
+    "title": "Board cards, take two: outlined Workable and Escalated, plain Avg Age",
+    "changes": [
+      {
+        "text": "**Workable is an outlined card now** — the tint from the previous entry is gone and the thin border stands on its own.",
+        "type": "Update"
+      },
+      {
+        "text": "**Escalated gained the same thin border**, keeping its red tint.",
+        "type": "Update"
+      },
+      {
+        "text": "**Avg Age lost its border**: the age-banded background and text are what carry the meaning, so the extra edge was noise.",
+        "type": "Update"
+      },
+      {
+        "text": "**One orange for both, chosen against both themes rather than just the dark one.** orange-600 measures **5.45:1** against the dark card and **3.56:1** against the white light-mode card — clearing the 3:1 non-text contrast guideline in each, and unmistakably orange beside the red it sits next to. orange-500 was tried first: brighter on dark (6.9:1) but only 2.80:1 on white, under the guideline. The row's red hover rule would also have flipped these two borders red on hover, so they now brighten to orange-500 instead, with the existing hover ring left as the cue.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.047",
     "date": "2026-10-06",
     "title": "Service board cards: visible edges, and an Avg Age card that colours by age",

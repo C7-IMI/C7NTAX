@@ -2920,5 +2920,62 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-06T22:15:49.320Z"
+  },
+  {
+    "id": "ff16b707-2a7a-4200-8518-c6d771e0a810",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "name": "Infrastructure Service Desk",
+      "ticketCode": "INF",
+      "description": "Data Center Infrastructure",
+      "autoCloseDays": 14,
+      "followUpEnabled": true,
+      "autoCloseEnabled": true,
+      "slaResponseMinutes": 120,
+      "slaResolutionMinutes": 480
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T22:37:39.567Z"
+  },
+  {
+    "id": "a48709ec-c508-489c-aaf9-d47f584a006b",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
+    "changes": {
+      "name": "Intelligence Service Desk",
+      "ticketCode": "INT",
+      "description": "AI Software Development",
+      "autoCloseDays": 14,
+      "followUpEnabled": true,
+      "autoCloseEnabled": true,
+      "slaResponseMinutes": 240,
+      "slaResolutionMinutes": 1440
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T22:37:55.415Z"
+  },
+  {
+    "id": "d9e3be28-3f23-4e2f-9d81-e7ed8dc017b8",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+    "changes": {
+      "name": "MSP Service Desk",
+      "ticketCode": "MSP",
+      "description": "General IT support",
+      "autoCloseDays": 14,
+      "followUpEnabled": true,
+      "autoCloseEnabled": true,
+      "slaResponseMinutes": 240,
+      "slaResolutionMinutes": 1440
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T22:38:01.341Z"
   }
 ]
