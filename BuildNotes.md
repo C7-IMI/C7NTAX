@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.038 | Last Updated: 2026-10-06
+## Version: 2026.10.6.039 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.039 — Checklists moves up into Core Assets
+- **[Update]** **Checklists now sits in Core Assets, directly above Configurations**, instead of being one of twenty alphabetised entries in the *Asset Types* list. It keeps everything it had there — its icon and colour, its record count, the link through to the client's checklist view and the active highlight when it is open — so nothing about how it works changed, only where it is found.
+- **[Update]** The rail now has a small list of promoted type slugs (Checklists, today) which are rendered as Core Assets and filtered out of the type list; the *Show N empty types* count follows, so an empty promoted type is no longer counted as a hidden one.
+- **Verification (live):** on a client page the rail reads *Core Assets: Overview, **Checklists (0)**, Configurations (1), Contacts (3), …* and Checklists is gone from *Asset Types* (which now starts at Account Management). Clicking it navigates to `?type=29f111fb-…`, highlights in place in Core Assets, and opens the usual *Checklists · {client}* panel with its record count, field count, description and *Add Checklist* action. Web typecheck 0; design-token lint unchanged.
+- **Rollback:** one constant and one render block in the rail — no API, schema or data change; the type itself is untouched in the database.
 
 ## 2026.10.6.038 — The warning bubble is now compact throughout
 - **[Update]** **Warning text down to 10px** (from 11px, and 14px where it started) with a 12.5px line height, and everything around it shrank to match: the orange marker is 10px with an 8px glyph, the gap, padding and corner radius are all a step tighter, and the shadow is lighter. The bubble is roughly a third smaller than it was at the start — 35px tall for two lines instead of 55px.

@@ -2646,3 +2646,22 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Measured on the bubble under the Cc row: 10px font, 12.5px line height, 10px marker, 4px/8px padding, 35px tall, same sentence, and the fields below did not move. Screenshot captured.
 - Worth recording for the next measurement: the bubble contains **two** `span[aria-hidden]` elements — the pointer arrow and the marker — so querying the first one reports the arrow's 12px and looks like the marker did not resize. It did (the second span measures 10px).
 - Web typecheck 0; design-token lint unchanged. The check wrote no data.
+
+---
+
+### Prompt 196 — Move Checklists into Core Assets, above Configurations
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~15 m
+**BuildNotes IDs:** 2026.10.6.039 - Checklists moves up into Core Assets
+> Move Checklists up to Core Assets above Configurations
+
+**What it was**
+- On a Kumo client page the left rail separates fixed destinations (*Core Assets*: Overview, Configurations, Contacts, Documents, Passwords, Domain Tracker, SSL Tracker, Locations, Vendors, Change Control) from the documented asset types (*Asset Types*, alphabetical, twenty of them). Checklists was one of those twenty, sitting between Backup and Email, which buries a likely-frequent destination in the longest list on the page.
+
+**What changed**
+- `apps/web/src/components/OrganizationTypeRail.tsx`: a `CORE_ASSET_TYPES` list (currently just `checklists`, matched on the type's id or name so the seeded slug does not matter) is rendered inside the Core Assets group immediately after Overview — i.e. above Configurations — and filtered out of the Asset Types group. The *Show N empty types* counter uses the remaining list, so an empty promoted type is no longer counted as a hidden one.
+- The promoted item renders through the same `RailItem`, so it keeps its icon, colour, record count, link (`?type=<id>`), tooltip and active highlight; the type itself is untouched in the database.
+
+**Verification (live)**
+- Rail on a client page: *Core Assets — Overview, **Checklists 0**, Configurations 1, Contacts 3, Documents 3, Passwords 1, Domain Tracker 1, SSL Tracker 1, Locations, Vendors, Change Control 21*, with *Asset Types* now starting at Account Management and no Checklists in it.
+- Clicking Checklists navigated to `?type=29f111fb-…`, the Core Assets entry highlighted in place, and the panel opened as before: *Checklists · Acme Corporation*, "0 records · 5 fields · Repeatable procedures and their last run", with *Add Checklist* pointing at `/kumo/assets?new=1&templateId=29f111fb-…&companyId=…`.
+- Web typecheck 0; design-token lint unchanged. No data changed — this is ordering only.

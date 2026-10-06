@@ -44,6 +44,16 @@ interface Props {
 
 const SHOW_EMPTY_KEY = "c7_kumo_types_show_empty";
 
+/**
+ * Types that belong in Core Assets rather than the asset-type list — the ones
+ * reached for on nearly every client and awkward to hunt for in a long list.
+ * Matched on id or name so it holds whatever slug the type was seeded with.
+ */
+const CORE_ASSET_TYPES = ["checklists"];
+
+const isCoreAssetType = (type: AssetType) =>
+  CORE_ASSET_TYPES.includes(type.id.trim().toLowerCase()) || CORE_ASSET_TYPES.includes(type.name.trim().toLowerCase());
+
 const isActive = (activeType: string, key: string) => activeType.toLowerCase() === key.toLowerCase();
 
 function RailItem({
@@ -94,8 +104,10 @@ export function OrganizationTypeRail({ orgId, counts, assetTypes, changeBoard, a
     try { localStorage.setItem(SHOW_EMPTY_KEY, showEmpty ? "1" : "0"); } catch { /* ignore */ }
   }, [showEmpty]);
 
-  const visibleTypes = showEmpty ? assetTypes : assetTypes.filter((t) => t.count > 0);
-  const emptyCount = assetTypes.length - assetTypes.filter((t) => t.count > 0).length;
+  const coreAssetTypes = assetTypes.filter(isCoreAssetType);
+  const docTypes = assetTypes.filter((t) => !isCoreAssetType(t));
+  const visibleTypes = showEmpty ? docTypes : docTypes.filter((t) => t.count > 0);
+  const emptyCount = docTypes.length - docTypes.filter((t) => t.count > 0).length;
   const base = `/kumo/organizations/${orgId}`;
 
   const changeControlTo = changeBoard
@@ -110,6 +122,18 @@ export function OrganizationTypeRail({ orgId, counts, assetTypes, changeBoard, a
 
       <Group label="Core Assets">
         <RailItem to={base} icon={LayoutDashboard} label="Overview" active={!activeType} title="Back to the organization overview" />
+        {coreAssetTypes.map((t) => (
+          <RailItem
+            key={t.id}
+            to={`${base}?type=${t.id}`}
+            icon={templateIcon(t.icon)}
+            iconColor={t.count > 0 ? t.color : null}
+            label={t.name}
+            count={t.count}
+            active={isActive(activeType, t.id)}
+            title={t.description || t.name}
+          />
+        ))}
         <RailItem to={`/kumo/configs?companyId=${orgId}`} icon={Server} label="Configurations" count={counts.configs} active={false} title="Servers, workstations and network devices" />
         <RailItem to={`/clients/contacts?companyId=${orgId}`} icon={Users} label="Contacts" count={counts.contacts} active={false} title="Contacts for this client" />
         <RailItem to={`/kumo/documents?companyId=${orgId}`} icon={BookOpen} label="Documents" count={counts.documents} active={false} title="Documents for this client" />
