@@ -1813,6 +1813,19 @@
 - **Verification:** probe run through the launcher (path with spaces + pass-through switch) showed **0 visible console windows** (43,645 samples) while the old direct `powershell.exe` action showed 1 (62,684 samples); auto-sync then committed and pushed a real change end-to-end via the launcher (`7ca0ac0`, `LastTaskResult = 0`); both task definitions read back correctly; API/web still 200. Test probe scripts, logs and the exported task XML backup were removed.
 
 
+### Prompt 154 — Suggest alternate light and dark colour schemes
+**Timestamp:** 2026-10-06 | **Status:** ✅ Completed (advisory) | **Duration:** ~15 min
+**BuildNotes IDs:** None (no project change)
+> Suggest alternate color schemes for both light and dark modes
+
+**Changes:**
+- No code changes. Reviewed the token architecture (`apps/web/src/index.css`: one `html` block for dark, one `html[data-theme="light"]` block for light, plus `tailwind.config.js` mapping `navy`/`cyber`/`surface`/`alert` to those variables) and computed WCAG contrast ratios with a Node script for the current palette and nine candidate schemes.
+- Measured defects in the **current** palettes: light-mode accent `#0284c7` on white = 4.10:1 (below AA for text), `alert-amber #d97706` = 3.19:1 and `alert-green #16a34a` = 3.30:1 (both sub-AA); proposed `#b45309` / `#15803d` reach 5.02:1. Dark-mode tokens all pass AA. Borders sit at 1.5–2.0:1 in every scheme (intentionally subtle).
+- Suggested dark alternates: **A Midnight Slate + cyber blue** (neutral graphite, keeps the brand accent), **B Deep Violet**, **C Warm Carbon + amber**, **D OLED true black**, **E Ocean teal**; light alternates: **F Cool Paper**, **G Warm Stone**, **H High-Contrast AAA-lean**. Included per-scheme token values and contrast for text/surface, accent/surface and button pairs (e.g. white on violet-600 = 5.70; white on teal-600 = 3.74, fixed by teal-700 = 5.47).
+- Recommended **A** for dark and **F** for light; noted that a full re-skin must also sweep the 118 raw hex literals in the 9 allowlisted `.tsx` files tracked by `scripts/lint-design-tokens.mjs`. Offered to implement any scheme behind a `data-palette` switcher with instant rollback.
+
+
+
 
 
 
