@@ -1903,3 +1903,16 @@
 
 
 
+
+### Prompt 159 — Fix the clipped "7" in the brand icon
+**Timestamp:** 2026-10-06 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.10.6.007)
+> The 7 is cutoff in this icon. It needs to look like the second attachment
+
+**Changes:**
+- **Root cause:** the icon slices had been cut ~23px too high. The black tile is actually at y 429–502, not y 406 — so every crop pulled in the red glow strip *above* the tile (the pink checkerboard bar the user saw across the top) and pushed the shield's lower half out of frame (the clipped "7").
+- Re-measured every tile and re-cut the slices: black tile x 545–618 y 429–502 (74×74), white tile x 642–714 y 429–502 (73×74), outlined shield x 443–512 y 425–504 (70×80). Corollary finding: the earlier caveat that the black tile's own top edge was glow-washed was wrong — the tile is uniformly black (`#000000`–`#050102`) to its edges, so any crop *inside* it is clean. Corrected in `brand/README.md`.
+- `brand/shield-glyph.png` — new 60×60 interior crop centred on the shield's strict bbox (x 559–604, y 439–488; tile margins L14 R14 T10 B14), fully inside the black tile, so it carries no checkerboard and no glow. This is now the source for the app icons.
+- `apps/web/public/` — rebuilt `favicon.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` from that crop: flat black plate, rounded mask (radius 17% of the side), shield drawn at 88% of the plate. The square window keeps the aspect uniform (the previous attempt stretched 56×60 into a square), and the 88% inset keeps a real margin at 16px.
+- `apps/desktop/build/icon.png` re-copied from the corrected 512; `brand/README.md` records the corrected tile/shield bounds and the centred-crop recipe.
+- **Verification:** shield-mask IoU between the delivered icon and the source tile is **0.975** (the "7" and its counter survive the round trip); at 512px the art clears the plate edge by L74 R73 T61 B31px and the below-shield content tapers 148→64, i.e. it is the artwork's own soft glow rather than a clipped edge; corners are transparent (rounded plate) and the interior is opaque. Icons serve HTTP 200 as `image/png` (1.9/39.9/44.6/220.5 KB) and the live sidebar logo loads at naturalWidth 192 with `link[rel=icon]` pointing at `/favicon.png`. `apps/web` typecheck unchanged (26 pre-existing errors, zero new); design-token lint passes at 117 legacy occurrences. Changelog re-parsed: 109 versions, no duplicates, 007 on top and 006 intact.

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.006 | Last Updated: 2026-10-06
+## Version: 2026.10.6.007 | Last Updated: 2026-10-06
 
 ---
 
@@ -11,6 +11,14 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.6.007 — Fixed the clipped shield/"7" brand icon
+- **[Fix]** **App icon was mis-cropped**: the icon slices had been cut ~23px too high, which pulled in the red glow strip *above* the black tile and sliced the bottom off the shield — the favicon showed a pink checkerboard bar across the top with a clipped "7". Every icon-variation slice was re-cut at the tile's real bounds (black tile x 545–618, y 429–502), and the four web icons plus the desktop icon are now built from a 60×60 interior crop centred on the shield (strict bbox x 559–604, y 439–488) drawn at 88% of a flat black rounded plate, so the glyph is centred with an even margin and nothing is cut off.
+- **[Fix]** `brand/README.md` — the caveat claiming the black tile's *own* top edge was glow-washed (`#9E8684`) was wrong; the tile is uniformly black (`#000000`–`#050102`) to its edges and the wash belongs to the strip above it. Replaced with the measured tile and shield bounds and a note on the centred-crop recipe, so the vertical offset can't be reintroduced.
+- **[Fix]** `apps/desktop/build/icon.png` was never committed — the generic `build/` rule in `.gitignore` hid it, so electron-builder's `win.icon` (which points at it) fell back to the default Electron icon in a fresh clone. `.gitignore` now re-includes that single source asset (the rest of the directory stays ignored).
+- **[Verification]** Shield-mask IoU between the delivered icon and the source tile is 0.975 (the "7" counter intact); at 512px the art clears the plate edge by 74/73/61/31px, so no clipping; the four icons serve HTTP 200 as `image/png` and the sidebar logo loads at naturalWidth 192; `apps/web` typecheck unchanged (26 pre-existing errors) and the design-token lint stays at 117 legacy occurrences.
 
 ---
 

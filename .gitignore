@@ -4,6 +4,11 @@ dist/
 .next/
 build/
 release/
+# apps/desktop/build/ is a source dir (electron-builder reads win.icon from it),
+# so keep the app icon tracked even though `build/` above ignores build output.
+!apps/desktop/build/
+apps/desktop/build/*
+!apps/desktop/build/icon.png
 *.env
 *.env.local
 .env.production
