@@ -2276,8 +2276,8 @@ Three things were **rejected** rather than mocked because the app has no such ca
 - Restored the `app_settings` config row to its pre-test state (`value: null`) afterwards, and deleted the throwaway tickets.
 - Typecheck unchanged (web 26, api 178 pre-existing, none in the new files); design-token lint unchanged (117 legacy hex, none new).
 
-### Prompt 180 - Right-click menus for Client List, Contacts, Manage Users, Manage Roles and Calendar
-**Timestamp:** 2026-10-06 | **Status:** Done - implemented and verified live | **Duration:** ~2 h
+### Prompt 180 — Right-click menus for Client List, Contacts, Manage Users, Manage Roles and Calendar
+**Timestamp:** 2026-10-06 | **Status:** Done — implemented and verified live | **Duration:** ~2 h
 **BuildNotes IDs:** 2026.10.6.024 - Right-click menus for Client List, Contacts, Manage Users, Manage Roles and Calendar
 > create similar right click menus for Client List, Contacts, Manage Users, Manage Roles, and Calendar within their respective contexts.
 
