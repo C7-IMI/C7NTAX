@@ -2103,3 +2103,24 @@
 - UI in the live app: all ten rail destinations opened correctly — overview, the Server type view, Locations, Passwords (1), Configurations (1), Documents ("3 of 4 documents" with chip), the tracker narrowed to certificates, Contacts (3), Tickets (scoped), and `Kumo → Assets?new=1` opening **New Server** with the client preselected. Rail renders 11 links with empty types hidden, 32 with them shown, sticky at 208px.
 - Rollback: with `c7_ui_kumo_types=0` the rail disappears and the page returns to its old single-column layout; an unknown `?type=` falls back to the dashboard rather than erroring; both restored afterwards. Typecheck unchanged (web 26, api 178 pre-existing), token lint unchanged (117 legacy hex in 9 allowlisted files), no errors in any new file.
 - Screenshots of the live implementation saved to the session workspace: `files/live-org-rail-overview.png`, `live-org-rail-alltypes.png`, `live-org-type-view.png`, `live-org-rail-tall.png`.
+
+### Prompt 172 — Spacing the organization screen's cards apart
+**Timestamp:** 2026-10-06 | **Status:** ✅ Fixed and verified | **Duration:** ~25 min
+**BuildNotes IDs:** 2026.10.6.018
+> Can you space the cards out just a bit on the top and bottom? THey're all bunched together
+
+**What was actually wrong**
+- The spacing was not too tight — it was **gone**. When the type rail was added, the dashboard's cards were wrapped in a `<div className="contents">` so the rail could sit in a two-column layout without disturbing the existing markup. Tailwind's `space-y-*` is implemented as `> * + *`, which only matches *direct DOM children*, and `display: contents` does not change DOM parentage — so the page root's `space-y-4` no longer reached the cards and they stacked edge to edge.
+- Measured on the live screen before the fix: vertical gaps `[0,0,0,0,0]` between the six card rows, while the horizontal grid gaps were still a correct 16px. That asymmetry is exactly what the screenshot showed.
+
+**Change**
+- `apps/web/src/pages/KumoOrganizationDetail.tsx` — the wrapper now carries its own rhythm (`space-y-5` when the dashboard is shown, `hidden` when a type or the Locations panel replaces it), with a comment explaining why `contents` cannot be used there. The three card rows on that screen went from `gap-4` to `gap-5` so the vertical and horizontal rhythm match at 20px.
+
+**Also fixed while verifying — the reason this was hard to confirm**
+- `apps/web/public/sw.js` was serving **stale code in development**. It handled every GET cache-first, including Vite's dev modules, so `index.html` → `/src/main.tsx` → every page module was answered from the `C7NTAX-v1` cache. Reloading, restarting the dev server, disabling the HTTP cache and opening a new tab all still ran pre-edit code — which is what produced the contradictory readings in the previous prompt (a new chip rendering next to an old heading from the same file).
+- Dev-server requests (`/src/`, `/@*`, `/node_modules/`) now return without touching the cache, navigations are network-first so a reload always picks up the current app (the cached copy still serves an offline start), and the cache name is bumped to `C7NTAX-v2` so existing clients purge the stale entries when the new worker activates.
+
+**Verification**
+- Live measurement after the fix: vertical gaps `[20,20,20,20,20]` and horizontal gaps `[20,20,20]` — uniform. Confirmed the fresh module was actually running (`bodyClass` reported `space-y-5`, not `contents`) by unregistering the old worker and clearing its cache first.
+- Re-checked afterwards that nothing else regressed: the rail (11 links with empty types hidden, 32 shown), the type view, the Locations panel, all ten deep links, and the `UI_KUMO_TYPES` rollback all behave as in Prompt 171. Typecheck unchanged at web 26 / api 178 pre-existing errors.
+- Screenshot of the corrected screen: `files/live-org-spacing-fixed.png`.

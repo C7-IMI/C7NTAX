@@ -303,7 +303,10 @@ export function KumoOrganizationDetailPage() {
 
         <div className="space-y-4 min-w-0">
           {panel}
-          <div className={panel ? "hidden" : "contents"}>
+          {/* Carries its own vertical rhythm: with `contents` Tailwind's
+              space-y-* on the column cannot reach these cards, since that
+              selector only matches direct DOM children. */}
+          <div className={panel ? "hidden" : "space-y-5"}>
 
       {/* ── Quick notes ────────────────────────────────────────── */}
       <div className="card">
@@ -345,7 +348,7 @@ export function KumoOrganizationDetailPage() {
       </div>
 
       {/* ── Password strength + documentation health ───────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="card space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -415,7 +418,7 @@ export function KumoOrganizationDetailPage() {
       </div>
 
       {/* ── Recents / contacts / recently updated ──────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <SectionCard icon={History} title="Recently Viewed By You">
           {detail.recentlyViewed.length === 0 ? (
             <p className="text-sm text-gray-500">You haven't viewed anything recently.</p>
@@ -492,7 +495,7 @@ export function KumoOrganizationDetailPage() {
       </div>
 
       {/* ── Passwords / expirations / locations ────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <SectionCard
           icon={Key}
           title="Popular Passwords"

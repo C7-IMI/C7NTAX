@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.6.018",
+    "date": "2026-10-06",
+    "title": "Card spacing on the organization screen, and a service worker that no longer hides updates",
+    "changes": [
+      {
+        "text": "**The organization screen's cards were touching each other.** The wrapper added around the dashboard used `display: contents`, and Tailwind's `space-y-*` only matches direct DOM children — so every card lost its vertical spacing. Measured on the live screen: **0px** between all six card rows, which is the bunching that was reported. The wrapper now carries its own rhythm instead of relying on the parent, so cards sit 20px apart.",
+        "type": "Fix"
+      },
+      {
+        "text": "The row gutters on that screen went from 16px to 20px as well, so the vertical and horizontal rhythm match rather than being two different values.",
+        "type": "Update"
+      },
+      {
+        "text": "**The service worker was serving stale code in development.** [sw.js](apps/web/public/sw.js) cached every GET response cache-first, including Vite's dev modules, so code changes never appeared — a page reload, a dev-server restart and a cache-disabled reload all kept running the pre-edit code. Dev-server requests (`/src/`, `/@*`, `/node_modules/`) now bypass the cache entirely, navigations are network-first with the cached copy still available for an offline start, and the cache name was bumped to `C7NTAX-v2` so existing clients purge the stale entries on activation.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.017",
     "date": "2026-10-06",
     "title": "Asset types: the organization rail, 19 standard types and client-scoped screens",

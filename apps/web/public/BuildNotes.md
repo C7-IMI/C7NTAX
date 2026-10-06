@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.017 | Last Updated: 2026-10-06
+## Version: 2026.10.6.018 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.018 — Card spacing on the organization screen, and a service worker that no longer hides updates
+- **[Fix]** **The organization screen's cards were touching each other.** The wrapper added around the dashboard used `display: contents`, and Tailwind's `space-y-*` only matches direct DOM children — so every card lost its vertical spacing. Measured on the live screen: **0px** between all six card rows, which is the bunching that was reported. The wrapper now carries its own rhythm instead of relying on the parent, so cards sit 20px apart.
+- **[Update]** The row gutters on that screen went from 16px to 20px as well, so the vertical and horizontal rhythm match rather than being two different values.
+- **[Fix]** **The service worker was serving stale code in development.** [sw.js](apps/web/public/sw.js) cached every GET response cache-first, including Vite's dev modules, so code changes never appeared — a page reload, a dev-server restart and a cache-disabled reload all kept running the pre-edit code. Dev-server requests (`/src/`, `/@*`, `/node_modules/`) now bypass the cache entirely, navigations are network-first with the cached copy still available for an offline start, and the cache name was bumped to `C7NTAX-v2` so existing clients purge the stale entries on activation.
+- **Verification:** measured in the live app rather than by eye — 20px between all six card rows (previously 0) and 20px in each of the three grid rows (previously 16), with the type rail unaffected; the seed round-trip, all ten deep links and the `UI_KUMO_TYPES` rollback were re-checked afterwards and still pass. Typecheck unchanged (web 26, api 178 pre-existing errors).
 
 ## 2026.10.6.017 — Asset types: the organization rail, 19 standard types and client-scoped screens
 - **[New]** **Asset type rail on the organization screen.** Every documentation type for a client in one place, grouped as IT Glue groups them: **Core Assets** — Overview, Configurations, Contacts, Documents, Passwords, Domain Tracker, SSL Tracker, Locations, Vendors, Change Control — and **Asset Types**, which lists every Kumo asset type with a live count for that client. Clicking a type opens that client's records of it in place, with an Add button preset to that type and client, a search box, and each row linking to the asset. Types with nothing documented are hidden behind a *Show N empty types* toggle that is remembered per browser, so the rail never buries what is in use. Overview returns to the dashboard.
