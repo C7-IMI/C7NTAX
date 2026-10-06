@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { RichTextEditor, toAttachmentDraft, type EmailAttachmentDraft } from "../components/RichTextEditor";
+import { RecipientField, recipientFromContact, type Recipient, type RecipientSuggestion } from "../components/RecipientField";
 import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
@@ -912,7 +913,7 @@ export function TicketDetailPage() {
     rate: "", billing: "billable" as "billable" | "nonBillable" | "noCharge", userId: "",
   });
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
-  const [contacts, setContacts] = useState<Array<{id:string;firstName:string;lastName:string}>>([]);
+  const [contacts, setContacts] = useState<RecipientSuggestion[]>([]);
   const [agreements, setAgreements] = useState<Array<{id:string;name:string;billingPeriod:string;billingAmount:number}>>([]);
   const [selectedAgreement, setSelectedAgreement] = useState<Record<string,unknown>|null>(null);
   const [users, setUsers] = useState<Array<{id:string;firstName:string;lastName:string}>>([]);
@@ -980,6 +981,14 @@ export function TicketDetailPage() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailForm, setEmailForm] = useState({ subject: "", body: "", html: "" });
   const [emailAttachments, setEmailAttachments] = useState<EmailAttachmentDraft[]>([]);
+  const [emailTo, setEmailTo] = useState<Recipient[]>([]);
+  const [emailCc, setEmailCc] = useState<Recipient[]>([]);
+  const [emailBcc, setEmailBcc] = useState<Recipient[]>([]);
+  const [showBcc, setShowBcc] = useState(false);
+  // The note composer can email the note to the ticket's people, and add new ones to the ticket.
+  const [noteExtras, setNoteExtras] = useState<Recipient[]>([]);
+  const [noteCc, setNoteCc] = useState<Recipient[]>([]);
+  const [noteRecipientsOpen, setNoteRecipientsOpen] = useState(false);
   const [attachingEmailFiles, setAttachingEmailFiles] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showMoreActions, setShowMoreActions] = useState(false);  const [moreActionsBusy, setMoreActionsBusy] = useState(false);
@@ -1134,8 +1143,67 @@ export function TicketDetailPage() {
     if (!contact?.email) { toast.error("This ticket has no contact email address"); return; }
     setEmailForm({ subject: `Re: ${ticket.ticketNumber || id} — ${ticket.title || ""}`, body: "", html: "" });
     setEmailAttachments([]);
+    setEmailTo([recipientFromContact(contact)]);
+    setEmailCc([]);
+    setEmailBcc([]);
+    setShowBcc(false);
     setShowEmailDialog(true);
   };
+
+  /** The ticket's own contacts, as addressable people. */
+  const ticketContactRecipients = (): Recipient[] => {
+    const primary = ticket?.contact as any;
+    const extra = ((ticket?.additionalContacts as any[]) || []).map((link: any) => ({
+      ...recipientFromContact(link.contact),
+      role: String(link.role || "cc"),
+    }));
+    return [...(primary?.email ? [recipientFromContact(primary)] : []), ...extra];
+  };
+
+  /** Client contacts offered in the address fields. */
+  const contactSuggestions: RecipientSuggestion[] = contacts;
+
+  /** Contacts added as "notify on every update" — copied on everything the ticket sends. */
+  const ticketCcRecipients = (): Recipient[] =>
+    ((ticket?.additionalContacts as any[]) || [])
+      .filter((link: any) => link.role === "cc" && link.contact?.email)
+      .map((link: any) => recipientFromContact(link.contact));
+
+  /** Turn picked recipients into the payload the API expects. */
+  const recipientPayload = (to: Recipient[], cc: Recipient[]) => {
+    const primaryId = (ticket?.contact as any)?.id as string | undefined;
+    return {
+      recipients: {
+        // The primary contact travels as a flag, not an id, so it is never re-linked to the ticket.
+        contactIds: to.filter((r) => r.contactId && r.contactId !== primaryId).map((r) => r.contactId),
+        emails: to.filter((r) => !r.contactId).map((r) => r.email),
+        ccContactIds: cc.filter((r) => r.contactId).map((r) => r.contactId),
+        ccEmails: cc.filter((r) => !r.contactId).map((r) => r.email),
+      },
+      includePrimary: to.some((r) => r.contactId === primaryId),
+      extraTo: to.filter((r) => !r.contactId).map((r) => r.email),
+      extraCc: cc.filter((r) => !r.contactId).map((r) => r.email),
+    };
+  };
+
+  /** Address row shared by the email dialog and the note composer. */
+  const renderRecipientField = (
+    label: string,
+    value: Recipient[],
+    onChange: (next: Recipient[]) => void,
+    options: { placeholder?: string; hint?: React.ReactNode; action?: React.ReactNode; exclude?: string[] } = {},
+  ) => (
+    <RecipientField
+      label={label}
+      value={value}
+      onChange={onChange}
+      suggestions={contactSuggestions}
+      placeholder={options.placeholder}
+      hint={options.hint}
+      action={options.action}
+      excludeEmails={options.exclude}
+    />
+  );
 
   const attachEmailFiles = async (files: File[]) => {
     if (!files.length) return;
@@ -1159,12 +1227,25 @@ export function TicketDetailPage() {
     }
     setSendingEmail(true);
     try {
-      const response = await api.post(`/tickets/${id}/email`, { ...emailForm, attachments: emailAttachments });
+      const { recipients, includePrimary } = recipientPayload(emailTo, emailCc);
+      const response = await api.post(`/tickets/${id}/email`, {
+        ...emailForm,
+        attachments: emailAttachments,
+        recipients,
+        includePrimary,
+        bcc: emailBcc.map((r) => r.email),
+      });
       const count = Number(response.data?.attachments || 0);
-      toast.success(count ? `Email sent with ${count} attachment${count === 1 ? "" : "s"}` : "Email sent to contact");
+      const copied = Number(response.data?.cc?.length || 0);
+      toast.success(
+        `Email sent${copied ? ` · ${copied} copied` : ""}${count ? ` with ${count} attachment${count === 1 ? "" : "s"}` : ""}`,
+      );
       setShowEmailDialog(false);
       setEmailForm({ subject: "", body: "", html: "" });
       setEmailAttachments([]);
+      setEmailTo([]);
+      setEmailCc([]);
+      setEmailBcc([]);
       load();
     } catch (error: any) {
       const apiError = error?.response?.data?.error;
@@ -1923,11 +2004,23 @@ export function TicketDetailPage() {
               <button type="button" onClick={() => setShowEmailDialog(false)} title="Close" aria-label="Close" className="rounded p-1 text-gray-500 transition-colors hover:bg-surface-lighter hover:text-white"><X size={16} /></button>
             </div>
 
-            <div className="flex items-center gap-2 rounded-lg border border-surface-border bg-surface-input px-3 py-2">
-              <span className="text-xs text-gray-500">To</span>
-              <span className="rounded-full bg-surface-lighter px-2 py-0.5 text-xs text-gray-200">{(ticket.contact as any)?.firstName ? `${(ticket.contact as any).firstName} ${(ticket.contact as any).lastName || ""}`.trim() : "Contact"}</span>
-              <span className="truncate text-xs text-gray-400">{(ticket.contact as any)?.email || ""}</span>
-              <span className="ml-auto hidden text-[11px] text-gray-600 sm:block">Replies return to the shared mailbox</span>
+            <div className="space-y-2">
+              {renderRecipientField("To", emailTo, setEmailTo, { placeholder: "Recipient", hint: "Replies return to the shared mailbox." })}
+              {renderRecipientField("Cc", emailCc, setEmailCc, {
+                placeholder: "Add a CC",
+                action: (
+                  <button
+                    type="button"
+                    onClick={() => setShowBcc((v) => !v)}
+                    className="shrink-0 rounded px-1.5 py-0.5 text-[11px] text-gray-500 transition-colors hover:bg-surface hover:text-gray-200"
+                    title={showBcc ? "Hide BCC" : "Add a BCC"}
+                  >
+                    {showBcc ? "Hide Bcc" : "Bcc"}
+                  </button>
+                ),
+                hint: autoRecipientHint,
+              })}
+              {showBcc && renderRecipientField("Bcc", emailBcc, setEmailBcc, { placeholder: "Add a BCC" })}
             </div>
 
             <label className="block text-xs text-gray-400">

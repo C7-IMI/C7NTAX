@@ -103,9 +103,10 @@ export class EmailService {
   /**
    * Notify a ticket's contact that a customer-visible activity occurred
    * (a non-internal note was added, time was logged, or the status changed).
+   * `cc` carries the ticket's CC contacts and anyone the author added.
    */
   async sendTicketActivity(
-    email: string,
+    to: string | string[],
     options: {
       ticketNumber: string;
       ticketTitle: string;
@@ -113,10 +114,12 @@ export class EmailService {
       details: string;
       clientName?: string;
       contactName?: string;
+      cc?: string[];
     },
   ): Promise<void> {
     await this.send({
-      to: email,
+      to,
+      cc: options.cc,
       subject: `[${options.ticketNumber}] ${options.eventLabel} — ${options.ticketTitle}`,
       html: ticketActivityTemplate(options),
     });

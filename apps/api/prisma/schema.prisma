@@ -14,212 +14,213 @@ datasource db {
 // ─── User & Auth ────────────────────────────────────────────────────
 
 model User {
-  id              String   @id @default(uuid())
-  email           String   @unique
-  username        String?  @unique
-  passwordHash    String
-  firstName       String
-  lastName        String
-  phone           String?
-  mobile          String?
-  title           String?
-  avatarUrl       String?
-  isActive        Boolean  @default(true)
-  isLocked        Boolean  @default(false)
-  loginAttempts   Int      @default(0)
-  lastLoginAt     DateTime?
-  emailVerified   Boolean  @default(false)
+  id            String    @id @default(uuid())
+  email         String    @unique
+  username      String?   @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  phone         String?
+  mobile        String?
+  title         String?
+  avatarUrl     String?
+  isActive      Boolean   @default(true)
+  isLocked      Boolean   @default(false)
+  loginAttempts Int       @default(0)
+  lastLoginAt   DateTime?
+  emailVerified Boolean   @default(false)
 
   // MFA
-  mfaEnabled        Boolean  @default(false)
-  mfaSecret         String?
-  mfaBackupCodes    String[] @default([]) // hashed
-  mfaEmailCode      String?
+  mfaEnabled          Boolean   @default(false)
+  mfaSecret           String?
+  mfaBackupCodes      String[]  @default([]) // hashed
+  mfaEmailCode        String?
   mfaEmailCodeExpires DateTime?
 
   // Relationships
-  roleId          String
-  role            Role              @relation(fields: [roleId], references: [id])
-  permissions     String[]          @default([])  // individual overrides (additive to role)
-  companyId       String?
-  company         Company?          @relation(fields: [companyId], references: [id])
-  sessions        Session[]
-  tickets         Ticket[]          @relation("AssignedTickets")
-  createdTickets  Ticket[]          @relation("CreatedTickets")
-  comments        TicketComment[]
-  timeEntries     TimeEntry[]
-  notifications   Notification[]
+  roleId              String
+  role                Role                 @relation(fields: [roleId], references: [id])
+  permissions         String[]             @default([]) // individual overrides (additive to role)
+  companyId           String?
+  company             Company?             @relation(fields: [companyId], references: [id])
+  sessions            Session[]
+  tickets             Ticket[]             @relation("AssignedTickets")
+  createdTickets      Ticket[]             @relation("CreatedTickets")
+  comments            TicketComment[]
+  timeEntries         TimeEntry[]
+  notifications       Notification[]
   webauthnCredentials WebauthnCredential[]
-  pushDevices     PushDevice[]
-  outlookAddinTokens OutlookAddinToken[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  pushDevices         PushDevice[]
+  outlookAddinTokens  OutlookAddinToken[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model Role {
   id          String   @id @default(uuid())
   name        String   @unique
-  systemRole  String   // SystemRole enum value
+  systemRole  String // SystemRole enum value
   permissions String[] // Permission enum values
   isDefault   Boolean  @default(false)
   users       User[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Session {
-  id           String   @id @default(uuid())
-  token        String   @unique
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ipAddress    String?
-  userAgent    String?
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-}
-
-model RefreshToken {
   id        String   @id @default(uuid())
   token     String   @unique
   userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
   expiresAt DateTime
   revokedAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 // ─── Tenant / MSP Multi-Tenancy ────────────────────────────────────
 
 model Tenant {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  domain    String?  @unique
-  settings  Json     @default("{}")
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String    @id @default(uuid())
+  name      String    @unique
+  domain    String?   @unique
+  settings  Json      @default("{}")
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   companies Company[]
 }
 
 // ─── Company / Client ───────────────────────────────────────────────
 
 model Company {
-  id              String   @id @default(uuid())
-  tenantId        String?
-  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
-  name            String
-  legalName       String?
-  taxId           String?
-  phone           String?
-  fax             String?
-  email           String?
-  billingEmail    String?
-  website         String?
-  addressLine1    String?
-  addressLine2    String?
-  city            String?
-  state           String?
-  postalCode      String?
-  country         String?
+  id                  String  @id @default(uuid())
+  tenantId            String?
+  tenant              Tenant? @relation(fields: [tenantId], references: [id])
+  name                String
+  legalName           String?
+  taxId               String?
+  phone               String?
+  fax                 String?
+  email               String?
+  billingEmail        String?
+  website             String?
+  addressLine1        String?
+  addressLine2        String?
+  city                String?
+  state               String?
+  postalCode          String?
+  country             String?
   billingAddressLine1 String?
   billingAddressLine2 String?
-  billingCity     String?
-  billingState    String?
-  billingPostalCode String?
-  billingCountry  String?
-  notes           String?
-  isActive        Boolean  @default(true)
-  clientId        Int?     @unique
-  clientType      String?  @default("Client")
-  companyType     String?  @default("Client") // Client, Prospect, Vendor, Partner
-  industry        String?
-  territory       String?
-  region          String?
-  currency        String?  @default("USD")
-  accountManagerId String?
-  primaryContactId String?
-  serviceLevel    String?  // Standard, Premium, Enterprise
+  billingCity         String?
+  billingState        String?
+  billingPostalCode   String?
+  billingCountry      String?
+  notes               String?
+  isActive            Boolean @default(true)
+  clientId            Int?    @unique
+  clientType          String? @default("Client")
+  companyType         String? @default("Client") // Client, Prospect, Vendor, Partner
+  industry            String?
+  territory           String?
+  region              String?
+  currency            String? @default("USD")
+  accountManagerId    String?
+  primaryContactId    String?
+  serviceLevel        String? // Standard, Premium, Enterprise
 
   // Portal access
-  portalEnabled   Boolean  @default(false)
+  portalEnabled Boolean @default(false)
 
   // Sub-organizations (HQ, branches, departments)
-  parentId        String?
-  parent          Company?  @relation("CompanyHierarchy", fields: [parentId], references: [id])
-  children        Company[] @relation("CompanyHierarchy")
+  parentId String?
+  parent   Company?  @relation("CompanyHierarchy", fields: [parentId], references: [id])
+  children Company[] @relation("CompanyHierarchy")
 
   // Relationships
-  users           User[]
-  contacts        Contact[]
-  quotes          Quote[]
-  tickets         Ticket[]
+  users             User[]
+  contacts          Contact[]
+  quotes            Quote[]
+  tickets           Ticket[]
   serviceAgreements ServiceAgreement[]
-  invoices        Invoice[]
+  invoices          Invoice[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([parentId])
 }
 
 model Contact {
-  id          String   @id @default(uuid())
-  firstName   String
-  lastName    String
-  email       String
-  phone       String?
-  mobile      String?
-  title       String?
-  department  String?
-  notes       String?
-  isPrimary   Boolean  @default(false)
-  isActive    Boolean  @default(true)
+  id         String  @id @default(uuid())
+  firstName  String
+  lastName   String
+  email      String
+  phone      String?
+  mobile     String?
+  title      String?
+  department String?
+  notes      String?
+  isPrimary  Boolean @default(false)
+  isActive   Boolean @default(true)
 
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  tickets     Ticket[]
+  tickets        Ticket[]
+  ticketContacts TicketContact[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─── Service Boards ─────────────────────────────────────────────────
 
 model ServiceBoard {
-  id              String   @id @default(uuid())
-  name            String
-  description     String?
-  ticketCode      String?  // optional prefix filter (e.g., "MSP" filters ticketNumber starting with "MSP-")
-  isActive        Boolean  @default(true)
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  ticketCode  String? // optional prefix filter (e.g., "MSP" filters ticketNumber starting with "MSP-")
+  isActive    Boolean @default(true)
 
   // SLA defaults
-  slaResponseMinutes   Int  @default(240)   // 4 hours
-  slaResolutionMinutes Int  @default(1440)  // 24 hours
+  slaResponseMinutes   Int @default(240) // 4 hours
+  slaResolutionMinutes Int @default(1440) // 24 hours
 
   // Auto-close config
-  autoCloseEnabled     Boolean @default(true)
-  autoCloseDays        Int     @default(14)
+  autoCloseEnabled Boolean @default(true)
+  autoCloseDays    Int     @default(14)
 
   // Follow-up email config
-  followUpEnabled      Boolean @default(true)
-  followUpIntervalHours Int    @default(24)
+  followUpEnabled       Boolean @default(true)
+  followUpIntervalHours Int     @default(24)
 
   // Relationships
   tickets         Ticket[]
   emailConnectors EmailConnector[]
   categories      TicketCategory[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TicketCategory {
-  id        String  @id @default(uuid())
-  name      String
-  boardId   String
-  board     ServiceBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  tickets   Ticket[]
+  id      String       @id @default(uuid())
+  name    String
+  boardId String
+  board   ServiceBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
 
   @@unique([boardId, name])
 }
@@ -227,66 +228,66 @@ model TicketCategory {
 // ─── Email Connectors ──────────────────────────────────────────────
 
 model EmailConnector {
-  id                String   @id @default(uuid())
-  boardId           String
-  board             ServiceBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  host              String
-  port              Int      @default(993)
-  secure            Boolean  @default(true)
-  user              String
-  passwordEncrypted String
-  folder            String   @default("INBOX")
-  transport         String   @default("imap") // imap, graph
-  clientId          String?  // Graph OAuth (transport=graph)
+  id                    String       @id @default(uuid())
+  boardId               String
+  board                 ServiceBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  host                  String
+  port                  Int          @default(993)
+  secure                Boolean      @default(true)
+  user                  String
+  passwordEncrypted     String
+  folder                String       @default("INBOX")
+  transport             String       @default("imap") // imap, graph
+  clientId              String? // Graph OAuth (transport=graph)
   clientSecretEncrypted String?
-  tenantId          String?  // Graph tenant or "common"
-  pollIntervalSec   Int      @default(60)
-  enabled           Boolean  @default(true)
-  lastPollAt        DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  tenantId              String? // Graph tenant or "common"
+  pollIntervalSec       Int          @default(60)
+  enabled               Boolean      @default(true)
+  lastPollAt            DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 }
 
 // ─── Tickets ────────────────────────────────────────────────────────
 
 model Ticket {
-  id          String   @id @default(uuid())
-  ticketNumber String  @unique // Auto-generated e.g. C7-00000001
-  title       String
-  description String?
-  status      String   @default("new")       // TicketStatus enum
-  priority    String   @default("medium")    // TicketPriority enum
-  source      String   @default("portal")    // TicketSource enum
-  dueDate     DateTime?
-  startTime   DateTime?
-  endTime     DateTime?
+  id           String    @id @default(uuid())
+  ticketNumber String    @unique // Auto-generated e.g. C7-00000001
+  title        String
+  description  String?
+  status       String    @default("new") // TicketStatus enum
+  priority     String    @default("medium") // TicketPriority enum
+  source       String    @default("portal") // TicketSource enum
+  dueDate      DateTime?
+  startTime    DateTime?
+  endTime      DateTime?
 
   // SLA tracking
-  slaResponseDue    DateTime?
-  slaResolutionDue  DateTime?
-  firstResponseAt   DateTime?
-  resolvedAt        DateTime?
-  closedAt          DateTime?
-  isOverdue         Boolean   @default(false) // Auto-set when dueDate passes
+  slaResponseDue   DateTime?
+  slaResolutionDue DateTime?
+  firstResponseAt  DateTime?
+  resolvedAt       DateTime?
+  closedAt         DateTime?
+  isOverdue        Boolean   @default(false) // Auto-set when dueDate passes
 
   // Auto-close tracking
-  waitingSince      DateTime?  // When status changed to waiting_on_client
-  followUpCount     Int        @default(0)
-  lastFollowUpAt    DateTime?
+  waitingSince   DateTime? // When status changed to waiting_on_client
+  followUpCount  Int       @default(0)
+  lastFollowUpAt DateTime?
 
   // Relationships
-  boardId       String
-  board         ServiceBoard     @relation(fields: [boardId], references: [id])
-  categoryId    String?
-  category      TicketCategory?  @relation(fields: [categoryId], references: [id])
-  companyId     String
-  company       Company          @relation(fields: [companyId], references: [id])
-  contactId     String?
-  contact       Contact?         @relation(fields: [contactId], references: [id])
-  assignedToId  String?
-  assignedTo    User?            @relation("AssignedTickets", fields: [assignedToId], references: [id])
-  createdById   String
-  createdBy     User             @relation("CreatedTickets", fields: [createdById], references: [id])
+  boardId      String
+  board        ServiceBoard    @relation(fields: [boardId], references: [id])
+  categoryId   String?
+  category     TicketCategory? @relation(fields: [categoryId], references: [id])
+  companyId    String
+  company      Company         @relation(fields: [companyId], references: [id])
+  contactId    String?
+  contact      Contact?        @relation(fields: [contactId], references: [id])
+  assignedToId String?
+  assignedTo   User?           @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  createdById  String
+  createdBy    User            @relation("CreatedTickets", fields: [createdById], references: [id])
 
   // Thread
   comments      TicketComment[]
@@ -294,158 +295,177 @@ model Ticket {
   timeEntries   TimeEntry[]
   notifications Notification[]
 
+  // Extra stakeholders beyond the primary `contact` — CCs and additional contacts
+  additionalContacts TicketContact[]
+
   // Tags / metadata
-  tags          String[]  @default([])
-  customFields  Json      @default("{}")
+  tags         String[] @default([])
+  customFields Json     @default("{}")
 
   // Service agreement link
   serviceAgreementId String?
   serviceAgreement   ServiceAgreement? @relation(fields: [serviceAgreementId], references: [id])
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Extra people on a ticket beyond the primary `Ticket.contact`.
+/// `cc` — copied on every customer-facing notification and ticket email.
+/// `additional` — recorded on the ticket and selectable per note, but not copied automatically.
+model TicketContact {
+  id           String   @id @default(uuid())
+  ticketId     String
+  ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  contactId    String
+  contact      Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  role         String   @default("cc")
+  /// Whether a customer-facing note is emailed to them by default.
+  notifyOnNote Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@unique([ticketId, contactId])
+  @@map("ticket_contacts")
 }
 
 model TicketComment {
-  id          String   @id @default(uuid())
-  body        String
-  isInternal  Boolean  @default(false)
-  isEmail     Boolean  @default(false) // true if ingested from email
-  fromEmail   String?  // sender email if email-sourced
+  id         String  @id @default(uuid())
+  body       String
+  isInternal Boolean @default(false)
+  isEmail    Boolean @default(false) // true if ingested from email
+  fromEmail  String? // sender email if email-sourced
 
-  ticketId    String
-  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id])
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
 
   attachments TicketAttachment[]
 
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TicketAttachment {
-  id          String   @id @default(uuid())
-  filename    String
-  mimeType    String
-  size        Int
-  storagePath String
-  ticketId    String?
-  ticket      Ticket?  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  commentId   String?
-  comment     TicketComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  id           String         @id @default(uuid())
+  filename     String
+  mimeType     String
+  size         Int
+  storagePath  String
+  ticketId     String?
+  ticket       Ticket?        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  commentId    String?
+  comment      TicketComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
   uploadedById String
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 // ─── Time Entry ─────────────────────────────────────────────────────
 
 model TimeEntry {
-  id          String   @id @default(uuid())
-  description String?
+  id            String    @id @default(uuid())
+  description   String?
   internalNotes String?
-  minutes     Int
-  billable    Boolean  @default(true)
-  noCharge    Boolean  @default(false)
-  rate        Float?
-  date        DateTime @default(now())
-  startTime   DateTime?
-  endTime     DateTime?
-  workType    String?
-  workRole    String?
+  minutes       Int
+  billable      Boolean   @default(true)
+  noCharge      Boolean   @default(false)
+  rate          Float?
+  date          DateTime  @default(now())
+  startTime     DateTime?
+  endTime       DateTime?
+  workType      String?
+  workRole      String?
 
-  ticketId    String
-  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
 
-  invoiceId   String?
-  invoice     Invoice? @relation(fields: [invoiceId], references: [id])
+  invoiceId String?
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id])
 
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─── Service Agreements & Billing ──────────────────────────────────
 
 model ServiceAgreement {
-  id            String   @id @default(uuid())
-  name          String
-  description   String?
-  companyId     String
-  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  isActive      Boolean  @default(true)
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  companyId   String
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  isActive    Boolean @default(true)
 
   // Billing config
-  billingPeriod String   @default("monthly")   // BillingPeriod enum
-  billingAmount Float    @default(0)
-  currency      String   @default("USD")
-  taxRate       Float    @default(0)            // e.g. 0.0825 = 8.25%
+  billingPeriod String @default("monthly") // BillingPeriod enum
+  billingAmount Float  @default(0)
+  currency      String @default("USD")
+  taxRate       Float  @default(0) // e.g. 0.0825 = 8.25%
 
   // Dates
-  startDate     DateTime
-  endDate       DateTime?
+  startDate       DateTime
+  endDate         DateTime?
   nextInvoiceDate DateTime?
 
   // Auto-invoice settings
-  autoInvoiceEnabled    Boolean @default(true)
-  invoiceDayOfMonth     Int     @default(1)
-  invoiceAdvanceDays    Int     @default(7)
+  autoInvoiceEnabled Boolean @default(true)
+  invoiceDayOfMonth  Int     @default(1)
+  invoiceAdvanceDays Int     @default(7)
 
   // Auto follow-up for unpaid
-  followUpEnabled       Boolean @default(true)
-  followUpIntervalDays  Int     @default(7)
-  maxFollowUps          Int     @default(3)
+  followUpEnabled      Boolean @default(true)
+  followUpIntervalDays Int     @default(7)
+  maxFollowUps         Int     @default(3)
 
   // Relationships
-  invoices      Invoice[]
-  tickets       Ticket[]
+  invoices Invoice[]
+  tickets  Ticket[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Invoice {
-  id             String   @id @default(uuid())
-  invoiceNumber  String   @unique
-  status         String   @default("draft")    // InvoiceStatus enum
-  issueDate      DateTime @default(now())
-  dueDate        DateTime
-  paidAt         DateTime?
-  subtotal       Float    @default(0)
-  taxRate        Float    @default(0)
-  taxTotal       Float    @default(0)
-  total          Float    @default(0)
-  currency       String   @default("USD")
-  notes          String?
+  id            String    @id @default(uuid())
+  invoiceNumber String    @unique
+  status        String    @default("draft") // InvoiceStatus enum
+  issueDate     DateTime  @default(now())
+  dueDate       DateTime
+  paidAt        DateTime?
+  subtotal      Float     @default(0)
+  taxRate       Float     @default(0)
+  taxTotal      Float     @default(0)
+  total         Float     @default(0)
+  currency      String    @default("USD")
+  notes         String?
 
   // Quote workflow (FI-034)
-  quoteStatus   String?  // null=regular invoice, "draft"|"sent"|"accepted"|"converted"|"declined"
+  quoteStatus String? // null=regular invoice, "draft"|"sent"|"accepted"|"converted"|"declined"
 
   // Recurring (FI-037)
-  isRecurring        Boolean  @default(false)
-  recurrenceRule     String?  // "monthly"|"quarterly"|"annually"|cron
+  isRecurring        Boolean   @default(false)
+  recurrenceRule     String? // "monthly"|"quarterly"|"annually"|cron
   nextGenerationDate DateTime?
 
-  companyId      String
-  company        Company  @relation(fields: [companyId], references: [id])
-  agreementId    String?
-  agreement      ServiceAgreement? @relation(fields: [agreementId], references: [id])
+  companyId   String
+  company     Company           @relation(fields: [companyId], references: [id])
+  agreementId String?
+  agreement   ServiceAgreement? @relation(fields: [agreementId], references: [id])
 
-  lineItems      InvoiceLineItem[]
-  timeEntries    TimeEntry[]
-  payments       Payment[]
+  lineItems   InvoiceLineItem[]
+  timeEntries TimeEntry[]
+  payments    Payment[]
 
   // Follow-up tracking
-  followUpCount    Int     @default(0)
-  lastFollowUpAt   DateTime?
-  nextFollowUpAt   DateTime?
+  followUpCount  Int       @default(0)
+  lastFollowUpAt DateTime?
+  nextFollowUpAt DateTime?
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model InvoiceLineItem {
@@ -459,103 +479,103 @@ model InvoiceLineItem {
 }
 
 model Payment {
-  id            String   @id @default(uuid())
-  amount        Float
-  method        String   // "credit_card", "ach", "check", "wire", "flexpoint", "other"
-  reference     String?  // external transaction ID
-  processedAt   DateTime @default(now())
+  id          String   @id @default(uuid())
+  amount      Float
+  method      String // "credit_card", "ach", "check", "wire", "flexpoint", "other"
+  reference   String? // external transaction ID
+  processedAt DateTime @default(now())
 
-  invoiceId     String
-  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 // ─── Integration Configs ────────────────────────────────────────────
 
 model Integration {
-  id            String   @id @default(uuid())
-  kind          String   // IntegrationKind
-  name          String
-  enabled       Boolean  @default(false)
-  credentials   Json     @default("{}")   // encrypted creds
-  settings      Json     @default("{}")
-  lastSyncAt    DateTime?
-  status        String   @default("disconnected")
-  errorMessage  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String    @id @default(uuid())
+  kind         String // IntegrationKind
+  name         String
+  enabled      Boolean   @default(false)
+  credentials  Json      @default("{}") // encrypted creds
+  settings     Json      @default("{}")
+  lastSyncAt   DateTime?
+  status       String    @default("disconnected")
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 // ─── Microsoft 365 Synced Data ─────────────────────────────────────
 
 model M365User {
-  id              String   @id @default(uuid())
-  integrationId   String
-  azureObjectId   String   @unique
+  id                String   @id @default(uuid())
+  integrationId     String
+  azureObjectId     String   @unique
   userPrincipalName String
-  displayName     String
-  givenName       String?
-  surname         String?
-  mail            String?
-  jobTitle        String?
-  department      String?
-  officeLocation  String?
-  mobilePhone     String?
-  businessPhone   String?
-  usageLocation   String?
-  accountEnabled  Boolean  @default(true)
-  contactId       String?
-  raw             Json     @default("{}")
-  lastSyncedAt    DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  displayName       String
+  givenName         String?
+  surname           String?
+  mail              String?
+  jobTitle          String?
+  department        String?
+  officeLocation    String?
+  mobilePhone       String?
+  businessPhone     String?
+  usageLocation     String?
+  accountEnabled    Boolean  @default(true)
+  contactId         String?
+  raw               Json     @default("{}")
+  lastSyncedAt      DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model M365Group {
-  id              String   @id @default(uuid())
-  integrationId   String
-  azureObjectId   String   @unique
-  displayName     String
-  description     String?
-  mail            String?
-  visibility      String?
-  memberCount     Int      @default(0)
-  raw             Json     @default("{}")
-  lastSyncedAt    DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String   @id @default(uuid())
+  integrationId String
+  azureObjectId String   @unique
+  displayName   String
+  description   String?
+  mail          String?
+  visibility    String?
+  memberCount   Int      @default(0)
+  raw           Json     @default("{}")
+  lastSyncedAt  DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model M365Subscription {
-  id              String   @id @default(uuid())
-  integrationId   String
-  skuId           String
-  skuPartNumber   String
-  displayName     String
-  enabled         Int      @default(0)
-  suspended       Int      @default(0)
-  assigned        Int      @default(0)
-  unit            String   @default("user")
-  raw             Json     @default("{}")
-  lastSyncedAt    DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String   @id @default(uuid())
+  integrationId String
+  skuId         String
+  skuPartNumber String
+  displayName   String
+  enabled       Int      @default(0)
+  suspended     Int      @default(0)
+  assigned      Int      @default(0)
+  unit          String   @default("user")
+  raw           Json     @default("{}")
+  lastSyncedAt  DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model SyncLog {
-  id              String   @id @default(uuid())
-  integrationId   String
-  status          String   @default("running")
-  entityType      String
-  recordsProcessed Int     @default(0)
-  recordsCreated  Int      @default(0)
-  recordsUpdated  Int      @default(0)
-  recordsFailed   Int      @default(0)
-  errorMessage    String?
-  startedAt       DateTime @default(now())
-  completedAt     DateTime?
-  createdAt       DateTime @default(now())
+  id               String    @id @default(uuid())
+  integrationId    String
+  status           String    @default("running")
+  entityType       String
+  recordsProcessed Int       @default(0)
+  recordsCreated   Int       @default(0)
+  recordsUpdated   Int       @default(0)
+  recordsFailed    Int       @default(0)
+  errorMessage     String?
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
 }
 
 // ─── Generic Synced Entity (for all integration types) ─────────────
@@ -563,13 +583,13 @@ model SyncLog {
 model SyncedEntity {
   id              String   @id @default(uuid())
   integrationId   String
-  entityKind      String   // e.g. "connectwise", "halopsa", "itglue"
-  entityType      String   // e.g. "ticket", "contact", "invoice"
-  externalId      String   // unique ID from the external system
+  entityKind      String // e.g. "connectwise", "halopsa", "itglue"
+  entityType      String // e.g. "ticket", "contact", "invoice"
+  externalId      String // unique ID from the external system
   displayName     String?
-  data            Json     @default("{}")  // raw JSON from the API
-  linkedContactId String?  // optional link to a Contact record
-  linkedCompanyId String?  // optional link to a Company record
+  data            Json     @default("{}") // raw JSON from the API
+  linkedContactId String? // optional link to a Contact record
+  linkedCompanyId String? // optional link to a Company record
   lastSyncedAt    DateTime @default(now())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -583,7 +603,7 @@ model SyncedEntity {
 
 model Notification {
   id        String   @id @default(uuid())
-  type      String   // "ticket_assigned", "ticket_updated", "invoice_sent", "sla_breach", etc.
+  type      String // "ticket_assigned", "ticket_updated", "invoice_sent", "sla_breach", etc.
   title     String
   body      String
   isRead    Boolean  @default(false)
@@ -621,36 +641,37 @@ model SystemConfig {
 // ═══════════════════════════════════════════════════════════════════
 
 model AiProviderConfig {
-  id            String   @id @default(uuid())
-  name          String   @unique
-  provider      String
-  isActive      Boolean  @default(false)
-  isDefault     Boolean  @default(false)
-  apiKey        String?
-  apiEndpoint   String?
-  model         String   @default("gpt-4o-mini")
-  maxTokens     Int      @default(2000)
-  temperature   Float    @default(0.3)
-  topP          Float    @default(1.0)
-  config        Json     @default("{}")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(uuid())
+  name        String   @unique
+  provider    String
+  isActive    Boolean  @default(false)
+  isDefault   Boolean  @default(false)
+  apiKey      String?
+  apiEndpoint String?
+  model       String   @default("gpt-4o-mini")
+  maxTokens   Int      @default(2000)
+  temperature Float    @default(0.3)
+  topP        Float    @default(1.0)
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model InferenceCache {
-  id          String   @id @default(uuid())
-  ticketId    String
-  providerId  String
-  requestType String
-  requestHash String
-  response    Json     @default("{}")
-  tokensUsed  Int      @default(0)
-  costEstimate Float   @default(0)
-  latencyMs   Int      @default(0)
-  hitCount    Int      @default(0)
-  expiresAt   DateTime?
+  id           String    @id @default(uuid())
+  ticketId     String
+  providerId   String
+  requestType  String
+  requestHash  String
+  response     Json      @default("{}")
+  tokensUsed   Int       @default(0)
+  costEstimate Float     @default(0)
+  latencyMs    Int       @default(0)
+  hitCount     Int       @default(0)
+  expiresAt    DateTime?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+
   @@index([ticketId])
   @@index([requestHash])
   @@index([providerId])
@@ -663,60 +684,61 @@ model TicketSimilarity {
   score           Float
   method          String
   createdAt       DateTime @default(now())
+
   @@unique([ticketId, similarTicketId])
   @@index([ticketId])
 }
 
 model DetectedPattern {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
   description String?
   category    String
-  severity    String   @default("medium")
+  severity    String    @default("medium")
   entityType  String
-  entityIds   String[] @default([])
-  metrics     Json     @default("{}")
-  status      String   @default("open")
-  detectedAt  DateTime @default(now())
+  entityIds   String[]  @default([])
+  metrics     Json      @default("{}")
+  status      String    @default("open")
+  detectedAt  DateTime  @default(now())
   resolvedAt  DateTime?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model WebhookConfig {
-  id        String   @id @default(uuid())
-  name      String
-  url       String
-  secret    String
-  events    String[] @default([])
-  isActive  Boolean  @default(true)
-  retryCount Int     @default(3)
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  name       String
+  url        String
+  secret     String
+  events     String[] @default([])
+  isActive   Boolean  @default(true)
+  retryCount Int      @default(3)
+  createdAt  DateTime @default(now())
 }
 
 model Opportunity {
-  id              String   @id @default(uuid())
-  name            String
-  companyId       String
-  contactId       String?
-  stage           String   @default("prospect")
-  probability     Int      @default(0)
-  amount          Float    @default(0)
-  currency        String   @default("USD")
+  id                String    @id @default(uuid())
+  name              String
+  companyId         String
+  contactId         String?
+  stage             String    @default("prospect")
+  probability       Int       @default(0)
+  amount            Float     @default(0)
+  currency          String    @default("USD")
   expectedCloseDate DateTime?
-  closedAt        DateTime?
-  wonReason       String?
-  lostReason      String?
-  assignedToId    String?
-  notes           String?
-  customFields    Json     @default("{}")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  closedAt          DateTime?
+  wonReason         String?
+  lostReason        String?
+  assignedToId      String?
+  notes             String?
+  customFields      Json      @default("{}")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 model SalesActivity {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   opportunityId String
   type          String
   subject       String
@@ -724,16 +746,18 @@ model SalesActivity {
   userId        String
   scheduledAt   DateTime?
   completedAt   DateTime?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
+
   @@index([opportunityId])
 }
 
 model TechnicianSkill {
-  id        String @id @default(uuid())
+  id        String   @id @default(uuid())
   userId    String
   skill     String
-  level     Int    @default(1)
+  level     Int      @default(1)
   createdAt DateTime @default(now())
+
   @@unique([userId, skill])
 }
 
@@ -750,60 +774,61 @@ model ScheduleEntry {
   travelTime  Int?
   color       String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
 }
 
 model Project {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   name            String
   description     String?
   companyId       String
-  status          String   @default("planning")
-  priority        String   @default("medium")
+  status          String    @default("planning")
+  priority        String    @default("medium")
   startDate       DateTime?
   endDate         DateTime?
   actualStartDate DateTime?
   actualEndDate   DateTime?
-  budget          Float    @default(0)
-  budgetSpent     Float    @default(0)
-  currency        String   @default("USD")
+  budget          Float     @default(0)
+  budgetSpent     Float     @default(0)
+  currency        String    @default("USD")
   managerId       String?
-  customFields    Json     @default("{}")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  customFields    Json      @default("{}")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model ProjectPhase {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   projectId   String
   name        String
   description String?
-  sortOrder   Int      @default(0)
+  sortOrder   Int       @default(0)
   startDate   DateTime?
   endDate     DateTime?
-  status      String   @default("pending")
+  status      String    @default("pending")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ProjectTask {
-  id              String   @id @default(uuid())
-  phaseId         String
-  name            String
-  description     String?
-  sortOrder       Int      @default(0)
-  status          String   @default("pending")
-  estimatedHours  Float?
-  actualHours     Float?
-  assignedToId    String?
-  startDate       DateTime?
-  endDate         DateTime?
-  ticketId        String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String    @id @default(uuid())
+  phaseId        String
+  name           String
+  description    String?
+  sortOrder      Int       @default(0)
+  status         String    @default("pending")
+  estimatedHours Float?
+  actualHours    Float?
+  assignedToId   String?
+  startDate      DateTime?
+  endDate        DateTime?
+  ticketId       String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model ProjectTaskDependency {
@@ -812,155 +837,156 @@ model ProjectTaskDependency {
   dependsOnId String
   type        String @default("finish_to_start")
   lagMinutes  Int    @default(0)
+
   @@unique([taskId, dependsOnId])
 }
 
 model Asset {
-  id              String   @id @default(uuid())
-  name            String
-  assetTag        String   @unique
-  serialNumber    String?
-  model           String?
-  manufacturer    String?
-  type            String   // hardware, software, license, server, laptop, mobile, network, other
-  category        String?  // workstation, peripheral, infrastructure, cloud, saas
-  status          String   @default("available") // available, assigned, maintenance, retired, lost
-  department      String?
-  vendor          String?
-  purchaseDate    DateTime?
-  purchasePrice   Float?
-  purchaseOrder   String?
-  warrantyExpiry  DateTime?
-  location        String?
-  building        String?
-  room            String?
-  companyId       String?
-  assignedToId    String?
-  costCenter      String?
+  id                 String    @id @default(uuid())
+  name               String
+  assetTag           String    @unique
+  serialNumber       String?
+  model              String?
+  manufacturer       String?
+  type               String // hardware, software, license, server, laptop, mobile, network, other
+  category           String? // workstation, peripheral, infrastructure, cloud, saas
+  status             String    @default("available") // available, assigned, maintenance, retired, lost
+  department         String?
+  vendor             String?
+  purchaseDate       DateTime?
+  purchasePrice      Float?
+  purchaseOrder      String?
+  warrantyExpiry     DateTime?
+  location           String?
+  building           String?
+  room               String?
+  companyId          String?
+  assignedToId       String?
+  costCenter         String?
   depreciationMethod String? // straight_line, declining_balance, none
-  usefulLife      Int?     // months
-  salvageValue    Float?
-  ipAddress       String?
-  macAddress      String?
-  osName          String?
-  osVersion       String?
-  installedSoftware Json?  @default("[]")
-  notes           String?
-  customFields    Json     @default("{}")
-  lastAuditedAt   DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  usefulLife         Int? // months
+  salvageValue       Float?
+  ipAddress          String?
+  macAddress         String?
+  osName             String?
+  osVersion          String?
+  installedSoftware  Json?     @default("[]")
+  notes              String?
+  customFields       Json      @default("{}")
+  lastAuditedAt      DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model AssetAssignment {
-  id          String   @id @default(uuid())
-  assetId     String
+  id           String    @id @default(uuid())
+  assetId      String
   assignedToId String?
-  ticketId    String?
-  checkedOutAt DateTime @default(now())
+  ticketId     String?
+  checkedOutAt DateTime  @default(now())
   checkedInAt  DateTime?
-  notes       String?
+  notes        String?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Contract {
-  id              String   @id @default(uuid())
-  name            String
-  contractNumber  String   @unique
-  companyId       String
-  type            String
-  status          String   @default("active")
-  startDate       DateTime
-  endDate         DateTime
-  renewalDate     DateTime?
-  autoRenew       Boolean  @default(false)
-  value           Float    @default(0)
-  currency        String   @default("USD")
-  billingPeriod   String?
+  id                 String    @id @default(uuid())
+  name               String
+  contractNumber     String    @unique
+  companyId          String
+  type               String
+  status             String    @default("active")
+  startDate          DateTime
+  endDate            DateTime
+  renewalDate        DateTime?
+  autoRenew          Boolean   @default(false)
+  value              Float     @default(0)
+  currency           String    @default("USD")
+  billingPeriod      String?
   serviceAgreementId String?
-  notifiedAt      DateTime?
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  notifiedAt         DateTime?
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model ContractMilestone {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   contractId  String
   name        String
   description String?
   dueDate     DateTime
   completedAt DateTime?
   amount      Float?
-  status      String   @default("pending")
+  status      String    @default("pending")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Vendor {
-  id          String   @id @default(uuid())
-  name        String
-  contactName String?
-  email       String?
-  phone       String?
-  website     String?
-  address     String?
-  taxId       String?
+  id           String  @id @default(uuid())
+  name         String
+  contactName  String?
+  email        String?
+  phone        String?
+  website      String?
+  address      String?
+  taxId        String?
   paymentTerms String?
-  isActive    Boolean  @default(true)
-  notes       String?
+  isActive     Boolean @default(true)
+  notes        String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model PurchaseOrder {
-  id          String   @id @default(uuid())
-  poNumber    String   @unique
-  vendorId    String
-  status      String   @default("draft")
-  subtotal    Float    @default(0)
-  taxTotal    Float    @default(0)
-  total       Float    @default(0)
-  currency    String   @default("USD")
-  orderedAt   DateTime?
-  expectedAt  DateTime?
-  receivedAt  DateTime?
+  id           String    @id @default(uuid())
+  poNumber     String    @unique
+  vendorId     String
+  status       String    @default("draft")
+  subtotal     Float     @default(0)
+  taxTotal     Float     @default(0)
+  total        Float     @default(0)
+  currency     String    @default("USD")
+  orderedAt    DateTime?
+  expectedAt   DateTime?
+  receivedAt   DateTime?
   approvedById String?
-  createdById String
-  notes       String?
+  createdById  String
+  notes        String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model POLineItem {
-  id          String @id @default(uuid())
+  id          String  @id @default(uuid())
   poId        String
   description String
-  quantity    Float  @default(1)
+  quantity    Float   @default(1)
   unitPrice   Float
   total       Float
   assetId     String?
 }
 
 model PtoRequest {
-  id          String   @id @default(uuid())
-  userId      String
-  type        String
-  status      String   @default("pending")
-  startDate   DateTime
-  endDate     DateTime
-  hours       Float
-  reason      String?
+  id           String    @id @default(uuid())
+  userId       String
+  type         String
+  status       String    @default("pending")
+  startDate    DateTime
+  endDate      DateTime
+  hours        Float
+  reason       String?
   approvedById String?
-  approvedAt  DateTime?
+  approvedAt   DateTime?
   deniedReason String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Holiday {
@@ -974,16 +1000,16 @@ model Holiday {
 }
 
 model Survey {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  type        String   @default("csat")
-  isActive    Boolean  @default(true)
-  sendOnResolve Boolean @default(false)
-  sendDelayHours Int   @default(1)
+  id             String  @id @default(uuid())
+  name           String
+  description    String?
+  type           String  @default("csat")
+  isActive       Boolean @default(true)
+  sendOnResolve  Boolean @default(false)
+  sendDelayHours Int     @default(1)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model SurveyQuestion {
@@ -1005,7 +1031,7 @@ model SurveyResponse {
   npsScore    Int?
   completedAt DateTime @default(now())
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model SurveyAnswer {
@@ -1016,34 +1042,34 @@ model SurveyAnswer {
 }
 
 model KnowledgeBaseArticle {
-  id          String   @id @default(uuid())
-  title       String
-  slug        String   @unique
-  content     String
-  excerpt     String?
-  status      String   @default("draft")
-  visibility  String   @default("internal")
-  categoryId  String?
-  authorId    String
-  viewCount   Int      @default(0)
-  helpfulCount Int     @default(0)
-  notHelpfulCount Int  @default(0)
-  tags        String[] @default([])
+  id              String   @id @default(uuid())
+  title           String
+  slug            String   @unique
+  content         String
+  excerpt         String?
+  status          String   @default("draft")
+  visibility      String   @default("internal")
+  categoryId      String?
+  authorId        String
+  viewCount       Int      @default(0)
+  helpfulCount    Int      @default(0)
+  notHelpfulCount Int      @default(0)
+  tags            String[] @default([])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model KBCategory {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
-  slug        String   @unique
+  slug        String  @unique
   description String?
   parentId    String?
-  sortOrder   Int      @default(0)
+  sortOrder   Int     @default(0)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model KBArticleVersion {
@@ -1054,6 +1080,7 @@ model KBArticleVersion {
   changeNote String?
   authorId   String
   createdAt  DateTime @default(now())
+
   @@unique([articleId, version])
 }
 
@@ -1074,48 +1101,49 @@ model KBArticleTicket {
   ticketId   String
   linkedById String
   createdAt  DateTime @default(now())
+
   @@unique([articleId, ticketId])
 }
 
 model ChatSession {
-  id           String   @id @default(uuid())
-  status       String   @default("active")
+  id           String    @id @default(uuid())
+  status       String    @default("active")
   companyId    String?
   userId       String?
   guestName    String?
   guestEmail   String?
   assignedToId String?
   ticketId     String?
-  startedAt    DateTime @default(now())
+  startedAt    DateTime  @default(now())
   closedAt     DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model ChatMessage {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   sessionId   String
   senderType  String
   senderId    String?
   content     String
-  contentType String   @default("text")
-  isRead      Boolean  @default(false)
+  contentType String  @default("text")
+  isRead      Boolean @default(false)
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model WorkflowRule {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
   entity      String
   trigger     String
-  conditions  Json     @default("[]")
-  isActive    Boolean  @default(true)
-  priority    Int      @default(0)
+  conditions  Json    @default("[]")
+  isActive    Boolean @default(true)
+  priority    Int     @default(0)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model WorkflowRuleAction {
@@ -1127,92 +1155,94 @@ model WorkflowRuleAction {
 }
 
 model WorkflowExecution {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   ruleId      String
   entityId    String
-  status      String   @default("running")
-  result      Json     @default("{}")
-  startedAt   DateTime @default(now())
+  status      String    @default("running")
+  result      Json      @default("{}")
+  startedAt   DateTime  @default(now())
   completedAt DateTime?
 }
 
 model Report {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
   type        String
-  config      Json     @default("{}")
-  isSystem    Boolean  @default(false)
+  config      Json    @default("{}")
+  isSystem    Boolean @default(false)
   createdById String
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ReportSchedule {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   reportId   String
   frequency  String
   dayOfWeek  Int?
   dayOfMonth Int?
   timeOfDay  String
   recipients String[]
-  format     String   @default("pdf")
-  isActive   Boolean  @default(true)
+  format     String    @default("pdf")
+  isActive   Boolean   @default(true)
   lastSentAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 model FieldPermission {
-  id       String  @id @default(uuid())
-  entity   String
-  field    String
-  roleName String
-  canRead  Boolean @default(true)
-  canWrite Boolean @default(false)
+  id        String   @id @default(uuid())
+  entity    String
+  field     String
+  roleName  String
+  canRead   Boolean  @default(true)
+  canWrite  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@unique([entity, field, roleName])
 }
 
 model SsoConfig {
-  id       String   @id @default(uuid())
-  name     String
-  provider String
-  isActive Boolean  @default(false)
-  config   Json     @default("{}")
-  domains  String[] @default([])
+  id        String   @id @default(uuid())
+  name      String
+  provider  String
+  isActive  Boolean  @default(false)
+  config    Json     @default("{}")
+  domains   String[] @default([])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Locale {
-  id        String  @id @default(uuid())
-  code      String  @unique
+  id        String   @id @default(uuid())
+  code      String   @unique
   name      String
-  isActive  Boolean @default(true)
-  isDefault Boolean @default(false)
-  direction String  @default("ltr")
+  isActive  Boolean  @default(true)
+  isDefault Boolean  @default(false)
+  direction String   @default("ltr")
   createdAt DateTime @default(now())
 }
 
 model Translation {
-  id        String @id @default(uuid())
+  id         String   @id @default(uuid())
   localeCode String
-  key       String
-  value     String
-  namespace String @default("common")
-  updatedAt DateTime @updatedAt
+  key        String
+  value      String
+  namespace  String   @default("common")
+  updatedAt  DateTime @updatedAt
+
   @@unique([localeCode, key, namespace])
 }
 
 model Currency {
-  code          String  @id
+  code          String   @id
   name          String
   symbol        String
-  decimalPlaces Int     @default(2)
-  isActive      Boolean @default(true)
+  decimalPlaces Int      @default(2)
+  isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
 }
 
@@ -1222,54 +1252,57 @@ model ExchangeRate {
   toCurrency   String
   rate         Float
   updatedAt    DateTime @updatedAt
+
   @@unique([fromCurrency, toCurrency])
 }
 
 model RetentionPolicy {
-  id           String   @id @default(uuid())
-  entity       String
+  id            String    @id @default(uuid())
+  entity        String
   retentionDays Int
-  archiveAction String  @default("archive")
-  condition    Json     @default("{}")
-  isActive     Boolean  @default(true)
-  lastRunAt    DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  archiveAction String    @default("archive")
+  condition     Json      @default("{}")
+  isActive      Boolean   @default(true)
+  lastRunAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
   @@unique([entity])
 }
 
 model CalendarSyncConfig {
-  id                   String   @id @default(uuid())
-  userId               String
-  provider             String
-  accessToken          String
-  refreshToken         String?
-  tokenExpiry          DateTime?
-  calendarId           String?
-  syncScheduleEntries  Boolean  @default(true)
-  syncPto              Boolean  @default(true)
-  lastSyncAt           DateTime?
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                  String    @id @default(uuid())
+  userId              String
+  provider            String
+  accessToken         String
+  refreshToken        String?
+  tokenExpiry         DateTime?
+  calendarId          String?
+  syncScheduleEntries Boolean   @default(true)
+  syncPto             Boolean   @default(true)
+  lastSyncAt          DateTime?
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
   @@unique([userId, provider])
 }
 
 model BulkOperation {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   type         String
-  status       String   @default("pending")
+  status       String    @default("pending")
   entity       String
-  config       Json     @default("{}")
-  totalCount   Int      @default(0)
-  successCount Int      @default(0)
-  failureCount Int      @default(0)
-  errors       Json     @default("[]")
+  config       Json      @default("{}")
+  totalCount   Int       @default(0)
+  successCount Int       @default(0)
+  failureCount Int       @default(0)
+  errors       Json      @default("[]")
   createdById  String
   startedAt    DateTime?
   completedAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1298,61 +1331,61 @@ model KumoLink {
 }
 
 model KumoAssetTemplate {
-  id          String   @id @default(uuid())
+  id          String              @id @default(uuid())
   name        String
   description String?
   icon        String?
-  color       String?  @default("#3b82d6")
-  isBuiltIn   Boolean  @default(false)
-  isActive    Boolean  @default(true)
+  color       String?             @default("#3b82d6")
+  isBuiltIn   Boolean             @default(false)
+  isActive    Boolean             @default(true)
   companyId   String?
   fields      KumoTemplateField[]
   assets      KumoAsset[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model KumoTemplateField {
-  id           String            @id @default(uuid())
+  id           String                @id @default(uuid())
   templateId   String
-  template     KumoAssetTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  template     KumoAssetTemplate     @relation(fields: [templateId], references: [id], onDelete: Cascade)
   key          String
   label        String
-  fieldType    String            @default("text")
-  required     Boolean           @default(false)
+  fieldType    String                @default("text")
+  required     Boolean               @default(false)
   options      Json?
   placeholder  String?
   helpText     String?
   defaultValue Json?
-  isSensitive  Boolean           @default(false)
-  encrypted    Boolean           @default(false)
-  sortOrder    Int               @default(0)
+  isSensitive  Boolean               @default(false)
+  encrypted    Boolean               @default(false)
+  sortOrder    Int                   @default(0)
   values       KumoAssetFieldValue[] @relation("FieldToValues")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([templateId, key])
 }
 
 model KumoAsset {
-  id            String            @id @default(uuid())
-  templateId    String
-  template      KumoAssetTemplate @relation(fields: [templateId], references: [id])
-  name          String
-  status        String            @default("active")
-  companyId     String?
-  tags          String[]          @default([])
-  createdById   String
-  updatedById   String?
-  fieldValues   KumoAssetFieldValue[] @relation("AssetToValues")
+  id                String                @id @default(uuid())
+  templateId        String
+  template          KumoAssetTemplate     @relation(fields: [templateId], references: [id])
+  name              String
+  status            String                @default("active")
+  companyId         String?
+  tags              String[]              @default([])
+  createdById       String
+  updatedById       String?
+  fieldValues       KumoAssetFieldValue[] @relation("AssetToValues")
   configServer      KumoServer?
   configWorkstation KumoWorkstation?
   configNetwork     KumoNetworkDevice?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([templateId, companyId])
 }
@@ -1417,7 +1450,7 @@ model KumoNetworkDevice {
 }
 
 model KumoPassword {
-  id                String   @id @default(uuid())
+  id                String                  @id @default(uuid())
   label             String
   username          String?
   email             String?
@@ -1433,14 +1466,14 @@ model KumoPassword {
   notes             String?
   companyId         String?
   totpSecret        String?
-  totpEnabled       Boolean  @default(false)
-  isActive          Boolean  @default(true)
+  totpEnabled       Boolean                 @default(false)
+  isActive          Boolean                 @default(true)
   createdById       String
   updatedById       String?
   accessLogs        KumoPasswordAccessLog[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId, category])
 }
@@ -1462,14 +1495,14 @@ model KumoPasswordAccessLog {
 }
 
 model KumoFolder {
-  id          String       @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
   slug        String
   description String?
   parentId    String?
-  parent      KumoFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
-  children    KumoFolder[] @relation("FolderHierarchy")
-  sortOrder   Int          @default(0)
+  parent      KumoFolder?    @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children    KumoFolder[]   @relation("FolderHierarchy")
+  sortOrder   Int            @default(0)
   companyId   String?
   documents   KumoDocument[]
 
@@ -1478,41 +1511,41 @@ model KumoFolder {
 }
 
 model KumoDocument {
-  id             String      @id @default(uuid())
+  id             String                 @id @default(uuid())
   folderId       String?
-  folder         KumoFolder? @relation(fields: [folderId], references: [id])
+  folder         KumoFolder?            @relation(fields: [folderId], references: [id])
   title          String
   slug           String
   currentContent String
-  currentVersion Int         @default(1)
-  status         String      @default("draft")
-  visibility     String      @default("internal")
-  sortOrder      Int         @default(0)
+  currentVersion Int                    @default(1)
+  status         String                 @default("draft")
+  visibility     String                 @default("internal")
+  sortOrder      Int                    @default(0)
   companyId      String?
-  tags           String[]    @default([])
+  tags           String[]               @default([])
   authorId       String
   lastEditorId   String?
-  viewCount      Int         @default(0)
-  isTemplate     Boolean     @default(false)
+  viewCount      Int                    @default(0)
+  isTemplate     Boolean                @default(false)
   revisions      KumoDocumentRevision[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([folderId, sortOrder])
   @@index([companyId, status])
 }
 
 model KumoDocumentRevision {
-  id         String        @id @default(uuid())
+  id         String       @id @default(uuid())
   documentId String
-  document   KumoDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document   KumoDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
   version    Int
   content    String
   changeLog  String?
   authorId   String
   fileSize   Int?
-  createdAt  DateTime      @default(now())
+  createdAt  DateTime     @default(now())
 
   @@unique([documentId, version])
   @@index([documentId, createdAt])
@@ -1521,17 +1554,17 @@ model KumoDocumentRevision {
 // ── FlowIngest: Domain Tracking ───────────────────────────────────
 
 model KumoDomain {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   domainName  String
   registrar   String?
   expiryDate  DateTime?
-  autoRenew   Boolean  @default(true)
+  autoRenew   Boolean   @default(true)
   dnsProvider String?
-  nameservers String[] @default([])
+  nameservers String[]  @default([])
   notes       String?
   companyId   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([companyId])
   @@index([expiryDate])
@@ -1540,19 +1573,19 @@ model KumoDomain {
 // ── FI-031: Certificate/SSL Tracking ──────────────────────────────
 
 model KumoCertificate {
-  id               String   @id @default(uuid())
-  name             String
-  domain           String
-  issuer           String?
-  expiryDate       DateTime
-  validFrom        DateTime?
-  subjectAltNames  String[] @default([])
-  certificateType  String?  @default("DV")
-  autoRenew        Boolean  @default(false)
-  notes            String?
-  companyId        String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String    @id @default(uuid())
+  name            String
+  domain          String
+  issuer          String?
+  expiryDate      DateTime
+  validFrom       DateTime?
+  subjectAltNames String[]  @default([])
+  certificateType String?   @default("DV")
+  autoRenew       Boolean   @default(false)
+  notes           String?
+  companyId       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([companyId])
   @@index([expiryDate])
@@ -1566,7 +1599,7 @@ model KumoFile {
   mimeType     String
   size         Int
   storagePath  String
-  entityType   String?  // "client", "ticket", "kumo_asset"
+  entityType   String? // "client", "ticket", "kumo_asset"
   entityId     String?
   companyId    String?
   uploadedById String
@@ -1599,29 +1632,29 @@ model Expense {
 // ── FI-040: Alerting System ────────────────────────────────────────
 
 model AlertRule {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   name          String
-  entityType    String   // "domain", "certificate", "invoice", "password"
-  triggerDays   Int      @default(30) // days before expiry to trigger
-  enabled       Boolean  @default(true)
+  entityType    String // "domain", "certificate", "invoice", "password"
+  triggerDays   Int       @default(30) // days before expiry to trigger
+  enabled       Boolean   @default(true)
   notifyEmail   String?
   lastTriggered DateTime?
   createdById   String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model AlertLog {
-  id            String   @id @default(uuid())
-  ruleId        String?
-  entityType    String
-  entityId      String
-  message       String
-  severity      String   @default("warning") // "info", "warning", "critical"
-  dismissed     Boolean  @default(false)
-  dismissedBy   String?
-  dismissedAt   DateTime?
-  createdAt     DateTime @default(now())
+  id          String    @id @default(uuid())
+  ruleId      String?
+  entityType  String
+  entityId    String
+  message     String
+  severity    String    @default("warning") // "info", "warning", "critical"
+  dismissed   Boolean   @default(false)
+  dismissedBy String?
+  dismissedAt DateTime?
+  createdAt   DateTime  @default(now())
 
   @@index([dismissed, createdAt])
 }
@@ -1629,13 +1662,13 @@ model AlertLog {
 // ── FI-041: Recently Viewed Items ──────────────────────────────────
 
 model RecentlyViewedItem {
-  id          String   @id @default(uuid())
-  userId      String
-  entityType  String   // "password", "config", "asset", "document", "domain", "certificate", "link"
-  entityId    String
-  entityName  String
-  entityIcon  String   @default("document")  // icon hint for the frontend
-  viewedAt    DateTime @default(now())
+  id         String   @id @default(uuid())
+  userId     String
+  entityType String // "password", "config", "asset", "document", "domain", "certificate", "link"
+  entityId   String
+  entityName String
+  entityIcon String   @default("document") // icon hint for the frontend
+  viewedAt   DateTime @default(now())
 
   @@unique([userId, entityType, entityId])
   @@index([userId, viewedAt])
@@ -1644,22 +1677,22 @@ model RecentlyViewedItem {
 // ── FI-060: Service Alerts ─────────────────────────────────────────
 
 model ServiceAlertService {
-  id              String   @id @default(uuid())
-  name            String   @unique
-  category        String   @default("other") // cloud, isp, telecom, collaboration, other
-  description     String?  // short summary shown on dashboard cards
-  statusPageUrl   String?  // official status page
-  downDetectorUrl String?  // DownDetector status page
-  rssUrl          String?  // RSS feed polled by the alert monitor
-  monitorKind     String   @default("vendor") // vendor, website, ssl, dns
-  monitorUrl      String?  // target URL/host for website/ssl/dns kinds
-  monitorConfig   Json?    // e.g. { checkIntervalMin, expectStatus, sslWarnDays }
-  monitorEnabled  Boolean  @default(true)
-  enabled         Boolean  @default(true)
-  sortOrder       Int      @default(0)
+  id              String         @id @default(uuid())
+  name            String         @unique
+  category        String         @default("other") // cloud, isp, telecom, collaboration, other
+  description     String? // short summary shown on dashboard cards
+  statusPageUrl   String? // official status page
+  downDetectorUrl String? // DownDetector status page
+  rssUrl          String? // RSS feed polled by the alert monitor
+  monitorKind     String         @default("vendor") // vendor, website, ssl, dns
+  monitorUrl      String? // target URL/host for website/ssl/dns kinds
+  monitorConfig   Json? // e.g. { checkIntervalMin, expectStatus, sslWarnDays }
+  monitorEnabled  Boolean        @default(true)
+  enabled         Boolean        @default(true)
+  sortOrder       Int            @default(0)
   alerts          ServiceAlert[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   @@index([enabled, sortOrder])
 }
@@ -1740,7 +1773,7 @@ model PushDevice {
 
 model AiAction {
   id            String          @id @default(uuid())
-  entityType    String          // ticket, device, client
+  entityType    String // ticket, device, client
   entityId      String?
   title         String
   summary       String
@@ -1761,7 +1794,7 @@ model AiActionAudit {
   id       String   @id @default(uuid())
   actionId String
   action   AiAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
-  event    String   // proposed, approved, rejected, executed, blocked
+  event    String // proposed, approved, rejected, executed, blocked
   userId   String?
   detail   String?
   at       DateTime @default(now())

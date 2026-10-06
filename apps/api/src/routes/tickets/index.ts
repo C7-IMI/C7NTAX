@@ -8,7 +8,8 @@ import { AppError } from "../../middleware/errorHandler";
 import { onTicketStatusChange, extractPriority } from "./automations";
 import { generateTicketNumber } from "../../services/ticketNumber";
 import { EmailService } from "@C7NTAX/email";
-import { notifyTicketContact, notifyTicketStatusChange } from "../../services/ticketNotifications";
+import { notifyTicketContact, notifyTicketNote, notifyTicketStatusChange } from "../../services/ticketNotifications";
+import { addTicketContact, listTicketContacts, removeTicketContact, resolveRecipients, ticketCcEmails, updateTicketContact, isEmailAddress } from "../../services/ticketContacts";
 import { v4 as uuid } from "uuid";
 import { sanitizeEmailHtml, htmlToText, extractInlineImages } from "../../services/emailHtml";
 import { logger } from "../../services/logger";
@@ -170,6 +171,10 @@ ticketsRouter.get("/:id", requirePermission(Permission.TicketView), async (req: 
       where: { id: req.params.id },
       include: {
         company: true, contact: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } }, assignedTo: true, board: true,
+        additionalContacts: {
+          orderBy: { createdAt: "asc" },
+          include: { contact: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } } },
+        },
         comments: { orderBy: { createdAt: "desc" }, include: { author: { select: { id: true, firstName: true, lastName: true } } } },
         timeEntries: { orderBy: { date: "desc" }, include: { user: { select: { id: true, firstName: true, lastName: true } } } },
         attachments: { orderBy: { createdAt: "desc" } },
@@ -185,10 +190,58 @@ ticketsRouter.get("/:id", requirePermission(Permission.TicketView), async (req: 
   } catch (e) { next(e); }
 });
 
+// ── Ticket contacts (CC / additional) ──
+ticketsRouter.get("/:id/contacts", requirePermission(Permission.TicketView), async (req: AuthRequest, res, next) => {
+  try {
+    const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { companyId: true } });
+    if (!ticket) throw new AppError("Ticket not found", 404);
+    if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
+    res.json(await listTicketContacts(String(req.params.id)));
+  } catch (e) { next(e); }
+});
+
+ticketsRouter.post("/:id/contacts", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { id: true, companyId: true } });
+    if (!ticket) throw new AppError("Ticket not found", 404);
+    if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
+    const link = await addTicketContact(ticket.id, {
+      contactId: req.body?.contactId,
+      email: req.body?.email,
+      firstName: req.body?.firstName,
+      lastName: req.body?.lastName,
+      role: req.body?.role,
+      notifyOnNote: req.body?.notifyOnNote,
+    });
+    res.status(201).json(link);
+  } catch (e) { next(e); }
+});
+
+ticketsRouter.patch("/:id/contacts/:contactId", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { id: true, companyId: true } });
+    if (!ticket) throw new AppError("Ticket not found", 404);
+    if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
+    const link = await updateTicketContact(ticket.id, String(req.params.contactId), { role: req.body?.role, notifyOnNote: req.body?.notifyOnNote });
+    res.json(link);
+  } catch (e) { next(e); }
+});
+
+ticketsRouter.delete("/:id/contacts/:contactId", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { id: true, companyId: true } });
+    if (!ticket) throw new AppError("Ticket not found", 404);
+    if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
+    const removed = await removeTicketContact(ticket.id, String(req.params.contactId));
+    if (!removed) throw new AppError("That contact is not on this ticket", 404);
+    res.json({ removed: true });
+  } catch (e) { next(e); }
+});
+
 // ── Create ticket ──
 ticketsRouter.post("/", requirePermission(Permission.TicketCreate), async (req: AuthRequest, res, next) => {
   try {
-    const { title, description, boardId, companyId, priority, source, startTime, endTime, contactId, assignedToId } = req.body;
+    const { title, description, boardId, companyId, priority, source, startTime, endTime, contactId, assignedToId, additionalContactIds } = req.body;
     if (!title || !boardId) throw new AppError("title and boardId required");
     const board = await prisma.serviceBoard.findUnique({ where: { id: boardId } });
     if (!board) throw new AppError("Service board not found", 404);
@@ -209,6 +262,19 @@ ticketsRouter.post("/", requirePermission(Permission.TicketCreate), async (req: 
         assignedToId: assignedToId || null,
       },
     });
+
+    // Extra contacts chosen while creating the ticket are linked straight away; a bad
+    // id is skipped rather than failing the creation that already succeeded.
+    const extraIds = Array.isArray(additionalContactIds) ? additionalContactIds.filter((v: unknown): v is string => typeof v === "string") : [];
+    for (const extraId of new Set(extraIds)) {
+      if (extraId === contactId) continue;
+      try {
+        await addTicketContact(ticket.id, { contactId: extraId, role: "additional" });
+      } catch (err) {
+        logger.warn("tickets.create", "Skipped additional contact", { ticketId: ticket.id, contactId: extraId, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
     res.status(201).json(ticket);
   } catch (e) { next(e); }
 });
@@ -312,7 +378,15 @@ ticketsRouter.post("/:id/comments", requirePermission(Permission.TicketEdit), as
       include: { author: { select: { id: true, firstName: true, lastName: true } } },
     });
     if (!comment.isInternal) {
-      await notifyTicketContact(ticket.id, { eventLabel: "New note added", details: body });
+      // People picked while writing the note are emailed with it and kept on the
+      // ticket, so the next note can just tick them again.
+      const recipients = await resolveRecipients(req.body?.recipients, {
+        addToTicket: ticket.id,
+        saveToTicket: req.body?.saveRecipients !== false,
+      });
+      await notifyTicketNote(ticket.id, { body, extraTo: recipients.to, extraCc: recipients.cc });
+      res.status(201).json({ ...comment, notified: [...recipients.to, ...recipients.cc], addedContacts: recipients.added });
+      return;
     }
     res.status(201).json(comment);
   } catch (e) { next(e); }
@@ -326,7 +400,11 @@ ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async
       data: { ticketId: req.params.id, body: content, authorId: req.user!.userId, isInternal: isInternal || false },
     });
     if (!note.isInternal) {
-      await notifyTicketContact(note.ticketId, { eventLabel: "New note added", details: String(content) });
+      const recipients = await resolveRecipients(req.body?.recipients, {
+        addToTicket: note.ticketId,
+        saveToTicket: req.body?.saveRecipients !== false,
+      });
+      await notifyTicketNote(note.ticketId, { body: String(content), extraTo: recipients.to, extraCc: recipients.cc });
     }
     res.status(201).json(note);
   } catch (e) { next(e); }
@@ -341,13 +419,31 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
     });
     if (!ticket) throw new AppError("Ticket not found", 404);
     if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
-    const recipient = ticket.contact?.email?.trim();
-    if (!recipient) throw new AppError("This ticket has no contact email address", 400);
     const subject = typeof req.body?.subject === "string" ? req.body.subject.trim().slice(0, 200) : "";
     const richHtml = typeof req.body?.html === "string" ? req.body.html.trim() : "";
     const plainBody = typeof req.body?.body === "string" ? req.body.body.trim() : "";
     if (!subject || (!richHtml && !plainBody)) throw new AppError("Subject and message are required", 400);
     if (plainBody.length > 20_000 || richHtml.length > 200_000) throw new AppError("Message is too long", 400);
+
+    // Recipients: the primary contact unless the composer removed them, plus anyone
+    // picked (client contacts and free addresses), with the ticket's CC contacts copied.
+    const picked = await resolveRecipients(req.body?.recipients, {
+      addToTicket: ticket.id,
+      saveToTicket: req.body?.saveToTicket !== false,
+    });
+    const primary = ticket.contact?.email?.trim();
+    const explicitTo = Array.isArray(req.body?.to) ? req.body.to.filter(isEmailAddress).map((e: string) => e.trim()) : [];
+    const skipPrimary = req.body?.includePrimary === false;
+    const to = [...new Set([...(skipPrimary ? [] : primary ? [primary] : []), ...explicitTo, ...picked.to])];
+    if (!to.length) throw new AppError("Add at least one recipient — this ticket has no contact email address", 400);
+    const toKeys = new Set(to.map((e) => e.toLowerCase()));
+    const ticketCc = await ticketCcEmails(ticket.id, primary);
+    const explicitCc = Array.isArray(req.body?.cc) ? req.body.cc.filter(isEmailAddress).map((e: string) => e.trim()) : [];
+    const cc = [...new Set([...ticketCc, ...explicitCc, ...picked.cc])].filter((e) => !toKeys.has(e.toLowerCase()));
+    const bcc: string[] = [...new Set((Array.isArray(req.body?.bcc) ? req.body.bcc.filter(isEmailAddress).map((e: string) => e.trim()) : []) as string[])].filter(
+      (e) => !toKeys.has(e.toLowerCase()) && !cc.some((c) => c.toLowerCase() === e.toLowerCase()),
+    );
+    const recipient = primary || to[0];
 
     // Attachments are validated before anything is sent, so a bad upload cannot half-send.
     const incoming = Array.isArray(req.body?.attachments) ? req.body.attachments.slice(0, 10) : [];
@@ -365,7 +461,9 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
     let sent;
     try {
       sent = await emailService.send({
-        to: recipient,
+        to,
+        cc: cc.length ? cc : undefined,
+        bcc: bcc.length ? bcc : undefined,
         subject: `[${ticket.ticketNumber}] ${subject}`,
         html: `${inlined.html}<hr><p>Ticket: ${escapeHtml(ticket.ticketNumber)} — ${escapeHtml(ticket.title)}<br>Client: ${escapeHtml(ticket.company?.name || "")}</p>`,
         text: `${messageText}\n\n---\nTicket: ${ticket.ticketNumber} — ${ticket.title}\nClient: ${ticket.company?.name || ""}`,
@@ -386,16 +484,22 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
     if (!sent) throw new AppError("The email could not be sent", 502);
 
     // Sent mail is recorded in activity; the files that went with it also join the attachments tab.
+    const header = [
+      `To: ${to.join(", ")}`,
+      cc.length ? `Cc: ${cc.join(", ")}` : null,
+      bcc.length ? `Bcc: ${bcc.join(", ")}` : null,
+      `Subject: ${subject}`,
+    ].filter(Boolean).join("\n");
     const comment = await prisma.ticketComment.create({
       data: {
         ticketId: ticket.id,
-        body: `To: ${recipient}\nSubject: ${subject}\n\n${messageText}${files.length ? `\n\n(Attached: ${files.map((f: PreparedAttachment) => f.filename).join(", ")})` : ""}`,
+        body: `${header}\n\n${messageText}${files.length ? `\n\n(Attached: ${files.map((f: PreparedAttachment) => f.filename).join(", ")})` : ""}`,
         authorId: req.user!.userId,
         isEmail: true,
       },
     });
     const stored = await storeAttachments(files, { ticketId: ticket.id, uploadedById: req.user!.userId, commentId: comment.id });
-    res.json({ sent: true, recipient, attachments: stored.length, commentId: comment.id });
+    res.json({ sent: true, recipient, to, cc, bcc, attachments: stored.length, commentId: comment.id, addedContacts: picked.added });
   } catch (e) { next(e); }
 });
 
