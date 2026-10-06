@@ -171,7 +171,14 @@ export function KumoDomainsPage() {
                       <p className="text-sm text-white truncate">{row.name}</p>
                       <p className="text-xs text-gray-500 truncate">{row.companyName || "No client"}</p>
                     </div>
-                    {when && <span className={`text-[10px] shrink-0 ${expiryTone(row)}`}>{when.overdue ? "expired" : when.label}</span>}
+                    {when ? (
+                      <span className="text-right shrink-0">
+                        <span className={`block text-[10px] ${expiryTone(row)}`}>{when.overdue ? "expired" : when.label}</span>
+                        <span className="block text-[10px] text-gray-600 mt-0.5">{formatDate(row.expiryDate)}</span>
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-gray-600 shrink-0">no expiry tracked</span>
+                    )}
                   </div>
                 </button>
               );

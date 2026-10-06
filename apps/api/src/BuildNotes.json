@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.6.021",
+    "date": "2026-10-06",
+    "title": "Domains & Certificates list shows the expiry date, not just the countdown",
+    "changes": [
+      {
+        "text": "**Every domain and certificate in the tracker now shows its actual expiry date alongside the time remaining** — \"in 5 days\" with \"Oct 11, 2026\" beneath it, \"expired\" with \"Sep 11, 2026\" — so the list can be read as a calendar rather than only as a countdown. Previously the date was reachable only by opening the record (or hovering), which meant scanning the list told you how urgent something was but not when it actually expires.",
+        "type": "Update"
+      },
+      {
+        "text": "A record with no expiry date now says **\"no expiry tracked\"** instead of showing nothing at all, so a blank space never reads as a rendering fault.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.020",
     "date": "2026-10-06",
     "title": "Kumo gets its own breadcrumb trail, and the global one goes back to normal",

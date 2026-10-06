@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.020 | Last Updated: 2026-10-06
+## Version: 2026.10.6.021 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,11 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.021 — Domains & Certificates list shows the expiry date, not just the countdown
+- **[Update]** **Every domain and certificate in the tracker now shows its actual expiry date alongside the time remaining** — "in 5 days" with "Oct 11, 2026" beneath it, "expired" with "Sep 11, 2026" — so the list can be read as a calendar rather than only as a countdown. Previously the date was reachable only by opening the record (or hovering), which meant scanning the list told you how urgent something was but not when it actually expires.
+- **[Update]** A record with no expiry date now says **"no expiry tracked"** instead of showing nothing at all, so a blank space never reads as a rendering fault.
+- **Verification:** rows read back from the live page — `initech.io` *expired · Sep 11, 2026*, `globexind.com` *in 5 days · Oct 11, 2026*, *in 35 days · Nov 10, 2026*, `acmecorp.com Wildcard` *in 65 days · Dec 10, 2026*, `acmecorp.com` *in 125 days · Feb 8, 2027*, `starkent.com Wildcard` *in 195 days · Apr 19, 2027*, `starkent.com` *in 310 days · Aug 12, 2027* — each row carrying both values, in expiry order. The detail panel already showed "Expires: date (label)" and is unchanged. Typecheck unchanged (web 26, api 178 pre-existing errors). Screenshot: `files/live-domains-dates.png`.
 
 ## 2026.10.6.020 — Kumo gets its own breadcrumb trail, and the global one goes back to normal
 - **[New]** **Kumo now has its own breadcrumb trail, with a back button**, shown at the top of the Kumo content area: *Kumo › Organizations › Acme Corporation › Server* on a client's asset type, *Kumo › Assets › SRV-DC-01* on an asset, *Kumo › Organizations › Acme Corporation › Passwords* on a client-scoped list, and the active filter where there is one (*Kumo › Documents › Stale*, *… › Domains & Certs › Certificates*). It appears on Kumo screens only and starts at *Kumo*, since the header already carries the app-level *Home*.

@@ -2174,3 +2174,21 @@ Two messages, one destination: the trail I had moved into the global header was 
 - Back button driven in sequence through the client screen: list → client → type → back → client → back → list.
 - Placed and hit-tested by geometry: the bar sits inside the scroll container below the header (header bottom 91px, main top 136px, trail top 160px) with `elementFromPoint` resolving to the button itself, so nothing overlaps it. The trail's SVG set is one arrow plus chevrons — no duplicated Home icon.
 - Typecheck unchanged (web 26, api 178 pre-existing), no errors in any changed file. Rollback guide rewritten for the two-trail design, including how to revert the global function, the Kumo bar, and the provider/hook plumbing separately.
+
+### Prompt 175 — Expiry dates on the Domains & Certificates list
+**Timestamp:** 2026-10-06 | **Status:** ✅ Implemented and verified | **Duration:** ~12 min
+**BuildNotes IDs:** 2026.10.6.021
+> For Domains and Certs, the actual date should also be listed, along with the number of days left
+
+**Change**
+- `apps/web/src/pages/KumoDomains.tsx` — each row in the tracker now carries the expiry date under the countdown: *in 5 days* with *Oct 11, 2026* beneath it, *expired* with *Sep 11, 2026*. The right-hand block of the row is now two lines, the countdown keeping its existing tone colour (red expired, amber inside 30 days, grey otherwise) and the date muted beneath it.
+- A row with no expiry date reads **"no expiry tracked"** rather than rendering nothing, so an empty slot cannot be mistaken for a fault. `Domain.expiryDate` is nullable, so that branch is reachable.
+- The detail panel already showed *Expires: Oct 11, 2026 (in 5 days)* and needed no change — worth noting so it is clear the two views agree.
+
+**Why it was only the list**
+- The countdown alone answers "how urgent is this" but not "when does it actually expire", and the date was only reachable by opening a record or hovering the tooltip. On a list whose whole purpose is forward planning, the date belongs on the face of it.
+
+**Verification**
+- Read back from the live page rather than by eye: every row returned both values in expiry order — `initech.io` *expired · Sep 11, 2026*, `globexind.com` *in 5 days · Oct 11, 2026*, *in 35 days · Nov 10, 2026*, `acmecorp.com Wildcard` *in 65 days · Dec 10, 2026*, `acmecorp.com` *in 125 days · Feb 8, 2027*, `starkent.com Wildcard` *in 195 days · Apr 19, 2027*, `starkent.com` *in 310 days · Aug 12, 2027*.
+- A service-worker reload issue earlier in this session had made stale renders look like real ones, so the check confirmed the running module produced the new markup before believing it.
+- Typecheck unchanged (web 26, api 178 pre-existing), no errors in the changed file. Screenshot: `files/live-domains-dates.png`.
