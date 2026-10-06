@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.6.044",
+    "date": "2026-10-06",
+    "title": "Repository moved to the C7-Intelligence organization",
+    "changes": [
+      {
+        "text": "**C7NTAX now lives at `github.com/C7-Intelligence/C7NTAX`.** The repository was **transferred** from the `C7-IMI` personal account into the `C7-Intelligence` organization rather than copied, so it keeps its identity — same repository id, same commit history, branches and settings — and the old `C7-IMI/C7NTAX` URLs redirect to the new ones.",
+        "type": "Update"
+      },
+      {
+        "text": "**Only the push target changed; every file stays in OneDrive.** The working copy is still `C:\\OneDrive\\OneDrive - Cyber 7 Group\\GHRepo\\Kun\\C7NTAX` and was never moved. The single local change is the `origin` remote, repointed from `git@github.com:C7-IMI/C7NTAX.git` to `git@github.com:C7-Intelligence/C7NTAX.git`.",
+        "type": "Update"
+      },
+      {
+        "text": "**The auto-sync push needed no script change.** `scripts/auto-sync.ps1` pushes `origin` and hardcodes only the local path, so the scheduled task keeps working against the new owner once the remote is repointed — it was paused for the transfer window and re-enabled afterwards.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.043",
     "date": "2026-10-06",
     "title": "Every asset type has its own configuration dialog and its own records",

@@ -2786,3 +2786,39 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Assets list: *210 assets* unscoped, *42* for one client, *2* for one client's type. Configurations still lists its servers, and the drawer's breadcrumb still carries the client.
 - A 46-route crawl found no empty-state text anywhere. Web typecheck 0, api 156 (baseline). Snapshot captured at 3,198 records across 101 tables.
 - One test-only gotcha worth remembering: Playwright's `input[type='text']` matches only elements with a literal `type="text"` attribute, so it skipped the Name field and made a correct form look broken for a while. The dialog now has proper label association, and the verification targets fields by label.
+
+---
+
+### Prompt 201 — Move the repository to the C7-Intelligence organization
+**Timestamp:** 2026-10-06 | **Status:** Done — repository transferred, and the push path re-verified against the new owner | **Duration:** ~45 min
+**BuildNotes IDs:** 2026.10.6.044 - Repository moved to the C7-Intelligence organization
+> I need to move this repo to the C7-Intelligence Organization on github and update local and remote paths
+
+**How the move was actually done**
+- The source repository was sitting under the **personal account `C7-IMI`**, not under an organization, and it is public. `gh` is not installed on this machine and the GitHub tooling available in this session is read-only, so the move went through the REST API using the credential that Git Credential Manager already holds for github.com. That credential belongs to the `C7-IMI` user, who is an **active admin of the `C7-Intelligence` organization**; the organization lets its members create repositories, and `C7-Intelligence/C7NTAX` did not exist.
+- A **transfer** was chosen over "create an empty repo and push to it". A transfer keeps the repository id, the full history, branches and settings, leaves nothing behind at the old owner, and GitHub redirects the old URLs — a fresh repo would have produced the same commits but a different repository with the old one still standing. The transfer request returned `202` and the repository was under the new owner within seconds, with its id and its last-push timestamp unchanged.
+- The push path was found **before** the transfer rather than after: the scheduled task **C7NTAX Auto-Sync** runs `scripts/auto-sync.ps1`, which pushes `origin` and hardcodes only the local repository path. So no script needed editing — only the remote. The task was **disabled for the transfer window** so its next run could not push at a URL that was mid-move, then re-enabled and run once.
+- `git remote set-url origin git@github.com:C7-Intelligence/C7NTAX.git` is the entire local change.
+
+**Verification**
+- Pre-transfer state recorded (id `1326639052`, public, default branch `main`) so continuity could be checked afterwards: the repository that appeared at `C7-Intelligence/C7NTAX` carries the **same id** and the same `pushed_at`.
+- SSH is still the transport and still works: `git ls-remote origin HEAD`, `git fetch origin` and `git push origin main` all succeed against the new path, and `HEAD == origin/main` at `470ca70`.
+- The auto-sync task reports `Disabled` during the window and `Ready` again afterwards; running `scripts/auto-sync.ps1` once pushed to the new remote and logged the new URL.
+- Nothing on disk moved: `git rev-parse --show-toplevel` still reports `C:/OneDrive/OneDrive - Cyber 7 Group/GHRepo/Kun/C7NTAX`, which is also what the app's boot task hardcodes.
+
+**Notes for next time**
+- The transfer is asynchronous — poll `GET /repos/C7-Intelligence/C7NTAX` until it answers rather than trusting the `202`.
+- `Invoke-WebRequest` follows redirects, so `GET /repos/C7-IMI/C7NTAX` returning `200` does **not** mean a copy was left behind; it is the redirect to the new location.
+
+---
+
+### Prompt 202 — The same move, with the local-path scope pinned
+**Timestamp:** 2026-10-06 | **Status:** Done — same change as Prompt 201, nothing additional to move | **Duration:** — (recorded with Prompt 201)
+**BuildNotes IDs:** 2026.10.6.044 - Repository moved to the C7-Intelligence organization
+> I need to move this repo to the C7-Intelligence Organization on github and update local and remote paths. THe local path update shuld only be for where the push happens. The lcaol fiels should still be in my onedrive folder
+
+**Scope, made explicit**
+- "Update local and remote paths" means the **push path only**. No file, folder or project path was moved or renamed: the working copy stays at `C:\OneDrive\OneDrive - Cyber 7 Group\GHRepo\Kun\C7NTAX`, resolved identically by `git rev-parse --show-toplevel`, and the only local edit is the `origin` remote (plus this logging).
+- Everything else in the tree was checked for an old-owner dependency and none was found: no `repository`/`homepage` field in any package manifest, no publish or auto-update configuration carrying a repo slug, no workflow referencing the repository, and `scripts/auto-sync.ps1` pushes `origin`. The remaining `C7-IMI` text is either historical BuildNotes/Retrace log lines — left intact, since they record what was true at the time — or a reference to the separate `C7-IMI/C7NTRL` repository, which this move deliberately did not touch.
+- Visibility was left exactly as it was: the repository is still public under its new owner.
+

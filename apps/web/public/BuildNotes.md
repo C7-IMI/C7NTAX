@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.043 | Last Updated: 2026-10-06
+## Version: 2026.10.6.044 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.044 — Repository moved to the C7-Intelligence organization
+- **[Update]** **C7NTAX now lives at `github.com/C7-Intelligence/C7NTAX`.** The repository was **transferred** from the `C7-IMI` personal account into the `C7-Intelligence` organization rather than copied, so it keeps its identity — same repository id, same commit history, branches and settings — and the old `C7-IMI/C7NTAX` URLs redirect to the new ones.
+- **[Update]** **Only the push target changed; every file stays in OneDrive.** The working copy is still `C:\OneDrive\OneDrive - Cyber 7 Group\GHRepo\Kun\C7NTAX` and was never moved. The single local change is the `origin` remote, repointed from `git@github.com:C7-IMI/C7NTAX.git` to `git@github.com:C7-Intelligence/C7NTAX.git`.
+- **[Update]** **The auto-sync push needed no script change.** `scripts/auto-sync.ps1` pushes `origin` and hardcodes only the local path, so the scheduled task keeps working against the new owner once the remote is repointed — it was paused for the transfer window and re-enabled afterwards.
+- **Verification:** the transfer returned `202` and the repository appeared under the new owner within seconds with its id and last-push timestamp unchanged; `git ls-remote origin`, `git fetch` and `git push origin main` all succeed over SSH at the new path, and `HEAD == origin/main`; the auto-sync task ran once against the new remote and pushed successfully; `git rev-parse --show-toplevel` still reports the OneDrive folder.
+- **Notes:** remaining `C7-IMI` mentions are historical (earlier BuildNotes and Retrace entries record what was true at the time) or refer to the separate `C7-IMI/C7NTRL` repository, which was not part of this move. A transfer leaves no copy behind at the old owner.
+- **Rollback:** `git remote set-url origin git@github.com:C7-IMI/C7NTAX.git` and transfer the repository back from the organization settings; no files, schema or dependencies are involved.
 
 ## 2026.10.6.043 — Every asset type has its own configuration dialog and its own records
 - **[New]** **One configuration dialog for every asset type, opened by the option itself.** The organization's type panel now adds and edits **in place**: *Add Active Directory* opens a dialog built from that type's own template — its name, icon, colour and description, the client (locked, so a record cannot land on the wrong one), a status, and then the type's fields. Editing a row is the pencil beside it, and the same dialog sits behind *Edit* on the record and behind *New Asset* in Kumo Assets (which first asks which type). Only the field definitions differ per type, so a type added later gets a dialog without any new code.
