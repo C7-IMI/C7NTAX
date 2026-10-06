@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.6.010",
+    "date": "2026-10-06",
+    "title": "Login page fits above the fold again (service health as a 2×2 grid)",
+    "changes": [
+      {
+        "text": "**The login page no longer scrolls.** The whole page — lockup, form, passkey buttons and service health — now fits the viewport at every size tested, with the service boxes as a **2×2 grid** instead of a single stack.",
+        "type": "Update"
+      },
+      {
+        "text": "**Service health boxes are compact**: the port moved down beside the status so each box is a tidy two lines, padding and gaps tightened, and the summary spacing reduced. The section drops from **275px to 145px**; a box goes from 384×52 to **189×48**.",
+        "type": "Update"
+      },
+      {
+        "text": "Trimmed the page's vertical rhythm to buy the last few pixels — outer padding `py-8`→`py-6`, lockup `mb-8`→`mb-6`, health section `mt-6`→`mt-4`.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.009",
     "date": "2026-10-06",
     "title": "Brand wordmark on the splash, loading and login screens",

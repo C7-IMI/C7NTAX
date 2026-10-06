@@ -119,9 +119,9 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4 py-6">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <BrandMark size={56} className="mx-auto mb-4" />
           <h1 className="flex justify-center">
             <Wordmark height={40} className="text-white" />
@@ -157,7 +157,7 @@ export function LoginPage() {
         )}
 
         {/* Service health status */}
-        <div className="mt-6 pt-4 border-t border-surface-border/50">
+        <div className="mt-4 pt-4 border-t border-surface-border/50">
           <ServiceHealthPanel />
         </div>
       </div>

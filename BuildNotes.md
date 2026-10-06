@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.009 | Last Updated: 2026-10-06
+## Version: 2026.10.6.010 | Last Updated: 2026-10-06
 
 ---
 
@@ -11,6 +11,14 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.6.010 — Login page fits above the fold again (service health as a 2×2 grid)
+- **[Update]** **The login page no longer scrolls.** The whole page — lockup, form, passkey buttons and service health — now fits the viewport at every size tested, with the service boxes as a **2×2 grid** instead of a single stack.
+- **[Update]** **Service health boxes are compact**: the port moved down beside the status so each box is a tidy two lines, padding and gaps tightened, and the summary spacing reduced. The section drops from **275px to 145px**; a box goes from 384×52 to **189×48**.
+- **[Update]** Trimmed the page's vertical rhythm to buy the last few pixels — outer padding `py-8`→`py-6`, lockup `mb-8`→`mb-6`, health section `mt-6`→`mt-4`.
+- **[Verification]** Measured, not eyeballed, by comparing `scrollHeight` against the viewport: the page overflowed by **17px** at 997×820 before, and now reports **0px overflow at 1366×700, 1280×720, 1440×900, 997×820 and 390×844** (mobile), with the grid resolving to exactly 2 rows and no box clipping its text (checked via `scrollWidth` vs `clientWidth`). The **failure state was exercised too** by aborting `/api/health`: "3 services down", help text rendering inside the narrower 189px columns, still **0px overflow** and no clipping. No console errors; typecheck unchanged (26 pre-existing errors); token lint unchanged at 117.
 
 ---
 

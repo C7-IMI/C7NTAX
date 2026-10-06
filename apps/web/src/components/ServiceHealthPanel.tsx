@@ -100,47 +100,47 @@ export function ServiceHealthPanel() {
         </div>
       )}
 
-      {services.map((s) => (
-        <div
-          key={s.name}
-          className={`rounded-lg border px-2.5 py-2 text-xs transition-colors ${
-            s.status === "up"
-              ? "border-green-900/40 bg-green-900/10"
-              : s.status === "down"
-              ? "border-red-900/40 bg-red-900/10"
-              : "border-surface-border bg-surface/50"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <span className={s.status === "up" ? "text-green-400" : s.status === "down" ? "text-red-400" : "text-gray-500"}>
-              {s.icon}
-            </span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-white font-medium truncate">{s.name}</span>
-                <span className="text-[10px] text-gray-600 shrink-0">:{s.port}</span>
-              </div>
-              <div className="flex items-center gap-1 mt-0.5">
-                {statusIcon(s.status)}
-                <span
-                  className={`text-[11px] ${
-                    s.status === "up" ? "text-green-400" : s.status === "down" ? "text-red-400" : "text-amber-400"
-                  }`}
-                >
-                  {s.message}
-                </span>
-              </div>
+      {/* 2x2 grid — compact enough to keep the whole login page above the fold */}
+      <div className="grid grid-cols-2 gap-1.5">
+        {services.map((s) => (
+          <div
+            key={s.name}
+            className={`rounded-lg border px-2 py-1.5 text-xs transition-colors ${
+              s.status === "up"
+                ? "border-green-900/40 bg-green-900/10"
+                : s.status === "down"
+                ? "border-red-900/40 bg-red-900/10"
+                : "border-surface-border bg-surface/50"
+            }`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className={`shrink-0 ${s.status === "up" ? "text-green-400" : s.status === "down" ? "text-red-400" : "text-gray-500"}`}>
+                {s.icon}
+              </span>
+              <span className="text-white font-medium truncate">{s.name}</span>
             </div>
-          </div>
 
-          {s.status === "down" && s.detail && (
-            <div className="mt-1.5 flex items-start gap-1 bg-red-950/30 rounded p-1.5">
-              <AlertTriangle size={10} className="text-amber-400 mt-0.5 shrink-0" />
-              <p className="text-[10px] text-gray-400 leading-relaxed">{s.detail}</p>
+            <div className="flex items-center gap-1 mt-0.5 min-w-0">
+              {statusIcon(s.status)}
+              <span
+                className={`truncate ${
+                  s.status === "up" ? "text-green-400" : s.status === "down" ? "text-red-400" : "text-amber-400"
+                } text-[11px]`}
+              >
+                {s.message}
+              </span>
+              <span className="ml-auto text-[10px] text-gray-600 shrink-0">:{s.port}</span>
             </div>
-          )}
-        </div>
-      ))}
+
+            {s.status === "down" && s.detail && (
+              <div className="mt-1 flex items-start gap-1 bg-red-950/30 rounded p-1">
+                <AlertTriangle size={9} className="text-amber-400 mt-0.5 shrink-0" />
+                <p className="text-[10px] text-gray-400 leading-snug">{s.detail}</p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
