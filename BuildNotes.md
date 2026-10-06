@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.5.012 | Last Updated: 2026-10-05
+## Version: 2026.10.5.013 | Last Updated: 2026-10-05
 
 ---
 
@@ -13,6 +13,13 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.5.013 — Design-system primitives + token/contrast cleanup (UI modernization P0)
+- **[New]** Added shared UI primitives under `apps/web/src/components/ui/` — `PageHeader`, `Section`, `StatCard`, `EmptyState`, `Skeleton`/`TableSkeleton` — to replace the hand-rolled header/section/state markup duplicated across pages (78 page headers, 66 section labels).
+- **[Update]** Migrated the Asset Inventory, Calendar, and Service Boards (Administration) page headers to `PageHeader` for a consistent title/subtitle/actions treatment.
+- **[New]** Added `scripts/lint-design-tokens.mjs` — fails when a new raw hex color appears in a `.tsx` (the 9 pre-existing offenders are allowlisted), so theme-breaking colors can't creep back into the codebase.
+- **[Fix]** Raised the dark-theme muted text tokens (`--text-muted`, `--text-muted-alt`) to meet WCAG AA (4.5:1) against the surface color.
+- **[Verification]** `apps/web` typecheck unchanged (26 pre-existing errors, none in the new or migrated files); the token lint passes; a live check confirms `/assets` and `/calendar` render the new header (title + subtitle) with no console errors.
 
 ## 2026.10.5.012 — Automatic GitHub sync (auto-commit + push)
 - **[New]** Added `scripts/auto-sync.ps1` and registered the scheduled task **"C7NTAX Auto-Sync"** (every 15 minutes, run while signed in): stages working-tree changes (respecting `.gitignore`), commits `auto-sync: <timestamp>` when there is something to commit, and pushes to `origin main`. Skips when there is nothing to commit, when a merge/rebase is in progress, or when the git index is locked.

@@ -1744,6 +1744,19 @@
 - Suggested a prioritized modernization: P0 design-system consolidation (shared `PageHeader`/`Section`/`StatCard`/`DataTable`/`EmptyState`/`Tabs`/`Dialog` primitives; remove hardcoded colors/inline styles; lint rule for raw hex), P1 shell (command palette ⌘K, header search/notifications, active-nav rail, table/filter-chip standardization, standardized states), P2 polish (elevation/hover lift, tighter type scale + tabular-nums, sticky table headers, density toggle, contrast fix for muted text ~3.4:1), P3 brand/charts. No code or documentation changes.
 
 
+### Prompt 149 — Implement the UI modernization P0 slice
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~35 min
+**BuildNotes IDs:** #1 (2026.10.5.013)
+> _(follow-on to Prompt 148 — implement the recommended P0)_
+
+**Changes:**
+- `apps/web/src/components/ui/` — new shared primitives `PageHeader`, `Section`, `StatCard`, `EmptyState`, `Skeleton`/`TableSkeleton` (plus barrel `index.ts`).
+- `apps/web/src/pages/{Assets,Calendar,Administration}.tsx` — migrated their page headers to `PageHeader` (consistent title/subtitle/actions).
+- `scripts/lint-design-tokens.mjs` — new design-token guard: fails on raw hex in `.tsx` outside the 9 allowlisted legacy files (118 legacy occurrences).
+- `apps/web/src/index.css` — raised dark-theme `--text-muted`/`--text-muted-alt` to WCAG AA (4.5:1) on the surface color.
+- **Verification:** `apps/web` typecheck unchanged (26 pre-existing errors, none in the new/migrated files); token lint passes; live check confirmed `/assets` and `/calendar` render the new header with no console errors.
+
+
 
 
 

@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.5.013",
+    "date": "2026-10-05",
+    "title": "Design-system primitives + token/contrast cleanup (UI modernization P0)",
+    "changes": [
+      {
+        "text": "Added shared UI primitives under `apps/web/src/components/ui/` — `PageHeader`, `Section`, `StatCard`, `EmptyState`, `Skeleton`/`TableSkeleton` — to replace the hand-rolled header/section/state markup duplicated across pages (78 page headers, 66 section labels).",
+        "type": "New Feature"
+      },
+      {
+        "text": "Migrated the Asset Inventory, Calendar, and Service Boards (Administration) page headers to `PageHeader` for a consistent title/subtitle/actions treatment.",
+        "type": "Update"
+      },
+      {
+        "text": "Added `scripts/lint-design-tokens.mjs` — fails when a new raw hex color appears in a `.tsx` (the 9 pre-existing offenders are allowlisted), so theme-breaking colors can't creep back into the codebase.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Raised the dark-theme muted text tokens (`--text-muted`, `--text-muted-alt`) to meet WCAG AA (4.5:1) against the surface color.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.5.012",
     "date": "2026-10-05",
     "title": "Automatic GitHub sync (auto-commit + push)",

@@ -40,8 +40,9 @@ html {
   --text-primary: #ffffff;
   --text-secondary: #d1d5db;
   --text-tertiary: #9ca3af;
-  --text-muted: #6b7280;
-  --text-muted-alt: #4b5563;
+  /* Raised from #6b7280 / #4b5563 to reach WCAG AA (4.5:1) on --surface #0f1a2e */
+  --text-muted: #8b93a1;
+  --text-muted-alt: #7c8598;
 }
 
 /* Light theme — overrides all CSS variables
