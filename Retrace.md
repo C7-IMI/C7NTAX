@@ -2211,3 +2211,29 @@ Answering the open question from Prompt 175: the organisation screen's Upcoming 
 - Detail panel after selecting a record: `Expires 9/11/26 (25 days overdue)`.
 - Typecheck unchanged (web 26, api 178 pre-existing), no errors in the changed files. Screenshots: `files/live-expirations-org-card.png`, `files/live-domains-dates.png`.
 - Deliberately scoped to expiry displays: the rest of the app's prose dates (`formatDate`) are unchanged, so a request to make every date numeric app-wide would be a separate, wider change.
+
+### Prompt 177 — Mockup for an application-style right-click menu in Tickets
+**Timestamp:** 2026-10-06 | **Status:** 🎨 Mockup delivered — awaiting approval before implementation | **Duration:** ~30 min
+**BuildNotes IDs:** none — mockup and plan only, no project change
+> If I right-click on the screen in the tickets section, I want an application style right click menu with different options related to that section in C7NTAX instead of the web browser right click menu. But it should offer the option to open in new tab and new window. The rest should be application related.
+>
+> Do a mock-up first
+
+**What was produced**
+- `files/context-menu-tickets.png` (and the interactive `files/context-menu-tickets.html`) — two scenarios: right-click on a **ticket row**, and right-click on **empty space** in the section. Both are drawn over a real screenshot of the Tickets screen (`files/tickets-backdrop.png`) using the app's own compiled CSS and real lucide icons, so the menu surface, radius, border and colours are the actual tokens (verified by computed style: `rgb(33,33,39)` on `bg-navy-800`, 10px radius, `rgb(42,42,49)` border, Inter), not a designer's approximation.
+- **Row menu:** Open ticket, **Open in new tab**, **Open in new window**, Change status ▸ (all nine statuses, current one ticked), Change priority ▸, Assign to ▸, Acknowledge, Close ticket, Add note, Log time entry, Email customer contact, Print ticket, Copy ticket number, Copy link. The submenu is shown open so the depth is visible.
+- **Section menu:** New ticket, Refresh list, Filter tickets…, Clear filters, Choose columns…, **Open this view in new tab**, **Open this view in new window** (the last two carrying the current filters in the URL).
+
+**Grounding — what was checked before proposing**
+Every item maps to an existing capability, so the menu does not promise anything the app cannot do: the batch actions (`acknowledge`, `close`, the status and priority sets) exist in `BATCH_ACTIONS`, priorities are `low/medium/high/critical`, statuses are the nine in `TICKET_STATUSES`, the email dialog and print path exist on the detail screen, and `PATCH /tickets/:id` already accepts `assignedToId` for the assign submenu.
+Three things were **rejected** rather than mocked because the app has no such capability today: **Delete ticket** (there is no `DELETE /tickets/:id`; only attachment deletion exists), **Assign to me** (no such action anywhere on tickets), and **Export CSV** (no exporter exists in the app). Offering them would have meant shipping menu items that do nothing.
+
+**Plan if approved**
+- A reusable `ContextMenu` (portal-rendered, `role="menu"`/`menuitem`, Escape to close, arrow keys, Shift+F10 and the Menu key to open, edge-aware flipping) plus a `useContextMenu` hook.
+- Tickets subscribes with its own handler: **row** context from the table, **section** context from the container background, both via `onContextMenu` with `preventDefault` scoped to the Tickets subtree only — other modules keep the browser menu.
+- Right-click inside inputs and textareas is deliberately **not** intercepted, so cut/copy/paste and spell-check keep working where they matter.
+- "Open in new tab" is `window.open(url, "_blank", "noopener")`; "Open in new window" passes window features so it becomes a real popup window, which also behaves as a separate window inside the Electron desktop shell.
+- Reversible by a `UI_CONTEXT_MENUS` flag (default on) plus a rollback doc section, in line with the repo's convention.
+- scoped to Tickets first, then other sections can opt in one at a time.
+
+**Open question asked:** whether the scope should stay Tickets-only for now, and whether the menu should be reachable from the ticket *detail* screen as well as the list.
