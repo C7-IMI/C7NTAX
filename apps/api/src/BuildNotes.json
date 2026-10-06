@@ -1,9 +1,25 @@
 [
   {
-    "version": "2026.10.6.001",
+    "version": "2026.10.6.002",
     "date": "2026-10-06",
-    "title": "Silent auto-sync (no more console window pop-ups)",
+    "title": "Silent boot startup + shared hidden launcher for both tasks",
     "changes": [
+      {
+        "text": "`scripts/run-hidden.vbs` — one generic hidden launcher used by both scheduled tasks: `wscript.exe //B //Nologo run-hidden.vbs <script.ps1> [args…]` runs PowerShell with `SW_HIDE` (console created hidden), passes extra arguments through, and logs to `startup/hidden-runner.log` if the target script is missing. Replaces `scripts/auto-sync-hidden.vbs`, which covered only auto-sync.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**C7NTAX Boot Startup** no longer flashes a console window at boot/login — it now launches `startup/c7ntax-boot.ps1` through the hidden runner instead of `powershell.exe` directly. Boot trigger (45s delay), `RunLevel Highest` (needed for service/Defender work), batteries allowed, `IgnoreNew`, `StartWhenAvailable` and the 30-minute limit are all preserved; the working directory is now pinned to the repo root.",
+        "type": "Fix"
+      },
+      {
+        "text": "`scripts/register-boot-task-hidden.ps1` — re-registers the boot task with the hidden runner. It **must run elevated**: the task's `Highest` run level makes `Register-ScheduledTask`, `Set-ScheduledTask` and `schtasks /Change` fail with \"Access is denied\" for a standard token (this is how the change was applied).",
+        "type": "New Feature"
+      },
+      {
+        "text": "Both tasks set `WorkingDirectory` to the repo root, and the scripts' header comments document the launcher.",
+        "type": "Update"
+      },
       {
         "text": "The **C7NTAX Auto-Sync** scheduled task no longer flashes a command-prompt window. Task Scheduler was launching `powershell.exe` directly; even with `-WindowStyle Hidden` PowerShell creates its console window and then hides it, which is the visible flash every 15 minutes. The task now runs `scripts/auto-sync-hidden.vbs` via `wscript.exe //B //Nologo` — a GUI host with no console — and `Shell.Run(cmd, 0, False)` starts PowerShell with `SW_HIDE`, so the console is created hidden and never appears.",
         "type": "Fix"

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.001 | Last Updated: 2026-10-06
+## Version: 2026.10.6.002 | Last Updated: 2026-10-06
 
 ---
 
@@ -14,7 +14,14 @@
 
 ---
 
-## 2026.10.6.001 — Silent auto-sync (no more console window pop-ups)
+## 2026.10.6.002 — Silent boot startup + shared hidden launcher for both tasks
+- **[New]** `scripts/run-hidden.vbs` — one generic hidden launcher used by both scheduled tasks: `wscript.exe //B //Nologo run-hidden.vbs <script.ps1> [args…]` runs PowerShell with `SW_HIDE` (console created hidden), passes extra arguments through, and logs to `startup/hidden-runner.log` if the target script is missing. Replaces `scripts/auto-sync-hidden.vbs`, which covered only auto-sync.
+- **[Fix]** **C7NTAX Boot Startup** no longer flashes a console window at boot/login — it now launches `startup/c7ntax-boot.ps1` through the hidden runner instead of `powershell.exe` directly. Boot trigger (45s delay), `RunLevel Highest` (needed for service/Defender work), batteries allowed, `IgnoreNew`, `StartWhenAvailable` and the 30-minute limit are all preserved; the working directory is now pinned to the repo root.
+- **[New]** `scripts/register-boot-task-hidden.ps1` — re-registers the boot task with the hidden runner. It **must run elevated**: the task's `Highest` run level makes `Register-ScheduledTask`, `Set-ScheduledTask` and `schtasks /Change` fail with "Access is denied" for a standard token (this is how the change was applied).
+- **[Update]** Both tasks set `WorkingDirectory` to the repo root, and the scripts' header comments document the launcher.
+- **[Verification]** Launcher probe (script path containing spaces + a pass-through switch) ran correctly with **0 visible console windows** across 43,645 samples, versus 1 visible window for the old direct `powershell.exe` action (62,684 samples); `C7NTAX Auto-Sync` then ran end-to-end through `wscript.exe` → `powershell.exe`, committing and pushing a real change (`7ca0ac0`, `LastTaskResult = 0`); both task definitions read back with the new action, trigger and settings intact; API :4000 and web :3010 still HTTP 200.
+
+
 - **[Fix]** The **C7NTAX Auto-Sync** scheduled task no longer flashes a command-prompt window. Task Scheduler was launching `powershell.exe` directly; even with `-WindowStyle Hidden` PowerShell creates its console window and then hides it, which is the visible flash every 15 minutes. The task now runs `scripts/auto-sync-hidden.vbs` via `wscript.exe //B //Nologo` — a GUI host with no console — and `Shell.Run(cmd, 0, False)` starts PowerShell with `SW_HIDE`, so the console is created hidden and never appears.
 - **[New]** `scripts/auto-sync-hidden.vbs` — resolves the repo from its own location (with the canonical path as fallback) and launches `scripts/auto-sync.ps1` hidden.
 - **[Fix]** Removed the task's battery restrictions (`DisallowStartIfOnBatteries` / `StopIfGoingOnBatteries` were both enabled, so auto-sync silently stopped on a laptop running off battery). Re-asserted `MultipleInstances = IgnoreNew`, `StartWhenAvailable`, and a 10-minute execution limit; the 15-minute repetition trigger, interactive principal (required for the SSH push) and run level are unchanged.

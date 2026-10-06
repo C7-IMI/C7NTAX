@@ -1799,6 +1799,21 @@
 - **Verification:** task read back from Task Scheduler with the new action and settings; `Start-ScheduledTask` ran through the `wscript.exe` → `powershell.exe` path, completed with `LastTaskResult = 0`, appended a fresh `startup/auto-sync.log` line, and left no orphan processes; the previous direct-launch action was confirmed as the source of the pop-ups.
 
 
+### Prompt 153 — Hide the boot startup window too
+**Timestamp:** 2026-10-06 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #1 (2026.10.6.002)
+> yes. hide it as well
+
+**Changes:**
+- `scripts/run-hidden.vbs` — new generic hidden launcher (`wscript.exe //B //Nologo run-hidden.vbs <script.ps1> [args…]`), replacing `scripts/auto-sync-hidden.vbs`; passes extra arguments through to PowerShell and logs to `startup/hidden-runner.log` when the target script is missing.
+- `C7NTAX Auto-Sync` task re-pointed at `run-hidden.vbs` (trigger, principal and settings unchanged).
+- `C7NTAX Boot Startup` task re-registered: action is now `wscript.exe //B //Nologo "…\run-hidden.vbs" "…\startup\c7ntax-boot.ps1"`, working directory pinned to the repo root; boot trigger (45s delay), `RunLevel Highest`, batteries allowed, `IgnoreNew`, `StartWhenAvailable` and the 30-minute limit preserved.
+- `scripts/register-boot-task-hidden.ps1` — elevated helper that performs the registration (the `Highest` run level blocks modification from a standard token: `Register-ScheduledTask`, `Set-ScheduledTask` and `schtasks /Change` all returned "Access is denied").
+- `scripts/auto-sync.ps1` and `startup/c7ntax-boot.ps1` headers document the launcher.
+- **Verification:** probe run through the launcher (path with spaces + pass-through switch) showed **0 visible console windows** (43,645 samples) while the old direct `powershell.exe` action showed 1 (62,684 samples); auto-sync then committed and pushed a real change end-to-end via the launcher (`7ca0ac0`, `LastTaskResult = 0`); both task definitions read back correctly; API/web still 200. Test probe scripts, logs and the exported task XML backup were removed.
+
+
+
 
 
 

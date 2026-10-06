@@ -1,7 +1,10 @@
 # =========================================================================
 # C7NTAX - Automatic Boot Startup Script (self-healing)
 # =========================================================================
-# Registered as the scheduled task "C7NTAX Boot Startup" (AtStartup).
+# Registered as the scheduled task "C7NTAX Boot Startup" (AtStartup), launched
+# through scripts/run-hidden.vbs so the boot sequence never flashes a console
+# window. The task runs at RunLevel Highest, so re-registering it requires an
+# elevated PowerShell: scripts/register-boot-task-hidden.ps1.
 # Idempotent: safe to run manually at any time.
 # Every blocking operation is time-bounded and logged so the script can
 # never hang silently.
