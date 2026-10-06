@@ -2822,3 +2822,26 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Everything else in the tree was checked for an old-owner dependency and none was found: no `repository`/`homepage` field in any package manifest, no publish or auto-update configuration carrying a repo slug, no workflow referencing the repository, and `scripts/auto-sync.ps1` pushes `origin`. The remaining `C7-IMI` text is either historical BuildNotes/Retrace log lines — left intact, since they record what was true at the time — or a reference to the separate `C7-IMI/C7NTRL` repository, which this move deliberately did not touch.
 - Visibility was left exactly as it was: the repository is still public under its new owner.
 
+
+---
+
+### Prompt 203 — Commit identity changed to the organization
+**Timestamp:** 2026-10-06 | **Status:** Done — identity set, committed, and confirmed on the new remote | **Duration:** ~15 min
+**BuildNotes IDs:** 2026.10.6.045 - Commit identity changed to C7-Intelligence
+> Update the identity
+
+**What was updated**
+- The repository's config still carried the personal account it was moved from (`c7-imi <c7-imi@users.noreply.github.com>`), so every commit under the new owner read as that individual. It is now `C7-Intelligence <C7-Intelligence@users.noreply.github.com>`.
+- The change is **repo-local** (`git config --local`). The machine-wide identity is a different account used by other checkouts and was deliberately left alone; nothing global, no hook and no script overrides these two values, so the setting here is the one that takes effect.
+- `scripts/auto-sync.ps1` commits with whatever the repository configures, so the scheduled auto-commits pick the new identity up on their own — no script edit.
+- GitHub's email reference documents the `noreply` shape as `<ID+USERNAME@users.noreply.github.com>` (or the legacy `<USERNAME@users.noreply.github.com>`) for user accounts and says nothing about organizations, so the organization name was used with that same `users.noreply.github.com` form — and it resolves. The API reports the new commit's author as the `C7-Intelligence` organization (`type: Organization`, id `331890042`, avatar and profile link attached), where the previous commits resolved to the personal `C7-IMI` user account. The first reading of this ("an organization address cannot be linked, so the commits would show the name only") was wrong, and the note was corrected after checking the pushed commit.
+
+**Verification**
+- `git var GIT_AUTHOR_IDENT` and `git var GIT_COMMITTER_IDENT` both report the new identity, which is what a commit with no overrides will use.
+- A probe commit built with `git commit-tree` — no ref, no index change, no push — carried the new identity in both the author and committer fields, so the config reaches commits and not just `git config` output.
+- The logging commit that followed was made and pushed with the new identity and is accepted by GitHub on `C7-Intelligence/C7NTAX`, with the author reading as the organization — a rejected push would have shown up here, since the commit before it still carried the old identity.
+- Reading the pushed commit back from the API settled the one open question: GitHub attributes it to the `C7-Intelligence` **organization**, not to an unknown address, so the history now points at the organization profile rather than the personal account that the repository was moved out of.
+
+**Notes for next time**
+- Attribution is by email: if a commit should link to a GitHub profile, the email must be one that account has verified. The organization name in the `noreply` form is unambiguous but unattributed — that is the deliberate trade-off here.
+

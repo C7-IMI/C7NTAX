@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.6.045",
+    "date": "2026-10-06",
+    "title": "Commit identity changed to C7-Intelligence",
+    "changes": [
+      {
+        "text": "**Commits from this working copy are now authored as `C7-Intelligence <C7-Intelligence@users.noreply.github.com>`** instead of the personal `c7-imi` account, so the history under the repository's new owner reads as the organization rather than an individual. The change is **repository-local** (`git config --local`), so the machine-wide identity other checkouts use is untouched.",
+        "type": "Update"
+      },
+      {
+        "text": "**The automatic commit path inherits it with no script change.** `scripts/auto-sync.ps1` commits with whatever identity the repository configures, and no hook or script overrides `user.name`/`user.email`, so the scheduled auto-sync commits and manual commits both use the new identity from here on.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.044",
     "date": "2026-10-06",
     "title": "Repository moved to the C7-Intelligence organization",

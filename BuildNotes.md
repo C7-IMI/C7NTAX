@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.044 | Last Updated: 2026-10-06
+## Version: 2026.10.6.045 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,13 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.045 — Commit identity changed to C7-Intelligence
+- **[Update]** **Commits from this working copy are now authored as `C7-Intelligence <C7-Intelligence@users.noreply.github.com>`** instead of the personal `c7-imi` account, so the history under the repository's new owner reads as the organization rather than an individual. The change is **repository-local** (`git config --local`), so the machine-wide identity other checkouts use is untouched.
+- **[Update]** **The automatic commit path inherits it with no script change.** `scripts/auto-sync.ps1` commits with whatever identity the repository configures, and no hook or script overrides `user.name`/`user.email`, so the scheduled auto-sync commits and manual commits both use the new identity from here on.
+- **Verification:** `git var GIT_AUTHOR_IDENT` and `git var GIT_COMMITTER_IDENT` report the new identity; a probe commit object built with `git commit-tree` carried it in both the author and committer fields without touching the index or any ref; the first commit pushed while using it was accepted by GitHub, and the API resolves that commit's author to the **`C7-Intelligence` organization** (`type: Organization`, id `331890042`, with the organization's avatar and profile link) instead of the personal `C7-IMI` user account the previous commits resolved to.
+- **Notes:** GitHub's email reference documents the `noreply` shape as `<ID+USERNAME@users.noreply.github.com>`, or the legacy `<USERNAME@users.noreply.github.com>`, for user accounts and says nothing about organizations — so the organization name was used with that same `users.noreply.github.com` form, and it resolves for an organization login as readily as for a user: the commit links to the organization, so no profile attribution is lost by moving off the personal account.
+- **Rollback:** `git config --local user.name c7-imi` and `git config --local user.email c7-imi@users.noreply.github.com`, or `git config --local --unset user.name user.email` to fall back to the machine-wide identity.
 
 ## 2026.10.6.044 — Repository moved to the C7-Intelligence organization
 - **[Update]** **C7NTAX now lives at `github.com/C7-Intelligence/C7NTAX`.** The repository was **transferred** from the `C7-IMI` personal account into the `C7-Intelligence` organization rather than copied, so it keeps its identity — same repository id, same commit history, branches and settings — and the old `C7-IMI/C7NTAX` URLs redirect to the new ones.
