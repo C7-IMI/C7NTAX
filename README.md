@@ -65,8 +65,9 @@ Every user-visible change ships with a way back, without a code change:
    its flag, its files, its data reversal and a "if the app breaks" checklist. See
    [UI-P1-ROLLBACK.md](UI-P1-ROLLBACK.md), [UI-PALETTE-ROLLBACK.md](UI-PALETTE-ROLLBACK.md),
    [KUMO-ORGANIZATIONS-ROLLBACK.md](KUMO-ORGANIZATIONS-ROLLBACK.md),
-   [KUMO-TYPES-ROLLBACK.md](KUMO-TYPES-ROLLBACK.md) and
-   [KUMO-BREADCRUMBS-ROLLBACK.md](KUMO-BREADCRUMBS-ROLLBACK.md).
+   [KUMO-TYPES-ROLLBACK.md](KUMO-TYPES-ROLLBACK.md),
+   [KUMO-BREADCRUMBS-ROLLBACK.md](KUMO-BREADCRUMBS-ROLLBACK.md) and
+   [CONTEXT-MENUS-ROLLBACK.md](CONTEXT-MENUS-ROLLBACK.md).
 
 ## Architecture
 

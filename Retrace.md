@@ -2237,3 +2237,41 @@ Three things were **rejected** rather than mocked because the app has no such ca
 - scoped to Tickets first, then other sections can opt in one at a time.
 
 **Open question asked:** whether the scope should stay Tickets-only for now, and whether the menu should be reachable from the ticket *detail* screen as well as the list.
+
+
+### Prompt 178 - Implementing the three refusals: delete, assign-to-me, CSV export
+**Timestamp:** 2026-10-06 | **Status:** Done - implemented and verified live | **Duration:** ~55 min
+**BuildNotes IDs:** 2026.10.6.023 - An application right-click menu in Tickets, with a switch in System Settings
+> implement the three you refused to mock
+
+**What changed**
+- `apps/api/src/routes/tickets/index.ts` - new `DELETE /:id` behind `requirePermission(Permission.TicketDelete)` plus the existing `canAccessTicket` check. Comments, attachments and time entries cascade with the ticket; the response reports the counts removed. The other `ticketId` columns in the schema are plain columns with no foreign key, so nothing is orphaned.
+- `apps/web/src/lib/csv.ts` (new) - `toCsv`, `downloadCsv` (UTF-8 BOM, blob + anchor click), `fileStamp`, and a `CsvColumn<T>` shape.
+- `apps/web/src/pages/Tickets.tsx` - row menu gains *Assign to me* (disabled when the ticket is already the signed-in technician's) and a danger-styled *Delete ticket…*; the section menu gains *Export as CSV* with the filtered row count as its hint. A shared `DeleteTicketDialog` names the ticket and warns that notes, attachments and time entries are deleted with it. `exportCsv` writes the filtered list using the visible columns, with plain-text cell values that mirror what the table renders.
+- The detail screen got its own menu (16 entries), driven by the screen's existing handlers, plus an `?action=note|time|email|attach|print` effect so the list menu can deep-link into it. The parameter is removed from the URL after it fires.
+
+**Verification (live)**
+- Row menu read back with all 16 entries; detail menu with its 16.
+- *Assign to me* put "Admin User" on a throwaway ticket; *Delete ticket…* asked "Delete MSP-1001-1022 - ZZ ui delete probe?" and the row was gone afterwards.
+- API: create -> assign -> comment + time entry -> delete returned `removed: {comments: 2, attachments: 0, timeEntries: 1}`, then 404.
+- CSV: `c7ntax-tickets-2026-10-06.csv`, 12,547 bytes, header `Ticket #,Summary,Status,Board,Client,Technician,Timestamp`, 96 rows matching the filtered list. (The embedded browser does not raise Playwright's download event for blob-anchor downloads, so the blob was captured in-page instead.)
+- Deep links: *Add note* landed with the note box focused, *Log time entry* opened the time dialog, both with the `action` parameter cleared.
+
+### Prompt 179 - System Settings switch for the right-click menus
+**Timestamp:** 2026-10-06 | **Status:** Done - implemented and verified live | **Duration:** ~35 min
+**BuildNotes IDs:** 2026.10.6.023 (same entry - the work was still uncommitted)
+> Create an option in administration -> systems settings to turn the right click menu on and off
+
+**What changed**
+- `apps/web/src/hooks/useContextMenusEnabled.ts` (new) - resolves `general.contextMenus` from the `app_settings` system config once per page load, defaults to on when unset or unreachable, and lets the settings screen prime the value so screens already open follow a change.
+- `apps/web/src/components/ContextMenu.tsx` - asks the hook instead of reading the flag directly, in both the hook and the component, so a disabled menu never calls `preventDefault` either.
+- `apps/web/src/pages/SystemSettings.tsx` - *Application right-click menus* checkbox in the General tab, with the explanatory line; saving primes the cache.
+- `CONTEXT-MENUS-ROLLBACK.md`, README rollback list and the `uiFlags.ts` doc comment updated; the per-browser `c7_ui_context_menus` flag remains as a local kill switch.
+
+**Verification (live)**
+- Toggle renders in Administration -> System Settings -> General, checked by default.
+- Unticked + Save, then right-clicking a row: `contextmenu` unprevented and 0 app menus (browser menu returns).
+- Ticked + Save, then back to Tickets by client-side navigation (no reload): `contextmenu` prevented and the app menu appears - the prime path works.
+- Also re-verified after the gating change: focus-return, Escape, Shift+F10, submenus, the text-field bypass and the CSV export.
+- Restored the `app_settings` config row to its pre-test state (`value: null`) afterwards, and deleted the throwaway tickets.
+- Typecheck unchanged (web 26, api 178 pre-existing, none in the new files); design-token lint unchanged (117 legacy hex, none new).

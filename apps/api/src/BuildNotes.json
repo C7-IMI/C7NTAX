@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.6.023",
+    "date": "2026-10-06",
+    "title": "An application right-click menu in Tickets, with a switch in System Settings",
+    "changes": [
+      {
+        "text": "**Right-clicking in Tickets now opens a C7NTAX menu instead of the browser's.** On a ticket row it offers *Open ticket*, *Open in new tab*, *Open in new window*, *Change status* ▸, *Change priority* ▸, *Assign to* ▸, *Assign to me*, *Acknowledge*, *Close ticket*, *Add note*, *Log time entry*, *Email customer contact*, *Print ticket*, *Copy ticket number*, *Copy link* and *Delete ticket…*; on the background it offers the section's own actions (*New ticket*, *Refresh list*, *Filter tickets…*, *Clear filters*, *Choose columns…*, *Export as CSV*, and open-this-view in a new tab or a new window, filters included). The ticket's own number, client, status, priority and technician head the menu, so what you are about to act on is on the face of it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The three actions the mockup left out are now real rather than faked.** *Delete ticket…* opens a confirmation that names the ticket and warns that notes, attachments and time entries go with it, then calls a new `DELETE /api/tickets/:id` (requires `ticket:delete`, honours client access, and reports what it cascaded). *Assign to me* assigns the signed-in technician in one click, disabled when the ticket is already theirs. *Export as CSV* writes the filtered list using the columns you have chosen to display.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Administration → System Settings → General → \"Application right-click menus\"** switches the menus on or off for everyone, stored in the `app_settings` system config. A change applies to screens already open, and the per-browser `c7_ui_context_menus` flag still overrides it locally. An unset value — or an unreachable API — means on, so the feature cannot be lost to a missing setting.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The menu works on the ticket detail screen too**, and its entries drive that screen's own handlers: *Add note* focuses the note box, *Log time entry* opens the time-entry dialog, *Attach file…* opens the attach dialog, *Print ticket* prints, *Refresh* reloads.",
+        "type": "Update"
+      },
+      {
+        "text": "**Keyboard operation genuinely works.** Verification caught two real faults in the new menu: the panel never took focus, so arrow keys scrolled the page behind it — which closed the menu — and *Home*/*End* did nothing. The panel now focuses itself once positioned and hands focus back on close, and Home/End jump to the first and last item. Shift+F10 and the Menu key open a focused row's menu.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.022",
     "date": "2026-10-06",
     "title": "Expiry dates are visible everywhere, and numeric",

@@ -11,6 +11,10 @@
  *   localStorage.removeItem("c7_ui_p1");   location.reload()   // back to default
  * Or the window.c7UiP1 / window.c7UiP2 helpers, or the command palette actions.
  *
+ * The right-click menus are also a system setting (Administration → System
+ * Settings → General → "Application right-click menus"), which applies to every
+ * user; see CONTEXT-MENUS-ROLLBACK.md.
+ *
  * Deployment-wide rollback: set VITE_UI_P1=false / VITE_UI_P2=false (e.g. in
  * apps/web/.env.local) and restart the web server; or run
  * scripts/rollback-ui-p1.ps1 -Part P1|P2|All.

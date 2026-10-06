@@ -101,7 +101,10 @@ export function ContextMenu({ state, onClose }: { state: MenuState | null; onClo
   /** Whether the open submenu should take focus (true only for the keyboard route). */
   const submenuByKeyboard = useRef(false);
 
-  const selectable = useMemo(() => state?.entries.filter(isSelectable).length ?? 0, [state]);
+  const selectableIndices = useMemo(
+    () => state?.entries.map((e, i) => (isSelectable(e) ? i : -1)).filter((i) => i >= 0) ?? [],
+    [state]
+  );
 
   // Keep the panel on screen, flipping rather than overflowing.
   useLayoutEffect(() => {
@@ -119,6 +122,16 @@ export function ContextMenu({ state, onClose }: { state: MenuState | null; onClo
   }, [state]);
 
   useEffect(() => { setActive(-1); setSubmenu(null); }, [state]);
+
+  // The panel takes focus once it is actually on screen (it stays hidden until it
+  // has been positioned), otherwise arrow keys scroll the page behind the menu —
+  // which closes it. Focus returns to whatever was focused before on close.
+  useEffect(() => {
+    if (!pos) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    panelRef.current?.focus({ preventScroll: true });
+    return () => { if (previous?.isConnected) previous.focus({ preventScroll: true }); };
+  }, [pos]);
 
   // Close on scroll, resize, Escape and any stray interaction outside.
   useEffect(() => {
@@ -140,7 +153,7 @@ export function ContextMenu({ state, onClose }: { state: MenuState | null; onClo
   if (!state || !enabled) return null;
 
   const move = (delta: number) => {
-    const indices = state.entries.map((e, i) => (isSelectable(e) ? i : -1)).filter((i) => i >= 0);
+    const indices = selectableIndices;
     if (indices.length === 0) return;
     const current = indices.indexOf(active);
     const next = current === -1
@@ -164,8 +177,8 @@ export function ContextMenu({ state, onClose }: { state: MenuState | null; onClo
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") { e.preventDefault(); move(1); }
     else if (e.key === "ArrowUp") { e.preventDefault(); move(-1); }
-    else if (e.key === "Home") { e.preventDefault(); move(selectable); }
-    else if (e.key === "End") { e.preventDefault(); move(-selectable); }
+    else if (e.key === "Home") { e.preventDefault(); setActive(selectableIndices[0] ?? -1); }
+    else if (e.key === "End") { e.preventDefault(); setActive(selectableIndices[selectableIndices.length - 1] ?? -1); }
     else if (e.key === "ArrowRight") {
       const entry = state.entries[active];
       if (isItem(entry) && entry.items?.length) { e.preventDefault(); setSubmenu(active); }
