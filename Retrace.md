@@ -2239,9 +2239,9 @@ Three things were **rejected** rather than mocked because the app has no such ca
 **Open question asked:** whether the scope should stay Tickets-only for now, and whether the menu should be reachable from the ticket *detail* screen as well as the list.
 
 
-### Prompt 178 - Implementing the three refusals: delete, assign-to-me, CSV export
-**Timestamp:** 2026-10-06 | **Status:** Done - implemented and verified live | **Duration:** ~55 min
-**BuildNotes IDs:** 2026.10.6.023 - An application right-click menu in Tickets, with a switch in System Settings
+### Prompt 178 — Implementing the three refusals: delete, assign-to-me, CSV export
+**Timestamp:** 2026-10-06 | **Status:** Done — implemented and verified live | **Duration:** ~55 min
+**BuildNotes IDs:** 2026.10.6.023 — An application right-click menu in Tickets, with a switch in System Settings
 > implement the three you refused to mock
 
 **What changed**
@@ -2257,8 +2257,8 @@ Three things were **rejected** rather than mocked because the app has no such ca
 - CSV: `c7ntax-tickets-2026-10-06.csv`, 12,547 bytes, header `Ticket #,Summary,Status,Board,Client,Technician,Timestamp`, 96 rows matching the filtered list. (The embedded browser does not raise Playwright's download event for blob-anchor downloads, so the blob was captured in-page instead.)
 - Deep links: *Add note* landed with the note box focused, *Log time entry* opened the time dialog, both with the `action` parameter cleared.
 
-### Prompt 179 - System Settings switch for the right-click menus
-**Timestamp:** 2026-10-06 | **Status:** Done - implemented and verified live | **Duration:** ~35 min
+### Prompt 179 — System Settings switch for the right-click menus
+**Timestamp:** 2026-10-06 | **Status:** Done — implemented and verified live | **Duration:** ~35 min
 **BuildNotes IDs:** 2026.10.6.023 (same entry - the work was still uncommitted)
 > Create an option in administration -> systems settings to turn the right click menu on and off
 
