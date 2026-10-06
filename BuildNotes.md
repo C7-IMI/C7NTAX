@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.008 | Last Updated: 2026-10-06
+## Version: 2026.10.6.009 | Last Updated: 2026-10-06
 
 ---
 
@@ -11,6 +11,16 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.6.009 — Brand wordmark on the splash, loading and login screens
+- **[Update]** **All three entry surfaces now use the brand wordmark.** The initial loading screen and the login screen (both the main form and the 2FA step) render the mask-based `<Wordmark>` introduced for the My Account menu, so the sheet's own letterforms — plate-free, and following the active colour scheme — are now the app's first and last impression rather than a text approximation.
+- **[New]** **The pre-JS splash shows the brand lockup** instead of the words "Loading C7NTAX…": the shield and the wordmark, centred on the brand surface, with a soft pulse that is disabled under `prefers-reduced-motion`. It uses the flat `wordmark-on-dark.png` served from `public/`, because the splash renders before the bundle's CSS exists and so cannot use the masks.
+- **[New]** `BrandMark` component — the sheet's shield on its black tile, used by the loading screen, both login screens and the sidebar. It replaces two hand-made placeholders (`bg-cyber-600` squares with the letters "C7") that stood in for a logo on the loading and 2FA screens.
+- **[Fix]** `.input-field:focus` carried a hardcoded sky-blue glow, `rgba(14, 165, 233, 0.3)` — visible as a blue wash on the focused field of the login form. It is now derived from the scheme's accent with `color-mix`, so it reads crimson everywhere the brand schemes are active.
+- **[Update]** `brand/README.md` records what each surface uses and why the splash needs the flat copy.
+- **[Verification]** Splash verified deterministically by aborting the bundle request so `#root` stays empty: the mark loads at 56×56 and the wordmark at 159×38, both from the sheet's assets, over `rgb(13,13,15)`; with the pulse paused the wordmark paints **5423 letter pixels at x 838–1155** — exactly its box — plus the crimson shield and 7. On the login page the wordmark renders **168×40** with white letters and a crimson 7 landing at x 56–108 against an expected 52–107, the mark at 56×56, the shell at `rgb(10,10,11)` (the scheme's page surface) and the focus ring now crimson; the `h1` still exposes "C7NTAX" as a level-1 heading. No console errors on either screen; `apps/web` typecheck unchanged (26 pre-existing errors) and the design-token lint unchanged at 117 legacy occurrences.
 
 ---
 

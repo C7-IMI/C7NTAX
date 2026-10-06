@@ -107,12 +107,18 @@ The app does **not** hot-link the mockup crops. It uses:
   at 88% of the plate, so the glyph is centred with an even margin and the plate
   edges stay crisp. When changing these, verify the art clears the plate edge —
   a clipped "7" is the failure mode to watch for.
-- The **wordmark logotype** as a reusable `<Wordmark>` component
+- The **wordmark logotype** via a reusable `<Wordmark>` component
   (`apps/web/src/components/Wordmark.tsx`, styled by `.c7-wordmark` in
-  `index.css`) — the sheet's own letterforms via the two masks above, so it has
-  no plate behind it and follows the active scheme. The sidebar and login page
-  render the wordform as **text** (`C` + a brand-crimson `7` + `NTAX`), which
-  stays crisp at any size; both treatments are in use.
+  `index.css`) — the sheet's own letterforms through the two masks above, so it
+  has no plate behind it and follows the active scheme. It is used by the My
+  Account menu, the initial loading screen and the login page.
+  `apps/web/public/brand/wordmark-on-dark.png` is a served copy of the flat
+  artwork: the pre-JS splash in `index.html` uses it, because the splash cannot
+  rely on the bundle's CSS. The sidebar still renders the wordform as **text**
+  (`C` + a brand-crimson `7` + `NTAX`), which stays crisp at any size.
+- The **shield mark** via `<BrandMark>` (`apps/web/src/components/BrandMark.tsx`)
+  — `icon-192.png`, the shield on its black tile. Used by the loading screen,
+  both login screens and the sidebar.
 - The **brand palette** (`#C00000` / `#EE5483` / `#662428` / `#801550`) across
   the eight colour schemes — see `UI-PALETTE-ROLLBACK.md`.
 

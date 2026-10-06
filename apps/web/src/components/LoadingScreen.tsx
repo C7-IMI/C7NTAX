@@ -7,7 +7,7 @@ import { Wordmark } from "./Wordmark";
  */
 export function LoadingScreen() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-5 bg-surface">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-5 bg-navy-950">
       <BrandMark size={56} />
       <Wordmark height={38} className="text-white" />
       <div className="animate-spin h-6 w-6 border-2 border-cyber-400 border-t-transparent rounded-full" />

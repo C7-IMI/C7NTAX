@@ -17,14 +17,30 @@
          Backgrounds match the brand palette (#0d0d0f surface) so the splash
          doesn't flash the old navy before the app mounts. */
       body { margin: 0; background: #0d0d0f; color: #e2e8f0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-      #root:empty::after {
-        content: "Loading C7NTAX…";
-        display: flex; align-items: center; justify-content: center;
-        min-height: 100vh; font-size: 16px; color: #64748b;
+
+      /* Brand lockup, built from the same assets the app uses (the sheet's mark
+         and wordmark) so the splash doesn't show a different logo first. It
+         sits on the near-black brand surface, so it uses the flat on-dark
+         wordmark rather than the masks, which need the bundle's CSS. */
+      #root:empty {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        min-height: 100vh; gap: 18px;
       }
+      #root:empty::before {
+        content: ""; width: 56px; height: 56px;
+        background: url("/icon-192.png") center / contain no-repeat;
+      }
+      #root:empty::after {
+        content: ""; width: 159px; height: 38px;
+        background: url("/brand/wordmark-on-dark.png") center / contain no-repeat;
+        animation: c7-splash-pulse 1.8s ease-in-out infinite;
+      }
+      @keyframes c7-splash-pulse { 50% { opacity: 0.6; } }
+      @media (prefers-reduced-motion: reduce) { #root:empty::after { animation: none; } }
+
       noscript div {
         display: flex; align-items: center; justify-content: center;
-        min-height: 100vh; padding: 2rem; text-align: center; color: #94a3b8;
+        min-height: 100vh; padding: 2rem; text-align: center; color: #8b93a1;
       }
     </style>
   </head>
@@ -33,11 +49,11 @@
     <noscript>
       <div>
         <div>
-          <h1 style="color:#fff;font-size:20px;margin-bottom:8px">JavaScript Required</h1>
+          <h1 style="color:#f7f7f8;font-size:20px;margin-bottom:8px">JavaScript Required</h1>
           <p style="font-size:14px;margin-bottom:16px">C7NTAX requires JavaScript to run.</p>
-          <p style="font-size:12px;color:#64748b">
-            Run <code style="background:#1e293b;padding:2px 6px;border-radius:4px">pnpm install && pnpm dev</code>
-            from the project root, then open <code style="background:#1e293b;padding:2px 6px;border-radius:4px">http://localhost:5173</code>
+          <p style="font-size:12px;color:#9a9aa4">
+            Run <code style="background:#1a1a1f;padding:2px 6px;border-radius:4px">pnpm install && pnpm dev</code>
+            from the project root, then open <code style="background:#1a1a1f;padding:2px 6px;border-radius:4px">http://localhost:5173</code>
           </p>
         </div>
       </div>

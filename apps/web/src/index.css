@@ -115,7 +115,7 @@ html[data-theme="light"] {
     @apply w-full bg-surface border border-surface-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:border-cyber-500 focus:outline-none transition-colors duration-150 text-sm;
   }
   .input-field:focus {
-    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.3);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--cyber-500) 30%, transparent);
   }
   .card {
     @apply bg-surface border border-surface-border rounded-xl p-5;

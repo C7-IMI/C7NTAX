@@ -100,7 +100,7 @@ export function LoginPage() {
 
   if (mfaToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface px-4">
+      <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <BrandMark size={48} className="mx-auto mb-4" />
@@ -119,7 +119,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4 py-8">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <BrandMark size={56} className="mx-auto mb-4" />

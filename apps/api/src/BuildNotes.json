@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.6.009",
+    "date": "2026-10-06",
+    "title": "Brand wordmark on the splash, loading and login screens",
+    "changes": [
+      {
+        "text": "**All three entry surfaces now use the brand wordmark.** The initial loading screen and the login screen (both the main form and the 2FA step) render the mask-based `<Wordmark>` introduced for the My Account menu, so the sheet's own letterforms — plate-free, and following the active colour scheme — are now the app's first and last impression rather than a text approximation.",
+        "type": "Update"
+      },
+      {
+        "text": "**The pre-JS splash shows the brand lockup** instead of the words \"Loading C7NTAX…\": the shield and the wordmark, centred on the brand surface, with a soft pulse that is disabled under `prefers-reduced-motion`. It uses the flat `wordmark-on-dark.png` served from `public/`, because the splash renders before the bundle's CSS exists and so cannot use the masks.",
+        "type": "New Feature"
+      },
+      {
+        "text": "`BrandMark` component — the sheet's shield on its black tile, used by the loading screen, both login screens and the sidebar. It replaces two hand-made placeholders (`bg-cyber-600` squares with the letters \"C7\") that stood in for a logo on the loading and 2FA screens.",
+        "type": "New Feature"
+      },
+      {
+        "text": "`.input-field:focus` carried a hardcoded sky-blue glow, `rgba(14, 165, 233, 0.3)` — visible as a blue wash on the focused field of the login form. It is now derived from the scheme's accent with `color-mix`, so it reads crimson everywhere the brand schemes are active.",
+        "type": "Fix"
+      },
+      {
+        "text": "`brand/README.md` records what each surface uses and why the splash needs the flat copy.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.008",
     "date": "2026-10-06",
     "title": "Brand wordmark in the My Account menu, with the metallic plate removed",
