@@ -2192,3 +2192,22 @@ Two messages, one destination: the trail I had moved into the global header was 
 - Read back from the live page rather than by eye: every row returned both values in expiry order — `initech.io` *expired · Sep 11, 2026*, `globexind.com` *in 5 days · Oct 11, 2026*, *in 35 days · Nov 10, 2026*, `acmecorp.com Wildcard` *in 65 days · Dec 10, 2026*, `acmecorp.com` *in 125 days · Feb 8, 2027*, `starkent.com Wildcard` *in 195 days · Apr 19, 2027*, `starkent.com` *in 310 days · Aug 12, 2027*.
 - A service-worker reload issue earlier in this session had made stale renders look like real ones, so the check confirmed the running module produced the new markup before believing it.
 - Typecheck unchanged (web 26, api 178 pre-existing), no errors in the changed file. Screenshot: `files/live-domains-dates.png`.
+
+### Prompt 176 — Expiry dates visible on the organization card, and numeric throughout
+**Timestamp:** 2026-10-06 | **Status:** ✅ Implemented and verified | **Duration:** ~15 min
+**BuildNotes IDs:** 2026.10.6.022
+> Yes. I want it visible. Just used numerical dates. AKA 1/1/06
+
+Answering the open question from Prompt 175: the organisation screen's Upcoming Expirations card should show the date rather than keeping it in a hover tooltip, and expiry dates should be written numerically.
+
+**Changes**
+- `apps/web/src/lib/format.ts` — new `formatDateShort`, numeric month/day/two-digit year through `toLocaleDateString`, so it follows the viewer's locale (month/day in en-US, day/month in en-GB) rather than hard-coding a US order. `formatDate` (the written form) is untouched and still used by the rest of the app.
+- `apps/web/src/pages/KumoOrganizationDetail.tsx` — the Upcoming Expirations card rows are now a two-line right-hand block: the relative label keeping its tone (amber inside 30 days, otherwise grey) with the numeric date beneath. The full written date moved to the date line's tooltip, where it also disambiguates a two-digit year.
+- `apps/web/src/pages/KumoDomains.tsx` — the tracker's rows and its detail panel now use the numeric form too, so the card, the list and the panel all read alike (`Expires 9/11/26 (25 days overdue)`).
+
+**Verification (live)**
+- Organization card: `acmecorp.com Wildcard | in 65 days | 12/10/26` and `acmecorp.com | in 125 days | 2/8/27`.
+- Tracker rows: `initech.io | Initech Solutions | expired | 9/11/26`, `globexind.com | Globex Industries | in 5 days | 10/11/26`, `… | in 35 days | 11/10/26`.
+- Detail panel after selecting a record: `Expires 9/11/26 (25 days overdue)`.
+- Typecheck unchanged (web 26, api 178 pre-existing), no errors in the changed files. Screenshots: `files/live-expirations-org-card.png`, `files/live-domains-dates.png`.
+- Deliberately scoped to expiry displays: the rest of the app's prose dates (`formatDate`) are unchanged, so a request to make every date numeric app-wide would be a separate, wider change.

@@ -43,6 +43,16 @@ export function formatDate(dateStr: string | null | undefined): string {
   return new Date(dateStr).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
+/**
+ * Numeric form of the same date — 1/1/26 in en-US, following the viewer's own
+ * locale — for expiry dates, where the exact day matters more than the month
+ * name and space is tight.
+ */
+export function formatDateShort(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString(undefined, { year: "2-digit", month: "numeric", day: "numeric" });
+}
+
 /** "in 12 days" / "3 days ago" for expiry dates. */
 export function daysUntil(dateStr: string): { days: number; label: string; overdue: boolean } {
   const days = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86_400_000);

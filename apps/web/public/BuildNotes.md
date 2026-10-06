@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.021 | Last Updated: 2026-10-06
+## Version: 2026.10.6.022 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,11 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.022 — Expiry dates are visible everywhere, and numeric
+- **[Update]** **The organization screen's Upcoming Expirations card now shows the date on the face of it** instead of hiding it in a hover tooltip: *acmecorp.com Wildcard · in 65 days · 12/10/26*. Reading the card previously told you how urgent something was but not when it actually expires, which are two different questions.
+- **[Update]** **Expiry dates are now numeric** — `12/10/26` rather than `Dec 10, 2026` — via a new `formatDateShort` helper that follows the viewer's own locale, so a US reader sees month/day and a UK reader day/month. Applied to the tracker's rows, its detail panel (*Expires 9/11/26 (25 days overdue)*) and the Upcoming Expirations card, so all three read alike. The full written date is still available on hover, which also disambiguates a two-digit year.
+- **Verification:** read back from the live pages — the card shows *in 65 days · 12/10/26* and *in 125 days · 2/8/27*; the tracker rows show *expired · 9/11/26*, *in 5 days · 10/11/26*, *in 35 days · 11/10/26*; and selecting a record shows *Expires 9/11/26 (25 days overdue)*. Typecheck unchanged (web 26, api 178 pre-existing errors), no errors in the changed files. Screenshots: `files/live-expirations-org-card.png`, `files/live-domains-dates.png`.
 
 ## 2026.10.6.021 — Domains & Certificates list shows the expiry date, not just the countdown
 - **[Update]** **Every domain and certificate in the tracker now shows its actual expiry date alongside the time remaining** — "in 5 days" with "Oct 11, 2026" beneath it, "expired" with "Sep 11, 2026" — so the list can be read as a calendar rather than only as a countdown. Previously the date was reachable only by opening the record (or hovering), which meant scanning the list told you how urgent something was but not when it actually expires.

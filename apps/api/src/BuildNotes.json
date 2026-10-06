@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.6.022",
+    "date": "2026-10-06",
+    "title": "Expiry dates are visible everywhere, and numeric",
+    "changes": [
+      {
+        "text": "**The organization screen's Upcoming Expirations card now shows the date on the face of it** instead of hiding it in a hover tooltip: *acmecorp.com Wildcard · in 65 days · 12/10/26*. Reading the card previously told you how urgent something was but not when it actually expires, which are two different questions.",
+        "type": "Update"
+      },
+      {
+        "text": "**Expiry dates are now numeric** — `12/10/26` rather than `Dec 10, 2026` — via a new `formatDateShort` helper that follows the viewer's own locale, so a US reader sees month/day and a UK reader day/month. Applied to the tracker's rows, its detail panel (*Expires 9/11/26 (25 days overdue)*) and the Upcoming Expirations card, so all three read alike. The full written date is still available on hover, which also disambiguates a two-digit year.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.021",
     "date": "2026-10-06",
     "title": "Domains & Certificates list shows the expiry date, not just the countdown",

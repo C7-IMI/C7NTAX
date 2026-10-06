@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Globe, Lock, CalendarClock, Building2, RefreshCw, ExternalLink, ShieldCheck } from "lucide-react";
-import { daysUntil, formatDate } from "../lib/format";
+import { daysUntil, formatDate, formatDateShort } from "../lib/format";
 import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 
 
@@ -174,7 +174,9 @@ export function KumoDomainsPage() {
                     {when ? (
                       <span className="text-right shrink-0">
                         <span className={`block text-[10px] ${expiryTone(row)}`}>{when.overdue ? "expired" : when.label}</span>
-                        <span className="block text-[10px] text-gray-600 mt-0.5">{formatDate(row.expiryDate)}</span>
+                        <span className="block text-[10px] text-gray-600 mt-0.5" title={formatDate(row.expiryDate)}>
+                          {formatDateShort(row.expiryDate)}
+                        </span>
                       </span>
                     ) : (
                       <span className="text-[10px] text-gray-600 shrink-0">no expiry tracked</span>
@@ -222,7 +224,7 @@ export function KumoDomainsPage() {
                 <Field label={selected.kind === "Certificate" ? "Issuer" : "Registrar"} value={selected.issuer} icon={ShieldCheck} />
                 <Field
                   label="Expires"
-                  value={selected.expiryDate ? `${formatDate(selected.expiryDate)} (${daysUntil(selected.expiryDate).label})` : null}
+                  value={selected.expiryDate ? `${formatDateShort(selected.expiryDate)} (${daysUntil(selected.expiryDate).label})` : null}
                   icon={CalendarClock}
                   tone={expiryTone(selected)}
                 />

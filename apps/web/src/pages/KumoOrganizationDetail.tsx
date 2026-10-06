@@ -7,7 +7,7 @@ import {
   History, CalendarClock, ChevronRight, Save, X, Globe, Mail, Phone, ExternalLink, Monitor,
   Server, BookOpen, Lock, Check, Activity, GitBranch,
 } from "lucide-react";
-import { initials, avatarColor, timeAgo, formatDate, daysUntil } from "../lib/format";
+import { initials, avatarColor, timeAgo, formatDate, formatDateShort, daysUntil } from "../lib/format";
 import { UI_KUMO_TYPES } from "../lib/uiFlags";
 import { OrganizationTypePanel } from "../components/OrganizationTypePanel";
 import { OrganizationTypeRail, type AssetType } from "../components/OrganizationTypeRail";
@@ -557,8 +557,13 @@ export function KumoOrganizationDetailPage() {
                   >
                     <span className="text-gray-500 shrink-0">{typeIcon(item.type, 13)}</span>
                     <span className="text-gray-300 truncate flex-1 group-hover:text-cyber-300">{item.name}</span>
-                    <span className={`text-[10px] shrink-0 ${when.days <= 30 ? "text-amber-400" : "text-gray-600"}`} title={formatDate(item.expiresAt)}>
-                      {when.label}
+                    <span className="text-right shrink-0">
+                      <span className={`block text-[10px] ${when.days <= 30 ? "text-amber-400" : "text-gray-600"}`}>
+                        {when.label}
+                      </span>
+                      <span className="block text-[10px] text-gray-600 mt-0.5" title={formatDate(item.expiresAt)}>
+                        {formatDateShort(item.expiresAt)}
+                      </span>
                     </span>
                   </Link>
                 );
