@@ -9,7 +9,7 @@ import { onTicketStatusChange, extractPriority } from "./automations";
 import { generateTicketNumber } from "../../services/ticketNumber";
 import { EmailService } from "@C7NTAX/email";
 import { notifyTicketContact, notifyTicketNote, notifyTicketStatusChange } from "../../services/ticketNotifications";
-import { addTicketContact, listTicketContacts, removeTicketContact, resolveRecipients, ticketCcEmails, updateTicketContact, isEmailAddress } from "../../services/ticketContacts";
+import { addTicketContact, listTicketContacts, removeTicketContact, resolveRecipients, ticketCcEmails, updateTicketContact, isEmailAddress, isValidEmail } from "../../services/ticketContacts";
 import { v4 as uuid } from "uuid";
 import { sanitizeEmailHtml, htmlToText, extractInlineImages } from "../../services/emailHtml";
 import { logger } from "../../services/logger";
@@ -98,6 +98,27 @@ async function storeAttachments(
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[char]!);
+}
+
+/**
+ * Reject a malformed address instead of quietly dropping it — an address the
+ * author typed is either sent to, or the request fails and says why.
+ */
+function assertValidAddresses(...lists: unknown[]): void {
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const value of list) {
+      if (typeof value !== "string") continue;
+      const email = value.trim();
+      if (email && !isValidEmail(email)) throw new AppError(`"${email}" is not a valid email address`, 400);
+    }
+  }
+}
+
+/** Validate the free-form addresses inside a recipients payload. */
+function assertValidRecipientPayload(input: unknown): void {
+  const payload = (input ?? {}) as Record<string, unknown>;
+  assertValidAddresses(payload.emails, payload.ccEmails);
 }
 
 function formatTimeEntryDetails(entry: { minutes: number; date: Date; description?: string | null; workType?: string | null; workRole?: string | null }): string {
@@ -370,6 +391,7 @@ ticketsRouter.post("/:id/comments", requirePermission(Permission.TicketEdit), as
   try {
     const body = typeof req.body?.body === "string" ? req.body.body.trim() : "";
     if (!body) throw new AppError("Comment is required", 400);
+    assertValidRecipientPayload(req.body?.recipients);
     const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { id: true, companyId: true } });
     if (!ticket) throw new AppError("Ticket not found", 404);
     if (!canAccessTicket(req, ticket.companyId)) throw new AppError("Not authorized", 403);
@@ -436,6 +458,8 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
     const plainBody = typeof req.body?.body === "string" ? req.body.body.trim() : "";
     if (!subject || (!richHtml && !plainBody)) throw new AppError("Subject and message are required", 400);
     if (plainBody.length > 20_000 || richHtml.length > 200_000) throw new AppError("Message is too long", 400);
+    assertValidAddresses(req.body?.to, req.body?.cc, req.body?.bcc);
+    assertValidRecipientPayload(req.body?.recipients);
 
     // Recipients: the primary contact unless the composer removed them, plus anyone
     // picked (client contacts and free addresses), with the ticket's CC contacts copied.

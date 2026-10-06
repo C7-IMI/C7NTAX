@@ -69,6 +69,21 @@ clientsRouter.get("/contacts", async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ── Look up who owns an address ──────────────────────────────────────
+// Used by the recipient fields to name the organisation an outside address
+// actually belongs to, so a warning can say "that is Stark's John Smith".
+clientsRouter.get("/contacts/lookup", async (req: AuthRequest, res, next) => {
+  try {
+    const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
+    if (!email) throw new AppError("email is required", 400);
+    const contact = await prisma.contact.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      select: { id: true, firstName: true, lastName: true, email: true, company: { select: { id: true, name: true } } },
+    });
+    res.json(contact ?? null);
+  } catch (e) { next(e); }
+});
+
 // ── Create contact ───────────────────────────────────────────────────
 clientsRouter.post("/contacts", async (req: AuthRequest, res, next) => {
   try {

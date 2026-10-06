@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { RichTextEditor, toAttachmentDraft, type EmailAttachmentDraft } from "../components/RichTextEditor";
-import { RecipientField, recipientFromContact, type Recipient, type RecipientSuggestion } from "../components/RecipientField";
+import { RecipientField, recipientFromContact, offOrgRecipients, offOrgSummary, type Recipient, type RecipientSuggestion } from "../components/RecipientField";
 import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
@@ -714,6 +714,8 @@ export function TicketsPage() {
                 suggestions={contacts.filter((c) => c.id !== form.contactId)}
                 placeholder="Add CC / additional contacts"
                 hint="Kept on the ticket as additional contacts you can promote to CC later."
+                orgName={companies.find((c) => c.id === form.companyId)?.name}
+                orgEmails={contacts.map((c) => c.email)}
               />
             </div>
             <div><label className="text-xs text-gray-500 block mb-1">Description</label><textarea className="input-field" placeholder="Detailed description..." value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={4}/></div>
@@ -1008,6 +1010,7 @@ export function TicketDetailPage() {
   const [emailBcc, setEmailBcc] = useState<Recipient[]>([]);
   const [showBcc, setShowBcc] = useState(false);
   const [showAddContact, setShowAddContact] = useState(false);
+  const [offOrgPrompt, setOffOrgPrompt] = useState<{ kind: "email" | "note"; addresses: string[]; companies: string[] } | null>(null);
   // The note composer emails the note to the ticket's people; this records the boxes the author
   // changed for the note being written (keyed by email), plus any Cc added on the fly.
   const [noteOverrides, setNoteOverrides] = useState<Record<string, boolean>>({});
@@ -1076,11 +1079,16 @@ export function TicketDetailPage() {
     finally{setSaving(false);}
   };
 
-  const handlePostNote = async (e?: React.FormEvent) => {
+  const handlePostNote = async (e?: React.FormEvent, options: { confirmedOffOrg?: boolean } = {}) => {
     if(e)e.preventDefault();
     if(!noteText.trim())return;
-    setPosting(true);
     const internal = noteInternal;
+    // Same warning as the email dialog: outside addresses are allowed, not silent.
+    if(!internal && !options.confirmedOffOrg){
+      const outside = offOrgIn(noteTo, noteCc);
+      if(outside.length){ setOffOrgPrompt({ kind:"note", addresses: outside, companies: [] }); return; }
+    }
+    setPosting(true);
     try{
       // The primary contact is ticked by default; anything added in the Cc field is
       // emailed with the note and saved onto the ticket.
@@ -1202,6 +1210,14 @@ export function TicketDetailPage() {
   /** Client contacts offered in the address fields. */
   const contactSuggestions: RecipientSuggestion[] = contacts;
 
+  /**
+   * The organisation a ticket's recipients must belong to. Suggestions and name
+   * matching are limited to it so a same-named contact at another client cannot
+   * be picked by mistake; anything outside it warns but is still allowed.
+   */
+  const orgName = (ticket?.company as { name?: string })?.name;
+  const orgEmails = contactSuggestions.map((c) => c.email);
+
   /** Contacts on the ticket who are emailed automatically, for the composer hints. */
   const autoEmailContacts = (): Array<{ name: string; email: string; role: string }> =>
     ((ticket?.additionalContacts as any[]) || [])
@@ -1279,8 +1295,13 @@ export function TicketDetailPage() {
       hint={options.hint}
       action={options.action}
       excludeEmails={options.exclude}
+      orgName={orgName}
+      orgEmails={orgEmails}
     />
   );
+
+  /** Addresses outside the ticket's organisation, for the pre-send check. */
+  const offOrgIn = (...lists: Recipient[][]): string[] => offOrgRecipients(lists.flat(), orgEmails);
 
   /** Extra people on the ticket, added from the Contacts card or while writing a note. */
   const addTicketContactLink = async (person: Recipient) => {
@@ -1333,11 +1354,19 @@ export function TicketDetailPage() {
     }
   };
 
-  const sendContactEmail = async (e: React.FormEvent) => {
+  const sendContactEmail = async (e: React.FormEvent, options: { confirmedOffOrg?: boolean } = {}) => {
     e.preventDefault();
     if (!emailForm.subject.trim() || (!emailForm.body.trim() && !emailForm.html.trim())) {
       toast.error("Add a subject and a message");
       return;
+    }
+    // Warn once about anyone outside the ticket's organisation, then let it go.
+    if (!options.confirmedOffOrg) {
+      const outside = offOrgIn(emailTo, emailCc, emailBcc);
+      if (outside.length) {
+        setOffOrgPrompt({ kind: "email", addresses: outside, companies: [] });
+        return;
+      }
     }
     setSendingEmail(true);
     try {
@@ -1367,6 +1396,18 @@ export function TicketDetailPage() {
     } finally {
       setSendingEmail(false);
     }
+  };
+
+  /** Continue after the "outside the organisation" warning. */
+  const confirmOffOrgPrompt = () => {
+    const pending = offOrgPrompt;
+    setOffOrgPrompt(null);
+    if (!pending) return;
+    if (pending.kind === "email") {
+      void sendContactEmail({ preventDefault() {} } as React.FormEvent, { confirmedOffOrg: true });
+      return;
+    }
+    void handlePostNote(undefined, { confirmedOffOrg: true });
   };
 
   const openFollowUp = () => {
@@ -1918,6 +1959,8 @@ export function TicketDetailPage() {
                   suggestions={contactSuggestions}
                   placeholder="Search this client's contacts or type an address"
                   hint="Added as an additional contact — choose how they are used once added."
+                  orgName={orgName}
+                  orgEmails={orgEmails}
                 />
               </div>
             )}
@@ -2302,6 +2345,31 @@ export function TicketDetailPage() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {offOrgPrompt && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4" onClick={() => setOffOrgPrompt(null)}>
+          <div className="card w-full max-w-md space-y-3" onClick={(e) => e.stopPropagation()}>
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-white">
+              <AlertTriangle size={16} className="text-amber-400" /> Outside {orgName || "this client"}
+            </h3>
+            <p className="text-sm text-gray-300">
+              {offOrgSummary(offOrgPrompt.addresses, orgName || "this client", offOrgPrompt.companies)}
+            </p>
+            <ul className="space-y-1">
+              {offOrgPrompt.addresses.map((address) => (
+                <li key={address} className="rounded-md bg-surface-lighter px-2 py-1 text-xs text-gray-200">{address}</li>
+              ))}
+            </ul>
+            <p className="text-xs text-gray-500">You can continue — just make sure this is the right person and not a same-named contact at another client.</p>
+            <div className="flex justify-end gap-2">
+              <button type="button" className="btn-secondary text-sm" onClick={() => setOffOrgPrompt(null)}>Go back</button>
+              <button type="button" className="btn-primary text-sm" onClick={confirmOffOrgPrompt}>
+                {offOrgPrompt.kind === "email" ? "Send anyway" : "Add note anyway"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -2565,3 +2565,38 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Ticket creation: the form posted `additionalContactIds`, and the created ticket came back with the contact linked as *additional*.
 - Contacts card: add via search, all three roles (persisted across a reload), and remove — each confirmed in the UI and the database. The ticket and its people were then restored to their original state.
 - Typecheck web 0, api 156 (baseline); design-token lint unchanged. A whitespace-only `prisma format` realignment of the whole schema was reverted so the schema diff is the 22 lines it should be.
+
+---
+
+### Prompt 192 — Scope recipient suggestions to the ticket's client, and warn about outsiders
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~1 h
+**BuildNotes IDs:** 2026.10.6.035 - Address fields only offer the ticket's own client, and warn about anyone else
+> In the email editor: When adding email contacts it should pull from Contacts, but the search/suggestion/auto-complete and name checks should be limited to users within that same org/company as defined on the ticket. It should still always validate that the email is a valid address (john@doe.com)
+>
+> This is to prevent accidentally CC'ing the wrong users
+>
+> For example, if there is a John Smith at Stark Enterprises (john@stark) and a John Smith at Initech (john@initech), but the ticket is for Initech, then only john@initch should be an option.
+>
+> There should also be a check and warning for that before allowing to send or clicking away from the field. If the e-mail address is manually entered, then provide the warning but allow it to continue. FOr instance if I manually type in admin@c7ntax.com, show the warning that it is not part of the org, but I can still proceed to send the e-mail.
+>
+> The warning can be in the style of the attached screenshot
+
+**How each part was read**
+- "limited to users within that same org" — the suggestion list was already scoped (the ticket detail page loads `/clients/contacts?companyId=<ticket client>`), so the work was making that explicit and enforcing it as the *only* thing name matching can see, on every surface that takes an address.
+- "check and warning … before allowing to send or clicking away from the field" — two moments, one rule: the bubble appears as soon as an outside address is present (which is what commits on blur), and pressing Send re-checks and asks once. "provide the warning but allow it to continue" ruled out blocking, so the confirm carries a *Send anyway*.
+- The screenshot is a validation bubble: white card, orange rounded marker, dark text, pointer at the top. Built as a reusable `FieldWarning` and used in the amber "warn, don't block" tone rather than the red hard-error tone, since nothing here is refused.
+
+**Where it went**
+- `apps/web/src/components/FieldWarning.tsx` (new): the bubble from the screenshot.
+- `apps/web/src/components/RecipientField.tsx`: `orgName` / `orgEmails` props, an amber outline while an outside address is present, and `offOrgRecipients()` / `offOrgSummary()` exported so the page can run the same check before sending. Each distinct outside address is looked up once to find out which client it does belong to.
+- `apps/api/src/routes/clients.ts`: `GET /clients/contacts/lookup?email=` returning the owning contact/company, used only to make the warning specific.
+- `apps/api/src/routes/tickets/index.ts`: `assertValidAddresses()` / `assertValidRecipientPayload()` so a malformed address is a named 400 rather than silently dropped; `ticketContacts.ts` gained a plain `isValidEmail()` because the existing `isEmailAddress()` is a type guard and narrowed the value away inside the check.
+- `apps/web/src/pages/Tickets.tsx`: the ticket's client name and its contact emails feed every address field, and the *Outside {client}* confirmation holds the send for one decision.
+
+**Verification (live)**
+- Seeded a John Smith at both Stark Enterprises (`john@starkenterprises.com`) and Umbrella Corp (`john@umbrellacorp.net`). On an Umbrella ticket, typing "John" offered **only** the Umbrella one — the Stark John Smith never appeared.
+- `admin@c7ntax.com` typed by hand: bubble read "admin@c7ntax.com is not a contact at Umbrella Corp. You can still send it — just make sure it is intentional." Adding `john@starkenterprises.com` changed it to "belongs to Stark Enterprises, not Umbrella Corp" — the lookup naming the actual owner is the part that catches the same-name trap.
+- *Send Email* opened the **Outside Umbrella Corp** dialog listing both addresses; **Send anyway** went through and the SMTP sink showed the envelope carrying `alice@umbrellacorp.net`, `admin@c7ntax.com` and `john@starkenterprises.com` with `Cc: admin@c7ntax.com, john@starkenterprises.com` on the message.
+- The note composer behaved identically, offering *Add note anyway*; the note was not posted until that was clicked.
+- Server side: `cc: ["not-an-address"]` → 400 `"not-an-address" is not a valid email address`; an invalid `ccEmails` entry in a note's recipients → 400; a valid outside address → accepted, as intended.
+- Cleanup: probe contacts, comments, links and audit rows removed, snapshots re-captured, sink stopped and temp files deleted. Typecheck web 0 / api 156 (baseline), design-token lint unchanged.

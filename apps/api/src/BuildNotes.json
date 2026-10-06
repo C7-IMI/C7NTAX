@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.6.035",
+    "date": "2026-10-06",
+    "title": "Address fields only offer the ticket's own client, and warn about anyone else",
+    "changes": [
+      {
+        "text": "**Recipient search is scoped to the ticket's organisation.** The To, Cc and Bcc fields, the note composer's recipients and the ticket's *Add contact* box only suggest contacts of the client the ticket belongs to, and name matching is limited to them — so on an Initech ticket, typing \"John\" offers Initech's John Smith and never the same-named John Smith at Stark Enterprises. (The new-ticket form scopes to the company being selected, and re-scopes if you change it.)",
+        "type": "New Feature"
+      },
+      {
+        "text": "**An address outside that client gets a warning, not a block.** Type or paste one — `admin@c7ntax.com` on an Umbrella Corp ticket — and a white validation bubble appears under the field in the same style as the form validators, the field outline turns amber, and it stays until the address is removed: *\"admin@c7ntax.com is not a contact at Umbrella Corp. You can still send it — just make sure it is intentional.\"* When we know who the address really belongs to, the warning names them: **\"john@starkenterprises.com belongs to Stark Enterprises, not Umbrella Corp.\"** — which is exactly the wrong-John-Smith case.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Sending checks the same thing.** Pressing *Send Email* (or *Add Note*) with an outside address opens an **Outside {client}** confirmation listing every one of them, with *Go back* and *Send anyway* — the send is held only long enough to be seen, never refused, and the recipients are all shown before you decide.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A malformed address is now rejected instead of quietly dropped.** The API validates every address a composer sends — typed addresses, Cc and Bcc lists, and the note recipients payload — and answers 400 naming the value (`\"not-an-address\" is not a valid email address`) rather than filtering it out and delivering to fewer people than the author thought.",
+        "type": "Update"
+      },
+      {
+        "text": "A small lookup (`GET /clients/contacts/lookup?email=`) resolves which client an outside address belongs to, one request per distinct address, so the warning can be specific. Emails are matched case-insensitively, and outside addresses are only ever warned about — nothing about them is stored unless the composer is saving recipients to the ticket.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.034",
     "date": "2026-10-06",
     "title": "CC anyone on a ticket email, and keep extra contacts on the ticket",

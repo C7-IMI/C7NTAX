@@ -38,8 +38,14 @@ const CONTACT_SELECT = {
 } as const;
 
 /** Very small guard — enough to stop a typo becoming a bounced ticket email. */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmail(value: string): boolean {
+  return EMAIL_PATTERN.test(value.trim());
+}
+
 export function isEmailAddress(value: unknown): value is string {
-  return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  return typeof value === "string" && EMAIL_PATTERN.test(value.trim());
 }
 
 export function normalizeRole(value: unknown): TicketContactRole {
