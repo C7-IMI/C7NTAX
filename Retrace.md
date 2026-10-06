@@ -1580,6 +1580,148 @@
 - Excluded the generated `apps/web/tsconfig.tsbuildinfo` file from the commit.
 
 
+### Prompt 134 — Identify excluded tsbuildinfo file
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~1 min
+**BuildNotes IDs:** None (informational question; no project change)
+> what was tsconfig excluded?
+
+**Changes:**
+- Clarified that `apps/web/tsconfig.tsbuildinfo` is generated TypeScript incremental-build metadata, not an application source change, and was left uncommitted.
+
+
+### Prompt 135 — Move Chat beside the browser preview
+**Timestamp:** 2026-10-05 | **Status:** ⚠️ Unable to move through available tools | **Duration:** ~1 min
+**BuildNotes IDs:** None (VS Code UI-only request; no project change)
+> can you move this chat window to the middle between explorer and the browser/preview?
+
+**Changes:**
+- The available controls cannot reposition VS Code workbench panes directly; provided manual editor-group placement guidance.
+
+
+### Prompt 136 — Build out the time entry dialog
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** #1 (2026.10.5.006)
+> The time entry dialog needs to be more in depth. Review other PSAs like Connectwise ASIO, AutotaskPSA, and ConnectwisePSA for reference and build out the time entry dialog/options accordingly.
+
+**Changes:**
+- `apps/api/prisma/schema.prisma` — `TimeEntry` gained `startTime`, `endTime`, `workType`, `workRole`, `internalNotes`, and `noCharge` fields (alongside existing `rate`); `prisma db push` + `prisma generate` applied.
+- `apps/api/src/routes/tickets/index.ts` — `POST /tickets/:id/time` accepts and persists the new fields, an optional resource (`userId`) override, and per-entry rate; work dates (`YYYY-MM-DD`) are parsed in local time; added a 24-hour duration cap.
+- `apps/api/src/routes/billing.ts` — invoice generation now uses per-entry rate when set and excludes No Charge entries from billable time.
+- `apps/web/src/pages/Tickets.tsx` — rebuilt the Add Time Entry dialog (consolidating the inline quick-add) with work date, resource, start/end time, auto-calculated duration, billing status (Billable / Non-billable / No Charge), work type, work role, hourly rate, client-facing notes, and internal notes; time entry lists/activity feed show work type, role, rate, and a distinct No Charge badge.
+- `apps/web/src/pages/Billing.tsx` — time view shows work type/role/rate meta and a no-charge badge.
+- `packages/shared/src/schemas.ts` — `timeEntrySchema` aligned with the actual model fields.
+- **Verification:** Live browser exercise confirmed billable, non-billable, and No Charge entries save and render with correct metadata; duration auto-calculates; explicit work dates display on the correct day. API/web `tsc --noEmit` show only pre-existing errors unrelated to these changes.
+
+
+### Prompt 137 — Email the customer contact on ticket activity
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~45 min
+**BuildNotes IDs:** #1 (2026.10.5.007)
+> whenever ticket notes are updated (except internal notes), time entry added, or the status is changed, it should e-mail the customer contact in that ticket.
+
+**Changes:**
+- `packages/email/src/EmailService.ts` — added `sendTicketActivity`, a customer-facing notification template that greets the ticket contact, shows the ticket number/title, the event, and HTML-escaped details; exported the template.
+- `apps/api/src/services/ticketNotifications.ts` — new shared best-effort helper (`notifyTicketContact`, `notifyTicketStatusChange`, `ticketStatusLabel`) that emails `ticket.contact` and logs failures via `logger.warn` without failing the caller.
+- `apps/api/src/routes/tickets/index.ts` — wired notifications into public note creation (`POST /:id/comments`, `POST /:id/notes`, and the `note` field on `PATCH /:id`), time entry creation (`POST /:id/time`), and status changes (`PATCH /:id` and `POST /batch`). Internal notes and internal time-entry notes are never included.
+- `apps/api/src/worker.ts` — the auto-close job notifies the contact when it closes a stale ticket.
+- **Verification:** Ran the API against a local SMTP capture: a public note, status changes, and time entries each delivered exactly one message to the ticket contact (correct recipient, subject, and escaped body), while an internal note delivered none; the API also booted cleanly with the new worker import. Deleted the smoke-test records and restored the snapshot files afterward. `tsc --noEmit` on the touched files reports only pre-existing strict-null errors that also exist at HEAD.
+
+
+### Prompt 138 — Explain the ticket notification change
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~5 min
+**BuildNotes IDs:** None (explanation only; no project change)
+> explain
+
+**Changes:**
+- Walked through the customer-notification implementation: the shared `ticketNotifications` service, the `EmailService.sendTicketActivity` template, the route and worker call sites, and how internal notes are excluded. No code or documentation changes.
+
+
+### Prompt 139 — Explain the generic `/api/bulk` status path
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~5 min
+**BuildNotes IDs:** None (explanation only; no project change)
+> explain this: One note: the generic admin bulk runner (`POST /api/bulk`, `ticket_update`) can also set a ticket's status from free-form config, but it isn't wired since it isn't user-facing (the web app never calls it). Let me know if you want that path covered too.
+
+**Changes:**
+- Explained that `POST /api/bulk` is a separate generic bulk-operation runner (distinct from `POST /api/tickets/batch`) whose `ticket_update` case applies an unvalidated free-form `config` directly via `prisma.ticket.update`, so a `status` key would bypass notifications. Confirmed no web/desktop caller references the endpoint, and described what wiring it would require. No code or documentation changes.
+
+
+### Prompt 140 — Save the admin bulk email notes to a reference file
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~5 min
+**BuildNotes IDs:** #1 (2026.10.5.008)
+> Just place that info you just gave me into a separate file called adminBulkticketemail for later reference.
+
+**Changes:**
+- Added `adminBulkticketemail.md` (repo root) capturing the `/api/bulk` `ticket_update` notification gap: the two bulk endpoints compared, why status changes bypass email, why that path was not wired, and the steps to wire it.
+- Logged BuildNotes `2026.10.5.008` and regenerated the What's New fallbacks.
+
+
+### Prompt 141 — PlanDocs completion audit + Azure migration plan
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~50 min
+**BuildNotes IDs:** #1 (2026.10.5.009)
+> look through the plandocs and tell me what hasn't been completed. ALso there is a plan to migrate to AWS. I need you to make a similar plan as if we wanted to migrate to Azure
+
+**Changes:**
+- Audited all 15 PlanDocs against the codebase and BuildNotes: PLAN-008 complete; PLAN-001 implemented (integration/MFA verification items open); PLAN-009 mostly complete (Phases 1–5; EWS + hardening open); PLAN-002/003/007/012/013/015 partial; PLAN-004/005/006/010/011/014 not started. Reported per-plan outstanding items.
+- `PLAN-Azure-Dev-Prod-Split-and-Sync.md` — new Azure twin of the AWS dev/prod plan: identical sync-command semantics, pipeline, phases, rollback, and verification, plus an AWS→Azure service mapping (ACR, Container Apps, Application Gateway + Front Door, PostgreSQL Flexible Server with zone-redundant HA, Key Vault, Blob immutable logs, Azure Monitor, Entra ID managed identity, DDoS Protection Standard, Azure OpenAI) and Azure-specific caveats (Front Door 443-only → App Gateway listeners for ports 3010/3011).
+- Registered as PLAN-016 (PlanDocs copy + registry index row).
+- **Verification:** Documentation/plan only — cross-checked the Azure plan's service mappings and caveats against the current architecture in PLAN-010/PLAN-007/PLAN-011.
+
+
+### Prompt 142 — What PLAN-015 items are safe to implement now
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** None (analysis/advice only; no project change)
+> What an be implementend in Plan 015 right now without risking the breaking of the app?
+
+**Changes:**
+- Assessed all 16 PLAN-015 items against the live codebase and classified them by blast radius: Tier 1 safe additive (#4 dashboard, #5 board drag-and-drop, #6 Kumo audit log, #7 MFA QR upload, #8 Outage Board, #9 CloudConnect live status, #11 AI KB autogen, #12 M365 inactivity reports); Tier 2 flagged/need-decision (#13 SMS, #10 report template, #3 draft-only batch invoicing); Tier 3 high-risk (#1 agreements/time engine); Tier 4 externally blocked (#14 C7NTRL, #15 client portal, #16 infra).
+- Noted that #2 (expenses) is already largely implemented in the codebase (`Expense` model, `/billing/expenses` CRUD, Expenses tab) — ahead of the plan's 2026-08-18 status. No code or documentation changes.
+
+
+### Prompt 143 — Implement the safe PLAN-015 item (Outage Board)
+**Timestamp:** 2026-10-05 | **Status:** ↩️ Reverted (see Prompt 144) | **Duration:** ~35 min
+**BuildNotes IDs:** None (entry `2026.10.5.010` withdrawn on revert)
+> What an be implementend in Plan 015 right now without risking the breaking of the app?  _(follow-up: proceed with the safest item)_
+
+**Changes:**
+- `apps/web/src/pages/ServiceAlerts.tsx` — added an **Outage Board** view (PLAN-015 #8): a tab strip (Overview / Outage Board) and a read-only four-column board (Outages / Degraded / Notices / Operational) built from the existing `/service-alerts/services` payload. Frontend-only — no API route, schema, or existing-view change; the original content is untouched behind the Overview tab and still uses the visibility-gated refresh.
+- `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` + `PlanDocs/PLAN-015-…` — added an implementation log noting #8 shipped.
+- **Verification:** `apps/web` typecheck shows no new errors (ServiceAlerts.tsx clean). Rendered the page in the live app: the board shows 4 columns with real data (2 degraded — e.g. Azure; 12 operational), the overview content is hidden while on the board and restored when switching back. Auth for the check used a localhost-only credential relay so no password entered tool output; smoke-test artifacts and snapshots were cleaned up/restored afterward.
+- **Reverted in Prompt 144** at the user's request; BuildNotes `2026.10.5.010` was withdrawn.
+
+
+### Prompt 144 — Undo the Outage Board change
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~15 min
+**BuildNotes IDs:** None (revert — entry `2026.10.5.010` withdrawn; top entry is back to `2026.10.5.009`)
+> undo that last change. the serivce alerts no longer work
+
+**Changes:**
+- Diagnosed the real cause: the API was down (I had stopped it during verification cleanup), so Vite's `/api` proxy returned 500s on the Service Alerts page — not a regression from the Outage Board code (which was frontend-only).
+- `apps/web/src/pages/ServiceAlerts.tsx` — reverted via `git checkout` (Outage Board tab/board removed; original page restored).
+- Removed the PLAN-015 implementation-log note from both `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` and `PlanDocs/PLAN-015-…`; removed BuildNotes `2026.10.5.010` and restored the header to `2026.10.5.009`; regenerated the What's New fallbacks.
+- Restarted the stack via `startup/c7ntax-boot.ps1 -SkipSeed` (API back on :4000, web on :3010; login + frontend checks HTTP 200).
+- **Verification:** Live page reloaded at `/service-alerts`: original layout renders 14 service cards, no Outage Board tab, no 500 errors.
+
+
+### Prompt 145 — AWS vs Azure recommendation
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.10.5.010)
+> based on the plandocs, two different migration plans, and this codebase/architecture, do you recommend we move to AWS or Azure?
+
+**Changes:**
+- Reviewed the two migration plans (PLAN-010 AWS, PLAN-016 Azure), PLAN-007 (SOC 2), PLAN-011 (Bedrock RAG), PLAN-015, and the codebase: containerized Node/Express + Prisma + PostgreSQL API, React SPA, Electron desktop, and the integration hub (verified no cloud SDK lock-in; both AWS and Azure adapters exist alongside Microsoft 365 Graph and Entra SSO).
+- Recommended **Azure** for identity fit (Entra ID SSO + M365 Graph already integrated; MSP clients are Microsoft-centric), Azure OpenAI as the Bedrock-equivalent for the RAG assistant, and Container Apps revisions for prod verification; noted AWS as the better choice if the team already has AWS depth/credits or prioritizes Bedrock.
+- Captured it as a decision record: `PLAN-Azure-Dev-Prod-Split-and-Sync.md` §15 (rationale, where AWS wins, deciding-factor table), cross-referenced from `PLAN-AWS-Dev-Prod-Split-and-Sync.md` §14 and the PlanDocs PLAN-010 copy; regenerated the PLAN-016 registry copy and the What's New fallbacks. Documentation/decision only — no application code change.
+
+
+### Prompt 146 — Write the cloud provider recommendation to a file
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~10 min
+**BuildNotes IDs:** #1 (2026.10.5.011)
+> write your recommendation to a file for later reference
+
+**Changes:**
+- Added `cloud-provider-recommendation.md` (repo root) — a standalone reference of the AWS-vs-Azure recommendation: the Azure recommendation, rationale (identity fit, AI parity, native blue/green, SOC 2 mapping), where AWS wins, the deciding-factor table, practical notes (no cloud SDK lock-in; Front Door port caveat), and links to PLAN-010/016/007/011/015.
+- Logged BuildNotes `2026.10.5.011` and regenerated the What's New fallbacks.
+
+
 
 
 

@@ -204,3 +204,11 @@ Classifier rules: message trimmed of punctuation must equal a trigger phrase
 5. Region and VPC CIDR planning.
 6. Data sync scope: code-only syncs by default vs data+code when the command
    says "with data".
+
+---
+
+## Cloud provider decision record
+
+See `PLAN-016-Azure-Dev-Prod-Split-Sync.md` §15 for the AWS-vs-Azure
+recommendation and decision rationale recorded 2026-10-05. This plan remains
+plan-only pending that decision.

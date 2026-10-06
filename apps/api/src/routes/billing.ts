@@ -75,18 +75,21 @@ billingRouter.post("/invoices/generate", requirePermission(Permission.InvoiceCre
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
 
-    // Get unbilled time entries
+    // Get unbilled time entries (exclude no-charge entries)
     const timeEntries = await prisma.timeEntry.findMany({
-      where: { ticket: { companyId }, invoiceId: null, billable: true },
+      where: { ticket: { companyId }, invoiceId: null, billable: true, noCharge: false },
     });
 
-    const hourlyRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
-    const lineItems = timeEntries.map((te) => ({
-      description: te.description || `Time entry ${te.id.slice(0, 8)}`,
-      quantity: +(te.minutes / 60).toFixed(2),
-      unitPrice: hourlyRate,
-      total: +(te.minutes / 60 * hourlyRate).toFixed(2),
-    }));
+    const defaultRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
+    const lineItems = timeEntries.map((te) => {
+      const unitPrice = te.rate && te.rate > 0 ? te.rate : defaultRate;
+      return {
+        description: te.description || `Time entry ${te.id.slice(0, 8)}`,
+        quantity: +(te.minutes / 60).toFixed(2),
+        unitPrice,
+        total: +(te.minutes / 60 * unitPrice).toFixed(2),
+      };
+    });
 
     const subtotal = lineItems.reduce((sum, li) => sum + li.total, 0);
     const taxRate = 0; // TODO: configurable per client location
@@ -123,14 +126,15 @@ billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permissi
       ? await prisma.serviceAgreement.findUnique({ where: { id: agreementId } })
       : await prisma.serviceAgreement.findFirst({ where: { companyId } });
     if (!agreement) throw new AppError("No service agreement found");
-    const timeEntries = await prisma.timeEntry.findMany({ where: { ticket: { companyId }, invoiceId: null, billable: true } });
+    const timeEntries = await prisma.timeEntry.findMany({ where: { ticket: { companyId }, invoiceId: null, billable: true, noCharge: false } });
     if (timeEntries.length === 0) throw new AppError("No unbilled time entries found");
-    const hourlyRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
+    const defaultRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
     const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
     const dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);
     const lineItems = timeEntries.map((te) => {
       const qty = +(te.minutes / 60).toFixed(2);
-      return { description: te.description || `Time entry ${te.id.slice(0, 8)}`, quantity: qty, unitPrice: hourlyRate, total: +(qty * hourlyRate).toFixed(2) };
+      const unitPrice = te.rate && te.rate > 0 ? te.rate : defaultRate;
+      return { description: te.description || `Time entry ${te.id.slice(0, 8)}`, quantity: qty, unitPrice, total: +(qty * unitPrice).toFixed(2) };
     });
     const subtotal = +lineItems.reduce((s, li) => s + li.total, 0).toFixed(2);
     const invoice = await prisma.invoice.create({
@@ -151,13 +155,16 @@ billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permissi
     const { companyId } = req.body;
     if (!companyId) throw new AppError("companyId required");
     if (process.env.BILLING_FROM_TICKETS_ENABLED === "false") throw new AppError("Billing-from-tickets disabled");
-    const entries = await prisma.timeEntry.findMany({ where: { ticket: { companyId }, invoiceId: null, billable: true }, include: { ticket: { select: { ticketNumber: true } } } });
+    const entries = await prisma.timeEntry.findMany({ where: { ticket: { companyId }, invoiceId: null, billable: true, noCharge: false }, include: { ticket: { select: { ticketNumber: true } } } });
     if (entries.length === 0) throw new AppError("No unbilled time entries for this company");
     const agreement = await prisma.serviceAgreement.findFirst({ where: { companyId } });
-    const rate = agreement && agreement.billingAmount > 0 ? agreement.billingAmount : 150;
+    const defaultRate = agreement && agreement.billingAmount > 0 ? agreement.billingAmount : 150;
     const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
     const dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);
-    const lineItems = entries.map((te) => ({ description: te.description || `Ticket ${te.ticket?.ticketNumber || ""} time`, quantity: +(te.minutes / 60).toFixed(2), unitPrice: rate, total: +(te.minutes / 60 * rate).toFixed(2) }));
+    const lineItems = entries.map((te) => {
+      const unitPrice = te.rate && te.rate > 0 ? te.rate : defaultRate;
+      return { description: te.description || `Ticket ${te.ticket?.ticketNumber || ""} time`, quantity: +(te.minutes / 60).toFixed(2), unitPrice, total: +(te.minutes / 60 * unitPrice).toFixed(2) };
+    });
     const subtotal = lineItems.reduce((s, li) => s + li.total, 0);
     const invoice = await prisma.invoice.create({ data: { invoiceNumber, companyId, agreementId: agreement?.id || null, issueDate: new Date(), dueDate, subtotal, taxRate: 0, taxTotal: 0, total: subtotal, status: InvoiceStatus.Draft, lineItems: { create: lineItems } } });
     await prisma.timeEntry.updateMany({ where: { id: { in: entries.map((x) => x.id) } }, data: { invoiceId: invoice.id } });

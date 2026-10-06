@@ -8,6 +8,7 @@ import { AppError } from "../../middleware/errorHandler";
 import { onTicketStatusChange, extractPriority } from "./automations";
 import { generateTicketNumber } from "../../services/ticketNumber";
 import { EmailService } from "@C7NTAX/email";
+import { notifyTicketContact, notifyTicketStatusChange } from "../../services/ticketNotifications";
 import { v4 as uuid } from "uuid";
 
 export const ticketsRouter = Router();
@@ -38,6 +39,15 @@ function resolveStoredAttachment(storagePath: string): string | null {
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[char]!);
+}
+
+function formatTimeEntryDetails(entry: { minutes: number; date: Date; description?: string | null; workType?: string | null; workRole?: string | null }): string {
+  const hours = Math.round((entry.minutes / 60) * 100) / 100;
+  const lines = [`${hours} hour${hours === 1 ? "" : "s"} logged on ${entry.date.toISOString().slice(0, 10)}.`];
+  if (entry.workType) lines.push(`Work type: ${entry.workType}`);
+  if (entry.workRole) lines.push(`Work role: ${entry.workRole}`);
+  if (entry.description) lines.push("", entry.description);
+  return lines.join("\n");
 }
 
 // ── List tickets ──
@@ -221,6 +231,12 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
       });
     }
 
+    // Email the ticket contact about customer-visible changes (internal notes excluded)
+    await notifyTicketStatusChange(ticket.id, oldStatus, updated.status);
+    if (req.body.note && !req.body.noteInternal) {
+      await notifyTicketContact(ticket.id, { eventLabel: "New note added", details: String(req.body.note) });
+    }
+
     res.json(updated);
   } catch (e) { next(e); }
 });
@@ -237,6 +253,9 @@ ticketsRouter.post("/:id/comments", requirePermission(Permission.TicketEdit), as
       data: { ticketId: ticket.id, body, authorId: req.user!.userId, isInternal: Boolean(req.body.isInternal) },
       include: { author: { select: { id: true, firstName: true, lastName: true } } },
     });
+    if (!comment.isInternal) {
+      await notifyTicketContact(ticket.id, { eventLabel: "New note added", details: body });
+    }
     res.status(201).json(comment);
   } catch (e) { next(e); }
 });
@@ -248,6 +267,9 @@ ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async
     const note = await prisma.ticketComment.create({
       data: { ticketId: req.params.id, body: content, authorId: req.user!.userId, isInternal: isInternal || false },
     });
+    if (!note.isInternal) {
+      await notifyTicketContact(note.ticketId, { eventLabel: "New note added", details: String(content) });
+    }
     res.status(201).json(note);
   } catch (e) { next(e); }
 });
@@ -357,7 +379,7 @@ ticketsRouter.delete("/:id/attachments/:attId", requirePermission(Permission.Tic
 // ── Add time entry ──
 ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    const { startTime, endTime, description, billable, minutes, date } = req.body;
+    const { startTime, endTime, description, internalNotes, billable, noCharge, minutes, date, workType, workRole, rate, userId } = req.body;
     let mins = 0;
     if (minutes) {
       mins = Math.round(Number(minutes));
@@ -365,9 +387,31 @@ ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async 
       mins = Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 60000);
     }
     if (!mins || mins <= 0) throw new AppError("Valid time required");
+    if (mins > 24 * 60) throw new AppError("Time entry cannot exceed 24 hours");
+    // Interpret a bare YYYY-MM-DD work date in local time (not UTC midnight)
+    const parseWorkDate = (d: unknown): Date => {
+      if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return new Date(`${d}T00:00:00`);
+      return d ? new Date(d as string) : new Date();
+    };
     const entry = await prisma.timeEntry.create({
-      data: { ticketId: req.params.id, userId: req.user!.userId, minutes: mins, date: date ? new Date(date) : new Date(), description: description || "", billable: billable ?? true },
+      data: {
+        ticketId: req.params.id,
+        userId: typeof userId === "string" && userId ? userId : req.user!.userId,
+        minutes: mins,
+        date: parseWorkDate(date),
+        startTime: startTime ? new Date(startTime) : null,
+        endTime: endTime ? new Date(endTime) : null,
+        description: description || "",
+        internalNotes: typeof internalNotes === "string" ? internalNotes : null,
+        workType: typeof workType === "string" && workType ? workType : null,
+        workRole: typeof workRole === "string" && workRole ? workRole : null,
+        rate: rate !== undefined && rate !== null && rate !== "" ? Number(rate) : null,
+        billable: billable ?? true,
+        noCharge: noCharge ?? false,
+      },
+      include: { user: { select: { id: true, firstName: true, lastName: true } } },
     });
+    await notifyTicketContact(entry.ticketId, { eventLabel: "Time entry added", details: formatTimeEntryDetails(entry) });
     res.status(201).json(entry);
   } catch (e) { next(e); }
 });
@@ -381,7 +425,20 @@ ticketsRouter.post("/batch", requirePermission(Permission.TicketEdit), async (re
     if (status) data.status = status;
     if (priority) data.priority = priority;
     if (Object.keys(data).length === 0) throw new AppError("status or priority required", 400);
+    const previousStatuses = status
+      ? await prisma.ticket.findMany({ where: { id: { in: ticketIds } }, select: { id: true, status: true } })
+      : [];
     const result = await prisma.ticket.updateMany({ where: { id: { in: ticketIds } }, data });
+
+    // Email each contact whose ticket status actually changed
+    if (status) {
+      const previous = new Map(previousStatuses.map((t) => [t.id, t.status] as const));
+      for (const ticketId of ticketIds) {
+        const oldStatus = previous.get(ticketId);
+        if (oldStatus) await notifyTicketStatusChange(ticketId, oldStatus, String(status));
+      }
+    }
+
     res.json({ updated: result.count, ticketIds });
   } catch (e) { next(e); }
 });

@@ -13,7 +13,7 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; }
 interface Agreement { id: string; name: string; description?: string; company: { name?: string } | null; billingPeriod: string; billingAmount: number; startDate: string; endDate?: string; isActive: boolean; autoInvoiceEnabled: boolean; followUpEnabled: boolean; _count?: { invoices: number } }
 interface Payment { id: string; amount: number; method: string; reference?: string; processedAt: string; invoice: { invoiceNumber: string; company: { name?: string } | null } }
-interface TimeEntry { id: string; description?: string; minutes: number; billable: boolean; date: string; ticket: { ticketNumber: string; company?: { name?: string } | null } | null; invoiceId?: string; }
+interface TimeEntry { id: string; description?: string; internalNotes?: string; minutes: number; billable: boolean; noCharge?: boolean; rate?: number | null; workType?: string | null; workRole?: string | null; date: string; ticket: { ticketNumber: string; company?: { name?: string } | null } | null; invoiceId?: string; }
 interface Company { id: string; name: string; }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -439,10 +439,10 @@ function TimeExpensesTab() {
           <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">Ticket</th><th className="p-3 hidden sm:table-cell">Client</th><th className="p-3">Time</th><th className="p-3">Billable</th><th className="p-3 hidden md:table-cell">Invoiced</th><th className="p-3 hidden lg:table-cell">Date</th></tr></thead>
           <tbody>{filtered.map(e => (
             <tr key={e.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
-              <td className="p-3"><span className="font-medium text-white">{e.ticket?.ticketNumber}</span>{e.description && <p className="text-xs text-gray-500 mt-0.5">{e.description.slice(0, 60)}</p>}</td>
+              <td className="p-3"><span className="font-medium text-white">{e.ticket?.ticketNumber}</span>{e.description && <p className="text-xs text-gray-500 mt-0.5">{e.description.slice(0, 60)}</p>}{[e.workType, e.workRole, e.rate ? `$${Number(e.rate).toFixed(2)}/hr` : null].filter(Boolean).length > 0 && <p className="text-[10px] text-gray-600 mt-0.5">{[e.workType, e.workRole, e.rate ? `$${Number(e.rate).toFixed(2)}/hr` : null].filter(Boolean).join(" · ")}</p>}</td>
               <td className="p-3 text-gray-300 hidden sm:table-cell">{e.ticket?.company?.name || "—"}</td>
               <td className="p-3 text-cyber-400 font-mono font-medium">{e.minutes}m <span className="text-gray-500 text-xs">({(e.minutes / 60).toFixed(2)}h)</span></td>
-              <td className="p-3">{e.billable ? <span className="badge bg-green-600/20 text-green-400">billable</span> : <span className="badge bg-gray-600/20 text-gray-400">non-bill</span>}</td>
+              <td className="p-3">{e.noCharge ? <span className="badge bg-amber-600/20 text-amber-400">no charge</span> : e.billable ? <span className="badge bg-green-600/20 text-green-400">billable</span> : <span className="badge bg-gray-600/20 text-gray-400">non-bill</span>}</td>
               <td className="p-3 hidden md:table-cell">{e.invoiceId ? <span className="badge bg-blue-600/20 text-blue-400">invoiced</span> : <span className="text-amber-400 text-xs">unbilled</span>}</td>
               <td className="p-3 text-gray-500 text-xs hidden lg:table-cell">{new Date(e.date).toLocaleDateString()}</td>
             </tr>

@@ -24,6 +24,7 @@ place at their `Source` paths.
 | PLAN-013 | C7NTAX Competitive Review & Modernization Plan | `PLAN-013-Competitive-Review-and-Modernization.md` | `PLAN-C7NTAX-Competitive-Review-and-Modernization.md` | 2026-08-18 | Planning |
 | PLAN-014 | C7NTRL RMM Product Line & PSA Integration Plan | `PLAN-014-C7NTRL-RMM-Product-Line-and-PSA-Integration.md` | `PLAN-C7NTRL-RMM-Product-Line-and-PSA-Integration.md` | 2026-08-18 | Planning |
 | PLAN-015 | C7NTAX Feature Backlog — UI, Billing, Kumo, Integrations & Infrastructure | `PLAN-015-Feature-Backlog-UI-Billing-Kumo-Integrations.md` | `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` | 2026-08-18 | Planning |
+| PLAN-016 | Azure Dev/Prod Split & Sync Plan | `PLAN-016-Azure-Dev-Prod-Split-Sync.md` | `PLAN-Azure-Dev-Prod-Split-and-Sync.md` | 2026-10-05 | Proposed (plan only) |
 
 ## Conventions
 

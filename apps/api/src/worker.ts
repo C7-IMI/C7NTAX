@@ -3,6 +3,7 @@ import { TicketStatus, InvoiceStatus } from "@C7NTAX/shared";
 import { notifyUser } from "./ws";
 import { EmailService } from "@C7NTAX/email";
 import { logger } from "./services/logger";
+import { notifyTicketStatusChange } from "./services/ticketNotifications";
 
 const emailService = new EmailService();
 
@@ -131,6 +132,9 @@ async function processAutoClose(): Promise<void> {
             resolvedAt: new Date(),
           },
         });
+
+        // Notify the customer contact that the ticket was auto-closed
+        await notifyTicketStatusChange(ticket.id, ticket.status, TicketStatus.Closed);
 
         // Add auto-close comment
         await prisma.ticketComment.create({

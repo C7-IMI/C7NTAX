@@ -247,3 +247,11 @@ Appended from the IT Glue security comparison (2026-08). Each item is dependency
    gate) and PLAN-015 open decision #1.
 8. **Edge layer:** adopt CloudFront + Shield Standard in front of the ALB
    (recommended yes — DDoS posture + SPA edge cache + WAF attach point).
+
+---
+
+## 14. Cloud provider decision record
+
+See `PLAN-Azure-Dev-Prod-Split-and-Sync.md` §15 (PLAN-016) for the AWS-vs-Azure
+recommendation and decision rationale recorded 2026-10-05. This plan remains
+plan-only pending that decision.

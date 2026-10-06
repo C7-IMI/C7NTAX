@@ -338,10 +338,16 @@ model TicketAttachment {
 model TimeEntry {
   id          String   @id @default(uuid())
   description String?
+  internalNotes String?
   minutes     Int
   billable    Boolean  @default(true)
+  noCharge    Boolean  @default(false)
   rate        Float?
   date        DateTime @default(now())
+  startTime   DateTime?
+  endTime     DateTime?
+  workType    String?
+  workRole    String?
 
   ticketId    String
   ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)

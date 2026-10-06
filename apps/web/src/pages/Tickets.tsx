@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import api from "../api";
+import { useAuth } from "../hooks/useAuth";
 import { InferencePanel } from "../components/InferencePanel";
 import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical } from "lucide-react";
 import toast from "react-hot-toast";
@@ -33,9 +34,17 @@ const BATCH_ACTIONS = [
 const TICKET_STATUSES = ["new","in_progress","waiting_on_client","waiting_on_third_party","on_hold","pending_approval","resolved","closed","cancelled"];
 const TICKET_PRIORITIES = ["low","medium","high","critical"];
 
+// ── Time entry options (mirrors ConnectWise / AutoTask work type & role lists) ──
+const WORK_TYPES = ["Remote", "On-Site", "Phone", "Email", "Travel", "Backup", "Project", "Managed Services", "After Hours", "Emergency"];
+const WORK_ROLES = ["Technician", "Engineer", "Consultant", "Project Manager", "Account Manager", "Dispatcher", "Administrator"];
+
 // ── Properly capitalized display labels ──
 const statusLabel = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 const priorityLabel = (p: string) => p.charAt(0).toUpperCase() + p.slice(1);
+
+// ── Time entry display helpers ──
+const timeBillingLabel = (te: any) => (te.noCharge ? "No Charge" : te.billable ? "Billable" : "Non-billable");
+const timeEntryMeta = (te: any) => [te.workType, te.workRole, te.rate ? `$${Number(te.rate).toFixed(2)}/hr` : null].filter(Boolean).join(" · ");
 
 // ── "Filter By" quick filters — mirrors the Service Board card status items ──
 const FILTER_BY_OPTIONS = [
@@ -684,6 +693,7 @@ function TicketActionMenu({ ticketId, currentStatus, currentPriority, onAction }
 
 export function TicketDetailPage() {
   const { id } = useParams();
+  const { user: currentUser } = useAuth();
   const [ticket, setTicket] = useState<Record<string,unknown>|null>(null);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<Record<string,string>>({});
@@ -693,7 +703,11 @@ export function TicketDetailPage() {
   const noteInputRef = useRef<HTMLInputElement>(null);
     const [focusNoteRequested, setFocusNoteRequested] = useState(false);
   const [showTimeEntry, setShowTimeEntry] = useState(false);
-  const [timeForm, setTimeForm] = useState({ startTime: "", endTime: "", calculated: "", description: "", billable: true });
+  const [timeForm, setTimeForm] = useState({
+    date: "", startTime: "", endTime: "", calculated: "",
+    description: "", internalNotes: "", workType: "", workRole: "",
+    rate: "", billing: "billable" as "billable" | "nonBillable" | "noCharge", userId: "",
+  });
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
   const [contacts, setContacts] = useState<Array<{id:string;firstName:string;lastName:string}>>([]);
   const [agreements, setAgreements] = useState<Array<{id:string;name:string;billingPeriod:string;billingAmount:number}>>([]);
@@ -760,7 +774,6 @@ export function TicketDetailPage() {
   const [showAttachDialog, setShowAttachDialog] = useState(false);
   const [attachForm, setAttachForm] = useState<{ file: File | null }>({ file: null });
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
-  const [showTimeTabAdd, setShowTimeTabAdd] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailForm, setEmailForm] = useState({ subject: "", body: "" });
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -835,15 +848,45 @@ export function TicketDetailPage() {
     finally{setPosting(false);}
   };
 
+  const timeMinutes = () => {
+    if (!timeForm.startTime || !timeForm.endTime) return 0;
+    const mins = Math.round((new Date(timeForm.endTime).getTime() - new Date(timeForm.startTime).getTime()) / 60000);
+    return mins > 0 ? mins : 0;
+  };
+  const formatDuration = (mins: number) => (mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "");
+
+  const resetTimeForm = () => setTimeForm({
+    date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
+    startTime: "", endTime: "", calculated: "",
+    description: "", internalNotes: "", workType: "", workRole: "",
+    rate: "", billing: "billable", userId: currentUser?.id || "",
+  });
+
+  const openTimeEntryModal = () => {
+    resetTimeForm();
+    setShowTimeEntry(true);
+  };
+
   const handleTimeEntry = async (e: React.FormEvent): Promise<boolean> => {
     e.preventDefault();
-    let mins = 0;
-    if (timeForm.startTime && timeForm.endTime) {
-      mins = Math.round((new Date(timeForm.endTime).getTime() - new Date(timeForm.startTime).getTime()) / 60000);
-    }
-    try{await api.post(`/tickets/${id}/time`, { ...timeForm, minutes: mins || undefined, date: new Date().toISOString().slice(0,10) });
+    const mins = timeMinutes();
+    try {
+      await api.post(`/tickets/${id}/time`, {
+        date: timeForm.date || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
+        startTime: timeForm.startTime || undefined,
+        endTime: timeForm.endTime || undefined,
+        description: timeForm.description,
+        internalNotes: timeForm.internalNotes || undefined,
+        workType: timeForm.workType || undefined,
+        workRole: timeForm.workRole || undefined,
+        rate: timeForm.rate ? Number(timeForm.rate) : undefined,
+        billable: timeForm.billing !== "nonBillable",
+        noCharge: timeForm.billing === "noCharge",
+        minutes: mins || undefined,
+        userId: timeForm.userId || undefined,
+      });
       toast.success("Time logged"); setShowTimeEntry(false);
-      setTimeForm({ startTime: "", endTime: "", calculated: "", description: "", billable: true });
+      resetTimeForm();
       load();
       return true;
     } catch { toast.error("Failed to log time"); return false; }
@@ -851,12 +894,11 @@ export function TicketDetailPage() {
 
   const updateTimeForm = (field: "startTime" | "endTime", value: string) => {
     const next = { ...timeForm, [field]: value };
-    if (next.startTime && next.endTime) {
-      const mins = Math.round((new Date(next.endTime).getTime() - new Date(next.startTime).getTime()) / 60000);
-      next.calculated = mins > 0 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : "";
-    } else {
-      next.calculated = "";
-    }
+    const start = field === "startTime" ? value : next.startTime;
+    const end = field === "endTime" ? value : next.endTime;
+    next.calculated = start && end
+      ? formatDuration(Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000))
+      : "";
     setTimeForm(next);
   };
 
@@ -1034,7 +1076,7 @@ export function TicketDetailPage() {
         <div className="flex items-center gap-1 flex-wrap">
           <button onClick={refreshDetails} title="Refresh" aria-label="Refresh" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><RotateCw size={16} /></button>
           <button onClick={() => { setFocusNoteRequested(true); setActiveTab("ticket"); }} title="Add Note" aria-label="Add Note" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><MessageSquare size={16} /></button>
-          <button onClick={() => { setActiveTab("time"); setShowTimeTabAdd(true); }} title="Log Time" aria-label="Log Time" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Timer size={16} /></button>
+          <button onClick={() => { setActiveTab("time"); openTimeEntryModal(); }} title="Log Time" aria-label="Log Time" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Timer size={16} /></button>
           <button onClick={() => { setActiveTab("attachments"); setShowAttachDialog(true); }} title="Attach File" aria-label="Attach File" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Paperclip size={16} /></button>
           <button onClick={openEmailDialog} title="Email Contact" aria-label="Email Contact" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Mail size={16} /></button>
           <button onClick={() => window.print()} title="Print Ticket" aria-label="Print Ticket" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Printer size={16} /></button>
@@ -1101,7 +1143,7 @@ export function TicketDetailPage() {
           <div className="card space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Dates & Times</h3>
-              <button onClick={() => setShowTimeTabAdd(true)} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>
+              <button onClick={openTimeEntryModal} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {editing ? (<>
@@ -1125,21 +1167,7 @@ export function TicketDetailPage() {
               <input ref={noteInputRef} className="input-field flex-1 text-sm" placeholder="Add a note... (Enter to submit)" value={noteText} onChange={e=>setNoteText(e.target.value)} />
               <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Post"}</button>
             </form>
-            <button onClick={() => setShowTimeEntry(!showTimeEntry)} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>
-            {showTimeEntry && (
-              <form onSubmit={handleTimeEntry} className="bg-surface-lighter rounded-lg p-3 space-y-2">
-                <div className="grid grid-cols-3 gap-2">
-                  <input className="input-field text-xs" type="datetime-local" value={timeForm.startTime} onChange={e=>updateTimeForm("startTime",e.target.value)} placeholder="Start"/>
-                  <input className="input-field text-xs" type="datetime-local" value={timeForm.endTime} onChange={e=>updateTimeForm("endTime",e.target.value)} placeholder="End"/>
-                  <input className="input-field text-xs" readOnly value={timeForm.calculated} placeholder="Duration"/>
-                </div>
-                <div className="flex gap-2">
-                  <input className="input-field flex-1 text-xs" placeholder="Description" value={timeForm.description} onChange={e=>setTimeForm({...timeForm,description:e.target.value})}/>
-                  <label className="flex items-center gap-1 text-xs text-gray-400"><input type="checkbox" checked={timeForm.billable} onChange={e=>setTimeForm({...timeForm,billable:e.target.checked})} /> Billable</label>
-                  <button type="submit" className="btn-primary text-xs">Save</button>
-                </div>
-              </form>
-            )}
+            <button onClick={openTimeEntryModal} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>
             <div className="space-y-3">
               {(ticket.comments as Array<Record<string,unknown>>)?.map((c:any,i:number)=>(
                 <div key={c.id||i} className="flex gap-2 text-xs">
@@ -1150,7 +1178,7 @@ export function TicketDetailPage() {
               {(ticket.timeEntries as Array<Record<string,unknown>>)?.map((te:any,i:number)=>(
                 <div key={te.id||i} className="flex gap-2 text-xs">
                   <span className="badge bg-green-600/20 text-green-400 shrink-0 mt-0.5">Time</span>
-                  <div className="min-w-0"><p className="text-gray-300">{te.description}{te.minutes ? ` (${Math.floor(te.minutes/60)}h ${te.minutes%60}m)` : ""} {te.billable?"· Billable":"· Non-billable"}</p><p className="text-gray-600 mt-0.5">{(te.user?.firstName||te.user?.lastName) ? `${te.user.firstName||""} ${te.user.lastName||""}`.trim() : "System"} · {(te.date||te.createdAt)?new Date((te.date||te.createdAt) as string).toLocaleString():""}</p></div>
+                  <div className="min-w-0"><p className="text-gray-300">{te.description}{te.minutes ? ` (${Math.floor(te.minutes/60)}h ${te.minutes%60}m)` : ""} · {timeBillingLabel(te)}</p>{timeEntryMeta(te) && <p className="text-gray-500 mt-0.5">{timeEntryMeta(te)}</p>}<p className="text-gray-600 mt-0.5">{(te.user?.firstName||te.user?.lastName) ? `${te.user.firstName||""} ${te.user.lastName||""}`.trim() : "System"} · {(te.date||te.createdAt)?new Date((te.date||te.createdAt) as string).toLocaleString():""}</p></div>
                 </div>
               ))||null}
             </div>
@@ -1249,7 +1277,7 @@ export function TicketDetailPage() {
       {activeTab === "activities" && (() => {
         const acts = [
           ...((ticket.comments as any[]) || []).map((c: any) => ({ kind: c.isEmail ? "Email" : c.isInternal ? "Internal" : "Note", time: c.createdAt, text: friendlyActivityBody(c.body || c.content), by: (c.author?.firstName || c.author?.lastName) ? `${c.author.firstName || ""} ${c.author.lastName || ""}`.trim() : (c.fromEmail || "System") })),
-          ...((ticket.timeEntries as any[]) || []).map((te: any) => ({ kind: "Time", time: te.date || te.createdAt, text: `${te.description || ""}${te.minutes ? ` (${Math.floor(te.minutes / 60)}h ${te.minutes % 60}m)` : ""} ${te.billable ? "· Billable" : "· Non-billable"}`, by: (te.user?.firstName || te.user?.lastName) ? `${te.user.firstName || ""} ${te.user.lastName || ""}`.trim() : "System" })),
+          ...((ticket.timeEntries as any[]) || []).map((te: any) => ({ kind: "Time", time: te.date || te.createdAt, text: `${te.description || ""}${te.minutes ? ` (${Math.floor(te.minutes / 60)}h ${te.minutes % 60}m)` : ""} · ${timeBillingLabel(te)}${timeEntryMeta(te) ? ` · ${timeEntryMeta(te)}` : ""}`, by: (te.user?.firstName || te.user?.lastName) ? `${te.user.firstName || ""} ${te.user.lastName || ""}`.trim() : "System" })),
         ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
         return (
           <div className="card space-y-2">
@@ -1280,7 +1308,7 @@ export function TicketDetailPage() {
           <div className="card space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Time</h3>
-              <button onClick={() => setShowTimeTabAdd(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={12} /> Add Time Entry</button>
+              <button onClick={openTimeEntryModal} className="btn-primary text-xs flex items-center gap-1"><Plus size={12} /> Add Time Entry</button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-surface-lighter rounded-lg p-3"><p className="text-gray-500 text-xs">Billable</p><p className="text-white font-semibold">{Math.floor(bill / 60)}h {bill % 60}m</p></div>
@@ -1293,9 +1321,10 @@ export function TicketDetailPage() {
                     <Clock size={14} className="text-green-400 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-xs">{te.description}{te.minutes ? ` (${Math.floor(te.minutes / 60)}h ${te.minutes % 60}m)` : ""}</p>
+                      {timeEntryMeta(te) && <p className="text-gray-500 text-[10px]">{timeEntryMeta(te)}</p>}
                       <p className="text-gray-500 text-[10px]">{(te.user?.firstName || te.user?.lastName) ? `${te.user.firstName || ""} ${te.user.lastName || ""}`.trim() : "System"} · {(te.date || te.createdAt) ? new Date((te.date || te.createdAt) as string).toLocaleString() : ""}</p>
                     </div>
-                    <span className={`badge text-[10px] ${te.billable ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>{te.billable ? "Billable" : "Non-billable"}</span>
+                    <span className={`badge text-[10px] ${te.noCharge ? "bg-amber-600/20 text-amber-400" : te.billable ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>{timeBillingLabel(te)}</span>
                   </div>
                 ))}
               </div>
@@ -1607,18 +1636,65 @@ export function TicketDetailPage() {
         </div>
       )}
 
-      {showTimeTabAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowTimeTabAdd(false)}>
-          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { if (await handleTimeEntry(e)) setShowTimeTabAdd(false); }}>
+      {showTimeEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowTimeEntry(false)}>
+          <form className="card w-full max-w-lg mx-4 space-y-3 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} onSubmit={handleTimeEntry}>
             <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Timer size={16} /> Add Time Entry</h3>
+            <p className="text-xs text-gray-500">Log work performed on {ticket.ticketNumber as string} — {ticket.title as string}.</p>
+
             <div className="grid grid-cols-2 gap-2">
-              <input className="input-field text-xs" type="datetime-local" value={timeForm.startTime} onChange={e => updateTimeForm("startTime", e.target.value)} required />
-              <input className="input-field text-xs" type="datetime-local" value={timeForm.endTime} onChange={e => updateTimeForm("endTime", e.target.value)} required />
+              <div><label className="text-xs text-gray-500 block mb-1">Work Date</label><input className="input-field text-xs" type="date" value={timeForm.date} onChange={e => setTimeForm({ ...timeForm, date: e.target.value })} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Resource</label>
+                <select className="input-field text-xs" value={timeForm.userId} onChange={e => setTimeForm({ ...timeForm, userId: e.target.value })}>
+                  {currentUser && !users.some(u => u.id === currentUser.id) && <option value={currentUser.id}>{`${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim() || currentUser.email}</option>}
+                  {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>)}
+                </select>
+              </div>
             </div>
-            <input className="input-field text-xs" readOnly value={timeForm.calculated} placeholder="Duration" />
-            <input className="input-field" placeholder="Description" value={timeForm.description} onChange={e => setTimeForm({ ...timeForm, description: e.target.value })} />
-            <label className="flex items-center gap-1 text-xs text-gray-400"><input type="checkbox" checked={timeForm.billable} onChange={e => setTimeForm({ ...timeForm, billable: e.target.checked })} /> Billable</label>
-            <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowTimeTabAdd(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Save</button></div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className="text-xs text-gray-500 block mb-1">Start Time</label><input className="input-field text-xs" type="datetime-local" value={timeForm.startTime} onChange={e => updateTimeForm("startTime", e.target.value)} required /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">End Time</label><input className="input-field text-xs" type="datetime-local" value={timeForm.endTime} onChange={e => updateTimeForm("endTime", e.target.value)} required /></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className="text-xs text-gray-500 block mb-1">Duration</label><input className="input-field text-xs" readOnly value={timeForm.calculated} placeholder="Auto-calculated" /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">Billing</label>
+                <select className="input-field text-xs" value={timeForm.billing} onChange={e => setTimeForm({ ...timeForm, billing: e.target.value as any })}>
+                  <option value="billable">Billable</option>
+                  <option value="nonBillable">Non-billable</option>
+                  <option value="noCharge">No Charge</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className="text-xs text-gray-500 block mb-1">Work Type</label>
+                <select className="input-field text-xs" value={timeForm.workType} onChange={e => setTimeForm({ ...timeForm, workType: e.target.value })}>
+                  <option value="">— Select —</option>
+                  {WORK_TYPES.map(w => <option key={w} value={w}>{w}</option>)}
+                </select>
+              </div>
+              <div><label className="text-xs text-gray-500 block mb-1">Work Role</label>
+                <select className="input-field text-xs" value={timeForm.workRole} onChange={e => setTimeForm({ ...timeForm, workRole: e.target.value })}>
+                  <option value="">— Select —</option>
+                  {WORK_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className="text-xs text-gray-500 block mb-1">Hourly Rate (optional)</label><input className="input-field text-xs" type="number" min="0" step="0.01" placeholder="Use agreement rate" value={timeForm.rate} onChange={e => setTimeForm({ ...timeForm, rate: e.target.value })} /></div>
+              <div className="flex items-end pb-1">{timeForm.billing === "noCharge" && <p className="text-[10px] text-amber-400">No Charge entries are billed at $0 and excluded from invoices.</p>}</div>
+            </div>
+
+            <div><label className="text-xs text-gray-500 block mb-1">Notes (shown on invoice)</label><textarea className="input-field text-sm" rows={2} placeholder="Describe the work performed" value={timeForm.description} onChange={e => setTimeForm({ ...timeForm, description: e.target.value })} required /></div>
+            <div><label className="text-xs text-gray-500 block mb-1">Internal Notes (not shown to client)</label><textarea className="input-field text-sm" rows={2} placeholder="Internal detail (optional)" value={timeForm.internalNotes} onChange={e => setTimeForm({ ...timeForm, internalNotes: e.target.value })} /></div>
+
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setShowTimeEntry(false)} className="btn-secondary text-sm">Cancel</button>
+              <button type="submit" className="btn-primary text-sm">Save Time Entry</button>
+            </div>
           </form>
         </div>
       )}

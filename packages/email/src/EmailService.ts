@@ -90,6 +90,28 @@ export class EmailService {
     });
   }
 
+  /**
+   * Notify a ticket's contact that a customer-visible activity occurred
+   * (a non-internal note was added, time was logged, or the status changed).
+   */
+  async sendTicketActivity(
+    email: string,
+    options: {
+      ticketNumber: string;
+      ticketTitle: string;
+      eventLabel: string;
+      details: string;
+      clientName?: string;
+      contactName?: string;
+    },
+  ): Promise<void> {
+    await this.send({
+      to: email,
+      subject: `[${options.ticketNumber}] ${options.eventLabel} — ${options.ticketTitle}`,
+      html: ticketActivityTemplate(options),
+    });
+  }
+
   /** Send invoice to client */
   async sendInvoice(
     email: string,
@@ -206,4 +228,35 @@ function overdueTemplate(num: string, amount: number, daysOd: number, portal: st
   </div>`;
 }
 
-export { mfaTemplate, followUpTemplate, autoCloseTemplate, invoiceTemplate, overdueTemplate };
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[char]!);
+}
+
+function ticketActivityTemplate(o: {
+  ticketNumber: string;
+  ticketTitle: string;
+  eventLabel: string;
+  details: string;
+  clientName?: string;
+  contactName?: string;
+}): string {
+  const greeting = o.contactName
+    ? `<p style="color: #cbd5e1; margin: 0 0 16px;">Hi ${escapeHtml(o.contactName)},</p>`
+    : "";
+  return `
+  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; background: #0f1923; color: #e2e8f0; border-radius: 12px; overflow: hidden;">
+    <div style="background: #00d4ff; padding: 24px; text-align: center;">
+      <h1 style="color: #0f1923; margin: 0; font-size: 20px;">Ticket Update</h1>
+    </div>
+    <div style="padding: 32px 24px;">
+      ${greeting}
+      <p style="color: #94a3b8; margin: 0 0 8px;">Ticket <strong style="color: #fff;">${escapeHtml(o.ticketNumber)}</strong> — <em>${escapeHtml(o.ticketTitle)}</em></p>
+      <p style="color: #cbd5e1; margin: 0 0 16px;"><strong style="color: #fff;">${escapeHtml(o.eventLabel)}</strong></p>
+      <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; color: #cbd5e1; margin-bottom: 24px;">${escapeHtml(o.details).replace(/\r?\n/g, "<br>")}</div>
+      <p style="color: #94a3b8; margin: 0;">If you have any questions, simply reply to this email.</p>
+      ${o.clientName ? `<p style="color: #64748b; font-size: 13px; margin: 8px 0 0;">${escapeHtml(o.clientName)}</p>` : ""}
+    </div>
+  </div>`;
+}
+
+export { mfaTemplate, followUpTemplate, autoCloseTemplate, invoiceTemplate, overdueTemplate, ticketActivityTemplate };

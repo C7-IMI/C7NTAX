@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.5.005 | Last Updated: 2026-10-05
+## Version: 2026.10.5.011 | Last Updated: 2026-10-05
 
 ---
 
@@ -13,6 +13,35 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.5.011 — Cloud provider recommendation reference doc
+- **[New]** Added `cloud-provider-recommendation.md` — a standalone reference of the AWS-vs-Azure recommendation (recommend **Azure** for this codebase/product), with the rationale, where AWS wins, the deciding-factor table, and the practical notes (no cloud SDK lock-in; Front Door port caveat).
+
+## 2026.10.5.010 — Cloud provider decision record (AWS vs Azure)
+- **[New]** Recorded the AWS-vs-Azure recommendation in `PLAN-Azure-Dev-Prod-Split-and-Sync.md` §15 (PLAN-016): **recommend Azure** for this codebase/product — Microsoft-centric identity (Entra ID SSO + M365 Graph already integrated), Azure OpenAI as the Bedrock-equivalent for the AI assistant, native Container Apps blue/green, and 1:1 SOC 2 control mapping — plus the conditions under which AWS is the better choice.
+- **[Update]** Cross-referenced the decision record from `PLAN-AWS-Dev-Prod-Split-and-Sync.md` §14 and the PlanDocs PLAN-010 copy; regenerated the PLAN-016 registry copy.
+- **Note:** decision/documentation only — no application code change; both migration plans remain plan-only.
+
+## 2026.10.5.009 — Azure dev/prod migration plan (PLAN-016)
+- **[New]** Added `PLAN-Azure-Dev-Prod-Split-and-Sync.md` — the Azure twin of the AWS dev/prod split plan: same sync-command semantics, phases, rollback, and verification, with every AWS service mapped to its Azure equivalent (ACR, Container Apps, Application Gateway + Front Door, PostgreSQL Flexible Server, Key Vault, Blob + immutable logs, Azure Monitor, Entra ID managed identity, DDoS Protection Standard, Azure OpenAI).
+- **[New]** Registered it in the PlanDocs registry as `PLAN-016` (copy at `PlanDocs/PLAN-016-Azure-Dev-Prod-Split-Sync.md` + index row).
+
+## 2026.10.5.008 — Document the admin bulk status email gap
+- **[New]** Added `adminBulkticketemail.md`, a reference explaining why `POST /api/bulk` (`ticket_update`) can change a ticket status without emailing the customer, how it differs from `POST /api/tickets/batch`, why it was left out of the notification change, and the steps to wire it.
+
+## 2026.10.5.007 — Notify the customer contact on ticket activity
+- **[New]** Ticket activity now emails the ticket's customer contact whenever a non-internal note is added, a time entry is logged, or the ticket status changes (individual edit, bulk update, or the worker's automatic close after inactivity).
+- **[New]** Added `EmailService.sendTicketActivity`, a customer-facing template that greets the contact by name and shows the ticket number/title, the event, and the client-facing detail; internal notes and internal time-entry notes are never included.
+- **[New]** Added `apps/api/src/services/ticketNotifications.ts`, a shared best-effort helper (`notifyTicketContact` / `notifyTicketStatusChange`) used by the ticket routes and the background worker; delivery failures are logged and never fail the originating request.
+- **[Update]** Status notifications report the previous and new status and are only sent when the status actually changes.
+- **[Verification]** Captured live SMTP output end-to-end: a public note, status changes, and two time entries each delivered exactly one message to the ticket contact with the correct recipient, subject, and escaped body, while an internal note delivered none. The API also boots cleanly with the new worker import (no circular-import failure).
+
+## 2026.10.5.006 — In-depth time entry dialog
+- **[Update]** Rebuilt the Add Time Entry dialog on ticket details (and consolidated the inline quick-add into the same modal) with PSA-grade fields: work date, resource, start/end times, auto-calculated duration, billing status (Billable / Non-billable / No Charge), work type, work role, optional hourly rate, client-facing notes, and internal notes — modeled after ConnectWise Manage / AutoTask time entry.
+- **[New]** `TimeEntry` now persists `startTime`/`endTime`, `workType`, `workRole`, `internalNotes`, and `noCharge`; the time API accepts an optional resource override and per-entry rate. Work dates are parsed as local dates so entries no longer display one day behind.
+- **[Update]** Time entry lists, the Activities feed, and the Billing time view now show work type, role, and rate; No Charge entries display a distinct amber badge.
+- **[Update]** Invoice generation honors per-entry rates and excludes No Charge entries from billable totals.
+- **[Verification]** Exercised the dialog live: billable, non-billable, and No Charge entries all saved and rendered with correct metadata; duration auto-calculates from start/end; explicit work dates display on the correct day. API/web source lint remains blocked by unrelated pre-existing strict-TypeScript errors.
 
 ## 2026.10.5.005 — Complete ticket-detail actions and workflows
 - **[New]** Ticket details now provide an SMTP-backed contact email composer, a print-ready ticket summary, scheduled follow-ups with date/time/assignee/notes, and a More Actions menu for editing, copying the ticket link, and changing status or priority.

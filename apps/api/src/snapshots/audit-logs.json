@@ -1363,6 +1363,47 @@
     "createdAt": "2026-08-12T08:15:51.766Z"
   },
   {
+    "id": "b0cf4294-1734-463f-8ffe-ac60ac9276d7",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "date": "2026-10-06",
+      "rate": 125,
+      "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+      "endTime": "2026-10-06T10:30",
+      "minutes": 90,
+      "billable": true,
+      "noCharge": false,
+      "workRole": "Technician",
+      "workType": "Remote",
+      "startTime": "2026-10-06T09:00",
+      "description": "Triaged IOC enrichment pipeline"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:14:38.340Z"
+  },
+  {
+    "id": "f0e2c13f-95a1-4dd0-ab05-3b02ade10a72",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "date": "2026-10-06",
+      "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+      "endTime": "2026-10-06T09:15",
+      "minutes": 15,
+      "billable": true,
+      "noCharge": false,
+      "startTime": "2026-10-06T09:00",
+      "description": "Date-parse verification entry"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:16:38.211Z"
+  },
+  {
     "id": "3658b176-0040-4b17-a015-dacdcf1b8eea",
     "action": "tickets:update",
     "entity": "tickets",
@@ -1628,5 +1669,24 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-09-03T18:33:31.080Z"
+  },
+  {
+    "id": "671788de-4612-4dfb-83c9-a8e90adf482e",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "date": "2026-10-05",
+      "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+      "endTime": "2026-10-06T14:45",
+      "minutes": 45,
+      "billable": true,
+      "noCharge": true,
+      "startTime": "2026-10-06T14:00",
+      "description": "Compensatory credit — outage"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T03:15:47.382Z"
   }
 ]
