@@ -2216,5 +2216,21 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T09:18:09.894Z"
+  },
+  {
+    "id": "a8ce67bc-2c3b-40a1-b806-f2a26834c4b6",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ac224cd0-7343-4a69-b49b-55bd730a8230",
+    "changes": {
+      "date": "2026-10-06T04:41:04.9310203-05:00",
+      "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+      "minutes": 45,
+      "billable": true,
+      "description": "PROBE time entry for menu check"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T09:41:05.063Z"
   }
 ]
