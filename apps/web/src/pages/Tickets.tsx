@@ -49,6 +49,18 @@ const priorityLabel = (p: string) => p.charAt(0).toUpperCase() + p.slice(1);
 const timeBillingLabel = (te: any) => (te.noCharge ? "No Charge" : te.billable ? "Billable" : "Non-billable");
 const timeEntryMeta = (te: any) => [te.workType, te.workRole, te.rate ? `$${Number(te.rate).toFixed(2)}/hr` : null].filter(Boolean).join(" · ");
 
+// ── Notes vs activity split ──
+// Field changes are written to the ticket as comments whose every line reads
+// "Label: old → new" (see the ticket PATCH handler), and the auto-close worker writes a fixed
+// sentence. Both are history, not correspondence, so they belong in Activity rather than Notes.
+const isSystemActivity = (body: unknown): boolean => {
+  const text = String(body ?? "").trim();
+  if (!text) return false;
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  if (lines.length > 0 && lines.every(l => /^[A-Z][A-Za-z ]+: .+ → .+$/.test(l))) return true;
+  return /^Ticket automatically closed after \d+ days? without client response\.$/.test(lines[0] ?? "");
+};
+
 // ── "Filter By" quick filters — mirrors the Service Board card status items ──
 const FILTER_BY_OPTIONS = [
   { value: "workable", label: "Workable", status: "in_progress", priority: "" },
