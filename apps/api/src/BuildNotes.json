@@ -25,6 +25,17 @@
         "type": "Update"
       },
       {
+        "text": "Repaired the changelog structure: earlier entries in this file had been inserted *over* the previous day's `##` heading, so `2026.10.5.014`/`015` and `2026.10.6.001`–`004` were being parsed as a single version. The headings are restored and the changelog now reports **107 separate versions** (all five of today's entries present, no duplicates).",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.6.004",
+    "date": "2026-10-06",
+    "title": "Colour schemes rebuilt on the C7NTAX brand palette",
+    "changes": [
+      {
         "text": "All eight alternate schemes now derive from the brand asset sheet's palette — **`#C00000`** crimson, **`#EE5483`** rose, **`#662428`** maroon, **`#801550`** plum, plus black and white — replacing the previous navy/violet/amber/teal set. Dark: **Brand Crimson**, **Crimson Rose**, **Deep Maroon**, **Plum Noir**, **True Black (OLED)**. Light: **Brand Light**, **Rose Tint**, **High Contrast**. Classic remains the default and is untouched.",
         "type": "Update"
       },
@@ -35,7 +46,14 @@
       {
         "text": "Scheme swatches in the picker now preview the brand black/crimson pairing, and the light schemes carry brand-crimson status colours (`--alert-red #a30000`).",
         "type": "Update"
-      },
+      }
+    ]
+  },
+  {
+    "version": "2026.10.6.003",
+    "date": "2026-10-06",
+    "title": "Selectable colour schemes (5 dark + 3 light) with AA-audited tokens",
+    "changes": [
       {
         "text": "**Colour scheme picker** in the header toolbar (next to the density and theme controls): choose a scheme per mode from **Classic** plus eight alternates — dark **Midnight Slate**, **Deep Violet**, **Warm Carbon**, **True Black (OLED)**, **Ocean Teal**; light **Cool Paper**, **Warm Stone**, **High Contrast**. Dark and light are chosen independently and each applies to its own theme.",
         "type": "New Feature"
@@ -59,7 +77,14 @@
       {
         "text": "`UI-PALETTE-ROLLBACK.md` — scheme table, three rollback levels and the list of files the feature owns.",
         "type": "New Feature"
-      },
+      }
+    ]
+  },
+  {
+    "version": "2026.10.6.002",
+    "date": "2026-10-06",
+    "title": "Silent boot startup + shared hidden launcher for both tasks",
+    "changes": [
       {
         "text": "`scripts/run-hidden.vbs` — one generic hidden launcher used by both scheduled tasks: `wscript.exe //B //Nologo run-hidden.vbs <script.ps1> [args…]` runs PowerShell with `SW_HIDE` (console created hidden), passes extra arguments through, and logs to `startup/hidden-runner.log` if the target script is missing. Replaces `scripts/auto-sync-hidden.vbs`, which covered only auto-sync.",
         "type": "New Feature"
@@ -75,7 +100,14 @@
       {
         "text": "Both tasks set `WorkingDirectory` to the repo root, and the scripts' header comments document the launcher.",
         "type": "Update"
-      },
+      }
+    ]
+  },
+  {
+    "version": "2026.10.6.001",
+    "date": "2026-10-06",
+    "title": "Silent auto-sync (no more console window pop-ups)",
+    "changes": [
       {
         "text": "The **C7NTAX Auto-Sync** scheduled task no longer flashes a command-prompt window. Task Scheduler was launching `powershell.exe` directly; even with `-WindowStyle Hidden` PowerShell creates its console window and then hides it, which is the visible flash every 15 minutes. The task now runs `scripts/auto-sync-hidden.vbs` via `wscript.exe //B //Nologo` — a GUI host with no console — and `Shell.Run(cmd, 0, False)` starts PowerShell with `SW_HIDE`, so the console is created hidden and never appears.",
         "type": "Fix"
@@ -87,7 +119,14 @@
       {
         "text": "Removed the task's battery restrictions (`DisallowStartIfOnBatteries` / `StopIfGoingOnBatteries` were both enabled, so auto-sync silently stopped on a laptop running off battery). Re-asserted `MultipleInstances = IgnoreNew`, `StartWhenAvailable`, and a 10-minute execution limit; the 15-minute repetition trigger, interactive principal (required for the SSH push) and run level are unchanged.",
         "type": "Fix"
-      },
+      }
+    ]
+  },
+  {
+    "version": "2026.10.5.015",
+    "date": "2026-10-05",
+    "title": "UI modernization P2 (elevation, typography, sticky tables, content width) + rollback switch",
+    "changes": [
       {
         "text": "**Card elevation** — soft layered shadows on every `.card`, with a subtle `translateY(-1px)` hover lift and cyber-blue border accent on interactive cards (`a.card`, `button.card`, `.card--interactive`). Theme-aware shadow tokens (`--card-shadow`, `--card-shadow-hover`, `--card-hover-border`) for dark and light.",
         "type": "New Feature"
@@ -111,7 +150,14 @@
       {
         "text": "`UI-P1-ROLLBACK.md` now documents both tiers, and `scripts/rollback-ui-p1.ps1` gained `-Part P1|P2|All`.",
         "type": "Update"
-      },
+      }
+    ]
+  },
+  {
+    "version": "2026.10.5.014",
+    "date": "2026-10-05",
+    "title": "UI modernization P1 (command palette, density, nav accents) + rollback switch",
+    "changes": [
       {
         "text": "**Command palette** (⌘K / Ctrl-K): searches every page in the nav tree plus quick actions (New Ticket, toggle theme, toggle density, turn off P1); arrow keys + Enter + Esc, mouse hover, scroll-into-view. The existing header **Search** button now opens it.",
         "type": "New Feature"

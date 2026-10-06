@@ -1865,6 +1865,7 @@
 - `apps/web/src/components/PalettePicker.tsx` / `apps/web/src/index.css` — Classic row and the two Classic swatch rules removed.
 - `apps/web/src/main.tsx` — `c7Palette.list()` marks the defaults; `apps/web/src/pages/Settings.tsx` — section anchors + hash scroll so the menu's deep links work.
 - **Verification:** typecheck unchanged at 26 pre-existing errors (zero new); token lint passes; live check with cleared storage confirmed Brand Crimson/Rose Tint defaults and no Classic in either list; exercised the menu (scheme pick, light/dark swap, density, My Profile deep link scrolling to `#profile`); five routes render with no console errors.
+- **Changelog repair:** validating the generated `BuildNotes.json` exposed that earlier BuildNotes edits had overwritten the `## 2026.10.5.014`, `## 2026.10.5.015` and `## 2026.10.6.001`–`004` headings, merging those entries into one and dropping them from What's New. Headings restored; the changelog now parses 107 separate versions with all five of today's entries present and no duplicates.
 
 
 
