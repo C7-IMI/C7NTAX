@@ -1,36 +1,87 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronRight, Home } from "lucide-react";
-import { UI_KUMO_BREADCRUMBS } from "../lib/uiFlags";
+import { Link } from "react-router-dom";
+import { ChevronRight, Home } from "lucide-react";
 
 export interface BreadcrumbSegment {
   label: string;
-  /** Omit on the current page — that segment renders as text, not a link. */
+  to: string; // Always defined — every segment is clickable
+}
+
+/**
+ * A segment of Kumo's own trail. The last one is the page you are on, so it
+ * carries no link.
+ */
+export interface TrailSegment {
+  label: string;
   to?: string;
 }
 
+/**
+ * The global, app-wide trail in the header. Unchanged in behaviour: it is built
+ * from the navigation tree alone, with no back button and no page-supplied
+ * segments — Kumo has its own trail for that (see KumoTrail.tsx).
+ */
+export function Breadcrumbs({ segments }: { segments: BreadcrumbSegment[] }) {
+  if (segments.length < 2) return null;
+
+  return (
+    <nav className="flex items-center gap-1.5 text-xs" aria-label="Breadcrumb">
+      {segments.map((seg, i) => {
+        const isLast = i === segments.length - 1;
+        return (
+          <span key={i} className="flex items-center gap-1.5">
+            {i > 0 && <ChevronRight size={11} className="text-gray-600 shrink-0" />}
+            <Link
+              to={seg.to}
+              className={`transition-colors truncate max-w-[200px] ${
+                isLast
+                  ? "text-white font-medium hover:text-cyber-400"
+                  : "text-gray-500 hover:text-white"
+              }`}
+            >
+              {i === 0 ? (
+                <span className="flex items-center gap-1">
+                  <Home size={12} />
+                  {seg.label}
+                </span>
+              ) : (
+                seg.label
+              )}
+            </Link>
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  Kumo's own trail: what a Kumo screen registers, plus the helpers for it.
+//  Consumed by KumoTrail.tsx, never by the global trail above.
+// ─────────────────────────────────────────────────────────────────────
+
 interface TrailContextValue {
-  segments: BreadcrumbSegment[];
-  setSegments: (segments: BreadcrumbSegment[]) => void;
+  segments: TrailSegment[];
+  setSegments: (segments: TrailSegment[]) => void;
 }
 
 const TrailContext = createContext<TrailContextValue | null>(null);
 
-/** Lets a screen contribute its own trail; mounted once, around the app shell. */
+/** Holds what the current screen registered; mounted once, around the app shell. */
 export function BreadcrumbTrailProvider({ children }: { children: React.ReactNode }) {
-  const [segments, setSegments] = useState<BreadcrumbSegment[]>([]);
+  const [segments, setSegments] = useState<TrailSegment[]>([]);
   const value = useMemo(() => ({ segments, setSegments }), [segments]);
   return <TrailContext.Provider value={value}>{children}</TrailContext.Provider>;
 }
 
 /**
- * A screen's own trail, which replaces the one derived from the navigation tree
- * — for names the tree cannot know (a client, a record, a selected type). It is
- * withdrawn when the screen unmounts, so nothing leaks between pages.
+ * A screen's own trail, for names the navigation tree cannot know (a client, a
+ * record, a selected type, an active filter). It is withdrawn when the screen
+ * unmounts, so nothing leaks between pages.
  *
- * Pass null while the data is still loading.
+ * Must be called on every render — pass null while the data is still loading.
  */
-export function useBreadcrumbTrail(segments: BreadcrumbSegment[] | null) {
+export function useBreadcrumbTrail(segments: TrailSegment[] | null) {
   const contextRef = useRef<TrailContextValue | null>(null);
   contextRef.current = useContext(TrailContext);
   const latest = useRef(segments);
@@ -40,13 +91,18 @@ export function useBreadcrumbTrail(segments: BreadcrumbSegment[] | null) {
   useEffect(() => {
     const context = contextRef.current;
     if (!context) return;
-    context.setSegments(UI_KUMO_BREADCRUMBS ? latest.current ?? [] : []);
+    context.setSegments(latest.current ?? []);
     return () => context.setSegments([]);
   }, [key]);
 }
 
+/** What the current screen registered, for Kumo's trail bar. */
+export function useRegisteredTrail(): TrailSegment[] {
+  return useContext(TrailContext)?.segments ?? [];
+}
+
 /** Home › Kumo › …rest */
-export function kumoTrail(...rest: BreadcrumbSegment[]): BreadcrumbSegment[] {
+export function kumoTrail(...rest: TrailSegment[]): TrailSegment[] {
   return [{ label: "Home", to: "/home" }, { label: "Kumo", to: "/kumo" }, ...rest];
 }
 
@@ -54,8 +110,8 @@ export function kumoTrail(...rest: BreadcrumbSegment[]): BreadcrumbSegment[] {
 export function kumoClientTrail(
   clientId: string,
   clientName: string | null | undefined,
-  ...rest: BreadcrumbSegment[]
-): BreadcrumbSegment[] {
+  ...rest: TrailSegment[]
+): TrailSegment[] {
   return kumoTrail(
     { label: "Organizations", to: "/kumo/organizations" },
     { label: clientName || "Client", to: `/kumo/organizations/${clientId}` },
@@ -63,68 +119,11 @@ export function kumoClientTrail(
   );
 }
 
-export function Breadcrumbs({ segments }: { segments: BreadcrumbSegment[] }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  // A screen's own trail wins over the navigation tree's.
-  const pageTrail = useContext(TrailContext)?.segments ?? [];
-  const trail = pageTrail.length > 0 ? pageTrail : segments;
-
-  // React Router keeps its position in history; at 0 there is nothing to return to.
-  const canGoBack = typeof window !== "undefined" && ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0;
-  const parent = [...trail].reverse().find((seg) => seg.to && seg.to !== location.pathname);
-
-  if (trail.length < 2) return null;
-
-  return (
-    <nav className="flex items-center gap-1.5 text-xs min-w-0" aria-label="Breadcrumb">
-      <button
-        type="button"
-        onClick={() => {
-          if (canGoBack) navigate(-1);
-          else navigate(parent?.to ?? "/home");
-        }}
-        title={canGoBack ? "Back to the previous screen" : `Back to ${parent?.label ?? "Home"}`}
-        aria-label="Back"
-        className="shrink-0 w-6 h-6 grid place-items-center rounded-md text-gray-500 hover:text-white hover:bg-surface-lighter transition-colors"
-      >
-        <ArrowLeft size={13} />
-      </button>
-      {trail.map((seg, i) => {
-        const isLast = i === trail.length - 1;
-        const isHome = i === 0;
-        const label = isHome ? (
-          <span className="flex items-center gap-1">
-            <Home size={12} />
-            {seg.label}
-          </span>
-        ) : (
-          seg.label
-        );
-        return (
-          <span key={`${seg.label}-${i}`} className="flex items-center gap-1.5 min-w-0">
-            {i > 0 && <ChevronRight size={11} className="text-gray-600 shrink-0" />}
-            {seg.to && !isLast ? (
-              <Link to={seg.to} title={seg.label} className="transition-colors truncate max-w-[200px] text-gray-500 hover:text-white">
-                {label}
-              </Link>
-            ) : (
-              <span className="truncate max-w-[200px] text-white font-medium" aria-current={isLast ? "page" : undefined} title={seg.label}>
-                {label}
-              </span>
-            )}
-          </span>
-        );
-      })}
-    </nav>
-  );
-}
-
 /**
  * Build breadcrumb segments from the NAV_TREE based on the current pathname.
  * The **deepest** matching node wins: matching in tree order is not enough,
  * because a section's own root ("/kumo") is a prefix of every one of its
- * children ("/kumo/passwords") and would otherwise swallow every sub-page.
+ * children ("/kumo/passwords") and would otherwise claim every sub-page.
  * The first segment is always "Home" linking to /home.
  */
 export function buildBreadcrumbs(
@@ -164,12 +163,15 @@ export function buildBreadcrumbs(
 
   if (!bestSection) return crumbs;
 
+  const sectionTo = bestSection.to;
+  if (!bestChild && !sectionTo) return crumbs;
+
   crumbs.push(
     bestChild
       ? { label: bestSection.label, to: `/section/${bestSection.id}` }
-      : { label: bestSection.label, to: bestSection.to }
+      : { label: bestSection.label, to: sectionTo! }
   );
-  if (bestChild) crumbs.push({ label: bestChild.label, to: bestChild.to });
+  if (bestChild) crumbs.push({ label: bestChild.label, to: bestChild.to! });
 
   return crumbs;
 }

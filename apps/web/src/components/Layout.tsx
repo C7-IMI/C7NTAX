@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
+import { KumoTrail } from "./KumoTrail";
 import { useTheme } from "../hooks/useTheme";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
@@ -752,7 +753,10 @@ export function Layout({ children }: { children: ReactNode }) {
             </button>
           </div>
         )}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <KumoTrail segments={buildBreadcrumbs(NAV_TREE, location.pathname)} />
+          {children}
+        </main>
       </div>
       {UI_P1 && <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={paletteItems} />}
     </div>

@@ -63,8 +63,8 @@ export const UI_KUMO_ORGS = readFlag(UI_KUMO_ORGS_STORAGE_KEY, "VITE_UI_KUMO_ORG
 export const UI_KUMO_TYPES = readFlag(UI_KUMO_TYPES_STORAGE_KEY, "VITE_UI_KUMO_TYPES");
 
 /**
- * Kumo → every screen: the breadcrumb trail and its back button (default: on).
- * Off removes the trail and the back button from all Kumo screens.
+ * Kumo → the breadcrumb trail and its back button. Shown on Kumo screens only
+ * (default: on); off hides both, leaving the rest of the app's header untouched.
  */
 export const UI_KUMO_BREADCRUMBS = readFlag(UI_KUMO_BREADCRUMBS_STORAGE_KEY, "VITE_UI_KUMO_BREADCRUMBS");
 
