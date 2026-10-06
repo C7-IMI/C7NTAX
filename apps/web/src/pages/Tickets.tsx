@@ -1496,7 +1496,7 @@ export function TicketDetailPage() {
                 onKeyDown={e=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaKey)) handlePostNote(e); }}
               />
               <div className="flex items-center justify-between gap-3">
-                <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${noteInternal?"text-amber-400":"text-blue-400"}`}>
+                <span className={`inline-flex items-center gap-1.5 self-start -mt-1 text-[11px] font-medium ${noteInternal?"text-amber-400":"text-blue-400"}`}>
                   {noteInternal ? <ShieldCheck size={11}/> : <Mail size={11}/>}
                   {noteInternal ? "Internal only — the customer is not emailed" : "Will be emailed to the ticket contact"}
                 </span>

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.029 | Last Updated: 2026-10-06
+## Version: 2026.10.6.030 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.030 — The note status sits closer to the entry box
+- **[Update]** **The visibility status now hugs the note box.** It was vertically centred in the composer footer — a 36px row built by the *Add Note* button — so its text started 24px below the box. It is now `self-start` with a small negative top margin, which lifts only that line: the distance to the box is **11px**.
+- **[Update]** The rest of the footer is deliberately untouched: the row is still 36px tall, the *Internal* checkbox sits 12px from the row's top and the *Add Note* button spans the row exactly as before, so the controls did not move relative to each other or to the box.
+- **Verification (live):** measured on ticket `e28544bc` — status 24px → 11px below the textarea, with no overlap; row height 36px, button 0–36px and checkbox at 12px within the row (identical to before); textarea 104px and the Notes card's two notes plus the Activity card's three entries all still rendering, in both the customer-facing and internal states.
+- **Rollback:** two utility classes on one element — no API, schema or data change.
 
 ## 2026.10.6.029 — The note submit button reads "Add Note"
 - **[Update]** **"Post" is now "Add Note"** on the ticket note composer, so the button names the thing it creates rather than the act of publishing it. Everything else about the control is unchanged — it stays right-aligned next to the *Internal* checkbox, is disabled until there is text, shows "..." while the request is in flight, and still submits by button or Ctrl/Cmd+Enter.

@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.6.030",
+    "date": "2026-10-06",
+    "title": "The note status sits closer to the entry box",
+    "changes": [
+      {
+        "text": "**The visibility status now hugs the note box.** It was vertically centred in the composer footer — a 36px row built by the *Add Note* button — so its text started 24px below the box. It is now `self-start` with a small negative top margin, which lifts only that line: the distance to the box is **11px**.",
+        "type": "Update"
+      },
+      {
+        "text": "The rest of the footer is deliberately untouched: the row is still 36px tall, the *Internal* checkbox sits 12px from the row's top and the *Add Note* button spans the row exactly as before, so the controls did not move relative to each other or to the box.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.029",
     "date": "2026-10-06",
     "title": "The note submit button reads \"Add Note\"",

@@ -2431,3 +2431,20 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 **Verification (live)**
 - Ticket `e28544bc`: the button rendered "Add Note" (95px wide, right edge 952 against the card's 973 — still right-aligned), disabled while the box was empty, enabled after typing, and submitting added the note under the blue *Note* badge and cleared the box. The probe note and its audit row were then deleted and the snapshots re-captured, leaving the ticket on its three original comments. Web typecheck: 0 errors.
+---
+
+### Prompt 187 — Tighten the gap between the note status and the entry box
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~15 min
+**BuildNotes IDs:** 2026.10.6.030 - The note status sits closer to the entry box
+> Is there anyway to reduce the space between the status and the note entry box without affecting the checkbox or submission button? I just want the status to sit up closer to the entry box. The checkbox and Add Note button are fine where they are
+
+**Why the gap was there**
+- The status line lives in the composer footer, a 36px row whose height is set by the *Add Note* button. With `items-center`, an 18px line was centred in it: 8px of form spacing plus the 9px of slack above the text put the status **24px** below the textarea. Moving the row would have dragged the checkbox and button up with it, which is exactly what the request ruled out.
+
+**What changed**
+- `self-start -mt-1` on the status span only. It now aligns to the top of the row and nudge up 4px, putting it **11px** below the box — less than half the old distance — while the row stays 36px tall.
+- The controls are untouched: the *Add Note* button still spans 0–36px of the row and the *Internal* checkbox still sits 12px from its top, i.e. their positions relative to each other and to the box are identical to before.
+
+**Verification (live)**
+- Ticket `e28544bc`, measured before and after: gap 24px → 11px with no overlap of the box; row 36px, button 0–36px, checkbox at 12px in both runs; textarea 104px. The card still renders its two notes (`Note`, `Note`) and the Activity card its three entries (`Change`, `Time`, `Time`), and the same 11px holds with the Internal box ticked. Web typecheck: 0 errors.
+- Two utility classes on one element, so the whole thing reverts with one `git revert`.
