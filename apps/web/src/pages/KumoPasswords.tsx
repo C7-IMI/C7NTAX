@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Shield, Eye, EyeOff, Search, X, Save, Clock, Edit3, Trash2, Copy, Building2, Key } from "lucide-react";
+import { Plus, Shield, Eye, EyeOff, Search, X, Save, Clock, Edit3, Trash2, Copy, Building2, Key, ExternalLink, Download, RotateCw, Eraser, ShieldCheck, KeyRound } from "lucide-react";
 import { generatePassword } from "../lib/generatePassword";
 import { PASSWORD_STRENGTH_LEVELS, scorePassword, passwordStrengthLevel } from "@C7NTAX/shared";
 import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 export function KumoPasswordsPage() {
   const [passwords, setPasswords] = useState<any[]>([]);
@@ -25,6 +28,7 @@ export function KumoPasswordsPage() {
   const [showNewPwd, setShowNewPwd] = useState(false);
   const [showEditPwd, setShowEditPwd] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const menu = useContextMenu();
 
   // Set by the organization screen, e.g. /kumo/passwords?select=<id>&strength=Very+Strong
   const selectId = searchParams.get("select");
@@ -140,8 +144,121 @@ export function KumoPasswordsPage() {
     try { const r = await api.get(`/kumo/passwords/${selected.id}/totp`); if (r.data.enabled) setManualTotpCode(r.data); } catch {}
   };
 
+  // ── Right-click menu: Kumo Password Vault ──
+  /** Reveals one entry's password and copies it, mirroring the detail panel's
+   *  Reveal button (including the 30-second auto-clear). */
+  const revealPasswordFor = async (p: Record<string, any>) => {
+    selectPassword(p);
+    try {
+      const r = await api.post(`/kumo/passwords/${p.id}/reveal`);
+      setRevealData(r.data);
+      setTimeout(() => setRevealData(null), 30000);
+      if (r.data?.password) await copyText(String(r.data.password), "Password");
+    } catch (e: any) {
+      const msg = e?.response?.data?.error?.message || e?.response?.data?.error || e?.message || "Access denied";
+      toast.error(typeof msg === "string" ? msg : "Access denied");
+    }
+  };
+
+  const deactivatePassword = async (p: Record<string, any>) => {
+    try {
+      await api.delete(`/kumo/passwords/${p.id}`);
+      toast.success("Deactivated");
+      if (selected?.id === p.id) setSelected(null);
+      fetch();
+    } catch { toast.error("Failed"); }
+  };
+
+  const setupTotpFor = async (p: Record<string, any>) => {
+    selectPassword(p);
+    try { const r = await api.post(`/kumo/passwords/${p.id}/totp/setup`); setTotpSetup(r.data); }
+    catch { toast.error("Failed"); }
+  };
+
+  const removeTotpFor = async (p: Record<string, any>) => {
+    try {
+      await api.delete(`/kumo/passwords/${p.id}/totp`);
+      toast.success("TOTP removed");
+      if (selected?.id === p.id) { setTotpSetup(null); setTotpCode(null); setManualSecret(""); setManualTotpCode(null); }
+      fetch();
+    } catch { toast.error("Failed"); }
+  };
+
+  /** Metadata only — the vault's secrets are never written to a file. */
+  const csvColumns: CsvColumn<Record<string, any>>[] = [
+    { key: "label", label: "Label", value: p => p.label ?? "" },
+    { key: "username", label: "Username", value: p => p.username ?? "" },
+    { key: "category", label: "Category", value: p => p.category ?? "" },
+    { key: "url", label: "URL", value: p => p.url ?? "" },
+    { key: "client", label: "Client", value: p => companies.find((c: any) => c.id === p.companyId)?.name ?? "" },
+    { key: "totp", label: "TOTP", value: p => (p.totpEnabled ? "Enabled" : "Off") },
+  ];
+
+  const exportCsv = () => {
+    if (filtered.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-kumo-passwords-${fileStamp()}.csv`, toCsv(filtered, csvColumns));
+    toast.success(`Exported ${filtered.length} entr${filtered.length === 1 ? "y" : "ies"} (metadata only)`);
+  };
+
+  const passwordMenuHeader = (p: Record<string, any>) => ({
+    title: String(p.label ?? "Password"),
+    subtitle: [p.username, p.category, companies.find((c: any) => c.id === p.companyId)?.name, p.totpEnabled ? "TOTP enabled" : null].filter(Boolean).join(" · "),
+  });
+
+  const passwordMenuEntries = (p: Record<string, any>): MenuEntry[] => [
+    { label: "Show details", icon: ExternalLink, hint: "⏎", onSelect: () => selectPassword(p) },
+    { label: "Reveal and copy password", icon: Eye, onSelect: () => void revealPasswordFor(p) },
+    "separator",
+    { label: "Copy username", icon: Copy, disabled: !p.username, onSelect: () => void copyText(String(p.username), "Username") },
+    { label: "Copy label", icon: Copy, onSelect: () => void copyText(String(p.label ?? ""), "Label") },
+    { label: "Copy URL", icon: Copy, disabled: !p.url, onSelect: () => void copyText(String(p.url), "URL") },
+    "separator",
+    {
+      label: "TOTP", icon: ShieldCheck,
+      items: [
+        {
+          label: "Set up TOTP", icon: KeyRound, disabled: !!p.totpEnabled,
+          onSelect: () => void setupTotpFor(p),
+        },
+        {
+          label: "Remove TOTP", icon: Trash2, disabled: !p.totpEnabled, danger: true,
+          onSelect: () => void removeTotpFor(p),
+        },
+      ],
+    },
+    "separator",
+    {
+      label: "Deactivate entry…", icon: Trash2, danger: true,
+      onSelect: () => {
+        if (!confirm(`Deactivate ${p.label}? The entry stays recoverable but leaves the active vault.`)) return;
+        void deactivatePassword(p);
+      },
+    },
+  ];
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "Add password", icon: Plus, onSelect: () => setShowCreate(true) },
+    { label: "Refresh list", icon: RotateCw, onSelect: () => void fetch() },
+    "separator",
+    {
+      label: "Clear filters", icon: Eraser, disabled: !companyFilter && !strengthFilter,
+      onSelect: () => {
+        setCompanyFilter("");
+        if (strengthFilter) setSearchParams({}, { replace: true });
+      },
+    },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${filtered.length} row${filtered.length === 1 ? "" : "s"} (no secrets)`, disabled: filtered.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h2 className="text-lg font-semibold text-white">Password Vault</h2><p className="text-sm text-gray-400">{filtered.length} passwords</p></div>
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Add Password</button>
@@ -171,6 +288,8 @@ export function KumoPasswordsPage() {
            filtered.length === 0 ? <div className="card py-8 text-center text-gray-500 text-sm">No passwords</div> :
            filtered.map(p => (
             <button key={p.id} onClick={() => selectPassword(p)}
+              onContextMenu={(e) => menu.open(e, passwordMenuEntries(p), passwordMenuHeader(p))}
+              onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, passwordMenuEntries(p), passwordMenuHeader(p))}
               className={`w-full text-left card px-4 py-3 hover:border-cyber-500/30 transition-colors ${selected?.id === p.id ? "border-cyber-500/50 bg-cyber-600/5" : ""}`}>
               <div className="flex items-center gap-2">
                 <Shield size={14} className="text-cyber-400 shrink-0" />

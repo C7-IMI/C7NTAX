@@ -1,9 +1,13 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
-import { Search, ExternalLink, History, ChevronRight } from "lucide-react";
+import toast from "react-hot-toast";
+import { Search, ExternalLink, History, ChevronRight, SquareArrowOutUpRight, AppWindow, Copy, Download, RotateCw, Eraser, Ticket, KeyRound, Server, FileText, Globe, Building2 } from "lucide-react";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { initials, avatarColor } from "../lib/format";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 interface Organization {
   id: string;
@@ -82,7 +86,97 @@ export function KumoOrganizationsPage() {
       .catch(() => {});
   }, []);
 
-  const rows = useMemo(() => (sort ? sortData(orgs, sort.field, sort.direction) : orgs), [orgs, sort]);
+  const rows = useMemo(() => (sort ? sortData(orgs, sort.field, sort.direction) : orgs), [orgs, sort])
+
+  // ── Right-click menu: Kumo Organizations ──
+  const menu = useContextMenu();
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const csvColumns: CsvColumn<Organization>[] = [
+    { key: "name", label: "Organization", value: o => o.name },
+    { key: "type", label: "Type", value: o => o.companyType ?? "" },
+    { key: "industry", label: "Industry", value: o => o.industry ?? "" },
+    { key: "location", label: "Location", value: o => [o.city, o.state].filter(Boolean).join(", ") },
+    { key: "contacts", label: "Contacts", value: o => o._count?.contacts ?? 0 },
+    { key: "assets", label: "Assets", value: o => o.kumo?.assets ?? 0 },
+    { key: "passwords", label: "Passwords", value: o => o.kumo?.passwords ?? 0 },
+    { key: "documents", label: "Documents", value: o => o.kumo?.documents ?? 0 },
+    { key: "domains", label: "Domains", value: o => o.kumo?.domains ?? 0 },
+    { key: "certificates", label: "Certificates", value: o => o.kumo?.certificates ?? 0 },
+    { key: "status", label: "Status", value: o => (o.isActive ? "Active" : "Inactive") },
+  ];
+
+  const exportCsv = () => {
+    if (rows.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-kumo-organizations-${fileStamp()}.csv`, toCsv(rows, csvColumns));
+    toast.success(`Exported ${rows.length} organization${rows.length === 1 ? "" : "s"}`);
+  };
+
+  const orgMenuHeader = (org: Organization) => ({
+    title: org.name,
+    subtitle: [
+      org.companyType,
+      [org.city, org.state].filter(Boolean).join(", ") || org.industry,
+      `${org.kumo?.assets ?? 0} assets · ${org.kumo?.passwords ?? 0} passwords · ${org.kumo?.documents ?? 0} documents`,
+    ].filter(Boolean).join(" · "),
+  });
+
+  const orgMenuEntries = (org: Organization): MenuEntry[] => {
+    const id = String(org.id);
+    return [
+      { label: "Open organization", icon: ExternalLink, hint: "⏎", onSelect: () => open(org) },
+      { label: "Open in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(`/kumo/organizations/${id}`) },
+      { label: "Open in new window", icon: AppWindow, onSelect: () => openInNewWindow(`/kumo/organizations/${id}`) },
+      "separator",
+      { label: "Client record", icon: Building2, onSelect: () => navigate(`/clients/${id}`) },
+      { label: "New ticket", icon: Ticket, onSelect: () => navigate(`/tickets?new=1&companyId=${id}`) },
+      {
+        label: "Kumo", icon: Globe,
+        items: [
+          { label: "Passwords", icon: KeyRound, onSelect: () => navigate(`/kumo/passwords?companyId=${id}`) },
+          { label: "Configurations", icon: Server, onSelect: () => navigate(`/kumo/configs?companyId=${id}`) },
+          { label: "Documents", icon: FileText, onSelect: () => navigate(`/kumo/documents?companyId=${id}`) },
+          { label: "Domains & Certs", icon: Globe, onSelect: () => navigate(`/kumo/domains?companyId=${id}`) },
+        ],
+      },
+      "separator",
+      org.companyType && {
+        label: `Show only ${String(org.companyType)} organizations`, icon: Building2,
+        onSelect: () => setCompanyType(String(org.companyType)),
+      },
+      "separator",
+      { label: "Copy name", icon: Copy, onSelect: () => void copyText(org.name, "Name") },
+      {
+        label: "Copy documentation summary", icon: Copy,
+        onSelect: () => void copyText([
+          org.name,
+          org.companyType ? `Type: ${org.companyType}` : null,
+          org.industry ? `Industry: ${org.industry}` : null,
+          [org.city, org.state].filter(Boolean).length ? `Location: ${[org.city, org.state].filter(Boolean).join(", ")}` : null,
+          `Assets: ${org.kumo?.assets ?? 0}`,
+          `Passwords: ${org.kumo?.passwords ?? 0}`,
+          `Documents: ${org.kumo?.documents ?? 0}`,
+          `Domains: ${org.kumo?.domains ?? 0}`,
+          `Certificates: ${org.kumo?.certificates ?? 0}`,
+          `Contacts: ${org._count?.contacts ?? 0}`,
+        ].filter(Boolean).join("\n"), "Documentation summary"),
+      },
+    ].filter(Boolean) as MenuEntry[];
+  };
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "Refresh list", icon: RotateCw, onSelect: () => void fetchOrgs(search, companyType) },
+    { label: "Focus search", icon: Search, onSelect: () => searchRef.current?.focus() },
+    "separator",
+    {
+      label: "Clear filters", icon: Eraser, disabled: !search && !companyType,
+      onSelect: () => { setSearch(""); setCompanyType(""); },
+    },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${rows.length} row${rows.length === 1 ? "" : "s"}`, disabled: rows.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];;
 
   const setCompanyType = (type: string) => {
     const next = new URLSearchParams(searchParams);
@@ -103,7 +197,11 @@ export function KumoOrganizationsPage() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">Organizations</h2>
@@ -149,6 +247,7 @@ export function KumoOrganizationsPage() {
           <div className="relative flex-1 min-w-[200px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input
+              ref={searchRef}
               className="input-field pl-8"
               placeholder="Filter by name, city, or industry…"
               value={search}
@@ -210,8 +309,11 @@ export function KumoOrganizationsPage() {
                 {rows.map((org) => (
                   <tr
                     key={org.id}
-                    className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer"
+                    tabIndex={0}
+                    className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer focus:outline-none focus:bg-surface-light/50"
                     onClick={() => open(org)}
+                    onContextMenu={(e) => menu.open(e, orgMenuEntries(org), orgMenuHeader(org))}
+                    onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, orgMenuEntries(org), orgMenuHeader(org))}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">

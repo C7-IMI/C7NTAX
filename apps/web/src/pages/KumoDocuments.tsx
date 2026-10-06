@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Folder, FileText, ChevronRight, X, Save, Clock } from "lucide-react";
+import { Plus, Folder, FileText, ChevronRight, X, Save, Clock, ExternalLink, SquareArrowOutUpRight, AppWindow, Copy, Download, RotateCw, Eraser } from "lucide-react";
 import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 export function KumoDocumentsPage() {
   const [folders, setFolders] = useState<any[]>([]);
@@ -108,8 +111,79 @@ export function KumoDocumentsPage() {
     setSearchParams(next, { replace: true });
   };
 
+  // ── Right-click menu: Kumo Documents ──
+  const menu = useContextMenu();
+
+  const csvColumns: CsvColumn<Record<string, any>>[] = [
+    { key: "title", label: "Title", value: d => d.title ?? "" },
+    { key: "version", label: "Version", value: d => d.currentVersion ?? "" },
+    { key: "status", label: "Status", value: d => d.status ?? "" },
+    { key: "visibility", label: "Visibility", value: d => d.visibility ?? "" },
+    { key: "client", label: "Client", value: d => companies.find((c: any) => c.id === d.companyId)?.name ?? "" },
+    { key: "updated", label: "Last Updated", value: d => d.updatedAt ?? "" },
+  ];
+
+  const exportCsv = () => {
+    if (visibleDocuments.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-kumo-documents-${fileStamp()}.csv`, toCsv(visibleDocuments, csvColumns));
+    toast.success(`Exported ${visibleDocuments.length} document${visibleDocuments.length === 1 ? "" : "s"}`);
+  };
+
+  const documentMenuHeader = (d: Record<string, any>) => ({
+    title: String(d.title ?? "Document"),
+    subtitle: [`v${d.currentVersion ?? 1}`, d.status, d.visibility, companies.find((c: any) => c.id === d.companyId)?.name].filter(Boolean).join(" · "),
+  });
+
+  const documentMenuEntries = (d: Record<string, any>): MenuEntry[] => {
+    const path = `/kumo/documents?doc=${d.id}`;
+    return [
+      { label: "Open document", icon: ExternalLink, hint: "⏎", onSelect: () => void openDoc(String(d.id)) },
+      { label: "Open in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(path) },
+      { label: "Open in new window", icon: AppWindow, onSelect: () => openInNewWindow(path) },
+      "separator",
+      { label: "Copy document link", icon: Copy, onSelect: () => void copyText(`${window.location.origin}${path}`, "Document link") },
+      { label: "Copy title", icon: Copy, onSelect: () => void copyText(String(d.title ?? ""), "Title") },
+      ...(d.companyId
+        ? [
+            "separator" as const,
+            { label: "Filter to this client", icon: Folder, onSelect: () => setSearchParams({ companyId: String(d.companyId) }) },
+          ]
+        : []),
+    ];
+  };
+
+  const folderMenuEntries = (f: Record<string, any>): MenuEntry[] => [
+    { label: "Show documents in this folder", icon: ExternalLink, hint: "⏎", onSelect: () => setSelectedFolder(String(f.id)) },
+    {
+      label: "New document in this folder…", icon: Plus,
+      onSelect: () => { setForm(prev => ({ ...prev, folderId: String(f.id) })); setShowCreate(true); },
+    },
+    "separator",
+    { label: "Copy folder name", icon: Copy, onSelect: () => void copyText(String(f.name ?? ""), "Folder name") },
+  ];
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "New document", icon: Plus, onSelect: () => setShowCreate(true) },
+    { label: "New folder…", icon: Folder, onSelect: () => setShowFolder(true) },
+    { label: "Refresh list", icon: RotateCw, onSelect: () => void fetchAll() },
+    "separator",
+    { label: "All documents", icon: Eraser, disabled: !selectedFolder, onSelect: () => setSelectedFolder(null) },
+    {
+      label: "Clear filters", icon: Eraser, disabled: !docFilter && !companyParam,
+      onSelect: () => setSearchParams({}),
+    },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${visibleDocuments.length} row${visibleDocuments.length === 1 ? "" : "s"}`, disabled: visibleDocuments.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">Kumo Documents</h2>
@@ -141,6 +215,8 @@ export function KumoDocumentsPage() {
           </button>
           {folders.map(f => (
             <button key={f.id} onClick={() => setSelectedFolder(f.id)}
+              onContextMenu={(e) => menu.open(e, folderMenuEntries(f), { title: String(f.name ?? "Folder") })}
+              onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, folderMenuEntries(f), { title: String(f.name ?? "Folder") })}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${selectedFolder === f.id ? "bg-cyber-600/15 text-cyber-400" : "text-gray-400 hover:text-white"}`}>
               <Folder size={14} /> {f.name}
               {f._count?.documents > 0 && <span className="text-xs text-gray-600 ml-auto">{f._count.documents}</span>}
@@ -153,7 +229,10 @@ export function KumoDocumentsPage() {
            visibleDocuments.length === 0 ? <div className="text-center py-12 card"><FileText size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">{docFilter ? "No documents match this filter" : "No documents"}</p></div> :
            <div className="space-y-2">
             {visibleDocuments.map(d => (
-              <div key={d.id} className="card hover:border-cyber-500/30 transition-colors cursor-pointer p-4" onClick={() => openDoc(d.id)}>
+              <div key={d.id} tabIndex={0} className="card hover:border-cyber-500/30 transition-colors cursor-pointer p-4 focus:outline-none focus:border-cyber-500/50" onClick={() => openDoc(d.id)}
+                onContextMenu={(e) => menu.open(e, documentMenuEntries(d), documentMenuHeader(d))}
+                onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, documentMenuEntries(d), documentMenuHeader(d))}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <FileText size={18} className="text-cyber-400 shrink-0" />

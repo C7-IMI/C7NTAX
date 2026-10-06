@@ -1,19 +1,24 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import {
   Plus, Send, DollarSign, CreditCard, Eye, FileText, Clock, Calendar,
   TrendingUp, Download, Receipt, Building2, AlertTriangle, CheckCircle,
   XCircle, RotateCw, ClipboardList, BarChart3, Timer, Filter,
+  ExternalLink, Copy, Eraser, Repeat, SquareArrowOutUpRight, AppWindow, Trash2,
   type LucideIcon,
 } from "lucide-react";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 // Types
 interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; }
-interface Agreement { id: string; name: string; description?: string; company: { name?: string } | null; billingPeriod: string; billingAmount: number; startDate: string; endDate?: string; isActive: boolean; autoInvoiceEnabled: boolean; followUpEnabled: boolean; _count?: { invoices: number } }
+interface Agreement { id: string; name: string; description?: string; companyId?: string; company: { name?: string; id?: string } | null; billingPeriod: string; billingAmount: number; startDate: string; endDate?: string; isActive: boolean; autoInvoiceEnabled: boolean; followUpEnabled: boolean; _count?: { invoices: number } }
 interface Payment { id: string; amount: number; method: string; reference?: string; processedAt: string; invoice: { invoiceNumber: string; company: { name?: string } | null } }
-interface TimeEntry { id: string; description?: string; internalNotes?: string; minutes: number; billable: boolean; noCharge?: boolean; rate?: number | null; workType?: string | null; workRole?: string | null; date: string; ticket: { ticketNumber: string; company?: { name?: string } | null } | null; invoiceId?: string; }
+interface TimeEntry { id: string; description?: string; internalNotes?: string; minutes: number; billable: boolean; noCharge?: boolean; rate?: number | null; workType?: string | null; workRole?: string | null; date: string; ticket: { id?: string; ticketNumber: string; company?: { name?: string } | null } | null; invoiceId?: string; }
 interface Company { id: string; name: string; }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -137,8 +142,89 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
     return s;
   }, { count: 0, total: 0, paid: 0, overdue: 0, outstanding: 0 });
 
+  /** Bills an invoice again on its own schedule (POST /invoices/:id/recurring). */
+  const makeRecurring = async (inv: Invoice) => {
+    try { await api.post(`/billing/invoices/${inv.id}/recurring`, {}); toast.success(`${inv.invoiceNumber} set to repeat`); fetchInvoices(); }
+    catch { toast.error("Failed to set up recurrence"); }
+  };
+
+  // ── Right-click menu: Invoices ──
+  const menu = useContextMenu();
+  const navigate = useNavigate();
+
+  const csvColumns: CsvColumn<Invoice>[] = [
+    { key: "number", label: "Invoice", value: inv => inv.invoiceNumber },
+    { key: "client", label: "Client", value: inv => inv.company?.name ?? "" },
+    { key: "total", label: "Amount", value: inv => inv.total },
+    { key: "status", label: "Status", value: inv => inv.status },
+    { key: "issued", label: "Issued", value: inv => inv.issueDate },
+    { key: "due", label: "Due", value: inv => inv.dueDate },
+  ];
+
+  const exportCsv = () => {
+    const rows = sortData(invoices, sort?.field || "dueDate", sort?.direction || "desc");
+    if (rows.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-invoices-${fileStamp()}.csv`, toCsv(rows, csvColumns));
+    toast.success(`Exported ${rows.length} invoice${rows.length === 1 ? "" : "s"}`);
+  };
+
+  const invoiceMenuHeader = (inv: Invoice) => ({
+    title: inv.invoiceNumber,
+    subtitle: [inv.company?.name, `$${inv.total.toFixed(2)}`, inv.status, `due ${new Date(inv.dueDate).toLocaleDateString()}`].filter(Boolean).join(" · "),
+  });
+
+  const invoiceMenuEntries = (inv: Invoice): MenuEntry[] => [
+    { label: "Open invoice", icon: ExternalLink, hint: "⏎", onSelect: () => setViewInvoice(inv) },
+    { label: "Download PDF", icon: FileText, onSelect: () => handleInvoicePdf(inv) },
+    "separator",
+    inv.status === "draft" && { label: "Send to client", icon: Send, onSelect: () => void handleSend(inv.id) },
+    ["sent", "partial", "overdue"].includes(inv.status) && { label: "Record payment…", icon: CreditCard, onSelect: () => openPay(inv) },
+    { label: "Set to repeat…", icon: Repeat, onSelect: () => void makeRecurring(inv) },
+    inv.company?.id && { label: "Open client", icon: Building2, onSelect: () => navigate(`/clients/${inv.company!.id}`) },
+    "separator",
+    { label: "Copy invoice number", icon: Copy, onSelect: () => void copyText(inv.invoiceNumber, "Invoice number") },
+    { label: "Copy amount", icon: Copy, onSelect: () => void copyText(`$${inv.total.toFixed(2)}`, "Amount") },
+    {
+      label: "Copy invoice summary", icon: Copy,
+      onSelect: () => void copyText([
+        inv.invoiceNumber,
+        inv.company?.name ? `Client: ${inv.company.name}` : null,
+        `Amount: $${inv.total.toFixed(2)}`,
+        `Status: ${inv.status}`,
+        `Issued: ${new Date(inv.issueDate).toLocaleDateString()}`,
+        `Due: ${new Date(inv.dueDate).toLocaleDateString()}`,
+      ].filter(Boolean).join("\n"), "Invoice summary"),
+    },
+  ].filter(Boolean) as MenuEntry[];
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "Generate invoice…", icon: Plus, onSelect: () => setShowGenerate(true) },
+    { label: "Refresh list", icon: RotateCw, onSelect: () => fetchInvoices() },
+    "separator",
+    { label: "Clear status filter", icon: Eraser, disabled: !statusFilter, onSelect: () => setStatusFilter("") },
+    {
+      label: "Sort by", icon: Filter,
+      items: [
+        { label: "Invoice number", checked: sort?.field === "invoiceNumber", onSelect: () => setSort({ field: "invoiceNumber", direction: "asc" }) },
+        { label: "Client", checked: sort?.field === "company.name", onSelect: () => setSort({ field: "company.name", direction: "asc" }) },
+        { label: "Amount", checked: sort?.field === "total", onSelect: () => setSort({ field: "total", direction: "desc" }) },
+        { label: "Issued", checked: sort?.field === "issueDate", onSelect: () => setSort({ field: "issueDate", direction: "desc" }) },
+        { label: "Due", checked: sort?.field === "dueDate", onSelect: () => setSort({ field: "dueDate", direction: "asc" }) },
+        { label: "Status", checked: sort?.field === "status", onSelect: () => setSort({ field: "status", direction: "asc" }) },
+      ],
+    },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${invoices.length} row${invoices.length === 1 ? "" : "s"}`, disabled: invoices.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <SummaryCard icon={Receipt} label="Total Invoiced" value={`$${totals.total.toLocaleString()}`} color="text-cyber-400" />
@@ -164,7 +250,10 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase tracking-wider"><SortableHeader field="invoiceNumber" label="Invoice" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="company.name" label="Client" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden sm:table-cell" /><SortableHeader field="total" label="Amount" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="issueDate" label="Issued" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="dueDate" label="Due" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="status" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><th className="p-3 text-right">Actions</th></tr></thead>
           <tbody>{sortData(invoices, sort?.field || "dueDate", sort?.direction || "desc").map(inv => (
-            <tr key={inv.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 cursor-pointer" onDoubleClick={() => handleInvoicePdf(inv)} onClick={() => setViewInvoice(inv)}>
+            <tr key={inv.id} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 cursor-pointer focus:outline-none focus:bg-surface-lighter/30" onDoubleClick={() => handleInvoicePdf(inv)} onClick={() => setViewInvoice(inv)}
+              onContextMenu={(e) => menu.open(e, invoiceMenuEntries(inv), invoiceMenuHeader(inv))}
+              onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, invoiceMenuEntries(inv), invoiceMenuHeader(inv))}
+            >
               <td className="p-3 font-medium text-white">{inv.invoiceNumber}</td>
               <td className="p-3 text-gray-300 hidden sm:table-cell">{inv.company?.name || "—"}</td>
               <td className="p-3">${inv.total.toFixed(2)}</td>
@@ -265,8 +354,74 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
     catch { toast.error("Failed"); }
   };
 
+  // ── Right-click menu: Agreements ──
+  const menu = useContextMenu();
+  const navigate = useNavigate();
+
+  const csvColumns: CsvColumn<Agreement>[] = [
+    { key: "name", label: "Agreement", value: a => a.name },
+    { key: "client", label: "Client", value: a => a.company?.name ?? "" },
+    { key: "period", label: "Billing Period", value: a => a.billingPeriod },
+    { key: "amount", label: "Amount", value: a => a.billingAmount },
+    { key: "start", label: "Start", value: a => a.startDate },
+    { key: "end", label: "End", value: a => a.endDate ?? "ongoing" },
+    { key: "status", label: "Status", value: a => (a.isActive ? "Active" : "Inactive") },
+    { key: "autoInvoice", label: "Auto Invoice", value: a => (a.autoInvoiceEnabled ? "Yes" : "No") },
+  ];
+
+  const exportCsv = () => {
+    const rows = sortData(agreements, sortAg?.field || "name", sortAg?.direction || "asc");
+    if (rows.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-agreements-${fileStamp()}.csv`, toCsv(rows, csvColumns));
+    toast.success(`Exported ${rows.length} agreement${rows.length === 1 ? "" : "s"}`);
+  };
+
+  const agreementMenuHeader = (a: Agreement) => ({
+    title: a.name,
+    subtitle: [a.company?.name, `${a.billingPeriod} · $${a.billingAmount.toLocaleString()}`, a.isActive ? "Active" : "Inactive", a.autoInvoiceEnabled ? "auto-invoiced" : null].filter(Boolean).join(" · "),
+  });
+
+  const agreementMenuEntries = (a: Agreement): MenuEntry[] => {
+    const companyId = a.company?.id ?? a.companyId;
+    return [
+      {
+        label: "New agreement for this client…", icon: Plus, disabled: !companyId,
+        onSelect: () => { setForm(prev => ({ ...prev, companyId: String(companyId) })); setShowCreate(true); },
+      },
+      companyId && { label: "Open client", icon: Building2, onSelect: () => navigate(`/clients/${companyId}`) },
+      companyId && { label: "Client's tickets", icon: FileText, onSelect: () => navigate(`/tickets?companyId=${companyId}`) },
+      companyId && { label: "Client's invoices", icon: Receipt, onSelect: () => navigate("/billing") },
+      "separator",
+      { label: "Copy agreement name", icon: Copy, onSelect: () => void copyText(a.name, "Agreement name") },
+      {
+        label: "Copy billing terms", icon: Copy,
+        onSelect: () => void copyText([
+          a.name,
+          a.company?.name ? `Client: ${a.company.name}` : null,
+          `Billing: $${a.billingAmount.toLocaleString()} ${a.billingPeriod}`,
+          `Starts: ${new Date(a.startDate).toLocaleDateString()}`,
+          a.endDate ? `Ends: ${new Date(a.endDate).toLocaleDateString()}` : "Ongoing",
+          `Auto invoice: ${a.autoInvoiceEnabled ? "yes" : "no"}`,
+        ].filter(Boolean).join("\n"), "Billing terms"),
+      },
+    ].filter(Boolean) as MenuEntry[];
+  };
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "New agreement…", icon: Plus, onSelect: () => setShowCreate(true) },
+    { label: "Refresh list", icon: RotateCw, onSelect: () => fetch() },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${agreements.length} row${agreements.length === 1 ? "" : "s"}`, disabled: agreements.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-400">{agreements.length} agreements</p>
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />New Agreement</button>
@@ -278,7 +433,10 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><SortableHeader field="name" label="Name" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /><SortableHeader field="company.name" label="Client" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3 hidden sm:table-cell" /><SortableHeader field="billingPeriod" label="Billing" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /><SortableHeader field="billingAmount" label="Amount" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /><SortableHeader field="startDate" label="Period" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="isActive" label="Status" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /></tr></thead>
           <tbody>{sortData(agreements, sortAg?.field || "name", sortAg?.direction || "asc").map(a => (
-            <tr key={a.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
+            <tr key={a.id} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 focus:outline-none focus:bg-surface-lighter/30"
+              onContextMenu={(e) => menu.open(e, agreementMenuEntries(a), agreementMenuHeader(a))}
+              onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, agreementMenuEntries(a), agreementMenuHeader(a))}
+            >
               <td className="p-3 font-medium text-white">{a.name}</td>
               <td className="p-3 text-gray-300 hidden sm:table-cell">{a.company?.name || "—"}</td>
               <td className="p-3"><span className={`badge ${PERIOD_COLORS[a.billingPeriod] || ""}`}>{a.billingPeriod}</span></td>
@@ -328,28 +486,92 @@ function PaymentsTab() {
   const [loading, setLoading] = useState(true);
   const [methodFilter, setMethodFilter] = useState("");
   const [sortPay, setSortPay] = useState<SortState | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("/billing/invoices?limit=200").then(r => {
-      const invs = r.data.data || [];
-      const allPayments: Payment[] = [];
-      for (const inv of invs) {
-        if (inv.payments) {
-          for (const p of inv.payments) {
-            allPayments.push({ ...p, invoice: { invoiceNumber: inv.invoiceNumber, company: inv.company } });
-          }
-        }
-      }
-      setPayments(allPayments);
+    load();
+  }, []);
+
+  const load = () => {
+    setLoading(true);
+    // /billing/payments is the payments list; the invoice list does not carry
+    // payments at all, so deriving them from it left this tab permanently empty.
+    api.get("/billing/payments").then(r => {
+      setPayments(Array.isArray(r.data) ? r.data : (r.data?.data || []));
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, []);
+  };
 
   const filtered = methodFilter ? payments.filter(p => p.method === methodFilter) : payments;
   const total = filtered.reduce((s, p) => s + p.amount, 0);
 
+  // ── Right-click menu: Payments ──
+  const menu = useContextMenu();
+
+  const csvColumns: CsvColumn<Payment>[] = [
+    { key: "invoice", label: "Invoice", value: p => p.invoice.invoiceNumber },
+    { key: "client", label: "Client", value: p => p.invoice.company?.name ?? "" },
+    { key: "amount", label: "Amount", value: p => p.amount },
+    { key: "method", label: "Method", value: p => p.method.replace(/_/g, " ") },
+    { key: "date", label: "Processed", value: p => p.processedAt },
+    { key: "reference", label: "Reference", value: p => p.reference ?? "" },
+  ];
+
+  const exportCsv = () => {
+    const rows = sortData(filtered, sortPay?.field || "processedAt", sortPay?.direction || "desc");
+    if (rows.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-payments-${fileStamp()}.csv`, toCsv(rows, csvColumns));
+    toast.success(`Exported ${rows.length} payment${rows.length === 1 ? "" : "s"}`);
+  };
+
+  const paymentMenuHeader = (p: Payment) => ({
+    title: `$${p.amount.toFixed(2)} · ${p.method.replace(/_/g, " ")}`,
+    subtitle: [p.invoice.invoiceNumber, p.invoice.company?.name, new Date(p.processedAt).toLocaleDateString()].filter(Boolean).join(" · "),
+  });
+
+  const paymentMenuEntries = (p: Payment): MenuEntry[] => [
+    { label: "Open invoices", icon: Receipt, hint: "⏎", onSelect: () => navigate("/billing") },
+    "separator",
+    { label: "Copy reference", icon: Copy, disabled: !p.reference, onSelect: () => void copyText(String(p.reference), "Reference") },
+    { label: "Copy amount", icon: Copy, onSelect: () => void copyText(`$${p.amount.toFixed(2)}`, "Amount") },
+    { label: "Copy invoice number", icon: Copy, onSelect: () => void copyText(p.invoice.invoiceNumber, "Invoice number") },
+    {
+      label: "Copy payment details", icon: Copy,
+      onSelect: () => void copyText([
+        `$${p.amount.toFixed(2)} ${p.method.replace(/_/g, " ")}`,
+        `Invoice: ${p.invoice.invoiceNumber}`,
+        p.invoice.company?.name ? `Client: ${p.invoice.company.name}` : null,
+        `Processed: ${new Date(p.processedAt).toLocaleDateString()}`,
+        p.reference ? `Reference: ${p.reference}` : null,
+      ].filter(Boolean).join("\n"), "Payment details"),
+    },
+  ];
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "Refresh list", icon: RotateCw, onSelect: () => load() },    "separator",
+    { label: "Clear method filter", icon: Eraser, disabled: !methodFilter, onSelect: () => setMethodFilter("") },
+    {
+      label: "Sort by", icon: Filter,
+      items: [
+        { label: "Invoice", checked: sortPay?.field === "invoice.invoiceNumber", onSelect: () => setSortPay({ field: "invoice.invoiceNumber", direction: "asc" }) },
+        { label: "Amount", checked: sortPay?.field === "amount", onSelect: () => setSortPay({ field: "amount", direction: "desc" }) },
+        { label: "Method", checked: sortPay?.field === "method", onSelect: () => setSortPay({ field: "method", direction: "asc" }) },
+        { label: "Date", checked: sortPay?.field === "processedAt", onSelect: () => setSortPay({ field: "processedAt", direction: "desc" }) },
+        { label: "Reference", checked: sortPay?.field === "reference", onSelect: () => setSortPay({ field: "reference", direction: "asc" }) },
+      ],
+    },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${filtered.length} row${filtered.length === 1 ? "" : "s"}`, disabled: filtered.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-400">{filtered.length} payments · ${total.toLocaleString()} total</p>
         <select className="input-field text-sm py-1.5 w-auto" value={methodFilter} onChange={e => setMethodFilter(e.target.value)}>
@@ -364,7 +586,10 @@ function PaymentsTab() {
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><SortableHeader field="invoice.invoiceNumber" label="Invoice" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3" /><SortableHeader field="invoice.company.name" label="Client" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3" /><SortableHeader field="amount" label="Amount" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3" /><SortableHeader field="method" label="Method" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3 hidden sm:table-cell" /><SortableHeader field="processedAt" label="Date" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="reference" label="Reference" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3 hidden md:table-cell" /></tr></thead>
           <tbody>{sortData(filtered, sortPay?.field || "processedAt", sortPay?.direction || "desc").map((p, i) => (
-            <tr key={i} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
+            <tr key={i} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 focus:outline-none focus:bg-surface-lighter/30"
+              onContextMenu={(e) => menu.open(e, paymentMenuEntries(p), paymentMenuHeader(p))}
+              onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, paymentMenuEntries(p), paymentMenuHeader(p))}
+            >
               <td className="p-3 font-medium text-white">{p.invoice.invoiceNumber}</td>
               <td className="p-3 text-gray-300">{p.invoice.company?.name || "—"}</td>
               <td className="p-3 text-green-400">${p.amount.toFixed(2)}</td>
@@ -389,28 +614,29 @@ function TimeExpensesTab() {
   const [ticketMap, setTicketMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [billableFilter, setBillableFilter] = useState<"" | "true" | "false">("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("/tickets?limit=200").then(r => {
-      const tickets = r.data.data || [];
-      const timeEntries: TimeEntry[] = [];
+    load();
+  }, []);
+
+  const load = () => {
+    setLoading(true);
+    // Billing's own time-entry source: the tickets list does not include them,
+    // which is why this table used to be permanently empty.
+    api.get("/billing/time-entries").then(r => {
+      const rows = Array.isArray(r.data) ? r.data : (r.data?.data || []);
+      setEntries(rows);
       const map: Record<string, any> = {};
-      for (const t of tickets) {
-        map[t.id] = t;
-        if (t.timeEntries) {
-          for (const te of t.timeEntries) {
-            timeEntries.push({ ...te, ticket: { ticketNumber: t.ticketNumber, company: t.company } } as TimeEntry);
-          }
-        }
+      for (const te of rows) {
+        if (te.ticket?.id) map[te.ticket.id] = te.ticket;
       }
-      timeEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setTicketMap(map);
-      setEntries(timeEntries);
       setLoading(false);
     }).catch(() => setLoading(false));
     // Expenses linked to tickets (created via the ticket Expenses tab dialog)
     api.get("/billing/expenses").then(r => setExpenses(r.data?.data || r.data || [])).catch(() => {});
-  }, []);
+  };
 
   const filtered = billableFilter ? entries.filter(e => e.billable === (billableFilter === "true")) : entries;
   const totalHours = filtered.reduce((s, e) => s + e.minutes, 0) / 60;
@@ -418,8 +644,146 @@ function TimeExpensesTab() {
   const totalUnbilled = filtered.filter(e => e.billable && !e.invoiceId).reduce((s, e) => s + e.minutes, 0) / 60;
   const expenseTotal = expenses.reduce((s, e) => s + (e.amount || 0), 0);
 
+  // ── Right-click menu: Time & Expenses ──
+  const menu = useContextMenu();
+  const [expenseConfirm, setExpenseConfirm] = useState<any | null>(null);
+  const [expenseBusy, setExpenseBusy] = useState(false);
+
+  const deleteExpense = async () => {
+    if (!expenseConfirm) return;
+    setExpenseBusy(true);
+    try {
+      await api.delete(`/billing/expenses/${expenseConfirm.id}`);
+      toast.success("Expense deleted");
+      setExpenses(prev => prev.filter(x => x.id !== expenseConfirm.id));
+      setExpenseConfirm(null);
+    } catch { toast.error("Failed to delete expense"); }
+    finally { setExpenseBusy(false); }
+  };
+
+  const csvColumns: CsvColumn<TimeEntry>[] = [
+    { key: "ticket", label: "Ticket", value: e => e.ticket?.ticketNumber ?? "" },
+    { key: "client", label: "Client", value: e => e.ticket?.company?.name ?? "" },
+    { key: "minutes", label: "Minutes", value: e => e.minutes },
+    { key: "hours", label: "Hours", value: e => (e.minutes / 60).toFixed(2) },
+    { key: "billable", label: "Billable", value: e => (e.noCharge ? "no charge" : e.billable ? "billable" : "non-billable") },
+    { key: "invoiced", label: "Invoiced", value: e => (e.invoiceId ? "yes" : "unbilled") },
+    { key: "workType", label: "Work Type", value: e => e.workType ?? "" },
+    { key: "workRole", label: "Work Role", value: e => e.workRole ?? "" },
+    { key: "rate", label: "Rate", value: e => e.rate ?? "" },
+    { key: "date", label: "Date", value: e => e.date },
+    { key: "description", label: "Description", value: e => e.description ?? "" },
+  ];
+
+  const exportTimeCsv = () => {
+    if (filtered.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-time-entries-${fileStamp()}.csv`, toCsv(filtered, csvColumns));
+    toast.success(`Exported ${filtered.length} time entr${filtered.length === 1 ? "y" : "ies"}`);
+  };
+
+  const exportExpenseCsv = () => {
+    if (expenses.length === 0) { toast.error("Nothing to export"); return; }
+    const columns: CsvColumn<Record<string, any>>[] = [
+      { key: "ticket", label: "Ticket", value: e => ticketMap[e.ticketId]?.ticketNumber ?? "" },
+      { key: "description", label: "Description", value: e => e.description ?? "" },
+      { key: "category", label: "Category", value: e => e.category ?? "" },
+      { key: "date", label: "Date", value: e => e.expenseDate ?? "" },
+      { key: "amount", label: "Amount", value: e => e.amount ?? 0 },
+    ];
+    downloadCsv(`c7ntax-expenses-${fileStamp()}.csv`, toCsv(expenses, columns));
+    toast.success(`Exported ${expenses.length} expense${expenses.length === 1 ? "" : "s"}`);
+  };
+
+  const timeMenuHeader = (e: TimeEntry) => ({
+    title: `${e.ticket?.ticketNumber ?? "Time entry"} · ${(e.minutes / 60).toFixed(2)}h`,
+    subtitle: [e.ticket?.company?.name, e.noCharge ? "no charge" : e.billable ? "billable" : "non-billable", e.invoiceId ? "invoiced" : "unbilled", new Date(e.date).toLocaleDateString()].filter(Boolean).join(" · "),
+  });
+
+  const timeMenuEntries = (e: TimeEntry): MenuEntry[] => [
+    e.ticket?.id && { label: "Open ticket", icon: FileText, hint: e.ticket.ticketNumber, onSelect: () => navigate(`/tickets/${e.ticket!.id}`) },
+    { label: "Show only billable", icon: Filter, onSelect: () => setBillableFilter("true") },
+    { label: "Show only non-billable", icon: Filter, onSelect: () => setBillableFilter("false") },
+    "separator",
+    {
+      label: "Copy time details", icon: Copy,
+      onSelect: () => void copyText([
+        `${e.ticket?.ticketNumber ?? "Time entry"} — ${(e.minutes / 60).toFixed(2)}h (${e.minutes}m)`,
+        e.ticket?.company?.name ? `Client: ${e.ticket.company.name}` : null,
+        `Date: ${new Date(e.date).toLocaleDateString()}`,
+        e.noCharge ? "No charge" : e.billable ? "Billable" : "Non-billable",
+        e.invoiceId ? "Invoiced" : "Unbilled",
+        [e.workType, e.workRole].filter(Boolean).join(" · ") || null,
+        e.description || null,
+      ].filter(Boolean).join("\n"), "Time details"),
+    },
+    { label: "Copy description", icon: Copy, disabled: !e.description, onSelect: () => void copyText(String(e.description), "Description") },
+  ].filter(Boolean) as MenuEntry[];
+
+  const expenseMenuHeader = (e: Record<string, any>) => ({
+    title: `$${(e.amount || 0).toFixed(2)} · ${e.category ?? "expense"}`,
+    subtitle: [ticketMap[e.ticketId]?.ticketNumber, e.description, e.expenseDate ? new Date(e.expenseDate).toLocaleDateString() : null].filter(Boolean).join(" · "),
+  });
+
+  const expenseMenuEntries = (e: Record<string, any>): MenuEntry[] => [
+    ticketMap[e.ticketId] && { label: "Open ticket", icon: FileText, hint: ticketMap[e.ticketId]?.ticketNumber, onSelect: () => navigate(`/tickets/${e.ticketId}`) },
+    "separator",
+    {
+      label: "Copy expense details", icon: Copy,
+      onSelect: () => void copyText([
+        `${e.description ?? "Expense"} — $${(e.amount || 0).toFixed(2)}`,
+        e.category ? `Category: ${e.category}` : null,
+        ticketMap[e.ticketId]?.ticketNumber ? `Ticket: ${ticketMap[e.ticketId].ticketNumber}` : null,
+        e.expenseDate ? `Date: ${new Date(e.expenseDate).toLocaleDateString()}` : null,
+      ].filter(Boolean).join("\n"), "Expense details"),
+    },
+    { label: "Copy amount", icon: Copy, onSelect: () => void copyText(`$${(e.amount || 0).toFixed(2)}`, "Amount") },
+    "separator",
+    { label: "Delete expense…", icon: Trash2, danger: true, onSelect: () => setExpenseConfirm(e) },
+  ].filter(Boolean) as MenuEntry[];
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "Refresh", icon: RotateCw, onSelect: () => load() },
+    "separator",
+    {
+      label: "Show", icon: Filter,
+      items: [
+        { label: "All time entries", checked: !billableFilter, onSelect: () => setBillableFilter("") },
+        { label: "Billable only", checked: billableFilter === "true", onSelect: () => setBillableFilter("true") },
+        { label: "Non-billable only", checked: billableFilter === "false", onSelect: () => setBillableFilter("false") },
+      ],
+    },
+    "separator",
+    { label: "Export time entries as CSV", icon: Download, hint: `${filtered.length} row${filtered.length === 1 ? "" : "s"}`, disabled: filtered.length === 0, onSelect: exportTimeCsv },
+    { label: "Export expenses as CSV", icon: Download, hint: `${expenses.length} row${expenses.length === 1 ? "" : "s"}`, disabled: expenses.length === 0, onSelect: exportExpenseCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
+      {expenseConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60" onClick={() => setExpenseConfirm(null)}>
+          <div role="dialog" aria-modal="true" aria-label="Delete expense" className="card w-full max-w-sm mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={24} className="text-red-400 shrink-0" />
+              <div>
+                <h3 className="text-white font-semibold">Delete expense?</h3>
+                <p className="text-sm text-gray-400 mt-1">
+                  {expenseConfirm.description || "This expense"} — ${(expenseConfirm.amount || 0).toFixed(2)} is removed from billing. This cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setExpenseConfirm(null)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={deleteExpense} disabled={expenseBusy} className="bg-red-600/20 text-red-400 hover:bg-red-600/30 px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">{expenseBusy ? "Deleting…" : "Delete expense"}</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <SummaryCard icon={Clock} label="Total Hours" value={`${totalHours.toFixed(1)}h`} color="text-cyber-400" />
         <SummaryCard icon={DollarSign} label="Billable" value={`${totalBillable.toFixed(1)}h`} color="text-green-400" />
@@ -439,7 +803,10 @@ function TimeExpensesTab() {
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
           <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">Ticket</th><th className="p-3 hidden sm:table-cell">Client</th><th className="p-3">Time</th><th className="p-3">Billable</th><th className="p-3 hidden md:table-cell">Invoiced</th><th className="p-3 hidden lg:table-cell">Date</th></tr></thead>
           <tbody>{filtered.map(e => (
-            <tr key={e.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
+            <tr key={e.id} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 focus:outline-none focus:bg-surface-lighter/30"
+              onContextMenu={(ev) => menu.open(ev, timeMenuEntries(e), timeMenuHeader(e))}
+              onKeyDown={(ev) => menu.onKeyDown(ev, ev.currentTarget, timeMenuEntries(e), timeMenuHeader(e))}
+            >
               <td className="p-3"><span className="font-medium text-white">{e.ticket?.ticketNumber}</span>{e.description && <p className="text-xs text-gray-500 mt-0.5">{e.description.slice(0, 60)}</p>}{[e.workType, e.workRole, e.rate ? `$${Number(e.rate).toFixed(2)}/hr` : null].filter(Boolean).length > 0 && <p className="text-[10px] text-gray-600 mt-0.5">{[e.workType, e.workRole, e.rate ? `$${Number(e.rate).toFixed(2)}/hr` : null].filter(Boolean).join(" · ")}</p>}</td>
               <td className="p-3 text-gray-300 hidden sm:table-cell">{e.ticket?.company?.name || "—"}</td>
               <td className="p-3 text-cyber-400 font-mono font-medium">{e.minutes}m <span className="text-gray-500 text-xs">({(e.minutes / 60).toFixed(2)}h)</span></td>
@@ -461,7 +828,10 @@ function TimeExpensesTab() {
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
           <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">Ticket</th><th className="p-3">Description</th><th className="p-3">Category</th><th className="p-3 hidden md:table-cell">Date</th><th className="p-3 text-right">Amount</th></tr></thead>
           <tbody>{expenses.map(e => (
-            <tr key={e.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
+            <tr key={e.id} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 focus:outline-none focus:bg-surface-lighter/30"
+              onContextMenu={(ev) => menu.open(ev, expenseMenuEntries(e), expenseMenuHeader(e))}
+              onKeyDown={(ev) => menu.onKeyDown(ev, ev.currentTarget, expenseMenuEntries(e), expenseMenuHeader(e))}
+            >
               <td className="p-3"><span className="font-medium text-white">{ticketMap[e.ticketId]?.ticketNumber || "—"}</span></td>
               <td className="p-3 text-gray-300 text-xs">{e.description}</td>
               <td className="p-3"><span className="badge bg-purple-600/20 text-purple-400 text-xs capitalize">{e.category}</span></td>
@@ -480,8 +850,21 @@ function TimeExpensesTab() {
 // ═══════════════════════════════════════════════════════════════════
 
 function ReportsTab() {
+  const menu = useContextMenu();
+  const navigate = useNavigate();
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "Custom report builder", icon: FileText, onSelect: () => navigate("/reports/custom") },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ReportCard icon={Receipt} title="Revenue Summary" desc="Monthly revenue breakdown by client and service, payment trends, and year-over-year comparisons" />
         <ReportCard icon={Clock} title="Aging Report" desc="Accounts receivable aging: current, 30, 60, 90+ days with client-level detail" />

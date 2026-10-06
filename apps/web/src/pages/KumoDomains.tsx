@@ -2,9 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Globe, Lock, CalendarClock, Building2, RefreshCw, ExternalLink, ShieldCheck } from "lucide-react";
+import { Globe, Lock, CalendarClock, Building2, RefreshCw, ExternalLink, ShieldCheck, SquareArrowOutUpRight, AppWindow, Copy, Download, Eraser, CalendarX } from "lucide-react";
 import { daysUntil, formatDate, formatDateShort } from "../lib/format";
 import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 
 interface DomainRow {
@@ -109,8 +112,89 @@ export function KumoDomainsPage() {
   const companyName = visible[0]?.companyName ?? null;
   const expiredCount = visible.filter((r) => r.expiryDate && daysUntil(r.expiryDate).overdue).length;
 
+  // ── Right-click menu: Kumo Domains & Certs ──
+  const menu = useContextMenu();
+
+  const csvColumns: CsvColumn<DomainRow>[] = [
+    { key: "kind", label: "Kind", value: r => r.kind },
+    { key: "name", label: "Name", value: r => r.name },
+    { key: "client", label: "Client", value: r => r.companyName ?? "" },
+    { key: "target", label: "Target", value: r => r.target ?? "" },
+    { key: "issuer", label: "Issuer", value: r => r.issuer ?? "" },
+    { key: "expiry", label: "Expires", value: r => (r.expiryDate ? new Date(r.expiryDate).toISOString().slice(0, 10) : "not tracked") },
+    { key: "daysLeft", label: "Days Left", value: r => (r.expiryDate ? daysUntil(r.expiryDate).days : "") },
+    { key: "autoRenew", label: "Auto Renew", value: r => (r.autoRenew ? "Yes" : "No") },
+  ];
+
+  const exportCsv = () => {
+    if (visible.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-kumo-domains-${fileStamp()}.csv`, toCsv(visible, csvColumns));
+    toast.success(`Exported ${visible.length} record${visible.length === 1 ? "" : "s"}`);
+  };
+
+  const domainMenuHeader = (row: DomainRow) => ({
+    title: row.name,
+    subtitle: [
+      row.kind,
+      row.companyName,
+      row.expiryDate ? `${formatDateShort(row.expiryDate)} (${daysUntil(row.expiryDate).overdue ? "expired" : daysUntil(row.expiryDate).label})` : "no expiry tracked",
+    ].filter(Boolean).join(" · "),
+  });
+
+  const domainMenuEntries = (row: DomainRow): MenuEntry[] => [
+    { label: "Show details", icon: ExternalLink, hint: "⏎", onSelect: () => setSelected(row) },
+    "separator",
+    row.companyId && {
+      label: "Filter to this client", icon: Building2,
+      onSelect: () => setSearchParams({ companyId: String(row.companyId) }),
+    },
+    {
+      label: `Show only ${row.kind === "Certificate" ? "certificates" : "domains"}`, icon: row.kind === "Certificate" ? Lock : Globe,
+      onSelect: () => setSearchParams({ kind: row.kind }),
+    },
+    "separator",
+    { label: "Copy name", icon: Copy, onSelect: () => void copyText(row.name, "Name") },
+    {
+      label: "Copy expiry date", icon: Copy, disabled: !row.expiryDate,
+      onSelect: () => void copyText(String(row.expiryDate ? formatDateShort(row.expiryDate) : ""), "Expiry date"),
+    },
+    {
+      label: "Copy record details", icon: Copy,
+      onSelect: () => void copyText([
+        `${row.kind}: ${row.name}`,
+        row.companyName ? `Client: ${row.companyName}` : null,
+        row.target ? `Target: ${row.target}` : null,
+        row.issuer ? `Issuer: ${row.issuer}` : null,
+        row.expiryDate
+          ? `Expires: ${formatDate(row.expiryDate)} (${daysUntil(row.expiryDate).overdue ? "expired" : daysUntil(row.expiryDate).label})`
+          : "No expiry tracked",
+        `Auto renew: ${row.autoRenew ? "yes" : "no"}`,
+      ].filter(Boolean).join("\n"), "Record details"),
+    },
+  ].filter(Boolean) as MenuEntry[];
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "Refresh", icon: RefreshCw, onSelect: () => void load() },
+    {
+      label: "Filter", icon: CalendarX,
+      items: FILTERS.map(f => ({ label: f.label, checked: filter === f.key, onSelect: () => setFilter(f.key) })),
+    },
+    {
+      label: "Clear filters", icon: Eraser, disabled: filter === "all" && !companyId && !kind,
+      onSelect: () => setSearchParams({}),
+    },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${visible.length} row${visible.length === 1 ? "" : "s"}`, disabled: visible.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-white">Domains &amp; Certificates</h2>
@@ -163,6 +247,8 @@ export function KumoDomainsPage() {
                 <button
                   key={`${row.kind}-${row.id}`}
                   onClick={() => setSelected(row)}
+                  onContextMenu={(e) => menu.open(e, domainMenuEntries(row), domainMenuHeader(row))}
+                  onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, domainMenuEntries(row), domainMenuHeader(row))}
                   className={`w-full text-left card px-4 py-3 hover:border-cyber-500/30 transition-colors ${selected?.id === row.id ? "border-cyber-500/50 bg-cyber-600/5" : ""}`}
                 >
                   <div className="flex items-center gap-2">

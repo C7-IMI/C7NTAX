@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Server, Search } from "lucide-react";
+import { Plus, Server, Search, ExternalLink, SquareArrowOutUpRight, AppWindow, Copy, Download, RotateCw, Eraser, Monitor, Building2 } from "lucide-react";
 import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 export function KumoConfigsPage() {
   const [configs, setConfigs] = useState<any[]>([]);
@@ -15,6 +18,7 @@ export function KumoConfigsPage() {
   const [templates, setTemplates] = useState([]);
   const [form, setForm] = useState({name:"",hostname:"",templateId:"",companyId:"",os:"",cpu:"",ram:"",storage:"",ip:"",virt:""});
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Set by the organization screen, e.g. /kumo/configs?select=<id>
   const selectId = searchParams.get("select");
@@ -47,6 +51,79 @@ export function KumoConfigsPage() {
 
   const filtered = companyFilter ? configs.filter(c => c.kumoAsset?.companyId === companyFilter) : configs;
 
+  // ── Right-click menu: Kumo Configurations ──
+  const menu = useContextMenu();
+
+  const csvColumns: CsvColumn<Record<string, any>>[] = [
+    { key: "name", label: "Server", value: c => c.kumoAsset?.name ?? c.hostname ?? "" },
+    { key: "hostname", label: "Hostname", value: c => c.hostname ?? "" },
+    { key: "fqdn", label: "FQDN", value: c => c.fqdn ?? "" },
+    { key: "ip", label: "IP Address", value: c => c.ipAddress ?? "" },
+    { key: "os", label: "Operating System", value: c => c.operatingSystem ?? "" },
+    { key: "cpu", label: "CPU Cores", value: c => c.cpuCores ?? "" },
+    { key: "ram", label: "RAM (GB)", value: c => c.ramGb ?? "" },
+    { key: "storage", label: "Storage (GB)", value: c => c.storageGb ?? "" },
+    { key: "virtualization", label: "Virtualization", value: c => c.virtualization ?? "" },
+    { key: "client", label: "Client", value: c => companies.find(x => x.id === c.kumoAsset?.companyId)?.name ?? "" },
+  ];
+
+  const exportCsv = () => {
+    if (filtered.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-kumo-configurations-${fileStamp()}.csv`, toCsv(filtered, csvColumns));
+    toast.success(`Exported ${filtered.length} server${filtered.length === 1 ? "" : "s"}`);
+  };
+
+  const clientName = (c: Record<string, any>) => companies.find(x => x.id === c.kumoAsset?.companyId)?.name ?? "";
+
+  const serverMenuHeader = (c: Record<string, any>) => ({
+    title: String(c.kumoAsset?.name || c.hostname || "Server"),
+    subtitle: [c.operatingSystem, c.ipAddress, clientName(c)].filter(Boolean).join(" · "),
+  });
+
+  const serverMenuEntries = (c: Record<string, any>): MenuEntry[] => [
+    { label: "Show details", icon: ExternalLink, hint: "⏎", onSelect: () => setSelected(c) },
+    ...(c.kumoAsset?.id
+      ? [
+          { label: "Open asset record", icon: Monitor, onSelect: () => navigate(`/kumo/assets/${c.kumoAsset.id}`) },
+          { label: "Open asset in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(`/kumo/assets/${c.kumoAsset.id}`) },
+          { label: "Open asset in new window", icon: AppWindow, onSelect: () => openInNewWindow(`/kumo/assets/${c.kumoAsset.id}`) },
+        ]
+      : []),
+    "separator",
+    { label: "Copy hostname", icon: Copy, disabled: !c.hostname, onSelect: () => void copyText(String(c.hostname), "Hostname") },
+    { label: "Copy IP address", icon: Copy, disabled: !c.ipAddress, onSelect: () => void copyText(String(c.ipAddress), "IP address") },
+    { label: "Copy FQDN", icon: Copy, disabled: !c.fqdn, onSelect: () => void copyText(String(c.fqdn), "FQDN") },
+    {
+      label: "Copy specifications", icon: Copy,
+      onSelect: () => void copyText([
+        String(c.kumoAsset?.name || c.hostname || "Server"),
+        c.operatingSystem ? `OS: ${c.operatingSystem}` : null,
+        c.ipAddress ? `IP: ${c.ipAddress}` : null,
+        c.fqdn ? `FQDN: ${c.fqdn}` : null,
+        c.cpuCores ? `${c.cpuCores} cores` : null,
+        c.ramGb ? `${c.ramGb} GB RAM` : null,
+        c.storageGb ? `${c.storageGb} GB storage` : null,
+        c.virtualization || null,
+        clientName(c) || null,
+      ].filter(Boolean).join("\n"), "Specifications"),
+    },
+    "separator",
+    ...(c.kumoAsset?.companyId
+      ? [{ label: "Filter to this client", icon: Building2, onSelect: () => setCompanyFilter(String(c.kumoAsset.companyId)) }]
+      : []),
+  ];
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "Add server", icon: Plus, onSelect: () => setShowCreate(true) },
+    { label: "Refresh list", icon: RotateCw, onSelect: () => fetch() },
+    "separator",
+    { label: "Clear client filter", icon: Eraser, disabled: !companyFilter, onSelect: () => setCompanyFilter("") },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${filtered.length} row${filtered.length === 1 ? "" : "s"}`, disabled: filtered.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
+
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     api.post("/kumo/configs/servers", {
@@ -58,7 +135,11 @@ export function KumoConfigsPage() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h2 className="text-lg font-semibold text-white">Configurations</h2><p className="text-sm text-gray-400">{filtered.length} servers</p></div>
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Server</button>
@@ -76,6 +157,8 @@ export function KumoConfigsPage() {
            filtered.length === 0 ? <div className="card py-8 text-center text-gray-500 text-sm">No configurations</div> :
            filtered.map(c => (
             <button key={c.id} onClick={() => { setSelected(c); api.post("/kumo/recently-viewed", { entityType: "config", entityId: c.id, entityName: c.kumoAsset?.name || c.hostname, entityIcon: "server" }).catch(() => {}); }}
+              onContextMenu={(e) => menu.open(e, serverMenuEntries(c), serverMenuHeader(c))}
+              onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, serverMenuEntries(c), serverMenuHeader(c))}
               className={"w-full text-left card px-4 py-3 hover:border-cyber-500/30 " + (selected?.id === c.id ? "border-cyber-500/50 bg-cyber-600/5" : "")}>
               <div className="flex items-center gap-2">
                 <Server size={14} className="text-cyber-400 shrink-0" />

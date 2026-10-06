@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.6.025",
+    "date": "2026-10-06",
+    "title": "Right-click menus across Kumo and Finance, and four screens that showed nothing",
+    "changes": [
+      {
+        "text": "**Every Kumo subsection except the dashboard now answers a right-click with a C7NTAX menu** — Organizations, Assets, Passwords, Configurations, Documents and Domains & Certs — each with an item menu and a section menu:",
+        "type": "New Feature"
+      },
+      {
+        "text": "**All five Finance subsections work the same way** — Invoices, Agreements, Payments, Time & Expenses and Reports:",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The Analytics revenue chart now draws its bars.** They were sized with a percentage height inside a flex column whose own height came from its content, which resolves to nothing — so every bar rendered 0px tall and the chart looked empty despite the data being there. Bars are now sized in pixels against a fixed maximum (the current month pair reads 100px and 140px for $2,712.50 and $3,788.75).",
+        "type": "Fix"
+      },
+      {
+        "text": "**Clicking a Reporting subsection in the nav now changes the screen.** `/reports`, `/reports/standard` and `/reports/analytics` all render `ReportsPage`, so moving between them re-rendered the same component and the tab state kept whichever subsection was opened first. The route now owns the tab (the prop is synced on change, and the in-page tabs navigate), which also keeps the nav highlight correct. `BillingPage` had the same latent gap for its five routes and is fixed too.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Payments showed nothing, ever.** The tab built its rows from `payments` on the invoices list, and `GET /billing/invoices` does not include payments — so the table was permanently empty even though three payments exist. It now reads `GET /billing/payments`, which returns exactly the shape the tab needs.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Time & Expenses showed no time at all**, for the same reason: the tab derived its rows from `GET /tickets`, whose list payload has no `timeEntries`. A new `GET /api/billing/time-entries` (with the ticket and client) feeds it, and five existing entries appeared. Each row's menu can now open its ticket — the ticket id travels with the row.",
+        "type": "Fix"
+      },
+      {
+        "text": "`apps/web/src/lib/menuActions.ts` (open in tab/window, copy with its toast, the \"open this view in…\" pair) is used by every menu, and the asset list now honours `?companyId=`, which it previously read only for its create deep link.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.024",
     "date": "2026-10-06",
     "title": "Right-click menus for Client List, Contacts, Manage Users, Manage Roles and Calendar",

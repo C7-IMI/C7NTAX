@@ -2,8 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Search, Monitor, Server, Laptop, Wifi, Edit3, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Search, Monitor, Server, Laptop, Wifi, Edit3, Trash2, AlertTriangle, ExternalLink, SquareArrowOutUpRight, AppWindow, Copy, Download, RotateCw, Eraser } from "lucide-react";
 import { templateIcon } from "../lib/kumoIcons";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
+import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 interface KumoAsset {
   id: string; name: string; templateId: string; status: string; companyId: string | null;
@@ -59,11 +62,88 @@ export function KumoAssetsPage() {
   };
   useEffect(() => { fetchAll(); }, []);
 
+  const menu = useContextMenu();
+
+  /** Client scope from the URL, e.g. /kumo/assets?companyId=<id> from an organization. */
+  const companyScope = searchParams.get("companyId") ?? "";
+
   const filtered = assets.filter(a => {
     if (search && !a.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (templateFilter && a.templateId !== templateFilter) return false;
+    if (companyScope && a.companyId !== companyScope) return false;
     return true;
   });
+
+  // ── Right-click menu: Kumo Assets ──
+  const csvColumns: CsvColumn<KumoAsset>[] = [
+    { key: "name", label: "Asset", value: a => a.name },
+    { key: "template", label: "Template", value: a => a.template?.name ?? "" },
+    { key: "status", label: "Status", value: a => a.status },
+    { key: "client", label: "Client", value: a => companies.find((c: any) => c.id === a.companyId)?.name ?? "" },
+  ];
+
+  const exportCsv = () => {
+    if (filtered.length === 0) { toast.error("Nothing to export"); return; }
+    downloadCsv(`c7ntax-kumo-assets-${fileStamp()}.csv`, toCsv(filtered, csvColumns));
+    toast.success(`Exported ${filtered.length} asset${filtered.length === 1 ? "" : "s"}`);
+  };
+
+  const assetMenuHeader = (a: KumoAsset) => ({
+    title: a.name,
+    subtitle: [a.template?.name, a.status, companies.find((c: any) => c.id === a.companyId)?.name].filter(Boolean).join(" · "),
+  });
+
+  const assetMenuEntries = (a: KumoAsset): MenuEntry[] => {
+    const path = `/kumo/assets/${a.id}`;
+    const clientName = companies.find((c: any) => c.id === a.companyId)?.name;
+    return [
+      { label: "Open asset", icon: ExternalLink, hint: "⏎", onSelect: () => navigate(path) },
+      { label: "Open in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(path) },
+      { label: "Open in new window", icon: AppWindow, onSelect: () => openInNewWindow(path) },
+      "separator",
+      {
+        label: "New asset from this template…", icon: Plus, disabled: !a.templateId,
+        onSelect: () => { const tpl = templates.find((t: any) => t.id === a.templateId); startCreate(tpl, a.companyId ?? ""); },
+      },
+      a.companyId && {
+        label: `Show only ${clientName ?? "this client"}`, icon: Monitor,
+        onSelect: () => navigate(`/kumo/assets?companyId=${a.companyId}`),
+      },
+      "separator",
+      { label: "Copy asset name", icon: Copy, onSelect: () => void copyText(a.name, "Asset name") },
+      {
+        label: "Copy asset details", icon: Copy,
+        onSelect: () => void copyText([
+          a.name,
+          a.template?.name ? `Template: ${a.template.name}` : null,
+          `Status: ${a.status}`,
+          clientName ? `Client: ${clientName}` : null,
+        ].filter(Boolean).join("\n"), "Asset details"),
+      },
+      "separator",
+      { label: "Delete asset…", icon: Trash2, danger: true, onSelect: () => void handleDelete(a.id) },
+    ].filter(Boolean) as MenuEntry[];
+  };
+
+  const sectionMenuEntries = (): MenuEntry[] => [
+    { label: "New asset", icon: Plus, onSelect: () => startCreate() },
+    { label: "Refresh list", icon: RotateCw, onSelect: () => void fetchAll() },
+    "separator",
+    {
+      label: "Clear filters", icon: Eraser, disabled: !search && !templateFilter && !companyScope,
+      onSelect: () => { setSearch(""); setTemplateFilter(""); if (companyScope) navigate("/kumo/assets"); },
+    },
+    {
+      label: "Filter by template", icon: Monitor,
+      items: templates.filter((t: any) => t.isActive).map((tpl: any) => ({
+        label: tpl.name, checked: templateFilter === tpl.id, onSelect: () => setTemplateFilter(tpl.id),
+      })),
+    },
+    "separator",
+    { label: "Export as CSV", icon: Download, hint: `${filtered.length} row${filtered.length === 1 ? "" : "s"}`, disabled: filtered.length === 0, onSelect: exportCsv },
+    "separator",
+    ...viewMenuEntries(),
+  ];
 
   const startCreate = (tpl?: any, companyId = "") => {
     setSelectedTemplate(tpl || null);
@@ -101,7 +181,11 @@ export function KumoAssetsPage() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div
+      className="space-y-4 animate-fade-in"
+      onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
+    >
+      <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">Kumo Assets</h2>
@@ -158,11 +242,14 @@ export function KumoAssetsPage() {
             </tr></thead>
             <tbody>
               {filtered.map(a => (
-                <tr key={a.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 cursor-pointer"
+                <tr key={a.id} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 cursor-pointer focus:outline-none focus:bg-surface-lighter/30"
                   onClick={() => { 
                     navigate(`/kumo/assets/${a.id}`); 
                     api.post("/kumo/recently-viewed", { entityType: "asset", entityId: a.id, entityName: a.name, entityIcon: "monitor" }).catch(() => {});
-                  }}>
+                  }}
+                  onContextMenu={(e) => menu.open(e, assetMenuEntries(a), assetMenuHeader(a))}
+                  onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, assetMenuEntries(a), assetMenuHeader(a))}
+                >
                   <td className="px-4 py-3 text-white font-medium">{a.name}</td>
                   <td className="px-4 py-3 hidden md:table-cell text-gray-400 text-xs">{a.template?.name || "—"}</td>
                   <td className="px-4 py-3 hidden sm:table-cell">

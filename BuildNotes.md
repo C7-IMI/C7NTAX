@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.024 | Last Updated: 2026-10-06
+## Version: 2026.10.6.025 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,29 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.025 — Right-click menus across Kumo and Finance, and four screens that showed nothing
+- **[New]** **Every Kumo subsection except the dashboard now answers a right-click with a C7NTAX menu** — Organizations, Assets, Passwords, Configurations, Documents and Domains & Certs — each with an item menu and a section menu:
+  - **Organizations**: open / new tab / new window, the client record, a new ticket, a **Kumo** submenu scoped to that client, "show only Client/Prospect/Vendor/Partner organizations", and copy (name, or a documentation summary with the asset, password, document, domain and certificate counts).
+  - **Assets**: open / new tab / new window, a new asset from the row's template, "show only this client", copy details, and *Delete asset…*.
+  - **Passwords**: show details, **reveal and copy the password** (the same 30-second auto-clear as the Reveal button), copy username/label/URL, a **TOTP** submenu (set up / remove), and *Deactivate entry…*. Its CSV export is **metadata only — secrets are never written to a file.**
+  - **Configurations**: show details, open the linked asset record, copy hostname / IP / FQDN / a full specification block, and filter to the client.
+  - **Documents**: open, new tab or window, copy the document link or title, filter to the client; folders get show-contents, new-document-in-this-folder and copy.
+  - **Domains & Certs**: show details, filter to the client or to domains/certificates only, copy name, expiry date or the whole record, and a filter menu. The CSV carries the expiry date **and the days remaining**.
+- **[New]** **All five Finance subsections work the same way** — Invoices, Agreements, Payments, Time & Expenses and Reports:
+  - **Invoices**: open, download PDF, send a draft, record a payment on a sent/partial/overdue one, *set to repeat*, open the client, copy the number, amount or a full summary, plus a sort menu and CSV.
+  - **Agreements**: start a new agreement for that client, open the client or their tickets, and copy the billing terms (amount, period, dates, auto-invoice).
+  - **Payments**: copy the reference, amount, invoice number or the whole payment block, with a method filter, sort menu and CSV.
+  - **Time & Expenses**: open the entry's ticket, show only billable or non-billable time, copy the time details; expenses get open-ticket, *Delete expense…* (which asks first) and copy. Time and expenses export separately.
+  - **Reports**: the custom report builder, and the usual open-in-tab/window pair.
+- **[Fix]** **The Analytics revenue chart now draws its bars.** They were sized with a percentage height inside a flex column whose own height came from its content, which resolves to nothing — so every bar rendered 0px tall and the chart looked empty despite the data being there. Bars are now sized in pixels against a fixed maximum (the current month pair reads 100px and 140px for $2,712.50 and $3,788.75).
+- **[Fix]** **Clicking a Reporting subsection in the nav now changes the screen.** `/reports`, `/reports/standard` and `/reports/analytics` all render `ReportsPage`, so moving between them re-rendered the same component and the tab state kept whichever subsection was opened first. The route now owns the tab (the prop is synced on change, and the in-page tabs navigate), which also keeps the nav highlight correct. `BillingPage` had the same latent gap for its five routes and is fixed too.
+- **[Fix]** **Payments showed nothing, ever.** The tab built its rows from `payments` on the invoices list, and `GET /billing/invoices` does not include payments — so the table was permanently empty even though three payments exist. It now reads `GET /billing/payments`, which returns exactly the shape the tab needs.
+- **[Fix]** **Time & Expenses showed no time at all**, for the same reason: the tab derived its rows from `GET /tickets`, whose list payload has no `timeEntries`. A new `GET /api/billing/time-entries` (with the ticket and client) feeds it, and five existing entries appeared. Each row's menu can now open its ticket — the ticket id travels with the row.
+- **[Update]** `apps/web/src/lib/menuActions.ts` (open in tab/window, copy with its toast, the "open this view in…" pair) is used by every menu, and the asset list now honours `?companyId=`, which it previously read only for its create deep link.
+- **Still deliberately not offered**, because the app cannot do it: deleting a contact, deleting a client, a hard delete for a user (`DELETE /users/:id` only deactivates), deleting a calendar entry, and — new to this list — editing or deleting Kumo configurations, deleting Kumo documents, and any change to a domain or certificate (that router is read-only).
+- **Verification (live):** every one of the eleven surfaces was right-clicked and its menu read back — Kumo Organizations (9 item / 6 section entries), Assets (8/7), Passwords (7 plus a TOTP submenu; 5), Configurations (9/6), Documents (6 for a document, 3 for a folder; 8), Domains & Certs (6/5), Invoices (8/7), Agreements, Payments (5/6), Time & Expenses (5 for a time entry, 4 for an expense; 6), Reports (3). The chart's bars measured 100px and 140px in the DOM, and switching Reporting subsections moved the active tab through Analytics → Standard Reports → Dashboards → Analytics with the URL and the nav highlight following. Payments showed its 3 real payments and Time & Expenses its 5 real time entries. Typecheck unchanged (web 26, api 178 pre-existing errors, none in the touched files); design-token lint unchanged.
+- **Housekeeping:** the probe payment and probe time entry created to prove those two tables were reachable were deleted afterwards; `app_settings` untouched.
 
 ## 2026.10.6.024 — Right-click menus for Client List, Contacts, Manage Users, Manage Roles and Calendar
 - **[New]** **Five more sections now answer a right-click with a C7NTAX menu instead of the browser's** — Client List, Contacts, Manage Users, Manage Roles and Calendar — each with an item menu and a section menu, on the same surface, with the same keyboard handling and the same switch as Tickets (Administration → System Settings → General → *Application right-click menus*).

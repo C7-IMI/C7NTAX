@@ -317,6 +317,25 @@ billingRouter.get("/invoices/:id/pdf", requirePermission(Permission.BillingView)
   } catch (e) { next(e); }
 });
 
+// ── Time entries for the billing view ──
+// The tickets list deliberately does not carry time entries, so this is the
+// billing screen's own source for them.
+billingRouter.get("/time-entries", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {
+  try {
+    const { companyId } = req.query as Record<string, string>;
+    const entries = await prisma.timeEntry.findMany({
+      where: companyId ? { ticket: { companyId } } : {},
+      orderBy: { date: "desc" },
+      take: 200,
+      include: {
+        ticket: { select: { id: true, ticketNumber: true, company: { select: { id: true, name: true } } } },
+        user: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+    res.json(entries);
+  } catch (e) { next(e); }
+});
+
 // ── Payments list ──
 billingRouter.get("/payments", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {
   try {

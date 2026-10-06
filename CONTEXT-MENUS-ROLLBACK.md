@@ -26,6 +26,17 @@ opted in keep the browser menu untouched.
 | Manage Users `/users` | a row / background | details, edit, permissions tab, security tab, activate/deactivate, lock/unlock, *Reset MFA* (asks first), copy, *Export as CSV* |
 | Manage Roles `/roles` | a role / background | show permissions, edit, manage members, copy name and permission list, *Delete role…* (blocked while users are assigned), *Export as CSV* |
 | Calendar `/calendar` | a day cell, an event, the background | *Add event on this date…* (prefilled 9–10am), filter to a date, month navigation, today, linked ticket, copy event details |
+| Kumo · Organizations `/kumo/organizations` | a row / table header | open, new tab/window, client record, new ticket, a **Kumo** submenu scoped to that client (passwords, configurations, documents, domains), type filter, copy, *Export as CSV* |
+| Kumo · Assets `/kumo/assets` | a row / table header | open, new tab/window, new asset from this template, filter to the row's client, copy, *Delete asset…*, template filter, *Export as CSV* |
+| Kumo · Passwords `/kumo/passwords` | an entry / background | show details, **reveal and copy password**, copy username/label/URL, a **TOTP** submenu (set up / remove), *Deactivate entry…*, *Export as CSV* (**metadata only — secrets are never written out**) |
+| Kumo · Configurations `/kumo/configs` | a server / background | show details, open the linked asset (tab/window), copy hostname/IP/FQDN/specifications, filter to the client, *Export as CSV* |
+| Kumo · Documents `/kumo/documents` | a document, a folder / background | open, new tab/window, copy link or title, filter to the client; folders: show contents, new document in this folder, copy name; *Export as CSV* |
+| Kumo · Domains & Certs `/kumo/domains` | a record / background | show details, filter to the client or to domains/certificates only, copy name/expiry/details, filter menu, *Export as CSV* (with days remaining) |
+| Finance · Invoices `/billing` | a row / table header | open, PDF, send (drafts), record payment, set to repeat, open client, copy, sort menu, *Export as CSV* |
+| Finance · Agreements `/billing/agreements` | a row / table header | new agreement for this client, open client, the client's tickets, copy billing terms, *Export as CSV* |
+| Finance · Payments `/billing/payments` | a row / table header | open invoices, copy reference/amount/invoice number/details, method filter, sort menu, *Export as CSV* |
+| Finance · Time & Expenses `/billing/time` | a time entry, an expense / background | open the entry's ticket, show only billable/non-billable, copy time details; expenses: open ticket, *Delete expense…* (asks first), copy; *Export as CSV* for time and expenses separately |
+| Finance · Reports `/billing/reports` | the background | custom report builder, view pair |
 
 Every entry maps to something the app can already do. Where a capability does not
 exist, the entry is absent rather than decorative:
@@ -76,6 +87,20 @@ exist, the entry is absent rather than decorative:
    `MenuConfirmDialog` for the one action that asks first (*Reset MFA*), and
    `Contacts.tsx` shares one edit-form builder between its Edit button and its
    menu so the two cannot drift.
+8. **The six Kumo subsection pages** (`KumoOrganizations.tsx`, `KumoAssets.tsx`,
+   `KumoPasswords.tsx`, `KumoConfigs.tsx`, `KumoDocuments.tsx`,
+   `KumoDomains.tsx`) — same pattern. `KumoAssets.tsx` also honours
+   `?companyId=` in its list filter (it read the parameter only for its create
+   deep link, so the menu's *Show only this client* would have done nothing).
+9. **`apps/web/src/pages/Billing.tsx`** — the five Finance subsections are tabs
+   of one page, so each tab component owns its own menu: a row menu, a section
+   menu on the tab's root, and (for Time & Expenses) a local delete-confirmation
+   dialog for an expense.
+10. **`apps/api/src/routes/billing.ts`** — `GET /api/billing/time-entries`
+    (200 most recent, with ticket and client). The Time & Expenses table used to
+    derive its rows from `GET /tickets`, which does not include time entries, so
+    that table was always empty. Payments has the same story and now uses the
+    existing `GET /api/billing/payments`.
 6. **`apps/web/src/pages/SystemSettings.tsx`** — the toggle, in the General tab.
 
 ## 1. Switch the menus off (no rebuild)
@@ -126,7 +151,7 @@ The whole feature is opt-in per page, so a section can be reverted on its own.
   and `runMenuConfirm` if *Reset MFA* goes; the page's own Danger Zone dialog is
   separate and stays.
 - `apps/web/src/lib/uiFlags.ts` — remove the `UI_CONTEXT_MENUS` flag.
-- `git checkout apps/web/src/pages/Tickets.tsx apps/web/src/pages/Clients.tsx apps/web/src/pages/Contacts.tsx apps/web/src/pages/Users.tsx apps/web/src/pages/Roles.tsx apps/web/src/pages/Calendar.tsx apps/api/src/routes/tickets/index.ts`
+- `git checkout apps/web/src/pages/Tickets.tsx apps/web/src/pages/Clients.tsx apps/web/src/pages/Contacts.tsx apps/web/src/pages/Users.tsx apps/web/src/pages/Roles.tsx apps/web/src/pages/Calendar.tsx apps/web/src/pages/Billing.tsx apps/web/src/pages/KumoOrganizations.tsx apps/web/src/pages/KumoAssets.tsx apps/web/src/pages/KumoPasswords.tsx apps/web/src/pages/KumoConfigs.tsx apps/web/src/pages/KumoDocuments.tsx apps/web/src/pages/KumoDomains.tsx apps/api/src/routes/tickets/index.ts apps/api/src/routes/billing.ts`
   reverts every modified file in one step; the new files are untracked, so
   deleting them is the whole rollback.
 

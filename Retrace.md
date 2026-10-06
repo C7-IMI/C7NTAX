@@ -2301,3 +2301,33 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Calendar: day 11 menu with header "Sunday, October 11, 2026" and prefill `2026-10-11T09:00`/`10:00`; 4-entry event menu; the ticket-linked event showed *Open linked ticket #INT-2008* and navigated to it; *Clear date filter* disabled once cleared.
 - Re-checked Tickets after the shared-helper refactor: 16 row, 8 section, 16 detail entries, unchanged. Typecheck web 26 (baseline, none in touched files); design-token lint unchanged.
 - Cleanup: the throwaway user, role, MFA flag and ticket-linked event created for these checks were deleted; `app_settings` left as found.
+
+### Prompt 181 - Kumo and Finance right-click menus, plus the Analytics chart and Reporting nav bugs
+**Timestamp:** 2026-10-06 | **Status:** Done - implemented and verified live | **Duration:** ~3 h
+**BuildNotes IDs:** 2026.10.6.025 - Right-click menus across Kumo and Finance, and four screens that showed nothing
+> create similar right click menus for every subsection in Kumo (except Dashboard), every subsection within fInance (except Dashboard) within their respective contexts.
+>
+> Fix the Monthly Revenue Trend graph in Analytics. It's not displaying anything. WHen I click on the subsections in Reporting, the screen doesn't change. For instance If I am in Analytics and click Standard Reports, the screen stays on Analytics. Fix that, too.
+
+**The two reported bugs, and what caused them**
+- **Monthly Revenue Trend was blank.** The bars were sized `height: ${h}%` inside a flex column whose own height came from its content, so the percentage resolved to nothing and every bar was 0px tall. The data was arriving fine (`/reports/data/revenue-summary` returns two months). Bars are now sized in pixels against a `BAR_MAX_PX` constant: the pair reads 100px and 140px for $2,712.50 and $3,788.75, which is the right ratio.
+- **Reporting subsections did not switch.** `/reports`, `/reports/standard` and `/reports/analytics` all render `ReportsPage`, so moving between them re-rendered the same instance with a new `tab` prop while `useState(initialTab)` kept its first value. The prop is now synced on change and the in-page tabs navigate, so the route owns the tab and the nav highlight stays correct. `BillingPage` had the same gap (its `/billing` route passes no tab, so its effect could never return to Invoices) and was fixed the same way.
+
+**Two more empty screens found while adding the Finance menus**
+- **Payments was always empty.** The tab built its rows from `payments` on `GET /billing/invoices`, and that endpoint does not include payments at all - so the table could never fill, even though three payments exist. It now reads the dedicated `GET /billing/payments`.
+- **Time & Expenses had no time rows**, same cause: the table derived entries from `GET /tickets`, whose list payload carries no `timeEntries`. Added `GET /api/billing/time-entries` (ticket + client included) and pointed the tab at it; five entries appeared. The ticket id now travels with each row, so a time entry's menu can open its ticket.
+
+**What changed**
+- Six Kumo pages (`KumoOrganizations`, `KumoAssets`, `KumoPasswords`, `KumoConfigs`, `KumoDocuments`, `KumoDomains`) and all five Finance tabs in `Billing.tsx` - each with an item menu, a section menu, Shift+F10 support on rows, and menus built per open so labels can follow state.
+- Passwords keeps its CSV to metadata only (never secrets), and reveals through the same 30-second auto-clear path as the Reveal button. Configurations, Documents and Domains have no write endpoints, so their menus offer navigation and copy only; asset delete, password deactivate, expense delete and invoice actions use the endpoints that exist.
+- `apps/web/src/lib/menuActions.ts` is now used by every menu, and the asset list honours `?companyId=` (it read that parameter only for its create deep link).
+- `CONTEXT-MENUS-ROLLBACK.md` covers all eighteen surfaces, the Known gaps list grew (no config/document/domain edits, no contact or calendar deletes), and the rollback command lists every modified file.
+
+**Verification (live)**
+- All eleven new surfaces right-clicked and read back: Kumo Organizations 9/6, Assets 8/7, Passwords 7 + TOTP submenu (5), Configurations 9/6, Documents 6 (document) + 3 (folder) / 8, Domains & Certs 6/5, Invoices 8/7, Agreements, Payments 5/6, Time & Expenses 5 (time) + 4 (expense) / 6, Reports 3.
+- Chart bars measured 100px and 140px in the DOM with the hover values $2,712.5 and $3,788.75.
+- Reporting subsections walked Analytics -> Standard Reports -> Dashboards -> Analytics; the active tab, the URL and the nav highlight all followed.
+- Payments showed its 3 real payments and Time & Expenses its 5 real time entries after the fixes.
+- Typecheck unchanged (web 26, api 178 pre-existing, none in the touched files); design-token lint unchanged (117 legacy hex, none new).
+- Cleanup: the probe payment and probe time entry used to prove those tables were reachable were deleted; `app_settings` left as found.
+- One self-inflicted incident: an edit joined a comment to `billingRouter.get("/payments")` and took the API down for a minute. Caught by the web app's health panel, fixed, and the API typecheck re-run against the baseline before continuing.
