@@ -1547,6 +1547,36 @@
     "createdAt": "2026-10-06T07:31:00.976Z"
   },
   {
+    "id": "4b6e61d6-3023-43fb-b0b1-436647e0ea99",
+    "action": "kumo_assets:create",
+    "entity": "kumo_assets",
+    "entityId": "assets",
+    "changes": {
+      "name": "Rollback probe VPN",
+      "values": {
+        "vendor": "Probe",
+        "endpoint": "probe.example.com"
+      },
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "templateId": "d48b32e3-a33c-43a5-9ab1-2e610e7024ac"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T08:03:46.016Z"
+  },
+  {
+    "id": "d6e4af65-d68c-4b84-af25-852e2790e244",
+    "action": "kumo_assets:delete",
+    "entity": "kumo_assets",
+    "entityId": "af960953-ae0e-444f-afc7-d9b57206df2b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T08:03:54.256Z"
+  },
+  {
     "id": "3658b176-0040-4b17-a015-dacdcf1b8eea",
     "action": "tickets:update",
     "entity": "tickets",

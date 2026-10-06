@@ -1,5 +1,48 @@
 [
   {
+    "version": "2026.10.6.017",
+    "date": "2026-10-06",
+    "title": "Asset types: the organization rail, 19 standard types and client-scoped screens",
+    "changes": [
+      {
+        "text": "**Asset type rail on the organization screen.** Every documentation type for a client in one place, grouped as IT Glue groups them: **Core Assets** — Overview, Configurations, Contacts, Documents, Passwords, Domain Tracker, SSL Tracker, Locations, Vendors, Change Control — and **Asset Types**, which lists every Kumo asset type with a live count for that client. Clicking a type opens that client's records of it in place, with an Add button preset to that type and client, a search box, and each row linking to the asset. Types with nothing documented are hidden behind a *Show N empty types* toggle that is remembered per browser, so the rail never buries what is in use. Overview returns to the dashboard.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**19 standard asset types, seeded with their field definitions** — Backup (product, targets, schedule, retention, last verified, restore tested), Networks, LAN, Wireless, Internet/WAN, VPN, Email, File Sharing, Printing, Licensing, Remote Access, Security, Virtualization, Voice/PBX, Account Management, Active Directory, Applications, Checklists and Sales & Finance, each with an icon and a schema of five to six fields. **Opt-in and fully reversible:** `pnpm --filter api db:types-on` seeds them (idempotent) and `db:types-off` reverses it — the reversal only ever touches those 19 names, deletes the ones nothing uses, and deactivates any type that holds records so no asset is ever orphaned.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Locations** shows the client's primary address from the client record and states plainly that separate sites per client are not modelled yet, rather than implying multi-site support.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Change Control** opens that client's tickets (21 of the 96 on the demo data), automatically using a \"Change\" service board when one exists (`?boardId`), and falls back to the client's tickets when it does not.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Vendors** and a company-type filter on the Kumo client list — Clients, Prospects, Vendors and Partners — read from the `companyType` already on the client record, so a new `?companyType=` param deep-links to any of them.",
+        "type": "Update"
+      },
+      {
+        "text": "**Client-scoped screens**: Passwords, Configurations, Documents and Contacts accept a `companyId` param and show a chip that clears it; the expiry tracker accepts `kind=Domain|Certificate` so the rail's Domain Tracker and SSL Tracker land on the right half of the page; Tickets accepts `companyId` to scope the list to one client.",
+        "type": "Update"
+      },
+      {
+        "text": "**Asset field values were being dropped.** The asset create form posted `fieldValues` while the API reads `values`, so every field entered on a new asset — backup schedule, VPN endpoint, and so on — was silently discarded. Fields now persist, which is what makes the typed asset records worth having.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The Configurations list never filtered by client.** The servers payload omitted the owning asset's `companyId`, so the client filter always matched nothing and showed an empty list. It now returns 1 server for the demo client, matching the count on the rail.",
+        "type": "Fix"
+      },
+      {
+        "text": "**[README](README.md) now records the convention that every change ships reversible:** UI work behind a flag in `uiFlags.ts` (off in one console line or one env var), data changes as an opt-in script with a matching reversal, no destructive schema changes, and a `<AREA>-ROLLBACK.md` per feature. This feature follows it — see [KUMO-TYPES-ROLLBACK.md](KUMO-TYPES-ROLLBACK.md).",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.016",
     "date": "2026-10-06",
     "title": "Every item on the organization screen opens its own record",

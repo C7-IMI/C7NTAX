@@ -29,6 +29,10 @@ export function ContactsPage() {
 
   // Set by the organization screen, e.g. /clients/contacts?select=<id>
   const selectId = searchParams.get("select");
+  const companyParam = searchParams.get("companyId") ?? "";
+
+  // The organization rail opens contacts pre-filtered to one client.
+  useEffect(() => { if (companyParam) setCompanyFilter(companyParam); }, [companyParam]);
 
   const fetch = () => {
     Promise.all([api.get("/clients?limit=100"), api.get("/clients/contacts?limit=500")])

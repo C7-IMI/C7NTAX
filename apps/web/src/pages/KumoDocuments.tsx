@@ -21,6 +21,7 @@ export function KumoDocumentsPage() {
   // Set by the organization screen, e.g. /kumo/documents?doc=<id>&filter=unviewed
   const docId = searchParams.get("doc");
   const docFilter = searchParams.get("filter") ?? "";
+  const companyParam = searchParams.get("companyId") ?? "";
 
   const fetchAll = async () => {
     try {
@@ -72,11 +73,19 @@ export function KumoDocumentsPage() {
   }, [docId]);
 
   const staleBefore = Date.now() - 90 * 86_400_000;
-  const visibleDocuments = docFilter === "unviewed"
+  const byFilter = docFilter === "unviewed"
     ? documents.filter((d: any) => (d.viewCount ?? 0) === 0)
     : docFilter === "stale"
       ? documents.filter((d: any) => new Date(d.updatedAt).getTime() < staleBefore)
       : documents;
+  // The organization rail opens the document list scoped to one client.
+  const visibleDocuments = companyParam ? byFilter.filter((d: any) => d.companyId === companyParam) : byFilter;
+
+  const clearCompanyFilter = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("companyId");
+    setSearchParams(next, { replace: true });
+  };
 
   const clearDocFilter = () => {
     const next = new URLSearchParams(searchParams);
@@ -90,10 +99,15 @@ export function KumoDocumentsPage() {
         <div>
           <h2 className="text-lg font-semibold text-white">Kumo Documents</h2>
           <p className="text-sm text-gray-400">
-            {docFilter ? `${visibleDocuments.length} of ${documents.length} documents` : `${documents.length} documents`}
+            {docFilter || companyParam ? `${visibleDocuments.length} of ${documents.length} documents` : `${documents.length} documents`}
           </p>
         </div>
         <div className="flex gap-2">
+          {companyParam && (
+            <button onClick={clearCompanyFilter} className="btn-secondary text-sm flex items-center gap-1" title="Show every client's documents">
+              {companies.find((c: any) => c.id === companyParam)?.name ?? "Client"} ✕
+            </button>
+          )}
           {docFilter && (
             <button onClick={clearDocFilter} className="btn-secondary text-sm flex items-center gap-1" title="Clear the filter">
               {docFilter === "unviewed" ? "Not viewed" : "Stale"} ✕

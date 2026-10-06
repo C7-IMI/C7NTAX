@@ -134,6 +134,8 @@ export function TicketsPage() {
   const assignedParam = searchParams.get("assignedToId") || "";
   const dateFromParam = searchParams.get("dateFrom") || "";
   const dateToParam = searchParams.get("dateTo") || "";
+  // The organization rail's Change Control entry scopes the list to one client.
+  const companyParam = searchParams.get("companyId") || "";
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
@@ -207,11 +209,12 @@ export function TicketsPage() {
     if (assignedParam) url += `&assignedToId=${encodeURIComponent(assignedParam)}`;
     if (dateFromParam) url += `&dateFrom=${encodeURIComponent(dateFromParam)}`;
     if (dateToParam) url += `&dateTo=${encodeURIComponent(dateToParam)}`;
+    if (companyParam && !searchParams.get("new")) url += `&companyId=${encodeURIComponent(companyParam)}`;
     api.get(url).then(r=>setTickets(r.data.data||[])).catch(()=>{}).finally(()=>setLoading(false));
   };
 
   useEffect(()=>{fetchBoards();},[]);
-  useEffect(()=>{fetchTickets();},[boardId, statusParam, priorityParam, assignedParam, dateFromParam, dateToParam]);
+  useEffect(()=>{fetchTickets();},[boardId, statusParam, priorityParam, assignedParam, dateFromParam, dateToParam, companyParam]);
   useEffect(()=>{api.get("/users?limit=200").then(r=>setUsers(r.data.data||[])).catch(()=>{});},[]);
 
   // Auto-open new ticket form when navigated from contact
@@ -371,7 +374,11 @@ export function TicketsPage() {
       )}
       <div>
         <h2 className="text-lg font-semibold text-white">Tickets</h2>
-        <p className="text-sm text-gray-400">{boardId ? `Filtered by board` : "Manage service tickets"}</p>
+        <p className="text-sm text-gray-400">
+          {companyParam && !searchParams.get("new")
+            ? `Showing ${companies.find(c=>c.id===companyParam)?.name ?? "one client"}'s tickets`
+            : boardId ? `Filtered by board` : "Manage service tickets"}
+        </p>
       </div>
 
       {/* Toolbar: board selector + Create on the left, Filter + Choose Columns on the right */}

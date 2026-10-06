@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import {
@@ -8,6 +8,9 @@ import {
   Server, BookOpen, Lock, Check, Activity, GitBranch,
 } from "lucide-react";
 import { initials, avatarColor, timeAgo, formatDate, daysUntil } from "../lib/format";
+import { UI_KUMO_TYPES } from "../lib/uiFlags";
+import { OrganizationTypePanel } from "../components/OrganizationTypePanel";
+import { OrganizationTypeRail, type AssetType } from "../components/OrganizationTypeRail";
 
 interface Organization {
   id: string;
@@ -47,7 +50,7 @@ interface SubOrganization { id: string; name: string; companyType: string | null
 
 interface Detail {
   organization: Organization;
-  counts: { assets: number; passwords: number; documents: number; domains: number; certificates: number };
+  counts: { assets: number; passwords: number; documents: number; domains: number; certificates: number; configs: number };
   passwordStrength: Record<string, number>;
   documentation: { stale: number; notViewed: number; expired: number; staleAfterDays: number };
   recentlyViewed: RecentItem[];
@@ -57,6 +60,8 @@ interface Detail {
   upcomingExpirations: Expiration[];
   activity: ActivityEvent[];
   subOrganizations: SubOrganization[];
+  assetTypes: AssetType[];
+  changeBoard: { id: string; name: string } | null;
 }
 
 /** The vault's own ladder, plus the "never scored" bucket. */
@@ -69,6 +74,9 @@ const STRENGTH_LEVELS: { key: string; bar: string; dot: string }[] = [
   { key: "Very Strong", bar: "bg-green-500", dot: "text-green-500" },
   { key: "Not evaluated", bar: "bg-gray-600", dot: "text-gray-600" },
 ];
+
+/** ?type= value the rail uses for the address panel (it is not a template). */
+const LOCATIONS_TYPE = "locations";
 
 function typeIcon(type: string, size = 14) {
   const map: Record<string, JSX.Element> = {
@@ -104,6 +112,7 @@ function itemTitle(type: string): string {
 export function KumoOrganizationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -181,6 +190,30 @@ export function KumoOrganizationDetailPage() {
   const documentationTotal = counts.documents + counts.domains + counts.certificates;
   const location = [org.city, org.state].filter(Boolean).join(", ");
 
+  // The rail drives this screen through ?type=: a template id shows that
+  // client's records of that type, "locations" the address panel, and no value
+  // the dashboard below. Unknown values fall back to the dashboard, and the
+  // whole thing is inert when the rail is switched off.
+  const requestedType = searchParams.get("type") ?? "";
+  const activeType = UI_KUMO_TYPES ? requestedType : "";
+  const activeTemplate = activeType && activeType !== LOCATIONS_TYPE
+    ? detail.assetTypes.find((t) => t.id === activeType) ?? null
+    : null;
+  const panel = activeTemplate ? (
+    <OrganizationTypePanel
+      orgId={org.id}
+      orgName={org.name}
+      templateId={activeTemplate.id}
+      templateName={activeTemplate.name}
+      templateDescription={activeTemplate.description}
+      templateIconName={activeTemplate.icon}
+      templateColor={activeTemplate.color}
+      fieldCount={activeTemplate.fieldCount}
+    />
+  ) : activeType === LOCATIONS_TYPE ? (
+    <LocationsPanel org={org} />
+  ) : null;
+
   return (
     <div className="space-y-4 animate-fade-in">
       {/* ── Header ─────────────────────────────────────────────── */}
@@ -246,6 +279,31 @@ export function KumoOrganizationDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Type rail + panel, or the dashboard on its own ─────── */}
+      <div className={UI_KUMO_TYPES ? "lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-4 lg:items-start" : ""}>
+        {UI_KUMO_TYPES && (
+          <OrganizationTypeRail
+            orgId={org.id}
+            counts={{
+              assets: counts.assets,
+              configs: counts.configs,
+              contacts: org._count.contacts,
+              documents: counts.documents,
+              passwords: counts.passwords,
+              domains: counts.domains,
+              certificates: counts.certificates,
+              tickets: org._count.tickets,
+            }}
+            assetTypes={detail.assetTypes ?? []}
+            changeBoard={detail.changeBoard ?? null}
+            activeType={activeType}
+          />
+        )}
+
+        <div className="space-y-4 min-w-0">
+          {panel}
+          <div className={panel ? "hidden" : "contents"}>
 
       {/* ── Quick notes ────────────────────────────────────────── */}
       <div className="card">
@@ -589,6 +647,10 @@ export function KumoOrganizationDetailPage() {
         )}
       </div>
 
+          </div>
+        </div>
+      </div>
+
       {/* ── Add sub-organization ───────────────────────────────── */}
       {showAddSub && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddSub(false)}>
@@ -620,6 +682,53 @@ export function KumoOrganizationDetailPage() {
           </form>
         </div>
       )}
+    </div>
+  );
+}
+
+/** The client's single address, shown when the rail asks for Locations. */
+function LocationsPanel({ org }: { org: Organization }) {
+  const lines = [
+    org.addressLine1,
+    org.addressLine2,
+    [org.city, org.state].filter(Boolean).join(", "),
+    org.postalCode,
+  ].filter(Boolean);
+
+  return (
+    <div className="card space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <MapPin size={15} className="text-cyber-400" />
+          <h3 className="text-sm font-semibold text-white">Locations</h3>
+        </div>
+        <Link to={`/clients/${org.id}`} className="text-xs text-cyber-400 hover:text-cyber-300">Edit Client</Link>
+      </div>
+
+      <div className="rounded-lg border border-surface-border p-3">
+        <p className="text-sm text-white">Primary location</p>
+        <p className="text-xs text-gray-500 mt-1">
+          {lines.length > 0 ? lines.join(" · ") : "No address on the client record."}
+        </p>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-400">
+          {org.phone && <span className="inline-flex items-center gap-1.5"><Phone size={12} className="text-gray-500" />{org.phone}</span>}
+          {org.email && <span className="inline-flex items-center gap-1.5"><Mail size={12} className="text-gray-500" />{org.email}</span>}
+          {org.website && (
+            <a
+              href={org.website.startsWith("http") ? org.website : `https://${org.website}`}
+              target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-1.5 hover:text-cyber-300"
+            >
+              <ExternalLink size={12} className="text-gray-500" />{org.website.replace(/^https?:\/\//, "")}
+            </a>
+          )}
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-500">
+        This is the address held on the client record. Sites beyond it — separate networks, contacts and
+        equipment per site — need a location model, which is not built yet.
+      </p>
     </div>
   );
 }

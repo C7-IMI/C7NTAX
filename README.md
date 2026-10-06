@@ -47,6 +47,26 @@ Stop wrestling with fragmented tools and rigid legacy software. Speak the langua
 
 _For the complete changelog with all historical entries, see [BuildNotes.md](BuildNotes.md)._
 
+## Reversible by default
+
+Every user-visible change ships with a way back, without a code change:
+
+1. **UI work goes behind a flag** in [apps/web/src/lib/uiFlags.ts](apps/web/src/lib/uiFlags.ts).
+   Flags default **on** for additive work, and turn off instantly from the browser console
+   (`localStorage.setItem("c7_ui_<flag>", "0"); location.reload()`), or deployment-wide with
+   `VITE_UI_<FLAG>=false` in `apps/web/.env.local`. Turning a flag off restores the previous
+   layout exactly.
+2. **Data changes ship as an opt-in script** with a matching reversal —
+   `pnpm --filter api db:types-on` / `db:types-off`, `db:sample-on` / `db:sample-off`. A
+   reversal deactivates rather than deletes when records depend on the data.
+3. **No destructive schema changes.** New models and columns are additive; `prisma db push`
+   only ever adds in development.
+4. **Every feature gets a rollback doc** at the repo root, named `<AREA>-ROLLBACK.md`, listing
+   its flag, its files, its data reversal and a "if the app breaks" checklist. See
+   [UI-P1-ROLLBACK.md](UI-P1-ROLLBACK.md), [UI-PALETTE-ROLLBACK.md](UI-PALETTE-ROLLBACK.md),
+   [KUMO-ORGANIZATIONS-ROLLBACK.md](KUMO-ORGANIZATIONS-ROLLBACK.md) and
+   [KUMO-TYPES-ROLLBACK.md](KUMO-TYPES-ROLLBACK.md).
+
 ## Architecture
 
 ```

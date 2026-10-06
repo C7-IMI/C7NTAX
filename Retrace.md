@@ -2066,3 +2066,40 @@
 - **Q4 (Change Control Request):** tickets on a "Change" service board, which turns out to need **no new code**: `Tickets.tsx` already reads `?boardId=`, `?companyId=` and `?new=1` with contact prefill (lines 131-136, 219-229), and `ServiceBoard` is a normal table creatable from the admin UI (`api.post("/boards")` at `Administration.tsx:192`). Tickets also bring the approval state, scheduling, audit trail and customer notification already shipped, which a flexible type would duplicate badly.
 - **Bonus, also verified:** `Company.companyType` already supports `"Vendor"`, so the Vendors entry is a filtered client list and needs no model work.
 - Also told the user that the field schemas for the 19 types are the part worth reviewing before the seed lands, and offered to present them first.
+
+### Prompt 171 — Implementing the type rail, standard types and client-scoped screens
+**Timestamp:** 2026-10-06 | **Status:** ✅ Implemented and verified | **Duration:** ~2 h
+**BuildNotes IDs:** 2026.10.6.017
+> Let's go with your suggestions. Just make sure it can be easily rolled back.
+>
+> From now on any changes should be able to be easily reverted
+
+**Changes — API (`apps/api`)**
+- `src/routes/kumo.ts` — `GET /organizations/:id` now returns `assetTypes` (every active template, global or client-owned, with that client's asset count, icon, colour and field count), a best-effort `changeBoard` (the first active board whose name contains "change"), and `counts.configs` (a client's KumoServers) for the rail's counts. `GET /assets` gained a `companyId` filter and `GET /organizations` a `companyType` filter.
+- `src/kumo-types-toggle.ts` (new) + `db:types-on` / `db:types-off` in `package.json` — the 19 standard types with their field schemas, seeded idempotently, plus their reversal.
+- `GET /configs/servers` now selects the owning asset's `companyId` — without it the Configurations client filter could never match (see the fix below).
+
+**Changes — web (`apps/web`)**
+- `src/components/OrganizationTypeRail.tsx` (new) — the two-group rail (Core Assets / Asset Types) with per-type counts, a remembered "show empty types" toggle, and the built-in entries deep-linking to client-scoped screens.
+- `src/components/OrganizationTypePanel.tsx` (new) — one client's records of one type, with search, an Add button preset to the type and client, and rows linking to the asset.
+- `src/lib/kumoIcons.ts` (new) — template icon names (stored as data on templates) resolved to real lucide icons, shared by the rail, the type panel and the Assets page.
+- `src/pages/KumoOrganizationDetail.tsx` — two-column layout with the sticky rail, the `?type=` view contract (template id, `locations`, otherwise the dashboard) and a `LocationsPanel` that states the single-address limitation honestly.
+- `src/pages/KumoAssets.tsx` — `?new=1&templateId=&companyId=` opens the create dialog preset (the dialog approved in the mockup) and uses the shared icon map.
+- `src/pages/KumoPasswords.tsx`, `KumoConfigs.tsx`, `KumoDocuments.tsx`, `Contacts.tsx`, `KumoDomains.tsx`, `KumoOrganizations.tsx`, `Tickets.tsx` — client/kind/company-type URL params so every rail entry lands on a filtered screen, each with a chip that clears it. Tickets reads `?companyId=` as a list scope (the Change Control destination) without disturbing the existing `?new=1` contact prefill.
+- `src/lib/uiFlags.ts` — the `UI_KUMO_TYPES` kill switch.
+- `README.md` — a "Reversible by default" section recording the standing convention this prompt asked for.
+
+**Docs & rollback**
+- `KUMO-TYPES-ROLLBACK.md` (new) — the flag, the files, the data reversal with its safety rules (delete when unused, deactivate when records exist, never touch user-created types), the "if the app breaks" checklist, and the note that the Change board belongs to Administration rather than this feature.
+
+**Biggest findings during implementation**
+- **Asset field values were being silently dropped.** The Assets create form posted `fieldValues`; the API reads `values`. Every field a technician typed — backup schedule, VPN endpoint, subnet — was discarded. Fixed, since the whole point of the standard types is those fields.
+- **The Configurations client filter never worked.** The servers payload omitted the owning asset's `companyId`, so a client-filtered Configurations list always showed zero. The rail surfaced it by counting 1 where the page showed 0. Fixed; both now read 1.
+- **A service worker (`apps/web/public/sw.js`) was serving stale modules** cached under `C7NTAX-v1`, which made the dev app keep running pre-edit code through a server restart and a cache-disabled reload. Unregistering it plus clearing the cache partition resolved every "the browser disagrees with the source" symptom. Worth knowing for future UI verification: check `navigator.serviceWorker.getRegistrations()` before believing a stale render.
+
+**Verification (all against the live stack, not harnesses)**
+- API with a real signed-in token: `assetTypes` returned 3 templates before seeding and 22 after; `?companyId=` on assets returned 1 for the demo client; `?companyType=Vendor` returned 0 while `Client` returned 5; tickets returned 21 of 96 for the client.
+- Seed round-trip: `on` created 19, `on` again kept 19 (nothing duplicated), `off` deleted 19; then with a probe asset attached to VPN, `off` deleted 18 and deactivated VPN while the asset stayed readable, `on` restored the type with its 5 fields, and the probe was deleted, leaving the demo data byte-equivalent to how it started.
+- UI in the live app: all ten rail destinations opened correctly — overview, the Server type view, Locations, Passwords (1), Configurations (1), Documents ("3 of 4 documents" with chip), the tracker narrowed to certificates, Contacts (3), Tickets (scoped), and `Kumo → Assets?new=1` opening **New Server** with the client preselected. Rail renders 11 links with empty types hidden, 32 with them shown, sticky at 208px.
+- Rollback: with `c7_ui_kumo_types=0` the rail disappears and the page returns to its old single-column layout; an unknown `?type=` falls back to the dashboard rather than erroring; both restored afterwards. Typecheck unchanged (web 26, api 178 pre-existing), token lint unchanged (117 legacy hex in 9 allowlisted files), no errors in any new file.
+- Screenshots of the live implementation saved to the session workspace: `files/live-org-rail-overview.png`, `live-org-rail-alltypes.png`, `live-org-type-view.png`, `live-org-rail-tall.png`.

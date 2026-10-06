@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Search, Monitor, Server, Laptop, Wifi, Edit3, Trash2, AlertTriangle } from "lucide-react";
+import { templateIcon } from "../lib/kumoIcons";
 
 interface KumoAsset {
   id: string; name: string; templateId: string; status: string; companyId: string | null;
@@ -22,6 +23,10 @@ export function KumoAssetsPage() {
   const [form, setForm] = useState<Record<string, any>>({ name: "" });
   const [fieldValues, setFieldValues] = useState<Record<string, any>>({});
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // The organization rail hands us the type and client, e.g.
+  // /kumo/assets?new=1&templateId=<id>&companyId=<id>
+  const deepLinkApplied = useRef(false);
 
   const fetchAll = async () => {
     try {
@@ -31,8 +36,24 @@ export function KumoAssetsPage() {
         api.get("/clients?limit=100"),
       ]);
       setAssets(aRes.data.data || []);
-      setTemplates(tRes.data.data || []);
+      const tpls = tRes.data.data || [];
+      setTemplates(tpls);
       setCompanies(cRes.data.data || []);
+
+      if (!deepLinkApplied.current) {
+        const templateIdParam = searchParams.get("templateId") ?? "";
+        const companyIdParam = searchParams.get("companyId") ?? "";
+        if (templateIdParam && searchParams.get("new") === "1") {
+          const tpl = tpls.find((t: any) => t.id === templateIdParam);
+          if (tpl) {
+            startCreate(tpl, companyIdParam);
+            deepLinkApplied.current = true;
+          }
+        } else if (templateIdParam) {
+          setTemplateFilter(templateIdParam);
+          deepLinkApplied.current = true;
+        }
+      }
     } catch { toast.error("Failed to load"); }
     finally { setLoading(false); }
   };
@@ -44,9 +65,9 @@ export function KumoAssetsPage() {
     return true;
   });
 
-  const startCreate = (tpl?: any) => {
+  const startCreate = (tpl?: any, companyId = "") => {
     setSelectedTemplate(tpl || null);
-    setForm({ name: "", companyId: "" });
+    setForm({ name: "", companyId });
     setFieldValues({});
     setShowCreate(true);
     if (tpl) {
@@ -64,7 +85,7 @@ export function KumoAssetsPage() {
       await api.post("/kumo/assets", {
         templateId: selectedTemplate.id,
         name: form.name,
-        fieldValues,
+        values: fieldValues,
         companyId: form.companyId || undefined,
       });
       toast.success("Asset created");
@@ -78,8 +99,6 @@ export function KumoAssetsPage() {
     try { await api.delete(`/kumo/assets/${id}`); toast.success("Deleted"); fetchAll(); }
     catch { toast.error("Failed"); }
   };
-
-  const iconMap: Record<string, any> = { Monitor, Server, Laptop, Wifi };
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -107,7 +126,7 @@ export function KumoAssetsPage() {
       {/* Templates quick-create */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
         {templates.filter((t:any) => t.isActive).map((tpl: any) => {
-          const Icon = iconMap[tpl.icon || "Monitor"] || Monitor;
+          const Icon = templateIcon(tpl.icon);
           return (
             <button key={tpl.id} onClick={() => startCreate(tpl)}
               className="card hover:border-cyber-500/30 transition-colors p-3 text-left group">

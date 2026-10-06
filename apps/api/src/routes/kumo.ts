@@ -484,7 +484,7 @@ kumoRouter.delete("/links/:id", requirePermission(Permission.KumoLinkManage), as
 
 kumoRouter.get("/configs/servers", requirePermission(Permission.KumoConfigView), async (_req: AuthRequest, res, next) => {
   try {
-    const data = await prisma.kumoServer.findMany({ include: { kumoAsset: { select: { id: true, name: true } } }, take: 200 });
+    const data = await prisma.kumoServer.findMany({ include: { kumoAsset: { select: { id: true, name: true, companyId: true } } }, take: 200 });
     res.json({ data });
   } catch (e) { next(e); }
 });

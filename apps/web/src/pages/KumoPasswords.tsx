@@ -28,6 +28,10 @@ export function KumoPasswordsPage() {
   // Set by the organization screen, e.g. /kumo/passwords?select=<id>&strength=Very+Strong
   const selectId = searchParams.get("select");
   const strengthFilter = searchParams.get("strength") ?? "";
+  const companyParam = searchParams.get("companyId") ?? "";
+
+  // The organization rail opens the vault pre-filtered to one client.
+  useEffect(() => { if (companyParam) setCompanyFilter(companyParam); }, [companyParam]);
 
   const fetch = async () => {
     try {

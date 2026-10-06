@@ -17,6 +17,10 @@ export function KumoConfigsPage() {
 
   // Set by the organization screen, e.g. /kumo/configs?select=<id>
   const selectId = searchParams.get("select");
+  const companyParam = searchParams.get("companyId") ?? "";
+
+  // The organization rail opens the list pre-filtered to one client.
+  useEffect(() => { if (companyParam) setCompanyFilter(companyParam); }, [companyParam]);
 
   const fetch = () => {
     api.get("/kumo/configs/servers").then(r => setConfigs(r.data.data||[])).catch(() => toast.error("Failed")).finally(() => setLoading(false));

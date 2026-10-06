@@ -53,7 +53,13 @@ export function KumoDomainsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const visible = useMemo(() => (companyId ? rows.filter((r) => r.companyId === companyId) : rows), [rows, companyId]);
+  const kind = searchParams.get("kind") ?? "";
+
+  const visible = useMemo(() => {
+    const scoped = companyId ? rows.filter((r) => r.companyId === companyId) : rows;
+    // Domain Tracker and SSL Tracker are the same page, narrowed by ?kind=.
+    return kind ? scoped.filter((r) => r.kind.toLowerCase() === kind.toLowerCase()) : scoped;
+  }, [rows, companyId, kind]);
 
   // Deep link: /kumo/domains?select=<id> opens straight onto that record.
   useEffect(() => {
@@ -75,6 +81,13 @@ export function KumoDomainsPage() {
     setSearchParams(next, { replace: true });
   };
 
+  const clearKind = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("kind");
+    next.delete("select");
+    setSearchParams(next, { replace: true });
+  };
+
   const companyName = visible[0]?.companyName ?? null;
   const expiredCount = visible.filter((r) => r.expiryDate && daysUntil(r.expiryDate).overdue).length;
 
@@ -92,6 +105,11 @@ export function KumoDomainsPage() {
           {companyId && (
             <button onClick={clearCompany} className="btn-secondary text-xs py-1 flex items-center gap-1.5" title="Clear the client filter">
               <Building2 size={12} /> {companyName || "Filtered client"} ✕
+            </button>
+          )}
+          {kind && (
+            <button onClick={clearKind} className="btn-secondary text-xs py-1 flex items-center gap-1.5" title="Show domains and certificates together">
+              {kind === "Certificate" ? <Lock size={12} /> : <Globe size={12} />} {kind === "Certificate" ? "Certificates" : "Domains"} ✕
             </button>
           )}
           <div className="flex gap-1">

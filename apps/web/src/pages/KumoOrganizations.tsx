@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import { Search, ExternalLink, History, ChevronRight } from "lucide-react";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
@@ -45,11 +45,15 @@ export function KumoOrganizationsPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortState | null>({ field: "name", direction: "asc" });
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const fetchOrgs = useCallback(async (term: string) => {
+  // Set by the organization rail's Vendors entry, e.g. ?companyType=Vendor
+  const companyType = searchParams.get("companyType") ?? "";
+
+  const fetchOrgs = useCallback(async (term: string, type: string) => {
     try {
-      const r = await api.get("/kumo/organizations", { params: { search: term, limit: 200 } });
+      const r = await api.get("/kumo/organizations", { params: { search: term, companyType: type || undefined, limit: 200 } });
       setOrgs(r.data?.data || []);
       setTotal(r.data?.total || 0);
       setError("");
@@ -67,9 +71,9 @@ export function KumoOrganizationsPage() {
 
   useEffect(() => {
     // Debounced so typing doesn't fire a request per keystroke.
-    const timer = setTimeout(() => fetchOrgs(search), search ? 250 : 0);
+    const timer = setTimeout(() => fetchOrgs(search, companyType), search ? 250 : 0);
     return () => clearTimeout(timer);
-  }, [search, fetchOrgs]);
+  }, [search, companyType, fetchOrgs]);
 
   useEffect(() => {
     api
@@ -79,6 +83,12 @@ export function KumoOrganizationsPage() {
   }, []);
 
   const rows = useMemo(() => (sort ? sortData(orgs, sort.field, sort.direction) : orgs), [orgs, sort]);
+
+  const setCompanyType = (type: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (type) next.set("companyType", type); else next.delete("companyType");
+    setSearchParams(next, { replace: true });
+  };
 
   const open = (org: Organization) => {
     api
@@ -145,6 +155,18 @@ export function KumoOrganizationsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <select
+            className="input-field text-sm py-1.5 w-auto"
+            value={companyType}
+            onChange={(e) => setCompanyType(e.target.value)}
+            title="Filter by company type"
+          >
+            <option value="">All types</option>
+            <option value="Client">Clients</option>
+            <option value="Prospect">Prospects</option>
+            <option value="Vendor">Vendors</option>
+            <option value="Partner">Partners</option>
+          </select>
           <span className="text-xs text-gray-500">
             {rows.length} of {total}
           </span>
@@ -155,13 +177,17 @@ export function KumoOrganizationsPage() {
         ) : error ? (
           <div className="p-8 text-center space-y-2">
             <p className="text-sm text-gray-400">{error}</p>
-            <button onClick={() => fetchOrgs(search)} className="btn-secondary text-sm">
+            <button onClick={() => fetchOrgs(search, companyType)} className="btn-secondary text-sm">
               Retry
             </button>
           </div>
         ) : orgs.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            {search ? `No organizations match “${search}”.` : "No organizations yet."}
+            {search
+              ? `No organizations match “${search}”.`
+              : companyType
+                ? `No ${companyType.toLowerCase()} organizations yet.`
+                : "No organizations yet."}
           </div>
         ) : (
           <div className="overflow-x-auto">

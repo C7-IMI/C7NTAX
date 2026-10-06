@@ -47,6 +47,11 @@ number of queries instead of one lookup per row.
 `GET /api/kumo/organizations/:id` returns everything the screen needs in one
 round trip, all scoped to that client:
 
+> **The type rail** (Core Assets / Asset Types) sits beside this dashboard and
+> drives it through a `?type=` param. It has its own guide and rollback —
+> [KUMO-TYPES-ROLLBACK.md](KUMO-TYPES-ROLLBACK.md) — because the seeded asset
+> types behind it are data that can be reversed separately from this screen.
+
 - **Header** — name, active state, type, location, industry, service level and
   contact/ticket counts, with *New Document*, *Edit* (the client record) and a
   *Quick Add* menu (asset, password, document, configuration, contact,
@@ -70,6 +75,10 @@ round trip, all scoped to that client:
   would miss every create), with a link to the full audit log.
 - **Sub-Organizations** — child companies that report into this one, creatable
   from the header menu or the section, each opening its own organization screen.
+
+The rail adds the per-type entries (`?type=<templateId>` in-page views, plus
+`?type=locations`), and the client-scoped links to Passwords, Configurations,
+Documents, Contacts, the expiry tracker and Tickets.
 
 ## Opening a specific item
 
