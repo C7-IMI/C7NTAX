@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.5.014 | Last Updated: 2026-10-05
+## Version: 2026.10.5.015 | Last Updated: 2026-10-05
 
 ---
 
@@ -14,7 +14,16 @@
 
 ---
 
-## 2026.10.5.014 — UI modernization P1 (command palette, density, nav accents) + rollback switch
+## 2026.10.5.015 — UI modernization P2 (elevation, typography, sticky tables, content width) + rollback switch
+- **[New]** **Card elevation** — soft layered shadows on every `.card`, with a subtle `translateY(-1px)` hover lift and cyber-blue border accent on interactive cards (`a.card`, `button.card`, `.card--interactive`). Theme-aware shadow tokens (`--card-shadow`, `--card-shadow-hover`, `--card-hover-border`) for dark and light.
+- **[Update]** **Typography polish** — Inter `font-feature-settings: "cv11", "ss01"`, `text-wrap: balance` on headings, `tabular-nums` on tables, and page titles (`PageHeader`) at 22px with tighter tracking.
+- **[New]** **Sticky table headers** with an opaque themed background, plus a 150ms row-hover transition, so long lists stay readable while scrolling.
+- **[Update]** **Content container** — page content is capped at 1600px and centered so it no longer stretches edge-to-edge on ultra-wide displays.
+- **[New]** Independent **P2 kill switch** alongside P1 — deployment-wide via `VITE_UI_P2=false`, or instantly in the browser via `localStorage.c7_ui_p2=0` / `c7UiP2.disable()` + reload. The command palette also gained a "Turn off look-and-feel polish (P2)" action. All P2 CSS is gated by `data-ui-p2="true"` and is inert when off.
+- **[Update]** `UI-P1-ROLLBACK.md` now documents both tiers, and `scripts/rollback-ui-p1.ps1` gained `-Part P1|P2|All`.
+- **[Verification]** `apps/web` typecheck unchanged (26 pre-existing errors, zero new); design-token lint passes (no new raw hex); live check on `/`, `/tickets`, `/assets`: `data-ui-p2="true"`, card shadow + hover lift/border confirmed via computed styles, `thead th` sticky with opaque background, tables `tabular-nums`, `/assets` title 22px, content wrapper `1600px`; with `c7_ui_p2=0` every P2 effect reverts (no shadow, no max-width, `font-feature-settings: normal`) while P1 stays on; removing the key restores P2 — no console errors.
+
+
 - **[New]** **Command palette** (⌘K / Ctrl-K): searches every page in the nav tree plus quick actions (New Ticket, toggle theme, toggle density, turn off P1); arrow keys + Enter + Esc, mouse hover, scroll-into-view. The existing header **Search** button now opens it.
 - **[New]** **Density toggle** (comfortable / compact) in the header toolbar; persisted per browser and applied before first paint.
 - **[Update]** Sidebar active items gain a cyber-blue accent rail + gradient (P1-scoped CSS).

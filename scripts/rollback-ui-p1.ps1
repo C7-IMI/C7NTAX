@@ -1,10 +1,13 @@
 # =============================================================================
-# Roll back the P1 UI modernization (see UI-P1-ROLLBACK.md).
+# Roll back the P1/P2 UI modernization (see UI-P1-ROLLBACK.md).
 #
+#   -Part     P1 (default), P2, or All
 #   -Restart  also restart the web server so the change applies immediately
-#   -Enable   re-enable P1 (removes the flag) instead of disabling it
+#   -Enable   re-enable the tier (sets the flag to true) instead of disabling
 # =============================================================================
 param(
+    [ValidateSet("P1", "P2", "All")]
+    [string]$Part = "P1",
     [switch]$Restart,
     [switch]$Enable
 )
@@ -14,16 +17,24 @@ $Repo = "C:/OneDrive/OneDrive - Cyber 7 Group/GHRepo/Kun/C7NTAX"
 $EnvFile = "$Repo/apps/web/.env.local"
 $Value = if ($Enable) { "true" } else { "false" }
 
+$Vars = switch ($Part) {
+    "P2" { @("VITE_UI_P2") }
+    "All" { @("VITE_UI_P1", "VITE_UI_P2") }
+    default { @("VITE_UI_P1") }
+}
+
 New-Item -ItemType Directory -Force -Path (Split-Path $EnvFile) | Out-Null
 
-if ((Test-Path $EnvFile) -and (Select-String -Path $EnvFile -Pattern '^VITE_UI_P1=' -Quiet)) {
-    (Get-Content $EnvFile) -replace '^VITE_UI_P1=.*$', "VITE_UI_P1=$Value" | Set-Content -Path $EnvFile
-} else {
-    Add-Content -Path $EnvFile -Value "VITE_UI_P1=$Value"
+foreach ($name in $Vars) {
+    if ((Test-Path $EnvFile) -and (Select-String -Path $EnvFile -Pattern "^$name=" -Quiet)) {
+        (Get-Content $EnvFile) -replace "^$name=.*$", "$name=$Value" | Set-Content -Path $EnvFile
+    } else {
+        Add-Content -Path $EnvFile -Value "$name=$Value"
+    }
 }
 
 $state = if ($Enable) { "ENABLED" } else { "DISABLED" }
-Write-Host "P1 UI modernization $state via apps/web/.env.local (VITE_UI_P1=$Value)."
+Write-Host "$Part UI modernization $state via apps/web/.env.local ($($Vars -join ', ')=$Value)."
 
 if ($Restart) {
     $listener = Get-NetTCPConnection -LocalPort 3010 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1

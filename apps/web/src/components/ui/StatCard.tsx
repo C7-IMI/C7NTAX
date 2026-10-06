@@ -21,7 +21,7 @@ export function StatCard({
   tone?: keyof typeof TONES;
 }) {
   return (
-    <div className="card flex items-center gap-3 !py-4">
+    <div className="card card--interactive flex items-center gap-3 !py-4">
       {icon ? (
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${TONES[tone]}`}>{icon}</div>
       ) : null}

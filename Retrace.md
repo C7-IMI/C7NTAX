@@ -1772,6 +1772,22 @@
 - **Verification:** web typecheck unchanged (26 pre-existing errors, zero in new files); design-token lint passes; live check: Ctrl-K opens the palette, filtering/navigation works (`calendar` → `/calendar`), density toggles `comfortable`↔`compact`, and turning the flag off restores the original UI with no palette/density control.
 
 
+### Prompt 151 — Implement UI modernization P2 (with rollback)
+**Timestamp:** 2026-10-05 | **Status:** ✅ Completed | **Duration:** ~45 min
+**BuildNotes IDs:** #1 (2026.10.5.015)
+> do the same for P2
+
+**Changes:**
+- `apps/web/src/lib/uiFlags.ts` — added an independent `UI_P2` flag (`VITE_UI_P2` build flag + `localStorage.c7_ui_p2` runtime override) alongside P1; `setUiP1`/`setUiP2` share one helper.
+- `apps/web/src/components/Layout.tsx` — `data-ui-p2` root attribute + a "Turn off look-and-feel polish (P2)" command-palette action.
+- `apps/web/src/main.tsx` — exposed the `c7UiP2` console helper next to `c7UiP1`.
+- `apps/web/src/index.css` — P2 CSS block gated by `[data-ui-p2="true"]`: theme-aware elevation tokens + hover lift on interactive cards, Inter `font-feature-settings`, balanced headings, 22px page titles, `tabular-nums` tables, sticky table headers with row hover, and a 1600px centered content container.
+- `apps/web/src/components/ui/{StatCard,PageHeader}.tsx` — opt-in `card--interactive` class and the `page-title` typography hook (both inert when P2 is off).
+- `scripts/rollback-ui-p1.ps1` — gained `-Part P1|P2|All`; `UI-P1-ROLLBACK.md` now documents both tiers.
+- **Verification:** web typecheck unchanged (26 pre-existing errors, zero new); design-token lint passes (no new raw hex); live check on `/`, `/tickets`, `/assets`: card shadow + hover lift/border verified via computed styles, sticky `thead th` with opaque background, `tabular-nums` tables, 22px page title, `1600px` content wrapper; `c7_ui_p2=0` reverts every P2 effect while P1 stays on, removing the key restores P2; palette shows the new P2 action.
+
+
+
 
 
 

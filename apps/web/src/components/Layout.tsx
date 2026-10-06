@@ -14,7 +14,7 @@ import { Sun, Moon } from "lucide-react";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 import { CommandPalette, type PaletteItem } from "./CommandPalette";
-import { UI_P1, setUiP1 } from "../lib/uiFlags";
+import { UI_P1, UI_P2, setUiP1, setUiP2 } from "../lib/uiFlags";
 import { getDensity, setDensity, type Density } from "../lib/density";
 
 export type NavNode = {
@@ -251,6 +251,16 @@ export function Layout({ children }: { children: ReactNode }) {
         keywords: "rollback revert disable",
         run: () => {
           setUiP1(false);
+          window.location.reload();
+        },
+      },
+      {
+        id: "act-ui-p2",
+        label: "Turn off look-and-feel polish (P2)",
+        group: "Actions",
+        keywords: "rollback revert disable shadows typography",
+        run: () => {
+          setUiP2(false);
           window.location.reload();
         },
       },
@@ -562,7 +572,11 @@ export function Layout({ children }: { children: ReactNode }) {
     : { width: `${sidebarWidth}px` };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-navy-950" data-ui-p1={UI_P1 ? "true" : "false"}>
+    <div
+      className="flex h-screen overflow-hidden bg-navy-950"
+      data-ui-p1={UI_P1 ? "true" : "false"}
+      data-ui-p2={UI_P2 ? "true" : "false"}
+    >
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)} />

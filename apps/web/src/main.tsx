@@ -5,12 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import App from "./App";
 import { ThemeProvider } from "./hooks/useTheme";
-import { UI_P1, setUiP1 } from "./lib/uiFlags";
+import { UI_P1, UI_P2, setUiP1, setUiP2 } from "./lib/uiFlags";
 import { applyDensity, getDensity } from "./lib/density";
 import "./index.css";
 
 // Apply the persisted density before first paint (avoids a flash) and expose
-// the P1 kill switch for instant rollback from the browser console.
+// the UI kill switches for instant rollback from the browser console.
 applyDensity(getDensity());
 (window as unknown as { c7UiP1?: unknown }).c7UiP1 = {
   get enabled() {
@@ -18,6 +18,13 @@ applyDensity(getDensity());
   },
   enable: () => setUiP1(true),
   disable: () => setUiP1(false),
+};
+(window as unknown as { c7UiP2?: unknown }).c7UiP2 = {
+  get enabled() {
+    return UI_P2;
+  },
+  enable: () => setUiP2(true),
+  disable: () => setUiP2(false),
 };
 
 // ── Error Boundary — catches rendering crashes ────────────────────

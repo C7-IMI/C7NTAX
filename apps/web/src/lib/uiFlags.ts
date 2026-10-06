@@ -1,38 +1,53 @@
 /**
- * P1 UI modernization kill switch.
+ * UI modernization kill switches (see UI-P1-ROLLBACK.md).
  *
- * Instant rollback (no rebuild, no code changes) — run in the browser console
- * or use window.c7UiP1 helpers, then reload:
+ * Instant rollback (no rebuild, no code changes) — browser console, then reload:
  *   localStorage.setItem("c7_ui_p1", "0"); location.reload()   // disable P1
- *   localStorage.setItem("c7_ui_p1", "1"); location.reload()   // force-enable P1
+ *   localStorage.setItem("c7_ui_p2", "0"); location.reload()   // disable P2
  *   localStorage.removeItem("c7_ui_p1");   location.reload()   // back to default
+ * Or the window.c7UiP1 / window.c7UiP2 helpers, or the command palette actions.
  *
- * Deployment-wide rollback: set VITE_UI_P1=false (e.g. in apps/web/.env.local)
- * and restart the web server. See UI-P1-ROLLBACK.md.
+ * Deployment-wide rollback: set VITE_UI_P1=false / VITE_UI_P2=false (e.g. in
+ * apps/web/.env.local) and restart the web server; or run
+ * scripts/rollback-ui-p1.ps1 -Part P1|P2|All.
  */
-const UI_P1_KEY = "c7_ui_p1";
+type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2";
 
-function readUiP1(): boolean {
+const UI_P1_STORAGE_KEY: FlagStorageKey = "c7_ui_p1";
+const UI_P2_STORAGE_KEY: FlagStorageKey = "c7_ui_p2";
+
+function readFlag(key: FlagStorageKey, envName: string): boolean {
   try {
-    const override = localStorage.getItem(UI_P1_KEY);
+    const override = localStorage.getItem(key);
     if (override === "0") return false;
     if (override === "1") return true;
   } catch {
     /* localStorage unavailable — fall through to the build default */
   }
   const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
-  return env?.VITE_UI_P1 !== "false";
+  return env?.[envName] !== "false";
 }
 
-/** Whether the P1 modernization features are enabled (default: on). */
-export const UI_P1 = readUiP1();
-
-export const UI_P1_STORAGE_KEY = UI_P1_KEY;
-
-export function setUiP1(enabled: boolean): void {
+function writeFlag(key: FlagStorageKey, enabled: boolean): void {
   try {
-    localStorage.setItem(UI_P1_KEY, enabled ? "1" : "0");
+    localStorage.setItem(key, enabled ? "1" : "0");
   } catch {
     /* ignore */
   }
 }
+
+/** P1: command palette, density toggle, nav accents (default: on). */
+export const UI_P1 = readFlag(UI_P1_STORAGE_KEY, "VITE_UI_P1");
+
+/** P2: elevation, typography, sticky tables, content width (default: on). */
+export const UI_P2 = readFlag(UI_P2_STORAGE_KEY, "VITE_UI_P2");
+
+export function setUiP1(enabled: boolean): void {
+  writeFlag(UI_P1_STORAGE_KEY, enabled);
+}
+
+export function setUiP2(enabled: boolean): void {
+  writeFlag(UI_P2_STORAGE_KEY, enabled);
+}
+
+export { UI_P1_STORAGE_KEY, UI_P2_STORAGE_KEY };
