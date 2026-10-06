@@ -204,10 +204,15 @@ export async function ticketNoteRecipients(
 /**
  * Resolve the recipient payload the composer and the ticket screens send.
  * Unknown ids are ignored rather than failing the whole send.
+ *
+ * `saveContacts` links the picked client contacts to the ticket; `saveEmails`
+ * additionally turns bare addresses into contacts of the ticket's client and
+ * links those too — which is what note submission wants, so the next note can
+ * simply tick the person instead of retyping their address.
  */
 export async function resolveRecipients(
   input: unknown,
-  options: { addToTicket?: string; saveToTicket?: boolean } = {},
+  options: { addToTicket?: string; saveContacts?: boolean; saveEmails?: boolean } = {},
 ): Promise<{ to: string[]; cc: string[]; added: string[] }> {
   const payload = (input ?? {}) as Record<string, unknown>;
   const contactIds = Array.isArray(payload.contactIds) ? payload.contactIds.filter((v): v is string => typeof v === "string") : [];
@@ -223,17 +228,37 @@ export async function resolveRecipients(
   const pick = (list: string[]) => list.map((id) => byId.get(id)).filter((e): e is string => Boolean(e));
 
   const added: string[] = [];
-  if (options.addToTicket && options.saveToTicket !== false && ids.length) {
-    const ticketId = options.addToTicket;
-    const ticket = await prisma.ticket.findUnique({ where: { id: ticketId }, select: { contactId: true } });
+  const ticketId = options.addToTicket;
+  const ticket = ticketId
+    ? await prisma.ticket.findUnique({ where: { id: ticketId }, select: { contactId: true, companyId: true } })
+    : null;
+  if (ticketId && ticket) {
     const existing = await prisma.ticketContact.findMany({ where: { ticketId }, select: { contactId: true } });
     const linked = new Set(existing.map((l) => l.contactId));
-    for (const id of new Set(ids)) {
-      if (!byId.has(id) || linked.has(id) || id === ticket?.contactId) continue;
-      // Someone picked while writing a note becomes an additional contact on the
-      // ticket; promoting them to "cc" is a deliberate choice on the ticket itself.
-      await addTicketContact(ticketId, { contactId: id, role: "additional" });
-      added.push(id);
+    const primaryEmail = ticket.contactId
+      ? (await prisma.contact.findUnique({ where: { id: ticket.contactId }, select: { email: true } }))?.email.trim().toLowerCase()
+      : undefined;
+
+    // Someone picked while writing a note becomes an additional contact on the
+    // ticket; promoting them to "cc" is a deliberate choice on the ticket itself.
+    if (options.saveContacts !== false) {
+      for (const id of new Set(ids)) {
+        if (!byId.has(id) || linked.has(id) || id === ticket.contactId) continue;
+        await addTicketContact(ticketId, { contactId: id, role: "additional" });
+        added.push(id);
+      }
+    }
+    if (options.saveEmails) {
+      const alreadyLinked = new Set(
+        (await prisma.ticketContact.findMany({ where: { ticketId }, include: { contact: { select: { email: true } } } })).map((l) =>
+          l.contact.email.trim().toLowerCase(),
+        ),
+      );
+      for (const email of new Set([...emails, ...ccEmails].map((e) => e.toLowerCase()))) {
+        if (email === primaryEmail || alreadyLinked.has(email)) continue;
+        const link = await addTicketContact(ticketId, { email, role: "additional" });
+        added.push(link.contactId);
+      }
     }
   }
 

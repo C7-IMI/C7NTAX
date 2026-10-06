@@ -45,6 +45,8 @@ export interface TicketActivity {
   extraTo?: string[];
   /** Addresses to copy, e.g. ad-hoc CCs typed into the composer. */
   extraCc?: string[];
+  /** Set false when the author unticked the ticket's own contact for this event. */
+  includePrimary?: boolean;
 }
 
 export async function notifyTicketContact(ticketId: string | undefined, activity: TicketActivity): Promise<void> {
@@ -65,10 +67,15 @@ export async function notifyTicketContact(ticketId: string | undefined, activity
     const noteExtras = activity.isNote ? await ticketNoteRecipients(ticketId) : { to: [] as string[], cc: [] as string[] };
     const cc = await ticketCcEmails(ticketId, primary);
 
-    const to = dedupe([primary, ...noteExtras.to, ...(activity.extraTo ?? [])]);
-    if (!to.length) return;
+    const to = dedupe([...(activity.includePrimary === false ? [] : [primary]), ...noteExtras.to, ...(activity.extraTo ?? [])]);
     const toKeys = new Set(to.map((e) => e.toLowerCase()));
-    const copy = dedupe([...cc, ...noteExtras.cc, ...(activity.extraCc ?? [])]).filter((e) => !toKeys.has(e.toLowerCase()));
+    let copy = dedupe([...cc, ...noteExtras.cc, ...(activity.extraCc ?? [])]).filter((e) => !toKeys.has(e.toLowerCase()));
+    // "Cc only" sends are fine to write but not to transmit — a mail client needs a To.
+    if (!to.length && copy.length) {
+      to.push(copy[0]!);
+      copy = copy.slice(1);
+    }
+    if (!to.length) return;
 
     const contactName = [ticket.contact?.firstName, ticket.contact?.lastName].filter(Boolean).join(" ").trim();
     await emailService.sendTicketActivity(to, {
@@ -104,7 +111,7 @@ export async function notifyTicketStatusChange(
 /** Notify the customer of a non-internal note, copying anyone the author picked. */
 export async function notifyTicketNote(
   ticketId: string | undefined,
-  note: { body: string; extraTo?: string[]; extraCc?: string[] },
+  note: { body: string; extraTo?: string[]; extraCc?: string[]; includePrimary?: boolean },
 ): Promise<void> {
   await notifyTicketContact(ticketId, {
     eventLabel: "New note added",
@@ -112,5 +119,6 @@ export async function notifyTicketNote(
     isNote: true,
     extraTo: note.extraTo,
     extraCc: note.extraCc,
+    includePrimary: note.includePrimary,
   });
 }

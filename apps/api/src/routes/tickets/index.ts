@@ -382,9 +382,15 @@ ticketsRouter.post("/:id/comments", requirePermission(Permission.TicketEdit), as
       // ticket, so the next note can just tick them again.
       const recipients = await resolveRecipients(req.body?.recipients, {
         addToTicket: ticket.id,
-        saveToTicket: req.body?.saveRecipients !== false,
+        saveContacts: req.body?.saveRecipients !== false,
+        saveEmails: req.body?.saveRecipients !== false,
       });
-      await notifyTicketNote(ticket.id, { body, extraTo: recipients.to, extraCc: recipients.cc });
+      await notifyTicketNote(ticket.id, {
+        body,
+        extraTo: recipients.to,
+        extraCc: recipients.cc,
+        includePrimary: req.body?.includePrimary !== false,
+      });
       res.status(201).json({ ...comment, notified: [...recipients.to, ...recipients.cc], addedContacts: recipients.added });
       return;
     }
@@ -402,9 +408,15 @@ ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async
     if (!note.isInternal) {
       const recipients = await resolveRecipients(req.body?.recipients, {
         addToTicket: note.ticketId,
-        saveToTicket: req.body?.saveRecipients !== false,
+        saveContacts: req.body?.saveRecipients !== false,
+        saveEmails: req.body?.saveRecipients !== false,
       });
-      await notifyTicketNote(note.ticketId, { body: String(content), extraTo: recipients.to, extraCc: recipients.cc });
+      await notifyTicketNote(note.ticketId, {
+        body: String(content),
+        extraTo: recipients.to,
+        extraCc: recipients.cc,
+        includePrimary: req.body?.includePrimary !== false,
+      });
     }
     res.status(201).json(note);
   } catch (e) { next(e); }
@@ -427,19 +439,20 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
 
     // Recipients: the primary contact unless the composer removed them, plus anyone
     // picked (client contacts and free addresses), with the ticket's CC contacts copied.
-    const picked = await resolveRecipients(req.body?.recipients, {
-      addToTicket: ticket.id,
-      saveToTicket: req.body?.saveToTicket !== false,
-    });
+      const recipients = await resolveRecipients(req.body?.recipients, {
+        addToTicket: ticket.id,
+        saveContacts: req.body?.saveToTicket !== false,
+        saveEmails: false,
+      });
     const primary = ticket.contact?.email?.trim();
     const explicitTo = Array.isArray(req.body?.to) ? req.body.to.filter(isEmailAddress).map((e: string) => e.trim()) : [];
     const skipPrimary = req.body?.includePrimary === false;
-    const to = [...new Set([...(skipPrimary ? [] : primary ? [primary] : []), ...explicitTo, ...picked.to])];
+    const to = [...new Set([...(skipPrimary ? [] : primary ? [primary] : []), ...explicitTo, ...recipients.to])];
     if (!to.length) throw new AppError("Add at least one recipient — this ticket has no contact email address", 400);
     const toKeys = new Set(to.map((e) => e.toLowerCase()));
     const ticketCc = await ticketCcEmails(ticket.id, primary);
     const explicitCc = Array.isArray(req.body?.cc) ? req.body.cc.filter(isEmailAddress).map((e: string) => e.trim()) : [];
-    const cc = [...new Set([...ticketCc, ...explicitCc, ...picked.cc])].filter((e) => !toKeys.has(e.toLowerCase()));
+    const cc = [...new Set([...ticketCc, ...explicitCc, ...recipients.cc])].filter((e) => !toKeys.has(e.toLowerCase()));
     const bcc: string[] = [...new Set((Array.isArray(req.body?.bcc) ? req.body.bcc.filter(isEmailAddress).map((e: string) => e.trim()) : []) as string[])].filter(
       (e) => !toKeys.has(e.toLowerCase()) && !cc.some((c) => c.toLowerCase() === e.toLowerCase()),
     );
@@ -499,7 +512,7 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
       },
     });
     const stored = await storeAttachments(files, { ticketId: ticket.id, uploadedById: req.user!.userId, commentId: comment.id });
-    res.json({ sent: true, recipient, to, cc, bcc, attachments: stored.length, commentId: comment.id, addedContacts: picked.added });
+    res.json({ sent: true, recipient, to, cc, bcc, attachments: stored.length, commentId: comment.id, addedContacts: recipients.added });
   } catch (e) { next(e); }
 });
 

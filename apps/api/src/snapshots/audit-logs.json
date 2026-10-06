@@ -440,18 +440,6 @@
     "createdAt": "2026-08-18T23:15:40.306Z"
   },
   {
-    "id": "ab654aec-5a9d-4735-aad7-9000578b108a",
-    "action": "ticket:update",
-    "entity": "ticket",
-    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
-    "changes": {
-      "status": "in_progress"
-    },
-    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-06T17:54:21.186Z"
-  },
-  {
     "id": "b9a551e1-ff54-4165-8cbb-d4322160921d",
     "action": "ticket:update",
     "entity": "ticket",
@@ -1127,18 +1115,6 @@
     "userId": "ce4f5ced-cc7a-4103-b9fc-3385930fe9fb",
     "ipAddress": "127.0.0.1",
     "createdAt": "2026-08-11T05:55:14.870Z"
-  },
-  {
-    "id": "a8c8b086-4fb9-4e48-be19-0bdad0072626",
-    "action": "ticket:create",
-    "entity": "ticket",
-    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
-    "changes": {
-      "title": "sample"
-    },
-    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
-    "ipAddress": "127.0.0.1",
-    "createdAt": "2026-08-11T17:54:21.186Z"
   },
   {
     "id": "4a58e2c4-2d14-4c47-8d20-158c9a0518f0",
@@ -2352,65 +2328,80 @@
     "createdAt": "2026-10-06T10:00:32.871Z"
   },
   {
-    "id": "f8591407-df90-4140-8b44-fabf237cad99",
-    "action": "tickets:update",
-    "entity": "tickets",
-    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "id": "0113f58e-a8d7-4abb-9255-77488855bb52",
+    "action": "service-alerts:update",
+    "entity": "service-alerts",
+    "entityId": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
     "changes": {
-      "priority": "medium"
+      "name": "Azure",
+      "rssUrl": "https://azure.status.microsoft/en-us/status/feed/",
+      "enabled": true,
+      "category": "cloud",
+      "sortOrder": 20,
+      "description": "Azure infrastructure, compute, storage and networking services.",
+      "statusPageUrl": "https://azure.status.microsoft/en-us/status",
+      "monitorEnabled": true,
+      "downDetectorUrl": "https://downdetector.com/status/windows-azure/"
     },
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
-    "createdAt": "2026-10-06T17:57:10.204Z"
+    "createdAt": "2026-10-06T19:17:36.379Z"
   },
   {
-    "id": "1ca77f38-56f7-46d4-8966-6118c55ca28a",
+    "id": "6e3ee1c1-dd74-447c-975d-19255d000de6",
+    "action": "service-alerts:update",
+    "entity": "service-alerts",
+    "entityId": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
+    "changes": {
+      "name": "AWS",
+      "rssUrl": "https://status.aws.amazon.com/rss/all.rss",
+      "enabled": true,
+      "category": "cloud",
+      "sortOrder": 30,
+      "description": "Amazon Web Services global infrastructure and regions.",
+      "statusPageUrl": "https://health.aws.amazon.com/health/status",
+      "monitorEnabled": true,
+      "downDetectorUrl": "https://downdetector.com/status/aws-amazon-web-services/"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T19:18:29.229Z"
+  },
+  {
+    "id": "65fcf6fa-eca2-42cb-8e5e-f4613ac25a78",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T19:19:20.554Z"
+  },
+  {
+    "id": "6f9d7a0d-e43e-4908-99d3-9c8ae980f681",
     "action": "tickets:create",
     "entity": "tickets",
-    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+    "entityId": "tickets",
     "changes": {
-      "body": "Hi Alice,\nTrace summary attached, findings in the bullets below.\nRules reviewed\nTraining booked",
-      "html": "Hi Alice,<div>Trace summary attached, findings in the bullets below.</div><div><ul><li>Rules reviewed</li><li>Training booked</li></ul></div>",
-      "subject": "Re: NOC-1902 — Phishing alert: suspicious email circulating",
-      "attachments": [
-        {
-          "size": 67,
-          "filename": "diagnostics.txt",
-          "mimeType": "text/plain",
-          "contentBase64": "QzdOVEFYIGVtYWlsIGF0dGFjaG1lbnQgcHJvYmUgLSB0ZXh0IGZpbGUuCkxpbmUgdHdvIG9mIHRoZSBwcm9iZS4NCg=="
-        },
-        {
-          "size": 89,
-          "filename": "screenshot.png",
-          "mimeType": "image/png",
-          "contentBase64": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII="
-        }
+      "title": "Contact-creation verification",
+      "status": "new",
+      "boardId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+      "endTime": "",
+      "priority": "medium",
+      "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+      "contactId": "ba2d02cf-44ec-40ff-8499-0c049f8735de",
+      "startTime": "",
+      "contactName": "",
+      "description": "",
+      "contactEmail": "",
+      "additionalContactIds": [
+        "17e99e78-d345-4955-b607-7bb78601c7fc"
       ]
     },
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
-    "createdAt": "2026-10-06T18:47:27.980Z"
-  },
-  {
-    "id": "d04919a1-43a7-44a3-8c5c-b1e671d30fc8",
-    "action": "tickets:create",
-    "entity": "tickets",
-    "entityId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
-    "changes": {
-      "body": "Investigation summary\n\nHigh risk – spoofed sender\n\nTrace ID 8842\n\nhttps://example.com/report",
-      "html": "<p style=\"font-size: 11.0pt; font-family: Calibri,sans-serif; color: #1F3864\"><b>Investigation summary</b></p><p style=\"margin-left: 36.0pt\"><span style=\"color: #C00000\">High risk</span> – spoofed sen...",
-      "subject": "Re: NOC-1902 — Phishing alert: suspicious email circulating",
-      "attachments": [
-        {
-          "size": 20,
-          "filename": "dropped-notes.txt",
-          "mimeType": "text/plain",
-          "contentBase64": "ZHJvcHBlZCB0ZXh0IHBheWxvYWQ="
-        }
-      ]
-    },
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "ipAddress": "::1",
-    "createdAt": "2026-10-06T19:00:01.365Z"
+    "createdAt": "2026-10-06T19:28:13.134Z"
   }
 ]

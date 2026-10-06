@@ -189,6 +189,7 @@ export function TicketsPage() {
   const [boards, setBoards] = useState<Array<{id:string;name:string}>>([]);
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
   const [contacts, setContacts] = useState<Array<{id:string;firstName:string;lastName:string;email:string}>>([]);
+  const [newTicketContacts, setNewTicketContacts] = useState<Recipient[]>([]);
 
   // ── Batch selection ──
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -288,7 +289,17 @@ export function TicketsPage() {
     setShowNew(true);
   };
   const handleCreate = async (e: React.FormEvent) => { e.preventDefault();
-    try { await api.post("/tickets",form); toast.success("Ticket created"); setShowNew(false); setForm({title:"",description:"",priority:"medium",boardId:"",companyId:"",contactId:"",contactName:"",contactEmail:"",startTime:"",endTime:"",status:"new"}); fetchTickets(); }
+    try {
+      await api.post("/tickets", {
+        ...form,
+        additionalContactIds: newTicketContacts.map((r) => r.contactId).filter(Boolean),
+      });
+      toast.success("Ticket created");
+      setShowNew(false);
+      setForm({title:"",description:"",priority:"medium",boardId:"",companyId:"",contactId:"",contactName:"",contactEmail:"",startTime:"",endTime:"",status:"new"});
+      setNewTicketContacts([]);
+      fetchTickets();
+    }
     catch { toast.error("Failed"); }
   };
 
@@ -694,6 +705,17 @@ export function TicketsPage() {
               <div><label className="text-xs text-gray-500 block mb-1">Start / End Time</label><div className="grid grid-cols-2 gap-1"><input className="input-field text-xs" type="datetime-local" value={form.startTime} onChange={e=>setForm({...form,startTime:e.target.value})} placeholder="Start"/><input className="input-field text-xs" type="datetime-local" value={form.endTime} onChange={e=>setForm({...form,endTime:e.target.value})} placeholder="End"/></div></div>
             </div>
             <div><label className="text-xs text-gray-500 block mb-1">Summary <span className="text-red-400">*</span></label><input className="input-field" placeholder="Brief summary of the issue" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/></div>
+            {/* Extra people on the ticket, picked up front instead of after the fact. */}
+            <div className="rounded-lg border border-surface-border bg-surface-lighter/40 px-2.5 py-2">
+              <RecipientField
+                label="Also"
+                value={newTicketContacts}
+                onChange={setNewTicketContacts}
+                suggestions={contacts.filter((c) => c.id !== form.contactId)}
+                placeholder="Add CC / additional contacts"
+                hint="Kept on the ticket as additional contacts you can promote to CC later."
+              />
+            </div>
             <div><label className="text-xs text-gray-500 block mb-1">Description</label><textarea className="input-field" placeholder="Detailed description..." value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={4}/></div>
             <div className="flex gap-2 justify-end pt-2 border-t border-surface-border"><button type="button" className="btn-secondary" onClick={()=>setShowNew(false)}>Cancel</button><button type="submit" className="btn-primary flex items-center gap-1.5"><Save size={14}/>Create Ticket</button></div>
           </form>
@@ -985,8 +1007,10 @@ export function TicketDetailPage() {
   const [emailCc, setEmailCc] = useState<Recipient[]>([]);
   const [emailBcc, setEmailBcc] = useState<Recipient[]>([]);
   const [showBcc, setShowBcc] = useState(false);
-  // The note composer can email the note to the ticket's people, and add new ones to the ticket.
-  const [noteExtras, setNoteExtras] = useState<Recipient[]>([]);
+  const [showAddContact, setShowAddContact] = useState(false);
+  // The note composer emails the note to the ticket's people; this records the boxes the author
+  // changed for the note being written (keyed by email), plus any Cc added on the fly.
+  const [noteOverrides, setNoteOverrides] = useState<Record<string, boolean>>({});
   const [noteCc, setNoteCc] = useState<Recipient[]>([]);
   const [noteRecipientsOpen, setNoteRecipientsOpen] = useState(false);
   const [attachingEmailFiles, setAttachingEmailFiles] = useState(false);
@@ -1057,7 +1081,22 @@ export function TicketDetailPage() {
     if(!noteText.trim())return;
     setPosting(true);
     const internal = noteInternal;
-    try{await api.post(`/tickets/${id}/comments`,{body:noteText, isInternal:internal});setNoteText("");setNoteInternal(false);load();toast.success(internal?"Internal note posted":"Note posted");}
+    try{
+      // The primary contact is ticked by default; anything added in the Cc field is
+      // emailed with the note and saved onto the ticket.
+      const { recipients, includePrimary } = recipientPayload(noteTo, noteCc);
+      await api.post(`/tickets/${id}/comments`,{
+        body:noteText,
+        isInternal:internal,
+        recipients,
+        includePrimary,
+        saveRecipients: true,
+      });
+      setNoteText("");setNoteInternal(false);setNoteOverrides({});setNoteCc([]);setNoteRecipientsOpen(false);
+      load();
+      const wentTo = internal ? 0 : new Set([...noteTo, ...noteCc].map(r => r.email.toLowerCase())).size;
+      toast.success(internal ? "Internal note posted" : wentTo > 1 ? `Note posted and emailed to ${wentTo} people` : "Note posted");
+    }
     catch{toast.error("Failed");}
     finally{setPosting(false);}
   };
@@ -1163,11 +1202,49 @@ export function TicketDetailPage() {
   /** Client contacts offered in the address fields. */
   const contactSuggestions: RecipientSuggestion[] = contacts;
 
-  /** Contacts added as "notify on every update" — copied on everything the ticket sends. */
-  const ticketCcRecipients = (): Recipient[] =>
+  /** Contacts on the ticket who are emailed automatically, for the composer hints. */
+  const autoEmailContacts = (): Array<{ name: string; email: string; role: string }> =>
     ((ticket?.additionalContacts as any[]) || [])
-      .filter((link: any) => link.role === "cc" && link.contact?.email)
-      .map((link: any) => recipientFromContact(link.contact));
+      .filter((link: any) => link.contact?.email && (link.role === "cc" || link.notifyOnNote))
+      .map((link: any) => ({
+        name: [link.contact.firstName, link.contact.lastName].filter(Boolean).join(" ").trim() || link.contact.email,
+        email: String(link.contact.email).toLowerCase(),
+        role: String(link.role || "cc"),
+      }));
+
+  const autoRecipientHint = (() => {
+    const people = autoEmailContacts();
+    if (!people.length) return undefined;
+    const names = people.map((p) => p.name).join(", ");
+    return `${names} also receive${people.length === 1 ? "s" : ""} this automatically.`;
+  })();
+
+  /** Everyone on the ticket, as note recipients — the primary first, then the rest. */
+  const noteRecipientPool = ticketContactRecipients();
+  /** Whether this person receives the note: their role decides it, unless the author changed it here. */
+  const noteRecipientChecked = (recipient: Recipient): boolean => {
+    const override = noteOverrides[recipient.email.toLowerCase()];
+    if (override !== undefined) return override;
+    const primaryId = (ticket?.contact as any)?.id;
+    if (!recipient.contactId || recipient.contactId === primaryId) return true;
+    const link = ((ticket?.additionalContacts as any[]) || []).find((l: any) => l.contact?.id === recipient.contactId);
+    return link ? link.role === "cc" || Boolean(link.notifyOnNote) : true;
+  };
+  const noteTo = noteRecipientPool.filter(noteRecipientChecked);
+  const toggleNoteRecipient = (recipient: Recipient) => {
+    const email = recipient.email.toLowerCase();
+    setNoteOverrides((prev) => ({ ...prev, [email]: !noteRecipientChecked(recipient) }));
+  };
+
+  /** Ticket contacts offered as one-click CCs — anyone not already addressed or covered automatically. */
+  const quickCcContacts = ticketContactRecipients().filter((r) => {
+    const email = r.email.toLowerCase();
+    const primaryId = (ticket?.contact as any)?.id;
+    if (r.contactId && r.contactId === primaryId) return false;
+    if (autoEmailContacts().some((p) => p.email === email)) return false;
+    if (emailCc.some((c) => c.email.toLowerCase() === email)) return false;
+    return !emailTo.some((t) => t.email.toLowerCase() === email);
+  });
 
   /** Turn picked recipients into the payload the API expects. */
   const recipientPayload = (to: Recipient[], cc: Recipient[]) => {
@@ -1204,6 +1281,43 @@ export function TicketDetailPage() {
       excludeEmails={options.exclude}
     />
   );
+
+  /** Extra people on the ticket, added from the Contacts card or while writing a note. */
+  const addTicketContactLink = async (person: Recipient) => {
+    try {
+      await api.post(`/tickets/${id}/contacts`, person.contactId
+        ? { contactId: person.contactId, role: "additional" }
+        : { email: person.email, firstName: person.name, role: "additional" });
+      toast.success(`${person.name || person.email} added to the ticket`);
+      load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Could not add that contact");
+    }
+  };
+
+  const updateTicketContactLink = async (contactId: string, mode: string) => {
+    const patch = mode === "cc"
+      ? { role: "cc", notifyOnNote: true }
+      : mode === "notes"
+        ? { role: "additional", notifyOnNote: true }
+        : { role: "additional", notifyOnNote: false };
+    try {
+      await api.patch(`/tickets/${id}/contacts/${contactId}`, patch);
+      load();
+    } catch {
+      toast.error("Could not update that contact");
+    }
+  };
+
+  const removeTicketContactLink = async (contactId: string) => {
+    try {
+      await api.delete(`/tickets/${id}/contacts/${contactId}`);
+      toast.success("Contact removed from the ticket");
+      load();
+    } catch {
+      toast.error("Could not remove that contact");
+    }
+  };
 
   const attachEmailFiles = async (files: File[]) => {
     if (!files.length) return;
@@ -1614,6 +1728,54 @@ export function TicketDetailPage() {
                   <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Add Note"}</button>
                 </div>
               </div>
+
+              {/* Who the note is emailed to — the ticket's own people, plus anyone added on the fly. */}
+              {!noteInternal && (
+                <div className="rounded-lg border border-surface-border bg-surface-lighter/40 px-2.5 py-2">
+                  <button
+                    type="button"
+                    onClick={() => setNoteRecipientsOpen(v => !v)}
+                    className="flex w-full items-center justify-between text-xs text-gray-400 transition-colors hover:text-gray-200"
+                    aria-expanded={noteRecipientsOpen}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Send size={12} />
+                      Send as email to {noteTo.length + noteCc.length} {noteTo.length + noteCc.length === 1 ? "person" : "people"}
+                    </span>
+                    <span className="flex items-center gap-1.5 text-[11px] text-gray-600">
+                      {noteRecipientsOpen ? "Hide" : "Change"}
+                      <ChevronDown size={12} className={noteRecipientsOpen ? "rotate-180 transition-transform" : "transition-transform"} />
+                    </span>
+                  </button>
+                  {noteRecipientsOpen && (
+                    <div className="mt-2 space-y-1.5">
+                      {noteRecipientPool.length === 0 && (
+                        <p className="text-[11px] text-gray-600">This ticket has no contact yet — add one below.</p>
+                      )}
+                      {noteRecipientPool.map((recipient) => {
+                        const checked = noteRecipientChecked(recipient);
+                        const role = (recipient as { role?: string }).role;
+                        return (
+                          <label key={recipient.key} className="flex cursor-pointer select-none items-center gap-2 text-xs text-gray-300">
+                            <input type="checkbox" checked={checked} onChange={() => toggleNoteRecipient(recipient)} />
+                            <span className="font-medium text-white">{recipient.name || recipient.email}</span>
+                            <span className="truncate text-gray-500">{recipient.email}</span>
+                            <span className="ml-auto shrink-0 rounded-full bg-surface-lighter px-2 py-0.5 text-[10px] text-gray-400">
+                              {role === "cc" ? "CC on all email" : role ? "Additional" : "Primary"}
+                            </span>
+                          </label>
+                        );
+                      })}
+                      <div className="pt-1">
+                        {renderRecipientField("Cc", noteCc, setNoteCc, {
+                          placeholder: "Add a CC",
+                          hint: "Anyone new here is saved to the ticket and emailed this note.",
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </form>
             <div className="space-y-3">
               {noteEntries.length === 0 && <p className="text-xs text-gray-600">No notes yet.</p>}
@@ -1687,6 +1849,78 @@ export function TicketDetailPage() {
               <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Contact Phone</span><span className="text-white text-xs">{(ticket.contact as any)?.phone||"-"}</span></div>
               <div className="flex items-center justify-between"><span className="text-xs text-gray-500">Assigned To</span><span className="text-white text-xs">{ticket.assignedTo?`${(ticket.assignedTo as any).firstName} ${(ticket.assignedTo as any).lastName}`:"-"}</span></div>
             </div>)}
+          </div>
+          <div className="card space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Contacts</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddContact((v) => !v)}
+                className="flex items-center gap-1 text-xs text-cyber-400 transition-colors hover:text-cyber-300"
+                aria-expanded={showAddContact}
+              >
+                <Plus size={12} /> Add contact
+              </button>
+            </div>
+
+            {/* Primary contact is the ticket's own field; the rest are links on the ticket. */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-medium text-white">
+                    {ticket.contact ? `${(ticket.contact as any).firstName || ""} ${(ticket.contact as any).lastName || ""}`.trim() : "No contact"}
+                  </span>
+                  <span className="block truncate text-[11px] text-gray-500">{(ticket.contact as any)?.email || "—"}</span>
+                </span>
+                <span className="shrink-0 rounded-full bg-cyber-600/20 px-2 py-0.5 text-[10px] text-cyber-300">Primary</span>
+              </div>
+
+              {((ticket.additionalContacts as any[]) || []).map((link: any) => (
+                <div key={link.id} className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-xs font-medium text-white">
+                      {[link.contact?.firstName, link.contact?.lastName].filter(Boolean).join(" ") || link.contact?.email}
+                    </span>
+                    <span className="block truncate text-[11px] text-gray-500">{link.contact?.email}</span>
+                  </span>
+                  <select
+                    className="shrink-0 rounded border border-surface-border bg-surface-input px-1.5 py-0.5 text-[11px] text-gray-300"
+                    value={link.role === "cc" ? "cc" : link.notifyOnNote ? "notes" : "ticket"}
+                    onChange={(e) => void updateTicketContactLink(link.contact.id, e.target.value)}
+                    title="How this contact is used on the ticket"
+                  >
+                    <option value="cc">CC on all email</option>
+                    <option value="notes">Emailed notes</option>
+                    <option value="ticket">Ticket only</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => void removeTicketContactLink(link.contact.id)}
+                    title={`Remove ${link.contact?.email} from this ticket`}
+                    aria-label={`Remove ${link.contact?.email} from this ticket`}
+                    className="shrink-0 text-gray-600 transition-colors hover:text-red-400"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {showAddContact && (
+              <div className="rounded-lg border border-surface-border bg-surface-lighter/40 px-2.5 py-2">
+                <RecipientField
+                  label="Add"
+                  value={[]}
+                  onChange={(picked) => {
+                    const person = picked[0];
+                    if (person) void addTicketContactLink(person);
+                  }}
+                  suggestions={contactSuggestions}
+                  placeholder="Search this client's contacts or type an address"
+                  hint="Added as an additional contact — choose how they are used once added."
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>)}
@@ -2021,6 +2255,21 @@ export function TicketDetailPage() {
                 hint: autoRecipientHint,
               })}
               {showBcc && renderRecipientField("Bcc", emailBcc, setEmailBcc, { placeholder: "Add a BCC" })}
+              {quickCcContacts.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pl-16">
+                  <span className="text-[11px] text-gray-600">On this ticket:</span>
+                  {quickCcContacts.map((r) => (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => setEmailCc((prev) => [...prev, r])}
+                      className="rounded-full border border-surface-border px-2 py-0.5 text-[11px] text-gray-400 transition-colors hover:border-cyber-400 hover:text-cyber-300"
+                    >
+                      + {r.name || r.email}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <label className="block text-xs text-gray-400">

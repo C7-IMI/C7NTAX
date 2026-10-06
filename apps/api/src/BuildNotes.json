@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.6.034",
+    "date": "2026-10-06",
+    "title": "CC anyone on a ticket email, and keep extra contacts on the ticket",
+    "changes": [
+      {
+        "text": "**The Email Contact composer has Cc and Bcc.** *To* starts with the ticket's contact and accepts anyone else — type a name to search the client's contacts or type any address, and it becomes a chip you can remove. *Cc* sits underneath with a **Bcc** toggle beside it, exactly as in Outlook on the web and Gmail, and a row of one-click **On this ticket** chips offers the ticket's other people. The activity entry in Notes now records the whole envelope (`To:`, `Cc:`, `Bcc:`), so it is clear who saw a message.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Tickets can carry extra contacts, not just one.** A new **Contacts** card sits beside *Client Info* and lists the primary contact plus everyone else on the ticket. **Add contact** searches the client's contacts or accepts a typed address, and each person has one three-way choice that matches how the PSA tools model it: **CC on all email** (copied on every ticket notification), **Emailed notes** (only notes), or **Ticket only** (recorded on the ticket, emailed nothing automatically). Any of them can be removed with one click.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Extra contacts can be added at every point in a ticket's life.** While *creating* a ticket, the new **Also** field takes CC/additional contacts up front and links them as the ticket is created. On an existing ticket the Contacts card adds and removes them at any time. And when *submitting a note*, the composer's **Send as email to N people** panel lists the ticket's contacts with a tick-box each — pre-ticked exactly as their role says — plus a Cc field for anyone else; a brand-new address typed there is emailed the note **and saved to the ticket** (and to the client's contact list), so the next note just ticks them.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The ticket's CC contacts are copied automatically, everywhere the ticket emails the customer.** Status changes, note notifications and time-entry notices all route through one helper, which now resolves the ticket's CC contacts and adds them to the Cc of the outgoing message, de-duplicated against the To list. Additional contacts flagged for notes are included on notes only. A \"Cc-only\" send (the customer's own address unticked, someone else added) is promoted to a real To on the wire, because mail clients need one.",
+        "type": "Update"
+      },
+      {
+        "text": "Free-form recipients behave sensibly per surface: on a note they become contacts of the client and are linked to the ticket; in the email dialog a typed external address is used for that message only, while picking one of the client's contacts still records them on the ticket. Addresses are validated on both sides — a malformed one is flagged inline instead of bouncing.",
+        "type": "Update"
+      },
+      {
+        "text": "The composer's Cc hint names who is already covered (\"Thomas Mueller also receives this automatically\"), so nobody is added twice, and the note panel's Cc hint says what saving does. The ticket-print view and the existing single-contact fields are unchanged.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.033",
     "date": "2026-10-06",
     "title": "The display-density toggle lives in My Account only",

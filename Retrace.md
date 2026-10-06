@@ -2532,3 +2532,36 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - My Account → **Use compact spacing**: `data-density` went `comfortable → compact → comfortable` and `localStorage.c7_density` tracked it, then reverted to leave the preference as found.
 - A reload with response monitoring showed **no** 5xx (the four 500s in the console log predated this change and came from the earlier email probe while the SMTP sink was down).
 - Web typecheck 0 errors; design-token lint unchanged (no new raw hex).
+
+---
+
+### Prompt 191 — CC in the email composer, and extra contacts on a ticket
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live end to end | **Duration:** ~2 h
+**BuildNotes IDs:** 2026.10.6.034 - CC anyone on a ticket email, and keep extra contacts on the ticket
+> I need to be able to CC people in the e-mail composer. 
+>
+> I also need the option to add additional contacts to a ticket during creation or editing or notes submission. Use your best logic to implement it where it makes the most sense.
+>
+> Use the attached screenshot as well as AutotaskPSA, Connectwise Asio, Scoro as references for what I need.
+
+**What the references model, and what was taken from them**
+- Autotask's *Send Notes as Email* panel (the screenshot) is a per-note recipient list: the ticket contact and the ticket's other people ticked individually, with a Cc row for anybody else. ConnectWise and Scoro both keep first-class *additional contacts* on a ticket rather than a single contact field. So: a real `TicketContact` join table with a role, a Contacts card on the ticket, a recipient panel on the note composer, and Cc/Bcc on the manual composer.
+- The one place the model is deliberately simpler than Autotask is the role: instead of separate "notify" flags scattered around, each ticket contact has **one** three-way choice — *CC on all email*, *Emailed notes*, *Ticket only* — which maps to `(role, notifyOnNote)` and is the only thing the UI has to explain.
+
+**Where it went**
+- `apps/api/src/services/ticketContacts.ts` (new): list/add/resolve/remove helpers, `ticketCcEmails()` for the automatic Cc, `ticketNoteRecipients()` for note defaults, and `resolveRecipients()` which turns the composer's `{contactIds, emails, ccContactIds, ccEmails}` payload into addresses *and* links newly picked people to the ticket. A bare address is found-or-created as a contact of the ticket's client, so the person lands in the client's contact list too.
+- `apps/api/src/services/ticketNotifications.ts`: the single choke point that emails the customer now resolves the ticket's CC contacts and the note defaults, de-duplicates against To, and promotes a Cc-only send to a real To so the wire message always has one.
+- `apps/api/src/routes/tickets/index.ts`: `GET/POST/PATCH/DELETE /:id/contacts`, `additionalContactIds` on create, and Cc/Bcc plus recipients on `/:id/email` and `/:id/comments`; the activity entry records the full envelope.
+- `apps/web/src/components/RecipientField.tsx` (new): chips + client-contact autocomplete + free-address entry, used by the email dialog (To/Cc/Bcc), the Contacts card, the note panel and the new-ticket form.
+- `packages/email/src/EmailService.ts`: `sendTicketActivity` takes `to` as an array plus `cc`.
+
+**What was actually broken along the way**
+- Nothing pre-existing, but two things the tests caught in my own work: free-form Cc addresses added during note submission were emailed but **not** saved to the ticket (the resolve helper only linked known contact ids), and the one-click "On this ticket" CC chips offered people who were *already* being copied automatically. Both fixed before the final verification pass.
+- The local SMTP sink had to be bound dual-stack — nodemailer resolves `localhost` to `::1`, and an IPv4-only listener gave `connect ECONNREFUSED ::1:587`, which the app correctly surfaced as its 502 "check the SMTP configuration" message.
+
+**Verification (live)**
+- Wire captures: an automatic send produced `To: alice@umbrellacorp.net` + `Cc: tmueller@umbrellacorp.net`; a manual one `To: alice@umbrellacorp.net, helpdesk-cc@umbrellacorp.net` + `Cc: tmueller@umbrellacorp.net`; and the SMTP **envelope** listed `alice`, `tmueller` and `audit-archive@example.com` — the Bcc address arriving without appearing in the headers, which is the correct behaviour.
+- Note submission: ticked rows arrive as `contactIds` (verified by intercepting the real request payload), the note email went to all ticked people, and the brand-new Cc address was created as a client contact and linked to the ticket.
+- Ticket creation: the form posted `additionalContactIds`, and the created ticket came back with the contact linked as *additional*.
+- Contacts card: add via search, all three roles (persisted across a reload), and remove — each confirmed in the UI and the database. The ticket and its people were then restored to their original state.
+- Typecheck web 0, api 156 (baseline); design-token lint unchanged. A whitespace-only `prisma format` realignment of the whole schema was reverted so the schema diff is the 22 lines it should be.
