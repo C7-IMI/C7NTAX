@@ -8,7 +8,7 @@ import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, C
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
-import { RichTextEditor, toAttachmentDraft, type EmailAttachmentDraft } from "../components/RichTextEditor";
+import { RichTextEditor, toAttachmentDraft, EMAIL_PROFILE, type EmailAttachmentDraft } from "../components/richText";
 import { RecipientField, recipientFromContact, offOrgRecipients, offOrgSummary, type Recipient, type RecipientSuggestion } from "../components/RecipientField";
 import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
@@ -2323,6 +2323,7 @@ export function TicketDetailPage() {
             <div>
               <span className="mb-1 block text-xs text-gray-400">Message</span>
               <RichTextEditor
+                profile={EMAIL_PROFILE}
                 onChange={(html, text) => setEmailForm(prev => ({ ...prev, html, body: text }))}
                 placeholder="Write your message… (Ctrl+Enter to send)"
                 attachments={emailAttachments}

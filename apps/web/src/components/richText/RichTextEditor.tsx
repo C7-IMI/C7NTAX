@@ -4,7 +4,8 @@ import {
   RemoveFormatting, Undo2, Redo2, Paperclip, X, FileText, Image as ImageIcon, Loader2,
   Copy, ExternalLink, Scissors, ClipboardPaste, CheckSquare, Trash2,
 } from "lucide-react";
-import { ContextMenu, useContextMenu, type MenuEntry } from "./ContextMenu";
+import { ContextMenu, useContextMenu, type MenuEntry } from "../ContextMenu";
+import { EMAIL_PROFILE, type RichTextProfile, type ToolbarGroup } from "./profiles";
 
 export interface EmailAttachmentDraft {
   filename: string;
@@ -154,13 +155,19 @@ function ToolbarButton({ label, shortcut, active, disabled, onClick, children }:
 
 const Separator = () => <span className="mx-1 h-5 w-px bg-surface-border/70" aria-hidden />;
 
+/** Shared empty list so the attachment strip is a no-op when the profile omits it. */
+const EMPTY_ATTACHMENTS: EmailAttachmentDraft[] = [];
+
 interface RichTextEditorProps {
   onChange: (html: string, text: string) => void;
+  /** Which options this surface gets — see profiles.ts. */
+  profile?: RichTextProfile;
   placeholder?: string;
   minHeight?: number;
-  attachments: EmailAttachmentDraft[];
-  onAttachFiles: (files: File[]) => void;
-  onRemoveAttachment: (index: number) => void;
+  /** Attachment chips; only meaningful when the profile takes attachments. */
+  attachments?: EmailAttachmentDraft[];
+  onAttachFiles?: (files: File[]) => void;
+  onRemoveAttachment?: (index: number) => void;
   onRequestSend?: () => void;
   /** Told when an image could not be embedded (too large or unreadable) so the dialog can toast it. */
   onInlineImageError?: (message: string) => void;
@@ -169,16 +176,20 @@ interface RichTextEditorProps {
 }
 
 /**
- * Rich text composer for outbound email — formatting toolbar, link editing, inline images,
- * attachment chips, drag-and-drop and an editor-specific context menu, in the shape people expect
- * from Outlook on the web or Gmail. The DOM is kept uncontrolled (only written on mount) so the
- * caret never jumps while typing.
+ * Rich text editor used across C7NTAX — formatting toolbar, link editing, inline
+ * images, drag-and-drop, Word-aware paste and an editor-specific context menu, in
+ * the shape people expect from Outlook on the web or Gmail. The DOM is kept
+ * uncontrolled (only written on mount) so the caret never jumps while typing.
+ *
+ * Which options appear comes from the `profile`; everything the editor can do is
+ * shared, so improving it improves every surface that uses it.
  */
 export function RichTextEditor({
   onChange,
-  placeholder = "Write your message…",
-  minHeight = 220,
-  attachments,
+  profile = EMAIL_PROFILE,
+  placeholder = profile.placeholder,
+  minHeight = profile.minHeight,
+  attachments = EMPTY_ATTACHMENTS,
   onAttachFiles,
   onRemoveAttachment,
   onRequestSend,
@@ -186,6 +197,8 @@ export function RichTextEditor({
   disabled,
   attaching,
 }: RichTextEditorProps) {
+  const takesAttachments = Boolean(profile.attachments) && Boolean(onAttachFiles);
+  const canSend = Boolean(profile.sendShortcut) && Boolean(onRequestSend);
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -219,11 +232,18 @@ export function RichTextEditor({
     }
   }, [savedRange]);
 
-  /** Reads image files and drops them into the message at the caret; all other files become attachments. */
+  /**
+   * Reads image files and drops them in at the caret. Anything that is not an
+   * image becomes an attachment where the profile takes them; on a surface with
+   * nowhere to put a file it is reported instead of vanishing.
+   */
   const handleIncomingFiles = useCallback(async (files: File[]) => {
     const images = files.filter((f) => f.type.startsWith("image/"));
     const others = files.filter((f) => !f.type.startsWith("image/"));
-    if (others.length) onAttachFiles(others);
+    if (others.length) {
+      if (takesAttachments) onAttachFiles?.(others);
+      else onInlineImageError?.(`${others.map((f) => f.name).join(", ")} cannot be attached here — insert an image, or attach the file on the record itself`);
+    }
     if (!images.length) return;
     const oversized = images.filter((f) => f.size > MAX_INLINE_IMAGE_BYTES);
     const usable = images.filter((f) => f.size <= MAX_INLINE_IMAGE_BYTES);
@@ -238,7 +258,7 @@ export function RichTextEditor({
     } catch (error) {
       onInlineImageError?.(error instanceof Error ? error.message : "Could not embed that image");
     }
-  }, [emit, onAttachFiles, onInlineImageError, restoreSelection]);
+  }, [emit, onAttachFiles, onInlineImageError, restoreSelection, takesAttachments]);
 
   const refreshState = useCallback(() => {
     const el = editorRef.current;
@@ -376,7 +396,7 @@ export function RichTextEditor({
       "separator",
       { label: "Insert link…", icon: Link2, hint: "Ctrl+K", onSelect: () => openLinkPopover() },
       { label: "Insert image…", icon: ImageIcon, onSelect: () => imageInputRef.current?.click() },
-      { label: "Attach file…", icon: Paperclip, onSelect: () => fileInputRef.current?.click() },
+      ...(takesAttachments ? [{ label: "Attach file…", icon: Paperclip, onSelect: () => fileInputRef.current?.click() } as MenuEntry] : []),
       { label: "Clear formatting", icon: RemoveFormatting, onSelect: () => { restoreSelection(); exec("removeFormat"); exec("formatBlock", "<div>"); } },
       "separator",
       { label: "Undo", icon: Undo2, hint: "Ctrl+Z", onSelect: () => exec("undo") },
@@ -400,46 +420,64 @@ export function RichTextEditor({
 
   const iconFor = (mimeType: string) => (mimeType.startsWith("image/") ? <ImageIcon size={13} /> : <FileText size={13} />);
 
+  const shows = (group: ToolbarGroup) => profile.toolbar.includes(group);
+
   return (
     <div className={`rounded-lg border bg-surface-input transition-colors ${dragging ? "border-cyber-500" : "border-surface-border"} ${disabled ? "opacity-60" : ""}`}>
       <div role="toolbar" aria-label="Formatting" className="flex flex-wrap items-center gap-0.5 border-b border-surface-border px-1.5 py-1">
-        <ToolbarButton label="Bold" shortcut="Ctrl+B" active={active.bold} disabled={disabled} onClick={() => exec("bold")}><Bold size={15} /></ToolbarButton>
-        <ToolbarButton label="Italic" shortcut="Ctrl+I" active={active.italic} disabled={disabled} onClick={() => exec("italic")}><Italic size={15} /></ToolbarButton>
-        <ToolbarButton label="Underline" shortcut="Ctrl+U" active={active.underline} disabled={disabled} onClick={() => exec("underline")}><Underline size={15} /></ToolbarButton>
-        <ToolbarButton label="Strikethrough" active={active.strikeThrough} disabled={disabled} onClick={() => exec("strikeThrough")}><Strikethrough size={15} /></ToolbarButton>
-        <Separator />
-        <ToolbarButton label="Bulleted list" active={active.insertUnorderedList} disabled={disabled} onClick={() => exec("insertUnorderedList")}><List size={15} /></ToolbarButton>
-        <ToolbarButton label="Numbered list" active={active.insertOrderedList} disabled={disabled} onClick={() => exec("insertOrderedList")}><ListOrdered size={15} /></ToolbarButton>
-        <ToolbarButton label="Quote" active={active.blockquote} disabled={disabled} onClick={() => exec("formatBlock", active.blockquote ? "<div>" : "<blockquote>")}><Quote size={15} /></ToolbarButton>
-        <Separator />
-        <div className="relative">
-          <ToolbarButton label="Insert link" shortcut="Ctrl+K" active={linkOpen || linkActive} disabled={disabled} onClick={openLinkPopover}><Link2 size={15} /></ToolbarButton>
-          {linkOpen && (
-            <div className="absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-surface-border bg-surface p-2 shadow-xl">
-              <label className="text-[10px] uppercase tracking-wide text-gray-500">Link address</label>
-              <input
-                autoFocus
-                value={linkValue}
-                onChange={(e) => setLinkValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") { e.preventDefault(); applyLink(); }
-                  if (e.key === "Escape") setLinkOpen(false);
-                }}
-                placeholder="https://example.com"
-                className="input-field mt-1 text-sm"
-              />
-              <div className="mt-2 flex items-center justify-end gap-1.5">
-                <button type="button" onClick={() => setLinkOpen(false)} className="btn-secondary text-xs py-1 px-2">Cancel</button>
-                <button type="button" onClick={() => applyLink()} className="btn-primary text-xs py-1 px-2">Apply</button>
-              </div>
+        {shows("emphasis") && (
+          <>
+            <ToolbarButton label="Bold" shortcut="Ctrl+B" active={active.bold} disabled={disabled} onClick={() => exec("bold")}><Bold size={15} /></ToolbarButton>
+            <ToolbarButton label="Italic" shortcut="Ctrl+I" active={active.italic} disabled={disabled} onClick={() => exec("italic")}><Italic size={15} /></ToolbarButton>
+            <ToolbarButton label="Underline" shortcut="Ctrl+U" active={active.underline} disabled={disabled} onClick={() => exec("underline")}><Underline size={15} /></ToolbarButton>
+            <ToolbarButton label="Strikethrough" active={active.strikeThrough} disabled={disabled} onClick={() => exec("strikeThrough")}><Strikethrough size={15} /></ToolbarButton>
+          </>
+        )}
+        {shows("lists") && (
+          <>
+            <Separator />
+            <ToolbarButton label="Bulleted list" active={active.insertUnorderedList} disabled={disabled} onClick={() => exec("insertUnorderedList")}><List size={15} /></ToolbarButton>
+            <ToolbarButton label="Numbered list" active={active.insertOrderedList} disabled={disabled} onClick={() => exec("insertOrderedList")}><ListOrdered size={15} /></ToolbarButton>
+            <ToolbarButton label="Quote" active={active.blockquote} disabled={disabled} onClick={() => exec("formatBlock", active.blockquote ? "<div>" : "<blockquote>")}><Quote size={15} /></ToolbarButton>
+          </>
+        )}
+        {shows("links") && (
+          <>
+            <Separator />
+            <div className="relative">
+              <ToolbarButton label="Insert link" shortcut="Ctrl+K" active={linkOpen || linkActive} disabled={disabled} onClick={openLinkPopover}><Link2 size={15} /></ToolbarButton>
+              {linkOpen && (
+                <div className="absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-surface-border bg-surface p-2 shadow-xl">
+                  <label className="text-[10px] uppercase tracking-wide text-gray-500">Link address</label>
+                  <input
+                    autoFocus
+                    value={linkValue}
+                    onChange={(e) => setLinkValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); applyLink(); }
+                      if (e.key === "Escape") setLinkOpen(false);
+                    }}
+                    placeholder="https://example.com"
+                    className="input-field mt-1 text-sm"
+                  />
+                  <div className="mt-2 flex items-center justify-end gap-1.5">
+                    <button type="button" onClick={() => setLinkOpen(false)} className="btn-secondary text-xs py-1 px-2">Cancel</button>
+                    <button type="button" onClick={() => applyLink()} className="btn-primary text-xs py-1 px-2">Apply</button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <ToolbarButton label="Remove link" disabled={disabled} onClick={() => applyLink(true)}><Link2Off size={15} /></ToolbarButton>
-        <ToolbarButton label="Clear formatting" disabled={disabled} onClick={() => { exec("removeFormat"); exec("formatBlock", "<div>"); }}><RemoveFormatting size={15} /></ToolbarButton>
-        <Separator />
-        <ToolbarButton label="Undo" shortcut="Ctrl+Z" disabled={disabled} onClick={() => exec("undo")}><Undo2 size={15} /></ToolbarButton>
-        <ToolbarButton label="Redo" shortcut="Ctrl+Y" disabled={disabled} onClick={() => exec("redo")}><Redo2 size={15} /></ToolbarButton>
+            <ToolbarButton label="Remove link" disabled={disabled} onClick={() => applyLink(true)}><Link2Off size={15} /></ToolbarButton>
+            <ToolbarButton label="Clear formatting" disabled={disabled} onClick={() => { exec("removeFormat"); exec("formatBlock", "<div>"); }}><RemoveFormatting size={15} /></ToolbarButton>
+          </>
+        )}
+        {shows("history") && (
+          <>
+            <Separator />
+            <ToolbarButton label="Undo" shortcut="Ctrl+Z" disabled={disabled} onClick={() => exec("undo")}><Undo2 size={15} /></ToolbarButton>
+            <ToolbarButton label="Redo" shortcut="Ctrl+Y" disabled={disabled} onClick={() => exec("redo")}><Redo2 size={15} /></ToolbarButton>
+          </>
+        )}
         <div className="ml-auto flex items-center gap-1">
           <button
             type="button"
@@ -453,24 +491,26 @@ export function RichTextEditor({
             <ImageIcon size={14} />
             Image
           </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={disabled || attaching}
-            title="Attach files"
-            aria-label="Attach files"
-            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-surface-lighter hover:text-white disabled:opacity-40"
-          >
-            {attaching ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />}
-            Attach
-          </button>
+          {takesAttachments && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={disabled || attaching}
+              title="Attach files"
+              aria-label="Attach files"
+              className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-surface-lighter hover:text-white disabled:opacity-40"
+            >
+              {attaching ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />}
+              Attach
+            </button>
+          )}
           <input
             ref={fileInputRef}
             type="file"
             multiple
             className="hidden"
-            onChange={(e) => { onAttachFiles(Array.from(e.target.files ?? [])); e.target.value = ""; }}
+            onChange={(e) => { onAttachFiles?.(Array.from(e.target.files ?? [])); e.target.value = ""; }}
           />
           <input
             ref={imageInputRef}
@@ -488,7 +528,7 @@ export function RichTextEditor({
         contentEditable={!disabled}
         role="textbox"
         aria-multiline="true"
-        aria-label="Message"
+        aria-label={profile.ariaLabel}
         data-placeholder={placeholder}
         onInput={emit}
         onBlur={emit}
@@ -500,14 +540,14 @@ export function RichTextEditor({
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); onRequestSend?.(); }
+          if (canSend && e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); onRequestSend?.(); }
           if (e.key === "k" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); openLinkPopover(); }
         }}
         style={{ minHeight }}
         className="prose-invert max-w-none overflow-y-auto px-3.5 py-3 text-sm text-gray-200 outline-none empty:before:pointer-events-none empty:before:text-gray-600 empty:before:content-[attr(data-placeholder)] [&_a]:text-cyber-400 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-surface-border [&_blockquote]:pl-3 [&_blockquote]:text-gray-400 [&_img]:my-1 [&_img]:max-w-full [&_img]:rounded [&_img]:align-middle [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:rounded [&_pre]:bg-surface-lighter [&_pre]:p-2 [&_table]:w-full [&_td]:border [&_td]:border-surface-border [&_td]:p-1.5 [&_th]:border [&_th]:border-surface-border [&_th]:p-1.5 [&_ul]:list-disc [&_ul]:pl-5"
       />
 
-      {attachments.length > 0 && (
+      {takesAttachments && attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 border-t border-surface-border px-3 py-2">
           {attachments.map((file, index) => (
             <span key={`${file.filename}-${index}`} className="flex items-center gap-2 rounded-md border border-surface-border bg-surface-lighter/60 px-2 py-1 text-xs text-gray-300">
@@ -516,7 +556,7 @@ export function RichTextEditor({
               <span className="text-gray-500">{formatBytes(file.size)}</span>
               <button
                 type="button"
-                onClick={() => onRemoveAttachment(index)}
+                onClick={() => onRemoveAttachment?.(index)}
                 title={`Remove ${file.filename}`}
                 aria-label={`Remove ${file.filename}`}
                 className="rounded p-0.5 text-gray-500 transition-colors hover:bg-surface hover:text-white"

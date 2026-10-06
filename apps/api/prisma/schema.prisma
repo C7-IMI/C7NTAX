@@ -46,6 +46,9 @@ model User {
   sessions        Session[]
   tickets         Ticket[]          @relation("AssignedTickets")
   createdTickets  Ticket[]          @relation("CreatedTickets")
+  checklists         Checklist[]      @relation("AssignedChecklists")
+  createdChecklists  Checklist[]      @relation("CreatedChecklists")
+  checklistTasks     ChecklistTask[]  @relation("AssignedChecklistTasks")
   comments        TicketComment[]
   timeEntries     TimeEntry[]
   notifications   Notification[]
@@ -155,6 +158,7 @@ model Company {
   tickets         Ticket[]
   serviceAgreements ServiceAgreement[]
   invoices        Invoice[]
+  checklists      Checklist[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
