@@ -55,5 +55,43 @@
     "customFields": {},
     "createdAt": "2026-08-12T06:04:15.126Z",
     "updatedAt": "2026-08-12T06:04:15.126Z"
+  },
+  {
+    "id": "908ab183-327e-48d8-8bf4-b97a17ca10be",
+    "name": "Initech Solutions — network refresh",
+    "description": "Replace the ageing switch stack and move the site to the new VLAN plan.",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "status": "active",
+    "priority": "high",
+    "startDate": "2026-09-15T20:16:16.417Z",
+    "endDate": "2026-11-10T20:16:16.417Z",
+    "actualStartDate": null,
+    "actualEndDate": null,
+    "budget": 18500,
+    "budgetSpent": 7200,
+    "currency": "USD",
+    "managerId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "customFields": {},
+    "createdAt": "2026-10-06T20:16:16.595Z",
+    "updatedAt": "2026-10-06T20:16:16.595Z"
+  },
+  {
+    "id": "51ba507e-b3f2-40f7-abf8-1458f316e998",
+    "name": "Umbrella Corp — network refresh",
+    "description": "Replace the ageing switch stack and move the site to the new VLAN plan.",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "status": "active",
+    "priority": "high",
+    "startDate": "2026-09-15T20:16:16.417Z",
+    "endDate": "2026-11-10T20:16:16.417Z",
+    "actualStartDate": null,
+    "actualEndDate": null,
+    "budget": 18500,
+    "budgetSpent": 7200,
+    "currency": "USD",
+    "managerId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "customFields": {},
+    "createdAt": "2026-10-06T20:16:16.654Z",
+    "updatedAt": "2026-10-06T20:16:16.654Z"
   }
 ]

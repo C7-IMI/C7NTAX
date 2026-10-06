@@ -14,5 +14,53 @@
     "virtualization": null,
     "hypervisorHost": null,
     "lastPatchedAt": null
+  },
+  {
+    "id": "7f8966a5-73d1-4e5c-90f3-17f9caffed17",
+    "kumoAssetId": "709db221-bcfe-484a-9382-f1dc7cf98837",
+    "hostname": "srv-initech-01",
+    "fqdn": "srv-01.initechsolutions.local",
+    "operatingSystem": "Windows Server 2022",
+    "osVersion": "21H2",
+    "cpuCores": 16,
+    "ramGb": 64,
+    "storageGb": 2048,
+    "ipAddress": "10.20.30.11",
+    "macAddress": "00-15-5D-31-2A-11",
+    "virtualization": "VMware",
+    "hypervisorHost": null,
+    "lastPatchedAt": "2026-09-24T20:16:16.417Z"
+  },
+  {
+    "id": "a082b0cd-c882-4051-a91c-421035745131",
+    "kumoAssetId": "cfdbd607-a810-4f03-a06d-8c78745f79c0",
+    "hostname": "srv-umbrella-01",
+    "fqdn": "srv-01.umbrellacorp.local",
+    "operatingSystem": "Windows Server 2022",
+    "osVersion": "21H2",
+    "cpuCores": 16,
+    "ramGb": 64,
+    "storageGb": 2048,
+    "ipAddress": "10.20.30.11",
+    "macAddress": "00-15-5D-31-2A-11",
+    "virtualization": "VMware",
+    "hypervisorHost": null,
+    "lastPatchedAt": "2026-09-24T20:16:16.417Z"
+  },
+  {
+    "id": "84faeb18-a63c-4f62-9549-9f0ff1e33f8a",
+    "kumoAssetId": "57a1f491-4533-4c1b-b51b-a6fa1c66f6d7",
+    "hostname": "srv-stark-01",
+    "fqdn": "srv-01.starkenterprises.local",
+    "operatingSystem": "Windows Server 2022",
+    "osVersion": "21H2",
+    "cpuCores": 16,
+    "ramGb": 64,
+    "storageGb": 2048,
+    "ipAddress": "10.20.30.11",
+    "macAddress": "00-15-5D-31-2A-11",
+    "virtualization": "VMware",
+    "hypervisorHost": null,
+    "lastPatchedAt": "2026-09-24T20:16:16.417Z"
   }
 ]

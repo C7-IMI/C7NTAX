@@ -14,5 +14,37 @@
     "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-08-19T07:21:59.100Z",
     "updatedAt": "2026-08-19T07:21:59.100Z"
+  },
+  {
+    "id": "041692d8-fd4a-4f41-bff0-0bc43c6b243e",
+    "quoteNumber": "QT-2026-2087",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "contactId": null,
+    "title": "Endpoint protection renewal",
+    "status": "sent",
+    "subtotal": 4800,
+    "taxRate": 8.25,
+    "taxTotal": 396,
+    "total": 5196,
+    "notes": "Valid for 30 days.",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:27.352Z",
+    "updatedAt": "2026-10-06T20:16:27.352Z"
+  },
+  {
+    "id": "7f03f7ac-66ab-4418-a556-19cf9665916c",
+    "quoteNumber": "QT-2026-2088",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "contactId": null,
+    "title": "Endpoint protection renewal",
+    "status": "sent",
+    "subtotal": 4800,
+    "taxRate": 8.25,
+    "taxTotal": 396,
+    "total": 5196,
+    "notes": "Valid for 30 days.",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:18:17.362Z",
+    "updatedAt": "2026-10-06T20:18:17.362Z"
   }
 ]

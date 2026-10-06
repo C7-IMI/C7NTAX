@@ -16,6 +16,7 @@
     "db:seed-auto": "tsx src/seed-automation.ts",
     "db:seed-from-snapshots": "tsx src/seed-from-snapshots.ts",
     "db:capture": "tsx src/snapshot-capture.ts",
+    "db:seed-coverage": "tsx src/seed-sample-coverage.ts",
     "db:reseed": "tsx src/snapshot-capture.ts && tsx src/seed-from-snapshots.ts",
     "db:sample-off": "tsx src/sample-data-toggle.ts off",
     "db:sample-on": "tsx src/sample-data-toggle.ts on",

@@ -122,6 +122,20 @@ const TABLES: TableDef[] = [
   { name: "kumoNetworkDevice", fileName: "kumo-network-devices.json" },
   { name: "currency", fileName: "currencies.json" },
   { name: "alertWebhookDelivery", fileName: "alert-webhook-deliveries.json" },
+  // Sample coverage 2026 (tables the app writes that were never captured)
+  { name: "exchangeRate", fileName: "exchange-rates.json" },
+  { name: "ticketCategory", fileName: "ticket-categories.json" },
+  { name: "ticketContact", fileName: "ticket-contacts.json" },
+  { name: "ticketSimilarity", fileName: "ticket-similarities.json" },
+  { name: "retentionPolicy", fileName: "retention-policies.json" },
+  { name: "fieldPermission", fileName: "field-permissions.json" },
+  { name: "detectedPattern", fileName: "detected-patterns.json" },
+  { name: "inferenceCache", fileName: "inference-cache.json" },
+  { name: "bulkOperation", fileName: "bulk-operations.json" },
+  { name: "assetAssignment", fileName: "asset-assignments.json" },
+  { name: "checklist", fileName: "checklists.json" },
+  { name: "checklistTask", fileName: "checklist-tasks.json" },
+  { name: "kBArticleTicket", fileName: "kb-article-tickets.json" },
 ];
 
 async function main(): Promise<void> {

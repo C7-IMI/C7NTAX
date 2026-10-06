@@ -1,1 +1,46 @@
-[]
+[
+  {
+    "id": "1e6dfae3-860d-4935-8d5e-ca066976f751",
+    "kumoAssetId": "1394caff-672a-4b09-b083-33da74f11f13",
+    "deviceType": "Firewall",
+    "managementIp": "10.20.30.1",
+    "macAddress": "00-15-5D-31-2A-01",
+    "firmwareVersion": "7.4.3",
+    "portCount": 8,
+    "serialNumber": "FGT60F0000000001",
+    "rackPosition": "U1"
+  },
+  {
+    "id": "1f3fa526-7d22-4794-bba7-5692a30d305c",
+    "kumoAssetId": "9d19a435-8ecb-4f1d-ae95-b848148b379f",
+    "deviceType": "Firewall",
+    "managementIp": "10.20.30.1",
+    "macAddress": "00-15-5D-31-2A-01",
+    "firmwareVersion": "7.4.3",
+    "portCount": 8,
+    "serialNumber": "FGT60F0000000001",
+    "rackPosition": "U1"
+  },
+  {
+    "id": "b244e00f-ded9-4d06-acf8-d95a7803453f",
+    "kumoAssetId": "e1d97ea8-4600-4f9b-8b50-ab9c8649faef",
+    "deviceType": "Firewall",
+    "managementIp": "10.20.30.1",
+    "macAddress": "00-15-5D-31-2A-01",
+    "firmwareVersion": "7.4.3",
+    "portCount": 8,
+    "serialNumber": "FGT60F0000000001",
+    "rackPosition": "U1"
+  },
+  {
+    "id": "80740acc-5f8a-4fe0-a06e-82e4481bc79d",
+    "kumoAssetId": "ac19c64c-0047-46bd-8ec8-ca06a760ee79",
+    "deviceType": "Firewall",
+    "managementIp": "10.20.30.1",
+    "macAddress": "00-15-5D-31-2A-01",
+    "firmwareVersion": "7.4.3",
+    "portCount": 8,
+    "serialNumber": "FGT60F0000000001",
+    "rackPosition": "U1"
+  }
+]

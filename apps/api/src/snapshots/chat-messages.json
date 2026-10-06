@@ -18,5 +18,95 @@
     "contentType": "text",
     "isRead": false,
     "createdAt": "2026-08-19T16:15:29.007Z"
+  },
+  {
+    "id": "ac621092-3cba-4a7a-b1d7-eeb9c5527cc9",
+    "sessionId": "02679ec4-cefd-450c-9128-110a0188c8a9",
+    "senderType": "guest",
+    "senderId": null,
+    "content": "Hi — our finance printer has gone offline again.",
+    "contentType": "text",
+    "isRead": true,
+    "createdAt": "2026-10-06T20:16:16.871Z"
+  },
+  {
+    "id": "4e64066a-36df-4f3a-8817-7c5cbc9de9a8",
+    "sessionId": "02679ec4-cefd-450c-9128-110a0188c8a9",
+    "senderType": "agent",
+    "senderId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "content": "Thanks for flagging it, I can see the printer dropping off the network. I've raised a ticket and I'm looking now.",
+    "contentType": "text",
+    "isRead": true,
+    "createdAt": "2026-10-06T20:16:16.871Z"
+  },
+  {
+    "id": "2d85e141-41f6-417c-b951-05225b0c76ec",
+    "sessionId": "02679ec4-cefd-450c-9128-110a0188c8a9",
+    "senderType": "guest",
+    "senderId": null,
+    "content": "Perfect, thank you.",
+    "contentType": "text",
+    "isRead": true,
+    "createdAt": "2026-10-06T20:16:16.871Z"
+  },
+  {
+    "id": "d0de6988-130b-4c45-bd56-226836fd80c4",
+    "sessionId": "277262d9-d0af-4fd3-8f9e-4260adcc7bcb",
+    "senderType": "guest",
+    "senderId": null,
+    "content": "Hi — our finance printer has gone offline again.",
+    "contentType": "text",
+    "isRead": true,
+    "createdAt": "2026-10-06T20:16:27.334Z"
+  },
+  {
+    "id": "967d6559-b7d9-4397-81d4-495a967cca42",
+    "sessionId": "277262d9-d0af-4fd3-8f9e-4260adcc7bcb",
+    "senderType": "agent",
+    "senderId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "content": "Thanks for flagging it, I can see the printer dropping off the network. I've raised a ticket and I'm looking now.",
+    "contentType": "text",
+    "isRead": true,
+    "createdAt": "2026-10-06T20:16:27.334Z"
+  },
+  {
+    "id": "9fafb627-6d21-4a06-9cc3-d726be895f37",
+    "sessionId": "277262d9-d0af-4fd3-8f9e-4260adcc7bcb",
+    "senderType": "guest",
+    "senderId": null,
+    "content": "Perfect, thank you.",
+    "contentType": "text",
+    "isRead": true,
+    "createdAt": "2026-10-06T20:16:27.334Z"
+  },
+  {
+    "id": "8acf5542-b35a-410f-af99-164a1f613c5f",
+    "sessionId": "a166f992-c74d-469a-ae31-03e2c5dba1ae",
+    "senderType": "guest",
+    "senderId": null,
+    "content": "Hi — our finance printer has gone offline again.",
+    "contentType": "text",
+    "isRead": true,
+    "createdAt": "2026-10-06T20:16:32.323Z"
+  },
+  {
+    "id": "54f479fe-5a3b-4af9-a42e-c9195071e71f",
+    "sessionId": "a166f992-c74d-469a-ae31-03e2c5dba1ae",
+    "senderType": "agent",
+    "senderId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "content": "Thanks for flagging it, I can see the printer dropping off the network. I've raised a ticket and I'm looking now.",
+    "contentType": "text",
+    "isRead": true,
+    "createdAt": "2026-10-06T20:16:32.323Z"
+  },
+  {
+    "id": "24073335-3829-432d-be6f-55eaa8268775",
+    "sessionId": "a166f992-c74d-469a-ae31-03e2c5dba1ae",
+    "senderType": "guest",
+    "senderId": null,
+    "content": "Perfect, thank you.",
+    "contentType": "text",
+    "isRead": true,
+    "createdAt": "2026-10-06T20:16:32.323Z"
   }
 ]

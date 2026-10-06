@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "id": "cb42abf0-5333-4c0f-a917-28d729851205",
+    "articleId": "012e5d73-fadb-4188-bb04-b527dea9adb5",
+    "filename": "screenshot.png",
+    "mimeType": "image/png",
+    "size": 24,
+    "storagePath": "012e5d73-fadb-4188-bb04-b527dea9adb5/2b2f3f87-88fe-4451-8ae8-893f2cab28fa",
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.847Z"
+  },
+  {
+    "id": "c81a659d-5187-480d-bbc5-a3b3c62a74d5",
+    "articleId": "78bec033-f117-4a8d-9a22-4a1544f15a32",
+    "filename": "screenshot.png",
+    "mimeType": "image/png",
+    "size": 24,
+    "storagePath": "78bec033-f117-4a8d-9a22-4a1544f15a32/7b5d6881-8a7e-403b-bdf3-a9902a4bb837",
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.856Z"
+  },
+  {
+    "id": "1fbda902-f0da-4552-b291-96b178295aba",
+    "articleId": "c22f9cc1-4299-46e8-99d6-09e975ae3ccc",
+    "filename": "screenshot.png",
+    "mimeType": "image/png",
+    "size": 24,
+    "storagePath": "c22f9cc1-4299-46e8-99d6-09e975ae3ccc/bf3d331f-be73-4cdb-b93d-f5883cbfb6d4",
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.860Z"
+  },
+  {
+    "id": "504770b0-31a8-418a-a063-ab3056233bdc",
+    "articleId": "62d36c14-fb89-4bb3-8f5d-7a0169d4c5ab",
+    "filename": "screenshot.png",
+    "mimeType": "image/png",
+    "size": 24,
+    "storagePath": "62d36c14-fb89-4bb3-8f5d-7a0169d4c5ab/aa7d0b49-4ef2-487c-aced-2124c06833a4",
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.864Z"
+  }
+]

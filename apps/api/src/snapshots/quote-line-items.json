@@ -7,5 +7,41 @@
     "unitPrice": 150,
     "total": 1500,
     "sortOrder": 1
+  },
+  {
+    "id": "77201616-9e5c-408a-96f3-44462f969c26",
+    "quoteId": "041692d8-fd4a-4f41-bff0-0bc43c6b243e",
+    "description": "Endpoint protection — 60 seats, annual",
+    "quantity": 60,
+    "unitPrice": 72,
+    "total": 4320,
+    "sortOrder": 0
+  },
+  {
+    "id": "3a3dbb37-1757-4156-9468-f7fd5b986548",
+    "quoteId": "041692d8-fd4a-4f41-bff0-0bc43c6b243e",
+    "description": "Onboarding and policy tuning",
+    "quantity": 1,
+    "unitPrice": 480,
+    "total": 480,
+    "sortOrder": 0
+  },
+  {
+    "id": "366bbdd2-eb81-457b-be03-83a9fce3e53d",
+    "quoteId": "7f03f7ac-66ab-4418-a556-19cf9665916c",
+    "description": "Endpoint protection — 60 seats, annual",
+    "quantity": 60,
+    "unitPrice": 72,
+    "total": 4320,
+    "sortOrder": 0
+  },
+  {
+    "id": "576906ca-3a3c-4a64-8937-f0039e23591e",
+    "quoteId": "7f03f7ac-66ab-4418-a556-19cf9665916c",
+    "description": "Onboarding and policy tuning",
+    "quantity": 1,
+    "unitPrice": 480,
+    "total": 480,
+    "sortOrder": 0
   }
 ]

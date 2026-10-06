@@ -1,1 +1,74 @@
-[]
+[
+  {
+    "id": "97f6a232-6c7d-40a8-af08-7421e9054161",
+    "articleId": "012e5d73-fadb-4188-bb04-b527dea9adb5",
+    "version": 1,
+    "content": "<p>Initial draft.</p>",
+    "changeNote": "Created",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.843Z"
+  },
+  {
+    "id": "915b5966-b891-45ef-8e63-43447a8d9127",
+    "articleId": "012e5d73-fadb-4188-bb04-b527dea9adb5",
+    "version": 2,
+    "content": "<h2>Before you start</h2><p>You will need your company email address and the phone you use for MFA.</p><ol><li>Open the Cisco AnyConnect client.</li><li>Enter <strong>vpn.example.com</strong> and select Connect.</li><li>Approve the Duo prompt on your phone.</li></ol><p>If the profile is missing, re-import the XML file from the IT portal.</p>",
+    "changeNote": "Added screenshots and the escalation path",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.843Z"
+  },
+  {
+    "id": "9f2b977a-37a4-405e-aca1-167f6b681a42",
+    "articleId": "78bec033-f117-4a8d-9a22-4a1544f15a32",
+    "version": 1,
+    "content": "<p>Initial draft.</p>",
+    "changeNote": "Created",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.854Z"
+  },
+  {
+    "id": "9a218111-e718-456e-b7db-bdf421b74221",
+    "articleId": "78bec033-f117-4a8d-9a22-4a1544f15a32",
+    "version": 2,
+    "content": "<h2>Add the mailbox</h2><p>In Outlook on the web, right-click your name and choose Add shared folder. Enter the mailbox address and select Add.</p><p>To send as the mailbox, use the From dropdown when composing.</p>",
+    "changeNote": "Added screenshots and the escalation path",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.854Z"
+  },
+  {
+    "id": "768aea63-605f-48ba-9ccc-5bd510f74316",
+    "articleId": "c22f9cc1-4299-46e8-99d6-09e975ae3ccc",
+    "version": 1,
+    "content": "<p>Initial draft.</p>",
+    "changeNote": "Created",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.858Z"
+  },
+  {
+    "id": "a3e742a1-e3a7-41ef-83fc-8a35c443c437",
+    "articleId": "c22f9cc1-4299-46e8-99d6-09e975ae3ccc",
+    "version": 2,
+    "content": "<h2>What you can do yourself</h2><p>Files deleted in the last 30 days can be restored from the recycle bin in your file browser.</p><h2>When to ask us</h2><p>Anything older, or a whole folder that has gone missing — raise a ticket and we will restore it from the nightly backup.</p>",
+    "changeNote": "Added screenshots and the escalation path",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.858Z"
+  },
+  {
+    "id": "335f394c-7a98-46cd-a5a1-c72208c2b0a2",
+    "articleId": "62d36c14-fb89-4bb3-8f5d-7a0169d4c5ab",
+    "version": 1,
+    "content": "<p>Initial draft.</p>",
+    "changeNote": "Created",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.862Z"
+  },
+  {
+    "id": "4d896a4a-5d2c-4374-8bdb-2184f1f04902",
+    "articleId": "62d36c14-fb89-4bb3-8f5d-7a0169d4c5ab",
+    "version": 2,
+    "content": "<h2>Do not click</h2><p>Do not open attachments or follow links. Report the message using the Report Phishing button.</p><p>Our team reviews every report and will get back to you if action is needed on your account.</p>",
+    "changeNote": "Added screenshots and the escalation path",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.862Z"
+  }
+]

@@ -81,5 +81,89 @@
     ],
     "createdAt": "2026-08-12T06:04:15.129Z",
     "updatedAt": "2026-10-06T10:00:02.852Z"
+  },
+  {
+    "id": "012e5d73-fadb-4188-bb04-b527dea9adb5",
+    "title": "Connect to the VPN from a Windows laptop",
+    "slug": "connect-to-the-vpn-from-a-windows-laptop",
+    "content": "<h2>Before you start</h2><p>You will need your company email address and the phone you use for MFA.</p><ol><li>Open the Cisco AnyConnect client.</li><li>Enter <strong>vpn.example.com</strong> and select Connect.</li><li>Approve the Duo prompt on your phone.</li></ol><p>If the profile is missing, re-import the XML file from the IT portal.</p>",
+    "excerpt": "The steps a user follows to get onto the VPN, including the profile import.",
+    "status": "published",
+    "visibility": "internal",
+    "categoryId": "3eda292d-9004-4f65-abb8-b6c4f9afbbab",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "viewCount": 40,
+    "helpfulCount": 12,
+    "notHelpfulCount": 0,
+    "tags": [
+      "vpn",
+      "remote",
+      "how-to"
+    ],
+    "createdAt": "2026-10-06T20:16:16.837Z",
+    "updatedAt": "2026-10-06T20:16:16.837Z"
+  },
+  {
+    "id": "78bec033-f117-4a8d-9a22-4a1544f15a32",
+    "title": "Microsoft 365: add a shared mailbox to Outlook",
+    "slug": "microsoft-365-add-a-shared-mailbox-to-outlook",
+    "content": "<h2>Add the mailbox</h2><p>In Outlook on the web, right-click your name and choose Add shared folder. Enter the mailbox address and select Add.</p><p>To send as the mailbox, use the From dropdown when composing.</p>",
+    "excerpt": "How to attach a shared mailbox so the team can send from it.",
+    "status": "published",
+    "visibility": "internal",
+    "categoryId": "3eda292d-9004-4f65-abb8-b6c4f9afbbab",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "viewCount": 57,
+    "helpfulCount": 13,
+    "notHelpfulCount": 1,
+    "tags": [
+      "microsoft-365",
+      "outlook",
+      "email"
+    ],
+    "createdAt": "2026-10-06T20:16:16.853Z",
+    "updatedAt": "2026-10-06T20:16:16.853Z"
+  },
+  {
+    "id": "c22f9cc1-4299-46e8-99d6-09e975ae3ccc",
+    "title": "Restore a file from last night's backup",
+    "slug": "restore-a-file-from-last-night-s-backup",
+    "content": "<h2>What you can do yourself</h2><p>Files deleted in the last 30 days can be restored from the recycle bin in your file browser.</p><h2>When to ask us</h2><p>Anything older, or a whole folder that has gone missing — raise a ticket and we will restore it from the nightly backup.</p>",
+    "excerpt": "Self-service restore requests, and when to raise a ticket instead.",
+    "status": "published",
+    "visibility": "internal",
+    "categoryId": "3eda292d-9004-4f65-abb8-b6c4f9afbbab",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "viewCount": 74,
+    "helpfulCount": 14,
+    "notHelpfulCount": 0,
+    "tags": [
+      "backup",
+      "restore",
+      "process"
+    ],
+    "createdAt": "2026-10-06T20:16:16.858Z",
+    "updatedAt": "2026-10-06T20:16:16.858Z"
+  },
+  {
+    "id": "62d36c14-fb89-4bb3-8f5d-7a0169d4c5ab",
+    "title": "What to do when you get a suspicious email",
+    "slug": "what-to-do-when-you-get-a-suspicious-email",
+    "content": "<h2>Do not click</h2><p>Do not open attachments or follow links. Report the message using the Report Phishing button.</p><p>Our team reviews every report and will get back to you if action is needed on your account.</p>",
+    "excerpt": "Reporting phishing, and what happens next.",
+    "status": "published",
+    "visibility": "internal",
+    "categoryId": "3eda292d-9004-4f65-abb8-b6c4f9afbbab",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "viewCount": 91,
+    "helpfulCount": 15,
+    "notHelpfulCount": 1,
+    "tags": [
+      "phishing",
+      "security",
+      "process"
+    ],
+    "createdAt": "2026-10-06T20:16:16.862Z",
+    "updatedAt": "2026-10-06T20:16:16.862Z"
   }
 ]

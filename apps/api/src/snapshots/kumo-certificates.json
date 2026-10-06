@@ -1,5 +1,43 @@
 [
   {
+    "id": "4f3facc4-0bd5-4621-8316-95a1fa867ea8",
+    "name": "*.initechsolutions.com",
+    "domain": "*.initechsolutions.com",
+    "issuer": "DigiCert",
+    "expiryDate": "2026-12-20T20:16:16.417Z",
+    "validFrom": "2025-12-20T20:16:16.417Z",
+    "subjectAltNames": [
+      "initechsolutions.com",
+      "www.initechsolutions.com",
+      "mail.initechsolutions.com"
+    ],
+    "certificateType": "DV",
+    "autoRenew": true,
+    "notes": "Wildcard certificate covering the main web and mail hosts.",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "createdAt": "2026-10-06T20:16:16.558Z",
+    "updatedAt": "2026-10-06T20:16:16.558Z"
+  },
+  {
+    "id": "def2f65e-218a-4757-96ac-3767fe49f81e",
+    "name": "*.umbrellacorp.com",
+    "domain": "*.umbrellacorp.com",
+    "issuer": "DigiCert",
+    "expiryDate": "2026-12-20T20:16:16.417Z",
+    "validFrom": "2025-12-20T20:16:16.417Z",
+    "subjectAltNames": [
+      "umbrellacorp.com",
+      "www.umbrellacorp.com",
+      "mail.umbrellacorp.com"
+    ],
+    "certificateType": "DV",
+    "autoRenew": true,
+    "notes": "Wildcard certificate covering the main web and mail hosts.",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "createdAt": "2026-10-06T20:16:16.617Z",
+    "updatedAt": "2026-10-06T20:16:16.617Z"
+  },
+  {
     "id": "92a2a8c0-e461-4fc6-98b1-b1adf7d021f3",
     "name": "acmecorp.com Wildcard",
     "domain": "*.acmecorp.com",

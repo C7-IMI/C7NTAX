@@ -1,1 +1,62 @@
-[]
+[
+  {
+    "id": "d0e1b45b-bb7e-4960-a370-d1f6702d9b2e",
+    "documentId": "b13ef9c5-ba2d-401f-8661-00789bfb7848",
+    "version": 1,
+    "content": "<p>Initial notes from onboarding.</p>",
+    "changeLog": "Initial draft",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "fileSize": null,
+    "createdAt": "2026-10-06T20:16:16.578Z"
+  },
+  {
+    "id": "6ae1412c-9cca-48da-b4d7-e7669956e7a2",
+    "documentId": "b13ef9c5-ba2d-401f-8661-00789bfb7848",
+    "version": 2,
+    "content": "<h2>Environment</h2><p>Windows Server 2022 file and print server, Microsoft 365 for mail, Cloudflare for DNS, Duo for MFA.</p><ul><li>Firewall: FortiGate 60F</li><li>Backups: nightly to cloud, 30-day retention</li></ul>",
+    "changeLog": "Added backups and MFA",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "fileSize": null,
+    "createdAt": "2026-10-06T20:16:16.578Z"
+  },
+  {
+    "id": "852b2621-1811-4d1f-8161-b1949d89a81c",
+    "documentId": "f2e7ed4b-3fdb-424b-85af-d6823394522d",
+    "version": 1,
+    "content": "<p>Initial notes from onboarding.</p>",
+    "changeLog": "Initial draft",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "fileSize": null,
+    "createdAt": "2026-10-06T20:16:16.624Z"
+  },
+  {
+    "id": "ff59dba5-6b9f-41ac-896e-a12e65d78dec",
+    "documentId": "f2e7ed4b-3fdb-424b-85af-d6823394522d",
+    "version": 2,
+    "content": "<h2>Environment</h2><p>Windows Server 2022 file and print server, Microsoft 365 for mail, Cloudflare for DNS, Duo for MFA.</p><ul><li>Firewall: FortiGate 60F</li><li>Backups: nightly to cloud, 30-day retention</li></ul>",
+    "changeLog": "Added backups and MFA",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "fileSize": null,
+    "createdAt": "2026-10-06T20:16:16.624Z"
+  },
+  {
+    "id": "a894f173-b12a-415c-93f5-0f512c3df2ce",
+    "documentId": "68fb70ea-211a-4f5b-84f9-29500cc89a96",
+    "version": 1,
+    "content": "<p>Initial notes from onboarding.</p>",
+    "changeLog": "Initial draft",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "fileSize": null,
+    "createdAt": "2026-10-06T20:16:16.666Z"
+  },
+  {
+    "id": "431e19ce-3ea5-4eac-bc31-fedd16bfc2b5",
+    "documentId": "68fb70ea-211a-4f5b-84f9-29500cc89a96",
+    "version": 2,
+    "content": "<h2>Environment</h2><p>Windows Server 2022 file and print server, Microsoft 365 for mail, Cloudflare for DNS, Duo for MFA.</p><ul><li>Firewall: FortiGate 60F</li><li>Backups: nightly to cloud, 30-day retention</li></ul>",
+    "changeLog": "Added backups and MFA",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "fileSize": null,
+    "createdAt": "2026-10-06T20:16:16.666Z"
+  }
+]

@@ -26,5 +26,33 @@
     "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-08-19T16:15:29.044Z",
     "updatedAt": "2026-08-19T16:15:29.044Z"
+  },
+  {
+    "id": "b15c8604-870d-4c77-9690-c2ca14812106",
+    "description": "Parking at the client site",
+    "amount": 18.5,
+    "category": "travel",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "ticketId": null,
+    "invoiceId": null,
+    "receiptUrl": null,
+    "expenseDate": "2026-09-27T20:16:27.091Z",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:27.364Z",
+    "updatedAt": "2026-10-06T20:16:27.364Z"
+  },
+  {
+    "id": "19a74295-34a0-4e8e-9311-47570e91110d",
+    "description": "Replacement patch leads",
+    "amount": 42.75,
+    "category": "hardware",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "ticketId": null,
+    "invoiceId": null,
+    "receiptUrl": null,
+    "expenseDate": "2026-10-01T20:16:27.091Z",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:27.364Z",
+    "updatedAt": "2026-10-06T20:16:27.364Z"
   }
 ]

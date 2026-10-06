@@ -16,5 +16,23 @@
     "notes": "Replacement SSDs",
     "createdAt": "2026-08-19T16:15:28.975Z",
     "updatedAt": "2026-08-19T16:15:28.975Z"
+  },
+  {
+    "id": "c3276486-b016-4884-9e42-6b41e6bf07e8",
+    "poNumber": "PO-2026-1042",
+    "vendorId": "683cde29-08f6-41b2-83b2-a6f63d5c17dd",
+    "status": "received",
+    "subtotal": 3200,
+    "taxTotal": 264,
+    "total": 3464,
+    "currency": "USD",
+    "orderedAt": "2026-09-12T20:16:27.091Z",
+    "expectedAt": "2026-09-18T20:16:27.091Z",
+    "receivedAt": "2026-09-19T20:16:27.091Z",
+    "approvedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "notes": "Replacement switches for the network refresh project.",
+    "createdAt": "2026-10-06T20:16:27.348Z",
+    "updatedAt": "2026-10-06T20:16:27.348Z"
   }
 ]

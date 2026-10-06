@@ -1,0 +1,42 @@
+[
+  {
+    "id": "4b20ef04-65e2-4419-a362-c076c0f8dc95",
+    "entity": "Asset",
+    "field": "purchasePrice",
+    "roleName": "Technician",
+    "canRead": true,
+    "canWrite": false,
+    "createdAt": "2026-10-06T20:15:46.059Z",
+    "updatedAt": "2026-10-06T20:15:46.059Z"
+  },
+  {
+    "id": "29a8790b-140e-4546-b978-de49db648083",
+    "entity": "Invoice",
+    "field": "total",
+    "roleName": "Technician",
+    "canRead": true,
+    "canWrite": false,
+    "createdAt": "2026-10-06T20:15:46.059Z",
+    "updatedAt": "2026-10-06T20:15:46.059Z"
+  },
+  {
+    "id": "f1638736-b307-4c7c-a05e-b5c848dbe407",
+    "entity": "Contact",
+    "field": "notes",
+    "roleName": "Dispatcher",
+    "canRead": true,
+    "canWrite": true,
+    "createdAt": "2026-10-06T20:15:46.059Z",
+    "updatedAt": "2026-10-06T20:15:46.059Z"
+  },
+  {
+    "id": "e9f7a1d2-6cfb-48b4-af17-f7d8ac5e7a10",
+    "entity": "Ticket",
+    "field": "customFields",
+    "roleName": "Dispatcher",
+    "canRead": true,
+    "canWrite": false,
+    "createdAt": "2026-10-06T20:15:46.059Z",
+    "updatedAt": "2026-10-06T20:15:46.059Z"
+  }
+]

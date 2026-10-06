@@ -98,5 +98,30 @@
     "nextFollowUpAt": null,
     "createdAt": "2026-08-12T06:04:15.132Z",
     "updatedAt": "2026-10-06T09:59:12.110Z"
+  },
+  {
+    "id": "e32346d9-5997-4902-9fd1-0f56ff668340",
+    "invoiceNumber": "INV-2026-1014",
+    "status": "sent",
+    "issueDate": "2026-09-26T20:16:16.417Z",
+    "dueDate": "2026-10-26T20:16:16.417Z",
+    "paidAt": null,
+    "subtotal": 3250,
+    "taxRate": 8.25,
+    "taxTotal": 268.13,
+    "total": 3518.13,
+    "currency": "USD",
+    "notes": "Monthly managed services and project time.",
+    "quoteStatus": null,
+    "isRecurring": false,
+    "recurrenceRule": null,
+    "nextGenerationDate": null,
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "agreementId": "9f2ea7b0-02f6-478a-ac53-b54c2458c7a0",
+    "followUpCount": 0,
+    "lastFollowUpAt": null,
+    "nextFollowUpAt": "2026-10-26T20:16:16.417Z",
+    "createdAt": "2026-10-06T20:16:16.639Z",
+    "updatedAt": "2026-10-06T20:16:16.639Z"
   }
 ]

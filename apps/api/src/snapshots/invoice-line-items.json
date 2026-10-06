@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "b6dc9c48-eb03-49b2-ac09-70a233f4c282",
+    "description": "Managed services — October 2026",
+    "quantity": 1,
+    "unitPrice": 2400,
+    "total": 2400,
+    "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340"
+  },
+  {
+    "id": "484f7b8d-f0f4-48e0-89dc-63603490f5b9",
+    "description": "Remote support — project work",
+    "quantity": 5,
+    "unitPrice": 170,
+    "total": 850,
+    "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340"
+  },
+  {
+    "id": "6d5dc4ee-f4ae-458e-8662-51ea8fdbac47",
+    "description": "Backup storage (500 GB)",
+    "quantity": 1,
+    "unitPrice": 75,
+    "total": 75,
+    "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340"
+  }
+]

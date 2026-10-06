@@ -28,5 +28,35 @@
     "color": null,
     "createdAt": "2026-08-19T16:15:28.965Z",
     "updatedAt": "2026-08-19T16:15:28.965Z"
+  },
+  {
+    "id": "0a18a9d0-fcf0-4292-984c-a3e5166f5ff8",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ticketId": "26f46ca7-d80e-4db3-9710-1524d70a6e91",
+    "title": "On-site visit — switch cutover",
+    "description": "Out-of-hours cutover window.",
+    "startTime": "2026-10-08T20:16:27.091Z",
+    "endTime": "2026-10-08T23:16:27.091Z",
+    "status": "scheduled",
+    "location": "Client site",
+    "travelTime": 30,
+    "color": null,
+    "createdAt": "2026-10-06T20:16:27.374Z",
+    "updatedAt": "2026-10-06T20:16:27.374Z"
+  },
+  {
+    "id": "0ba23167-48b2-42cb-8067-0b0334543ab8",
+    "userId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "ticketId": null,
+    "title": "Remote support block",
+    "description": "Held for ticket work.",
+    "startTime": "2026-10-07T20:16:27.091Z",
+    "endTime": "2026-10-08T00:16:27.091Z",
+    "status": "scheduled",
+    "location": "Remote",
+    "travelTime": null,
+    "color": "#7c3aed",
+    "createdAt": "2026-10-06T20:16:27.374Z",
+    "updatedAt": "2026-10-06T20:16:27.374Z"
   }
 ]

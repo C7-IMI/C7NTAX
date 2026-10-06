@@ -10,5 +10,77 @@
     "status": "completed",
     "createdAt": "2026-08-19T16:16:58.590Z",
     "updatedAt": "2026-08-19T16:16:58.590Z"
+  },
+  {
+    "id": "84185119-aa55-48da-9e1d-045052036a20",
+    "projectId": "908ab183-327e-48d8-8bf4-b97a17ca10be",
+    "name": "Discovery",
+    "description": "Audit the existing network.",
+    "sortOrder": 0,
+    "startDate": "2026-09-15T20:16:16.417Z",
+    "endDate": "2026-09-22T20:16:16.417Z",
+    "status": "completed",
+    "createdAt": "2026-10-06T20:16:16.601Z",
+    "updatedAt": "2026-10-06T20:16:16.601Z"
+  },
+  {
+    "id": "118efa83-d5e2-46f5-9dc4-03f9f0adce6b",
+    "projectId": "908ab183-327e-48d8-8bf4-b97a17ca10be",
+    "name": "Build",
+    "description": "Order, rack and configure the new stack.",
+    "sortOrder": 1,
+    "startDate": "2026-09-24T20:16:16.417Z",
+    "endDate": "2026-10-20T20:16:16.417Z",
+    "status": "active",
+    "createdAt": "2026-10-06T20:16:16.602Z",
+    "updatedAt": "2026-10-06T20:16:16.602Z"
+  },
+  {
+    "id": "bd715976-b347-4d51-92b8-84b16644f6a5",
+    "projectId": "908ab183-327e-48d8-8bf4-b97a17ca10be",
+    "name": "Cutover",
+    "description": "Move the site over out of hours.",
+    "sortOrder": 2,
+    "startDate": "2026-10-21T20:16:16.417Z",
+    "endDate": "2026-11-10T20:16:16.417Z",
+    "status": "planned",
+    "createdAt": "2026-10-06T20:16:16.603Z",
+    "updatedAt": "2026-10-06T20:16:16.603Z"
+  },
+  {
+    "id": "7a6df458-6a4d-4bfe-b5e5-b3a97001e9c9",
+    "projectId": "51ba507e-b3f2-40f7-abf8-1458f316e998",
+    "name": "Discovery",
+    "description": "Audit the existing network.",
+    "sortOrder": 0,
+    "startDate": "2026-09-15T20:16:16.417Z",
+    "endDate": "2026-09-22T20:16:16.417Z",
+    "status": "completed",
+    "createdAt": "2026-10-06T20:16:16.655Z",
+    "updatedAt": "2026-10-06T20:16:16.655Z"
+  },
+  {
+    "id": "42569b6f-68c4-4245-946d-bfc320269274",
+    "projectId": "51ba507e-b3f2-40f7-abf8-1458f316e998",
+    "name": "Build",
+    "description": "Order, rack and configure the new stack.",
+    "sortOrder": 1,
+    "startDate": "2026-09-24T20:16:16.417Z",
+    "endDate": "2026-10-20T20:16:16.417Z",
+    "status": "active",
+    "createdAt": "2026-10-06T20:16:16.655Z",
+    "updatedAt": "2026-10-06T20:16:16.655Z"
+  },
+  {
+    "id": "265fb60c-cf2a-4129-80a9-2a3b04908676",
+    "projectId": "51ba507e-b3f2-40f7-abf8-1458f316e998",
+    "name": "Cutover",
+    "description": "Move the site over out of hours.",
+    "sortOrder": 2,
+    "startDate": "2026-10-21T20:16:16.417Z",
+    "endDate": "2026-11-10T20:16:16.417Z",
+    "status": "planned",
+    "createdAt": "2026-10-06T20:16:16.656Z",
+    "updatedAt": "2026-10-06T20:16:16.656Z"
   }
 ]

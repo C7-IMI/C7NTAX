@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "b97d6549-47fc-4648-b892-0ad319f95a84",
+    "name": "C7NTAX assistant",
+    "provider": "openai",
+    "isActive": true,
+    "isDefault": true,
+    "apiEndpoint": "https://api.openai.com/v1",
+    "model": "gpt-4o-mini",
+    "maxTokens": 1024,
+    "createdAt": "2026-10-06T20:15:46.070Z",
+    "updatedAt": "2026-10-06T20:15:46.070Z"
+  }
+]

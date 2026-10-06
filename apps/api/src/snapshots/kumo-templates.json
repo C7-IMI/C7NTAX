@@ -1,17 +1,5 @@
 [
   {
-    "id": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
-    "name": "Networks",
-    "description": "Network topology, addressing and VLANs",
-    "icon": "Network",
-    "color": "#3b82d6",
-    "isBuiltIn": false,
-    "isActive": true,
-    "companyId": null,
-    "createdAt": "2026-10-06T08:03:54.104Z",
-    "updatedAt": "2026-10-06T08:03:54.104Z"
-  },
-  {
     "id": "11283785-a4ff-453a-bee1-9d54ba48fd74",
     "name": "Account Management",
     "description": "Administrative and service accounts",
@@ -34,6 +22,18 @@
     "companyId": null,
     "createdAt": "2026-10-06T08:03:54.112Z",
     "updatedAt": "2026-10-06T08:03:54.112Z"
+  },
+  {
+    "id": "5f2c5025-1216-40e1-968c-64ddcc7aca40",
+    "name": "Networks",
+    "description": "Network topology, addressing and VLANs",
+    "icon": "Network",
+    "color": "#3b82d6",
+    "isBuiltIn": false,
+    "isActive": true,
+    "companyId": null,
+    "createdAt": "2026-10-06T08:03:54.104Z",
+    "updatedAt": "2026-10-06T08:03:54.104Z"
   },
   {
     "id": "28683693-7a1e-4892-9800-b56e771cede1",

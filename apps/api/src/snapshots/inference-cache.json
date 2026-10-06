@@ -1,0 +1,82 @@
+[
+  {
+    "id": "029b3a8e-140e-48de-bcb5-542f372666d0",
+    "ticketId": "26f46ca7-d80e-4db3-9710-1524d70a6e91",
+    "providerId": "b97d6549-47fc-4648-b892-0ad319f95a84",
+    "requestType": "summary",
+    "requestHash": "sample-hash-0",
+    "response": {
+      "text": "Sample cached response used to populate the AI panel."
+    },
+    "tokensUsed": 320,
+    "costEstimate": 0.0007,
+    "latencyMs": 780,
+    "hitCount": 0,
+    "expiresAt": "2026-10-26T20:16:16.417Z",
+    "createdAt": "2026-10-06T20:16:16.881Z"
+  },
+  {
+    "id": "9f50cbb9-3416-46ce-9736-2238736a4a56",
+    "ticketId": "90625947-2606-4265-be21-4795bff6b2fa",
+    "providerId": "b97d6549-47fc-4648-b892-0ad319f95a84",
+    "requestType": "suggested_reply",
+    "requestHash": "sample-hash-1",
+    "response": {
+      "text": "Sample cached response used to populate the AI panel."
+    },
+    "tokensUsed": 360,
+    "costEstimate": 0.0014,
+    "latencyMs": 845,
+    "hitCount": 1,
+    "expiresAt": "2026-10-26T20:16:16.417Z",
+    "createdAt": "2026-10-06T20:16:16.881Z"
+  },
+  {
+    "id": "dc9300ba-642b-42a8-9e56-ff68c54a68c2",
+    "ticketId": "eb6adec6-c915-4a44-b901-56402153ffc5",
+    "providerId": "b97d6549-47fc-4648-b892-0ad319f95a84",
+    "requestType": "classification",
+    "requestHash": "sample-hash-2",
+    "response": {
+      "text": "Sample cached response used to populate the AI panel."
+    },
+    "tokensUsed": 400,
+    "costEstimate": 0.0021,
+    "latencyMs": 910,
+    "hitCount": 2,
+    "expiresAt": "2026-10-26T20:16:16.417Z",
+    "createdAt": "2026-10-06T20:16:16.881Z"
+  },
+  {
+    "id": "8bc52945-8041-4b69-91b1-3bf9b4de5415",
+    "ticketId": "a5eb83b6-6b64-43a8-ae56-932a3b63146f",
+    "providerId": "b97d6549-47fc-4648-b892-0ad319f95a84",
+    "requestType": "summary",
+    "requestHash": "sample-hash-3",
+    "response": {
+      "text": "Sample cached response used to populate the AI panel."
+    },
+    "tokensUsed": 440,
+    "costEstimate": 0.0028,
+    "latencyMs": 975,
+    "hitCount": 3,
+    "expiresAt": "2026-10-26T20:16:16.417Z",
+    "createdAt": "2026-10-06T20:16:16.881Z"
+  },
+  {
+    "id": "4f69876e-c00a-433d-b4b4-b5c3ef4c9c1a",
+    "ticketId": "b7baeb44-f625-4e92-8c71-b5198b1bc850",
+    "providerId": "b97d6549-47fc-4648-b892-0ad319f95a84",
+    "requestType": "suggested_reply",
+    "requestHash": "sample-hash-4",
+    "response": {
+      "text": "Sample cached response used to populate the AI panel."
+    },
+    "tokensUsed": 480,
+    "costEstimate": 0.0035,
+    "latencyMs": 1040,
+    "hitCount": 4,
+    "expiresAt": "2026-10-26T20:16:16.417Z",
+    "createdAt": "2026-10-06T20:16:16.881Z"
+  }
+]

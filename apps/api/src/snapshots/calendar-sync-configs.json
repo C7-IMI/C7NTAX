@@ -1,1 +1,24 @@
-[]
+[
+  {
+    "id": "cc4ff6c2-2d77-4800-a242-8ae582c948e4",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "provider": "microsoft",
+    "calendarId": "primary",
+    "syncScheduleEntries": true,
+    "syncPto": true,
+    "tokenExpiry": "2026-11-20T20:15:45.935Z",
+    "createdAt": "2026-10-06T20:15:46.073Z",
+    "updatedAt": "2026-10-06T20:15:46.073Z"
+  },
+  {
+    "id": "fadf0922-6ed1-4670-b9d7-edd54fceeca2",
+    "userId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "provider": "google",
+    "calendarId": "primary",
+    "syncScheduleEntries": true,
+    "syncPto": true,
+    "tokenExpiry": "2026-11-20T20:15:45.935Z",
+    "createdAt": "2026-10-06T20:15:46.073Z",
+    "updatedAt": "2026-10-06T20:15:46.073Z"
+  }
+]

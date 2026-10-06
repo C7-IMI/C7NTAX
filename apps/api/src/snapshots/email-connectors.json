@@ -1,1 +1,36 @@
-[]
+[
+  {
+    "id": "a6902cf1-7549-4dae-9029-6138122b440f",
+    "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+    "host": "outlook.office365.com",
+    "port": 993,
+    "secure": true,
+    "user": "servicedesk@example.com",
+    "folder": "INBOX",
+    "transport": "imap",
+    "clientId": null,
+    "tenantId": null,
+    "pollIntervalSec": 120,
+    "enabled": false,
+    "lastPollAt": null,
+    "createdAt": "2026-10-06T20:15:46.062Z",
+    "updatedAt": "2026-10-06T20:15:46.062Z"
+  },
+  {
+    "id": "39349def-117b-4509-be5e-88c04501bb75",
+    "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "host": "imap.gmail.com",
+    "port": 993,
+    "secure": true,
+    "user": "support@example.com",
+    "folder": "INBOX",
+    "transport": "imap",
+    "clientId": null,
+    "tenantId": null,
+    "pollIntervalSec": 120,
+    "enabled": false,
+    "lastPollAt": null,
+    "createdAt": "2026-10-06T20:15:46.062Z",
+    "updatedAt": "2026-10-06T20:15:46.062Z"
+  }
+]

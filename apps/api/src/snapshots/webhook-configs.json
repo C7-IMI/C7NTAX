@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "b5496ca1-e3f8-4291-97d3-6cca2654d354",
+    "name": "Service alert bridge",
+    "url": "https://hooks.example.com/c7ntax/alerts",
+    "events": [
+      "service_alert.raised",
+      "service_alert.resolved"
+    ],
+    "isActive": true,
+    "retryCount": 3,
+    "createdAt": "2026-10-06T20:15:46.064Z"
+  },
+  {
+    "id": "52c40515-db86-4075-893d-fa32f55f7e83",
+    "name": "Ticket escalations",
+    "url": "https://hooks.example.com/c7ntax/tickets",
+    "events": [
+      "ticket.created",
+      "ticket.sla_breached"
+    ],
+    "isActive": true,
+    "retryCount": 3,
+    "createdAt": "2026-10-06T20:15:46.064Z"
+  }
+]

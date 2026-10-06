@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "id": "1e470287-dfaf-4dba-b435-9e37928e9666",
+    "kumoAssetId": "e39343b5-0842-475a-ac17-8f16213607e6",
+    "hostname": "WS-GLOBEX-014",
+    "operatingSystem": "Windows 11 Pro 23H2",
+    "serialNumber": "PF3XK92L",
+    "assignedUserId": null,
+    "lastCheckInAt": "2026-10-05T20:15:45.935Z"
+  },
+  {
+    "id": "8d251d6b-8c6d-4fc5-9593-01238b5bb249",
+    "kumoAssetId": "8c3f3ec5-c44a-4d69-a621-bf7b5b3dec9e",
+    "hostname": "WS-INITECH-014",
+    "operatingSystem": "Windows 11 Pro 23H2",
+    "serialNumber": "PF3XK92L",
+    "assignedUserId": null,
+    "lastCheckInAt": "2026-10-05T20:16:16.417Z"
+  },
+  {
+    "id": "6fd17fb9-a5a9-4d02-b34a-9d57c0984a0e",
+    "kumoAssetId": "841f0b7c-b43a-4b31-a08f-12015ae6b17a",
+    "hostname": "WS-ACME-014",
+    "operatingSystem": "Windows 11 Pro 23H2",
+    "serialNumber": "PF3XK92L",
+    "assignedUserId": null,
+    "lastCheckInAt": "2026-10-05T20:16:16.417Z"
+  }
+]

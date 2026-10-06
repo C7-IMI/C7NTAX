@@ -18,5 +18,25 @@
     "notes": null,
     "createdAt": "2026-08-19T16:15:28.994Z",
     "updatedAt": "2026-08-19T16:15:28.994Z"
+  },
+  {
+    "id": "8357f658-c6a0-4ab7-839f-a0fe1edc0cc9",
+    "name": "Managed services agreement",
+    "contractNumber": "CT-2026-3011",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "type": "managed_services",
+    "status": "active",
+    "startDate": "2026-03-20T20:16:27.091Z",
+    "endDate": "2027-03-20T20:16:27.091Z",
+    "renewalDate": "2027-02-18T20:16:27.091Z",
+    "autoRenew": true,
+    "value": 28800,
+    "currency": "USD",
+    "billingPeriod": "monthly",
+    "serviceAgreementId": null,
+    "notifiedAt": null,
+    "notes": "Includes unlimited remote support during business hours.",
+    "createdAt": "2026-10-06T20:16:27.361Z",
+    "updatedAt": "2026-10-06T20:16:27.361Z"
   }
 ]

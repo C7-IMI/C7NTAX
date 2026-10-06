@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "code": "USD",
+    "name": "US Dollar",
+    "symbol": "$",
+    "decimalPlaces": 2,
+    "isActive": true,
+    "createdAt": "2026-10-06T20:15:46.032Z"
+  },
+  {
+    "code": "EUR",
+    "name": "Euro",
+    "symbol": "€",
+    "decimalPlaces": 2,
+    "isActive": true,
+    "createdAt": "2026-10-06T20:15:46.032Z"
+  },
+  {
+    "code": "GBP",
+    "name": "Pound Sterling",
+    "symbol": "£",
+    "decimalPlaces": 2,
+    "isActive": true,
+    "createdAt": "2026-10-06T20:15:46.032Z"
+  },
+  {
+    "code": "CAD",
+    "name": "Canadian Dollar",
+    "symbol": "CA$",
+    "decimalPlaces": 2,
+    "isActive": true,
+    "createdAt": "2026-10-06T20:15:46.032Z"
+  },
+  {
+    "code": "AUD",
+    "name": "Australian Dollar",
+    "symbol": "A$",
+    "decimalPlaces": 2,
+    "isActive": true,
+    "createdAt": "2026-10-06T20:15:46.032Z"
+  }
+]

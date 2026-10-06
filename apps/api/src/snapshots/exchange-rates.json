@@ -1,0 +1,37 @@
+[
+  {
+    "id": "3784c073-7f58-47a0-8f5d-8efac2257ce1",
+    "fromCurrency": "EUR",
+    "toCurrency": "USD",
+    "rate": 1.08,
+    "updatedAt": "2026-10-06T20:15:46.037Z"
+  },
+  {
+    "id": "02fb8158-9602-4fda-85a4-0c1c4a77fc1c",
+    "fromCurrency": "GBP",
+    "toCurrency": "USD",
+    "rate": 1.27,
+    "updatedAt": "2026-10-06T20:15:46.037Z"
+  },
+  {
+    "id": "75806778-c9f9-4937-a0e1-fc3d72261035",
+    "fromCurrency": "CAD",
+    "toCurrency": "USD",
+    "rate": 0.74,
+    "updatedAt": "2026-10-06T20:15:46.037Z"
+  },
+  {
+    "id": "8de27bdb-b90a-4008-b2a5-7763c9600a11",
+    "fromCurrency": "AUD",
+    "toCurrency": "USD",
+    "rate": 0.66,
+    "updatedAt": "2026-10-06T20:15:46.037Z"
+  },
+  {
+    "id": "083f2eba-5986-4887-b650-b02b4b8aa1da",
+    "fromCurrency": "USD",
+    "toCurrency": "EUR",
+    "rate": 0.93,
+    "updatedAt": "2026-10-06T20:15:46.037Z"
+  }
+]

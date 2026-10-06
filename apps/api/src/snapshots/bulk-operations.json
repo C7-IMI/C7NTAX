@@ -1,0 +1,55 @@
+[
+  {
+    "id": "70e1d24b-d03f-418e-990e-b96ccb4cbba1",
+    "type": "status_change",
+    "status": "completed",
+    "entity": "ticket",
+    "config": {},
+    "totalCount": 24,
+    "successCount": 24,
+    "failureCount": 0,
+    "errors": [],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "startedAt": "2026-09-30T20:15:45.935Z",
+    "completedAt": "2026-09-30T20:15:45.935Z",
+    "createdAt": "2026-10-06T20:15:46.078Z",
+    "updatedAt": "2026-10-06T20:15:46.078Z"
+  },
+  {
+    "id": "d4a58300-8714-4081-a12a-178387eaa28f",
+    "type": "assign",
+    "status": "completed",
+    "entity": "ticket",
+    "config": {},
+    "totalCount": 12,
+    "successCount": 11,
+    "failureCount": 1,
+    "errors": [
+      {
+        "id": "unknown",
+        "message": "Ticket already closed"
+      }
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "startedAt": "2026-10-03T20:15:45.935Z",
+    "completedAt": "2026-10-03T20:15:45.935Z",
+    "createdAt": "2026-10-06T20:15:46.078Z",
+    "updatedAt": "2026-10-06T20:15:46.078Z"
+  },
+  {
+    "id": "c1cbd123-2deb-409a-846c-e14a97763a8a",
+    "type": "export",
+    "status": "completed",
+    "entity": "asset",
+    "config": {},
+    "totalCount": 5,
+    "successCount": 5,
+    "failureCount": 0,
+    "errors": [],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "startedAt": "2026-10-05T20:15:45.935Z",
+    "completedAt": "2026-10-05T20:15:45.935Z",
+    "createdAt": "2026-10-06T20:15:46.078Z",
+    "updatedAt": "2026-10-06T20:15:46.078Z"
+  }
+]

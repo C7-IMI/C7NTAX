@@ -28,5 +28,35 @@
     "deniedReason": null,
     "createdAt": "2026-08-19T16:15:28.987Z",
     "updatedAt": "2026-08-19T16:15:28.987Z"
+  },
+  {
+    "id": "1067872e-544d-43ea-b0ab-a314ff1724e4",
+    "userId": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "type": "vacation",
+    "status": "pending",
+    "startDate": "2026-10-30T20:16:27.091Z",
+    "endDate": "2026-11-03T20:16:27.091Z",
+    "hours": 40,
+    "reason": "Family holiday",
+    "approvedById": null,
+    "approvedAt": null,
+    "deniedReason": null,
+    "createdAt": "2026-10-06T20:16:27.370Z",
+    "updatedAt": "2026-10-06T20:16:27.370Z"
+  },
+  {
+    "id": "bd8964dd-6e11-4c26-9527-c66ccd8937e6",
+    "userId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "type": "sick",
+    "status": "approved",
+    "startDate": "2026-09-24T20:18:17.104Z",
+    "endDate": "2026-09-24T20:18:17.104Z",
+    "hours": 8,
+    "reason": "Flu",
+    "approvedById": null,
+    "approvedAt": null,
+    "deniedReason": null,
+    "createdAt": "2026-10-06T20:18:17.375Z",
+    "updatedAt": "2026-10-06T20:18:17.375Z"
   }
 ]

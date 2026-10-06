@@ -9,5 +9,159 @@
     "commentId": null,
     "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-08-22T03:46:32.491Z"
+  },
+  {
+    "id": "a363fa90-44b2-4041-b450-c79126365b0a",
+    "filename": "error-message.png",
+    "mimeType": "image/png",
+    "size": 24,
+    "storagePath": "26f46ca7-d80e-4db3-9710-1524d70a6e91/b9468de8-fe26-44bb-a9f8-bf0b6a74c974",
+    "ticketId": "26f46ca7-d80e-4db3-9710-1524d70a6e91",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.824Z"
+  },
+  {
+    "id": "19056cb1-1b9a-4557-8230-795348e65f54",
+    "filename": "network-scan.txt",
+    "mimeType": "text/plain",
+    "size": 58,
+    "storagePath": "90625947-2606-4265-be21-4795bff6b2fa/73db65af-6381-4827-bc76-8ec051a2024c",
+    "ticketId": "90625947-2606-4265-be21-4795bff6b2fa",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.826Z"
+  },
+  {
+    "id": "5dc1d70c-2d09-4d5b-9954-912b474f222d",
+    "filename": "vendor-quote.pdf",
+    "mimeType": "application/pdf",
+    "size": 25,
+    "storagePath": "eb6adec6-c915-4a44-b901-56402153ffc5/4553bff2-eeef-4a7b-af3c-dc11f866329d",
+    "ticketId": "eb6adec6-c915-4a44-b901-56402153ffc5",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.828Z"
+  },
+  {
+    "id": "66d5f192-b891-453d-a78b-0b4f1cc2bc9d",
+    "filename": "backup-report.csv",
+    "mimeType": "text/csv",
+    "size": 69,
+    "storagePath": "a5eb83b6-6b64-43a8-ae56-932a3b63146f/b17361a8-d274-48af-a788-c9b1f2a511b4",
+    "ticketId": "a5eb83b6-6b64-43a8-ae56-932a3b63146f",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.829Z"
+  },
+  {
+    "id": "4826fc74-07b0-4aee-a7f0-7438ce3fc691",
+    "filename": "firewall-config.txt",
+    "mimeType": "text/plain",
+    "size": 49,
+    "storagePath": "b7baeb44-f625-4e92-8c71-b5198b1bc850/975df4f0-83ad-437f-ac52-c85fce95caf1",
+    "ticketId": "b7baeb44-f625-4e92-8c71-b5198b1bc850",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.831Z"
+  },
+  {
+    "id": "8fd868d6-260b-4c31-b0ca-d95b3cfc30e8",
+    "filename": "onboarding-notes.md",
+    "mimeType": "text/markdown",
+    "size": 48,
+    "storagePath": "1baf3d02-245f-4dc2-ad9e-44db99f79f1f/c56979da-359c-4302-9248-f3086a3dfff0",
+    "ticketId": "1baf3d02-245f-4dc2-ad9e-44db99f79f1f",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.832Z"
+  },
+  {
+    "id": "d719f824-85a6-4093-a6c0-24ae14006788",
+    "filename": "error-message.png",
+    "mimeType": "image/png",
+    "size": 24,
+    "storagePath": "90b62960-6c9e-4cb6-915d-69bc2e823688/cba2a495-b92f-4abe-a0cc-e6d83f815f5d",
+    "ticketId": "90b62960-6c9e-4cb6-915d-69bc2e823688",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:27:17.861Z"
+  },
+  {
+    "id": "0baea8f1-8c3c-43a9-bc6d-b2caf5e94182",
+    "filename": "network-scan.txt",
+    "mimeType": "text/plain",
+    "size": 58,
+    "storagePath": "e7335f26-f96b-4e3c-811f-faf8297f4dc9/24b8f55c-9eea-4169-9fe9-bf5554d56f7d",
+    "ticketId": "e7335f26-f96b-4e3c-811f-faf8297f4dc9",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:27:17.868Z"
+  },
+  {
+    "id": "6308f1ba-169a-44b9-8c06-77f6eff0113f",
+    "filename": "vendor-quote.pdf",
+    "mimeType": "application/pdf",
+    "size": 25,
+    "storagePath": "84612939-82b4-40e4-bc93-cfaa7e2a1473/e55f1e5b-200b-48b9-92c3-16cd3fd991f3",
+    "ticketId": "84612939-82b4-40e4-bc93-cfaa7e2a1473",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:27:17.870Z"
+  },
+  {
+    "id": "0c99862e-78cf-47ba-9f49-01d2ccc45fc0",
+    "filename": "backup-report.csv",
+    "mimeType": "text/csv",
+    "size": 69,
+    "storagePath": "89462cf0-248c-48fe-88fd-1accda04c0a7/c48617fa-bb3d-4e3b-9500-b32a61c937ba",
+    "ticketId": "89462cf0-248c-48fe-88fd-1accda04c0a7",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:27:17.871Z"
+  },
+  {
+    "id": "9f55d124-a843-4541-9bd6-ee01955eb9d8",
+    "filename": "firewall-config.txt",
+    "mimeType": "text/plain",
+    "size": 49,
+    "storagePath": "cd18b217-2848-46ac-9ee5-559145d282f3/6d94e24e-4c04-4be1-9ba5-d3f9525fe6cc",
+    "ticketId": "cd18b217-2848-46ac-9ee5-559145d282f3",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:27:17.873Z"
+  },
+  {
+    "id": "d48ebac1-037f-4469-b662-f1d80234490c",
+    "filename": "onboarding-notes.md",
+    "mimeType": "text/markdown",
+    "size": 48,
+    "storagePath": "d6a6b7e5-f12e-48d5-aed9-217e65e1a070/793c7b2c-d154-4be3-9004-3b3bfe788931",
+    "ticketId": "d6a6b7e5-f12e-48d5-aed9-217e65e1a070",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:27:17.874Z"
+  },
+  {
+    "id": "cb67aec0-a3d6-4c0f-a830-fbbe5cb8b941",
+    "filename": "event-log-export.csv",
+    "mimeType": "text/csv",
+    "size": 69,
+    "storagePath": "29461582-8055-4603-96cd-70f1c2d11c66/2b58a31e-3b8c-4787-9445-efc7eb03202c",
+    "ticketId": "29461582-8055-4603-96cd-70f1c2d11c66",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:27:17.876Z"
+  },
+  {
+    "id": "cb811b24-79cb-4855-9036-54a2f81e32de",
+    "filename": "site-photo.jpg",
+    "mimeType": "image/jpeg",
+    "size": 24,
+    "storagePath": "22a4c552-0d86-4927-8da1-0515514b3fac/5c149ea2-19e2-4ab6-8049-58be82ca0f4e",
+    "ticketId": "22a4c552-0d86-4927-8da1-0515514b3fac",
+    "commentId": null,
+    "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:27:17.877Z"
   }
 ]

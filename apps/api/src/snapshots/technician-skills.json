@@ -1,1 +1,191 @@
-[]
+[
+  {
+    "id": "b57942f0-4aa6-4e24-a255-a7bb51ee67dd",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "skill": "Windows Server",
+    "level": 1,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "37087057-870a-401e-8230-c348a3bd175c",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "skill": "Microsoft 365",
+    "level": 3,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "c15f0e08-9047-471a-bc0a-783beeaee914",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "skill": "Networking",
+    "level": 5,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "da52f3e8-1569-4d7a-92d6-7e4761c13369",
+    "userId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "skill": "Microsoft 365",
+    "level": 1,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "258ccfd2-b29b-431e-a649-aaae8856dd34",
+    "userId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "skill": "Networking",
+    "level": 3,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "2be5eedf-7d0b-4ba4-8dbf-bda7b32acd80",
+    "userId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "skill": "Firewalls",
+    "level": 5,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "9a97888f-8f03-4f87-9569-3b99c63773ba",
+    "userId": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "skill": "Networking",
+    "level": 1,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "bc5e6bba-9c45-4757-9f7b-83dd2b63775a",
+    "userId": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "skill": "Firewalls",
+    "level": 3,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "0a0b22ef-a6ff-437d-9fcb-1778a845800a",
+    "userId": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "skill": "Microsoft Entra ID",
+    "level": 5,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "3e7d7ee4-2cf3-4424-b7a5-4ba9a2e6f6ab",
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "skill": "Windows Server",
+    "level": 1,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "c3f1c0c9-f0c4-4603-9282-d4317c7ec9e1",
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "skill": "Microsoft 365",
+    "level": 3,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "1d8891d8-b6cd-4716-9e54-9710f8dff8f1",
+    "userId": "fdfa1aae-cc07-4dd0-b8bb-02fbfa55a157",
+    "skill": "Networking",
+    "level": 5,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "9a7b32b6-56fd-4756-ab6b-5d2de05d82db",
+    "userId": "2433bcef-29be-4d98-ae2e-7412c9d5ae0e",
+    "skill": "Microsoft 365",
+    "level": 1,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "ad3cf919-664b-4ed9-a344-1364234b98ba",
+    "userId": "2433bcef-29be-4d98-ae2e-7412c9d5ae0e",
+    "skill": "Networking",
+    "level": 3,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "a61e3aff-bc7b-43dd-91a7-633e6b9cba97",
+    "userId": "2433bcef-29be-4d98-ae2e-7412c9d5ae0e",
+    "skill": "Firewalls",
+    "level": 5,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "b603275a-89b7-48fc-b6af-fe49ec7bde90",
+    "userId": "5c43660c-e4a5-4f89-804d-75bf60db5911",
+    "skill": "Networking",
+    "level": 1,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "057d1734-0cbb-4529-9fea-75dec1d6845b",
+    "userId": "5c43660c-e4a5-4f89-804d-75bf60db5911",
+    "skill": "Firewalls",
+    "level": 3,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "f1e55792-6847-4b32-890a-4b9ad5d2eee7",
+    "userId": "5c43660c-e4a5-4f89-804d-75bf60db5911",
+    "skill": "Microsoft Entra ID",
+    "level": 5,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "c390122c-bd3e-42ea-98bf-8cfdebf418f3",
+    "userId": "abfe53bb-96a0-491f-97cb-71431d950abb",
+    "skill": "Windows Server",
+    "level": 1,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "801ebcd6-1858-4273-9a43-cd3a66db93b4",
+    "userId": "abfe53bb-96a0-491f-97cb-71431d950abb",
+    "skill": "Microsoft 365",
+    "level": 3,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "85aa2913-4102-44d2-afb9-a48b9adeebc8",
+    "userId": "abfe53bb-96a0-491f-97cb-71431d950abb",
+    "skill": "Networking",
+    "level": 5,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "12eca591-4e2d-4611-82b5-0ecdafbf9cec",
+    "userId": "7ce93cee-bd43-4a5c-86a6-9bf3c11d839c",
+    "skill": "Microsoft 365",
+    "level": 1,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "bd9eab94-3e46-4ba0-a698-89776080dfac",
+    "userId": "7ce93cee-bd43-4a5c-86a6-9bf3c11d839c",
+    "skill": "Networking",
+    "level": 3,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "d7b5a0ee-8c27-40d2-9e14-f1fa89ac1219",
+    "userId": "7ce93cee-bd43-4a5c-86a6-9bf3c11d839c",
+    "skill": "Firewalls",
+    "level": 5,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "4d34455e-9344-4cfb-81fb-d1da0e654ddd",
+    "userId": "d12c1ea5-4912-4c16-8bbf-65eb5a12406f",
+    "skill": "Networking",
+    "level": 1,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "d8684507-80c9-43a9-9031-3ee1fc20d3b7",
+    "userId": "d12c1ea5-4912-4c16-8bbf-65eb5a12406f",
+    "skill": "Firewalls",
+    "level": 3,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  },
+  {
+    "id": "6add2d32-24c0-4771-8285-0867884ff4f1",
+    "userId": "d12c1ea5-4912-4c16-8bbf-65eb5a12406f",
+    "skill": "Microsoft Entra ID",
+    "level": 5,
+    "createdAt": "2026-10-06T20:18:17.203Z"
+  }
+]

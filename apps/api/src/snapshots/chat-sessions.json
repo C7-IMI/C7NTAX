@@ -12,5 +12,47 @@
     "closedAt": null,
     "createdAt": "2026-08-19T16:15:29.006Z",
     "updatedAt": "2026-08-19T16:15:29.006Z"
+  },
+  {
+    "id": "02679ec4-cefd-450c-9128-110a0188c8a9",
+    "status": "closed",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "userId": null,
+    "guestName": "Marcus Bell",
+    "guestEmail": "marcus.bell@globexindustries.com",
+    "assignedToId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ticketId": null,
+    "startedAt": "2026-10-04T20:16:16.417Z",
+    "closedAt": "2026-10-04T20:16:16.417Z",
+    "createdAt": "2026-10-06T20:16:16.869Z",
+    "updatedAt": "2026-10-06T20:16:16.869Z"
+  },
+  {
+    "id": "277262d9-d0af-4fd3-8f9e-4260adcc7bcb",
+    "status": "closed",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "userId": null,
+    "guestName": "Marcus Bell",
+    "guestEmail": "marcus.bell@globexindustries.com",
+    "assignedToId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ticketId": null,
+    "startedAt": "2026-10-04T20:16:27.091Z",
+    "closedAt": "2026-10-04T20:16:27.091Z",
+    "createdAt": "2026-10-06T20:16:27.332Z",
+    "updatedAt": "2026-10-06T20:16:27.332Z"
+  },
+  {
+    "id": "a166f992-c74d-469a-ae31-03e2c5dba1ae",
+    "status": "closed",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "userId": null,
+    "guestName": "Marcus Bell",
+    "guestEmail": "marcus.bell@globexindustries.com",
+    "assignedToId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ticketId": null,
+    "startedAt": "2026-10-04T20:16:32.065Z",
+    "closedAt": "2026-10-04T20:16:32.065Z",
+    "createdAt": "2026-10-06T20:16:32.320Z",
+    "updatedAt": "2026-10-06T20:16:32.320Z"
   }
 ]

@@ -1,0 +1,64 @@
+[
+  {
+    "id": "308fc460-5af8-49e6-9bb7-33c125705c41",
+    "name": "Repeated VPN disconnects",
+    "description": "Six tickets in the last fortnight mention the VPN dropping for the same client.",
+    "category": "network",
+    "severity": "high",
+    "entityType": "ticket",
+    "entityIds": [
+      "26f46ca7-d80e-4db3-9710-1524d70a6e91",
+      "90625947-2606-4265-be21-4795bff6b2fa",
+      "eb6adec6-c915-4a44-b901-56402153ffc5"
+    ],
+    "metrics": {
+      "tickets": 6,
+      "windowDays": 14
+    },
+    "status": "open",
+    "detectedAt": "2026-10-06T20:16:16.873Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-06T20:16:16.873Z",
+    "updatedAt": "2026-10-06T20:16:16.873Z"
+  },
+  {
+    "id": "5a475d9a-a57f-434f-be4b-4980ae948e6c",
+    "name": "Phishing wave targeting finance",
+    "description": "Invoice-themed phishing reported by three clients in two days.",
+    "category": "security",
+    "severity": "critical",
+    "entityType": "ticket",
+    "entityIds": [
+      "a5eb83b6-6b64-43a8-ae56-932a3b63146f",
+      "b7baeb44-f625-4e92-8c71-b5198b1bc850",
+      "1baf3d02-245f-4dc2-ad9e-44db99f79f1f"
+    ],
+    "metrics": {
+      "tickets": 3,
+      "windowDays": 2
+    },
+    "status": "open",
+    "detectedAt": "2026-10-06T20:16:16.873Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-06T20:16:16.873Z",
+    "updatedAt": "2026-10-06T20:16:16.873Z"
+  },
+  {
+    "id": "b35dea78-8f0f-4ba4-8748-fa48846c6f8a",
+    "name": "Backup job overruns",
+    "description": "Nightly jobs on two servers are now finishing after the business day starts.",
+    "category": "backup",
+    "severity": "medium",
+    "entityType": "asset",
+    "entityIds": [],
+    "metrics": {
+      "assets": 2,
+      "averageOverrunMinutes": 48
+    },
+    "status": "acknowledged",
+    "detectedAt": "2026-10-06T20:16:16.873Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-06T20:16:16.873Z",
+    "updatedAt": "2026-10-06T20:16:16.873Z"
+  }
+]

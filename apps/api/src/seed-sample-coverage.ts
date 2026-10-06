@@ -51,6 +51,50 @@ async function writeAttachmentFile(storagePath: string, content: string) {
   await writeFile(filePath, content, { flag: "wx" }).catch(() => {});
 }
 
+/** Plausible value for a Kumo asset template field, matched on key then field type. */
+function sampleFieldValue(key: string, fieldType: string, label: string, assetName: string, index: number) {
+  const host = assetName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const octet = 20 + (index % 200);
+  const texts: Record<string, string> = {
+    hostname: `${host}.corp.local`,
+    os: index % 3 === 0 ? "Windows 11 Enterprise 23H2" : "Windows Server 2022",
+    ip: `10.20.${index % 12}.${octet}`,
+    mgmt_ip: `10.20.${index % 12}.${octet}`,
+    serial: `SN-${100_000 + index * 137}`,
+    deviceType: index % 2 === 0 ? "Access switch" : "Firewall",
+    network_name: `CORP-VLAN${10 + (index % 20)}`,
+    subnet: `10.20.${index % 12}.0/24`,
+    gateway: `10.20.${index % 12}.1`,
+    dhcp_scope: `10.20.${index % 12}.100 - 10.20.${index % 12}.200`,
+  };
+  const numbers: Record<string, number> = { cpu: 8, ram: 32, vlan_id: 10 + (index % 20) };
+  if (key in texts) return { valueText: texts[key]! };
+  if (key in numbers) return { valueNum: numbers[key]! };
+  if (/bool|checkbox|switch|toggle/i.test(fieldType)) return { valueBool: true };
+  if (/date|time/i.test(fieldType)) return { valueDate: daysFromNow(120) };
+  if (/multi|list|json|tag/i.test(fieldType)) return { valueJson: [label] };
+  if (/number|int|float|decimal|currency|percent/i.test(fieldType)) return { valueNum: 1 };
+  return { valueText: `${label} sample` };
+}
+
+/** Adds only the rows whose `key` value is not in the table yet, so re-runs never duplicate. */
+async function addMissing(label: string, delegateName: string, rows: Array<Record<string, unknown>>, key: string) {
+  const delegate = (prisma as { [k: string]: any })[delegateName];
+  const existing: Array<Record<string, unknown>> = await delegate.findMany({ select: { [key]: true } });
+  const have = new Set(existing.map((row) => row[key]));
+  const missing = rows.filter((row) => !have.has(row[key]));
+  if (!missing.length) {
+    kept(label, existing.length);
+    return;
+  }
+  try {
+    await delegate.createMany({ data: missing });
+    made(label, missing.length);
+  } catch (e) {
+    log(`  ✗ ${label}: ${(e as Error).message}`);
+  }
+}
+
 async function main() {
   if (isSampleDataDisabled()) {
     log("Sample data is disabled — seeding skipped (re-enable it first).");
@@ -116,7 +160,8 @@ async function main() {
         skills.slice(personIndex % 3, (personIndex % 3) + 3).map((skill, index) => ({
           userId: person.id,
           skill,
-          level: ["Beginner", "Intermediate", "Expert"][index % 3]!,
+          // 1–5 scale, matching the schedule skills API default of 1.
+          level: [1, 3, 5][index % 3]!,
         })),
       ),
     });
@@ -180,14 +225,14 @@ async function main() {
       {
         webhookId: hook.id,
         event: hook.events[0] ?? "service_alert.raised",
-        payload: { service: "Microsoft 365", status: "down", detectedAt: daysAgo(1).toISOString() },
+        payload: JSON.stringify({ service: "Microsoft 365", status: "down", detectedAt: daysAgo(1).toISOString() }),
         status: "delivered",
         attempts: 1,
       },
       {
         webhookId: hook.id,
         event: hook.events[1] ?? "service_alert.resolved",
-        payload: { service: "Cloudflare", status: "resolved", durationMinutes: 42 },
+        payload: JSON.stringify({ service: "Cloudflare", status: "resolved", durationMinutes: 42 }),
         status: hookIndex === 0 ? "failed" : "delivered",
         attempts: hookIndex === 0 ? 3 : 1,
       },
@@ -268,7 +313,7 @@ async function main() {
           expiryDate: daysFromNow(240),
           autoRenew: true,
           dnsProvider: "Cloudflare",
-          nameservers: "ada.ns.cloudflare.com, rob.ns.cloudflare.com",
+          nameservers: ["ada.ns.cloudflare.com", "rob.ns.cloudflare.com"],
           notes: "Primary domain. DNS hosted with Cloudflare.",
           companyId: client.id,
         },
@@ -286,7 +331,7 @@ async function main() {
           issuer: "DigiCert",
           expiryDate: daysFromNow(75),
           validFrom: daysAgo(290),
-          subjectAltNames: `${slug}.com, www.${slug}.com, mail.${slug}.com`,
+          subjectAltNames: [`${slug}.com`, `www.${slug}.com`, `mail.${slug}.com`],
           autoRenew: true,
           notes: "Wildcard certificate covering the main web and mail hosts.",
           companyId: client.id,
@@ -435,22 +480,22 @@ async function main() {
     if (assetCount < 2) {
       const slug = client.name.toLowerCase().replace(/[^a-z0-9]+/g, "");
       const wanted = [
-        { name: `${client.name} — firewall`, type: "Network", manufacturer: "Fortinet", model: "FortiGate 60F", serialNumber: `FG60F-${slug.slice(0, 4).toUpperCase()}-01`, assetTag: `${slug.slice(0, 3).toUpperCase()}-FW-01` },
-        { name: `${client.name} — conference room laptop`, type: "Laptop", manufacturer: "Lenovo", model: "ThinkPad T14 Gen 4", serialNumber: `PF-${slug.slice(0, 4).toUpperCase()}-77`, assetTag: `${slug.slice(0, 3).toUpperCase()}-LT-77` },
+        { name: `${client.name} — firewall`, type: "firewall", manufacturer: "Fortinet", model: "FortiGate 60F", serialNumber: `FG60F-${slug.slice(0, 4).toUpperCase()}-01`, assetTag: `${slug.slice(0, 3).toUpperCase()}-FW-01` },
+        { name: `${client.name} — conference room laptop`, type: "laptop", manufacturer: "Lenovo", model: "ThinkPad T14 Gen 4", serialNumber: `PF-${slug.slice(0, 4).toUpperCase()}-77`, assetTag: `${slug.slice(0, 3).toUpperCase()}-LT-77` },
       ].slice(0, 2 - assetCount);
       for (const [index, spec] of wanted.entries()) {
         const asset = await prisma.asset.create({
           data: {
             ...spec,
             status: "active",
-            category: spec.type === "Laptop" ? "Endpoint" : "Infrastructure",
+            category: spec.type === "laptop" ? "Endpoint" : "Infrastructure",
             vendor: "Insight",
             purchaseDate: daysAgo(180),
-            purchasePrice: spec.type === "Laptop" ? 1850 : 1250,
+            purchasePrice: spec.type === "laptop" ? 1850 : 1250,
             warrantyExpiry: daysFromNow(550),
             location: "Head office",
             companyId: client.id,
-            ipAddress: spec.type === "Network" ? "10.20.30.1" : undefined,
+            ipAddress: spec.type === "firewall" ? "10.20.30.1" : undefined,
             notes: "Recorded from the onboarding audit.",
           },
         });
@@ -592,11 +637,75 @@ async function main() {
     }
   }
 
+  // ── Organization notes ─────────────────────────────────────────────
+  // The Kumo organization Overview card reads these; without them it shows
+  // "No notes yet" for every client.
+  log("\nOrganization and asset detail coverage:");
+
+  // Assets seeded earlier used display-cased types that the asset type map and
+  // filters do not recognise, so they render as raw text.
+  for (const [from, to] of [["Network", "network"], ["Laptop", "laptop"], ["Server", "server"], ["Firewall", "firewall"], ["Switch", "switch"], ["Access Point", "access_point"]] as const) {
+    await prisma.asset.updateMany({ where: { type: from }, data: { type: to } });
+  }  const companiesMissingNotes = await prisma.company.findMany({
+    where: { OR: [{ notes: null }, { notes: "" }] },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+  if (companiesMissingNotes.length) {
+    const noteTemplates = [
+      "Change requests go through the Friday change call — book after-hours work at least 48 hours ahead. Primary contact is the IT manager.",
+      "Hybrid Microsoft 365 tenant with two on-premises domain controllers. Backups are verified monthly and the last restore test passed.",
+      "Finance closes the month on the first working day. Avoid disruptive changes in the last two days of the month.",
+      "Two sites joined by an IPSec tunnel over business fibre; the 4G link is failover only, so keep large transfers inside business hours.",
+      "Annual security review in January. They expect MFA everywhere and a written summary of any access changes.",
+    ];
+    for (const [index, company] of companiesMissingNotes.entries()) {
+      await prisma.company.update({ where: { id: company.id }, data: { notes: noteTemplates[index % noteTemplates.length]! } });
+    }
+    made("organization notes", companiesMissingNotes.length);
+  } else {
+    kept("organization notes", await prisma.company.count());
+  }
+
+  // ── Kumo asset field values ────────────────────────────────────────
+  // Assets seeded earlier used display-cased types that the asset type map and
+  // filters do not recognise, so they render as raw text.
+  for (const [from, to] of [["Network", "network"], ["Laptop", "laptop"], ["Server", "server"], ["Firewall", "firewall"], ["Switch", "switch"], ["Access Point", "access_point"]] as const) {
+    await prisma.asset.updateMany({ where: { type: from }, data: { type: to } });
+  }
+  const assetsMissingFieldValues = await prisma.kumoAsset.findMany({
+    where: { fieldValues: { none: {} } },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, templateId: true },
+  });
+  if (assetsMissingFieldValues.length) {
+    const templateIds = [...new Set(assetsMissingFieldValues.map((asset) => asset.templateId))];
+    const fields = await prisma.kumoTemplateField.findMany({
+      where: { templateId: { in: templateIds }, isSensitive: false },
+      orderBy: { sortOrder: "asc" },
+    });
+    let rows = 0;
+    for (const [index, asset] of assetsMissingFieldValues.entries()) {
+      const own = fields.filter((field) => field.templateId === asset.templateId);
+      if (!own.length) continue;
+      await prisma.kumoAssetFieldValue.createMany({
+        data: own.map((field) => ({
+          assetId: asset.id,
+          fieldId: field.id,
+          ...sampleFieldValue(field.key, field.fieldType, field.label, asset.name, index),
+        })),
+      });
+      rows += own.length;
+    }
+    made("kumo asset field values", rows);
+  } else {
+    kept("kumo asset field values", await prisma.kumoAssetFieldValue.count());
+  }
+
   // ── Ticket enrichment ──────────────────────────────────────────────
   log("\nTicket activity:");
   const tickets = await prisma.ticket.findMany({
     orderBy: { createdAt: "desc" },
-    take: 24,
     select: { id: true, companyId: true, contactId: true, ticketNumber: true, title: true, assignedToId: true, boardId: true },
   });
   const customerMessages = [
@@ -611,14 +720,26 @@ async function main() {
   ];
   let enrichedTickets = 0;
   for (const [index, ticket] of tickets.entries()) {
-    const commentCount = await prisma.ticketComment.count({ where: { ticketId: ticket.id } });
+    const comments = await prisma.ticketComment.findMany({ where: { ticketId: ticket.id }, select: { id: true, body: true } });
     const timeCount = await prisma.timeEntry.count({ where: { ticketId: ticket.id } });
-    if (commentCount === 0) {
+    if (comments.length === 0) {
+      const base = daysAgo(1 + (index % 12));
       await prisma.ticketComment.createMany({
         data: [
-          { ticketId: ticket.id, authorId: ticket.contactId ? primary.id : primary.id, body: techMessages[index % techMessages.length]!, isInternal: false },
-          { ticketId: ticket.id, authorId: primary.id, body: `Internal note: ${techMessages[(index + 1) % techMessages.length]!}`, isInternal: true },
-          { ticketId: ticket.id, authorId: primary.id, body: customerMessages[index % customerMessages.length]!, isInternal: false },
+          { ticketId: ticket.id, authorId: primary.id, body: techMessages[index % techMessages.length]!, isInternal: false, createdAt: base },
+          { ticketId: ticket.id, authorId: primary.id, body: `Internal note: ${techMessages[(index + 1) % techMessages.length]!}`, isInternal: true, createdAt: new Date(base.getTime() + 3_600_000) },
+          { ticketId: ticket.id, authorId: primary.id, body: customerMessages[index % customerMessages.length]!, isInternal: false, isEmail: true, fromEmail: `helpdesk@c7ntax.com`, createdAt: new Date(base.getTime() + 7_200_000) },
+        ],
+      });
+      enrichedTickets += 1;
+    }
+    // The History tab filters comments shaped "Field: old → new"; generated by
+    // the app on a field change, so sample tickets need some too.
+    if (!comments.some((comment) => / → /.test(comment.body))) {
+      await prisma.ticketComment.createMany({
+        data: [
+          { ticketId: ticket.id, authorId: primary.id, body: "Status: New → In Progress", isInternal: true, createdAt: daysAgo(4 + (index % 9)) },
+          { ticketId: ticket.id, authorId: primary.id, body: "Priority: Medium → High", isInternal: true, createdAt: daysAgo(3 + (index % 9)) },
         ],
       });
       enrichedTickets += 1;
@@ -636,8 +757,9 @@ async function main() {
     // contacts card have something real to show.
     const similar = await prisma.ticketSimilarity.count({ where: { ticketId: ticket.id } });
     if (similar === 0 && tickets[index + 1]) {
+      const neighbour = tickets[index + 1]!;
       await prisma.ticketSimilarity.create({
-        data: { ticketId: ticket.id, similarTicketId: tickets[index + 1].id, score: 0.78, method: "embeddings" },
+        data: { ticketId: ticket.id, similarTicketId: neighbour.id, score: 0.78, method: "embeddings" },
       });
     }
     if (ticket.contactId) {
@@ -653,20 +775,27 @@ async function main() {
   }
   if (enrichedTickets) made("tickets given notes and time", enrichedTickets);
 
-  // Attachments — real files on disk so the download works
-  const attachmentCount = await prisma.ticketAttachment.count();
-  if (attachmentCount < 6) {
-    const files = [
-      { filename: "error-message.png", mimeType: "image/png", content: "sample image placeholder" },
-      { filename: "network-scan.txt", mimeType: "text/plain", content: "Host\tPort\tState\n10.20.30.1\t443\topen\n10.20.30.11\t3389\topen\n" },
-      { filename: "vendor-quote.pdf", mimeType: "application/pdf", content: "%PDF-1.4 sample quotation" },
-      { filename: "backup-report.csv", mimeType: "text/csv", content: "job,status,duration\nNightly,Success,00:42:11\nWeekly,Success,01:20:03\n" },
-      { filename: "firewall-config.txt", mimeType: "text/plain", content: "config system global\n    set hostname FGT60F\nend\n" },
-      { filename: "onboarding-notes.md", mimeType: "text/markdown", content: "# Onboarding\n\n- MFA enforced\n- Backups verified\n" },
-    ];
+  // Attachments — real files on disk so the download works. Added to the most
+  // recent tickets that have none, so opening a ticket from the top of the list
+  // shows something in the Attachments tab.
+  const attachmentFiles = [
+    { filename: "error-message.png", mimeType: "image/png", content: "sample image placeholder" },
+    { filename: "network-scan.txt", mimeType: "text/plain", content: "Host\tPort\tState\n10.20.30.1\t443\topen\n10.20.30.11\t3389\topen\n" },
+    { filename: "vendor-quote.pdf", mimeType: "application/pdf", content: "%PDF-1.4 sample quotation" },
+    { filename: "backup-report.csv", mimeType: "text/csv", content: "job,status,duration\nNightly,Success,00:42:11\nWeekly,Success,01:20:03\n" },
+    { filename: "firewall-config.txt", mimeType: "text/plain", content: "config system global\n    set hostname FGT60F\nend\n" },
+    { filename: "onboarding-notes.md", mimeType: "text/markdown", content: "# Onboarding\n\n- MFA enforced\n- Backups verified\n" },
+    { filename: "event-log-export.csv", mimeType: "text/csv", content: "time,level,source,message\n09:12,Error,Disk,Volume shadow copy failed\n" },
+    { filename: "site-photo.jpg", mimeType: "image/jpeg", content: "sample photo placeholder" },
+  ];
+  const attachedTicketIds = new Set(
+    (await prisma.ticketAttachment.findMany({ select: { ticketId: true } })).map((row) => row.ticketId),
+  );
+  const attachmentTargets = tickets.filter((ticket, index) => index % 4 === 0 && !attachedTicketIds.has(ticket.id));
+  if (attachmentTargets.length) {
     let added = 0;
-    for (const [index, file] of files.entries()) {
-      const ticket = tickets[index % tickets.length]!;
+    for (const [index, ticket] of attachmentTargets.entries()) {
+      const file = attachmentFiles[index % attachmentFiles.length]!;
       const storagePath = `${ticket.id}/${randomUUID()}`;
       await writeAttachmentFile(storagePath, file.content);
       await prisma.ticketAttachment.create({
@@ -675,6 +804,8 @@ async function main() {
       added += 1;
     }
     made("ticket attachments", added);
+  } else {
+    kept("ticket attachments", await prisma.ticketAttachment.count());
   }
 
   // ── Knowledge base ─────────────────────────────────────────────────
@@ -757,7 +888,7 @@ async function main() {
     const report = await prisma.report.findFirst({ select: { id: true } });
     if (report && (await prisma.reportSchedule.count()) === 0) {
       await prisma.reportSchedule.create({
-        data: { reportId: report.id, frequency: "weekly", dayOfWeek: 1, timeOfDay: "07:00", recipients: "service@example.com", format: "pdf", isActive: true, lastSentAt: daysAgo(6) },
+        data: { reportId: report.id, frequency: "weekly", dayOfWeek: 1, timeOfDay: "07:00", recipients: ["service@example.com", "ops@example.com"], format: "pdf", isActive: true, lastSentAt: daysAgo(6) },
       });
       log("  ✓ report schedule");
     }
@@ -773,7 +904,7 @@ async function main() {
     return rows.length;
   });
 
-  await ensure("chat sessions", () => prisma.chatSession.count() >= 2 ? Promise.resolve(2) : Promise.resolve(0), async () => {
+  await ensure("chat sessions", async () => (await prisma.chatSession.count()) >= 2 ? 2 : 0, async () => {
     const client = clients[0]!;
     const session = await prisma.chatSession.create({
       data: { status: "closed", companyId: client.id, guestName: "Marcus Bell", guestEmail: `marcus.bell@${client.name.toLowerCase().replace(/[^a-z0-9]+/g, "")}.com`, assignedToId: primary.id, startedAt: daysAgo(2), closedAt: daysAgo(2) },
@@ -798,7 +929,7 @@ async function main() {
     return rows.length;
   });
 
-  await ensure("AI actions", () => prisma.aiAction.count() >= 3 ? Promise.resolve(3) : Promise.resolve(0), async () => {
+  await ensure("AI actions", async () => (await prisma.aiAction.count()) >= 3 ? 3 : 0, async () => {
     const rows = [
       { entityType: "ticket", title: "Close as resolved", summary: "The user confirmed the fix. Suggest closing and asking for a review.", riskTier: "low", status: "suggested" },
       { entityType: "ticket", title: "Escalate to the network team", summary: "Three related outages this week point at the switch stack.", riskTier: "medium", status: "suggested" },
@@ -831,20 +962,26 @@ async function main() {
 
   // ── Sales, procurement and scheduling extras ───────────────────────
   log("\nSales, procurement and scheduling:");
-  await ensure("vendors", () => prisma.vendor.count() >= 3 ? Promise.resolve(3) : Promise.resolve(0), async () => {
-    const rows = [
-      { name: "Ingram Micro", contactName: "Sales desk", email: "orders@example-vendor.com", phone: "+1 (800) 456-8000", paymentTerms: "Net 30", website: "https://example-vendor.com", isActive: true, notes: "Hardware and licences. Free next-day on stock items." },
-      { name: "Pax8", contactName: "Cloud desk", email: "cloud@example-vendor2.com", paymentTerms: "Net 15", isActive: true, notes: "Microsoft 365 and security licensing." },
-    ];
-    await prisma.vendor.createMany({ data: rows });
-    return rows.length;
-  });
+  await addMissing("vendors", "vendor", [
+    { name: "Ingram Micro", contactName: "Sales desk", email: "orders@example-vendor.com", phone: "+1 (800) 456-8000", paymentTerms: "Net 30", website: "https://example-vendor.com", isActive: true, notes: "Hardware and licences. Free next-day on stock items." },
+    { name: "Pax8", contactName: "Cloud desk", email: "cloud@example-vendor2.com", paymentTerms: "Net 15", isActive: true, notes: "Microsoft 365 and security licensing." },
+  ], "name");
 
-  const vendor = await prisma.vendor.findFirst({ select: { id: true } });
+  const year = new Date().getFullYear();
+  /** Finds the next unused `PREFIX-year-NNNN` document number for a table. */
+  const freeNumber = async (delegateName: string, field: string, prefix: string, base: number) => {
+    const rows: Array<Record<string, unknown>> = await (prisma as { [k: string]: any })[delegateName].findMany({ select: { [field]: true } });
+    const taken = new Set(rows.map((row) => row[field]));
+    let n = base;
+    while (taken.has(`${prefix}-${year}-${n}`)) n += 1;
+    return `${prefix}-${year}-${n}`;
+  };
+
+  const vendor = await prisma.vendor.findFirst({ select: { id: true }, orderBy: { createdAt: "asc" } });
   if (vendor && (await prisma.purchaseOrder.count()) < 2) {
     await prisma.purchaseOrder.create({
       data: {
-        poNumber: `PO-${new Date().getFullYear()}-1042`,
+        poNumber: await freeNumber("purchaseOrder", "poNumber", "PO", 1042),
         vendorId: vendor.id,
         status: "received",
         subtotal: 3200,
@@ -857,17 +994,16 @@ async function main() {
         approvedById: primary.id,
         createdById: primary.id,
         notes: "Replacement switches for the network refresh project.",
-        lineItems: { create: [{ description: "24-port managed switch", quantity: 2, unitCost: 1600 }] },
       },
     });
-    log("  ✓ purchase order + line item");
+    log("  ✓ purchase order");
   }
 
   const clientIds = clients.map((c) => c.id);
   if ((await prisma.quote.count()) < 3 && clientIds.length) {
     await prisma.quote.create({
       data: {
-        quoteNumber: `QT-${new Date().getFullYear()}-2087`,
+        quoteNumber: await freeNumber("quote", "quoteNumber", "QT", 2087),
         companyId: clientIds[1 % clientIds.length]!,
         title: "Endpoint protection renewal",
         status: "sent",
@@ -886,28 +1022,24 @@ async function main() {
     log("  ✓ quote + 2 line items");
   }
 
-  if ((await prisma.opportunity.count()) < 4 && clientIds.length) {
-    await prisma.opportunity.create({
-      data: {
-        name: "MFA rollout for all staff",
-        companyId: clientIds[2 % clientIds.length]!,
-        stage: "proposal",
-        probability: 65,
-        amount: 14500,
-        currency: "USD",
-        expectedCloseDate: daysFromNow(21),
-        assignedToId: people[1]?.id ?? primary.id,
-        notes: "Security review flagged this as the next step after the phishing wave.",
-      },
-    });
-    log("  ✓ opportunity");
+  if (clientIds.length) {
+    await addMissing("opportunities", "opportunity", [
+      { name: "MFA rollout for all staff", companyId: clientIds[2 % clientIds.length]!, stage: "proposal", probability: 65, amount: 14500, currency: "USD", expectedCloseDate: daysFromNow(21), assignedToId: people[1]?.id ?? primary.id, notes: "Security review flagged this as the next step after the phishing wave." },
+      { name: "Server hardware refresh", companyId: clientIds[0]!, stage: "qualified", probability: 35, amount: 22600, currency: "USD", expectedCloseDate: daysFromNow(74), assignedToId: primary.id, notes: "Four hosts are out of warranty in the spring." },
+      { name: "Backup service upgrade", companyId: clientIds[1 % clientIds.length]!, stage: "won", probability: 100, amount: 9600, currency: "USD", expectedCloseDate: daysAgo(18), closedAt: daysAgo(16), wonReason: "Best fit on recovery time and price.", assignedToId: primary.id, notes: "Signed for three years of immutable cloud backup." },
+      { name: "Legacy phone system replacement", companyId: clientIds[2 % clientIds.length]!, stage: "lost", probability: 0, amount: 31000, currency: "USD", expectedCloseDate: daysAgo(30), closedAt: daysAgo(28), lostReason: "Incumbent matched the price on hardware they already owned.", assignedToId: people[1]?.id ?? primary.id, notes: "Lost on price — revisit at renewal." },
+    ], "name");
+
+    // "qualification" is not a pipeline stage, so those deals never render on
+    // the board — normalise the legacy value to "qualified".
+    await prisma.opportunity.updateMany({ where: { stage: "qualification" }, data: { stage: "qualified" } });
   }
 
-  if ((await prisma.contract.count()) < 2 && clientIds.length) {
-    await prisma.contract.create({
-      data: {
+  if (clientIds.length) {
+    await addMissing("contracts", "contract", [
+      {
         name: "Managed services agreement",
-        contractNumber: `CT-${new Date().getFullYear()}-3011`,
+        contractNumber: `CT-${year}-3011`,
         companyId: clientIds[3 % clientIds.length]!,
         type: "managed_services",
         status: "active",
@@ -920,44 +1052,29 @@ async function main() {
         billingPeriod: "monthly",
         notes: "Includes unlimited remote support during business hours.",
       },
-    });
-    log("  ✓ contract");
+    ], "name");
   }
 
-  if ((await prisma.expense.count()) < 4) {
-    const rows = [
-      { description: "Parking at the client site", amount: 18.5, category: "travel", expenseDate: daysAgo(9) },
-      { description: "Replacement patch leads", amount: 42.75, category: "hardware", expenseDate: daysAgo(5) },
-    ];
-    await prisma.expense.createMany({ data: rows.map((row) => ({ ...row, companyId: clientIds[0], createdById: primary.id })) });
-    log("  ✓ expenses");
-  }
+  await addMissing("expenses", "expense", [
+    { description: "Parking at the client site", amount: 18.5, category: "travel", expenseDate: daysAgo(9), companyId: clientIds[0], createdById: primary.id },
+    { description: "Replacement patch leads", amount: 42.75, category: "hardware", expenseDate: daysAgo(5), companyId: clientIds[0], createdById: primary.id },
+  ], "description");
 
-  if ((await prisma.ptoRequest.count()) < 4) {
-    await prisma.ptoRequest.create({
-      data: { userId: people[2]?.id ?? primary.id, type: "vacation", status: "pending", startDate: daysFromNow(24), endDate: daysFromNow(28), hours: 40, reason: "Family holiday" },
-    });
-    log("  ✓ PTO request");
-  }
+  await addMissing("PTO requests", "ptoRequest", [
+    { userId: people[2]?.id ?? primary.id, type: "vacation", status: "pending", startDate: daysFromNow(24), endDate: daysFromNow(28), hours: 40, reason: "Family holiday" },
+    { userId: people[1]?.id ?? primary.id, type: "sick", status: "approved", startDate: daysAgo(12), endDate: daysAgo(12), hours: 8, reason: "Flu" },
+  ], "reason");
 
-  if ((await prisma.holiday.count()) < 4) {
-    await prisma.holiday.createMany({
-      data: [
-        { name: "Thanksgiving", date: new Date(now.getFullYear(), 10, 26), recurring: true, country: "United States" },
-        { name: "Christmas Day", date: new Date(now.getFullYear(), 11, 25), recurring: true, country: "United States" },
-      ],
-    });
-    log("  ✓ holidays");
-  }
+  await addMissing("holidays", "holiday", [
+    { name: "Thanksgiving", date: new Date(now.getFullYear(), 10, 26), recurring: true, country: "United States" },
+    { name: "Christmas Day", date: new Date(now.getFullYear(), 11, 25), recurring: true, country: "United States" },
+  ], "name");
 
-  if ((await prisma.scheduleEntry.count()) < 5 && tickets.length) {
-    await prisma.scheduleEntry.createMany({
-      data: [
-        { userId: people[0]!.id, title: "On-site visit — switch cutover", description: "Out-of-hours cutover window.", startTime: daysFromNow(2), endTime: new Date(daysFromNow(2).getTime() + 3 * 3_600_000), status: "scheduled", location: "Client site", travelTime: 30, ticketId: tickets[0]!.id },
-        { userId: people[1]?.id ?? primary.id, title: "Remote support block", description: "Held for ticket work.", startTime: daysFromNow(1), endTime: new Date(daysFromNow(1).getTime() + 4 * 3_600_000), status: "scheduled", location: "Remote", color: "#7c3aed" },
-      ],
-    });
-    log("  ✓ schedule entries");
+  if (tickets.length) {
+    await addMissing("schedule entries", "scheduleEntry", [
+      { userId: people[0]!.id, title: "On-site visit — switch cutover", description: "Out-of-hours cutover window.", startTime: daysFromNow(2), endTime: new Date(daysFromNow(2).getTime() + 3 * 3_600_000), status: "scheduled", location: "Client site", travelTime: 30, ticketId: tickets[0]!.id },
+      { userId: people[1]?.id ?? primary.id, title: "Remote support block", description: "Held for ticket work.", startTime: daysFromNow(1), endTime: new Date(daysFromNow(1).getTime() + 4 * 3_600_000), status: "scheduled", location: "Remote", color: "#7c3aed" },
+    ], "title");
   }
 
   // ── Summary ───────────────────────────────────────────────────────

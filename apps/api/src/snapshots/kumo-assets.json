@@ -1,5 +1,145 @@
 [
   {
+    "id": "e39343b5-0842-475a-ac17-8f16213607e6",
+    "templateId": "46116d72-67f4-4916-bd2f-968a3206b7b4",
+    "name": "Globex Industries Workstation",
+    "status": "active",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:15:46.089Z",
+    "updatedAt": "2026-10-06T20:15:46.089Z"
+  },
+  {
+    "id": "709db221-bcfe-484a-9382-f1dc7cf98837",
+    "templateId": "14e185e6-81d4-4a89-a1b5-83e7f2e838d5",
+    "name": "Initech Solutions Server",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:16:16.567Z",
+    "updatedAt": "2026-10-06T20:16:16.567Z"
+  },
+  {
+    "id": "8c3f3ec5-c44a-4d69-a621-bf7b5b3dec9e",
+    "templateId": "46116d72-67f4-4916-bd2f-968a3206b7b4",
+    "name": "Initech Solutions Workstation",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:16:16.570Z",
+    "updatedAt": "2026-10-06T20:16:16.570Z"
+  },
+  {
+    "id": "1394caff-672a-4b09-b083-33da74f11f13",
+    "templateId": "25d2a8f2-a85a-4c2e-84ec-860869631bd7",
+    "name": "Initech Solutions Network Device",
+    "status": "active",
+    "companyId": "72d516df-a453-4f73-ada4-e93a231a078a",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:16:16.573Z",
+    "updatedAt": "2026-10-06T20:16:16.573Z"
+  },
+  {
+    "id": "cfdbd607-a810-4f03-a06d-8c78745f79c0",
+    "templateId": "14e185e6-81d4-4a89-a1b5-83e7f2e838d5",
+    "name": "Umbrella Corp Server",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:16:16.619Z",
+    "updatedAt": "2026-10-06T20:16:16.619Z"
+  },
+  {
+    "id": "9d19a435-8ecb-4f1d-ae95-b848148b379f",
+    "templateId": "25d2a8f2-a85a-4c2e-84ec-860869631bd7",
+    "name": "Umbrella Corp Network Device",
+    "status": "active",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:16:16.621Z",
+    "updatedAt": "2026-10-06T20:16:16.621Z"
+  },
+  {
+    "id": "57a1f491-4533-4c1b-b51b-a6fa1c66f6d7",
+    "templateId": "14e185e6-81d4-4a89-a1b5-83e7f2e838d5",
+    "name": "Stark Enterprises Server",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:16:16.661Z",
+    "updatedAt": "2026-10-06T20:16:16.661Z"
+  },
+  {
+    "id": "e1d97ea8-4600-4f9b-8b50-ab9c8649faef",
+    "templateId": "25d2a8f2-a85a-4c2e-84ec-860869631bd7",
+    "name": "Stark Enterprises Network Device",
+    "status": "active",
+    "companyId": "afc589cd-2c11-4f82-bea5-958439a80cf3",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:16:16.663Z",
+    "updatedAt": "2026-10-06T20:16:16.663Z"
+  },
+  {
+    "id": "841f0b7c-b43a-4b31-a08f-12015ae6b17a",
+    "templateId": "46116d72-67f4-4916-bd2f-968a3206b7b4",
+    "name": "Acme Corporation Workstation",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:16:16.675Z",
+    "updatedAt": "2026-10-06T20:16:16.675Z"
+  },
+  {
+    "id": "ac19c64c-0047-46bd-8ec8-ca06a760ee79",
+    "templateId": "25d2a8f2-a85a-4c2e-84ec-860869631bd7",
+    "name": "Acme Corporation Network Device",
+    "status": "active",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "tags": [
+      "sample"
+    ],
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "updatedById": null,
+    "createdAt": "2026-10-06T20:16:16.676Z",
+    "updatedAt": "2026-10-06T20:16:16.676Z"
+  },
+  {
     "id": "75a17625-21ff-483c-9449-1834ba6081b3",
     "templateId": "14e185e6-81d4-4a89-a1b5-83e7f2e838d5",
     "name": "SRV-DC-01",

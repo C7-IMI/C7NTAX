@@ -35,18 +35,19 @@ const KEEP_MODELS = new Set([
 
 // Wipe order: children before parents
 const WIPE_MODELS: string[] = [
-  "kbArticleTicket", "kbArticleAttachment", "kbArticleVersion", "knowledgeBaseArticle", "kbCategory",
+  "kBArticleTicket", "kBArticleAttachment", "kBArticleVersion", "knowledgeBaseArticle", "kBCategory",
   "surveyAnswer", "surveyResponse", "surveyQuestion", "survey",
   "projectTaskDependency", "projectTask", "projectPhase", "project",
+  "checklistTask", "checklist",
   "contractMilestone", "contract", "assetAssignment", "asset",
-  "poLineItem", "purchaseOrder", "vendor",
+  "pOLineItem", "purchaseOrder", "vendor",
   "workflowExecution", "workflowRuleAction", "workflowRule",
   "chatMessage", "chatSession",
   "reportSchedule", "report",
-  "ticketAttachment", "ticketComment", "timeEntry", "ticket", "ticketCategory", "emailConnector", "serviceBoard",
+  "ticketContact", "ticketAttachment", "ticketComment", "timeEntry", "ticket", "ticketCategory", "emailConnector", "serviceBoard",
   "invoiceLineItem", "payment", "invoice", "serviceAgreement",
   "salesActivity", "opportunity",
-  "notification", "auditLog", "alertLog", "alertRule", "expense", "recentlyViewedItem",
+  "notification", "auditLog", "alertLog", "alertWebhookDelivery", "alertRule", "expense", "recentlyViewedItem",
   "serviceAlert", "serviceAlertService",
   "m365Subscription", "m365Group", "m365User", "syncedEntity", "syncLog", "integration", "webhookConfig",
   "technicianSkill", "scheduleEntry", "ptoRequest", "holiday", "bulkOperation", "calendarSyncConfig",

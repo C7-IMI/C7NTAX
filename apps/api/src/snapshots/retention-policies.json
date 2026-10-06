@@ -1,0 +1,57 @@
+[
+  {
+    "id": "ad0f10ae-f667-46c5-a582-054e64f706bd",
+    "entity": "ticket",
+    "retentionDays": 2555,
+    "archiveAction": "archive",
+    "condition": {},
+    "isActive": true,
+    "lastRunAt": null,
+    "createdAt": "2026-10-06T20:15:46.054Z",
+    "updatedAt": "2026-10-06T20:15:46.054Z"
+  },
+  {
+    "id": "cc942640-e369-4941-919d-8afe6e510bd4",
+    "entity": "auditLog",
+    "retentionDays": 1095,
+    "archiveAction": "archive",
+    "condition": {},
+    "isActive": true,
+    "lastRunAt": null,
+    "createdAt": "2026-10-06T20:15:46.054Z",
+    "updatedAt": "2026-10-06T20:15:46.054Z"
+  },
+  {
+    "id": "7ae65ff2-8781-4e7b-a9c2-a9a89f596741",
+    "entity": "chatMessage",
+    "retentionDays": 730,
+    "archiveAction": "delete",
+    "condition": {},
+    "isActive": true,
+    "lastRunAt": null,
+    "createdAt": "2026-10-06T20:15:46.054Z",
+    "updatedAt": "2026-10-06T20:15:46.054Z"
+  },
+  {
+    "id": "45b1f30d-20fb-4b39-a78c-cc10a848852c",
+    "entity": "kumoPasswordAccessLog",
+    "retentionDays": 365,
+    "archiveAction": "delete",
+    "condition": {},
+    "isActive": true,
+    "lastRunAt": null,
+    "createdAt": "2026-10-06T20:15:46.054Z",
+    "updatedAt": "2026-10-06T20:15:46.054Z"
+  },
+  {
+    "id": "c474e6bd-85a4-4fb4-bf48-7c42227bd2d1",
+    "entity": "invoice",
+    "retentionDays": 3650,
+    "archiveAction": "archive",
+    "condition": {},
+    "isActive": true,
+    "lastRunAt": null,
+    "createdAt": "2026-10-06T20:15:46.054Z",
+    "updatedAt": "2026-10-06T20:15:46.054Z"
+  }
+]

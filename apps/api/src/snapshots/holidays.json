@@ -16,5 +16,23 @@
     "country": "US",
     "region": null,
     "createdAt": "2026-08-19T16:15:28.990Z"
+  },
+  {
+    "id": "fcb29756-259a-4090-b0b7-b40733034e79",
+    "name": "Thanksgiving",
+    "date": "2026-11-26T06:00:00.000Z",
+    "recurring": true,
+    "country": "United States",
+    "region": null,
+    "createdAt": "2026-10-06T20:16:27.372Z"
+  },
+  {
+    "id": "e4bfdb0b-3bae-44d4-85c4-5bd2d9c73bc3",
+    "name": "Christmas Day",
+    "date": "2026-12-25T06:00:00.000Z",
+    "recurring": true,
+    "country": "United States",
+    "region": null,
+    "createdAt": "2026-10-06T20:16:27.372Z"
   }
 ]

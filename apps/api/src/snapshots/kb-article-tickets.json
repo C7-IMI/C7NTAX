@@ -1,0 +1,30 @@
+[
+  {
+    "id": "83bd56b4-6cc8-461c-93e5-fb57c1189651",
+    "articleId": "012e5d73-fadb-4188-bb04-b527dea9adb5",
+    "ticketId": "26f46ca7-d80e-4db3-9710-1524d70a6e91",
+    "linkedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.850Z"
+  },
+  {
+    "id": "d417b54e-cb76-4e60-ba20-21e37deab951",
+    "articleId": "78bec033-f117-4a8d-9a22-4a1544f15a32",
+    "ticketId": "90625947-2606-4265-be21-4795bff6b2fa",
+    "linkedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.857Z"
+  },
+  {
+    "id": "95ec8777-8713-414c-a390-033e3e4fbf64",
+    "articleId": "c22f9cc1-4299-46e8-99d6-09e975ae3ccc",
+    "ticketId": "eb6adec6-c915-4a44-b901-56402153ffc5",
+    "linkedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.861Z"
+  },
+  {
+    "id": "596421da-c952-483d-9a1c-97f92edaeb0f",
+    "articleId": "62d36c14-fb89-4bb3-8f5d-7a0169d4c5ab",
+    "ticketId": "a5eb83b6-6b64-43a8-ae56-932a3b63146f",
+    "linkedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-06T20:16:16.864Z"
+  }
+]

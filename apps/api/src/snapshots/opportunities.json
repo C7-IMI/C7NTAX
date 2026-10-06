@@ -55,5 +55,43 @@
     "customFields": {},
     "createdAt": "2026-08-12T06:04:15.131Z",
     "updatedAt": "2026-08-12T06:04:15.131Z"
+  },
+  {
+    "id": "0b7830f1-61bb-4e45-8a16-587e18aea8c6",
+    "name": "MFA rollout for all staff",
+    "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+    "contactId": null,
+    "stage": "proposal",
+    "probability": 65,
+    "amount": 14500,
+    "currency": "USD",
+    "expectedCloseDate": "2026-10-27T20:16:27.091Z",
+    "closedAt": null,
+    "wonReason": null,
+    "lostReason": null,
+    "assignedToId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "notes": "Security review flagged this as the next step after the phishing wave.",
+    "customFields": {},
+    "createdAt": "2026-10-06T20:16:27.358Z",
+    "updatedAt": "2026-10-06T20:16:27.358Z"
+  },
+  {
+    "id": "fd1df216-152e-44cd-94fb-c412bffb4f7d",
+    "name": "Server hardware refresh",
+    "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+    "contactId": null,
+    "stage": "qualification",
+    "probability": 35,
+    "amount": 22600,
+    "currency": "USD",
+    "expectedCloseDate": "2026-12-19T20:18:17.104Z",
+    "closedAt": null,
+    "wonReason": null,
+    "lostReason": null,
+    "assignedToId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "notes": "Four hosts are out of warranty in the spring.",
+    "customFields": {},
+    "createdAt": "2026-10-06T20:18:17.368Z",
+    "updatedAt": "2026-10-06T20:18:17.368Z"
   }
 ]

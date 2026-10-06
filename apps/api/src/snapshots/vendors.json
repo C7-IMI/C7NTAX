@@ -28,5 +28,35 @@
     "notes": null,
     "createdAt": "2026-08-19T16:15:28.969Z",
     "updatedAt": "2026-08-19T16:15:28.969Z"
+  },
+  {
+    "id": "15a852ea-ebe5-4824-9eb5-ca99f6a11341",
+    "name": "Ingram Micro",
+    "contactName": "Sales desk",
+    "email": "orders@example-vendor.com",
+    "phone": "+1 (800) 456-8000",
+    "website": "https://example-vendor.com",
+    "address": null,
+    "taxId": null,
+    "paymentTerms": "Net 30",
+    "isActive": true,
+    "notes": "Hardware and licences. Free next-day on stock items.",
+    "createdAt": "2026-10-06T20:16:16.883Z",
+    "updatedAt": "2026-10-06T20:16:16.883Z"
+  },
+  {
+    "id": "5ec9cd5a-a596-414b-84f9-30c6fedc1bd4",
+    "name": "Pax8",
+    "contactName": "Cloud desk",
+    "email": "cloud@example-vendor2.com",
+    "phone": null,
+    "website": null,
+    "address": null,
+    "taxId": null,
+    "paymentTerms": "Net 15",
+    "isActive": true,
+    "notes": "Microsoft 365 and security licensing.",
+    "createdAt": "2026-10-06T20:16:16.883Z",
+    "updatedAt": "2026-10-06T20:16:16.883Z"
   }
 ]

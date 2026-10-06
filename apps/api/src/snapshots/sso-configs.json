@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "id": "6252a851-cc76-4790-99b8-94ab618dd137",
+    "name": "Microsoft Entra ID",
+    "provider": "azure-ad",
+    "isActive": false,
+    "domains": [
+      "example.com"
+    ],
+    "createdAt": "2026-10-06T20:15:46.076Z",
+    "updatedAt": "2026-10-06T20:15:46.076Z"
+  }
+]

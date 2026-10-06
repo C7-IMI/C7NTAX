@@ -109,10 +109,35 @@ const SEED_ORDER: { fileName: string; model: string }[] = [
   { fileName: "kumo-network-devices.json", model: "kumoNetworkDevice" },
   { fileName: "currencies.json", model: "currency" },
   { fileName: "alert-webhook-deliveries.json", model: "alertWebhookDelivery" },
+  // Sample coverage 2026 (parents before children)
+  { fileName: "exchange-rates.json", model: "exchangeRate" },
+  { fileName: "ticket-categories.json", model: "ticketCategory" },
+  { fileName: "ticket-contacts.json", model: "ticketContact" },
+  { fileName: "ticket-similarities.json", model: "ticketSimilarity" },
+  { fileName: "retention-policies.json", model: "retentionPolicy" },
+  { fileName: "field-permissions.json", model: "fieldPermission" },
+  { fileName: "detected-patterns.json", model: "detectedPattern" },
+  { fileName: "inference-cache.json", model: "inferenceCache" },
+  { fileName: "bulk-operations.json", model: "bulkOperation" },
+  { fileName: "asset-assignments.json", model: "assetAssignment" },
+  { fileName: "checklists.json", model: "checklist" },
+  { fileName: "checklist-tasks.json", model: "checklistTask" },
+  { fileName: "kb-article-tickets.json", model: "kBArticleTicket" },
 ];
 
 // Reverse order for clean deletion
 const CLEAN_ORDER = [...SEED_ORDER].reverse();
+
+/**
+ * Snapshot capture deliberately omits secret-bearing columns, but Prisma still
+ * requires them. Fixtures for these models are rehydrated with placeholders so
+ * a reseed restores the rows instead of failing and leaving the table empty.
+ */
+const SECRET_PLACEHOLDERS: Record<string, Record<string, string>> = {
+  emailConnector: { passwordEncrypted: "sample-placeholder-secret" },
+  webhookConfig: { secret: "sample-placeholder-secret" },
+  calendarSyncConfig: { accessToken: "sample-placeholder-token" },
+};
 
 async function main(): Promise<void> {
   const log = (msg: string) => console.log(`[SeedFromSnapshots] ${msg}`);
@@ -144,7 +169,9 @@ async function main(): Promise<void> {
     }
 
     try {
-      const rows: Record<string, unknown>[] = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      const raw: Record<string, unknown>[] = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      const placeholders = SECRET_PLACEHOLDERS[entry.model];
+      const rows = placeholders ? raw.map((row) => ({ ...placeholders, ...row })) : raw;
       if (rows.length === 0) continue;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
