@@ -10,6 +10,10 @@ import { useRegisteredTrail, type TrailSegment } from "./Breadcrumbs";
  * A Kumo screen can name what the navigation tree cannot (its client, a record,
  * the type the rail has open) by calling `useBreadcrumbTrail`; screens that do
  * not simply fall back to the trail derived from the navigation tree.
+ *
+ * Outside Kumo the trail only appears for a screen that registered one — an
+ * organization's contacts or tickets, say — so the client that opened them
+ * stays visible. Everything else keeps the header trail alone.
  */
 export function KumoTrail({ segments }: { segments: TrailSegment[] }) {
   const navigate = useNavigate();
@@ -20,17 +24,20 @@ export function KumoTrail({ segments }: { segments: TrailSegment[] }) {
   // starts at the module root instead of repeating it.
   const trail = source.filter((seg, i) => !(i === 0 && seg.label.toLowerCase() === "home"));
 
-  // Kumo only — never shown on another module's screens.
+  // Kumo only — never shown on another module's screens. A screen outside Kumo
+  // that an organization opened registers a trail of its own, which is the
+  // explicit opt-in to show the client the header trail cannot know.
   const inKumo =
     location.pathname === "/kumo" ||
     location.pathname.startsWith("/kumo/") ||
     location.pathname === "/section/kumo";
+  const showTrail = inKumo || registered.length > 0;
 
   // React Router keeps its position in history; at 0 there is nothing to return to.
   const canGoBack = typeof window !== "undefined" && ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0;
   const parent = [...trail].reverse().find((seg) => seg.to && seg.to !== location.pathname);
 
-  if (!UI_KUMO_BREADCRUMBS || !inKumo || trail.length < 2) return null;
+  if (!UI_KUMO_BREADCRUMBS || !showTrail || trail.length < 2) return null;
 
   return (
     <nav aria-label="Kumo breadcrumb" className="flex items-center gap-1 min-w-0 text-sm mb-4">

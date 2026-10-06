@@ -153,15 +153,6 @@
     "viewedAt": "2026-08-24T21:45:02.560Z"
   },
   {
-    "id": "c528fede-3b74-4d84-819a-5828427845ef",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "password",
-    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
-    "entityName": "Acme Domain Admin",
-    "entityIcon": "key",
-    "viewedAt": "2026-10-06T07:42:15.034Z"
-  },
-  {
     "id": "3753e0a7-10dc-4ca4-bc41-a9dd48f0095a",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "asset",
@@ -207,15 +198,6 @@
     "viewedAt": "2026-10-06T08:48:05.122Z"
   },
   {
-    "id": "7ec2cabc-94f4-4e62-8fab-b4eab90a914d",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "document",
-    "entityId": "493a0ec4-910c-480f-937d-be0baa32b992",
-    "entityName": "Acme Network Topology Overview",
-    "entityIcon": "book",
-    "viewedAt": "2026-10-06T08:48:53.260Z"
-  },
-  {
     "id": "72e96b4b-96a4-418f-a6ea-4c01419d2b52",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "asset",
@@ -232,5 +214,23 @@
     "entityName": "Acme Corporation",
     "entityIcon": "building",
     "viewedAt": "2026-10-06T19:50:29.048Z"
+  },
+  {
+    "id": "c528fede-3b74-4d84-819a-5828427845ef",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "entityName": "Acme Domain Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-10-06T20:57:14.757Z"
+  },
+  {
+    "id": "7ec2cabc-94f4-4e62-8fab-b4eab90a914d",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "document",
+    "entityId": "493a0ec4-910c-480f-937d-be0baa32b992",
+    "entityName": "Acme Network Topology Overview",
+    "entityIcon": "book",
+    "viewedAt": "2026-10-06T20:57:19.804Z"
   }
 ]

@@ -91,16 +91,30 @@ function typeIcon(type: string, size = 14) {
   return map[type] ?? <FileText size={size} />;
 }
 
+/**
+ * A screen that belongs to one client: the destination plus ?companyId=, so it
+ * opens filtered to this organization and its trail can name the client instead
+ * of falling back to the whole-app list.
+ */
+function scopedTo(path: string, orgId: string, params: Record<string, string | undefined> = {}): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value) query.set(key, value);
+  }
+  query.set("companyId", orgId);
+  return `${path}?${query.toString()}`;
+}
+
 /** Where an item opens: its own screen, selected by query param. */
-function itemLink(type: string, id: string): string {
+function itemLink(type: string, id: string, orgId: string): string {
   switch (type.toLowerCase()) {
     case "asset": return `/kumo/assets/${id}`;
     case "config":
-    case "configuration": return `/kumo/configs?select=${id}`;
-    case "password": return `/kumo/passwords?select=${id}`;
-    case "document": return `/kumo/documents?doc=${id}`;
+    case "configuration": return scopedTo("/kumo/configs", orgId, { select: id });
+    case "password": return scopedTo("/kumo/passwords", orgId, { select: id });
+    case "document": return scopedTo("/kumo/documents", orgId, { doc: id });
     case "domain":
-    case "certificate": return `/kumo/domains?select=${id}`;
+    case "certificate": return scopedTo("/kumo/domains", orgId, { select: id });
     case "organization": return `/kumo/organizations/${id}`;
     default: return "/kumo";
   }
@@ -263,7 +277,7 @@ export function KumoOrganizationDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Link to="/kumo/documents" className="btn-secondary text-sm flex items-center gap-2">
+          <Link to={scopedTo("/kumo/documents", org.id)} className="btn-secondary text-sm flex items-center gap-2">
             <BookOpen size={14} /> New Document
           </Link>
           <Link to={`/clients/${org.id}`} className="btn-secondary text-sm flex items-center gap-2">
@@ -278,10 +292,10 @@ export function KumoOrganizationDetailPage() {
                 <div className="fixed inset-0 z-40" onClick={() => setShowQuickAdd(false)} />
                 <div className="absolute right-0 mt-1 w-52 z-50 card p-1 space-y-0.5">
                   {[
-                    { to: "/kumo/assets", label: "New Asset", icon: Monitor },
-                    { to: "/kumo/passwords", label: "New Password", icon: Key },
-                    { to: "/kumo/documents", label: "New Document", icon: BookOpen },
-                    { to: "/kumo/configs", label: "New Configuration", icon: Server },
+                    { to: scopedTo("/kumo/assets", org.id), label: "New Asset", icon: Monitor },
+                    { to: scopedTo("/kumo/passwords", org.id), label: "New Password", icon: Key },
+                    { to: scopedTo("/kumo/documents", org.id), label: "New Document", icon: BookOpen },
+                    { to: scopedTo("/kumo/configs", org.id), label: "New Configuration", icon: Server },
                     { to: `/clients/${org.id}`, label: "New Contact", icon: Users },
                   ].map((item) => (
                     <Link
@@ -405,7 +419,7 @@ export function KumoOrganizationDetailPage() {
             {STRENGTH_LEVELS.map((l) => (
               <Link
                 key={l.key}
-                to={`/kumo/passwords?strength=${encodeURIComponent(l.key)}`}
+                to={scopedTo("/kumo/passwords", org.id, { strength: l.key })}
                 title={`Show the ${l.key.toLowerCase()} credentials`}
                 className="text-center rounded-lg py-1 hover:bg-surface-lighter transition-colors"
               >
@@ -417,7 +431,7 @@ export function KumoOrganizationDetailPage() {
             ))}
           </div>
 
-          <Link to="/kumo/passwords" className="btn-secondary text-xs py-1.5 inline-flex items-center gap-1">
+          <Link to={scopedTo("/kumo/passwords", org.id)} className="btn-secondary text-xs py-1.5 inline-flex items-center gap-1">
             View More <ChevronRight size={12} />
           </Link>
         </div>
@@ -431,14 +445,14 @@ export function KumoOrganizationDetailPage() {
             {documentationTotal} tracked items across {counts.documents} documents, {counts.domains} domains and {counts.certificates} certificates
           </p>
           <div className="flex items-start justify-around gap-2 pt-1">
-            <HealthRing value={documentation.stale} total={documentationTotal} label="Stale" tone="stroke-amber-400" to="/kumo/documents?filter=stale" />
-            <HealthRing value={documentation.notViewed} total={documentationTotal} label="Not Viewed" tone="stroke-cyber-400" to="/kumo/documents?filter=unviewed" />
-            <HealthRing value={documentation.expired} total={documentationTotal} label="Expired" tone="stroke-red-400" to="/kumo/domains?filter=expired" />
+            <HealthRing value={documentation.stale} total={documentationTotal} label="Stale" tone="stroke-amber-400" to={scopedTo("/kumo/documents", org.id, { filter: "stale" })} />
+            <HealthRing value={documentation.notViewed} total={documentationTotal} label="Not Viewed" tone="stroke-cyber-400" to={scopedTo("/kumo/documents", org.id, { filter: "unviewed" })} />
+            <HealthRing value={documentation.expired} total={documentationTotal} label="Expired" tone="stroke-red-400" to={scopedTo("/kumo/domains", org.id, { filter: "expired" })} />
           </div>
           <p className="text-[10px] text-gray-600">
             Stale = a document untouched for {documentation.staleAfterDays} days. Expired = a domain or certificate past its expiry date.
           </p>
-          <Link to="/kumo/documents" className="btn-secondary text-xs py-1.5 inline-flex items-center gap-1">
+          <Link to={scopedTo("/kumo/documents", org.id)} className="btn-secondary text-xs py-1.5 inline-flex items-center gap-1">
             View More <ChevronRight size={12} />
           </Link>
         </div>
@@ -454,7 +468,7 @@ export function KumoOrganizationDetailPage() {
               {detail.recentlyViewed.map((item) => (
                 <Link
                   key={item.id}
-                  to={itemLink(item.entityType, item.entityId)}
+                  to={itemLink(item.entityType, item.entityId, org.id)}
                   title={itemTitle(item.entityType)}
                   className="flex items-center gap-2 text-sm rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter group"
                 >
@@ -479,7 +493,7 @@ export function KumoOrganizationDetailPage() {
               {detail.importantContacts.map((c) => (
                 <Link
                   key={c.id}
-                  to={`/clients/contacts?select=${c.id}`}
+                  to={scopedTo("/clients/contacts", org.id, { select: c.id })}
                   title="Open this contact"
                   className="flex items-center gap-2 rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter group"
                 >
@@ -507,7 +521,7 @@ export function KumoOrganizationDetailPage() {
               {detail.recentlyUpdated.map((item) => (
                 <Link
                   key={`${item.type}-${item.id}`}
-                  to={itemLink(item.type, item.id)}
+                  to={itemLink(item.type, item.id, org.id)}
                   title={itemTitle(item.type)}
                   className="flex items-center gap-2 text-sm rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter group"
                 >
@@ -526,7 +540,7 @@ export function KumoOrganizationDetailPage() {
         <SectionCard
           icon={Key}
           title="Popular Passwords"
-          action={<Link to="/kumo/passwords" className="text-xs text-cyber-400 hover:text-cyber-300">Add Password</Link>}
+          action={<Link to={scopedTo("/kumo/passwords", org.id)} className="text-xs text-cyber-400 hover:text-cyber-300">Add Password</Link>}
         >
           {detail.popularPasswords.length === 0 ? (
             <p className="text-sm text-gray-500">No passwords yet.</p>
@@ -535,7 +549,7 @@ export function KumoOrganizationDetailPage() {
               {detail.popularPasswords.map((p) => (
                 <Link
                   key={p.id}
-                  to={`/kumo/passwords?select=${p.id}`}
+                  to={scopedTo("/kumo/passwords", org.id, { select: p.id })}
                   title="Open this credential"
                   className="flex items-center gap-2 text-sm group rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter"
                 >
@@ -562,7 +576,7 @@ export function KumoOrganizationDetailPage() {
                 return (
                   <Link
                     key={`${item.type}-${item.id}`}
-                    to={itemLink(item.type, item.id)}
+                    to={itemLink(item.type, item.id, org.id)}
                     title={itemTitle(item.type)}
                     className="flex items-center gap-2 text-sm group rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-surface-lighter"
                   >
@@ -626,7 +640,7 @@ export function KumoOrganizationDetailPage() {
             {detail.activity.map((e) => (
               <Link
                 key={`${e.type}-${e.id}-${e.at}`}
-                to={itemLink(e.type, e.id)}
+                to={itemLink(e.type, e.id, org.id)}
                 title={itemTitle(e.type)}
                 className="flex items-center gap-3 py-2 group hover:bg-surface-lighter rounded-lg px-1.5 -mx-1.5"
               >

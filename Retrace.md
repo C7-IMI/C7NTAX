@@ -2727,3 +2727,33 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - `seed-sample-coverage.ts` is the place to add sample data, not the seeders: it will only ever fill what is missing, so it can be run after any reseed without duplicating rows.
 - Two traps found this way and worth remembering: a table can be non-empty overall while the *screen* is empty per record, and a misspelled model name in a `deleteMany` loop fails silently — so verify wipe lists against the Prisma client's own model names, not by eye.
+
+---
+
+### Prompt 199 — Organization options stay inside the organization
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live across every rail entry and every link on the org screen | **Duration:** ~40 min
+**BuildNotes IDs:** 2026.10.6.042 - Organization options stay inside the organization, and the trail says which one
+> Kumo:
+>
+> If I am inside an organization and click on an option such as checklists, I want to be taken to that orgs checlists, not the general checklist screen for all checklists.  The breadcrumb trail should also reflect where exactly I am in the respecitve org option
+
+**What the investigation found**
+- The rail's Core Assets entries were already right: Checklists, Configurations, Documents, Passwords, Domain Tracker and SSL Tracker all pass ?companyId= and each rendered a trail naming the client. Following every rail entry one by one showed the scoping and the trail were in place for those six.
+- The leak was the organization's **own** screen and the two options that live outside Kumo. Reading every link off the page showed eleven places that dropped the client: the header *New Document*, the *Quick Add* destinations (Asset, Password, Document, Configuration), the seven *Password Strength* tiles, both *View More* actions, the three *Documentation Health* rings, *Add Password* and every *Recently Viewed / Recently Updated / Upcoming Expirations / Activity* row (those go through itemLink(), which built ?select=/?doc= links with no client).
+- *Contacts* and *Change Control* are organization options but live outside Kumo, and the bar that names the client only rendered when the path started with /kumo — so both showed the header's generic *Home › Clients › Contacts* / *Home › Tickets*, with no client anywhere.
+
+**What changed**
+- KumoOrganizationDetail.tsx: a single scopedTo(path, orgId, params) helper now builds every outgoing Kumo link, so the client cannot be forgotten; itemLink() takes the organization id for the same reason. Quick Add keeps its one intentionally in-organization entry (New Contact → the client record).
+- Breadcrumbs.tsx gained orgTrail() — Organizations › client › …rest, the client trail without Kumo's own root, for a client-scoped screen outside Kumo.
+- KumoTrail.tsx: the bar still renders on Kumo screens as before, and now also on a screen that registered a trail of its own. That is the explicit opt-in, so other modules' screens are untouched.
+- Contacts.tsx and Tickets.tsx register that trail when the URL carries a client. For Tickets, the client name comes from the loaded rows — the companies list there is only fetched for the new-ticket dialog, which is why *"Showing …'s tickets"* had been reading "one client"; it now names the client too.
+
+**Verification (live)**
+- Followed all fourteen rail entries from Acme Corporation: Checklists *2 of 2 checklists · Acme Corporation*, Configurations *1 servers*, Documents *3 of 7 documents*, Passwords *1 passwords*, Domain Tracker / SSL Tracker *2 tracked*, Contacts *3 contacts*, plus Overview, Locations and the asset types. Trails: *Kumo › Organizations › Acme Corporation › Checklists* (and the equivalents), *Organizations › Acme Corporation › Contacts*, *Organizations › Acme Corporation › Tickets*.
+- Read every link on the organization screen back out of the DOM: all now carry companyId= — including ?strength=Strong&companyId=… on the tiles and ?filter=stale|unviewed|expired&companyId=… on the rings.
+- Scoped deep links still select their record and stay filtered: passwords *1 passwords* with the row open, configurations *1 servers*, documents *3 of 7 documents*, domains *2 tracked*, and a filtered documents list trails as *… Documents › Stale*.
+- Regression pass on unscoped URLs: /tickets, /clients, /assets, /billing show no client trail (unchanged header trails), /kumo/checklists shows *Kumo › Checklists*, /kumo/assets shows *Kumo › Assets*.
+- Web typecheck 0; the API was not touched. BuildNotes 2026.10.6.042 at the top, both generated fallbacks regenerated, and screenshots of the scoped Contacts and Tickets trails saved to the session folder.
+
+**Notes for next time**
+- Kumo asset *record* pages (/kumo/assets/:id) still trail as *Kumo › Assets › name*: they are reached by id from anywhere, and the record payload carries no client name to label the segment with. Left as is rather than inventing a lookup; worth revisiting if the record trail should carry the client too.

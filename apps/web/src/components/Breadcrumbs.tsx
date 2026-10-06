@@ -120,6 +120,24 @@ export function kumoClientTrail(
 }
 
 /**
+ * Organizations › client › …rest — the same trail without Kumo's own root, for
+ * a screen outside Kumo that an organization opened (its contacts, its tickets).
+ * Those modules carry their own trail in the header already; this adds the
+ * client the header cannot know.
+ */
+export function orgTrail(
+  clientId: string,
+  clientName: string | null | undefined,
+  ...rest: TrailSegment[]
+): TrailSegment[] {
+  return [
+    { label: "Organizations", to: "/kumo/organizations" },
+    { label: clientName || "Client", to: `/kumo/organizations/${clientId}` },
+    ...rest,
+  ];
+}
+
+/**
  * Build breadcrumb segments from the NAV_TREE based on the current pathname.
  * The **deepest** matching node wins: matching in tree order is not enough,
  * because a section's own root ("/kumo") is a prefix of every one of its

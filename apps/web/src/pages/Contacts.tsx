@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { orgTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock, Plus, Ticket, Users, ExternalLink, UserCheck, UserX, Copy, Download, RotateCw, Eraser } from "lucide-react";
@@ -38,6 +39,14 @@ export function ContactsPage() {
 
   // The organization rail opens contacts pre-filtered to one client.
   useEffect(() => { if (companyParam) setCompanyFilter(companyParam); }, [companyParam]);
+
+  // Reached from an organization, the trail names that client so it is clear the
+  // list is theirs rather than the whole address book.
+  useBreadcrumbTrail(
+    companyParam
+      ? orgTrail(companyParam, companies.find((c) => c.id === companyParam)?.name, { label: "Contacts" })
+      : null
+  );
 
   const fetch = () => {
     Promise.all([api.get("/clients?limit=100"), api.get("/clients/contacts?limit=500")])

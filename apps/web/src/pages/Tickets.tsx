@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../hooks/useAuth";
+import { orgTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { InferencePanel } from "../components/InferencePanel";
 import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical, ExternalLink, AppWindow, SquareArrowOutUpRight, UserCheck, Flag, CircleDot, Copy, Eraser, Check, AlertTriangle, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -197,6 +198,24 @@ export function TicketsPage() {
   const [batchApplying, setBatchApplying] = useState(false);
   const [checkedActions, setCheckedActions] = useState<Set<string>>(new Set());
   const [quickOpen, setQuickOpen] = useState(false);
+
+  // The scoped list carries its client on every row, whereas `companies` is only
+  // fetched for the new-ticket dialog — so on a filtered list the rows are the
+  // only source of the client's name.
+  const scopedClientName = companyParam
+    ? companies.find((c) => c.id === companyParam)?.name
+      ?? (tickets.find((t) => (t.company as { id?: string } | undefined)?.id === companyParam)?.company as { name?: string } | undefined)?.name
+    : undefined;
+
+  // Reached from an organization (its Change Control entry, or a client's
+  // tickets), the trail names that client and the board the list is filtered to.
+  useBreadcrumbTrail(
+    companyParam && searchParams.get("new") !== "1"
+      ? orgTrail(companyParam, scopedClientName, {
+          label: boards.find((b) => b.id === boardId)?.name || "Tickets",
+        })
+      : null
+  );
 
   // ── Pagination state ──
   const [pageSize, setPageSize] = useState<number | "all">(25);
@@ -577,7 +596,7 @@ export function TicketsPage() {
         <h2 className="text-lg font-semibold text-white">Tickets</h2>
         <p className="text-sm text-gray-400">
           {companyParam && !searchParams.get("new")
-            ? `Showing ${companies.find(c=>c.id===companyParam)?.name ?? "one client"}'s tickets`
+            ? `Showing ${scopedClientName ?? "one client"}'s tickets`
             : boardId ? `Filtered by board` : "Manage service tickets"}
         </p>
       </div>

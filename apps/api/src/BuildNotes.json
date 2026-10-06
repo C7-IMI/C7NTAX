@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.6.042",
+    "date": "2026-10-06",
+    "title": "Organization options stay inside the organization, and the trail says which one",
+    "changes": [
+      {
+        "text": "**Every link that leaves an organization now carries that client with it.** The rail's Core Assets entries already did, but the organization's own screens did not: *New Document* and the *Quick Add* menu (Asset, Password, Document, Configuration), the *Password Strength* tiles, the *View More* actions on passwords and documents, the three *Documentation Health* rings (Stale, Not Viewed, Expired), *Add Password*, and every row in *Recently Viewed*, *Recently Updated*, *Upcoming Expirations* and the activity feed all opened the all-clients list. They now pass the client, so clicking an option shows that organization's records rather than the general screen — and those deep links (`?select=`, `?doc=`) still open the record they point at.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Contacts and Change Control now show the client in the trail.** They are organization options, but they live outside Kumo, and the bar that names the client only rendered on Kumo screens. A screen outside Kumo can now register its own trail and the bar appears for it, so the organization's contacts read *Organizations › Acme Corporation › Contacts* and its Change Control reads *Organizations › Acme Corporation › Change Control* instead of *Home › Clients › Contacts* and *Home › Tickets*. Screens that register nothing are untouched — the header trail on them is exactly as it was.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A client's ticket list names the client again.** The *\"Showing … 's tickets\"* line read \"one client\" because it looked at a companies list that is only fetched for the new-ticket dialog; it now falls back to the client on the rows themselves, which is also what the new Change Control trail uses for its label.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.041",
     "date": "2026-10-06",
     "title": "Sample data in every corner, and a reseed that keeps it",
