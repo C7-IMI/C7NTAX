@@ -178,5 +178,14 @@
     "entityName": "Office 365 Global Admin",
     "entityIcon": "key",
     "viewedAt": "2026-10-06T06:49:34.385Z"
+  },
+  {
+    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "organization",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "entityName": "Acme Corporation",
+    "entityIcon": "building",
+    "viewedAt": "2026-10-06T07:28:18.453Z"
   }
 ]

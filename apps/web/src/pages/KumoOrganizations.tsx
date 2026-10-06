@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import { Search, ExternalLink, History, ChevronRight } from "lucide-react";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
+import { initials, avatarColor } from "../lib/format";
 
 interface Organization {
   id: string;
@@ -31,29 +32,6 @@ const TYPE_COLORS: Record<string, string> = {
   Vendor: "bg-purple-600/20 text-purple-400",
   Partner: "bg-green-600/20 text-green-400",
 };
-
-const AVATAR_COLORS = [
-  "bg-cyber-600/15 text-cyber-300",
-  "bg-amber-600/15 text-amber-300",
-  "bg-green-600/15 text-green-300",
-  "bg-purple-600/15 text-purple-300",
-  "bg-blue-600/15 text-blue-300",
-];
-
-function initials(name: string): string {
-  const words = name.replace(/[^A-Za-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
-  const first = words[0];
-  if (!first) return "?";
-  const second = words[1];
-  return (second ? first.charAt(0) + second.charAt(0) : first.slice(0, 2)).toUpperCase();
-}
-
-/** Stable tint per organization so an avatar keeps its colour between renders. */
-function avatarColor(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) % 9973;
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length] ?? "bg-cyber-600/15 text-cyber-300";
-}
 
 function CountCell({ value, className = "" }: { value: number; className?: string }) {
   return <td className={`px-4 py-3 ${className} ${value > 0 ? "text-gray-300" : "text-gray-600"}`}>{value}</td>;
@@ -111,7 +89,7 @@ export function KumoOrganizationsPage() {
         entityIcon: "building",
       })
       .catch(() => {});
-    navigate(`/clients/${org.id}`);
+    navigate(`/kumo/organizations/${org.id}`);
   };
 
   return (
@@ -138,7 +116,7 @@ export function KumoOrganizationsPage() {
             {recent.map((item) => (
               <button
                 key={item.id}
-                onClick={() => navigate(`/clients/${item.entityId}`)}
+                onClick={() => navigate(`/kumo/organizations/${item.entityId}`)}
                 title={item.entityName}
                 className="flex flex-col items-center gap-1.5 w-16 group"
               >

@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.6.015",
+    "date": "2026-10-06",
+    "title": "The Organization dashboard in Kumo, and sub-organizations",
+    "changes": [
+      {
+        "text": "**Clicking an organization in Kumo now opens a full documentation dashboard for that client.** `GET /api/kumo/organizations/:id` answers with everything the screen needs in one round trip: **Quick Notes** (the client record's notes, editable in place), **Password Strength** for the whole vault using the same ladder the vault uses, a **Documentation Health Summary** of stale / never-viewed / expired items, your **Recently Viewed By You** items for that client, its **Important Contacts**, **Recently Updated** records, **Popular Passwords**, **Upcoming Expirations**, **Locations** and a client **Activity Feed**. It is built from C7NTAX cards, tokens and icons rather than a copy of another product's chrome.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Sub-organizations are now real records.** `Company` gained a nullable `parentId` self-relation (applied with `prisma db push`), and the client API accepts `parentId` on create and update with a cycle guard so a hierarchy cannot loop. The organization screen lists its children — each opening its own dashboard — and can create one from the header's Quick Add menu or from the section itself.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One password strength ladder for the whole app.** `packages/shared/src/passwordStrength.ts` now holds the scoring used both by the password vault (on reveal) and by the organization dashboard, so the two views cannot disagree. One visible side effect: a credential that scores full marks now reads \"Very Strong\" instead of \"Strong\".",
+        "type": "Update"
+      },
+      {
+        "text": "**The header title now follows the most specific route.** `getPageTitle` only matched exact paths, so nested pages such as `/kumo/organizations/:id` fell back to \"Dashboard\"; it now picks the longest matching nav entry, which also fixes the header on other detail pages.",
+        "type": "Update"
+      },
+      {
+        "text": "Organization entries in Recently Viewed now open the organization screen, and `apps/web/src/lib/format.ts` collects the initials, avatar tint and time helpers the two Kumo screens share.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.014",
     "date": "2026-10-06",
     "title": "Kumo now tags new records to the client you choose, and the duplicate dashboard route is gone",

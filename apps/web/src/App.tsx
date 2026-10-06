@@ -21,6 +21,7 @@ import { KumoPasswordsPage } from "./pages/KumoPasswords";
 import { KumoDocumentsPage } from "./pages/KumoDocuments";
 import { KumoConfigsPage } from "./pages/KumoConfigs";
 import { KumoOrganizationsPage } from "./pages/KumoOrganizations";
+import { KumoOrganizationDetailPage } from "./pages/KumoOrganizationDetail";
 import { SettingsPage } from "./pages/Settings";
 import { MFASetupPage } from "./pages/MFASetup";
 import { OpportunitiesPage } from "./pages/Opportunities";
@@ -105,6 +106,7 @@ function ProtectedRoutes() {
         <Route path="/roles" element={<RolesPage />} />
         <Route path="/kumo" element={<KumoDashboardPage />} />
         {UI_KUMO_ORGS && <Route path="/kumo/organizations" element={<KumoOrganizationsPage />} />}
+        {UI_KUMO_ORGS && <Route path="/kumo/organizations/:id" element={<KumoOrganizationDetailPage />} />}
         <Route path="/kumo/assets/:id" element={<KumoAssetDetailPage />} />
         <Route path="/kumo/assets" element={<KumoAssetsPage />} />
         <Route path="/kumo/passwords" element={<KumoPasswordsPage />} />

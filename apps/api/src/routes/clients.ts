@@ -127,10 +127,14 @@ clientsRouter.post("/", async (req: AuthRequest, res, next) => {
       "addressLine1","addressLine2","city","state","postalCode","country",
       "billingAddressLine1","billingAddressLine2","billingCity","billingState","billingPostalCode","billingCountry",
       "notes","isActive","clientType","companyType","industry","territory","region","currency",
-      "accountManagerId","primaryContactId","serviceLevel","portalEnabled"];
+      "accountManagerId","primaryContactId","serviceLevel","portalEnabled","parentId"];
     const data: Record<string, unknown> = { name };
     for (const key of allowed) {
       if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+    if (data.parentId) {
+      const parent = await prisma.company.findUnique({ where: { id: data.parentId as string }, select: { id: true } });
+      if (!parent) throw new AppError("Unknown parentId", 400);
     }
     const company = await prisma.company.create({ data: data as any });
     res.status(201).json(company);
@@ -144,10 +148,22 @@ clientsRouter.patch("/:id", async (req: AuthRequest, res, next) => {
       "addressLine1","addressLine2","city","state","postalCode","country",
       "billingAddressLine1","billingAddressLine2","billingCity","billingState","billingPostalCode","billingCountry",
       "notes","isActive","clientType","companyType","industry","territory","region","currency",
-      "accountManagerId","primaryContactId","serviceLevel","portalEnabled"];
+      "accountManagerId","primaryContactId","serviceLevel","portalEnabled","parentId"];
     const data: Record<string, unknown> = {};
     for (const key of allowed) {
       if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+    // Walking up from the new parent must never reach this client, or the
+    // hierarchy would loop.
+    if (data.parentId) {
+      if (data.parentId === req.params.id) throw new AppError("A client cannot be its own parent", 400);
+      let cursor: string | null = data.parentId as string;
+      for (let hops = 0; cursor && hops < 50; hops++) {
+        if (cursor === req.params.id) throw new AppError("That client is already inside this organization", 400);
+        const ancestor: { parentId: string | null } | null =
+          await prisma.company.findUnique({ where: { id: cursor }, select: { parentId: true } });
+        cursor = ancestor?.parentId ?? null;
+      }
     }
     const company = await prisma.company.update({ where: { id: req.params.id }, data: data as any });
     res.json(company);

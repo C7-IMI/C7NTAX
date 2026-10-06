@@ -143,6 +143,11 @@ model Company {
   // Portal access
   portalEnabled   Boolean  @default(false)
 
+  // Sub-organizations (HQ, branches, departments)
+  parentId        String?
+  parent          Company?  @relation("CompanyHierarchy", fields: [parentId], references: [id])
+  children        Company[] @relation("CompanyHierarchy")
+
   // Relationships
   users           User[]
   contacts        Contact[]
@@ -153,6 +158,8 @@ model Company {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([parentId])
 }
 
 model Contact {

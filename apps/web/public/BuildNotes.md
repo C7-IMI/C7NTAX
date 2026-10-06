@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.014 | Last Updated: 2026-10-06
+## Version: 2026.10.6.015 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.015 — The Organization dashboard in Kumo, and sub-organizations
+- **[New]** **Clicking an organization in Kumo now opens a full documentation dashboard for that client.** `GET /api/kumo/organizations/:id` answers with everything the screen needs in one round trip: **Quick Notes** (the client record's notes, editable in place), **Password Strength** for the whole vault using the same ladder the vault uses, a **Documentation Health Summary** of stale / never-viewed / expired items, your **Recently Viewed By You** items for that client, its **Important Contacts**, **Recently Updated** records, **Popular Passwords**, **Upcoming Expirations**, **Locations** and a client **Activity Feed**. It is built from C7NTAX cards, tokens and icons rather than a copy of another product's chrome.
+- **[New]** **Sub-organizations are now real records.** `Company` gained a nullable `parentId` self-relation (applied with `prisma db push`), and the client API accepts `parentId` on create and update with a cycle guard so a hierarchy cannot loop. The organization screen lists its children — each opening its own dashboard — and can create one from the header's Quick Add menu or from the section itself.
+- **[Update]** **One password strength ladder for the whole app.** `packages/shared/src/passwordStrength.ts` now holds the scoring used both by the password vault (on reveal) and by the organization dashboard, so the two views cannot disagree. One visible side effect: a credential that scores full marks now reads "Very Strong" instead of "Strong".
+- **[Update]** **The header title now follows the most specific route.** `getPageTitle` only matched exact paths, so nested pages such as `/kumo/organizations/:id` fell back to "Dashboard"; it now picks the longest matching nav entry, which also fixes the header on other detail pages.
+- **[Update]** Organization entries in Recently Viewed now open the organization screen, and `apps/web/src/lib/format.ts` collects the initials, avatar tint and time helpers the two Kumo screens share.
+- **Verification:** the endpoint was called live for Acme Corporation and returned real aggregates (1 asset, 1 password, 3 documents, 1 domain, 1 certificate; strength Strong 1; 3 never-viewed documents; 3 contacts; 7 activity events; a certificate expiring 2026-12-10). In the browser the screen rendered all eleven sections, a note saved through the UI, and a sub-organization was created, opened its own dashboard and was then deleted with the note reset to null — record counts and both empty states were identical afterwards. No page-level or card overflow at 1440 or 1280.
 
 ## 2026.10.6.014 — Kumo now tags new records to the client you choose, and the duplicate dashboard route is gone
 - **[Fix]** **Kumo ignored the client selected when creating a record.** The password, asset, configuration/server, document and folder handlers all wrote `companyId: req.user!.companyId`, so the client chosen in the form was overwritten: every new record was tagged to the creator's own company, and nothing new could appear under the client it belonged to. All five now resolve the company through one helper — an explicit `companyId` wins, otherwise the record follows the creator's company exactly as before, and an unknown id is rejected with a 400 rather than written. (The asset handler previously stored `null` when no client was sent, so assets never appeared under any organization.)

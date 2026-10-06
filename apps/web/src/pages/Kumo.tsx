@@ -173,7 +173,7 @@ function getEntityLink(entityType: string, entityId: string): string {
     domain: `/kumo`,
     certificate: `/kumo`,
     link: `/kumo`,
-    organization: `/clients/${entityId}`,
+    organization: `/kumo/organizations/${entityId}`,
   };
   return map[entityType] || `/kumo`;
 }

@@ -1483,6 +1483,58 @@
     "createdAt": "2026-10-06T03:35:48.474Z"
   },
   {
+    "id": "af8b1dac-f751-4974-83ec-8de589c688b7",
+    "action": "company:update",
+    "entity": "company",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "notes": "__tmp note from verification"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T07:29:00.833Z"
+  },
+  {
+    "id": "1443dd08-acd4-45aa-8de3-6eef2451b579",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "city": "",
+      "name": "__tmp Branch Office",
+      "state": "",
+      "parentId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "companyType": "Client"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T07:29:03.214Z"
+  },
+  {
+    "id": "0a7857a3-5e68-4592-b100-c38135c227ce",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "97a56ee1-f23a-45d0-9538-a66934702146",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T07:29:14.406Z"
+  },
+  {
+    "id": "360eab2d-83a8-40b3-a2a2-5442b16ebab2",
+    "action": "company:update",
+    "entity": "company",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "notes": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T07:29:14.413Z"
+  },
+  {
     "id": "3658b176-0040-4b17-a015-dacdcf1b8eea",
     "action": "tickets:update",
     "entity": "tickets",

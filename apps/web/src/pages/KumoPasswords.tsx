@@ -3,6 +3,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Shield, Eye, EyeOff, Search, X, Save, Clock, Edit3, Trash2, Copy, Building2, Key } from "lucide-react";
 import { generatePassword } from "../lib/generatePassword";
+import { PASSWORD_STRENGTH_LEVELS, scorePassword, passwordStrengthLevel } from "@C7NTAX/shared";
 
 export function KumoPasswordsPage() {
   const [passwords, setPasswords] = useState<any[]>([]);
@@ -325,16 +326,14 @@ export function KumoPasswordsPage() {
 
 function passwordStrength(pw: string): { label: string; color: string; width: number } {
   if (!pw) return { label: "N/A", color: "bg-gray-600", width: 0 };
-  let score = 0;
-  if (pw.length >= 12) score++;
-  if (pw.length >= 16) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[a-z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  const labels = ["Very Weak", "Weak", "Fair", "Good", "Strong", "Very Strong"];
+  const score = scorePassword(pw);
+  const level = passwordStrengthLevel(pw);
   const colors = ["bg-red-500", "bg-red-400", "bg-amber-400", "bg-amber-300", "bg-green-400", "bg-green-500"];
-  return { label: labels[score] || "Strong", color: colors[score] || "bg-green-500", width: Math.min(100, (score + 1) * 16.6) };
+  return {
+    label: level,
+    color: colors[PASSWORD_STRENGTH_LEVELS.indexOf(level)] ?? "bg-green-500",
+    width: Math.min(100, (score + 1) * 16.6),
+  };
 }
 
 function ReadOnlyField({ label, value }: { label: string; value: any }) {

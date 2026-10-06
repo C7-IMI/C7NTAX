@@ -136,14 +136,18 @@ function isNodeActive(node: NavNode, pathname: string): boolean {
 }
 
 function getPageTitle(nodes: NavNode[], pathname: string): string {
-  for (const n of nodes) {
-    if (n.to && pathname === n.to) return n.label;
-    if (n.children) {
-      const found = getPageTitle(n.children, pathname);
-      if (found) return found;
+  // The most specific match wins, so nested routes (/kumo/organizations/:id)
+  // report their own section instead of falling through to Dashboard.
+  const matches: { to: string; label: string }[] = [];
+  const walk = (list: NavNode[]): void => {
+    for (const n of list) {
+      if (n.to && (pathname === n.to || pathname.startsWith(n.to + "/"))) matches.push({ to: n.to, label: n.label });
+      if (n.children) walk(n.children);
     }
-  }
-  return "Dashboard";
+  };
+  walk(nodes);
+  if (matches.length === 0) return "Dashboard";
+  return matches.reduce((a, b) => (b.to.length > a.to.length ? b : a)).label;
 }
 
 // ── Section descriptions for header display ───────────────────────

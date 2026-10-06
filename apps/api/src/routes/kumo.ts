@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
-import { Permission } from "@C7NTAX/shared";
+import { Permission, passwordStrengthLevel } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { encrypt, decrypt, secureClear } from "../services/kumoCrypto";
 import speakeasy from "speakeasy";
@@ -694,6 +694,194 @@ kumoRouter.get("/organizations", requirePermission(Permission.KumoView), async (
       total,
       limit: Number(limit),
       offset: Number(offset),
+    });
+  } catch (e) { next(e); }
+});
+
+// ── One organization: the documentation dashboard behind a client ─────
+// Everything the organization screen shows, aggregated for a single company
+// in one round trip: vault strength, documentation health, recents, contacts,
+// popular passwords, expirations, recent activity and sub-organizations.
+
+/** A document untouched for this long counts as stale. */
+const STALE_DOCUMENT_DAYS = 90;
+/** created/updated within this window is reported as a creation. */
+const CREATED_WINDOW_MS = 60_000;
+
+kumoRouter.get("/organizations/:id", requirePermission(Permission.KumoView), async (req: AuthRequest, res, next) => {
+  try {
+    const companyId = req.params.id;
+    const now = new Date();
+    const staleBefore = new Date(now.getTime() - STALE_DOCUMENT_DAYS * 86_400_000);
+
+    const org = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: {
+        id: true, name: true, companyType: true, industry: true, territory: true, region: true,
+        phone: true, email: true, website: true, addressLine1: true, addressLine2: true,
+        city: true, state: true, postalCode: true, country: true, notes: true, isActive: true,
+        serviceLevel: true, portalEnabled: true, parentId: true, createdAt: true, updatedAt: true,
+        _count: { select: { contacts: true, tickets: true, serviceAgreements: true, invoices: true } },
+      },
+    });
+    if (!org) throw new AppError("Organization not found", 404);
+
+    const [
+      assetCount, passwordCount, documentCount, domainCount, certificateCount,
+      staleDocuments, unviewedDocuments, expiredCertificates, expiredDomains,
+      passwords, documents, certificates, domains, recentAssets, children, contacts, recentItems,
+    ] = await Promise.all([
+      prisma.kumoAsset.count({ where: { companyId } }),
+      prisma.kumoPassword.count({ where: { companyId } }),
+      prisma.kumoDocument.count({ where: { companyId } }),
+      prisma.kumoDomain.count({ where: { companyId } }),
+      prisma.kumoCertificate.count({ where: { companyId } }),
+      prisma.kumoDocument.count({ where: { companyId, updatedAt: { lt: staleBefore } } }),
+      prisma.kumoDocument.count({ where: { companyId, viewCount: 0 } }),
+      prisma.kumoCertificate.count({ where: { companyId, expiryDate: { lt: now } } }),
+      prisma.kumoDomain.count({ where: { companyId, expiryDate: { lt: now } } }),
+      prisma.kumoPassword.findMany({
+        where: { companyId },
+        select: {
+          id: true, label: true, username: true, url: true, expiresAt: true, createdAt: true, updatedAt: true,
+          createdById: true, updatedById: true, encryptedPassword: true, iv: true, authTag: true,
+          _count: { select: { accessLogs: true } },
+        },
+        orderBy: [{ accessLogs: { _count: "desc" } }, { label: "asc" }],
+      }),
+      prisma.kumoDocument.findMany({
+        where: { companyId },
+        select: { id: true, title: true, status: true, updatedAt: true, createdAt: true, authorId: true, lastEditorId: true },
+        orderBy: { updatedAt: "desc" },
+        take: 10,
+      }),
+      prisma.kumoCertificate.findMany({
+        where: { companyId },
+        select: { id: true, name: true, domain: true, expiryDate: true, createdAt: true, updatedAt: true },
+        orderBy: { expiryDate: "asc" },
+      }),
+      prisma.kumoDomain.findMany({
+        where: { companyId },
+        select: { id: true, domainName: true, expiryDate: true, createdAt: true, updatedAt: true },
+        orderBy: { domainName: "asc" },
+      }),
+      prisma.kumoAsset.findMany({
+        where: { companyId },
+        select: { id: true, name: true, createdAt: true, updatedAt: true, createdById: true, updatedById: true },
+        orderBy: { updatedAt: "desc" },
+        take: 10,
+      }),
+      prisma.company.findMany({
+        where: { parentId: companyId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, companyType: true, city: true, state: true, isActive: true },
+      }),
+      prisma.contact.findMany({
+        where: { companyId },
+        orderBy: [{ isPrimary: "desc" }, { firstName: "asc" }],
+        take: 6,
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true, title: true, isPrimary: true },
+      }),
+      prisma.recentlyViewedItem.findMany({
+        where: { userId: req.user!.userId },
+        orderBy: { viewedAt: "desc" },
+        take: 20,
+      }),
+    ]);
+
+    // Strength is scored here rather than stored, because the vault scores on
+    // reveal and never writes the column. Rows that cannot be decrypted (seed
+    // data carries an ENC: placeholder) count as "Not evaluated".
+    const passwordStrength: Record<string, number> = {
+      "Very Weak": 0, Weak: 0, Fair: 0, Good: 0, Strong: 0, "Very Strong": 0, "Not evaluated": 0,
+    };
+    for (const pw of passwords) {
+      let plaintext = "";
+      try { plaintext = decrypt(pw.encryptedPassword, pw.iv, pw.authTag); } catch { plaintext = ""; }
+      const bucket = !plaintext || plaintext.startsWith("ENC:") ? "Not evaluated" : passwordStrengthLevel(plaintext);
+      passwordStrength[bucket] = (passwordStrength[bucket] ?? 0) + 1;
+    }
+
+    type Expiring = { type: string; id: string; name: string; expiresAt: Date };
+    const upcoming: Expiring[] = [];
+    for (const p of passwords) if (p.expiresAt && p.expiresAt >= now) upcoming.push({ type: "Password", id: p.id, name: p.label, expiresAt: p.expiresAt });
+    for (const c of certificates) if (c.expiryDate >= now) upcoming.push({ type: "Certificate", id: c.id, name: c.name, expiresAt: c.expiryDate });
+    for (const d of domains) if (d.expiryDate && d.expiryDate >= now) upcoming.push({ type: "Domain", id: d.id, name: d.domainName, expiresAt: d.expiryDate });
+    const upcomingExpirations = upcoming.sort((a, b) => a.expiresAt.getTime() - b.expiresAt.getTime()).slice(0, 5);
+
+    const recentlyUpdated = [
+      ...recentAssets.map((a) => ({ type: "Asset", id: a.id, name: a.name, updatedAt: a.updatedAt })),
+      ...documents.map((d) => ({ type: "Document", id: d.id, name: d.title, updatedAt: d.updatedAt })),
+      ...passwords.map((p) => ({ type: "Password", id: p.id, name: p.label, updatedAt: p.updatedAt })),
+      ...domains.map((d) => ({ type: "Domain", id: d.id, name: d.domainName, updatedAt: d.updatedAt })),
+      ...certificates.map((c) => ({ type: "Certificate", id: c.id, name: c.name, updatedAt: c.updatedAt })),
+    ].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, 5);
+
+    // Activity is derived from the records themselves — the audit log records
+    // the path, not the owning organization, so filtering it here would miss
+    // every create.
+    const activityRaw = [
+      ...recentAssets.map((a) => ({ type: "Asset", id: a.id, name: a.name, createdAt: a.createdAt, updatedAt: a.updatedAt, byId: a.updatedById || a.createdById })),
+      ...documents.map((d) => ({ type: "Document", id: d.id, name: d.title, createdAt: d.createdAt, updatedAt: d.updatedAt, byId: d.lastEditorId || d.authorId })),
+      ...passwords.map((p) => ({ type: "Password", id: p.id, name: p.label, createdAt: p.createdAt, updatedAt: p.updatedAt, byId: p.updatedById || p.createdById })),
+      ...domains.map((d) => ({ type: "Domain", id: d.id, name: d.domainName, createdAt: d.createdAt, updatedAt: d.updatedAt, byId: null })),
+      ...certificates.map((c) => ({ type: "Certificate", id: c.id, name: c.name, createdAt: c.createdAt, updatedAt: c.updatedAt, byId: null })),
+    ]
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+      .slice(0, 8);
+
+    const actorIds = [...new Set(activityRaw.map((a) => a.byId).filter((id): id is string => !!id))];
+    const actors = actorIds.length
+      ? await prisma.user.findMany({ where: { id: { in: actorIds } }, select: { id: true, firstName: true, lastName: true } })
+      : [];
+    const actorName = new Map(actors.map((u) => [u.id, `${u.firstName} ${u.lastName}`.trim()]));
+    const activity = activityRaw.map((e) => ({
+      type: e.type,
+      id: e.id,
+      name: e.name,
+      action: e.updatedAt.getTime() - e.createdAt.getTime() < CREATED_WINDOW_MS ? "created" : "updated",
+      at: e.updatedAt,
+      by: e.byId ? actorName.get(e.byId) ?? null : null,
+    }));
+
+    // A recent is only kept when the item it points at belongs to this client.
+    const recentIds = recentItems.map((i) => i.entityId);
+    const [ownedAssets, ownedPasswords, ownedDocuments, ownedDomains, ownedCertificates, ownedServers] = recentIds.length
+      ? await Promise.all([
+        prisma.kumoAsset.findMany({ where: { id: { in: recentIds }, companyId }, select: { id: true } }),
+        prisma.kumoPassword.findMany({ where: { id: { in: recentIds }, companyId }, select: { id: true } }),
+        prisma.kumoDocument.findMany({ where: { id: { in: recentIds }, companyId }, select: { id: true } }),
+        prisma.kumoDomain.findMany({ where: { id: { in: recentIds }, companyId }, select: { id: true } }),
+        prisma.kumoCertificate.findMany({ where: { id: { in: recentIds }, companyId }, select: { id: true } }),
+        prisma.kumoServer.findMany({ where: { id: { in: recentIds }, kumoAsset: { companyId } }, select: { id: true } }),
+      ])
+      : [[], [], [], [], [], []];
+    const ownedIds = new Set(
+      [...ownedAssets, ...ownedPasswords, ...ownedDocuments, ...ownedDomains, ...ownedCertificates, ...ownedServers].map((r) => r.id)
+    );
+
+    res.json({
+      organization: org,
+      counts: {
+        assets: assetCount, passwords: passwordCount, documents: documentCount,
+        domains: domainCount, certificates: certificateCount,
+      },
+      passwordStrength,
+      documentation: {
+        stale: staleDocuments,
+        notViewed: unviewedDocuments,
+        expired: expiredCertificates + expiredDomains,
+        staleAfterDays: STALE_DOCUMENT_DAYS,
+      },
+      recentlyViewed: recentItems.filter((i) => ownedIds.has(i.entityId)).slice(0, 5),
+      importantContacts: contacts,
+      recentlyUpdated,
+      popularPasswords: passwords.slice(0, 5).map((p) => ({
+        id: p.id, label: p.label, username: p.username, url: p.url, accessCount: p._count.accessLogs,
+      })),
+      upcomingExpirations,
+      activity,
+      subOrganizations: children,
     });
   } catch (e) { next(e); }
 });
