@@ -652,20 +652,20 @@ export function Layout({ children }: { children: ReactNode }) {
           <div
             role="alert"
             onClick={() => navigate("/service-alerts")}
-            className="bg-red-600/15 border-b border-red-500/40 px-4 lg:px-6 py-2.5 flex items-center gap-3 cursor-pointer select-none shrink-0"
+            className="service-alert-banner border-b px-4 lg:px-6 py-2.5 flex items-center gap-3 cursor-pointer select-none shrink-0"
             title="Click for more details"
           >
-            <AlertTriangle size={16} className="text-red-400 shrink-0" />
-            <span className="text-sm text-red-100 flex-1 min-w-0 truncate">
+            <AlertTriangle size={16} className="service-alert-banner__icon shrink-0" />
+            <span className="service-alert-banner__message text-sm flex-1 min-w-0 truncate">
               {/possible service interruption|reported for/i.test(bannerAlert.title)
                 ? bannerAlert.title
                 : `Possible Service Interruption has been reported for ${bannerAlert.serviceName}`}
               {bannerAlert.title.includes(".") ? " " : ". "}
-              <span className="underline underline-offset-2 font-medium text-red-200">Click here for more details.</span>
+              <span className="service-alert-banner__details underline underline-offset-2 font-medium">Click here for more details.</span>
             </span>
             <button
               onClick={(e) => { e.stopPropagation(); dismissBanner(); }}
-              className="shrink-0 text-red-300 hover:text-white p-1 rounded transition-colors"
+              className="service-alert-banner__dismiss shrink-0 p-1 rounded transition-colors"
               title="Dismiss alert"
               aria-label="Dismiss alert"
             >
