@@ -11,10 +11,11 @@
  * apps/web/.env.local) and restart the web server; or run
  * scripts/rollback-ui-p1.ps1 -Part P1|P2|All.
  */
-type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2";
+type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2" | "c7_ui_palette";
 
 const UI_P1_STORAGE_KEY: FlagStorageKey = "c7_ui_p1";
 const UI_P2_STORAGE_KEY: FlagStorageKey = "c7_ui_p2";
+const UI_PALETTE_STORAGE_KEY: FlagStorageKey = "c7_ui_palette";
 
 function readFlag(key: FlagStorageKey, envName: string): boolean {
   try {
@@ -42,6 +43,9 @@ export const UI_P1 = readFlag(UI_P1_STORAGE_KEY, "VITE_UI_P1");
 /** P2: elevation, typography, sticky tables, content width (default: on). */
 export const UI_P2 = readFlag(UI_P2_STORAGE_KEY, "VITE_UI_P2");
 
+/** Colour schemes: the palette picker in the header toolbar (default: on). */
+export const UI_PALETTE = readFlag(UI_PALETTE_STORAGE_KEY, "VITE_UI_PALETTE");
+
 export function setUiP1(enabled: boolean): void {
   writeFlag(UI_P1_STORAGE_KEY, enabled);
 }
@@ -50,4 +54,8 @@ export function setUiP2(enabled: boolean): void {
   writeFlag(UI_P2_STORAGE_KEY, enabled);
 }
 
-export { UI_P1_STORAGE_KEY, UI_P2_STORAGE_KEY };
+export function setUiPalette(enabled: boolean): void {
+  writeFlag(UI_PALETTE_STORAGE_KEY, enabled);
+}
+
+export { UI_P1_STORAGE_KEY, UI_P2_STORAGE_KEY, UI_PALETTE_STORAGE_KEY };

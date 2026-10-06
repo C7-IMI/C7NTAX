@@ -1825,6 +1825,21 @@
 - Recommended **A** for dark and **F** for light; noted that a full re-skin must also sweep the 118 raw hex literals in the 9 allowlisted `.tsx` files tracked by `scripts/lint-design-tokens.mjs`. Offered to implement any scheme behind a `data-palette` switcher with instant rollback.
 
 
+### Prompt 155 — Implement the colour schemes behind a switcher
+**Timestamp:** 2026-10-06 | **Status:** ✅ Completed | **Duration:** ~50 min
+**BuildNotes IDs:** #1 (2026.10.6.003)
+> _(follow-on to Prompt 154 — make the suggested schemes selectable in the app)_
+
+**Changes:**
+- `apps/web/src/lib/palette.ts` — scheme catalogue (5 dark + 3 light), per-mode persistence (`c7_palette_dark` / `c7_palette_light`), `applyPalettes()` and `setPalette()` / `resetPalettes()`; `applyPalettes()` runs in `main.tsx` before first paint to avoid a flash.
+- `apps/web/src/components/PalettePicker.tsx` — header control listing the schemes for the active mode with swatch previews, descriptions and a Classic option; closes on outside click and Escape.
+- `apps/web/src/index.css` — `── Colour schemes ──` block with one variable set per scheme, dark schemes scoped to `html:not([data-theme="light"])`; added `.btn-primary`'s `color: var(--btn-primary-fg, var(--text-primary))` and `.scheme-swatch--*` previews so no hex enters any `.tsx`.
+- `apps/web/src/lib/uiFlags.ts` (`UI_PALETTE`), `apps/web/src/components/Layout.tsx` (`{UI_PALETTE && <PalettePicker />}`), `apps/web/src/main.tsx` (`c7Palette` helper), `UI-PALETTE-ROLLBACK.md`, cross-reference from `UI-P1-ROLLBACK.md`.
+- Contrast auditing found the built-in dark primary button is **2.68:1** (white on `#00aae0`); the new schemes avoid it via `--btn-primary-fg` and all 8 pass 12/12 AA pairs (96/96), worst pair 4.58.
+- **Verification:** typecheck unchanged at 26 pre-existing errors (zero new); token lint passes; live check confirmed each scheme's computed surfaces/borders/muted text/button colours, per-mode persistence, Classic restoring the exact original tokens (`--surface #0f1a2e`), the picker listing the right schemes per mode, and no console errors across `/`, `/tickets`, `/clients`, `/assets`, `/billing/dashboard`. The app was left on Classic.
+
+
+
 
 
 

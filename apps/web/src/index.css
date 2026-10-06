@@ -96,7 +96,11 @@ html[data-theme="light"] {
 
 @layer components {
   .btn-primary {
-    @apply bg-cyber-600 hover:bg-cyber-500 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-cyber-600 hover:bg-cyber-500 font-medium px-4 py-2 rounded-lg transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    /* Defaults to --text-primary, i.e. the previous text-white. Colour schemes
+       override --btn-primary-fg when their accent needs dark or light label
+       text to stay >= 4.5:1 (see "Colour schemes" at the end of this file). */
+    color: var(--btn-primary-fg, var(--text-primary));
   }
   .btn-secondary {
     @apply bg-surface-lighter hover:bg-surface-border text-white font-medium px-4 py-2 rounded-lg transition-colors duration-150 border border-surface-border;
@@ -267,3 +271,151 @@ html[data-theme="light"] {
 
 /* Content width — stop pages stretching edge-to-edge on ultra-wide displays */
 [data-ui-p2="true"] main > * { max-width: 1600px; margin-inline: auto; }
+
+/* ── Colour schemes ───────────────────────────────────────────────────────
+   Optional palettes, selected with data-palette-dark / data-palette-light on
+   <html> (see apps/web/src/lib/palette.ts). No attribute = "Classic", which is
+   the theme blocks at the top of this file and is completely unaffected here.
+   Dark schemes are scoped to :not([data-theme="light"]) so a stored light-mode
+   choice can never leak dark tokens.
+   Every scheme is audited against WCAG AA: text, muted text, accent-on-surface
+   and the primary-button label all stay >= 4.5:1 (96/96 checks). */
+
+/* Dark — Midnight Slate: neutral graphite, keeps the brand cyan */
+html:not([data-theme="light"])[data-palette-dark="midnight"] {
+  --navy-50: #eef1f5; --navy-100: #cfd6df; --navy-200: #aab3c0; --navy-300: #85909f;
+  --navy-400: #66727f; --navy-500: #4d5866; --navy-600: #3f4a57; --navy-700: #333c48;
+  --navy-800: #262e38; --navy-900: #171d24; --navy-950: #0a0d12;
+  --surface: #0f131a; --surface-light: #151a23; --surface-lighter: #1c222c; --surface-border: #2b333f;
+  --text-primary: #f8fafc; --text-secondary: #cbd5e1; --text-tertiary: #94a3b8;
+  --text-muted: #8b95a5; --text-muted-alt: #7f8896;
+  --btn-primary-fg: #0a0d12;
+  --nav-accent: rgb(34 204 247 / 0.16);
+  --card-hover-border: rgb(34 204 247 / 0.45);
+}
+
+/* Dark — Deep Violet: near-black surfaces, violet accent */
+html:not([data-theme="light"])[data-palette-dark="violet"] {
+  --navy-50: #f0eff5; --navy-100: #d3d1de; --navy-200: #b0adc0; --navy-300: #8d899f;
+  --navy-400: #6d697f; --navy-500: #545066; --navy-600: #464257; --navy-700: #393647;
+  --navy-800: #2b2938; --navy-900: #1a1824; --navy-950: #08080c;
+  --surface: #0e0e14; --surface-light: #14141c; --surface-lighter: #1b1b25; --surface-border: #2a2a38;
+  --cyber-50: #f5f3ff; --cyber-100: #ede9fe; --cyber-200: #ddd6fe; --cyber-300: #c4b5fd;
+  --cyber-400: #a78bfa; --cyber-500: #6d28d9; --cyber-600: #7c3aed; --cyber-700: #6d28d9;
+  --cyber-800: #5b21b6; --cyber-900: #4c1d95;
+  --text-primary: #f8fafc; --text-secondary: #cbd5e1; --text-tertiary: #9a9ab0;
+  --text-muted: #8b8b9c; --text-muted-alt: #807f94;
+  --btn-primary-fg: #ffffff;
+  --nav-accent: rgb(139 92 246 / 0.18);
+  --card-hover-border: rgb(167 139 250 / 0.45);
+}
+
+/* Dark — Warm Carbon: warm graphite, amber accent */
+html:not([data-theme="light"])[data-palette-dark="carbon"] {
+  --navy-50: #f6f1ec; --navy-100: #e0d6cc; --navy-200: #c4b8ab; --navy-300: #a89a8b;
+  --navy-400: #8a7b6b; --navy-500: #6e6154; --navy-600: #5b5045; --navy-700: #4a4138;
+  --navy-800: #362f28; --navy-900: #221d19; --navy-950: #100d0b;
+  --surface: #141110; --surface-light: #1b1715; --surface-lighter: #231e1b; --surface-border: #3a322c;
+  --cyber-50: #fffbeb; --cyber-100: #fef3c7; --cyber-200: #fde68a; --cyber-300: #fcd34d;
+  --cyber-400: #fbbf24; --cyber-500: #f59e0b; --cyber-600: #d97706; --cyber-700: #b45309;
+  --cyber-800: #92400e; --cyber-900: #78350f;
+  --text-primary: #faf7f4; --text-secondary: #d6cdc4; --text-tertiary: #a89e94;
+  --text-muted: #9b9187; --text-muted-alt: #8f857c;
+  --btn-primary-fg: #141110;
+  --nav-accent: rgb(245 158 11 / 0.16);
+  --card-hover-border: rgb(251 191 36 / 0.45);
+}
+
+/* Dark — True Black: OLED-friendly pure black */
+html:not([data-theme="light"])[data-palette-dark="oled"] {
+  --navy-50: #ebebed; --navy-100: #c9c9cd; --navy-200: #a3a3aa; --navy-300: #7d7d85;
+  --navy-400: #5f5f66; --navy-500: #47474d; --navy-600: #3a3a40; --navy-700: #2e2e33;
+  --navy-800: #1f1f23; --navy-900: #121215; --navy-950: #000000;
+  --surface: #060607; --surface-light: #0d0d0f; --surface-lighter: #15151a; --surface-border: #26262d;
+  --cyber-300: #7dd3fc; --cyber-400: #38bdf8; --cyber-500: #38bdf8; --cyber-600: #0ea5e9;
+  --text-primary: #e8e8ea; --text-secondary: #b9b9c0; --text-tertiary: #8d8d96;
+  --text-muted: #82828b; --text-muted-alt: #78787f;
+  --btn-primary-fg: #000000;
+  --nav-accent: rgb(56 189 248 / 0.18);
+  --card-hover-border: rgb(56 189 248 / 0.45);
+}
+
+/* Dark — Ocean Teal */
+html:not([data-theme="light"])[data-palette-dark="ocean"] {
+  --navy-50: #e8f4f5; --navy-100: #c6e0e2; --navy-200: #9dc4c8; --navy-300: #74a8ad;
+  --navy-400: #558a8f; --navy-500: #3d6a6f; --navy-600: #315a5f; --navy-700: #274a4f;
+  --navy-800: #1a3338; --navy-900: #0f2226; --navy-950: #07161a;
+  --surface: #07161a; --surface-light: #0d1f24; --surface-lighter: #142b31; --surface-border: #24393f;
+  --cyber-50: #f0fdfa; --cyber-100: #ccfbf1; --cyber-200: #99f6e4; --cyber-300: #5eead4;
+  --cyber-400: #2dd4bf; --cyber-500: #14b8a6; --cyber-600: #0d9488; --cyber-700: #0f766e;
+  --cyber-800: #115e59; --cyber-900: #134e4a;
+  --text-primary: #f0fdfa; --text-secondary: #cbd5e1; --text-tertiary: #8fa8ad;
+  --text-muted: #879fa4; --text-muted-alt: #7d9499;
+  --btn-primary-fg: #07161a;
+  --nav-accent: rgb(20 184 166 / 0.18);
+  --card-hover-border: rgb(45 212 191 / 0.45);
+}
+
+/* Light — Cool Paper: faintly cool white, AA-clean accent + status colours */
+html[data-theme="light"][data-palette-light="paper"] {
+  --navy-50: #f0f3f7; --navy-100: #e3e9f0; --navy-200: #ccd5e0; --navy-300: #a7b3c2;
+  --navy-400: #76839a; --navy-500: #5b6779; --navy-600: #47505e; --navy-700: #363d47;
+  --navy-800: #1f242b; --navy-900: #10141a; --navy-950: #ffffff;
+  --surface: #ffffff; --surface-light: #f6f8fa; --surface-lighter: #eef1f5; --surface-border: #c9d1d9;
+  --cyber-50: #eff6ff; --cyber-100: #dbeafe; --cyber-200: #bfdbfe; --cyber-300: #0550ae;
+  --cyber-400: #0969da; --cyber-500: #0550ae; --cyber-600: #0969da; --cyber-700: #0550ae;
+  --cyber-800: #033d8b; --cyber-900: #0a3069;
+  --alert-red: #b91c1c; --alert-amber: #b45309; --alert-green: #15803d;
+  --text-primary: #0d1117; --text-secondary: #30363d; --text-tertiary: #4d5560;
+  --text-muted: #57606a; --text-muted-alt: #4f5964;
+  --btn-primary-fg: #ffffff;
+  --nav-accent: rgb(9 105 218 / 0.12);
+  --card-hover-border: rgb(9 105 218 / 0.45);
+}
+
+/* Light — Warm Stone */
+html[data-theme="light"][data-palette-light="stone"] {
+  --navy-50: #f7f4f1; --navy-100: #efe9e3; --navy-200: #e0d7ce; --navy-300: #c2b6a9;
+  --navy-400: #93877a; --navy-500: #74695d; --navy-600: #5b5248; --navy-700: #443d35;
+  --navy-800: #2a2521; --navy-900: #171412; --navy-950: #ffffff;
+  --surface: #ffffff; --surface-light: #faf9f7; --surface-lighter: #f2efeb; --surface-border: #d8d3cc;
+  --cyber-50: #f0fdfa; --cyber-100: #ccfbf1; --cyber-200: #99f6e4; --cyber-300: #115e59;
+  --cyber-400: #0f766e; --cyber-500: #115e59; --cyber-600: #0f766e; --cyber-700: #115e59;
+  --cyber-800: #134e4a; --cyber-900: #042f2e;
+  --alert-red: #b91c1c; --alert-amber: #b45309; --alert-green: #15803d;
+  --text-primary: #1c1917; --text-secondary: #3f3a36; --text-tertiary: #57534e;
+  --text-muted: #6b6560; --text-muted-alt: #625c57;
+  --btn-primary-fg: #ffffff;
+  --nav-accent: rgb(15 118 110 / 0.12);
+  --card-hover-border: rgb(15 118 110 / 0.45);
+}
+
+/* Light — High Contrast: AAA-leaning text and crisp borders */
+html[data-theme="light"][data-palette-light="contrast"] {
+  --navy-50: #f4f4f5; --navy-100: #e4e4e7; --navy-200: #d4d4d8; --navy-300: #a1a1aa;
+  --navy-400: #71717a; --navy-500: #52525b; --navy-600: #3f3f46; --navy-700: #27272a;
+  --navy-800: #18181b; --navy-900: #09090b; --navy-950: #ffffff;
+  --surface: #ffffff; --surface-light: #f4f4f5; --surface-lighter: #e4e4e7; --surface-border: #71717a;
+  --cyber-50: #eff6ff; --cyber-100: #dbeafe; --cyber-200: #bfdbfe; --cyber-300: #1e40af;
+  --cyber-400: #1d4ed8; --cyber-500: #1e40af; --cyber-600: #1d4ed8; --cyber-700: #1e3a8a;
+  --cyber-800: #1e3a8a; --cyber-900: #172554;
+  --alert-red: #b91c1c; --alert-amber: #b45309; --alert-green: #15803d;
+  --text-primary: #09090b; --text-secondary: #27272a; --text-tertiary: #3f3f46;
+  --text-muted: #52525b; --text-muted-alt: #3f3f46;
+  --btn-primary-fg: #ffffff;
+  --nav-accent: rgb(29 78 216 / 0.12);
+  --card-hover-border: rgb(29 78 216 / 0.5);
+}
+
+/* Scheme swatch previews for the palette picker (no raw hex in .tsx) */
+.scheme-swatch { background-image: linear-gradient(135deg, var(--scheme-bg) 0 62%, var(--scheme-accent) 62% 100%); }
+.scheme-swatch--classic  { --scheme-bg: #0f1a2e; --scheme-accent: #00c0f4; }
+.scheme-swatch--midnight { --scheme-bg: #0f131a; --scheme-accent: #22ccf7; }
+.scheme-swatch--violet   { --scheme-bg: #0e0e14; --scheme-accent: #a78bfa; }
+.scheme-swatch--carbon   { --scheme-bg: #141110; --scheme-accent: #fbbf24; }
+.scheme-swatch--oled     { --scheme-bg: #000000; --scheme-accent: #38bdf8; }
+.scheme-swatch--ocean    { --scheme-bg: #07161a; --scheme-accent: #2dd4bf; }
+.scheme-swatch--paper    { --scheme-bg: #ffffff; --scheme-accent: #0969da; }
+.scheme-swatch--stone    { --scheme-bg: #faf9f7; --scheme-accent: #0f766e; }
+.scheme-swatch--contrast { --scheme-bg: #ffffff; --scheme-accent: #1d4ed8; }
+.scheme-swatch--classic-light { --scheme-bg: #ffffff; --scheme-accent: #0284c7; }

@@ -110,3 +110,5 @@ P1 and drop P2 entirely.
   only, so a rollback cannot affect stored data.
 - Hover/transition effects respect `prefers-reduced-motion` via the global rule
   in `apps/web/src/index.css`.
+- Colour schemes are a separate tier with their own flag — see
+  [UI-PALETTE-ROLLBACK.md](./UI-PALETTE-ROLLBACK.md).

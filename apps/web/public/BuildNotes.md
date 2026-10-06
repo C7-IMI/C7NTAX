@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.002 | Last Updated: 2026-10-06
+## Version: 2026.10.6.003 | Last Updated: 2026-10-06
 
 ---
 
@@ -14,7 +14,16 @@
 
 ---
 
-## 2026.10.6.002 — Silent boot startup + shared hidden launcher for both tasks
+## 2026.10.6.003 — Selectable colour schemes (5 dark + 3 light) with instant rollback
+- **[New]** **Colour scheme picker** in the header toolbar (next to the density and theme controls): choose a scheme per mode from **Classic** plus eight alternates — dark **Midnight Slate**, **Deep Violet**, **Warm Carbon**, **True Black (OLED)**, **Ocean Teal**; light **Cool Paper**, **Warm Stone**, **High Contrast**. Dark and light are chosen independently and each applies to its own theme.
+- **[New]** `apps/web/src/lib/palette.ts` (catalogue, per-mode persistence, `applyPalettes()` before first paint) and `apps/web/src/components/PalettePicker.tsx`. A scheme is pure CSS applied via `data-palette-dark` / `data-palette-light` on `<html>` — no data, routing or behaviour is touched, and **Classic means "no attribute"**, so the built-in theme is never modified.
+- **[Update]** Every alternate scheme is **WCAG AA audited (96/96 checks)**: body text, secondary/tertiary/muted text, accent-on-surface and the primary-button label all stay ≥ 4.5:1.
+- **[Fix]** Introduced `--btn-primary-fg` so a scheme can pick a dark or light button label: the built-in dark primary button (white on `#00aae0`) is only **2.68:1**, while the alternates reach 4.93–8.75:1. `.btn-primary` now uses `color: var(--btn-primary-fg, var(--text-primary))`, which is byte-for-byte the previous `text-white` behaviour when nothing overrides the variable — Classic is visually unchanged.
+- **[New]** `UI-PALETTE` flag (default on; `VITE_UI_PALETTE=false` / `localStorage.c7_ui_palette=0`) hides the picker, and `window.c7Palette` exposes `list()`, `get(mode)`, `set(mode, id)` and `reset()`.
+- **[New]** `UI-PALETTE-ROLLBACK.md` — scheme table, three rollback levels and the list of files the feature owns.
+- **[Verification]** `apps/web` typecheck unchanged (26 pre-existing errors, zero new); design-token lint passes with **no raw hex added to any `.tsx`** (scheme colours and picker swatches live in `index.css`); live check: the picker lists the schemes for the active mode, selecting **Warm Carbon** / **Deep Violet** / **True Black** / **Cool Paper** applied the expected `--surface`, border, muted-text and button colours with zero console errors, Classic restored the original tokens exactly, both modes store independently, and `/`, `/clients`, `/assets`, `/billing/dashboard` render normally with the app left on Classic.
+
+
 - **[New]** `scripts/run-hidden.vbs` — one generic hidden launcher used by both scheduled tasks: `wscript.exe //B //Nologo run-hidden.vbs <script.ps1> [args…]` runs PowerShell with `SW_HIDE` (console created hidden), passes extra arguments through, and logs to `startup/hidden-runner.log` if the target script is missing. Replaces `scripts/auto-sync-hidden.vbs`, which covered only auto-sync.
 - **[Fix]** **C7NTAX Boot Startup** no longer flashes a console window at boot/login — it now launches `startup/c7ntax-boot.ps1` through the hidden runner instead of `powershell.exe` directly. Boot trigger (45s delay), `RunLevel Highest` (needed for service/Defender work), batteries allowed, `IgnoreNew`, `StartWhenAvailable` and the 30-minute limit are all preserved; the working directory is now pinned to the repo root.
 - **[New]** `scripts/register-boot-task-hidden.ps1` — re-registers the boot task with the hidden runner. It **must run elevated**: the task's `Highest` run level makes `Register-ScheduledTask`, `Set-ScheduledTask` and `schtasks /Change` fail with "Access is denied" for a standard token (this is how the change was applied).
