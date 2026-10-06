@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.5.015 | Last Updated: 2026-10-05
+## Version: 2026.10.6.001 | Last Updated: 2026-10-06
 
 ---
 
@@ -14,7 +14,13 @@
 
 ---
 
-## 2026.10.5.015 — UI modernization P2 (elevation, typography, sticky tables, content width) + rollback switch
+## 2026.10.6.001 — Silent auto-sync (no more console window pop-ups)
+- **[Fix]** The **C7NTAX Auto-Sync** scheduled task no longer flashes a command-prompt window. Task Scheduler was launching `powershell.exe` directly; even with `-WindowStyle Hidden` PowerShell creates its console window and then hides it, which is the visible flash every 15 minutes. The task now runs `scripts/auto-sync-hidden.vbs` via `wscript.exe //B //Nologo` — a GUI host with no console — and `Shell.Run(cmd, 0, False)` starts PowerShell with `SW_HIDE`, so the console is created hidden and never appears.
+- **[New]** `scripts/auto-sync-hidden.vbs` — resolves the repo from its own location (with the canonical path as fallback) and launches `scripts/auto-sync.ps1` hidden.
+- **[Fix]** Removed the task's battery restrictions (`DisallowStartIfOnBatteries` / `StopIfGoingOnBatteries` were both enabled, so auto-sync silently stopped on a laptop running off battery). Re-asserted `MultipleInstances = IgnoreNew`, `StartWhenAvailable`, and a 10-minute execution limit; the 15-minute repetition trigger, interactive principal (required for the SSH push) and run level are unchanged.
+- **[Verification]** Task re-registration confirmed by reading it back (action `wscript.exe //B //Nologo "…\scripts\auto-sync-hidden.vbs"`, interval `PT15M`, duration `P3650D`, batteries allowed); `Start-ScheduledTask` completed with `LastTaskResult = 0` and a fresh `startup/auto-sync.log` line, with the process tree confirmed as `wscript.exe` → `powershell.exe` and no leftover processes or temp files.
+
+
 - **[New]** **Card elevation** — soft layered shadows on every `.card`, with a subtle `translateY(-1px)` hover lift and cyber-blue border accent on interactive cards (`a.card`, `button.card`, `.card--interactive`). Theme-aware shadow tokens (`--card-shadow`, `--card-shadow-hover`, `--card-hover-border`) for dark and light.
 - **[Update]** **Typography polish** — Inter `font-feature-settings: "cv11", "ss01"`, `text-wrap: balance` on headings, `tabular-nums` on tables, and page titles (`PageHeader`) at 22px with tighter tracking.
 - **[New]** **Sticky table headers** with an opaque themed background, plus a 150ms row-hover transition, so long lists stay readable while scrolling.

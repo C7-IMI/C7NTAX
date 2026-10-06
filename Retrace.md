@@ -1787,6 +1787,19 @@
 - **Verification:** web typecheck unchanged (26 pre-existing errors, zero new); design-token lint passes (no new raw hex); live check on `/`, `/tickets`, `/assets`: card shadow + hover lift/border verified via computed styles, sticky `thead th` with opaque background, `tabular-nums` tables, 22px page title, `1600px` content wrapper; `c7_ui_p2=0` reverts every P2 effect while P1 stays on, removing the key restores P2; palette shows the new P2 action.
 
 
+### Prompt 152 — Make the auto-sync run without popping up a console window
+**Timestamp:** 2026-10-06 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** #1 (2026.10.6.001)
+> make sure the auto sync runs sliently. I don't want the command prompt window to keep popping up
+
+**Changes:**
+- `scripts/auto-sync-hidden.vbs` — new silent launcher: `wscript.exe` (GUI host, no console) runs `powershell.exe … -WindowStyle Hidden -File scripts\auto-sync.ps1` with `Shell.Run(cmd, 0, False)`, so the console is created with `SW_HIDE` and never appears. Repo path is derived from the script location with the canonical path as fallback.
+- Scheduled task **C7NTAX Auto-Sync** re-registered: action is now `wscript.exe //B //Nologo "…\scripts\auto-sync-hidden.vbs"` (was `powershell.exe -WindowStyle Hidden -File …`, which still flashes a console host). Removed `DisallowStartIfOnBatteries`/`StopIfGoingOnBatteries` (auto-sync previously stopped silently on battery); kept `MultipleInstances=IgnoreNew`, `StartWhenAvailable`, 10-minute limit, the `PT15M`/`P3650D` trigger, and the interactive principal needed for the SSH push.
+- `scripts/auto-sync.ps1` — header comment documents the hidden-launcher registration.
+- **Verification:** task read back from Task Scheduler with the new action and settings; `Start-ScheduledTask` ran through the `wscript.exe` → `powershell.exe` path, completed with `LastTaskResult = 0`, appended a fresh `startup/auto-sync.log` line, and left no orphan processes; the previous direct-launch action was confirmed as the source of the pop-ups.
+
+
+
 
 
 

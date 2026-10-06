@@ -1,9 +1,21 @@
 [
   {
-    "version": "2026.10.5.015",
-    "date": "2026-10-05",
-    "title": "UI modernization P2 (elevation, typography, sticky tables, content width) + rollback switch",
+    "version": "2026.10.6.001",
+    "date": "2026-10-06",
+    "title": "Silent auto-sync (no more console window pop-ups)",
     "changes": [
+      {
+        "text": "The **C7NTAX Auto-Sync** scheduled task no longer flashes a command-prompt window. Task Scheduler was launching `powershell.exe` directly; even with `-WindowStyle Hidden` PowerShell creates its console window and then hides it, which is the visible flash every 15 minutes. The task now runs `scripts/auto-sync-hidden.vbs` via `wscript.exe //B //Nologo` — a GUI host with no console — and `Shell.Run(cmd, 0, False)` starts PowerShell with `SW_HIDE`, so the console is created hidden and never appears.",
+        "type": "Fix"
+      },
+      {
+        "text": "`scripts/auto-sync-hidden.vbs` — resolves the repo from its own location (with the canonical path as fallback) and launches `scripts/auto-sync.ps1` hidden.",
+        "type": "New Feature"
+      },
+      {
+        "text": "Removed the task's battery restrictions (`DisallowStartIfOnBatteries` / `StopIfGoingOnBatteries` were both enabled, so auto-sync silently stopped on a laptop running off battery). Re-asserted `MultipleInstances = IgnoreNew`, `StartWhenAvailable`, and a 10-minute execution limit; the 15-minute repetition trigger, interactive principal (required for the SSH push) and run level are unchanged.",
+        "type": "Fix"
+      },
       {
         "text": "**Card elevation** — soft layered shadows on every `.card`, with a subtle `translateY(-1px)` hover lift and cyber-blue border accent on interactive cards (`a.card`, `button.card`, `.card--interactive`). Theme-aware shadow tokens (`--card-shadow`, `--card-shadow-hover`, `--card-hover-border`) for dark and light.",
         "type": "New Feature"

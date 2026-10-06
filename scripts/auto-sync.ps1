@@ -1,7 +1,9 @@
 # =========================================================================
 # C7NTAX Auto-Sync
 # Commits working-tree changes and pushes them to origin (main).
-# Registered as the scheduled task "C7NTAX Auto-Sync".
+# Registered as the scheduled task "C7NTAX Auto-Sync", which invokes it through
+# scripts/auto-sync-hidden.vbs so no console window is ever shown (a direct
+# powershell.exe task action always flashes a console host).
 #
 # Safe / idempotent:
 #   - no-ops when there is nothing to commit
