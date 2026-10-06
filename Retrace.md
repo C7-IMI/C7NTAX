@@ -2600,3 +2600,18 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - The note composer behaved identically, offering *Add note anyway*; the note was not posted until that was clicked.
 - Server side: `cc: ["not-an-address"]` → 400 `"not-an-address" is not a valid email address`; an invalid `ccEmails` entry in a note's recipients → 400; a valid outside address → accepted, as intended.
 - Cleanup: probe contacts, comments, links and audit rows removed, snapshots re-captured, sink stopped and temp files deleted. Typecheck web 0 / api 156 (baseline), design-token lint unchanged.
+
+---
+
+### Prompt 193 — Smaller type in the outside-organisation warning
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live | **Duration:** ~5 m
+**BuildNotes IDs:** 2026.10.6.036 - Smaller type in the outside-organisation warning
+> make the warning font smaller
+
+**What changed**
+- `apps/web/src/components/FieldWarning.tsx`: the message went from the body size (14px) to **12px** with a matching tighter line height, and the orange marker dropped from 20px to 16px with an 11px "!" so it stays proportional. The bubble's wording, the amber field outline and the *Send anyway* confirmation are untouched — this is type scale only.
+- Everything that shows the warning inherits it, because the bubble is one shared component: the To, Cc and Bcc rows, the note composer's recipients, the ticket's *Add contact* field and the new-ticket *Also* field.
+
+**Verification (live)**
+- Under the Cc row of the Email Contact dialog the bubble measured **12px / 16.5px line height** (previously 14px) with the same sentence, and the fields below it did not move.
+- Web typecheck 0; design-token lint unchanged. Nothing to clean up — the check was a screenshot and a measurement, no data was written.

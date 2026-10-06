@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.035 | Last Updated: 2026-10-06
+## Version: 2026.10.6.036 | Last Updated: 2026-10-06
 
 ---
 
