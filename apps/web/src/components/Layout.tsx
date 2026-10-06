@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs } from "./Breadcrumbs";
 import { useTheme } from "../hooks/useTheme";
-import { Sun, Moon } from "lucide-react";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 import { CommandPalette, type PaletteItem } from "./CommandPalette";
@@ -689,23 +688,6 @@ export function Layout({ children }: { children: ReactNode }) {
                 <AlignJustify size={14} />
               </button>
             )}
-            <button
-              onClick={toggleTheme}
-              className="px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"
-              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {theme === "dark" ? (
-                <>
-                  <Sun size={14} />
-                  <span className="hidden lg:inline">Light</span>
-                </>
-              ) : (
-                <>
-                  <Moon size={14} />
-                  <span className="hidden lg:inline">Dark</span>
-                </>
-              )}
-            </button>
             <button
               onClick={() => { if (UI_P1) setPaletteOpen(true); }}
               className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"
