@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.010 | Last Updated: 2026-10-06
+## Version: 2026.10.6.011 | Last Updated: 2026-10-06
 
 ---
 
@@ -11,6 +11,14 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.6.011 — Removed the header palette swap button
+- **[Update]** **The palette swap control is gone from the header toolbar.** Colour schemes are now chosen in one place only — the Appearance section of the My Account menu, which is where they were being used anyway. The header keeps its density toggle, light/dark switch and the rest of the toolbar.
+- **[Update]** Deleted `apps/web/src/components/PalettePicker.tsx`, now unused (recoverable from git history if the button is ever wanted back), and dropped its import and the `UI_PALETTE` reference from `Layout.tsx`. The flag itself stays: it still gates the scheme list in the My Account menu.
+- **[Update]** `UI-PALETTE-ROLLBACK.md` — records that the scheme list lives in the My Account menu, so the Level 2 `VITE_UI_PALETTE=false` switch now hides the only palette control left in the UI.
+- **[Verification]** Live: the header toolbar reports **no palette button** (`Compact spacing, Light, Search, Recent Items, AI Assistant, Settings, My Account`), while the My Account menu still lists all five dark schemes; switching from the menu drove the palette as before (`crimson → rose`), and reselecting the first entry restored `crimson`. Clean reload with no console or page errors; `apps/web` typecheck unchanged (26 pre-existing errors); design-token lint unchanged at 117 legacy occurrences.
 
 ---
 

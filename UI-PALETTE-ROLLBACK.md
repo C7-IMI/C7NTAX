@@ -71,27 +71,29 @@ VITE_UI_PALETTE=false
 ```
 
 ```js
-localStorage.setItem("c7_ui_palette", "0"); location.reload();   // picker hidden
+localStorage.setItem("c7_ui_palette", "0"); location.reload();   // scheme list hidden
 ```
 
-Hiding the picker does **not** change a stored scheme — use `c7Palette.reset()`
-(Level 1) to return to the brand defaults.
+Hiding the feature does **not** change a stored scheme — use `c7Palette.reset()`
+(Level 1) to return to the brand defaults. The scheme list lives in the My
+Account menu, so this hides the only palette control left in the UI.
 
 ### Level 3 — Remove the code entirely
 
 Files added/changed by the colour schemes:
 
 - `apps/web/src/lib/palette.ts` (catalogue, defaults, persistence, `applyPalettes`)
-- `apps/web/src/components/PaletteSchemeList.tsx` (shared scheme list)
-- `apps/web/src/components/PalettePicker.tsx` (header popover)
-- `apps/web/src/components/MyAccountMenu.tsx` (also renders the scheme list)
+- `apps/web/src/components/PaletteSchemeList.tsx` (shared scheme list, used by
+  the My Account menu — the standalone header picker was removed on 2026-10-06,
+  recover it from git history if it is wanted again)
+- `apps/web/src/components/MyAccountMenu.tsx` (renders the scheme list)
 - `apps/web/src/index.css` — the `── Colour schemes ──` block at the end, plus
   `.btn-primary`'s `color: var(--btn-primary-fg, var(--text-primary))` (which is
   identical to the previous `text-white` when nothing overrides the variable)
 - `apps/web/src/lib/uiFlags.ts` (`UI_PALETTE`)
 - `apps/web/src/main.tsx` (`applyPalettes()` + the `c7Palette` helper)
-- `apps/web/src/components/Layout.tsx` (`{UI_PALETTE && <PalettePicker />}` and
-  `<MyAccountMenu />`)
+- `apps/web/src/components/Layout.tsx` (`<MyAccountMenu />` — the palette control
+  lives inside it, not in the header toolbar)
 - `apps/web/src/pages/Settings.tsx` (section anchors for the My Account links)
 
 ## Notes
