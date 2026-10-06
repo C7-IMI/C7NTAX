@@ -32,6 +32,8 @@ export interface RailCounts {
   domains: number;
   certificates: number;
   tickets: number;
+  /** Checklists are their own record type, not a Kumo asset type. */
+  checklists: number;
 }
 
 interface Props {
@@ -47,12 +49,19 @@ const SHOW_EMPTY_KEY = "c7_kumo_types_show_empty";
 /**
  * Types that belong in Core Assets rather than the asset-type list — the ones
  * reached for on nearly every client and awkward to hunt for in a long list.
- * Matched on id or name so it holds whatever slug the type was seeded with.
+ * Matched on id or name so it holds whatever slug the type was seeded with, and
+ * given its own destination when the type has grown a section of its own.
  */
-const CORE_ASSET_TYPES = ["checklists"];
+const CORE_ASSET_TYPES: Array<{ slug: string; to?: (orgId: string) => string }> = [
+  { slug: "checklists", to: (orgId) => `/kumo/checklists?companyId=${orgId}` },
+];
 
-const isCoreAssetType = (type: AssetType) =>
-  CORE_ASSET_TYPES.includes(type.id.trim().toLowerCase()) || CORE_ASSET_TYPES.includes(type.name.trim().toLowerCase());
+const coreAssetLink = (type: AssetType, orgId: string) =>
+  CORE_ASSET_TYPES.find(
+    (entry) => entry.slug === type.id.trim().toLowerCase() || entry.slug === type.name.trim().toLowerCase(),
+  );
+
+const isCoreAssetType = (type: AssetType) => Boolean(coreAssetLink(type, ""));
 
 const isActive = (activeType: string, key: string) => activeType.toLowerCase() === key.toLowerCase();
 
@@ -122,18 +131,23 @@ export function OrganizationTypeRail({ orgId, counts, assetTypes, changeBoard, a
 
       <Group label="Core Assets">
         <RailItem to={base} icon={LayoutDashboard} label="Overview" active={!activeType} title="Back to the organization overview" />
-        {coreAssetTypes.map((t) => (
-          <RailItem
-            key={t.id}
-            to={`${base}?type=${t.id}`}
-            icon={templateIcon(t.icon)}
-            iconColor={t.count > 0 ? t.color : null}
-            label={t.name}
-            count={t.count}
-            active={isActive(activeType, t.id)}
-            title={t.description || t.name}
-          />
-        ))}
+        {coreAssetTypes.map((t) => {
+          const entry = coreAssetLink(t, orgId);
+          const destination = entry?.to?.(orgId) ?? `${base}?type=${t.id}`;
+          const ownSection = Boolean(entry?.to);
+          return (
+            <RailItem
+              key={t.id}
+              to={destination}
+              icon={templateIcon(t.icon)}
+              iconColor={t.count > 0 ? t.color : null}
+              label={t.name}
+              count={ownSection ? counts.checklists : t.count}
+              active={!ownSection && isActive(activeType, t.id)}
+              title={t.description || t.name}
+            />
+          );
+        })}
         <RailItem to={`/kumo/configs?companyId=${orgId}`} icon={Server} label="Configurations" count={counts.configs} active={false} title="Servers, workstations and network devices" />
         <RailItem to={`/clients/contacts?companyId=${orgId}`} icon={Users} label="Contacts" count={counts.contacts} active={false} title="Contacts for this client" />
         <RailItem to={`/kumo/documents?companyId=${orgId}`} icon={BookOpen} label="Documents" count={counts.documents} active={false} title="Documents for this client" />

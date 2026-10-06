@@ -2430,5 +2430,197 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-06T19:44:35.691Z"
+  },
+  {
+    "id": "df94bd71-20cf-4ac6-a156-983dd7f89096",
+    "action": "checklists:create",
+    "entity": "checklists",
+    "entityId": "checklists",
+    "changes": {
+      "name": "API probe checklist",
+      "tasks": [
+        "First task",
+        "Second task"
+      ],
+      "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+      "description": "<p>Probe <b>description</b></p>"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:06:47.824Z"
+  },
+  {
+    "id": "67e88c80-e6ff-4dfb-9707-df1e9eadcf77",
+    "action": "checklists:update",
+    "entity": "checklists",
+    "entityId": "2b7ecc04-7241-46a0-9bc0-216a98629d9a",
+    "changes": {
+      "completed": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:06:47.868Z"
+  },
+  {
+    "id": "b122716b-551d-49df-aefa-c1ef55dd5731",
+    "action": "checklists:create",
+    "entity": "checklists",
+    "entityId": "2b7ecc04-7241-46a0-9bc0-216a98629d9a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:06:47.885Z"
+  },
+  {
+    "id": "6eff0dac-775f-415d-857c-68b1affc0d33",
+    "action": "checklists:delete",
+    "entity": "checklists",
+    "entityId": "2b7ecc04-7241-46a0-9bc0-216a98629d9a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:06:47.901Z"
+  },
+  {
+    "id": "58fd9ddf-2fd3-43cd-af71-34eb73b8dc41",
+    "action": "checklists:delete",
+    "entity": "checklists",
+    "entityId": "81ed4b46-f62e-4ced-b712-c6933d2cbea7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:06:47.907Z"
+  },
+  {
+    "id": "d3d17104-683c-4938-ae69-dc4364e72e76",
+    "action": "checklists:create",
+    "entity": "checklists",
+    "entityId": "checklists",
+    "changes": {
+      "name": "New PC Setup List",
+      "tasks": [
+        "Install custom Cisco AnyConnect client",
+        "Import profile xml file (see attachment)",
+        "Duo enrollment - must be on the AA network"
+      ],
+      "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:07:19.737Z"
+  },
+  {
+    "id": "98313fec-1cea-4943-8254-88e1cc54ee0c",
+    "action": "checklists:update",
+    "entity": "checklists",
+    "entityId": "2d1c8554-df4d-456f-aaa4-9bfaa5701b13",
+    "changes": {
+      "description": "<p><b>Run before handing the laptop over</b></p><ul><li>Back up the old profile</li><li>Confirm Duo enrolment</li></ul>"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:07:29.445Z"
+  },
+  {
+    "id": "07a64773-9f7c-4d76-900d-ca9cefc50284",
+    "action": "checklists:update",
+    "entity": "checklists",
+    "entityId": "2d1c8554-df4d-456f-aaa4-9bfaa5701b13",
+    "changes": {
+      "description": "<p><b>Run before handing the laptop over</b></p><ul><li>Back up the old profile</li><li>Confirm Duo enrolment</li></ul>"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:07:31.690Z"
+  },
+  {
+    "id": "48e507ad-56b3-4ac8-a322-d0b0d34f3f01",
+    "action": "checklists:create",
+    "entity": "checklists",
+    "entityId": "2d1c8554-df4d-456f-aaa4-9bfaa5701b13",
+    "changes": {
+      "title": "Hand over to the user"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:07:32.196Z"
+  },
+  {
+    "id": "924dfd30-74bd-42cc-845c-dd627a29df93",
+    "action": "checklists:update",
+    "entity": "checklists",
+    "entityId": "2d1c8554-df4d-456f-aaa4-9bfaa5701b13",
+    "changes": {
+      "completed": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:07:43.250Z"
+  },
+  {
+    "id": "2ab8c22f-6112-48fb-97af-b800ed1a49f3",
+    "action": "checklists:update",
+    "entity": "checklists",
+    "entityId": "2d1c8554-df4d-456f-aaa4-9bfaa5701b13",
+    "changes": {
+      "assignedToId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:07:45.759Z"
+  },
+  {
+    "id": "62f16ea1-5ae8-4739-8135-bf92223660bc",
+    "action": "checklists:update",
+    "entity": "checklists",
+    "entityId": "2d1c8554-df4d-456f-aaa4-9bfaa5701b13",
+    "changes": {
+      "description": "<p><b>Run before handing the laptop over</b></p><ul><li>Back up the old profile</li><li>Confirm Duo enrolmentSecond paragraph <i style=\"font-size: 0.875rem;\">added later</i><span style=\"font-size: 0.8..."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:08:44.591Z"
+  },
+  {
+    "id": "9c7d19a0-2946-484d-8a2f-f50ebd062dbc",
+    "action": "checklists:create",
+    "entity": "checklists",
+    "entityId": "2d1c8554-df4d-456f-aaa4-9bfaa5701b13",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:09:44.088Z"
+  },
+  {
+    "id": "8ad2bbb1-b064-4274-902a-8d8be7fa612a",
+    "action": "checklists:delete",
+    "entity": "checklists",
+    "entityId": "2d1c8554-df4d-456f-aaa4-9bfaa5701b13",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:10:21.754Z"
+  },
+  {
+    "id": "f59e1753-0b7b-412c-9e8d-d27cf616d8cc",
+    "action": "checklists:delete",
+    "entity": "checklists",
+    "entityId": "5d256ba9-287b-48cb-8d00-bec5e46a61a8",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-06T20:10:21.758Z"
   }
 ]

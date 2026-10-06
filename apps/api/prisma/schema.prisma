@@ -1602,6 +1602,52 @@ model KumoFile {
   @@index([companyId])
 }
 
+// ── Checklists ─────────────────────────────────────────────────────
+// A repeatable procedure for a client: a rich-text description plus an ordered
+// list of tasks, each of which can be assigned, dated and ticked off.
+
+model Checklist {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?  // rich HTML
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assignedToId String?
+  assignedTo   User?    @relation("AssignedChecklists", fields: [assignedToId], references: [id])
+  dueDate      DateTime?
+  createdById  String
+  createdBy    User     @relation("CreatedChecklists", fields: [createdById], references: [id])
+  tasks        ChecklistTask[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([assignedToId])
+  @@map("checklists")
+}
+
+model ChecklistTask {
+  id            String    @id @default(uuid())
+  checklistId   String
+  checklist     Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  title         String
+  notes         String?   // rich HTML
+  position      Int       @default(0)
+  completedAt   DateTime?
+  completedById String?
+  assignedToId  String?
+  assignedTo    User?     @relation("AssignedChecklistTasks", fields: [assignedToId], references: [id])
+  dueDate       DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([checklistId])
+  @@index([assignedToId])
+  @@map("checklist_tasks")
+}
+
 // ── FI-038: Expense Tracking ───────────────────────────────────────
 
 model Expense {

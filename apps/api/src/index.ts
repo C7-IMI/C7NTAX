@@ -57,6 +57,7 @@ import { aiActionsRouter } from "./routes/aiActions";
 import { alertWebhooksRouter } from "./routes/alertWebhooks";
 import { ssoExchangeRouter } from "./routes/ssoExchange";
 import { webauthnRouter } from "./routes/webauthn";
+import { checklistsRouter } from "./routes/checklists";
 import { setupWebSocket } from "./ws";
 import { WEB_ORIGIN } from "@C7NTAX/shared";
 import { startWorkers } from "./worker";
@@ -141,6 +142,7 @@ app.use("/api/roles", rolesRouter);
 app.use("/api/tickets", ticketsRouter);
 app.use("/api/boards", boardsRouter);
 app.use("/api/clients", clientsRouter);
+app.use("/api/checklists", checklistsRouter);
 app.use("/api/billing", billingRouter);
 app.use("/api/cloudconnect", cloudConnectRouter);
 

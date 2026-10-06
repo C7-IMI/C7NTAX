@@ -53,7 +53,8 @@ import { AiActionsPage } from "./pages/AiActions";
 import { HelpPage } from "./pages/Help";
 import { HelpGettingStarted, HelpFaq, HelpConfiguration, HelpIndex, HelpWalkthrough } from "./pages/HelpDoc";
 import { UI_KUMO_ORGS } from "./lib/uiFlags";
-
+import { ChecklistsPage } from "./pages/Checklists";
+import { ChecklistDetailPage } from "./pages/ChecklistDetail";
 function ProtectedRoutes() {
   const navigate = useNavigate();
 
@@ -114,6 +115,8 @@ function ProtectedRoutes() {
         {UI_KUMO_ORGS && <Route path="/kumo/domains" element={<KumoDomainsPage />} />}
         <Route path="/kumo/assets/:id" element={<KumoAssetDetailPage />} />
         <Route path="/kumo/assets" element={<KumoAssetsPage />} />
+        <Route path="/kumo/checklists/:id" element={<ChecklistDetailPage />} />
+        <Route path="/kumo/checklists" element={<ChecklistsPage />} />
         <Route path="/kumo/passwords" element={<KumoPasswordsPage />} />
         <Route path="/kumo/documents" element={<KumoDocumentsPage />} />
         <Route path="/kumo/configs" element={<KumoConfigsPage />} />

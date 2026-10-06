@@ -28,6 +28,20 @@
     "updatedAt": "2026-10-05T22:51:44.814Z"
   },
   {
+    "id": "265545d8-10b3-4c9f-8a6b-2eac5eb238de",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Several services are degraded",
+    "description": "&lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 6&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;20:04&lt;/var&gt; UTC&lt;/small&gt;&lt;br&gt; &lt;strong&gt;Update&lt;/strong&gt; - Webhooks is operating normally. &lt;/p&gt; &lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 6&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;19:57&lt;/var&gt; UTC&lt;/small&gt;&lt;br&gt; &lt;strong&gt;Investigating&lt;/strong&gt; - We are investigating reports of degraded perform",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://www.githubstatus.com/incidents/cjwszcf57bff",
+    "detectedAt": "2026-10-06T20:02:08.275Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-06T20:02:08.277Z",
+    "updatedAt": "2026-10-06T20:07:21.905Z"
+  },
+  {
     "id": "41a5d91e-0152-4b6e-ba02-0450e8b161b2",
     "serviceId": "c8648d24-753b-452f-bbcc-6cd1e8dae5b4",
     "title": "Possible service degradation reported for Microsoft 365 (DownDetector)",
@@ -1752,15 +1766,15 @@
   {
     "id": "e0d0fd8a-a577-4105-9e4d-feecbf83ae0e",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
-    "title": "Computer Use Is Experiencing Issues",
-    "description": "Status: Investigating We are investigating issues for agents api and computer use. Affected components Agents (Degraded performance)",
+    "title": "Errors processing large PDFs in the Responses API",
+    "description": "Status: Identified We are implementing the mitigation. Affected components Responses (Degraded performance)",
     "severity": "degraded",
     "status": "active",
     "source": "rss",
-    "sourceUrl": "https://status.openai.com//incidents/01M493CZ0CB14KPC0EER83MNVB",
+    "sourceUrl": "https://status.openai.com//incidents/01M48Y8E81QAFF9XKVGE118E6X",
     "detectedAt": "2026-10-06T15:53:47.100Z",
     "resolvedAt": null,
     "createdAt": "2026-10-06T15:53:47.102Z",
-    "updatedAt": "2026-10-06T19:46:40.856Z"
+    "updatedAt": "2026-10-06T20:07:09.316Z"
   }
 ]

@@ -2665,3 +2665,30 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Rail on a client page: *Core Assets — Overview, **Checklists 0**, Configurations 1, Contacts 3, Documents 3, Passwords 1, Domain Tracker 1, SSL Tracker 1, Locations, Vendors, Change Control 21*, with *Asset Types* now starting at Account Management and no Checklists in it.
 - Clicking Checklists navigated to `?type=29f111fb-…`, the Core Assets entry highlighted in place, and the panel opened as before: *Checklists · Acme Corporation*, "0 records · 5 fields · Repeatable procedures and their last run", with *Add Checklist* pointing at `/kumo/assets?new=1&templateId=29f111fb-…&companyId=…`.
 - Web typecheck 0; design-token lint unchanged. No data changed — this is ordering only.
+
+---
+
+### Prompt 197 — Checklists as a real section, on one shared rich text editor
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live end to end | **Duration:** ~2 h
+**BuildNotes IDs:** 2026.10.6.040 - Checklists become a real section, on one shared rich text editor
+> the checklists dialog/creation needs to look and function similar to the one in ITGlue. See screenshots for examples and reference. THe checklist editor should be rich text similar to the e-mail editor.
+>
+> It may make sense to build in a rich text editor into C7NTAX that then just provides different options/dialogs based on the section. THat way if I want to add functionality to the editor itself, then it will be available across the app, instead of maintaining multple rich text editors. I'll let you decide the feasability and logistics of that.
+
+**The editor question, answered**
+- Feasible and worth doing: the editor already existed as one component, it was just wired only to email. So it moved to `components/richText` and grew a **profile** — which toolbar groups, attachments or not, whether Ctrl+Enter submits, default size and placeholder. Email passes `EMAIL_PROFILE` (unchanged behaviour); checklists use `DOCUMENT_PROFILE` (formatting plus inline images, no attachment strip, Enter stays a newline). Section chrome — attachment chips, Save/Send buttons, validation — stays with the section, so there is still exactly one implementation to improve.
+- One real gap surfaced while building the checklist editor: the editor had no way to *show* stored content (it was written for a composer that always starts empty). It gained an `initialHtml` prop, written only when the caret is elsewhere and the value differs from what was last emitted, so a save round-trip can never wipe typing.
+
+**What was built**
+- `apps/api/prisma/schema.prisma`: `Checklist` (name, rich-text description, client, assignee, due date, creator) and `ChecklistTask` (title, rich-text notes, position, assignee, due date, `completedAt`/`completedById`), project-mapped to `checklists` / `checklist_tasks`. Nothing existing was altered.
+- `apps/api/src/routes/checklists.ts` (new): list with progress counts, `my-tasks`, single record, create (with tasks typed one-per-line), patch, duplicate (tasks copied, nothing ticked), delete, and task add / patch / delete / reorder. Descriptions go through the same allowlist sanitiser as email.
+- `apps/web/src/pages/Checklists.tsx` (new): the list screen from the reference — Checklists/My Tasks tabs, filter + "N of M", column chooser, sortable headings, row selection with bulk delete, per-row duplicate and delete, new-checklist dialog (name, client, assignee, due, tasks, rich-text description), and page/row right-click menus following the app's convention.
+- `apps/web/src/pages/ChecklistDetail.tsx` (new): breadcrumbs, editable title, assignee and due-date pickers, rich-text description that saves itself, progress bar, and the task list — circle to complete, in-place rename, per-task assignee and due date, move up/down, delete, and an **Add task** row where Enter saves and opens the next one.
+- Wiring: routes in `App.tsx`, a Checklists entry in the Kumo navigation, and the organisation rail now links its Checklists entry to the section with the client's real checklist count.
+
+**Verification (live)**
+- Created "New PC Setup List" for Umbrella Corp through the dialog — the description field showed the document profile (formatting toolbar, **no Attach button**) — then on the editor: added a task via Add task + Enter (draft row stayed open for the next), wrote a bold paragraph and a bullet list into the description and confirmed it survived a reload with the *Bulleted list* button showing as pressed, completed a task (counter to "1 of 4", row struck through), assigned one to Admin User and saw it appear under My Tasks with its checklist and client, and used Duplicate (copy made with the same tasks at "0 of 4") and Delete through the list.
+- The organisation rail reads *Core Assets: Overview, Checklists 1, Configurations …*, links to `/kumo/checklists?companyId=…`, and Checklists no longer appears under Asset Types.
+- API: create with tasks, list with progress, task completion, duplicate, my-tasks and delete all exercised directly; deletion cascades the tasks.
+- Two things worth recording: the API is running without file-watch (so a new router needs a manual restart — "Cannot POST /api/checklists" was exactly that), and `prisma format` realigns the entire schema, so it was reverted again to keep the diff to the 46 added lines.
+- Web typecheck 0, api 156 (baseline); design-token lint unchanged. Probe checklists and tasks deleted, snapshots re-captured with both tables empty.

@@ -124,6 +124,9 @@ export function KumoOrganizationDetailPage() {
   const [showAddSub, setShowAddSub] = useState(false);
   const [subForm, setSubForm] = useState({ name: "", companyType: "Client", city: "", state: "" });
   const [savingSub, setSavingSub] = useState(false);
+  // The Checklists entry in Core Assets owns a section of its own, so the rail
+  // shows a real count rather than the generic asset-type number.
+  const [checklists, setChecklists] = useState<Array<{ id: string }>>([]);
 
   const load = useCallback(async () => {
     try {
@@ -137,6 +140,13 @@ export function KumoOrganizationDetailPage() {
     } finally {
       setLoading(false);
     }
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    api.get("/checklists", { params: { companyId: id } })
+      .then((r) => setChecklists(r.data?.data || []))
+      .catch(() => setChecklists([]));
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
@@ -310,6 +320,7 @@ export function KumoOrganizationDetailPage() {
               domains: counts.domains,
               certificates: counts.certificates,
               tickets: org._count.tickets,
+              checklists: checklists.length,
             }}
             assetTypes={detail.assetTypes ?? []}
             changeBoard={detail.changeBoard ?? null}

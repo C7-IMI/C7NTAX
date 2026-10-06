@@ -162,6 +162,8 @@ interface RichTextEditorProps {
   onChange: (html: string, text: string) => void;
   /** Which options this surface gets — see profiles.ts. */
   profile?: RichTextProfile;
+  /** Content to show on first render, e.g. a stored description. */
+  initialHtml?: string;
   placeholder?: string;
   minHeight?: number;
   /** Attachment chips; only meaningful when the profile takes attachments. */
@@ -187,6 +189,7 @@ interface RichTextEditorProps {
 export function RichTextEditor({
   onChange,
   profile = EMAIL_PROFILE,
+  initialHtml,
   placeholder = profile.placeholder,
   minHeight = profile.minHeight,
   attachments = EMPTY_ATTACHMENTS,
@@ -209,12 +212,29 @@ export function RichTextEditor({
   const [linkValue, setLinkValue] = useState("");
   const [savedRange, setSavedRange] = useState<Range | null>(null);
   const [linkActive, setLinkActive] = useState(false);
+  const lastEmitted = useRef<string | null>(null);
 
   const emit = useCallback(() => {
     const el = editorRef.current;
     if (!el) return;
+    lastEmitted.current = el.innerHTML;
     onChange(el.innerHTML, el.innerText.replace(/\n{3,}/g, "\n\n").trim());
   }, [onChange]);
+
+  /**
+   * The editor is uncontrolled so the caret never jumps. Content that arrives
+   * from the record is written once it exists, and only while the caret is
+   * elsewhere and it differs from what we last sent — so a save round-trip
+   * cannot wipe what is being typed.
+   */
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el || !initialHtml) return;
+    if (document.activeElement === el || el.contains(document.activeElement)) return;
+    if (initialHtml === lastEmitted.current || el.innerHTML === initialHtml) return;
+    el.innerHTML = initialHtml;
+    lastEmitted.current = initialHtml;
+  }, [initialHtml]);
 
   const saveSelection = useCallback(() => {
     const selection = window.getSelection();

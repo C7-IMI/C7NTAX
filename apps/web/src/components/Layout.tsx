@@ -78,6 +78,7 @@ export const NAV_TREE: NavNode[] = [
       { id: "kumo-passwords", to: "/kumo/passwords", icon: Shield, label: "Passwords" },
       { id: "kumo-configs", to: "/kumo/configs", icon: Server, label: "Configurations" },
       { id: "kumo-documents", to: "/kumo/documents", icon: BookOpen, label: "Documents" },
+      { id: "kumo-checklists", to: "/kumo/checklists", icon: ClipboardList, label: "Checklists" },
       ...(UI_KUMO_ORGS ? [{ id: "kumo-domains", to: "/kumo/domains", icon: Globe, label: "Domains & Certs" }] : []),
     ],
   },

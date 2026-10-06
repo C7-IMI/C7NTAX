@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.6.040",
+    "date": "2026-10-06",
+    "title": "Checklists become a real section, on one shared rich text editor",
+    "changes": [
+      {
+        "text": "**Checklists are now records of their own, shaped like IT Glue's.** A checklist has a name, a rich-text description, an owner and a due date, and an ordered list of **tasks** — each with its own assignee, due date and tick state — instead of being one more asset type with fixed fields. New `checklists` and `checklist_tasks` tables; nothing about the existing Kumo asset types changed.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The Checklists list** (`/kumo/checklists`, also in the Kumo navigation) follows the reference screenshots: *Checklists* and *My Tasks* tabs, a filter box across every column with an \"N of M\" count, a column chooser, sortable headings, row checkboxes with bulk delete, and per-row **Duplicate** and **Delete**. A client chip scopes the whole screen and can be cleared, and the organisation rail's Checklists entry lands here with the client's real count. Duplicating copies the tasks with everything unticked, which is what makes one checklist reusable for the next onboarding.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The checklist editor** opens on breadcrumbs (Organizations › Client › Checklists › name) with an editable title, assignee picker and due-date picker, a rich-text **description**, a progress bar, and the task list: click the circle to complete (the row dims and strikes through), edit the name in place, set an assignee and due date per task, reorder with the move buttons, or delete. **Add task** opens a *Task name* row and Enter saves it and opens the next one, so a checklist can be typed straight through — the placeholder row in the reference screenshot.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**My Tasks** gathers everything assigned to the signed-in user across every client, with the checklist and client beside it and a tick to complete it in place; completing one clears it from the list, which is what the tab is for.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One rich text editor, configured per section.** The editor that was built for the email composer now lives in `components/richText` with a **profile** describing what a surface gets: which toolbar groups, whether it takes attachments, whether Ctrl+Enter submits, and its default size and placeholder. Email uses `EMAIL_PROFILE` (everything, attachment chips, Ctrl+Enter to send); checklist descriptions and the new-checklist dialog use `DOCUMENT_PROFILE` (formatting and inline images, no attachment strip, Enter stays a newline). The editor also gained an **initial-content** prop so a stored description renders back — previously it only ever wrote what was typed. Improving the editor now improves every surface at once, and the section-specific parts (attachment chips, Save/Send buttons) stay with their section.",
+        "type": "New Feature"
+      },
+      {
+        "text": "`GET /api/checklists`, `/my-tasks`, the record and its tasks, duplicate and reorder all sit behind the existing ticket permissions; descriptions are sanitised through the same allowlist the email composer uses, so stored HTML is limited to the safe subset. Deleting a checklist removes its tasks, and the rail count updates with it.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.039",
     "date": "2026-10-06",
     "title": "Checklists moves up into Core Assets",
