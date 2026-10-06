@@ -2845,3 +2845,63 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - Attribution is by email: if a commit should link to a GitHub profile, the email must be one that account has verified. The organization name in the `noreply` form is unambiguous but unattributed — that is the deliberate trade-off here.
 
+
+---
+
+### Prompt 204 — The service-alert resolver stopped trusting a source it cannot read
+**Timestamp:** 2026-10-06 | **Status:** Done — verified live and against every resolver branch | **Duration:** ~2.5 h
+**BuildNotes IDs:** 2026.10.6.046 - Service alerts resolve on what the sources actually say
+> The service alerts page and pollers need tuning. I need the auto-resolver to check multiple sources to detect if an outage is still an issue. RIght now it shows some alerts from over two weeks ago. THat's can't be right.
+
+**What was actually wrong**
+- The resolver was already multi-source, but it required a *positive all-clear from every configured source* before it would retire an alert. That made each source a veto, and one of them has become permanently unreadable: DownDetector now answers the r.jina.ai reader with a Cloudflare challenge page — HTTP 200, a `Warning: This page maybe requiring CAPTCHA` line and no `# User reports` status line — so `ddAllClear` was false on every poll, forever. Eleven of the fourteen services carry a DownDetector URL, so **nothing could auto-resolve**, and two real alerts sat there claiming an outage was ongoing: AWS at 15 days and Azure at 33 days.
+- The second failure was quieter: Azure's own RSS feed is a valid but *empty* feed (577 bytes, title "Azure Status", no items), so with DownDetector blocked that service had no readable source at all.
+- Two smaller ones came out of the same reading: a service whose `rssUrl` and `downDetectorUrl` were both empty was skipped entirely (so any alert it had could never resolve), and `checkNetworkService` ran *instead of* the feed check for website/ssl/dns services rather than alongside it.
+
+**What changed**
+- Sources are now observed **in parallel and independently** — feed, status page API, DownDetector, uptime monitor — and each returns a verdict: `problem`, `restored`, `clear` or `unknown`, with the reason. `unknown` is the new distinction that matters: it can never be mistaken for all-clear, and it no longer vetoes what the readable sources agree on.
+- Added the **Statuspage.io JSON API** as a source (`<status-page-origin>/api/v2/status.json`): `none` is a positive all-clear, `minor`/`major`/`critical` raises or refreshes an alert using the page's own wording and severity. It is not behind a bot challenge, which is what made the stale resolutions possible. Status pages that are not Statuspage.io answer 404 and stay unknown — nothing is inferred from them.
+- Added the **stale ceiling**: `SERVICE_ALERT_STALE_HOURS` (default 72). An alert that no source has reported for that long is retired as stale with the source verdicts recorded, so a permanently blocked source cannot pin an incident to the banner. Manual alerts are still never auto-resolved, and the two-poll anti-flap and one-poll minimum age are unchanged.
+- Resolution reasons now name what the sources said, e.g. *"Auto-resolved as stale: no monitored source has reported this incident in the last 72h, so it is treated as over (rss unknown, statuspage unknown)."* — the record explains itself after the fact.
+- The screens report source health instead of hiding it: a monitor strip (last poll, cadence, unreadable sources by name), per-service source verdicts on the cards, the same verdicts inside each active alert, and — on the settings screen — a "Sources (last poll)" column with the reason on hover plus one summary error line for the blocked DownDetector pages instead of one per service.
+
+**Verification**
+- Live: the two stale alerts (AWS 15 days, Azure 33 days) both auto-resolved within two polls — the monitor log shows *"Auto-resolved alert for AWS (all clear from rss)"* and the same for Azure — and the banner and page went to zero active alerts. Every service's verdict set was read back: AWS/Azure/Google Workspace/Deepseek clear, Claude/OpenAI/GitHub restored, Gemini/Comcast/Verizon/Spectrum/Microsoft 365 unknown (their sources are all blocked, which is now stated rather than silently ignored).
+- Probe: a throwaway service pointed at a local vendor whose feed and status API can be switched, walked through each branch through the real API — incident in the feed → alert created (`degraded`/`rss`); resolution item → resolved immediately; empty feed with a `major` status indicator → alert created (`outage`/`statuspage`, title from the page); indicator softened to `minor` → the same alert refreshed to `degraded`, not duplicated; all sources clear → resolved on the second consecutive clear poll; every source unreachable → held under the default ceiling, then retired as stale under a shortened one. 22 of 22 checks pass across the run (`FAIL` on the first attempt at the second clear poll was the one-poll minimum age doing its job — the alert was 2.5 minutes old, and the guard is five).
+- One false alarm worth remembering: the first phase-6b run "failed" because a previous probe process was still holding the fake vendor port and kept serving an incident item, so the sources were readable after all. Killing it and re-running isolated the branch cleanly.
+- Cleanup: the throwaway service and its alerts were deleted (cascades), no probe process is left listening, the probe scripts live in the session folder and the credential helper used to log the browser back in was deleted after use, and `npm run db:capture` was re-run so the reseed fixtures hold no probe records (127 alert records, all resolved). API typecheck 156 (baseline, none in the touched files); web typecheck 0.
+
+**Notes for next time**
+- An "unreadable source" is not an error to be reported eleven times: it is a per-service fact. The monitor keeps one summary error line for the blocked DownDetector pages and puts the detail on the service, which is what makes the screen readable.
+- DownDetector is currently unusable from this host at any rate (challenge page for all 13 configured services). It is still polled — it is a useful signal when it answers — but nothing depends on it now.
+
+---
+
+### Prompt 205 — Service board cards: edges on Workable and Avg Age, and an age-banded Avg Age
+**Timestamp:** 2026-10-06 | **Status:** Done — measured live, all three bands exercised | **Duration:** ~35 min
+**BuildNotes IDs:** 2026.10.6.047 - Service board cards: visible edges, and an Avg Age card that colours by age
+> Service Boards:
+>
+> I want Workable and Avg Age to have visible borders around them as well. It doesn't look right with those two not having them.
+>
+> Avg age card should have a dynamically change background color based on the avg age date. Less than one week (7 days) should be green. One week (8-14 days) to two weeks is yellow. More than two weeks (8+ days) red.
+>
+> Workable can just have a thin border around the card
+
+**What the browser showed that the source did not**
+- Reading the computed styles rather than the class strings explained the complaint: the four tiles that look like cards (New, On Hold, Waiting, Escalated) have a *tint* and no border, while Workable and Avg Age had neither. Workable's tint was written as `bg-cyber-600/15`, and the `cyber` palette is defined in CSS as `var(--cyber-*)` — Tailwind cannot apply an opacity modifier to a CSS variable, so that class was never generated and the tile had a transparent background. That is why it read as plain text on the card.
+- So the tint was fixed at the same time as the border, using `color-mix()` against the same accent variable so the tile keeps following the active theme (the theme is red at the moment, cyan in the default palette).
+
+**What changed**
+- Workable: a working accent tint plus the thin accent border that was asked for.
+- Avg Age: the whole tile now colours by the average — emerald up to 7 days, amber for 8-14, red beyond 14 — background, border and text together, with a tooltip naming the band and the exact average. With the current data (51-52 days on all four boards) every card shows red.
+- The other four status tiles are untouched.
+
+**Verification**
+- Measured in the browser, not eyeballed: Workable resolves to the accent at 15% background and 40% border; the Avg Age card resolves to `rgba(5,150,105,0.15)`/`rgba(5,150,105,0.4)` green, `rgba(245,158,11,0.15)`/`…0.4` amber and `rgba(220,38,38,0.15)`/`…0.4` red, with the label and value taking the band's text colour, and the tooltip reading *"Average age of open tickets on this board: 52 days (over two weeks)"*.
+- All four boards are over two weeks old, so green and amber were exercised by temporarily shifting the thresholds and restoring them, then the red band was re-checked against the real data. Web typecheck 0.
+
+**Notes for next time**
+- The API restarts during this session invalidated the browser session (the SPA clears its token on a 401), so the page had to be logged back in. The credentials were fed in through a temporary script file loaded with `addScriptTag` and deleted afterwards, which keeps them out of the transcript — worth reusing.
+- `cyber/*` colors are `var()` references, so `bg-cyber-500/15`, `border-cyber-600/40` and friends silently do nothing. Where an accent tint or border is needed, use `color-mix(in_srgb,var(--cyber-500)_15%,transparent)`.
+
