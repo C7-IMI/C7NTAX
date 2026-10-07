@@ -34,5 +34,29 @@
     "maxTokens": 2000,
     "createdAt": "2026-10-07T09:30:42.055Z",
     "updatedAt": "2026-10-07T09:30:42.055Z"
+  },
+  {
+    "id": "1e5e0ca4-c067-4438-9c8b-b1c321bdedf9",
+    "name": "Persona probe provider 1791365453187",
+    "provider": "local",
+    "isActive": false,
+    "isDefault": false,
+    "apiEndpoint": null,
+    "model": "gpt-4o-mini",
+    "maxTokens": 2000,
+    "createdAt": "2026-10-07T09:30:53.192Z",
+    "updatedAt": "2026-10-07T09:30:53.192Z"
+  },
+  {
+    "id": "6c2e336b-3ce8-4982-a874-e1cc0ff609a1",
+    "name": "Persona probe provider 1791365453196",
+    "provider": "local",
+    "isActive": false,
+    "isDefault": false,
+    "apiEndpoint": null,
+    "model": "gpt-4o-mini",
+    "maxTokens": 2000,
+    "createdAt": "2026-10-07T09:30:53.202Z",
+    "updatedAt": "2026-10-07T09:30:53.202Z"
   }
 ]

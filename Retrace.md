@@ -3780,3 +3780,25 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The web app reads API errors in two shapes: middleware refuses with `{ error: "…" }` while `next(new AppError(…))` returns `{ error: { message, status } }`. `Billing.tsx` and `FinanceDashboard.tsx` now understand both; **19 other call sites still assume the string shape** and will toast "[object Object]" — recorded for the PLAN-013 #9 UI/UX pass.
 - PLAN-013 #3 (customer portal) is next: the identity dependency (PLAN-001/002) is satisfied, and company scoping substitutes for the multi-tenant isolation that is out of scope.
+
+**Prompt 220 — continued: PLAN-013 #3 (the customer portal)**
+
+**What I did**
+- Read the plan's own open question first — "portal auth: email+portal-token vs full SSO-lite" — and chose the **emailed one-time code**, because SSO needs the Entra registration that does not exist yet (PLAN-017) while a code needs only the SMTP path the product already uses for ticket notifications and MFA. Recorded as a decision, not left open, and confined to the sign-in route so the alternative can be swapped in later.
+- **Models and identity:** `PortalLoginCode` (hash, attempts, expiry, single use) and `PortalSession` (hashed token, CSRF token, IP, UA, expiry) with their own relations on `Contact`, plus `Company.portalAccentColor` / `portalLogoUrl` alongside the `portalEnabled` flag that already existed. `services/portalAuth.ts` owns the code lifecycle, the `c7_portal` cookie, the double-submit CSRF check and the two middlewares.
+- **The separation is structural, not conventional:** a `PortalPrincipal` is never a `UserSession`, so the two token types cannot be confused, and the probe proves it in both directions (portal token on a staff route 401; staff token on the portal 401).
+- **Routes (`PORTAL_ENABLED`, else 404 everywhere):** request-code, verify-code, logout, `/me`, `/tickets`, `/tickets/:id`, `POST /tickets`, `POST /tickets/:id/reply`. Scoping is one function (`ticketWhereForContact`) so there is a single definition of "mine": the contact on the ticket, or an additional contact — **not** everyone at their employer. A colleague's ticket answers 404 rather than 403, because whether a ticket exists is itself information.
+- **The reopen rule:** replying to a closed ticket sets it back to `new` and clears `closedAt`. Leaving it closed would hide the reply from the queue that has to answer it. The customer is *not* emailed their own message (the notification deliberately excludes the primary contact).
+- **Attribution:** portal tickets are created by a dedicated `portal@c7ntax.local` actor, not the email connector — "who created this ticket" should be true.
+- **Browser half:** `/portal/*` pages mounted **outside** the staff auth provider, so no staff session can leak into the portal and a portal 401 can never bounce the tab to the staff sign-in page. Login, ticket list with an open/all filter, ticket detail with the customer-visible thread, a new-ticket form, a reply box that says "Reply and reopen" when the ticket is closed, and the client's accent colour applied throughout.
+- **Verified:** `probe-portal.mjs` 90/90, `probe-portal-off.mjs` 10/10 (flag off), then the whole journey in the browser — including the two things a probe cannot show: the internal note is genuinely absent from the rendered page, and the staff app still loads normally after the router change (nav, Billing, five invoices, six-persona matrix byte-identical to the W2-7 baseline).
+
+**Decisions worth remembering**
+- **An unauthenticated 202 is the honest answer to "request a code".** Anything else turns the endpoint into a customer list; the same body comes back whether or not the address has a portal account.
+- **404 beats 403 for someone else's ticket.** 403 confirms it exists.
+- **A customer session is not a staff session, and a table is the cheapest way to guarantee it.** The alternative — a `UserSession` with a null user — is one missing `if` away from being a privilege escalation.
+- **Reopening on reply is the difference between a portal and a form.** A reply nobody sees is worse than no reply box.
+
+**Notes for next time**
+- `PortalLoginCode`/`PortalSession` rows are never pruned by a job yet: expired codes and dead sessions accumulate (small, and they are the audit of who signed in). Add a retention sweep with the other retention policies.
+- The portal has no attachment support, no profile screen, and sends the provider no notification when a customer replies — all recorded in the outstanding-items list rather than implied.

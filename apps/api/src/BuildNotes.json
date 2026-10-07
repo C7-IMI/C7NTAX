@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.7.018",
+    "date": "2026-10-07",
+    "title": "A customer portal, built so a customer can only ever see their own tickets",
+    "changes": [
+      {
+        "text": "**The portal exists: `/portal`, signed in with an emailed six-digit code.** `/api/portal/auth/request` answers **202 whatever happens** — the same body for an address with a portal account and one without — so the endpoint cannot be used to list customers. A code lives ten minutes, works once, dies with the next code requested, and is stored **hashed**, because a database read should not recover a live credential. Three codes per contact per fifteen minutes, five attempts per code, and the attempt is counted against the code rather than the caller.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A portal visitor is a Contact, not a User, and the separation is structural.** New `PortalSession` and `PortalLoginCode` models, their own `c7_portal` cookie (HttpOnly, SameSite=Strict, double-submit CSRF on writes) and their own `PortalPrincipal` — never a `UserSession` with a null user. The two credentials are mutually useless by construction, which the probe checks in both directions: a portal token on a staff route is 401, a staff token on the portal is 401.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"My tickets\" means the contact's own tickets, not their employer's.** A ticket is theirs when they are the ticket's contact or were added as an additional contact; company membership alone is deliberately not enough, because a client with three hundred staff should not have each of them reading the others' tickets. A colleague's ticket reads as **404, not 403** — whether a ticket exists is itself information. Internal notes are filtered in the query, and billing, time entries and the staff audit trail are not in the response at all.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Raising a ticket, replying, and reopening.** A ticket raised from the portal carries `source: \"portal\"`, the contact's client, the contact as its contact, the priority the customer chose, and `status: \"new\"` so a person triages it; the customer's own words become the first non-internal comment with their address as its sender. The ticket is attributed to a dedicated `portal@c7ntax.local` actor rather than to the email connector, because \"who created this\" should be true. A reply to a **closed** ticket **reopens it** (`status: new`, `closedAt` cleared) — leaving it closed would hide the reply from the queue that has to answer it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Per-client portal access and branding.** `Company.portalEnabled`, `portalAccentColor` and `portalLogoUrl`, surfaced as a **Customer Portal** card on the client record with the portal address to share. The colour and logo are validated where they are set (`#rrggbb`, http(s) or an API path) because they render on a page customers look at. The API must also run with `PORTAL_ENABLED=true`; until it does, **every portal route answers 404**, so a deployment that has not switched the portal on does not advertise one.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The portal is its own application inside the SPA**, mounted at `/portal/*` **outside** the staff auth provider: no staff session can leak into it and a portal 401 can never bounce the tab to the staff sign-in page. Sign-in, ticket list (open/all), ticket detail with the customer-visible thread, a new-ticket form and a reply box that says \"Reply and reopen\" when the ticket is closed. Branding is applied as an accent colour, with the product's own when the client has none.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.017",
     "date": "2026-10-07",
     "title": "Billing from tickets: you see the money before you bill it, and the invoice remembers which tickets it came from",

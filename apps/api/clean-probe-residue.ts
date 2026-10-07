@@ -237,6 +237,48 @@ async function main() {
     () => prisma.company.deleteMany({ where: { id: { in: m365ProbeCompanyIds } } }),
   );
 
+  // The customer-portal probe and its browser check create clients with contacts, tickets,
+  // sign-in codes and portal sessions. An interrupted run leaves the lot behind.
+  const portalProbeCompanies = await prisma.company.findMany({
+    where: { OR: [{ name: { startsWith: "Portal Probe" } }, { name: { startsWith: "UI Portal Verify" } }] },
+    select: { id: true },
+  });
+  const portalProbeCompanyIds = portalProbeCompanies.map(c => c.id);
+  const portalProbeContacts = await prisma.contact.findMany({ where: { companyId: { in: portalProbeCompanyIds } }, select: { id: true } });
+  const portalProbeContactIds = portalProbeContacts.map(c => c.id);
+  const portalProbeTickets = await prisma.ticket.findMany({ where: { companyId: { in: portalProbeCompanyIds } }, select: { id: true } });
+  const portalProbeTicketIds = portalProbeTickets.map(t => t.id);
+  await remove(
+    "portal probe comments",
+    () => prisma.ticketComment.count({ where: { ticketId: { in: portalProbeTicketIds } } }),
+    () => prisma.ticketComment.deleteMany({ where: { ticketId: { in: portalProbeTicketIds } } }),
+  );
+  await remove(
+    "portal probe tickets",
+    () => Promise.resolve(portalProbeTicketIds.length),
+    () => prisma.ticket.deleteMany({ where: { id: { in: portalProbeTicketIds } } }),
+  );
+  await remove(
+    "portal probe sign-in codes",
+    () => prisma.portalLoginCode.count({ where: { contactId: { in: portalProbeContactIds } } }),
+    () => prisma.portalLoginCode.deleteMany({ where: { contactId: { in: portalProbeContactIds } } }),
+  );
+  await remove(
+    "portal probe sessions",
+    () => prisma.portalSession.count({ where: { contactId: { in: portalProbeContactIds } } }),
+    () => prisma.portalSession.deleteMany({ where: { contactId: { in: portalProbeContactIds } } }),
+  );
+  await remove(
+    "portal probe contacts",
+    () => Promise.resolve(portalProbeContactIds.length),
+    () => prisma.contact.deleteMany({ where: { id: { in: portalProbeContactIds } } }),
+  );
+  await remove(
+    "portal probe clients",
+    () => Promise.resolve(portalProbeCompanyIds.length),
+    () => prisma.company.deleteMany({ where: { id: { in: portalProbeCompanyIds } } }),
+  );
+
   // The time-rules probe and the browser check leave one client, agreement and ticket each.
   const timeRuleCompanyWhere = { OR: [{ name: { startsWith: "TimeRules Probe" } }, { name: { startsWith: "TimeRules Off Probe" } }, { name: { startsWith: "Expense Probe" } }] };
   const timeRuleCompanies = await prisma.company.findMany({ where: timeRuleCompanyWhere, select: { id: true } });
