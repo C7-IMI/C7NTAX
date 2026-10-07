@@ -102,7 +102,7 @@ export const NAV_TREE: NavNode[] = [
     id: "reports", icon: TrendingUp, label: "Reporting", permission: Permission.ReportView, children: [
       { id: "reports-dashboard", to: "/reports", icon: TrendingUp, label: "Dashboards" },
       { id: "reports-standard", to: "/reports/standard", icon: ClipboardList, label: "Standard Reports" },
-      { id: "reports-qbr", to: "/reports/qbr", icon: Presentation, label: "Quarterly Business Review" },
+      { id: "reports-reviews", to: "/reports/reviews", icon: Presentation, label: "Business Reviews" },
       { id: "reports-custom", to: "/reports/custom", icon: Filter, label: "Custom Reports" },
       { id: "reports-analytics", to: "/reports/analytics", icon: BarChart3, label: "Analytics" },
     ],
@@ -220,6 +220,7 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/reports": "KPI dashboards with real-time ticket, SLA, and technician metrics.",
   "/reports/standard": "Pre-built reports: ticket volume, SLA, revenue, utilization.",
   "/reports/qbr": "A quarterly business review pack: service delivery, commercials, estate and risk against the quarter before.",
+  "/reports/reviews": "Business reviews at weekly, monthly or quarterly cadence, each against the period before.",
   "/reports/custom": "Saved reports built on the reporting engine, with their schedules.",
   "/reports/analytics": "Advanced analytics with visual charts and trend data.",
   "/help": "Documentation home — guided setup, FAQ, configuration reference, and a cross-linked index.",

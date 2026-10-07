@@ -5,7 +5,7 @@
 
 # Custom Report Designer
 
-> **Sequence:** follows the Reporting overhaul (BuildNotes **2026.10.7.025**). The Reporting section now ships **10 standard reports** with a shared filter set, a **Quarterly Business Review** pack, working Print/PDF/Excel/CSV, and a **Custom Reports** landing page that lists, runs, schedules and manages saved reports. The visual designer — bands, groups, totals, an expression language, a page preview — is the piece still to be written, and this document is the decision the brief asked for: **import/integrate something like jsreport, or write it ourselves in the style of jsreport / Crystal Reports / FastReport Open Source.**
+> **Sequence:** follows the Reporting overhaul (BuildNotes **2026.10.7.025**). The Reporting section now ships **12 standard reports** with a shared filter set, **Weekly / Monthly / Quarterly Business Reviews** from one pack at three cadences, working Print/PDF/Excel/CSV, and a **Custom Reports** landing page that lists, runs, schedules and manages saved reports. The visual designer — bands, groups, totals, an expression language, a page preview — is the piece still to be written, and this document is the decision the brief asked for: **import/integrate something like jsreport, or write it ourselves in the style of jsreport / Crystal Reports / FastReport Open Source.**
 > **Status:** 📋 **Recommendation only.** Nothing here is built. The landing page says so on screen, and every claim below is sourced.
 > **Basis:** repository as at BuildNotes **2026.10.7.024**; external facts verified on 2026-10-07 and cited inline, with the sources listed in §9. Where a licence could not be verified it is marked **unverified** rather than guessed.
 > **Next action:** accept or reject §2's recommendation. If accepted, the work is §6 in order, and §7's first two steps are small enough to ship on their own.
@@ -14,16 +14,16 @@
 
 ## 1. What "a custom report" means in this product today
 
-| Layer | What exists now | Where |
-|---|---|---|
-| **Engine** | `runReportConfig` — a whitelisted, config-driven runner over 7 sources (tickets, invoices, time entries, expenses, assets, contacts, companies) with 10 operators, `groupBy`, sorting and a row limit. No SQL, no arbitrary field names. | `apps/api/src/services/reportRunner.ts` |
-| **Storage** | `Report` (name, description, type, JSON config, author, `isSystem`) and `ReportSchedule` (frequency, day, time, recipients, format, `lastSentAt`). | `apps/api/prisma/schema.prisma` |
-| **Authoring** | A guided form (source, columns, one filter, group-by, sort, limit) plus a raw JSON box for the shapes the form does not cover. | `apps/web/src/pages/CustomReports.tsx` |
-| **Running** | Run, Print, PDF, Excel, CSV, duplicate, schedule, edit, delete; saved reports of a standard type are rendered by that standard report's own builder so the two cannot disagree. | `apps/web/src/pages/CustomReports.tsx`, `apps/api/src/routes/reports.ts` |
-| **Rendering** | One section model (`kpis`, `bars`, `table`, `notes`, `facts`) that the screen, the print window and every export all read. | `apps/web/src/components/reports/reportKit.tsx` |
-| **PDF** | jsPDF + jspdf-autotable, client-side, one table per section. | `apps/web/src/components/reports/reportKit.tsx` |
-| **Excel** | SpreadsheetML 2003 (`.xls`), one sheet per section, typed cells — written by hand, no dependency. | same |
-| **What is missing** | Any layout the *user* designs: bands, absolute positioning, sub-reports, running totals, page breaks, an expression language, a designer canvas. | — |
+| Layer               | What exists now                                                                                                                                                                                                                          | Where                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Engine**          | `runReportConfig` — a whitelisted, config-driven runner over 7 sources (tickets, invoices, time entries, expenses, assets, contacts, companies) with 10 operators, `groupBy`, sorting and a row limit. No SQL, no arbitrary field names. | `apps/api/src/services/reportRunner.ts`                                  |
+| **Storage**         | `Report` (name, description, type, JSON config, author, `isSystem`) and `ReportSchedule` (frequency, day, time, recipients, format, `lastSentAt`).                                                                                       | `apps/api/prisma/schema.prisma`                                          |
+| **Authoring**       | A guided form (source, columns, one filter, group-by, sort, limit) plus a raw JSON box for the shapes the form does not cover.                                                                                                           | `apps/web/src/pages/CustomReports.tsx`                                   |
+| **Running**         | Run, Print, PDF, Excel, CSV, duplicate, schedule, edit, delete; saved reports of a standard type are rendered by that standard report's own builder so the two cannot disagree.                                                          | `apps/web/src/pages/CustomReports.tsx`, `apps/api/src/routes/reports.ts` |
+| **Rendering**       | One section model (`kpis`, `bars`, `table`, `notes`, `facts`) that the screen, the print window and every export all read.                                                                                                               | `apps/web/src/components/reports/reportKit.tsx`                          |
+| **PDF**             | jsPDF + jspdf-autotable, client-side, one table per section.                                                                                                                                                                             | `apps/web/src/components/reports/reportKit.tsx`                          |
+| **Excel**           | SpreadsheetML 2003 (`.xls`), one sheet per section, typed cells — written by hand, no dependency.                                                                                                                                        | same                                                                     |
+| **What is missing** | Any layout the *user* designs: bands, absolute positioning, sub-reports, running totals, page breaks, an expression language, a designer canvas.                                                                                         | —                                                                        |
 
 So the question is narrow: **what produces a user-designed layout, and what renders it to a page?**
 
@@ -47,17 +47,17 @@ Three reasons, in order of weight:
 
 ## 3. The options, with what each actually delivers
 
-| Option | Licence | Runs where | Banded designer? | Delivers the brief? | Cost |
-|---|---|---|---|---|---|
-| **jsreport (embed)** | **LGPL** engine + **MIT** studio/recipes + **commercial** cap of 5 stored templates | Node, embeddable in our Express app or headless; **Puppeteer/Chrome needed for PDF** | **No** — code editor, hand-written HTML + Handlebars | Partly (a template editor, not bands) | A second service, a 280 MB Chrome image, a licence decision |
-| **ReportBro** | **AGPL-3.0 or paid** | Designer in the browser; **renderer is Python** | **Yes** | Yes in principle | A Python sidecar, plus AGPL or a commercial licence |
-| **FastReport Open Source** | **MIT** | **.NET only** ([no Node binding](https://github.com/FastReports/FastReport); a .NET sidecar is an inference) | Yes (its native designer is not MIT) | Only via a .NET sidecar | A second runtime and a service boundary |
-| **JasperReports** | Library **LGPL-3.0**, Server CE **AGPL-3.0** | Java | Yes | Via a Java service | JVM sidecar; Java/JRXML skills |
-| **Stimulsoft / DevExpress / Bold Reports / ActiveReportsJS / Telerik** | Commercial (**terms unverified** — see §8) | JS or .NET | Yes | Yes | Per-developer or per-deployment licence |
-| **Build it here** | Our own code | Our stack | Yes, by definition | Yes | §5's estimate |
-| **`@react-pdf/renderer`** (renderer only) | **MIT** | Node + browser, React components | N/A — a renderer | A PDF path without Chrome | Small; it is a dependency, not a designer |
-| **pdfmake** (renderer only) | **MIT** | Node + browser | N/A | A JSON-document PDF writer | Small |
-| **Headless Chrome** (Puppeteer/Playwright) | Apache-2.0 | Node driving Chrome | N/A | Highest HTML/CSS fidelity, real page breaks | **~282 MB** download on Linux (pnpm blocks install scripts by default) |
+| Option                                                                 | Licence                                                                             | Runs where                                                                                                   | Banded designer?                                     | Delivers the brief?                         | Cost                                                                   |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------- |
+| **jsreport (embed)**                                                   | **LGPL** engine + **MIT** studio/recipes + **commercial** cap of 5 stored templates | Node, embeddable in our Express app or headless; **Puppeteer/Chrome needed for PDF**                         | **No** — code editor, hand-written HTML + Handlebars | Partly (a template editor, not bands)       | A second service, a 280 MB Chrome image, a licence decision            |
+| **ReportBro**                                                          | **AGPL-3.0 or paid**                                                                | Designer in the browser; **renderer is Python**                                                              | **Yes**                                              | Yes in principle                            | A Python sidecar, plus AGPL or a commercial licence                    |
+| **FastReport Open Source**                                             | **MIT**                                                                             | **.NET only** ([no Node binding](https://github.com/FastReports/FastReport); a .NET sidecar is an inference) | Yes (its native designer is not MIT)                 | Only via a .NET sidecar                     | A second runtime and a service boundary                                |
+| **JasperReports**                                                      | Library **LGPL-3.0**, Server CE **AGPL-3.0**                                        | Java                                                                                                         | Yes                                                  | Via a Java service                          | JVM sidecar; Java/JRXML skills                                         |
+| **Stimulsoft / DevExpress / Bold Reports / ActiveReportsJS / Telerik** | Commercial (**terms unverified** — see §8)                                          | JS or .NET                                                                                                   | Yes                                                  | Yes                                         | Per-developer or per-deployment licence                                |
+| **Build it here**                                                      | Our own code                                                                        | Our stack                                                                                                    | Yes, by definition                                   | Yes                                         | §5's estimate                                                          |
+| **`@react-pdf/renderer`** (renderer only)                              | **MIT**                                                                             | Node + browser, React components                                                                             | N/A — a renderer                                     | A PDF path without Chrome                   | Small; it is a dependency, not a designer                              |
+| **pdfmake** (renderer only)                                            | **MIT**                                                                             | Node + browser                                                                                               | N/A                                                  | A JSON-document PDF writer                  | Small                                                                  |
+| **Headless Chrome** (Puppeteer/Playwright)                             | Apache-2.0                                                                          | Node driving Chrome                                                                                          | N/A                                                  | Highest HTML/CSS fidelity, real page breaks | **~282 MB** download on Linux (pnpm blocks install scripts by default) |
 
 **Note on what we already have:** the current jsPDF + autotable path is the lightest and most deterministic of the PDF options — we control every coordinate — and it needs no Chrome and no second runtime. The trade is that **pagination is ours to implement**, which §5 says is the hard part either way.
 
@@ -92,6 +92,7 @@ Element =
 ```
 
 **Rules that make it safe.** A template is user input, so it gets the same treatment as every other user input in this codebase:
+
 - **Validated on write** (bands, element types, coordinates, expressions) and **re-validated on render** — a stored document is not trusted just because it was stored once.
 - **Every expression is evaluated by our own interpreter over a fixed AST**, never `eval` and never a template engine that can reach the filesystem. (jsreport sandboxes user code by default via `trustUserCode`, which is evidence that this is a real requirement.)
 - **Data comes from the same whitelisted runner** (`runReportConfig`) or a standard report — a template cannot introduce a source, a column or an operator that the runner does not already allow, and it cannot widen client scoping.
@@ -100,18 +101,19 @@ Element =
 
 ## 5. What building it costs, honestly
 
-| Workstream | Why it is hard | Realistic size |
-|---|---|---|
-| **1. Template model + storage + validation** | A schema, a migration, an API, and validation on both write and render. | Small — days. |
-| **2. Banded builder over the model (form-driven)** | Bands, elements, data binding and the six standard reports expressed as templates. No canvas yet. | Moderate — 2–3 weeks. |
-| **3. Canvas designer** | Drag/resize, band reordering, property grid, snapping, undo/redo, zoom, keyboard. This is a UI product in its own right. | Large — 6–10 weeks. |
-| **4. Pagination and layout engine** | Two passes (measure, then place); break on detail overflow, group change, page-footer reservation; repeat page/column headers; keep-together rules. **This is the single biggest cost and the reason self-built designers fail.** | Large — 4–8 weeks. |
-| **5. Expression language** | A parser, an AST, a safe evaluator, functions and aggregates, and useful error messages pointing at the element. | Moderate — 2–3 weeks. |
-| **6. Renderers** | Screen (React, from the same document), PDF (jsPDF coordinates or `@react-pdf/renderer`), Excel (per-band sheet or tabular export), CSV. | Moderate — 2–4 weeks. |
-| **7. Sub-reports, charts, aggregates across pages** | Recursion, shared page context, running totals. | Moderate — 2–4 weeks. |
-| **8. Print fidelity** | WYSIWYG on screen ≠ PDF unless both come from one layout engine — which is why step 6 renders *from the document*, not from the DOM. | Included in 4 and 6. |
+| Workstream                                          | Why it is hard                                                                                                                                                                                                                    | Realistic size        |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **1. Template model + storage + validation**        | A schema, a migration, an API, and validation on both write and render.                                                                                                                                                           | Small — days.         |
+| **2. Banded builder over the model (form-driven)**  | Bands, elements, data binding and the six standard reports expressed as templates. No canvas yet.                                                                                                                                 | Moderate — 2–3 weeks. |
+| **3. Canvas designer**                              | Drag/resize, band reordering, property grid, snapping, undo/redo, zoom, keyboard. This is a UI product in its own right.                                                                                                          | Large — 6–10 weeks.   |
+| **4. Pagination and layout engine**                 | Two passes (measure, then place); break on detail overflow, group change, page-footer reservation; repeat page/column headers; keep-together rules. **This is the single biggest cost and the reason self-built designers fail.** | Large — 4–8 weeks.    |
+| **5. Expression language**                          | A parser, an AST, a safe evaluator, functions and aggregates, and useful error messages pointing at the element.                                                                                                                  | Moderate — 2–3 weeks. |
+| **6. Renderers**                                    | Screen (React, from the same document), PDF (jsPDF coordinates or `@react-pdf/renderer`), Excel (per-band sheet or tabular export), CSV.                                                                                          | Moderate — 2–4 weeks. |
+| **7. Sub-reports, charts, aggregates across pages** | Recursion, shared page context, running totals.                                                                                                                                                                                   | Moderate — 2–4 weeks. |
+| **8. Print fidelity**                               | WYSIWYG on screen ≠ PDF unless both come from one layout engine — which is why step 6 renders *from the document*, not from the DOM.                                                                                              | Included in 4 and 6.  |
 
 **Risks, named:**
+
 - **Text measurement and PDF text layout** — wrapping, ligatures, non-Latin scripts and keep-together rules. Borrow a real text engine (`@react-pdf/renderer`, MIT, has flexbox-like primitives and no HTML requirement) rather than hand-rolling glyph metrics.
 - **Grouping and aggregation across pages** — running totals and per-page sub-totals are where a "finished" engine turns out not to be.
 - **A second renderer to keep in step** — screen and PDF must read one model, which is exactly the rule the current `reportKit` enforces and must stay enforced.
@@ -123,15 +125,15 @@ Element =
 
 ## 6. Phases, in order, each with an exit condition
 
-| Phase | Deliverable | Exit condition |
-|---|---|---|
-| **0** | This document accepted; the document model in §4 reviewed and frozen as the compatibility surface. | The schema is agreed before any renderer is written. |
-| **1** | `ReportTemplate` model + validation + API; the six standard reports re-expressible as templates. | `probe-report-templates.mjs` green: an invalid template is refused on write *and* on render; a valid one round-trips. |
-| **2** | Form-driven banded builder: add/reorder bands, bind fields, preview from the document. | A grouped report with a header, a detail band and totals renders identically on screen and in PDF for the same document. |
-| **3** | Expression language: parser, AST, sandboxed evaluator, aggregates, per-element errors. | No expression can reach the filesystem, the network or the database; a bad expression names its element and does not fail the page. |
-| **4** | Renderers: PDF (jsPDF or `@react-pdf/renderer`), Excel, CSV — all from the document. | The same template produces a PDF whose page breaks match the preview, and an Excel file with one row per detail row. |
-| **5** | Canvas designer (drag, resize, property grid, undo/redo). | A non-developer builds a two-group report without touching JSON. |
-| **6** | Sub-reports, charts, cross-page aggregates. | A sub-report inherits the parent's parameters and does not corrupt the parent's page count. |
+| Phase | Deliverable                                                                                        | Exit condition                                                                                                                      |
+| ----- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **0** | This document accepted; the document model in §4 reviewed and frozen as the compatibility surface. | The schema is agreed before any renderer is written.                                                                                |
+| **1** | `ReportTemplate` model + validation + API; the six standard reports re-expressible as templates.   | `probe-report-templates.mjs` green: an invalid template is refused on write *and* on render; a valid one round-trips.               |
+| **2** | Form-driven banded builder: add/reorder bands, bind fields, preview from the document.             | A grouped report with a header, a detail band and totals renders identically on screen and in PDF for the same document.            |
+| **3** | Expression language: parser, AST, sandboxed evaluator, aggregates, per-element errors.             | No expression can reach the filesystem, the network or the database; a bad expression names its element and does not fail the page. |
+| **4** | Renderers: PDF (jsPDF or `@react-pdf/renderer`), Excel, CSV — all from the document.               | The same template produces a PDF whose page breaks match the preview, and an Excel file with one row per detail row.                |
+| **5** | Canvas designer (drag, resize, property grid, undo/redo).                                          | A non-developer builds a two-group report without touching JSON.                                                                    |
+| **6** | Sub-reports, charts, cross-page aggregates.                                                        | A sub-report inherits the parent's parameters and does not corrupt the parent's page count.                                         |
 
 **What stays untouched:** the standard reports, the section model in `reportKit`, the current custom reports and their schedules. A template is an **extra** type (`Report.type = "template"`), so nothing that exists today changes behaviour.
 
@@ -163,13 +165,13 @@ Element =
 
 ## 10. Decisions this document is waiting on
 
-| # | Decision | Owner | Blocks |
-|---|---|---|---|
-| 1 | Accept §2 (build it here) or reject it for jsreport / a commercial product | Product owner | Phase 0 |
-| 2 | Freeze the §4 document model as the compatibility surface | Engineering | Phases 1–6 |
-| 3 | PDF renderer: extend jsPDF, or add `@react-pdf/renderer` (MIT) | Engineering | Phase 4 |
-| 4 | Whether a customer may bring their own SQL source | Product + Security | Outside this plan; changes the data layer |
-| 5 | Priority of the canvas (Phase 5) against the form-driven builder (Phase 2) | Product owner | Phase ordering only — the document format does not change either way |
+| #   | Decision                                                                   | Owner              | Blocks                                                               |
+| --- | -------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------- |
+| 1   | Accept §2 (build it here) or reject it for jsreport / a commercial product | Product owner      | Phase 0                                                              |
+| 2   | Freeze the §4 document model as the compatibility surface                  | Engineering        | Phases 1–6                                                           |
+| 3   | PDF renderer: extend jsPDF, or add `@react-pdf/renderer` (MIT)             | Engineering        | Phase 4                                                              |
+| 4   | Whether a customer may bring their own SQL source                          | Product + Security | Outside this plan; changes the data layer                            |
+| 5   | Priority of the canvas (Phase 5) against the form-driven builder (Phase 2) | Product owner      | Phase ordering only — the document format does not change either way |
 
 ---
 

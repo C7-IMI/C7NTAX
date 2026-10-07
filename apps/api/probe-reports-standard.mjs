@@ -5,12 +5,15 @@
  *   1. **Every standard report answers, and answers with data.** A report that returns an empty
  *      shell is the failure mode this suite exists to catch — two of these reports used to
  *      fabricate their figures with `Math.random()`, which "worked" by never being checked.
- *   2. **Filters narrow and never widen.** A date range, a client and a board each change the
+ *   2. **The three business reviews are one pack at three cadences** — weekly, monthly and
+ *      quarterly each review the last *finished* period, compare like for like, and offer a list
+ *      of periods that agrees with the one they opened on.
+ *   3. **Filters narrow and never widen.** A date range, a client and a board each change the
  *      result, and a date given as a calendar day means that whole day rather than a UTC-shifted one.
- *   3. **Totals are not taken from a page of rows**, and an impossible duration never reaches an
+ *   4. **Totals are not taken from a page of rows**, and an impossible duration never reaches an
  *      average.
- *   4. **A saved report runs the same code as the screen**, so it cannot show a different number.
- *   5. Report management — create, edit, duplicate, schedule, delete, and the system-report guard.
+ *   5. **A saved report runs the same code as the screen**, so it cannot show a different number.
+ *   6. Report management — create, edit, duplicate, schedule, delete, and the system-report guard.
  *
  * The custom runner's own assertions live in `probe-reports.mjs`.
  *
@@ -60,6 +63,8 @@ const STANDARD = [
   { path: "contract-profitability", keys: ["totals", "costBasis", "agreements"], arrays: ["agreements"] },
   { path: "client-value", keys: ["totals", "clients"], arrays: ["clients"] },
   { path: "quarterly-business-review", keys: ["comparisons", "serviceDelivery", "commercials", "clients", "risk", "estate", "satisfaction", "highlights", "watchItems", "quarters"], arrays: ["quarters"] },
+  { path: "monthly-business-review", keys: ["comparisons", "serviceDelivery", "commercials", "estate", "satisfaction", "highlights", "periodOptions"], arrays: ["periodOptions"] },
+  { path: "weekly-business-review", keys: ["comparisons", "serviceDelivery", "commercials", "estate", "satisfaction", "highlights", "periodOptions"], arrays: ["periodOptions"] },
 ];
 
 async function main() {
@@ -140,20 +145,45 @@ async function main() {
   const augustEntries = await prisma.timeEntry.count({ where: { date: { gte: new Date(2026, 7, 1), lte: new Date(2026, 7, 31, 23, 59, 59, 999) } } });
   check(timed.data.totals.entries === augustEntries, `the time report respects the range (${timed.data.totals.entries} of ${augustEntries})`);
 
-  console.log("\nthe quarterly business review compares like with like");
-  const qbr = payloads["quarterly-business-review"];
-  check(/^Q[1-4] \d{4}$/.test(qbr.reviewedQuarter), `it reviews a named quarter (${qbr.reviewedQuarter})`);
-  check(qbr.comparedWith !== qbr.reviewedQuarter, `against the one before (${qbr.comparedWith})`);
-  check(qbr.quarters.length === 8, `and offers eight quarters to pick from (${qbr.quarters.length})`);
-  const lastFinished = qbr.quarters[0];
-  check(lastFinished?.label === qbr.reviewedQuarter, `the first of them is the one it opened on (${lastFinished?.label})`);
+  console.log("\nthe business reviews compare like with like");
+  const CADENCES = [
+    { path: "weekly-business-review", granularity: "week", options: 12, maxDays: 7 },
+    { path: "monthly-business-review", granularity: "month", options: 12, maxDays: 31 },
+    { path: "quarterly-business-review", granularity: "quarter", options: 8, maxDays: 92 },
+  ];
+  const reviews = {};
+  for (const cadence of CADENCES) {
+    const res = await call("GET", `/api/reports/data/${cadence.path}`, { token: admin.token });
+    reviews[cadence.granularity] = res.data;
+    check(res.status === 200, `${cadence.path} answers (${res.status})`);
+    check(res.data?.granularity === cadence.granularity, `and reports its cadence as ${cadence.granularity} (${res.data?.granularity})`);
+    check(!!res.data?.reviewedPeriod && res.data.reviewedPeriod !== res.data?.comparedWith, `reviewing ${res.data?.reviewedPeriod} against ${res.data?.comparedWith}`);
+    check(res.data?.periodOptions?.length === cadence.options, `offering ${cadence.options} periods to pick from (${res.data?.periodOptions?.length})`);
+    check(res.data?.periodOptions?.[0]?.label === res.data?.reviewedPeriod, "the first of them is the one it opened on");
+    // A period from its first millisecond to its last is one day short of "days × 24h".
+    const currentDays = Math.round((new Date(res.data.period.to).getTime() - new Date(res.data.period.from).getTime()) / 86400000);
+    check(currentDays <= cadence.maxDays, `the window runs whole ${cadence.granularity}s only (${currentDays} days)`);
+    check(res.data?.highlights?.length + res.data?.watchItems?.length > 0, `and writes a narrative (${res.data?.highlights?.length} highlights, ${res.data?.watchItems?.length} watch items)`);
+    check(!!res.data?.commercials && !!res.data?.estate && !!res.data?.satisfaction, "with the commercial, estate and satisfaction chapters");
+  }
+  check(reviews.week.reviewedPeriod !== reviews.month.reviewedPeriod && reviews.month.reviewedPeriod !== reviews.quarter.reviewedPeriod, "the three cadences review three different periods");
+  check(/^Week of /.test(reviews.week.reviewedPeriod), `the weekly one is labelled as a week (${reviews.week.reviewedPeriod})`);
+  check(/\d{4}$/.test(reviews.month.reviewedPeriod) && !/^Q/.test(reviews.month.reviewedPeriod), `the monthly one as a month (${reviews.month.reviewedPeriod})`);
+  check(/^Q[1-4] /.test(reviews.quarter.reviewedPeriod), `the quarterly one as a quarter (${reviews.quarter.reviewedPeriod})`);
+
+  // The oldest option in each list is the one before the second-oldest: the lists step backwards.
+  const weekOptions = reviews.week.periodOptions;
+  check(new Date(weekOptions[0].from) > new Date(weekOptions[1].from), "the weekly list runs backwards from the most recent week");
+  const monthGap = Math.round((new Date(reviews.month.periodOptions[0].from).getTime() - new Date(reviews.month.periodOptions[1].from).getTime()) / 86400000);
+  check(monthGap >= 28 && monthGap <= 31, `monthly periods are a month apart (${monthGap} days)`);
+
+  const qbr = reviews.quarter;
   const q3 = await call("GET", "/api/reports/data/quarterly-business-review?from=2026-07-01&to=2026-09-30", { token: admin.token });
   const q3Tickets = await prisma.ticket.count({ where: { createdAt: { gte: new Date(2026, 6, 1), lte: new Date(2026, 8, 30, 23, 59, 59, 999) } } });
   check(q3.data.serviceDelivery.opened === q3Tickets, `a chosen quarter counts exactly its own tickets (${q3.data.serviceDelivery.opened} of ${q3Tickets})`);
-  check(q3.data.highlights.length + q3.data.watchItems.length > 0, `and writes a narrative (${q3.data.highlights.length} highlights, ${q3.data.watchItems.length} watch items)`);
-  check(q3.data.commercials && q3.data.estate && q3.data.satisfaction, "with the commercial, estate and satisfaction chapters");
   check(q3.data.comparisons.tickets.previous !== undefined, `and states what it compared against (${q3.data.comparisons.tickets.previous} tickets in ${q3.data.comparedWith})`);
   check(q3.data.watchItems.every(w => !/\b1 (invoices|tickets|clients)\b/.test(w)), "no watch item says \"1 invoices\"");
+  check(qbr.periodOptions.length === 8, `the quarterly picker offers eight quarters (${qbr.periodOptions.length})`);
 
   console.log("\nsaved reports run the same code as the screens");
   const created = await call("POST", "/api/reports", {

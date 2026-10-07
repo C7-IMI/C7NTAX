@@ -30,8 +30,12 @@ export interface StandardReport {
   icon: LucideIcon;
   endpoint: string;
   filters: ReportFilters;
-  /** True when the report brings its own period (the QBR has quarters rather than a date range). */
+  /** True when the report brings its own period (a business review has periods rather than a range). */
   quarters?: boolean;
+  /** The noun the cadence uses in a section title — "this week", "this month", "this quarter". */
+  periodNoun?: string;
+  /** What the cadence is, for the pack's own "how this was built" facts. */
+  periodLabel?: string;
   build: (payload: Payload) => Section[];
 }
 
@@ -1101,10 +1105,15 @@ export const STANDARD_REPORTS: StandardReport[] = [
   csat,
   contract,
   clientValue,
+  weeklyReview,
+  monthlyReview,
   qbr,
 ];
 
 export const REPORT_BY_ID = new Map(STANDARD_REPORTS.map(r => [r.id, r]));
+
+/** The three business reviews share one builder, so the screen can switch cadence without a reload. */
+export const REVIEW_REPORTS = [weeklyReview, monthlyReview, qbr];
 
 /** The types a saved report can be given, so the custom-report editor offers the same list. */
 export const REPORT_TYPE_OPTIONS = [

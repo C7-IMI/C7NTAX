@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import {
@@ -11,13 +11,13 @@ import { ReportsSkeleton, TableSkeleton } from "../components/ui/Skeleton";
 import { apiErrorMessage } from "../lib/apiError";
 import { downloadCsv } from "../lib/csv";
 import { ReportBody, exportCsv, exportExcel, exportPdf, money, number, printReport, sectionsToTables, type Section } from "../components/reports/reportKit";
-import { REPORT_BY_ID, STANDARD_REPORTS, type StandardReport } from "../components/reports/standardReports";
+import { REPORT_BY_ID, REPORT_TYPE_OPTIONS, REVIEW_REPORTS, STANDARD_REPORTS, type StandardReport } from "../components/reports/standardReports";
 import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog";
 
 const TABS: Array<{ id: string; label: string; icon: LucideIcon; to: string }> = [
   { id: "dashboard", label: "Dashboards", icon: BarChart3, to: "/reports" },
   { id: "standard", label: "Standard Reports", icon: ClipboardList, to: "/reports/standard" },
-  { id: "qbr", label: "Quarterly Business Review", icon: Presentation, to: "/reports/qbr" },
+  { id: "reviews", label: "Business Reviews", icon: Presentation, to: "/reports/reviews" },
   { id: "custom", label: "Custom Reports", icon: Filter, to: "/reports/custom" },
   { id: "analytics", label: "Analytics", icon: TrendingUp, to: "/reports/analytics" },
 ];
@@ -44,13 +44,20 @@ function useReportOptions(): FilterOptions {
   return options;
 }
 
-export function ReportsPage({ tab: initialTab }: { tab?: string }) {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(initialTab || "dashboard");
+/**
+ * The reviews entry points. `/reports/reviews` reads its cadence from the query string (so a card
+ * can link straight to its own cadence), and the older `/reports/qbr` and the two cadence-specific
+ * paths keep working — a link somebody has already sent should not break because the report grew
+ * two siblings.
+ */
+export function ReviewsPage({ period }: { period?: string }) {
+  const [search] = useSearchParams();
+  return <ReportsPage tab="reviews" period={period ?? search.get("period") ?? undefined} />;
+}
 
-  // The route owns the tab: every /reports* route renders this component, so moving between them
-  // re-renders it with a new prop rather than remounting it.
-  useEffect(() => { setActiveTab(initialTab || "dashboard"); }, [initialTab]);
+export function ReportsPage({ tab: initialTab, period }: { tab?: string; period?: string }) {
+  const navigate = useNavigate();
+  const activeTab = initialTab === "qbr" ? "reviews" : initialTab || "dashboard";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -61,7 +68,7 @@ export function ReportsPage({ tab: initialTab }: { tab?: string }) {
         </div>
         <div className="flex items-center gap-2">
           <Link to="/reports/custom" className="btn-secondary text-sm flex items-center gap-2"><Filter size={14} /> Custom Reports</Link>
-          <Link to="/reports/qbr" className="btn-primary text-sm flex items-center gap-2"><Presentation size={14} /> Quarterly Business Review</Link>
+          <Link to="/reports/reviews" className="btn-primary text-sm flex items-center gap-2"><Presentation size={14} /> Business Reviews</Link>
         </div>
       </div>
 
@@ -82,7 +89,7 @@ export function ReportsPage({ tab: initialTab }: { tab?: string }) {
 
       {activeTab === "dashboard" && <DashboardTab />}
       {activeTab === "standard" && <StandardReportsTab />}
-      {activeTab === "qbr" && <QbrTab />}
+      {activeTab === "reviews" && <ReviewsTab initialPeriod={period} />}
       {activeTab === "analytics" && <AnalyticsTab />}
     </div>
   );
@@ -373,6 +380,9 @@ function ExportDialog({
 //  Standard reports
 // ═══════════════════════════════════════════════════════════════════
 
+/** A review's card opens the review tab on that card's own cadence. */
+const reviewCadence = (id: string): string => (id === "weekly-review" ? "week" : id === "monthly-review" ? "month" : "quarter");
+
 function StandardReportsTab() {
   const options = useReportOptions();
   const [open, setOpen] = useState<StandardReport | null>(null);
@@ -424,7 +434,7 @@ function StandardReportsTab() {
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2 flex-wrap">
-              <button onClick={() => (report.quarters ? navigate("/reports/qbr") : setOpen(report))} className="btn-primary text-xs flex items-center gap-1.5 px-3 py-1.5">
+              <button onClick={() => (report.quarters ? navigate(`/reports/reviews?period=${reviewCadence(report.id)}`) : setOpen(report))} className="btn-primary text-xs flex items-center gap-1.5 px-3 py-1.5">
                 <FileText size={12} /> Run Report
               </button>
               <button onClick={() => void print(report)} disabled={printing === report.id} className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-1.5">
@@ -450,35 +460,53 @@ function StandardReportsTab() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  Quarterly business review
+//  Business reviews — one pack, three cadences
 // ═══════════════════════════════════════════════════════════════════
 
-function QbrTab() {
+const CADENCES = [
+  { id: "week", label: "Weekly", reportId: "weekly-review", path: "/reports/weekly-review", hint: "Last completed week against the week before" },
+  { id: "month", label: "Monthly", reportId: "monthly-review", path: "/reports/monthly-review", hint: "Last completed month against the month before" },
+  { id: "quarter", label: "Quarterly", reportId: "qbr", path: "/reports/qbr", hint: "Last completed quarter against the quarter before" },
+] as const;
+
+function ReviewsTab({ initialPeriod }: { initialPeriod?: string }) {
   const options = useReportOptions();
+  const navigate = useNavigate();
+  const [cadenceId, setCadenceId] = useState<string>(CADENCES.some(c => c.id === initialPeriod) ? initialPeriod! : "quarter");
   const [filters, setFilters] = useState<ReportFilters>({ ...EMPTY_FILTERS });
-  const [quarters, setQuarters] = useState<Array<{ label: string; from: string; to: string }>>([]);
-  const [quarter, setQuarter] = useState("");
+  const [periods, setPeriods] = useState<Array<{ label: string; from: string; to: string }>>([]);
+  const [period, setPeriod] = useState("");
 
-  // The quarter list comes from the report itself, so the picker and the pack agree on which
-  // quarters exist. Loaded once: choosing a quarter should not re-derive the list.
+  const cadence = CADENCES.find(c => c.id === cadenceId) ?? CADENCES[2];
+  const report = REVIEW_REPORTS.find(r => r.id === cadence.reportId)!;
+
+  // Switching cadence resets the window: a week's dates mean nothing to a quarter.
   useEffect(() => {
-    api.get("/reports/data/quarterly-business-review")
-      .then(r => {
-        const list = (r.data?.quarters ?? []) as Array<{ label: string; from: string; to: string }>;
-        setQuarters(list);
-        setQuarter(r.data?.reviewedQuarter ?? list[0]?.label ?? "");
-      })
-      .catch(() => {});
-  }, []);
+    setFilters({ ...EMPTY_FILTERS });
+    setPeriod("");
+    setPeriods([]);
+  }, [cadenceId]);
 
-  const pickQuarter = (label: string) => {
-    const found = quarters.find(q => q.label === label);
-    setQuarter(label);
+  // The period list comes from the report itself, so the picker and the pack agree on which
+  // periods exist. Loaded once per cadence: choosing a period must not re-derive the list.
+  useEffect(() => {
+    let live = true;
+    api.get(report.endpoint)
+      .then(r => {
+        if (!live) return;
+        const list = (r.data?.periodOptions ?? r.data?.quarters ?? []) as Array<{ label: string; from: string; to: string }>;
+        setPeriods(list);
+        setPeriod(r.data?.reviewedPeriod ?? r.data?.reviewedQuarter ?? list[0]?.label ?? "");
+      })
+      .catch(() => { if (live) setPeriods([]); });
+    return () => { live = false; };
+  }, [report.endpoint]);
+
+  const pickPeriod = (label: string) => {
+    const found = periods.find(p => p.label === label);
+    setPeriod(label);
     if (found) setFilters(current => ({ ...current, from: found.from.slice(0, 10), to: found.to.slice(0, 10) }));
   };
-
-  const report = REPORT_BY_ID.get("qbr");
-  if (!report) return <p className="text-sm text-gray-500">The Quarterly Business Review report is unavailable.</p>;
 
   return (
     <div className="space-y-4">
@@ -486,21 +514,37 @@ function QbrTab() {
         <div className="flex items-start gap-3">
           <Presentation size={18} className="text-cyber-400 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-white">Quarterly Business Review</h3>
+            <h3 className="text-sm font-semibold text-white">Business Reviews</h3>
             <p className="text-xs text-gray-400 mt-1">
-              A full pack for a customer meeting: service delivery, targets, commercials, estate and risk, against the
-              quarter before. It opens on the last finished quarter, and compares like with like — a quarter still in
+              One pack at three cadences: service delivery, targets, commercials, estate and risk, against the period
+              before. It opens on the last <em>finished</em> period, and a comparison is like for like — a period still in
               progress is measured against the same number of days of its predecessor.
             </p>
           </div>
         </div>
       </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        {CADENCES.map(option => (
+          <button
+            key={option.id}
+            onClick={() => setCadenceId(option.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors text-left ${cadenceId === option.id ? "bg-cyber-600/20 border-cyber-500/40 text-cyber-400" : "border-surface-border text-gray-400 hover:text-white hover:bg-surface-lighter"}`}
+            title={option.hint}
+          >
+            {option.label}
+          </button>
+        ))}
+        <button className="btn-secondary text-xs ml-auto" onClick={() => navigate(cadence.path)}>Open in its own view</button>
+      </div>
+
       <ReportViewer
+        key={cadenceId}
         report={report}
         filters={filters}
         onFilters={setFilters}
         options={options}
-        quarterPicker={quarters.length ? { value: quarter, options: quarters, onSelect: pickQuarter } : undefined}
+        quarterPicker={periods.length ? { value: period, options: periods, onSelect: pickPeriod } : undefined}
       />
     </div>
   );

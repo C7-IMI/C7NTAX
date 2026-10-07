@@ -38,7 +38,7 @@ import { FinanceDashboardPage } from "./pages/FinanceDashboard";
 import { SystemSettingsPage } from "./pages/SystemSettings";
 import { InferenceSettingsPage } from "./pages/InferenceSettings";
 import { ProcurementPage } from "./pages/Procurement";
-import { ReportsPage } from "./pages/Reports";
+import { ReportsPage, ReviewsPage } from "./pages/Reports";
 import { CustomReportsPage } from "./pages/CustomReports";
 import { SectionLanding, SECTION_DESCRIPTIONS } from "./pages/SectionLanding";
 import { ProductCatalogPage } from "./pages/ProductCatalog";
@@ -127,7 +127,10 @@ function ProtectedRoutes() {
         <Route path="/billing/reports" element={<BillingPage tab="reports" />} />
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/reports/standard" element={<ReportsPage tab="standard" />} />
-        <Route path="/reports/qbr" element={<ReportsPage tab="qbr" />} />
+        <Route path="/reports/reviews" element={<ReviewsPage />} />
+        <Route path="/reports/qbr" element={<ReviewsPage />} />
+        <Route path="/reports/weekly-review" element={<ReviewsPage period="week" />} />
+        <Route path="/reports/monthly-review" element={<ReviewsPage period="month" />} />
         <Route path="/reports/analytics" element={<ReportsPage tab="analytics" />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/reports/custom" element={<CustomReportsPage />} />

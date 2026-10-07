@@ -36,6 +36,7 @@ Legend: ✅ complete · 🟡 partial (in the codebase now) · ⬜ not started ·
 | — | PLAN-010 | AWS dev/prod split & sync | not scheduled | ⏭ superseded by PLAN-016 (Azure recommendation) | Keep as the AWS decision record / fallback |
 | — | PLAN-008 | Token savings — 10 options | closed | ✅ complete (2026-08-14) | Nothing; keep the rollback table |
 | — | PLAN-003 | Multi-tenant architecture | **deferred by decision** | 🟡 Step 1 only | Steps 2–3 (tenant middleware, full isolation/RLS). Nothing else in the sequence may wait on it |
+| — | **PLAN-020** | **Custom report designer (build / embed / buy)** | **overlay — advises on the Reporting designer** | 📋 **Recommendation only, nothing applied** | Answers the question the Custom Reports landing page raises: **build a banded designer here on a JSON template document** — jsreport is **LGPL on the engine plus a commercial cap of 5 stored templates** and has **no banded WYSIWYG designer to adopt**, ReportBro is **AGPL or paid with a Python-only renderer**, and every other banded JS designer is commercial. §4 defines the document model, §5 costs the work honestly, §6 phases it with an exit condition each |
 | — | **PLAN-019** | **Remaining work & go-live sequencing (advisory overlay)** | **overlay — orders the rows above** | 📋 **Recommendation only, nothing applied** | Not work of its own: it sequences what is left into three tiers, names the exit condition for each step, and lists the ten decisions with their owners. Written after the W0–W2/W5-1 programme completed (BuildNotes 2026.10.7.017–.022). §3.1 recommends production flag values, §3.4 recommends deploying **dev first and running the battery against it**, §6 recommends a single battery runner and a primary-surfaces click-through |
 
 ### 1.1 Waves
@@ -103,6 +104,7 @@ with the code, the code won and the line was corrected.
 | PLAN-017 | Microsoft 365 OAuth app: build & deploy | `PLAN-017-Microsoft-365-OAuth-App-Setup.md` | authored in `PlanDocs/` | 2026-10-06 | ⬜ Ready to execute (runbook) |
 | PLAN-018 | Dependency & application security remediation (CVE review) | `PLAN-018-Dependency-and-Application-Security-Remediation.md` | authored in `PlanDocs/` | 2026-10-06 | 🟠 Partly applied — Phase 0 status table inside the plan |
 | PLAN-019 | Remaining Work & Go-Live Sequencing (advisory overlay) | `PLAN-019-Remaining-Work-and-Go-Live-Sequencing.md` | authored in `PlanDocs/` | 2026-10-07 | 📋 Advice only — nothing applied |
+| PLAN-020 | Custom Report Designer — build it here, embed jsreport, or buy | `PLAN-020-Custom-Report-Designer.md` | authored in `PlanDocs/` | 2026-10-07 | 📋 Advice only — nothing applied. Recommends building a banded designer on a JSON template document; §6 phases it with an exit condition each |
 
 ---
 

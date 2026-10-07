@@ -3886,6 +3886,82 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 ---
 
+### Prompt 222 — Overhaul Reporting: audit and fix the reports, add a Quarterly Business Review, add Custom Reports, and plan the designer
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~1 session
+**BuildNotes IDs:** 2026.10.7.025 - Reporting, audited: two reports that invented their numbers, buttons that did nothing, and a review pack at three cadences
+
+> Overhaul the reports section to make it more robust and detailed. Audit the reports and fix them so that they actually work. Also make the reports more detailed when displayed. Ensure the buttons all function as intended. Add a report option called quarterly business review.
+>
+> Use AutotaskPSA, Connectwise Asio, and Scoro as references for how the report section and the reports themselves should look and what information should be displayed.
+>
+> Lastly, add a Custom Reports subsection under Reporting. Just make the section with a default landing page that lists all custom generated reports for now. We will write the logic for it later. It's going to need to be a full WYSIWYG style editor which is going to be a big feature to implement. Decide if it would make more sense to import/integrate something like jsreport into the theme of the application or write it ourselves in the style of jsreport/Crystal Reports/FastReport Open Source. Just plan that out into a doc for now.
+
+**What I did**
+- **Audited before changing, which is where most of this came from.** Reading the endpoints against their own cards found that **Client Satisfaction and Contract Profitability generated their figures with `Math.random()`** — a client-facing NPS that changed on every refresh, and a margin computed by multiplying revenue by a random 0.4–0.7. `/data/client-value` had been written and **had no caller in the UI at all**. Every other card promised more than its endpoint returned: "by assignee with date range filtering", "by board and technician", "ticket throughput", "payments collected", "project and billable status" — none of which existed.
+- **Rewrote the data layer** into `services/reportData.ts`, one function per report, with three rules: nothing is invented (an unknowable figure is reported as unknown with its reason), a total is never taken from a page of rows, and a query parameter can narrow a report but never widen it. Every report now answers `?from=&to=&clientId=&boardId=` and returns the period it applied.
+- **Fixed the buttons by making one section model serve everything.** A report is a list of sections (KPIs, bars, tables, notes, facts) and the screen, the print document and every export read that same list — so what prints and what exports cannot disagree with what is on screen. Print renders a real document (the old `window.print()` printed the sidebar; on a card the Print button just ran the report again), Excel is a genuine SpreadsheetML workbook rather than an HTML table renamed `.xls`, and DOC was removed rather than faked.
+- **Found and fixed four defects the verification surfaced**, all of which had been invisible: two reports returned **500 for a client-scoped account** (they asked the `Company` table for a `companyId` column it does not have), **every date-range filter was off by one day** west of Greenwich (`new Date("2026-08-01")` is UTC midnight), a page-derived total under-reported, and one seeded ticket with a resolution date before its creation date pushed a **-24 hour** average into the productivity report.
+- **Rebuilt the SLA report around what the data can actually support.** Four outcomes instead of two, and — because 96 tickets have no `firstResponseAt` — the first response is read from the stamp when it exists and otherwise from our own earliest public reply, with the source counted on the report. A missed target and a late answer are different problems and are now reported as such.
+- **Added the Quarterly Business Review, then generalised it into three cadences.** One `businessReviewReport` serves weekly, monthly and quarterly: each reviews the **last finished** period (my first attempt resolved to the period *in progress* — the probe caught it), compares like for like over equal elapsed time when a period is unfinished, and offers a period picker built from the report itself. 12 standard reports now; the tab is "Business Reviews" with a cadence switch, and `/reports/qbr` still resolves.
+- **Built the Custom Reports landing page** with everything that was missing around it: list, search, filters, summary counts, run, print, export, edit, duplicate, schedule and delete, plus the `PATCH`/`DELETE`/`duplicate` endpoints the page needed, a schedule that says why it refused, and fixes for `[object Object]` in relation columns and headings reading "ticket Number".
+- **Wrote `PlanDocs/PLAN-020-Custom-Report-Designer.md`** from verified sources: jsreport is LGPL on the engine with a commercial five-template cap and **has no banded WYSIWYG designer to adopt**; ReportBro is AGPL or paid with a Python renderer; FastReport Open Source is MIT but .NET-only; every mature banded JavaScript designer is commercial. The recommendation is to build it here on a JSON template document, phased, with the honest cost of pagination and text measurement named.
+
+**Decisions worth remembering**
+- **A report that guesses is worse than a report that admits what it cannot see.** Two of these had been "working" for months by never being checked against reality; the fix was as much about what they now refuse to print as about what they compute.
+- **One document, many outputs.** The reason Print, PDF, Excel and CSV now agree with the screen is that there is exactly one description of what a report contains — the moment an export builds its own idea of the report, it starts drifting.
+- **Check the button, not the handler.** "Print" existed, had an `onClick`, and printed the wrong thing; on the cards it was wired to the same handler as Run. A button that looks implemented is not evidence that it works.
+- **Generalise on the third caller, not the first.** The QBR was written once; adding weekly and monthly turned it into a parameterised pack in one edit rather than three near-copies that would have diverged by the third revision.
+
+**Notes for next time**
+- The probes delete the personas' sessions, which signs the verification browser out — sign in again rather than reading a 401 as a defect.
+- `User.costRate` (nullable) is the only schema change: **agreement margins are only as good as those rates**, and with none set the report says so rather than showing a 100% margin as if it were real.
+- PLAN-020 §7 lists the two cheap steps worth taking regardless of what is decided — keep the exporters document-driven, and surface the runner's `notes` in the editor.
+
+---
+
+### Prompt 223 — Weekly and Monthly Business Reviews, in the style of the Quarterly
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~30 min
+**BuildNotes IDs:** 2026.10.7.025 - Reporting, audited: two reports that invented their numbers, buttons that did nothing, and a review pack at three cadences
+
+> I also need weekly and monthly report options in the style of the Quarterly Business Review. you can implement those two now
+
+**What I did**
+- Extended `qbrReport` into `businessReviewReport(user, period, granularity)` and gave each cadence its own endpoint (`/data/weekly-business-review`, `/data/monthly-business-review`, `/data/quarterly-business-review`), so a saved report, a schedule or a scheduled email can point at the cadence it means.
+- Replaced the quarter-only period maths with `reviewPlan(granularity, reference)`: UTC boundaries (Monday-start weeks, calendar months, calendar quarters), the **last finished** period, the one before it, and the picker's list — 12 weeks, 12 months, 8 quarters. `quarterOf`/`lastCompletedQuarter`/`recentQuarters` now delegate to it, so the quarterly behaviour that existed before is unchanged.
+- **Fixed a bug my own first attempt introduced:** resolving "the last finished period" by stepping back one day from *today* lands in the period still being reported for weeks and months — the probe caught the weekly review opening on the week in progress. It now steps back to the day before the current period begins.
+- Frontend: one `businessReview()` builder serves all three cards; the Reporting tab became **Business Reviews** with a Weekly/Monthly/Quarterly switch, a period picker per cadence, and `/reports/reviews?period=week|month|quarter` so a card's Run Report opens its own cadence. `/reports/qbr`, `/reports/weekly-review` and `/reports/monthly-review` all still resolve.
+- **Verified:** `probe-reports-standard.mjs` **131/131** with a cadence section that checks each one answers, names its cadence, reviews the last finished period against the one before, offers the right number of periods (12/12/8) with the first matching the one it opened on, stays inside one period's length, and writes a narrative — plus that the three cadences review three *different* periods and that the monthly list steps a month at a time. Browser: the cadence switch on the real data (Weekly → "Week of 28 Sept 2026 against Week of 21 Sept 2026" at 91.75h, Monthly → "September 2026 against August 2026" at $3,518.13 invoiced, Quarterly → "Q3 2026 against Q2 2026" at $27,960.63), the 12-card grid, and a card's Run Report landing on `/reports/reviews?period=week` with Weekly active.
+
+**Decisions worth remembering**
+- **One pack, three windows — not three reports.** The three cards differ only in their endpoint and their nouns, so a fix to the pack fixes all three, and the probe asserts they cannot silently become three different reports.
+- **A "period" is only useful if it has finished.** A review of a week that started yesterday reports almost nothing; the default is the last completed period, and the picker still lets you choose the one in progress if you want it.
+- **Equal elapsed time or no comparison.** A week-to-date against a full week before it would report a collapse that is an artefact of the calendar, so a partial period is compared with the same number of days and the notes say which it was.
+
+**Notes for next time**
+- The cadence list lives in three places by necessity — the API plan, the card definitions and the tab's switch — and the probe is what keeps them honest. Adding a fourth cadence means touching all three deliberately.
+
+---
+
+### Prompt 224 — Custom report designer: plan the decision
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed (documentation only) | **Duration:** included in Prompt 222
+**BuildNotes IDs:** 2026.10.7.025 - Reporting, audited: two reports that invented their numbers, buttons that did nothing, and a review pack at three cadences
+
+> [the plan-a-doc part of Prompt 222]
+
+**What I did**
+- Researched the options with sources cited per claim: jsreport's per-package licences (engine LGPL, studio and PDF/Excel recipes MIT), its **commercial free tier limited to 5 stored templates** and its Enterprise-Scale tier for shipping inside another product, its embeddability (`extensions.express.app`), its filesystem-first persistence, the Puppeteer/Chrome requirement for PDF, and the fact that it has **no banded designer**; ReportBro (AGPL-3.0 or paid, Python renderer), FastReport Open Source (MIT, .NET-only, no Node binding), JasperReports (LGPL library / AGPL server), and the commercial banded designers.
+- Wrote `PlanDocs/PLAN-020-Custom-Report-Designer.md`: recommendation, the options table, the document model, an honest cost table with the named risks, six phases each with an exit condition, the two cheap steps worth taking regardless, and the conditions that would change the recommendation. Registered it in `PlanDocs/README.md` as an **overlay** row marked *advice only — nothing applied*.
+
+**Decisions worth remembering**
+- **The licence question is the first question, not the last.** jsreport is widely described as MIT and is not: the engine is LGPL and the free tier caps at five stored templates, which is exactly the shape that surprises a team after they have built on it.
+- **Adopting a tool that does not do the thing is the expensive mistake.** jsreport would have delivered a code editor, a second service and a Chrome image — and we would still have had to build the bands.
+- **Cost the hard part out loud.** Pagination and text measurement are most of a report engine's work; a plan that hides that behind "weeks" is the plan that gets abandoned.
+
+**Notes for next time**
+- §10 of PLAN-020 lists the five decisions it waits on; §11 is its own maintenance rule — when a phase ships or a licence is confirmed, correct the document in the same commit.
+
+---
+
 ### Prompt 221 — Product Catalog: Administration gets a catalogue, and four surfaces price from it
 **Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~1 session
 **BuildNotes IDs:** 2026.10.7.024 - Product Catalog: one place a price is written down, and four places it is used
