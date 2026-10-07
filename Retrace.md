@@ -3169,3 +3169,27 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The per-plan `> **Sequence:**` block is the single best source for "what is left" — it was written from the code, and it keeps `Outstanding` separate from `Implemented` so a status question does not require re-reading the plan bodies.
 - "Remaining" is not one kind of work: PLAN-017 is a tenant console session, PLAN-016 is a decision plus infrastructure, and PLAN-015 Phase A is the only large coding item in the near waves. Answering "what's left" without that split reads as more coding than there actually is.
+
+---
+
+### Prompt 215 — Service Alerts in crimson so it stands out in the left nav
+**Timestamp:** 2026-10-06 | **Status:** Done — shipped, typechecked, verified in both themes | **Duration:** ~25 min
+**BuildNotes IDs:** 2026.10.6.055 - Service Alerts stands out in the left nav
+
+> I want service alerts and the icon to be crimson so that it stands out on the left nav pane
+
+**What I did**
+- Traced the nav through `components/Layout.tsx`: one `NAV_TREE` and one `renderNode`, used by both the desktop sidebar and the mobile drawer, with four render paths that matter (collapsed icon button, collapsed link, a parent row, and the leaf row Service Alerts actually uses). Added a single `isAlerts` flag per node and applied it in the two paths that render Service Alerts — the leaf row (icon + label) and the collapsed icon — rather than sprinkling `node.id === "service-alerts"` checks like the existing badge does.
+- Used the theme-aware `alert-red` token instead of a hardcoded hex. The badge is already `bg-red-500` and `--alert-red` resolves to that same `#ef4444` in the dark palettes, so the label, icon and badge read as one red; in the light palettes the same token becomes `#a30000`. A literal `#DC143C` measured **3.8:1** against the near-black sidebar — dimmer than the grey it was replacing — so the "obvious" crimson would have gone backwards in the theme the user actually runs.
+- Kept the colour through active and hover states (a child span with its own colour wins over the parent's `hover:text-white`), because the whole point is that it stands out rather than blending in the moment you point at it.
+
+**Decisions worth remembering**
+- The user's dark palette is literally `data-palette-dark="crimson"` — **Brand Crimson** in `index.css` — and that palette's own comment records that accent *text* uses `#ff5c5c` because the brand `#C00000` is only 3.0:1 on near-black. That is why "crimson text in the sidebar" is not a hex decision but a token decision: `alert-red` is the only red in the system already tuned against every palette.
+- The theme system is CSS-variable driven with per-palette overrides (`data-theme`, `data-palette-dark`, `data-palette-light`), so anything added to the nav must use a token or it breaks in the five dark schemes and three light ones.
+- Unconditional red, per the request. If it should only shout when something is happening, the same flag plus `alertCount > 0` is a one-line change.
+
+**Notes for next time**
+- Reading the computed colour out of the live DOM is the fastest way to prove a nav accent landed: the label span reported `rgb(239, 68, 68)` while the neighbouring Tickets icon stayed `rgb(154, 154, 164)`, which also proves Tailwind emitted the new `text-alert-red` utility.
+- Toggling a theme for a check is easiest by setting `document.documentElement.dataset.theme` directly, then putting it back.
+- A `pageError: Cannot destructure property 'user' of 'useAuth(...)'` appeared once right after editing the file and did **not** reproduce on a clean load or reload — it is a Vite HMR artifact of re-evaluating `App.tsx` mid-update, not a bug in the change. Always re-test a pageError on a fresh load before chasing it.
+- The sidebar collapse state persists in `localStorage`, so a later DOM query for the label can silently find nothing because the nav is in icon-only mode.

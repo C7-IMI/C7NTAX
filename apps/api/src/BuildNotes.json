@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.6.055",
+    "date": "2026-10-06",
+    "title": "Service Alerts stands out in the left nav",
+    "changes": [
+      {
+        "text": "**Service Alerts now reads as an alert channel, not a page.** Its label and its warning-triangle icon carry the alert colour in the sidebar instead of the neutral nav grey, so the section is findable at a glance next to Tickets, Service Boards and Pipeline — which keep the grey. It stays red when the row is active or hovered (the red is the point), and the collapsed icon-only sidebar colours the icon too. The colour is the theme-aware `--alert-red` token the count badge already uses, so in the dark themes the label, the icon and the badge are the same red, and in the light themes it darkens to `#a30000` on its own.",
+        "type": "Update"
+      },
+      {
+        "text": "**Contrast checked in both themes rather than eyeballed**: `#ef4444` measures **5.1:1** on the active row surface and **5.6:1** on the sidebar itself in the dark (crimson) palette, and `#a30000` measures **9.1:1** in the light palettes — all above the 4.5:1 AA threshold for the 14px medium label, so the accent does not cost legibility.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.054",
     "date": "2026-10-06",
     "title": "Closing the exploitable paths from the security audit, without changing how the app behaves",

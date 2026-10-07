@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.054 | Last Updated: 2026-10-06
+## Version: 2026.10.6.055 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.055 — Service Alerts stands out in the left nav
+- **[Update]** **Service Alerts now reads as an alert channel, not a page.** Its label and its warning-triangle icon carry the alert colour in the sidebar instead of the neutral nav grey, so the section is findable at a glance next to Tickets, Service Boards and Pipeline — which keep the grey. It stays red when the row is active or hovered (the red is the point), and the collapsed icon-only sidebar colours the icon too. The colour is the theme-aware `--alert-red` token the count badge already uses, so in the dark themes the label, the icon and the badge are the same red, and in the light themes it darkens to `#a30000` on its own.
+- **[Update]** **Contrast checked in both themes rather than eyeballed**: `#ef4444` measures **5.1:1** on the active row surface and **5.6:1** on the sidebar itself in the dark (crimson) palette, and `#a30000` measures **9.1:1** in the light palettes — all above the 4.5:1 AA threshold for the 14px medium label, so the accent does not cost legibility.
+- **Verification:** web typecheck clean (0 errors); the rendered colours were read from the live DOM in both themes (`rgb(239, 68, 68)` label and icon in dark, `rgb(163, 0, 0)` in light, with Tickets still `rgb(154, 154, 164)`), and the sidebar was checked both expanded and collapsed.
+- **Rollback:** revert the two conditional classes in `apps/web/src/components/Layout.tsx` (`renderNode`).
 
 ## 2026.10.6.054 — Closing the exploitable paths from the security audit, without changing how the app behaves
 - **[Fix]** **Stored XSS in the invoice "PDF".** The endpoint builds its HTML with string interpolation and serves it as `text/html`, so a line-item description, a payment method or a payment reference containing `<img src=x onerror=…>` executed in the browser of the admin or manager who opened the invoice — and because the API and the SPA share an origin, that script could read the JWT straight out of `localStorage`. Every interpolated value (line items, payment method and reference, invoice number, company name and email, currency, status) is now escaped with the `escapeHtml` that already existed in the email service; the invoice's real content renders exactly as before.
