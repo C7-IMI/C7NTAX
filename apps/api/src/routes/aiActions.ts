@@ -3,13 +3,14 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
 import { Permission } from "@C7NTAX/shared";
+import { configFlag } from "../services/appSettings";
 
 // Backlog item 5 — AI risk-classified actions (provider-agnostic; gated by AI_ACTIONS_ENABLED).
 // Critical actions are never executable; high actions require approval; low/medium execute on approval.
 export const aiActionsRouter = Router();
 
 aiActionsRouter.use((_req, res, next) => {
-  if (process.env.AI_ACTIONS_ENABLED === "false") return res.status(404).json({ error: "AI actions disabled" });
+  if (!configFlag("knowledge", "aiActions")) return res.status(404).json({ error: "AI actions disabled" });
   next();
 });
 aiActionsRouter.use(authenticate);

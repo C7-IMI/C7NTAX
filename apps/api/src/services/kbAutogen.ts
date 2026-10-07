@@ -15,6 +15,7 @@
 import { prisma } from "../index";
 import { llmJsonCompletion } from "./inference/LlmProvider";
 import { logger } from "./logger";
+import { configFlag } from "./appSettings";
 
 export interface KbDraft {
   title: string;
@@ -34,7 +35,7 @@ export interface DraftResult {
 const MAX_TICKET_CHARS = 6000;
 
 export function autogenEnabled(): boolean {
-  return process.env.KB_AUTOGEN_ENABLED !== "false";
+  return configFlag("knowledge", "autoDraft");
 }
 
 /** Truncates on a word boundary so the prompt never trails off mid-thought. */

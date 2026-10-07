@@ -4,12 +4,13 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { AppError } from "../middleware/errorHandler";
 import { Permission } from "@C7NTAX/shared";
 import crypto from "crypto";
+import { configFlag } from "../services/appSettings";
 
 // Backlog item 4 — alert webhook registration + delivery log (gated by ALERT_WEBHOOKS_ENABLED).
 export const alertWebhooksRouter = Router();
 
 alertWebhooksRouter.use((_req, res, next) => {
-  if (process.env.ALERT_WEBHOOKS_ENABLED === "false") return res.status(404).json({ error: "Alert webhooks disabled" });
+  if (!configFlag("monitoring", "alertWebhooks")) return res.status(404).json({ error: "Alert webhooks disabled" });
   next();
 });
 alertWebhooksRouter.use(authenticate);

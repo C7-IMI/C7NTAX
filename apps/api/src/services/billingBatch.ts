@@ -19,8 +19,9 @@ import { prisma } from "../index";
 import { InvoiceStatus } from "@C7NTAX/shared";
 import { pushInvoice } from "./accountingSync";
 import { logger } from "./logger";
+import { configFlag } from "./appSettings";
 
-export const invoiceBatchEnabled = (): boolean => process.env.INVOICE_BATCH_ENABLED === "true";
+export const invoiceBatchEnabled = (): boolean => configFlag("billing", "invoiceBatch");
 
 const FALLBACK_HOURLY = 150;
 

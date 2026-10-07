@@ -2,12 +2,13 @@ import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, type AuthRequest } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
+import { configFlag } from "../services/appSettings";
 
 // Backlog item 10 — mobile backend enablement: push device registration + sync markers.
 export const pushRouter = Router();
 
 pushRouter.use((_req, res, next) => {
-  if (process.env.PUSH_ENABLED === "false") return res.status(404).json({ error: "Push disabled" });
+  if (!configFlag("apps", "push")) return res.status(404).json({ error: "Push disabled" });
   next();
 });
 pushRouter.use(authenticate);

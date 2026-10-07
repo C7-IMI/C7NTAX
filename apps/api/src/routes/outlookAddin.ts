@@ -6,6 +6,7 @@ import { AppError } from "../middleware/errorHandler";
 import { createTicketFromEmail } from "../services/emailToTicket";
 import type { ParsedEmail } from "@C7NTAX/email";
 import crypto from "crypto";
+import { configFlag } from "../services/appSettings";
 
 // Backlog item 8 — Outlook add-in batch endpoint (gated by OUTLOOK_ADDIN_ENABLED).
 export const outlookAddinRouter = Router();
@@ -28,7 +29,7 @@ async function recordSeen(ids: string[]): Promise<void> {
 }
 
 outlookAddinRouter.use((_req, res, next) => {
-  if (process.env.OUTLOOK_ADDIN_ENABLED === "false") return res.status(404).json({ error: "Outlook add-in disabled" });
+  if (!configFlag("integrations", "outlookAddin")) return res.status(404).json({ error: "Outlook add-in disabled" });
   next();
 });
 outlookAddinRouter.use(authenticate);

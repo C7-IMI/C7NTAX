@@ -16,9 +16,10 @@
 import { prisma } from "../index";
 import { AppError } from "../middleware/errorHandler";
 import { logger } from "./logger";
+import { configFlag } from "./appSettings";
 
 export function offboardEnabled(): boolean {
-  return process.env.M365_OFFBOARD_ENABLED !== "false";
+  return configFlag("integrations", "m365Offboarding");
 }
 
 export const INACTIVITY_BUCKETS = [

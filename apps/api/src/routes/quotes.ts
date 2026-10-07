@@ -3,12 +3,13 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
 import { Permission, InvoiceStatus } from "@C7NTAX/shared";
+import { configFlag } from "../services/appSettings";
 
 // Backlog item 1 — Quotes & service catalog. Additive, gated by QUOTES_ENABLED.
 export const quotesRouter = Router();
 
 quotesRouter.use((_req, res, next) => {
-  if (process.env.QUOTES_ENABLED === "false") return res.status(404).json({ error: "Quotes disabled" });
+  if (!configFlag("billing", "quotes")) return res.status(404).json({ error: "Quotes disabled" });
   next();
 });
 quotesRouter.use(authenticate);

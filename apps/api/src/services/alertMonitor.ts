@@ -23,23 +23,33 @@ import { prisma } from "../index";
 import { assertSafeOutboundUrl, safeFetch } from "./egress";
 import tls from "node:tls";
 import { promises as dns } from "node:dns";
+import { configFlag, configNumber } from "./appSettings";
 
-const POLL_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
+/**
+ * The poll interval is read when the monitor starts rather than per poll: it also defines the
+ * shortest life an alert can have, so changing it mid-flight would move a finish line that
+ * alerts are already running against. The configuration screen marks it restart-required.
+ */
+/**
+ * The poll interval and the stale ceiling are sampled when the monitor starts rather than per
+ * poll, because the interval also defines the shortest life an alert may have — moving it
+ * mid-flight would shift a finish line that open alerts are already running against. Both are
+ * marked restart-required in the configuration registry, which is exactly this.
+ */
+let POLL_INTERVAL_MS = 5 * 60 * 1000;
+let STALE_AFTER_MS = 72 * 60 * 60 * 1000;
+let STALE_AFTER_HOURS = 72;
 const ITEM_WINDOW_MS = 24 * 60 * 60 * 1000; // consider feed items from last 24h
-const MIN_ALERT_AGE_MS = POLL_INTERVAL_MS; // never resolve on the poll that created it
 const REQUIRED_CLEAR_POLLS = 2; // consecutive all-clear polls before resolving
 const SOCIAL_WINDOW_MS = 2 * 60 * 60 * 1000; // social posts older than two hours are not evidence
 const USER_AGENT = "C7NTAX-ServiceAlerts/1.0";
 
-function positiveIntFromEnv(name: string, fallback: number): number {
-  const raw = Number(process.env[name]);
-  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : fallback;
+/** Samples the configured timing. Called once, as the monitor starts. */
+function readMonitorTiming(): void {
+  POLL_INTERVAL_MS = Math.max(1, configNumber("monitoring", "pollIntervalMinutes", 5)) * 60 * 1000;
+  STALE_AFTER_HOURS = Math.max(1, configNumber("monitoring", "staleAfterHours", 72));
+  STALE_AFTER_MS = STALE_AFTER_HOURS * 60 * 60 * 1000;
 }
-
-// Hard ceiling on how long an alert may stay active without any source
-// confirming it. Only reached when every configured source is unreadable.
-const STALE_AFTER_MS = positiveIntFromEnv("SERVICE_ALERT_STALE_HOURS", 72) * 60 * 60 * 1000;
-const STALE_AFTER_HOURS = Math.round(STALE_AFTER_MS / 3600000);
 
 const OUTAGE_PATTERNS = [
   /major outage/i, /outage/i, /degraded performance/i, /degraded/i, /service disruption/i,
@@ -314,7 +324,7 @@ async function observeDownDetector(service: { name: string; downDetectorUrl: str
  * silently look like it is watching a source it cannot read.
  */
 async function observeSocial(service: { name: string }): Promise<SourceObservation | null> {
-  if (process.env.SERVICE_ALERTS_SOCIAL_ENABLED === "false") return null;
+  if (!configFlag("monitoring", "socialSource")) return null;
   const token = process.env.X_BEARER_TOKEN;
   if (!token) return null;
   const base = process.env.X_API_BASE_URL || "https://api.x.com";
@@ -369,7 +379,7 @@ async function observeSocial(service: { name: string }): Promise<SourceObservati
 
 /** website / ssl / dns monitors (gated by UPTIME_MONITORS_ENABLED). */async function observeMonitor(service: { name: string; monitorKind: string; monitorUrl: string | null; monitorConfig: unknown }): Promise<SourceObservation | null> {
   if (service.monitorKind === "vendor" || !service.monitorUrl) return null;
-  if (process.env.UPTIME_MONITORS_ENABLED === "false") return null;
+  if (!configFlag("monitoring", "uptimeMonitors")) return null;
   const kind = service.monitorKind as "website" | "ssl" | "dns";
   const cfg = (service.monitorConfig || {}) as { expectStatus?: number; sslWarnDays?: number };
   try {
@@ -522,7 +532,7 @@ async function applyObservations(service: { id: string; name: string }, observat
     // so a single missed item cannot flap the alert off and on.
     const streak = (clearStreak.get(service.id) || 0) + 1;
     clearStreak.set(service.id, streak);
-    if (streak >= REQUIRED_CLEAR_POLLS && alertAge >= MIN_ALERT_AGE_MS) {
+    if (streak >= REQUIRED_CLEAR_POLLS && alertAge >= POLL_INTERVAL_MS) {
       await prisma.serviceAlert.update({
         where: { id: active.id },
         data: {
@@ -611,6 +621,7 @@ export async function runAlertCheck(): Promise<MonitorSnapshot> {
 }
 
 export function startAlertMonitor(): void {
+  readMonitorTiming();
   log("info", `Service Alerts monitor started (${POLL_INTERVAL_MS / 60000}-minute interval, ${STALE_AFTER_HOURS}h stale ceiling)`);
   // First run shortly after boot so the dashboard is populated quickly.
   setTimeout(() => { void runAlertCheck(); }, 20_000);

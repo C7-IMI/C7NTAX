@@ -16,6 +16,7 @@
  */
 import { prisma } from "../index";
 import type { IntegrationConfig } from "@C7NTAX/integrations";
+import { configFlag, configNumber } from "./appSettings";
 
 export interface IntegrationHealth {
   /** healthy = verified working, degraded = last check failed, unconfigured = cannot be tried, off = disabled. */
@@ -47,12 +48,12 @@ const inFlight = new Set<string>();
 const VERIFY_WAIT_MS = 8000;
 
 function intervalSeconds(): number {
-  const raw = Number(process.env.CLOUDCONNECT_VERIFY_INTERVAL_SEC);
+  const raw = configNumber("integrations", "verifyIntervalSec", 300);
   return Number.isFinite(raw) && raw >= 30 ? Math.floor(raw) : 300;
 }
 
 export function liveStatusEnabled(): boolean {
-  return process.env.CLOUDCONNECT_LIVE_STATUS_ENABLED !== "false";
+  return configFlag("integrations", "liveStatus");
 }
 
 /** Required credential names per kind, mirrored from the route so a missing field is not a test call. */

@@ -14,6 +14,7 @@
  *
  * Everything here is pure; the caller decides whether to run it (`TIME_RULES_ENABLED`).
  */
+import { configFlag, configNumber, configText } from "./appSettings";
 
 /** Defaults match the plan's specification; an agreement may override each of them. */
 export const TIME_RULE_DEFAULTS = {
@@ -39,7 +40,7 @@ export function drawsFromBlock(type: string | null | undefined): boolean {
 }
 
 export function timeRulesEnabled(): boolean {
-  return process.env.TIME_RULES_ENABLED === "true";
+  return configFlag("billing", "timeRules");
 }
 
 export interface TimeRuleSettings {
@@ -49,17 +50,32 @@ export interface TimeRuleSettings {
   overtimeMultiplier: number;
 }
 
-export const DEFAULT_SETTINGS: TimeRuleSettings = { ...TIME_RULE_DEFAULTS };
+/**
+ * The instance defaults an agreement falls back to. Read per call rather than captured at module
+ * load, because the values come from configuration and the modules are evaluated before the
+ * settings snapshot is loaded.
+ */
+export function defaultTimeRuleSettings(): TimeRuleSettings {
+  return {
+    overtimeEnabled: configFlag("billing", "overtimeEnabled"),
+    overtimeAfter: configText("billing", "overtimeAfter") || TIME_RULE_DEFAULTS.overtimeAfter,
+    overtimeMultiplier: (() => {
+      const configured = configNumber("billing", "overtimeMultiplier", TIME_RULE_DEFAULTS.overtimeMultiplier);
+      return configured > 0 ? configured : TIME_RULE_DEFAULTS.overtimeMultiplier;
+    })(),
+  };
+}
 
 export function settingsFrom(agreement: {
   overtimeEnabled?: boolean | null;
   overtimeAfter?: string | null;
   overtimeMultiplier?: number | null;
 } | null | undefined): TimeRuleSettings {
+  const defaults = defaultTimeRuleSettings();
   return {
-    overtimeEnabled: agreement?.overtimeEnabled ?? DEFAULT_SETTINGS.overtimeEnabled,
-    overtimeAfter: normaliseClock(agreement?.overtimeAfter) ?? DEFAULT_SETTINGS.overtimeAfter,
-    overtimeMultiplier: Number(agreement?.overtimeMultiplier) > 0 ? Number(agreement?.overtimeMultiplier) : DEFAULT_SETTINGS.overtimeMultiplier,
+    overtimeEnabled: agreement?.overtimeEnabled ?? defaults.overtimeEnabled,
+    overtimeAfter: normaliseClock(agreement?.overtimeAfter) ?? defaults.overtimeAfter,
+    overtimeMultiplier: Number(agreement?.overtimeMultiplier) > 0 ? Number(agreement.overtimeMultiplier) : defaults.overtimeMultiplier,
   };
 }
 
