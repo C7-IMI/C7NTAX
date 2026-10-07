@@ -518,6 +518,20 @@
     "updatedAt": "2026-08-20T06:09:49.658Z"
   },
   {
+    "id": "8347b71f-f271-49e2-b2af-f335eb5841f8",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "Workspace Agents Degraded and Responses Impacted",
+    "description": "Status: Investigating We are investigating the issue for workspace agents, users may not see the responses during the issue time. Affected components Agent (Degraded performance)",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.openai.com//incidents/01M49YQE6WZT02WYF0KBXVMQ5G",
+    "detectedAt": "2026-10-07T01:16:26.775Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-07T01:16:26.776Z",
+    "updatedAt": "2026-10-07T01:16:26.776Z"
+  },
+  {
     "id": "90fa0286-2aef-4b63-934c-85c16cf67ce5",
     "serviceId": "10630569-8873-4b00-9137-a346046c2b5f",
     "title": "Possible service degradation reported for Verizon (DownDetector)",
@@ -670,6 +684,20 @@
     "resolvedAt": "2026-08-20T17:39:58.447Z",
     "createdAt": "2026-08-20T17:29:54.545Z",
     "updatedAt": "2026-08-20T17:39:58.448Z"
+  },
+  {
+    "id": "c06c6cd9-c00f-428f-9298-c283ca0cad05",
+    "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
+    "title": "Elevated errors loading usage data on platform.claude.com",
+    "description": "&lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 7&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;01:20&lt;/var&gt; UTC&lt;/small&gt;&lt;br&gt; &lt;strong&gt;Investigating&lt;/strong&gt; - We are investigating elevated errors loading usage data on the platform.claude.com Usage page and the Admin API usage report endpoint since 5 PM PT. Messages API requests are not affected. We will provide an update as soon as possible. &lt;/p&gt;",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.claude.com/incidents/wf2v8ms031sx",
+    "detectedAt": "2026-10-07T01:21:21.416Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-07T01:21:21.418Z",
+    "updatedAt": "2026-10-07T01:21:21.418Z"
   },
   {
     "id": "d54ded8b-1295-4a58-8f99-299907e1ffca",

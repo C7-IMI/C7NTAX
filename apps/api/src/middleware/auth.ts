@@ -88,13 +88,17 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
       }
       next();
     })
-    .catch(() => next());
+    .catch(() => {
+      // Fail closed: if the session cannot be confirmed, the request is not served.
+      res.status(401).json({ error: "Your session could not be verified — please sign in again" });
+    });
 }
 
 async function refreshSessionContext(user: AuthUser): Promise<{ valid: boolean; mustChangePassword: boolean }> {
+  let dbUser;
   try {
     const { prisma } = await import("../index");
-    const dbUser = await prisma.user.findUnique({
+    dbUser = await prisma.user.findUnique({
       where: { id: user.userId },
       select: {
         permissions: true,
@@ -103,6 +107,11 @@ async function refreshSessionContext(user: AuthUser): Promise<{ valid: boolean; 
         role: { select: { systemRole: true, permissions: true } },
       },
     });
+  } catch {
+    // A database we cannot read is a session we cannot vouch for.
+    return { valid: false, mustChangePassword: false };
+  }
+  try {
     if (!dbUser) return { valid: false, mustChangePassword: false };
 
     const state: SessionContext = {
@@ -128,8 +137,8 @@ async function refreshSessionContext(user: AuthUser): Promise<{ valid: boolean; 
 
     return { valid: true, mustChangePassword: state.mustChangePassword };
   } catch {
-    // Silently use JWT permissions if DB is unreachable
-    return { valid: true, mustChangePassword: false };
+    // Anything unexpected while verifying the session is treated as unverified.
+    return { valid: false, mustChangePassword: false };
   }
 }
 

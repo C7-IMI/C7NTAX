@@ -151,6 +151,14 @@ usersRouter.post("/", requirePermission(Permission.UserManage), async (req: Auth
       : await prisma.role.findFirst({ where: { systemRole: role } });
     if (!roleRecord) throw new AppError(`Role "${roleId ?? role}" not found`, 400);
 
+    // Handing out an administrative role is a privilege change: UserManage is enough
+    // to create people, but only RoleManage may create another administrator.
+    const administrative = !!roleRecord.permissions?.includes(Permission.RoleManage) ||
+      !!roleRecord.permissions?.includes(Permission.SystemConfig);
+    if (administrative && !req.user!.permissions.includes(Permission.RoleManage)) {
+      throw new AppError("Creating an administrator requires the role:manage permission", 403);
+    }
+
     if (reportsToId) {
       const manager = await prisma.user.findUnique({ where: { id: reportsToId } });
       if (!manager) throw new AppError("The selected manager does not exist", 400);
@@ -286,8 +294,19 @@ usersRouter.post("/:id/reset-password", requirePermission(Permission.SecurityMan
 // ── Update user ──────────────────────────────────────────────────────
 usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: AuthRequest, res, next) => {
   try {
-    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    const target = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
     if (!target) throw new AppError("User not found", 404);
+
+    const isSelf = req.user!.userId === target.id;
+    const canManageRoles = req.user!.permissions.includes(Permission.RoleManage);
+
+    // Assigning roles or individual permissions is a privilege change, so it needs
+    // RoleManage — and never on your own account, which is how escalation happens.
+    const touchesPermissions = req.body.role !== undefined || req.body.roleId !== undefined || req.body.permissions !== undefined;
+    if (touchesPermissions) {
+      if (isSelf) throw new AppError("You cannot change your own role or permissions", 403);
+      if (!canManageRoles) throw new AppError("Managing roles and permissions requires the role:manage permission", 403);
+    }
 
     const updates: Record<string, unknown> = {};
     const allowed = [
@@ -312,7 +331,7 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
     }
 
     // Deactivating yourself locks you out of the screen you are standing on.
-    if (updates.isActive === false && req.user!.userId === target.id) {
+    if (updates.isActive === false && isSelf) {
       throw new AppError("You cannot deactivate your own account", 400);
     }
 
@@ -328,7 +347,11 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
     }
 
     // Handle role change — update roleId
-    if (req.body.role) {
+    if (req.body.roleId) {
+      const roleRecord = await prisma.role.findUnique({ where: { id: String(req.body.roleId) } });
+      if (!roleRecord) throw new AppError(`Role "${req.body.roleId}" not found`, 400);
+      updates.roleId = roleRecord.id;
+    } else if (req.body.role) {
       const roleRecord = await prisma.role.findFirst({ where: { systemRole: req.body.role } });
       if (!roleRecord) throw new AppError(`Role "${req.body.role}" not found`, 400);
       updates.roleId = roleRecord.id;

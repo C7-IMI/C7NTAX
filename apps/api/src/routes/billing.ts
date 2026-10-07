@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { Permission, InvoiceStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { BillingEngine } from "@C7NTAX/billing";
+import { escapeHtml } from "../services/emailHtml";
 import { v4 as uuid } from "uuid";
 
 export const billingRouter = Router();
@@ -225,8 +226,10 @@ billingRouter.get("/invoices/:id/pdf", requirePermission(Permission.BillingView)
 
     const currency = "$";
     const statusLabel = invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1);
+    // Every value below reaches the browser as HTML, so it is escaped: descriptions,
+    // payment references and client names are all free text somebody typed.
     const lineRows = (invoice.lineItems || []).map(li =>
-      `<tr><td style="padding:8px;border-bottom:1px solid #1e293b;color:#cbd5e1;">${li.description}</td>
+      `<tr><td style="padding:8px;border-bottom:1px solid #1e293b;color:#cbd5e1;">${escapeHtml(li.description)}</td>
        <td style="padding:8px;text-align:right;border-bottom:1px solid #1e293b;color:#cbd5e1;">${li.quantity}</td>
        <td style="padding:8px;text-align:right;border-bottom:1px solid #1e293b;color:#cbd5e1;">${currency}${li.unitPrice.toFixed(2)}</td>
        <td style="padding:8px;text-align:right;border-bottom:1px solid #1e293b;color:#fff;">${currency}${li.total.toFixed(2)}</td></tr>`
@@ -234,8 +237,8 @@ billingRouter.get("/invoices/:id/pdf", requirePermission(Permission.BillingView)
 
     const paymentRows = (invoice.payments || []).map(p =>
       `<tr><td style="padding:4px 8px;color:#94a3b8;">${new Date(p.processedAt).toLocaleDateString()}</td>
-       <td style="padding:4px 8px;color:#94a3b8;">${p.method}</td>
-       <td style="padding:4px 8px;text-align:right;color:#94a3b8;">${p.reference || ""}</td>
+       <td style="padding:4px 8px;color:#94a3b8;">${escapeHtml(p.method)}</td>
+       <td style="padding:4px 8px;text-align:right;color:#94a3b8;">${escapeHtml(p.reference || "")}</td>
        <td style="padding:4px 8px;text-align:right;color:#86efac;">${currency}${p.amount.toFixed(2)}</td></tr>`
     ).join("");
 
@@ -282,8 +285,8 @@ billingRouter.get("/invoices/:id/pdf", requirePermission(Permission.BillingView)
   <div class="header">
     <div class="logo">C7<span>NTAX</span></div>
     <div class="invoice-title">
-      <h1>${invoice.invoiceNumber}</h1>
-      <span class="status status-${invoice.status}">${statusLabel}</span>
+      <h1>${escapeHtml(invoice.invoiceNumber)}</h1>
+      <span class="status status-${escapeHtml(invoice.status)}">${escapeHtml(statusLabel)}</span>
     </div>
   </div>
   <div class="addresses">
@@ -293,13 +296,13 @@ billingRouter.get("/invoices/:id/pdf", requirePermission(Permission.BillingView)
     </div>
     <div>
       <h3>Bill To</h3>
-      <p><strong style="color:#e2e8f0;">${invoice.company?.name || "—"}</strong><br>${invoice.company?.email || ""}</p>
+      <p><strong style="color:#e2e8f0;">${escapeHtml(invoice.company?.name || "—")}</strong><br>${escapeHtml(invoice.company?.email || "")}</p>
     </div>
   </div>
   <div class="meta">
     <div><label>Issued</label><span>${new Date(invoice.issueDate).toLocaleDateString()}</span></div>
     <div><label>Due</label><span>${new Date(invoice.dueDate).toLocaleDateString()}</span></div>
-    <div><label>Currency</label><span>${invoice.currency || "USD"}</span></div>
+    <div><label>Currency</label><span>${escapeHtml(invoice.currency || "USD")}</span></div>
   </div>
   <table>
     <thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>

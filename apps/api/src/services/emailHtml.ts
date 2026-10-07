@@ -31,7 +31,8 @@ const MAX_INLINE_IMAGE_TOTAL_BYTES = 8 * 1024 * 1024;
 /** A 2 MB image is ~2.8 M base64 characters; anything longer is not an image we will embed. */
 const MAX_INLINE_IMAGE_URI_LENGTH = Math.ceil((MAX_INLINE_IMAGE_BYTES / 3) * 4) + 64;
 
-function escapeHtml(value: string): string {
+/** Escape text for interpolation into an HTML template. */
+export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[char]!);
 }
 

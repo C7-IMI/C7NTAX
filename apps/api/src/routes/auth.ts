@@ -2,17 +2,42 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
+import { randomInt, timingSafeEqual } from "node:crypto";
 import { prisma } from "../index";
 import { authenticate, signToken, signMfaToken, JWT_SECRET, computePermissions, type AuthRequest } from "../middleware/auth";
 import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
+import { rateLimiter } from "../middleware/rateLimiter";
 
 export const authRouter = Router();
 const emailService = new EmailService();
 
+/**
+ * SOC 2 hardening: enforce the failed-attempt lockout the Security tab already
+ * advertises. Off by default so behaviour only changes where hardening is on.
+ */
+const LOCKOUT_ENABLED = process.env.AUTH_HARDENING_ENABLED === "true";
+const MAX_LOGIN_ATTEMPTS = 5;
+
+/**
+ * Brute-force limit for the credential endpoints. Deliberately generous: it is a
+ * floor against hammering, not the primary control (per-account lockout is, and
+ * that is off unless AUTH_HARDENING_ENABLED is set). Office NAT, the boot script's
+ * health login and test scripts all share one IP bucket.
+ */
+const credentialLimiter = rateLimiter(300, 15 * 60 * 1000);
+
+/** Constant-time comparison for short one-time codes. */
+function codesMatch(a: string, b: string): boolean {
+  const left = Buffer.from(String(a));
+  const right = Buffer.from(String(b));
+  if (left.length !== right.length) return false;
+  return timingSafeEqual(left, right);
+}
+
 // ── POST /api/auth/login ────────────────────────────────────────────
-authRouter.post("/login", async (req, res, next) => {
+authRouter.post("/login", credentialLimiter, async (req, res, next) => {
   try {
     const { email, username, password } = req.body;
     if ((!email && !username) || !password) {
@@ -29,10 +54,27 @@ authRouter.post("/login", async (req, res, next) => {
       return;
     }
 
+    if (LOCKOUT_ENABLED && user.isLocked) {
+      res.status(423).json({ error: "Account locked after too many failed sign-in attempts — ask an administrator to unlock it" });
+      return;
+    }
+
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
+      if (LOCKOUT_ENABLED) {
+        const attempts = user.loginAttempts + 1;
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { loginAttempts: attempts, ...(attempts >= MAX_LOGIN_ATTEMPTS ? { isLocked: true } : {}) },
+        });
+      }
       res.status(401).json({ error: "Invalid credentials" });
       return;
+    }
+
+    // A successful sign-in clears the counter.
+    if (LOCKOUT_ENABLED && user.loginAttempts > 0) {
+      await prisma.user.update({ where: { id: user.id }, data: { loginAttempts: 0 } });
     }
 
     // SOC 2 hardening (backlog item 11): rehash-on-login when enabled and hash cost < 12.
@@ -71,7 +113,7 @@ authRouter.post("/login", async (req, res, next) => {
 // ── POST /api/auth/change-password ──────────────────────────────────
 // Self-service password change, and the step that clears mustChangePassword.
 // A fresh token is returned because the old one predates passwordChangedAt.
-authRouter.post("/change-password", authenticate, async (req: AuthRequest, res, next) => {
+authRouter.post("/change-password", authenticate, credentialLimiter, async (req: AuthRequest, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body ?? {};
     if (!currentPassword || !newPassword) {
@@ -153,7 +195,7 @@ authRouter.post("/mfa/verify-setup", authenticate, async (req: AuthRequest, res,
 });
 
 // ── POST /api/auth/mfa/verify ───────────────────────────────────────
-authRouter.post("/mfa/verify", async (req, res, next) => {
+authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
   try {
     const { code, mfaToken } = req.body;
     if (!code || !mfaToken) { res.status(400).json({ error: "Code and MFA token required" }); return; }
@@ -192,7 +234,7 @@ authRouter.post("/mfa/verify", async (req, res, next) => {
 });
 
 // ── POST /api/auth/send-mfa-email ───────────────────────────────────
-authRouter.post("/send-mfa-email", async (req, res, next) => {
+authRouter.post("/send-mfa-email", credentialLimiter, async (req, res, next) => {
   try {
     const { mfaToken } = req.body;
     if (!mfaToken) { res.status(400).json({ error: "MFA token required" }); return; }
@@ -204,8 +246,8 @@ authRouter.post("/send-mfa-email", async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
-    // Generate 6-digit code
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    // Generate 6-digit code — CSPRNG, not Math.random
+    const code = String(randomInt(100000, 1000000));
     // Store temporarily (15 min expiry)
     await prisma.user.update({
       where: { id: user.id },
@@ -219,7 +261,7 @@ authRouter.post("/send-mfa-email", async (req, res, next) => {
 });
 
 // ── POST /api/auth/mfa/verify-email ─────────────────────────────────
-authRouter.post("/mfa/verify-email", async (req, res, next) => {
+authRouter.post("/mfa/verify-email", credentialLimiter, async (req, res, next) => {
   try {
     const { code, mfaToken } = req.body;
     if (!code || !mfaToken) { res.status(400).json({ error: "Code and MFA token required" }); return; }
@@ -233,7 +275,7 @@ authRouter.post("/mfa/verify-email", async (req, res, next) => {
       res.status(400).json({ error: "Code expired or not requested" }); return;
     }
 
-    if (user.mfaEmailCode !== code) { res.status(400).json({ error: "Invalid code" }); return; }
+    if (!codesMatch(user.mfaEmailCode, String(code))) { res.status(400).json({ error: "Invalid code" }); return; }
 
     // Clear code
     await prisma.user.update({ where: { id: user.id }, data: { mfaEmailCode: null, mfaEmailCodeExpires: null } });

@@ -12,8 +12,9 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
-import { NewUserDialog, type RoleOption, type ClientOption } from "../components/users/NewUserDialog";
+import { NewUserDialog, type RoleOption, type ClientOption, isAdministrativeRole } from "../components/users/NewUserDialog";
 import { ResetPasswordDialog } from "../components/users/ResetPasswordDialog";
+import { useAuth } from "../hooks/useAuth";
 import { timezoneOptions } from "../lib/timezones";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -66,6 +67,10 @@ function MenuConfirmDialog({ state, busy, onCancel, onConfirm }: {
 }
 
 export function UsersPage() {
+  const { permissions } = useAuth();
+  // The API refuses role and permission edits without role:manage, so the screen
+  // shows them read-only instead of letting somebody fill in a form that 403s.
+  const canManageRoles = permissions.includes(Permission.RoleManage);
   const [users, setUsers] = useState<UserFull[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -119,8 +124,7 @@ export function UsersPage() {
 
   useEffect(() => { fetchUsers(); fetchRoles(); fetchClients(); }, [fetchUsers, fetchRoles, fetchClients]);
 
-  const refreshUser = async (id: string) => {
-    try {
+  const refreshUser = async (id: string) => {    try {
       const r = await api.get(`/users/${id}`);
       setSelected(r.data);
       setForm(r.data);
@@ -334,6 +338,8 @@ export function UsersPage() {
   ];
 
   // ── Render ──
+  // Role and permission edits are an administrator action end to end.
+  const canEditPerms = editing && canManageRoles;
   if (loading) return <div className="text-center py-12 text-gray-500">Loading users...</div>;
 
   return (
@@ -549,6 +555,15 @@ export function UsersPage() {
 
             {/* Tab Content */}
             <div className="p-6 space-y-6">
+              {!canManageRoles && tab === "permissions" && (
+                <div className="bg-cyber-600/10 border border-cyber-500/30 rounded-lg p-3 flex items-start gap-2">
+                  <ShieldAlert size={16} className="text-cyber-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-cyber-300">
+                    You can see every permission here, but changing roles or individual permissions needs the
+                    role:manage permission.
+                  </div>
+                </div>
+              )}
               {/* ── Profile Tab ── */}
               {tab === "profile" && (
                 <div className="space-y-4">
@@ -567,13 +582,16 @@ export function UsersPage() {
                     <Grid cols={2}>
                       <div>
                         <Label>Role</Label>
-                        {editing ? (
+                        {editing && canManageRoles ? (
                           <select className="input-field text-sm py-1.5" value={String(form.roleId || selected.role?.id || "")}
                             onChange={e => setForm({ ...form, roleId: e.target.value })}>
                             {roles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.systemRole.replace(/_/g, " ")})</option>)}
                           </select>
                         ) : (
                           <p className="text-sm text-white">{selected.role?.name || selected.role?.systemRole?.replace(/_/g, " ") || "—"}</p>
+                        )}
+                        {editing && !canManageRoles && (
+                          <p className="text-xs text-gray-500 mt-1">Changing roles needs the role:manage permission.</p>
                         )}
                       </div>
                       <div>
@@ -628,10 +646,10 @@ export function UsersPage() {
                       <p className="text-white font-medium">Permission Configuration</p>
                       <p className="text-xs text-gray-500">
                         Role: {selected.role?.name || selected.role?.systemRole?.replace(/_/g, " ")} — 
-                        {editing ? " Toggle individual overrides below" : " Click Edit to modify"}
+                        {canEditPerms ? " Toggle individual overrides below" : " Click Edit to modify"}
                       </p>
                     </div>
-                    {editing && (
+                    {canEditPerms && (
                       <div className="flex gap-2">
                         <button onClick={() => setPermSet(new Set(selected.role?.permissions || []))}
                           className="btn-secondary text-xs py-1 px-2">Reset to Role</button>
@@ -642,7 +660,7 @@ export function UsersPage() {
                   </div>
 
                   {/* Role template dropdown */}
-                  {editing && (
+                  {canEditPerms && (
                     <div className="card py-2.5 px-4 flex items-center gap-3">
                       <label className="text-xs text-gray-400 font-medium shrink-0">Apply role defaults:</label>
                       <select
@@ -675,7 +693,7 @@ export function UsersPage() {
                   )}
 
                   {/* Customization warning — compares against user's assigned role */}
-                  {editing && (() => {
+                  {canEditPerms && (() => {
                     const rolePermsArr = selected?.role?.permissions || [];
                     const roleSet = new Set(rolePermsArr);
                     const hasDeviation = rolePermsArr.some(p => permSet.has(p) !== roleSet.has(p)) ||
@@ -706,7 +724,7 @@ export function UsersPage() {
                             {cat.permissions.filter(p => permSet.has(p)).length}/{cat.permissions.length}
                           </span>
                         </div>
-                        {editing && (
+                        {canEditPerms && (
                           <button
                             onClick={() => toggleCategory(cat.permissions)}
                             className={`text-xs px-2 py-0.5 rounded border transition-colors ${
@@ -727,7 +745,7 @@ export function UsersPage() {
                           return (
                             <label key={p}
                               className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
-                                editing ? "cursor-pointer hover:bg-surface-lighter" : "cursor-default"
+                                canEditPerms ? "cursor-pointer hover:bg-surface-lighter" : "cursor-default"
                               } ${
                                 deviates
                                   ? "bg-amber-600/10 border border-amber-500/40 text-amber-300"
@@ -735,7 +753,7 @@ export function UsersPage() {
                                     ? (isAdmin ? "bg-red-600/10 text-red-300" : "bg-cyber-600/10 text-cyber-300")
                                     : "text-gray-500"
                               }`}>
-                              {editing ? (
+                              {canEditPerms ? (
                                 <input type="checkbox" checked={has} onChange={() => togglePerm(p)}
                                   className="rounded accent-cyber-500" />
                               ) : (
@@ -754,7 +772,7 @@ export function UsersPage() {
                     </div>
                   ))}
 
-                  {editing && (
+                  {canEditPerms && (
                     <div className="bg-amber-600/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
                       <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
                       <div className="text-xs text-amber-300">

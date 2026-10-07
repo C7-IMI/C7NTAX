@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../index";
-import { authenticate, type AuthRequest } from "../middleware/auth";
+import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
+import { Permission } from "@C7NTAX/shared";
 export const bulkRouter = Router(); bulkRouter.use(authenticate);
 
 bulkRouter.post("/", async (req: AuthRequest, res, next) => {
@@ -19,18 +20,18 @@ bulkRouter.get("/:id", async (req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-// Webhooks
-bulkRouter.get("/webhooks", async (_req: AuthRequest, res, next) => {
-  try { res.json(await prisma.webhookConfig.findMany()); }
+// Webhooks — administrative, and the signing secret is never returned.
+bulkRouter.get("/webhooks", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
+  try { res.json((await prisma.webhookConfig.findMany()).map(({ secret, ...rest }) => rest)); }
   catch (e) { next(e); }
 });
 
-bulkRouter.post("/webhooks", async (req: AuthRequest, res, next) => {
+bulkRouter.post("/webhooks", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { res.status(201).json(await prisma.webhookConfig.create({ data: { name: req.body.name, url: req.body.url, secret: req.body.secret, events: req.body.events || [], isActive: req.body.isActive ?? true } })); }
   catch (e) { next(e); }
 });
 
-bulkRouter.delete("/webhooks/:id", async (req: AuthRequest, res, next) => {
+bulkRouter.delete("/webhooks/:id", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { await prisma.webhookConfig.delete({ where: { id: req.params.id } }); res.json({ message: "Webhook removed" }); }
   catch (e) { next(e); }
 });

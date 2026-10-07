@@ -24,6 +24,8 @@ interface Props {
   users: UserOption[];
   /** Prefill, e.g. when the list menu was used to copy an existing user. */
   defaults?: { roleId?: string; companyId?: string; department?: string; timezone?: string; fromName?: string };
+  /** Whether the signed-in user may hand out administrative roles. */
+  canManageRoles?: boolean;
 }
 
 type CredentialMode = "generate" | "set" | "invite";
@@ -48,11 +50,20 @@ const EMPTY: Values = {
 const TABS = ["Profile", "Access", "Credentials"] as const;
 
 /**
+ * Roles that carry administration. The API refuses to hand these out without
+ * `role:manage`, so the dialog does not offer them either.
+ */
+export function isAdministrativeRole(role: { permissions?: string[] }): boolean {
+  const perms = role.permissions ?? [];
+  return perms.includes("role:manage") || perms.includes("system:config");
+}
+
+/**
  * New User — the Autotask "Resource" / Asio "Member" equivalent: identity,
  * placement and role on separate tabs, and an explicit choice about how the
  * first password reaches the person.
  */
-export function NewUserDialog({ open, onClose, onCreated, roles, clients, users, defaults }: Props) {
+export function NewUserDialog({ open, onClose, onCreated, roles, clients, users, defaults, canManageRoles = true }: Props) {
   const [tab, setTab] = useState<number>(0);
   const [values, setValues] = useState<Values>(EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -316,7 +327,7 @@ export function NewUserDialog({ open, onClose, onCreated, roles, clients, users,
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-gray-400">Role <span className="text-red-400">*</span></label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {roles.map(r => {
+                    {roles.filter(r => canManageRoles || !isAdministrativeRole(r)).map(r => {
                       const selected = values.roleId === r.id;
                       return (
                         <button key={r.id} type="button" onClick={() => set("roleId", r.id)}
@@ -427,8 +438,7 @@ export function NewUserDialog({ open, onClose, onCreated, roles, clients, users,
   );
 }
 
-/** Labelled input with room underneath for an error or a hint. */
-function Field({ label, value, onChange, error, hint, type = "text", required, placeholder, autoFocus }: {
+/** Labelled input with room underneath for an error or a hint. */function Field({ label, value, onChange, error, hint, type = "text", required, placeholder, autoFocus }: {
   label: string; value: string; onChange: (value: string) => void;
   error?: string; hint?: string; type?: string; required?: boolean; placeholder?: string; autoFocus?: boolean;
 }) {

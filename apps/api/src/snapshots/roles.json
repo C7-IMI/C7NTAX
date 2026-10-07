@@ -1,5 +1,16 @@
 [
   {
+    "id": "871606b9-f630-49f0-8144-db2ae4831fe7",
+    "name": "User Management only 621256",
+    "systemRole": "manager",
+    "permissions": [
+      "user:manage"
+    ],
+    "isDefault": false,
+    "createdAt": "2026-10-07T01:30:22.422Z",
+    "updatedAt": "2026-10-07T01:30:22.422Z"
+  },
+  {
     "id": "52f22c12-60e7-4489-a606-f82710131221",
     "name": "Admin",
     "systemRole": "admin",

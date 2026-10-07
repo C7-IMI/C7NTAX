@@ -14,10 +14,12 @@ alertWebhooksRouter.use((_req, res, next) => {
 });
 alertWebhooksRouter.use(authenticate);
 
-alertWebhooksRouter.get("/", async (_req: AuthRequest, res, next) => {
+// The signing secret stays server-side: it is what proves a delivery is ours, and
+// the web UI never displays it.
+alertWebhooksRouter.get("/", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try {
     const configs = await prisma.webhookConfig.findMany();
-    res.json({ data: configs });
+    res.json({ data: configs.map(({ secret, ...rest }) => rest) });
   } catch (e) { next(e); }
 });
 

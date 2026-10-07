@@ -64,6 +64,23 @@ import { startWorkers } from "./worker";
 // ── Startup logging ─────────────────────────────────────────────────
 logger.startup();
 
+// ── Secret assertions ───────────────────────────────────────────────
+// The fallback JWT secret is in the public repository, and the Kumo vault key is
+// derived from JWT_SECRET when KUMO_MASTER_KEY is absent — so an unset secret in a
+// real deployment compromises every session *and* every stored credential.
+const JWT_FALLBACK = "C7NTAX-dev-secret-change-in-prod";
+if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || process.env.JWT_SECRET === JWT_FALLBACK)) {
+  throw new Error(
+    "JWT_SECRET must be set to a unique value in production (refusing to start with the built-in development secret)."
+  );
+}
+if (!process.env.JWT_SECRET) {
+  logger.info("startup", "JWT_SECRET is unset — using the development secret. Never do this outside a dev machine.");
+}
+if (!process.env.KUMO_MASTER_KEY) {
+  logger.info("startup", "KUMO_MASTER_KEY is unset — the vault key is derived from JWT_SECRET. Set it explicitly before production.");
+}
+
 export const prisma = new PrismaClient();
 export const app = express();
 
@@ -117,7 +134,9 @@ const QUIET_POLL_PATHS = [
 app.use(morgan("short", {
   skip: (req) => !req.headers.authorization && QUIET_POLL_PATHS.includes(req.path),
   stream: {
-    write: (message: string) => logger.info("http", message.trim()),
+    // The invoice page used to pass its JWT in the query string, so never write a
+    // token into the log file.
+    write: (message: string) => logger.info("http", message.trim().replace(/([?&]token=)[^&\s"]+/gi, "$1***")),
   },
 }));
 app.use(rateLimiter(9999, 60 * 1000));

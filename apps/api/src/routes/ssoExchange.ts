@@ -11,6 +11,11 @@ export const ssoExchangeRouter = Router();
 
 const enabled = () => process.env.SSO_ENABLED === "true" && !!process.env.SSO_ISSUER;
 
+/** Where the in-flight OIDC nonce lives between /oidc/start and /oidc/callback. */
+const SSO_STATE_KEY = "sso:oidc_state";
+/** How long a started sign-in stays valid. */
+const SSO_STATE_TTL_MS = 10 * 60 * 1000;
+
 function base64url(input: string | Buffer): string {
   return Buffer.from(input).toString("base64url");
 }
@@ -46,6 +51,12 @@ ssoExchangeRouter.get("/oidc/start", async (req, res, next) => {
     const discovery = await fetch(`${issuer}/.well-known/openid-configuration`);
     const { authorization_endpoint } = (await discovery.json()) as { authorization_endpoint: string };
     const state = crypto.randomBytes(16).toString("hex");
+    // Remember the nonce so the callback can prove it started this handshake.
+    await prisma.systemConfig.upsert({
+      where: { key: SSO_STATE_KEY },
+      create: { key: SSO_STATE_KEY, value: JSON.stringify({ state, createdAt: new Date().toISOString() }) },
+      update: { value: JSON.stringify({ state, createdAt: new Date().toISOString() }) },
+    });
     const params = new URLSearchParams({
       response_type: "code",
       client_id: process.env.SSO_CLIENT_ID!,
@@ -62,6 +73,18 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
     if (!enabled()) return res.status(404).json({ error: "SSO disabled" });
     const { code, state, error } = req.query as Record<string, string>;
     if (error || !code) return res.status(400).json({ error: error || "No authorization code" });
+
+    // The callback is unauthenticated, so the nonce is the only thing tying it to a
+    // sign-in we started — single use, and only valid for a few minutes.
+    const stored = await prisma.systemConfig.findUnique({ where: { key: SSO_STATE_KEY } });
+    let expected: { state?: string; createdAt?: string } = {};
+    try { expected = stored ? JSON.parse(stored.value as string) : {}; } catch { expected = {}; }
+    const ageMs = expected.createdAt ? Date.now() - new Date(expected.createdAt).getTime() : Infinity;
+    if (!state || !expected.state || state !== expected.state || ageMs > SSO_STATE_TTL_MS) {
+      return res.status(400).json({ error: "This sign-in link is invalid or has expired — start again" });
+    }
+    await prisma.systemConfig.deleteMany({ where: { key: SSO_STATE_KEY } });
+
     const issuer = process.env.SSO_ISSUER!.replace(/\/$/, "");
     const discovery = await fetch(`${issuer}/.well-known/openid-configuration`);
     const { token_endpoint } = (await discovery.json()) as { token_endpoint: string };
@@ -83,21 +106,33 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
 
     let user = await prisma.user.findUnique({ where: { email }, include: { role: true } });
     if (!user) {
-      const role = await prisma.role.findFirst({ where: { systemRole: "admin" } });
+      // An identity the IdP vouches for but we have never seen is not automatically
+      // an administrator: it is created inactive and read-only, and an administrator
+      // decides what it may do.
+      const role = await prisma.role.findFirst({ where: { systemRole: "read_only" } })
+        ?? await prisma.role.findFirst({ where: { systemRole: "client_user" } })
+        ?? await prisma.role.findFirst({ where: { systemRole: "technician" } });
+      if (!role) return res.status(500).json({ error: "No role available for a new SSO user" });
       const created = await prisma.user.create({
         data: {
           email,
           passwordHash: `sso:${crypto.randomBytes(24).toString("hex")}`,
           firstName: claims.name?.split(" ")[0] || claims.preferred_username || email,
           lastName: claims.name?.split(" ").slice(1).join(" ") || "",
-          roleId: role?.id || (await prisma.role.findFirstOrThrow()).id,
+          roleId: role.id,
           emailVerified: true,
+          isActive: false,
         },
       });
+      console.log(`[SSO] Created inactive read-only account for ${email} — an administrator must enable it and assign a role.`);
       user = await prisma.user.findUnique({ where: { id: created.id }, include: { role: true } });
+      return res.status(403).json({ error: "Your account was created but is not active yet — ask an administrator to enable it" });
+    }
+    if (!user.isActive) {
+      return res.status(403).json({ error: "Your account is inactive — ask an administrator to enable it" });
     }
     if (!user) return res.status(500).json({ error: "User provisioning failed" });
-    const token = signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole, tokenVersion: user.tokenVersion });
+    const token = signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "read_only") as SystemRole, tokenVersion: user.tokenVersion });
     res.redirect(`${process.env.WEB_ORIGIN || "http://localhost:3010"}/login?token=${encodeURIComponent(token)}`);
   } catch (e) { next(e); }
 });

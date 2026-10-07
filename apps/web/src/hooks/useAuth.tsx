@@ -1,12 +1,15 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import api from "../api";
+import { ROLE_PERMISSIONS, type SystemRole } from "@C7NTAX/shared";
 
 interface User {
   id: string;
   email: string;
   firstName?: string | null;
   lastName?: string | null;
-  role?: string;
+  role?: string | { id?: string; name?: string; systemRole?: string; permissions?: string[] };
+  /** Individual permission overrides on top of the role. */
+  permissions?: string[];
   companyId?: string;
   mfaEnabled?: boolean;
   /** Set after an administrator resets the password; cleared once changed. */
@@ -23,6 +26,8 @@ interface AuthState {
   token: string | null;
   loading: boolean;
   landingPage: LandingPage;
+  /** Effective permissions (role + overrides), for hiding controls the API will refuse. */
+  permissions: string[];
   login: (email: string, password: string) => Promise<{ mfaRequired?: boolean; mfaToken?: string; landingPage?: LandingPage; mustChangePassword?: boolean }>;
   loginMfa: (mfaToken: string, code: string) => Promise<LandingPage | undefined>;
   /** Finish a sign-in that produced a token elsewhere, and load the profile. */
@@ -107,6 +112,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u => (u ? { ...u, mustChangePassword: false } : u));
   }, []);
 
+  // The API enforces permissions; this mirror is only so the UI can hide controls
+  // it knows will be refused (role and permission editing, for instance).
+  const permissions = useMemo(() => {
+    const role = user?.role;
+    const systemRole = typeof role === "string" ? role : role?.systemRole;
+    const rolePerms: string[] = typeof role === "object" && role?.permissions?.length
+      ? role.permissions
+      : (ROLE_PERMISSIONS[systemRole as SystemRole] ?? []);
+    return [...new Set([...rolePerms, ...(user?.permissions ?? [])])];
+  }, [user]);
+
   const logout = useCallback(() => {
     localStorage.removeItem("c7_token");
     localStorage.removeItem("c7_user");
@@ -119,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, landingPage, login, loginMfa, completeSignIn, markPasswordChanged, logout, setLandingPage }}>
+    <AuthContext.Provider value={{ user, token, loading, landingPage, permissions, login, loginMfa, completeSignIn, markPasswordChanged, logout, setLandingPage }}>
       {children}
     </AuthContext.Provider>
   );

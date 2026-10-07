@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { readFileSync, statSync } from "fs";
 import { resolve } from "path";
-import { authenticate, type AuthRequest } from "../middleware/auth";
+import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { prisma } from "../index";
 import { getRetryCount, getRecoveryLog, resetPoller, isPaused } from "../services/poller";
+import { AppError } from "../middleware/errorHandler";
+import { Permission } from "@C7NTAX/shared";
 
 export const systemRouter = Router();
 systemRouter.use(authenticate);
@@ -116,6 +118,30 @@ systemRouter.post("/calendar-sync", async (req: AuthRequest, res, next) => {
 
 // ── System Config (landing page, etc.) ──
 
+/**
+ * Keys the application itself writes from ordinary screens (Settings, System
+ * Settings). Anything else is administrative and needs `SystemConfig`.
+ */
+const SELF_SERVICE_CONFIG_KEYS = new Set(["app_settings", "session_timeout", "default_landing_page"]);
+
+/**
+ * Keys a request may never write, whoever is asking: connector credentials and
+ * OAuth handshake state are owned by the services that create them, and the
+ * sample-data switches change what the whole instance contains.
+ */
+const RESERVED_CONFIG_PREFIXES = ["email_connector:", "oauth", "sso:", "sample_data"];
+const RESERVED_CONFIG_PATTERN = /secret|token|password|credential|apikey|api_key|private_?key/i;
+
+function assertConfigWriteAllowed(user: AuthRequest["user"], key: string): void {
+  if (RESERVED_CONFIG_PREFIXES.some(p => key.startsWith(p)) || RESERVED_CONFIG_PATTERN.test(key)) {
+    throw new AppError("That setting is managed by the system and cannot be edited here", 403);
+  }
+  const isAdmin = !!user?.permissions?.includes(Permission.SystemConfig);
+  if (!isAdmin && !SELF_SERVICE_CONFIG_KEYS.has(key)) {
+    throw new AppError("Insufficient permissions", 403);
+  }
+}
+
 systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
   try {
     const config = await prisma.systemConfig.findUnique({ where: { key: req.params.key } });
@@ -126,6 +152,7 @@ systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
 
 systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
   try {
+    assertConfigWriteAllowed(req.user, String(req.params.key));
     const config = await prisma.systemConfig.upsert({
       where: { key: req.params.key },
       create: { key: req.params.key, value: JSON.stringify(req.body.value) },
@@ -135,7 +162,8 @@ systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
-systemRouter.get("/configs", async (_req: AuthRequest, res, next) => {
+// The full config dump is an administrative view: it contains connector and SSO state.
+systemRouter.get("/configs", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try {
     const configs = await prisma.systemConfig.findMany();
     const map: Record<string, unknown> = {};
@@ -160,6 +188,7 @@ systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
 // ── Save system config ──
 systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
   try {
+    assertConfigWriteAllowed(req.user, String(req.params.key));
     const { key } = req.params;
     const value = typeof req.body.value === "string" ? req.body.value : JSON.stringify(req.body.value);
     await prisma.systemConfig.upsert({ where: { key }, create: { key, value }, update: { value } });
