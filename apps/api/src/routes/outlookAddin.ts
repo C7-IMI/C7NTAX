@@ -29,7 +29,12 @@ async function recordSeen(ids: string[]): Promise<void> {
 }
 
 outlookAddinRouter.use((_req, res, next) => {
-  if (!configFlag("integrations", "outlookAddin")) return res.status(404).json({ error: "Outlook add-in disabled" });
+  // The field moved from the `integrations` area to `apps` (Client Apps & Notifications) in
+  // BuildNotes 2026.10.7.030. This read was left behind, and `configValue` answers "" for a field
+  // the registry does not declare — so it failed closed and the endpoint returned 404 for every
+  // request while the switch showed as on. `scripts/check-config-reads.mts` now guards this class
+  // of drift, because a stale area fails silently and disabling a live feature looks like nothing.
+  if (!configFlag("apps", "outlookAddin")) return res.status(404).json({ error: "Outlook add-in disabled" });
   next();
 });
 outlookAddinRouter.use(authenticate);

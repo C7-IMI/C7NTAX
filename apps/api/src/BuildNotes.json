@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.7.032",
+    "date": "2026-10-07",
+    "title": "The add-in endpoint was dead, and a mockup for the flow that replaces it",
+    "changes": [
+      {
+        "text": "**`POST /api/outlook-addin/tickets` answered `404 \"Outlook add-in disabled\"` unconditionally.** `routes/outlookAddin.ts` read `configFlag(\"integrations\", \"outlookAddin\")`, and the field moved from `integrations` to `apps` (Client Apps & Notifications) in 2026.10.7.030. `configValue` answers `\"\"` for a field the registry does not declare, `configFlag` reads that as `false`, and the gate therefore failed **closed** — the taskpane was served, every screen said the feature was on, and the only thing that could actually create a ticket was unreachable. Confirmed live: `404 {\"error\":\"Outlook add-in disabled\"}` before, `201 {\"created\":1, … \"ticketNumber\":\"MSP-1001-1001\"}` after.",
+        "type": "Fix"
+      },
+      {
+        "text": "**`scripts/check-config-reads.mts`** (`pnpm guard:config`) fails when any `configFlag`/`configText`/`configNumber` call names a field the registry does not declare, and names the area a missing field actually lives in. It reads the **real registry** rather than restating it — it runs through `tsx`, because `packages/shared` is TypeScript source with extensionless imports and plain `node` cannot load it. The sweep that found this bug found **exactly one** stale read across 43; the same sweep now passes, and re-introducing the stale area makes it fail.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`docs/mockups/outlook-addin-ticket-flow.html`** — an interactive design mockup of the flow for creating tickets from one or several selected messages. Self-contained, no build step, no API calls: a simulation rail for the selection (1, 3, or 5 messages) and the Outlook theme, the taskpane at its real 360px width inside a suggestion of Outlook's chrome, and per-screen design notes for review. Covers:",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.031",
     "date": "2026-10-07",
     "title": "The Outlook add-in becomes installable: a generated manifest, a Windows installer, and a C7NC section",

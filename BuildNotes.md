@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.031 | Last Updated: 2026-10-07
+## Version: 2026.10.7.032 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,24 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.032 — The add-in endpoint was dead, and a mockup for the flow that replaces it
+
+Started on a design mockup and found, on the way in, that the endpoint the mockup is about had been returning 404 for every request since the switch moved areas.
+
+- **[Fix]** **`POST /api/outlook-addin/tickets` answered `404 "Outlook add-in disabled"` unconditionally.** `routes/outlookAddin.ts` read `configFlag("integrations", "outlookAddin")`, and the field moved from `integrations` to `apps` (Client Apps & Notifications) in 2026.10.7.030. `configValue` answers `""` for a field the registry does not declare, `configFlag` reads that as `false`, and the gate therefore failed **closed** — the taskpane was served, every screen said the feature was on, and the only thing that could actually create a ticket was unreachable. Confirmed live: `404 {"error":"Outlook add-in disabled"}` before, `201 {"created":1, … "ticketNumber":"MSP-1001-1001"}` after.
+- **[New]** **`scripts/check-config-reads.mts`** (`pnpm guard:config`) fails when any `configFlag`/`configText`/`configNumber` call names a field the registry does not declare, and names the area a missing field actually lives in. It reads the **real registry** rather than restating it — it runs through `tsx`, because `packages/shared` is TypeScript source with extensionless imports and plain `node` cannot load it. The sweep that found this bug found **exactly one** stale read across 43; the same sweep now passes, and re-introducing the stale area makes it fail.
+- **[New]** **`docs/mockups/outlook-addin-ticket-flow.html`** — an interactive design mockup of the flow for creating tickets from one or several selected messages. Self-contained, no build step, no API calls: a simulation rail for the selection (1, 3, or 5 messages) and the Outlook theme, the taskpane at its real 360px width inside a suggestion of Outlook's chrome, and per-screen design notes for review. Covers:
+  - **Several messages:** a sheet asking *one ticket each* or *one ticket with the rest attached*, each option stating its outcome in tickets rather than in prose, and nothing proceeding until the choice is actually made.
+  - **Bundling:** pick which message becomes the ticket (its subject, body and contact become the ticket's) and which of the others ride along as attachments, independently of that choice.
+  - **The preview question:** a sheet asking whether to review before anything is submitted, with "Create now" left one click away so the review is not a tax on speed.
+  - **The review:** every field the server will fill in shown as an editable field — board, client, contact, subject, description, priority, read-only source — with matches stated in green and **unmatched senders in amber**, which is the failure the screen exists to catch. Several tickets collapse to summary rows with one open at a time, because a 360px pane cannot hold five forms.
+  - **The result:** per-message outcomes, since "3 created" does not say which of the user's messages was already done — skipped rows carry their reason.
+- **Not implemented.** The mockup is a design artifact; no part of the new flow is in the add-in yet.
+- **Rollback:** the endpoint fix is one string, and `guard:config` is additive — removing its `package.json` line and the script leaves everything else untouched. The mockup is a standalone file nothing references at runtime.
+- **Verification:** the endpoint was exercised live against the running API — 404 before the fix, 400 `boardId required` after the middleware passed, and **201 with a real ticket (`MSP-1001-1001`)** on a real board. `guard:config` reports 43 reads across 133 files with none stale, and was run against the unfixed code, where it reported exactly `integrations.outlookAddin` read by `src/routes/outlookAddin.ts`. The mockup was driven in the browser through all three scenarios and both branches: single-email (skips the bundle question), 3-message bundled, and 5-message individual with unmatched senders; Back was checked to return to the entry screen in individual mode and to the bundling step in bundled mode, "Create now" was checked to skip the review entirely, the dark theme was checked to apply, and **no screen overflows the pane** (measured, since a layout break is what a screenshot would have shown). No console errors. API typecheck 150, the pre-existing baseline.
 
 ---
 

@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>C7NTAX — Outlook add-in: ticket flow mockup</title>
+<!--
+  A design mockup, not the add-in.
+
+  Nothing here talks to the API and no file in this document is part of the shipped add-in.
+  It exists to agree on the flow before it is built: what happens to one selected message, what
+  happens to several, where the customer is asked to choose, and where they get to check what
+  is about to be submitted.
+
+  It is deliberately a single self-contained file so it can be opened by anyone, reviewed, and
+  thrown away once the real thing exists.
+-->
+<style>
+  /* ── Tokens ──────────────────────────────────────────────────────────────
+     The taskpane palette, not the web application's. The add-in renders inside
+     Outlook and has to sit next to Outlook's own chrome, so it stays a light
+     neutral surface with a single brand colour, and follows the host's theme. */
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #f1f2f5;
+    --fg: #1b1b1f;
+    --fg-2: #52525b;
+    --muted: #71717a;
+    --border: #e2e3e8;
+    --border-strong: #cfd1d8;
+    --brand: #c8102e;
+    --brand-soft: #fdecef;
+    --ok: #047857;
+    --ok-soft: #e7f6f0;
+    --warn: #b45309;
+    --warn-soft: #fdf3e3;
+    --shadow: 0 10px 30px rgba(15, 18, 25, .12);
+  }
+
+  html[data-theme="dark"] {
+    --bg: #0e0f12;
+    --surface: #17181c;
+    --surface-2: #1f2026;
+    --fg: #f2f2f4;
+    --fg-2: #c3c4cb;
+    --muted: #9a9aa5;
+    --border: #2b2c33;
+    --border-strong: #3a3b44;
+    --brand: #ff5a6e;
+    --brand-soft: #2a1419;
+    --ok: #4ade80;
+    --ok-soft: #12261d;
+    --warn: #fbbf24;
+    --warn-soft: #2a2110;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Outside the pane: the review scaffolding ─────────────────────────── */
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+    display: grid;
+    grid-template-columns: 265px minmax(0, 1fr) 300px;
+    gap: 26px;
+    align-items: start;
+  }
+
+  @media (max-width: 1080px) {
+    .page { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .page h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: -.01em; }
+  .page .lede { color: var(--muted); font-size: 12.5px; margin: 0 0 18px; }
+
+  .rail { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 18px; }
+
+  .rail h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); margin: 0 0 8px; font-weight: 600;
+  }
+
+  .seg { display: flex; flex-direction: column; gap: 6px; }
+
+  .seg button {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    text-align: left; padding: 9px 11px; font: inherit; font-size: 13px;
+    background: var(--surface); color: var(--fg); border: 1px solid var(--border);
+    border-radius: 9px; cursor: pointer;
+  }
+  .seg button:hover { border-color: var(--border-strong); }
+  .seg button[aria-pressed="true"] {
+    border-color: var(--brand); background: var(--brand-soft); color: var(--fg);
+    font-weight: 600;
+  }
+  .seg button .count {
+    font-size: 11px; color: var(--muted); font-weight: 400;
+  }
+  .seg button[aria-pressed="true"] .count { color: var(--brand); }
+
+  .swatches { display: flex; gap: 6px; }
+  .swatches button {
+    flex: 1; padding: 8px; font: inherit; font-size: 12.5px; cursor: pointer;
+    background: var(--surface); color: var(--fg); border: 1px solid var(--border);
+    border-radius: 9px;
+  }
+  .swatches button[aria-pressed="true"] { border-color: var(--brand); font-weight: 600; }
+
+  /* ── The pane itself ──────────────────────────────────────────────────── */
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+  .window {
+    width: 100%; max-width: 660px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: var(--shadow); overflow: hidden;
+  }
+
+  /* A suggestion of Outlook's reading pane, so the pane is judged in context:
+     how much room it actually has, and what it sits beside. */
+  .host {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+  }
+  .host .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); }
+  .host .subject { color: var(--fg-2); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .pane {
+    position: relative; display: flex; flex-direction: column;
+    width: 360px; max-width: 100%; margin: 0 auto; height: 620px;
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .pane-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border-bottom: 1px solid var(--border); flex: 0 0 auto;
+  }
+  .pane-head .mark {
+    width: 22px; height: 22px; border-radius: 6px; background: var(--brand);
+    color: #fff; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pane-head .title { font-weight: 600; font-size: 13px; flex: 1; }
+
+  .steps { display: flex; align-items: center; gap: 6px; padding: 9px 12px 0; flex: 0 0 auto; }
+  .steps span {
+    height: 3px; flex: 1; border-radius: 2px; background: var(--border);
+  }
+  .steps span.on { background: var(--brand); }
+
+  .pane-body {
+    flex: 1 1 auto; overflow-y: auto; padding: 12px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  .pane-foot {
+    flex: 0 0 auto; padding: 10px 12px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px; background: var(--surface);
+  }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+
+  /* ── Controls ─────────────────────────────────────────────────────────── */
+  button, select, input, textarea { font: inherit; }
+
+  .btn {
+    padding: 9px 12px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg);
+    font-size: 13px; font-weight: 500;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn-primary {
+    background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600;
+  }
+  .btn-primary:hover { filter: brightness(1.06); }
+  .btn-ghost { border-color: transparent; color: var(--muted); font-weight: 500; padding: 6px 8px; }
+  .btn-ghost:hover { color: var(--fg); border-color: transparent; }
+  .btn-block { width: 100%; }
+  .btn:disabled { opacity: .5; cursor: default; }
+
+  .label { font-size: 11.5px; font-weight: 600; color: var(--fg-2); margin-bottom: 4px; display: block; }
+  .field { margin-bottom: 10px; }
+  .field:last-child { margin-bottom: 0; }
+  select, input[type="text"], textarea {
+    width: 100%; padding: 8px 9px; border-radius: 8px;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg);
+    font-size: 13px;
+  }
+  textarea { resize: vertical; min-height: 84px; line-height: 1.5; }
+  select:focus, input:focus, textarea:focus, .btn:focus-visible, .pick:focus-visible {
+    outline: 2px solid var(--brand); outline-offset: 1px;
+  }
+  .hint { font-size: 11.5px; color: var(--muted); margin: 5px 0 0; }
+  .hint.ok { color: var(--ok); }
+  .hint.warn { color: var(--warn); }
+
+  .card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 11px;
+    background: var(--surface);
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-bottom: 9px;
+  }
+  .card-head h3 { font-size: 12.5px; margin: 0; font-weight: 600; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 999px;
+    border: 1px solid transparent; white-space: nowrap;
+  }
+  .chip-neutral { background: var(--surface-2); color: var(--muted); border-color: var(--border); }
+  .chip-brand { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+  .chip-ok { background: var(--ok-soft); color: var(--ok); }
+  .chip-warn { background: var(--warn-soft); color: var(--warn); }
+
+  /* ── Message rows ─────────────────────────────────────────────────────── */
+  .msg {
+    display: flex; gap: 9px; align-items: flex-start; padding: 9px;
+    border: 1px solid var(--border); border-radius: 9px; background: var(--surface);
+  }
+  .msg + .msg { margin-top: 7px; }
+  .avatar {
+    flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--surface-2); color: var(--fg-2); font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .msg-body { min-width: 0; flex: 1; }
+  .msg-who { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg-sub { font-size: 12px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .msg-right { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+  /* A whole-row target: in a 360px pane a 14px checkbox is a poor target, and
+     the row is one decision, not two. */
+  .pick {
+    display: flex; gap: 9px; align-items: flex-start; width: 100%; text-align: left;
+    padding: 9px; border: 1px solid var(--border); border-radius: 9px;
+    background: var(--surface); color: var(--fg); cursor: pointer;
+  }
+  .pick + .pick { margin-top: 7px; }
+  .pick:hover { border-color: var(--border-strong); }
+  .pick[aria-checked="true"] { border-color: var(--brand); background: var(--brand-soft); }
+  .pick .tick {
+    flex: 0 0 auto; width: 16px; height: 16px; margin-top: 2px; border-radius: 50%;
+    border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center;
+  }
+  .pick[aria-checked="true"] .tick { border-color: var(--brand); background: var(--brand); }
+  .pick[aria-checked="true"] .tick::after {
+    content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff;
+  }
+  .pick .tick.square { border-radius: 5px; }
+  .pick[aria-checked="true"] .tick.square::after {
+    content: "✓"; background: none; color: #fff; font-size: 11px; line-height: 1; width: auto; height: auto;
+  }
+
+  /* ── Modal sheets ─────────────────────────────────────────────────────────
+     In-pane sheets rather than windows: Office dialogs are heavyweight and the
+     taskpane is the surface the user is already in. */
+  .scrim {
+    position: absolute; inset: 0; background: rgba(12, 14, 18, .42);
+    display: flex; align-items: flex-end; z-index: 5;
+  }
+  .sheet {
+    width: 100%; background: var(--surface); border-top-left-radius: 14px;
+    border-top-right-radius: 14px; border-top: 1px solid var(--border);
+    padding: 14px 12px 12px; display: flex; flex-direction: column; gap: 10px;
+    animation: rise .18s ease-out;
+  }
+  @keyframes rise { from { transform: translateY(14px); opacity: .6; } to { transform: none; opacity: 1; } }
+  .sheet h2 { font-size: 14px; margin: 0; }
+  .sheet p { margin: 0; font-size: 12.5px; color: var(--fg-2); }
+
+  .opt {
+    display: block; width: 100%; text-align: left; cursor: pointer; font: inherit;
+    border: 1px solid var(--border); border-radius: 10px; padding: 11px;
+    background: var(--surface); color: var(--fg);
+  }
+  .opt:hover { border-color: var(--border-strong); }
+  .opt[aria-checked="true"] { border-color: var(--brand); background: var(--brand-soft); }
+  .opt .opt-title { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .opt .opt-sub { font-size: 12px; color: var(--fg-2); margin-top: 3px; }
+
+  /* ── Results ──────────────────────────────────────────────────────────── */
+  .result { display: flex; gap: 9px; align-items: center; padding: 9px; border: 1px solid var(--border); border-radius: 9px; }
+  .result + .result { margin-top: 7px; }
+  .result .num { font-size: 12px; font-weight: 700; }
+  .result .sub { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result.skipped { opacity: .72; }
+  .result .state { margin-left: auto; flex: 0 0 auto; }
+
+  .att {
+    display: flex; align-items: center; gap: 7px; font-size: 12px;
+    padding: 7px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2);
+  }
+  .att + .att { margin-top: 6px; }
+  .att .name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .empty { text-align: center; padding: 22px 10px; color: var(--muted); font-size: 12.5px; }
+
+  /* ── Design notes ─────────────────────────────────────────────────────── */
+  .notes { position: sticky; top: 24px; }
+  .notes .note {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 11px 12px; font-size: 12.5px; color: var(--fg-2); line-height: 1.55;
+  }
+  .notes h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+    margin: 0 0 8px; font-weight: 600;
+  }
+  .notes ul { margin: 8px 0 0; padding-left: 17px; }
+  .notes li { margin-bottom: 6px; }
+  .notes strong { color: var(--fg); }
+  .notes .skip { color: var(--muted); font-style: italic; }
+
+  .caption { font-size: 11.5px; color: var(--muted); text-align: center; max-width: 660px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Simulation rail ─────────────────────────────────────────────────── -->
+  <aside class="rail">
+    <div>
+      <h1>C7NTAX — Outlook add-in</h1>
+      <p class="lede">Ticket creation flow. Interactive mockup; nothing is submitted.</p>
+    </div>
+
+    <div>
+      <h2>Simulate the selection</h2>
+      <div class="seg" id="scenarios">
+        <button data-scenario="single" aria-pressed="true">
+          Single email <span class="count">1 message</span>
+        </button>
+        <button data-scenario="three">
+          Multiple emails <span class="count">3 messages</span>
+        </button>
+        <button data-scenario="many">
+          Multiple, with gaps <span class="count">5 messages</span>
+        </button>
+      </div>
+      <p class="hint" id="scenario-hint"></p>
+    </div>
+
+    <div>
+      <h2>Outlook theme</h2>
+      <div class="swatches" id="themes">
+        <button data-theme="light" aria-pressed="true">Light</button>
+        <button data-theme="dark" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+
+    <div>
+      <h2>Review tools</h2>
+      <div class="seg">
+        <button id="notes-toggle" aria-pressed="true">
+          Design notes <span class="count">shown</span>
+        </button>
+        <button id="restart">Restart the flow</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── The pane ────────────────────────────────────────────────────────── -->
+  <main class="stage">
+    <div class="window">
+      <div class="host">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="subject" id="host-subject">Inbox — 1 of 342</span>
+      </div>
+      <div class="pane">
+        <div class="pane-head">
+          <div class="mark">C7</div>
+          <div class="title">C7NTAX</div>
+          <button class="btn-ghost" id="signout" type="button">Sign out</button>
+        </div>
+        <div class="steps" id="steps"></div>
+        <div class="pane-body" id="body"></div>
+        <div class="pane-foot" id="foot"></div>
+        <div id="sheet"></div>
+      </div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </main>
+
+  <!-- ── Design notes ────────────────────────────────────────────────────── -->
+  <aside class="notes" id="notes"></aside>
+</div>
+
+<script>
+/* ── The simulated selection ────────────────────────────────────────────────
+   Shaped like the payload the add-in already posts: sender, subject, body and a
+   per-message dedup state. The "already has a ticket" flag is real behaviour --
+   the endpoint answers `skipped` with a reason, per message. */
+const SENDERS = {
+  jane:   { name: "Jane Doe",        email: "jane.doe@contoso.com",        company: "Contoso Ltd",    initials: "JD" },
+  marcus: { name: "Marcus Hale",     email: "marcus.hale@northwind.com",  company: "Northwind Traders", initials: "MH" },
+  priya:  { name: "Priya Raman",     email: "priya.raman@fabrikam.com",   company: "Fabrikam Inc",   initials: "PR" },
+  tom:    { name: "Tom Beckett",     email: "tom.beckett@gmail.com",      company: null,             initials: "TB" },
+  sara:   { name: "Sara Okafor",     email: "sara.okafor@contoso.com",    company: "Contoso Ltd",    initials: "SO" }
+};
+
+const SCENARIOS = {
+  single: {
+    host: "RE: VPN keeps dropping on the 3rd floor",
+    hint: "One message selected. No bundle choice to make — the flow goes straight to whether you want to look first.",
+    emails: [
+      {
+        id: "m1", sender: SENDERS.jane, subject: "VPN keeps dropping on the 3rd floor",
+        received: "09:42", hasAttachment: false, already: false,
+        body: "Hi team,\n\nSince yesterday afternoon the VPN drops every few minutes on the third floor. It reconnects on its own but it interrupts calls.\n\nNothing changed on our side that I know of.\n\nThanks,\nJane"
+      }
+    ]
+  },
+  three: {
+    host: "Inbox — 3 conversations selected",
+    hint: "Three messages from three different clients. One of them already has a ticket, which is the case the flow has to be honest about before the user has chosen anything.",
+    emails: [
+      {
+        id: "m1", sender: SENDERS.jane, subject: "VPN keeps dropping on the 3rd floor",
+        received: "09:42", hasAttachment: false, already: false,
+        body: "Hi team,\n\nSince yesterday afternoon the VPN drops every few minutes on the third floor. It reconnects on its own but it interrupts calls.\n\nThanks,\nJane"
+      },
+      {
+        id: "m2", sender: SENDERS.marcus, subject: "New starter setup for next Monday",
+        received: "08:15", hasAttachment: true, already: false,
+        body: "Morning,\n\nWe have a new starter joining the finance team on Monday. Could you set up a laptop, a mailbox and access to the shared drive?\n\nHis details are in the attached form.\n\nRegards,\nMarcus"
+      },
+      {
+        id: "m3", sender: SENDERS.priya, subject: "Invoice 4471 question",
+        received: "Yesterday", hasAttachment: false, already: true,
+        body: "Hi,\n\nInvoice 4471 looks like it has last month's support line on it twice. Can you check?\n\nPriya"
+      }
+    ]
+  },
+  many: {
+    host: "Inbox — 5 conversations selected",
+    hint: "Five messages, two of which come from senders with no matching client in C7NTAX — the case the preview exists for, because the fields it is about to fill in are wrong and nobody would know.",
+    emails: [
+      {
+        id: "m1", sender: SENDERS.jane, subject: "VPN keeps dropping on the 3rd floor",
+        received: "09:42", hasAttachment: false, already: false,
+        body: "Hi team,\n\nSince yesterday afternoon the VPN drops every few minutes on the third floor.\n\nThanks,\nJane"
+      },
+      {
+        id: "m2", sender: SENDERS.marcus, subject: "New starter setup for next Monday",
+        received: "08:15", hasAttachment: true, already: false,
+        body: "Morning,\n\nWe have a new starter joining the finance team on Monday. Laptop, mailbox and shared drive access, please.\n\nRegards,\nMarcus"
+      },
+      {
+        id: "m3", sender: SENDERS.tom, subject: "Can't log into the portal",
+        received: "07:58", hasAttachment: false, already: false, unmatched: true,
+        body: "Hi, I'm locked out of the customer portal. It says my code has expired but I only just got it.\n\nTom"
+      },
+      {
+        id: "m4", sender: SENDERS.sara, subject: "Renewal quote for the firewall",
+        received: "Yesterday", hasAttachment: true, already: false,
+        body: "Hello,\n\nOur firewall licence is up for renewal next month. Could you send over a quote?\n\nSara"
+      },
+      {
+        id: "m5", sender: SENDERS.priya, subject: "Invoice 4471 question",
+        received: "Yesterday", hasAttachment: false, already: true,
+        body: "Hi,\n\nInvoice 4471 looks like it has last month's support line on it twice.\n\nPriya"
+      }
+    ]
+  }
+};
+
+const BOARDS = ["Infrastructure Desk", "Service Desk", "Intelligence Desk"];
+const PRIORITIES = ["Low", "Normal", "High", "Urgent"];
+
+/* ── State ──────────────────────────────────────────────────────────────── */
+const state = {
+  scenario: "single",
+  screen: "entry",      // entry | bundle | preview | result
+  sheet: null,          // mode | previewAsk | null
+  mode: null,           // individual | bundled
+  parentId: null,
+  attached: {},         // id -> boolean, for bundled mode
+  board: BOARDS[0],
+  emails: [],
+  edits: {},            // id -> { client, contact, subject, description, priority }
+  showNotes: true,
+  results: null
+};
+
+function scenarioEmails(key) {
+  return SCENARIOS[key].emails.map(e => ({ ...e }));
+}
+
+function reset(key = state.scenario) {
+  state.scenario = key;
+  state.emails = scenarioEmails(key);
+  state.screen = "entry";
+  state.sheet = null;
+  state.mode = null;
+  state.parentId = state.emails[0].id;
+  state.attached = {};
+  state.board = BOARDS[0];
+  state.edits = {};
+  state.results = null;
+  state.openEdit = undefined;
+  for (const e of state.emails) {
+    // Only messages that can actually be filed default to attached; one that already has a ticket
+    // is never offered, so it must not be pre-counted either.
+    state.attached[e.id] = !e.already;
+    state.edits[e.id] = {
+      client: e.sender.company ?? "",
+      contact: e.sender.name,
+      subject: e.subject,
+      description: e.body,
+      priority: "Normal"
+    };
+  }
+}
+
+/* ── Small helpers ──────────────────────────────────────────────────────── */
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const active = () => state.emails.filter(e => !e.already);
+
+/**
+ * What will actually ride along: only the messages eligible to be filed, minus the parent.
+ *
+ * Filtered against `active()` rather than trusting `state.attached` on its own, because a message
+ * that already has a ticket is not offered as an attachment — and counting it made the footer
+ * disagree with the list above it.
+ */
+const attachedIds = () =>
+  active().filter(e => e.id !== state.parentId && state.attached[e.id]).map(e => e.id);
+
+/** "the other message" / "the other 2 messages" — reads as English either way. */
+const otherLabel = (n) => (n === 1 ? "message" : `${n} messages`);
+
+const STEPS = {
+  entry: 1,
+  bundle: 2,
+  preview: 3,
+  result: 4
+};
+
+/* ── Screens ────────────────────────────────────────────────────────────── */
+function renderSteps() {
+  const total = state.mode === "bundled" || state.emails.length === 1 ? 4 : 4;
+  const current = STEPS[state.screen];
+  document.getElementById("steps").innerHTML =
+    Array.from({ length: total }, (_, i) => `<span class="${i < current ? "on" : ""}"></span>`).join("");
+}
+
+function msgRow(email, right = "") {
+  const s = email.sender;
+  return `
+    <div class="msg">
+      <div class="avatar">${s.initials}</div>
+      <div class="msg-body">
+        <div class="msg-who">${esc(s.name)}</div>
+        <div class="msg-sub">${esc(email.subject)}</div>
+        <div class="msg-meta">${esc(s.email)} · ${esc(email.received)}${email.hasAttachment ? " · 📎 attachment" : ""}</div>
+      </div>
+      ${right ? `<div class="msg-right">${right}</div>` : ""}
+    </div>`;
+}
+
+function screenEntry() {
+  const n = state.emails.length;
+  const already = state.emails.filter(e => e.already).length;
+  const fresh = n - already;
+
+  const body = `
+    <div class="card">
+      <div class="card-head">
+        <h3>${plural(n, "message", "messages")} selected</h3>
+        <span class="chip chip-neutral">from Outlook</span>
+      </div>
+      ${state.emails.map(e => msgRow(e, e.already ? `<span class="chip chip-warn">Has a ticket</span>` : "")).join("")}
+    </div>
+
+    <div class="field">
+      <label class="label" for="board">Board</label>
+      <select id="board">${BOARDS.map(b => `<option${b === state.board ? " selected" : ""}>${esc(b)}</option>`).join("")}</select>
+      <p class="hint">Where the ticket goes. Everything else is filled in from the message, and you can change it before it is submitted.</p>
+    </div>
+
+    ${already ? `<p class="hint warn">${plural(already, "message already has", "messages already have")} a ticket and will be skipped, so ${plural(fresh, "ticket", "tickets")} will be created.</p>` : ""}
+  `;
+
+  const foot = `
+    <button class="btn btn-primary btn-block" id="go">
+      ${n === 1 ? "Create ticket" : `Create ${plural(fresh, "ticket", "tickets")}…`}
+    </button>
+    <p class="hint" style="text-align:center;margin:0">${n === 1 ? "You'll be asked whether to review it first." : "You'll be asked how to handle them, then whether to review."}</p>
+  `;
+
+  return { body, foot };
+}
+
+function screenBundle() {
+  const candidates = active();
+  const parent = candidates.find(e => e.id === state.parentId) ?? candidates[0];
+  const others = candidates.filter(e => e.id !== parent.id);
+
+  const body = `
+    <div>
+      <p class="label" style="margin-bottom:7px">Which message becomes the ticket?</p>
+      ${candidates.map(e => `
+        <button class="pick" role="radio" aria-checked="${e.id === state.parentId}" data-parent="${e.id}" type="button">
+          <span class="tick"></span>
+          <span class="msg-body">
+            <span class="msg-who">${esc(e.sender.name)}</span>
+            <span class="msg-sub">${esc(e.subject)}</span>
+          </span>
+          ${e.id === state.parentId ? `<span class="chip chip-brand">The ticket</span>` : ""}
+        </button>`).join("")}
+      <p class="hint">Its subject, body and contact become the ticket's, so pick the message that describes the work.</p>
+    </div>
+
+    <div>
+      <p class="label" style="margin-bottom:7px">Attach the other ${otherLabel(others.length)}</p>
+      ${others.map(e => `
+        <button class="pick" role="checkbox" aria-checked="${!!state.attached[e.id]}" data-attach="${e.id}" type="button">
+          <span class="tick square"></span>
+          <span class="msg-body">
+            <span class="msg-who">${esc(e.sender.name)}</span>
+            <span class="msg-sub">${esc(e.subject)}</span>
+          </span>
+        </button>`).join("")}
+      <p class="hint">Attached messages ride along as attachments on the one ticket, so a reply can point at the whole thread.</p>
+    </div>
+  `;
+
+  const count = attachedIds().length;
+  const foot = `
+    <div class="row">
+      <button class="btn" id="back">Back</button>
+      <button class="btn btn-primary" id="go" style="flex:2">Continue</button>
+    </div>
+    <p class="hint" style="text-align:center;margin:0">1 ticket with ${plural(count, "attachment", "attachments")}</p>
+  `;
+
+  return { body, foot };
+}
+
+function screenPreview() {
+  if (state.mode === "bundled") {
+    const parent = state.emails.find(e => e.id === state.parentId);
+    const edit = state.edits[parent.id];
+    const attached = attachedIds().map(id => state.emails.find(e => e.id === id));
+
+    const body = `
+      <div class="card">
+        <div class="card-head">
+          <h3>What will be submitted</h3>
+          <span class="chip chip-brand">1 ticket</span>
+        </div>
+        <p class="hint" style="margin:0">From <strong>${esc(parent.sender.name)}</strong> · ${esc(parent.sender.email)}</p>
+      </div>
+
+      ${fieldBlock(edit, parent, "b")}
+
+      <div>
+        <p class="label">Attachments</p>
+        ${attached.map(e => `
+          <div class="att">
+            <span aria-hidden="true">📎</span>
+            <span class="name">${esc(e.subject)}</span>
+            <span class="chip chip-neutral">email</span>
+          </div>`).join("") || `<p class="hint">No other messages attached.</p>`}
+        ${parent.hasAttachment ? `
+          <div class="att">
+            <span aria-hidden="true">📎</span>
+            <span class="name">New starter form.docx</span>
+            <span class="chip chip-neutral">from the message</span>
+          </div>` : ""}
+      </div>
+    `;
+
+    const foot = `
+      <div class="row">
+        <button class="btn" id="back">Back</button>
+        <button class="btn btn-primary" id="go" style="flex:2">Create ticket</button>
+      </div>
+    `;
+    return { body, foot };
+  }
+
+  // Individual: one editable block per message, collapsed to a summary.
+  const list = active();
+  const body = `
+    <div class="card">
+      <div class="card-head">
+        <h3>What will be submitted</h3>
+        <span class="chip chip-brand">${plural(list.length, "ticket", "tickets")}</span>
+      </div>
+      <p class="hint" style="margin:0">${list.length === 1
+        ? "Check and edit what will be filled in before it is submitted."
+        : "Each message becomes its own ticket. Open one to change what will be filled in."}</p>
+    </div>
+    ${list.map((e, i) => {
+      const open = state.openEdit === e.id || (state.openEdit === undefined && i === 0);
+      return `
+      <div class="card" style="${open ? "" : "padding:0"}">
+        ${open ? `
+          <div class="card-head">
+            <h3>${esc(e.sender.name)}</h3>
+            <button class="btn-ghost" data-close="${e.id}" type="button">Done</button>
+          </div>
+          ${fieldBlock(state.edits[e.id], e, "i-" + e.id)}
+        ` : `
+          <button class="pick" data-open="${e.id}" type="button" style="border:none;border-radius:10px">
+            <span class="avatar">${e.sender.initials}</span>
+            <span class="msg-body">
+              <span class="msg-who">${esc(state.edits[e.id].subject)}</span>
+              <span class="msg-sub">${esc(e.sender.name)} · ${esc(state.edits[e.id].client || "no client matched")}</span>
+            </span>
+            <span class="chip chip-neutral">Edit</span>
+          </button>
+        `}
+      </div>`;
+    }).join("")}
+  `;
+
+  const foot = `
+    <div class="row">
+      <button class="btn" id="back">Back</button>
+      <button class="btn btn-primary" id="go" style="flex:2">Create ${plural(list.length, "ticket", "tickets")}</button>
+    </div>
+  `;
+
+  return { body, foot };
+}
+
+/** The editable field set. Identical for one ticket and for each of several —
+ *  one shape to learn, and the same review whether you bundled or not. */
+function fieldBlock(edit, email, key) {
+  const unmatched = !edit.client;
+  const clientOptions = ["Contoso Ltd", "Northwind Traders", "Fabrikam Inc", "Choose a client…"];
+  return `
+    <div class="field">
+      <label class="label" for="f-board-${key}">Board</label>
+      <select id="f-board-${key}" data-field="board" data-key="${key}">
+        ${BOARDS.map(b => `<option${b === state.board ? " selected" : ""}>${esc(b)}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="label" for="f-client-${key}">Client</label>
+      <select id="f-client-${key}" data-field="client" data-key="${key}" data-msg="${email.id}">
+        <option value=""${unmatched ? " selected" : ""}>Not matched</option>
+        ${clientOptions.slice(0, 3).map(c => `<option${c === edit.client ? " selected" : ""}>${esc(c)}</option>`).join("")}
+      </select>
+      ${unmatched
+        ? `<p class="hint warn">No client matched <strong>${esc(email.sender.email)}</strong>. Pick one, or the ticket is created without a client.</p>`
+        : `<p class="hint ok">Matched from ${esc(email.sender.email)}</p>`}
+    </div>
+
+    <div class="field">
+      <label class="label" for="f-contact-${key}">Contact</label>
+      <input type="text" id="f-contact-${key}" data-field="contact" data-key="${key}" data-msg="${email.id}" value="${esc(edit.contact)}" />
+    </div>
+
+    <div class="field">
+      <label class="label" for="f-subject-${key}">Subject</label>
+      <input type="text" id="f-subject-${key}" data-field="subject" data-key="${key}" data-msg="${email.id}" value="${esc(edit.subject)}" />
+    </div>
+
+    <div class="field">
+      <label class="label" for="f-desc-${key}">Description</label>
+      <textarea id="f-desc-${key}" data-field="description" data-key="${key}" data-msg="${email.id}">${esc(edit.description)}</textarea>
+      <p class="hint">The message body, trimmed of the signature and quoted history.</p>
+    </div>
+
+    <div class="field">
+      <label class="label" for="f-priority-${key}">Priority</label>
+      <select id="f-priority-${key}" data-field="priority" data-key="${key}" data-msg="${email.id}">
+        ${PRIORITIES.map(p => `<option${p === edit.priority ? " selected" : ""}>${p}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="label">Source</label>
+      <input type="text" value="Email (Outlook add-in)" disabled />
+    </div>
+  `;
+}
+
+function screenResult() {
+  const r = state.results;
+  const body = `
+    <div class="card" style="text-align:center;padding:16px 11px">
+      <div style="font-size:26px;line-height:1">${r.skipped.length && !r.created.length ? "⚠️" : "✅"}</div>
+      <h3 style="margin:7px 0 3px;font-size:14px">${r.created.length ? plural(r.created.length, "ticket created", "tickets created") : "Nothing to create"}</h3>
+      <p class="hint" style="margin:0">
+        ${r.bundled
+          ? `One ticket, with ${otherLabel((r.attachments ?? []).length)} attached.`
+          : "One ticket per message."}
+        ${r.skipped.length ? ` ${plural(r.skipped.length, "message was", "messages were")} skipped.` : ""}
+      </p>
+    </div>
+
+    ${r.created.map(t => `
+      <div class="result">
+        <span class="num">${esc(t.number)}</span>
+        <span class="sub">${esc(t.subject)}</span>
+        <span class="state"><a href="#" onclick="return false" style="color:var(--brand);font-size:12px;font-weight:600">Open</a></span>
+      </div>`).join("")}
+
+    ${r.skipped.map(s => `
+      <div class="result skipped">
+        <span class="num" style="color:var(--muted)">—</span>
+        <span class="sub">${esc(s.subject)}</span>
+        <span class="state"><span class="chip chip-warn">${esc(s.reason)}</span></span>
+      </div>`).join("")}
+
+    ${r.attachments ? `
+      <div>
+        <p class="label">Attached to ${esc(r.created[0].number)}</p>
+        ${r.attachments.map(a => `
+          <div class="att"><span aria-hidden="true">📎</span><span class="name">${esc(a)}</span><span class="chip chip-neutral">email</span></div>`).join("")}
+      </div>` : ""}
+  `;
+
+  const foot = `
+    <button class="btn btn-primary btn-block" id="go">Create another</button>
+    <button class="btn btn-block" id="close">Close</button>
+  `;
+
+  return { body, foot };
+}
+
+/* ── Sheets ─────────────────────────────────────────────────────────────── */
+function sheetMode() {
+  const n = active().length;
+  const total = state.emails.length;
+  const dropped = total - n;
+  return `
+    <div class="scrim">
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="How should these messages become tickets">
+        <h2>${plural(total, "message", "messages")} selected</h2>
+        <p>How should ${n === 1 ? "it" : `the ${n} that will be filed`} become tickets?</p>
+        ${dropped ? `<p class="hint warn" style="margin:0">${plural(dropped, "message already has", "messages already have")} a ticket and will be skipped.</p>` : ""}
+
+        <button class="opt" role="radio" aria-checked="${state.mode === "individual"}" data-mode="individual" type="button">
+          <span class="opt-title">One ticket each <span class="chip chip-neutral">Most common</span></span>
+          <span class="opt-sub">${plural(n, "ticket", "tickets")}, one per message. Each keeps its own subject and stays in its own conversation.</span>
+        </button>
+
+        <button class="opt" role="radio" aria-checked="${state.mode === "bundled"}" data-mode="bundled" type="button">
+          <span class="opt-title">One ticket, the rest attached</span>
+          <span class="opt-sub">A single ticket. You pick which message is the ticket, and the ${n === 1 ? "others are" : "other " + (n - 1) + " are"} added to it as attachments.</span>
+        </button>
+
+        <div class="row" style="margin-top:2px">
+          <button class="btn" id="sheet-cancel" type="button">Cancel</button>
+          <button class="btn btn-primary" id="sheet-continue" type="button" ${state.mode ? "" : "disabled"}>Continue</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function sheetPreviewAsk() {
+  const n = state.mode === "bundled" ? 1 : active().length;
+  const what = n === 1 ? "the message" : "the messages";
+  return `
+    <div class="scrim">
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="Preview before creating">
+        <h2>Preview first?</h2>
+        <p>You can check and edit what will be filled in from ${what} — the client, contact, subject, description and priority — before ${n === 1 ? "the ticket is" : "any ticket is"} created.</p>
+        <div class="row">
+          <button class="btn" id="ask-skip" type="button">Create now</button>
+          <button class="btn btn-primary" id="ask-preview" type="button">Preview and edit</button>
+        </div>
+        <p class="hint" style="text-align:center;margin:0">Nothing is submitted until you confirm.</p>
+      </div>
+    </div>`;
+}
+
+/* ── Notes per screen ───────────────────────────────────────────────────── */
+const NOTES = {
+  entry: () => `
+    <h2>1 · On selection</h2>
+    <div class="note">
+      <strong>The pane opens already knowing what is selected</strong>, and says so with the messages themselves rather than a count. A count is not reviewable; three subject lines are.
+      <ul>
+        <li><strong>One primary action.</strong> Its label states the outcome — "Create 2 tickets" — so the count and the dedup arithmetic are visible before anything is chosen.</li>
+        <li>${state.emails.some(e => e.already)
+          ? "<strong>Already-has-a-ticket is shown here</strong>, not after submitting. Finding out at the end that one of three was ignored is the worst moment to find out."
+          : "<strong>Dedup is stated up front.</strong> When a selected message already has a ticket it is flagged on the row before the user commits to anything."}</li>
+        <li>The Board is the only choice on this screen, because it is the only thing that cannot be inferred from the message.</li>
+      </ul>
+    </div>`,
+  bundle: () => `
+    <h2>2 · Bundling</h2>
+    <div class="note">
+      <strong>Choosing the parent is a choice about the ticket's identity</strong>, so the rows are radio buttons and the chosen one is labelled "The ticket" rather than relying on a radio dot.
+      <ul>
+        <li><strong>Only the messages that will be created are offered</strong> — the ones already ticketed are absent, because they cannot become the parent.</li>
+        <li>Attaching is independent of choosing: any of the others can be left off, so "bundle" does not mean "all or nothing".</li>
+        <li>The footer states the consequence — "1 ticket with 2 attachments" — in the place the user is about to press.</li>
+      </ul>
+    </div>`,
+  preview: () => `
+    <h2>3 · Preview &amp; edit</h2>
+    <div class="note">
+      <strong>The same field set whether you bundled or not.</strong> One shape to learn, and the review is identical for one ticket or five.
+      <ul>
+        <li><strong>Every field the server will fill in is shown as a field</strong>, not as a summary. The user is looking at the actual submission, so "what will happen" needs no interpretation.</li>
+        <li><strong>Matched vs unmatched is stated</strong> — green where the sender resolved to a client, amber where nothing matched. A silently blank client is the failure this screen exists to catch.</li>
+        <li>Several tickets collapse to summary rows with one open at a time: a 360px pane cannot hold five forms, and it does not need to.</li>
+        <li>Source is shown read-only, because "this came from email" is a fact about the ticket, not a choice.</li>
+      </ul>
+    </div>`,
+  result: () => `
+    <h2>4 · Result</h2>
+    <div class="note">
+      <strong>Per message, always.</strong> "3 created" does not tell somebody which of their messages was already done — so each row names its message and its outcome, and skipped rows say why.
+      <ul>
+        <li>Ticket numbers are the useful thing to copy, so they lead the row.</li>
+        <li>A bundled result lists what rode along, so the attachment set is confirmable after the fact.</li>
+      </ul>
+    </div>`
+};
+
+const SHEET_NOTES = {
+  mode: () => `
+    <h2>2 · The bundle question</h2>
+    <div class="note">
+      <strong>Asked, never guessed.</strong> Both answers are legitimate and only the user knows which: three unrelated problems are three tickets, three messages about one incident are one.
+      <ul>
+        <li><strong>Each option states its outcome</strong> — "3 tickets" versus "1 ticket" — so the choice is decided on consequence rather than on wording.</li>
+        <li>"Most common" is a label, not a pre-selection: the flow does not proceed until the user has actually chosen.</li>
+        <li>It is a sheet inside the pane, not a modal window. Office owns modal dialogs; a taskpane that opens one fights its own host.</li>
+        <li>Single selection skips this entirely — there is nothing to decide, so nothing is asked.</li>
+      </ul>
+    </div>`,
+  previewAsk: () => `
+    <h2>3 · The preview question</h2>
+    <div class="note">
+      <strong>Opt-in, and remembered as a preference later.</strong> Someone filing the same kind of ticket all day does not want a review step; someone filing a ticket for a client they have never seen does.
+      <ul>
+        <li><strong>"Create now" is not hidden</strong> — a one-click path stays one click, so the review never becomes a tax on speed.</li>
+        <li>The copy states what the preview contains, so the choice is informed rather than a coin flip.</li>
+        <li>"Nothing is submitted until you confirm" is the sentence that makes the extra step feel safe rather than slow.</li>
+      </ul>
+    </div>`
+};
+
+/* ── Render ─────────────────────────────────────────────────────────────── */
+function render() {
+  renderSteps();
+
+  const screen = {
+    entry: screenEntry,
+    bundle: screenBundle,
+    preview: screenPreview,
+    result: screenResult
+  }[state.screen];
+
+  const { body, foot } = screen();
+  document.getElementById("body").innerHTML = body;
+  document.getElementById("foot").innerHTML = foot;
+
+  const sheet = state.sheet === "mode" ? sheetMode() : state.sheet === "previewAsk" ? sheetPreviewAsk() : "";
+  document.getElementById("sheet").innerHTML = sheet;
+
+  document.getElementById("caption").textContent = CAPTIONS[state.screen] ?? "";
+  document.getElementById("host-subject").textContent = SCENARIOS[state.scenario].host;
+
+  const notesEl = document.getElementById("notes");
+  if (!state.showNotes) { notesEl.innerHTML = ""; }
+  else if (state.sheet) notesEl.innerHTML = SHEET_NOTES[state.sheet]();
+  else notesEl.innerHTML = NOTES[state.screen]();
+
+  document.getElementById("scenario-hint").textContent = SCENARIOS[state.scenario].hint;
+  wire();
+}
+
+const CAPTIONS = {
+  entry: "Step 1 — the pane opens knowing what is selected. One button, and it says what it will do.",
+  bundle: "Step 2 — bundled mode: choose the message that becomes the ticket, then which of the others ride along.",
+  preview: "Step 3 — the review: the same editable field set for one ticket or five, with matches and gaps called out.",
+  result: "Step 4 — per-message outcomes, including what was skipped and why."
+};
+
+/* ── Wiring ─────────────────────────────────────────────────────────────── */
+function wire() {
+  const el = (id) => document.getElementById(id);
+
+  // Rail
+  document.querySelectorAll("#scenarios button").forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll("#scenarios button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      reset(b.dataset.scenario);
+      render();
+    };
+  });
+  document.querySelectorAll("#themes button").forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll("#themes button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      document.documentElement.dataset.theme = b.dataset.theme;
+    };
+  });
+
+  // Board
+  const board = el("board");
+  if (board) board.onchange = () => { state.board = board.value; };
+
+  // Entry -> mode question (several) or preview question (one)
+  el("go") && (el("go").onclick = () => {
+    if (state.screen === "entry") {
+      if (state.emails.length === 1) { state.mode = "individual"; state.sheet = "previewAsk"; }
+      else state.sheet = "mode";
+    } else if (state.screen === "bundle") {
+      state.screen = "preview";
+      state.sheet = "previewAsk";
+    } else if (state.screen === "preview") {
+      submit();
+    } else if (state.screen === "result") {
+      reset(state.scenario);
+    }
+    render();
+  });
+
+  // Bundle: parent + attachments
+  document.querySelectorAll("[data-parent]").forEach(b => {
+    b.onclick = () => {
+      state.parentId = b.dataset.parent;
+      // The parent cannot also be an attachment.
+      state.attached[state.parentId] = false;
+      render();
+    };
+  });
+  document.querySelectorAll("[data-attach]").forEach(b => {
+    b.onclick = () => {
+      const id = b.dataset.attach;
+      state.attached[id] = !state.attached[id];
+      render();
+    };
+  });
+
+  // Preview: open/close one of several, and edit fields
+  document.querySelectorAll("[data-open]").forEach(b => {
+    b.onclick = () => { state.openEdit = b.dataset.open; render(); };
+  });
+  document.querySelectorAll("[data-close]").forEach(b => {
+    b.onclick = () => { state.openEdit = null; render(); };
+  });
+  document.querySelectorAll("[data-field]").forEach(input => {
+    const handler = () => {
+      const key = input.dataset.key;
+      const msgId = input.dataset.msg;
+      const field = input.dataset.field;
+      if (field === "board") { state.board = input.value; return; }
+      // Keys are per-email in individual mode and shared in bundled mode; the message id is
+      // what actually identifies the edit.
+      const id = msgId ?? state.parentId;
+      state.edits[id][field] = input.value;
+      // A live re-render would steal focus mid-keystroke, so only the match hint updates.
+      if (field === "client") {
+        const hint = input.parentElement.querySelector(".hint");
+        if (hint) {
+          hint.className = input.value ? "hint ok" : "hint warn";
+          hint.innerHTML = input.value
+            ? `Applied to this ticket.`
+            : `No client matched. Pick one, or the ticket is created without a client.`;
+        }
+      }
+    };
+    input.onchange = handler;
+    input.oninput = handler;
+  });
+
+  // Sheets
+  document.querySelectorAll("[data-mode]").forEach(b => {
+    b.onclick = () => {
+      state.mode = b.dataset.mode;
+      document.querySelectorAll("[data-mode]").forEach(x => x.setAttribute("aria-checked", String(x === b)));
+      const cont = document.getElementById("sheet-continue");
+      if (cont) cont.disabled = false;
+    };
+  });
+  el("sheet-cancel") && (el("sheet-cancel").onclick = () => { state.sheet = null; state.mode = null; render(); });
+  el("sheet-continue") && (el("sheet-continue").onclick = () => {
+    state.sheet = null;
+    if (state.mode === "bundled") { state.screen = "bundle"; state.parentId = active()[0].id; }
+    else { state.screen = "preview"; state.sheet = "previewAsk"; state.mode = "individual"; }
+    render();
+  });
+  el("ask-skip") && (el("ask-skip").onclick = () => { state.sheet = null; submit(); });
+  el("ask-preview") && (el("ask-preview").onclick = () => { state.sheet = null; state.screen = "preview"; render(); });
+
+  // Back
+  el("back") && (el("back").onclick = () => {
+    // Only a bundled flow has a bundling step to return to. Sending an individual-ticket user
+    // "back" to a parent-and-attachments screen they never saw would be a step out of nowhere.
+    if (state.screen === "bundle") state.screen = "entry";
+    else state.screen = state.mode === "bundled" ? "bundle" : "entry";
+    state.openEdit = null;
+    render();
+  });
+  el("close") && (el("close").onclick = () => { reset(state.scenario); render(); });
+}
+
+/** Stand in for POST /api/outlook-addin/tickets. The shapes here are the endpoint's:
+ *  per-message results, `skipped` with a reason, and one ticket number per created. */
+function submit() {
+  const created = [];
+  const skipped = [];
+  let attachments = null;
+  let n = 4100;
+
+  if (state.mode === "bundled") {
+    const parent = state.emails.find(e => e.id === state.parentId);
+    const attached = attachedIds().map(id => state.emails.find(e => e.id === id));
+    created.push({ number: `MSP-1001-${n++}`, subject: state.edits[parent.id].subject });
+    attachments = [
+      ...attached.map(e => e.subject),
+      ...(parent.hasAttachment ? ["New starter form.docx"] : [])
+    ];
+    for (const e of state.emails.filter(x => x.already)) skipped.push({ subject: e.subject, reason: "already has a ticket" });
+  } else {
+    for (const e of state.emails) {
+      if (e.already) { skipped.push({ subject: e.subject, reason: "already has a ticket" }); continue; }
+      created.push({ number: `MSP-1001-${n++}`, subject: state.edits[e.id].subject });
+    }
+  }
+
+  state.results = { created, skipped, attachments, bundled: state.mode === "bundled" };
+  state.screen = "result";
+  state.sheet = null;
+  render();
+}
+
+/* ── Start ──────────────────────────────────────────────────────────────── */
+document.getElementById("notes-toggle").onclick = (e) => {
+  state.showNotes = !state.showNotes;
+  e.currentTarget.setAttribute("aria-pressed", String(state.showNotes));
+  e.currentTarget.querySelector(".count").textContent = state.showNotes ? "shown" : "hidden";
+  render();
+};
+document.getElementById("restart").onclick = () => { reset(state.scenario); render(); };
+document.getElementById("signout").onclick = () => {};
+
+reset("single");
+render();
+</script>
+</body>
+</html>

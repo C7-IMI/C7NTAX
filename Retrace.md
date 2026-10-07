@@ -4204,3 +4204,43 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **`Stop-Process -Id` needs a literal PID** in this environment: read the PID with `Get-NetTCPConnection … -eq 4000` first, then kill it in a separate call. The array-variable form is rejected by the guard.
 - **The installer is built for one origin and says so.** After the production hostname exists (PLAN-016), rebuild with `pwsh -File ./build.ps1 -ApiUrl https://<host>` and commit the new artifact, or the C7NC page will keep showing the rebuild warning.
 - **`O365/` is untested past sign-in.** Run it with `-WhatIf` first against a real tenant; the first real run is the test.
+
+
+### Prompt 231 — A ticket-creation flow for one or many selected emails (mockup first)
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed (mockup; implementation not started) | **Duration:** ~1.5 h
+**BuildNotes IDs:** 2026.10.7.032 - The add-in endpoint was dead, and a mockup for the flow that replaces it
+
+> For the Outlook add-in, if multiple e-mails are selected a dialog should pop up and ask whether individual tickets should be created or should they be packaged into a single ticket as attachments. If bundled you should be able to select which one will be the submitted as the aprent ticket and what other ones who be included as attachments. Also There should be a popup asking if you want to see a preview of what the ticket submission will look like to review what fields will be populated in the ticket from the info in the email. You should have the option to edit the info before submitting.
+>
+> Do a mockup first. Include a simulation of when a single email is selected as well as multiple emails. It should be clean, streamlined, and intuitive.
+
+**What I did**
+- **Read the real endpoint before drawing anything**, because a preview screen is a promise about which fields get filled in — and the answer had to be the actual server's, not a guess. That read turned up the bug below.
+- **Found `POST /api/outlook-addin/tickets` returning 404 for every request.** `routes/outlookAddin.ts` still gated on `configFlag("integrations", "outlookAddin")` after the field moved to `apps` in 2026.10.7.030. `configValue` answers `""` for an undeclared field, `configFlag` reads that as `false`, so the gate failed **closed**: the taskpane served, every screen reported the feature as on, and the only thing that could create a ticket was unreachable. Proved it live — `404 {"error":"Outlook add-in disabled"}` — then fixed it and proved it again: `201`, one ticket, `MSP-1001-1001`.
+- **Swept all 43 config read sites rather than fixing the one I had tripped over**, because a stale area fails silently and this class of drift had just cost a whole feature. Wrote the sweep as `scripts/check-config-reads.mts` (`pnpm guard:config`) and made it read the **real registry** instead of restating it — which is why it runs through `tsx`; `packages/shared` is TypeScript source with extensionless imports and plain `node` cannot load it. It reported exactly one stale read, so the fix was complete rather than merely sufficient, and it names the area a missing field has actually moved to.
+- **Built `docs/mockups/outlook-addin-ticket-flow.html`** — a single self-contained file, no build step and no API calls, with a simulation rail (1 / 3 / 5 selected messages, Outlook light or dark) and the pane rendered at its real 360px inside a suggestion of Outlook's chrome.
+- **Several messages get the bundle question as a sheet, not a modal window.** Office owns modal dialogs, so a taskpane that opens one fights its own host. Each option states its outcome in tickets — "2 tickets, one per message" versus "A single ticket" — and the flow does not advance until the user has actually chosen.
+- **Bundling is two independent decisions**, so it is two controls: which message becomes the ticket (labelled *The ticket*, not left to a radio dot), and which of the others ride along. A message that already has a ticket cannot be the parent and is not offered as an attachment either.
+- **The preview is a question, not a step.** A sheet asks whether to review, and "Create now" stays one click away — the review should never become a tax on filing the same kind of ticket all day.
+- **The review shows every field as a field**, editable: board, client, contact, subject, description, priority, and a read-only Source. Matched senders say so in green; unmatched ones say so in amber with the picker right there. Several tickets collapse to summary rows with one open at a time, because five forms do not fit in 360px and do not need to.
+- **The result is per message**, since "3 created" does not tell somebody which of their messages was already done — each row leads with its ticket number, and skipped rows carry the reason.
+- **Added per-screen design notes** to the mockup so the reasoning travels with the artifact and can be reviewed screen by screen, with a toggle to hide them.
+- **Driven in the browser through every path**, then the copy bugs fixed: a footer that counted an already-ticketed message as an attachment (2 when only 1 could ride along), "1 messages", "from the messages" for a single message, and Back from an individual-ticket preview that went to a bundling step the user had never seen.
+
+**Decisions worth remembering**
+- **Ask the server before designing the screen that describes it.** The preview exists to show which fields the server fills in; designing it from imagination would have produced a screen that lies about the payload. Reading the handler is what surfaced a dead endpoint.
+- **Moving a config field is a breaking change with no compile error.** The registry is typed, the read is a string pair, and `configValue` returns `""` for anything it cannot find — so the failure is a feature that is off while every screen says it is on. That is the third distinct silent-failure mode in this area (the others were a module-scope read and a cached cross-origin 404), and it is now the only one with a guard.
+- **A guard is worth writing when the failure is silent and the check is mechanical.** One stale read out of 43 is exactly the case: cheap to check, impossible to notice, and the cost of missing it is a feature nobody can use.
+- **The bundle question is asked, never guessed.** Three messages can be three unrelated problems or one incident, and only the user knows which. Defaulting either way encodes a wrong assumption into a habit.
+- **"One ticket each" and "the rest attached" are not symmetric choices**, so the option copy leads with the consequence — a count of tickets — rather than with the mechanism.
+- **Bundling is two axes, so it is two controls.** Collapsing "which is the parent" and "which ride along" into one picker would force all-or-nothing and make the parent choice carry a meaning it does not have.
+- **One field set for one ticket and for five.** The same review for both means one shape to learn, and it keeps bundled and individual from feeling like two different products.
+- **Stating the arithmetic before the user commits** — "1 message already has a ticket and will be skipped, so 2 tickets will be created" — is what stops a half-working outcome from looking like a bug at the end.
+
+**Notes for next time**
+- **`pnpm guard:config` exists now.** Run it after any change to `packages/shared/src/appConfiguration.ts`. It catches a moved or renamed field, which is otherwise invisible.
+- **A `configFlag("area", "field")` pair where the field has moved fails closed and silently.** If a feature is switched on in the UI but its endpoint 404s, check the area before anything else.
+- **The mockup is not wired in and nothing references it.** It lives at `docs/mockups/outlook-addin-ticket-flow.html`; open it directly in a browser.
+- **The flow is not implemented.** The endpoint today still takes `{ boardId, emails[] }` and creates one ticket per message — bundling, the preview and per-field edits all need server work (`createTicketFromEmail` currently ignores whatever the pane sends beyond the message fields, and note the endpoint tests the flag in `integrations`, now fixed).
+- **The mockup's field set is the contract for the server change**: board, client, contact, subject, description, priority, plus attachments and a parent for bundled mode. Whoever implements it should change the endpoint to accept the reviewed fields rather than re-deriving them.
+- **A layout check beats a screenshot for mockups**: measuring `scrollWidth` against `clientWidth` for the pane and every descendant caught nothing, but it is the check that would have found an overflowing row in a 360px pane — the failure mode a narrow taskpane is most prone to.

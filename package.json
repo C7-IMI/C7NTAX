@@ -32,6 +32,7 @@
     "db:sample-on": "pnpm --filter @C7NTAX/api db:sample-on",
     "clean": "turbo run clean && rimraf node_modules",
     "guard:routes": "node scripts/check-route-guards.mjs",
+    "guard:config": "tsx scripts/check-config-reads.mts",
     "guard:deps": "node scripts/audit-baseline.mjs",
     "deploy:preflight": "node scripts/azure/preflight.mjs",
     "deploy:preflight:full": "node scripts/azure/preflight.mjs --docker",
