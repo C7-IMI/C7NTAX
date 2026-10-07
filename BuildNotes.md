@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.021 | Last Updated: 2026-10-07
+## Version: 2026.10.7.022 | Last Updated: 2026-10-07
 
 ---
 
@@ -13,6 +13,13 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.7.022 — The ticket search box said "Search tickets…" and filtered nothing
+- **[Fix]** **The Tickets list search box now searches.** It was a bare input with no `value`, no `onChange` and no reader — typing in it moved the cursor and nothing else, on the primary list surface. It is now bound to a `q` URL parameter, debounced at 300 ms so three keystrokes are one request, and passed to the API as `search` (which already matched ticket number and subject and had no caller). Verified: 25 rows → **0** for a nonsense term, the URL carries `?q=…`, and the box follows the URL so Back/Forward and a shared link both work.
+- **[New]** **Active filters are shown as removable chips.** `Filtered by` renders one chip per active filter — search, status, priority, board, client, assignee, date range — each naming what it is (`Status: Escalated` uses the friendly name from the quick-filter list rather than the raw `open`+`critical` pair), with an ✕ that drops only that parameter and a **Clear all** beside them. A filtered list that cannot say why it is filtered is how somebody concludes the app is broken. Verified in the browser: removing the search chip restored all 25 rows, emptied the box and cleaned the URL; `?status=open&priority=critical` produced the `Status: Escalated` and `Priority: critical` chips over 7 rows.
+- **[Update]** **`Clear all` and the per-chip removals preserve everything else in the URL**, which the newer code in this page did not always do — the clients page already had a working search (`search` state, `typeFilter`, "Clear filters"), so the Tickets box was the missing half of PLAN-013 #9's "advanced filter bar on Tickets/Clients".
+- **Verification:** browser-verified in both directions (empty result and cleared result), web typecheck 0 errors, API typecheck at the 152 pre-existing.
+- **Rollback:** revert the commit; the API already supported `search`, so nothing server-side changes.
 
 ## 2026.10.7.021 — The service worker was caching 209 API responses, including whoever was signed in
 - **[Fix]** **Authenticated API responses are no longer cached in the browser.** `sw.js` cached every API `GET` under a URL-only key and served the cached copy back when the network failed. That key cannot express "as this person", so the last user's tickets, clients, invoices — and now the customer portal's tickets — could be handed to whoever used that browser next, most visibly after signing out or with the API unreachable. Measured on a working profile before the fix: **`C7NTAX-v2` held 351 entries, 209 of them `/api/`**. API requests now go to the network and nowhere else: no cache read, no cache write, so an unreachable API produces a failed request and a page that says so instead of yesterday's data.

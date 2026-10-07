@@ -3852,3 +3852,18 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The service worker is registered from `index.html` for every environment, including development. If a future change touches caching, that registration is the one place to look and the version constant is the only lever for retiring a bucket.
 - #9's remaining, genuinely-unbuilt items are the Tickets/Clients filter-chip bar, an empty-state audit, breadcrumb parity and mobile table→card transforms. All are additive; none is a defect.
+
+**Prompt 220 — continued: PLAN-013 #9 (the ticket search box that filtered nothing)**
+
+**What I did**
+- Read the Tickets list before assuming what "advanced filter bar" needed, and found the search input was **decorative**: no `value`, no `onChange`, no reader — typing in it did nothing at all, on the app's primary list surface. The API already accepted `?search=` (matching ticket number and title) and had no caller from this page.
+- Wired it: a `q` URL parameter with the other filters (so a filtered list is a link somebody can send), a local input debounced at 300 ms so three keystrokes are one request, and the box following the URL for Back/Forward and chip removals. Clients already had a working search and type filter, so this was the missing half of #9's "filter bar on Tickets/Clients".
+- Added the **active-filter chips**: one per active filter naming what it is (`Status: Escalated` from the quick-filter list rather than the raw `open` plus `critical`), an ✕ that drops only that parameter, and **Clear all**. The newer code in that page replaced the whole query string when one filter changed; the chips preserve everything else.
+- Verified in the browser: 25 rows → 0 for a nonsense term with the chip and the URL following, the chip's ✕ restoring all 25 rows and emptying the box, and `?status=open&priority=critical` producing the friendly chips over 7 rows.
+
+**Decisions worth remembering**
+- **A filtered list must be able to say why it is filtered.** Without that, an empty table reads as a broken app rather than as a filter somebody set yesterday.
+- **Check the primary surface first.** Three separate defects in this session (the duplicate route, the inert search box, the worker's API cache) were all found by looking at what a person actually touches, not by reading plans.
+
+**Notes for next time**
+- #9's remaining items — an empty-state audit, breadcrumb parity, mobile table→card transforms — are additive polish. The defect-shaped parts of #9 and #8 are now done.

@@ -191,6 +191,10 @@ export function TicketsPage() {
   const dateToParam = searchParams.get("dateTo") || "";
   // The organization rail's Change Control entry scopes the list to one client.
   const companyParam = searchParams.get("companyId") || "";
+  // The search term lives in the URL with the other filters, so a filtered list is a link
+  // somebody can send. The box is local and debounced: three keystrokes are one request.
+  const qParam = searchParams.get("q") || "";
+  const [searchInput, setSearchInput] = useState(qParam);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [tickets, setTickets] = useState<any[]>([]);
@@ -285,12 +289,27 @@ export function TicketsPage() {
     if (assignedParam) url += `&assignedToId=${encodeURIComponent(assignedParam)}`;
     if (dateFromParam) url += `&dateFrom=${encodeURIComponent(dateFromParam)}`;
     if (dateToParam) url += `&dateTo=${encodeURIComponent(dateToParam)}`;
+    if (qParam) url += `&search=${encodeURIComponent(qParam)}`;
     if (companyParam && !searchParams.get("new")) url += `&companyId=${encodeURIComponent(companyParam)}`;
     api.get(url).then(r=>setTickets(r.data.data||[])).catch(()=>{}).finally(()=>setLoading(false));
   };
 
   useEffect(()=>{fetchBoards();},[]);
-  useEffect(()=>{fetchTickets();},[boardId, statusParam, priorityParam, assignedParam, dateFromParam, dateToParam, companyParam]);
+  useEffect(()=>{fetchTickets();},[boardId, statusParam, priorityParam, assignedParam, dateFromParam, dateToParam, companyParam, qParam]);
+
+  // The box follows the URL (Back/Forward, a chip being removed, a shared link)…
+  useEffect(() => { setSearchInput(qParam); }, [qParam]);
+  // …and the URL follows the box, once the typing stops.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput === qParam) return;
+      const next = new URLSearchParams(searchParams);
+      if (searchInput.trim()) next.set("q", searchInput.trim());
+      else next.delete("q");
+      setSearchParams(next, { replace: true });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, qParam, searchParams, setSearchParams]);
   useEffect(()=>{api.get("/users?limit=200").then(r=>setUsers(r.data.data||[])).catch(()=>{});},[]);
 
   // Auto-open new ticket form when navigated from contact
@@ -754,7 +773,62 @@ export function TicketsPage() {
         </div>
       )}
 
-      <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/><input className="input-field pl-9" placeholder="Search tickets..."/></div>
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+        <input
+          className="input-field pl-9"
+          placeholder="Search tickets by number or subject..."
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
+          aria-label="Search tickets"
+        />
+      </div>
+
+      {/* ── Active filters ── What is narrowing this list, and a way out of each one. */}
+      {(() => {
+        const drop = (key: string) => () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete(key);
+          setSearchParams(next);
+        };
+        const chips: Array<{ key: string; label: string; clear: () => void }> = [];
+        if (qParam) chips.push({ key: "q", label: `Search: ${qParam}`, clear: drop("q") });
+        if (statusParam) {
+          const named = FILTER_BY_OPTIONS.find(o => o.status === statusParam && (!priorityParam || o.priority === priorityParam));
+          chips.push({ key: "status", label: `Status: ${named?.label ?? statusParam.replace(/,/g, ", ").replace(/_/g, " ")}`, clear: drop("status") });
+        }
+        if (priorityParam) chips.push({ key: "priority", label: `Priority: ${priorityParam}`, clear: drop("priority") });
+        if (boardId) chips.push({ key: "boardId", label: `Board: ${boards.find(b => b.id === boardId)?.name ?? "selected"}`, clear: drop("boardId") });
+        if (companyParam && !searchParams.get("new")) chips.push({ key: "companyId", label: `Client: ${companies.find(c => c.id === companyParam)?.name ?? "selected"}`, clear: drop("companyId") });
+        if (assignedParam) {
+          const assigned = users.find(u => u.id === assignedParam);
+          chips.push({ key: "assignedToId", label: `Assigned: ${assigned ? `${assigned.firstName} ${assigned.lastName}`.trim() : "selected"}`, clear: drop("assignedToId") });
+        }
+        if (dateFromParam) chips.push({ key: "dateFrom", label: `From: ${dateFromParam}`, clear: drop("dateFrom") });
+        if (dateToParam) chips.push({ key: "dateTo", label: `To: ${dateToParam}`, clear: drop("dateTo") });
+        if (chips.length === 0) return null;
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-gray-500 flex items-center gap-1"><Filter size={12} /> Filtered by</span>
+            {chips.map(chip => (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={chip.clear}
+                title={`Remove ${chip.label}`}
+                className="badge bg-cyber-600/15 text-cyber-300 hover:bg-cyber-600/30 flex items-center gap-1"
+              >
+                {chip.label} <X size={12} />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setSearchParams({})}
+              className="text-xs text-gray-500 hover:text-white ml-1"
+            >Clear all</button>
+          </div>
+        );
+      })()}
       {/* ── Batch actions bar ── */}
       {selectedIds.size > 0 && (
         <div className="card flex items-center gap-3 bg-cyber-600/5 border-cyber-500/30">
