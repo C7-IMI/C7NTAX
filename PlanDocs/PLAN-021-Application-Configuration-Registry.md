@@ -6,7 +6,7 @@
 # Application Configuration
 
 > **Sequence:** follows the Help rewrite (BuildNotes **2026.10.7.028**) and the implementation programme that came before it (W0–W2, W5-1, PLAN-015 backlog, PLAN-020 phases 0–6). It is the step that turns the programme's feature flags and hard-coded limits into a surface an operator can reason about, and it is a prerequisite for packaging: a deployment cannot be handed over while its settings screen is a form that does nothing.
-> **Status:** ⚠️ **Built the same day, and the code is the evidence**: `packages/shared/src/appConfiguration.ts` (the registry), `apps/api/src/services/appSettings.ts` (resolution and the write path), `apps/api/src/routes/configuration.ts` (the API), `apps/web/src/pages/Configuration.tsx` and `CustomerPortalSettings.tsx` (the screens), `apps/api/probe-configuration.mjs` (78 assertions). BuildNotes **2026.10.7.029**.
+> **Status:** ⚠️ **Built the same day, and the code is the evidence**: `packages/shared/src/appConfiguration.ts` (the registry), `apps/api/src/services/appSettings.ts` (resolution and the write path), `apps/api/src/routes/configuration.ts` (the API), `apps/web/src/pages/Configuration.tsx` and `CustomerPortalSettings.tsx` (the screens), `apps/api/probe-configuration.mjs` (87 assertions). BuildNotes **2026.10.7.029**, with a follow-up in **2026.10.7.030** that moved the Outlook add-in switch to Client Apps & Notifications, made it govern the taskpane as well as the endpoint, and fixed a service-worker defect that cached a cross-origin 404 — see §12.
 > **Basis:** repository as at BuildNotes **2026.10.7.028**. Every claim about what *was* read is a `grep` result over `apps/api/src` and `apps/web/src`, and every claim about what *is* read now is a call site named in the two sections below.
 > **Reference platforms:** Autotask PSA, ConnectWise (PSA/Asio) and Scoro, used for the shape of the surface and for where each setting belongs. See §9.
 > **Next action:** §8 lists the decisions this work did not take. None of them block anything else.
@@ -254,4 +254,18 @@ Two conventions were adopted from all three: **a settings screen says what each 
 | `apps/web/src/components/Layout.tsx`, `App.tsx` | Navigation and routes; Quotes, Monitors, Alert Webhooks and AI Actions surfaced |
 | `apps/web/src/pages/portal/*` | Branding and policy from the portal's own endpoints |
 | `apps/web/src/pages/HelpDoc.tsx` | Configuration reference and walkthroughs updated |
-| `apps/api/probe-configuration.mjs` | New — 78 assertions |
+| `apps/api/probe-configuration.mjs` | New — 87 assertions |
+
+---
+
+## 12. Follow-up: the add-in switch, and a cached error (2026.10.7.030)
+
+The add-in's switch shipped in 2026.10.7.029 and was reported as not visible. Three separate faults, and only the third was a defect in the switch itself:
+
+1. **Placement.** It sat under *CloudConnect, Email & Microsoft 365*. It is now the first field under **Client Apps & Notifications**, and that area's summary names it. `/admin/system` gained shortcut chips, because it is the screen people open first when looking for a feature switch.
+2. **Half a feature.** `index.ts` read `OUTLOOK_ADDIN_ENABLED` **once at module load** to decide whether to mount the taskpane at `/addin`; the setting governed only the endpoint. The mount now checks the setting per request, so one switch means one thing. This is the general lesson for §2.3: a field can be `source: "setting"` and still have a module-scope reader elsewhere, so grep for the *variable name* when converting, not for a handler.
+3. **A cached cross-origin error.** The PWA service worker treated any GET as its own and cached a cross-origin 404 **by URL alone**, so switching the add-in back on could not displace it and a working feature looked dead. The worker now ignores foreign origins and never stores a non-`ok` response. This is the second bug of that class — the first was API responses replayed across accounts — and the rule that generalises is: speak only for your own origin, and never store a failure.
+
+`services/addinAssets.ts` was extracted because the directory arithmetic was written twice and the two copies disagreed; `assetsPresent` reported `false` while the taskpane was demonstrably served.
+
+**Nine Help instructions** that told operators to set a variable and restart for flags that had become settings were corrected, and the two that genuinely still need a deployment value (the WebAuthn relying-party id and the SSO issuer) are now stated separately from the switch they enable.

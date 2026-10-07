@@ -53,7 +53,13 @@ export interface ConfigFieldSpec {
   label: string;
   /** One line, shown under the label. */
   summary: string;
-  /** The longer explanation: what changes, what happens when it is off, what it needs. */
+  /**
+   * The longer explanation: what changes, what happens when it is off, what it needs.
+   *
+   * **Plain text.** The configuration screen prints this as written, so inline marks such as
+   * `**bold**` would appear as literal asterisks — the Help renders those, this does not, and
+   * putting them here is a defect rather than emphasis. The `affects` list carries the emphasis.
+   */
   detail?: string;
   type: ConfigValueType;
   source: ConfigSource;
@@ -940,7 +946,7 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         label: "Outlook add-in",
         summary: "The add-in that files a message and its attachments as a ticket, from inside Outlook.",
         detail:
-          "Governs both halves of it: the **taskpane** the mailbox loads, and the **endpoint** the taskpane calls. Off, both answer 404, so a mailbox that already has the add-in sideloaded is told the server does not support it rather than failing halfway through filing a message. On, the taskpane is served from the add-in directory and the endpoint accepts. Takes effect immediately; no restart.",
+          "Governs both halves of it: the taskpane the mailbox loads, and the endpoint the taskpane calls. Off, both answer 404, so a mailbox that already has the add-in sideloaded is told the server does not support it rather than failing halfway through filing a message. On, the taskpane is served from the add-in directory and the endpoint accepts. Takes effect immediately; no restart.",
         type: "boolean",
         source: "setting",
         env: "OUTLOOK_ADDIN_ENABLED",

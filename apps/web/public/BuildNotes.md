@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.029 | Last Updated: 2026-10-07
+## Version: 2026.10.7.030 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,22 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.030 — The Outlook add-in switch is in the UI, and it governs the whole feature
+
+Found on the way to a switch that already existed: it was buried in the wrong place, it only covered half the feature, and a service worker made it look broken.
+
+- **[Fix]** **The add-in's taskpane ignored the setting.** `OUTLOOK_ADDIN_ENABLED` was read **once at module load** in `index.ts` to decide whether to mount the taskpane at `/addin`, while the setting governed only the endpoint. So switching the add-in off in the UI left the taskpane being served, and a restart was the only way to change it — which the Help then documented as the way to turn it on. The mount now checks the setting **per request**, so one switch governs both halves: off, the taskpane and the endpoint both answer 404, and a mailbox that already has the add-in sideloaded is told the server does not support it rather than failing halfway through filing a message.
+- **[Update]** **The switch moved where it can be found.** It sat under *CloudConnect, Email & Microsoft 365*, where nobody looking for the Outlook add-in would think to look. It is now the first field under **Client Apps & Notifications**, the area for the companion clients a deployment serves, and that area's own summary names it. Administration → System Settings also gained a **shortcut row** naming the add-in, the customer portal, monitors, email connectors, sessions and billing, so the screen people go to first now points at them instead of leaving them to be found.
+- **[Fix]** **System Settings claimed the add-in was fine when it was not.** The row was hardcoded to "configured" and read the raw environment variable, so it contradicted the switch it was supposed to be reporting. It now reports the **value in force**, whether the taskpane's files exist at all (the difference between "switched off" and "cannot be switched on"), and links straight to the switch — **Switch the add-in off / on**.
+- **[Fix]** **A cached cross-origin error made a working feature look broken.** Verifying the switch by hand, the taskpane kept returning 404 in the browser after it was switched back on, while a command-line request to the same URL returned 200. The cause was the PWA service worker: it treated **any** GET as its own business, so a fetch of `http://…:4000/addin/taskpane.html` from a page it controls was cached **by URL alone** — including the 404 — and the cache-first branch replayed that 404 for ever after. A live feature looked dead because its error had been cached. The worker now ignores requests whose origin is not its own, and **never stores a response that was not successful**, so a transient error can no longer become permanent. Cache name bumped to `C7NTAX-v4` so an already-cached cross-origin response is retired.
+- **[Fix]** **Nine Help instructions told people to set an environment variable and restart** for flags that have been settings since 2026.10.7.029 — the Outlook add-in, uptime monitors, alert webhooks, AI actions, time rules, Graph delivery, SSO and passkeys, plus two "turn it off with `X=false`" notes. Each now names the switch's own label and the area it lives under, and the two that genuinely still need a deployment value (the WebAuthn relying-party id, the SSO issuer) say so separately from the switch.
+- **[New]** **`services/addinAssets.ts`** holds where the taskpane lives. The server that mounts `/addin` and the deployment report that says whether it *can* be served need the same answer, and the first attempt at writing it twice got the directory depth wrong from one of them — so `assetsPresent` reported `false` while the pane was being served.
+- **[Fix]** **A setting's description was printing its own emphasis marks.** `detail` is rendered as plain text on the configuration cards, so the one field whose text used `**` showed the asterisks. The text is plain now, and the field's own doc comment says so — the Help renders those marks, a settings card does not, and putting them there is a defect rather than emphasis.
+- **Rollback:** `OUTLOOK_ADDIN_ENABLED=false` in the environment remains the fallback for a deployment that cannot use the screen, and clearing the setting restores it. The service-worker change only narrows what is cached.
+- **Verification:** `probe-configuration.mjs` **87 passed, 0 failed** (nine new assertions, including that switching the add-in off makes the **taskpane** answer 404 and switching it back on serves it again with no restart). API typecheck 150, below the 151 pre-existing baseline; web typecheck 0. Route guards 389/343/0; help links 74/20/43. In the browser, the switch toggled true → false → true with the taskpane at 200 → 404 → 200, the cache bucket read `C7NTAX-v4`, and all eight configuration areas were checked for a literal inline mark and had none.
 
 ---
 

@@ -313,6 +313,47 @@ check(
 const noAccess = await fetch(`${BASE}/api/portal/me`);
 check(noAccess.status === 401 || noAccess.status === 404, `an unauthenticated portal read is refused (${noAccess.status})`);
 
+section("A switch that governs two halves of a feature");
+
+/**
+ * The Outlook add-in is served by the API and driven by the same setting as its endpoint. The
+ * interesting property is not that the value saves — that is checked above — but that flipping it
+ * changes what the **taskpane** does, with no restart. A regression here is invisible until a
+ * mailbox gets a 404 for a feature the screen says is on.
+ */
+const addin = (await get("/system/deployment")).data?.addin;
+check(!!addin, "the deployment report describes the add-in");
+if (addin) {
+  check(typeof addin.enabled === "boolean", "it reports whether the add-in is on");
+  check(typeof addin.assetsPresent === "boolean", "it reports whether the taskpane's files exist");
+
+  if (addin.assetsPresent) {
+    const paneStatus = async () => (await fetch(`${BASE}/addin/taskpane.html`)).status;
+
+    // A fresh deployment with the add-in on serves it; the assertion below is the one that
+    // matters, and this one states the starting point rather than assuming it.
+    const startStatus = await paneStatus();
+    check(
+      startStatus === 200 || startStatus === 404,
+      `the taskpane answers ${startStatus} to begin with`,
+    );
+
+    await patch("/configuration/apps/outlookAddin", false);
+    check(await paneStatus() === 404, "switched off, the taskpane answers 404 rather than serving");
+    check((await get("/system/deployment")).data.addin.enabled === false, "and the deployment report follows it");
+
+    await patch("/configuration/apps/outlookAddin", true);
+    check(await paneStatus() === 200, "switched back on, it is served again with no restart");
+
+    await clearSetting("/configuration/apps/outlookAddin");
+    const cleared = await liveField("apps", "outlookAddin");
+    check(cleared.saved === null, "and the switch can be cleared back to the deployment's own value");
+    check(await paneStatus() === 200, "leaving the add-in available");
+  } else {
+    check(true, "the taskpane's files are absent here, so its status is not asserted");
+  }
+}
+
 section("Permissions are enforced per area");
 
 const forArea = async (email, password, path) => {
