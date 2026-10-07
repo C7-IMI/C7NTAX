@@ -1,6 +1,18 @@
 {
-  "latest": "C7NTAX-OutlookAddIn-26.10.7033.msi",
+  "latest": "C7NTAX-OutlookAddIn-26.10.7034.msi",
   "releases": [
+    {
+      "fileName": "C7NTAX-OutlookAddIn-26.10.7034.msi",
+      "pluginVersion": "26.10.7034",
+      "productVersion": "2026.10.7.034",
+      "addinHost": "http://localhost:4000",
+      "addinId": "d25125d4-fcab-47bb-82a8-89a19450042a",
+      "sourceHash": "f7ca474cf83f80abd8590eac483a8c8d8bcbe306ce9ccc3c39c245eda4899f8f",
+      "builtAt": "2026-10-07T22:20:44Z",
+      "sha256": "ba7f37d47db2b3e9f5d39423e73e9db3acbc62bb65635bc182b8386f3e8fafe9",
+      "size": 32768,
+      "wix": "5.0.2"
+    },
     {
       "fileName": "C7NTAX-OutlookAddIn-26.10.7033.msi",
       "pluginVersion": "26.10.7033",

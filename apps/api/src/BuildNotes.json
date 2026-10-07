@@ -1,5 +1,60 @@
 [
   {
+    "version": "2026.10.7.034",
+    "date": "2026-10-07",
+    "title": "The add-in flow ships, the plugin gets a version, and every installer is kept",
+    "changes": [
+      {
+        "text": "**The plugin is a versioned artifact.** `apps/outlook-addin/plugin.json` records its identity, its version (`YY.M.PPPP`, derived from the release), and the **hash of the files that make it up**. `pnpm plugin:bump` recomputes that hash and takes the version from the current release; the manifest's `<Version>` is served from the same record, so the version Office reports, the version in the MSI filename, and the version on the install page cannot disagree. The add-in's identity moved out of the API and into the record with it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"If the plugin changes, the installer must be updated\" is now enforced, not remembered.** `pnpm guard:plugin` fails when the plugin's files have changed since they were versioned, when the newest installer was built from a different payload, or when there is no installer at all — and `build.ps1` refuses outright rather than producing an installer for an unversioned plugin. Verified on a real change: the guard reported both problems and the build threw.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Every installer is kept, and the install page lists them.** `installer/artifacts/index.json` is the history — version, release, origin, payload hash, build time and SHA-256 per artifact — and the page shows them newest first with a **Download** on each, so an earlier plugin can be reinstalled for troubleshooting or a last-known-good rollback. Only artifacts named in the history are served, so a download path never becomes a filesystem path.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The flow, in the pane and on the server.** Several selected messages now ask *one ticket each* or *one ticket with the rest attached*; bundling asks which message is the ticket and which of the others ride along; a preview sheet offers the review; and the review shows every field the server will fill in, editable — board, client, contact, subject, description, priority.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`POST /api/outlook-addin/preview`** is what makes the review real rather than decorative. A client is matched from the sender's domain and a contact from the sender's address, and the pane can see neither — so the server is asked what it *would* do, read-only, and reports which messages already have a ticket. The pane shows that on the row instead of finding out at the end.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /api/outlook-addin/options`** gives the pane boards and clients without demanding the permissions `/api/boards` and `/api/clients` enforce. Filing a ticket does not require `ClientView`, and a technician who could create a ticket but not list clients was being shown an empty picker.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Bundled messages ride along as `.eml` attachments** — headers plus the plain-text body, so somebody can open the original later rather than reading a re-rendered summary. Whole-message attachments are size-checked and deliberately non-fatal: the ticket exists, and failing the whole submission because one message was too large would report failure for work that was done.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Reviewed fields win over deduction.** A client the user picked, a corrected contact name, an edited subject, description or priority are applied rather than re-derived. The contact rename is real — an editable field that quietly does nothing is worse than one that is not offered — and it is logged.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Saved preferences, per user.** Held on the `User` row (`addinPreferences`), not in the pane's `localStorage`, which is scoped to the add-in's origin and therefore shared by every C7NTAX account used on that machine. A preference that lets a ticket be filed without asking, inherited by the next person to use Outlook on that PC, is not a preference. *Remember this answer* sits on both questions, and a **Preferences** screen reachable from the pane header is the one place a saved answer can be seen and undone — because every one of them works by making a question stop appearing.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Single-click filing**, when both answers are saved: the entry screen says so in its button label and in \"filed immediately — no questions, per your saved preferences\", with a **One-click** chip. Verified end to end: the second selection created tickets **with no sheet shown at all**. Bundling is deliberately not rememberable and the sheet says why — which message is the ticket changes per conversation, so \"always bundle\" would have to invent a parent.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Writes from the pane were rejected with `403 CSRF token missing or invalid`, and every read worked.** The pane authenticates with its own bearer token, but a browser sends the origin's cookies with a same-origin fetch by default — so on a machine where the user was also signed in to the C7NTAX web app, the API saw a valid session cookie and demanded the CSRF header that goes with it. The pane now fetches with `credentials: \"omit\"`, which is what makes it a token client with no ambient session to confuse and no request that can ride on somebody's browser login.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The unmatched-client hint said the wrong thing.** It read \"the ticket is created without a client\"; the server falls back to the oldest client, so it now names the client it will actually be filed under.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.033",
     "date": "2026-10-07",
     "title": "Save my preferences: the add-in flow can stop asking",

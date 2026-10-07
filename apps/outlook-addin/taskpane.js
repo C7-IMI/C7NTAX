@@ -53,10 +53,21 @@ const state = {
 
 /* ── Plumbing ──────────────────────────────────────────────────────────────── */
 
-/** The API lives on the same origin that serves this folder, so relative URLs are correct. */
+/**
+ * The API lives on the same origin that serves this folder, so relative URLs are correct.
+ *
+ * `credentials: "omit"` is load-bearing, not tidiness. This pane authenticates with its own bearer
+ * token, but a browser sends the origin's cookies with a same-origin fetch by default — and if the
+ * person happens to be signed in to the C7NTAX web app, the API sees a valid session cookie and
+ * demands the CSRF header that goes with it. Every write from the pane came back
+ * `403 CSRF token missing or invalid` while every read worked, which is exactly the shape of a
+ * confusing bug. Omitting credentials keeps the pane what it is: a token client with no ambient
+ * session to confuse, and one whose requests cannot ride on somebody's browser login.
+ */
 async function api(path, options = {}) {
   const res = await fetch(`/api${path}`, {
     ...options,
+    credentials: "omit",
     headers: {
       "content-type": "application/json",
       ...(state.token ? { authorization: `Bearer ${state.token}` } : {}),
@@ -400,7 +411,11 @@ function fieldBlock(index, key) {
       </select>
     </label>
     ${unmatched
-      ? `<p class="hint warn">No client matched <strong>${escapeHtml(state.items[index]?.from || "this sender")}</strong>. Pick one, or the ticket is created without a client.</p>`
+      ? `<p class="hint warn">No client matched <strong>${escapeHtml(state.items[index]?.from || "this sender")}</strong>. ${
+          preview.fallbackCompany
+            ? `It will be filed under <strong>${escapeHtml(preview.fallbackCompany.name)}</strong> unless you pick one.`
+            : "Pick one, or the ticket is created without a client."
+        }</p>`
       : `<p class="hint ok">Matched from ${escapeHtml(state.items[index]?.from || "the sender")}</p>`}
 
     <label for="f-contact-${key}">Contact<input id="f-contact-${key}" type="text" data-field="contactName" data-index="${index}" value="${escapeHtml(edit.contactName || "")}" /></label>

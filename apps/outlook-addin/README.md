@@ -5,12 +5,36 @@ leaving Outlook. The pane converts each message into the same shape the monitore
 uses and posts it to `POST /api/outlook-addin/tickets`, so the two paths produce identical tickets
 (same contact and client matching, same dedup key, same numbering).
 
+## The flow
+
+| Selection | What the pane does |
+|---|---|
+| one message | asks whether to show the preview; creates the ticket |
+| several messages | first asks **one ticket each** or **one ticket with the others attached**, then which message is the parent |
+| bundling | the other messages are downloaded as `.eml` attachments on the parent ticket |
+| the preview | every field the server would fill in — board, client, contact, subject, description, priority — shown and editable before anything is submitted |
+
+The preview is not a client-side guess. A client is matched from the sender's domain and a contact
+from the sender's address, and the pane can see neither, so `POST /api/outlook-addin/preview` asks the
+server what it *would* do, read-only, and also reports which messages already have a ticket. The
+pane shows that on the row rather than letting it be discovered at the end. Anything edited in the
+preview is applied rather than re-derived.
+
+Both questions can be answered **remembered** (*Remember this answer*) and are then stored on the
+`User` row, not in the pane's `localStorage` — which is scoped to the add-in's origin and so shared by
+every C7NTAX account used on that machine. A **Preferences** screen is reachable from the pane header
+and is the one place a saved answer can be seen and undone, because every saved answer works by making
+a question stop appearing. With both answers saved, a later selection files with one click and no
+sheet at all. Bundling is deliberately not rememberable: which message is the ticket changes per
+conversation.
+
 ## What is here
 
 | File | What it is |
 |---|---|
-| `manifest.xml` | The add-in manifest: a `MessageReadCommandSurface` ribbon button that opens the taskpane. Served with its two placeholders resolved — see below, and do not edit them in place. |
-| `taskpane.html` / `taskpane.js` | The pane: sign-in, board selector, selection summary, per-message results. |
+| `manifest.xml` | The add-in manifest: a `MessageReadCommandSurface` ribbon button that opens the taskpane. Served with its three placeholders resolved — see below, and do not edit them in place. |
+| `plugin.json` | The plugin's identity, version and **payload hash** — the record that makes "if the plugin changes, the installer must be rebuilt" enforceable. Maintained by `pnpm plugin:bump`; see [Versioning](#versioning). |
+| `taskpane.html` / `taskpane.js` | The pane: sign-in, selection summary, the questions, the preview, per-message results and preferences. |
 | `commands.html` / `commands.js` | The function file Office requires. Deliberately behaviour-free — the button opens the pane rather than creating tickets blind. |
 | `styles.css` | Minimal styling that reads on Outlook's light and dark themes. |
 | `assets/icon-16.png`, `-32`, `-80` | Ribbon and manifest icons, derived from the app icon. |
@@ -21,16 +45,16 @@ pane call the API with relative URLs and no CORS. Turn it off with `OUTLOOK_ADDI
 
 ## What is served, and what is not
 
-`/addin/manifest.xml` is **generated, not a file**. The copy on disk holds two placeholders, and a
+`/addin/manifest.xml` is **generated, not a file**. The copy on disk holds three placeholders, and a
 manifest carrying a placeholder is one Office rejects without explaining why — so asking a running
 server for the manifest is the only way to get a usable one:
 
 | Request | Answers with |
 |---|---|
 | `/addin/taskpane.html`, `/addin/commands.html`, `/addin/styles.css`, `/addin/assets/*` | the file on disk, as served by `express.static` |
-| `/addin/manifest.xml` | the manifest with both placeholders resolved for that server's own origin |
-| `/addin/installer` | JSON describing the Windows installer, if one has been built |
-| `/addin/installer/<name>.msi` | the installer, or the versionless alias `C7NTAX-OutlookAddIn.msi` |
+| `/addin/manifest.xml` | the manifest with all three placeholders resolved for that server's own origin and plugin version |
+| `/addin/installer` | JSON describing the installer — the current build, the payload hash, whether it is stale, and every released version |
+| `/addin/installer/<name>.msi` | the installer for a version named in the history, or the versionless alias `C7NTAX-OutlookAddIn.msi` |
 
 Because the manifest is generated, **do not edit `manifest.xml` to replace the placeholders in
 place** — that would break the generation for every other deployment that shares the repository, and
@@ -39,7 +63,8 @@ the substitution would then be done twice.
 | Placeholder | Resolved from | Meaning |
 |---|---|---|
 | `__ADDIN_HOST__` | `PUBLIC_BASE_URL`, else the request's own host | the origin serving this folder, e.g. `https://tax.cyber7group.com` |
-| `__ADDIN_GUID__` | `OUTLOOK_ADDIN_GUID`, else a fixed default | the identity Office knows the add-in by |
+| `__ADDIN_GUID__` | `OUTLOOK_ADDIN_GUID`, else `plugin.json` | the identity Office knows the add-in by |
+| `__ADDIN_VERSION__` | `plugin.json` | the four-field version Office reports, e.g. `26.10.7034.0` |
 
 The GUID is **fixed rather than generated**: Office treats a new GUID as a different add-in, so a
 deployment that regenerated it would strand every mailbox that had already sideloaded the previous
@@ -67,18 +92,37 @@ downloads, from **C7NC → Outlook Add-in** in the application itself.
 2. Outlook on the web → **Get Add-ins → My add-ins → Add a custom add-in → Add from file** and
    choose `manifest.xml`. Desktop Outlook has the same option under **Get Add-ins → My add-ins**.
 3. Open a message. The C7NTAX group appears in the ribbon; click **Create ticket**.
-4. Sign in with a C7NTAX account that holds `ticket:create`. Pick the board, click **Create ticket**,
-   and the pane lists the ticket it made — or says which messages already had one.
+4. Sign in with a C7NTAX account that holds `ticket:create`. Answer the questions (or accept the
+   preview), click **Create ticket**, and the pane lists the ticket it made — or says which messages
+   already had one.
 
 Multi-select works from the message list where the host supports it
 (`getSelectedItemsAsync`, Mailbox 1.13+); on older hosts and for a single open message the pane uses
 the message being read.
 
-## What is not done yet (and why)
+## Versioning
 
-- **The multi-message flow is designed, not built.** Right now a selection becomes one ticket per message. The agreed design adds a question when several messages are selected — one ticket each, or one ticket with the others attached — a choice of which message is the parent, and a preview you can edit before anything is submitted. It also lets the user **save their answers**, so the questions stop being asked and a later selection files with one click. It is reviewed as an interactive mockup at
-  [`docs/mockups/outlook-addin-ticket-flow.html`](../../docs/mockups/outlook-addin-ticket-flow.html)
-  and is not implemented in either the pane or the endpoint yet. The mockup's field set is the contract for the server change, and the saved preferences need somewhere to live per user.
+The plugin has its own version, `YY.M.PPPP`, derived from the release it shipped in
+(`2026.10.7.034` → `26.10.7034`). It is the version Office reports, the version in the MSI filename,
+and the version shown on **C7NC → Outlook Add-in** — all read from `plugin.json`, so they cannot
+disagree.
+
+One plugin version per application release: a change to any file in the payload inside a release must
+advance the release, so the version stays monotonic.
+
+```powershell
+pnpm guard:plugin     # fail if the payload changed without a version, or the installer is stale
+pnpm plugin:bump      # recompute the payload hash and take the version from the current release
+pnpm installer:build  # rebuild the MSI for the current plugin version
+```
+
+The payload is every file the add-in runs — `manifest.xml`, the taskpane and commands files,
+`styles.css` and the icons. `plugin.json` itself is deliberately not part of it: bumping the record
+must not change the hash the record holds. `guard:plugin` and `build.ps1` both **refuse** rather than
+produce an installer for an unversioned plugin — see
+[the installer documentation](../../installer/README.md#the-plugin-version-and-the-installers).
+
+## What is not done yet (and why)
 
 - **Microsoft SSO (the `POST /api/auth/office-sso` flow)** is not implemented. It needs the Entra app
   registration from PLAN-017 with the add-in's redirect URI and the `Mail.ReadWrite` scope consented;

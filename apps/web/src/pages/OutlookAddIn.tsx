@@ -22,7 +22,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
-  AlertTriangle, CheckCircle2, Download, ExternalLink, FileCode2, Info, Mail, Package, ShieldCheck, Terminal,
+  AlertTriangle, CheckCircle2, Download, ExternalLink, FileCode2, History, Info, Mail, Package, ShieldCheck, Terminal,
 } from "lucide-react";
 import api from "../api";
 import { PageHeader } from "../components/ui";
@@ -46,8 +46,36 @@ interface Artifact {
   downloadPath?: string;
 }
 
-interface InstallerFacts extends Artifact {
+/** One entry in the installer history. */
+interface VersionFacts {
+  fileName: string;
+  pluginVersion: string;
+  productVersion: string;
+  size: number;
+  builtAt: string;
+  sha256: string;
   addinHost: string;
+  /** Whether this installer was built from the plugin files being served now. */
+  matchesPlugin: boolean;
+  downloadPath: string;
+}
+
+/** What `/addin/installer` says about what is on offer. Public, so it answers for every role. */
+interface Artifact {
+  available: boolean;
+  fileName?: string;
+  pluginVersion?: string;
+  productVersion?: string;
+  size?: number;
+  builtAt?: string;
+  sha256?: string;
+  downloadPath?: string;
+  stale?: boolean;
+  versions?: VersionFacts[];
+  plugin?: { version: string; release: string; sourceHash: string };
+}
+
+interface InstallerFacts extends VersionFacts {
   matchesOrigin: boolean;
 }
 
@@ -57,8 +85,15 @@ interface AddinFacts {
   manifestId: string;
   manifestUrl: string;
   assetsPresent: boolean;
-  installer: InstallerFacts | null;
+  installer: (InstallerFacts & { versions: InstallerFacts[] }) | null;
   installerDirectory: string;
+  plugin: {
+    version: string;
+    release: string;
+    sourceHash: string;
+    currentSourceHash: string;
+    modifiedSinceVersioned: boolean;
+  };
 }
 
 function formatBytes(bytes: number): string {
@@ -114,6 +149,9 @@ export function OutlookAddInPage() {
   /** Admin detail when it is there, the public descriptor otherwise. */
   const shownSize = installer?.size ?? artifact?.size ?? 0;
   const shownVersion = installer?.productVersion ?? artifact?.productVersion ?? "";
+  const pluginVersion = installer?.pluginVersion ?? artifact?.pluginVersion ?? "";
+  /** Every version on offer, from whichever source answered. */
+  const versions = installer?.versions ?? artifact?.versions ?? [];
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
@@ -248,6 +286,65 @@ pwsh -File ./build.ps1 -ApiUrl ${facts?.origin}`}
         </div>
       </div>
 
+      {/* ── Installer versions ────────────────────────────────────────────────
+          Kept downloadable because a plugin change can be the reason a mailbox misbehaves, and
+          the remedy is to install the version that worked rather than to wait for a fix. */}
+      {versions.length > 1 ? (
+        <div className="card">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <History size={16} className="text-cyber-400 shrink-0" />
+              <h3 className="text-white text-sm font-medium">Installer versions</h3>
+            </div>
+            <span className="text-xs text-gray-500">
+              {pluginVersion ? `plugin ${pluginVersion}` : ""}
+            </span>
+          </div>
+
+          {artifact?.stale ? (
+            <div className="flex gap-3 mb-3 rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+              <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-300 leading-relaxed">
+                The newest installer was built before the add-in's current files, so it registers a
+                slightly older plugin. Rebuild it to catch up:
+                <code className="block mt-1 text-gray-400">pnpm plugin:bump &amp;&amp; pnpm installer:build</code>
+              </p>
+            </div>
+          ) : null}
+
+          <div className="space-y-2">
+            {versions.map((version, index) => (
+              <div
+                key={version.fileName}
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-surface-border px-3 py-2"
+              >
+                <span className="text-sm text-white font-medium">Plugin {version.pluginVersion}</span>
+                {index === 0 ? <Chip tone="good">Newest</Chip> : <Chip tone="muted">Earlier</Chip>}
+                {version.matchesPlugin ? null : <Chip tone="warn">Older plugin files</Chip>}
+
+                <span className="text-xs text-gray-500">
+                  release {version.productVersion} · {formatBytes(version.size)} · {formatDate(version.builtAt)}
+                </span>
+
+                <a
+                  href={version.downloadPath}
+                  download
+                  className="ml-auto text-xs font-semibold text-cyber-400 hover:underline"
+                >
+                  Download
+                </a>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-gray-500 mt-3">
+            Every version is kept so a mailbox can be rolled back. Installing an earlier one
+            replaces the current install; restart Outlook afterwards. The plugin version is what
+            Office reports, and it changes only when the add-in's own files change.
+          </p>
+        </div>
+      ) : null}
+
       {/* ── Deployment facts ────────────────────────────────────────────────── */}
       {adminView && facts ? (
         <div className="card">
@@ -263,8 +360,14 @@ pwsh -File ./build.ps1 -ApiUrl ${facts?.origin}`}
             <Fact label="Add-in identity">
               <span className="font-mono text-xs">{facts.manifestId}</span>
             </Fact>
+            <Fact label="Plugin">
+              {facts.plugin.version}
+              {facts.plugin.modifiedSinceVersioned ? (
+                <span className="ml-2 text-amber-400 text-xs">changed since versioned</span>
+              ) : null}
+            </Fact>
             <Fact label="Installer">
-              {installer ? `${shownVersion} · ${formatBytes(shownSize)}` : "not built"}
+              {installer ? `${installer.pluginVersion} · ${formatBytes(shownSize)}` : "not built"}
             </Fact>
             {installer ? (
               <>
