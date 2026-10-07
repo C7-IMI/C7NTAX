@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.008 | Last Updated: 2026-10-07
+## Version: 2026.10.7.009 | Last Updated: 2026-10-07
 
 ---
 
@@ -13,6 +13,15 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.7.009 — A board leads with the tile its desk cares about
+- **[New]** **Board tiles can be arranged.** Each board card showed six metric tiles in a fixed two-row layout, so an escalation queue could not lead with **Escalated** and a MACD desk could not lead with **New**. The tiles are now arranged per board — drag by the handle or use the arrows, and **pin** the one that matters so it leads the card regardless of the dragged order.
+- **[New]** **One arrangement per board, shared with the desk that reads it.** This is a board setting, not a personal preference: reading it needs `board:view`, changing it needs `board:manage`, and every account looking at that board sees the same tiles in the same order. Board cards still refresh their numbers every 15 seconds; only the arrangement is saved.
+- **[New]** **"Pin to the front" survives the drag order.** A pinned tile is moved ahead of the unpinned ones and two pins keep their relative order, so a pin is a statement about importance rather than a one-off shuffle.
+- **[New]** **The saved arrangement is reconciled, like the dashboard's.** An unknown tile id is dropped, a duplicate collapsed, and a tile added later **appended rather than missing** — so retiring or renaming a tile cannot leave a board with a hole in it. A non-array and an over-long list are refused with a 400, and an unknown board is a 404.
+- **[New]** **The arrangement rides on the metrics the page already calls** (`/boards/metrics` loads every board's layout in one query), so there is no extra request per card.
+- **Verification:** 33/33 assertions on the new `probe-board-layout.mjs` — catalogue order and six tiles for an unarranged board; an arrangement stored and returned exactly as made; a pin leading the card while the rest keep their dragged order; two pins keeping theirs; unknown ids dropped, duplicates collapsed, missing tiles appended; a non-array, an over-long list and an unknown board refused; read-only reading (200) but refused a write and a reset (403), a technician refused a write (403), an unauthenticated read refused (401); the metrics endpoint carrying the arrangement for the arranged board and the untouched default for every other board; reset restoring catalogue order. Browser-verified: pinned **Escalated** on the Infrastructure board, saved, **reloaded and it still led the card** while the other three boards kept their default order, then Reset and the row was gone. Regression: 34/34 session, 13/13 scoping, 21/21 egress, 18/18 passkey, 24/24 time rules, 24/24 reports, 34/34 Kumo audit, 31/31 dashboard, `guard:routes` 348 routes/309 with permission/0 violations, the six-persona matrix byte-identical, web typecheck 0, API typecheck 152 (pre-existing only).
+- **Rollback:** the model is additive and every board renders catalogue order when no row exists; deleting the route restores the previous fixed layout with no data change.
 
 ## 2026.10.7.008 — The dashboard is yours: arrange it, size it, hide what you do not use
 - **[New]** **A per-user dashboard.** The overview was one fixed grid of six stat cards and nine links, identical for everybody and identical forever. It is now assembled from a **widget catalogue** you arrange: drag a widget by its handle (or use the arrows) to reorder, pick **S / M / L** for its width, hide the ones you do not use, save. The layout follows **your account**, not the browser, so it is there on the next machine you sign in from — and **Reset** puts the catalogue order back.

@@ -3615,3 +3615,21 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The plan's "pin to top" is satisfied by order; a real pin would need a second field and a reason beyond the drag.
 - The technician persona lacks `billing:view`, which is the account that proves the catalogue filter (8 of 10 widgets). My first version of the probe asserted the *read-only* persona saw fewer and failed — read-only holds every view permission in this roster.
+
+**Prompt 220 — continued: W2-7 (service board tile arrangement, PLAN-015 Phase B #5)**
+
+**What I did**
+- `BoardLayout` (`boardId @unique`, `tiles Json`, `updatedById`), migration `board_layout`, and `services/boardLayout.ts` with the six-tile catalogue and `normaliseBoardTiles()`.
+- `GET /boards/:id/layout` (board:view) and `PUT|DELETE /boards/:id/layout` (board:manage). The tiles a board card shows are the same for everyone reading it, so this is a board setting, not a per-user preference — the permission split says exactly that.
+- **A pin moves the tile ahead of the unpinned ones and stays there.** The order somebody dragged is preserved among the unpinned tiles, so "pin" means importance rather than a one-off shuffle.
+- `/boards/metrics` gained `tiles` and `layoutPersonalised` per board from **one** layout query, so the page renders in the saved order with no extra request per card.
+- `Boards.tsx`: an **Arrange** action per card (only for `board:manage`), the six tiles become draggable boxes with arrows and a pin toggle, Save/Cancel/Reset, then back to live numbers.
+
+**Decisions worth remembering**
+- **Same reconciliation rule as the dashboard.** Unknown tile dropped, duplicate collapsed, missing tile appended — one rule for "a saved layout is input" across both features, which is why the second one took a fraction of the time.
+- **Shared, not personal.** The plan's model is `BoardLayout (boardId → tile order)`, and the risk it names is that *users* cannot prioritise — but the tiles belong to the board, and fifteen technicians each with their own tile order would be fifteen different boards. The honest trade is recorded here: if per-user board tiles are ever wanted, it is a second table keyed by user **and** board.
+- **Verified by pinning, not just saving.** Order and pin interact, and the browser check confirmed a pinned tile still leads after a reload while every other board keeps its default.
+
+**Notes for next time**
+- The `Arrange` button is revealed on card hover; keyboard focus reaches it, but it is intentionally quiet because it is a rare action.
+- `probe-permissions.mjs` covers boards only through `read:boards`; the layout routes have their own permission assertions in `probe-board-layout.mjs` (403 for read-only and for a technician on the write, 403 on reset, 401 unauthenticated).

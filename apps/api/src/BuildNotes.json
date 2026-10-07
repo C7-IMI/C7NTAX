@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.7.009",
+    "date": "2026-10-07",
+    "title": "A board leads with the tile its desk cares about",
+    "changes": [
+      {
+        "text": "**Board tiles can be arranged.** Each board card showed six metric tiles in a fixed two-row layout, so an escalation queue could not lead with **Escalated** and a MACD desk could not lead with **New**. The tiles are now arranged per board — drag by the handle or use the arrows, and **pin** the one that matters so it leads the card regardless of the dragged order.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One arrangement per board, shared with the desk that reads it.** This is a board setting, not a personal preference: reading it needs `board:view`, changing it needs `board:manage`, and every account looking at that board sees the same tiles in the same order. Board cards still refresh their numbers every 15 seconds; only the arrangement is saved.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"Pin to the front\" survives the drag order.** A pinned tile is moved ahead of the unpinned ones and two pins keep their relative order, so a pin is a statement about importance rather than a one-off shuffle.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The saved arrangement is reconciled, like the dashboard's.** An unknown tile id is dropped, a duplicate collapsed, and a tile added later **appended rather than missing** — so retiring or renaming a tile cannot leave a board with a hole in it. A non-array and an over-long list are refused with a 400, and an unknown board is a 404.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The arrangement rides on the metrics the page already calls** (`/boards/metrics` loads every board's layout in one query), so there is no extra request per card.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.008",
     "date": "2026-10-07",
     "title": "The dashboard is yours: arrange it, size it, hide what you do not use",

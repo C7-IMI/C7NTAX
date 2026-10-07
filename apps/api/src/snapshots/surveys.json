@@ -97,5 +97,27 @@
     "sendDelayHours": 1,
     "createdAt": "2026-10-07T07:43:24.643Z",
     "updatedAt": "2026-10-07T07:43:24.643Z"
+  },
+  {
+    "id": "ab07497f-2216-4cb0-a913-572114eac3a8",
+    "name": "Persona probe survey 1791359344787",
+    "description": null,
+    "type": "csat",
+    "isActive": true,
+    "sendOnResolve": false,
+    "sendDelayHours": 1,
+    "createdAt": "2026-10-07T07:49:04.791Z",
+    "updatedAt": "2026-10-07T07:49:04.791Z"
+  },
+  {
+    "id": "c587a51f-76ff-4c23-958d-6bc44535360f",
+    "name": "Persona probe survey 1791359344793",
+    "description": null,
+    "type": "csat",
+    "isActive": true,
+    "sendOnResolve": false,
+    "sendDelayHours": 1,
+    "createdAt": "2026-10-07T07:49:04.796Z",
+    "updatedAt": "2026-10-07T07:49:04.796Z"
   }
 ]

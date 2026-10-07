@@ -112,5 +112,29 @@
     "priority": 0,
     "createdAt": "2026-10-07T07:43:24.615Z",
     "updatedAt": "2026-10-07T07:43:24.615Z"
+  },
+  {
+    "id": "7ab74337-7785-4c29-9ee0-3db0282ab94f",
+    "name": "Persona probe rule 1791359344769",
+    "description": null,
+    "entity": "ticket",
+    "trigger": "ticket.created",
+    "conditions": [],
+    "isActive": true,
+    "priority": 0,
+    "createdAt": "2026-10-07T07:49:04.773Z",
+    "updatedAt": "2026-10-07T07:49:04.773Z"
+  },
+  {
+    "id": "b608c7b3-9a63-482e-bb5d-c19ff00dd28e",
+    "name": "Persona probe rule 1791359344774",
+    "description": null,
+    "entity": "ticket",
+    "trigger": "ticket.created",
+    "conditions": [],
+    "isActive": true,
+    "priority": 0,
+    "createdAt": "2026-10-07T07:49:04.777Z",
+    "updatedAt": "2026-10-07T07:49:04.777Z"
   }
 ]
