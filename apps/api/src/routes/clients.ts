@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { canAccessCompany, companyWhere } from "../middleware/companyScope";
 
 export const clientsRouter = Router();
 clientsRouter.use(authenticate);
@@ -11,7 +12,8 @@ clientsRouter.use(authenticate);
 clientsRouter.get("/", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
   try {
     const { search, status, type, industry, territory, limit = "50", offset = "0", sort = "name" } = req.query as Record<string, string>;
-    const where: Record<string, unknown> = {};
+    // A company-scoped account only ever sees its own client record.
+    const where: Record<string, unknown> = { ...companyWhere(req.user) };
     if (status === "active") where.isActive = true;
     if (status === "inactive") where.isActive = false;
     if (type) where.companyType = type;
@@ -48,7 +50,7 @@ clientsRouter.get("/", requirePermission(Permission.ClientView), async (req: Aut
 clientsRouter.get("/contacts", requirePermission(Permission.ContactView), async (req: AuthRequest, res, next) => {
   try {
     const { search, companyId, limit = "100", offset = "0" } = req.query as Record<string, string>;
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { ...companyWhere(req.user) };
     if (companyId) where.companyId = companyId;
     if (search) {
       where.OR = [
@@ -77,7 +79,7 @@ clientsRouter.get("/contacts/lookup", requirePermission(Permission.ContactView),
     const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
     if (!email) throw new AppError("email is required", 400);
     const contact = await prisma.contact.findFirst({
-      where: { email: { equals: email, mode: "insensitive" } },
+      where: { email: { equals: email, mode: "insensitive" }, ...companyWhere(req.user) },
       select: { id: true, firstName: true, lastName: true, email: true, company: { select: { id: true, name: true } } },
     });
     res.json(contact ?? null);
@@ -91,6 +93,7 @@ clientsRouter.post("/contacts", requirePermission(Permission.ContactCreate), asy
     if (!companyId || !firstName || !lastName || !email) {
       throw new AppError("companyId, firstName, lastName, email are required", 400);
     }
+    if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
     const allowed = ["phone","mobile","title","department","notes","isPrimary","isActive"];
     const data: Record<string, unknown> = { companyId, firstName, lastName, email };
     for (const key of allowed) {
@@ -110,6 +113,8 @@ clientsRouter.patch("/contacts/:id", requirePermission(Permission.ContactEdit), 
       if (req.body[key] !== undefined) data[key] = req.body[key];
     }
     if (Object.keys(data).length === 0) throw new AppError("No fields to update", 400);
+    const existing = await prisma.contact.findUnique({ where: { id: req.params.id }, select: { companyId: true } });
+    if (!existing || !canAccessCompany(req.user, existing.companyId)) throw new AppError("Contact not found", 404);
     const contact = await prisma.contact.update({ where: { id: req.params.id }, data: data as any, include: { company: { select: { id: true, name: true } } } });
     res.json(contact);
   } catch (e) { next(e); }
@@ -129,6 +134,9 @@ clientsRouter.get("/:id", requirePermission(Permission.ClientView), async (req: 
       },
     });
     if (!company) throw new AppError("Client not found", 404);
+    // An id that exists but belongs to another company is answered exactly like one
+    // that does not exist.
+    if (!canAccessCompany(req.user, company.id)) throw new AppError("Client not found", 404);
     res.json(company);
   } catch (e) { next(e); }
 });
@@ -159,6 +167,8 @@ clientsRouter.post("/", requirePermission(Permission.ClientCreate), async (req: 
 // ── Update client ────────────────────────────────────────────────────
 clientsRouter.patch("/:id", requirePermission(Permission.ClientEdit), async (req: AuthRequest, res, next) => {
   try {
+    // A company-scoped account may only edit its own client record.
+    if (!canAccessCompany(req.user, req.params.id)) throw new AppError("Client not found", 404);
     const allowed = ["name","legalName","taxId","phone","fax","email","billingEmail","website",
       "addressLine1","addressLine2","city","state","postalCode","country",
       "billingAddressLine1","billingAddressLine2","billingCity","billingState","billingPostalCode","billingCountry",
@@ -188,6 +198,7 @@ clientsRouter.patch("/:id", requirePermission(Permission.ClientEdit), async (req
 // ── Delete client ────────────────────────────────────────────────────
 clientsRouter.delete("/:id", requirePermission(Permission.ClientDelete), async (req: AuthRequest, res, next) => {
   try {
+    if (!canAccessCompany(req.user, req.params.id)) throw new AppError("Client not found", 404);
     await prisma.company.delete({ where: { id: req.params.id } });
     res.json({ message: "Client deleted" });
   } catch (e) { next(e); }
@@ -197,7 +208,8 @@ clientsRouter.delete("/:id", requirePermission(Permission.ClientDelete), async (
 clientsRouter.get("/:id/agreements", requirePermission(Permission.ServiceAgreementView), async (req: AuthRequest, res, next) => {
   try {
     const agreements = await prisma.serviceAgreement.findMany({
-      where: { companyId: req.params.id },
+      // `companyId` from the request is narrowed to the caller's own company when scoped.
+      where: { companyId: canAccessCompany(req.user, req.params.id) ? req.params.id : "__none__" },
       orderBy: { name: "asc" },
       select: { id: true, name: true, billingPeriod: true, billingAmount: true, isActive: true },
     });
@@ -209,7 +221,7 @@ clientsRouter.get("/:id/agreements", requirePermission(Permission.ServiceAgreeme
 clientsRouter.get("/:id/contacts", requirePermission(Permission.ContactView), async (req: AuthRequest, res, next) => {
   try {
     const contacts = await prisma.contact.findMany({
-      where: { companyId: req.params.id },
+      where: { companyId: canAccessCompany(req.user, req.params.id) ? req.params.id : "__none__" },
       orderBy: { isPrimary: "desc" },
     });
     res.json({ data: contacts });
@@ -220,11 +232,11 @@ clientsRouter.get("/:id/contacts", requirePermission(Permission.ContactView), as
 clientsRouter.get("/:id/kumo", requirePermission(Permission.KumoView), authenticate, async (req: AuthRequest, res, next) => {
   try {
     const [assets, passwords, documents, domains, certificates] = await Promise.all([
-      prisma.kumoAsset.count({ where: { companyId: req.params.id } }),
-      prisma.kumoPassword.count({ where: { companyId: req.params.id } }),
-      prisma.kumoDocument.count({ where: { companyId: req.params.id } }),
-      prisma.kumoDomain.count({ where: { companyId: req.params.id } }),
-      prisma.kumoCertificate.count({ where: { companyId: req.params.id } }),
+      prisma.kumoAsset.count({ where: { companyId: canAccessCompany(req.user, req.params.id) ? req.params.id : "__none__" } }),
+      prisma.kumoPassword.count({ where: { companyId: canAccessCompany(req.user, req.params.id) ? req.params.id : "__none__" } }),
+      prisma.kumoDocument.count({ where: { companyId: canAccessCompany(req.user, req.params.id) ? req.params.id : "__none__" } }),
+      prisma.kumoDomain.count({ where: { companyId: canAccessCompany(req.user, req.params.id) ? req.params.id : "__none__" } }),
+      prisma.kumoCertificate.count({ where: { companyId: canAccessCompany(req.user, req.params.id) ? req.params.id : "__none__" } }),
     ]);
     res.json({ assets, passwords, documents, domains, certificates });
   } catch (e) { next(e); }

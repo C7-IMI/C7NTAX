@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
+import { canAccessCompany, companyWhere } from "../middleware/companyScope";
 import { Permission, InvoiceStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { BillingEngine } from "@C7NTAX/billing";
@@ -183,6 +184,7 @@ billingRouter.post("/invoices/:id/send", requirePermission(Permission.InvoiceSen
   try {
     const invoice = await prisma.invoice.findUnique({ where: { id: req.params.id }, include: { company: true, lineItems: true } });
     if (!invoice) throw new AppError("Invoice not found", 404);
+    if (!canAccessCompany(req.user, invoice.companyId)) throw new AppError("Invoice not found", 404);
     if (invoice.status !== InvoiceStatus.Draft && invoice.status !== InvoiceStatus.Sent) {
       throw new AppError("Invoice cannot be sent in its current status");
     }
@@ -199,6 +201,7 @@ billingRouter.post("/invoices/:id/record-payment", requirePermission(Permission.
     const { amount } = req.body;
     const invoice = await prisma.invoice.findUnique({ where: { id: req.params.id } });
     if (!invoice) throw new AppError("Invoice not found", 404);
+    if (!canAccessCompany(req.user, invoice.companyId)) throw new AppError("Invoice not found", 404);
     const newStatus = amount >= invoice.total ? InvoiceStatus.Paid : InvoiceStatus.Partial;
     const updated = await prisma.invoice.update({
       where: { id: req.params.id },
@@ -220,9 +223,7 @@ billingRouter.get("/invoices/:id/pdf", requirePermission(Permission.BillingView)
       include: { company: true, lineItems: true, payments: true },
     });
     if (!invoice) throw new AppError("Invoice not found", 404);
-    if (!req.user!.permissions.includes(Permission.TicketViewAll) && req.user!.companyId && invoice.companyId !== req.user!.companyId) {
-      throw new AppError("Not authorized", 403);
-    }
+    if (!canAccessCompany(req.user, invoice.companyId)) throw new AppError("Not authorized", 403);
 
     const currency = "$";
     const statusLabel = invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1);
@@ -360,11 +361,12 @@ billingRouter.get("/payments", requirePermission(Permission.BillingView), async 
 // ── Revenue report ──
 billingRouter.get("/reports/revenue", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {
   try {
+    const scope = companyWhere(req.user);
     const [totalInvoiced, totalPaid, overdueCount, overdueAmount] = await Promise.all([
-      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: { not: "draft" } } }),
-      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "paid" } }),
-      prisma.invoice.count({ where: { status: "overdue" } }),
-      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "overdue" } }),
+      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: { not: "draft" }, ...scope } }),
+      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "paid", ...scope } }),
+      prisma.invoice.count({ where: { status: "overdue", ...scope } }),
+      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "overdue", ...scope } }),
     ]);
     res.json({
       totalInvoiced: totalInvoiced._sum.total || 0,
@@ -376,11 +378,12 @@ billingRouter.get("/reports/revenue", requirePermission(Permission.BillingView),
 });
 
 // ── FI-032 / FI-041: Finance Dashboard ────────────────────────────
-billingRouter.get("/dashboard", authenticate, async (_req: AuthRequest, res, next) => {
+billingRouter.get("/dashboard", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {
   try {
+    const scope = companyWhere(req.user);
     const [invoices, payments] = await Promise.all([
-      prisma.invoice.findMany({ select: { status: true, total: true, dueDate: true, issueDate: true } }),
-      prisma.payment.findMany({ select: { amount: true, processedAt: true, invoice: { select: { status: true } } } }),
+      prisma.invoice.findMany({ where: scope, select: { status: true, total: true, dueDate: true, issueDate: true } }),
+      prisma.payment.findMany({ where: scope.companyId ? { invoice: { companyId: scope.companyId } } : {}, select: { amount: true, processedAt: true, invoice: { select: { status: true } } } }),
     ]);
     const totalInvoiced = invoices.reduce((s,i) => s + i.total, 0);
     const totalPaid = payments.reduce((s,p) => s + p.amount, 0);
@@ -391,10 +394,11 @@ billingRouter.get("/dashboard", authenticate, async (_req: AuthRequest, res, nex
 });
 
 // ── FI-034: Quotes ─────────────────────────────────────────────────
-billingRouter.post("/quotes", authenticate, async (req: AuthRequest, res, next) => {
+billingRouter.post("/quotes", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
   try {
     const { companyId, lineItems, notes, dueDate } = req.body;
     if (!companyId) throw new AppError("companyId required", 400);
+    if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
     const total = (lineItems || []).reduce((s: number, li: any) => s + (li.quantity * li.unitPrice), 0);
     const invoice = await prisma.invoice.create({
       data: {
@@ -408,34 +412,39 @@ billingRouter.post("/quotes", authenticate, async (req: AuthRequest, res, next) 
   } catch (e) { next(e); }
 });
 
-billingRouter.post("/quotes/:id/accept", authenticate, async (req: AuthRequest, res, next) => {
+billingRouter.post("/quotes/:id/accept", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
   try {
+    const existing = await prisma.invoice.findUnique({ where: { id: req.params.id }, select: { companyId: true } });
+    if (!existing || !canAccessCompany(req.user, existing.companyId)) throw new AppError("Quote not found", 404);
     const inv = await prisma.invoice.update({ where: { id: req.params.id }, data: { quoteStatus: "accepted", invoiceNumber: `INV-${Date.now().toString(36).toUpperCase()}` } });
     res.json(inv);
   } catch (e) { next(e); }
 });
 
 // ── FI-037: Recurring Invoices ─────────────────────────────────────
-billingRouter.post("/invoices/:id/recurring", authenticate, async (req: AuthRequest, res, next) => {
+billingRouter.post("/invoices/:id/recurring", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
   try {
     const { recurrenceRule } = req.body; // "monthly", "quarterly", "annually"
+    const existing = await prisma.invoice.findUnique({ where: { id: req.params.id }, select: { companyId: true } });
+    if (!existing || !canAccessCompany(req.user, existing.companyId)) throw new AppError("Invoice not found", 404);
     const inv = await prisma.invoice.update({ where: { id: req.params.id }, data: { isRecurring: true, recurrenceRule, nextGenerationDate: new Date() } });
     res.json(inv);
   } catch (e) { next(e); }
 });
 
 // ── FI-038: Expenses ───────────────────────────────────────────────
-billingRouter.get("/expenses", authenticate, async (req: AuthRequest, res, next) => {
+billingRouter.get("/expenses", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {
   try {
-    const expenses = await prisma.expense.findMany({ orderBy: { expenseDate: "desc" }, take: 200 });
+    const expenses = await prisma.expense.findMany({ where: companyWhere(req.user), orderBy: { expenseDate: "desc" }, take: 200 });
     res.json({ data: expenses });
   } catch (e) { next(e); }
 });
 
-billingRouter.post("/expenses", authenticate, async (req: AuthRequest, res, next) => {
+billingRouter.post("/expenses", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
   try {
     const { description, amount, category, companyId, ticketId, receiptUrl, expenseDate } = req.body;
     if (!description || !amount) throw new AppError("description and amount required", 400);
+    if (companyId && !canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
     const exp = await prisma.expense.create({
       data: { description, amount, category: category || "other", companyId: companyId || null, ticketId: ticketId || null, receiptUrl, expenseDate: expenseDate ? new Date(expenseDate) : new Date(), createdById: req.user!.userId },
     });
@@ -443,7 +452,12 @@ billingRouter.post("/expenses", authenticate, async (req: AuthRequest, res, next
   } catch (e) { next(e); }
 });
 
-billingRouter.delete("/expenses/:id", authenticate, async (req: AuthRequest, res, next) => {
-  try { await prisma.expense.delete({ where: { id: req.params.id } }); res.json({ message: "Deleted" }); }
+billingRouter.delete("/expenses/:id", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
+  try {
+    const expense = await prisma.expense.findUnique({ where: { id: req.params.id }, select: { companyId: true } });
+    if (!expense || !canAccessCompany(req.user, expense.companyId)) throw new AppError("Expense not found", 404);
+    await prisma.expense.delete({ where: { id: req.params.id } });
+    res.json({ message: "Deleted" });
+  }
   catch (e) { next(e); }
 });

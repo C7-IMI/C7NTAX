@@ -1,11 +1,13 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
+import { companyWhere, ticketCompanyWhere } from "../middleware/companyScope";
 import { Permission } from "@C7NTAX/shared";
 export const reportsRouter = Router(); reportsRouter.use(authenticate);
 
-reportsRouter.get("/", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
+    const scope = companyWhere(req.user);
     const reports = await prisma.report.findMany({ orderBy: { name: "asc" } });
     const [authors, schedules] = await Promise.all([
       prisma.user.findMany({ where: { id: { in: [...new Set(reports.map(r => r.createdById))] } }, select: { id: true, firstName: true, lastName: true } }),
@@ -42,23 +44,25 @@ reportsRouter.post("/:id/schedules", requirePermission(Permission.ReportCreate),
 
 // ── Standard report data endpoints ──
 
-reportsRouter.get("/data/ticket-volume", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/ticket-volume", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
-    const total = await prisma.ticket.count();
-    const byStatus = await prisma.ticket.groupBy({ by: ["status"], _count: { id: true } });
-    const byPriority = await prisma.ticket.groupBy({ by: ["priority"], _count: { id: true } });
-    const byBoard = await prisma.ticket.groupBy({ by: ["boardId"], _count: { id: true } });
+    const scope = companyWhere(req.user);
+    const total = await prisma.ticket.count({ where: scope });
+    const byStatus = await prisma.ticket.groupBy({ by: ["status"], where: scope, _count: { id: true } });
+    const byPriority = await prisma.ticket.groupBy({ by: ["priority"], where: scope, _count: { id: true } });
+    const byBoard = await prisma.ticket.groupBy({ by: ["boardId"], where: scope, _count: { id: true } });
     const boards = await prisma.serviceBoard.findMany({ select: { id: true, name: true } });
     const boardMap = new Map(boards.map(b => [b.id, b.name]));
     res.json({ total, byStatus: byStatus.map(s => ({ status: s.status, count: s._count.id })), byPriority: byPriority.map(p => ({ priority: p.priority, count: p._count.id })), byBoard: byBoard.map(b => ({ board: boardMap.get(b.boardId) || b.boardId, count: b._count.id })) });
   } catch (e) { next(e); }
 });
 
-reportsRouter.get("/data/sla-compliance", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/sla-compliance", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
+    const scope = companyWhere(req.user);
     const now = new Date();
     const tickets = await prisma.ticket.findMany({
-      where: { status: { notIn: ["closed", "cancelled"] } },
+      where: { status: { notIn: ["closed", "cancelled"] }, ...scope },
       include: { board: { select: { slaResponseMinutes: true, slaResolutionMinutes: true } } },
     });
     let metResponse = 0, breachedResponse = 0, metResolution = 0, breachedResolution = 0;
@@ -79,11 +83,12 @@ reportsRouter.get("/data/sla-compliance", requirePermission(Permission.ReportVie
   } catch (e) { next(e); }
 });
 
-reportsRouter.get("/data/technician-utilization", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/technician-utilization", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
+    const scope = companyWhere(req.user);
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
     const timeEntries = await prisma.timeEntry.findMany({
-      where: { date: { gte: thirtyDaysAgo } },
+      where: { date: { gte: thirtyDaysAgo }, ...ticketCompanyWhere(req.user) },
       include: { user: { select: { id: true, firstName: true, lastName: true } } },
     });
     const byUser: Record<string, { name: string; billable: number; nonBillable: number }> = {};
@@ -97,12 +102,13 @@ reportsRouter.get("/data/technician-utilization", requirePermission(Permission.R
   } catch (e) { next(e); }
 });
 
-reportsRouter.get("/data/revenue-summary", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/revenue-summary", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
+    const scope = companyWhere(req.user);
     const [paid, outstanding, byMonth] = await Promise.all([
-      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "paid" } }),
-      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: { in: ["sent", "partial", "overdue"] } } }),
-      prisma.invoice.findMany({ where: { status: "paid", paidAt: { not: null } }, select: { paidAt: true, total: true }, orderBy: { paidAt: "desc" }, take: 200 }),
+      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "paid", ...scope } }),
+      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: { in: ["sent", "partial", "overdue"] }, ...scope } }),
+      prisma.invoice.findMany({ where: { status: "paid", paidAt: { not: null }, ...scope }, select: { paidAt: true, total: true }, orderBy: { paidAt: "desc" }, take: 200 }),
     ]);
     const monthly: Record<string, number> = {};
     for (const inv of byMonth) {
@@ -115,11 +121,12 @@ reportsRouter.get("/data/revenue-summary", requirePermission(Permission.ReportVi
 });
 
 // ── Ticket Aging Report ──
-reportsRouter.get("/data/ticket-aging", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/ticket-aging", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
+    const scope = companyWhere(req.user);
     const now = new Date();
     const tickets = await prisma.ticket.findMany({
-      where: { status: { notIn: ["closed", "cancelled"] } },
+      where: { status: { notIn: ["closed", "cancelled"] }, ...scope },
       select: { createdAt: true, updatedAt: true, title: true, ticketNumber: true, status: true, priority: true },
     });
     const aging = { lessThan1Day: 0, oneTo3Days: 0, threeTo7Days: 0, sevenTo30Days: 0, over30Days: 0, total: tickets.length };
@@ -136,9 +143,11 @@ reportsRouter.get("/data/ticket-aging", requirePermission(Permission.ReportView)
 });
 
 // ── Time Tracking Report ──
-reportsRouter.get("/data/time-tracking", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/time-tracking", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
+    const scope = companyWhere(req.user);
     const timeEntries = await prisma.timeEntry.findMany({
+      where: ticketCompanyWhere(req.user),
       orderBy: { date: "desc" },
       take: 200,
       include: { user: { select: { firstName: true, lastName: true } }, ticket: { select: { ticketNumber: true, title: true } } },
@@ -156,9 +165,10 @@ reportsRouter.get("/data/time-tracking", requirePermission(Permission.ReportView
 });
 
 // ── Client Satisfaction (placeholder) ──
-reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
-    const companies = await prisma.company.findMany({ select: { id: true, name: true }, take: 20 });
+    const scope = companyWhere(req.user);
+    const companies = await prisma.company.findMany({ where: scope, select: { id: true, name: true }, take: 20 });
     const data = companies.map(c => ({
       client: c.name,
       npsScore: Math.round(30 + Math.random() * 50),
@@ -173,9 +183,11 @@ reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), async 
 });
 
 // ── Contract Profitability Report ──
-reportsRouter.get("/data/contract-profitability", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/contract-profitability", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
+    const scope = companyWhere(req.user);
     const agreements = await prisma.serviceAgreement.findMany({
+      where: scope,
       include: { company: { select: { name: true } }, invoices: { where: { status: "paid" }, select: { total: true } } },
     });
     const data = agreements.map(a => {
