@@ -5,8 +5,14 @@
 
 # Bedrock Agentic RAG AI Assistant for PSA — Implementation Plan
 
+> **Sequence:** Wave 4 · position 8 of 12 (re-sequenced 2026-10-06) · **Status:** ⬜ Not started — the integration seam exists, nothing agentic does
+> **Implemented groundwork:** OpenAI-compatible provider abstraction (`apps/api/src/services/inference/LlmProvider.ts`), `/api/inference`, `/api/kb`, and AI ticket suggestions in the UI — the seam this plan plugs into.
+> **Outstanding:** all eight phases (S3 export + OpenSearch collection + Knowledge Base, the agent itself, `search_web` action group, API Gateway/IAM + streaming proxy, ticket AI panel, weekly KB batch generation, guardrails/tenant filtering/PrivateLink, validation runbook) **plus** phase 9 — the risk-classified action layer and MCP server moved here from PLAN-013 #7.
+> **Depends on:** PLAN-016 (private networking, hosting) and PLAN-007 phase 7 security controls. On the Azure path, Azure OpenAI + AI Search substitute for Bedrock, and the `tenant_id` filter waits for PLAN-003.
+> **Next action:** freeze the open decisions in §9 (model, embeddings, search vendor, export mechanism), then build phase 1 once the cloud target exists.
+
 **Plan Label:** Bedrock Agentic RAG AI Assistant for PSA Plan
-**Status:** Proposed (plan only — no implementation yet)
+**Status:** ⬜ Not started — the integration seam exists (see the sequence block below).
 **Date:** 2026-08-18
 
 ---

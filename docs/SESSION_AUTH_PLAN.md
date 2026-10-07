@@ -1,5 +1,11 @@
 # C7NTAX — Session-Based Authentication & Permissions Implementation Plan
 
+> **Sequence:** Wave 1 · position 2 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Partial — infrastructure written, never wired
+> **Implemented:** `Session` + `RefreshToken` Prisma models; `apps/api/src/middleware/sessionAuth.ts` (sliding expiry, inactivity timeout, admin bypass); session-timeout setting surfaced in Administration → Settings; `auditLog` middleware.
+> **Outstanding:** `sessionAuth` is imported nowhere — the live path is still the 12-hour JWT in `middleware/auth.ts`; no refresh rotation or revocation for app sessions; the idle-timeout warning modal (§3.3) does not exist.
+> **Depends on:** nothing. **Unblocks:** PLAN-007 SC-03, PLAN-002's session hand-off, PLAN-013 #3 portal sessions.
+> **Next action:** decide wire-in vs retire, then mount it behind `SESSION_AUTH_ENABLED` and ship the timeout modal.
+
 ## Scope
 
 Replace the current JWT-based auth with a secure session-based system modeled after enterprise PSA platforms (Autotask PSA, ConnectWise Manage, HaloPSA). All changes are incremental and preserve the existing API surface, frontend component tree, and navigation structure.

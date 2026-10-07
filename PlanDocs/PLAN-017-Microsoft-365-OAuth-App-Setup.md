@@ -1,10 +1,16 @@
 # PLAN-017 — Microsoft 365 OAuth App: Build & Deployment Plan
 
+> **Sequence:** Wave 1 · position 1 of 12 (re-sequenced 2026-10-06) · **Status:** ⬜ Ready to execute — the runbook is complete and the code it configures is shipped
+> **Implemented:** the plan itself is the deliverable, and the connector side it configures is live (Graph app-only + delegated, EWS, attribution, health — see PLAN-009).
+> **Outstanding:** tenant-side work only — app registration, `Mail.ReadWrite` consent, Exchange RBAC scoping (app-only) or a delegated sign-in, then test + enable the connector. Nothing in this repository is pending.
+> **Depends on:** nothing. **Unblocks:** PLAN-009's close-out and real mail flowing into tickets.
+> **Next action:** follow §4 (app-only, recommended for a shared watcher mailbox) or §5 (delegated), then §7 to verify and switch the connector to Watching.
+
 **Plan ID:** PLAN-017
 **Title:** Microsoft 365 OAuth App: Build & Deployment Plan (app-only + delegated sign-in)
 **Source:** authored in `PlanDocs/`
 **Created:** 2026-10-06
-**Status:** Ready to execute (connector code shipped — see BuildNotes 2026.10.6.050)
+**Status:** ⬜ Ready to execute — runbook complete, connector code shipped (see the sequence block below)
 **Related:** PLAN-009 (Monitored Mailbox Email-to-Ticket Connector), PLAN-016 (Azure Dev/Prod Split)
 
 ---

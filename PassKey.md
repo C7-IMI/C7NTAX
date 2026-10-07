@@ -1,6 +1,12 @@
 # Passkey Authentication — Implementation Plan
 
-> **Status**: Planning  
+> **Sequence:** Wave 1 · position 3 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Partial — roughly three quarters built
+> **Implemented:** `WebauthnCredential` model; `/api/auth/webauthn/{register,login}/options|verify` using `@simplewebauthn/server`; passkey sign-in and enrolment in `apps/web/src/pages/Login.tsx` with `@simplewebauthn/browser`, gated by `PASSKEY_ENABLED`. TOTP + email MFA untouched.
+> **Outstanding:** passkey management UI (list/rename/remove a device), per-role policy, recovery codes; plus this plan's SSO stage — OIDC start/callback and JIT provisioning exist in `routes/sso.ts` + `routes/ssoExchange.ts` behind `SSO_ENABLED`/`SSO_ISSUER`, but there is no login button and no SAML.
+> **Depends on:** PLAN-001 (session lifetime). **Unblocks:** PLAN-007 SC-05, PLAN-013 #6, PLAN-012's identity exchange.
+> **Next action:** finish the management/recovery UI, then surface SSO on the login page.
+
+> **Status**: 🟡 Partial — passkey sign-in and enrolment shipped; management UI, per-role policy and recovery codes outstanding (see the sequence block below)  
 > **Target**: C7 Overwatch (C7NTAX)  
 > **Protocol**: WebAuthn Level 2 (W3C) via `@simplewebauthn/server` + `@simplewebauthn/browser`  
 > **Principle**: Passkey-first, password-retained — additive, never destructive

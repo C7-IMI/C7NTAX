@@ -6,7 +6,13 @@
 
 # C7NTRL RMM Product Line & PSA Integration Plan (PLAN-014)
 
-**Plan ID:** PLAN-014 | **Status:** Proposed (planning phase)
+> **Sequence:** Wave 6 · position 12 of 12 (re-sequenced 2026-10-06) · **Status:** ⬜ Not started — the PSA-side contract is defined, the RMM phases are external
+> **Implemented:** nothing in this repository: no `/api/rmm/*` endpoints exist. Every PSA surface the contract writes into does exist (Kumo assets, tickets + automations, Service Alerts, billing agreements, workflows).
+> **Outstanding:** each PSA-side endpoint in §3 — device sync → Kumo asset upsert, tenant sync, HMAC alert webhook → ticket automation, compliance display, patch approval, signed device deep-link — every one gated on its matching C7NTRL phase.
+> **Depends on:** C7NTRL-001 phases (other repository) and PLAN-002 for the signed deep-link identity. **Unblocks:** nothing in this repo.
+> **Next action:** nothing until a C7NTRL phase actually ships; then implement the two sync endpoints plus the alert webhook as the first slice.
+
+**Plan ID:** PLAN-014 | **Status:** ⬜ Not started — PSA-side contract defined, gated on C7NTRL phases (see the sequence block below)
 **Companion:** C7NTRL-001 (`C7-IMI/C7NTRL` repo, `docs/PLAN-C7NTRL-Architecture-and-Integration.md` — the RMM-side plan this mirrors).
 **Contract:** `docs/INTEGRATION-CONTRACT.md` (committed to both repos; C7NTAX copy lives at `docs/INTEGRATION-CONTRACT.md`).
 

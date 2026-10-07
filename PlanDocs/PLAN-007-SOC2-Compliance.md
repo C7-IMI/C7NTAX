@@ -5,6 +5,12 @@
 
 # SOC2.Compliance — C7NTAX SOC 2 Readiness Plan
 
+> **Sequence:** Wave 3 · position 7 of 12 (re-sequenced 2026-10-06) · **Status:** ⬜ Not started — code-side groundwork exists
+> **Implemented groundwork:** RBAC with granular permissions, TOTP + email MFA, bcrypt hashing, helmet, CORS allow-list, audit-log middleware, AES-256 Kumo vault, retention-policy APIs, health endpoint, `.env` gitignored, snapshot/seeding system.
+> **Outstanding:** SC-01/02 secrets + KMS; SC-03 JWT rotation (no app-side refresh rotation today); SC-04 rate limiting (`index.ts` currently allows 9999 req/60 s); SC-05/06 MFA + password policy; SC-07 edge TLS/HSTS; SC-08/09 scanning (`.github/workflows` contains only `desktop-build.yml` — no CI scanning at all); SC-10/12 removing `--accept-data-loss` and the reseed path from the production boot; SC-11 append-only audit trail; and the AV/CF/PR/OR controls (infrastructure, runbooks, policies).
+> **Depends on:** PLAN-016 for the AV/CF/OR controls; SC-03/04/06/09/12 are independent and may start immediately. **Unblocks:** enterprise sales, PLAN-011 phase 7.
+> **Next action:** take the independent code controls as a first tranche, then hang the infrastructure controls on the chosen cloud.
+
 > Version: 2026.8.14.004 | Owner: C7NTAX engineering | Status: PLAN (no code changes yet)
 > Scope: SOC 2 Type II readiness for C7NTAX as deployed to AWS.
 > How to use: reference items by ID (`SC-04`, `AV-02`, …) in prompts and tickets.

@@ -5,8 +5,14 @@
 
 # Azure Dev/Prod Split & Sync Plan
 
+> **Sequence:** Wave 3 · position 6 of 12 (re-sequenced 2026-10-06) · **Status:** ⬜ Not started — plan + decision record only (§15 recommends Azure; final call pending)
+> **Implemented:** nothing in-repo — no IaC, no container definitions, no deploy pipeline; `.github/workflows` contains only `desktop-build.yml`, so there is no CI that runs typecheck, tests or migrations.
+> **Outstanding:** every phase, plus the CI/CD the repository currently lacks entirely. Note the Prisma workflow: migrations are applied with `db push` in dev and there is no versioned migration history (PLAN-007 PI-01), which has to be fixed as part of this plan rather than after it.
+> **Depends on:** nothing — this is the foundation. **Unblocks:** PLAN-007's AV/CF/OR controls, PLAN-011's hosting/AI services, PLAN-005's update feed.
+> **Next action:** confirm Azure vs AWS, then build dev environment #1 (app + PostgreSQL + Key Vault equivalent) behind a CI pipeline that runs typecheck and tests before deploy.
+
 **Plan Label:** Azure Dev/Prod Split & Sync Plan
-**Status:** Proposed (plan only — no implementation yet)
+**Status:** ⬜ Not started — plan and decision record only (see the sequence block below).
 **Date:** 2026-10-05
 **Companion:** `PLAN-AWS-Dev-Prod-Split-and-Sync.md` (PLAN-010) — identical goals, sync semantics, phases, and rollback model; every AWS service is mapped to its Azure equivalent in §2.
 

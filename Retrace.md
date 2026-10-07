@@ -3002,3 +3002,30 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - The EWS parser matched bare tag names while Exchange prefixes everything (`<t:RootFolder>`), so every response silently parsed to zero items. The stub made that obvious in one run; a real tenant would have shown it as "connected, 0 unread".
 - This app rewrites `title` attributes to `data-kun-title` for its own tooltips, so `getByTitle` finds a *tooltip*, not the button — use `button[data-kun-title="…"]`, and never `.first()` on a generic selector inside a list (that is how a seeded demo connector got deleted and had to be restored).
 - `prisma db push` needs the API stopped on Windows: the running process holds the query-engine DLL and `generate` fails with EPERM.
+
+---
+
+### Prompt 209 — Plan review: what is actually built, and re-sequencing every plan
+**Timestamp:** 2026-10-06 | **Status:** Done — all 17 plans statused and re-ordered; documentation only, no code touched | **Duration:** ~1 h 15 min
+**BuildNotes IDs:** 2026.10.6.051 - Plan registry re-sequenced: the status of every plan checked against the code, and a new execution order
+> review the plan docs and tell me what hasn't been implemented yet. REview the current state of the application to see if a reorder is necessary. Reorder them and update the plan docs. After the reorder give me a brief summary of next steps. Assume we are going to go ahead and move forward with everything except for multi-tenant at this time. Plan only for now. No changes to the code
+
+**What I did**
+- Read all 17 plan documents, then verified each one against the repository instead of trusting its own status line — `apps/api/src/routes/*`, `apps/api/src/middleware/*`, `apps/api/src/services/*`, `prisma/schema.prisma`, `apps/web/src` (+ `public/`), `apps/desktop/*`, `packages/*`, `.github/workflows/*`, `scripts/*`.
+- Rebuilt `PlanDocs/README.md`: status legend, the six-wave sequence, per-plan "what is actually left", dependency notes, the reason the order changed, and the evidence basis.
+- Added a `> **Sequence:**` block to the top of every plan — wave, position, verified status, what is implemented (with file evidence), what is outstanding, dependencies, and the next action — in both the `PlanDocs/` copy and the 16 original documents at their source paths, then corrected the stale `**Status:**` lines so no document contradicts its verified state.
+- Deferred multi-tenant out of the sequence and gave each plan that cited it a named substitute.
+
+**What the review found that the documents did not say**
+- **Plans whose work is already done:** PLAN-008 token savings (all ten options, markers in code); PLAN-009 email connector (four transports, attribution, health — the most complete feature in the product) — and PLAN-005 already ships a Windows Electron build, PLAN-002's passkeys sign users in from `Login.tsx`, and PLAN-013's own #1/#2 quotes module (models, routes, UI, quote→invoice) and #4 website/SSL/DNS monitors are live.
+- **Plans whose "pending" hiding was wrong the other way:** nothing in the repo backs PLAN-007's 38 SOC 2 controls, PLAN-016's cloud split, PLAN-011's assistant, PLAN-004's mobile apps or PLAN-014's RMM endpoints — and there is no CI at all beyond `desktop-build.yml`, which matters because PLAN-016 and PLAN-007 both assume a pipeline exists.
+- **The half-finished items were invisible:** `sessionAuth.ts` is written but imported nowhere (JWT is still the live path); OIDC SSO exists behind `SSO_ENABLED`/`SSO_ISSUER` with no login button; the billing-from-tickets API exists with no UI; the Outlook add-in has its tickets endpoint but not its identity exchange.
+- **PLAN-015 Phase A is entirely unstarted** (agreements/time engine, expenses, bill-through batch invoicing) — the largest remaining revenue gap, and it depends on nothing.
+
+**New sequence (multi-tenant deferred)**
+1 PLAN-017 M365 go-live · 2 PLAN-001 session auth · 3 PLAN-002 identity (passkeys + SSO) · 4 PLAN-015 billing/backlog · 5 PLAN-013 modernization (portal, billing UI, UX pass) · 6 PLAN-016 cloud split · 7 PLAN-007 SOC 2 · 8 PLAN-011 AI assistant · 9 PLAN-012 Outlook add-in · 10 PLAN-004 mobile · 11 PLAN-005 desktop · 12 PLAN-014 C7NTRL. Folded/superseded: PLAN-006 → PLAN-005, PLAN-010 → PLAN-016, PLAN-008 closed, PLAN-003 deferred.
+
+**Notes for next time**
+- The most useful question to ask a plan document is "where is that in the code?" — three plans claimed nothing was built while shipping, and one claimed a status ("Step 1 Complete") that its siblings had outgrown.
+- Two explore subagents failed with `400 The requested model is not supported`, so this review was done directly; the greps that mattered most were `model Quote`, `webauthn`, `electron`, `sessionAuth`, and `\.github/workflows`.
+- Sixteen plans exist as a copy here *and* an original at the repo root. Anything that changes a plan has to change both, which is why the sequence block was inserted by script rather than by hand.

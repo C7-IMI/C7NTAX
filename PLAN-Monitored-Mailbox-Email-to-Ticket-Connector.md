@@ -1,7 +1,13 @@
 # Monitored Mailbox Email-to-Ticket Connector Plan
 
+> **Sequence:** Wave 1 · position 1 of 12, paired with PLAN-017 (re-sequenced 2026-10-06) · **Status:** ✅ Complete — phases 1–6 shipped, phase 7 hardening shipped except one optional item
+> **Implemented:** IMAP transport with UID mark-seen; Microsoft Graph app-only **and** delegated ("Connect to Microsoft", authorization code + PKCE, rotating encrypted refresh token); EWS transport for on-premises Exchange; attribution rules (connector default client, auto-create client per domain, consumer-domain safety, contact opt-out); threading on the real ticket-number format; dedup cursor with process-then-mark; attachment caps and HTML→text bodies; per-connector health/status; CloudConnect panel with transport, auth-mode and rule controls.
+> **Outstanding (optional):** the phase 7 outbound acknowledgment email (off by default). **Design deviation to record:** connectors live on the `EmailConnector` Prisma model rather than `Integration` rows with `kind="email_connector"` (§3.1); the transport set is `imap | ews | graph` rather than the plan's two.
+> **Depends on:** PLAN-017 to go live against Microsoft 365. **Unblocks:** PLAN-012 (the add-in reuses this ingest path).
+> **Next action:** execute PLAN-017 in the tenant, then close this plan.
+
 **Plan Label:** Monitored Mailbox Email-to-Ticket Connector Plan
-**Status:** Proposed (no implementation yet)
+**Status:** ✅ Complete — phases 1–6 shipped, phase 7 hardening shipped (see the sequence block below).
 **Date:** 2026-08-18
 **Scope:** Plan only - no code changes in this document's turn.
 

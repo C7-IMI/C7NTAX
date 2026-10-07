@@ -1,7 +1,13 @@
 # C7NTAX Competitive Review & Modernization Plan (PLAN-013)
 
+> **Sequence:** Wave 2 · position 5 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Partial — several of its own items already shipped
+> **Implemented (its items):** #1/#2 quotes module — `Quote`/`QuoteLineItem` models, `routes/quotes.ts` (list/create/status/`:id/convert`), `pages/Quotes.tsx`, quote→invoice conversion; #4 website/SSL/DNS monitors in `services/alertMonitor.ts` (gated by `UPTIME_MONITORS_ENABLED`); #5 partial — batch billing-from-tickets API exists (`BILLING_FROM_TICKETS_ENABLED`, `billing.ts`); #6 partial — OIDC SSO code exists behind `SSO_ENABLED` (no login button, no SAML).
+> **Outstanding:** #3 customer portal (no `/portal` routes or pages exist); #5 UI completion (generate-from-tickets modal + linked-ticket column on the Billing page); #7 AI action layer + MCP server (moved to PLAN-011 phase 9); #8 security hardening (JWT rotation, scoping review, CI scanners); #9 UI/UX modernization pass; #10 RMM decision gate (→ PLAN-014).
+> **Depends on:** PLAN-001/002 for the portal's identity; PLAN-016 for #8's infrastructure scanners; #9 is independent. **Unblocks:** nothing hard.
+> **Next action:** run #9 in parallel with the PLAN-015 billing chain, then take #3 once sessions/SSO are settled.
+
 **Plan Label:** C7NTAX Competitive Review & Modernization Plan
-**Status:** Proposed (plan only — no implementation yet)
+**Status:** 🟡 Partial — quotes, monitors and part of the billing chain shipped (see the sequence block below).
 **Date:** 2026-08-18
 **Reviewed:** Endar (tomkeene/endar), NetLock RMM (0x101-Cyber-Security/NetLock-RMM), Breeze (LanternOps/breeze), C7NTAX (current codebase + pending plans)
 

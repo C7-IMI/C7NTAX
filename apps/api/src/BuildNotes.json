@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.6.051",
+    "date": "2026-10-06",
+    "title": "Plan registry re-sequenced: the status of every plan checked against the code, and a new execution order",
+    "changes": [
+      {
+        "text": "**Every plan in `PlanDocs/` now carries a verified status and its position in the execution order**, and the registry (`PlanDocs/README.md`) is rebuilt around six waves. The old order was simply the order the plans were written; several of them turned out to be far further along — or further behind — than their own status lines claimed, so the statuses were re-derived from the repository rather than from the documents.",
+        "type": "Update"
+      },
+      {
+        "text": "**Plans that are already substantially shipped have moved out of the \"pending\" list**: the email-to-ticket connector (PLAN-009) is complete across four transports; quotes + quote→invoice (PLAN-013 #1/#2), website/SSL/DNS monitors (#4) and part of the billing-from-tickets chain (#5) are live; passkeys sign users in today (PLAN-002); a Windows desktop build ships (PLAN-005); token savings (PLAN-008) is complete.",
+        "type": "Update"
+      },
+      {
+        "text": "**The genuine gaps are now explicit**: the customer portal is absent; Plan-015's entire Phase A (agreements/time engine, expenses, bill-through batch invoicing) is untouched; the SOC 2 controls are unstarted with only code-side groundwork in place; there is no cloud dev/prod split and no CI beyond the desktop build; the AI assistant is unstarted; the Outlook add-in has only its tickets endpoint; mobile is a PWA manifest with no app; the RMM integration has no endpoints yet.",
+        "type": "Update"
+      },
+      {
+        "text": "**Order: 1** Microsoft 365 OAuth go-live (PLAN-017) · **2** finish session auth (PLAN-001) · **3** finish identity — passkeys + SSO (PLAN-002) · **4** billing & backlog chain (PLAN-015) · **5** modernization: portal, billing UI, UI/UX pass (PLAN-013) · **6** cloud dev/prod split (PLAN-016) · **7** SOC 2 (PLAN-007) · **8** AI assistant (PLAN-011) · **9** Outlook add-in (PLAN-012) · **10** mobile (PLAN-004) · **11** desktop completion (PLAN-005) · **12** C7NTRL integration (PLAN-014). Waves group these as \"finish the foundation\", \"revenue & daily ops\", \"platform & compliance\", \"intelligence\", \"client surfaces\" and \"partner integration\".",
+        "type": "Update"
+      },
+      {
+        "text": "**Multi-tenant (PLAN-003) is deferred by decision** and removed from the active sequence. Because three plans cited it as a prerequisite, each now names its substitute: the portal and SSO scope by **company** (which already exists), PLAN-011 drops its `tenant_id` vector filter for now, and PLAN-013 #8's RLS pass becomes a company-scoped query review. Re-enabling it would put it at position 1, ahead of everything else.",
+        "type": "Update"
+      },
+      {
+        "text": "PLAN-006 is folded into PLAN-005 (the shipped desktop toolchain is already open source), PLAN-010 is marked superseded by PLAN-016's Azure recommendation, and PLAN-008 is closed. The documents' own stale `**Status:**` lines were corrected so no plan contradicts its verified state.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.050",
     "date": "2026-10-06",
     "title": "Email connector: where unknown senders go, Exchange on-premises, and signing in as yourself",

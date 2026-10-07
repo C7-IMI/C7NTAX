@@ -5,8 +5,13 @@
 
 # AWS Dev/Prod Split & Sync Plan
 
+> **Sequence:** not scheduled — alternate path (re-sequenced 2026-10-06) · **Status:** ⏭ Superseded by PLAN-016, whose §15 recommends Azure (final call still pending)
+> **Implemented:** nothing in-repo — there is no IaC, container, or pipeline artifact; `.github/workflows` holds only the desktop build.
+> **Outstanding:** every phase. Keep this document as the AWS-side decision record and the fallback if AWS experience/credits outweigh Azure's identity fit (Entra ID + Conditional Access, Managed Identity, Azure OpenAI).
+> **Next action:** confirm the AWS-vs-Azure call. If Azure, mark this plan superseded and stop referencing it from PLAN-007/011/015 (PLAN-016 carries the full service mapping, so the churn is documentation only).
+
 **Plan Label:** AWS Dev/Prod Split & Sync Plan
-**Status:** Proposed (plan only — no implementation yet)
+**Status:** ⏭ Superseded by PLAN-016 (Azure recommendation) — kept as the AWS decision record (see the sequence block below).
 **Date:** 2026-08-18
 
 ---

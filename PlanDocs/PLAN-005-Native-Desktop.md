@@ -5,6 +5,12 @@
 
 # C7NTAX — Native Desktop Clients Plan (Windows / Linux / macOS)
 
+> **Sequence:** Wave 5 · position 11 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Partial — Windows shell shipped
+> **Implemented:** `apps/desktop` Electron 33 app (`nodeIntegration:false`, `contextIsolation:true`, custom protocol, window-open handler, persisted window bounds); `electron-builder --win portable` producing `dist-electron/C7NTAX-Portable-1.0.0.exe`; `scripts/build-desktop.ps1`; `.github/workflows/desktop-build.yml` (windows-latest + artifact upload).
+> **Outstanding:** macOS and Linux targets, code signing/notarisation, auto-update (no `autoUpdater` anywhere), CI performance budgets, per-platform smoke tests.
+> **Depends on:** PLAN-016 for a release/update host. **Unblocks:** nothing.
+> **Next action:** add mac/linux matrix targets to the existing workflow, then choose the update feed.
+
 **Scope:** Build three native desktop applications — Windows, Linux, macOS — that look and
 function as close as possible to the current C7NTAX WebUI/desktop experience. The existing
 Electron desktop app **remains part of the project** and is updated alongside these three
@@ -14,7 +20,7 @@ versions; it is not replaced.
 embedded browser views). Priority order: speed → low memory/resource usage → compatibility →
 maintenance.
 
-**Status:** Plan only. No implementation has begun.
+**Status:** 🟡 Partial — Windows Electron shell shipped (see the sequence block below).
 **Version:** 1.0 — 2026-08-12
 
 ---

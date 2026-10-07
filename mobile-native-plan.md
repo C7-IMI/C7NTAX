@@ -1,9 +1,15 @@
 # C7NTAX — Native Mobile Applications Plan
 
+> **Sequence:** Wave 5 · position 10 of 12 (re-sequenced 2026-10-06) · **Status:** ⬜ Not started — PWA baseline only
+> **Implemented:** an installable PWA — `apps/web/public/manifest.json`, four icons, `sw.js` registered from `index.html` (network-first navigations, dev-server cache bypass).
+> **Outstanding:** everything in the plan: no Capacitor/React Native shell, no `apps/mobile`, no Android/iOS store builds, no offline sync, no push notifications, no mobile-specific UX.
+> **Depends on:** PLAN-001 (session lifetime on mobile), PLAN-013 #3 (portal surfaces). **Unblocks:** nothing.
+> **Next action:** decide store apps vs PWA-only. If PWA-only, close this plan and fold the remaining asks into PLAN-013 #9.
+
 **Scope:** Android (Kotlin + Jetpack Compose) and iOS (Swift + SwiftUI) apps replicating the
 core functionality of the existing C7NTAX desktop client (Electron app + web UI).
 
-**Status:** Planning only. No implementation has begun.
+**Status:** ⬜ Not started — PWA baseline only (see the sequence block below).
 **Version:** 1.0 — 2026-08-12
 **Audience:** Engineering, operations, and release management.
 

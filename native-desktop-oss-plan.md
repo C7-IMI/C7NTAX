@@ -1,5 +1,11 @@
 # C7NTAX — Native Desktop Clients Plan (Windows / Linux / macOS) — Open-Source Edition
 
+> **Sequence:** folded into PLAN-005 (Wave 5) · **Status:** ⏭ Superseded in practice (re-sequenced 2026-10-06) — the shipped toolchain is already open source
+> **Implemented:** the desktop build uses Electron (MIT), electron-builder (MIT) and GitHub Actions — exactly the open-source toolchain this plan specifies.
+> **Outstanding:** only the plan's non-Windows platforms, and the CI substitution (self-hosted runners) if GitHub Actions is not acceptable.
+> **Depends on:** PLAN-005. **Unblocks:** nothing.
+> **Next action:** keep this document as the OSS constraint list; if a fully self-hosted CI is ever required it becomes the tooling reference for PLAN-005.
+
 **Scope:** Build three native desktop applications — Windows, Linux, macOS — that look and
 function as close as possible to the current C7NTAX WebUI/desktop experience. The existing
 Electron desktop app **remains part of the project** and is updated alongside these three
@@ -13,7 +19,7 @@ is open-source or freely available without purchase**. Assumption: no proprietar
 been purchased. Where no direct open-source replacement exists, an equivalent workflow using
 open-source tools is specified. Licensing of every tool is listed.
 
-**Status:** Plan only. No implementation has begun.
+**Status:** ⏭ Superseded in practice — the shipped desktop toolchain is already open source (see the sequence block below).
 **Version:** 1.0 — 2026-08-12
 
 ---

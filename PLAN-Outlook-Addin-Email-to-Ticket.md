@@ -1,7 +1,13 @@
 # Outlook Add-in: Email-to-Ticket Generator — Implementation Plan
 
+> **Sequence:** Wave 5 · position 9 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Partial — the backend half of phase 1 exists
+> **Implemented:** `POST /api/outlook-addin/tickets` (`apps/api/src/routes/outlookAddin.ts`) reusing `createTicketFromEmail`, and every ingest primitive it needs (field deduction, threading, dedup, board validation) from PLAN-009.
+> **Outstanding:** the identity half of phase 1 (`POST /api/auth/office-sso` does not exist), the add-in project and manifest, multi-select selection logic, taskpane UI, icon set, testing, and Integrated Apps / AppSource deployment.
+> **Depends on:** PLAN-002 (identity for the SSO exchange), PLAN-009 (done), PLAN-016 if hosted centrally. **Unblocks:** nothing.
+> **Next action:** add the office-sso exchange (validate the Microsoft identity token → issue a C7NTAX JWT), then scaffold the manifest + taskpane.
+
 **Plan Label:** Outlook Add-in Email-to-Ticket Generator Plan
-**Status:** Proposed (plan only — no implementation yet)
+**Status:** 🟡 Partial — the backend tickets endpoint exists (see the sequence block below).
 **Date:** 2026-08-18
 
 ---

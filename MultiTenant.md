@@ -1,6 +1,12 @@
 # Multi-Tenant Architecture — Implementation Plan
 
-> **Status**: Step 1 Complete
+> **Sequence:** **Deferred by decision (2026-10-06)** — removed from the active sequence; nothing else may wait on it
+> **Implemented (Step 1):** `Tenant` model, `Company.tenantId`, `GET/POST /api/tenants`, router mounted, seeded tenants, schema pushed.
+> **Outstanding:** Step 2 (tenant middleware, `x-tenant-id` client header, tenant switcher) and Step 3 (tenantId on all major entities, row-level security).
+> **Substitutes agreed while deferred:** the customer portal (PLAN-013 #3) and SSO scope by **company**, which already exists; PLAN-011 phase 7 drops its `tenant_id` vector filter; PLAN-013 #8 reduces RLS enforcement to company-scoped query review.
+> **Next action:** none this cycle. If a second tenant is onboarded this becomes position 1, ahead of everything else — isolation has to land before another organisation's data is loaded.
+
+> **Status**: 🟡 Step 1 complete; Steps 2–3 deferred by decision on 2026-10-06 — nothing else in the sequence waits on it (see the sequence block below)
 > **Protocol**: Tenant-scoped data isolation with MSP management plane
 
 ## Database Schema

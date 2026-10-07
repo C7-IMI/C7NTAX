@@ -1,5 +1,11 @@
 # TOKEN-SAVINGS — 10 Options Implementation & Rollback Guide
 
+> **Sequence:** closed (was independent) · **Status:** ✅ Complete — all ten options implemented 2026-08-14, re-verified 2026-10-06
+> **Implemented:** `TOKEN-SAVE-01…10` markers in `apps/api/src/index.ts`, `services/logger.ts`, `services/inference/LlmProvider.ts` and `snapshot-capture.ts`, plus the boot-script rotation, the visibility-polling hook (`apps/web/src/hooks/useVisibilityPolling.ts`) and `scripts/typecheck-diff.sh`.
+> **Outstanding:** nothing. The rollback table stays as the reference if a token or log budget regresses.
+> **Requirement this plan imposes on every other plan:** any plan that edits `schema.prisma` must let `startup/.schema.sha256` re-sync, or option 4's skip flag keeps new tables out of the database.
+> **Next action:** none — retired from the active sequence.
+
 Each option is implemented as a self-contained, clearly-marked change
 (`TOKEN-SAVE-NN` comments). To roll back one option, apply ONLY the revert
 listed for that option — all other options stay intact.
