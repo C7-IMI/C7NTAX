@@ -18,7 +18,7 @@
  * browser and the probe suite all read the same rules.
  */
 import type { ValueFormat } from "./reportFormat";
-import { AGGREGATE_FUNCTIONS, AGGREGATE_SCOPES, FUNCTIONS, NAMESPACES, parseExpression, parseTextSegments, collectCalls, collectPaths, type AggregateScope } from "./reportExpression";
+import { AGGREGATE_FUNCTIONS, AGGREGATE_SCOPES, FUNCTIONS, NAMESPACES, RUNNING_FUNCTIONS, parseExpression, parseTextSegments, collectCalls, collectPaths, type AggregateScope, type RunningFunction } from "./reportExpression";
 
 export const DOCUMENT_VERSION = 1 as const;
 
@@ -158,15 +158,37 @@ export const BAND_PRINT_ORDER: BandKind[] = [
   "pageHeader", "reportTitle", "columnHeader", "groupHeader", "detail", "groupFooter", "reportSummary", "columnFooter", "pageFooter",
 ];
 
-export type ElementType = "text" | "field" | "aggregate" | "line" | "box" | "image";
+export type ElementType = "text" | "field" | "aggregate" | "line" | "box" | "image" | "chart" | "subreport";
 
 export const ELEMENT_TYPES: Array<{ type: ElementType; label: string; help: string }> = [
   { type: "text", label: "Text", help: "A caption. Write {{Fields.x}} inside it to include a value." },
   { type: "field", label: "Field", help: "One value from the row, or an expression." },
   { type: "aggregate", label: "Total", help: "A sum, average, count, minimum or maximum over a scope." },
+  { type: "chart", label: "Chart", help: "A bar, column, line, pie or donut drawn from the rows." },
+  { type: "subreport", label: "Sub-report", help: "Print another saved report inside this one, boxed to a section." },
   { type: "line", label: "Line", help: "A rule, for separating bands." },
   { type: "box", label: "Box", help: "A rectangle or a filled panel." },
   { type: "image", label: "Image", help: "A built-in brand asset, or a URL an expression returns." },
+];
+
+export type ChartKind = "bar" | "column" | "line" | "pie" | "donut";
+
+export const CHART_KINDS: Array<{ kind: ChartKind; label: string; help: string }> = [
+  { kind: "column", label: "Column", help: "Vertical bars — the usual shape when the categories run along the bottom." },
+  { kind: "bar", label: "Bar", help: "Horizontal bars — easier to read when the category names are long." },
+  { kind: "line", label: "Line", help: "A line through the values, for a trend over time." },
+  { kind: "pie", label: "Pie", help: "Shares of a whole. Best with a handful of categories." },
+  { kind: "donut", label: "Donut", help: "A pie with the middle left open, which leaves room for a total." },
+];
+
+/** The functions a chart can fold its categories with. Deliberately the same set as a total element. */
+export const CHART_FUNCTIONS: Array<{ fn: (typeof AGGREGATE_FUNCTIONS)[number]; label: string }> = [
+  { fn: "SUM", label: "Sum of" },
+  { fn: "COUNT", label: "Count of" },
+  { fn: "AVG", label: "Average of" },
+  { fn: "MIN", label: "Lowest of" },
+  { fn: "MAX", label: "Highest of" },
+  { fn: "COUNTD", label: "Distinct count of" },
 ];
 
 export type FontFamily = "sans" | "serif" | "mono";
@@ -209,7 +231,35 @@ export interface AggregateElement extends ElementBase {
 export interface ShapeElement extends ElementBase { type: "line" | "box"; style: ElementStyle }
 export interface ImageElement extends ElementBase { type: "image"; src: string; style: ElementStyle }
 
-export type TemplateElement = TextElement | FieldElement | AggregateElement | ShapeElement | ImageElement;
+export interface ChartElement extends ElementBase {
+  type: "chart";
+  kind: ChartKind;
+  title: string;
+  /** Which field slices the rows into categories. */
+  categoryExpression: string;
+  /** Which field is folded up inside each category. */
+  valueExpression: string;
+  fn: (typeof AGGREGATE_FUNCTIONS)[number];
+  scope: AggregateScope;
+  showLegend: boolean;
+  showValues: boolean;
+  /** Categories beyond this are folded into one "Other" slice, so the axis stays readable. */
+  maxCategories: number;
+  style: ElementStyle;
+}
+
+export interface SubreportElement extends ElementBase {
+  type: "subreport";
+  /** The saved report to print. Named as well as pointed at, so a deletion reads sensibly. */
+  templateId: string;
+  templateName: string;
+  /** Child parameter key → an expression worked out in the parent's parameter context. */
+  parameterBindings: Record<string, string>;
+  style: ElementStyle;
+}
+
+export type TemplateElement =
+  | TextElement | FieldElement | AggregateElement | ChartElement | SubreportElement | ShapeElement | ImageElement;
 
 export interface TemplateBand {
   id: string;
@@ -292,6 +342,15 @@ export function createElement(type: ElementType, overrides: Partial<TemplateElem
     case "line": return { ...base, y: 0, h: 0.4, w: 186, type: "line", style: { ...style, border: { width: 0.3, color: "#94a3b8" } }, ...overrides } as ShapeElement;
     case "box": return { ...base, w: 60, h: 12, type: "box", style: { ...style, border: { width: 0.3, color: "#cbd5e1" }, background: "#f8fafc" }, ...overrides } as ShapeElement;
     case "image": return { ...base, w: 30, h: 12, type: "image", src: "brand-mark", style, ...overrides } as ImageElement;
+    case "chart": return {
+      ...base, w: 90, h: 55, type: "chart",
+      kind: "column", title: "", categoryExpression: "", valueExpression: "", fn: "SUM", scope: "report",
+      showLegend: true, showValues: false, maxCategories: 10, style: { ...style, align: "center" as HAlign }, ...overrides,
+    } as ChartElement;
+    case "subreport": return {
+      ...base, w: 120, h: 25, type: "subreport", templateId: "", templateName: "",
+      parameterBindings: {}, style: { ...style, padding: 0 }, ...overrides,
+    } as SubreportElement;
   }
 }
 
@@ -605,6 +664,28 @@ function normaliseElement(input: Record<string, unknown>): TemplateElement {
     };
     case "line": case "box": return { ...base, type, style: normalisedStyle };
     case "image": return { ...base, type, src: str(input.src, "brand-mark"), style: normalisedStyle };
+    case "chart": return {
+      ...base, type,
+      kind: (CHART_KINDS.some(k => k.kind === input.kind) ? input.kind : "column") as ChartKind,
+      title: str(input.title),
+      categoryExpression: str(input.categoryExpression),
+      valueExpression: str(input.valueExpression),
+      fn: (AGGREGATE_FUNCTIONS.includes(input.fn as never) ? input.fn : "SUM") as ChartElement["fn"],
+      scope: (AGGREGATE_SCOPES.includes(input.scope as AggregateScope) ? input.scope : "report") as AggregateScope,
+      showLegend: input.showLegend === undefined ? true : bool(input.showLegend),
+      showValues: bool(input.showValues),
+      maxCategories: Math.max(1, Math.min(50, Math.trunc(num(input.maxCategories, 10)))),
+      style: normalisedStyle,
+    };
+    case "subreport": return {
+      ...base, type,
+      templateId: str(input.templateId),
+      templateName: str(input.templateName),
+      parameterBindings: isRecord(input.parameterBindings)
+        ? Object.fromEntries(Object.entries(input.parameterBindings).map(([key, value]) => [key, str(value)]))
+        : {},
+      style: normalisedStyle,
+    };
     default: return { ...base, type: "text", text: str(input.text), style: normalisedStyle };
   }
 }
@@ -627,6 +708,11 @@ export interface TemplateIssue {
 export interface ValidationOptions {
   /** The whitelisted sources and their fields. Without it, field names cannot be checked. */
   catalog?: { sources: CatalogSource[] };
+  /**
+   * The saved reports a sub-report element may point at. Without it, a reference cannot be checked —
+   * which is why the API always passes it and the browser only passes it when it has the list.
+   */
+  templates?: Array<{ id: string; name: string; parameters?: Array<{ key: string; required?: boolean }> }>;
 }
 
 const KEY_LIKE = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -884,6 +970,93 @@ export function validateTemplate(input: unknown, options: ValidationOptions = {}
         return;
       }
 
+      if (element.type === "chart") {
+        const chartContext = { bandId: band.id, elementId: element.id };
+        if (!element.categoryExpression.trim()) {
+          add({ severity: "error", code: "element.chartCategory", path: `${elementPath}.categoryExpression`, message: "A chart needs the field that groups the rows into categories — the bars or slices come from it.", ...chartContext });
+        } else {
+          checkExpression(element.categoryExpression, `${elementPath}.categoryExpression`, { band, document, context: chartContext, catalogSource, fieldKeys, sourceKeys, add });
+        }
+        if (!element.valueExpression.trim() && element.fn !== "COUNT") {
+          add({ severity: "error", code: "element.chartValue", path: `${elementPath}.valueExpression`, message: `A chart of ${element.fn === "COUNTD" ? "distinct values" : "values"} needs the field to ${element.fn === "COUNTD" ? "count" : "total"}.`, ...chartContext });
+        } else if (element.valueExpression.trim()) {
+          const { ast, error } = parseExpression(element.valueExpression);
+          if (!ast) {
+            add({ severity: "error", code: "element.chartValue", path: `${elementPath}.valueExpression`, message: `This expression could not be read: ${error}`, ...chartContext });
+          } else if (ast.kind !== "path" && element.fn !== "COUNT") {
+            add({ severity: "error", code: "element.chartValue", path: `${elementPath}.valueExpression`, message: `${element.fn} folds a field, so give a single field name such as Fields.total — not a calculation.`, ...chartContext });
+          } else if (ast.kind === "path") {
+            const fieldKey = ast.parts[1];
+            if (fieldKey && options.catalog && !fieldKeys.has(fieldKey)) {
+              add({ severity: "error", code: "element.field", path: `${elementPath}.valueExpression`, message: `"${fieldKey}" is not a field of ${catalogSource?.label ?? "this source"}.`, ...chartContext });
+            }
+            const target = fieldKey ? fieldType(fieldKey) : undefined;
+            if (!["COUNT", "COUNTD"].includes(element.fn) && target && !["number", "money", "minutes"].includes(target)) {
+              add({ severity: "error", code: "element.chartType", path: `${elementPath}.valueExpression`, message: `${element.fn} needs a number to work on, and ${fieldKey} is ${target}.`, ...chartContext });
+            }
+          }
+        }
+        if (element.scope === "group" && !band.groupKey) {
+          add({ severity: "error", code: "element.scope", path: `${elementPath}.scope`, message: "This chart is scoped to a group, but its band is not inside one.", ...chartContext });
+        }
+        // A chart is unreadable when it is too small to hold an axis and a legend, so say so while it is
+        // still being designed rather than letting it print as a smudge.
+        if (element.w < 40 || element.h < 30) {
+          add({ severity: "warning", code: "element.chartSmall", path: elementPath, message: `This chart is ${element.w.toFixed(0)}×${element.h.toFixed(0)}mm; below about 40×30mm the axis labels and legend have nowhere to go.`, ...chartContext });
+        }
+        if (element.kind === "pie" || element.kind === "donut") {
+          const value = parseExpression(element.valueExpression).ast;
+          if (value?.kind === "path" && value.parts[1]) {
+            const target = fieldType(value.parts[1]);
+            if (target === "minutes") {
+              add({ severity: "warning", code: "element.chartPercent", path: elementPath, message: "A pie of a minutes field draws shares of time rather than a duration; a bar chart usually reads better.", ...chartContext });
+            }
+          }
+        }
+        return;
+      }
+
+      if (element.type === "subreport") {
+        const subContext = { bandId: band.id, elementId: element.id };
+        if (!element.templateId) {
+          add({ severity: "error", code: "element.subreport", path: `${elementPath}.templateId`, message: "Choose the saved report this sub-report should print.", ...subContext });
+        } else {
+          const known = options.templates;
+          const target = known?.find(t => t.id === element.templateId);
+          if (known && !target) {
+            add({ severity: "error", code: "element.subreportMissing", path: `${elementPath}.templateId`, message: `${element.templateName || "That report"} is no longer available — choose another, or remove this sub-report.`, ...subContext });
+          }
+          for (const [key, expression] of Object.entries(element.parameterBindings)) {
+            if (!expression.trim()) continue;
+            const { ast, error } = parseExpression(expression);
+            if (!ast) {
+              add({ severity: "error", code: "expression.syntax", path: `${elementPath}.parameterBindings.${key}`, message: `This expression could not be read: ${error}`, ...subContext });
+              continue;
+            }
+            // Bindings are worked out once, in the parent's parameter context, before the child's rows are
+            // fetched — so a binding cannot read a row, and anything that does is refused here rather than
+            // silently resolving to nothing at run time.
+            if (collectPaths(ast).some(p => (p.parts[0] ?? "").toLowerCase() === "fields")) {
+              add({ severity: "error", code: "element.subreportBinding", path: `${elementPath}.parameterBindings.${key}`, message: "A sub-report's parameter is set once for the whole report, so it cannot read Fields — pass a parameter instead.", ...subContext });
+            }
+            checkExpression(expression, `${elementPath}.parameterBindings.${key}`, { band, document, context: subContext, catalogSource, fieldKeys, sourceKeys, add });
+          }
+          if (target) {
+            for (const parameter of target.parameters ?? []) {
+              if (parameter.required && !(element.parameterBindings[parameter.key] ?? "").trim()) {
+                add({ severity: "warning", code: "element.subreportParameter", path: elementPath, message: `${target.name} needs "${parameter.key}", and nothing is bound to it — give it a value here.`, ...subContext });
+              }
+            }
+          }
+        }
+        for (const key of Object.keys(element.parameterBindings)) {
+          if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
+            add({ severity: "warning", code: "element.subreportParameter", path: `${elementPath}.parameterBindings`, message: `"${key}" is not a parameter name; parameter names use letters, digits and underscores.`, ...subContext });
+          }
+        }
+        return;
+      }
+
       if (element.type === "image" && !element.src.trim()) {
         add({ severity: "error", code: "element.image", path: `${elementPath}.src`, message: "An image needs a source.", ...context });
       }
@@ -931,6 +1104,29 @@ function checkExpression(source: string, path: string, check: ExpressionCheck): 
       const scopeArgument = call.name === "COUNT" && call.args.length === 1 ? call.args[0] : call.args[1];
       if (scopeArgument?.kind === "string" && !AGGREGATE_SCOPES.includes(scopeArgument.value.toLowerCase() as AggregateScope)) {
         check.add({ severity: "error", code: "expression.scope", path, message: `The scope of ${call.name} must be "report", "group" or "page".`, ...check.context });
+      }
+    }
+    if (RUNNING_FUNCTIONS.includes(call.name as RunningFunction)) {
+      const scopeArgument = call.name === "RUNNINGCOUNT" && call.args.length === 1 ? call.args[0] : call.args[1];
+      if (scopeArgument?.kind === "string") {
+        const wanted = scopeArgument.value.toLowerCase();
+        const groupKeys = check.document.groups.map(g => g.key.toLowerCase());
+        if (wanted === "page") {
+          check.add({ severity: "error", code: "expression.scope", path, message: `${call.name} is a running total, so "page" is not a scope it can have — it carries over a page break by design.`, ...check.context });
+        } else if (wanted !== "report" && wanted !== "group" && !groupKeys.includes(wanted)) {
+          check.add({
+            severity: "error", code: "expression.scope", path,
+            message: groupKeys.length
+              ? `The scope of ${call.name} must be "report", "group" or one of ${check.document.groups.map(g => g.key).join(", ")}.`
+              : `The scope of ${call.name} must be "report"; this report has no groups to restart it at.`,
+            ...check.context,
+          });
+        }
+      }
+      // A running total is a value that changes as the rows print, so a band printed once before them has
+      // nothing to show.
+      if (check.band.kind === "pageHeader" || check.band.kind === "columnHeader" || check.band.kind === "reportTitle") {
+        check.add({ severity: "warning", code: "expression.running", path, message: `${call.name} prints in the ${BAND_BY_KIND.get(check.band.kind)?.label.toLowerCase() ?? check.band.kind}, which is printed before any rows — it will read as nothing.`, ...check.context });
       }
     }
   }

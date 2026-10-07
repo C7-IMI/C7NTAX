@@ -43,6 +43,16 @@ export type AggregateScope = "report" | "group" | "page";
 export const AGGREGATE_FUNCTIONS: AggregateFunction[] = ["SUM", "AVG", "MIN", "MAX", "COUNT", "COUNTD"];
 export const AGGREGATE_SCOPES: AggregateScope[] = ["report", "group", "page"];
 
+/**
+ * A running total, which is an aggregate the layout engine keeps as it walks the rows rather than one
+ * it computes over a row set. That difference is what makes it survive a page break: `SUM` in a page
+ * footer totals the page, `RUNNINGSUM` in the same footer means "so far", which is only answerable
+ * because the total was accumulated row by row.
+ */
+export type RunningFunction = "RUNNINGSUM" | "RUNNINGAVG" | "RUNNINGCOUNT";
+
+export const RUNNING_FUNCTIONS: RunningFunction[] = ["RUNNINGSUM", "RUNNINGAVG", "RUNNINGCOUNT"];
+
 export interface ExpressionContext {
   fields: Record<string, unknown>;
   parameters: Record<string, unknown>;
@@ -51,6 +61,11 @@ export interface ExpressionContext {
   group?: Record<string, unknown> | null;
   /** Injected by the layout engine, which is the only thing that knows which rows a scope covers. */
   aggregate?: (request: { fn: AggregateFunction; path: string; scope: AggregateScope }) => unknown;
+  /**
+   * Also injected by the engine, and only present while the rows are being walked. `scope` is the raw
+   * second argument as written — a group key, or "" for the whole report.
+   */
+  running?: (request: { fn: RunningFunction; path: string; scope: string }) => unknown;
   /** Resolves a path in another declared data source, for `DataSources.key.field`. */
   dataSource?: (key: string, path: string) => unknown;
 }
@@ -265,7 +280,7 @@ export function parseExpression(source: string): { ast: Expr | null; error: stri
 
 export interface FunctionSpec {
   name: string;
-  category: "Aggregate" | "Math" | "Text" | "Date" | "Logical" | "Format" | "Value";
+  category: "Aggregate" | "Running" | "Math" | "Text" | "Date" | "Logical" | "Format" | "Value";
   signature: string;
   description: string;
   minArgs: number;
@@ -274,6 +289,8 @@ export interface FunctionSpec {
   pathArg?: boolean;
   /** Accepts a second argument naming the scope: report, group or page. */
   scopeArg?: boolean;
+  /** Accepts a second argument naming the group a running total restarts at. */
+  runningScopeArg?: boolean;
 }
 
 export const FUNCTIONS: FunctionSpec[] = [
@@ -283,6 +300,9 @@ export const FUNCTIONS: FunctionSpec[] = [
   { name: "MAX", category: "Aggregate", signature: "MAX(field, scope?)", description: "The highest value of a field.", minArgs: 1, maxArgs: 2, pathArg: true, scopeArg: true },
   { name: "COUNT", category: "Aggregate", signature: "COUNT(field?, scope?)", description: "Counts rows, or the rows where a field has a value.", minArgs: 0, maxArgs: 2, pathArg: true, scopeArg: true },
   { name: "COUNTD", category: "Aggregate", signature: "COUNTD(field, scope?)", description: "Counts the distinct values of a field.", minArgs: 1, maxArgs: 2, pathArg: true, scopeArg: true },
+  { name: "RUNNINGSUM", category: "Running", signature: "RUNNINGSUM(field, group?)", description: "A total that keeps accumulating as the rows are printed and carries over a page break.", minArgs: 1, maxArgs: 2, pathArg: true, runningScopeArg: true },
+  { name: "RUNNINGAVG", category: "Running", signature: "RUNNINGAVG(field, group?)", description: "A running mean across the rows printed so far.", minArgs: 1, maxArgs: 2, pathArg: true, runningScopeArg: true },
+  { name: "RUNNINGCOUNT", category: "Running", signature: "RUNNINGCOUNT(field?, group?)", description: "Counts the rows printed so far, or those where a field has a value.", minArgs: 0, maxArgs: 2, pathArg: true, runningScopeArg: true },
   { name: "ROUND", category: "Math", signature: "ROUND(value, digits?)", description: "Rounds a number, optionally to a number of decimal places.", minArgs: 1, maxArgs: 2 },
   { name: "ABS", category: "Math", signature: "ABS(value)", description: "The value without its sign.", minArgs: 1, maxArgs: 1 },
   { name: "CEIL", category: "Math", signature: "CEIL(value)", description: "Rounds up to a whole number.", minArgs: 1, maxArgs: 1 },
@@ -460,6 +480,17 @@ function scopeFrom(ast: Expr | undefined): AggregateScope {
   return "report";
 }
 
+/**
+ * Which group a running total restarts at, as a group key, or null for "never". `"group"` is shorthand
+ * for the innermost declared group, which is the one a designer means when they write it by hand.
+ */
+export function runningScopeKey(scope: string, groupKeys: string[]): string | null {
+  const wanted = scope.trim().toLowerCase();
+  if (!wanted || wanted === "report") return null;
+  if (wanted === "group") return groupKeys[groupKeys.length - 1]?.toLowerCase() ?? null;
+  return groupKeys.find(key => key.toLowerCase() === wanted) ?? null;
+}
+
 export function evaluateAst(ast: Expr, ctx: ExpressionContext): unknown {
   switch (ast.kind) {
     case "number": return ast.value;
@@ -566,6 +597,17 @@ function evaluateCall(ast: { name: string; args: Expr[] }, ctx: ExpressionContex
   if (!spec) throw new ExpressionError(`There is no function called ${name}`);
   if (ast.args.length < spec.minArgs || (spec.maxArgs >= 0 && ast.args.length > spec.maxArgs)) {
     throw new ExpressionError(`${name} takes ${spec.signature.split("(")[1]?.replace(")", "") || "no arguments"} — it was given ${ast.args.length}`);
+  }
+
+  if (RUNNING_FUNCTIONS.includes(name as RunningFunction)) {
+    const fn = name as RunningFunction;
+    const isCount = fn === "RUNNINGCOUNT";
+    const path = aggregatePath(ast.args[0]) ?? (isCount && ast.args.length === 0 ? "" : null);
+    if (path === null) throw new ExpressionError(`${name} needs a field name as its first argument, such as ${name}(Fields.total)`);
+    const scopeAst = isCount && ast.args.length === 1 && ast.args[0]?.kind === "string" ? ast.args[0] : ast.args[1];
+    const scope = scopeAst?.kind === "string" ? scopeAst.value : "";
+    if (!ctx.running) throw new ExpressionError(`${name} can only be worked out while the rows are being printed`);
+    return ctx.running({ fn, path, scope });
   }
 
   if (AGGREGATE_FUNCTIONS.includes(name as AggregateFunction)) {

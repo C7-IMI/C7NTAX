@@ -23,14 +23,17 @@
  */
 import {
   BAND_BY_KIND, contentBox, normaliseDocument, pageDimensions, validateTemplate, errorsOf,
-  type BandKind, type CatalogSource, type ElementStyle, type ImageElement, type PageMargins,
-  type ShapeElement, type TemplateBand, type TemplateElement, type ReportTemplateDocument, type TemplateIssue,
+  type BandKind, type CatalogSource, type ChartElement, type ElementStyle, type ImageElement, type PageMargins,
+  type ShapeElement, type SubreportElement, type TemplateBand, type TemplateElement, type TemplateGroup,
+  type ReportTemplateDocument, type TemplateIssue,
 } from "./reportTemplate";
 import {
   collectCalls, collectPaths, evaluateExpression, interpolateText, parseExpression, parseTextSegments,
-  type AggregateFunction, type AggregateScope, type ExpressionContext,
+  runningScopeKey, RUNNING_FUNCTIONS,
+  type AggregateFunction, type AggregateScope, type ExpressionContext, type RunningFunction,
 } from "./reportExpression";
 import { formatValue, type ValueFormat } from "./reportFormat";
+import { layoutChart, type LaidOutChart } from "./reportChart";
 
 /** Font sizes are points, like a word processor; page geometry is millimetres. */
 export const PT_TO_MM = 25.4 / 72;
@@ -58,7 +61,8 @@ export type ElementPayload =
   | { kind: "text"; lines: LaidOutLine[]; style: ElementStyle; format?: ValueFormat }
   | { kind: "line"; style: ElementStyle }
   | { kind: "box"; style: ElementStyle }
-  | { kind: "image"; src: string; style: ElementStyle };
+  | { kind: "image"; src: string; style: ElementStyle }
+  | { kind: "chart"; chart: LaidOutChart };
 
 export interface LaidOutElement {
   id: string;
@@ -111,6 +115,15 @@ export interface LaidOutReport {
 
 export type MeasureText = (text: string, style: TextStyle) => number;
 
+/** A sub-report, resolved by the API and handed to the engine along with the run. */
+export interface SubreportResolution {
+  document: unknown;
+  rows: Array<Record<string, unknown>>;
+  /** The child's parameters, already resolved in the parent's parameter context. */
+  parameters: Record<string, unknown>;
+  name?: string;
+}
+
 export interface LayoutRequest {
   document: unknown;
   rows: Array<Record<string, unknown>>;
@@ -123,6 +136,10 @@ export interface LayoutRequest {
   now?: Date;
   /** The whitelisted sources and fields, so a field name can be checked before anything runs. */
   catalog?: { sources: CatalogSource[] };
+  /** The saved reports a sub-report element may point at, so a stale reference is caught on render too. */
+  templates?: Array<{ id: string; name: string; parameters?: Array<{ key: string; required?: boolean }> }>;
+  /** The resolved sub-reports, keyed by the template id the elements point at. */
+  subreports?: Record<string, SubreportResolution>;
 }
 
 const isBlank = (value: unknown): boolean => value === null || value === undefined || (typeof value === "string" && value.trim() === "");
@@ -309,21 +326,62 @@ function placeText(options: PlaceTextOptions): ElementPayload {
   return { kind: "text", lines: placed, style, format: options.format };
 }
 
-// ── The engine ──────────────────────────────────────────────────────
+// ── Sections ────────────────────────────────────────────────────────
+
+/**
+ * A section is one document being flowed: the report itself, or a sub-report printed inside it. Pages,
+ * the deferred patch list and the issue log are shared across every section, because a sub-report is
+ * printed **on the parent's pages** — that is what stops it from throwing the parent's page numbering
+ * out. Everything that belongs to one document (its rows, its grouping, its running totals) lives here
+ * so two documents can be in flight at once without one borrowing the other's numbers.
+ */
+interface Section {
+  key: string;
+  isRoot: boolean;
+  document: ReportTemplateDocument;
+  parameters: Record<string, unknown>;
+  reportMeta: Record<string, unknown>;
+  groups: TemplateGroup[];
+  groupKeys: string[];
+  bandsByKind: Map<BandKind, TemplateBand[]>;
+  firstOf: (kind: BandKind, groupKey?: string) => TemplateBand | undefined;
+  heightOf: (kind: BandKind, groupKey?: string) => number;
+  levels: number;
+  sortedRows: Array<Record<string, unknown>>;
+  sortedKeys: string[][];
+  groupCount: number;
+  groupRowsFor: (start: number, level: number) => Array<Record<string, unknown>>;
+  /** Every running total the document asks for, collected up front so it accumulates whether read or not. */
+  runningSpecs: RunningSpec[];
+  running: Map<string, RunningState>;
+  /** Horizontal shift applied to every element, which is how a sub-report sits inside its box. */
+  offsetX: number;
+}
 
 interface FlowPage {
   number: number;
   bands: LaidOutBand[];
   y: number;
-  rowIndexes: number[];
 }
+
+interface RunningSpec { fn: RunningFunction; path: string; scopeKey: string }
+
+interface RunningState { rows: number; values: number; numbers: number; sum: number }
+
+const emptyRunningState = (): RunningState => ({ rows: 0, values: 0, numbers: 0, sum: 0 });
+
+/** A running total's identity: the function, the field and the group it restarts at ("" for never). */
+const runningKey = (fn: RunningFunction, path: string, scopeKey: string): string =>
+  `${fn}|${path.trim().toLowerCase()}|${scopeKey.toLowerCase()}`;
 
 /**
  * Narrowing by a union of literals (`type === "line" || type === "box"`) does not remove the member
- * from the union, so shapes and images are identified with guards instead.
+ * from the union, so shapes, images, charts and sub-reports are identified with guards instead.
  */
 const isShape = (element: TemplateElement): element is ShapeElement => element.type === "line" || element.type === "box";
 const isImage = (element: TemplateElement): element is ImageElement => element.type === "image";
+const isChart = (element: TemplateElement): element is ChartElement => element.type === "chart";
+const isSubreport = (element: TemplateElement): element is SubreportElement => element.type === "subreport";
 
 interface EmitContext {
   row?: Record<string, unknown>;
@@ -332,39 +390,84 @@ interface EmitContext {
   groupRows?: Array<Record<string, unknown>>;
   /** The group's key value as text, carried from the sort so an expression group still has a label. */
   groupValue?: string;
-  pageNumber: number;
 }
 
-export function layoutReport(request: LayoutRequest): LaidOutReport {
-  const document = normaliseDocument(request.document);
-  const issues: TemplateIssue[] = validateTemplate(document, { catalog: request.catalog });
+/** Everything an element needs to know about the band and the page it is being placed on. */
+interface Placement {
+  section: Section;
+  band: TemplateBand;
+  owner: Section;
+  context: EmitContext;
+  /** The top of the band, which is the page cursor at the moment the band started. */
+  bandTop: number;
+  bandPage: FlowPage;
+  placed: LaidOutElement[];
+  /** A copy of the running totals as they stood when this band was reached. */
+  running: Map<string, RunningState>;
+}
 
-  if (errorsOf(issues).length) {
-    issues.push({ severity: "error", code: "render.refused", path: "bands", message: "The report was not generated because this template has errors to fix first." });
-    return refusedReport(document, issues);
-  }
-
+/** Resolves the declared parameters of one document, and says so when a required one has no value. */
+function resolveParameters(
+  document: ReportTemplateDocument,
+  provided: Record<string, unknown> | undefined,
+  issues: TemplateIssue[],
+  where: string,
+): Record<string, unknown> {
   const parameters: Record<string, unknown> = {};
   for (const parameter of document.parameters) {
-    const provided = request.parameters?.[parameter.key];
-    let value: unknown = provided !== undefined && provided !== "" ? provided : parameter.defaultValue ?? "";
+    const given = provided?.[parameter.key];
+    let value: unknown = given !== undefined && given !== "" ? given : parameter.defaultValue ?? "";
     if (value !== "" && value !== undefined) {
       if (parameter.type === "number") value = Number(value);
       else if (parameter.type === "boolean") value = value === true || value === "true" || value === "1";
       else if (parameter.type === "date") value = String(value);
     }
     if (parameter.required && (value === undefined || value === "")) {
-      issues.push({ severity: "error", code: "parameter.required", path: `parameters[${parameter.key}]`, message: `This report needs "${parameter.label || parameter.key}" before it can be generated.` });
+      issues.push({
+        severity: "error", code: "parameter.required", path: `${where}parameters[${parameter.key}]`,
+        message: `This report needs "${parameter.label || parameter.key}" before it can be generated.`,
+      });
     }
     parameters[parameter.key] = value;
   }
-  if (errorsOf(issues).length) {
-    issues.push({ severity: "error", code: "render.refused", path: "parameters", message: "The report was not generated because it is missing something it needs." });
-    return { ...refusedReport(document, issues), parameters };
-  }
+  return parameters;
+}
 
-  const page = pageDimensions(document.page);
-  const { width: contentWidth, height: contentHeight } = contentBox(document.page);
+/**
+ * Every running total a document asks for, read from its expressions rather than discovered as it
+ * prints. Reading them up front is what lets a total accumulate from the first row even when the band
+ * that shows it — a group footer, say — only appears at the end.
+ */
+function collectRunningSpecs(document: ReportTemplateDocument): RunningSpec[] {
+  const groupKeys = document.groups.map(group => group.key);
+  const specs = new Map<string, RunningSpec>();
+  for (const source of collectDocumentExpressions(document)) {
+    const { ast } = parseExpression(source);
+    if (!ast) continue;
+    for (const call of collectCalls(ast)) {
+      if (!RUNNING_FUNCTIONS.includes(call.name as RunningFunction)) continue;
+      const fn = call.name as RunningFunction;
+      const isCount = fn === "RUNNINGCOUNT";
+      const pathAst = call.args[0];
+      const path = pathAst?.kind === "path" ? pathAst.parts.join(".") : "";
+      const scopeAst = isCount && call.args.length === 1 && call.args[0]?.kind === "string" ? call.args[0] : call.args[1];
+      const scopeKey = runningScopeKey(scopeAst?.kind === "string" ? scopeAst.value : "", groupKeys) ?? "";
+      specs.set(runningKey(fn, path, scopeKey), { fn, path, scopeKey });
+    }
+  }
+  return [...specs.values()];
+}
+
+/** Sorts a document's rows by its groups once, so a group is contiguous and its span can be found. */
+function buildSection(args: {
+  key: string;
+  isRoot: boolean;
+  document: ReportTemplateDocument;
+  rows: Array<Record<string, unknown>>;
+  parameters: Record<string, unknown>;
+  now?: Date;
+}): Section {
+  const { key, isRoot, document, rows, parameters } = args;
 
   const bandsByKind = new Map<BandKind, TemplateBand[]>();
   for (const band of document.bands) bandsByKind.set(band.kind, [...(bandsByKind.get(band.kind) ?? []), band]);
@@ -372,12 +475,6 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
     (bandsByKind.get(kind) ?? []).find(band => groupKey === undefined || band.groupKey === groupKey);
   const heightOf = (kind: BandKind, groupKey?: string): number => firstOf(kind, groupKey)?.height ?? 0;
 
-  // The footers are anchored to the bottom of the page rather than flowed after the last row, so the
-  // flow gets the page height minus the space they reserve.
-  const footerReserve = heightOf("columnFooter") + heightOf("pageFooter");
-  const flowHeight = Math.max(5, contentHeight - footerReserve);
-
-  const rows = request.rows;
   const levels = document.groups.length;
   const keysByRow: string[][] = rows.map(row =>
     document.groups.map(group => {
@@ -415,25 +512,133 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
     sortedRows.slice(start, (endOf[start]?.[level] ?? start) + 1);
   const groupCount = levels ? new Set(sortedKeys.map(keys => keys[0])).size : 0;
 
-  const reportMeta = {
-    name: document.name,
-    rowCount: sortedRows.length,
-    groupCount,
-    generatedAt: (request.now ?? new Date()).toISOString(),
-    source: document.dataSources[0]?.source ?? "",
+  const runningSpecs = collectRunningSpecs(document);
+  const running = new Map<string, RunningState>();
+  for (const spec of runningSpecs) running.set(runningKey(spec.fn, spec.path, spec.scopeKey), emptyRunningState());
+
+  return {
+    key, isRoot, document, parameters, groups: document.groups, groupKeys: document.groups.map(group => group.key),
+    bandsByKind, firstOf, heightOf, levels, sortedRows, sortedKeys, groupCount, groupRowsFor,
+    runningSpecs, running, offsetX: 0,
+    reportMeta: {
+      name: document.name,
+      rowCount: sortedRows.length,
+      groupCount,
+      generatedAt: (args.now ?? new Date()).toISOString(),
+      source: document.dataSources[0]?.source ?? "",
+    },
   };
+}
+
+export function layoutReport(request: LayoutRequest): LaidOutReport {
+  const document = normaliseDocument(request.document);
+  const issues: TemplateIssue[] = validateTemplate(document, { catalog: request.catalog, templates: request.templates });
+
+  if (errorsOf(issues).length) {
+    issues.push({ severity: "error", code: "render.refused", path: "bands", message: "The report was not generated because this template has errors to fix first." });
+    return refusedReport(document, issues);
+  }
+
+  const parameters = resolveParameters(document, request.parameters, issues, "");
+  if (errorsOf(issues).length) {
+    issues.push({ severity: "error", code: "render.refused", path: "parameters", message: "The report was not generated because it is missing something it needs." });
+    return { ...refusedReport(document, issues), parameters };
+  }
+
+  const page = pageDimensions(document.page);
+  const { width: contentWidth, height: contentHeight } = contentBox(document.page);
 
   const pages: FlowPage[] = [];
-  const deferred: Array<{ pageNumber: number; apply: (pageRows: Array<Record<string, unknown>>) => void }> = [];
+  const sections = new Map<string, Section>();
+  const deferred: Array<{ sectionKey: string; pageNumber: number; apply: (pageRows: Array<Record<string, unknown>>) => void }> = [];
+  /** Which rows of which section printed on which page, so a page-scoped value is answerable. */
+  const pageRowIndexes = new Map<string, number[]>();
+  const rowsOnPage = (sectionKey: string, pageNumber: number): Array<Record<string, unknown>> => {
+    const section = sections.get(sectionKey);
+    if (!section) return [];
+    return pageRowIndexes.get(`${sectionKey}#${pageNumber}`)?.map(index => section.sortedRows[index]!).filter(Boolean) ?? [];
+  };
   const currentPage = (): FlowPage => pages[pages.length - 1]!;
 
-  const emitBand = (band: TemplateBand, context: EmitContext): void => {
+  const rootSection = buildSection({ key: "root", isRoot: true, document, rows: request.rows, parameters, now: request.now });
+  sections.set(rootSection.key, rootSection);
+
+  // The footers of the owning report are anchored to the bottom of the page, so the flow gets the page
+  // height minus the space they reserve. A sub-report has no footers of its own — it lives on these pages.
+  const footerReserve = rootSection.heightOf("columnFooter") + rootSection.heightOf("pageFooter");
+  const flowHeight = Math.max(5, contentHeight - footerReserve);
+
+  /** Adds a numeric value to a running total, if that total exists in this section. */
+  function accumulate(section: Section, row: Record<string, unknown>): void {
+    for (const spec of section.runningSpecs) {
+      const state = section.running.get(runningKey(spec.fn, spec.path, spec.scopeKey));
+      if (!state) continue;
+      state.rows += 1;
+      if (!spec.path) continue;
+      const raw = readField(row, spec.path);
+      if (isBlank(raw)) continue;
+      state.values += 1;
+      const number = toNumber(raw);
+      if (!Number.isNaN(number)) {
+        state.numbers += 1;
+        state.sum += number;
+      }
+    }
+  }
+
+  /** A running total scoped to a group goes back to nothing the moment that group opens. */
+  function resetRunning(section: Section, groupKey: string): void {
+    for (const spec of section.runningSpecs) {
+      if (!spec.scopeKey || spec.scopeKey.toLowerCase() !== groupKey.toLowerCase()) continue;
+      section.running.set(runningKey(spec.fn, spec.path, spec.scopeKey), emptyRunningState());
+    }
+  }
+
+  function startPage(owner: Section, inline: Section | null): FlowPage {
+    if (pages.length) finishPage();
+    const flow: FlowPage = { number: pages.length + 1, bands: [], y: 0 };
+    pages.push(flow);
+    const header = owner.firstOf("pageHeader");
+    if (header) emitBand(owner, header, {}, owner);
+    if (flow.number === 1) {
+      const title = owner.firstOf("reportTitle");
+      if (title) emitBand(owner, title, {}, owner);
+    }
+    const columnHeader = owner.firstOf("columnHeader");
+    if (columnHeader) emitBand(owner, columnHeader, {}, owner);
+    // A sub-report that runs onto a fresh page brings its own captions with it, behind the parent's.
+    if (inline) {
+      const carried = inline.firstOf("columnHeader");
+      if (carried) emitBand(inline, carried, {}, owner);
+    }
+    return flow;
+  }
+
+  /** The footers of the page being left, taken from the report that owns the page. */
+  function finishPage(): void {
     const flow = currentPage();
-    const group = context.groupLevel === undefined ? undefined : document.groups[context.groupLevel];
+    const columnFooter = rootSection.firstOf("columnFooter");
+    const pageFooter = rootSection.firstOf("pageFooter");
+    if (columnFooter) {
+      flow.y = Math.max(flow.y, contentHeight - footerReserve);
+      emitBand(rootSection, columnFooter, {}, rootSection);
+    }
+    if (pageFooter) {
+      flow.y = Math.max(flow.y, contentHeight - rootSection.heightOf("pageFooter"));
+      emitBand(rootSection, pageFooter, {}, rootSection);
+    }
+  }
+
+  const needsNewPage = (height: number): boolean => currentPage().y + height > flowHeight + 0.001;
+
+  function emitBand(section: Section, band: TemplateBand, context: EmitContext, owner: Section): void {
+    const bandPage = currentPage();
+    const bandTop = bandPage.y;
+    const group = context.groupLevel === undefined ? undefined : section.groups[context.groupLevel];
     const baseContext = {
       fields: context.row ?? {},
-      parameters,
-      report: reportMeta,
+      parameters: section.parameters,
+      report: section.reportMeta,
       group: group
         ? {
             key: group.key,
@@ -447,12 +652,30 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
         : null,
     };
 
-    const placed: LaidOutElement[] = [];
+    const placement: Placement = {
+      section, band, owner, context, bandTop, bandPage, placed: [],
+      // The totals as they stand now: a deferred re-resolve must not see the values from the end of the
+      // report, or a page footer would print the grand total.
+      running: new Map(section.running),
+    };
+    const placed = placement.placed;
+
+    /** A running total, read from the snapshot taken when this band was reached. */
+    const running = (call: { fn: RunningFunction; path: string; scope: string }): unknown => {
+      const scopeKey = runningScopeKey(call.scope, section.groupKeys) ?? "";
+      const state = placement.running.get(runningKey(call.fn, call.path, scopeKey));
+      if (!state) return call.fn === "RUNNINGCOUNT" ? 0 : null;
+      if (call.fn === "RUNNINGCOUNT") return call.path ? state.values : state.rows;
+      if (call.fn === "RUNNINGAVG") return state.numbers ? state.sum / state.numbers : null;
+      return state.sum;
+    };
 
     for (const element of band.elements) {
+      const x = section.offsetX + element.x;
+
       if (isShape(element)) {
         placed.push({
-          id: element.id, type: element.type, x: element.x, y: flow.y + element.y, w: element.w, h: element.h,
+          id: element.id, type: element.type, x, y: bandTop + element.y, w: element.w, h: element.h,
           deferred: false, payload: { kind: element.type, style: element.style },
         });
         continue;
@@ -464,9 +687,19 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
           if (src.includes("{{")) src = interpolateText(src, baseContext as ExpressionContext);
         } catch { src = ""; }
         placed.push({
-          id: element.id, type: element.type, x: element.x, y: flow.y + element.y, w: element.w, h: element.h,
+          id: element.id, type: element.type, x, y: bandTop + element.y, w: element.w, h: element.h,
           deferred: false, payload: { kind: "image", src, style: element.style },
         });
+        continue;
+      }
+
+      if (isSubreport(element)) {
+        emitSubreport(placement, element);
+        continue;
+      }
+
+      if (isChart(element)) {
+        emitChart(placement, element);
         continue;
       }
 
@@ -480,6 +713,7 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
           : element.text;
       const info = element.type === "text" ? deferredInfoForText(element.text) : deferredInfo(expression);
       const isDeferred = info.page || info.totalPages;
+      const positioned = { ...element, x };
 
       const resolve = (pageNumber: number, pageRows: Array<Record<string, unknown>>): string => {
         const ctx: ExpressionContext = {
@@ -488,10 +722,9 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
           aggregate: aggregateRequest =>
             aggregateRequest.scope === "page"
               ? computeAggregate(aggregateRequest, pageRows)
-              : computeAggregate(aggregateRequest, aggregateRequest.scope === "group" ? context.groupRows ?? [] : sortedRows),
-          dataSource: request.dataSources
-            ? (key: string, path: string) => readField(request.dataSources?.[key]?.[0], path)
-            : undefined,
+              : computeAggregate(aggregateRequest, aggregateRequest.scope === "group" ? context.groupRows ?? [] : section.sortedRows),
+          running,
+          dataSource: request.dataSources ? (key: string, path: string) => readField(request.dataSources?.[key]?.[0], path) : undefined,
         };
         if (element.type === "text") {
           try { return interpolateText(element.text, ctx); } catch { return ""; }
@@ -510,19 +743,20 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
 
       const format = element.type === "text" ? undefined : element.format;
       const placedElement: LaidOutElement = {
-        id: element.id, type: element.type, x: element.x, y: flow.y + element.y, w: element.w, h: element.h,
-        payload: placeText({ value: resolve(flow.number, []), element, style: element.style, bandY: flow.y, measure: request.measure, format }),
+        id: element.id, type: element.type, x, y: bandTop + element.y, w: element.w, h: element.h,
+        payload: placeText({ value: resolve(bandPage.number, []), element: positioned, style: element.style, bandY: bandTop, measure: request.measure, format }),
         deferred: isDeferred, rowIndex: context.rowIndex, groupLevel: context.groupLevel,
       };
 
       if (isDeferred) {
         // The page is fixed at placement time, so the patch pass knows which page's rows to total.
-        const pageNumber = flow.number;
+        const pageNumber = bandPage.number;
         deferred.push({
+          sectionKey: section.key,
           pageNumber,
           apply: pageRows => {
             placedElement.payload = placeText({
-              value: resolve(pageNumber, pageRows), element, style: element.style, bandY: flow.y, measure: request.measure, format,
+              value: resolve(pageNumber, pageRows), element: positioned, style: element.style, bandY: bandTop, measure: request.measure, format,
             });
             placedElement.deferred = false;
           },
@@ -532,177 +766,327 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
       placed.push(placedElement);
     }
 
-    flow.bands.push({
+    // A band declares its own height, but a sub-report inside it can make it taller than that: the child
+    // flows into the space below its box and the band grows to hold it.
+    let height = band.height;
+    if (currentPage() === bandPage) {
+      bandPage.y = Math.max(bandPage.y, bandTop + band.height);
+      height = bandPage.y - bandTop;
+    }
+
+    bandPage.bands.push({
       bandId: band.id, kind: band.kind, groupKey: band.groupKey, groupLevel: context.groupLevel,
-      y: flow.y, height: band.height, elements: placed, rowIndex: context.rowIndex,
+      y: bandTop, height, elements: placed, rowIndex: context.rowIndex,
     });
-    flow.y += band.height;
-  };
 
-  /** The footers of the page being left, anchored to the bottom of its content area. */
-  const finishPage = (): void => {
-    const flow = currentPage();
-    const columnFooter = firstOf("columnFooter");
-    const pageFooter = firstOf("pageFooter");
-    if (columnFooter) {
-      flow.y = Math.max(flow.y, contentHeight - footerReserve);
-      emitBand(columnFooter, { pageNumber: flow.number });
+    if (context.rowIndex !== undefined) {
+      const listKey = `${section.key}#${bandPage.number}`;
+      const list = pageRowIndexes.get(listKey) ?? [];
+      if (!list.includes(context.rowIndex)) list.push(context.rowIndex);
+      pageRowIndexes.set(listKey, list);
     }
-    if (pageFooter) {
-      flow.y = Math.max(flow.y, contentHeight - heightOf("pageFooter"));
-      emitBand(pageFooter, { pageNumber: flow.number });
-    }
-  };
+  }
 
-  const startPage = (): FlowPage => {
-    if (pages.length) finishPage();
-    const flow: FlowPage = { number: pages.length + 1, bands: [], y: 0, rowIndexes: [] };
-    pages.push(flow);
-    const header = firstOf("pageHeader");
-    if (header) emitBand(header, { pageNumber: flow.number });
-    if (flow.number === 1) {
-      const title = firstOf("reportTitle");
-      if (title) emitBand(title, { pageNumber: flow.number });
+  /** Folds the rows behind a chart into one value per category. */
+  function foldChartRows(element: ChartElement, rows: Array<Record<string, unknown>>, section: Section): { labels: string[]; values: number[] } {
+    interface Bucket { rows: number; withValue: number; numbers: number; sum: number; min?: unknown; max?: unknown; distinct: Set<string> }
+    const labels: string[] = [];
+    const buckets = new Map<string, Bucket>();
+    for (const row of rows) {
+      // A chart's categories are read row by row, so only the row and the report's parameters are in scope.
+      const rowContext = { fields: row, parameters: section.parameters, report: section.reportMeta };
+      let label: string;
+      try { label = toText(evaluateExpression(element.categoryExpression, rowContext)) || "(blank)"; } catch { continue; }
+      let bucket = buckets.get(label);
+      if (!bucket) {
+        bucket = { rows: 0, withValue: 0, numbers: 0, sum: 0, distinct: new Set() };
+        buckets.set(label, bucket);
+        labels.push(label);
+      }
+      bucket.rows += 1;
+      if (!element.valueExpression.trim()) continue;
+      let raw: unknown;
+      try { raw = evaluateExpression(element.valueExpression, rowContext); } catch { raw = undefined; }
+      if (isBlank(raw)) continue;
+      bucket.withValue += 1;
+      bucket.distinct.add(toText(raw));
+      const number = toNumber(raw);
+      if (!Number.isNaN(number)) {
+        bucket.numbers += 1;
+        bucket.sum += number;
+      }
+      if (bucket.min === undefined || compareForSort(raw, bucket.min) < 0) bucket.min = raw;
+      if (bucket.max === undefined || compareForSort(raw, bucket.max) > 0) bucket.max = raw;
     }
-    const columnHeader = firstOf("columnHeader");
-    if (columnHeader) emitBand(columnHeader, { pageNumber: flow.number });
-    return flow;
-  };
+    const values = labels.map(label => {
+      const bucket = buckets.get(label)!;
+      switch (element.fn) {
+        case "COUNT": return element.valueExpression.trim() ? bucket.withValue : bucket.rows;
+        case "COUNTD": return bucket.distinct.size;
+        case "AVG": return bucket.numbers ? bucket.sum / bucket.numbers : 0;
+        case "MIN": return toNumber(bucket.min);
+        case "MAX": return toNumber(bucket.max);
+        default: return bucket.numbers ? bucket.sum : 0;
+      }
+    });
+    return { labels, values: values.map(value => (Number.isFinite(value) ? value : 0)) };
+  }
 
-  const needsNewPage = (height: number): boolean => currentPage().y + height > flowHeight + 0.001;
+  function emitChart(placement: Placement, element: ChartElement): void {
+    const { section, context, bandTop } = placement;
+    const scopeRows = (pageRows: Array<Record<string, unknown>>): Array<Record<string, unknown>> =>
+      element.scope === "page" ? pageRows
+        : element.scope === "group" ? context.groupRows ?? []
+          : section.sortedRows;
+    const build = (pageRows: Array<Record<string, unknown>>): LaidOutChart => {
+      const series = foldChartRows(element, scopeRows(pageRows), section);
+      return layoutChart({
+        kind: element.kind,
+        box: { x: section.offsetX + element.x, y: bandTop + element.y, w: element.w, h: element.h },
+        labels: series.labels,
+        values: series.values,
+        title: element.title,
+        showLegend: element.showLegend,
+        showValues: element.showValues,
+        maxCategories: element.maxCategories,
+        style: element.style,
+        measure: request.measure,
+      });
+    };
+    const placedElement: LaidOutElement = {
+      id: element.id, type: "chart", x: section.offsetX + element.x, y: bandTop + element.y, w: element.w, h: element.h,
+      payload: { kind: "chart", chart: build([]) },
+      deferred: element.scope === "page", rowIndex: context.rowIndex, groupLevel: context.groupLevel,
+    };
+    if (element.scope === "page") {
+      const pageNumber = placement.bandPage.number;
+      deferred.push({
+        sectionKey: section.key,
+        pageNumber,
+        apply: pageRows => {
+          placedElement.payload = { kind: "chart", chart: build(pageRows) };
+          placedElement.deferred = false;
+        },
+      });
+    }
+    placement.placed.push(placedElement);
+  }
+
+  /**
+   * Prints a saved report inside the parent band. The child flows into the parent's pages — it does not
+   * begin a report of its own — so the parent's furniture, page numbering and row count are untouched.
+   */
+  function emitSubreport(placement: Placement, element: SubreportElement): void {
+    const { section, owner } = placement;
+    const label = element.templateName || element.templateId || "the sub-report";
+    const note = (text: string): void => {
+      placement.placed.push({
+        id: element.id, type: "subreport", x: section.offsetX + element.x, y: placement.bandTop + element.y,
+        w: element.w, h: element.h, deferred: false,
+        payload: placeText({
+          value: text,
+          element: { ...element, x: section.offsetX + element.x },
+          style: element.style, bandY: placement.bandTop, measure: request.measure,
+        }),
+      });
+    };
+
+    const resolution = request.subreports?.[element.templateId];
+    if (!element.templateId || !resolution) {
+      issues.push({
+        severity: "warning", code: "render.subreport", path: "bands",
+        message: `Sub-report "${label}" was not printed because it was not available when this report ran.`,
+        bandId: placement.band.id, elementId: element.id,
+      });
+      note(`Sub-report "${label}" was not available when this report ran.`);
+      return;
+    }
+
+    const childDocument = normaliseDocument(resolution.document);
+    const childIssues = validateTemplate(childDocument, { catalog: request.catalog, templates: request.templates });
+    if (errorsOf(childIssues).length) {
+      issues.push({
+        severity: "warning", code: "render.subreport", path: "bands",
+        message: `Sub-report "${label}" was not printed because its own template has errors to fix first.`,
+        bandId: placement.band.id, elementId: element.id,
+      });
+      note(`Sub-report "${label}" has errors to fix before it can be printed.`);
+      return;
+    }
+
+    const offsetX = section.offsetX + element.x;
+    // The child starts where its box sits. If that box will not fit on what is left of the page, the
+    // break happens here, in the parent's flow, so the parent knows a page has been used.
+    if (needsNewPage(element.y + element.h)) startPage(owner, section);
+    currentPage().y += element.y;
+
+    const childParameters = resolveParameters(childDocument, resolution.parameters, issues, `subreports[${element.templateId}].`);
+    const child = buildSection({
+      key: `${section.key}/${element.id}`,
+      isRoot: false,
+      document: childDocument,
+      rows: resolution.rows,
+      parameters: childParameters,
+      now: request.now,
+    });
+    sections.set(child.key, child);
+    flowSection(child, { owner, inline: true, offsetX });
+  }
 
   /** Repeats the group headers that asked for it, after a break moved the rows onto a new page. */
-  const repeatGroupHeaders = (rowIndex: number, keys: string[]): void => {
-    for (let level = 0; level < levels; level++) {
-      const group = document.groups[level]!;
-      const header = firstOf("groupHeader", group.key);
+  function repeatGroupHeaders(section: Section, owner: Section, rowIndex: number, keys: string[]): void {
+    for (let level = 0; level < section.levels; level++) {
+      const group = section.groups[level]!;
+      const header = section.firstOf("groupHeader", group.key);
       if (!header?.repeatOnNewPage) continue;
-      const groupRows = groupRowsFor(rowIndex, level);
-      emitBand(header, {
+      const groupRows = section.groupRowsFor(rowIndex, level);
+      emitBand(section, header, {
         groupLevel: level, groupRows, row: groupRows[0], groupValue: keys[level] ?? "",
-        pageNumber: currentPage().number,
-      });
+      }, owner);
     }
-  };
+  }
 
-  startPage();
-  const openLevels = new Array<boolean>(Math.max(1, levels)).fill(false);
-  const openGroupRows = new Array<Array<Record<string, unknown>>>(Math.max(1, levels)).fill([]);
-  let previousKeys: string[] | null = null;
+  /** Flows one document: its group openings and closings, its rows and its summary. */
+  function flowSection(section: Section, options: { owner: Section; inline: boolean; offsetX: number }): void {
+    const { owner, inline } = options;
+    section.offsetX = options.offsetX;
 
-  for (let index = 0; index < sortedRows.length; index++) {
-    const keys = sortedKeys[index]!;
-    const row = sortedRows[index]!;
-
-    let firstChanged = levels;
-    if (previousKeys === null) firstChanged = 0;
-    else {
-      for (let level = 0; level < levels; level++) {
-        if (keys[level] !== previousKeys[level]) { firstChanged = level; break; }
+    // An embedded sub-report has no page of its own, so its title and column captions are printed inline
+    // once, where the box sits — everything else about the page belongs to the parent.
+    if (inline) {
+      for (const kind of ["reportTitle", "columnHeader"] as BandKind[]) {
+        const band = section.firstOf(kind);
+        if (!band) continue;
+        if (needsNewPage(band.height)) startPage(owner, section);
+        emitBand(section, band, {}, owner);
       }
     }
 
-    // Close the groups that have ended, deepest first.
-    for (let level = levels - 1; level >= firstChanged; level--) {
-      if (!openLevels[level]) continue;
-      const group = document.groups[level]!;
-      const footer = firstOf("groupFooter", group.key);
-      if (footer) {
-        if (needsNewPage(footer.height)) startPage();
-        emitBand(footer, {
+    const openLevels = new Array<boolean>(Math.max(1, section.levels)).fill(false);
+    const openGroupRows = new Array<Array<Record<string, unknown>>>(Math.max(1, section.levels)).fill([]);
+    let previousKeys: string[] | null = null;
+    const levels = section.levels;
+
+    for (let index = 0; index < section.sortedRows.length; index++) {
+      const keys = section.sortedKeys[index]!;
+      const row = section.sortedRows[index]!;
+
+      let firstChanged = levels;
+      if (previousKeys === null) firstChanged = 0;
+      else {
+        for (let level = 0; level < levels; level++) {
+          if (keys[level] !== previousKeys[level]) { firstChanged = level; break; }
+        }
+      }
+
+      // Close the groups that have ended, deepest first.
+      for (let level = levels - 1; level >= firstChanged; level--) {
+        if (!openLevels[level]) continue;
+        const group = section.groups[level]!;
+        const footer = section.firstOf("groupFooter", group.key);
+        if (footer) {
+          if (needsNewPage(footer.height)) startPage(owner, inline ? section : null);
+          emitBand(section, footer, {
+            groupLevel: level,
+            groupRows: openGroupRows[level] ?? [],
+            // A group footer reads the last row of its group, which is also the row the key came from.
+            row: openGroupRows[level]?.[(openGroupRows[level]?.length ?? 1) - 1],
+            groupValue: section.sortedKeys[index - 1]?.[level] ?? "",
+          }, owner);
+        }
+        openLevels[level] = false;
+        openGroupRows[level] = [];
+      }
+
+      // Open the groups that have started, outermost first. A running total scoped to this group restarts
+      // here, which is why the reset happens before the header is printed rather than after.
+      for (let level = firstChanged; level < levels; level++) {
+        const group = section.groups[level]!;
+        const groupRows = section.groupRowsFor(index, level);
+        openLevels[level] = true;
+        openGroupRows[level] = groupRows;
+        resetRunning(section, group.key);
+
+        const header = section.firstOf("groupHeader", group.key);
+        if (!header) continue;
+        if (header.pageBreakBefore && currentPage().y > 0) startPage(owner, inline ? section : null);
+        if (group.keepTogether) {
+          const total = header.height + groupRows.length * section.heightOf("detail") + section.heightOf("groupFooter", group.key);
+          // A group that would fit on a page of its own is not split across two just because it started late.
+          if (total <= flowHeight && needsNewPage(total) && currentPage().y > header.height) startPage(owner, inline ? section : null);
+        }
+        if (needsNewPage(header.height)) startPage(owner, inline ? section : null);
+        emitBand(section, header, {
           groupLevel: level,
-          groupRows: openGroupRows[level] ?? [],
-          // A group footer reads the last row of its group, which is also the row the key came from.
-          row: openGroupRows[level]?.[(openGroupRows[level]?.length ?? 1) - 1],
-          groupValue: sortedKeys[index - 1]?.[level] ?? "",
-          pageNumber: currentPage().number,
-        });
+          groupRows,
+          // A group header reads the first row of its group, so Fields.status prints the group's key.
+          row: groupRows[0],
+          groupValue: keys[level] ?? "",
+        }, owner);
+      }
+
+      // The row joins the running totals before its own detail band reads them, so a band can print
+      // "total so far, including me" — and the totals carry on across a page break untouched.
+      accumulate(section, row);
+
+      for (const detail of section.bandsByKind.get("detail") ?? []) {
+        if (needsNewPage(detail.height)) {
+          startPage(owner, inline ? section : null);
+          repeatGroupHeaders(section, owner, index, keys);
+        }
+        emitBand(section, detail, { row, rowIndex: index }, owner);
+      }
+
+      previousKeys = keys;
+    }
+
+    for (let level = levels - 1; level >= 0; level--) {
+      if (!openLevels[level]) continue;
+      const group = section.groups[level]!;
+      const footer = section.firstOf("groupFooter", group.key);
+      if (footer) {
+        if (needsNewPage(footer.height)) startPage(owner, inline ? section : null);
+        const groupRows = openGroupRows[level] ?? [];
+        emitBand(section, footer, {
+          groupLevel: level, groupRows, row: groupRows[groupRows.length - 1],
+          groupValue: section.sortedKeys[section.sortedRows.length - 1]?.[level] ?? "",
+        }, owner);
       }
       openLevels[level] = false;
-      openGroupRows[level] = [];
     }
 
-    // Open the groups that have started, outermost first.
-    for (let level = firstChanged; level < levels; level++) {
-      const group = document.groups[level]!;
-      const groupRows = groupRowsFor(index, level);
-      openLevels[level] = true;
-      openGroupRows[level] = groupRows;
-
-      const header = firstOf("groupHeader", group.key);
-      if (!header) continue;
-      if (header.pageBreakBefore && currentPage().y > 0) startPage();
-      if (group.keepTogether) {
-        const total = header.height + groupRows.length * heightOf("detail") + heightOf("groupFooter", group.key);
-        // A group that would fit on a page of its own is not split across two just because it started late.
-        if (total <= flowHeight && needsNewPage(total) && currentPage().y > header.height) startPage();
-      }
-      if (needsNewPage(header.height)) startPage();
-      emitBand(header, {
-        groupLevel: level,
-        groupRows,
-        // A group header reads the first row of its group, so Fields.status prints the group's key.
-        row: groupRows[0],
-        groupValue: keys[level] ?? "",
-        pageNumber: currentPage().number,
-      });
+    const summary = section.firstOf("reportSummary");
+    if (summary) {
+      if (summary.pageBreakBefore && currentPage().y > 0) startPage(owner, inline ? section : null);
+      if (needsNewPage(summary.height)) startPage(owner, inline ? section : null);
+      emitBand(section, summary, {}, owner);
     }
-
-    for (const detail of bandsByKind.get("detail") ?? []) {
-      if (needsNewPage(detail.height)) {
-        startPage();
-        repeatGroupHeaders(index, keys);
-      }
-      emitBand(detail, { row, rowIndex: index, pageNumber: currentPage().number });
-      const flow = currentPage();
-      if (!flow.rowIndexes.includes(index)) flow.rowIndexes.push(index);
-    }
-
-    previousKeys = keys;
   }
 
-  for (let level = levels - 1; level >= 0; level--) {
-    if (!openLevels[level]) continue;
-    const group = document.groups[level]!;
-    const footer = firstOf("groupFooter", group.key);
-    if (footer) {
-      if (needsNewPage(footer.height)) startPage();
-      const groupRows = openGroupRows[level] ?? [];
-      emitBand(footer, {
-        groupLevel: level, groupRows, row: groupRows[groupRows.length - 1],
-        groupValue: sortedKeys[sortedRows.length - 1]?.[level] ?? "",
-        pageNumber: currentPage().number,
-      });
-    }
-    openLevels[level] = false;
-  }
-
-  const summary = firstOf("reportSummary");
-  if (summary) {
-    if (summary.pageBreakBefore && currentPage().y > 0) startPage();
-    if (needsNewPage(summary.height)) startPage();
-    emitBand(summary, { pageNumber: currentPage().number });
-  }
-
+  startPage(rootSection, null);
+  flowSection(rootSection, { owner: rootSection, inline: false, offsetX: 0 });
   finishPage();
 
   // Deferred values, now that every page exists.
   for (const work of deferred) {
-    const flow = pages.find(candidate => candidate.number === work.pageNumber);
-    work.apply((flow?.rowIndexes ?? []).map(rowIndex => sortedRows[rowIndex]!));
+    work.apply(rowsOnPage(work.sectionKey, work.pageNumber));
   }
 
-  if (request.limit !== undefined && sortedRows.length >= request.limit) {
+  if (request.limit !== undefined && rootSection.sortedRows.length >= request.limit) {
     issues.push({ severity: "warning", code: "render.limit", path: "dataSources[0].limit", message: `This report stopped at its row limit of ${request.limit}; rows beyond it are not included.` });
   }
 
   return {
     page: { width: page.width, height: page.height, margins: document.page.margins },
     content: { width: contentWidth, height: contentHeight },
-    pages: pages.map(flow => ({ number: flow.number, bands: flow.bands, rowIndexes: flow.rowIndexes })),
-    rowCount: sortedRows.length,
-    groupCount,
-    truncated: request.limit !== undefined && sortedRows.length >= request.limit,
+    pages: pages.map(flow => ({
+      number: flow.number,
+      bands: flow.bands,
+      rowIndexes: [...(pageRowIndexes.get(`${rootSection.key}#${flow.number}`) ?? [])],
+    })),
+    rowCount: rootSection.sortedRows.length,
+    groupCount: rootSection.groupCount,
+    truncated: request.limit !== undefined && rootSection.sortedRows.length >= request.limit,
     parameters,
     issues,
     refused: false,
@@ -737,7 +1121,12 @@ export function collectDocumentExpressions(document: ReportTemplateDocument): st
       if (element.type === "text") holes(element.text);
       else if (element.type === "field" && element.expression) found.push(element.expression);
       else if (element.type === "aggregate" && element.expression) found.push(element.expression);
-      else if (element.type === "image" && element.src.includes("{{")) holes(element.src);
+      else if (element.type === "chart") {
+        if (element.categoryExpression) found.push(element.categoryExpression);
+        if (element.valueExpression) found.push(element.valueExpression);
+      } else if (element.type === "subreport") {
+        for (const binding of Object.values(element.parameterBindings)) if (binding) found.push(binding);
+      } else if (element.type === "image" && element.src.includes("{{")) holes(element.src);
     }
   }
   return found;

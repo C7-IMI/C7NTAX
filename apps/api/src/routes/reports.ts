@@ -6,10 +6,12 @@ import { Permission } from "@C7NTAX/shared";
 import { runReportConfig, describeReportCatalog, type ReportConfig } from "../services/reportRunner";
 import { AppError } from "../middleware/errorHandler";
 import {
-  BAND_KINDS, ELEMENT_TYPES, FORMAT_LABELS, FUNCTIONS, PAGE_SIZES, STARTERS, VALUE_FORMATS,
+  BAND_KINDS, CHART_FUNCTIONS, CHART_KINDS, ELEMENT_TYPES, FORMAT_LABELS, FUNCTIONS, PAGE_SIZES, STARTERS, VALUE_FORMATS,
   AGGREGATE_SCOPES, DOCUMENT_VERSION, createBlankDocument, createStarter,
 } from "@C7NTAX/shared";
-import { catalogForValidation, resolveParameters, runTemplateDocument, validateDocument } from "../services/reportTemplates";
+import {
+  catalogForValidation, invalidateTemplateCache, listTemplateRefs, resolveParameters, runTemplateDocument, validateDocument,
+} from "../services/reportTemplates";
 import {
   agingReport, clientValueReport, contractProfitabilityReport, csatReport, monthlyReviewReport, parsePeriod,
   qbrReport, revenueReport, slaReport, ticketVolumeReport, timeTrackingReport, utilizationReport, weeklyReviewReport,
@@ -66,24 +68,30 @@ reportsRouter.get("/data/options", requirePermission(Permission.ReportView), asy
  * functions, band kinds, page sizes, formats and the starter documents — comes from here, and every
  * part of it is the same whitelist the runner enforces. There is no second list to drift.
  */
-reportsRouter.get("/designer/catalog", requirePermission(Permission.ReportView), (_req: AuthRequest, res) => {
-  const catalog = describeReportCatalog();
-  res.json({
-    documentVersion: DOCUMENT_VERSION,
-    sources: catalog.sources,
-    operators: catalog.operators,
-    functions: FUNCTIONS,
-    bandKinds: BAND_KINDS,
-    elementTypes: ELEMENT_TYPES,
-    pageSizes: PAGE_SIZES,
-    formats: VALUE_FORMATS.map(key => ({ key, label: FORMAT_LABELS[key] })),
-    aggregateScopes: AGGREGATE_SCOPES,
-    starters: STARTERS,
-    branding: [
-      { key: "brand-mark", label: "C7NTAX mark", path: "/icon-192.png" },
-      { key: "brand-wordmark", label: "C7NTAX wordmark", path: "/brand/wordmark-on-dark.png" },
-    ],
-  });
+reportsRouter.get("/designer/catalog", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
+  try {
+    const catalog = describeReportCatalog();
+    res.json({
+      documentVersion: DOCUMENT_VERSION,
+      sources: catalog.sources,
+      operators: catalog.operators,
+      functions: FUNCTIONS,
+      bandKinds: BAND_KINDS,
+      elementTypes: ELEMENT_TYPES,
+      chartKinds: CHART_KINDS,
+      chartFunctions: CHART_FUNCTIONS,
+      pageSizes: PAGE_SIZES,
+      formats: VALUE_FORMATS.map(key => ({ key, label: FORMAT_LABELS[key] })),
+      aggregateScopes: AGGREGATE_SCOPES,
+      starters: STARTERS,
+      // The saved reports a sub-report element may point at, so the inspector can offer them by name.
+      templates: await listTemplateRefs(),
+      branding: [
+        { key: "brand-mark", label: "C7NTAX mark", path: "/icon-192.png" },
+        { key: "brand-wordmark", label: "C7NTAX wordmark", path: "/brand/wordmark-on-dark.png" },
+      ],
+    });
+  } catch (e) { next(e); }
 });
 
 /** A starter document for a source, so a new report is never an empty page. */
@@ -103,11 +111,12 @@ reportsRouter.get("/designer/starter", requirePermission(Permission.ReportView),
 });
 
 /** Live validation for the designer: it posts the document it is editing and shows what comes back. */
-reportsRouter.post("/designer/validate", requirePermission(Permission.ReportCreate), (req: AuthRequest, res, next) => {
+reportsRouter.post("/designer/validate", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
   try {
     const name = typeof req.body?.name === "string" ? req.body.name : "Untitled report";
-    const validation = validateDocument(req.body?.document ?? req.body, name);
-    res.json({ issues: validation.issues, document: validation.document, catalog: catalogForValidation() });
+    const templates = await listTemplateRefs();
+    const validation = validateDocument(req.body?.document ?? req.body, name, templates);
+    res.json({ issues: validation.issues, document: validation.document, catalog: catalogForValidation(), templates });
   } catch (e) { next(e); }
 });
 
@@ -143,6 +152,8 @@ reportsRouter.post("/designer/preview", requirePermission(Permission.ReportView)
       limit: run.limit,
       notes: run.notes,
       issues: run.validation.issues,
+      subreports: run.subreports,
+      templates: await listTemplateRefs(),
     });
   } catch (e) { next(e); }
 });
@@ -165,7 +176,7 @@ reportsRouter.post("/", requirePermission(Permission.ReportCreate), async (req: 
     if (!req.body?.name || typeof req.body.name !== "string" || !req.body.name.trim()) throw new AppError("A report needs a name");
     const type = req.body.type || "custom";
     // A template is validated before it is stored: an invalid document is a report that can never run.
-    if (type === "template") assertTemplateIsValid(req.body.config?.document, req.body.name);
+    if (type === "template") await assertTemplateIsValid(req.body.config?.document, req.body.name);
     const r = await prisma.report.create({
       data: {
         name: req.body.name.trim(),
@@ -175,6 +186,7 @@ reportsRouter.post("/", requirePermission(Permission.ReportCreate), async (req: 
         createdById: req.user!.userId,
       },
     });
+    if (r.type === "template") invalidateTemplateCache();
     res.status(201).json(r);
   } catch (e) { next(e); }
 });
@@ -190,8 +202,10 @@ reportsRouter.patch("/:id", requirePermission(Permission.ReportCreate), async (r
     if (req.body?.config !== undefined) updates.config = req.body.config;
     const nextType = (updates.type as string | undefined) ?? report.type;
     const nextConfig = (updates.config as { document?: unknown } | undefined) ?? (report.config as { document?: unknown } | null);
-    if (nextType === "template") assertTemplateIsValid(nextConfig?.document, (updates.name as string | undefined) ?? report.name);
-    res.json(await prisma.report.update({ where: { id: report.id }, data: updates }));
+    if (nextType === "template") await assertTemplateIsValid(nextConfig?.document, (updates.name as string | undefined) ?? report.name);
+    const updated = await prisma.report.update({ where: { id: report.id }, data: updates });
+    if (nextType === "template" || report.type === "template") invalidateTemplateCache();
+    res.json(updated);
   } catch (e) { next(e); }
 });
 
@@ -200,8 +214,8 @@ reportsRouter.patch("/:id", requirePermission(Permission.ReportCreate), async (r
  * is in the message so a plain HTTP client still learns something useful, and the full list travels in
  * `details` for the designer to highlight.
  */
-function assertTemplateIsValid(raw: unknown, name: string): void {
-  const validation = validateDocument(raw, name);
+async function assertTemplateIsValid(raw: unknown, name: string): Promise<void> {
+  const validation = validateDocument(raw, name, await listTemplateRefs());
   if (!validation.errors.length) return;
   const first = validation.errors[0]!;
   throw new AppError(
@@ -220,6 +234,7 @@ reportsRouter.delete("/:id", requirePermission(Permission.ReportCreate), async (
     if (report.isSystem) throw new AppError(`${report.name} ships with the product and cannot be deleted`, 409);
     await prisma.reportSchedule.deleteMany({ where: { reportId: report.id } });
     await prisma.report.delete({ where: { id: report.id } });
+    if (report.type === "template") invalidateTemplateCache();
     res.json({ deleted: true, name: report.name });
   } catch (e) { next(e); }
 });
@@ -238,6 +253,7 @@ reportsRouter.post("/:id/duplicate", requirePermission(Permission.ReportCreate),
         createdById: req.user!.userId,
       },
     });
+    if (copy.type === "template") invalidateTemplateCache();
     res.status(201).json(copy);
   } catch (e) { next(e); }
 });
@@ -284,6 +300,7 @@ reportsRouter.get("/:id/run", requirePermission(Permission.ReportView), async (r
         document: run.validation.document, parameters: run.parameters,
         columns: run.columns, rows: run.rows, data: run.rows,
         truncated: run.truncated, limit: run.limit, notes: run.notes, issues: run.validation.issues,
+        subreports: run.subreports,
       });
       return;
     }
