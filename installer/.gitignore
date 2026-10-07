@@ -1,0 +1,2 @@
+# WiX's debug symbols. Rebuilt with the MSI, and only useful when debugging a build.
+*.wixpdb

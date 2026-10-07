@@ -9,7 +9,7 @@ uses and posts it to `POST /api/outlook-addin/tickets`, so the two paths produce
 
 | File | What it is |
 |---|---|
-| `manifest.xml` | The add-in manifest: a `MessageReadCommandSurface` ribbon button that opens the taskpane. Two placeholders must be replaced (below). |
+| `manifest.xml` | The add-in manifest: a `MessageReadCommandSurface` ribbon button that opens the taskpane. Served with its two placeholders resolved — see below, and do not edit them in place. |
 | `taskpane.html` / `taskpane.js` | The pane: sign-in, board selector, selection summary, per-message results. |
 | `commands.html` / `commands.js` | The function file Office requires. Deliberately behaviour-free — the button opens the pane rather than creating tickets blind. |
 | `styles.css` | Minimal styling that reads on Outlook's light and dark themes. |
@@ -19,26 +19,47 @@ The folder is served by the API at **`/addin`** on the same origin as `/api`, wh
 pane call the API with relative URLs and no CORS. Turn it off with `OUTLOOK_ADDIN_ENABLED=false`
 (the API routes are gated by the same flag).
 
-## Before you sideload or submit
+## What is served, and what is not
 
-Replace two placeholders in `manifest.xml`:
+`/addin/manifest.xml` is **generated, not a file**. The copy on disk holds two placeholders, and a
+manifest carrying a placeholder is one Office rejects without explaining why — so asking a running
+server for the manifest is the only way to get a usable one:
 
-| Placeholder | Value |
+| Request | Answers with |
 |---|---|
-| `__ADDIN_HOST__` | The https origin serving this folder, e.g. `https://tax.cyber7group.com`. Production is the App Gateway hostname from PLAN-016. |
-| `__ADDIN_GUID__` | A GUID you generate once and keep forever. Office identifies the add-in by it, so changing it later looks like a different add-in. |
+| `/addin/taskpane.html`, `/addin/commands.html`, `/addin/styles.css`, `/addin/assets/*` | the file on disk, as served by `express.static` |
+| `/addin/manifest.xml` | the manifest with both placeholders resolved for that server's own origin |
+| `/addin/installer` | JSON describing the Windows installer, if one has been built |
+| `/addin/installer/<name>.msi` | the installer, or the versionless alias `C7NTAX-OutlookAddIn.msi` |
 
-A quick replace, from this folder:
+Because the manifest is generated, **do not edit `manifest.xml` to replace the placeholders in
+place** — that would break the generation for every other deployment that shares the repository, and
+the substitution would then be done twice.
+
+| Placeholder | Resolved from | Meaning |
+|---|---|---|
+| `__ADDIN_HOST__` | `PUBLIC_BASE_URL`, else the request's own host | the origin serving this folder, e.g. `https://tax.cyber7group.com` |
+| `__ADDIN_GUID__` | `OUTLOOK_ADDIN_GUID`, else a fixed default | the identity Office knows the add-in by |
+
+The GUID is **fixed rather than generated**: Office treats a new GUID as a different add-in, so a
+deployment that regenerated it would strand every mailbox that had already sideloaded the previous
+one. Set `OUTLOOK_ADDIN_GUID` only to give a deployment its own identity deliberately.
+
+Check the generated result at any time:
 
 ```powershell
-(Get-Content manifest.xml) `
-  -replace '__ADDIN_HOST__', 'https://tax.cyber7group.com' `
-  -replace '__ADDIN_GUID__', '11111111-2222-3333-4444-555555555555' |
-  Set-Content manifest.xml
+(Invoke-WebRequest http://localhost:4000/addin/manifest.xml -UseBasicParsing).Content
 ```
 
 The icons are fetched by Office over HTTPS from the same origin, so the add-in will not load if
 `/addin/assets/*.png` is not reachable from the user's machine.
+
+## Installing it
+
+There are three routes, described in full in [the installer documentation](../../installer/README.md):
+a per-user **Windows installer** (built from `installer/`), a **manual sideload**, and a
+**centralized deployment** through the Microsoft 365 admin center. All three are offered, with the
+downloads, from **C7NC → Outlook Add-in** in the application itself.
 
 ## Sideload it (testing)
 

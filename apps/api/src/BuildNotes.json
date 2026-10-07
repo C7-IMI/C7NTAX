@@ -1,5 +1,60 @@
 [
   {
+    "version": "2026.10.7.031",
+    "date": "2026-10-07",
+    "title": "The Outlook add-in becomes installable: a generated manifest, a Windows installer, and a C7NC section",
+    "changes": [
+      {
+        "text": "**The manifest the server handed out could never load.** `apps/outlook-addin/manifest.xml` carries two placeholders — `__ADDIN_HOST__` for the origin and `__ADDIN_GUID__` for the identity Office knows the add-in by — and nothing replaced them. `/addin` is served straight off disk by `express.static`, so `GET /addin/manifest.xml` returned the file **with the placeholders still in it**. Office requires absolute URLs, and it reports a manifest it cannot parse by simply not showing the add-in: anyone following the README got silence. The manifest is now **generated** for the origin in force, and the raw file can no longer reach a client.",
+        "type": "Fix"
+      },
+      {
+        "text": "**`services/addinPackage.ts`** decides both placeholders once — the origin from `PUBLIC_BASE_URL` or the request's own host, the identity from `OUTLOOK_ADDIN_GUID` or a fixed default — and is used by the served manifest, the installer build and the deployment report, so the three cannot describe different deployments. The identity is **fixed rather than generated**: Office treats a new GUID as a different add-in, so regenerating it would strand every mailbox that had already sideloaded the previous one.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A per-user Windows installer.** `installer/outlook-addin/build.ps1` fetches the resolved manifest from a running server, reads the version from `BuildNotes.md`, and compiles a WiX MSI that copies the manifest into `%LOCALAPPDATA%\\C7NTAX\\OutlookAddIn` and writes the `HKCU` registration Office reads. It is **per-user and needs no administrator** — not a preference: the registration lives in the signed-in user's hive, so a machine-wide package writes a hive Office is not reading and appears to work only for whoever ran the install. The value is written as **`REG_SZ`**, because Office does not follow `REG_EXPAND_SZ` here and the wrong type registers an add-in that never appears.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The manifest comes from the server when building, not from a substitution in the script.** The API is the only thing that knows both the deployment's origin and the add-in identity in force, so the installer and the manifest a user downloads by hand cannot disagree. The consequence is stated rather than hidden — the installer is valid for **one origin** — and the application detects the mismatch and shows the rebuild command instead of quietly offering a package that opens an empty pane.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Windows Installer cannot hold a four-digit year**, so the version is mapped: `2026.10.7.031` becomes `26.10.7031` (`YY.M.PPPP`). Every field stays in range and the order stays monotonic as the changelog advances; a version that ordered builds incorrectly would break the upgrade rule, and the symptom would be an upgrade that silently did nothing. The true version is kept in `build.json`, the artifact's filename, and the interface.",
+        "type": "Update"
+      },
+      {
+        "text": "**Three public, flag-gated download routes** alongside the taskpane: the generated manifest, a JSON descriptor of the artifact, and the installer itself under its versioned name or the versionless alias `C7NTAX-OutlookAddIn.msi`. They are public because the taskpane already is and the install button should be a plain link, and they follow the same `apps.outlookAddin` switch — offering a package for a switched-off add-in would install a button that answers 404.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A JSON descriptor rather than a HEAD probe.** The page first asked with `HEAD` and read the status. A probe that fails for any transient reason would have asserted that no installer exists — a false claim about a file sitting right there. Asking once for a description means the page can be wrong about *when*, never about *whether*.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**C7NC → Outlook Add-in**, a new top-level navigation section for the companion clients. The page offers all three installation routes — the installer, a manual sideload, and centralized deployment — with the conditions each one needs, the silent-install and uninstall commands, troubleshooting, and the deployment facts for an administrator including a **warning and the rebuild command when the installer was built for another server**. It carries **no permission** and degrades to a single explanatory card when the admin-only deployment report answers 403, so a technician who cannot read deployment detail can still install the add-in. It sits at the top level rather than under Administration because these are things a *user* installs on their own machine, and burying that behind a settings screen would make it an administrator's task by accident.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`O365/New-C7NTAXMailboxApp.ps1`** — PLAN-017's runbook of portal clicks as Graph REST. Device-code sign-in with Microsoft's own Graph command-line client (no module, no `az`), create or reuse the registration, request `Mail.ReadWrite` as an application role and/or the delegated scopes, create the service principal, **grant admin consent** by app-role assignment and permission grant, create the client secret once into a git-ignored file, and print the Exchange Online RBAC commands that scope the app to one mailbox. That last step prints rather than runs, because those are Exchange cmdlets and not Graph, and because scoping is what turns a tenant-wide reader into a mailbox reader — it deserves to be deliberate. `O365/README.md` explains the two flows, the prerequisites and the failures worth naming.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`PlanDocs/PLAN-022-Outlook-Add-in-Packaging-and-Distribution.md`** records the design, the thirteen decisions — including two rejections (`util:XmlFile` URL rewriting at install time, and a rebuild endpoint on the production API) — and what is left.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A rebuilt installer could not reach anybody.** The service worker cached `/addin/*` in its cache-first branch, so a downloaded installer would come back out of a cache after being rebuilt. It now bypasses `/addin/` exactly as it bypasses `/api/`, and the cache name is bumped so an already-stored copy is retired. The Vite dev server also proxies `/addin` now, so the download link resolves same-origin in development as it does in a deployment.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The Help no longer describes the broken path.** The Outlook add-in walkthrough documented sideloading \"the manifest that ships in the repository\" — the file with the placeholder in it — and now covers the install page, the three routes, and the Outlook restart. Two FAQ entries warn about the two failures that look like breakage: an installer built for another server, and a manifest taken from the repository instead of from the page.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.030",
     "date": "2026-10-07",
     "title": "The Outlook add-in switch is in the UI, and it governs the whole feature",

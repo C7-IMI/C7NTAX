@@ -1,0 +1,2 @@
+# The provisioning script's output holds a client secret in clear text.
+out/

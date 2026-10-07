@@ -87,13 +87,13 @@ export type InstallerBuild = {
 /**
  * Where `installer/build.ps1` writes its output.
  *
- * Deliberately not a `dist/` directory: the repository ignores `dist/` wholesale, and the
- * artifact is meant to be committed so the in-app download works from a fresh clone.
+ * Deliberately not `dist/` or `release/`: the repository ignores both wholesale, and the
+ * artifact has to be committed for the in-app download to work from a fresh clone.
  */
 export function installerDirectory(): string {
   return (
     process.env.OUTLOOK_ADDIN_INSTALLER_DIR ||
-    path.resolve(__dirname, "..", "..", "..", "..", "installer", "release")
+    path.resolve(__dirname, "..", "..", "..", "..", "installer", "artifacts")
   );
 }
 

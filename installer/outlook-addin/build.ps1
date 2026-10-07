@@ -32,7 +32,7 @@
   repository already keeps it.
 
 .PARAMETER OutputDirectory
-  Where the artifact and its `build.json` go. Defaults to `installer/release`.
+  Where the artifact and its `build.json` go. Defaults to `installer/artifacts`.
 
 .EXAMPLE
   ./build.ps1 -ApiUrl https://tax.cyber7group.com
@@ -58,7 +58,7 @@ Set-StrictMode -Version Latest
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Resolve-Path (Join-Path $scriptDir "..\..")
-if (-not $OutputDirectory) { $OutputDirectory = Join-Path $repoRoot "installer\release" }
+if (-not $OutputDirectory) { $OutputDirectory = Join-Path $repoRoot "installer\artifacts" }
 
 # ── The toolkit ───────────────────────────────────────────────────────────────
 # WiX is a dotnet tool. Version 5 rather than the newest: the toolset began requiring
