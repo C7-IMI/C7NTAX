@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { PasskeyManager } from "../components/PasskeyManager";
 import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Target, FolderKanban, Monitor, BookOpen } from "lucide-react";
 import api from "../api";
 import toast from "react-hot-toast";
@@ -122,6 +123,8 @@ export function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <PasskeyManager />
 
       <div className="card scroll-mt-6" id="session">
         <h3 className="font-semibold text-white mb-4">Session Timeout</h3>

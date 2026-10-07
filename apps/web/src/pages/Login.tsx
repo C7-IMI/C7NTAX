@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { usePasskey } from "../hooks/usePasskey";
 import { ServiceHealthPanel } from "../components/ServiceHealthPanel";
 import { BrandMark } from "../components/BrandMark";
 import { Wordmark } from "../components/Wordmark";
-import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
 import api from "../api";
 import toast from "react-hot-toast";
 
 export function LoginPage() {
   const { login, loginMfa, completeSignIn } = useAuth();
+  const { registerPasskey, loginWithPasskey, isSupported: passkeySupported } = usePasskey();
   const navigate = useNavigate();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +18,6 @@ export function LoginPage() {
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
   const [ssoEnabled, setSsoEnabled] = useState(false);
-  const [passkeyEnabled, setPasskeyEnabled] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   // A session that ended server-side lands here with a reason so the sign-in page can say why.
@@ -51,8 +51,11 @@ export function LoginPage() {
 
   useEffect(() => {
     api.get("/auth/sso/status").then(r => setSsoEnabled(!!r.data?.enabled)).catch(() => {});
-    setPasskeyEnabled(true); // backend gates the endpoints; button shows and errors cleanly if disabled
   }, []);
+
+  // The button only appears where the browser can actually use a passkey; the API decides
+  // separately whether the endpoints exist at all, and reports that as a normal error.
+  const passkeyEnabled = passkeySupported;
 
   const handleSso = () => { window.location.href = "/api/auth/sso/oidc/start"; };
 
@@ -60,10 +63,8 @@ export function LoginPage() {
     if (!loginId) { toast.error("Enter your email first"); return; }
     setLoading(true);
     try {
-      const { data } = await api.post("/auth/webauthn/login/options", { email: loginId });
-      const auth = await startAuthentication(data.options);
-      const verify = await api.post("/auth/webauthn/login/verify", { userId: data.userId, response: auth });
-      await completeSignIn(verify.data.token);
+      const issued = await loginWithPasskey(loginId);
+      await completeSignIn(issued);
       navigate("/");
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message || "Passkey login failed";
@@ -74,10 +75,8 @@ export function LoginPage() {
   const handlePasskeyRegister = async () => {
     setLoading(true);
     try {
-      const { data } = await api.post("/auth/webauthn/register/options");
-      const reg = await startRegistration(data);
-      await api.post("/auth/webauthn/register/verify", reg);
-      toast.success("Passkey registered for this device");
+      const created = await registerPasskey();
+      toast.success(created?.deviceName ? `Passkey registered — ${created.deviceName}` : "Passkey registered for this device");
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message || "Passkey registration failed (sign in with password first)";
       toast.error(msg);
@@ -156,7 +155,7 @@ export function LoginPage() {
           </div>
         )}
         <form onSubmit={handleLogin} className="card space-y-4">
-          <input className="input-field" type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} placeholder="Email or username" required autoFocus />
+          <input className="input-field" type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} placeholder="Email or username" autoComplete="username webauthn" required autoFocus />
           <input className="input-field" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
           <button className="btn-primary w-full" type="submit" disabled={loading}>
             {loading ? "Signing in..." : "Sign In"}

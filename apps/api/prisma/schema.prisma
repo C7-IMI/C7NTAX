@@ -1846,14 +1846,17 @@ model QuoteLineItem {
 }
 
 model WebauthnCredential {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  credentialId String   @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String    @unique
   publicKey    String
-  counter      Int      @default(0)
-  transports   String   @default("[]")
-  createdAt    DateTime @default(now())
+  counter      Int       @default(0)
+  transports   String    @default("[]")
+  /// User-facing label, e.g. "Chrome on Windows"; the management UI lists and renames this.
+  deviceName   String?
+  lastUsedAt   DateTime?
+  createdAt    DateTime  @default(now())
 }
 
 model PushDevice {
