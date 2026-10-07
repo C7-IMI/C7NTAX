@@ -3834,3 +3834,21 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - If PLAN-003 (multi-tenant) is ever taken up, #8's RLS pass is the piece that comes with it; the substitutes in force are company scoping and the per-contact portal scoping.
 - `AUTH_HARDENING_ENABLED=true` means persona accounts lock after five wrong passwords — worth remembering before any suite that deliberately fails sign-ins.
+
+**Prompt 220 — continued: PLAN-013 #9 (skeletons, and the service worker the browser check uncovered)**
+
+**What I did**
+- Checked what #9's list actually still needed instead of taking it at face value: the density toggle, the ticket bulk actions, the global `T` shortcut and collapsible sidebar groups were already in place from earlier waves. What was genuinely missing was the skeleton pass — `components/ui/Skeleton.tsx` existed with `TableSkeleton` and **zero call sites**, while 29 placeholders across the app still rendered a bare "Loading…".
+- Added `PageSkeleton` and `CardSkeleton` to that module and replaced the placeholders across **25 pages**: `TableSkeleton` where a table is coming, `PageSkeleton` where a table skeleton would describe a layout the page is not going to show (detail and settings screens).
+- **The browser check found something much more serious than a loading state.** Verifying the skeletons needed a delayed API response, and Playwright's request interception never saw the API calls. The cause: `apps/web/public/sw.js` **caches every API `GET`** under a URL-only key and serves the cached copy when the network fails. Measured on the working profile: `C7NTAX-v2` held **351 entries, 209 of them `/api/`** — another user's tickets, clients and invoices, and now the portal's too, available to whoever used that browser next.
+- Fixed it in `sw.js`: API requests go to the network and nowhere else (no cache read, no cache write), the cache name moves to `C7NTAX-v3` so activation retires the poisoned bucket, and activation additionally deletes any `/api/` entry in the current bucket. Verified in the browser: 209 API entries → **0**, old bucket gone, and a further full page load adds none.
+- Then proved the skeletons properly: with the worker no longer in the API path, a delayed `/api/clients` renders **six skeleton rows**, no "Loading…" text anywhere, and the nine-row table afterwards.
+
+**Decisions worth remembering**
+- **A cache key of "URL" cannot express "as this person".** Any cache of an authenticated response has to be keyed by the session or not exist; there is no third option that is safe.
+- **A component with no call sites is not a finished feature.** `TableSkeleton` had been written and never used; the plan's own checklist read as done because the file existed.
+- **An offline-capable app must decide what "offline" means.** The shell still starts without a network; last-seen business data is deliberately not shown, because a stale invoice is worse than an honest failure.
+
+**Notes for next time**
+- The service worker is registered from `index.html` for every environment, including development. If a future change touches caching, that registration is the one place to look and the version constant is the only lever for retiring a bucket.
+- #9's remaining, genuinely-unbuilt items are the Tickets/Clients filter-chip bar, an empty-state audit, breadcrumb parity and mobile table→card transforms. All are additive; none is a defect.

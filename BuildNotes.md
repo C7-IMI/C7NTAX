@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.020 | Last Updated: 2026-10-07
+## Version: 2026.10.7.021 | Last Updated: 2026-10-07
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.7.021 — The service worker was caching 209 API responses, including whoever was signed in
+- **[Fix]** **Authenticated API responses are no longer cached in the browser.** `sw.js` cached every API `GET` under a URL-only key and served the cached copy back when the network failed. That key cannot express "as this person", so the last user's tickets, clients, invoices — and now the customer portal's tickets — could be handed to whoever used that browser next, most visibly after signing out or with the API unreachable. Measured on a working profile before the fix: **`C7NTAX-v2` held 351 entries, 209 of them `/api/`**. API requests now go to the network and nowhere else: no cache read, no cache write, so an unreachable API produces a failed request and a page that says so instead of yesterday's data.
+- **[Fix]** **What was already cached is purged, on devices that have the old worker.** The cache name moves to `C7NTAX-v3` (activation retires the old bucket, dropping all 209 API entries) and activation additionally deletes any `/api/` entry in the current bucket. Verified in the browser: after the new worker activated, `C7NTAX-v3` held **4 shell entries and 0 API entries**, and a further full page load added none.
+- **[New]** **Skeletons, finally used.** `components/ui/Skeleton.tsx` existed with `Skeleton` and `TableSkeleton` and **no call sites at all** — every page still rendered a bare "Loading…" line. `PageSkeleton` and `CardSkeleton` were added to it and the placeholders were replaced across **25 pages**: `TableSkeleton` where a table is coming (Clients, Tickets, Billing, Contacts, Assets, Projects, Procurement, Knowledge Base, PTO, Calendar, Roles, Kumo lists, Administration, the finance dashboard) and `PageSkeleton` where a table would be a lie (client/asset/Kumo asset detail, Cloud Connect, inference settings, and the ticket detail view).
+- **[Update]** **Offline behaviour changed deliberately.** The PWA shell (`/`, `/index.html`, icons, manifest) is still cached so the app starts offline, but last-seen business data is not: showing a stale invoice to somebody who cannot reach the server is worse than showing that the server cannot be reached.
+- **Verification:** browser-measured cache contents before and after (209 API entries → 0, old bucket deleted, no new API entries on reload); the loading state proved with a delayed API response — the Clients page renders **six skeleton rows** while waiting and no literal "Loading…" text remains anywhere in the app, then the nine-row table appears; web typecheck 0, API typecheck at the 152 pre-existing. The fix also removed the reason a page could not be tested with an intercepted request: the worker used to serve `/api/` calls out of its own cache, so nothing downstream of it ever saw them.
+- **Rollback:** revert the commit; the SW change is self-contained and the skeleton swap is markup only. A device with the older worker simply keeps its cache until the next deploy, at which point `v3` retires it.
 
 ## 2026.10.7.020 — The hardening switch was re-hashing every password on every sign-in
 - **[Fix]** **`AUTH_HARDENING_ENABLED` never recognised its own work.** The rehash-on-login guard tested `passwordHash.startsWith("$2b$12$")`, but this application hashes with **`bcryptjs`**, which writes `$2a$12$`. So a hash the hardening pass had just written still looked stale, and **every** sign-in re-hashed the password — a wasted ~300 ms on the hottest route in the product and a password row rewritten on every login. The guard now matches the algorithm and cost (`/^\$2[aby]\$12\$/`) rather than one vendor's letter, so an upgrade happens once and never again.

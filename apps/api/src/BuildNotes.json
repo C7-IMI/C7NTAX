@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.7.021",
+    "date": "2026-10-07",
+    "title": "The service worker was caching 209 API responses, including whoever was signed in",
+    "changes": [
+      {
+        "text": "**Authenticated API responses are no longer cached in the browser.** `sw.js` cached every API `GET` under a URL-only key and served the cached copy back when the network failed. That key cannot express \"as this person\", so the last user's tickets, clients, invoices — and now the customer portal's tickets — could be handed to whoever used that browser next, most visibly after signing out or with the API unreachable. Measured on a working profile before the fix: **`C7NTAX-v2` held 351 entries, 209 of them `/api/`**. API requests now go to the network and nowhere else: no cache read, no cache write, so an unreachable API produces a failed request and a page that says so instead of yesterday's data.",
+        "type": "Fix"
+      },
+      {
+        "text": "**What was already cached is purged, on devices that have the old worker.** The cache name moves to `C7NTAX-v3` (activation retires the old bucket, dropping all 209 API entries) and activation additionally deletes any `/api/` entry in the current bucket. Verified in the browser: after the new worker activated, `C7NTAX-v3` held **4 shell entries and 0 API entries**, and a further full page load added none.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Skeletons, finally used.** `components/ui/Skeleton.tsx` existed with `Skeleton` and `TableSkeleton` and **no call sites at all** — every page still rendered a bare \"Loading…\" line. `PageSkeleton` and `CardSkeleton` were added to it and the placeholders were replaced across **25 pages**: `TableSkeleton` where a table is coming (Clients, Tickets, Billing, Contacts, Assets, Projects, Procurement, Knowledge Base, PTO, Calendar, Roles, Kumo lists, Administration, the finance dashboard) and `PageSkeleton` where a table would be a lie (client/asset/Kumo asset detail, Cloud Connect, inference settings, and the ticket detail view).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Offline behaviour changed deliberately.** The PWA shell (`/`, `/index.html`, icons, manifest) is still cached so the app starts offline, but last-seen business data is not: showing a stale invoice to somebody who cannot reach the server is worse than showing that the server cannot be reached.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.020",
     "date": "2026-10-07",
     "title": "The hardening switch was re-hashing every password on every sign-in",
