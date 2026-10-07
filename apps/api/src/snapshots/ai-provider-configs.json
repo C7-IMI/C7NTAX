@@ -180,15 +180,27 @@
     "updatedAt": "2026-10-07T20:57:38.346Z"
   },
   {
-    "id": "32ee40cc-85b2-467d-ba45-cdb02fd12601",
-    "name": "Probe KB provider muyqdfpy",
-    "provider": "custom",
-    "isActive": true,
-    "isDefault": true,
-    "apiEndpoint": "http://127.0.0.1:4124/v1/chat/completions",
-    "model": "probe-model",
-    "maxTokens": 800,
-    "createdAt": "2026-10-07T23:20:28.010Z",
-    "updatedAt": "2026-10-07T23:20:28.010Z"
+    "id": "4c81c4e3-28ff-46d7-8d97-97d380736064",
+    "name": "Persona probe provider 1791416129686",
+    "provider": "local",
+    "isActive": false,
+    "isDefault": false,
+    "apiEndpoint": null,
+    "model": "gpt-4o-mini",
+    "maxTokens": 2000,
+    "createdAt": "2026-10-07T23:35:29.691Z",
+    "updatedAt": "2026-10-07T23:35:29.691Z"
+  },
+  {
+    "id": "bd7aa232-4bf1-4934-91bd-8ac053d06df8",
+    "name": "Persona probe provider 1791416129696",
+    "provider": "local",
+    "isActive": false,
+    "isDefault": false,
+    "apiEndpoint": null,
+    "model": "gpt-4o-mini",
+    "maxTokens": 2000,
+    "createdAt": "2026-10-07T23:35:29.700Z",
+    "updatedAt": "2026-10-07T23:35:29.700Z"
   }
 ]

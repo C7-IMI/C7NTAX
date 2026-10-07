@@ -154,6 +154,28 @@
     "updatedAt": "2026-10-07T20:57:38.255Z"
   },
   {
+    "id": "83fc5ab0-757e-46d5-872f-94b248ce2a82",
+    "name": "Persona probe survey 1791416129498",
+    "description": null,
+    "type": "csat",
+    "isActive": true,
+    "sendOnResolve": false,
+    "sendDelayHours": 1,
+    "createdAt": "2026-10-07T23:35:29.502Z",
+    "updatedAt": "2026-10-07T23:35:29.502Z"
+  },
+  {
+    "id": "c3c416a9-cfc9-423f-a712-6f4c66272e8c",
+    "name": "Persona probe survey 1791416129510",
+    "description": null,
+    "type": "csat",
+    "isActive": true,
+    "sendOnResolve": false,
+    "sendDelayHours": 1,
+    "createdAt": "2026-10-07T23:35:29.514Z",
+    "updatedAt": "2026-10-07T23:35:29.514Z"
+  },
+  {
     "id": "6dc81f0e-6a5e-448f-ad03-0b03e4faeecb",
     "name": "CSAT — Post-Ticket",
     "description": "Sent after ticket resolution",
