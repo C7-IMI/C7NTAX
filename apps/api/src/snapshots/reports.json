@@ -1,49 +1,5 @@
 [
   {
-    "id": "408664b3-90a6-4a27-a951-ef54d5cac19f",
-    "name": "Persona probe report 1791365441953",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T09:30:41.957Z",
-    "updatedAt": "2026-10-07T09:30:41.957Z"
-  },
-  {
-    "id": "363e5f84-0da6-4065-852d-4a3b2f9ca8b6",
-    "name": "Persona probe report 1791365441959",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T09:30:41.964Z",
-    "updatedAt": "2026-10-07T09:30:41.964Z"
-  },
-  {
-    "id": "d8cf17d9-0886-4eb3-b0fb-0f54add16b48",
-    "name": "Persona probe report 1791365453106",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T09:30:53.110Z",
-    "updatedAt": "2026-10-07T09:30:53.110Z"
-  },
-  {
-    "id": "cc1fa9f4-f3a2-4f9d-82b3-2a77046a3801",
-    "name": "Persona probe report 1791365453110",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T09:30:53.115Z",
-    "updatedAt": "2026-10-07T09:30:53.115Z"
-  },
-  {
     "id": "f037556f-a402-427b-bcf0-0038efea3b3d",
     "name": "Browser check — open tickets",
     "description": null,
