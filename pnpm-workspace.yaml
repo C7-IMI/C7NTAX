@@ -1,3 +1,33 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Security floors for transitive dependencies (the dependency audit in
+# `security/audit-baseline.json` is the gate; these are the fixes it expects).
+#
+# They are declared here *and* in package.json on purpose, and the reason is a trap worth
+# recording. `packageManager` pins pnpm 9.1.0, which reads overrides only from the root `pnpm`
+# field in package.json; pnpm 10 and later read them only from this file. Measured on this
+# machine: a wrapper pnpm 11.20.0 prints "the pnpm field ... was ignored" *before* handing over
+# to the pinned 9.1.0, which then applies them — so the warning is misleading here, and the tree
+# is fine. It stops being misleading the moment something resolves without the pin: the same
+# override in a project with no `packageManager` did nothing at all, and `qs` fell from the
+# 6.16.0 floor back to 6.11.0. Declaring the floors in both places means they hold whichever
+# pnpm resolves the tree, because a floor that is quietly ignored is worse than one that was
+# never set — the lockfile keeps the patched versions until something re-resolves, and then
+# they are gone.
+#
+# Keep the two lists identical. Verified by `node scripts/audit-baseline.mjs`.
+overrides:
+  proxy-addr@<2.0.8: ^2.0.8
+  brace-expansion@<1.1.21: ^1.1.21
+  brace-expansion@>=2.0.0 <2.1.7: 2.1.7
+  semver@<5.7.2: ^5.7.2
+  qs@<6.16.0: ^6.16.0
+  dompurify@<3.4.16: ^3.4.16
+  "@xmldom/xmldom@<0.9.12": ^0.9.12
+  js-yaml@<4.3.2: ^4.3.2
+  source-map-js@<1.2.2: ^1.2.2
+  tar@<7.5.21: ^7.5.21
+  app-builder-lib@<26.15.0: ^26.17.0
+  builder-util-runtime@<9.7.0: ^9.7.0

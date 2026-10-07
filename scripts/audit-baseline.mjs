@@ -126,6 +126,46 @@ if (write) {
 
 function ok(message) { console.log(message); }
 
+/**
+ * The security overrides are declared twice, on purpose — see the note in `pnpm-workspace.yaml`.
+ * pnpm 9 reads them only from the root `pnpm` field in package.json, pnpm 10+ only from the
+ * workspace file, and the two toolchains are both in play depending on how the tree is resolved.
+ * Two copies drift, and a drifted copy is a security floor that quietly stops applying, so the
+ * sets are held equal here rather than by a comment asking politely.
+ */
+function compareOverrides() {
+  const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+  const inPackageJson = pkg.pnpm?.overrides ?? {};
+  const raw = readFileSync(path.join(root, "pnpm-workspace.yaml"), "utf8");
+  const block = raw.split(/^overrides:\s*$/m)[1];
+  const inWorkspace = {};
+  if (block) {
+    for (const line of block.split("\n")) {
+      const match = /^\s+("?[^":#]+"?):\s*["']?([^"'#]+?)["']?\s*$/.exec(line);
+      if (match) inWorkspace[match[1].replace(/"/g, "")] = match[2].trim();
+    }
+  }
+
+  const onlyPackage = Object.keys(inPackageJson).filter(k => !(k in inWorkspace));
+  const onlyWorkspace = Object.keys(inWorkspace).filter(k => !(k in inPackageJson));
+  const differing = Object.keys(inPackageJson).filter(
+    k => k in inWorkspace && String(inPackageJson[k]) !== inWorkspace[k],
+  );
+
+  if (onlyPackage.length || onlyWorkspace.length || differing.length) {
+    console.error("\nthe security overrides in package.json and pnpm-workspace.yaml have drifted:\n");
+    for (const k of onlyPackage) console.error(`  x ${k} is in package.json only`);
+    for (const k of onlyWorkspace) console.error(`  x ${k} is in pnpm-workspace.yaml only`);
+    for (const k of differing) {
+      console.error(`  x ${k}: package.json has ${inPackageJson[k]}, pnpm-workspace.yaml has ${inWorkspace[k]}`);
+    }
+    console.error("\nAn override only one package manager reads is a floor that stops applying.");
+    return false;
+  }
+  console.log(`override parity: ${Object.keys(inPackageJson).length} security floors declared in both files`);
+  return true;
+}
+
 if (!existsSync(baselinePath)) {
   console.error("security/audit-baseline.json is missing — run: node scripts/audit-baseline.mjs --write");
   process.exit(1);
@@ -161,4 +201,5 @@ if (failures.length) {
   console.log("\nFix them, or record them in security/audit-baseline.json with a reason and re-run with --write.");
   process.exit(1);
 }
+if (!compareOverrides()) process.exit(1);
 console.log("\nno unaccepted production or high-severity advisories");
