@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.055 | Last Updated: 2026-10-06
+## Version: 2026.10.6.056 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.056 — The collapsed sidebar's user footer no longer collides
+- **[Fix]** **The sign-out button and your initials were drawn on top of each other in the collapsed sidebar.** The button was positioned absolutely `bottom-3` inside the footer, which is the last block of a full-height sidebar — so its 12px offset landed in exactly the same place as the centred avatar the footer already draws there, leaving the icons superimposed and the sign-out target hanging over the avatar. The collapsed footer is now a centred column — avatar, then sign-out beneath it — and the absolute positioning is gone.
+- **[Fix]** **It was also a hit-target problem, not just a cosmetic one**: the button was the later sibling, so it painted over the avatar, while the avatar's own centre resolved to the button's icon. Both elements now sit fully inside the footer with a 6px gap, each is the topmost element at its own centre, and the footer grew from 53px to 79px — the nav is a `flex-1 overflow-y-auto` sibling, so it simply reclaims less height and still scrolls every item into view rather than letting the last few hide behind the footer.
+- **Verification:** element-by-element hit testing of the live collapsed sidebar (`elementFromPoint` at each element's centre) reports **no occluded elements** — before the fix it reported the sign-out button and its icon both covered by the "AU" avatar; after, the avatar and button do not intersect, both are the topmost at their own centre, and both are inside the footer bounds. The expanded footer (avatar, name, email, sign-out in a row) is unchanged and its button still hit-tests to itself; the last nav item scrolls fully into view above the footer; web typecheck clean (0 errors).
+- **Rollback:** restore `justify-center` and the `absolute bottom-3` class on the collapsed sign-out button in `apps/web/src/components/Layout.tsx`.
 
 ## 2026.10.6.055 — Service Alerts stands out in the left nav
 - **[Update]** **Service Alerts now reads as an alert channel, not a page.** Its label and its warning-triangle icon carry the alert colour in the sidebar instead of the neutral nav grey, so the section is findable at a glance next to Tickets, Service Boards and Pipeline — which keep the grey. It stays red when the row is active or hovered (the red is the point), and the collapsed icon-only sidebar colours the icon too. The colour is the theme-aware `--alert-red` token the count badge already uses, so in the dark themes the label, the icon and the badge are the same red, and in the light themes it darkens to `#a30000` on its own.

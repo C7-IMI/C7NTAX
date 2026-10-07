@@ -637,7 +637,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
         {/* User footer */}
         <div className={`border-t border-surface-border ${collapsed ? "p-2" : "p-3"}`}>
-          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3 px-2 py-2"}`}>
+          <div className={`flex items-center ${collapsed ? "flex-col gap-1.5" : "gap-3 px-2 py-2"}`}>
             <div className="w-8 h-8 rounded-full bg-cyber-600/30 text-cyber-400 flex items-center justify-center text-sm font-bold shrink-0">
               {user?.firstName?.[0]}{user?.lastName?.[0]}
             </div>
@@ -653,7 +653,7 @@ export function Layout({ children }: { children: ReactNode }) {
               </>
             )}
             {collapsed && (
-              <button onClick={logout} className="text-gray-500 hover:text-red-400 transition-colors p-1 absolute bottom-3" title="Sign out">
+              <button onClick={logout} className="text-gray-500 hover:text-red-400 transition-colors p-1" title="Sign out">
                 <LogOut size={16} />
               </button>
             )}

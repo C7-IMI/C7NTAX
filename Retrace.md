@@ -3193,3 +3193,26 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Toggling a theme for a check is easiest by setting `document.documentElement.dataset.theme` directly, then putting it back.
 - A `pageError: Cannot destructure property 'user' of 'useAuth(...)'` appeared once right after editing the file and did **not** reproduce on a clean load or reload — it is a Vite HMR artifact of re-evaluating `App.tsx` mid-update, not a bug in the change. Always re-test a pageError on a fresh load before chasing it.
 - The sidebar collapse state persists in `localStorage`, so a later DOM query for the label can silently find nothing because the nav is in icon-only mode.
+
+---
+
+### Prompt 216 — Fix the overlapping icons when the nav pane is collapsed
+**Timestamp:** 2026-10-06 | **Status:** Done — fixed, hit-tested, typechecked | **Duration:** ~25 min
+**BuildNotes IDs:** 2026.10.6.056 - The collapsed sidebar's user footer no longer collides
+
+> Fix the overlap issue when the nav pane is collapsed
+
+**What I did**
+- Reproduced it properly before changing anything, by hit-testing the live collapsed sidebar (`document.elementFromPoint` at each element's centre) rather than eyeballing the screenshot. In the 64px rail the **Sign out** button and the **avatar** were drawn over each other: the button's rect `9,736 40x40` and the avatar's `16,756 32x32`, with the avatar as the topmost element at the sign-out button's centre and a `LogOut` icon line on top of the avatar's centre. Both were also unusable — the glyphs superimposed, and the sign-out target hanging across the avatar.
+- The cause was one class: the collapsed branch of the footer used `absolute bottom-3`, and the footer is the last block of a full-height sidebar, so 12px from the bottom is exactly where the footer's own centred avatar sits. The *expanded* footer keeps its button in the flex row and had no problem — which is why this only ever looked wrong in the rail.
+- Fixed by making the collapsed footer a centred column (avatar, then sign-out under it) and deleting the absolute positioning, so the two are laid out by flexbox and cannot collide by construction.
+- Re-ran the hit test after the fix, and separately checked that the extra 26px of footer does not push nav items out of reach: the nav is a `flex-1 overflow-y-auto` sibling, so it reclaims less height, and after scrolling, the last item ("Help") sits fully inside the nav viewport `665-705` with the footer starting at `717`.
+
+**Decisions worth remembering**
+- **Hit-test, don't measure.** My first attempt at an overlap detector compared bounding boxes and produced six false positives — scrolled-out nav items (Calendar, Time Off) whose centres happen to sit behind the footer even though `overflow-y-auto` clips them. `elementFromPoint` respects clipping and paint order, so it reports what a user can actually click. The first detector would have sent me chasing the wrong bug and then "fixing" the nav that was never broken.
+- **The screenshot was from collapsed mode, and my browser page was expanded** — the sidebar preference lives in `localStorage.c7_sidebar_collapsed`. Driving the state through that key (rather than clicking the toggle, which silently failed because the button is `hidden lg:flex`) made the repro deterministic, and I set it back to collapsed afterwards so the pane on screen is the one that was reported.
+- The bug was cosmetic *and* functional: because the button was the later sibling it painted above the avatar, so the avatar's centre resolved to the button's icon while the button was still clickable. A pure overlap measurement would have recorded "no problem" if it had only checked one of the two directions.
+
+**Notes for next time**
+- `aside > div.border-t` is the footer selector for a cropped screenshot, and the aside is `fixed` at the small breakpoint with `lg:relative` — so a "collapsed" width of 64px is only meaningful above `lg`, which is worth confirming before trusting any collapsed-mode measurement.
+- Collapsed-mode geometry worth keeping in the regression list: avatar `16,726 32x32`, sign-out `20,764 24x24`, 6px gap, footer `717` + `79px` tall, each element the topmost at its own centre, and the last nav item scrollable to `665-705`.

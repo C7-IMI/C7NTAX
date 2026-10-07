@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.6.056",
+    "date": "2026-10-06",
+    "title": "The collapsed sidebar's user footer no longer collides",
+    "changes": [
+      {
+        "text": "**The sign-out button and your initials were drawn on top of each other in the collapsed sidebar.** The button was positioned absolutely `bottom-3` inside the footer, which is the last block of a full-height sidebar — so its 12px offset landed in exactly the same place as the centred avatar the footer already draws there, leaving the icons superimposed and the sign-out target hanging over the avatar. The collapsed footer is now a centred column — avatar, then sign-out beneath it — and the absolute positioning is gone.",
+        "type": "Fix"
+      },
+      {
+        "text": "**It was also a hit-target problem, not just a cosmetic one**: the button was the later sibling, so it painted over the avatar, while the avatar's own centre resolved to the button's icon. Both elements now sit fully inside the footer with a 6px gap, each is the topmost element at its own centre, and the footer grew from 53px to 79px — the nav is a `flex-1 overflow-y-auto` sibling, so it simply reclaims less height and still scrolls every item into view rather than letting the last few hide behind the footer.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.055",
     "date": "2026-10-06",
     "title": "Service Alerts stands out in the left nav",
