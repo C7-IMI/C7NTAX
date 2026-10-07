@@ -812,6 +812,20 @@
     "updatedAt": "2026-10-07T08:10:36.285Z"
   },
   {
+    "id": "e12f3273-bbf2-454e-8a30-11cee5df160b",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "Dot in Codex may fail to create new threads",
+    "description": "Status: Investigating We are investigating the issue for the listed services. Affected components dots (Degraded performance)",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.openai.com//incidents/01M4BK9J2M83R4SSC71D9FXW45",
+    "detectedAt": "2026-10-07T16:33:55.625Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-07T16:33:55.627Z",
+    "updatedAt": "2026-10-07T16:36:03.964Z"
+  },
+  {
     "id": "cdb66145-0f0e-4eab-bfd6-8398f4c0d5ba",
     "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
     "title": "Social reports about Claude on X",

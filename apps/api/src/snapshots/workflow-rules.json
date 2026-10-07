@@ -1,5 +1,53 @@
 [
   {
+    "id": "7d7c4609-122e-41c3-8bd7-38e002f7b569",
+    "name": "Persona probe rule 1791390968969",
+    "description": null,
+    "entity": "ticket",
+    "trigger": "ticket.created",
+    "conditions": [],
+    "isActive": true,
+    "priority": 0,
+    "createdAt": "2026-10-07T16:36:08.973Z",
+    "updatedAt": "2026-10-07T16:36:08.973Z"
+  },
+  {
+    "id": "2d650f4b-5143-49ef-932c-e6437a666f55",
+    "name": "Persona probe rule 1791390968974",
+    "description": null,
+    "entity": "ticket",
+    "trigger": "ticket.created",
+    "conditions": [],
+    "isActive": true,
+    "priority": 0,
+    "createdAt": "2026-10-07T16:36:08.978Z",
+    "updatedAt": "2026-10-07T16:36:08.978Z"
+  },
+  {
+    "id": "baa609b5-f487-4ecd-873f-172cae872972",
+    "name": "Persona probe rule 1791390975626",
+    "description": null,
+    "entity": "ticket",
+    "trigger": "ticket.created",
+    "conditions": [],
+    "isActive": true,
+    "priority": 0,
+    "createdAt": "2026-10-07T16:36:15.629Z",
+    "updatedAt": "2026-10-07T16:36:15.629Z"
+  },
+  {
+    "id": "d3e39556-768e-40e6-bb2b-b96242059ecf",
+    "name": "Persona probe rule 1791390975632",
+    "description": null,
+    "entity": "ticket",
+    "trigger": "ticket.created",
+    "conditions": [],
+    "isActive": true,
+    "priority": 0,
+    "createdAt": "2026-10-07T16:36:15.636Z",
+    "updatedAt": "2026-10-07T16:36:15.636Z"
+  },
+  {
     "id": "2471da05-83dc-497f-ae38-6a61bfd17c74",
     "name": "Escalate high-priority tickets",
     "description": null,

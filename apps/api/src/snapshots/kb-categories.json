@@ -1,5 +1,45 @@
 [
   {
+    "id": "22893ab4-e403-42d9-8bc8-cce6a6a4f2f1",
+    "name": "Persona probe category 1791390968946",
+    "slug": "persona-probe-category-1791390968946",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T16:36:08.949Z",
+    "updatedAt": "2026-10-07T16:36:08.949Z"
+  },
+  {
+    "id": "8e105453-12b2-4460-a5f0-8d09ffb353c9",
+    "name": "Persona probe category 1791390968951",
+    "slug": "persona-probe-category-1791390968951",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T16:36:08.955Z",
+    "updatedAt": "2026-10-07T16:36:08.955Z"
+  },
+  {
+    "id": "6ca7f7ab-60b0-4ea4-b05e-f0c5ad4c7a55",
+    "name": "Persona probe category 1791390975605",
+    "slug": "persona-probe-category-1791390975605",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T16:36:15.608Z",
+    "updatedAt": "2026-10-07T16:36:15.608Z"
+  },
+  {
+    "id": "2b92f498-5ed7-4806-8f30-d706f6d8bbd2",
+    "name": "Persona probe category 1791390975610",
+    "slug": "persona-probe-category-1791390975610",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T16:36:15.614Z",
+    "updatedAt": "2026-10-07T16:36:15.614Z"
+  },
+  {
     "id": "3eda292d-9004-4f65-abb8-b6c4f9afbbab",
     "name": "How-To",
     "slug": "how-to",
