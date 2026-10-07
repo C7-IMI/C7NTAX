@@ -5,6 +5,7 @@ import { Permission } from "@C7NTAX/shared";
 import { IntegrationHub } from "@C7NTAX/integrations";
 import type { IntegrationConfig } from "@C7NTAX/integrations";
 import { AppError } from "../middleware/errorHandler";
+import { liveStatusEnabled, noteManualVerification, verifyDueIntegrations } from "../services/integrationHealth";
 
 export const cloudConnectRouter = Router();
 cloudConnectRouter.use(authenticate);
@@ -227,6 +228,42 @@ cloudConnectRouter.patch("/:id", requirePermission(Permission.IntegrationManage)
   } catch (e) { next(e); }
 });
 
+// ── Live status ───────────────────────────────────────────────────────────
+/**
+ * What each connection's health actually is, verified on a throttle (PLAN-015 Phase B #9). The
+ * verification happens server-side so ten open tabs still produce one call per integration, and an
+ * integration with credentials missing is never called at all.
+ */
+cloudConnectRouter.get("/status", requirePermission(Permission.IntegrationView), async (_req: AuthRequest, res, next) => {
+  try {
+    if (!liveStatusEnabled()) {
+      const rows = await prisma.integration.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, status: true, enabled: true } });
+      res.json({ enabled: false, data: rows.map(r => ({ id: r.id, status: r.status, enabled: r.enabled, health: null })) });
+      return;
+    }
+    const rows = await verifyDueIntegrations(
+      async config => {
+        const adapter = hub.getAdapter(config.kind);
+        if (!adapter) return false;
+        hub.register(config);
+        return adapter.testConnection(config);
+      },
+      row => ({
+        id: row.id,
+        kind: row.kind as IntegrationConfig["kind"],
+        name: row.name,
+        enabled: row.enabled,
+        credentials: row.credentials as Record<string, string>,
+        settings: row.settings as Record<string, unknown>,
+        status: row.status as IntegrationConfig["status"],
+        errorMessage: row.errorMessage ?? undefined,
+        lastSyncAt: row.lastSyncAt ?? undefined,
+      }),
+    );
+    res.json({ enabled: true, data: rows.map(r => ({ id: r.id, status: r.status, enabled: r.enabled, health: r.health })) });
+  } catch (e) { next(e); }
+});
+
 // ── Test connection ───────────────────────────────────────────────────────
 cloudConnectRouter.post("/:id/test", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
@@ -235,6 +272,7 @@ cloudConnectRouter.post("/:id/test", requirePermission(Permission.IntegrationVie
     if (!adapter) throw new AppError(`Unknown integration kind: ${config.kind}`, 400);
     const ok = await adapter.testConnection(config);
     await persistCredentials(req.params.id!, config.credentials as Record<string, string>);
+    noteManualVerification(req.params.id!, ok, ok ? "Verified from the connection test — the connection answered." : "The connection test failed.");
 
     if (ok) {
       await prisma.integration.update({
