@@ -3671,3 +3671,23 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The health memory is in-process: a restart reports "not verified since this process started" until the first check, and multiple replicas keep separate memories. Same shape as the passkey challenge store — a table is the follow-up.
 - Two small discoveries worth keeping: new integrations default to `enabled: false`, so a probe (or a person) must enable one after creating it; and the permission sweep's write probes leave a client per persona per run, which `clean-probe-residue.ts` clears — run it after a sweep, not before.
+
+**Prompt 220 — continued: W2-10 (AI KB auto-generation, PLAN-015 Phase B #11)**
+
+**What I did**
+- Schema: `KnowledgeBaseArticle.aiGenerated`, `sourceTicketId`, `reviewNote` (+ index) — migration `kb_autogen`.
+- `services/kbAutogen.ts`: prompt built from the ticket's description, customer-visible notes, internal notes and logged work, capped at 6,000 characters **on a word boundary**; drafts are filed as `draft` with the ticket attached and a review note.
+- `llmJsonCompletion()` in `LlmProvider.ts` — a plain JSON completion sharing the existing provider resolution and egress policy, returning `null` rather than throwing so "the model said nothing usable" is an outcome a caller can handle.
+- Resolution (and close) triggers a background draft, and **never** blocks the status change; a refusal is logged.
+- Routes: `POST /kb/autogen/:ticketId`, `GET /kb/drafts`, and `DELETE /kb/:id` for drafts only (a published article is something somebody relies on; it says to archive it instead).
+- UI: a **Drafts awaiting review** queue on the Knowledge Base page, an AI banner with **Publish** / **Discard** / **Source ticket** in the article view.
+
+**Decisions worth remembering**
+- **A machine may draft; a person publishes.** The flag, the review note, the source ticket and the draft status are all there so the reader can check the claim rather than trust the summary.
+- **Refuse rather than embellish.** A ticket with too little recorded on it gets "too little recorded on it to learn from", and a model that answers with prose gets the same treatment. Both are the difference between an empty knowledge base and a confidently wrong one.
+- **A background draft must not be able to break a status change.** The resolution path fires and forgets; the probe asserts both that the draft appears *and* that resolution still returns 200 with the model unreachable.
+- **Two real bugs found while verifying**: several providers can hold the default flag and `findFirst` picked arbitrarily (the most recently updated now wins), and the KB list never selected `content`, so opening an article showed the excerpt as the body — which also meant an AI draft could not have been reviewed.
+
+**Notes for next time**
+- The draft does not check the existing knowledge base for duplicates; that needs a similarity pass over titles and is recorded as the follow-up.
+- The probe needs a loopback model stub plus `EGRESS_ALLOW_PRIVATE=true`; the provider row it creates must be the most recently updated default, which is now a rule the code states rather than an accident.

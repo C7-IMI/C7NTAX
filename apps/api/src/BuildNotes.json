@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.7.012",
+    "date": "2026-10-07",
+    "title": "Solved tickets write their own first draft of the knowledge base article",
+    "changes": [
+      {
+        "text": "**A resolved ticket drafts an article, and the draft stays a draft.** The knowledge that leaves with whoever solved the ticket is the expensive kind, and the tickets carry it already. Resolving (or closing) a ticket now drafts a knowledge base article from it — title, cause, symptoms, resolution steps, tags — filed as a **draft** with the **ticket it came from attached** and a review note saying what to check. Nothing is ever published by a machine: a person publishes it or discards it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A review queue instead of a hidden pile.** The Knowledge Base page shows the drafts awaiting review, marked **AI** where they were drafted, with **Review** on each; the article view says plainly that AI wrote it, links the source ticket, and offers **Publish** and **Discard**. Discard deletes a draft; a *published* article cannot be deleted from that button — it says to archive it instead, because a published article is something somebody may already be relying on.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`POST /kb/autogen/:ticketId`** drafts on demand and **`GET /kb/drafts`** lists what is waiting, both behind `KB_AUTOGEN_ENABLED` (default on; `KB_AUTOGEN_MODEL` can point drafting at a cheaper deployment than the interactive model).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The prompt is built from resolved material and capped on a word boundary**, with a 6,000-character ceiling — the description, the customer-visible notes, the internal notes and the logged work. A prompt that stops mid-sentence is an invitation to invent the rest of it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A ticket with nothing recorded on it is refused rather than embellished**: \"too little recorded on it to learn from\", and nothing is written. A model that answers with prose instead of JSON is refused the same way — an unusable answer must not become an article.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One draft per ticket.** Asking twice is refused with the reason, without calling the model again.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Several providers can carry the default flag, and the winner was arbitrary.** `findFirst` over `isDefault: true` picked whichever row the database happened to return first, so a freshly configured model could be ignored in favour of an older one. The most recently updated default now wins.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The article view never showed the article.** The knowledge base list did not select `content`, so opening an article showed its excerpt as if it were the body. The list now carries the content (and the provenance fields) and the modal renders it — which is also what makes reviewing an AI draft possible at all.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.011",
     "date": "2026-10-07",
     "title": "CloudConnect says what it verified, and stops asking the vendor",
