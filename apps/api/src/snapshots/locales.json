@@ -1,23 +1,5 @@
 [
   {
-    "id": "07b2b687-36f2-4ba7-af5b-492122bf3ac5",
-    "code": "zz890294",
-    "name": "Persona Probe",
-    "isActive": true,
-    "isDefault": false,
-    "direction": "ltr",
-    "createdAt": "2026-10-07T05:44:50.297Z"
-  },
-  {
-    "id": "b3631640-ed2e-49ca-a60d-086acdb98ffb",
-    "code": "zz890298",
-    "name": "Persona Probe",
-    "isActive": true,
-    "isDefault": false,
-    "direction": "ltr",
-    "createdAt": "2026-10-07T05:44:50.301Z"
-  },
-  {
     "id": "fafdc678-d104-44e2-9724-0380d2c0c86a",
     "code": "en-US",
     "name": "English (US)",

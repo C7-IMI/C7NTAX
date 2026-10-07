@@ -1,27 +1,5 @@
 [
   {
-    "id": "280c3a2c-4346-4919-a350-4b13b49359c3",
-    "name": "Persona probe report 1791351890258",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T05:44:50.261Z",
-    "updatedAt": "2026-10-07T05:44:50.261Z"
-  },
-  {
-    "id": "26096ad5-5883-4b1a-bf66-5d050923e47f",
-    "name": "Persona probe report 1791351890262",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T05:44:50.265Z",
-    "updatedAt": "2026-10-07T05:44:50.265Z"
-  },
-  {
     "id": "a78d1e07-5ec7-45ae-9768-be02f6387c76",
     "name": "Monthly Ticket Volume",
     "description": "Standard ticket volume report",

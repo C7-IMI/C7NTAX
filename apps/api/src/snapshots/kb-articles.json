@@ -165,39 +165,5 @@
     ],
     "createdAt": "2026-10-06T20:16:16.862Z",
     "updatedAt": "2026-10-06T20:16:16.862Z"
-  },
-  {
-    "id": "aa25b14d-6218-4b8b-a031-b0a57484e03a",
-    "title": "Persona probe article 1791351890151",
-    "slug": "persona-probe-article-1791351890151",
-    "content": "probe",
-    "excerpt": null,
-    "status": "draft",
-    "visibility": "internal",
-    "categoryId": null,
-    "authorId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "viewCount": 0,
-    "helpfulCount": 0,
-    "notHelpfulCount": 0,
-    "tags": [],
-    "createdAt": "2026-10-07T05:44:50.155Z",
-    "updatedAt": "2026-10-07T05:44:50.155Z"
-  },
-  {
-    "id": "c7bca681-9fba-4f3c-9d8d-62378765865c",
-    "title": "Persona probe article 1791351890158",
-    "slug": "persona-probe-article-1791351890158",
-    "content": "probe",
-    "excerpt": null,
-    "status": "draft",
-    "visibility": "internal",
-    "categoryId": null,
-    "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "viewCount": 0,
-    "helpfulCount": 0,
-    "notHelpfulCount": 0,
-    "tags": [],
-    "createdAt": "2026-10-07T05:44:50.161Z",
-    "updatedAt": "2026-10-07T05:44:50.161Z"
   }
 ]

@@ -9,27 +9,5 @@
     "sendDelayHours": 1,
     "createdAt": "2026-08-19T16:15:29.026Z",
     "updatedAt": "2026-08-19T16:15:29.026Z"
-  },
-  {
-    "id": "7a2a2851-3a42-4e32-9947-02ea473d053e",
-    "name": "Persona probe survey 1791351890218",
-    "description": null,
-    "type": "csat",
-    "isActive": true,
-    "sendOnResolve": false,
-    "sendDelayHours": 1,
-    "createdAt": "2026-10-07T05:44:50.221Z",
-    "updatedAt": "2026-10-07T05:44:50.221Z"
-  },
-  {
-    "id": "3664a414-b0d8-42c6-9e8f-6246a7ed08e0",
-    "name": "Persona probe survey 1791351890222",
-    "description": null,
-    "type": "csat",
-    "isActive": true,
-    "sendOnResolve": false,
-    "sendDelayHours": 1,
-    "createdAt": "2026-10-07T05:44:50.225Z",
-    "updatedAt": "2026-10-07T05:44:50.225Z"
   }
 ]
