@@ -347,8 +347,11 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.UserManage,
   ],
   [SystemRole.Technician]: [
+    // Deliberately no TicketViewAll: internal technicians already see every ticket
+    // because they carry no companyId, while a technician scoped to one client must
+    // not see the rest. Granting it here would silently widen that case.
     Permission.TicketView, Permission.TicketCreate, Permission.TicketEdit,
-    Permission.TicketViewAll, Permission.TicketClose,
+    Permission.TicketClose,
     Permission.BoardView,
     Permission.ServiceAlertView,
     Permission.ClientView, Permission.ContactView,
@@ -384,6 +387,8 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.ProcurementView,
   ],
   [SystemRole.ClientAdmin]: [
+    // A client-facing role: no internal chat and no internal HR surfaces. Everything
+    // else it holds is data about its own company (scoping is enforced server-side).
     Permission.TicketView, Permission.TicketCreate, Permission.TicketEdit, Permission.TicketClose,
     Permission.BoardView,
     Permission.ServiceAlertView,
@@ -393,17 +398,15 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.AssetView,
     Permission.KBView,
     Permission.ScheduleView,
-    Permission.ChatView,
     Permission.ReportView,
-    Permission.PTOView, Permission.PTORequest,
   ],
   [SystemRole.ClientUser]: [
+    // Client-facing, like ClientAdmin: no internal chat.
     Permission.TicketView, Permission.TicketCreate,
     Permission.BoardView,
     Permission.ServiceAlertView,
     Permission.ClientView,
     Permission.KBView,
-    Permission.ChatView,
     Permission.BillingView,
   ],
   [SystemRole.ReadOnly]: [

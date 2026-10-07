@@ -84,11 +84,33 @@
       "security:manage",
       "mfa:enforce",
       "servicealert:view",
-      "servicealert:manage"
+      "servicealert:manage",
+      "contact:view",
+      "contact:create",
+      "contact:edit",
+      "contact:delete",
+      "payment:view",
+      "payment:process",
+      "agreement:view",
+      "agreement:manage",
+      "contract:view",
+      "contract:create",
+      "contract:edit",
+      "contract:delete",
+      "survey:view",
+      "survey:create",
+      "survey:manage",
+      "chat:view",
+      "chat:manage",
+      "workflow:view",
+      "workflow:create",
+      "workflow:edit",
+      "workflow:delete",
+      "workflow:manage"
     ],
     "isDefault": true,
     "createdAt": "2026-08-12T06:04:14.720Z",
-    "updatedAt": "2026-08-14T06:46:29.384Z"
+    "updatedAt": "2026-10-07T02:18:01.378Z"
   },
   {
     "id": "f032badc-4d32-463c-973d-5cf0559f273a",
@@ -104,11 +126,18 @@
       "client:view",
       "integration:view",
       "report:view",
-      "servicealert:view"
+      "servicealert:view",
+      "contact:view",
+      "project:view",
+      "asset:view",
+      "kb:view",
+      "schedule:view",
+      "chat:view",
+      "inference:view"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.721Z",
-    "updatedAt": "2026-08-14T06:46:29.388Z"
+    "updatedAt": "2026-10-07T02:18:01.382Z"
   },
   {
     "id": "d077b89f-73e4-4f50-ab39-20c9f1f7964a",
@@ -121,11 +150,18 @@
       "board:view",
       "client:view",
       "billing:view",
-      "servicealert:view"
+      "servicealert:view",
+      "ticket:close",
+      "contact:view",
+      "project:view",
+      "asset:view",
+      "kb:view",
+      "schedule:view",
+      "report:view"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.721Z",
-    "updatedAt": "2026-08-14T06:46:29.390Z"
+    "updatedAt": "2026-10-07T02:18:01.383Z"
   },
   {
     "id": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
@@ -136,11 +172,18 @@
       "board:view",
       "client:view",
       "report:view",
-      "servicealert:view"
+      "servicealert:view",
+      "contact:view",
+      "billing:view",
+      "project:view",
+      "asset:view",
+      "kb:view",
+      "schedule:view",
+      "chat:view"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.722Z",
-    "updatedAt": "2026-08-14T06:46:29.391Z"
+    "updatedAt": "2026-10-07T02:18:01.383Z"
   },
   {
     "id": "ead437af-8f98-4b1c-8716-9435830d4877",
@@ -247,10 +290,12 @@
       "kumo:doc:delete",
       "kumo:doc:publish",
       "kumo:link:view",
-      "kumo:link:manage"
+      "kumo:link:manage",
+      "servicealert:view",
+      "servicealert:manage"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.718Z",
-    "updatedAt": "2026-09-11T06:02:58.298Z"
+    "updatedAt": "2026-10-07T02:18:01.384Z"
   }
 ]

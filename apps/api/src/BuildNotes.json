@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.6.058",
+    "date": "2026-10-06",
+    "title": "Roles now hold the permissions they were always meant to have",
+    "changes": [
+      {
+        "text": "**Every built-in role had drifted from its declared permission set, so the app disagreed with itself about who may do what.** `ROLE_PERMISSIONS` in `@C7NTAX/shared` is the source of truth, but the seeded role rows were written out by hand in `seed-full.ts` and had fallen behind: **Admin was missing 22 permissions** (all of contacts, contracts, agreements, surveys, chat, workflows and payment processing), **Technician was missing seven** it needs daily — knowledge base, contacts, projects, assets, schedule, chat and AI inference suggestions — **Client Admin** was missing ticket close, contacts, projects, assets, KB, schedule and reports, and **Read Only** was missing contacts, billing, projects, assets, KB and schedule. Nothing surfacing this drift was visible until now, because most of those routes were never gated; any permission gate built on top of the drifted rows would have locked the wrong people out.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Super Admin could not see Service Alerts** while Admin could — the role was missing `servicealert:view` and `servicealert:manage`, the only two permissions it lacked. Confirmed from the live API before the change (403 for Super Admin, 200 for Admin on the same endpoint) and 200 for both after.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A repeatable reconciliation instead of a one-off hand edit.** `seed-role-permissions.ts` merges `ROLE_PERMISSIONS` into every stored role **additively** — nothing is ever removed, so the worst case of a mistake is a role that can do slightly more than intended rather than one that silently cannot work — with a `--dry-run` that reports the diff before it is applied. `seed-full.ts` now reads the same table instead of duplicating 80-element arrays, so a freshly seeded database cannot drift again.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Three deliberate narrowings, recorded in the intent table itself** rather than applied silently by the sync: `TicketViewAll` was removed from the Technician default, because internal technicians already see every ticket by carrying no company (the convention in `tickets/index.ts`) while a technician scoped to one client must not see the rest; and `ChatView` and the PTO permissions were removed from the two client-facing roles, since both are internal surfaces a client contact has no business in.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.057",
     "date": "2026-10-06",
     "title": "One account can be exempted from the login interruptions, for testing only",

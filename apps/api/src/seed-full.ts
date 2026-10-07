@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { Permission } from "@C7NTAX/shared";
+import { Permission, ROLE_PERMISSIONS, SystemRole } from "@C7NTAX/shared";
 import { encrypt } from "./services/kumoCrypto";
 const prisma = new PrismaClient();
 
@@ -58,11 +58,15 @@ async function main() {
   const hash = (pw: string) => bcrypt.hashSync(pw, 10);
 
   // ── Roles ──
-  const superAdminRole = await prisma.role.create({ data: { name: "Super Admin", systemRole: "super_admin", isDefault: false, permissions: Object.values(Permission) } });
-  const adminRole = await prisma.role.create({ data: { name: "Admin", systemRole: "admin", isDefault: true, permissions: ["ticket:view","ticket:create","ticket:edit","ticket:delete","ticket:assign","ticket:close","ticket:view_all","board:view","board:manage","client:view","client:create","client:edit","client:delete","billing:view","billing:manage","invoice:create","invoice:send","user:manage","role:manage","system:config","integration:view","integration:manage","report:view","report:export","report:create","kumo:view","kumo:manage","kumo:view_all","kumo:asset:view","kumo:asset:create","kumo:asset:edit","kumo:asset:delete","kumo:asset:template:manage","kumo:passwords:view","kumo:passwords:create","kumo:passwords:edit","kumo:passwords:delete","kumo:passwords:reveal","kumo:config:view","kumo:config:create","kumo:config:edit","kumo:config:delete","kumo:doc:view","kumo:doc:create","kumo:doc:edit","kumo:doc:delete","kumo:doc:publish","kumo:link:view","kumo:link:manage","asset:view","asset:create","asset:edit","asset:delete","project:view","project:create","project:edit","project:delete","project:manage","kb:view","kb:create","kb:edit","kb:delete","kb:manage","opportunity:view","opportunity:create","opportunity:edit","opportunity:delete","procurement:view","procurement:create","procurement:approve","schedule:view","schedule:manage","pto:view","pto:request","pto:approve","inference:view","inference:manage","security:manage","mfa:enforce","servicealert:view","servicealert:manage"] } });
-  const techRole = await prisma.role.create({ data: { name: "Technician", systemRole: "technician", permissions: ["ticket:view","ticket:create","ticket:edit","ticket:assign","ticket:close","board:view","client:view","integration:view","report:view","servicealert:view"] } });
-  const clientRole = await prisma.role.create({ data: { name: "Client Admin", systemRole: "client_admin", permissions: ["ticket:view","ticket:create","ticket:edit","board:view","client:view","billing:view","servicealert:view"] } });
-  const readOnlyRole = await prisma.role.create({ data: { name: "Read Only", systemRole: "read_only", permissions: ["ticket:view","board:view","client:view","report:view","servicealert:view"] } });
+  // Permissions come from ROLE_PERMISSIONS (the declared intent) rather than being
+  // written out here, so a role can never be seeded with a different set from the one
+  // the rest of the app reasons about.
+  const rolePerms = (role: SystemRole) => ROLE_PERMISSIONS[role] as string[];
+  const superAdminRole = await prisma.role.create({ data: { name: "Super Admin", systemRole: "super_admin", isDefault: false, permissions: rolePerms(SystemRole.SuperAdmin) } });
+  const adminRole = await prisma.role.create({ data: { name: "Admin", systemRole: "admin", isDefault: true, permissions: rolePerms(SystemRole.Admin) } });
+  const techRole = await prisma.role.create({ data: { name: "Technician", systemRole: "technician", permissions: rolePerms(SystemRole.Technician) } });
+  const clientRole = await prisma.role.create({ data: { name: "Client Admin", systemRole: "client_admin", permissions: rolePerms(SystemRole.ClientAdmin) } });
+  const readOnlyRole = await prisma.role.create({ data: { name: "Read Only", systemRole: "read_only", permissions: rolePerms(SystemRole.ReadOnly) } });
   console.log("  ✓ Created 5 roles");
 
   // ── Users ──

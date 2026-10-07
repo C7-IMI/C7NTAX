@@ -3266,3 +3266,39 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Two API instances against one database is fine, but they each start the snapshot poller — re-capture and diff the fixtures before committing, which is now habit anyway.
 - The second instance is torn down by looking up its listener on port 4100 and terminating that specific PID; its log files were deleted with it.
 - The remaining W0 items and their lockout risk, for the answer: the permission matrix (P0-2) is the one that can lock anyone out if applied wrongly, which is why it needs the intended matrix rather than a guess; the `/api/system` gate on `GET /configs` already shipped with the four documented read carve-outs untouched.
+
+---
+
+### Prompt 219 — W0 implementation begins: personas, baseline sweep, and the W1/W2 direction
+**Timestamp:** 2026-10-06 | **Status:** In progress — W0 step A complete (role reconciliation); steps B–F open | **Duration:** ongoing
+**BuildNotes IDs:** 2026.10.6.058 - Roles now hold the permissions they were always meant to have
+
+> Ok. So I want to start implementing the remaining items. Start with W0. Verify the application functions fully before moving to the next item. Take snapshots at each step.
+>
+> Create test users with the various different roles and use them for logging in and testing at each phase.
+>
+> If W0 completes without issue, then move on to W1, then W2, etc. Make sure every change can be easily reverted if the application breaks or won't load. If it does break, revert the change that broke it, then stop the implementation, triage, and suggest what to do next. Do not continue until I give the go ahead after reviewing the triage.
+>
+> The ultimate goal is to implement everything except multi tenant
+
+**Plus a new instruction received mid-step:** package the result to move to Azure, with an implementation script/plan (that is PLAN-016 territory and becomes the final deliverable of this run, after the code waves).
+
+**What I did**
+- **Reconciled W0's scope against the code before writing anything.** The plan's own `Status` line still claimed "Planning — no code changed", which has been false since 2026.10.6.054; corrected it, and defined "W0 complete" as *the eight acceptance criteria in §6*, not every item of Phase 2 — because PLAN-018 itself says the structural items (H1–H6) are scheduled with PLAN-001/PLAN-016. H1 (the egress helper) comes along only because P0-5 depends on it.
+- **Built the test personas the request asks for**: `persona.superadmin`, `persona.admin`, `persona.tech`, `persona.readonly` (all internal, `companyId` null per the `tickets/index.ts` convention), plus `persona.clientadmin` scoped to a client and `persona.tech.scoped` — a technician carrying a company, which is the case that proves company scoping without needing `TicketViewAll`. All share one dev-only password and are marked for cleanup.
+- **Wrote a reusable sweep harness** (`probe-permissions.mjs`): signs in as every persona and calls 40 representative endpoints across every module plus nine write probes, printing a status matrix. Ran it as a **baseline before touching anything** and kept the output, so every later change is diffable rather than judged by eye.
+- **The baseline exposed the real shape of the problem**: every non-admin role could already read knowledge base articles, chat sessions, surveys, workflow rules, alerts, AI actions, inference providers, **revenue and SLA reports**, **SSO configuration** and the **audit log**; a client-scoped role could list every client. Meanwhile `/users`, `/roles`, `/alert-webhooks`, `/kumo/assets`, `/billing`, `/contracts` and `/quotes` were already gated and behaved correctly.
+- **Found and fixed the prerequisite first (step A)**: the stored role rows had drifted from `ROLE_PERMISSIONS`, so Admin lacked 22 permissions (contacts, contracts, workflows, chat, surveys, payments) and — visibly — **Super Admin alone could not see Service Alerts**. Applied an additive, dry-runnable reconciliation script, pointed `seed-full.ts` at the shared table so it cannot drift again, and removed `TicketViewAll` from the Technician default plus the internal-only chat/PTO permissions from the client-facing roles, in the intent table where the decision belongs.
+- **Verified step A by diff, not by assertion**: the six-persona matrix is identical before and after except four intended lines — Super Admin gains Service Alerts, Read Only gains the read-only billing/contract/quote views its declared role includes. No 5xx, nothing else moved.
+
+**Decisions worth remembering**
+- **The permission set is the load-bearing artefact for every gate.** Choosing gates against the drifted rows would have 403'd the admin out of Contacts (no `contact:view`), the technician out of the KB, projects, chat and the AI suggestion panel, and locked Super Admin out of Service Alerts. Fix the data before wiring the guards.
+- **Additive-only reconciliation.** Nothing is ever removed, so a mistake over-grants rather than breaking a workflow — and the "who can see what" question stays reversible.
+- **`TicketViewAll` on a scoped technician is a widening, not a convenience.** Internal staff see everything by carrying no company; granting the permission to the role would silently defeat scoping for client-scoped technicians, so the intent table now says no.
+- **Test personas must mirror the real convention** (`companyId: null` = internal, unrestricted) or the scoping tests would prove nothing. My first attempt gave every persona a company, which would have made the scoping assertions meaningless.
+- Several seed/`env` findings worth keeping: `.env` reaches the API as a side effect of importing Prisma (not by `tsx`), `seed-service-alerts.ts` established the "merge the intent into stored roles" pattern, and seed scripts that import `./index` start a second HTTP server and die with `EADDRINUSE` — the new script creates its own Prisma client instead.
+
+**Notes for next time**
+- **Step order for the rest of W0:** B) gate the nine ungated routers (reads by module view permission, writes by the matching create/edit/delete/manage) plus company scoping, and make the SPA nav permission-aware so a hidden page cannot look broken; C) the route-guard test that walks the Express stack and fails on any authenticated route without a guard or an explicit exemption; D) P0-5 with H1's egress helper; E) P0-12 (`?token=` removal); F) Phase 1 majors + `security/audit-baseline.json` + the CI gate.
+- Re-run `probe-permissions.mjs` after every step and diff against the stored matrix; keep `baseline-permissions-reads.txt` as the reference.
+- The sweep is status-only — it does not yet assert *scoping* (that a scoped persona sees only its own company's rows). Extend it before step B's scoping work.
