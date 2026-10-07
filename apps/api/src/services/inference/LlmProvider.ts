@@ -147,3 +147,54 @@ function estimateTokens(_provider: string, json: Record<string, unknown>): numbe
   const text = ((json as { choices?: Array<{ message: { content: string } }> }).choices?.[0]?.message?.content) || "";
   return Math.ceil(text.split(/\s+/).length / 0.75);
 }
+
+/**
+ * A plain JSON completion against the configured provider, for callers that need their own prompt
+ * rather than a solution suggestion (PLAN-015 Phase B #11 drafts KB articles this way).
+ *
+ * It returns `null` instead of throwing when there is no provider, the endpoint is blocked, or the
+ * model answers with something that is not JSON: a caller that wants a draft must be able to tell
+ * "the model said nothing usable" from "the model said something wrong", and neither is a crash.
+ */
+export async function llmJsonCompletion<T = Record<string, unknown>>(
+  prompt: string,
+  options: { model?: string; maxTokens?: number; temperature?: number } = {},
+): Promise<{ data: T; tokensUsed: number } | null> {
+  // Several providers can carry the default flag, so the most recently updated one wins: whoever
+  // just configured a model expects it to be the one that answers.
+  const provider = await prisma.aiProviderConfig.findFirst({ where: { isActive: true, isDefault: true }, orderBy: { updatedAt: "desc" } });
+  if (!provider || provider.provider === "local") return null;
+
+  const endpoint = provider.apiEndpoint || getDefaultEndpoint(provider.provider);
+  if (!endpoint) return null;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (provider.provider === "openai" || provider.provider === "custom") headers["Authorization"] = `Bearer ${provider.apiKey}`;
+  else if (provider.provider === "anthropic") { headers["x-api-key"] = provider.apiKey!; headers["anthropic-version"] = "2023-06-01"; }
+  else if (provider.provider === "azure_openai") headers["api-key"] = provider.apiKey!;
+
+  const model = options.model || process.env.KB_AUTOGEN_MODEL || process.env.INFERENCE_MODEL || provider.model;
+  const body = buildRequestBody(
+    { provider: provider.provider, model, maxTokens: options.maxTokens ?? provider.maxTokens, temperature: options.temperature ?? provider.temperature, topP: provider.topP },
+    prompt,
+  );
+
+  try {
+    const res = await safeFetch(endpoint, { purpose: "inference", method: "POST", headers, body: JSON.stringify(body) });
+    const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (!res.ok) {
+      console.error(`[LLM] JSON completion HTTP ${res.status}: ${JSON.stringify(json).slice(0, 200)}`);
+      return null;
+    }
+    let content = provider.provider === "anthropic"
+      ? ((json as { content?: Array<{ text: string }> }).content?.[0]?.text) || ""
+      : ((json as { choices?: Array<{ message: { content: string } }> }).choices?.[0]?.message?.content) || "";
+    content = content.replace(/```json\n?|```/g, "").trim();
+    if (!content) return null;
+    const data = JSON.parse(content) as T;
+    return { data, tokensUsed: estimateTokens(provider.provider, json) };
+  } catch (e) {
+    const detail = e instanceof EgressError ? e.message : (e as Error).message;
+    console.error(`[LLM] JSON completion failed: ${detail}`);
+    return null;
+  }
+}

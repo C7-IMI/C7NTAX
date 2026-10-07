@@ -3,7 +3,37 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { draftArticleFromTicket, autogenEnabled } from "../services/kbAutogen";
 export const kbRouter = Router(); kbRouter.use(authenticate);
+
+// ── AI-drafted articles (PLAN-015 Phase B #11) ────────────────────────
+/**
+ * Drafts an article from a ticket. It always lands as a draft attributed to the caller with the
+ * ticket attached; nothing here publishes.
+ */
+kbRouter.post("/autogen/:ticketId", requirePermission(Permission.KBCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const result = await draftArticleFromTicket(String(req.params.ticketId), req.user!.userId);
+    if (!result.ok) throw new AppError(result.reason || "Could not draft an article", 409);
+    res.status(201).json({ article: result.article, tokensUsed: result.tokensUsed, enabled: autogenEnabled() });
+  } catch (e) { next(e); }
+});
+
+/** The drafts waiting for a human, newest first. */
+kbRouter.get("/drafts", requirePermission(Permission.KBView), async (_req: AuthRequest, res, next) => {
+  try {
+    const drafts = await prisma.knowledgeBaseArticle.findMany({
+      where: { status: "draft" },
+      orderBy: { updatedAt: "desc" },
+      take: 50,
+      select: {
+        id: true, title: true, slug: true, excerpt: true, status: true, tags: true, aiGenerated: true,
+        sourceTicketId: true, reviewNote: true, createdAt: true, updatedAt: true, authorId: true,
+      },
+    });
+    res.json({ data: drafts, autogenEnabled: autogenEnabled() });
+  } catch (e) { next(e); }
+});
 
 kbRouter.get("/", requirePermission(Permission.KBView), async (req: AuthRequest, res, next) => {
   try { const { search, categoryId, status, visibility, limit = "50", offset = "0" } = req.query as Record<string, string>;
@@ -11,7 +41,7 @@ kbRouter.get("/", requirePermission(Permission.KBView), async (req: AuthRequest,
     if (categoryId) where.categoryId = categoryId;
     if (visibility) where.visibility = visibility;
     if (search) where.OR = [{ title: { contains: search } }, { content: { contains: search } }];
-    const [data, total] = await Promise.all([prisma.knowledgeBaseArticle.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" }, select: { id: true, title: true, slug: true, excerpt: true, status: true, visibility: true, tags: true, viewCount: true, helpfulCount: true, updatedAt: true, authorId: true, categoryId: true } }), prisma.knowledgeBaseArticle.count({ where })]);
+    const [data, total] = await Promise.all([prisma.knowledgeBaseArticle.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" }, select: { id: true, title: true, slug: true, excerpt: true, content: true, status: true, visibility: true, tags: true, viewCount: true, helpfulCount: true, updatedAt: true, authorId: true, categoryId: true, aiGenerated: true, sourceTicketId: true, reviewNote: true } }), prisma.knowledgeBaseArticle.count({ where })]);
     res.json({ data, total }); }
   catch (e) { next(e); }
 });
@@ -51,6 +81,23 @@ kbRouter.get("/:slug", requirePermission(Permission.KBView), async (req: AuthReq
     await prisma.knowledgeBaseArticle.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
     res.json({ ...article, author, category, versions, linkedTickets: links.map(l => ({ ...l, ticket: ticketById.get(l.ticketId) ?? null })) }); }
   catch (e) { next(e); }
+});
+
+// ── Discard a draft ───────────────────────────────────────────────────
+/**
+ * Only drafts can be deleted. A published article is knowledge somebody may already be relying on,
+ * and "remove it" for those belongs in a deliberate archive flow rather than a button beside
+ * Publish — which is exactly where an AI-drafted article lands when a reviewer rejects it.
+ */
+kbRouter.delete("/:id", requirePermission(Permission.KBEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const article = await prisma.knowledgeBaseArticle.findUnique({ where: { id: String(req.params.id) }, select: { id: true, status: true } });
+    if (!article) throw new AppError("Article not found", 404);
+    if (article.status !== "draft") throw new AppError("Only a draft can be discarded; archive a published article instead", 409);
+    await prisma.kBArticleVersion.deleteMany({ where: { articleId: article.id } });
+    await prisma.knowledgeBaseArticle.delete({ where: { id: article.id } });
+    res.json({ message: "Draft discarded" });
+  } catch (e) { next(e); }
 });
 
 kbRouter.patch("/:id", requirePermission(Permission.KBEdit), async (req: AuthRequest, res, next) => {

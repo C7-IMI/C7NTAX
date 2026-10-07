@@ -6,6 +6,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../../middlew
 import { Permission, TicketStatus } from "@C7NTAX/shared";
 import { AppError } from "../../middleware/errorHandler";
 import { onTicketStatusChange, extractPriority } from "./automations";
+import { draftArticleOnResolution } from "../../services/kbAutogen";
 import { generateTicketNumber } from "../../services/ticketNumber";
 import { EmailService } from "@C7NTAX/email";
 import { notifyTicketContact, notifyTicketNote, notifyTicketStatusChange } from "../../services/ticketNotifications";
@@ -324,6 +325,11 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
 
     if (updates.status && updates.status !== oldStatus) {
       await onTicketStatusChange(req.params.id, updates.status as TicketStatus, oldStatus);
+      // A solved ticket is the raw material for a knowledge base article. It is drafted in the
+      // background: a draft is a nice-to-have and must not hold up the status change.
+      if (updates.status === TicketStatus.Resolved || updates.status === TicketStatus.Closed) {
+        void draftArticleOnResolution(ticket.id, req.user!.userId);
+      }
     }
 
     // Add comment if provided

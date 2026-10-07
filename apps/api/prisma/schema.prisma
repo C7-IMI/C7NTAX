@@ -1179,9 +1179,16 @@ model KnowledgeBaseArticle {
   helpfulCount Int     @default(0)
   notHelpfulCount Int  @default(0)
   tags        String[] @default([])
+  /// Drafted by AI from a resolved ticket (PLAN-015 Phase B #11). It stays a draft until a human
+  /// publishes it, and the ticket it came from is kept so the claim can be checked.
+  aiGenerated     Boolean @default(false)
+  sourceTicketId  String?
+  reviewNote      String?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([aiGenerated, status])
 }
 
 model KBCategory {
