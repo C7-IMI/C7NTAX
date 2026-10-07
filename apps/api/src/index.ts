@@ -22,6 +22,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { rateLimiter } from "./middleware/rateLimiter";
 import { autoSnapshotMiddleware } from "./services/autoSnapshot";
 import { logger } from "./services/logger";
+import { mountWebApp } from "./webApp";
 import { authRouter } from "./routes/auth";
 import { usersRouter } from "./routes/users";
 import { rolesRouter } from "./routes/roles";
@@ -197,6 +198,9 @@ app.use("/api/outlook-addin", outlookAddinRouter);
 app.use("/api/push", pushRouter);
 app.use("/api/ai-actions", aiActionsRouter);
 app.use("/api/alert-webhooks", alertWebhooksRouter);
+
+// PLAN-016: in a deployment the API and the SPA are one image and one origin.
+mountWebApp(app);
 
 app.use(errorHandler);
 
