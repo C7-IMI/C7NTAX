@@ -1,5 +1,31 @@
 [
   {
+    "id": "1f3d22e1-efb6-4136-98d2-2cee0c8614f9",
+    "checklistId": "6e3cd4b6-6bef-4416-a4a4-0b8b2e2957b4",
+    "title": "first task",
+    "notes": null,
+    "position": 0,
+    "completedAt": null,
+    "completedById": null,
+    "assignedToId": null,
+    "dueDate": null,
+    "createdAt": "2026-10-07T05:08:14.253Z",
+    "updatedAt": "2026-10-07T05:08:14.253Z"
+  },
+  {
+    "id": "9cca888c-c845-4d5b-a585-09f97aa3152f",
+    "checklistId": "6e3cd4b6-6bef-4416-a4a4-0b8b2e2957b4",
+    "title": "second task",
+    "notes": null,
+    "position": 1,
+    "completedAt": null,
+    "completedById": null,
+    "assignedToId": null,
+    "dueDate": null,
+    "createdAt": "2026-10-07T05:08:14.253Z",
+    "updatedAt": "2026-10-07T05:08:14.253Z"
+  },
+  {
     "id": "5c3b0a4b-8801-4ec8-82cb-b22db537f031",
     "checklistId": "595aed7e-e658-4b8a-a615-c57558a0b77c",
     "title": "Install the standard application set",

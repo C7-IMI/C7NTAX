@@ -36,6 +36,14 @@ const DEFAULT_TIMEOUT_MINUTES = 30;
 /** Longest a session may live without any activity check at all. */
 const MAX_SESSION_HOURS = 12;
 
+/**
+ * Whether this account is excused from the inactivity timeout. Callers that tell the browser
+ * about the timeout use this too, so an exempt session never shows a warning that will not fire.
+ */
+export function idleTimeoutExempt(systemRole: string | null | undefined, email: string): boolean {
+  return ADMIN_TIMEOUT_BYPASS && (systemRole === "admin" || systemRole === "super_admin" || isBypassAccount(email));
+}
+
 export const sessionAuthEnabled = (): boolean => process.env.SESSION_AUTH_ENABLED !== "false";
 const isProduction = (): boolean => process.env.NODE_ENV === "production";
 
@@ -127,6 +135,8 @@ export interface ResolvedSession {
   sessionId: string;
   csrfToken: string;
   lastActivityAt: Date;
+  /** True when this account is excused from the inactivity timeout. */
+  idleTimeoutExempt: boolean;
 }
 
 /**
@@ -152,8 +162,7 @@ export async function resolveSession(req: Request): Promise<
 
   if (record.expiresAt.getTime() <= Date.now()) return { status: "expired" };
 
-  const exempt = ADMIN_TIMEOUT_BYPASS
-    && (user.role?.systemRole === "admin" || user.role?.systemRole === "super_admin" || isBypassAccount(user.email));
+  const exempt = idleTimeoutExempt(user.role?.systemRole, user.email);
 
   if (!exempt) {
     const timeoutMs = await getSessionTimeoutMs();
@@ -172,6 +181,7 @@ export async function resolveSession(req: Request): Promise<
       sessionId: record.id,
       csrfToken: record.csrfToken,
       lastActivityAt: record.lastActivityAt,
+      idleTimeoutExempt: exempt,
     },
   };
 }

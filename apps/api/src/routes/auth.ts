@@ -355,11 +355,15 @@ authRouter.get("/session", async (req, res) => {
     select: { id: true, email: true, firstName: true, lastName: true, role: true, companyId: true, mfaEnabled: true, mustChangePassword: true },
   });
   if (!user) { clearSessionCookies(res); res.status(401).json({ error: { message: "Not signed in", code: "NO_SESSION" } }); return; }
-  const timeoutMs = await getSessionTimeoutMs();
+  // An exempt session reports a zero timeout so the browser never warns about an expiry the
+  // server will not enforce.
+  const exempt = result.session.idleTimeoutExempt;
+  const timeoutMs = exempt ? 0 : await getSessionTimeoutMs();
   res.json({
     user,
     permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], []),
-    timeoutMinutes: Math.round(timeoutMs / 60000),
+    timeoutMinutes: exempt ? 0 : Math.round(timeoutMs / 60000),
+    idleTimeoutExempt: exempt,
     lastActivityAt: result.session.lastActivityAt,
   });
 });
@@ -376,8 +380,9 @@ authRouter.post("/session/extend", async (req, res) => {
     return;
   }
   await touchSession(result.session.sessionId);
-  const timeoutMs = await getSessionTimeoutMs();
-  res.json({ extended: true, timeoutMinutes: Math.round(timeoutMs / 60000), lastActivityAt: new Date().toISOString() });
+  const exempt = result.session.idleTimeoutExempt;
+  const timeoutMs = exempt ? 0 : await getSessionTimeoutMs();
+  res.json({ extended: true, timeoutMinutes: exempt ? 0 : Math.round(timeoutMs / 60000), lastActivityAt: new Date().toISOString() });
 });
 
 /**

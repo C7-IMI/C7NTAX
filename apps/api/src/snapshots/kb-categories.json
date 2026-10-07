@@ -18,5 +18,45 @@
     "sortOrder": 2,
     "createdAt": "2026-08-19T16:15:29.003Z",
     "updatedAt": "2026-08-19T16:15:29.003Z"
+  },
+  {
+    "id": "edd4a870-c113-4c88-ac95-63cec184d83b",
+    "name": "Persona probe category 1791349395833",
+    "slug": "persona-probe-category-1791349395833",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T05:03:15.837Z",
+    "updatedAt": "2026-10-07T05:03:15.837Z"
+  },
+  {
+    "id": "98227e61-d768-4772-a98e-d0287eea19bd",
+    "name": "Persona probe category 1791349395838",
+    "slug": "persona-probe-category-1791349395838",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T05:03:15.841Z",
+    "updatedAt": "2026-10-07T05:03:15.841Z"
+  },
+  {
+    "id": "026bd56e-e377-4470-bf83-e16e6cbb075b",
+    "name": "Persona probe category 1791349452814",
+    "slug": "persona-probe-category-1791349452814",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T05:04:12.817Z",
+    "updatedAt": "2026-10-07T05:04:12.817Z"
+  },
+  {
+    "id": "9aa7816d-1601-477c-be10-0ad37a98ef11",
+    "name": "Persona probe category 1791349452819",
+    "slug": "persona-probe-category-1791349452819",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T05:04:12.822Z",
+    "updatedAt": "2026-10-07T05:04:12.822Z"
   }
 ]

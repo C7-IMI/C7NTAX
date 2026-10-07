@@ -18,6 +18,23 @@ export function LoginPage() {
   const [mfaCode, setMfaCode] = useState("");
   const [ssoEnabled, setSsoEnabled] = useState(false);
   const [passkeyEnabled, setPasskeyEnabled] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // A session that ended server-side lands here with a reason so the sign-in page can say why.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reason = params.get("reason");
+    if (!reason) return;
+    const messages: Record<string, string> = {
+      timeout: "You were signed out after a period of inactivity.",
+      expired: "Your session ended. Sign in to continue.",
+      logout: "You have been signed out.",
+    };
+    setNotice(messages[reason] ?? "Please sign in to continue.");
+    params.delete("reason");
+    const query = params.toString();
+    window.history.replaceState({}, "", query ? `/login?${query}` : "/login");
+  }, []);
 
   // SSO callback: the redirect carries a single-use code, which is exchanged for the
   // token in the body of a POST — the token itself never appears in a URL.
@@ -130,6 +147,14 @@ export function LoginPage() {
           </h1>
           <p className="text-gray-400 text-sm mt-2">Sign in to your PSA dashboard</p>
         </div>
+        {notice && (
+          <div
+            role="status"
+            className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200"
+          >
+            {notice}
+          </div>
+        )}
         <form onSubmit={handleLogin} className="card space-y-4">
           <input className="input-field" type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} placeholder="Email or username" required autoFocus />
           <input className="input-field" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />

@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useActivityMonitor } from "../hooks/useActivityMonitor";
+import { SessionTimeoutWarning } from "./SessionTimeoutWarning";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
@@ -239,7 +241,15 @@ function getSectionDescription(pathname: string): string {
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { user, logout, permissions } = useAuth();
+  const { user, logout, permissions, session, extendSession } = useAuth();
+
+  // A cookie session can idle out; a bearer-token client cannot, so the warning is only
+  // shown where it means something (PLAN-001 §3.2).
+  const { showWarning, secondsRemaining } = useActivityMonitor({
+    timeoutMs: session.timeoutMinutes * 60 * 1000,
+    enabled: session.cookieMode,
+    onTimeout: () => logout(),
+  });
 
   // The navigation only offers what the API will actually serve for this role.
   const visibleTree = useMemo(() => filterNavByPermission(NAV_TREE, permissions), [permissions]);
@@ -773,6 +783,12 @@ export function Layout({ children }: { children: ReactNode }) {
         </main>
       </div>
       {UI_P1 && <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={paletteItems} />}
+      <SessionTimeoutWarning
+        visible={showWarning}
+        secondsRemaining={secondsRemaining}
+        onExtend={extendSession}
+        onLogout={logout}
+      />
     </div>
     </BreadcrumbTrailProvider>
   );

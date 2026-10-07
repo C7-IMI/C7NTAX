@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api";
+import api, { getAuthToken } from "../api";
 import toast from "react-hot-toast";
 import {
   Plus, Send, DollarSign, CreditCard, Eye, FileText, Clock, Calendar,
@@ -121,11 +121,12 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
     try { await api.post(`/billing/invoices/${id}/send`); toast.success("Sent"); fetchInvoices(); } catch { toast.error("Failed"); }
   };
   const handleInvoicePdf = async (inv: Invoice) => {
-    // Fetched with the Authorization header and opened from a blob: the token must never
-    // appear in a URL, where it would land in history, proxy logs and the access log.
+    // Fetched with the Authorization header (or the session cookie, which the browser adds
+    // on its own) and opened from a blob: the token must never appear in a URL, where it
+    // would land in history, proxy logs and the access log.
     // The tab is opened synchronously first — a popup raised after an `await` has lost the
     // click's activation and is blocked — then pointed at the blob when the fetch resolves.
-    const token = localStorage.getItem("c7_token");
+    const token = getAuthToken();
     const win = window.open("", "_blank");
     if (win) win.opener = null;
     try {

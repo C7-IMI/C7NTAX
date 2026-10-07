@@ -42,7 +42,8 @@ export function ChangePasswordForm({
     setBusy(true);
     try {
       const res = await api.post("/auth/change-password", { currentPassword: current, newPassword: next });
-      localStorage.setItem("c7_token", res.data.token);
+      // The auth context decides where the new token lives: in memory for a cookie session,
+      // in storage only for clients that cannot hold a cookie.
       onChanged(res.data.token);
     } catch (e: any) {
       setError(e?.response?.data?.error?.message || "Could not change your password");
