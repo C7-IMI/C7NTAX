@@ -15,7 +15,18 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 // Types
-interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; }
+interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; sourceTickets?: Array<{ id: string; ticketNumber: string }>; }
+/**
+ * A client's unbilled time, from `GET /billing/invoices/unbilled/:companyId`. Read-only, and the
+ * same helper builds the invoice, so the figures shown here are the figures billed.
+ */
+interface UnbilledSummary {
+  entries: number;
+  minutes: number;
+  amount: number;
+  tickets: Array<{ id: string; ticketNumber: string }>;
+  agreement: { id: string; name: string; billingAmount: number };
+}
 interface Agreement { id: string; name: string; description?: string; companyId?: string; company: { name?: string; id?: string } | null; billingPeriod: string; billingAmount: number; startDate: string; endDate?: string; isActive: boolean; autoInvoiceEnabled: boolean; followUpEnabled: boolean; agreementType?: string; hourlyRate?: number | null; rateTier?: string | null; blockHoursIncluded?: number; blockHoursUsed?: number; overtimeEnabled?: boolean; overtimeAfter?: string; overtimeMultiplier?: number; _count?: { invoices: number } }
 interface Payment { id: string; amount: number; method: string; reference?: string; processedAt: string; invoice: { invoiceNumber: string; company: { name?: string } | null } }
 interface TimeEntry { id: string; description?: string; internalNotes?: string; minutes: number; billable: boolean; noCharge?: boolean; rate?: number | null; workType?: string | null; workRole?: string | null; date: string; ticket: { id?: string; ticketNumber: string; company?: { name?: string } | null } | null; invoiceId?: string; }
@@ -30,6 +41,10 @@ const PERIOD_COLORS: Record<string, string> = {
   monthly: "bg-blue-600/20 text-blue-400", quarterly: "bg-purple-600/20 text-purple-400",
   annual: "bg-cyber-600/20 text-cyber-400", weekly: "bg-amber-600/20 text-amber-400",
 };
+
+/** The API's own message when it sent one — more useful than a generic "Failed". */
+const apiMessage = (err: unknown, fallback: string) =>
+  (err as { response?: { data?: { error?: string } } })?.response?.data?.error || fallback;
 
 const TABS = [
   { id: "invoices", label: "Invoices", icon: Receipt },
@@ -100,6 +115,9 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
   const [statusFilter, setStatusFilter] = useState("");
   const [showGenerate, setShowGenerate] = useState(false);
   const [genForm, setGenForm] = useState({ companyId: "", agreementId: "" });
+  const [genPreview, setGenPreview] = useState<UnbilledSummary | null>(null);
+  const [genError, setGenError] = useState("");
+  const [genBusy, setGenBusy] = useState(false);
   const [showBatch, setShowBatch] = useState(false);
   const [batchFlagged, setBatchFlagged] = useState(false);
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
@@ -114,6 +132,19 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
   };
   useEffect(() => { setLoading(true); fetchInvoices(); }, [statusFilter]);
 
+  // Check what the chosen client has to bill before offering to bill it: an empty draft invoice is
+  // worse than a refusal, and the operator should see the hours and tickets behind the number.
+  useEffect(() => {
+    if (!showGenerate || !genForm.companyId) { setGenPreview(null); setGenError(""); return; }
+    let cancelled = false;
+    setGenPreview(null);
+    setGenError("");
+    api.get(`/billing/invoices/unbilled/${genForm.companyId}`)
+      .then(r => { if (!cancelled) setGenPreview(r.data); })
+      .catch(err => { if (!cancelled) setGenError(apiMessage(err, "Could not check unbilled time")); });
+    return () => { cancelled = true; };
+  }, [showGenerate, genForm.companyId]);
+
   // Bill-through batches are flag-gated on the API, so the button appears only where the
   // endpoints actually answer — a 404 means the feature is switched off server-side.
   useEffect(() => {
@@ -124,8 +155,28 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    try { await api.post("/billing/invoices/generate", genForm); toast.success("Generated"); setShowGenerate(false); setGenForm({ companyId: "", agreementId: "" }); fetchInvoices(); }
-    catch { toast.error("Failed"); }
+    if (genBusy) return;
+    setGenBusy(true);
+    try {
+      // generate-from-tickets is the endpoint that reports what it actually billed; the bare
+      // /invoices/generate silently writes an empty draft when nothing is unbilled.
+      const r = await api.post("/billing/invoices/generate-from-tickets", { companyId: genForm.companyId });
+      const created: Invoice = r.data.invoice;
+      const entries = Number(r.data.entriesIncluded ?? 0);
+      const tickets: string[] = r.data.tickets || [];
+      toast.success([
+        `Created ${created.invoiceNumber}`,
+        `from ${entries} time ${entries === 1 ? "entry" : "entries"}`,
+        tickets.length ? `(${tickets.join(", ")})` : null,
+      ].filter(Boolean).join(" "));
+      setShowGenerate(false);
+      setGenForm({ companyId: "", agreementId: "" });
+      setGenPreview(null);
+      fetchInvoices();
+      setViewInvoice(created);
+    } catch (err: unknown) {
+      toast.error(apiMessage(err, "Could not generate the invoice"));
+    } finally { setGenBusy(false); }
   };
   const handleSend = async (id: string) => {
     try { await api.post(`/billing/invoices/${id}/send`); toast.success("Sent"); fetchInvoices(); } catch { toast.error("Failed"); }
@@ -191,6 +242,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
   const csvColumns: CsvColumn<Invoice>[] = [
     { key: "number", label: "Invoice", value: inv => inv.invoiceNumber },
     { key: "client", label: "Client", value: inv => inv.company?.name ?? "" },
+    { key: "tickets", label: "Source tickets", value: inv => (inv.sourceTickets ?? []).map(t => t.ticketNumber).join(", ") },
     { key: "total", label: "Amount", value: inv => inv.total },
     { key: "status", label: "Status", value: inv => inv.status },
     { key: "issued", label: "Issued", value: inv => inv.issueDate },
@@ -216,6 +268,10 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
     inv.status === "draft" && { label: "Send to client", icon: Send, onSelect: () => void handleSend(inv.id) },
     ["sent", "partial", "overdue"].includes(inv.status) && { label: "Record payment…", icon: CreditCard, onSelect: () => openPay(inv) },
     { label: "Set to repeat…", icon: Repeat, onSelect: () => void makeRecurring(inv) },
+    inv.sourceTickets && inv.sourceTickets.length > 0 && {
+      label: "Open source ticket…", icon: FileText,
+      items: inv.sourceTickets.map(t => ({ label: t.ticketNumber, onSelect: () => navigate(`/tickets/${t.id}`) })),
+    },
     inv.company?.id && { label: "Open client", icon: Building2, onSelect: () => navigate(`/clients/${inv.company!.id}`) },
     "separator",
     { label: "Copy invoice number", icon: Copy, onSelect: () => void copyText(inv.invoiceNumber, "Invoice number") },
@@ -225,6 +281,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
       onSelect: () => void copyText([
         inv.invoiceNumber,
         inv.company?.name ? `Client: ${inv.company.name}` : null,
+        inv.sourceTickets && inv.sourceTickets.length > 0 ? `Tickets: ${inv.sourceTickets.map(t => t.ticketNumber).join(", ")}` : null,
         `Amount: $${inv.total.toFixed(2)}`,
         `Status: ${inv.status}`,
         `Issued: ${new Date(inv.issueDate).toLocaleDateString()}`,
@@ -318,12 +375,41 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
         <Modal onClose={() => setShowGenerate(false)}>
           <form onSubmit={handleGenerate} className="space-y-3">
             <h3 className="text-lg font-semibold text-white">Generate Invoice</h3>
-            <p className="text-xs text-gray-400">Creates an invoice from unbilled time entries for the selected client.</p>
-            <select className="input-field" value={genForm.companyId} onChange={e => setGenForm({...genForm, companyId: e.target.value})} required>
-              <option value="">Select client...</option>
-              {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <div className="flex gap-2"><button type="submit" className="btn-primary text-sm">Generate</button><button type="button" onClick={() => setShowGenerate(false)} className="btn-secondary text-sm">Cancel</button></div>
+            <p className="text-xs text-gray-400">Creates a draft invoice from the client's unbilled time entries.</p>
+            <div>
+              <label className="text-xs text-gray-500">Client</label>
+              <select className="input-field" value={genForm.companyId} onChange={e => setGenForm({ ...genForm, companyId: e.target.value })} required>
+                <option value="">Select client...</option>
+                {[...companies].sort((a, b) => a.name.localeCompare(b.name)).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            {genForm.companyId && (
+              <div className="rounded border border-surface-border bg-surface-lighter px-3 py-2 text-sm">
+                {genError ? <p className="text-amber-400">{genError}</p>
+                  : !genPreview ? <p className="text-gray-500">Checking unbilled time…</p>
+                    : genPreview.entries === 0 ? <p className="text-amber-400">Nothing unbilled for this client — there is no work to invoice.</p>
+                      : (
+                        <div className="space-y-1">
+                          <div className="flex justify-between"><span className="text-gray-400">Unbilled</span><span className="text-white">{genPreview.entries} {genPreview.entries === 1 ? "entry" : "entries"} · {(genPreview.minutes / 60).toFixed(2)} h</span></div>
+                          <div className="flex justify-between"><span className="text-gray-400">Agreement</span><span className="text-white">{genPreview.agreement.name}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-400">Amount</span><span className="text-white font-medium">${genPreview.amount.toFixed(2)}</span></div>
+                          {genPreview.tickets.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1 pt-1">
+                              <span className="text-gray-400 text-xs">Tickets</span>
+                              {genPreview.tickets.slice(0, 8).map(t => <span key={t.id} className="badge bg-cyber-600/20 text-cyber-400 text-xs">{t.ticketNumber}</span>)}
+                              {genPreview.tickets.length > 8 && <span className="text-gray-500 text-xs">+{genPreview.tickets.length - 8} more</span>}
+                            </div>
+                          )}
+                        </div>
+                      )}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button type="submit" className="btn-primary text-sm" disabled={genBusy || !genForm.companyId || !!genError || genPreview?.entries === 0}>
+                {genBusy ? "Generating…" : "Generate draft"}
+              </button>
+              <button type="button" onClick={() => setShowGenerate(false)} className="btn-secondary text-sm">Cancel</button>
+            </div>
           </form>
         </Modal>
       )}

@@ -124,47 +124,105 @@ billingRouter.get("/invoices", requirePermission(Permission.BillingView), async 
       prisma.invoice.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { issueDate: "desc" }, include: { company: { select: { id: true, name: true } }, lineItems: true } }),
       prisma.invoice.count({ where }),
     ]);
-    res.json({ data: invoices, total });
+    // Which tickets an invoice was billed from, in one grouped query rather than a lookup per
+    // invoice: the invoice list is where somebody checks "did we bill that work", and the answer
+    // should not need opening each invoice in turn.
+    const invoiceIds = invoices.map(i => i.id);
+    const billedTime = invoiceIds.length
+      ? await prisma.timeEntry.findMany({
+          where: { invoiceId: { in: invoiceIds } },
+          select: { invoiceId: true, ticket: { select: { ticketNumber: true } } },
+        })
+      : [];
+    const ticketsByInvoice = new Map<string, Set<string>>();
+    for (const entry of billedTime) {
+      if (!entry.invoiceId || !entry.ticket?.ticketNumber) continue;
+      if (!ticketsByInvoice.has(entry.invoiceId)) ticketsByInvoice.set(entry.invoiceId, new Set());
+      ticketsByInvoice.get(entry.invoiceId)!.add(entry.ticket.ticketNumber);
+    }
+    res.json({
+      data: invoices.map(invoice => ({
+        ...invoice,
+        sourceTickets: [...(ticketsByInvoice.get(invoice.id) ?? [])].sort(),
+      })),
+      total,
+    });
+  } catch (e) { next(e); }
+});
+
+/**
+ * The agreement a generate run bills against: an explicit id wins, otherwise the client's first
+ * agreement. Shared with the write path so the preview below cannot promise a different rate than
+ * the invoice ends up using.
+ */
+async function resolveBillingAgreement(companyId: string, agreementId?: string | null) {
+  const agreement = agreementId
+    ? await prisma.serviceAgreement.findUnique({ where: { id: agreementId } })
+    : await prisma.serviceAgreement.findFirst({ where: { companyId } });
+  if (!agreement) throw new AppError("No service agreement found");
+  return agreement;
+}
+
+/** Unbilled, billable, chargeable time for a client, carrying the ticket each entry came from. */
+function unbilledTimeEntries(companyId: string) {
+  return prisma.timeEntry.findMany({
+    where: { ticket: { companyId }, invoiceId: null, billable: true, noCharge: false },
+    include: { ticket: { select: { id: true, ticketNumber: true } } },
+    orderBy: { date: "asc" },
+  });
+}
+
+type UnbilledEntry = Awaited<ReturnType<typeof unbilledTimeEntries>>[number];
+
+/** One invoice line per time entry; an entry's own rate beats the agreement's default. */
+function ticketLineItems(entries: UnbilledEntry[], agreement: { billingAmount: number }) {
+  const defaultRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
+  return entries.map((te) => {
+    const quantity = +(te.minutes / 60).toFixed(2);
+    const unitPrice = te.rate && te.rate > 0 ? te.rate : defaultRate;
+    // Name the source ticket rather than a slice of a UUID: the line, the invoice list and the
+    // ticket all then agree about where the charge came from.
+    const reference = te.ticket?.ticketNumber ? `Ticket ${te.ticket.ticketNumber}` : `Time entry ${te.id.slice(0, 8)}`;
+    return { description: te.description || reference, quantity, unitPrice, total: +(quantity * unitPrice).toFixed(2) };
+  });
+}
+
+/** What a client's unbilled time would add up to. Reads only, so the dialog can show it first. */
+billingRouter.get("/invoices/unbilled/:companyId", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const companyId = String(req.params.companyId);
+    if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
+    const agreement = await resolveBillingAgreement(companyId);
+    const entries = await unbilledTimeEntries(companyId);
+    const lineItems = ticketLineItems(entries, agreement);
+    res.json({
+      entries: entries.length,
+      minutes: entries.reduce((sum, te) => sum + te.minutes, 0),
+      amount: +lineItems.reduce((sum, li) => sum + li.total, 0).toFixed(2),
+      tickets: [...new Map(entries.map(te => [te.ticket.id, te.ticket])).values()].sort((a, b) => a.ticketNumber.localeCompare(b.ticketNumber)),
+      agreement: { id: agreement.id, name: agreement.name, billingAmount: agreement.billingAmount },
+    });
   } catch (e) { next(e); }
 });
 
 billingRouter.post("/invoices/generate", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
   try {
-    const { companyId, agreementId } = req.body;
+    const companyId = String(req.body?.companyId ?? "");
     if (!companyId) throw new AppError("companyId required");
-    const agreement = agreementId
-      ? await prisma.serviceAgreement.findUnique({ where: { id: agreementId } })
-      : await prisma.serviceAgreement.findFirst({ where: { companyId } });
-    if (!agreement) throw new AppError("No service agreement found");
+    if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
+    const agreement = await resolveBillingAgreement(companyId, req.body?.agreementId ?? null);
+    const timeEntries = await unbilledTimeEntries(companyId);
+    const lineItems = ticketLineItems(timeEntries, agreement);
 
     const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
-
-    // Get unbilled time entries (exclude no-charge entries)
-    const timeEntries = await prisma.timeEntry.findMany({
-      where: { ticket: { companyId }, invoiceId: null, billable: true, noCharge: false },
-    });
-
-    const defaultRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
-    const lineItems = timeEntries.map((te) => {
-      const unitPrice = te.rate && te.rate > 0 ? te.rate : defaultRate;
-      return {
-        description: te.description || `Time entry ${te.id.slice(0, 8)}`,
-        quantity: +(te.minutes / 60).toFixed(2),
-        unitPrice,
-        total: +(te.minutes / 60 * unitPrice).toFixed(2),
-      };
-    });
-
     const subtotal = lineItems.reduce((sum, li) => sum + li.total, 0);
-    const taxRate = 0; // TODO: configurable per client location
-    const taxTotal = subtotal * taxRate;
 
     const invoice = await prisma.invoice.create({
       data: {
         invoiceNumber, companyId, agreementId: agreement.id, issueDate: new Date(), dueDate,
-        subtotal, taxRate, taxTotal, total: subtotal + taxTotal, status: InvoiceStatus.Draft,
+        subtotal, taxRate: 0, taxTotal: 0, total: subtotal, status: InvoiceStatus.Draft,
         lineItems: { create: lineItems },
       },
       include: { lineItems: true },
@@ -182,26 +240,23 @@ billingRouter.post("/invoices/generate", requirePermission(Permission.InvoiceCre
   } catch (e) { next(e); }
 });
 
-// Backlog item 2 — batch generate from unbilled time entries (gated by BILLING_FROM_TICKETS_ENABLED)
+// Backlog item 2 — generate a draft from unbilled time entries (gated by BILLING_FROM_TICKETS_ENABLED).
+// There used to be a second handler for this same path further down the file. Express serves the
+// first match, so that one was unreachable dead code with a different response shape sitting where
+// it looked authoritative; it has been removed rather than left to mislead.
 billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
   try {
     if (process.env.BILLING_FROM_TICKETS_ENABLED === "false") throw new AppError("Generate-from-tickets disabled", 404);
-    const { companyId, agreementId } = req.body;
+    const companyId = String(req.body?.companyId ?? "");
     if (!companyId) throw new AppError("companyId required");
-    const agreement = agreementId
-      ? await prisma.serviceAgreement.findUnique({ where: { id: agreementId } })
-      : await prisma.serviceAgreement.findFirst({ where: { companyId } });
-    if (!agreement) throw new AppError("No service agreement found");
-    const timeEntries = await prisma.timeEntry.findMany({ where: { ticket: { companyId }, invoiceId: null, billable: true, noCharge: false } });
+    if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
+    const agreement = await resolveBillingAgreement(companyId, req.body?.agreementId ?? null);
+    const timeEntries = await unbilledTimeEntries(companyId);
     if (timeEntries.length === 0) throw new AppError("No unbilled time entries found");
-    const defaultRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
+    const lineItems = ticketLineItems(timeEntries, agreement);
+
     const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
     const dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);
-    const lineItems = timeEntries.map((te) => {
-      const qty = +(te.minutes / 60).toFixed(2);
-      const unitPrice = te.rate && te.rate > 0 ? te.rate : defaultRate;
-      return { description: te.description || `Time entry ${te.id.slice(0, 8)}`, quantity: qty, unitPrice, total: +(qty * unitPrice).toFixed(2) };
-    });
     const subtotal = +lineItems.reduce((s, li) => s + li.total, 0).toFixed(2);
     const invoice = await prisma.invoice.create({
       data: {
@@ -212,29 +267,11 @@ billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permissi
       include: { lineItems: true },
     });
     await prisma.timeEntry.updateMany({ where: { id: { in: timeEntries.map((te) => te.id) } }, data: { invoiceId: invoice.id } });
-    res.status(201).json({ invoice, entriesIncluded: timeEntries.length });
-  } catch (e) { next(e); }
-});
-
-billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
-  try {
-    const { companyId } = req.body;
-    if (!companyId) throw new AppError("companyId required");
-    if (process.env.BILLING_FROM_TICKETS_ENABLED === "false") throw new AppError("Billing-from-tickets disabled");
-    const entries = await prisma.timeEntry.findMany({ where: { ticket: { companyId }, invoiceId: null, billable: true, noCharge: false }, include: { ticket: { select: { ticketNumber: true } } } });
-    if (entries.length === 0) throw new AppError("No unbilled time entries for this company");
-    const agreement = await prisma.serviceAgreement.findFirst({ where: { companyId } });
-    const defaultRate = agreement && agreement.billingAmount > 0 ? agreement.billingAmount : 150;
-    const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
-    const dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);
-    const lineItems = entries.map((te) => {
-      const unitPrice = te.rate && te.rate > 0 ? te.rate : defaultRate;
-      return { description: te.description || `Ticket ${te.ticket?.ticketNumber || ""} time`, quantity: +(te.minutes / 60).toFixed(2), unitPrice, total: +(te.minutes / 60 * unitPrice).toFixed(2) };
+    res.status(201).json({
+      invoice,
+      entriesIncluded: timeEntries.length,
+      tickets: [...new Map(timeEntries.map(te => [te.ticket.id, te.ticket])).values()].map(t => t.ticketNumber).sort(),
     });
-    const subtotal = lineItems.reduce((s, li) => s + li.total, 0);
-    const invoice = await prisma.invoice.create({ data: { invoiceNumber, companyId, agreementId: agreement?.id || null, issueDate: new Date(), dueDate, subtotal, taxRate: 0, taxTotal: 0, total: subtotal, status: InvoiceStatus.Draft, lineItems: { create: lineItems } } });
-    await prisma.timeEntry.updateMany({ where: { id: { in: entries.map((x) => x.id) } }, data: { invoiceId: invoice.id } });
-    res.status(201).json({ invoiceNumber: invoice.invoiceNumber, lineItems: lineItems.length, invoiceId: invoice.id });
   } catch (e) { next(e); }
 });
 
