@@ -61,6 +61,37 @@ const KIND_ICONS: Record<string, LucideIcon> = {
 
 const POLL_INTERVAL_MS = 10000;
 
+/** What the server last verified about a connection (PLAN-015 Phase B #9). */
+interface LiveStatusRow {
+  id: string;
+  status: string;
+  enabled: boolean;
+  health: {
+    state: "healthy" | "degraded" | "unconfigured" | "off";
+    detail: string;
+    verifiedAt: string | null;
+    ageSeconds: number | null;
+    stale: boolean;
+    consecutiveFailures: number;
+    missingFields: string[];
+    checking: boolean;
+  } | null;
+}
+
+function healthAgo(seconds: number | null): string {
+  if (seconds === null) return "never verified";
+  if (seconds < 60) return `verified ${seconds}s ago`;
+  if (seconds < 3600) return `verified ${Math.round(seconds / 60)}m ago`;
+  return `verified ${Math.round(seconds / 3600)}h ago`;
+}
+
+const HEALTH_STYLE = {
+  healthy: { dot: "bg-emerald-500", text: "text-emerald-300", bg: "bg-emerald-600/10", label: "Verified" },
+  degraded: { dot: "bg-red-500", text: "text-red-300", bg: "bg-red-600/10", label: "Not answering" },
+  unconfigured: { dot: "bg-amber-500", text: "text-amber-300", bg: "bg-amber-600/10", label: "Incomplete" },
+  off: { dot: "bg-gray-600", text: "text-gray-500", bg: "bg-surface-lighter", label: "Off" },
+} as const;
+
 // ── Credential formatting ──────────────────────────────────────────
 
 function formatCredLabel(cred: string): string {
@@ -98,6 +129,8 @@ export function CloudConnectPage() {
   const [fixFieldValues, setFixFieldValues] = useState<Record<string, string>>({});
   // Per-field test results within the dialog
   const [fixTestResults, setFixTestResults] = useState<Record<string, { status: "idle" | "testing" | "pass" | "fail"; error?: string }>>({});
+  // Last verified health per integration, from the throttled server-side check
+  const [liveStatus, setLiveStatus] = useState<Record<string, LiveStatusRow>>({});
 
   // ── Integration Action Panel state ──
   const [actionPanel, setActionPanel] = useState<{ open: boolean; integration: Integration } | null>(null);
@@ -107,12 +140,17 @@ export function CloudConnectPage() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [intRes, typeRes] = await Promise.all([
+      const [intRes, typeRes, statusRes] = await Promise.all([
         api.get("/cloudconnect"),
         api.get("/cloudconnect/types"),
+        // Live health is verified server-side on a throttle, so this poll is cheap however
+        // many browser tabs are open.
+        api.get("/cloudconnect/status").catch(() => null),
       ]);
       setIntegrations(intRes.data?.data || []);
       setTypes(typeRes.data?.types || []);
+      const rows: LiveStatusRow[] = statusRes?.data?.data || [];
+      setLiveStatus(Object.fromEntries(rows.map(r => [r.id, r])));
     } catch { /* silent — avoid toast storms on poll */ }
     finally { setLoading(false); }
   }, []);
@@ -202,15 +240,27 @@ export function CloudConnectPage() {
   // ── Error Fix Dialog handlers ──
 
   const openFixDialog = (integration: Integration, fieldErrors: FieldError[]) => {
+    // A failure the server could name gives an exact field list. When it could not (a rejected
+    // password rather than a missing one), every configured field becomes editable — the dialog's
+    // whole purpose is to fix the connection here, and "all errors resolved" on a connection that
+    // is demonstrably failing would be a lie.
+    const errors = fieldErrors.length > 0
+      ? fieldErrors
+      : Object.keys((integration.credentials || {}) as Record<string, string>).map(field => ({
+          field,
+          message: "The last check could not use this value.",
+          fix: "Re-enter the value exactly as the vendor issued it.",
+          example: "",
+        }));
     const vals: Record<string, string> = {};
     const tests: Record<string, { status: "idle" | "testing" | "pass" | "fail"; error?: string }> = {};
-    for (const fe of fieldErrors) {
-      vals[fe.field] = integration.credentials?.[fe.field] || "";
-      tests[fe.field] = { status: "idle" };
+    for (const entry of errors) {
+      vals[entry.field] = (integration.credentials as Record<string, string>)?.[entry.field] || "";
+      tests[entry.field] = { status: "idle" };
     }
     setFixFieldValues(vals);
     setFixTestResults(tests);
-    setFixDialog({ open: true, integration, fieldErrors });
+    setFixDialog({ open: true, integration, fieldErrors: errors });
   };
 
   const closeFixDialog = () => {
@@ -394,6 +444,17 @@ export function CloudConnectPage() {
             const IconComp = IconFor(int.kind);
             const tr = testResults[int.id];
             const isConnected = int.status === "connected";
+            const live = liveStatus[int.id];
+            const health = live?.health ?? null;
+            const style = HEALTH_STYLE[health?.state ?? "off"];
+            const healthTooltip = (h: typeof health) => {
+              if (!h) return "Live status is switched off on this deployment.";
+              const parts = [h.detail];
+              if (h.missingFields.length > 0 && h.state !== "off") parts.push(`Missing: ${h.missingFields.map(formatCredLabel).join(", ")}`);
+              if (h.consecutiveFailures > 1) parts.push(`${h.consecutiveFailures} consecutive failed checks`);
+              if (h.stale && h.state !== "off") parts.push("Older than the check interval — press Test to verify now.");
+              return parts.join(" · ");
+            };
             return (
               <div key={int.id} className={`card space-y-4 ${int.enabled ? "border-l-2 border-l-cyber-500" : "opacity-60"}`}>
                 <div className="flex items-center justify-between">
@@ -412,6 +473,31 @@ export function CloudConnectPage() {
                         {isConnected && <span className="text-[10px] text-cyber-500">click to explore →</span>}
                       </div>
                       <p className="text-xs text-gray-500">{KIND_LABELS[int.kind] || int.kind}</p>
+                      {health && (
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            if (health.state === "degraded" || health.state === "unconfigured") {
+                              openFixDialog(int, health.missingFields.map((field: string) => ({
+                                field,
+                                message: "is required but not set",
+                                fix: "",
+                                example: "",
+                              })));
+                              void handleTest(int.id);
+                            }
+                          }}
+                          title={healthTooltip(health)}
+                          className={`mt-1 inline-flex items-center gap-1.5 text-[11px] rounded-md px-1.5 py-0.5 ${style.bg} ${style.text} ${health.state === "degraded" || health.state === "unconfigured" ? "hover:underline cursor-pointer" : "cursor-default"}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot} ${health.stale ? "opacity-50" : ""}`} />
+                          {style.label}
+                          <span className="text-gray-500">
+                            · {health.checking ? "checking now…" : health.stale ? "not verified recently" : healthAgo(health.ageSeconds)}
+                          </span>
+                          {(health.state === "degraded" || health.state === "unconfigured") && <span className="font-medium">· Fix</span>}
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
@@ -597,7 +683,18 @@ export function CloudConnectPage() {
 
             {/* Body: errored fields */}
             <div className="p-5 space-y-4">
-              {fixDialog.fieldErrors.length === 0 ? (
+              {fixDialog.fieldErrors.length === 0 && Object.keys(fixFieldValues).length === 0 ? (
+                // Opened for a connection that is failing and stores nothing editable. Claiming
+                // "all errors resolved" here would be the dialog lying about the row behind it.
+                <div className="text-center py-6">
+                  <AlertTriangle size={32} className="text-amber-400 mx-auto mb-2" />
+                  <p className="text-white font-medium">Nothing to edit for this connection</p>
+                  <p className="text-sm text-gray-400 mt-1 max-w-md mx-auto">
+                    It stores no credentials, so the failure is in how it is reached rather than in a value here.
+                    Press Test on the row to see the vendor's answer, or delete and recreate the connection.
+                  </p>
+                </div>
+              ) : fixDialog.fieldErrors.length === 0 ? (
                 <div className="text-center py-6">
                   <CheckCircle size={32} className="text-green-400 mx-auto mb-2" />
                   <p className="text-white font-medium">All errors resolved!</p>

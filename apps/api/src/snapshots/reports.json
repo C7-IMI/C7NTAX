@@ -1,27 +1,5 @@
 [
   {
-    "id": "fc1409fb-a635-4dbf-b3e2-b472c3312138",
-    "name": "Persona probe report 1791359344825",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T07:49:04.829Z",
-    "updatedAt": "2026-10-07T07:49:04.829Z"
-  },
-  {
-    "id": "372e54a6-7694-4c27-a1d6-6a6b3b5b27ac",
-    "name": "Persona probe report 1791359344829",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T07:49:04.833Z",
-    "updatedAt": "2026-10-07T07:49:04.833Z"
-  },
-  {
     "id": "f037556f-a402-427b-bcf0-0038efea3b3d",
     "name": "Browser check — open tickets",
     "description": null,
@@ -52,72 +30,6 @@
     "updatedAt": "2026-10-07T07:20:49.394Z"
   },
   {
-    "id": "a48ca9d3-63e6-45b0-8189-cbc23085523e",
-    "name": "Persona probe report 1791358462754",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T07:34:22.757Z",
-    "updatedAt": "2026-10-07T07:34:22.757Z"
-  },
-  {
-    "id": "15820eb7-1a98-4eba-a7fe-5a53f370a85b",
-    "name": "Persona probe report 1791358462759",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T07:34:22.762Z",
-    "updatedAt": "2026-10-07T07:34:22.762Z"
-  },
-  {
-    "id": "766399eb-134b-48ec-a426-6d3b53690b70",
-    "name": "Persona probe report 1791358471578",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T07:34:31.582Z",
-    "updatedAt": "2026-10-07T07:34:31.582Z"
-  },
-  {
-    "id": "00e41b72-0415-4da9-9131-0922cde454bc",
-    "name": "Persona probe report 1791358471583",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T07:34:31.587Z",
-    "updatedAt": "2026-10-07T07:34:31.587Z"
-  },
-  {
-    "id": "9bda568a-2f50-4fc3-b0ed-7f2621877329",
-    "name": "Persona probe report 1791358485070",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T07:34:45.072Z",
-    "updatedAt": "2026-10-07T07:34:45.072Z"
-  },
-  {
-    "id": "819c4481-59de-4cc1-a136-caec3551e2a4",
-    "name": "Persona probe report 1791358485073",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T07:34:45.076Z",
-    "updatedAt": "2026-10-07T07:34:45.076Z"
-  },
-  {
     "id": "a78d1e07-5ec7-45ae-9768-be02f6387c76",
     "name": "Monthly Ticket Volume",
     "description": "Standard ticket volume report",
@@ -138,27 +50,5 @@
     "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-08-19T16:15:28.983Z",
     "updatedAt": "2026-08-19T16:15:28.983Z"
-  },
-  {
-    "id": "ddd1fc30-4731-4e1f-90fd-a72addad8595",
-    "name": "Persona probe report 1791359004674",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T07:43:24.677Z",
-    "updatedAt": "2026-10-07T07:43:24.677Z"
-  },
-  {
-    "id": "f9109c74-4460-40b2-b0a0-00214129abdf",
-    "name": "Persona probe report 1791359004678",
-    "description": null,
-    "type": "ticket",
-    "config": {},
-    "isSystem": false,
-    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T07:43:24.682Z",
-    "updatedAt": "2026-10-07T07:43:24.682Z"
   }
 ]

@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.7.011",
+    "date": "2026-10-07",
+    "title": "CloudConnect says what it verified, and stops asking the vendor",
+    "changes": [
+      {
+        "text": "**A live status chip per connection.** CloudConnect knew a connection was broken when somebody pressed Test and found out; the row's badge was a status from the day it was saved. Each connection now carries a chip that says what the platform actually observed — **Verified**, **Not answering**, **Incomplete** or **Off**, with **when** it was checked and, when it is not healthy, a **Fix** link that opens the credential dialog for that connection directly.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Verification is done server-side, on a throttle.** `GET /cloudconnect/status` verifies whichever connections are due (`CLOUDCONNECT_VERIFY_INTERVAL_SEC`, default 300) and reports the result — so ten open browsers still produce **one** call per connection per interval, not ten. A slow vendor cannot hold the page open: the request waits a budget, then reports the last known state while the answer is recorded when it lands (and the chip says \"checking now…\" meanwhile).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A request that cannot succeed is never sent.** A connection missing any required credential is reported as **Incomplete** naming the fields, and **no call is made to the vendor at all** — an integration with no client secret is not a vendor's problem.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The chip and the badge cannot disagree.** A verification writes the result back to the row it describes (`status`/`errorMessage`), and a hand-run Test records itself immediately, so the two never tell different stories. Consecutive failures are counted and surfaced in the tooltip.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"All errors resolved!\" was shown for a connection that was demonstrably failing.** The fix dialog renders the field list the *server* named, so a failure with no named field (a rejected password, a connection with no credentials stored) opened an empty dialog claiming success. A failure with no named field now lists **every configured field** as editable — which is the dialog's whole purpose — and a connection that stores nothing editable says exactly that instead of congratulating itself.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.010",
     "date": "2026-10-07",
     "title": "An Outage Board, and social reports that can never shout louder than they should",

@@ -3651,3 +3651,23 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The X query comes from the service name, so common names can match unrelated posts — recorded in BuildNotes and in the plan as the reason a per-service query column is a follow-up.
 - Two API configurations again for this one: the stub phase needs `EGRESS_ALLOW_PRIVATE=true` plus the token and `X_API_BASE_URL` pointing at the loopback stub; the "off" phase needs the token **unset**.
+
+**Prompt 220 — continued: W2-9 (CloudConnect live statuses + inline fix, PLAN-015 Phase B #9)**
+
+**What I did**
+- `services/integrationHealth.ts` and `GET /cloudconnect/status`: per-connection health — `healthy` / `degraded` / `unconfigured` / `off` — with when it was verified, how stale that is, consecutive failures, and the missing fields.
+- **Verified server-side on a throttle** (`CLOUDCONNECT_VERIFY_INTERVAL_SEC`, default 300s) so how many vendor calls happen depends on how many integrations exist, not how many tabs are open. An in-flight set is both the duplicate-call guard and the meaning of "checking now".
+- **A connection with a missing credential is never called.** It reads as `unconfigured`, names the fields, and says nothing was sent. Sending a request that cannot succeed is noise on someone else's API.
+- **The answer is written where the badge reads it** (`status`/`errorMessage`), and a hand-run Test records itself immediately, so the chip and the badge cannot disagree.
+- **A slow vendor cannot hold the page open:** the request waits a budget, then reports the last known state while the answer is recorded whenever it lands.
+- UI: a chip per connection (dot + word + when, faint dot when stale, **Fix** when it needs attention) that opens the credential dialog for that connection.
+- **Fixed two things I found while verifying:** the fix dialog claimed "All errors resolved!" for a connection that was failing with no server-named field (it renders fields from the server's list) — it now lists every configured field as editable, or says plainly that the connection stores nothing editable; and the health tooltip no longer tells you to "press Test" on a connection that is switched off.
+
+**Decisions worth remembering**
+- **A GET that acts.** Verification runs inside the status request: the alternative is a background timer that burns vendor calls for connections nobody is looking at. The guards that make it safe (interval, in-flight, missing-credential skip) are the reason it can be a GET.
+- **Never report a failure that has not happened.** A check still running is `checking`, not `degraded`; the last real answer stays on screen until a new one exists.
+- **Hand out the reason, not a mood.** Every unhealthy state carries the field list or the vendor's words, because "not answering" alone sends somebody to a support queue.
+
+**Notes for next time**
+- The health memory is in-process: a restart reports "not verified since this process started" until the first check, and multiple replicas keep separate memories. Same shape as the passkey challenge store — a table is the follow-up.
+- Two small discoveries worth keeping: new integrations default to `enabled: false`, so a probe (or a person) must enable one after creating it; and the permission sweep's write probes leave a client per persona per run, which `clean-probe-residue.ts` clears — run it after a sweep, not before.

@@ -28,6 +28,8 @@ export interface IntegrationHealth {
   stale: boolean;
   consecutiveFailures: number;
   missingFields: string[];
+  /** A check is running right now; its answer will replace this one. */
+  checking: boolean;
 }
 
 interface LastVerification {
@@ -38,7 +40,11 @@ interface LastVerification {
 }
 
 const verifications = new Map<string, LastVerification>();
+/** Checks currently running: this is both the duplicate-call guard and what "checking now" means. */
 const inFlight = new Set<string>();
+
+/** How long a status request waits for a fresh answer before reporting the previous one. */
+const VERIFY_WAIT_MS = 8000;
 
 function intervalSeconds(): number {
   const raw = Number(process.env.CLOUDCONNECT_VERIFY_INTERVAL_SEC);
@@ -105,6 +111,7 @@ function healthFromRow(
     stale: ageSeconds === null ? true : ageSeconds > interval,
     consecutiveFailures: last?.failures ?? 0,
     missingFields: missing,
+    checking: inFlight.has(row.id),
   };
 }
 
@@ -143,34 +150,41 @@ export async function verifyDueIntegrations(
 
     await Promise.all(due.map(async row => {
       inFlight.add(row.id);
-      try {
-        const ok = await test(toConfig(row as never));
-        const previous = verifications.get(row.id);
-        verifications.set(row.id, {
-          at: Date.now(),
-          ok,
-          detail: ok ? "Verified just now — the connection answered." : "The last check failed.",
-          failures: ok ? 0 : (previous?.failures ?? 0) + 1,
-        });
-        // Keep the stored status in step with what was just observed, so the badge and the chip
-        // cannot tell two different stories.
-        const nextStatus = ok ? "connected" : "error";
-        if (row.status !== nextStatus || (!ok && !row.errorMessage)) {
-          await prisma.integration.update({
-            where: { id: row.id },
-            data: { status: nextStatus, errorMessage: ok ? null : (row.errorMessage || "The last automatic check could not reach the service") },
+      // The answer is written down whenever it arrives, even if this request has already moved on:
+      // a slow vendor must not hold a page open, and must not be asked twice either.
+      const settled = test(toConfig(row as never))
+        .then(async ok => {
+          const previous = verifications.get(row.id);
+          verifications.set(row.id, {
+            at: Date.now(),
+            ok,
+            detail: ok ? "Verified just now — the connection answered." : "The last check failed.",
+            failures: ok ? 0 : (previous?.failures ?? 0) + 1,
           });
-        }
-      } catch (err) {
-        verifications.set(row.id, {
-          at: Date.now(),
-          ok: false,
-          detail: `Check could not run: ${(err as Error).message}`,
-          failures: (verifications.get(row.id)?.failures ?? 0) + 1,
-        });
-      } finally {
-        inFlight.delete(row.id);
-      }
+          // Keep the stored status in step with what was just observed, so the badge and the chip
+          // cannot tell two different stories.
+          const nextStatus = ok ? "connected" : "error";
+          if (row.status !== nextStatus || (!ok && !row.errorMessage)) {
+            await prisma.integration.update({
+              where: { id: row.id },
+              data: { status: nextStatus, errorMessage: ok ? null : (row.errorMessage || "The last automatic check could not reach the service") },
+            });
+          }
+        })
+        .catch((err: Error) => {
+          verifications.set(row.id, {
+            at: Date.now(),
+            ok: false,
+            detail: `Check could not run: ${err.message}`,
+            failures: (verifications.get(row.id)?.failures ?? 0) + 1,
+          });
+        })
+        .finally(() => { inFlight.delete(row.id); });
+
+      await Promise.race([
+        settled,
+        new Promise<void>(resolve => setTimeout(resolve, VERIFY_WAIT_MS)),
+      ]);
     }));
   }
 
@@ -186,7 +200,7 @@ export async function verifyDueIntegrations(
       credentials: row.credentials,
       health: enabled
         ? healthFromRow(row, missing, Date.now())
-        : { state: "healthy", detail: "Live status is switched off.", verifiedAt: null, ageSeconds: null, stale: true, consecutiveFailures: 0, missingFields: missing },
+        : { state: "healthy", detail: "Live status is switched off.", verifiedAt: null, ageSeconds: null, stale: true, consecutiveFailures: 0, missingFields: missing, checking: false },
     };
   });
 }

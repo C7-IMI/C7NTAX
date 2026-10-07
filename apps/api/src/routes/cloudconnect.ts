@@ -257,7 +257,7 @@ cloudConnectRouter.get("/status", requirePermission(Permission.IntegrationView),
         settings: row.settings as Record<string, unknown>,
         status: row.status as IntegrationConfig["status"],
         errorMessage: row.errorMessage ?? undefined,
-        lastSyncAt: row.lastSyncAt ?? undefined,
+        lastSyncAt: row.lastSyncAt ?? null,
       }),
     );
     res.json({ enabled: true, data: rows.map(r => ({ id: r.id, status: r.status, enabled: r.enabled, health: r.health })) });
