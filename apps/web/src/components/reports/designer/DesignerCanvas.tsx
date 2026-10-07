@@ -14,8 +14,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   MM_PER_PX, contentBox, mmToPx, pageDimensions,
-  type ReportTemplateDocument, type TemplateBand, type TemplateElement, type TemplateIssue,
+  type LaidOutChart, type ReportTemplateDocument, type TemplateBand, type TemplateElement, type TemplateIssue,
 } from "@C7NTAX/shared";
+import { chartSvg } from "../../../lib/reportChartSvg";
 import type { Selection } from "./Inspector";
 
 const BAND_TINTS: Record<string, string> = {
@@ -49,6 +50,8 @@ interface CanvasProps {
   issues: TemplateIssue[];
   /** elementId → the value it prints with the current data, so the canvas shows real content. */
   values: Map<string, string>;
+  /** elementId → the chart the current data produced, so a chart is designed against real numbers. */
+  charts: Map<string, LaidOutChart>;
   onSelect: (selection: Selection) => void;
   onDocument: (next: ReportTemplateDocument, options?: { push?: boolean }) => void;
   onDropField: (bandId: string, fieldKey: string, at: { x: number; y: number }) => void;
@@ -75,7 +78,7 @@ export function designBandOrder(document: ReportTemplateDocument): TemplateBand[
   return ordered;
 }
 
-export function DesignerCanvas({ document, selection, zoom, issues, values, onSelect, onDocument, onDropField }: CanvasProps) {
+export function DesignerCanvas({ document, selection, zoom, issues, values, charts, onSelect, onDocument, onDropField }: CanvasProps) {
   const dims = pageDimensions(document.page);
   const content = contentBox(document.page);
   const pxPerMm = mmToPx(1) * zoom;
@@ -255,7 +258,15 @@ export function DesignerCanvas({ document, selection, zoom, issues, values, onSe
                         }}
                         title={problems.length ? problems.map(issue => issue.message).join("\n") : element.type === "field" || element.type === "aggregate" ? `{${(element as { expression?: string }).expression ?? ""}}` : undefined}
                       >
-                        {element.type === "image" ? (
+                        {element.type === "chart" ? (
+                          charts.get(element.id) ? (
+                            <div className="absolute inset-0" dangerouslySetInnerHTML={{ __html: chartSvg(charts.get(element.id)!, { zoom, origin: "box" }) }} />
+                          ) : (
+                            <span className="text-[9px] text-slate-500">{element.categoryExpression ? "No data to draw" : "Chart — choose a category field"}</span>
+                          )
+                        ) : element.type === "subreport" ? (
+                          <span className="text-[9px] text-slate-500">{element.templateName || "Sub-report — choose a saved report"}</span>
+                        ) : element.type === "image" ? (
                           <span className="text-[9px] text-slate-500">{element.src}</span>
                         ) : (
                           <span

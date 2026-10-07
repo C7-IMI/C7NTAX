@@ -20,7 +20,7 @@ import toast from "react-hot-toast";
 import {
   AGGREGATE_SCOPES, BAND_BY_KIND, DOCUMENT_VERSION, contentBox, createElement, labelFor,
   layoutReport, normaliseDocument, pageDimensions,
-  type ReportTemplateDocument, type TemplateElement, type TemplateIssue,
+  type LaidOutChart, type ReportTemplateDocument, type TemplateElement, type TemplateIssue,
 } from "@C7NTAX/shared";
 import api from "../api";
 import { apiErrorMessage } from "../lib/apiError";
@@ -185,6 +185,11 @@ export function ReportDesignerPage() {
       measure: measureTextMm,
       limit: run?.limit,
       catalog: catalog ? { sources: catalog.sources.map(source => ({ key: source.key, label: source.label, fields: source.fields.map(field => ({ key: field.key, label: field.label, type: field.type })) })) } : undefined,
+      templates: catalog?.templates ?? run?.templates,
+      // The sub-reports the API resolved for this preview, so a sub-report is laid out with the same
+      // child rows the saved report would run — and the exit condition of the phase is visible here:
+      // the child flows into these pages, so the page count stays the parent's.
+      subreports: run?.subreports,
     });
   }, [document, run, catalog]);
 
@@ -204,12 +209,28 @@ export function ReportDesignerPage() {
     return map;
   }, [laid]);
 
+  /** Element id → the chart the current data produced, so a chart is designed against real numbers. */
+  const charts = useMemo(() => {
+    const map = new Map<string, LaidOutChart>();
+    if (!laid) return map;
+    for (const page of laid.pages) {
+      for (const band of page.bands) {
+        for (const element of band.elements) {
+          if (element.payload.kind === "chart" && !map.has(element.id)) map.set(element.id, element.payload.chart);
+        }
+      }
+    }
+    return map;
+  }, [laid]);
+
   // ── Editing ───────────────────────────────────────────────────────
-  const onAddElement = useCallback((bandId: string, element: TemplateElement) => {
+  const onAddElement = useCallback((bandId: string, element: TemplateElement, options?: { growBandTo?: number }) => {
     if (!document) return;
     applyDocument({
       ...document,
-      bands: document.bands.map(band => (band.id === bandId ? { ...band, elements: [...band.elements, element] } : band)),
+      bands: document.bands.map(band => (band.id === bandId
+        ? { ...band, height: options?.growBandTo ? Math.max(band.height, options.growBandTo) : band.height, elements: [...band.elements, element] }
+        : band)),
     }, { push: true });
     select({ kind: "element", bandId, elementId: element.id });
   }, [document, applyDocument]);
@@ -452,6 +473,7 @@ export function ReportDesignerPage() {
               zoom={zoom}
               issues={issues}
               values={values}
+              charts={charts}
               onSelect={select}
               onDocument={applyDocument}
               onDropField={onDropField}
@@ -547,6 +569,7 @@ export function ReportDesignerPage() {
           <Inspector
             document={document}
             catalog={catalog}
+            templates={catalog?.templates ?? []}
             selection={selection}
             issues={issues}
             onSelect={select}

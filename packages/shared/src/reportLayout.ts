@@ -62,7 +62,7 @@ export type ElementPayload =
   | { kind: "line"; style: ElementStyle }
   | { kind: "box"; style: ElementStyle }
   | { kind: "image"; src: string; style: ElementStyle }
-  | { kind: "chart"; chart: LaidOutChart };
+  | { kind: "chart"; chart: LaidOutChart; style: ElementStyle };
 
 export interface LaidOutElement {
   id: string;
@@ -90,6 +90,8 @@ export interface LaidOutBand {
   height: number;
   elements: LaidOutElement[];
   rowIndex?: number;
+  /** Set on a band that came from a sub-report, to the section it belongs to. */
+  section?: string;
 }
 
 export interface LaidOutPage {
@@ -777,6 +779,7 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
     bandPage.bands.push({
       bandId: band.id, kind: band.kind, groupKey: band.groupKey, groupLevel: context.groupLevel,
       y: bandTop, height, elements: placed, rowIndex: context.rowIndex,
+      section: section.isRoot ? undefined : section.key,
     });
 
     if (context.rowIndex !== undefined) {
@@ -855,7 +858,7 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
     };
     const placedElement: LaidOutElement = {
       id: element.id, type: "chart", x: section.offsetX + element.x, y: bandTop + element.y, w: element.w, h: element.h,
-      payload: { kind: "chart", chart: build([]) },
+      payload: { kind: "chart", chart: build([]), style: element.style },
       deferred: element.scope === "page", rowIndex: context.rowIndex, groupLevel: context.groupLevel,
     };
     if (element.scope === "page") {
@@ -864,7 +867,7 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
         sectionKey: section.key,
         pageNumber,
         apply: pageRows => {
-          placedElement.payload = { kind: "chart", chart: build(pageRows) };
+          placedElement.payload = { kind: "chart", chart: build(pageRows), style: element.style };
           placedElement.deferred = false;
         },
       });

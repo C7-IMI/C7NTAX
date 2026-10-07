@@ -682,6 +682,504 @@ async function main() {
     check(foreignRows(wideningRows).length === 0, `a template cannot widen a scoped account's data (${wideningRows.length} rows, ${foreignRows(wideningRows).length} foreign)`);
   }
 
+  // ── Phase 6: charts, running totals and sub-reports ───────────────
+  // Expense-shaped rows, because `tickets` has no number to fold and a chart needs one. The fields are
+  // the runner's own: description, amount, category and status.
+  const phaseRows = [
+    { id: "1", description: "E-1", amount: 100, category: "Hardware", status: "Approved" },
+    { id: "2", description: "E-2", amount: 50, category: "Hardware", status: "Approved" },
+    { id: "3", description: "E-3", amount: 25, category: "Software", status: "Submitted" },
+    { id: "4", description: "E-4", amount: 25, category: "Software", status: "Submitted" },
+  ];
+  const amountTotal = phaseRows.reduce((sum, row) => sum + row.amount, 0);
+
+  /** The tickets harness with the bands replaced, for the sub-report tests. */
+  const parentDocument = (summary = null, detailHeight = 6) => {
+    const document = createBlankDocument("Sub-report parent", "tickets");
+    document.page = { size: "a4", orientation: "portrait", width: 210, height: 297, margins: { top: 10, right: 10, bottom: 10, left: 10 } };
+    const detail = createBand("detail", { height: detailHeight });
+    detail.elements = [field("Fields.ticketNumber", 0, 0, 40, detailHeight)];
+    const pageFooter = createBand("pageFooter", { height: 6 });
+    pageFooter.elements = [text("Page {{Page.number}} of {{Page.totalPages}}", 0, 0, 60, 5)];
+    document.bands = [detail, ...(summary ? [summary] : []), pageFooter];
+    return document;
+  };
+
+  const chartElement = overrides => createElement("chart", {
+    x: 0, y: 0, w: 120, h: 50, kind: "column",
+    categoryExpression: "Fields.category", valueExpression: "Fields.amount", fn: "SUM", scope: "report",
+    ...overrides,
+  });
+  const phaseDocument = element => {
+    const document = createBlankDocument("Chart harness", "expenses");
+    document.page = { size: "a4", orientation: "portrait", width: 210, height: 297, margins: { top: 10, right: 10, bottom: 10, left: 10 } };
+    const summary = createBand("reportSummary", { height: element.h + 2 });
+    summary.elements = [element];
+    document.bands = [summary];
+    return document;
+  };
+  const placeChart = (element, rows = phaseRows) => {
+    const laid = layoutReport({
+      document: phaseDocument(element),
+      rows,
+      measure,
+      catalog: catalogForValidation,
+    });
+    const placed = laid.pages.flatMap(page => page.bands).flatMap(band => band.elements).find(candidate => candidate.id === element.id);
+    return { laid, placed, chart: placed?.payload.kind === "chart" ? placed.payload.chart : null };
+  };
+
+  section("a chart folds the rows and draws inside its box");
+  {
+    const { laid, placed, chart } = placeChart(chartElement());
+    check(laid.refused === false, "a chart does not stop the report from laying out");
+    check(placed?.type === "chart", "a chart element lays out into a chart element");
+    check(placed?.payload.kind === "chart", "carrying a drawn chart");
+    check(chart.data.length === 2, `one bar per category (${chart.data?.length})`);
+    check(chart.data[0]?.label === "Hardware" && chart.data[1]?.label === "Software", "in the order the rows sorted into");
+    check(chart.bars.length === 2, "and one bar drawn for each");
+    check(
+      Math.abs(chart.data.reduce((sum, datum) => sum + datum.value, 0) - amountTotal) < 0.001,
+      `the bars add up to the total of the rows (${chart.data.reduce((sum, datum) => sum + datum.value, 0)} of ${amountTotal})`,
+    );
+    check(Math.abs(chart.data[0].value - 150) < 0.001, "summing the rows of each category (Hardware = 150)");
+    check(
+      chart.bars.every(bar => bar.x >= chart.box.x - 0.001 && bar.x + bar.w <= chart.box.x + chart.box.w + 0.001),
+      "every bar is inside the chart's box horizontally",
+    );
+    check(
+      chart.bars.every(bar => bar.y >= chart.box.y - 0.001 && bar.y + bar.h <= chart.box.y + chart.box.h + 0.001),
+      "and vertically, so nothing is clipped",
+    );
+    check(chart.gridLines.length === 5 && chart.axis.length === 2, "the axis and its grid lines are placed");
+    check(chart.labels.some(label => label.role === "category" && label.text === "Hardware"), "the categories are labelled");
+    check(chart.labels.some(label => label.role === "axis"), "and so are the values");
+    check(chart.labels.every(label => label.baselineY > label.y), "every label knows where its baseline is, so the PDF can place it");
+
+    check(placeChart(chartElement({ fn: "COUNT", valueExpression: "" })).chart.data.every(datum => datum.value === 2), "COUNT with no field counts the rows of each category");
+    check(placeChart(chartElement({ fn: "COUNTD", valueExpression: "Fields.description" })).chart.data.every(datum => datum.value === 2), "COUNTD counts the distinct values");
+    check(Math.abs(placeChart(chartElement({ fn: "AVG" })).chart.data[0].value - 75) < 0.001, "AVG averages the numbers of each category");
+    check(Math.abs(placeChart(chartElement({ fn: "MAX" })).chart.data[0].value - 100) < 0.001, "MAX takes the highest");
+
+    // A long tail is folded so the axis stays readable, and the fold is named for what it holds.
+    const many = Array.from({ length: 15 }, (_, index) => ({ description: `E-${index}`, category: `S${index}`, amount: index + 1 }));
+    const folded = placeChart(chartElement({ maxCategories: 5 }), many).chart;
+    check(folded.data.length === 5, `a chart folds its tail into one category (${folded.data.length} of 15)`);
+    check(folded.data[4].label.startsWith("Other (11)"), `and says how many it folded (${folded.data[4]?.label})`);
+    check(
+      Math.abs(folded.data[4].value - many.slice(4).reduce((sum, row) => sum + row.amount, 0)) < 0.001,
+      "keeping the folded values rather than dropping them",
+    );
+    check(placeChart(chartElement({ maxCategories: 5, showLegend: false, showValues: true }), many).chart.labels.some(label => label.role === "value"), "values on the bars are labelled when asked for");
+  }
+
+  section("a pie is measured in turns, a line in points");
+  {
+    const { chart } = placeChart(chartElement({ kind: "pie" }));
+    check(chart.slices.length === 2, "a pie has one slice per category");
+    const turn = chart.slices.reduce((sum, slice) => sum + (slice.endAngle - slice.startAngle), 0);
+    check(Math.abs(turn - Math.PI * 2) < 1e-6, `the slices add up to exactly one turn (${turn.toFixed(6)})`);
+    check(chart.slices[0].startAngle === 0, "the first slice starts at twelve o'clock");
+    check(chart.slices[0].endAngle === chart.slices[1].startAngle, "and the slices are contiguous");
+    check(
+      chart.slices[0].endAngle - chart.slices[0].startAngle > chart.slices[1].endAngle - chart.slices[1].startAngle,
+      "the larger share sweeps a larger angle",
+    );
+    check(chart.centre.r > 0 && chart.centre.innerR === 0, "a pie has a radius and no hole");
+    check(chart.legendSwatches.length === 2, "and a key to its colours");
+
+    const donut = placeChart(chartElement({ kind: "donut" })).chart;
+    check(donut.centre.innerR > 0 && donut.centre.innerR < donut.centre.r, "a donut leaves the middle open");
+    check(donut.slices.length === donut.data.length, "and is otherwise a pie");
+
+    const line = placeChart(chartElement({ kind: "line" })).chart;
+    check(line.points.length === 2 && line.bars.length === 0, "a line is drawn as points, not bars");
+    check(line.points[0].y < line.points[1].y, "a larger value is drawn higher up the page");
+    check(line.points.every(point => point.y >= line.box.y && point.y <= line.box.y + line.box.h), "and the points stay inside the box");
+
+    const bars = placeChart(chartElement({ kind: "bar" })).chart;
+    check(bars.bars[0].w > bars.bars[1].w, "a horizontal bar is as long as its value");
+
+    const nothing = placeChart(chartElement(), []).chart;
+    check(nothing.empty === true, "a chart with no rows says it has nothing to draw");
+    check(nothing.bars.length === 0, "rather than drawing an axis around nothing");
+    check(nothing.labels.some(label => label.role === "note" && /no data/i.test(label.text)), "and prints a note where the chart would be");
+
+    // Negative values must not be drawn as positive bars, or a credit reads as a charge.
+    const mixed = placeChart(chartElement(), [{ category: "Up", amount: 30 }, { category: "Down", amount: -10 }]).chart;
+    check(mixed.bars[0].y < mixed.bars[1].y, "a negative value is drawn below the baseline and a positive one above it");
+    check(mixed.bars[0].y + mixed.bars[0].h < mixed.bars[1].y + 0.001, "with both bars growing away from nought");
+  }
+
+  section("a chart is validated like the rest of the document");
+  {
+    const codes = element => errorsOf(validateTemplate(phaseDocument(element), { catalog: catalogForValidation })).map(issue => issue.code);
+
+    check(!codes(chartElement()).length, "a well-formed chart validates");
+    check(codes(chartElement({ categoryExpression: "" })).includes("element.chartCategory"), "a chart with no category field is refused");
+    check(codes(chartElement({ valueExpression: "" })).includes("element.chartValue"), "and one with no value field");
+    check(codes(chartElement({ valueExpression: "Fields.nope" })).includes("element.field"), "and one naming a field that does not exist");
+    check(codes(chartElement({ valueExpression: "Fields.status" })).includes("element.chartType"), "SUM needs a number, and a status is not one");
+    check(!codes(chartElement({ valueExpression: "Fields.status", fn: "COUNT" })).length, "but COUNT is happy with anything countable");
+    check(!codes(chartElement({ categoryExpression: "Fields.amount + 1" })).length, "a chart's categories may be any per-row expression, including a calculation");
+    check(
+      errorsOf(validateTemplate(phaseDocument(chartElement({ w: 20, h: 12 })), { catalog: catalogForValidation })).length === 0,
+      "a small chart is not an error",
+    );
+    check(
+      validateTemplate(phaseDocument(chartElement({ w: 20, h: 12 })), { catalog: catalogForValidation }).some(issue => issue.severity === "warning" && issue.code === "element.chartSmall"),
+      "but it warns while it is still being designed, because an axis needs room",
+    );
+    check(codes(chartElement({ categoryExpression: "SUM(Fields.amount)" })).includes("element.chartExpression"), "a chart's categories are read row by row, so an aggregate in one is refused");
+    check(codes(chartElement({ valueExpression: "RUNNINGSUM(Fields.amount)" })).includes("element.chartExpression"), "and so is a running total");
+    check(codes(chartElement({ scope: "group" })).includes("element.scope"), "a group-scoped chart outside a group is refused");
+  }
+
+  section("a running total keeps adding up, and carries over a page break");
+  {
+    const runningDocument = (expression, extraBand = null, groups = []) => {
+      const document = createBlankDocument("Running totals", "expenses");
+      document.page = { size: "a4", orientation: "portrait", width: 210, height: 297, margins: { top: 10, right: 10, bottom: 10, left: 10 } };
+      const detail = createBand("detail", { height: 6 });
+      detail.elements = [field("Fields.description", 0, 0, 40, 6), field(expression, 100, 0, 50, 6, "money")];
+      document.bands = [detail, ...(extraBand ? [extraBand] : [])];
+      document.groups = groups;
+      return document;
+    };
+    const runningValues = laid => laid.pages
+      .flatMap(page => page.bands)
+      .filter(band => band.kind === "detail")
+      .map(band => Number(band.elements[1].payload.lines.map(line => line.text).join("").replace(/[^0-9.-]/g, "")));
+
+    const laid = layoutReport({ document: runningDocument("RUNNINGSUM(Fields.amount)"), rows: phaseRows, measure, catalog: catalogForValidation });
+    const values = runningValues(laid);
+    check(laid.refused === false, "a running total does not stop the report from laying out");
+    check(values.length === 4, `every row prints a running total (${values.length})`);
+    check(values[0] === 100 && values[1] === 150 && values[2] === 175, `each row adds its own amount to the one before (${values.join(", ")})`);
+    check(Math.abs(values[3] - amountTotal) < 0.001, "and the last row's total is the report's total");
+
+    check(runningValues(layoutReport({ document: runningDocument("RUNNINGCOUNT()"), rows: phaseRows, measure, catalog: catalogForValidation })).join(",") === "1,2,3,4", "a running count counts the rows printed so far");
+    check(runningValues(layoutReport({ document: runningDocument("RUNNINGCOUNT(Fields.description)"), rows: phaseRows, measure, catalog: catalogForValidation })).join(",") === "1,2,3,4", "or the rows where a field has a value");
+    check(
+      runningValues(layoutReport({ document: runningDocument("RUNNINGAVG(Fields.amount)"), rows: phaseRows, measure, catalog: catalogForValidation })).join(",") === "100,75,58.33,50",
+      "a running mean is the mean of the rows so far",
+    );
+
+    // Enough rows to need more than one page: the total must not restart at the top of page two.
+    const many = Array.from({ length: 90 }, (_, index) => ({ description: `E-${index}`, amount: 10 }));
+    const spilled = layoutReport({ document: runningDocument("RUNNINGSUM(Fields.amount)"), rows: many, measure, catalog: catalogForValidation });
+    check(spilled.pages.length > 1, `90 rows need more than one page (${spilled.pages.length})`);
+    const secondPage = spilled.pages[1].bands.find(band => band.kind === "detail");
+    const carried = Number(secondPage.elements[1].payload.lines.map(line => line.text).join("").replace(/[^0-9.-]/g, ""));
+    check(carried > 400, `the total carries over the break rather than restarting (${carried} on the first row of page 2)`);
+    const across = runningValues(spilled);
+    check(Math.abs(across[across.length - 1] - 900) < 0.001, "and still reaches the report's total at the last row");
+
+    // Scoped to a group, the total starts again when that group opens.
+    const groups = [{ key: "status", label: "Status", expression: "Fields.status", sort: "asc", keepTogether: true }];
+    const groupHeader = createBand("groupHeader", { height: 6, groupKey: "status" });
+    groupHeader.elements = [field("Fields.status", 0, 0, 40, 6)];
+    const scoped = layoutReport({
+      document: runningDocument("RUNNINGSUM(Fields.amount, 'status')", groupHeader, groups),
+      rows: phaseRows,
+      measure,
+      catalog: catalogForValidation,
+    });
+    check(runningValues(scoped).join(",") === "100,150,25,50", `a group-scoped running total restarts at each group (${runningValues(scoped).join(", ")})`);
+
+    const footers = createBand("groupFooter", { height: 6, groupKey: "status" });
+    footers.elements = [field("RUNNINGSUM(Fields.amount, 'status')", 100, 0, 50, 6, "money")];
+    const withFooter = layoutReport({
+      document: runningDocument("RUNNINGSUM(Fields.amount, 'status')", footers, groups),
+      rows: phaseRows,
+      measure,
+      catalog: catalogForValidation,
+    });
+    const groupTotals = withFooter.pages
+      .flatMap(page => page.bands)
+      .filter(band => band.kind === "groupFooter")
+      .map(band => Number(band.elements[0].payload.lines.map(line => line.text).join("").replace(/[^0-9.-]/g, "")));
+    check(groupTotals.join(",") === "150,50", `a group footer reads its group's total through its last row (${groupTotals.join(", ")})`);
+    check(!scoped.issues.some(issue => issue.severity === "warning"), "and nothing about it needs a warning");
+
+    // The scope is checked before anything runs, so a total that cannot mean anything is refused.
+    const validateRunning = expression => errorsOf(validateTemplate(runningDocument(expression), { catalog: catalogForValidation })).map(issue => issue.code);
+    check(validateRunning("RUNNINGSUM(Fields.amount, 'page')").includes("expression.scope"), 'a running total cannot be scoped to "page"');
+    check(validateRunning("RUNNINGSUM(Fields.amount, 'nowhere')").includes("expression.scope"), "nor to a group the report does not have");
+    check(!errorsOf(validateTemplate(runningDocument("RUNNINGSUM(Fields.amount, 'group')"), { catalog: catalogForValidation })).length, 'and "group" is shorthand for the innermost declared group');
+    const headerDocument = runningDocument("RUNNINGSUM(Fields.amount)");
+    const columnHeader = createBand("columnHeader", { height: 6 });
+    columnHeader.elements = [field("RUNNINGSUM(Fields.amount)", 0, 0, 40, 6, "money")];
+    headerDocument.bands.push(columnHeader);
+    check(
+      validateTemplate(headerDocument, { catalog: catalogForValidation }).some(issue => /before any rows/.test(issue.message)),
+      "a running total printed before the rows warns that it will read as nothing",
+    );
+    check(
+      errorsOf(validateTemplate(runningDocument("RUNNINGCOUNT(Fields.nope)"), { catalog: catalogForValidation })).some(issue => issue.code === "expression.field"),
+      "and its field is checked like any other",
+    );
+  }
+
+  section("a sub-report flows onto its parent's pages");
+  {
+    const childId = "probe-child-report";
+    const childParameter = { key: "clientId", label: "Client", type: "text", required: true, defaultValue: "" };
+    const childDocument = () => {
+      const document = createBlankDocument("Sub report", "tickets");
+      document.page = { size: "a4", orientation: "portrait", width: 210, height: 297, margins: { top: 10, right: 10, bottom: 10, left: 10 } };
+      document.parameters = [{ ...childParameter }];
+      const title = createBand("reportTitle", { height: 8 });
+      title.elements = [text("Sub-report title", 0, 0, 80, 8)];
+      const detail = createBand("detail", { height: 6 });
+      detail.elements = [field("Fields.ticketNumber", 0, 0, 40, 6), text("{{Parameters.clientId}}", 60, 0, 40, 6)];
+      document.bands = [title, detail];
+      return document;
+    };
+    const childRows = count => Array.from({ length: count }, (_, index) => ({ ticketNumber: `C-${index}` }));
+    const subreportElement = overrides => createElement("subreport", {
+      x: 0, y: 0, w: 160, h: 8, templateId: childId, templateName: "Sub report",
+      parameterBindings: { clientId: "'Acme'" }, ...overrides,
+    });
+    const layoutWithChild = (element, parentRows = 3, childRowCount = 2, extra = {}) => {
+      const summary = createBand("reportSummary", { height: element.h + 2 });
+      summary.elements = [element];
+      return layoutReport({
+        document: parentDocument(summary),
+        rows: childRows(parentRows).map(row => ({ ticketNumber: row.ticketNumber.replace("C-", "P-") })),
+        parameters: { clientId: "Acme" },
+        measure,
+        catalog: catalogForValidation,
+        templates: [{ id: childId, name: "Sub report", parameters: [childParameter] }],
+        subreports: { [childId]: { document: childDocument(), rows: childRows(childRowCount), parameters: { clientId: "Acme" }, name: "Sub report" } },
+        ...extra,
+      });
+    };
+
+    const element = subreportElement();
+    const laid = layoutWithChild(element);
+    const bands = laid.pages.flatMap(page => page.bands);
+    const printed = bands.flatMap(band => band.elements)
+      .filter(candidate => candidate.payload.kind === "text" && /^C-\d/.test(candidate.payload.lines.map(line => line.text).join("")));
+    check(laid.refused === false, "a sub-report does not stop the parent from laying out");
+    check(printed.length === 2, `the sub-report's rows are printed once each (${printed.length})`);
+    check(bands.some(band => band.section), "and they carry the section they came from, so they are not mistaken for the parent's rows");
+    check(laid.pages.length === 1, `a child that fits does not add a page (${laid.pages.length})`);
+    check(laid.rowCount === 3, `and the parent's own row count is unchanged (${laid.rowCount})`);
+
+    // The parent's own page footer still knows the truth, however many pages the child pulls in.
+    const footerOf = page => page.bands.find(band => band.kind === "pageFooter");
+    const footerText = page => footerOf(page).elements[0].payload.lines.map(line => line.text).join("");
+    check(footerText(laid.pages[0]) === "Page 1 of 1", `the parent's page footer reports the parent's page count (${footerText(laid.pages[0])})`);
+
+    const spilled = layoutWithChild(element, 3, 80);
+    check(spilled.pages.length > 1, `a child longer than the page adds pages (${spilled.pages.length})`);
+    check(
+      spilled.pages.every((page, index) => footerText(page) === `Page ${index + 1} of ${spilled.pages.length}`),
+      "and the parent's footer counts every one of them, in the right order",
+    );
+    check(spilled.rowCount === 3, "without the child's rows becoming the parent's rows");
+    check(spilled.pages.flatMap(page => page.bands).filter(band => band.kind === "detail" && !band.section).length === 3, "and the parent still prints its own three rows");
+    check(spilled.pages.flatMap(page => page.bands).filter(band => band.kind === "reportTitle" && band.section).length === 1, `the child's title prints once, inline (${spilled.pages.flatMap(page => page.bands).filter(band => band.kind === "reportTitle" && band.section).length})`);
+    check(
+      spilled.pages.flatMap(page => page.bands).flatMap(band => band.elements).filter(candidate => candidate.payload.kind === "text" && candidate.payload.lines.some(line => line.text === "Acme")).length > 0,
+      "and the sub-report's parameters are the ones its parent bound",
+    );
+
+    // A child printed from a band that repeats prints once per parent row — that is what the design asked.
+    const detail = createBand("detail", { height: 6 });
+    detail.elements = [field("Fields.ticketNumber", 0, 0, 40, 6), createElement("subreport", {
+      x: 0, y: 0, w: 60, h: 6, templateId: childId, templateName: "Sub report", parameterBindings: {},
+    })];
+    const perRowDocument = parentDocument();
+    perRowDocument.bands = perRowDocument.bands.map(band => (band.kind === "detail" ? detail : band));
+    const perRow = layoutReport({
+      document: perRowDocument,
+      rows: [{ ticketNumber: "P-1" }, { ticketNumber: "P-2" }, { ticketNumber: "P-3" }],
+      measure,
+      catalog: catalogForValidation,
+      templates: [{ id: childId, name: "Sub report", parameters: [childParameter] }],
+      // No parameters bound at all: the child's required parameter is unset, which must not stop the parent.
+      subreports: { [childId]: { document: childDocument(), rows: childRows(1), parameters: {}, name: "Sub report" } },
+    });
+    check(
+      perRow.pages.flatMap(page => page.bands).flatMap(band => band.elements).filter(candidate => candidate.payload.kind === "text" && /^C-0/.test(candidate.payload.lines.map(line => line.text).join(""))).length === 3,
+      "a sub-report in a repeating band prints once for each of the parent's rows",
+    );
+    check(perRow.pages.length === 1 && !perRow.refused, "and the parent is still produced when the child is missing what it needs");
+
+    // A sub-report that cannot be found is a note and a placeholder, never a refusal: the rest of the
+    // report is still worth printing.
+    const missing = layoutReport({
+      document: parentDocument((() => { const band = createBand("reportSummary", { height: 10 }); band.elements = [subreportElement({ templateId: "gone", templateName: "Deleted report" })]; return band; })()),
+      rows: [{ ticketNumber: "P-1" }, { ticketNumber: "P-2" }],
+      measure,
+      catalog: catalogForValidation,
+    });
+    check(!missing.refused && missing.pages.length > 0, "a sub-report that is no longer available does not stop the report");
+    check(missing.issues.some(issue => issue.code === "render.subreport" && /not available/.test(issue.message)), "it is reported as a warning that says so");
+    check(
+      missing.pages.flatMap(page => page.bands).flatMap(band => band.elements).some(candidate => candidate.payload.kind === "text" && /not available/.test(candidate.payload.lines.map(line => line.text).join(""))),
+      "and a placeholder is printed where it would have been",
+    );
+
+    // Validation refuses a reference that cannot resolve before the report is ever run.
+    const withChild = overrides => {
+      const band = createBand("reportSummary", { height: 10 });
+      band.elements = [subreportElement(overrides)];
+      return parentDocument(band);
+    };
+    const options = { catalog: catalogForValidation, templates: [{ id: childId, name: "Sub report", parameters: [childParameter] }] };
+    check(errorsOf(validateTemplate(withChild({ templateId: "gone" }), options)).some(issue => issue.code === "element.subreportMissing"), "a reference to a report that is not there is an error on save");
+    check(errorsOf(validateTemplate(withChild({ templateId: "" }), { catalog: catalogForValidation })).some(issue => issue.code === "element.subreport"), "and so is a sub-report with no report chosen");
+    check(!errorsOf(validateTemplate(withChild({}), options)).length, "a reference that is there validates");
+    check(errorsOf(validateTemplate(withChild({ parameterBindings: { clientId: "Fields.ticketNumber" } }), options)).some(issue => issue.code === "element.subreportBinding"), "a binding that reads a row is refused, because it is worked out before there are any rows");
+    check(errorsOf(validateTemplate(withChild({ parameterBindings: { clientId: "SUM(Fields.amount)" } }), options)).some(issue => issue.code === "element.subreportBinding"), "and so is one that totals anything");
+    check(validateTemplate(withChild({ parameterBindings: {} }), options).some(issue => issue.code === "element.subreportParameter"), "and an unbound required parameter is pointed out");
+    check(!errorsOf(validateTemplate(withChild({ parameterBindings: { clientId: "Parameters.clientId" } }), options)).length, "binding it to the parent's parameter validates");
+    check(validateTemplate(withChild({ parameterBindings: { "not a name": "1" } }), options).some(issue => issue.code === "element.subreportParameter"), "and a binding whose key is not a parameter name is pointed out");
+  }
+
+  section("the API resolves sub-reports, and refuses a loop");
+  {
+    const stampChild = Date.now().toString(36);
+    const created = [];
+    const makeTemplate = async (name, document) => {
+      const response = await call("POST", "/api/reports", { token: admin.token, body: { name, type: "template", config: { document } } });
+      if (response.data?.id) created.push(response.data.id);
+      return response;
+    };
+
+    const childDoc = () => {
+      const document = createBlankDocument("Probe child", "tickets");
+      document.page = { size: "a4", orientation: "portrait", width: 210, height: 297, margins: { top: 10, right: 10, bottom: 10, left: 10 } };
+      document.parameters = [{ key: "status", label: "Status", type: "text", required: true, defaultValue: "" }];
+      document.dataSources[0].filters = [{ field: "status", op: "equals", parameterKey: "status" }];
+      document.dataSources[0].limit = 200;
+      const detail = createBand("detail", { height: 6 });
+      detail.elements = [field("Fields.ticketNumber", 0, 0, 60, 6)];
+      document.bands = [detail];
+      return document;
+    };
+    // A child with nothing to ask for, for the templates that only exist to be pointed at.
+    const bareChildDoc = () => {
+      const document = childDoc();
+      document.parameters = [];
+      document.dataSources[0].filters = [];
+      return document;
+    };
+
+    const parentDoc = templateId => {
+      const document = createBlankDocument("Probe parent", "tickets");
+      document.page = { size: "a4", orientation: "portrait", width: 210, height: 297, margins: { top: 10, right: 10, bottom: 10, left: 10 } };
+      document.parameters = [{ key: "status", label: "Status", type: "text", required: true, defaultValue: "new" }];
+      const summary = createBand("reportSummary", { height: 40 });
+      summary.elements = [createElement("subreport", {
+        x: 0, y: 0, w: 160, h: 20, templateId, templateName: "Probe child",
+        parameterBindings: { status: "Parameters.status" },
+      })];
+      const detail = createBand("detail", { height: 6 });
+      detail.elements = [field("Fields.ticketNumber", 0, 0, 60, 6)];
+      document.bands = [detail, summary];
+      return document;
+    };
+
+    const child = await makeTemplate(`Probe template child ${stampChild}`, childDoc());
+    check(child.status === 201, `a child template is stored (${child.status})`);
+    const childId = child.data?.id;
+
+    const parent = await makeTemplate(`Probe template parent ${stampChild}`, parentDoc(childId));
+    check(parent.status === 201, `and a parent that prints it (${parent.status})`);
+
+    const run = await call("GET", `/api/reports/${parent.data?.id}/run`, { token: admin.token });
+    check(run.status === 200, `the parent runs (${run.status})`);
+    const resolved = run.data?.subreports?.[childId];
+    check(!!resolved, "and its sub-report came back resolved for the run");
+    check(resolved?.parameters?.status === "new", `with the parent's parameter value inherited (${resolved?.parameters?.status})`);
+    check(Array.isArray(resolved?.rows) && resolved.rows.length > 0, `and the child's own rows fetched once (${resolved?.rows?.length})`);
+    check((resolved?.rows ?? []).every(row => row.status === "new"), "every one of which satisfies the parameter the parent bound");
+    check(resolved?.document?.bands?.length > 0, "with the child's own document, so the layout can print it");
+
+    // The same binding, a different parent parameter: the child follows it rather than caching a value.
+    const closed = await call("GET", `/api/reports/${parent.data?.id}/run?status=closed`, { token: admin.token });
+    const closedResolved = closed.data?.subreports?.[childId];
+    check(closed.status === 200, `the parent runs again with another parameter (${closed.status})`);
+    check(closedResolved?.parameters?.status === "closed", "and the child inherits the new value");
+    check((closedResolved?.rows ?? []).length > 0 && (closedResolved?.rows ?? []).every(row => row.status === "closed"), "so it fetches the rows that value asks for");
+    check(closedResolved?.rows?.length !== resolved?.rows?.length, "which are not the same rows as before");
+    check(run.data?.parameters?.status === "new", "and the parent's own parameters are unchanged by the child");
+
+    // A report that prints itself is refused rather than looped.
+    const selfDoc = bareChildDoc();
+    const selfie = await makeTemplate(`Probe template self ${stampChild}`, selfDoc);
+    const summary = createBand("reportSummary", { height: 20 });
+    summary.elements = [createElement("subreport", { x: 0, y: 0, w: 120, h: 15, templateId: selfie.data.id, templateName: "itself" })];
+    const patched = await call("PATCH", `/api/reports/${selfie.data.id}`, {
+      token: admin.token,
+      body: { config: { document: { ...selfDoc, bands: [...selfDoc.bands, summary] } } },
+    });
+    check(patched.status === 200, `a template may point at itself once it exists (${patched.status})`);
+    const selfRun = await call("GET", `/api/reports/${selfie.data.id}/run`, { token: admin.token });
+    check(selfRun.status === 200, `and running it still answers rather than hanging (${selfRun.status})`);
+    check((selfRun.data?.notes ?? []).some(note => /would print itself/i.test(note)), "with a note saying it was skipped");
+    check(!selfRun.data?.subreports?.[selfie.data.id], "and nothing resolved for it");
+
+    // Nesting is bounded: a chain longer than the cap stops at the cap and says so.
+    const chain = [];
+    for (let level = 0; level < 5; level++) {
+      const document = bareChildDoc();
+      if (level > 0) {
+        const nested = createBand("reportSummary", { height: 20 });
+        nested.elements = [createElement("subreport", { x: 0, y: 0, w: 120, h: 15, templateId: chain[level - 1], templateName: `level ${level - 1}` })];
+        document.bands = [...document.bands, nested];
+      }
+      const response = await makeTemplate(`Probe template chain ${stampChild} ${level}`, document);
+      chain.push(response.data?.id);
+      if (response.status !== 201) break;
+    }
+    check(chain.filter(Boolean).length === 5, `a five-deep chain of templates is stored (${chain.filter(Boolean).length})`);
+    const deep = await call("GET", `/api/reports/${chain[4]}/run`, { token: admin.token });
+    check(deep.status === 200, `the deepest of them runs (${deep.status})`);
+    check((deep.data?.notes ?? []).some(note => /nest at most 3 deep/i.test(note)), "and the level past the cap is skipped with a note rather than followed");
+    check(Object.keys(deep.data?.subreports ?? {}).length <= 3, `so at most three levels resolved (${Object.keys(deep.data?.subreports ?? {}).length})`);
+
+    // A sub-report whose target stops being a designed report is skipped at run time with a note, and the
+    // engine prints a placeholder — the parent is still worth printing.
+    const retired = await makeTemplate(`Probe template retired ${stampChild}`, bareChildDoc());
+    const retiredId = retired.data?.id;
+    const pointing = await makeTemplate(`Probe template pointing ${stampChild}`, parentDoc(retiredId));
+    check(pointing.status === 201, `a parent may point at a report that is still a template (${pointing.status})`);
+    const firstRun = await call("GET", `/api/reports/${pointing.data?.id}/run`, { token: admin.token });
+    check(!!firstRun.data?.subreports?.[retiredId], "and it resolves while it is one");
+    const demoted = await call("PATCH", `/api/reports/${retiredId}`, {
+      token: admin.token,
+      body: { type: "custom", config: { source: "tickets", columns: [], filters: [], limit: 5 } },
+    });
+    check(demoted.status === 200 && demoted.data.type === "custom", `a template can be turned back into a plain report (${demoted.status})`);
+    const afterDemotion = await call("GET", `/api/reports/${pointing.data?.id}/run`, { token: admin.token });
+    check(afterDemotion.status === 422, `and the parent then refuses to run rather than printing nothing (${afterDemotion.status})`);
+    check(/no longer available/.test(JSON.stringify(afterDemotion.data)), "naming the report that went missing, so the fix is obvious");
+
+    // The engine still has the last word: handed the parent's document without a resolution — which is what
+    // the designer's own preview does while a child is being fixed — it prints a placeholder, not a refusal.
+    const previewLayout = layoutReport({
+      document: parentDoc(retiredId),
+      rows: [{ ticketNumber: "P-1" }],
+      measure,
+      catalog: catalogForValidation,
+      subreports: {},
+    });
+    check(previewLayout.pages.length > 0 && !previewLayout.refused, "and a layout made without a resolution is still produced");
+    check(
+      previewLayout.pages.flatMap(page => page.bands).flatMap(band => band.elements).some(candidate => candidate.payload.kind === "text" && /not available/i.test(candidate.payload.lines.map(line => line.text).join(""))),
+      "with a placeholder where the sub-report would have been",
+    );
+
+    for (const id of created.filter(Boolean)) await call("DELETE", `/api/reports/${id}`, { token: admin.token });
+    check(created.filter(Boolean).length > 0, `the sub-report probe's ${created.filter(Boolean).length} templates are cleaned up`);
+  }
+
+
   if (createdId) {
     const removed = await call("DELETE", `/api/reports/${createdId}`, { token: admin.token });
     check(removed.status === 200, `the probe's template is cleaned up (${removed.status})`);

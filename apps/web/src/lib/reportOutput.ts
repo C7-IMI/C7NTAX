@@ -13,13 +13,14 @@
 import jsPDF from "jspdf";
 import {
   labelFor,
-  type LaidOutBand, type LaidOutElement, type LaidOutReport,
+  type LaidOutBand, type LaidOutChart, type LaidOutElement, type LaidOutReport,
   type ReportTemplateDocument, type TemplateElement,
 } from "@C7NTAX/shared";
 import {
   reportFileBase, tablesToCsv, tablesToExcel, tablesToPrintWindow, type FlatTable,
 } from "../components/reports/reportKit";
 import { FONT_STACKS, pdfFont } from "./reportMeasure";
+import { chartSvg } from "./reportChartSvg";
 
 export interface BandedOutputMeta {
   title: string;
@@ -110,6 +111,10 @@ function bandHtml(band: LaidOutBand): string {
       return `<div class="ln" style="left:${element.x}mm;top:${element.y}mm;width:${element.w}mm;height:${width}mm;background:${colour}"></div>`;
     }
     if (element.payload.kind === "box") return `<div class="el" style="${box}"></div>`;
+    // The chart's SVG is placed in a wrapper at the element's own millimetres, exactly as on screen.
+    if (element.payload.kind === "chart") {
+      return `<div class="el" style="left:${element.x}mm;top:${element.y}mm;width:${element.w}mm;height:${element.h}mm;border:none;background:transparent">${chartSvg(element.payload.chart, { origin: "box" })}</div>`;
+    }
     if (element.payload.kind === "image") {
       return element.payload.src
         ? `<div class="el" style="${box}"><img src="${escapeHtml(element.payload.src)}" style="width:100%;height:100%;object-fit:contain" alt=""/></div>`
@@ -124,6 +129,85 @@ function bandHtml(band: LaidOutBand): string {
 }
 
 // ── PDF ─────────────────────────────────────────────────────────────
+
+/** A point on a pie: radians clockwise from twelve o'clock, matching the engine's own measurement. */
+const chartPolar = (cx: number, cy: number, r: number, angle: number): [number, number] =>
+  [cx + r * Math.sin(angle), cy - r * Math.cos(angle)];
+
+/**
+ * Draws a chart with jsPDF's own primitives, reading the layout's millimetres. A pie's curved edge is
+ * built from triangles between the centre and successive points on the arc, which is how a vector pie
+ * is drawn without a path API — at forty-eight steps a slice is indistinguishable from a curve.
+ */
+function drawChart(doc: jsPDF, chart: LaidOutChart): void {
+  const fill = (colour: string) => { const [r, g, b] = hexToRgb(colour); doc.setFillColor(r, g, b); };
+  const stroke = (colour: string) => { const [r, g, b] = hexToRgb(colour); doc.setDrawColor(r, g, b); };
+
+  for (const grid of chart.gridLines) {
+    stroke(grid.colour);
+    doc.setLineWidth(0.15);
+    doc.line(grid.x1, grid.y1, grid.x2, grid.y2);
+  }
+  for (const bar of chart.bars) {
+    fill(bar.colour);
+    doc.rect(bar.x, bar.y, bar.w, bar.h, "F");
+  }
+  for (const axis of chart.axis) {
+    stroke("#64748b");
+    doc.setLineWidth(0.2);
+    doc.line(axis.x1, axis.y1, axis.x2, axis.y2);
+  }
+
+  if (chart.slices.length) {
+    const { x: cx, y: cy, r, innerR } = chart.centre;
+    for (const slice of chart.slices) {
+      fill(slice.colour);
+      const sweep = Math.max(0, slice.endAngle - slice.startAngle);
+      const steps = Math.max(1, Math.ceil((sweep / (Math.PI * 2)) * 48));
+      for (let step = 0; step < steps; step++) {
+        const from = slice.startAngle + (sweep * step) / steps;
+        const to = slice.startAngle + (sweep * (step + 1)) / steps;
+        const [x1, y1] = chartPolar(cx, cy, r, from);
+        const [x2, y2] = chartPolar(cx, cy, r, to);
+        if (innerR > 0) {
+          const [ix1, iy1] = chartPolar(cx, cy, innerR, from);
+          const [ix2, iy2] = chartPolar(cx, cy, innerR, to);
+          doc.triangle(x1, y1, x2, y2, ix1, iy1, "F");
+          doc.triangle(x2, y2, ix2, iy2, ix1, iy1, "F");
+        } else {
+          doc.triangle(x1, y1, x2, y2, cx, cy, "F");
+        }
+      }
+    }
+  }
+
+  if (chart.points.length > 1) {
+    stroke("#0f766e");
+    doc.setLineWidth(0.5);
+    for (let index = 1; index < chart.points.length; index++) {
+      const previous = chart.points[index - 1]!;
+      const point = chart.points[index]!;
+      doc.line(previous.x, previous.y, point.x, point.y);
+    }
+  }
+  for (const point of chart.points) {
+    fill("#0f766e");
+    doc.circle(point.x, point.y, 0.6, "F");
+  }
+  for (const swatch of chart.legendSwatches) {
+    fill(swatch.colour);
+    doc.rect(swatch.x, swatch.y, swatch.w, swatch.h, "F");
+  }
+
+  for (const label of chart.labels) {
+    const { font, style: fontStyle } = pdfFont({ fontFamily: label.fontFamily, fontSize: label.fontSize, bold: label.bold, italic: false });
+    doc.setFont(font, fontStyle);
+    doc.setFontSize(label.fontSize);
+    const [r, g, b] = hexToRgb(label.colour);
+    doc.setTextColor(r, g, b);
+    if (label.text) doc.text(label.text, label.x, label.baselineY, { baseline: "alphabetic" });
+  }
+}
 
 /**
  * The PDF, drawn from the layout's own coordinates. jsPDF is given the document's page size in
@@ -147,6 +231,14 @@ export function exportTemplatePdf(laid: LaidOutReport, meta: BandedOutputMeta): 
           doc.setDrawColor(r, g, b);
           doc.setLineWidth(width);
           doc.line(element.x, element.y + width / 2, element.x + element.w, element.y + width / 2);
+          continue;
+        }
+
+        // A chart is drawn from the same millimetres the screen draws, with jsPDF's own primitives —
+        // rectangles, lines, triangles and text — so no SVG rasterising step is needed and the printed
+        // chart stays vector-crisp at any zoom.
+        if (element.payload.kind === "chart") {
+          drawChart(doc, element.payload.chart);
           continue;
         }
 
@@ -213,6 +305,9 @@ export function bandsToTables(laid: LaidOutReport, document: ReportTemplateDocum
   let groupValue = "";
   for (const page of laid.pages) {
     for (const band of page.bands) {
+      // A sub-report's bands are its own design printed inside this one; its rows belong to it, not to
+      // this table, and mapping them onto the parent's columns would only produce blanks.
+      if (band.section) continue;
       if (band.kind === "groupHeader") { groupValue = band.groupValue ?? ""; continue; }
       if (band.kind === "detail") {
         const row: Record<string, unknown> = {};

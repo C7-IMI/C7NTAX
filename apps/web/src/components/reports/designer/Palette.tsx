@@ -19,7 +19,7 @@ interface PaletteProps {
   document: ReportTemplateDocument;
   catalog: DesignerCatalog | null;
   selection: Selection;
-  onAddElement: (bandId: string, element: TemplateElement) => void;
+  onAddElement: (bandId: string, element: TemplateElement, options?: { growBandTo?: number }) => void;
   onEditElement: (bandId: string, elementId: string, patch: Partial<TemplateElement>) => void;
   onSelect: (selection: Selection) => void;
 }
@@ -278,13 +278,20 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
                 onClick={() => {
                   if (!targetBand) return;
                   const placement = fitInBand(targetBand, targetBand.elements.length);
+                  // A chart and a sub-report need room to be legible, so the band grows to hold them —
+                  // otherwise a chart dropped into a 6mm data row would be refused by the validator on
+                  // the spot, which reads as the designer being broken rather than as the band being short.
+                  const natural = spec.type === "chart" ? { w: 90, h: 55 } : spec.type === "subreport" ? { w: 110, h: 25 } : null;
+                  const height = natural ? Math.max(placement.h, natural.h) : placement.h;
+                  const y = natural ? 0 : placement.y;
                   const element = createElement(spec.type as TemplateElement["type"], {
                     x: 0,
-                    y: placement.y,
-                    w: spec.type === "text" ? 50 : spec.type === "aggregate" ? 30 : spec.type === "image" ? 25 : 60,
-                    h: placement.h,
+                    y,
+                    w: natural?.w ?? (spec.type === "text" ? 50 : spec.type === "aggregate" ? 30 : spec.type === "image" ? 25 : 60),
+                    h: height,
                   });
-                  onAddElement(targetBand.id, element);
+                  const growBandTo = natural ? Math.max(targetBand.height, y + height + 0.25) : undefined;
+                  onAddElement(targetBand.id, element, growBandTo === undefined ? undefined : { growBandTo });
                   onSelect({ kind: "element", bandId: targetBand.id, elementId: element.id });
                 }}
                 className={`px-2 py-1 rounded text-[10px] border ${targetBand ? "bg-surface-light border-surface-lighter text-gray-300 hover:border-cyber-500" : "text-gray-600 border-surface-lighter"}`}

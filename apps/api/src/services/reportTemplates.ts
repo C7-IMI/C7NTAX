@@ -278,6 +278,8 @@ export async function runTemplateDocument(
     /** Depth and ancestry of sub-reports, so a self-printing report is refused rather than looped. */
     depth?: number;
     stack?: string[];
+    /** The report being run, so a sub-report pointing back at it is caught at the first level. */
+    reportId?: string;
   } = {},
 ): Promise<TemplateRun> {
   const templates = await listTemplateRefs();
@@ -308,7 +310,13 @@ export async function runTemplateDocument(
 
   const [result, resolved] = await Promise.all([
     runReportConfig(plan.config, scope),
-    resolveSubreports(validation.document, parameters, { clientId: options.clientId, depth: options.depth, stack: options.stack }),
+    resolveSubreports(validation.document, parameters, {
+      clientId: options.clientId,
+      depth: options.depth,
+      // The report being run is part of the ancestry, so "this report prints itself" is caught before any
+      // query rather than one level down.
+      stack: options.stack ?? (options.reportId ? [options.reportId] : []),
+    }),
   ]);
   return {
     rows: result.rows,

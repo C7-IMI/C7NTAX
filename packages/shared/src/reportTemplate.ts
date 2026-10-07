@@ -972,14 +972,21 @@ export function validateTemplate(input: unknown, options: ValidationOptions = {}
 
       if (element.type === "chart") {
         const chartContext = { bandId: band.id, elementId: element.id };
+        // A chart reads its categories and its values one row at a time, so a function that works over a
+        // set of rows cannot be part of either — the fold is the chart's own function instead.
+        const rowExpressionProblem = (source: string, label: string) => {
+          const problem = rowSetFunctionIn(source);
+          if (problem) add({ severity: "error", code: "element.chartExpression", path: `${elementPath}.${label}`, message: problem, ...chartContext });
+          return !!problem;
+        };
         if (!element.categoryExpression.trim()) {
           add({ severity: "error", code: "element.chartCategory", path: `${elementPath}.categoryExpression`, message: "A chart needs the field that groups the rows into categories — the bars or slices come from it.", ...chartContext });
-        } else {
+        } else if (!rowExpressionProblem(element.categoryExpression, "categoryExpression")) {
           checkExpression(element.categoryExpression, `${elementPath}.categoryExpression`, { band, document, context: chartContext, catalogSource, fieldKeys, sourceKeys, add });
         }
         if (!element.valueExpression.trim() && element.fn !== "COUNT") {
           add({ severity: "error", code: "element.chartValue", path: `${elementPath}.valueExpression`, message: `A chart of ${element.fn === "COUNTD" ? "distinct values" : "values"} needs the field to ${element.fn === "COUNTD" ? "count" : "total"}.`, ...chartContext });
-        } else if (element.valueExpression.trim()) {
+        } else if (element.valueExpression.trim() && !rowExpressionProblem(element.valueExpression, "valueExpression")) {
           const { ast, error } = parseExpression(element.valueExpression);
           if (!ast) {
             add({ severity: "error", code: "element.chartValue", path: `${elementPath}.valueExpression`, message: `This expression could not be read: ${error}`, ...chartContext });
@@ -1038,6 +1045,12 @@ export function validateTemplate(input: unknown, options: ValidationOptions = {}
             // silently resolving to nothing at run time.
             if (collectPaths(ast).some(p => (p.parts[0] ?? "").toLowerCase() === "fields")) {
               add({ severity: "error", code: "element.subreportBinding", path: `${elementPath}.parameterBindings.${key}`, message: "A sub-report's parameter is set once for the whole report, so it cannot read Fields — pass a parameter instead.", ...subContext });
+              continue;
+            }
+            const rowSet = rowSetFunctionIn(expression);
+            if (rowSet) {
+              add({ severity: "error", code: "element.subreportBinding", path: `${elementPath}.parameterBindings.${key}`, message: `A sub-report's rows are fetched before this report's rows are read, so ${rowSet}`, ...subContext });
+              continue;
             }
             checkExpression(expression, `${elementPath}.parameterBindings.${key}`, { band, document, context: subContext, catalogSource, fieldKeys, sourceKeys, add });
           }
@@ -1081,6 +1094,20 @@ interface ExpressionCheck {
   fieldKeys: Set<string>;
   sourceKeys: Set<string>;
   add: (issue: TemplateIssue) => void;
+}
+
+/**
+ * A chart's categories and values, and a sub-report's parameter bindings, are worked out **outside** any
+ * row set — so an aggregate or a running total in one cannot mean anything. It is caught here, while the
+ * report is being designed, rather than resolving to nothing at run time.
+ */
+function rowSetFunctionIn(source: string): string | null {
+  const { ast } = parseExpression(source);
+  if (!ast) return null;
+  const call = collectCalls(ast).find(candidate =>
+    AGGREGATE_FUNCTIONS.includes(candidate.name as never) || RUNNING_FUNCTIONS.includes(candidate.name as RunningFunction));
+  if (!call) return null;
+  return `${call.name} works over a set of rows and cannot be used here — use the row's own field, or a Total or Chart element instead.`;
 }
 
 /** Shared between text holes, field expressions and aggregate references. */

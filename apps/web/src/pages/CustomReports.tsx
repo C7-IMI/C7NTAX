@@ -99,6 +99,9 @@ function TemplateReportView({ report, payload, onClose }: { report: SavedReport;
       parameters: (payload.parameters ?? {}) as Record<string, unknown>,
       measure: measureTextMm,
       limit: payload.limit as number | undefined,
+      // The run resolves the sub-reports, so a saved report prints the same embedded reports the
+      // designer previewed — from the same child rows, on the same pages.
+      subreports: payload.subreports as Record<string, { document: unknown; rows: Array<Record<string, unknown>>; parameters: Record<string, unknown>; name?: string }> | undefined,
     });
   }, [document, payload]);
 
@@ -233,6 +236,7 @@ export function CustomReportsPage() {
           parameters: (payload.parameters ?? {}) as Record<string, unknown>,
           measure: measureTextMm,
           limit: payload.limit as number | undefined,
+          subreports: payload.subreports as Record<string, { document: unknown; rows: Array<Record<string, unknown>>; parameters: Record<string, unknown>; name?: string }> | undefined,
         });
         const meta = { title: report.name, subtitle: report.description ?? undefined, period: (payload.period as { label?: string } | undefined)?.label };
         if (action === "print") printTemplateReport(laid, meta);

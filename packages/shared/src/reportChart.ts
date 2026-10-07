@@ -121,12 +121,13 @@ export function layoutChart(request: ChartRequest): LaidOutChart {
     colour?: string,
   ) => {
     if (!text) return;
-    const font = textStyle(style, size);
+    const bold = role === "title";
+    const font = { ...textStyle(style, size), bold };
     const width = measure(text, font);
     const left = anchor === "middle" ? x - width / 2 : anchor === "end" ? x - width : x;
     labels.push({
       role, text, x: left, y, baselineY: y + size * 0.8 * PT_TO_MM, width,
-      colour: colour ?? style.color, fontSize: size, fontFamily: style.fontFamily, bold: false,
+      colour: colour ?? style.color, fontSize: size, fontFamily: style.fontFamily, bold,
     });
   };
 

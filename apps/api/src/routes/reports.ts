@@ -291,6 +291,7 @@ reportsRouter.get("/:id/run", requirePermission(Permission.ReportView), async (r
         name: report.name,
         parameters: supplied,
         clientId: period.clientId,
+        reportId: report.id,
       });
       if (run.validation.errors.length) {
         throw new AppError(`This template has ${run.validation.errors.length} problem${run.validation.errors.length === 1 ? "" : "s"}: ${run.validation.errors[0]!.message}`, 422);

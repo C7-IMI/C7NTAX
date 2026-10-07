@@ -11,6 +11,7 @@
 import type { CSSProperties } from "react";
 import { mmToPx, type LaidOutElement, type LaidOutPage, type LaidOutReport } from "@C7NTAX/shared";
 import { BAND_BACKGROUNDS } from "../../../lib/reportOutput";
+import { chartSvg } from "../../../lib/reportChartSvg";
 import { FONT_STACKS } from "../../../lib/reportMeasure";
 
 const isTransparent = (colour: string | null | undefined): boolean =>
@@ -59,6 +60,12 @@ export function PlacedElement({ element, zoom }: { element: LaidOutElement; zoom
 
   if (element.payload.kind === "box") {
     return <div style={{ ...placedStyle(element, zoom), border, background }} />;
+  }
+
+  // A chart is drawn by the same function the print window uses, so the two cannot disagree — the
+  // markup is a millimetre box that the `zoom` scales, not a second implementation of the geometry.
+  if (element.payload.kind === "chart") {
+    return <div style={{ ...placedStyle(element, zoom) }} dangerouslySetInnerHTML={{ __html: chartSvg(element.payload.chart, { zoom, origin: "box" }) }} />;
   }
 
   return (

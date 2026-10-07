@@ -1,5 +1,644 @@
 [
   {
+    "id": "ce96cdc3-58dd-4a15-8f8e-722700a13b43",
+    "name": "Probe template renamed 1791390236909",
+    "description": "Probe",
+    "type": "template",
+    "config": {
+      "document": {
+        "name": "Probe design",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_muybht673irp",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 0,
+                "y": 2,
+                "id": "el_muybht672uqi",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_muybht672vwz",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_muybht6734vm",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_muybht67362v",
+                "text": "Invoice Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_muybht6738b9",
+                "text": "Currency",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_muybht673au2",
+                "text": "Due Date",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 139.5,
+                "y": 0,
+                "id": "el_muybht673ejh",
+                "text": "Subtotal",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "right",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_muybht6730hx",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_muybht6731ba",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_muybht6732fc",
+                "text": "{{COUNT(Fields.invoiceNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_muybht6733qr",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_muybht6735o7",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_muybht6737og",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.invoiceNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_muybht6739fj",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.currency"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_muybht673bki",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "date",
+                "expression": "Fields.dueDate"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 139.5,
+                "y": 0,
+                "id": "el_muybht673ff9",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "money",
+                "expression": "Fields.subtotal"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_muybht673ct2",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_muybht673d8w",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 139.5,
+                "y": 1.5,
+                "fn": "SUM",
+                "id": "el_muybht673gr2",
+                "type": "aggregate",
+                "scope": "group",
+                "style": {
+                  "bold": true,
+                  "align": "right",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "money",
+                "expression": "Fields.subtotal"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 1.5,
+                "id": "el_muybht673hdp",
+                "text": "Group total",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_muybht673j8b",
+            "kind": "reportSummary",
+            "height": 12,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_muybht673klv",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#0f172a",
+                    "width": 0.5
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 2,
+                "id": "el_muybht673lg",
+                "text": "Grand total",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "right",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 139.5,
+                "y": 2,
+                "fn": "SUM",
+                "id": "el_muybht673m53",
+                "type": "aggregate",
+                "scope": "report",
+                "style": {
+                  "bold": true,
+                  "align": "right",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 11,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "money",
+                "expression": "Fields.subtotal"
+              },
+              {
+                "h": 6,
+                "w": 93,
+                "x": 0,
+                "y": 2,
+                "id": "el_muybht673ngb",
+                "text": "{{COUNT(Fields.invoiceNumber)}} records in this report",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_muybht672w4z",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_muybht672xme",
+                "text": "Invoices · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_muybht672yym",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_muybht672z80",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "invoices",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      }
+    },
+    "isSystem": false,
+    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "createdAt": "2026-10-07T16:23:56.918Z",
+    "updatedAt": "2026-10-07T16:23:56.941Z"
+  },
+  {
     "id": "300f7292-d13a-462f-b3c7-445e03c626dc",
     "name": "Client Value Report",
     "description": "Value delivered per client",

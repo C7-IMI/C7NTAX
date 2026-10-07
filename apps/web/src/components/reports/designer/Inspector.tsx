@@ -8,15 +8,20 @@
  */
 import { useMemo } from "react";
 import {
-  BAND_KINDS, BAND_BY_KIND, ELEMENT_TYPES, PAGE_SIZES, VALUE_FORMATS, FORMAT_LABELS,
+  BAND_KINDS, BAND_BY_KIND, CHART_FUNCTIONS, CHART_KINDS, ELEMENT_TYPES, PAGE_SIZES, VALUE_FORMATS, FORMAT_LABELS,
   AGGREGATE_FUNCTIONS, AGGREGATE_SCOPES, createBand, createElement, newId,
-  type ElementStyle, type ReportTemplateDocument, type TemplateBand, type TemplateDataSource,
-  type TemplateElement, type TemplateGroup, type TemplateIssue, type TemplateParameter,
+  type ChartElement, type ElementStyle, type ReportTemplateDocument, type SubreportElement, type TemplateBand,
+  type TemplateDataSource, type TemplateElement, type TemplateGroup, type TemplateIssue, type TemplateParameter,
   type PageSizeKey, type ValueFormat,
 } from "@C7NTAX/shared";
-import type { DesignerCatalog } from "../../../lib/designerTypes";
+import type { CatalogTemplate, DesignerCatalog } from "../../../lib/designerTypes";
 import { ExpressionInput } from "./ExpressionInput";
 import { fitInBand } from "./Palette";
+
+const CHART_VERBS: Record<string, string> = {
+  SUM: "Sum of", COUNT: "Count of", AVG: "Average of", MIN: "Lowest of", MAX: "Highest of", COUNTD: "Distinct count of",
+};
+const chartVerb = (fn: string): string => CHART_VERBS[fn] ?? fn;
 
 export type Selection =
   | { kind: "report" }
@@ -26,6 +31,8 @@ export type Selection =
 interface InspectorProps {
   document: ReportTemplateDocument;
   catalog: DesignerCatalog | null;
+  /** The saved designed reports a sub-report element may point at, from the catalog. */
+  templates: CatalogTemplate[];
   selection: Selection;
   issues: TemplateIssue[];
   onSelect: (selection: Selection) => void;
@@ -150,11 +157,12 @@ function Section({ title, children, actions }: { title: string; children: React.
 
 // ── Element panel ───────────────────────────────────────────────────
 
-function ElementPanel({ document, band, element, catalog, issues, onDocument, onSelect }: {
+function ElementPanel({ document, band, element, catalog, templates, issues, onDocument, onSelect }: {
   document: ReportTemplateDocument;
   band: TemplateBand;
   element: TemplateElement;
   catalog: DesignerCatalog | null;
+  templates: CatalogTemplate[];
   issues: TemplateIssue[];
   onDocument: (next: ReportTemplateDocument, options?: { push?: boolean }) => void;
   onSelect: (selection: Selection) => void;
@@ -188,6 +196,7 @@ function ElementPanel({ document, band, element, catalog, issues, onDocument, on
   };
 
   const spec = ELEMENT_TYPES.find(candidate => candidate.type === element.type);
+  const chosen = element.type === "subreport" ? templates.find(candidate => candidate.id === element.templateId) : undefined;
 
   return (
     <>
@@ -264,6 +273,111 @@ function ElementPanel({ document, band, element, catalog, issues, onDocument, on
           <Field label="Source" hint="A built-in asset, or an expression that returns a URL.">
             <TextInput value={element.src} onChange={src => update(el => ({ ...el, src }) as TemplateElement)} />
           </Field>
+        ) : null}
+
+        {element.type === "chart" ? (
+          <>
+            <Field label="Chart">
+              <SelectInput
+                value={element.kind}
+                onChange={kind => update(el => ({ ...el, kind }) as TemplateElement)}
+                options={(catalog?.chartKinds ?? CHART_KINDS.map(kind => ({ kind: kind.kind, label: kind.label, help: kind.help }))).map(kind => ({ value: kind.kind as ChartElement["kind"], label: kind.label }))}
+              />
+            </Field>
+            <p className="text-[10px] text-gray-500">
+              {(catalog?.chartKinds ?? CHART_KINDS).find(kind => kind.kind === element.kind)?.help}
+            </p>
+            <Field label="Title">
+              <TextInput value={element.title} onChange={title => update(el => ({ ...el, title }) as TemplateElement)} placeholder="Optional" />
+            </Field>
+            <ExpressionInput
+              label="Category field"
+              path={`${element.id}.categoryExpression`}
+              value={element.categoryExpression}
+              onChange={categoryExpression => update(el => ({ ...el, categoryExpression }) as TemplateElement)}
+              issue={issueFor(issues, issue => issue.elementId === element.id && /chartCategory/.test(issue.code))?.message ?? null}
+              placeholder="Fields.status"
+            />
+            <Field label={chartVerb(element.fn)}>
+              <SelectInput
+                value={element.fn}
+                onChange={fn => update(el => ({ ...el, fn }) as TemplateElement)}
+                options={(catalog?.chartFunctions ?? CHART_FUNCTIONS.map(entry => ({ fn: entry.fn, label: entry.label }))).map(entry => ({ value: entry.fn as ChartElement["fn"], label: entry.label }))}
+              />
+            </Field>
+            {element.fn === "COUNT" ? null : (
+              <ExpressionInput
+                label="Value field"
+                path={`${element.id}.valueExpression`}
+                value={element.valueExpression}
+                onChange={valueExpression => update(el => ({ ...el, valueExpression }) as TemplateElement)}
+                issue={issueFor(issues, issue => issue.elementId === element.id && /chartValue|chartType/.test(issue.code))?.message ?? null}
+                placeholder={fields.find(field => field.type === "money")?.key ? `Fields.${fields.find(field => field.type === "money")!.key}` : "Fields.total"}
+              />
+            )}
+            <Field label="Over" hint={element.scope === "group" ? "Fold the rows of the group this band belongs to." : element.scope === "page" ? "Fold the rows printed on the same page, once pagination is known." : "Fold every row the report selected."}>
+              <Chips
+                value={element.scope}
+                onChange={scope => update(el => ({ ...el, scope }) as TemplateElement)}
+                options={AGGREGATE_SCOPES.map(scope => ({ value: scope, label: scope }))}
+              />
+            </Field>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Categories" hint="The rest fold into one Other bar.">
+                <NumberInput value={element.maxCategories} step={1} min={1} max={50} onChange={maxCategories => update(el => ({ ...el, maxCategories }) as TemplateElement)} />
+              </Field>
+              <Field label="Values on bars">
+                <Toggle checked={element.showValues} onChange={showValues => update(el => ({ ...el, showValues }) as TemplateElement)} label="Print" />
+              </Field>
+            </div>
+            <Field label="Legend">
+              <Toggle checked={element.showLegend} onChange={showLegend => update(el => ({ ...el, showLegend }) as TemplateElement)} label="Show the legend" />
+            </Field>
+          </>
+        ) : null}
+
+        {element.type === "subreport" ? (
+          <>
+            <Field label="Saved report" hint="Printed inside this band, on this report's pages.">
+              <SelectInput
+                value={element.templateId}
+                onChange={templateId => {
+                  const chosen = templates.find(candidate => candidate.id === templateId);
+                  update(el => ({ ...el, templateId, templateName: chosen?.name ?? "" }) as TemplateElement);
+                }}
+                options={[{ value: "", label: templates.length ? "— choose a report —" : "No saved designed reports yet" },
+                  ...templates.map(candidate => ({ value: candidate.id, label: candidate.name }))]}
+              />
+            </Field>
+            <p className="text-[10px] text-gray-500">
+              The sub-report inherits this report&apos;s pages and page numbers, and runs its own data source with the
+              parameters you bind below. Sub-reports nest at most three deep.
+            </p>
+            {chosen?.parameters.length ? (
+              <div className="space-y-2">
+                <p className="text-[11px] text-gray-400">Parameters</p>
+                {chosen.parameters.map(parameter => (
+                  <ExpressionInput
+                    key={parameter.key}
+                    label={`${parameter.label || parameter.key}${parameter.required ? " *" : ""}`}
+                    path={`${element.id}.parameterBindings.${parameter.key}`}
+                    value={element.parameterBindings[parameter.key] ?? ""}
+                    onChange={value => update(el => ({
+                      ...el,
+                      parameterBindings: { ...(el as SubreportElement).parameterBindings, [parameter.key]: value },
+                    }) as TemplateElement)}
+                    issue={issueFor(issues, issue => issue.elementId === element.id && issue.path.includes(`parameterBindings.${parameter.key}`))?.message ?? null}
+                    placeholder="Parameters.from — a parameter, not a field"
+                  />
+                ))}
+              </div>
+            ) : element.templateId ? (
+              <p className="text-[10px] text-gray-500">This report declares no parameters, so there is nothing to bind.</p>
+            ) : null}
+            <p className="text-[10px] text-gray-500">
+              A binding is worked out once, before the sub-report&apos;s rows are fetched, so it cannot read Fields.
+            </p>
+          </>
         ) : null}
 
         <div className="flex gap-2 pt-1">

@@ -1,39 +1,5 @@
 [
   {
-    "id": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
-    "email": "persona.readonly@c7ntax.local",
-    "username": null,
-    "passwordHash": "$2a$12$0zr1na3Iy8Jzg/SK7RUIPuTbM6glnbzpRIjavuPDvNd.NCcdS6lt6",
-    "firstName": "Persona",
-    "lastName": "Read Only",
-    "phone": null,
-    "mobile": null,
-    "title": null,
-    "avatarUrl": null,
-    "isActive": true,
-    "isLocked": false,
-    "loginAttempts": 0,
-    "lastLoginAt": "2026-10-07T16:15:20.108Z",
-    "emailVerified": false,
-    "mustChangePassword": false,
-    "passwordChangedAt": null,
-    "tokenVersion": 0,
-    "department": "Verification",
-    "timezone": "America/Chicago",
-    "costRate": null,
-    "reportsToId": null,
-    "mfaEnabled": false,
-    "mfaSecret": null,
-    "mfaBackupCodes": [],
-    "mfaEmailCode": null,
-    "mfaEmailCodeExpires": null,
-    "roleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
-    "permissions": [],
-    "companyId": null,
-    "createdAt": "2026-10-07T02:14:32.828Z",
-    "updatedAt": "2026-10-07T16:15:20.110Z"
-  },
-  {
     "id": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "email": "sarah.jones@c7ntax.com",
     "username": "sjones",
@@ -478,6 +444,40 @@
     "updatedAt": "2026-10-07T01:20:55.129Z"
   },
   {
+    "id": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "email": "persona.readonly@c7ntax.local",
+    "username": null,
+    "passwordHash": "$2a$12$0zr1na3Iy8Jzg/SK7RUIPuTbM6glnbzpRIjavuPDvNd.NCcdS6lt6",
+    "firstName": "Persona",
+    "lastName": "Read Only",
+    "phone": null,
+    "mobile": null,
+    "title": null,
+    "avatarUrl": null,
+    "isActive": true,
+    "isLocked": false,
+    "loginAttempts": 0,
+    "lastLoginAt": "2026-10-07T16:26:45.556Z",
+    "emailVerified": false,
+    "mustChangePassword": false,
+    "passwordChangedAt": null,
+    "tokenVersion": 0,
+    "department": "Verification",
+    "timezone": "America/Chicago",
+    "costRate": null,
+    "reportsToId": null,
+    "mfaEnabled": false,
+    "mfaSecret": null,
+    "mfaBackupCodes": [],
+    "mfaEmailCode": null,
+    "mfaEmailCodeExpires": null,
+    "roleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+    "permissions": [],
+    "companyId": null,
+    "createdAt": "2026-10-07T02:14:32.828Z",
+    "updatedAt": "2026-10-07T16:26:45.557Z"
+  },
+  {
     "id": "29cd3439-d7e0-4c55-b4be-1c273bd52a56",
     "email": "persona.clientadmin@c7ntax.local",
     "username": null,
@@ -525,7 +525,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-07T16:15:19.650Z",
+    "lastLoginAt": "2026-10-07T16:26:52.391Z",
     "emailVerified": false,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -543,7 +543,7 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-10-07T02:14:32.822Z",
-    "updatedAt": "2026-10-07T16:15:19.652Z"
+    "updatedAt": "2026-10-07T16:26:52.392Z"
   },
   {
     "id": "fe948159-f6e8-44eb-9e8d-e2ce8e549bd1",
@@ -559,7 +559,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-07T16:15:19.885Z",
+    "lastLoginAt": "2026-10-07T16:26:52.650Z",
     "emailVerified": false,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -577,7 +577,7 @@
     "permissions": [],
     "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
     "createdAt": "2026-10-07T02:15:44.171Z",
-    "updatedAt": "2026-10-07T16:15:19.886Z"
+    "updatedAt": "2026-10-07T16:26:52.651Z"
   },
   {
     "id": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
@@ -593,7 +593,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-07T16:13:30.948Z",
+    "lastLoginAt": "2026-10-07T16:26:50.764Z",
     "emailVerified": false,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -611,7 +611,7 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-10-07T02:14:32.824Z",
-    "updatedAt": "2026-10-07T16:13:30.949Z"
+    "updatedAt": "2026-10-07T16:26:50.765Z"
   },
   {
     "id": "2462cd70-64a1-4d45-90fc-cf334fee8f6d",
@@ -661,7 +661,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-07T12:19:58.525Z",
+    "lastLoginAt": "2026-10-07T16:27:36.578Z",
     "emailVerified": true,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -679,6 +679,6 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-10-07T12:19:58.528Z"
+    "updatedAt": "2026-10-07T16:27:36.580Z"
   }
 ]

@@ -15,13 +15,14 @@ export interface CatalogSource { key: string; label: string; defaultSort: string
 export interface CatalogOperator { key: string; label: string; valueKind: "none" | "text" | "number" | "date" | "list" | "pair" }
 export interface CatalogFunction {
   name: string;
-  category: "Aggregate" | "Math" | "Text" | "Date" | "Logical" | "Format" | "Value";
+  category: "Aggregate" | "Running" | "Math" | "Text" | "Date" | "Logical" | "Format" | "Value";
   signature: string;
   description: string;
   minArgs: number;
   maxArgs: number;
   pathArg?: boolean;
   scopeArg?: boolean;
+  runningScopeArg?: boolean;
 }
 
 export interface CatalogBandKind {
@@ -40,11 +41,21 @@ export interface DesignerCatalog {
   functions: CatalogFunction[];
   bandKinds: CatalogBandKind[];
   elementTypes: Array<{ type: string; label: string; help: string }>;
+  chartKinds: Array<{ kind: string; label: string; help: string }>;
+  chartFunctions: Array<{ fn: string; label: string }>;
   pageSizes: Array<{ key: string; label: string; width: number; height: number }>;
   formats: Array<{ key: string; label: string }>;
   aggregateScopes: string[];
   starters: Array<{ kind: string; label: string; help: string }>;
+  /** The saved designed reports a sub-report element may print, with the parameters they need. */
+  templates: CatalogTemplate[];
   branding: Array<{ key: string; label: string; path: string }>;
+}
+
+export interface CatalogTemplate {
+  id: string;
+  name: string;
+  parameters: Array<{ key: string; label: string; required: boolean }>;
 }
 
 /** The run a preview produced: the rows the document's data source returned, and how they were got. */
@@ -57,4 +68,14 @@ export interface DesignerRun {
   truncated: boolean;
   limit: number;
   period?: { label?: string };
+  /** The sub-reports the document prints, keyed by template id, resolved by the API with their rows. */
+  subreports?: Record<string, SubreportResolution>;
+  templates?: CatalogTemplate[];
+}
+
+export interface SubreportResolution {
+  document: unknown;
+  rows: Array<Record<string, unknown>>;
+  parameters: Record<string, unknown>;
+  name?: string;
 }
