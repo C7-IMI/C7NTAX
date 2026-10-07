@@ -5,10 +5,10 @@
 
 # Custom Report Designer
 
-> **Sequence:** follows the Reporting overhaul (BuildNotes **2026.10.7.025**). The Reporting section now ships **12 standard reports** with a shared filter set, **Weekly / Monthly / Quarterly Business Reviews** from one pack at three cadences, working Print/PDF/Excel/CSV, and a **Custom Reports** landing page that lists, runs, schedules and manages saved reports. The visual designer — bands, groups, totals, an expression language, a page preview — is the piece still to be written, and this document is the decision the brief asked for: **import/integrate something like jsreport, or write it ourselves in the style of jsreport / Crystal Reports / FastReport Open Source.**
-> **Status:** 📋 **Recommendation only.** Nothing here is built. The landing page says so on screen, and every claim below is sourced.
-> **Basis:** repository as at BuildNotes **2026.10.7.024**; external facts verified on 2026-10-07 and cited inline, with the sources listed in §9. Where a licence could not be verified it is marked **unverified** rather than guessed.
-> **Next action:** accept or reject §2's recommendation. If accepted, the work is §6 in order, and §7's first two steps are small enough to ship on their own.
+> **Sequence:** follows the Reporting overhaul (BuildNotes **2026.10.7.025**). The Reporting section now ships **12 standard reports** with a shared filter set, **Weekly / Monthly / Quarterly Business Reviews** from one pack at three cadences, working Print/PDF/Excel/CSV, and a **Custom Reports** landing page that lists, runs, schedules and manages saved reports. The visual designer — bands, groups, totals, an expression language, a page preview — was the piece still to be written; **it shipped in BuildNotes 2026.10.7.026** (phases 1–5 below), so this document is now a record of the decision and of what each phase delivered rather than a proposal.
+> **Status:** ✅ **Built here, as recommended.** The banded designer is in the product: `packages/shared/src/reportTemplate.ts`, `reportExpression.ts` and `reportLayout.ts` for the document, the language and the engine; `apps/web/src/pages/ReportDesigner.tsx` with `components/reports/designer/` for the canvas, palette and property grid; `POST /reports/designer/{validate,preview}`, `GET /reports/designer/{catalog,starter}` and a `template` branch on run. **Phase 6 — sub-reports, charts as elements and cross-page aggregates — has not been built** and is the remaining work.
+> **Basis:** repository as at BuildNotes **2026.10.7.026**; external facts verified on 2026-10-07 and cited inline, with the sources listed in §9. Where a licence could not be verified it is marked **unverified** rather than guessed.
+> **Next action:** none for phases 0–5. Phase 6 is a separate decision, and §10's remaining open items are the ones listed there.
 
 ---
 
@@ -125,15 +125,15 @@ Element =
 
 ## 6. Phases, in order, each with an exit condition
 
-| Phase | Deliverable                                                                                        | Exit condition                                                                                                                      |
-| ----- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **0** | This document accepted; the document model in §4 reviewed and frozen as the compatibility surface. | The schema is agreed before any renderer is written.                                                                                |
-| **1** | `ReportTemplate` model + validation + API; the six standard reports re-expressible as templates.   | `probe-report-templates.mjs` green: an invalid template is refused on write *and* on render; a valid one round-trips.               |
-| **2** | Form-driven banded builder: add/reorder bands, bind fields, preview from the document.             | A grouped report with a header, a detail band and totals renders identically on screen and in PDF for the same document.            |
-| **3** | Expression language: parser, AST, sandboxed evaluator, aggregates, per-element errors.             | No expression can reach the filesystem, the network or the database; a bad expression names its element and does not fail the page. |
-| **4** | Renderers: PDF (jsPDF or `@react-pdf/renderer`), Excel, CSV — all from the document.               | The same template produces a PDF whose page breaks match the preview, and an Excel file with one row per detail row.                |
-| **5** | Canvas designer (drag, resize, property grid, undo/redo).                                          | A non-developer builds a two-group report without touching JSON.                                                                    |
-| **6** | Sub-reports, charts, cross-page aggregates.                                                        | A sub-report inherits the parent's parameters and does not corrupt the parent's page count.                                         |
+| Phase | Deliverable                                                                                        | Exit condition                                                                                                                      | Status                                                                         |
+| ----- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **0** | This document accepted; the document model in §4 reviewed and frozen as the compatibility surface. | The schema is agreed before any renderer is written.                                                                                | ✅ 2026.10.7.026 — frozen as `packages/shared/src/reportTemplate.ts`            |
+| **1** | `ReportTemplate` model + validation + API; the six standard reports re-expressible as templates.   | `probe-report-templates.mjs` green: an invalid template is refused on write *and* on render; a valid one round-trips.               | ✅ Shipped — `probe-report-designer.mjs` asserts both refusals, 225/225         |
+| **2** | Form-driven banded builder: add/reorder bands, bind fields, preview from the document.             | A grouped report with a header, a detail band and totals renders identically on screen and in PDF for the same document.            | ✅ Shipped — the property grid builds every band the model has                  |
+| **3** | Expression language: parser, AST, sandboxed evaluator, aggregates, per-element errors.             | No expression can reach the filesystem, the network or the database; a bad expression names its element and does not fail the page. | ✅ Shipped — 40 functions, three aggregate scopes, the escape attempts asserted |
+| **4** | Renderers: PDF (jsPDF or `@react-pdf/renderer`), Excel, CSV — all from the document.               | The same template produces a PDF whose page breaks match the preview, and an Excel file with one row per detail row.                | ✅ Shipped on jsPDF, in millimetres from the layout's own coordinates           |
+| **5** | Canvas designer (drag, resize, property grid, undo/redo).                                          | A non-developer builds a two-group report without touching JSON.                                                                    | ✅ Shipped — drag, resize, snapping, keyboard, undo/redo                        |
+| **6** | Sub-reports, charts, cross-page aggregates.                                                        | A sub-report inherits the parent's parameters and does not corrupt the parent's page count.                                         | ⬜ **Not built** — the remaining work                                           |
 
 **What stays untouched:** the standard reports, the section model in `reportKit`, the current custom reports and their schedules. A template is an **extra** type (`Report.type = "template"`), so nothing that exists today changes behaviour.
 
@@ -177,4 +177,10 @@ Element =
 
 ## 11. Keeping this document honest
 
-When a phase ships, mark it here and in `PlanDocs/README.md`, and record the version in `BuildNotes.md` — a plan that quietly disagrees with the code is worse than no plan. When a licence in §3 is confirmed or found wrong, correct §3 and §9 in the same commit; **unverified** entries stay marked until they are checked. This document is advice: nothing in it has been applied, and the Custom Reports screen says so on screen.
+When a phase ships, mark it here and in `PlanDocs/README.md`, and record the version in `BuildNotes.md` — a plan that quietly disagrees with the code is worse than no plan. When a licence in §3 is confirmed or found wrong, correct §3 and §9 in the same commit; **unverified** entries stay marked until they are checked.
+
+**Phases 0–5 shipped in BuildNotes 2026.10.7.026** and are marked in §6, and §10 records what each decision became. Phase 6 has not been built. Two things are worth adding when phase 6 is taken up, both learned while building 0–5:
+
+- **A document is read by three parties** — the API's validator, the browser's canvas and engine, and the probe suite — so anything added to it belongs in `packages/shared`, where all three see it. The engine was put there for that reason, and putting it in the web app instead would have made "re-validated on render" impossible to assert.
+- **A new element must be valid where it lands.** The first version of the palette added a field to a 6mm band and produced a validation error on creation; the defaults of a designer are its instructions, so placement arithmetic belongs with the placement.
+

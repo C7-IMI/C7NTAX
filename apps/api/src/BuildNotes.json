@@ -1,5 +1,60 @@
 [
   {
+    "version": "2026.10.7.026",
+    "date": "2026-10-07",
+    "title": "The custom report designer: bands, an expression language, and a real layout engine",
+    "changes": [
+      {
+        "text": "**The banded report designer is built here, as PLAN-020 recommended — not embedded.** A report is now a **document**: page setup, data sources, parameters, groups and **nine band kinds** (Report Title, Page Header, Column Header, Group Header, Data, Group Footer, Column Footer, Page Footer, Report Summary), each holding absolutely-positioned elements — text, field, total, line, box and image. It is stored as a normal `Report` of type `template`, so a designed report lists, runs, exports, schedules, duplicates and deletes beside every other saved report. Reachable from **Custom Reports → New designed report**, which offers four starter layouts (blank page, simple list, grouped list with totals, summary with grand totals) built from the chosen source's own catalog.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**An expression language, written here rather than borrowed.** Tokeniser → parser → fixed AST → interpreter: arithmetic, text, dates, comparisons, `AND`/`OR`/`NOT`, `IN`, `LIKE`, `IF`, `COALESCE`, and **40 functions** across Aggregate, Math, Text, Date, Logical, Format and Value. Six aggregates (`SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `COUNTD`) take a scope — **report**, **group** or **page** — and the page scope is resolved *after* pagination, which is why a page total is the total of the rows on that page rather than of the rows that happened to exist when it was drawn. Text elements interpolate `{{ … }}` holes, so a caption reads \"Client: {{Fields.client}}\".",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One layout engine, and every output reads its result.** `layoutReport` sorts and groups the rows, then flows the bands onto pages: repeated page and column headers, group headers that repeat after a break, `keepTogether` groups that move to a page with room for them, page breaks before a band, bottom-anchored footers, and text wrapped to the millimetre and clipped to its box. The screen, the print window and the **PDF** draw the same placed lines — jsPDF in millimetres, so a placed line needs no conversion — and **Excel/CSV** take one row per data band with the group each row belongs to. All four were verified: Excel 27.6 KB, CSV 5.0 KB, PDF 58.5 KB, and a print document with the report's own pages.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A canvas, a palette and a property grid.** Bands are stacked in the order they print, at the page's real width and margins, so horizontal positions on the canvas are the positions on the page. Elements are dragged and resized in millimetres with millimetre snapping (Alt for a quarter), clamped to their band; arrows nudge, Shift+arrows move 5mm, Delete removes, Ctrl+D duplicates, Ctrl+Z/Ctrl+Shift+Z undo and redo, Ctrl+S saves. The palette inserts fields, parameters, built-ins (`Page.number`, `Page.totalPages`, `Report.name`, `Group.value`, …) and functions **into the expression you were last typing in** — with the caret landing inside a function's brackets — or appends to the selected element, or adds a new element to the selected band, and the line at the top says which. The Design tab shows each element with its **real value** from the preview; the Preview tab shows the paginated pages; the Data tab shows the rows and lets parameters and the period be set.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"Is empty\" and \"is not empty\" were a 500 on almost every field.** The custom-report runner translated both operators into a Prisma null comparison whatever the column was — and Prisma refuses a null filter on a column that cannot be null (`Argument must not be null`), which is most of them, and refuses `not` on a relation entirely. Each field now declares whether it can be empty and whether it is a relation: a nullable scalar filters `null`/`{ not: null }`, a nullable relation `{ is: null }`/`{ isNot: null }`, and a required column is *simplified* with a note instead of being sent — \"is not empty\" matches every row because every row satisfies it, and \"is empty\" matches none. The designer also stops offering the two operators on a column that cannot be empty. Found by the new probe, which now asserts all five cases.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A `YYYY-MM-DD` value was a day early in the expression language.** `YEAR`, `MONTH`, `DAY`, `DAYNAME`, `MONTHNAME`, `DATEADD`, `DATEDIFF` and `FORMATDATE` parsed a plain date as UTC midnight, so west of Greenwich `MONTH(\"2026-08-01\")` answered 7 and the weekday was a day out — the same class of defect the reporting overhaul fixed in the formatter, in the one place that had been missed. `TODAY()` returns a local calendar day for the same reason.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The runner's whitelist grew the fields a designed report actually wants** — a ticket's assignee, board, category, contact, source, first response, resolution and close dates and its overdue flag; a time entry's technician, invoice and rate; and a type on every field, so the designer can format and align a column as what it is. Additive: an existing custom report selects the same columns it always did.",
+        "type": "Update"
+      },
+      {
+        "text": "**The field:function catalog is the runner's own whitelist.** `GET /reports/designer/catalog` publishes the sources, their fields (with type and nullability), the ten filter operators with the kind of value each wants, the forty functions with signatures and descriptions, the nine band kinds, the page sizes, the eight value formats, the four starters and the built-in images. A field cannot be offered unless a report can read it, because there is no second list to drift — and `POST /reports/designer/validate` and `POST /reports/designer/preview` run against it.",
+        "type": "Update"
+      },
+      {
+        "text": "**A template is validated on write *and again on render*.** Saving refuses a document that cannot render, with the first problem in the message and every problem in `error.details`; running or previewing one re-validates it, so a document that was stored and later damaged is refused rather than drawn. Tests pin both halves, including a layout that is damaged in memory and then must refuse to produce pages.",
+        "type": "Update"
+      },
+      {
+        "text": "**The renderers are document-driven, as PLAN-020 §7 asked.** `reportKit`'s print, PDF, Excel and CSV paths were split into writers over plain tables, so the standard reports and the designed ones share one spreadsheet writer, one CSV writer and one PDF writer instead of two of each.",
+        "type": "Update"
+      },
+      {
+        "text": "**`@C7NTAX/shared` is no longer pre-bundled by Vite.** It is source in this repository, so `optimizeDeps` now excludes it: a new export used to be missing until someone remembered `--force`, and the symptom was a blank page with a module-export error — which is exactly what happened while building this and cost a debugging detour worth writing down.",
+        "type": "Update"
+      },
+      {
+        "text": "**`apps/api/probe-report-designer.mjs` — 225 assertions, all green.** The expression language (39 cases), the escape attempts (`Math.max`, `constructor`, `globalThis`, `process`, a semicolon, a function literal, and a source-level check that no engine file contains `eval(` or `new Function(`), 27 validation rules, the four starters against three sources, pagination over 200 rows with every row printed exactly once, grouping and group totals checked against arithmetic done by hand, page totals proved equal to each page's own rows, text wrapping and clipping, parameters and the row limit, the API's catalog, the starter/validate/preview endpoints, the `isNotNull` fix in all five cases, a template's whole life as a saved report (create, list, run, rename, refuse an invalid edit, refuse to be damaged, duplicate, delete), and who may design: read-only accounts may preview but not save, and a client-scoped account's preview stays inside its own client even when the template tries to widen it.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.025",
     "date": "2026-10-07",
     "title": "Reporting, audited: two reports that invented their numbers, buttons that did nothing, and a review pack at three cadences",
