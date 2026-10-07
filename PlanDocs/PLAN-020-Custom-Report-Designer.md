@@ -133,7 +133,7 @@ Element =
 | **3** | Expression language: parser, AST, sandboxed evaluator, aggregates, per-element errors.             | No expression can reach the filesystem, the network or the database; a bad expression names its element and does not fail the page. | ✅ Shipped — 40 functions, three aggregate scopes, the escape attempts asserted |
 | **4** | Renderers: PDF (jsPDF or `@react-pdf/renderer`), Excel, CSV — all from the document.               | The same template produces a PDF whose page breaks match the preview, and an Excel file with one row per detail row.                | ✅ Shipped on jsPDF, in millimetres from the layout's own coordinates           |
 | **5** | Canvas designer (drag, resize, property grid, undo/redo).                                          | A non-developer builds a two-group report without touching JSON.                                                                    | ✅ Shipped — drag, resize, snapping, keyboard, undo/redo                        |
-| **6** | Sub-reports, charts, cross-page aggregates.                                                        | A sub-report inherits the parent's parameters and does not corrupt the parent's page count.                                         | ⬜ **Not built** — the remaining work                                           |
+| **6** | Sub-reports, charts, cross-page aggregates.                                                        | A sub-report inherits the parent's parameters and does not corrupt the parent's page count.                                         | ✅ 2026.10.7.027 — charts, sub-reports and running totals                       |
 
 **What stays untouched:** the standard reports, the section model in `reportKit`, the current custom reports and their schedules. A template is an **extra** type (`Report.type = "template"`), so nothing that exists today changes behaviour.
 
@@ -179,8 +179,12 @@ Element =
 
 When a phase ships, mark it here and in `PlanDocs/README.md`, and record the version in `BuildNotes.md` — a plan that quietly disagrees with the code is worse than no plan. When a licence in §3 is confirmed or found wrong, correct §3 and §9 in the same commit; **unverified** entries stay marked until they are checked.
 
-**Phases 0–5 shipped in BuildNotes 2026.10.7.026** and are marked in §6, and §10 records what each decision became. Phase 6 has not been built. Two things are worth adding when phase 6 is taken up, both learned while building 0–5:
+**All six phases have shipped.** Phases 0–5 in BuildNotes 2026.10.7.026 and phase 6 in 2026.10.7.027, each marked in §6, with §10 recording what every decision became. **Nothing in this plan is outstanding** — the document is closed unless a §8 condition changes it.
 
-- **A document is read by three parties** — the API's validator, the browser's canvas and engine, and the probe suite — so anything added to it belongs in `packages/shared`, where all three see it. The engine was put there for that reason, and putting it in the web app instead would have made "re-validated on render" impossible to assert.
-- **A new element must be valid where it lands.** The first version of the palette added a field to a 6mm band and produced a validation error on creation; the defaults of a designer are its instructions, so placement arithmetic belongs with the placement.
+Three things were learned across 0–6, all of them recorded here because they were expensive to learn:
 
+- **A document is read by three parties** — the API's validator, the browser's canvas and engine, and the probe suite — so anything added to it belongs in `packages/shared`, where all three see it. The engine was put there for that reason, and putting it in the web app instead would have made "re-validated on render" impossible to assert. Phase 6's charts followed the same rule: the geometry is shared, and the only thing in the web app is the drawing.
+- **A new element must be valid where it lands.** The first version of the palette added a field to a 6mm band and produced a validation error on creation; the defaults of a designer are its instructions, so placement arithmetic belongs with the placement. Phase 6's chart and sub-report follow it by growing the band to hold themselves.
+- **Scope is a name, not a category.** Phase 6's running totals take a *group key* (`'status'`) rather than a scope word, because "the group" means different things in two different bands and an expression that changes meaning by where it is printed is not one an author can reason about.
+
+**Where the next work would go, if it were ever taken up:** a per-element expression debugger (the largest remaining quality-of-life gap), repeating sub-report headers on each page the child continues onto, and a chart in Excel — the three things phase 6 deliberately left. None of them blocks anything.

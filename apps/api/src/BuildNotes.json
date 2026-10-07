@@ -1,9 +1,49 @@
 [
   {
-    "version": "2026.10.7.026",
+    "version": "2026.10.7.027",
     "date": "2026-10-07",
-    "title": "The custom report designer: bands, an expression language, and a real layout engine",
+    "title": "Charts, sub-reports and running totals: the last of the report designer",
     "changes": [
+      {
+        "text": "**Charts are elements a report can hold.** A **Chart** element draws a **column, bar, line, pie or donut** from the report's own rows: pick the field that groups the rows into categories, the field to fold inside them, and how to fold it (`SUM`, `COUNT`, `AVG`, `MIN`, `MAX`, `COUNTD`) over the **report**, the current **group** or the current **page**. A chart is designed against real numbers — the canvas draws it live from the preview's rows — and can carry a title, values on the bars, a legend, and a cut-off after which the tail is folded into one labelled `Other (n)` bar so the axis stays readable. A chart too small for an axis and a legend (below about 40×30mm) warns while it is still being designed rather than printing as a smudge.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The chart's geometry is computed once, in millimetres, and everything reads it.** `layoutChart` turns labels and values into placed bars, points, grid lines, axes, slices and labels — including every piece of text, with its baseline — so the preview, the print window and the PDF cannot disagree about what the chart looks like. The screen draws that geometry as SVG (one `chartSvg` also used by the print document) and the PDF draws it with jsPDF's own primitives — rectangles, lines, triangles for the pie's arcs, and real text — so a printed chart stays vector-crisp rather than being a rasterised screenshot. Labels sit on the baseline the engine chose, which is what makes the screen and the PDF place text in the same spot.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Sub-reports print a saved report inside another one.** A **Sub-report** element names another saved designed report and flows its bands **onto the parent's pages** — because that is what keeps the parent's page count, page numbering and row count intact. The child brings its own title and column captions inline once, repeats them after a page break, runs its own data source, and reads the parent's `Page.*` context, so the parent's page footer still says `Page 1 of 2` when the child is what made it two pages. Parameters are bound from the parent's own parameters (`Parameters.status`), worked out **once** before the child's rows are fetched — a binding cannot read `Fields`, and the validator refuses one that tries, because there would be no row to read yet. Sub-reports nest up to three deep, a report that prints itself is skipped with a note rather than looped, and the child's rows are fetched once rather than once per parent row. A reference that cannot resolve is refused on save with a message that names the report; and if the parent is laid out without a resolution at all — which is what the designer's own preview does while a child is being fixed — the engine prints a placeholder, not a refusal.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Running totals that survive a page break.** `RUNNINGSUM`, `RUNNINGAVG` and `RUNNINGCOUNT` are aggregates the engine keeps as it walks the rows, so they carry over a page boundary by construction: the first row of page two continues where page one left off, and the last row equals the report's own total. Scoped to a group — by name (`'status'`) or as `'group'` for the innermost one — a running total restarts the moment that group opens, which is why a group footer reads its group's total through its last row. `'page'` is refused: a running total that restarted every page would not be one. Scope is checked while the report is being designed, with a warning when a running total is put where it can only read as nothing.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The engine flows one *section* at a time, so two documents can be in flight at once.** Pages, the deferred-value patch pass and the issue log are shared; the rows, grouping, sorted keys and running totals belong to the document being flowed. That is the whole mechanism behind a sub-report — it is a second document flowing into the pages that already exist, with a horizontal offset and no page of its own — and it is why the parent's numbers are untouched. A band that holds a sub-report grows to hold it, and a child that runs past the bottom of the page moves the flow onto a new one, which the parent sees as a page it used rather than one it lost count of.",
+        "type": "Update"
+      },
+      {
+        "text": "**The runner's catalog publishes what the designer now offers**: the five chart kinds, the six folding functions, and the saved designed reports a sub-report element may point at — with the parameters each needs, so a binding can be filled in by name. The reference list is cached for a few seconds and dropped whenever a report is written, so the picker is not stale but the designer's live validation is not a query per keystroke.",
+        "type": "Update"
+      },
+      {
+        "text": "**`Page.totalPages` was wrong in a report containing a sub-report.** The footer is resolved after pagination from the pages that exist *at the end*, and a child that added pages used to be invisible to it — a footer could read \"Page 1 of 2\" on both pages. Every page's footer now counts every page, and the probe asserts it page by page rather than once.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The designer's palette and property grid cover both new elements.** Chart offers its kind with a one-line description, title, category and value fields with the same expression builder as everything else, the folding function, the scope, the category cut-off, values on the bars and the legend. Sub-report offers the saved report by name and one expression box per parameter the chosen report declares, with required ones marked — and the canvas shows the chart it will actually draw, and the sub-report's name where it will print.",
+        "type": "Update"
+      },
+      {
+        "text": "**`apps/api/probe-report-designer.mjs` now carries 349 assertions, all green** — 124 of them new for this phase: that a chart's bars add up to the total of the rows and every bar is inside its box, that a pie's slices sweep exactly one turn and a negative value is drawn below the baseline rather than as a positive bar, that a chart's category expression cannot contain a set-based function, that a running total reaches the report's total at the last row and does not restart at the top of page two, that a group-scoped one restarts at each group, that a sub-report's rows print once each and carry their own section, that a child longer than the page adds pages and the parent's footer counts every one of them, that a report pointing at itself is skipped rather than looped, and that a five-deep chain of sub-reports stops at the cap with a note. The two neighbouring suites stay green (`probe-reports-standard.mjs` 131, `probe-reports.mjs` 29) and the API's type-check baseline is unchanged.",
+        "type": "New Feature"
+      },
+      {
+        "text": "`PlanDocs/PLAN-020-Custom-Report-Designer.md` marks **phase 6 complete**, which closes the plan — every phase of the custom report designer is now built, with multi-tenant the only item still outstanding elsewhere in the programme.",
+        "type": "Update"
+      },
       {
         "text": "**The banded report designer is built here, as PLAN-020 recommended — not embedded.** A report is now a **document**: page setup, data sources, parameters, groups and **nine band kinds** (Report Title, Page Header, Column Header, Group Header, Data, Group Footer, Column Footer, Page Footer, Report Summary), each holding absolutely-positioned elements — text, field, total, line, box and image. It is stored as a normal `Report` of type `template`, so a designed report lists, runs, exports, schedules, duplicates and deletes beside every other saved report. Reachable from **Custom Reports → New designed report**, which offers four starter layouts (blank page, simple list, grouped list with totals, summary with grand totals) built from the chosen source's own catalog.",
         "type": "New Feature"
@@ -53,6 +93,12 @@
         "type": "New Feature"
       }
     ]
+  },
+  {
+    "version": "2026.10.7.026",
+    "date": "2026-10-07",
+    "title": "The custom report designer: bands, an expression language, and a real layout engine",
+    "changes": []
   },
   {
     "version": "2026.10.7.025",

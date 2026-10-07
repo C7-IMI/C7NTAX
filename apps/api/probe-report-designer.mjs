@@ -773,8 +773,7 @@ async function main() {
     check(placeChart(chartElement({ maxCategories: 5, showLegend: false, showValues: true }), many).chart.labels.some(label => label.role === "value"), "values on the bars are labelled when asked for");
   }
 
-  section("a pie is measured in turns, a line in points");
-  {
+  section("a pie is measured in turns, a line in points");  {
     const { chart } = placeChart(chartElement({ kind: "pie" }));
     check(chart.slices.length === 2, "a pie has one slice per category");
     const turn = chart.slices.reduce((sum, slice) => sum + (slice.endAngle - slice.startAngle), 0);
