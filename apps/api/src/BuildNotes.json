@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.7.015",
+    "date": "2026-10-07",
+    "title": "The Outlook add-in is a real add-in, and its pane is a real pane",
+    "changes": [
+      {
+        "text": "**The add-in exists.** `apps/outlook-addin/` holds the manifest (a `MessageReadCommandSurface` ribbon button), the taskpane, the function file Office requires, its own styles, and 16/32/80 ribbon icons derived from the app icon. It is **served by the API at `/addin`** on the same origin as `/api`, so the pane calls the API with relative URLs and no CORS — and the manifest's HTTPS URLs point at the same host.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The pane reads the selection the way the host allows.** `getSelectedItemsAsync` (Mailbox 1.13+) for a genuine multi-selection, falling back to `mailbox.item` for a single open message — and it says *which* of those it is instead of silently creating nothing when the host does not support multi-select.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The same pipeline, not a second one.** Each message is converted into the same `ParsedEmail` shape the monitored-mailbox connector uses and posted to the existing endpoint, so contact/client matching, the `Re:`/`FW:` stripping, quoted-reply removal, priority deduction, dedup key and ticket numbering are all identical. An add-in that built tickets its own way would be a quiet second behaviour for the same email.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Per-message results.** The endpoint now returns one line per message — ticket id and number, or the reason it was skipped — because \"3 created\" does not tell somebody which of their five messages was already handled. The pane lists each with a link to its ticket.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A tailored Content-Security-Policy for the add-in path, discovered by actually loading it.** The global helmet policy (`script-src 'self'`) blocked the Office.js CDN — bundling it is not permitted, so the pane could never have worked — and would have refused the frame Office puts the pane in. `/addin` now sends its own policy: that one script origin, inline styles (Office.js styles its own injected elements), the Office telemetry frame by name, and `frame-ancestors` limited to the Office and Outlook hosts. Everything else stays as tight as the global policy.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`apps/outlook-addin/README.md`** documents the two manifest placeholders (`__ADDIN_HOST__`, `__ADDIN_GUID__`), sideloading from a file for testing, the admin-center path for an internal deployment, and the three things deliberately not built: the SSO flow (needs the PLAN-017 app registration), AppSource submission (a Partner Center decision), and writing back to the mailbox (needs `ReadWriteItem` and has no purpose here).",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.014",
     "date": "2026-10-07",
     "title": "A QR screenshot is enough to enrol, and a foreign one is refused",

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  C7NTAX — Email to ticket (PLAN-012).
+
+  A Mail Read command-surface add-in: the ribbon button opens the taskpane against the selected
+  message (or the one being read), the taskpane asks which board, and the messages become tickets
+  through POST /api/outlook-addin/tickets.
+
+  Replace the three placeholders before sideloading or submitting:
+    __ADDIN_HOST__   the https origin that serves this folder (production: the App Gateway hostname)
+    __ADDIN_GUID__   a GUID you generate once and keep forever; Office identifies the add-in by it
+  The icons ship with the folder and are served from the same origin, because Office fetches
+  manifest icons over HTTPS and will not load the add-in if they are unreachable.
+-->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
+           xsi:type="MailApp">
+  <Id>__ADDIN_GUID__</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>C7 Intelligence</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="C7NTAX — Email to ticket" />
+  <Description DefaultValue="Create a C7NTAX ticket from the selected email, or from several at once." />
+  <IconUrl DefaultValue="__ADDIN_HOST__/addin/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="__ADDIN_HOST__/addin/assets/icon-80.png" />
+  <SupportUrl DefaultValue="__ADDIN_HOST__/help" />
+  <AppDomains>
+    <AppDomain>__ADDIN_HOST__</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Mailbox" />
+  </Hosts>
+  <Requirements>
+    <Sets>
+      <Set Name="Mailbox" MinVersion="1.1" />
+    </Sets>
+  </Requirements>
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="__ADDIN_HOST__/addin/taskpane.html" />
+        <RequestedHeight>450</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+  <Permissions>ReadItem</Permissions>
+  <Rule xsi:type="RuleCollection" Mode="Or">
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read" />
+  </Rule>
+  <DisableEntityHighlighting>false</DisableEntityHighlighting>
+
+  <!-- The ribbon button and the taskpane it opens. -->
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Requirements>
+      <bt:Sets DefaultMinVersion="1.3">
+        <bt:Set Name="Mailbox" />
+      </bt:Sets>
+    </Requirements>
+    <Hosts>
+      <Host xsi:type="MailHost">
+        <DesktopFormFactor>
+          <FunctionFile resid="Commands.Url" />
+          <ExtensionPoint xsi:type="MessageReadCommandSurface">
+            <OfficeTab id="TabDefault">
+              <Group id="C7NTAX.Group">
+                <Label resid="Group.Label" />
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16" />
+                  <bt:Image size="32" resid="Icon.32" />
+                  <bt:Image size="80" resid="Icon.80" />
+                </Icon>
+                <Control xsi:type="Button" id="C7NTAX.CreateTickets">
+                  <Label resid="Button.Label" />
+                  <Supertip>
+                    <Title resid="Button.Label" />
+                    <Description resid="Button.Tooltip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16" />
+                    <bt:Image size="32" resid="Icon.32" />
+                    <bt:Image size="80" resid="Icon.80" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>C7NTAX.Taskpane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url" />
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="__ADDIN_HOST__/addin/assets/icon-16.png" />
+        <bt:Image id="Icon.32" DefaultValue="__ADDIN_HOST__/addin/assets/icon-32.png" />
+        <bt:Image id="Icon.80" DefaultValue="__ADDIN_HOST__/addin/assets/icon-80.png" />
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Commands.Url" DefaultValue="__ADDIN_HOST__/addin/commands.html" />
+        <bt:Url id="Taskpane.Url" DefaultValue="__ADDIN_HOST__/addin/taskpane.html" />
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="Group.Label" DefaultValue="C7NTAX" />
+        <bt:String id="Button.Label" DefaultValue="Create ticket" />
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="Button.Tooltip" DefaultValue="Create a C7NTAX ticket from this email — select several messages to create several tickets." />
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

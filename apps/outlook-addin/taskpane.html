@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>C7NTAX — Email to ticket</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Office.js is loaded from Microsoft's CDN: an add-in cannot bundle it, because the host
+       injects the mailbox context into this frame. -->
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+</head>
+<body>
+  <header>
+    <img src="assets/icon-32.png" alt="" width="20" height="20" />
+    <h1>C7NTAX</h1>
+    <button id="signout" class="ghost" hidden>Sign out</button>
+  </header>
+
+  <main>
+    <!-- Signed out: the fallback sign-in. Microsoft SSO needs the Entra app registration from
+         PLAN-017; until that exists, the add-in uses the same credentials as the web app. -->
+    <section id="signin">
+      <p class="muted">Sign in to create tickets from this mailbox.</p>
+      <label>Email or username<input id="email" type="text" autocomplete="username" /></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password" /></label>
+      <p id="signin-error" class="error" hidden></p>
+      <button id="signin-submit" class="primary">Sign in</button>
+      <p class="muted small">Signed in as the account whose permissions the ticket will be created with.</p>
+    </section>
+
+    <!-- Signed in: the working panel. -->
+    <section id="panel" hidden>
+      <div id="selection" class="card"></div>
+
+      <label>Board
+        <select id="board"></select>
+      </label>
+
+      <button id="create" class="primary">Create ticket</button>
+      <p id="status" class="muted small"></p>
+      <ul id="results" class="results"></ul>
+    </section>
+  </main>
+
+  <script src="taskpane.js"></script>
+</body>
+</html>

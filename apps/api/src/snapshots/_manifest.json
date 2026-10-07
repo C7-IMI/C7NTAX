@@ -1,11 +1,11 @@
 {
-  "capturedAt": "2026-10-07T08:44:54.452Z",
-  "totalRecords": 4731,
+  "capturedAt": "2026-10-07T08:52:59.718Z",
+  "totalRecords": 4763,
   "tables": {
     "role": 5,
     "user": 16,
     "company": 5,
-    "contact": 14,
+    "contact": 17,
     "serviceBoard": 4,
     "ticket": 96,
     "ticketComment": 469,
@@ -37,7 +37,7 @@
     "kumoLink": 3,
     "kumoDomain": 5,
     "kumoCertificate": 5,
-    "auditLog": 1580,
+    "auditLog": 1609,
     "kumoFile": 2,
     "kumoTemplateField": 107,
     "kumoAssetFieldValue": 1020,

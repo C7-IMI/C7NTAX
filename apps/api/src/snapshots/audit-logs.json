@@ -23426,5 +23426,500 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T08:44:47.139Z"
+  },
+  {
+    "id": "2070b2d0-03bf-4651-809b-ebf79bf09a88",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muxva2cu — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T08:50:02.469Z",
+          "internetMessageId": "<addin-probe-muxva2cu@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:50:02.510Z"
+  },
+  {
+    "id": "048e5dc7-4c03-40a6-b2ea-70c924974220",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muxva2cu — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muxva2cu@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:50:02.521Z"
+  },
+  {
+    "id": "658eb5c2-5e24-402f-8ada-8e42e51ad741",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muxva2cu A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muxva2cu@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muxva2cu B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muxva2cu@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muxva2cu — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muxva2cu@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:50:02.554Z"
+  },
+  {
+    "id": "a87eb5e3-1a58-444f-8e27-6be4d1be6040",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Body check muxvasm1 — VPN will not connect",
+          "bodyText": "Re: Body check\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Body Check",
+          "internetMessageId": "<bodycheck-muxvasm1@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:50:35.761Z"
+  },
+  {
+    "id": "f49c9682-b4fc-4ec6-a252-cf8c0c8aa3d2",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muxvb263 — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T08:50:48.875Z",
+          "internetMessageId": "<addin-probe-muxvb263@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:50:48.906Z"
+  },
+  {
+    "id": "bf80346e-3658-47f0-98bc-7be3a20146f3",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muxvb263 — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muxvb263@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:50:48.919Z"
+  },
+  {
+    "id": "4910a9bd-dcbe-4f2e-9311-a79b1b0969a4",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muxvb263 A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muxvb263@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muxvb263 B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muxvb263@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muxvb263 — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muxvb263@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:50:48.959Z"
+  },
+  {
+    "id": "a1fcae4f-39ce-45cb-9e2c-32db8bcfc135",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muxvdi9d — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T08:52:43.028Z",
+          "internetMessageId": "<addin-probe-muxvdi9d@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:43.063Z"
+  },
+  {
+    "id": "1d14a624-2847-4fec-afac-3ada08a32f84",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muxvdi9d — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muxvdi9d@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:43.072Z"
+  },
+  {
+    "id": "9802d3e8-4a09-4957-bb76-f7ef184cf3ad",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muxvdi9d A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muxvdi9d@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muxvdi9d B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muxvdi9d@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muxvdi9d — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muxvdi9d@probe.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:43.103Z"
+  },
+  {
+    "id": "e758c4d6-3c1d-464d-9b29-7c9a486f55cd",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "technician",
+      "email": "sessionprobe1791363165923@probe.local",
+      "lastName": "Probe",
+      "password": "***",
+      "firstName": "Session",
+      "requireChange": false,
+      "credentialMode": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:46.239Z"
+  },
+  {
+    "id": "e20a3c05-ed54-4b9c-8167-83d0e1a88599",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "0d6c6df9-6c35-4de3-b39b-3d8ad8ba0270",
+    "changes": {
+      "requireChange": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:46.834Z"
+  },
+  {
+    "id": "42e0eb8e-89fc-4a3b-a90c-1b451b1e8cd5",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault muxvdnhk",
+      "category": "probe",
+      "password": "***",
+      "username": "probe"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:49.077Z"
+  },
+  {
+    "id": "677d429d-80b2-4f47-ad64-7c3cea6f4f14",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "4b94280e-10e0-4b70-9ee6-20f13fa9622d",
+    "changes": {
+      "label": "Probe vault muxvdnhk edited",
+      "password": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:49.101Z"
+  },
+  {
+    "id": "ac831817-face-4b89-b2a0-c54312c63ab1",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "4b94280e-10e0-4b70-9ee6-20f13fa9622d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:49.122Z"
+  },
+  {
+    "id": "4815e224-ed9c-495e-b53d-db1f9d72b0fa",
+    "action": "kumo_documents:create",
+    "entity": "kumo_documents",
+    "entityId": "documents",
+    "changes": {
+      "title": "Probe doc muxvdnhk",
+      "content": "first revision"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:49.161Z"
+  },
+  {
+    "id": "c099e079-a178-44ab-9421-1a3c7abae52e",
+    "action": "kumo_documents:update",
+    "entity": "kumo_documents",
+    "entityId": "d2aff512-79cf-4c90-aca4-0d7b862831e0",
+    "changes": {
+      "content": "second revision",
+      "changeLog": "added the runbook step"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:49.169Z"
+  },
+  {
+    "id": "6ff8e237-86b9-4aa4-b94e-7337adc7a260",
+    "action": "kumo_passwords:delete",
+    "entity": "kumo_passwords",
+    "entityId": "4b94280e-10e0-4b70-9ee6-20f13fa9622d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:49.185Z"
+  },
+  {
+    "id": "d51c0ea1-1d94-4100-b9a1-1fe597e48b24",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "c9107c48-0613-411b-939b-58ca354c9a31",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:52.963Z"
+  },
+  {
+    "id": "804c9898-d1fe-4a3f-bb64-b621b4228151",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault shared muxvdnhk",
+      "category": "probe",
+      "password": "***",
+      "username": "probe2"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:49.239Z"
+  },
+  {
+    "id": "7fe16fec-115e-4612-b4f9-533e7c3239c2",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "74f97961-9f71-4fed-b6b4-588723dff752",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:49.250Z"
+  },
+  {
+    "id": "1822001f-4a6a-490c-aa35-5c342bf4f033",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "offboard",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:50.216Z"
+  },
+  {
+    "id": "ecb5808e-a70a-4945-a9ca-f4546169b973",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live incomplete muxvdoid",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:51.085Z"
+  },
+  {
+    "id": "028b67e6-8fdf-48a5-a543-8aa1e4b4ff4f",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "3ad2c7cc-bbb5-41cc-9cc0-4c5631daba10",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:51.096Z"
+  },
+  {
+    "id": "2989fd10-4570-42be-9294-7a86baf9dacc",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live complete muxvdoid",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:51.120Z"
+  },
+  {
+    "id": "66505479-d72a-4021-9967-da09e59292b7",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "2ea07e63-0c43-4a6b-9259-a4f2b0c7b53a",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:51.125Z"
+  },
+  {
+    "id": "1275b43c-64f9-41db-990b-cc9607ecd8ea",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "2ea07e63-0c43-4a6b-9259-a4f2b0c7b53a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:52.935Z"
+  },
+  {
+    "id": "fb692000-2e40-466c-9066-068b5e0cf4d0",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live disabled muxvdoid",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:52.950Z"
+  },
+  {
+    "id": "c4f2f86c-2a2d-42ae-b749-23327c2818e0",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "c9107c48-0613-411b-939b-58ca354c9a31",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:52:52.957Z"
   }
 ]

@@ -1,4 +1,6 @@
 import express from "express";
+import path from "node:path";
+import { existsSync } from "node:fs";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
@@ -204,6 +206,38 @@ app.use("/api/push", pushRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/ai-actions", aiActionsRouter);
 app.use("/api/alert-webhooks", alertWebhooksRouter);
+
+// PLAN-012: the Outlook add-in's taskpane is served from the same origin as the API, because the
+// manifest's URLs must be HTTPS and same-origin is what lets the pane call /api without CORS.
+// Off with OUTLOOK_ADDIN_ENABLED=false, which is also what the API routes do.
+if (process.env.OUTLOOK_ADDIN_ENABLED !== "false") {
+  const addinDir = process.env.OUTLOOK_ADDIN_DIR || path.resolve(__dirname, "..", "..", "outlook-addin");
+  if (existsSync(addinDir)) {
+    // The global helmet policy cannot apply here: Office.js is only served from Microsoft's CDN
+    // (bundling it is not permitted), and Office frames the taskpane, so the pane needs a policy
+    // that allows that one script origin and those two frames — and nothing else.
+    app.use("/addin", (_req, res, next) => {
+      res.setHeader("Content-Security-Policy", [
+        "default-src 'self'",
+        "script-src 'self' https://appsforoffice.microsoft.com",
+        // Office.js injects its own elements and styles them inline; without this the pane loads
+        // with the host's chrome unstyled, which reads as a broken add-in.
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data:",
+        "connect-src 'self'",
+        // Office.js opens a hidden telemetry frame on Microsoft's own host. Naming it keeps the
+        // rest of default-src closed.
+        "frame-src https://telemetryservice.firstpartyapps.oaspapps.com",
+        "frame-ancestors https://*.office.com https://*.office365.com https://*.outlook.com https://outlook.office.com https://outlook.office365.com",
+        "base-uri 'none'",
+        "form-action 'none'",
+      ].join("; "));
+      next();
+    });
+    app.use("/addin", express.static(addinDir, { index: "taskpane.html", extensions: ["html"] }));
+    console.log(`[C7NTAX] Outlook add-in served from /addin (${addinDir})`);
+  }
+}
 
 // PLAN-016: in a deployment the API and the SPA are one image and one origin.
 mountWebApp(app);

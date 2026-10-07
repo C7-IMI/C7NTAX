@@ -53,11 +53,18 @@ outlookAddinRouter.post("/tickets", requirePermission(Permission.TicketCreate), 
     const created: string[] = [];
     const skipped: string[] = [];
     const newlySeen: string[] = [];
+    // Per-message results, because the taskpane has to show which email produced which ticket —
+    // "3 created" does not tell somebody which of their five messages was already done.
+    const results: Array<{ subject: string; ticketId?: string; ticketNumber?: string; reason?: string }> = [];
 
     for (const e of emails) {
       const messageId = e.internetMessageId
         || crypto.createHash("sha256").update(`${e.from}-${e.subject}-${e.receivedAt || ""}`).digest("hex");
-      if (seen.includes(messageId)) { skipped.push(e.subject || messageId); continue; }
+      if (seen.includes(messageId)) {
+        skipped.push(e.subject || messageId);
+        results.push({ subject: e.subject || messageId, reason: "already has a ticket" });
+        continue;
+      }
       const email: ParsedEmail = {
         messageId,
         from: { name: e.fromName || "", email: e.from || "" },
@@ -71,12 +78,19 @@ outlookAddinRouter.post("/tickets", requirePermission(Permission.TicketCreate), 
         references: [],
       };
       const ticketId = await createTicketFromEmail(boardId, email);
-      if (ticketId) { created.push(ticketId); newlySeen.push(messageId); }
-      else skipped.push(e.subject || messageId);
+      if (ticketId) {
+        created.push(ticketId);
+        newlySeen.push(messageId);
+        const ticket = await prisma.ticket.findUnique({ where: { id: ticketId }, select: { ticketNumber: true } });
+        results.push({ subject: e.subject || messageId, ticketId, ticketNumber: ticket?.ticketNumber });
+      } else {
+        skipped.push(e.subject || messageId);
+        results.push({ subject: e.subject || messageId, reason: "the ticket could not be created" });
+      }
     }
 
     if (newlySeen.length > 0) await recordSeen([...seen, ...newlySeen]);
 
-    res.status(201).json({ created: created.length, skipped, tickets: created });
+    res.status(201).json({ created: created.length, skipped, tickets: created, results });
   } catch (e) { next(e); }
 });

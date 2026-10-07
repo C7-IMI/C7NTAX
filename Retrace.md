@@ -3725,3 +3725,22 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - `MFASetup` regenerates its pending secret on every visit (pre-existing). That means a screenshot taken before a reload now reports as a foreign enrolment — the message is honest, but rotate-on-load is the actual defect and is recorded rather than changed here.
 - The bundle grew by jsQR (~40KB); `BarcodeDetector` handles Chrome/Edge so the library is only the fallback.
+
+**Prompt 220 — continued: W5-1 (Outlook add-in, PLAN-012)**
+
+**What I did**
+- `apps/outlook-addin/`: manifest (`MessageReadCommandSurface` + taskpane), `taskpane.html/js`, the function file Office requires (`commands.html/js`, deliberately behaviour-free), `styles.css`, and 16/32/80 icons generated from the existing app icon, plus a README with the placeholders, sideloading and what is deliberately not built.
+- Served by the API at `/addin` (same origin as `/api`, so relative URLs and no CORS), behind `OUTLOOK_ADDIN_ENABLED`.
+- The pane: `getSelectedItemsAsync` when the host has it, `mailbox.item` otherwise; board selector with last-used board remembered; per-message results with ticket links; bearer-token sign-in stored locally (SSO needs the PLAN-017 registration, recorded).
+- `POST /api/outlook-addin/tickets` now returns a `results` array — one line per message with the ticket id and number, or the reason it was skipped.
+- **Found by loading the pane, not by reading code:** the global helmet CSP (`script-src 'self'`) blocked the Office.js CDN, and `default-src 'self'` refused the frame Office puts the pane in. The pane could never have worked inside Outlook. `/addin` now sends a policy tailored to it.
+- Dropped an invented second flag (`OUTLOOK_ADDIN_DISABLED`) in favour of the one that already existed — two names for the same switch, with opposite polarity, is a bug waiting to be written.
+
+**Decisions worth remembering**
+- **Same pipeline or no feature.** The pane posts to the existing endpoint, so the two email paths cannot drift into different ticket behaviour.
+- **A no-op command file is the right no-op.** Office requires a function file; the button opens the pane instead of creating tickets blind.
+- **Load the thing where it will run.** Two CSP failures were invisible to every unit-level check and would have been "the add-in doesn't work" in Outlook with no explanation on screen.
+
+**Notes for next time**
+- The manifest is not added to any build; it is a source file with two placeholders to replace per deployment (`__ADDIN_HOST__`, `__ADDIN_GUID__`).
+- SSO and AppSource submission are decisions, not code: they need the Entra registration (PLAN-017) and a Partner Center account respectively.
