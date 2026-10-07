@@ -255,5 +255,22 @@
     "sortOrder": 0,
     "createdAt": "2026-10-07T23:05:05.018Z",
     "updatedAt": "2026-10-07T23:05:05.018Z"
+  },
+  {
+    "id": "c278e146-292b-41b0-8234-8e82e7d49d7d",
+    "name": "ProbeSocial muyqdzu0",
+    "category": "other",
+    "description": "probe",
+    "statusPageUrl": null,
+    "downDetectorUrl": null,
+    "rssUrl": null,
+    "monitorKind": "vendor",
+    "monitorUrl": null,
+    "monitorConfig": null,
+    "monitorEnabled": true,
+    "enabled": true,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T23:20:53.492Z",
+    "updatedAt": "2026-10-07T23:20:53.492Z"
   }
 ]

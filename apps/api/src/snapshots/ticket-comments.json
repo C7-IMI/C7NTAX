@@ -5311,5 +5311,27 @@
     "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "createdAt": "2026-10-07T23:01:51.798Z",
     "updatedAt": "2026-10-07T23:01:51.798Z"
+  },
+  {
+    "id": "b57f1a0f-cc4e-4e0c-9e6f-a2936763c475",
+    "body": "Deleted the stale mail profile and let autodiscover rebuild it. Outlook connected immediately.",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "cce50643-fca8-4bcb-ad72-73d0aab012d4",
+    "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "createdAt": "2026-10-07T23:17:44.747Z",
+    "updatedAt": "2026-10-07T23:17:44.747Z"
+  },
+  {
+    "id": "aaba7183-93a6-4a1b-9f56-71dd4879cc49",
+    "body": "Deleted the stale mail profile and let autodiscover rebuild it. Outlook connected immediately.",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "242b5e34-0209-4fb3-868f-cb099c197198",
+    "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "createdAt": "2026-10-07T23:20:28.020Z",
+    "updatedAt": "2026-10-07T23:20:28.020Z"
   }
 ]

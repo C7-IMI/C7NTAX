@@ -7,6 +7,10 @@
  *
  * The push is exercised against a local stub server so the payload and the auth header are real.
  *
+ * Requires `EGRESS_ALLOW_PRIVATE=true` on the API process: the stub is on 127.0.0.1, which the
+ * egress policy refuses by default, so without it every push assertion fails with a 409 that looks
+ * like a product bug and is not one.
+ *
  * Run from apps/api:  node probe-expenses.mjs
  */
 import { createServer } from "node:http";

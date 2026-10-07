@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.7.037",
+    "date": "2026-10-07",
+    "title": "A full security and bug audit: five holes closed, and the ones left are named",
+    "changes": [
+      {
+        "text": "**Any signed-in account could read any system-configuration row by name, including the SSO hand-off.** `GET /api/system/config/:key` had no gate while its `PATCH` twin did — and the row the SSO callback parks there holds the single-use code **and the signing-in user's whole token** for two minutes. Polling that key during somebody's sign-in was a full session takeover that never touched the exchange endpoint built to consume the code. Read and write now share one policy: service-owned rows (`sso:`, `email_connector:`, `oauth`, `sample_data`, and anything named like a secret) are refused to everyone, administrators included, and are left out of the `/system/configs` dump as well. The three genuinely self-service keys keep working, which is what the app's own screens read.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The integration list handed every technician the password to every client's cloud.** `credentials` is stored in clear text and returned with the row; `IntegrationView` is held by technicians and `IntegrationManage` is not, so a technician could read the M365 client secret, the ConnectWise key pair and the AWS `secretAccessKey` for the whole provider — and could *use* them through the test and sync endpoints. A view-only caller now receives `hasCredentials` instead of the values, and the fix dialog that needs them is the manage-gated one.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A letter from a client was enough to open a ticket against a different client.** The add-in took `companyId` from the review and `POST /projects`, `POST /quotes` and `POST /schedule` took a company from the body, all reachable by the client-facing roles. A scoped account now files only under its own client — the add-in refuses another up front with a 403 rather than reporting \"the ticket could not be created\" for a refusal the person could have avoided, its picker offers only their own client, and every write that names a company checks it.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Six endpoints let a client-scoped account read the whole provider's data.** Projects, assets, the schedule and quotes — including quote line-item pricing — returned every company's rows, because the company filter was the caller's own query parameter and absent by default. Project and asset detail routes answered with another company's record. All six are scoped now, with detail routes answering 404 rather than 403 so an id that is not yours is indistinguishable from one that does not exist.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Unpublished and internal knowledge-base articles were readable by client roles.** `KBView` is held by `client_admin` and `client_user`, and the article route ignored both `status` and `visibility`, so drafts — body, review note and the ticket they were drafted from — were readable by the customer they were written about. Scoped accounts now see published, non-internal articles only; staff are unaffected, including the draft queue.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The security overrides were one toolchain away from being silently ignored.** `packageManager` pins pnpm 9.1.0, which reads them only from `package.json`; pnpm 10+ reads them only from `pnpm-workspace.yaml`. Measured rather than assumed: the same override in a project with no pin did nothing and `qs` fell back to a vulnerable version. All twelve floors are declared in both files, re-resolving produced a byte-identical lockfile, and `pnpm guard:deps` now **fails on drift** between the two lists — a floor only one package manager reads is not a floor.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The audit answered the \"do the buttons work\" question with three checks rather than by clicking.** Every API path the web app calls (332 of them) was matched against the routes that exist: **none broken**. The route-guard check reports 393 routes / 347 guarded / 0 unguarded. The probe suite — 28 suites — was run in full, and the three that failed were the three that document an environment precondition (`INVOICE_BATCH_ENABLED`, `TIME_RULES_ENABLED`, `EGRESS_ALLOW_PRIVATE`, `BILLING_FROM_TICKETS_ENABLED`); re-run with them set, all three pass 36/36, 6/6 and 27/27, which is a check that the kill switches work rather than a bug found.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.036",
     "date": "2026-10-07",
     "title": "The add-in says \"bundle\", and can be tried without installing it",

@@ -123,6 +123,14 @@ async function main() {
   const drafted = await call("POST", `/api/kb/autogen/${ticket.id}`, { token: admin.token });
   check(drafted.status === 201, `a draft was produced (${drafted.status})`);
   const articleId = drafted.data?.article?.id;
+  if (!articleId) {
+    // Without its preconditions — a loopback AI provider and `EGRESS_ALLOW_PRIVATE=true` — the model
+    // call is refused by the egress policy and no article exists. Say that, rather than falling
+    // through to a Prisma `where` with an undefined id, which buries the reason under a stack trace.
+    check(false, `no article was drafted — is the API running with EGRESS_ALLOW_PRIVATE=true, KB_AUTOGEN_ENABLED=true and the stub provider on ${AI_PORT}? (${drafted.status})`);
+    console.log(`\n${pass} passed, ${fail} failed`);
+    process.exit(1);
+  }
   check(drafted.data?.article?.aiGenerated === true, "and it is marked as AI-generated");
   check(drafted.data?.article?.status === "draft", `and it is only a draft, never published (${drafted.data?.article?.status})`);
   check(drafted.data?.tokensUsed === 412, `the model usage is reported back (${drafted.data?.tokensUsed})`);

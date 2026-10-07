@@ -178,5 +178,17 @@
     "maxTokens": 2000,
     "createdAt": "2026-10-07T20:57:38.346Z",
     "updatedAt": "2026-10-07T20:57:38.346Z"
+  },
+  {
+    "id": "32ee40cc-85b2-467d-ba45-cdb02fd12601",
+    "name": "Probe KB provider muyqdfpy",
+    "provider": "custom",
+    "isActive": true,
+    "isDefault": true,
+    "apiEndpoint": "http://127.0.0.1:4124/v1/chat/completions",
+    "model": "probe-model",
+    "maxTokens": 800,
+    "createdAt": "2026-10-07T23:20:28.010Z",
+    "updatedAt": "2026-10-07T23:20:28.010Z"
   }
 ]

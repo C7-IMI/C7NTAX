@@ -189406,5 +189406,254 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T23:14:51.853Z"
+  },
+  {
+    "id": "e661384e-caaf-404b-bce9-efacb82122a6",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:43.025Z"
+  },
+  {
+    "id": "60a8c409-0961-48fe-88df-3b760d65d3bf",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "72d2f206-92c0-4d9a-b18f-d5ecc1c28d18",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:43.797Z"
+  },
+  {
+    "id": "cbc1ebcb-722e-470f-bf29-442c5604bae4",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "9ac2579b-1163-4058-b4a4-ca7cde91b8f1",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:43.854Z"
+  },
+  {
+    "id": "93b6dbe2-7417-4fab-bebb-6ab0ac6ceca6",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault muyq9zad",
+      "category": "probe",
+      "password": "***",
+      "username": "probe"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:45.842Z"
+  },
+  {
+    "id": "a669e140-7a79-4058-a40a-3eff72b1a6b0",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "56bcc546-2caa-4cb9-a761-e23d8af0cd65",
+    "changes": {
+      "label": "Probe vault muyq9zad edited",
+      "password": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:45.860Z"
+  },
+  {
+    "id": "436020ad-767f-4c36-922d-76fbf7bb3d95",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "56bcc546-2caa-4cb9-a761-e23d8af0cd65",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:45.878Z"
+  },
+  {
+    "id": "aed3a28c-edab-4507-930e-e11a2e7c13c6",
+    "action": "kumo_documents:create",
+    "entity": "kumo_documents",
+    "entityId": "documents",
+    "changes": {
+      "title": "Probe doc muyq9zad",
+      "content": "first revision"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:45.913Z"
+  },
+  {
+    "id": "85ec49ff-0502-4d10-9507-9d61707c9738",
+    "action": "kumo_documents:update",
+    "entity": "kumo_documents",
+    "entityId": "d840790f-dd23-42d5-ad05-8ff49043eaea",
+    "changes": {
+      "content": "second revision",
+      "changeLog": "added the runbook step"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:45.920Z"
+  },
+  {
+    "id": "5853182e-1da9-4fe6-bd62-b7a484ceeadd",
+    "action": "kumo_passwords:delete",
+    "entity": "kumo_passwords",
+    "entityId": "56bcc546-2caa-4cb9-a761-e23d8af0cd65",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:45.934Z"
+  },
+  {
+    "id": "e4747a5d-57e1-4dc0-b739-2c283447de4a",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault shared muyq9zad",
+      "category": "probe",
+      "password": "***",
+      "username": "probe2"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:45.970Z"
+  },
+  {
+    "id": "a861176f-1807-4d90-b224-79d08ce73954",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "c6385b5a-5ad0-498a-9364-06c8b6dce65b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:45.978Z"
+  },
+  {
+    "id": "3b243a89-9655-4952-bdce-e921ce74cd60",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "offboard",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:17:47.000Z"
+  },
+  {
+    "id": "fb9d6c1c-83a1-432d-a14c-edf163f4dc93",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "2b15d650-8695-435e-ab6c-62cd6cc451ad",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:20:15.423Z"
+  },
+  {
+    "id": "0596b69a-8122-4d77-b53b-e85e53a76947",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "b0eac680-961d-4c03-b5ea-a826ed9a44e9",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:20:15.510Z"
+  },
+  {
+    "id": "5ae9aa58-efb7-436e-8c1c-3d9227e16e92",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:20:52.893Z"
+  },
+  {
+    "id": "3535abc1-4b07-46c0-8191-d5b7ab604ebb",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "services",
+    "changes": {
+      "name": "ProbeSocial muyqdzu0",
+      "enabled": true,
+      "category": "other",
+      "description": "probe",
+      "monitorEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:20:53.496Z"
+  },
+  {
+    "id": "f8477180-9751-4c05-9ae8-921d8bd3b902",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:23:59.758Z"
+  },
+  {
+    "id": "78b11171-9708-4032-a86f-d760ab2502ce",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:27:05.381Z"
+  },
+  {
+    "id": "2f3bb2ec-1241-431b-b337-19cbf0aa8c60",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:30:20.848Z"
   }
 ]
