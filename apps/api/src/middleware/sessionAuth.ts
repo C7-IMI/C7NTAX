@@ -1,135 +1,212 @@
 /**
- * Session Authentication Middleware
- * Implements session-based auth with sliding expiration and inactivity timeout.
- * Admin accounts bypass timeout per Autotask/ConnectWise/HaloPSA standards.
+ * Session Authentication (PLAN-001)
+ *
+ * Browser clients get a server-side session: a random token in an HttpOnly cookie, with
+ * only its SHA-256 hash stored, so a database leak cannot be replayed. The session slides
+ * on activity and expires after an idle period that administrators are exempt from, which
+ * is the behaviour Autotask, ConnectWise and HaloPSA all ship (see PLAN-001 §5.2).
+ *
+ * Two things this deliberately does NOT change:
+ *   · Non-browser clients (desktop app, Outlook add-in, probes, integrations) still
+ *     authenticate with `Authorization: Bearer`. They cannot hold a cookie, and the route
+ *     stack is untouched — `authenticate` in middleware/auth.ts consults the session first
+ *     and falls back to the token.
+ *   · The shape of `req.user`. The session path resolves the same identity, through the
+ *     same permission-refresh code as the token path, so every route's guards behave
+ *     identically whichever way the caller signed in.
+ *
+ * Cookies are sent automatically by the browser, so any state-changing request that is
+ * authenticated by cookie must also carry the CSRF token header; a header is not sent
+ * automatically by a cross-site request, which is what makes the check meaningful.
  */
-
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { prisma } from "../index";
 import { isBypassAccount } from "../services/testBypass";
+import { logger } from "../services/logger";
 
-const SESSION_COOKIE = "c7_sid";
-const ADMIN_TIMEOUT_BYPASS = true; // Admin + Super Admin sessions never expire per PSA standard
+export const SESSION_COOKIE = "c7_sid";
+export const CSRF_COOKIE = "c7_csrf";
+export const CSRF_HEADER = "x-csrf-token";
 
-/** Read session timeout from SystemConfig, fallback to 30 minutes */
-async function getSessionTimeoutMs(): Promise<number> {
+/** Admin and Super Admin sessions never expire from inactivity (PLAN-001 §5.2). */
+const ADMIN_TIMEOUT_BYPASS = true;
+/** Default idle timeout when no setting is stored. */
+const DEFAULT_TIMEOUT_MINUTES = 30;
+/** Longest a session may live without any activity check at all. */
+const MAX_SESSION_HOURS = 12;
+
+export const sessionAuthEnabled = (): boolean => process.env.SESSION_AUTH_ENABLED !== "false";
+const isProduction = (): boolean => process.env.NODE_ENV === "production";
+
+const hashToken = (token: string): string => createHash("sha256").update(token).digest("hex");
+
+/** Idle timeout in milliseconds: SystemConfig `session_timeout` (minutes), else 30. */
+export async function getSessionTimeoutMs(): Promise<number> {
   try {
     const cfg = await prisma.systemConfig.findUnique({ where: { key: "session_timeout" } });
-    if (cfg?.value) {
-      const val = JSON.parse(cfg.value as string);
-      if (typeof val === "number" && val >= 5 && val <= 480) return val * 60 * 1000;
+    if (cfg?.value !== undefined && cfg?.value !== null) {
+      const raw = cfg.value as unknown;
+      const minutes = typeof raw === "number" ? raw : Number(typeof raw === "string" ? JSON.parse(raw) : raw);
+      if (Number.isFinite(minutes) && minutes >= 5 && minutes <= 480) return minutes * 60 * 1000;
     }
-  } catch {}
-  return 30 * 60 * 1000; // default 30 min
+  } catch { /* fall through to the default */ }
+  return DEFAULT_TIMEOUT_MINUTES * 60 * 1000;
 }
 
-export interface SessionUser {
+export interface CreatedSession {
+  sessionToken: string;
+  csrfToken: string;
+  expiresAt: Date;
+}
+
+/**
+ * Creates a session for a user and invalidates their previous ones. One live session per
+ * account is the ConnectWise behaviour (PLAN-001 §2.2 step 4): a new sign-in retires the
+ * old one instead of leaving it to expire.
+ */
+export async function createSession(user: { id: string; email: string }, req: Request): Promise<CreatedSession> {
+  const sessionToken = randomBytes(32).toString("hex");
+  const csrfToken = randomBytes(32).toString("hex");
+  const timeoutMs = await getSessionTimeoutMs();
+  const expiresAt = new Date(Date.now() + Math.min(timeoutMs * 4, MAX_SESSION_HOURS * 3600 * 1000));
+
+  await prisma.userSession.updateMany({
+    where: { userId: user.id, invalidatedAt: null },
+    data: { invalidatedAt: new Date() },
+  });
+
+  await prisma.userSession.create({
+    data: {
+      sessionToken: hashToken(sessionToken),
+      csrfToken,
+      userId: user.id,
+      ipAddress: req.ip ?? null,
+      userAgent: (req.headers["user-agent"] as string | undefined)?.slice(0, 300) ?? null,
+      lastActivityAt: new Date(),
+      expiresAt,
+    },
+  });
+
+  logger.info("session", `session opened for ${user.email} from ${req.ip ?? "unknown"}`);
+  return { sessionToken, csrfToken, expiresAt };
+}
+
+export function setSessionCookies(res: Response, session: CreatedSession): void {
+  const maxAge = Math.max(1000, session.expiresAt.getTime() - Date.now());
+  const base = { httpOnly: true, secure: isProduction(), sameSite: "strict" as const, path: "/" };
+  res.cookie(SESSION_COOKIE, session.sessionToken, { ...base, maxAge });
+  // Readable by the SPA on purpose: the double-submit check compares it with the header.
+  res.cookie(CSRF_COOKIE, session.csrfToken, { ...base, httpOnly: false, maxAge });
+}
+
+export function clearSessionCookies(res: Response): void {
+  for (const name of [SESSION_COOKIE, CSRF_COOKIE]) {
+    res.clearCookie(name, { httpOnly: name === SESSION_COOKIE, secure: isProduction(), sameSite: "strict", path: "/" });
+  }
+}
+
+export function readSessionToken(req: Request): string | undefined {
+  const cookies = (req as Request & { cookies?: Record<string, string> }).cookies;
+  const fromParser = cookies?.[SESSION_COOKIE];
+  if (fromParser) return fromParser;
+  // Minimal fallback parser, so the session path still works if cookie-parser is not
+  // mounted (for example a harness importing this module directly).
+  const header = req.headers.cookie;
+  if (!header) return undefined;
+  for (const part of header.split(";")) {
+    const [name, ...rest] = part.trim().split("=");
+    if (name === SESSION_COOKIE) return decodeURIComponent(rest.join("="));
+  }
+  return undefined;
+}
+
+export interface ResolvedSession {
   userId: string;
   email: string;
-  role: string;
-  companyId: string | null;
-  permissions: string[];
-}
-
-export interface SessionRequest extends Request {
-  user?: SessionUser;
-  sessionId?: string;
+  sessionId: string;
+  csrfToken: string;
+  lastActivityAt: Date;
 }
 
 /**
- * Load user permissions from database (role + individual overrides).
+ * Resolves the cookie to a live session, applying absolute expiry and the inactivity
+ * timeout. The status tells the caller what to answer; `none` means "no cookie at all",
+ * which is not an error — the caller falls back to the bearer token.
  */
-async function loadPermissions(userId: string): Promise<string[]> {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        permissions: true,
-        role: { select: { permissions: true } },
-      },
-    });
-    if (!user) return [];
-    const perms = new Set([...(user.role?.permissions || []), ...(user.permissions || [])]);
-    return [...perms];
-  } catch {
-    return [];
-  }
-}
+export async function resolveSession(req: Request): Promise<
+  { status: "ok"; session: ResolvedSession } | { status: "none" | "invalid" | "expired" | "timeout" }
+> {
+  const token = readSessionToken(req);
+  if (!token) return { status: "none" };
 
-/**
- * Session authentication middleware.
- * Reads session cookie, validates session, loads permissions.
- * Also enforces inactivity timeout for non-admin users.
- */
-export async function authenticateSession(
-  req: SessionRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  const sessionToken = req.cookies?.[SESSION_COOKIE];
-  if (!sessionToken) {
-    // Fall back to JWT Bearer token for backward compatibility
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith("Bearer ")) {
-      // Delegate to existing JWT auth
-      const { authenticate } = await import("./auth");
-      return authenticate(req as any, res, next);
+  const record = await prisma.userSession.findUnique({ where: { sessionToken: hashToken(token) } });
+  if (!record || record.invalidatedAt) return { status: "invalid" };
+
+  const user = await prisma.user.findUnique({
+    where: { id: record.userId },
+    select: { id: true, email: true, isActive: true, role: { select: { systemRole: true } } },
+  });
+  // A session for a deleted account is not a session.
+  if (!user) return { status: "invalid" };
+
+  if (record.expiresAt.getTime() <= Date.now()) return { status: "expired" };
+
+  const exempt = ADMIN_TIMEOUT_BYPASS
+    && (user.role?.systemRole === "admin" || user.role?.systemRole === "super_admin" || isBypassAccount(user.email));
+
+  if (!exempt) {
+    const timeoutMs = await getSessionTimeoutMs();
+    if (Date.now() - record.lastActivityAt.getTime() > timeoutMs) {
+      await prisma.userSession.update({ where: { id: record.id }, data: { invalidatedAt: new Date() } });
+      logger.info("session", `session for ${user.email} timed out after ${Math.round(timeoutMs / 60000)} minutes idle`);
+      return { status: "timeout" };
     }
-    res.status(401).json({ error: "Not authenticated" });
+  }
+
+  return {
+    status: "ok",
+    session: {
+      userId: user.id,
+      email: user.email,
+      sessionId: record.id,
+      csrfToken: record.csrfToken,
+      lastActivityAt: record.lastActivityAt,
+    },
+  };
+}
+
+/** Sliding expiry: any authenticated request counts as activity. */
+export async function touchSession(sessionId: string): Promise<void> {
+  await prisma.userSession.update({ where: { id: sessionId }, data: { lastActivityAt: new Date() } });
+}
+
+export async function invalidateSessionsForUser(userId: string): Promise<number> {
+  const result = await prisma.userSession.updateMany({ where: { userId, invalidatedAt: null }, data: { invalidatedAt: new Date() } });
+  return result.count;
+}
+
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/**
+ * Double-submit CSRF check for cookie-authenticated writes, compared in constant time.
+ * Safe methods are skipped: a GET must not change state, so there is nothing to forge.
+ */
+export function csrfTokenValid(req: Request, expected: string): boolean {
+  if (SAFE_METHODS.has(req.method)) return true;
+  const supplied = req.headers[CSRF_HEADER];
+  if (typeof supplied !== "string" || supplied.length === 0) return false;
+  const a = Buffer.from(supplied);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/** Response for a session that no longer exists: the SPA turns this into a sign-in prompt. */
+export function sessionExpiredResponse(res: Response, status: "invalid" | "expired" | "timeout"): void {
+  clearSessionCookies(res);
+  if (status === "timeout") {
+    res.status(440).json({ error: "Session expired due to inactivity", code: "SESSION_TIMEOUT" });
     return;
   }
-
-  try {
-    const session = await prisma.userSession.findUnique({
-      where: { sessionToken },
-      include: { user: { select: { id: true, email: true, role: { select: { systemRole: true } }, companyId: true } } },
-    });
-
-    if (!session || session.invalidatedAt || session.expiresAt < new Date()) {
-      res.clearCookie(SESSION_COOKIE);
-      res.status(401).json({ error: "Session expired", code: "SESSION_EXPIRED" });
-      return;
-    }
-
-    // Inactivity timeout — admin + super_admin bypass per PSA standard, and the
-    // account-scoped testing bypass when one is configured
-    if (ADMIN_TIMEOUT_BYPASS &&
-        (session.user?.role?.systemRole === "admin" || session.user?.role?.systemRole === "super_admin" ||
-         isBypassAccount(session.user?.email))) {
-      // Admin and Super Admin sessions never expire from inactivity
-    } else {
-      const timeoutMs = await getSessionTimeoutMs();
-      const idleMs = Date.now() - session.lastActivityAt.getTime();
-      if (idleMs > timeoutMs) {
-        await prisma.userSession.update({
-          where: { id: session.id },
-          data: { invalidatedAt: new Date() },
-        });
-        res.clearCookie(SESSION_COOKIE);
-        res.status(440).json({ error: "Session expired due to inactivity", code: "SESSION_TIMEOUT" });
-        return;
-      }
-    }
-
-    // Sliding expiration — extend session
-    await prisma.userSession.update({
-      where: { id: session.id },
-      data: { lastActivityAt: new Date() },
-    });
-
-    // Load permissions
-    const permissions = await loadPermissions(session.userId);
-
-    req.user = {
-      userId: session.userId,
-      email: session.user.email,
-      role: session.user.role?.systemRole || "technician",
-      companyId: session.user.companyId,
-      permissions,
-    };
-    req.sessionId = session.id;
-    next();
-  } catch (e) {
-    next(e);
-  }
+  res.status(401).json({ error: "Session expired", code: "SESSION_EXPIRED" });
 }

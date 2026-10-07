@@ -10,6 +10,15 @@ import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
 import { rateLimiter, isLoopback } from "../middleware/rateLimiter";
 import { isBypassAccount, isBypassLoginAttempt, logBypassSignIn } from "../services/testBypass";
+import { startSession, endSessionsForUser } from "../services/signIn";
+import {
+  clearSessionCookies,
+  getSessionTimeoutMs,
+  invalidateSessionsForUser,
+  resolveSession,
+  sessionAuthEnabled,
+  touchSession,
+} from "../middleware/sessionAuth";
 
 export const authRouter = Router();
 const emailService = new EmailService();
@@ -105,11 +114,11 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
       return;
     }
 
-    const token = signToken({
+    const token = await startSession(req, res, {
       id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
       companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
-      mfaEnabled: false, active: true,
+      mfaEnabled: user.mfaEnabled, active: user.isActive,
       tokenVersion: user.tokenVersion,
     });
 
@@ -162,7 +171,10 @@ authRouter.post("/change-password", authenticate, credentialLimiter, async (req:
       },
     });
 
-    const token = signToken({
+    // A fresh session as well as a fresh token: the old session is retired by the version
+    // bump, and the caller should not have to sign in again to keep working.
+    await endSessionsForUser(user.id);
+    const token = await startSession(req, res, {
       id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
       companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
@@ -234,7 +246,7 @@ authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
       await prisma.user.update({ where: { id: user.id }, data: { mfaBackupCodes: codes } });
     }
 
-    const token = signToken({
+    const token = await startSession(req, res, {
       id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
       companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
@@ -295,7 +307,7 @@ authRouter.post("/mfa/verify-email", credentialLimiter, async (req, res, next) =
     // Clear code
     await prisma.user.update({ where: { id: user.id }, data: { mfaEmailCode: null, mfaEmailCodeExpires: null } });
 
-    const token = signToken({
+    const token = await startSession(req, res, {
       id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
       companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
@@ -319,4 +331,71 @@ authRouter.get("/me", authenticate, async (req: AuthRequest, res, next) => {
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
     res.json({ ...user, testBypass: isBypassAccount(user.email) });
   } catch (e) { next(e); }
+});
+
+/**
+ * Session state for the SPA (PLAN-001 §3.1/§3.2). Deliberately unauthenticated: it is how
+ * the client finds out whether the cookie is still good before it renders a signed-in UI,
+ * and it answers 401 rather than 403 so a caller can tell "not signed in" from "no rights".
+ * It also carries the numbers the idle-timeout warning needs, so no second request is made.
+ */
+authRouter.get("/session", async (req, res) => {
+  if (!sessionAuthEnabled()) {
+    res.status(404).json({ error: { message: "Session authentication is disabled", code: "SESSION_AUTH_DISABLED" } });
+    return;
+  }
+  const result = await resolveSession(req);
+  if (result.status !== "ok") {
+    if (result.status !== "none") clearSessionCookies(res);
+    res.status(401).json({ error: { message: result.status === "timeout" ? "Session expired due to inactivity" : "Not signed in", code: result.status === "timeout" ? "SESSION_TIMEOUT" : "NO_SESSION" } });
+    return;
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: result.session.userId },
+    select: { id: true, email: true, firstName: true, lastName: true, role: true, companyId: true, mfaEnabled: true, mustChangePassword: true },
+  });
+  if (!user) { clearSessionCookies(res); res.status(401).json({ error: { message: "Not signed in", code: "NO_SESSION" } }); return; }
+  const timeoutMs = await getSessionTimeoutMs();
+  res.json({
+    user,
+    permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], []),
+    timeoutMinutes: Math.round(timeoutMs / 60000),
+    lastActivityAt: result.session.lastActivityAt,
+  });
+});
+
+/**
+ * "Stay logged in" (PLAN-001 §3.3). Extending is just activity, so the sliding window does
+ * the work; the endpoint exists so the modal can be explicit and get the new deadline back.
+ */
+authRouter.post("/session/extend", async (req, res) => {
+  const result = await resolveSession(req);
+  if (result.status !== "ok") {
+    if (result.status !== "none") clearSessionCookies(res);
+    res.status(401).json({ error: { message: "Session expired — sign in again", code: "SESSION_TIMEOUT" } });
+    return;
+  }
+  await touchSession(result.session.sessionId);
+  const timeoutMs = await getSessionTimeoutMs();
+  res.json({ extended: true, timeoutMinutes: Math.round(timeoutMs / 60000), lastActivityAt: new Date().toISOString() });
+});
+
+/**
+ * Logout ends the session server-side, not just in the browser: clearing a cookie alone
+ * would leave a live session behind. Also accepts a bearer token, so the desktop app and
+ * scripts can end a session too.
+ */
+authRouter.post("/logout", async (req: AuthRequest, res) => {
+  let ended = 0;
+  const header = req.headers.authorization;
+  if (header?.startsWith("Bearer ")) {
+    try {
+      const payload = jwt.verify(header.slice(7), JWT_SECRET) as { userId?: string };
+      if (payload.userId) ended += await invalidateSessionsForUser(payload.userId);
+    } catch { /* an expired token still gets its cookies cleared below */ }
+  }
+  const result = await resolveSession(req);
+  if (result.status === "ok") ended += await invalidateSessionsForUser(result.session.userId);
+  clearSessionCookies(res);
+  res.json({ message: "Signed out", sessionsEnded: ended });
 });

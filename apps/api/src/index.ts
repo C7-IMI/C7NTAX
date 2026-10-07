@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -148,6 +149,9 @@ app.use(morgan("short", {
 }));
 app.use(rateLimiter(9999, 60 * 1000));
 app.use(express.json({ limit: "10mb" }));
+// Session cookies (PLAN-001). Parsed before any route so `authenticate` can read the
+// session cookie on every request.
+app.use(cookieParser());
 
 // Auto-capture snapshots after any successful write (debounced 5s)
 // Must be BEFORE routes so it hooks into response finish events

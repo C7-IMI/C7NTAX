@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, signToken, type AuthRequest } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
+import { startSession } from "../services/signIn";
 import {
   generateRegistrationOptions, verifyRegistrationResponse,
   generateAuthenticationOptions, verifyAuthenticationResponse,
@@ -110,6 +111,7 @@ webauthnRouter.post("/login/verify", async (req, res, next) => {
     challenges.delete(`login:${userId}`);
     const user = await prisma.user.findUnique({ where: { id: userId }, include: { role: true } });
     if (!user) throw new AppError("User not found", 404);
-    res.json({ token: signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole, tokenVersion: user.tokenVersion }) });
+    const token = await startSession(req, res, { id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole, tokenVersion: user.tokenVersion });
+    res.json({ token });
   } catch (e) { next(e); }
 });

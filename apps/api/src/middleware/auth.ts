@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import type { SignOptions } from "jsonwebtoken";
 import { Permission, ROLE_PERMISSIONS, type SystemRole } from "@C7NTAX/shared";
 import { bypassTokenTtl, isBypassAccount } from "../services/testBypass";
+import { clearSessionCookies, csrfTokenValid, resolveSession, sessionAuthEnabled, sessionExpiredResponse, touchSession } from "./sessionAuth";
 
 const JWT_SECRET = process.env.JWT_SECRET || "C7NTAX-dev-secret-change-in-prod";
 
@@ -45,13 +46,95 @@ export interface SignTokenPayload {
 }
 
 /**
- * Extract and verify JWT from Authorization header.
- * Attaches user context to request.
- * Also refreshes permissions from the database to catch newly added permissions,
- * and rejects tokens that predate the user's last password change so a reset or
- * a deactivation takes effect immediately instead of when the token expires.
+ * Extract and verify the caller's identity.
+ *
+ * Two credentials are accepted, in this order (PLAN-001):
+ *   1. the session cookie — browser clients, with a CSRF check on writes and an idle
+ *      timeout that administrators are exempt from;
+ *   2. `Authorization: Bearer` — everything that cannot hold a cookie (desktop app,
+ *      Outlook add-in, integrations, probes).
+ *
+ * Both paths end in the same place: permissions refreshed from the database, and the same
+ * gate for a password change that is still owed, so no route can tell them apart.
  */
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction): void {
+  if (sessionAuthEnabled()) {
+    resolveSession(req)
+      .then(async (result) => {
+        if (result.status === "ok") {
+          if (!csrfTokenValid(req, result.session.csrfToken)) {
+            res.status(403).json({ error: { message: "CSRF token missing or invalid", code: "CSRF_FAILED" } });
+            return;
+          }
+          await touchSession(result.session.sessionId).catch(() => { /* activity tracking must not fail a request */ });
+          const identity = await sessionIdentity(result.session.userId, result.session.email);
+          if (!identity) {
+            sessionExpiredResponse(res, "invalid");
+            return;
+          }
+          req.user = identity;
+          return completeAuthentication(req, res, next);
+        }
+        if (result.status === "none") {
+          // No cookie at all: a token client, or a browser before this change shipped.
+          return authenticateByToken(req, res, next);
+        }
+        // A cookie that no longer works. If the caller also presented a token, honour it —
+        // the desktop shell and the add-in keep tokens, and losing a working credential
+        // because an unrelated cookie expired would be a needless sign-out.
+        if (typeof req.headers.authorization === "string" && req.headers.authorization.startsWith("Bearer ")) {
+          clearSessionCookies(res);
+          return authenticateByToken(req, res, next);
+        }
+        sessionExpiredResponse(res, result.status);
+      })
+      .catch(() => {
+        // Fail closed: if the session cannot be confirmed, the request is not served.
+        res.status(401).json({ error: "Your session could not be verified — please sign in again" });
+      });
+    return;
+  }
+  authenticateByToken(req, res, next);
+}
+
+/** Builds the request identity from the database for a session holder. */
+async function sessionIdentity(userId: string, email: string): Promise<AuthUser | null> {
+  try {
+    const { prisma } = await import("../index");
+    const row = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        companyId: true,
+        permissions: true,
+        tokenVersion: true,
+        isActive: true,
+        role: { select: { systemRole: true, permissions: true } },
+      },
+    });
+    if (!row || row.isActive === false) return null;
+    return {
+      userId: row.id,
+      email: row.email || email,
+      role: row.role.systemRole as SystemRole,
+      companyId: row.companyId ?? null,
+      permissions: computePermissions(
+        row.role.systemRole as SystemRole,
+        (row.role.permissions || []) as string[],
+        (row.permissions || []) as string[],
+      ),
+      // Taken from the row, so the version check below compares like with like: the session
+      // is the credential, and a password change invalidates sessions directly.
+      tokenVersion: row.tokenVersion,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** The bearer-token path, unchanged apart from living in its own function. */
+function authenticateByToken(req: AuthRequest, res: Response, next: NextFunction): void {
   // Only the Authorization header: a token in a query string ends up in browser history,
   // proxy logs and the access log, so `?token=` is no longer accepted (see PLAN-018 P0-12).
   let token: string | undefined;
@@ -73,9 +156,17 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
     return;
   }
 
+  completeAuthentication(req, res, next);
+}
+
+/**
+ * Shared tail of both paths: confirm the identity against the database against a token
+ * version, then enforce the password-change gate.
+ */
+function completeAuthentication(req: AuthRequest, res: Response, next: NextFunction): void {
   // Refresh permissions from DB to capture newly added Permission enum values,
   // and reject tokens that a password change or reset has retired.
-  refreshSessionContext(req.user)
+  refreshSessionContext(req.user!)
     .then((state) => {
       if (!state.valid) {
         res.status(401).json({ error: "Your session has ended — please sign in again" });

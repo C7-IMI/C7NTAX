@@ -105,6 +105,29 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
+// ─── Sessions (PLAN-001) ────────────────────────────────────────────
+// Server-side session for browser clients. The cookie holds a random token; only its
+// SHA-256 hash is stored, so a database leak cannot be replayed as a session. The CSRF
+// token is stored separately and echoed back in a header for state-changing requests,
+// because a cookie is sent automatically by the browser and a header is not.
+// No relation on purpose: the opposite field on User would be dead weight for a table
+// that is queried by token and pruned by expiry.
+model UserSession {
+  id             String    @id @default(uuid())
+  sessionToken   String    @unique // sha256 of the cookie value
+  csrfToken      String
+  userId         String
+  ipAddress      String?
+  userAgent      String?
+  lastActivityAt DateTime  @default(now())
+  expiresAt      DateTime
+  invalidatedAt  DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 // ─── Tenant / MSP Multi-Tenancy ────────────────────────────────────
 
 model Tenant {

@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { randomInt } from "node:crypto";
 import { EmailService } from "@C7NTAX/email";
 import { AppError } from "../middleware/errorHandler";
+import { endSessionsForUser } from "../services/signIn";
 
 export const usersRouter = Router();
 usersRouter.use(authenticate);
@@ -268,6 +269,8 @@ usersRouter.post("/:id/reset-password", requirePermission(Permission.SecurityMan
         mfaEmailCodeExpires: null,
       },
     });
+    // A reset must end live sessions too, not just retire tokens.
+    await endSessionsForUser(user.id);
 
     let emailed = false;
     let emailError: string | undefined;
@@ -309,6 +312,7 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
     }
 
     const updates: Record<string, unknown> = {};
+    let passwordReset = false;
     const allowed = [
       "firstName", "lastName", "title", "phone", "mobile", "companyId", "isActive", "permissions",
       "username", "department", "timezone", "reportsToId",
@@ -344,6 +348,7 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
       updates.passwordChangedAt = new Date();
       updates.mustChangePassword = req.body.requireChange ?? true;
       updates.tokenVersion = { increment: 1 };
+      passwordReset = true;
     }
 
     // Handle role change — update roleId
@@ -361,6 +366,9 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
       data: updates as any,
       include: { role: true, company: true },
     });
+    // A password change or a deactivation must end live sessions, not just retire tokens:
+    // a session cookie would otherwise keep working after either.
+    if (passwordReset || req.body.isActive === false) await endSessionsForUser(user.id);
     const { passwordHash, mfaSecret, ...safe } = user;
     res.json(safe);
   } catch (e) { next(e); }

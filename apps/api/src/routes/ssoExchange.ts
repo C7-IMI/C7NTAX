@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../index";
-import { signToken } from "../middleware/auth";
+import { signToken, JWT_SECRET } from "../middleware/auth";
 import { safeFetch } from "../services/egress";
+import { startSession } from "../services/signIn";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { SystemRole } from "@C7NTAX/shared";
@@ -173,6 +174,21 @@ ssoExchangeRouter.post("/exchange", async (req, res, next) => {
       return res.status(400).json({ error: "This sign-in link is invalid or has expired — start again" });
     }
     await prisma.systemConfig.deleteMany({ where: { key: SSO_CODE_KEY } });
+
+    // The browser that just came back from the identity provider gets a session as well as
+    // the token, so a subsequent reload is authenticated by the cookie (PLAN-001).
+    let claims: { userId?: string; email?: string } = {};
+    try { claims = jwt.verify(held.token, JWT_SECRET) as { userId?: string; email?: string }; }
+    catch { return res.status(400).json({ error: "This sign-in link has expired — start again" }); }
+    if (claims.userId) {
+      const account = await prisma.user.findUnique({ where: { id: claims.userId }, include: { role: true } });
+      if (account?.isActive) {
+        await startSession(req, res, {
+          id: account.id, email: account.email, role: (account.role?.systemRole ?? "read_only") as SystemRole,
+          companyId: account.companyId, tokenVersion: account.tokenVersion,
+        });
+      }
+    }
     res.json({ token: held.token });
   } catch (e) { next(e); }
 });
