@@ -161,6 +161,13 @@ clientsRouter.post("/", requirePermission(Permission.ClientCreate), async (req: 
     for (const key of allowed) {
       if (req.body[key] !== undefined) data[key] = req.body[key];
     }
+    // Same branding rules as the update path — a client must not be creatable with a colour the
+    // portal would then render.
+    if (req.body.portalAccentColor) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(String(req.body.portalAccentColor))) throw new AppError("portalAccentColor must be a hex colour such as #0ea5e9", 400);
+      data.portalAccentColor = String(req.body.portalAccentColor).toLowerCase();
+    }
+    if (req.body.portalLogoUrl) data.portalLogoUrl = String(req.body.portalLogoUrl).trim();
     if (data.parentId) {
       const parent = await prisma.company.findUnique({ where: { id: data.parentId as string }, select: { id: true } });
       if (!parent) throw new AppError("Unknown parentId", 400);
@@ -183,6 +190,25 @@ clientsRouter.patch("/:id", requirePermission(Permission.ClientEdit), async (req
     const data: Record<string, unknown> = {};
     for (const key of allowed) {
       if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+    // Portal branding (PLAN-013 #3) reaches a page customers look at, so it is validated here
+    // rather than trusted: a colour has to be a hex value and a logo has to be a real URL.
+    if (req.body.portalAccentColor !== undefined) {
+      const raw = req.body.portalAccentColor;
+      if (raw === null || raw === "") data.portalAccentColor = null;
+      else if (/^#[0-9a-fA-F]{6}$/.test(String(raw))) data.portalAccentColor = String(raw).toLowerCase();
+      else throw new AppError("portalAccentColor must be a hex colour such as #0ea5e9", 400);
+    }
+    if (req.body.portalLogoUrl !== undefined) {
+      const raw = req.body.portalLogoUrl;
+      if (raw === null || raw === "") data.portalLogoUrl = null;
+      else {
+        const url = String(raw).trim();
+        if (!/^https?:\/\/\S+$/i.test(url) && !/^\/[\w\-./]+$/.test(url)) {
+          throw new AppError("portalLogoUrl must be an http(s) URL or a path under the API", 400);
+        }
+        data.portalLogoUrl = url;
+      }
     }
     // Walking up from the new parent must never reach this client, or the
     // hierarchy would loop.

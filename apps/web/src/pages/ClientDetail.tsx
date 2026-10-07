@@ -124,6 +124,40 @@ export function ClientDetailPage() {
             {client.notes && (
               <Card title="Notes"><p className="text-sm text-gray-400 whitespace-pre-wrap">{client.notes}</p></Card>
             )}
+            <Card title="Customer Portal (PLAN-013 #3)">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-white">Portal access</p>
+                    <p className="text-xs text-gray-500">Lets this client's contacts sign in, see their own tickets and raise new ones.</p>
+                  </div>
+                  {editing ? (
+                    <button
+                      type="button"
+                      onClick={() => setForm((p: Record<string, unknown>) => ({ ...p, portalEnabled: !p.portalEnabled }))}
+                      className={`badge ${form.portalEnabled ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}
+                    >{form.portalEnabled ? "Enabled" : "Disabled"}</button>
+                  ) : (
+                    <span className={`badge ${client.portalEnabled ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>{client.portalEnabled ? "Enabled" : "Disabled"}</span>
+                  )}
+                </div>
+                <Grid cols={2}>
+                  <Field label="Accent Colour" value={client.portalAccentColor} editing={editing} form={form} setForm={setForm} field="portalAccentColor" placeholder="#0ea5e9" />
+                  <Field label="Logo URL" value={client.portalLogoUrl} editing={editing} form={form} setForm={setForm} field="portalLogoUrl" placeholder="https://…" />
+                </Grid>
+                {editing && form.portalAccentColor && !/^#[0-9a-fA-F]{6}$/.test(String(form.portalAccentColor)) && (
+                  <p className="text-xs text-amber-400">The accent colour must look like #0ea5e9.</p>
+                )}
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span>Portal address</span>
+                  <a className="text-cyber-400 hover:underline" href="/portal" target="_blank" rel="noreferrer">/portal</a>
+                  <span className="text-gray-600">— share this with the client's contacts; they sign in with their email address.</span>
+                </div>
+                <p className="text-xs text-gray-600">
+                  The API must also be running with <code>PORTAL_ENABLED=true</code>; until then the portal answers 404 to everybody.
+                </p>
+              </div>
+            </Card>
             {editing && (
               <Card title="Notes (Edit)"><textarea className="input-field text-sm" rows={4} value={form.notes || ""} onChange={e => setForm((p:any) => ({...p, notes: e.target.value}))} /></Card>
             )}
@@ -247,14 +281,14 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function Grid({ cols, children }: { cols: number; children: React.ReactNode }) {
   return <div className={`grid grid-cols-2 md:grid-cols-${cols} gap-3`}>{children}</div>;
 }
-function Field({ label, value, editing, form, setForm, field, type, options }: {
+function Field({ label, value, editing, form, setForm, field, type, options, placeholder }: {
   label: string; value: any; editing: boolean; form: Record<string,any>;
-  setForm: (v:any) => void; field: string; type?: string; options?: string[];
+  setForm: (v:any) => void; field: string; type?: string; options?: string[]; placeholder?: string;
 }) {
   if (!editing && !value) return null;
   if (!editing) return <div><p className="text-xs text-gray-500">{label}</p><p className="text-sm text-white">{String(value || "—")}</p></div>;
   if (type === "select" && options) {
     return <div><label className="text-xs text-gray-500 block mb-1">{label}</label><select className="input-field text-sm py-1.5" value={String(form[field] ?? "")} onChange={e => setForm((p:any) => ({...p, [field]: e.target.value}))}>{options.map(o => <option key={o} value={o}>{o || "—"}</option>)}</select></div>;
   }
-  return <div><label className="text-xs text-gray-500 block mb-1">{label}</label><input className="input-field text-sm py-1.5" value={String(form[field] ?? "")} onChange={e => setForm((p:any) => ({...p, [field]: e.target.value}))} /></div>;
+  return <div><label className="text-xs text-gray-500 block mb-1">{label}</label><input className="input-field text-sm py-1.5" placeholder={placeholder} value={String(form[field] ?? "")} onChange={e => setForm((p:any) => ({...p, [field]: e.target.value}))} /></div>;
 }

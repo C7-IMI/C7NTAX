@@ -39,6 +39,11 @@ const EXEMPTIONS = [
     reason: "self-service settings keys (guarded per key), What's New, and the audit trail the ticket view reads — see PLAN-018 Phase 0",
   },
   { file: "email-connectors.ts", match: /GET \/oauth\/callback$/, reason: "OAuth callback for the connector, validated with single-use state" },
+  {
+    file: "portal.ts",
+    match: /.*/,
+    reason: "the customer portal signs in a Contact with an emailed one-time code and its own cookie; a Contact is not a staff User and holds no permissions, so every route carries `requirePortalSession`/`requirePortalWrite` and scopes reads to the contact's own tickets",
+  },
   { file: "tenants.ts", match: /.*/, reason: "multi-tenant stubs — PLAN-003 is deferred by decision" },
 ];
 

@@ -56,6 +56,7 @@ import { UI_KUMO_ORGS } from "./lib/uiFlags";
 import { ChecklistsPage } from "./pages/Checklists";
 import { ChecklistDetailPage } from "./pages/ChecklistDetail";
 import { ChangePasswordForm } from "./components/users/ChangePasswordForm";
+import { PortalApp } from "./pages/portal/PortalApp";
 
 /**
  * Held in front of the whole app while an administrator's reset is outstanding:
@@ -202,8 +203,22 @@ function DesktopNavBridge() {
 
 export default function App() {
   return (
-    <AuthProvider>
+    <>
       <GlobalTooltip />
+      <Routes>
+        {/* The customer portal is its own audience: a Contact, not a staff User. It renders
+            outside the staff auth provider so nothing here can fall back to a staff session,
+            and a 401 in the portal can never bounce the tab to the staff sign-in page. */}
+        <Route path="/portal/*" element={<PortalApp />} />
+        <Route path="*" element={<StaffApp />} />
+      </Routes>
+    </>
+  );
+}
+
+function StaffApp() {
+  return (
+    <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/*" element={<ProtectedRoutes />} />
