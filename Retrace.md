@@ -3029,3 +3029,31 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - The most useful question to ask a plan document is "where is that in the code?" — three plans claimed nothing was built while shipping, and one claimed a status ("Step 1 Complete") that its siblings had outgrown.
 - Two explore subagents failed with `400 The requested model is not supported`, so this review was done directly; the greps that mattered most were `model Quote`, `webauthn`, `electron`, `sessionAuth`, and `\.github/workflows`.
 - Sixteen plans exist as a copy here *and* an original at the repo root. Anything that changes a plan has to change both, which is why the sequence block was inserted by script rather than by hand.
+
+---
+
+### Prompt 210 — CI/CD readiness: what the repo has, and what a pipeline needs
+**Timestamp:** 2026-10-06 | **Status:** Done — question answered from the verified repo state; investigation only, no project change (no BuildNotes entry applies) | **Duration:** ~20 min
+**BuildNotes IDs:** none (no project change — this prompt only inspected the repo and answered a question)
+
+> What do I need for CI/CD?
+
+**What I checked**
+- `.github/workflows/` (one workflow: `desktop-build.yml`), root `package.json` + `turbo.json`, every app/package `scripts` block, `.env.example` and every `process.env.*` the API reads, `packages/shared/src/constants.ts`, `apps/web/vite.config.ts`, `.gitignore`, `git ls-files`, and the local boot pipeline in `startup/`.
+
+**What the repo actually has**
+- **One workflow, no gate:** `desktop-build.yml` builds the Windows portable exe on `windows-latest` and publishes a nightly release. Nothing typechecks, tests, builds or deploys the API or web app on a push.
+- **No test runner at all** — zero `*.test.ts`/`*.spec.ts` files, no vitest/jest config, and no package implements the `test` task that `turbo.json` already declares, so `pnpm test` has nothing to run.
+- `lint` everywhere is just `tsc --noEmit` (no ESLint; prettier is a dependency but has no `**/.prettierrc**`, so `format` runs on defaults).
+- **`prisma/migrations/` is gitignored** and `db:migrate` is `prisma migrate dev` — the repo is `db push`-only, which directly breaks PLAN-016 §7 item 6 (`prisma migrate deploy` from CI has nothing to apply).
+- No `Dockerfile`, no compose, no IaC, no `.gitattributes`, no `.nvmrc`. Prisma generate is not wired to `postinstall` (the API `package.json` has no postinstall), so any fresh checkout must run `db:generate` before `tsc`.
+- Origins are hardcoded to localhost in `packages/shared/src/constants.ts`; the SPA itself calls `baseURL: "/api"` (relative, so same-origin deployment needs no change).
+- `startup/security-scanners.ps1` **already exists** — gitleaks + trivy, non-blocking, gated on `AUTH_HARDENING_ENABLED`, run from the local boot script. It is local-only and self-skips when the tools are missing, so it is not a gate.
+- Hygiene is otherwise good: `.env`/`*.log`/`dist`/`node_modules` ignored, 553 tracked files, no build artifacts committed.
+
+**Answer given** (grouped: repo prerequisites, pipeline design, Azure-side prerequisites, minimum viable first step, ranked blockers) — key points: add `.gitattributes`; un-ignore migrations and adopt `migrate deploy`; add vitest + first tests (ticket-number sequencer, mail parse/attribution, time rules, API smoke against a postgres service container); CI must run `prisma generate` before `tsc`; port `security-scanners.ps1` into a real gitleaks/trivy job; separate `ci.yml` / `deploy-dev.yml` (OIDC, no stored cloud secret, post-deploy health check) / `deploy-prod.yml` (`workflow_dispatch` + Environment approval, per PLAN-016 "prod deploys only via the sync command"); and **CI must never commit back to main** because the local `auto-sync` task pushes every ~15 minutes — a formatting/BuildNotes write-back would ping-pong forever. Also flagged: `turbo run test` currently reports success while running nothing, which would make a naive pipeline look green.
+
+**Notes for next time**
+- `.gitignore` hides `prisma/migrations/` — easy to miss, and it silently invalidates the schema-migration half of PLAN-016 and any "migrations are the source of truth" assumption about production.
+- The scanners already exist locally (`startup/security-scanners.ps1`, SOC 2 backlog item 11), so CI work there is a port, not new code.
+- `scripts/typecheck-diff.sh` is bash and `apps/desktop` needs Windows; keep web/API jobs on `ubuntu-latest` and only the desktop job on `windows-latest`.
