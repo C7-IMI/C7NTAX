@@ -76,9 +76,9 @@ the message being read.
 
 ## What is not done yet (and why)
 
-- **The multi-message flow is designed, not built.** Right now a selection becomes one ticket per message. The agreed design adds a question when several messages are selected — one ticket each, or one ticket with the others attached — a choice of which message is the parent, and a preview you can edit before anything is submitted. It is reviewed as an interactive mockup at
+- **The multi-message flow is designed, not built.** Right now a selection becomes one ticket per message. The agreed design adds a question when several messages are selected — one ticket each, or one ticket with the others attached — a choice of which message is the parent, and a preview you can edit before anything is submitted. It also lets the user **save their answers**, so the questions stop being asked and a later selection files with one click. It is reviewed as an interactive mockup at
   [`docs/mockups/outlook-addin-ticket-flow.html`](../../docs/mockups/outlook-addin-ticket-flow.html)
-  and is not implemented in either the pane or the endpoint yet. The mockup's field set is the contract for the server change.
+  and is not implemented in either the pane or the endpoint yet. The mockup's field set is the contract for the server change, and the saved preferences need somewhere to live per user.
 
 - **Microsoft SSO (the `POST /api/auth/office-sso` flow)** is not implemented. It needs the Entra app
   registration from PLAN-017 with the add-in's redirect URI and the `Mail.ReadWrite` scope consented;

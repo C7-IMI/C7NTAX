@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.7.033",
+    "date": "2026-10-07",
+    "title": "Save my preferences: the add-in flow can stop asking",
+    "changes": [
+      {
+        "text": "**Preferences, saved on the device** (`localStorage`), reachable from a **⚙ in the pane header** and from the line on the entry screen that reports what is saved. They survive a reload and follow the mailbox rather than the browser session. Three answers:",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"Remember this answer\" on both questions, so a preference is set where it is decided** rather than by going to a settings page first. On the preview question it means **whichever button is pressed** — remember \"create without asking\", or remember \"always show me first\" — because the answer is the answer either way.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Bundling is deliberately not rememberable**, and the sheet says so rather than offering a checkbox that would have to invent an answer: which message is the ticket changes per conversation, so \"always bundle\" would mean guessing a parent. The checkbox appears for *One ticket each* and is replaced by that explanation for *One ticket, the rest attached*.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The entry screen states what the saved preferences will do, before the button acts on them** — the label becomes **Create 2 tickets now**, the note reads \"2 tickets filed immediately — no questions, per your saved preferences\", and an **One-click** chip marks the state. Nothing changes behaviour silently.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The Preferences screen states the consequence in prose** for the current combination, including the one case that files tickets with nothing shown first, and keeps *Ask each time* as a first-class option so turning the questions back on is one tap. **Reset** returns to asking.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The rail gained \"New selection (keeps preferences)\"** — the demonstration that matters: the selection changes, the preferences do not, so the same button takes a different path. \"Reset flow & clear preferences\" is the reviewer's way back to a first run.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Rows in the picker lists overflowed the pane.** `text-overflow: ellipsis` does not apply to an inline box, and those rows are built from `<span>`s while the message rows are built from `<div>`s — so a nowrap subject ran straight out of the 360px pane wherever a `<span>` was used. `msg-who` and `msg-sub` are now `display: block`, so the ellipsis works whichever tag builds the row. Found by measuring rather than by looking.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.032",
     "date": "2026-10-07",
     "title": "The add-in endpoint was dead, and a mockup for the flow that replaces it",

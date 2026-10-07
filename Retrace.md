@@ -4244,3 +4244,33 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The flow is not implemented.** The endpoint today still takes `{ boardId, emails[] }` and creates one ticket per message — bundling, the preview and per-field edits all need server work (`createTicketFromEmail` currently ignores whatever the pane sends beyond the message fields, and note the endpoint tests the flag in `integrations`, now fixed).
 - **The mockup's field set is the contract for the server change**: board, client, contact, subject, description, priority, plus attachments and a parent for bundled mode. Whoever implements it should change the endpoint to accept the reviewed fields rather than re-deriving them.
 - **A layout check beats a screenshot for mockups**: measuring `scrollWidth` against `clientWidth` for the pane and every descendant caught nothing, but it is the check that would have found an overflowing row in a 360px pane — the failure mode a narrow taskpane is most prone to.
+
+
+### Prompt 232 — Saved preferences in the add-in mockup, so a selection can be one click
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed (mockup) | **Duration:** ~40 min
+**BuildNotes IDs:** 2026.10.7.033 - Save my preferences: the add-in flow can stop asking
+
+> Add a save my preferences option to the mockup, so that it will allow single click creation in the future.
+
+**What I did**
+- **Added saved preferences to the mockup**, held in `localStorage` so they survive a reload and belong to the mailbox rather than to the browser session. Three answers: how several messages are handled (*ask* or *one ticket per message*), whether the review is offered (*ask*, *always*, or **never — create immediately**), and whether the last board used is remembered.
+- **Put "Remember this answer" on the questions themselves**, so a preference is set where it is decided rather than by first finding a settings page. On the preview question it means **whichever button is pressed** — remember "create without asking", or remember "always show me first" — because the answer is the answer either way.
+- **Made the entry screen say what the preferences will do before the button acts on them.** With both answers saved the label becomes **Create 2 tickets now**, the note underneath reads "2 tickets filed immediately — no questions, per your saved preferences", and an **One-click** chip marks the state. A preference that changes behaviour silently is how somebody files something they did not mean to.
+- **Added a Preferences screen reachable from a ⚙ in the pane header and from the entry screen.** This is the part that matters most: every one of these preferences works by making a question *stop appearing*, so once it has taken effect this screen is the only evidence it was ever set. It states the consequence in prose for the current combination — including the one case that files tickets with nothing shown first — keeps *Ask each time* as a first-class option rather than a hidden default, and has a **Reset**.
+- **Refused to make bundling rememberable, and said so in the sheet.** Which message is the ticket changes per conversation, so "always bundle" would have to invent a parent. The remember checkbox appears for *One ticket each* and is replaced by that explanation for *One ticket, the rest attached* — an honest gap beats a checkbox that guesses.
+- **Added "New selection (keeps preferences)" to the rail**, because that is the demonstration: the selection changes, the preferences do not, and the same button takes a different path. "Reset flow & clear preferences" is the way back to a first run, and the rail's Preferences row shows *asking*, *saved* or *one-click* at a glance.
+- **Found and fixed a layout defect by measuring.** Rows in the picker lists overflowed the 360px pane: `text-overflow: ellipsis` does not apply to an inline box, and those rows are built from `<span>`s while the message rows are built from `<div>`s. `msg-who` and `msg-sub` are now `display: block` so the ellipsis works whichever tag builds the row.
+
+**Decisions worth remembering**
+- **A preference that silences a question has to be visible in three places**: where it is set (the checkbox on the question), where it takes effect (the notice and chip on the entry screen), and in one place it can be undone (the Preferences screen). Without all three, the third is a treasure hunt and the first two look like the product behaving unpredictably.
+- **"Never ask" is offered, and named honestly.** Its sub-label says the ticket is filed as soon as you press Create rather than dressing it up as "streamline the process". A confirm-free path is a real thing to want and a real thing to be told you are choosing.
+- **Some questions should not be rememberable.** Remembering "one ticket per message" removes a question with one right answer for that person; remembering "bundle" would remove a question about which message is the ticket, which has no default. An honest gap in the settings beats a guess made on the user's behalf.
+- **"Remember this answer" is better than a pre-selection.** The flow still asks the first time, still shows both outcomes, and only stops asking once the user has actually answered — so nothing is decided for somebody who has never seen the choice.
+- **Measuring catches what looking does not.** The ellipsis defect was invisible in a snapshot (the text was clipped in the source, not on screen) and obvious to arithmetic on `clientWidth` versus `scrollWidth`.
+- **Preferences are device-scoped, not account-scoped, in the mockup.** That is the honest default for an add-in — the pane is the user's own Outlook — and it avoids implying a server-side preference store that does not exist.
+
+**Notes for next time**
+- **Preferences are in `localStorage` under `c7ntax.addin.mockup.prefs`.** Clearing it resets a first run; the rail's "Reset flow & clear preferences" does the same from inside the mockup.
+- **The implementation still needs somewhere to keep these.** A per-user preference is a `User` column or a settings row, and the pane needs it at sign-in — that is a server change, so it belongs in the same work as the flow itself.
+- **The flow and the preferences remain unimplemented.** The mockup is the design of record for both; `docs/mockups/outlook-addin-ticket-flow.html` is the only artifact.
+- **The overflow check is worth keeping as a habit for any narrow-surface work.** It is four lines in the browser console and it found a defect that three rounds of reading the CSS had not.

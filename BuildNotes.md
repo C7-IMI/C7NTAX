@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.032 | Last Updated: 2026-10-07
+## Version: 2026.10.7.033 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,26 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.033 — Save my preferences: the add-in flow can stop asking
+
+The mockup's questions can now be answered permanently, which is what makes a selection a single click — and the preference is visible in three places, because a setting whose whole job is to stop a question appearing is invisible the moment it works.
+
+- **[New]** **Preferences, saved on the device** (`localStorage`), reachable from a **⚙ in the pane header** and from the line on the entry screen that reports what is saved. They survive a reload and follow the mailbox rather than the browser session. Three answers:
+  - **Several messages:** *Ask me each time* (default) or *One ticket per message* — no question.
+  - **Before creating:** *Ask each time* (default), *Always show the review*, or **Never — create immediately**.
+  - **Board:** remember the last board used, or always start on the first one.
+- **[New]** **"Remember this answer" on both questions, so a preference is set where it is decided** rather than by going to a settings page first. On the preview question it means **whichever button is pressed** — remember "create without asking", or remember "always show me first" — because the answer is the answer either way.
+- **[New]** **Bundling is deliberately not rememberable**, and the sheet says so rather than offering a checkbox that would have to invent an answer: which message is the ticket changes per conversation, so "always bundle" would mean guessing a parent. The checkbox appears for *One ticket each* and is replaced by that explanation for *One ticket, the rest attached*.
+- **[New]** **The entry screen states what the saved preferences will do, before the button acts on them** — the label becomes **Create 2 tickets now**, the note reads "2 tickets filed immediately — no questions, per your saved preferences", and an **One-click** chip marks the state. Nothing changes behaviour silently.
+- **[New]** **The Preferences screen states the consequence in prose** for the current combination, including the one case that files tickets with nothing shown first, and keeps *Ask each time* as a first-class option so turning the questions back on is one tap. **Reset** returns to asking.
+- **[New]** **The rail gained "New selection (keeps preferences)"** — the demonstration that matters: the selection changes, the preferences do not, so the same button takes a different path. "Reset flow & clear preferences" is the reviewer's way back to a first run.
+- **[Fix]** **Rows in the picker lists overflowed the pane.** `text-overflow: ellipsis` does not apply to an inline box, and those rows are built from `<span>`s while the message rows are built from `<div>`s — so a nowrap subject ran straight out of the 360px pane wherever a `<span>` was used. `msg-who` and `msg-sub` are now `display: block`, so the ellipsis works whichever tag builds the row. Found by measuring rather than by looking.
+- **Not implemented.** This is the mockup only; no part of the flow or the preferences is in the add-in.
+- **Rollback:** the mockup is a standalone file that nothing references at runtime, and preferences live only in that browser's `localStorage` under `c7ntax.addin.mockup.prefs` — clearing it, or pressing **Reset flow & clear preferences**, restores a first run.
+- **Verification:** driven in the browser end to end — first run asks both questions; ticking *Remember this answer* on each and then pressing **New selection** produces `Create 2 tickets now` with the **One-click** chip, and pressing it files two tickets **with no sheet shown at all**; the preference survives a page reload; the Preferences screen renders the saved radio states and the correct outcome sentence, and **Reset** returns the entry screen to "You'll be asked whether to review it first." and "Nothing saved yet." No console errors, and **no screen overflows the pane** — measured across the entry screens for one, three and five messages, both sheets, the bundling step and the preferences screen, which is the check that found the ellipsis defect.
 
 ---
 

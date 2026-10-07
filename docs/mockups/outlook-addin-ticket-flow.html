@@ -237,8 +237,12 @@
     display: flex; align-items: center; justify-content: center;
   }
   .msg-body { min-width: 0; flex: 1; }
-  .msg-who { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .msg-sub { font-size: 12px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Block, not inline: `text-overflow: ellipsis` does not apply to an inline box, so a
+     nowrap subject inside a <span> ran straight out of the 360px pane. The rows are built
+     from spans in the picker lists and from divs in the message lists, so the style has to
+     make them behave the same either way. */
+  .msg-who { display: block; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg-sub { display: block; font-size: 12px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .msg-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .msg-right { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 
@@ -307,6 +311,28 @@
   .att + .att { margin-top: 6px; }
   .att .name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+  /* ── Saved preferences ────────────────────────────────────────────────────
+     A preference works by making a question disappear, so it gets a standing
+     notice on the screen where it takes effect rather than only living in a
+     settings page nobody opens. */
+  .saved {
+    display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+    padding: 8px 9px; border: 1px solid var(--border); border-radius: 9px;
+    background: var(--surface-2); font-size: 12px;
+  }
+  .saved-text { color: var(--fg-2); flex: 1; min-width: 0; }
+  .linklike {
+    color: var(--brand); font-weight: 600; font-size: 12px;
+    text-decoration: none; background: none; border: none; cursor: pointer; padding: 0;
+  }
+  .linklike:hover { text-decoration: underline; }
+
+  .remember {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 12px; color: var(--fg-2); cursor: pointer; padding: 2px 0;
+  }
+  .remember input { margin: 2px 0 0; accent-color: var(--brand); flex: 0 0 auto; }
+
   .empty { text-align: center; padding: 22px 10px; color: var(--muted); font-size: 12.5px; }
 
   /* ── Design notes ─────────────────────────────────────────────────────── */
@@ -364,10 +390,16 @@
     <div>
       <h2>Review tools</h2>
       <div class="seg">
+        <button id="prefs-shortcut">
+          Preferences <span class="count" id="prefs-summary">asking</span>
+        </button>
+        <button id="new-selection">
+          New selection <span class="count">keeps preferences</span>
+        </button>
         <button id="notes-toggle" aria-pressed="true">
           Design notes <span class="count">shown</span>
         </button>
-        <button id="restart">Restart the flow</button>
+        <button id="restart">Reset flow &amp; clear preferences</button>
       </div>
     </div>
   </aside>
@@ -524,6 +556,7 @@ const state = {
   edits: {},            // id -> { client, contact, subject, description, priority }
   showNotes: true,
   prefs: loadPrefs(),
+  prefsReturn: "entry",
   results: null
 };
 
@@ -539,7 +572,9 @@ function reset(key = state.scenario) {
   state.mode = null;
   state.parentId = state.emails[0].id;
   state.attached = {};
-  state.board = BOARDS[0];
+  // The board is a preference, not part of the selection: "always use my last board" has to
+  // survive the selection changing, or it is not a preference.
+  state.board = state.prefs.rememberBoard ? (state.prefs.lastBoard ?? BOARDS[0]) : BOARDS[0];
   state.edits = {};
   state.results = null;
   state.openEdit = undefined;
@@ -624,17 +659,55 @@ function screenEntry() {
       <p class="hint">Where the ticket goes. Everything else is filled in from the message, and you can change it before it is submitted.</p>
     </div>
 
+    ${savedPrefsNotice()}
     ${already ? `<p class="hint warn">${plural(already, "message already has", "messages already have")} a ticket and will be skipped, so ${plural(fresh, "ticket", "tickets")} will be created.</p>` : ""}
   `;
 
+  // The label is the promise. With nothing saved it promises the questions; with preferences
+  // saved it promises the outcome and nothing else, because there is nothing else left to ask.
+  const label = isOneClick()
+    ? `Create ${plural(fresh, "ticket", "tickets")} now`
+    : n === 1
+      ? "Create ticket"
+      : `Create ${plural(fresh, "ticket", "tickets")}…`;
+
+  const promise = isOneClick()
+    ? `${plural(fresh, "ticket", "tickets")} filed immediately — no questions, per your saved preferences.`
+    : state.prefs.preview === "always"
+      ? "Straight to the review — your preferences always show it."
+      : n === 1
+        ? "You'll be asked whether to review it first."
+        : state.prefs.mode === "individual"
+          ? "One ticket per message, then you'll be asked whether to review."
+          : "You'll be asked how to handle them, then whether to review.";
+
   const foot = `
-    <button class="btn btn-primary btn-block" id="go">
-      ${n === 1 ? "Create ticket" : `Create ${plural(fresh, "ticket", "tickets")}…`}
-    </button>
-    <p class="hint" style="text-align:center;margin:0">${n === 1 ? "You'll be asked whether to review it first." : "You'll be asked how to handle them, then whether to review."}</p>
+    <button class="btn btn-primary btn-block" id="go">${label}</button>
+    <p class="hint" style="text-align:center;margin:0">${promise}</p>
   `;
 
   return { body, foot };
+}
+
+/** What the saved preferences will do on this screen, said plainly, with a way out. */
+function savedPrefsNotice() {
+  const saved = state.prefs.mode !== "ask" || state.prefs.preview !== "ask" || !state.prefs.rememberBoard;
+  if (!saved) {
+    return `<p class="hint" style="margin:0">Nothing saved yet. <a href="#" data-prefs class="linklike">Preferences</a></p>`;
+  }
+
+  const parts = [];
+  if (state.prefs.mode === "individual" && state.emails.length > 1) parts.push("one ticket per message");
+  if (state.prefs.preview === "never") parts.push("no review");
+  if (state.prefs.preview === "always") parts.push("always reviewing first");
+  if (!state.prefs.rememberBoard) parts.push("a fixed board");
+
+  return `
+    <div class="saved">
+      <span class="chip ${isOneClick() ? "chip-ok" : "chip-brand"}">${isOneClick() ? "One-click" : "Saved"}</span>
+      <span class="saved-text">${parts.length ? esc(parts.join(" · ")) : "preferences saved"}</span>
+      <a href="#" data-prefs class="linklike">Change</a>
+    </div>`;
 }
 
 function screenBundle() {
@@ -896,6 +969,17 @@ function sheetMode() {
           <button class="btn" id="sheet-cancel" type="button">Cancel</button>
           <button class="btn btn-primary" id="sheet-continue" type="button" ${state.mode ? "" : "disabled"}>Continue</button>
         </div>
+
+        ${state.mode === "individual" ? `
+          <label class="remember">
+            <input type="checkbox" id="remember-mode" />
+            <span>Remember this — create one ticket per message without asking</span>
+          </label>` : state.mode === "bundled" ? `
+          <p class="hint" style="margin:0">Bundling always asks which message is the ticket, so this answer cannot be remembered.</p>` : `
+          <label class="remember">
+            <input type="checkbox" id="remember-mode" />
+            <span>Remember this answer</span>
+          </label>`}
       </div>
     </div>`;
 }
@@ -912,9 +996,107 @@ function sheetPreviewAsk() {
           <button class="btn" id="ask-skip" type="button">Create now</button>
           <button class="btn btn-primary" id="ask-preview" type="button">Preview and edit</button>
         </div>
+        <label class="remember">
+          <input type="checkbox" id="remember-preview" />
+          <span>Remember this answer</span>
+        </label>
         <p class="hint" style="text-align:center;margin:0">Nothing is submitted until you confirm.</p>
       </div>
     </div>`;
+}
+
+/**
+ * The one place a saved preference can be seen and undone.
+ *
+ * It exists because every one of these preferences works by making a question stop appearing —
+ * so once it has taken effect, this screen is the only evidence it was ever set.
+ */
+function screenPrefs() {
+  const boards = BOARDS.map(b => `<option${b === state.board ? " selected" : ""}>${esc(b)}</option>`).join("");
+
+  const body = `
+    <div class="card">
+      <div class="card-head">
+        <h3>Preferences</h3>
+        ${isOneClick() ? `<span class="chip chip-ok">One-click</span>` : `<span class="chip chip-neutral">Ask</span>`}
+      </div>
+      <p class="hint" style="margin:0">Saved on this device, so they follow this mailbox rather than the browser session.</p>
+    </div>
+
+    <div>
+      <p class="label">When several messages are selected</p>
+      <button class="pick" role="radio" aria-checked="${state.prefs.mode === "ask"}" data-pref-mode="ask" type="button">
+        <span class="tick"></span>
+        <span class="msg-body"><span class="msg-who">Ask me each time</span><span class="msg-sub">One ticket each, or one with the others attached — you choose.</span></span>
+      </button>
+      <button class="pick" role="radio" aria-checked="${state.prefs.mode === "individual"}" data-pref-mode="individual" type="button">
+        <span class="tick"></span>
+        <span class="msg-body"><span class="msg-who">One ticket per message</span><span class="msg-sub">No question. Bundling still asks, because which message is the ticket is a real choice.</span></span>
+      </button>
+    </div>
+
+    <div>
+      <p class="label">Before creating</p>
+      <button class="pick" role="radio" aria-checked="${state.prefs.preview === "ask"}" data-pref-preview="ask" type="button">
+        <span class="tick"></span>
+        <span class="msg-body"><span class="msg-who">Ask each time</span><span class="msg-sub">You decide whether to review, per conversation.</span></span>
+      </button>
+      <button class="pick" role="radio" aria-checked="${state.prefs.preview === "always"}" data-pref-preview="always" type="button">
+        <span class="tick"></span>
+        <span class="msg-body"><span class="msg-who">Always show the review</span><span class="msg-sub">Go straight to the fields; nothing is submitted until you confirm.</span></span>
+      </button>
+      <button class="pick" role="radio" aria-checked="${state.prefs.preview === "never"}" data-pref-preview="never" type="button">
+        <span class="tick"></span>
+        <span class="msg-body"><span class="msg-who">Never — create immediately</span><span class="msg-sub">The ticket is filed as soon as you press Create, with the fields taken from the message.</span></span>
+      </button>
+    </div>
+
+    <div>
+      <p class="label">Board</p>
+      <label class="remember" style="border:1px solid var(--border);border-radius:9px;padding:9px">
+        <input type="checkbox" id="pref-board" ${state.prefs.rememberBoard ? "checked" : ""} />
+        <span>Remember the last board I used</span>
+      </label>
+      ${state.prefs.rememberBoard
+        ? `<p class="hint ok">Remembered: ${esc(state.prefs.lastBoard ?? state.board)}</p>`
+        : `<p class="hint">Every selection starts on ${esc(BOARDS[0])}.</p>`}
+    </div>
+
+    <div class="card" style="background:var(--surface-2)">
+      <p class="label" style="margin-bottom:6px">What this means</p>
+      <p class="hint" style="margin:0">${prefsOutcome()}</p>
+    </div>
+  `;
+
+  const foot = `
+    <div class="row">
+      <button class="btn" id="prefs-reset" type="button">Reset</button>
+      <button class="btn btn-primary" id="prefs-done" type="button" style="flex:2">Done</button>
+    </div>
+  `;
+
+  return { body, foot };
+}
+
+/** The consequence of the current preferences, spelled out — including the one that files
+ *  tickets without showing anything. */
+function prefsOutcome() {
+  if (state.prefs.mode === "ask" && state.prefs.preview === "ask") {
+    return "Every selection asks how to handle it, and asks whether to review. Nothing is filed without a confirmation.";
+  }
+  if (state.prefs.preview === "never" && state.prefs.mode === "individual") {
+    return "Selecting messages and pressing Create files them straight away — one ticket per message, no review, no questions. Bundling still asks which message is the ticket.";
+  }
+  if (state.prefs.preview === "never") {
+    return "With one message selected, pressing Create files it straight away. With several, you are still asked how to handle them.";
+  }
+  if (state.prefs.preview === "always") {
+    const several = state.prefs.mode === "individual"
+      ? " Several messages are filed one ticket each without being asked."
+      : " Several messages still ask how to handle them.";
+    return "You always land on the review, so nothing is filed until you confirm." + several;
+  }
+  return "Your answers take effect on the next selection.";
 }
 
 /* ── Notes per screen ───────────────────────────────────────────────────── */
@@ -938,7 +1120,7 @@ const NOTES = {
       <ul>
         <li><strong>Only the messages that will be created are offered</strong> — the ones already ticketed are absent, because they cannot become the parent.</li>
         <li>Attaching is independent of choosing: any of the others can be left off, so "bundle" does not mean "all or nothing".</li>
-        <li>The footer states the consequence — "1 ticket with 2 attachments" — in the place the user is about to press.</li>
+        <li>The footer states the consequence — the ticket count and what rides along — in the place the user is about to press.</li>
       </ul>
     </div>`,
   preview: () => `
@@ -960,6 +1142,17 @@ const NOTES = {
         <li>Ticket numbers are the useful thing to copy, so they lead the row.</li>
         <li>A bundled result lists what rode along, so the attachment set is confirmable after the fact.</li>
       </ul>
+    </div>`,
+  prefs: () => `
+    <h2>Preferences</h2>
+    <div class="note">
+      <strong>A preference that silences a question has to be findable afterwards.</strong> That is the whole risk: once "don't ask again" has taken effect, the only evidence it exists is this screen — so it is reachable from the pane header at all times and from the line on the entry screen that says what is saved.
+      <ul>
+        <li><strong>"Never ask" is offered, and named honestly.</strong> Its sub-label says the ticket is filed as soon as you press Create, rather than dressing it up as "streamline the process".</li>
+        <li><strong>Bundling is deliberately not rememberable.</strong> Which message is the ticket changes per conversation, so remembering it would mean guessing a parent. An option to "always bundle" would have to invent an answer to a real question.</li>
+        <li><strong>The screen states the consequence</strong> in prose for the current combination, including the one case that files tickets with nothing shown first.</li>
+        <li><strong>Every answer is an explicit choice, not a default</strong> — "Ask each time" stays a first-class option, so turning the questions back on is one tap rather than a hunt for a checkbox.</li>
+      </ul>
     </div>`
 };
 
@@ -978,9 +1171,10 @@ const SHEET_NOTES = {
   previewAsk: () => `
     <h2>3 · The preview question</h2>
     <div class="note">
-      <strong>Opt-in, and remembered as a preference later.</strong> Someone filing the same kind of ticket all day does not want a review step; someone filing a ticket for a client they have never seen does.
+      <strong>Opt-in, and rememberable in both directions.</strong> Someone filing the same kind of ticket all day does not want a review step; someone filing for a client they have never seen does. So the question is asked once and can then be answered permanently — either way.
       <ul>
         <li><strong>"Create now" is not hidden</strong> — a one-click path stays one click, so the review never becomes a tax on speed.</li>
+        <li><strong>"Remember this answer" sits under both buttons</strong>, and means whichever one you press: remember "create without asking", or remember "always show me first".</li>
         <li>The copy states what the preview contains, so the choice is informed rather than a coin flip.</li>
         <li>"Nothing is submitted until you confirm" is the sentence that makes the extra step feel safe rather than slow.</li>
       </ul>
@@ -995,6 +1189,7 @@ function render() {
     entry: screenEntry,
     bundle: screenBundle,
     preview: screenPreview,
+    prefs: screenPrefs,
     result: screenResult
   }[state.screen];
 
@@ -1014,6 +1209,7 @@ function render() {
   else notesEl.innerHTML = NOTES[state.screen]();
 
   document.getElementById("scenario-hint").textContent = SCENARIOS[state.scenario].hint;
+  renderPrefsSummary();
   wire();
 }
 
@@ -1021,6 +1217,7 @@ const CAPTIONS = {
   entry: "Step 1 — the pane opens knowing what is selected. One button, and it says what it will do.",
   bundle: "Step 2 — bundled mode: choose the message that becomes the ticket, then which of the others ride along.",
   preview: "Step 3 — the review: the same editable field set for one ticket or five, with matches and gaps called out.",
+  prefs: "Preferences — the only place a saved answer can be seen and undone, once it has stopped a question appearing.",
   result: "Step 4 — per-message outcomes, including what was skipped and why."
 };
 
@@ -1045,18 +1242,62 @@ function wire() {
 
   // Board
   const board = el("board");
-  if (board) board.onchange = () => { state.board = board.value; };
+  if (board) board.onchange = () => {
+    state.board = board.value;
+    if (state.prefs.rememberBoard) { state.prefs.lastBoard = board.value; savePrefs(); }
+  };
 
-  // Entry -> mode question (several) or preview question (one)
+  // Preferences: the standing entry point, and the link from the entry screen
+  el("prefs-open") && (el("prefs-open").onclick = () => { state.prefsReturn = state.screen; state.screen = "prefs"; render(); });
+  document.querySelectorAll("[data-prefs]").forEach(a => {
+    a.onclick = (ev) => { ev.preventDefault(); state.prefsReturn = state.screen; state.screen = "prefs"; render(); };
+  });
+  document.querySelectorAll("[data-pref-mode]").forEach(b => {
+    b.onclick = () => {
+      state.prefs.mode = b.dataset.prefMode;
+      savePrefs();
+      render();
+    };
+  });
+  document.querySelectorAll("[data-pref-preview]").forEach(b => {
+    b.onclick = () => {
+      state.prefs.preview = b.dataset.prefPreview;
+      savePrefs();
+      render();
+    };
+  });
+  el("pref-board") && (el("pref-board").onchange = (ev) => {
+    state.prefs.rememberBoard = ev.target.checked;
+    if (state.prefs.rememberBoard) state.prefs.lastBoard = state.board;
+    savePrefs();
+    render();
+  });
+  el("prefs-done") && (el("prefs-done").onclick = () => { state.screen = state.prefsReturn ?? "entry"; render(); });
+  el("prefs-reset") && (el("prefs-reset").onclick = () => {
+    state.prefs = { ...DEFAULT_PREFS };
+    savePrefs();
+    state.board = BOARDS[0];
+    render();
+  });
+
+  // Entry: the questions that are asked depend on what has been saved, so this is the only
+  // place the flow branches before the user has decided anything.
   el("go") && (el("go").onclick = () => {
     if (state.screen === "entry") {
-      if (state.emails.length === 1) { state.mode = "individual"; state.sheet = "previewAsk"; }
-      else state.sheet = "mode";
+      const several = active().length > 1;
+
+      if (several && state.prefs.mode === "ask") { state.sheet = "mode"; render(); return; }
+      state.mode = "individual";
+
+      if (state.prefs.preview === "never") { submit(); return; }
+      if (state.prefs.preview === "always") { state.screen = "preview"; render(); return; }
+      state.sheet = "previewAsk";
     } else if (state.screen === "bundle") {
       state.screen = "preview";
       state.sheet = "previewAsk";
     } else if (state.screen === "preview") {
       submit();
+      return;
     } else if (state.screen === "result") {
       reset(state.scenario);
     }
@@ -1123,13 +1364,31 @@ function wire() {
   });
   el("sheet-cancel") && (el("sheet-cancel").onclick = () => { state.sheet = null; state.mode = null; render(); });
   el("sheet-continue") && (el("sheet-continue").onclick = () => {
+    // "Remember this" means the answer about to be given, so the preference is written here
+    // rather than on a separate save — the user is answering the question either way.
+    if (el("remember-mode")?.checked && state.mode === "individual") {
+      state.prefs.mode = "individual";
+      savePrefs();
+    }
     state.sheet = null;
     if (state.mode === "bundled") { state.screen = "bundle"; state.parentId = active()[0].id; }
     else { state.screen = "preview"; state.sheet = "previewAsk"; state.mode = "individual"; }
     render();
   });
-  el("ask-skip") && (el("ask-skip").onclick = () => { state.sheet = null; submit(); });
-  el("ask-preview") && (el("ask-preview").onclick = () => { state.sheet = null; state.screen = "preview"; render(); });
+
+  // "Remember this answer" means whichever button is pressed, so the preference is the answer
+  // itself — remember-skip and remember-preview are the same checkbox read in two directions.
+  el("ask-skip") && (el("ask-skip").onclick = () => {
+    if (el("remember-preview")?.checked) { state.prefs.preview = "never"; savePrefs(); }
+    state.sheet = null;
+    submit();
+  });
+  el("ask-preview") && (el("ask-preview").onclick = () => {
+    if (el("remember-preview")?.checked) { state.prefs.preview = "always"; savePrefs(); }
+    state.sheet = null;
+    state.screen = "preview";
+    render();
+  });
 
   // Back
   el("back") && (el("back").onclick = () => {
@@ -1173,6 +1432,16 @@ function submit() {
   render();
 }
 
+function renderPrefsSummary() {
+  const el = document.getElementById("prefs-summary");
+  if (!el) return;
+  el.textContent = isOneClick()
+    ? "one-click"
+    : state.prefs.mode === "ask" && state.prefs.preview === "ask"
+      ? "asking"
+      : "saved";
+}
+
 /* ── Start ──────────────────────────────────────────────────────────────── */
 document.getElementById("notes-toggle").onclick = (e) => {
   state.showNotes = !state.showNotes;
@@ -1180,7 +1449,20 @@ document.getElementById("notes-toggle").onclick = (e) => {
   e.currentTarget.querySelector(".count").textContent = state.showNotes ? "shown" : "hidden";
   render();
 };
-document.getElementById("restart").onclick = () => { reset(state.scenario); render(); };
+
+// "New selection" is the demonstration that matters: the selection changes, the saved
+// preferences do not, so the same button now takes a different path.
+document.getElementById("new-selection").onclick = () => { reset(state.scenario); render(); };
+document.getElementById("prefs-shortcut").onclick = () => { state.prefsReturn = state.screen; state.screen = "prefs"; render(); };
+
+// Full restart, preferences included — the reviewer's way back to a first run.
+document.getElementById("restart").onclick = () => {
+  state.prefs = { ...DEFAULT_PREFS };
+  savePrefs();
+  reset(state.scenario);
+  render();
+};
+
 document.getElementById("signout").onclick = () => {};
 
 reset("single");
