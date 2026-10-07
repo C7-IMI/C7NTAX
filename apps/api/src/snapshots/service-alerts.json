@@ -618,16 +618,16 @@
   {
     "id": "88d7eed1-9fa4-4360-ae78-69a9426544de",
     "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
-    "title": "Elevated errors on platform.claude.com",
-    "description": "&lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 7&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;17:28&lt;/var&gt; UTC&lt;/small&gt;&lt;br&gt; &lt;strong&gt;Identified&lt;/strong&gt; - We&apos;ve identified the cause of errors loading usage data. The Admin API usage report has recovered, and fixes for the platform.claude.com Usage and Rate limits pages are in progress. The most recent 30 minutes of usage may be delayed. Core functionality is not affected. &lt;/p&gt; &lt;p&gt;",
+    "title": "Partially Degraded Service",
+    "description": "https://status.claude.com reports \"Partially Degraded Service\".",
     "severity": "degraded",
     "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://status.claude.com/incidents/978mjkgw6mh7",
+    "source": "statuspage",
+    "sourceUrl": "https://status.claude.com/",
     "detectedAt": "2026-10-07T13:26:28.280Z",
     "resolvedAt": null,
     "createdAt": "2026-10-07T13:26:28.282Z",
-    "updatedAt": "2026-10-07T18:31:15.551Z"
+    "updatedAt": "2026-10-07T21:49:27.042Z"
   },
   {
     "id": "7ab015c8-3881-462c-a469-c5f93f4e35ad",

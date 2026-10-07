@@ -383,6 +383,7 @@
         <div class="pane-head">
           <div class="mark">C7</div>
           <div class="title">C7NTAX</div>
+          <button class="btn-ghost" id="prefs-open" type="button" title="Preferences">⚙</button>
           <button class="btn-ghost" id="signout" type="button">Sign out</button>
         </div>
         <div class="steps" id="steps"></div>
@@ -480,10 +481,40 @@ const SCENARIOS = {
 const BOARDS = ["Infrastructure Desk", "Service Desk", "Intelligence Desk"];
 const PRIORITIES = ["Low", "Normal", "High", "Urgent"];
 
+/* ── Saved preferences ──────────────────────────────────────────────────────
+   The whole point of a preference here is that it stops asking, so it has to be
+   visible afterwards and reversible in one place. A setting that only exists at
+   the moment it was set is a setting nobody can undo. */
+const PREFS_KEY = "c7ntax.addin.mockup.prefs";
+
+const DEFAULT_PREFS = {
+  mode: "ask",        // ask | individual       — how several messages are handled
+  preview: "ask",     // ask | always | never   — whether the review is offered
+  rememberBoard: true,
+  lastBoard: null
+};
+
+function loadPrefs() {
+  try {
+    return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") };
+  } catch {
+    // file:// and private windows can refuse storage; the mockup then behaves as if nothing
+    // was ever saved, which is the same as a first run.
+    return { ...DEFAULT_PREFS };
+  }
+}
+
+function savePrefs() {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(state.prefs)); } catch { /* in-memory only */ }
+}
+
+/** True when the saved preferences make a selection a single click. */
+const isOneClick = () => state.prefs.mode !== "ask" && state.prefs.preview === "never";
+
 /* ── State ──────────────────────────────────────────────────────────────── */
 const state = {
   scenario: "single",
-  screen: "entry",      // entry | bundle | preview | result
+  screen: "entry",      // entry | bundle | preview | prefs | result
   sheet: null,          // mode | previewAsk | null
   mode: null,           // individual | bundled
   parentId: null,
@@ -492,6 +523,7 @@ const state = {
   emails: [],
   edits: {},            // id -> { client, contact, subject, description, priority }
   showNotes: true,
+  prefs: loadPrefs(),
   results: null
 };
 

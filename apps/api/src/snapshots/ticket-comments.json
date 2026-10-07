@@ -5157,5 +5157,16 @@
     "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-09-29T20:27:17.158Z",
     "updatedAt": "2026-10-06T20:27:17.849Z"
+  },
+  {
+    "id": "ce131f1d-f46a-4d3b-bcad-03d05324d570",
+    "body": "Email received from jane.doe@contoso.com (Message-ID: <mockup-verify-1@example.com>)\n\nHi team,\nSince yesterday the VPN drops every few minutes.\nThanks,\nJane",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "jane.doe@contoso.com",
+    "ticketId": "c6956ad5-6e85-46f6-91fc-9ebc5e09a97c",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T21:55:03.875Z",
+    "updatedAt": "2026-10-07T21:55:03.875Z"
   }
 ]

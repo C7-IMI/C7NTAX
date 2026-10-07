@@ -269,6 +269,46 @@
     "updatedAt": "2026-08-14T23:32:23.392Z"
   },
   {
+    "id": "c6956ad5-6e85-46f6-91fc-9ebc5e09a97c",
+    "ticketNumber": "MSP-1001-1001",
+    "title": "VPN keeps dropping on the 3rd floor",
+    "description": "Hi team,\nSince yesterday the VPN drops every few minutes.\nThanks,\nJane",
+    "status": "new",
+    "priority": "low",
+    "source": "email",
+    "dueDate": null,
+    "startTime": null,
+    "endTime": null,
+    "slaResponseDue": null,
+    "slaResolutionDue": null,
+    "firstResponseAt": null,
+    "resolvedAt": null,
+    "closedAt": null,
+    "isOverdue": false,
+    "waitingSince": null,
+    "followUpCount": 0,
+    "lastFollowUpAt": null,
+    "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "categoryId": null,
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "contactId": "0a8cf133-4379-40c4-a3a2-bf49a4b1ea4e",
+    "assignedToId": null,
+    "createdById": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "tags": [],
+    "customFields": {
+      "email": {
+        "cc": [],
+        "to": [],
+        "date": "2026-10-07T21:55:03.768Z",
+        "from": "jane.doe@contoso.com",
+        "messageId": "<mockup-verify-1@example.com>"
+      }
+    },
+    "serviceAgreementId": null,
+    "createdAt": "2026-10-07T21:55:03.873Z",
+    "updatedAt": "2026-10-07T21:55:03.873Z"
+  },
+  {
     "id": "55a0bb5c-ce9c-484b-98e8-9cbe21205af6",
     "ticketNumber": "NOC-2006",
     "title": "Service restart loop detected",
