@@ -5168,5 +5168,137 @@
     "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
     "createdAt": "2026-10-07T21:55:03.875Z",
     "updatedAt": "2026-10-07T21:55:03.875Z"
+  },
+  {
+    "id": "d94ae70f-b5dc-4008-9b19-2b6c733fa6c2",
+    "body": "Email received from jane.doe@contoso.com (Message-ID: <flow-ind-1@example.com>)\n\nThe VPN drops every few minutes.",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "jane.doe@contoso.com",
+    "ticketId": "8137c1c5-d89d-464f-99a1-379d65da2f3d",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:16:24.247Z",
+    "updatedAt": "2026-10-07T22:16:24.247Z"
+  },
+  {
+    "id": "47b44dec-6f3b-4f00-8fe0-c4e180d1c3a4",
+    "body": "Email received from sara.okafor@contoso.com (Message-ID: <flow-ind-2@example.com>)\n\nLicence is up for renewal.",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "sara.okafor@contoso.com",
+    "ticketId": "f5b08469-a6a7-46bd-bd4c-b8fe29113018",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:16:24.260Z",
+    "updatedAt": "2026-10-07T22:16:24.260Z"
+  },
+  {
+    "id": "991a1520-9d6a-4df9-a293-de5f15f0ff50",
+    "body": "Email received from jane.doe@contoso.com (Message-ID: <flow-bun-1@example.com>)\n\nParent message body.",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "jane.doe@contoso.com",
+    "ticketId": "9b92b760-2808-4a5a-b20b-74ca4bcad77a",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:16:36.051Z",
+    "updatedAt": "2026-10-07T22:16:36.051Z"
+  },
+  {
+    "id": "f5929dd5-7234-4944-975c-1d7842c906ec",
+    "body": "Email received from jane.doe@contoso.com (Message-ID: <flow-edit-1@example.com>)\n\nBody.",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "jane.doe@contoso.com",
+    "ticketId": "7d27ff67-5647-49f2-ac68-15c9fa516d4b",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:16:48.477Z",
+    "updatedAt": "2026-10-07T22:16:48.477Z"
+  },
+  {
+    "id": "f6be88fa-fc2f-4d38-ad28-7a632af3ff3c",
+    "body": "Email received from jane.doe@contoso.com (Message-ID: <run2-1@example.com>)\n\nHi team,\nThe VPN drops every few minutes on the third floor.\nThanks,\nJane",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "jane.doe@contoso.com",
+    "ticketId": "2dc577b4-9e59-4c55-a7b3-0672cca927ac",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:18:53.260Z",
+    "updatedAt": "2026-10-07T22:18:53.260Z"
+  },
+  {
+    "id": "e7aff48e-c68f-4790-803c-80c3f08f291f",
+    "body": "Email received from tom.beckett@gmail.com (Message-ID: <prefs-1@example.com>)\n\nMy laptop will not charge.",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "tom.beckett@gmail.com",
+    "ticketId": "67dcfcea-84ab-48ab-adf7-047f7232bfae",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:19:08.394Z",
+    "updatedAt": "2026-10-07T22:19:08.394Z"
+  },
+  {
+    "id": "2bded231-2d27-487a-8d5a-aa80b4df0b75",
+    "body": "Email received from tom.beckett@gmail.com (Message-ID: <prefs-2@example.com>)\n\nThe second monitor flickers.",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "tom.beckett@gmail.com",
+    "ticketId": "0bbfa360-f32e-46c2-9ea0-2a284732c8ce",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:19:08.399Z",
+    "updatedAt": "2026-10-07T22:19:08.399Z"
+  },
+  {
+    "id": "e52a3fa2-f0c9-4807-9517-18b810c98922",
+    "body": "Email received from someone@umbrellacorp.net (Message-ID: <addin-probe-muyogvpi@probe.invalid>)\n\nRe: Addin probe\nHi, the VPN client will not connect since this morning.",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "someone@umbrellacorp.net",
+    "ticketId": "c1a15aa5-5bde-47d2-9071-12a3e2c8607c",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:27:09.264Z",
+    "updatedAt": "2026-10-07T22:27:09.264Z"
+  },
+  {
+    "id": "d040c75a-0e57-4a18-b9eb-944d0c443b5a",
+    "body": "Email received from one@umbrellacorp.net (Message-ID: <addin-a-muyogvpi@probe.invalid>)\n\nprinter is offline",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "one@umbrellacorp.net",
+    "ticketId": "de368785-aecf-448d-917c-c6fa68b025df",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:27:09.290Z",
+    "updatedAt": "2026-10-07T22:27:09.290Z"
+  },
+  {
+    "id": "f9898b44-a3c2-467d-8a07-00e666f09d10",
+    "body": "Email received from two@umbrellacorp.net (Message-ID: <addin-b-muyogvpi@probe.invalid>)\n\nmailbox is full",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "two@umbrellacorp.net",
+    "ticketId": "ca238ceb-e8e7-40ae-9fbf-3c505cc4cf81",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:27:09.296Z",
+    "updatedAt": "2026-10-07T22:27:09.296Z"
+  },
+  {
+    "id": "bdadef7f-59b3-40de-aa4e-c691d2627700",
+    "body": "Email received from someone@umbrellacorp.net (Message-ID: <addin-probe-muyoha2p@probe.invalid>)\n\nRe: Addin probe\nHi, the VPN client will not connect since this morning.",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "someone@umbrellacorp.net",
+    "ticketId": "4d3b65c9-d081-4fdd-a83b-dd3c33a9d2d5",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:27:28.136Z",
+    "updatedAt": "2026-10-07T22:27:28.136Z"
+  },
+  {
+    "id": "ed443d47-a17f-4216-baf1-4bef64e76659",
+    "body": "Email received from someone@umbrellacorp.net (Message-ID: <addin-probe-muyohht9@probe.invalid>)\n\nRe: Addin probe\nHi, the VPN client will not connect since this morning.",
+    "isInternal": false,
+    "isEmail": true,
+    "fromEmail": "someone@umbrellacorp.net",
+    "ticketId": "4dd0c8de-dc4f-474b-a315-6219002d1b63",
+    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:27:37.968Z",
+    "updatedAt": "2026-10-07T22:27:37.968Z"
   }
 ]

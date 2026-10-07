@@ -33959,6 +33959,172 @@
     "createdAt": "2026-10-07T21:20:39.315Z"
   },
   {
+    "id": "8e7b3cab-5c55-4cfb-add2-5a1d5b5203a9",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "preview",
+    "changes": {
+      "emails": [
+        {
+          "from": "jane.doe@contoso.com",
+          "subject": "VPN keeps dropping on the 3rd floor",
+          "bodyText": "Hi team,\n\nThe VPN drops every few minutes on the third floor.\n\nThanks,\nJane",
+          "fromName": "Jane Doe",
+          "receivedAt": "2026-10-07T22:18:51.133Z",
+          "hasAttachment": false,
+          "internetMessageId": "<run2-1@example.com>"
+        },
+        {
+          "from": "marcus.hale@northwind.com",
+          "subject": "New starter setup for next Monday",
+          "bodyText": "Morning,\n\nA new starter joins Monday.\n\nRegards,\nMarcus",
+          "fromName": "Marcus Hale",
+          "receivedAt": "2026-10-07T22:18:51.134Z",
+          "hasAttachment": true,
+          "internetMessageId": "<run2-2@example.com>"
+        },
+        {
+          "from": "sara.okafor@contoso.com",
+          "subject": "Renewal quote for the firewall",
+          "bodyText": "Licence renews next month.\n\nSara",
+          "fromName": "Sara Okafor",
+          "receivedAt": "2026-10-07T22:18:51.134Z",
+          "hasAttachment": false,
+          "internetMessageId": "<run2-3@example.com>"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:18:51.186Z"
+  },
+  {
+    "id": "94b6e69d-9e81-4b61-8481-e91e0c69738f",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "bundled",
+      "emails": [
+        {
+          "from": "jane.doe@contoso.com",
+          "subject": "VPN keeps dropping on the 3rd floor",
+          "bodyText": "Hi team,\n\nThe VPN drops every few minutes on the third floor.\n\nThanks,\nJane",
+          "fromName": "Jane Doe",
+          "receivedAt": "2026-10-07T22:18:51.133Z",
+          "hasAttachment": false,
+          "internetMessageId": "<run2-1@example.com>"
+        },
+        {
+          "from": "marcus.hale@northwind.com",
+          "subject": "New starter setup for next Monday",
+          "bodyText": "Morning,\n\nA new starter joins Monday.\n\nRegards,\nMarcus",
+          "fromName": "Marcus Hale",
+          "receivedAt": "2026-10-07T22:18:51.134Z",
+          "hasAttachment": true,
+          "internetMessageId": "<run2-2@example.com>"
+        },
+        {
+          "from": "sara.okafor@contoso.com",
+          "subject": "Renewal quote for the firewall",
+          "bodyText": "Licence renews next month.\n\nSara",
+          "fromName": "Sara Okafor",
+          "receivedAt": "2026-10-07T22:18:51.134Z",
+          "hasAttachment": false,
+          "internetMessageId": "<run2-3@example.com>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "parentMessageId": "<run2-1@example.com>"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:18:53.273Z"
+  },
+  {
+    "id": "9a737469-fec4-4c66-bdea-105af57c8e16",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "ask",
+      "preview": "ask",
+      "lastBoardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:18:53.285Z"
+  },
+  {
+    "id": "02b7f7da-64d8-4182-830a-52070cf4c824",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "individual",
+      "emails": [
+        {
+          "from": "tom.beckett@gmail.com",
+          "subject": "Laptop will not charge",
+          "bodyText": "My laptop will not charge.",
+          "fromName": "Tom Beckett",
+          "receivedAt": "2026-10-07T22:19:06.118Z",
+          "hasAttachment": false,
+          "internetMessageId": "<prefs-1@example.com>"
+        },
+        {
+          "from": "tom.beckett@gmail.com",
+          "subject": "Second monitor flickers",
+          "bodyText": "The second monitor flickers.",
+          "fromName": "Tom Beckett",
+          "receivedAt": "2026-10-07T22:19:06.118Z",
+          "hasAttachment": false,
+          "internetMessageId": "<prefs-2@example.com>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:19:08.404Z"
+  },
+  {
+    "id": "570e21bd-9576-4921-a090-146100e4dfd4",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "never",
+      "lastBoardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:19:08.416Z"
+  },
+  {
+    "id": "1c67a3d5-c9a6-44ef-91e2-1d6c8957732d",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyogvpi — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyogvpi@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:09.281Z"
+  },
+  {
     "id": "1d125254-57eb-4e25-89b2-1d85ad6ee27b",
     "action": "tickets:create",
     "entity": "tickets",
@@ -34645,6 +34811,149 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T21:20:41.609Z"
+  },
+  {
+    "id": "b291f016-908a-4007-8424-ef867ccecec5",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "never",
+      "lastBoardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:19:08.389Z"
+  },
+  {
+    "id": "3df3b9d1-a662-450d-ad8c-8d5b2eff2452",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muyogvpi A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muyogvpi@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muyogvpi B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muyogvpi@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyogvpi — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muyogvpi@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:09.299Z"
+  },
+  {
+    "id": "cb05767a-3b26-462c-90ba-b874c583a2f1",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyoha2p — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T22:27:28.122Z",
+          "internetMessageId": "<addin-probe-muyoha2p@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:28.143Z"
+  },
+  {
+    "id": "33a59531-4cd2-4d72-b4b6-ede9b71451d5",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyoha2p — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyoha2p@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:28.164Z"
+  },
+  {
+    "id": "9e99777d-6687-447a-b976-6ffcd9cfd6f1",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyohawx — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T22:27:29.041Z",
+          "internetMessageId": "<addin-probe-muyohawx@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:29.065Z"
+  },
+  {
+    "id": "c5c3d87c-47ca-4bb7-a3b8-b584712aba68",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyohawx — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyohawx@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:29.083Z"
+  },
+  {
+    "id": "f4a6132c-0dfa-4c44-9841-594bfc173fc4",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "value": 20
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.648Z"
   },
   {
     "id": "9a946398-7e09-42bc-82cb-7465f1edc849",
@@ -36563,6 +36872,217 @@
     "createdAt": "2026-10-07T21:49:23.378Z"
   },
   {
+    "id": "691daca2-e80c-4fbd-a0a3-5008e9c5f571",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "individual",
+      "emails": [
+        {
+          "from": "tom.beckett@gmail.com",
+          "subject": "Laptop will not charge",
+          "bodyText": "My laptop will not charge.",
+          "fromName": "Tom Beckett",
+          "receivedAt": "2026-10-07T22:19:06.118Z",
+          "hasAttachment": false,
+          "internetMessageId": "<prefs-1@example.com>"
+        },
+        {
+          "from": "tom.beckett@gmail.com",
+          "subject": "Second monitor flickers",
+          "bodyText": "The second monitor flickers.",
+          "fromName": "Tom Beckett",
+          "receivedAt": "2026-10-07T22:19:06.118Z",
+          "hasAttachment": false,
+          "internetMessageId": "<prefs-2@example.com>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:19:12.884Z"
+  },
+  {
+    "id": "61439281-81f1-429a-ab37-d207c2a0e8f9",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "never",
+      "lastBoardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:19:12.912Z"
+  },
+  {
+    "id": "05f1d895-437b-4506-a89e-92fe1310f96f",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "ask",
+      "preview": "ask",
+      "lastBoardId": null,
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:19:24.158Z"
+  },
+  {
+    "id": "ed6c608d-80f1-42e4-aadc-79e8be90b2e3",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muyohawx A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muyohawx@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muyohawx B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muyohawx@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyohawx — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muyohawx@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:29.117Z"
+  },
+  {
+    "id": "bd016eda-450d-4655-8d0f-a3eb6928bb8f",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyohht9 — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T22:27:37.957Z",
+          "internetMessageId": "<addin-probe-muyohht9@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:37.973Z"
+  },
+  {
+    "id": "9b70b96e-d99b-4417-80c7-efae3fef54df",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyohht9 — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyohht9@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:37.988Z"
+  },
+  {
+    "id": "33ea063e-332d-4f5d-8e05-78ea79791bd0",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyohiha — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T22:27:38.830Z",
+          "internetMessageId": "<addin-probe-muyohiha@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:38.847Z"
+  },
+  {
+    "id": "71f1bb0b-c7cf-4c39-bd5f-745ec2474be8",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyohiha — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyohiha@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:38.858Z"
+  },
+  {
+    "id": "16a024c3-9108-4ea4-a67a-6dab9ba65bdc",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muyohiha A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muyohiha@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muyohiha B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muyohiha@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyohiha — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muyohiha@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:38.879Z"
+  },
+  {
     "id": "b3cfe42c-94a0-44a7-a61a-9977f31c8281",
     "action": "tickets:create",
     "entity": "tickets",
@@ -38379,6 +38899,28 @@
     "createdAt": "2026-10-07T21:49:34.381Z"
   },
   {
+    "id": "d874aea8-eda1-4b8b-96bc-f0d9e6db0546",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyogsdm — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T22:27:04.881Z",
+          "internetMessageId": "<addin-probe-muyogsdm@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:04.901Z"
+  },
+  {
     "id": "856386d6-1988-424d-b8f9-7a5cbd91caa6",
     "action": "reports:create",
     "entity": "reports",
@@ -39306,6 +39848,38 @@
     "createdAt": "2026-10-07T21:49:34.345Z"
   },
   {
+    "id": "826c4202-8e29-429f-bb14-6f77257f5d65",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyogsdm — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyogsdm@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:04.910Z"
+  },
+  {
+    "id": "fd9236c1-7e2d-47a4-a1b0-0042acdd9403",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.762Z"
+  },
+  {
     "id": "89f17f93-9d68-459f-b5ca-1af778fdf872",
     "action": "reports:create",
     "entity": "reports",
@@ -39961,6 +40535,231 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-07T21:55:03.881Z"
+  },
+  {
+    "id": "b727ac37-6543-41f1-bb71-26f2e13e910d",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muyogsdm A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muyogsdm@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muyogsdm B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muyogsdm@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyogsdm — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muyogsdm@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:04.930Z"
+  },
+  {
+    "id": "74ec48d5-b875-40cf-9a71-852342a8f648",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyoizau — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T22:28:47.438Z",
+          "internetMessageId": "<addin-probe-muyoizau@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:28:47.466Z"
+  },
+  {
+    "id": "e2040f0c-5bc7-49ce-b851-5498157cf02d",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyoizau — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyoizau@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:28:47.476Z"
+  },
+  {
+    "id": "7fe71fff-fdce-4b10-bfb3-0b4a7bede7c3",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muyoizau A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muyoizau@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muyoizau B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muyoizau@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyoizau — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muyoizau@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:28:47.498Z"
+  },
+  {
+    "id": "13dbe1df-7d87-4073-b1c5-feb36bc0734d",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "preview",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muyoizau — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "internetMessageId": "<addin-review-muyoizau@probe.invalid>"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:28:47.505Z"
+  },
+  {
+    "id": "22e427bc-7e40-48cf-88f7-750b422d5f19",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muyoizau — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "priority": "High",
+          "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+          "contactName": "Reviewed Contact",
+          "internetMessageId": "<addin-review-muyoizau@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:28:47.532Z"
+  },
+  {
+    "id": "441d51de-954d-4f3b-9903-018dbb7347ed",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "bundled",
+      "emails": [
+        {
+          "from": "parent@umbrellacorp.net",
+          "subject": "Addin probe muyoizau — parent message",
+          "bodyText": "This one becomes the ticket.",
+          "internetMessageId": "<addin-parent-muyoizau@probe.invalid>"
+        },
+        {
+          "from": "child.a@umbrellacorp.net",
+          "subject": "Addin probe muyoizau — context one",
+          "bodyText": "Context one.",
+          "internetMessageId": "<addin-child-a-muyoizau@probe.invalid>"
+        },
+        {
+          "from": "child.b@umbrellacorp.net",
+          "subject": "Addin probe muyoizau — context two",
+          "bodyText": "Context two.",
+          "internetMessageId": "<addin-child-b-muyoizau@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "parentMessageId": "<addin-parent-muyoizau@probe.invalid>"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:28:47.559Z"
+  },
+  {
+    "id": "642cf7ad-2845-4678-ae71-ac28b71304ee",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "never",
+      "lastBoardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "rememberBoard": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:28:47.574Z"
+  },
+  {
+    "id": "dc48482d-1bd5-40f2-a370-e35818e91ca6",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "banana",
+      "preview": "sometimes"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:28:47.591Z"
+  },
+  {
+    "id": "1345313a-8360-4cee-814b-ec54b393e33e",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "ask",
+      "preview": "ask",
+      "lastBoardId": null,
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:28:47.596Z"
   },
   {
     "id": "355cf454-962e-4268-9cbe-dd42cd04779c",
@@ -47154,6 +47953,33 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T21:16:19.509Z"
+  },
+  {
+    "id": "0a19368e-5925-44b1-a746-c5795415e5d8",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "preview",
+    "changes": {
+      "emails": [
+        {
+          "from": "jane.doe@contoso.com",
+          "subject": "VPN keeps dropping on the 3rd floor",
+          "bodyText": "Hi team,\n\nThe VPN drops every few minutes.\n\nThanks,\nJane",
+          "fromName": "Jane Doe",
+          "internetMessageId": "<flow-1@example.com>"
+        },
+        {
+          "from": "tom.beckett@gmail.com",
+          "subject": "Can't log into the portal",
+          "bodyText": "Locked out, code expired.",
+          "fromName": "Tom Beckett",
+          "internetMessageId": "<flow-2@gmail.com>"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:16:15.371Z"
   },
   {
     "id": "97c15868-8351-4e69-a445-5f156a6b1330",
@@ -108858,6 +109684,174 @@
     "createdAt": "2026-10-07T21:13:50.629Z"
   },
   {
+    "id": "8604de00-87a1-45ff-a39a-2874f95e620d",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "individual",
+      "emails": [
+        {
+          "from": "jane.doe@contoso.com",
+          "subject": "VPN keeps dropping on the 3rd floor",
+          "bodyText": "The VPN drops every few minutes.",
+          "fromName": "Jane Doe",
+          "priority": "High",
+          "internetMessageId": "<flow-ind-1@example.com>"
+        },
+        {
+          "from": "sara.okafor@contoso.com",
+          "subject": "Renewal quote for the firewall",
+          "bodyText": "Licence is up for renewal.",
+          "fromName": "Sara Okafor",
+          "internetMessageId": "<flow-ind-2@example.com>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:16:24.264Z"
+  },
+  {
+    "id": "f6325308-ebb6-4239-adf3-c812b237a254",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "individual",
+      "emails": [
+        {
+          "from": "jane.doe@contoso.com",
+          "subject": "VPN keeps dropping on the 3rd floor",
+          "bodyText": "The VPN drops every few minutes.",
+          "fromName": "Jane Doe",
+          "priority": "High",
+          "internetMessageId": "<flow-ind-1@example.com>"
+        },
+        {
+          "from": "sara.okafor@contoso.com",
+          "subject": "Renewal quote for the firewall",
+          "bodyText": "Licence is up for renewal.",
+          "fromName": "Sara Okafor",
+          "internetMessageId": "<flow-ind-2@example.com>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:16:24.288Z"
+  },
+  {
+    "id": "8f35ff7f-7ee0-437a-b2e1-4626e49e9631",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "bundled",
+      "emails": [
+        {
+          "from": "jane.doe@contoso.com",
+          "subject": "VPN keeps dropping on the 3rd floor",
+          "bodyText": "Parent message body.",
+          "fromName": "Jane Doe",
+          "contactName": "Jane Doe",
+          "internetMessageId": "<flow-bun-1@example.com>"
+        },
+        {
+          "from": "marcus.hale@northwind.com",
+          "subject": "New starter setup for next Monday",
+          "bodyText": "New starter needs a laptop.",
+          "fromName": "Marcus Hale",
+          "internetMessageId": "<flow-bun-2@example.com>"
+        },
+        {
+          "from": "sara.okafor@contoso.com",
+          "subject": "Renewal quote for the firewall",
+          "bodyText": "Licence renewal.",
+          "fromName": "Sara Okafor",
+          "internetMessageId": "<flow-bun-3@example.com>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "parentMessageId": "<flow-bun-1@example.com>"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:16:36.066Z"
+  },
+  {
+    "id": "46a3583f-11af-495e-8d95-cb85f251ec54",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "jane.doe@contoso.com",
+          "subject": "Wrong subject from Outlook",
+          "bodyText": "Body.",
+          "fromName": "Jane Doe",
+          "priority": "Urgent",
+          "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+          "contactName": "Jane A. Doe",
+          "internetMessageId": "<flow-edit-1@example.com>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:16:48.483Z"
+  },
+  {
+    "id": "78c84197-7edf-4b50-8e23-5d44986b7277",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "preview",
+    "changes": {
+      "emails": [
+        {
+          "from": "tom.beckett@gmail.com",
+          "subject": "Laptop will not charge",
+          "bodyText": "My laptop will not charge.",
+          "fromName": "Tom Beckett",
+          "receivedAt": "2026-10-07T22:19:06.118Z",
+          "hasAttachment": false,
+          "internetMessageId": "<prefs-1@example.com>"
+        },
+        {
+          "from": "tom.beckett@gmail.com",
+          "subject": "Second monitor flickers",
+          "bodyText": "The second monitor flickers.",
+          "fromName": "Tom Beckett",
+          "receivedAt": "2026-10-07T22:19:06.118Z",
+          "hasAttachment": false,
+          "internetMessageId": "<prefs-2@example.com>"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:19:06.155Z"
+  },
+  {
+    "id": "974f7fdd-c718-4e04-b75d-832e274f05a0",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "ask",
+      "lastBoardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T22:19:07.992Z"
+  },
+  {
     "id": "2a51d636-c563-4268-bc9d-acaab84e68f8",
     "action": "reports:create",
     "entity": "reports",
@@ -142258,6 +143252,18 @@
     "createdAt": "2026-10-07T21:16:19.640Z"
   },
   {
+    "id": "8cd19f43-7a33-460f-802b-62bcb1a37eb2",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.792Z"
+  },
+  {
     "id": "c18f803d-d003-4e02-ab6f-73aed625cd16",
     "action": "reports:create",
     "entity": "reports",
@@ -168620,6 +169626,40 @@
     "createdAt": "2026-10-07T21:20:31.109Z"
   },
   {
+    "id": "311bbe80-9f2c-4b05-a47b-a25dfe0458b1",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyogvpi — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T22:27:09.211Z",
+          "internetMessageId": "<addin-probe-muyogvpi@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:27:09.270Z"
+  },
+  {
+    "id": "9e372922-46e2-4245-b4d8-9d154023366c",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "value": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.613Z"
+  },
+  {
     "id": "674b049a-8afb-4401-ac99-0ccb71d2fa8f",
     "action": "reports:create",
     "entity": "reports",
@@ -175565,6 +176605,18 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T21:20:31.148Z"
+  },
+  {
+    "id": "0947a764-7d20-4e3c-ad9e-1c7f26be871a",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.631Z"
   },
   {
     "id": "c74a9dbb-d254-42d5-9317-2e9e234ba14d",
@@ -183474,5 +184526,672 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T16:35:50.621Z"
+  },
+  {
+    "id": "d6bec984-71a5-4fea-809a-0eadc700b314",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T22:30:00.879Z",
+          "internetMessageId": "<addin-probe-muyokjxt@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:00.909Z"
+  },
+  {
+    "id": "33adcb48-9c33-445c-815c-d96b1a2a16e9",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyokjxt@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:00.921Z"
+  },
+  {
+    "id": "493f9999-31c2-4b7f-b1f6-6d308e79e0de",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muyokjxt@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muyokjxt@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muyokjxt@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:00.940Z"
+  },
+  {
+    "id": "8658a666-8380-4193-b529-cc3053e2c7a5",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "preview",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "internetMessageId": "<addin-review-muyokjxt@probe.invalid>"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:00.949Z"
+  },
+  {
+    "id": "72681996-2fd0-4358-a9e7-66c204a11367",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "priority": "High",
+          "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+          "contactName": "Reviewed Contact",
+          "internetMessageId": "<addin-review-muyokjxt@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:00.995Z"
+  },
+  {
+    "id": "e04d08c1-7c27-4556-adbd-f4269645a100",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "bundled",
+      "emails": [
+        {
+          "from": "parent@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt — parent message",
+          "bodyText": "This one becomes the ticket.",
+          "internetMessageId": "<addin-parent-muyokjxt@probe.invalid>"
+        },
+        {
+          "from": "child.a@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt — context one",
+          "bodyText": "Context one.",
+          "internetMessageId": "<addin-child-a-muyokjxt@probe.invalid>"
+        },
+        {
+          "from": "child.b@umbrellacorp.net",
+          "subject": "Addin probe muyokjxt — context two",
+          "bodyText": "Context two.",
+          "internetMessageId": "<addin-child-b-muyokjxt@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "parentMessageId": "<addin-parent-muyokjxt@probe.invalid>"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:01.021Z"
+  },
+  {
+    "id": "89f78ee0-c351-435b-afb0-fa7536f6fdff",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "never",
+      "lastBoardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "rememberBoard": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:01.038Z"
+  },
+  {
+    "id": "42baefb6-3d4f-406a-82fb-e3580b8fd380",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "banana",
+      "preview": "sometimes"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:01.057Z"
+  },
+  {
+    "id": "741e7b10-6db4-4157-96a9-63db7e28d821",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "ask",
+      "preview": "ask",
+      "lastBoardId": null,
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:01.062Z"
+  },
+  {
+    "id": "8885e1c9-f574-4e32-9826-0d525e4a21f6",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.483Z"
+  },
+  {
+    "id": "75dc8510-581b-4bd5-9624-c718f92b7a29",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.503Z"
+  },
+  {
+    "id": "5be9b964-6119-4ade-8a5c-3db846544bac",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.664Z"
+  },
+  {
+    "id": "7dd3279b-db00-4b47-82fa-0858edcf11c9",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 45
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.711Z"
+  },
+  {
+    "id": "ef42cd98-623c-4ed0-ace9-01345055a451",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 5
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.729Z"
+  },
+  {
+    "id": "be1fd89a-bbbe-4a44-99f7-eaedc651f3f8",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.856Z"
+  },
+  {
+    "id": "ce9f1afb-887f-41f2-a00e-815e7e957b79",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.873Z"
+  },
+  {
+    "id": "e348766a-1012-438d-9e18-90725cc76576",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:06.892Z"
+  },
+  {
+    "id": "80695887-a843-42c2-bd4e-76231e422639",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "technician",
+      "email": "sessionprobe1791412210154@probe.local",
+      "lastName": "Probe",
+      "password": "***",
+      "firstName": "Session",
+      "requireChange": false,
+      "credentialMode": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:10.399Z"
+  },
+  {
+    "id": "2e19b1a8-87d2-4243-b556-8d07970076d0",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "a58cc8d4-7d60-4554-b399-8481f239efc3",
+    "changes": {
+      "requireChange": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:10.889Z"
+  },
+  {
+    "id": "b0e23c18-c7b5-4a7c-9e35-0e2889c1674e",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "nobody.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:11.406Z"
+  },
+  {
+    "id": "eddfea9e-e6c7-4a1d-8436-fff1b23b6c6c",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:11.552Z"
+  },
+  {
+    "id": "66e27705-2fda-4f34-b25a-3d488107e35c",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.carol.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:11.557Z"
+  },
+  {
+    "id": "5d7a99be-266f-4540-a8f5-1fdd33ef7746",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:11.791Z"
+  },
+  {
+    "id": "efddc0bf-2098-4093-9f26-80c31cef2312",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:11.799Z"
+  },
+  {
+    "id": "962e5feb-940d-4fe5-969d-b9c986c421d7",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:11.803Z"
+  },
+  {
+    "id": "dc902e4b-6cae-4e24-be01-a0fc21763474",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "918575",
+      "email": "portal.alice.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:12.565Z"
+  },
+  {
+    "id": "a58d2185-ee10-4ec6-bd6d-6d3376fbb315",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:12.577Z"
+  },
+  {
+    "id": "355e6fa7-5bb5-4834-9a08-bcd3fa954b58",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:12.942Z"
+  },
+  {
+    "id": "561c2e4f-6de2-4436-8b83-50bc8d5d23c5",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Bearer without CSRF",
+      "description": "Should be accepted"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:13.773Z"
+  },
+  {
+    "id": "c397b59c-0f44-41bc-bf56-b0703242d7b6",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Cookie write",
+      "description": "Accepted with both halves"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:13.795Z"
+  },
+  {
+    "id": "0a467071-a729-42bd-a23b-3329a0a21633",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Portal-raised ticket",
+      "priority": "high",
+      "description": "The printer is on fire"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:13.814Z"
+  },
+  {
+    "id": "2ad97eb6-6768-4684-83c7-143283e7465a",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "ffb358ba-4834-412c-97fc-603e866fdd5d",
+    "changes": {
+      "body": "Any update on this?"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:13.831Z"
+  },
+  {
+    "id": "8f261600-757f-48ba-963a-95a77ad59291",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "19ef0032-65fe-4b11-8dd5-2b59cb4f3271",
+    "changes": {
+      "body": "This is not fixed"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:13.846Z"
+  },
+  {
+    "id": "d9616cbb-188c-481c-b8fc-612db13a655b",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:13.881Z"
+  },
+  {
+    "id": "c6c6d740-b9b0-4065-9602-d02eb5384905",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "798232",
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:14.518Z"
+  },
+  {
+    "id": "45ac9de3-8dc9-41c2-a670-9cf7caf990f5",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:14.530Z"
+  },
+  {
+    "id": "c54abd68-765f-417c-877e-a13d6286ec12",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "710671",
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:15.092Z"
+  },
+  {
+    "id": "b06525c2-88c4-4da7-b8d7-bc4671dea6de",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:15.100Z"
+  },
+  {
+    "id": "95c3b18d-ce42-40d9-979b-a53816ca5ad9",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "807949",
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:15.734Z"
+  },
+  {
+    "id": "9d15673a-0b85-4ca2-a65d-e1d2d6014222",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:15.741Z"
+  },
+  {
+    "id": "000155d0-7949-4757-9b93-df5c268c03c6",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "744011",
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:16.314Z"
+  },
+  {
+    "id": "3da1c6b7-989b-4480-a683-c9d9616bba04",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:16.328Z"
+  },
+  {
+    "id": "c6c74f6f-e597-40fe-98ed-a7503e8b6c23",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "331746",
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:16.601Z"
+  },
+  {
+    "id": "51330098-6038-46d5-a048-ba9cd4a2f444",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:16.626Z"
+  },
+  {
+    "id": "ca05e0b5-bea9-4fca-a081-0ff30d03102d",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "972753",
+      "email": "portal.bob.1791412211024@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:17.405Z"
+  },
+  {
+    "id": "118515b4-6b36-4821-9724-2fa2a5e04730",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "logout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:17.424Z"
+  },
+  {
+    "id": "870e09b9-a01e-42cb-a74d-0fb2d18d4c39",
+    "action": "company:update",
+    "entity": "company",
+    "entityId": "07abf123-a8fa-4ae9-8c48-19d51e9c83f3",
+    "changes": {
+      "portalLogoUrl": "/uploads/logo.png",
+      "portalAccentColor": "#123456"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T22:30:17.441Z"
   }
 ]

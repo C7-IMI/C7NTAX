@@ -330,6 +330,28 @@
     "createdAt": "2026-10-06T20:28:15.806Z"
   },
   {
+    "id": "82588ff8-2cd2-43fb-814f-5acce165ee7b",
+    "filename": "New starter setup for next Monday.eml",
+    "mimeType": "message/rfc822",
+    "size": 242,
+    "storagePath": "9b92b760-2808-4a5a-b20b-74ca4bcad77a/c8dbe234-8b08-462d-bb91-ee61ee713996",
+    "ticketId": "9b92b760-2808-4a5a-b20b-74ca4bcad77a",
+    "commentId": null,
+    "uploadedById": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:16:36.055Z"
+  },
+  {
+    "id": "cc22e6e4-eeaf-47f2-b51d-17a89a0cbb1e",
+    "filename": "Renewal quote for the firewall.eml",
+    "mimeType": "message/rfc822",
+    "size": 226,
+    "storagePath": "9b92b760-2808-4a5a-b20b-74ca4bcad77a/95d55e86-f4b9-4c9b-a2e1-a9b3bc5d20a1",
+    "ticketId": "9b92b760-2808-4a5a-b20b-74ca4bcad77a",
+    "commentId": null,
+    "uploadedById": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:16:36.062Z"
+  },
+  {
     "id": "fa755044-1183-4895-9cce-dcfdb0f40273",
     "filename": "onboarding-notes.md",
     "mimeType": "text/markdown",
@@ -383,5 +405,27 @@
     "commentId": null,
     "uploadedById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-10-06T20:28:15.816Z"
+  },
+  {
+    "id": "ee30a48b-fa6d-4798-8bcb-59f4b070e1f0",
+    "filename": "New starter setup for next Monday.eml",
+    "mimeType": "message/rfc822",
+    "size": 263,
+    "storagePath": "2dc577b4-9e59-4c55-a7b3-0672cca927ac/f1c2768b-5147-465a-a6e5-97a7658f0e2d",
+    "ticketId": "2dc577b4-9e59-4c55-a7b3-0672cca927ac",
+    "commentId": null,
+    "uploadedById": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:18:53.264Z"
+  },
+  {
+    "id": "245691e1-4e4e-4f29-ad92-d150d4903115",
+    "filename": "Renewal quote for the firewall.eml",
+    "mimeType": "message/rfc822",
+    "size": 237,
+    "storagePath": "2dc577b4-9e59-4c55-a7b3-0672cca927ac/79fe8804-a05f-468b-ab73-6e6eedc5b85f",
+    "ticketId": "2dc577b4-9e59-4c55-a7b3-0672cca927ac",
+    "commentId": null,
+    "uploadedById": "38f63d60-ef50-49f7-821e-c67115d6814e",
+    "createdAt": "2026-10-07T22:18:53.267Z"
   }
 ]

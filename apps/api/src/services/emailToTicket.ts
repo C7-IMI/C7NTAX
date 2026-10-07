@@ -5,6 +5,7 @@
  * threaded replies as comments.
  */
 import { prisma } from "../index";
+import type { Company } from "@prisma/client";
 import { generateTicketNumber } from "./ticketNumber";
 import { TicketStatus } from "@C7NTAX/shared";
 import {
@@ -164,25 +165,24 @@ async function resolveSender(from: ParsedEmail["from"], options: EmailIngestOpti
 
   // A client the user picked in the add-in's review wins over everything below: it is the one
   // value in the whole flow that cannot be inferred from the message, and the only reason the
-  // review offers a picker at all.
+  // review offers a picker at all. It wins over matching, not over the rest of this function —
+  // returning here used to skip contact creation, so a sender with no contact yet was filed
+  // against no contact at all and the name the user confirmed was silently dropped.
+  let chosenCompany: Company | null = null;
   if (options.reviewed?.companyId) {
-    const chosen = await prisma.company.findUnique({ where: { id: options.reviewed.companyId } });
-    if (chosen) {
-      const contact = email
-        ? await prisma.contact.findFirst({ where: { email: { equals: email, mode: "insensitive" } } })
-        : null;
-      return { contact, company: chosen };
+    chosenCompany = await prisma.company.findUnique({ where: { id: options.reviewed.companyId } });
+    if (!chosenCompany) {
+      console.warn(`[EmailConnector] Reviewed client ${options.reviewed.companyId} no longer exists — matching the sender instead`);
     }
-    console.warn(`[EmailConnector] Reviewed client ${options.reviewed.companyId} no longer exists — matching the sender instead`);
   }
 
   let contact = await prisma.contact.findFirst({
     where: { email: { equals: email, mode: "insensitive" } },
   });
 
-  let company = contact
-    ? await prisma.company.findUnique({ where: { id: contact.companyId } })
-    : null;
+  let company =
+    chosenCompany ??
+    (contact ? await prisma.company.findUnique({ where: { id: contact.companyId } }) : null);
 
   // The connector's configured default wins over guessing when nothing matched.
   if (!company && options.defaultCompanyId) {
