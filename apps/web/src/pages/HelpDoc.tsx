@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import type { ReactNode } from "react";
 import { BookOpen, HelpCircle, Settings2, ListOrdered, ChevronRight, Lightbulb, AlertTriangle, Wrench } from "lucide-react";
 
 // ── PSA-style documentation frame (structure modeled on Autotask / ConnectWise Asio / HaloPSA docs) ──
@@ -1003,21 +1004,21 @@ export const HELP_SECTIONS: HelpSection[] = [
 function Block({ block }: { block: HelpBlock }) {
   switch (block.kind) {
     case "h": return <h2 id={slugify(block.text)} className="text-base font-semibold text-white mt-6 mb-2">{block.text}</h2>;
-    case "p": return <p className="text-sm text-gray-300 leading-relaxed mb-3">{block.text}</p>;
+    case "p": return <p className="text-sm text-gray-300 leading-relaxed mb-3">{inline(block.text)}</p>;
     case "steps": return (
       <ol className="list-decimal list-inside space-y-2 mb-3">
-        {block.items.map((s, i) => <li key={i} className="text-sm text-gray-300 leading-relaxed">{s}</li>)}
+        {block.items.map((s, i) => <li key={i} className="text-sm text-gray-300 leading-relaxed">{inline(s)}</li>)}
       </ol>
     );
-    case "note": return <div className="bg-cyber-600/10 rounded-md px-3 py-2 my-3 text-sm text-gray-300"><span className="font-semibold text-cyber-400">Note: </span>{block.text}</div>;
-    case "tip": return <div className="bg-green-600/10 rounded-md px-3 py-2 my-3 text-sm text-gray-300 flex gap-2"><Lightbulb size={16} className="text-green-400 shrink-0 mt-0.5" /><span>{block.text}</span></div>;
-    case "warn": return <div className="bg-amber-600/10 rounded-md px-3 py-2 my-3 text-sm text-gray-300 flex gap-2"><AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" /><span>{block.text}</span></div>;
+    case "note": return <div className="bg-cyber-600/10 rounded-md px-3 py-2 my-3 text-sm text-gray-300"><span className="font-semibold text-cyber-400">Note: </span>{inline(block.text)}</div>;
+    case "tip": return <div className="bg-green-600/10 rounded-md px-3 py-2 my-3 text-sm text-gray-300 flex gap-2"><Lightbulb size={16} className="text-green-400 shrink-0 mt-0.5" /><span>{inline(block.text)}</span></div>;
+    case "warn": return <div className="bg-amber-600/10 rounded-md px-3 py-2 my-3 text-sm text-gray-300 flex gap-2"><AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" /><span>{inline(block.text)}</span></div>;
     case "table": return (
       <div className="overflow-x-auto my-3">
         <table className="w-full text-sm border-collapse">
           <thead><tr>{block.headers.map((h, i) => <th key={i} className="text-left text-gray-400 font-semibold border-b border-surface-border px-3 py-2">{h}</th>)}</tr></thead>
           <tbody>
-            {block.rows.map((r, ri) => <tr key={ri} className="border-b border-surface-border/50">{r.map((c, ci) => <td key={ci} className="text-gray-300 px-3 py-2">{c}</td>)}</tr>)}
+            {block.rows.map((r, ri) => <tr key={ri} className="border-b border-surface-border/50">{r.map((c, ci) => <td key={ci} className="text-gray-300 px-3 py-2">{inline(c)}</td>)}</tr>)}
           </tbody>
         </table>
       </div>
@@ -1028,6 +1029,27 @@ function Block({ block }: { block: HelpBlock }) {
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+/**
+ * Inline emphasis inside a block's text: `**bold**` and `` `code` ``.
+ *
+ * The walkthroughs name buttons, flags and paths, and a sentence that cannot say which words are the
+ * button is harder to follow than one that can. Headings are left alone — an `<h2>` is already the
+ * emphasis — so a heading's text is rendered as written and its slug stays stable.
+ */
+function inline(text: string): ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  if (parts.length === 1) return text;
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return <strong key={index} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+      return <code key={index} className="font-mono text-[11px] px-1 py-0.5 rounded bg-surface-lighter text-cyber-300">{part.slice(1, -1)}</code>;
+    }
+    return part;
+  });
 }
 
 function SectionIcon({ id }: { id: string }) {
