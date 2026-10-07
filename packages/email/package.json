@@ -13,7 +13,7 @@
     "@C7NTAX/shared": "workspace:*",
     "nodemailer": "^10.0.15",
     "handlebars": "^4.7.8",
-    "mailparser": "^3.7.0",
+    "mailparser": "^3.9.36",
     "imap": "^0.8.19"
   },
   "devDependencies": {

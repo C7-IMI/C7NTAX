@@ -53,6 +53,37 @@ async function main() {
   }
   console.log(`probe alert services removed: ${services.length}`);
 
+  // Connector-suite residue: the probes ingest mail into "Attribution …" tickets, create
+  // clients for made-up domains, and write contacts on .example addresses. Only recent
+  // rows that match those shapes are touched.
+  const since = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  const probeTickets = await prisma.ticket.findMany({ where: { createdAt: { gte: since }, title: { startsWith: "Attribution" } }, select: { id: true } });
+  if (probeTickets.length) {
+    const ids = probeTickets.map(t => t.id);
+    await prisma.ticketComment.deleteMany({ where: { ticketId: { in: ids } } }).catch(() => {});
+    const gone = await prisma.ticket.deleteMany({ where: { id: { in: ids } } });
+    console.log(`probe tickets removed: ${gone.count}`);
+  } else {
+    console.log("probe tickets removed: 0");
+  }
+
+  const probeCompanies = await prisma.company.findMany({ where: { createdAt: { gte: since }, OR: [{ name: { contains: "muxiu" } }, { name: { startsWith: "Brandnewcorp" } }] }, select: { id: true, name: true } });
+  const probeContacts = await prisma.contact.findMany({ where: { createdAt: { gte: since }, OR: [{ email: { endsWith: ".example" } }, { email: { contains: "muxiu" } }] }, select: { id: true } });
+  if (probeCompanies.length) {
+    await prisma.ticket.deleteMany({ where: { companyId: { in: probeCompanies.map(c => c.id) } } }).catch(() => {});
+    await prisma.contact.deleteMany({ where: { companyId: { in: probeCompanies.map(c => c.id) } } }).catch(() => {});
+    const gone = await prisma.company.deleteMany({ where: { id: { in: probeCompanies.map(c => c.id) } } });
+    console.log(`probe clients removed: ${gone.count} (${probeCompanies.map(c => c.name).join(", ")})`);
+  } else {
+    console.log("probe clients removed: 0");
+  }
+  if (probeContacts.length) {
+    const gone = await prisma.contact.deleteMany({ where: { id: { in: probeContacts.map(c => c.id) } } });
+    console.log(`probe contacts removed: ${gone.count}`);
+  } else {
+    console.log("probe contacts removed: 0");
+  }
+
   const counts = {
     users: await prisma.user.count(),
     providers: await prisma.aiProviderConfig.count(),

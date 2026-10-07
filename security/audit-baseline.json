@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-10-07T03:15:34.901Z",
+  "command": "node scripts/audit-baseline.mjs --write",
+  "packageManager": "9.1.0",
+  "totals": {
+    "advisories": 4,
+    "production": 0,
+    "bySeverity": {
+      "high": 2,
+      "moderate": 2
+    }
+  },
+  "accepted": [],
+  "advisories": [
+    {
+      "key": "braces|GHSA-vfj7-8cjw-p6xm",
+      "id": 1240992,
+      "module": "braces",
+      "severity": "high",
+      "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+      "vulnerableVersions": "<=3.0.3",
+      "patchedVersions": "no fix published",
+      "cves": [
+        "CVE-2026-93687"
+      ],
+      "ghsa": "GHSA-vfj7-8cjw-p6xm",
+      "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      "prod": false,
+      "paths": [
+        ". > braces@3.0.3",
+        "apps\\web > tailwindcss@3.4.19 > chokidar@3.6.0 > braces@3.0.3",
+        "apps\\web > tailwindcss@3.4.19 > fast-glob@3.3.3 > micromatch@4.0.8 > braces@3.0.3",
+        "apps\\web > tailwindcss@3.4.19 > micromatch@4.0.8 > braces@3.0.3"
+      ]
+    },
+    {
+      "key": "http-cache-semantics|GHSA-ch52-4w7c-c8xp",
+      "id": 1240991,
+      "module": "http-cache-semantics",
+      "severity": "high",
+      "title": "http-cache-semantics max-stale handling can disclose cross-user cached responses",
+      "vulnerableVersions": "<=4.2.0",
+      "patchedVersions": "no fix published",
+      "cves": [
+        "CVE-2026-93748"
+      ],
+      "ghsa": "GHSA-ch52-4w7c-c8xp",
+      "url": "https://github.com/advisories/GHSA-ch52-4w7c-c8xp",
+      "prod": false,
+      "paths": [
+        ". > http-cache-semantics@4.2.0",
+        "apps\\desktop > electron-builder@26.17.0 > app-builder-lib@26.17.0 > @electron/get@3.1.0 > got@11.8.6 > cacheable-request@7.0.4 > http-cache-semantics@4.2.0"
+      ]
+    },
+    {
+      "key": "postcss-selector-parser|GHSA-rj75-hqrm-r3gf",
+      "id": 1241232,
+      "module": "postcss-selector-parser",
+      "severity": "moderate",
+      "title": "PostCSS: Quadratic complexity in flat selector parsing allows CPU exhaustion",
+      "vulnerableVersions": "<7.1.6",
+      "patchedVersions": ">=7.1.6",
+      "cves": [
+        "CVE-2026-104844"
+      ],
+      "ghsa": "GHSA-rj75-hqrm-r3gf",
+      "url": "https://github.com/advisories/GHSA-rj75-hqrm-r3gf",
+      "prod": false,
+      "paths": [
+        ". > postcss-selector-parser@6.1.4",
+        "apps\\web > tailwindcss@3.4.19 > postcss-nested@6.2.0 > postcss-selector-parser@6.1.4",
+        "apps\\web > tailwindcss@3.4.19 > postcss-selector-parser@6.1.4"
+      ]
+    },
+    {
+      "key": "sprintf-js|GHSA-hp3w-g68c-fv3c",
+      "id": 1241202,
+      "module": "sprintf-js",
+      "severity": "moderate",
+      "title": "sprintf-js vulnerable to denial of service through unbounded precision specifiers",
+      "vulnerableVersions": "<=1.1.3",
+      "patchedVersions": "no fix published",
+      "cves": [
+        "CVE-2026-97058"
+      ],
+      "ghsa": "GHSA-hp3w-g68c-fv3c",
+      "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
+      "prod": false,
+      "paths": [
+        ". > sprintf-js@1.1.3",
+        "apps\\desktop > electron-builder@26.17.0 > app-builder-lib@26.17.0 > @electron/get@3.1.0 > global-agent@3.0.0 > roarr@2.15.4 > sprintf-js@1.1.3"
+      ]
+    }
+  ]
+}

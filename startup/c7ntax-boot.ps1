@@ -279,7 +279,9 @@ if (-not $apiUp) {
 if (Test-Port 3010) {
     Write-Step "Frontend already running"
 } else {
-    $web = Start-Process -FilePath $Node -ArgumentList "`"$NpxCli`"", "vite", "--port", "3010", "--host" -WorkingDirectory $WebDir -WindowStyle Hidden -RedirectStandardOutput "$LogDir/web.out.log" -RedirectStandardError "$LogDir/web.err.log" -PassThru
+    # Bound to localhost on purpose: the dev server serves source files, and binding it to
+  # every interface (--host) puts them on the LAN (see PLAN-018, CVE-2026-53571).
+  $web = Start-Process -FilePath $Node -ArgumentList "`"$NpxCli`"", "vite", "--port", "3010" -WorkingDirectory $WebDir -WindowStyle Hidden -RedirectStandardOutput "$LogDir/web.out.log" -RedirectStandardError "$LogDir/web.err.log" -PassThru
     Write-Step "Frontend starting (PID $($web.Id))"
 }
 $webUp = $false

@@ -10,12 +10,13 @@
  * cannot resolve to a private one:
  *   - http(s) only, and https unless the host is loopback and private access is allowed
  *   - no loopback, link-local (which includes 169.254.169.254), or RFC1918/CGNAT/ULA
- *   - redirects are not followed automatically: a 3xx response is an error, so a public
- *     URL cannot bounce the request into the private network
+ *   - redirects are followed, but every hop is validated like the first, so a public URL
+ *     cannot bounce the request into the private network
  *   - every attempt is logged, with its outcome, so an SSRF attempt is visible
  *
  * Private access is off unless `EGRESS_ALLOW_PRIVATE=true`, which exists for a local
- * model server (Ollama) in development and is refused in production.
+ * model server (Ollama) in development and is refused in production. Link-local stays
+ * blocked even then.
  */
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";

@@ -6,15 +6,15 @@
   "scripts": {
     "dev": "electron . --dev",
     "prebuild": "pnpm --filter @C7NTAX/web exec vite build",
-    "build": "tsc && electron-builder --win portable --config.electronVersion=33.4.11",
+    "build": "tsc && electron-builder --win portable --config.electronVersion=44.6.0",
     "clean": "rimraf dist"
   },
   "dependencies": {
     "electron-is-dev": "^2.0.0"
   },
   "devDependencies": {
-    "electron": "^33.2.1",
-    "electron-builder": "^24.13.0",
+    "electron": "^44.6.0",
+    "electron-builder": "^26.17.0",
     "rimraf": "^5.0.0",
     "typescript": "^5.4.0"
   },

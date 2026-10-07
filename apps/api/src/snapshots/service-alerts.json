@@ -521,15 +521,15 @@
     "id": "8347b71f-f271-49e2-b2af-f335eb5841f8",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Workspace Agents Degraded and Responses Impacted",
-    "description": "Status: Monitoring We have applied the mitigation and are monitoring the recovery. Affected components Agent (Degraded performance)",
+    "description": "Auto-resolved: Workspace Agents Degraded and Responses Impacted\n\nStatus: Monitoring We have applied the mitigation and are monitoring the recovery. Affected components Agent (Degraded performance)",
     "severity": "degraded",
-    "status": "active",
+    "status": "resolved",
     "source": "rss",
     "sourceUrl": "https://status.openai.com//incidents/01M49YQE6WZT02WYF0KBXVMQ5G",
     "detectedAt": "2026-10-07T01:16:26.775Z",
-    "resolvedAt": null,
+    "resolvedAt": "2026-10-07T03:01:21.135Z",
     "createdAt": "2026-10-07T01:16:26.776Z",
-    "updatedAt": "2026-10-07T02:45:50.835Z"
+    "updatedAt": "2026-10-07T03:01:21.138Z"
   },
   {
     "id": "90fa0286-2aef-4b63-934c-85c16cf67ce5",
