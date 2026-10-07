@@ -471,7 +471,10 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
       }
 
       const expression = element.type === "aggregate"
-        ? `${element.fn}(${element.expression}${element.scope !== "report" ? `, '${element.scope}'` : ""})`
+        ? `${element.fn}(${[
+            element.expression.trim(),
+            element.scope !== "report" ? `'${element.scope}'` : "",
+          ].filter(Boolean).join(", ")})`
         : element.type === "field"
           ? element.expression
           : element.text;

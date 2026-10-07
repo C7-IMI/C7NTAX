@@ -34,7 +34,7 @@ import { DesignerCanvas } from "../components/reports/designer/DesignerCanvas";
 import { Inspector, type Selection } from "../components/reports/designer/Inspector";
 import { Palette } from "../components/reports/designer/Palette";
 import { LaidOutPageView } from "../components/reports/designer/PageRenderer";
-import { isTypingTarget } from "../components/reports/designer/ExpressionInput";
+import { clearActiveExpressionTarget, isTypingTarget } from "../components/reports/designer/ExpressionInput";
 import type { DesignerCatalog, DesignerRun } from "../lib/designerTypes";
 
 interface SavedReport {
@@ -80,6 +80,16 @@ export function ReportDesignerPage() {
       return next;
     });
     setDirty(true);
+  }, []);
+
+  /**
+   * Selecting something on the canvas ends the "inserting into the expression you were editing" mode.
+   * Without this the palette keeps writing into the last input that had focus, which after a canvas
+   * click is not where the user is looking any more.
+   */
+  const select = useCallback((next: Selection) => {
+    clearActiveExpressionTarget();
+    setSelection(next);
   }, []);
 
   // ── Load ──────────────────────────────────────────────────────────
@@ -201,7 +211,7 @@ export function ReportDesignerPage() {
       ...document,
       bands: document.bands.map(band => (band.id === bandId ? { ...band, elements: [...band.elements, element] } : band)),
     }, { push: true });
-    setSelection({ kind: "element", bandId, elementId: element.id });
+    select({ kind: "element", bandId, elementId: element.id });
   }, [document, applyDocument]);
 
   const onEditElement = useCallback((bandId: string, elementId: string, patch: Partial<TemplateElement>) => {
@@ -222,11 +232,13 @@ export function ReportDesignerPage() {
     const format = field?.type === "money" ? "money" : field?.type === "date" ? "date" : field?.type === "number" ? "number" : field?.type === "minutes" ? "minutes" : "text";
     const band = document.bands.find(candidate => candidate.id === bandId);
     if (!band) return;
+    // Dropped where the pointer was, but kept inside the band and never taller than the room left.
+    const y = Math.max(0, Math.min(at.y, Math.max(0, band.height - 3.5)));
     const element = createElement("field", {
       x: at.x,
-      y: Math.min(at.y, Math.max(0, band.height - 5)),
+      y,
       w: Math.min(contentBox(document.page).width - at.x, format === "date" ? 28 : format === "money" ? 24 : 45),
-      h: Math.max(4, Math.min(6.5, band.height - at.y)),
+      h: Math.max(1.5, Math.min(6.5, band.height - y - 0.25)),
       expression: `Fields.${fieldKey}`,
       format,
       style: { ...createElement("field").style, fontSize: 8.5, align: format === "money" || format === "number" || format === "minutes" ? "right" : "left" },
@@ -268,7 +280,7 @@ export function ReportDesignerPage() {
       if (modifier && event.key.toLowerCase() === "z") { event.preventDefault(); event.shiftKey ? redo() : undo(); return; }
       if (modifier && event.key.toLowerCase() === "y") { event.preventDefault(); redo(); return; }
       if (modifier && event.key.toLowerCase() === "s") { event.preventDefault(); void save(); return; }
-      if (event.key === "Escape") { setSelection({ kind: "report" }); return; }
+      if (event.key === "Escape") { select({ kind: "report" }); return; }
       if (selection.kind !== "element" || !document) return;
 
       const band = document.bands.find(candidate => candidate.id === selection.bandId);
@@ -278,7 +290,7 @@ export function ReportDesignerPage() {
       if (event.key === "Delete" || event.key === "Backspace") {
         event.preventDefault();
         applyDocument({ ...document, bands: document.bands.map(candidate => (candidate.id === band.id ? { ...candidate, elements: candidate.elements.filter(el => el.id !== element.id) } : candidate)) }, { push: true });
-        setSelection({ kind: "band", bandId: band.id });
+        select({ kind: "band", bandId: band.id });
         return;
       }
       if (modifier && event.key.toLowerCase() === "d") {
@@ -317,7 +329,10 @@ export function ReportDesignerPage() {
         await api.patch(`/reports/${reportId}`, payload);
       } else {
         const created = await api.post("/reports", payload);
-        setReportId((created.data as SavedReport).id);
+        const savedId = (created.data as SavedReport).id;
+        setReportId(savedId);
+        // The URL becomes the report's own address, so a refresh reopens it instead of starting over.
+        navigate(`/reports/custom/${savedId}/design`, { replace: true });
       }
       setDirty(false);
       toast.success(reportId ? "Template saved" : "Template created");
@@ -424,7 +439,7 @@ export function ReportDesignerPage() {
             selection={selection}
             onAddElement={onAddElement}
             onEditElement={onEditElement}
-            onSelect={setSelection}
+            onSelect={select}
           />
         </aside>
 
@@ -437,7 +452,7 @@ export function ReportDesignerPage() {
               zoom={zoom}
               issues={issues}
               values={values}
-              onSelect={setSelection}
+              onSelect={select}
               onDocument={applyDocument}
               onDropField={onDropField}
             />
@@ -534,7 +549,7 @@ export function ReportDesignerPage() {
             catalog={catalog}
             selection={selection}
             issues={issues}
-            onSelect={setSelection}
+            onSelect={select}
             onDocument={applyDocument}
             onName={value => { setName(value); setDirty(true); }}
             onDescription={value => { setDescription(value); setDirty(true); }}

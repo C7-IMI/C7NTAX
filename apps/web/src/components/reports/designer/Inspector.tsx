@@ -16,6 +16,7 @@ import {
 } from "@C7NTAX/shared";
 import type { DesignerCatalog } from "../../../lib/designerTypes";
 import { ExpressionInput } from "./ExpressionInput";
+import { fitInBand } from "./Palette";
 
 export type Selection =
   | { kind: "report" }
@@ -235,12 +236,12 @@ function ElementPanel({ document, band, element, catalog, issues, onDocument, on
               />
             </Field>
             <ExpressionInput
-              label="Of field"
+              label={element.fn === "COUNT" ? "Of field (optional)" : "Of field"}
               path={`${element.id}.aggregate`}
               value={element.expression}
               onChange={expression => update(el => ({ ...el, expression }) as TemplateElement)}
               issue={expressionIssue?.message ?? null}
-              placeholder={fields.find(field => field.type === "money")?.key ? `Fields.${fields.find(field => field.type === "money")!.key}` : "Fields.amount"}
+              placeholder={element.fn === "COUNT" ? "leave empty to count rows" : fields.find(field => field.type === "money")?.key ? `Fields.${fields.find(field => field.type === "money")!.key}` : "Fields.amount"}
             />
             <Field label="Over" hint={element.scope === "group" ? "The rows of the group this band belongs to." : element.scope === "page" ? "The rows printed on the same page. Resolved after pagination." : "Every row the report selected."}>
               <Chips
@@ -424,7 +425,8 @@ function BandPanel({ document, band, issues, selection, onDocument, onSelect, ca
             type="button"
             className="text-[10px] text-gray-300 hover:text-white bg-surface-light border border-surface-lighter rounded px-2 py-1"
             onClick={() => {
-              const quick = createElement("text", { x: 0, y: 0, w: Math.min(60, band.height * 8), h: Math.max(4, band.height - 1), text: "Label" });
+              const placement = fitInBand(band, band.elements.length);
+              const quick = createElement("text", { x: 0, y: placement.y, w: Math.min(60, band.height * 8), h: placement.h, text: "Label" });
               onDocument({ ...document, bands: document.bands.map(candidate => (candidate.id === band.id ? { ...candidate, elements: [...candidate.elements, quick] } : candidate)) });
               onSelect({ kind: "element", bandId: band.id, elementId: quick.id });
             }}
@@ -582,7 +584,13 @@ function ReportPanel({ document, catalog, issues, onDocument, onName, onDescript
                 <SelectInput
                   value={filter.op}
                   onChange={op => setSource({ filters: (source?.filters ?? []).map((candidate, at) => (at === index ? { ...candidate, op } : candidate)) })}
-                  options={operators.map(operator => ({ value: operator.key, label: operator.label }))}
+                  options={operators
+                    // "is empty" is only a question about a column that can be empty; offering it on a
+                    // required one invites a filter that can never match.
+                    .filter(operator => (operator.key === "isNull" || operator.key === "isNotNull")
+                      ? sourceFields.find(field => field.key === filter.field)?.nullable
+                      : true)
+                    .map(operator => ({ value: operator.key, label: operator.label }))}
                 />
               </div>
               {filter.op === "isNull" || filter.op === "isNotNull" ? null : (

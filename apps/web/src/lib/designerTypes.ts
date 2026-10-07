@@ -8,12 +8,11 @@
  */
 import type { BandKind } from "@C7NTAX/shared";
 
-export interface CatalogField { key: string; label: string; type: string; filterable: boolean }
+export interface CatalogField { key: string; label: string; type: string; nullable: boolean; relation: boolean; filterable: boolean }
 
 export interface CatalogSource { key: string; label: string; defaultSort: string; fields: CatalogField[] }
 
 export interface CatalogOperator { key: string; label: string; valueKind: "none" | "text" | "number" | "date" | "list" | "pair" }
-
 export interface CatalogFunction {
   name: string;
   category: "Aggregate" | "Math" | "Text" | "Date" | "Logical" | "Format" | "Value";

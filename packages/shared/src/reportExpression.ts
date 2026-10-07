@@ -394,9 +394,16 @@ const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
 function toDateValue(value: unknown): Date | null {
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
   if (typeof value === "number") return new Date(value);
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  if (typeof value === "string") {
+    // A plain `YYYY-MM-DD` is a *calendar day*, not an instant: parsing it as UTC midnight makes
+    // YEAR/MONTH/DAY answer for the day before anywhere west of Greenwich, which is how a report
+    // dated 1 August shows July.
+    const dayOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (dayOnly) return new Date(Number(dayOnly[1]), Number(dayOnly[2]) - 1, Number(dayOnly[3]));
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
   }
   return null;
 }
@@ -608,7 +615,8 @@ function evaluateCall(ast: { name: string; args: Expr[] }, ctx: ExpressionContex
     case "ISNULL": return isBlank(first);
     case "ISEMPTY": return toText(first).trim() === "";
     case "NOW": return new Date();
-    case "TODAY": { const now = new Date(); return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())); }
+    // Today, as a calendar day in the reader's own timezone — a UTC midnight reads as yesterday here.
+    case "TODAY": { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate()); }
     case "YEAR": { const d = toDateValue(first); return d ? d.getFullYear() : null; }
     case "MONTH": { const d = toDateValue(first); return d ? d.getMonth() + 1 : null; }
     case "DAY": { const d = toDateValue(first); return d ? d.getDate() : null; }

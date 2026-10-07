@@ -18,6 +18,10 @@ export function setActiveExpression(key: string, insert: (text: string, caretOff
 export function clearActiveExpression(key: string): void {
   if (activeTarget?.key === key) activeTarget = null;
 }
+/** Forgets the focused expression, whatever it was — used when the user selects something else. */
+export function clearActiveExpressionTarget(): void {
+  activeTarget = null;
+}
 export function activeExpressionKey(): string | null {
   return activeTarget?.key ?? null;
 }

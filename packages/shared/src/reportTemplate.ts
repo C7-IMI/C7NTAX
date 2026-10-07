@@ -359,6 +359,18 @@ function element(type: ElementType, value: string, x: number, y: number, w: numb
   return createElement(type, { x, y, w, h, style: sharedStyle });
 }
 
+/** The format a catalogue field wants, so a starter's columns are laid out as the data reads. */
+export function formatForField(field: { type: string }): ValueFormat {
+  switch (field.type) {
+    case "money": return "money";
+    case "number": return "number";
+    case "minutes": return "minutes";
+    case "date": return "date";
+    case "boolean": return "yesno";
+    default: return "text";
+  }
+}
+
 /** A starter document for one source. Fields are chosen from the catalog, never hardcoded, so a
  *  starter is always valid against the data it names. */
 export function createStarter(kind: StarterKind, source: CatalogSource, name = "Untitled report"): ReportTemplateDocument {
@@ -385,8 +397,7 @@ export function createStarter(kind: StarterKind, source: CatalogSource, name = "
     detail.elements = [
       element("field", `Fields.${shape.idField?.key ?? "id"}`, 0, 0, width * 0.5, 6, { fontSize: 9 }),
       element("field", `Fields.${shape.dateField?.key ?? shape.idField?.key ?? "id"}`, width * 0.5, 0, width * 0.5, 6, { fontSize: 9, align: "left" }, shape.dateField ? "date" : "text"),
-    ];
-    document.bands = [header, detail, pageFooter];
+    ];    document.bands = [header, detail, pageFooter];
     return document;
   }
 
@@ -399,7 +410,8 @@ export function createStarter(kind: StarterKind, source: CatalogSource, name = "
     const share = width / Math.max(1, columns.length + 1);
     columns.forEach((field, index) => {
       columnHeader.elements.push(element("text", field.label, index * share, 0, share, 7, { bold: true, fontSize: 8, color: "#334155" }));
-      detail.elements.push(element("field", `Fields.${field.key}`, index * share, 0, share, 6, { fontSize: 8.5 }));
+      // Each column is formatted for its own kind of value: a date field is a date, not an ISO string.
+      detail.elements.push(element("field", `Fields.${field.key}`, index * share, 0, share, 6, { fontSize: 8.5 }, formatForField(field)));
     });
     if (amount) {
       columnHeader.elements.push(element("text", amount.label, columns.length * share, 0, share, 7, { bold: true, fontSize: 8, color: "#334155", align: "right" }));
@@ -427,7 +439,7 @@ export function createStarter(kind: StarterKind, source: CatalogSource, name = "
   const share = width / Math.max(1, columns.length + 1);
   columns.forEach((field, index) => {
     columnHeader.elements.push(element("text", field.label, index * share, 0, share, 7, { bold: true, fontSize: 8, color: "#334155" }));
-    detail.elements.push(element("field", `Fields.${field.key}`, index * share, 0, share, 6, { fontSize: 8.5 }));
+    detail.elements.push(element("field", `Fields.${field.key}`, index * share, 0, share, 6, { fontSize: 8.5 }, formatForField(field)));
   });
 
   const footer = createBand("groupFooter", { groupKey: "group1", height: 8 });
@@ -843,6 +855,8 @@ export function validateTemplate(input: unknown, options: ValidationOptions = {}
 
       if (element.type === "aggregate") {
         if (!element.expression.trim()) {
+          // Counting the rows is the one total that needs no field: "how many tickets were raised".
+          if (element.fn === "COUNT") return;
           add({ severity: "error", code: "element.expression", path: `${elementPath}.expression`, message: "A total needs the field to total.", ...context });
           return;
         }

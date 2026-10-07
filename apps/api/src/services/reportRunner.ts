@@ -34,6 +34,15 @@ interface FieldSpec {
   label?: string;
   type?: ReportFieldType;
   /**
+   * The column can hold no value. Only `isNull` and `isNotNull` care, and Prisma refuses a null filter
+   * on a column that cannot be null — so this decides which of those two operators is sent, and a
+   * column left unmarked is treated as required. Marking it wrongly the safe way round (required when
+   * it is not) costs an empty result and a note; the other way round is a 500.
+   */
+  nullable?: boolean;
+  /** The column is a relation, which null-filters as `is: null` rather than `= null`. */
+  relation?: boolean;
+  /**
    * Turns a selected relation into the single value a report wants to print. A user is
    * `{ firstName, lastName }`, which has no one obvious value, so a column that presents a person
    * flattens it here rather than making every expression do it.
@@ -62,16 +71,16 @@ const SOURCES: Record<ReportSource, { model: string; label: string; fields: Reco
       source: { field: "source", type: "text" },
       createdAt: { field: "createdAt", type: "date" },
       updatedAt: { field: "updatedAt", type: "date" },
-      dueDate: { field: "dueDate", type: "date" },
-      firstResponseAt: { field: "firstResponseAt", type: "date" },
-      resolvedAt: { field: "resolvedAt", type: "date" },
-      closedAt: { field: "closedAt", type: "date" },
+      dueDate: { field: "dueDate", type: "date", nullable: true },
+      firstResponseAt: { field: "firstResponseAt", type: "date", nullable: true },
+      resolvedAt: { field: "resolvedAt", type: "date", nullable: true },
+      closedAt: { field: "closedAt", type: "date", nullable: true },
       isOverdue: { field: "isOverdue", type: "boolean" },
-      client: { field: "company", select: { name: true }, type: "text" },
-      board: { field: "board", select: { name: true }, type: "text" },
-      category: { field: "category", select: { name: true }, type: "text" },
-      assignee: { field: "assignedTo", select: { firstName: true, lastName: true }, flatten: personName, type: "text" },
-      contact: { field: "contact", select: { firstName: true, lastName: true }, flatten: personName, type: "text" },
+      client: { field: "company", select: { name: true }, type: "text", relation: true },
+      board: { field: "board", select: { name: true }, type: "text", relation: true },
+      category: { field: "category", select: { name: true }, type: "text", nullable: true, relation: true },
+      assignee: { field: "assignedTo", select: { firstName: true, lastName: true }, flatten: personName, type: "text", nullable: true, relation: true },
+      contact: { field: "contact", select: { firstName: true, lastName: true }, flatten: personName, type: "text", nullable: true, relation: true },
     },
   },
   invoices: {
@@ -85,11 +94,11 @@ const SOURCES: Record<ReportSource, { model: string; label: string; fields: Reco
       currency: { field: "currency", type: "text" },
       issueDate: { field: "issueDate", type: "date" },
       dueDate: { field: "dueDate", type: "date" },
-      paidAt: { field: "paidAt", type: "date" },
+      paidAt: { field: "paidAt", type: "date", nullable: true },
       subtotal: { field: "subtotal", type: "money" },
       taxTotal: { field: "taxTotal", type: "money" },
       total: { field: "total", type: "money" },
-      client: { field: "company", select: { name: true }, type: "text" },
+      client: { field: "company", select: { name: true }, type: "text", relation: true },
     },
   },
   time_entries: {
@@ -100,16 +109,16 @@ const SOURCES: Record<ReportSource, { model: string; label: string; fields: Reco
     fields: {
       date: { field: "date", type: "date" },
       minutes: { field: "minutes", type: "minutes" },
-      billedMinutes: { field: "billedMinutes", type: "minutes" },
+      billedMinutes: { field: "billedMinutes", type: "minutes", nullable: true },
       overtimeMinutes: { field: "overtimeMinutes", type: "minutes" },
       billable: { field: "billable", type: "boolean" },
       noCharge: { field: "noCharge", type: "boolean" },
-      rate: { field: "rate", type: "money" },
-      description: { field: "description", type: "text" },
-      workType: { field: "workType", type: "text" },
-      technician: { field: "user", select: { firstName: true, lastName: true }, flatten: personName, type: "text" },
-      ticket: { field: "ticket", select: { ticketNumber: true }, type: "text" },
-      invoice: { field: "invoice", select: { invoiceNumber: true }, type: "text" },
+      rate: { field: "rate", type: "money", nullable: true },
+      description: { field: "description", type: "text", nullable: true },
+      workType: { field: "workType", type: "text", nullable: true },
+      technician: { field: "user", select: { firstName: true, lastName: true }, flatten: personName, type: "text", relation: true },
+      ticket: { field: "ticket", select: { ticketNumber: true }, type: "text", relation: true },
+      invoice: { field: "invoice", select: { invoiceNumber: true }, type: "text", nullable: true, relation: true },
     },
   },
   expenses: {
@@ -120,11 +129,11 @@ const SOURCES: Record<ReportSource, { model: string; label: string; fields: Reco
       description: { field: "description", type: "text" },
       amount: { field: "amount", type: "money" },
       category: { field: "category", type: "text" },
-      vendor: { field: "vendor", type: "text" },
+      vendor: { field: "vendor", type: "text", nullable: true },
       status: { field: "status", type: "text" },
       expenseDate: { field: "expenseDate", type: "date" },
-      miles: { field: "miles", type: "number" },
-      syncedAt: { field: "syncedAt", type: "date" },
+      miles: { field: "miles", type: "number", nullable: true },
+      syncedAt: { field: "syncedAt", type: "date", nullable: true },
     },
   },
   assets: {
@@ -146,9 +155,9 @@ const SOURCES: Record<ReportSource, { model: string; label: string; fields: Reco
     fields: {
       firstName: { field: "firstName", type: "text" },
       lastName: { field: "lastName", type: "text" },
-      email: { field: "email", type: "text" },
-      phone: { field: "phone", type: "text" },
-      title: { field: "title", type: "text" },
+      email: { field: "email", type: "text", nullable: true },
+      phone: { field: "phone", type: "text", nullable: true },
+      title: { field: "title", type: "text", nullable: true },
       createdAt: { field: "createdAt", type: "date" },
     },
   },
@@ -158,9 +167,9 @@ const SOURCES: Record<ReportSource, { model: string; label: string; fields: Reco
     defaultSort: "name",
     fields: {
       name: { field: "name", type: "text" },
-      city: { field: "city", type: "text" },
-      state: { field: "state", type: "text" },
-      industry: { field: "industry", type: "text" },
+      city: { field: "city", type: "text", nullable: true },
+      state: { field: "state", type: "text", nullable: true },
+      industry: { field: "industry", type: "text", nullable: true },
       isActive: { field: "isActive", type: "boolean" },
       createdAt: { field: "createdAt", type: "date" },
     },
@@ -190,30 +199,50 @@ export interface ReportRunResult {
   limit?: number;
 }
 
-/** Builds a Prisma `where` from the config's filters, ignoring anything not whitelisted. */
-function buildWhere(source: ReportSource, config: ReportConfig, notes: string[]): Record<string, unknown> {
+/**
+ * Builds a Prisma `where` from the config's filters, ignoring anything not whitelisted.
+ *
+ * The two null operators need care that the rest do not. Prisma refuses a null filter on a column that
+ * cannot be null (`Argument must not be null`) and refuses `not` on a relation, so `isNull` and
+ * `isNotNull` are translated per field rather than emitted as a value — a report that asks "which
+ * tickets have no resolution date" must not become a 500 because the column it named is required.
+ */
+function buildWhere(source: ReportSource, config: ReportConfig, notes: string[]): { where: Record<string, unknown>; empty: boolean } {
   const spec = SOURCES[source];
   const where: Record<string, unknown> = {};
+  let empty = false;
   for (const filter of config.filters ?? []) {
     const column = filter.field ? spec.fields[filter.field] : undefined;
     if (!column) { notes.push(`ignored filter on unknown field "${filter.field}"`); continue; }
     const op = (filter.op ?? "equals") as Operator;
     if (!OPERATORS.includes(op)) { notes.push(`ignored filter with unknown operator "${filter.op}"`); continue; }
     const value = filter.value;
+
+    if (op === "isNull" || op === "isNotNull") {
+      if (!column.nullable) {
+        // Every row already satisfies "is not null", and none satisfies "is null":
+        notes.push(`${filter.field} cannot be empty, so the "${op === "isNull" ? "is empty" : "is not empty"}" filter was simplified`);
+        if (op === "isNull") empty = true;
+        continue;
+      }
+      where[column.field] = column.relation
+        ? (op === "isNull" ? { is: null } : { isNot: null })
+        : (op === "isNull" ? null : { not: null });
+      continue;
+    }
+
     const condition =
-      op === "equals" ? value
-      : op === "notEquals" ? { not: value }
+      op === "equals" ? coerce(value)
+      : op === "notEquals" ? { not: coerce(value) }
       : op === "contains" ? { contains: String(value ?? ""), mode: "insensitive" }
       : op === "startsWith" ? { startsWith: String(value ?? ""), mode: "insensitive" }
-      : op === "in" ? { in: Array.isArray(value) ? value : [value] }
+      : op === "in" ? { in: Array.isArray(value) ? value.map(coerce) : [coerce(value)] }
       : op === "gte" ? { gte: coerce(value) }
       : op === "lte" ? { lte: coerce(value) }
-      : op === "between" ? { gte: coerce(Array.isArray(value) ? value[0] : undefined), lte: coerce(Array.isArray(value) ? value[1] : undefined) }
-      : op === "isNull" ? null
-      : { not: null };
+      : { gte: coerce(Array.isArray(value) ? value[0] : undefined), lte: coerce(Array.isArray(value) ? value[1] : undefined) };
     where[column.field] = condition;
   }
-  return where;
+  return { where, empty };
 }
 
 /** Dates arrive as strings; numbers as strings if somebody typed them in a form. */
@@ -222,7 +251,7 @@ function coerce(value: unknown): unknown {
   return value;
 }
 
-export interface CatalogField { key: string; label: string; type: ReportFieldType; filterable: boolean }
+export interface CatalogField { key: string; label: string; type: ReportFieldType; nullable: boolean; relation: boolean; filterable: boolean }
 export interface ReportCatalog {
   sources: Array<{ key: ReportSource; label: string; defaultSort: string; fields: CatalogField[] }>;
   operators: Array<{ key: Operator; label: string; valueKind: "none" | "text" | "number" | "date" | "list" | "pair" }>;
@@ -258,6 +287,9 @@ export function describeReportCatalog(): ReportCatalog {
           key: fieldKey,
           label: field.label ?? labelFor(fieldKey),
           type: field.type ?? "text",
+          // Whether a column can be empty decides whether "is empty" is even a question worth asking.
+          nullable: field.nullable ?? false,
+          relation: field.relation ?? false,
           filterable: true,
         })),
       };
@@ -283,7 +315,13 @@ export async function runReportConfig(config: ReportConfig, scope: Record<string
   const droppedColumns = requested.filter(c => !(c in spec.fields));
   if (droppedColumns.length) notes.push(`ignored unknown column(s): ${droppedColumns.join(", ")}`);
 
-  const where = { ...buildWhere(source, config, notes), ...scope };
+  const built = buildWhere(source, config, notes);
+  const where = { ...built.where, ...scope };
+  if (built.empty) {
+    // A filter that nothing can satisfy — "the resolution date is empty" on a required column — is
+    // answered without a query, which is both correct and cheaper than a query that returns nothing.
+    return { source, columns, rows: [], truncated: false, notes, limit: Math.min(Math.max(Number(config.limit) || 200, 1), 2000) };
+  }
 
   // Prisma's `select` is keyed by the real field or relation name, so a column that presents
   // itself as "client" is selected as `company` and renamed back on the way out.

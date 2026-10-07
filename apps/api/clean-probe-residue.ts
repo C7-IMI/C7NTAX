@@ -385,6 +385,10 @@ async function main() {
       { name: { startsWith: "Browser report" } },
       { name: { startsWith: "Report probe" } },
       { name: { startsWith: "Probe report" } },
+      // The designer's probe names its templates "Probe template …", and a template is a report.
+      { name: { startsWith: "Probe template" } },
+      { name: { startsWith: "Probe designed" } },
+      { name: { startsWith: "Probe design" } },
     ],
   };
   const probeReports = await prisma.report.findMany({ where: probeReportWhere, select: { id: true } });

@@ -142,7 +142,9 @@ export async function runTemplateDocument(
       });
     }
   }
-  if (errorsOf(validation.issues).length) {
+  // The array taken before the parameter check would not know about these, and the caller reads it.
+  validation.errors = errorsOf(validation.issues);
+  if (validation.errors.length) {
     return { rows: [], columns: [], truncated: false, limit: 0, notes: [], parameters, validation };
   }
 

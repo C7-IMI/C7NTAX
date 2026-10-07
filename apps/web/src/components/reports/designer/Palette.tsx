@@ -30,6 +30,18 @@ const TYPE_LABELS: Record<string, string> = {
   text: "Text", number: "Number", money: "Money", minutes: "Minutes", date: "Date", boolean: "Yes / no",
 };
 
+/**
+ * Where a new element goes in a band: inside it, never hanging over the bottom edge. A band tall enough
+ * to stack elements staggers them so a new one is visible; a short band (a 6mm data row) puts it on the
+ * row itself, which is what the user is looking at.
+ */
+export function fitInBand(band: { height: number; elements: unknown[] }, index: number): { y: number; h: number } {
+  const staggered = band.height >= 12 ? Math.min(index * 4, Math.max(0, band.height - 6)) : 0;
+  const y = Math.max(0, Math.min(staggered, band.height - 1.5));
+  const h = Math.max(1.5, Math.min(7, band.height - y - 0.25));
+  return { y, h };
+}
+
 export function Palette({ document, catalog, selection, onAddElement, onEditElement, onSelect }: PaletteProps) {
   const [search, setSearch] = useState("");
   const [openCategory, setOpenCategory] = useState<string | null>("Aggregate");
@@ -59,10 +71,15 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
     return [...groups.entries()];
   }, [catalog]);
 
-  const targetBandId = selection.kind === "element" ? selection.bandId : selection.kind === "band" ? selection.bandId : document.bands.find(band => band.kind === "detail")?.id ?? document.bands[0]?.id;
-  const targetBand = document.bands.find(band => band.id === targetBandId);
-  const selectedElement = selection.kind === "element"
-    ? document.bands.find(band => band.id === selection.bandId)?.elements.find(element => element.id === selection.elementId)
+  /**
+   * The band a click lands in: the selected one when it still exists, otherwise the data band. A
+   * selection can outlive the band it named — deleting a band, or a remount after a code change — and
+   * a palette that answers "select a band first" while a band is plainly on screen is a dead end.
+   */
+  const selectedBand = selection.kind === "report" ? undefined : document.bands.find(band => band.id === selection.bandId);
+  const targetBand = selectedBand ?? document.bands.find(band => band.kind === "detail") ?? document.bands[0];
+  const selectedElement = selection.kind === "element" && selectedBand
+    ? selectedBand.elements.find(element => element.id === selection.elementId)
     : undefined;
 
   /** Where a click will land, said plainly — otherwise the palette is a guess. */
@@ -70,20 +87,20 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
     if (activeExpressionKey()) return "Inserting into the expression you are editing";
     if (selectedElement) return `Appending to the selected ${selectedElement.type} element`;
     if (targetBand) return `Adding a new element to the ${targetBand.kind} band`;
-    return "Select a band first";
+    return "This report has no bands to add to yet";
   })();
 
   /** Appends to the selected element's own expression — a document edit rather than a keystroke. */
   const appendToSelected = (text: string, wrapInTextHole = false): boolean => {
-    if (selection.kind !== "element" || !selectedElement) return false;
+    if (!selectedElement || !selectedBand) return false;
     if (selectedElement.type === "field" || selectedElement.type === "aggregate") {
       const expression = `${selectedElement.expression}${selectedElement.expression ? " " : ""}${text}`;
-      onEditElement(selection.bandId, selectedElement.id, { expression } as Partial<TemplateElement>);
+      onEditElement(selectedBand.id, selectedElement.id, { expression } as Partial<TemplateElement>);
       return true;
     }
     if (selectedElement.type === "text") {
       const addition = wrapInTextHole ? `{{${text}}}` : text;
-      onEditElement(selection.bandId, selectedElement.id, { text: `${selectedElement.text}${addition}` } as Partial<TemplateElement>);
+      onEditElement(selectedBand.id, selectedElement.id, { text: `${selectedElement.text}${addition}` } as Partial<TemplateElement>);
       return true;
     }
     return false;
@@ -94,11 +111,14 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
     const format = field
       ? field.type === "money" ? "money" : field.type === "date" ? "date" : field.type === "number" ? "number" : field.type === "minutes" ? "minutes" : "text"
       : "text";
+    // The new element is placed *inside* its band, with room to spare: an element that is invalid the
+    // moment it is added is a designer telling the user off for using it.
+    const placement = fitInBand(targetBand, targetBand.elements.length);
     const element = createElement("field", {
       x: 0,
-      y: Math.max(0, Math.min(targetBand.height - 5, targetBand.elements.length * 5.5)),
+      y: placement.y,
       w: field?.type === "date" ? 30 : format === "money" || format === "number" || format === "minutes" ? 26 : 60,
-      h: Math.max(4, Math.min(7, targetBand.height - 0.5)),
+      h: placement.h,
       expression,
       format,
       style: {
@@ -257,11 +277,12 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
                 disabled={!targetBand}
                 onClick={() => {
                   if (!targetBand) return;
+                  const placement = fitInBand(targetBand, targetBand.elements.length);
                   const element = createElement(spec.type as TemplateElement["type"], {
                     x: 0,
-                    y: Math.max(0, Math.min(targetBand.height - 5, targetBand.elements.length * 5.5)),
+                    y: placement.y,
                     w: spec.type === "text" ? 50 : spec.type === "aggregate" ? 30 : spec.type === "image" ? 25 : 60,
-                    h: Math.max(4, Math.min(7, targetBand.height - 0.5)),
+                    h: placement.h,
                   });
                   onAddElement(targetBand.id, element);
                   onSelect({ kind: "element", bandId: targetBand.id, elementId: element.id });

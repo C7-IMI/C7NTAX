@@ -31,7 +31,10 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ["@C7NTAX/shared"],
+    // The shared package is source in this repository, not a published dependency, so it is served as
+    // source. Pre-bundling it means a new export is missing until someone remembers `--force`, and the
+    // symptom is a blank page with a module-export error rather than anything that names the cause.
+    exclude: ["@C7NTAX/shared"],
   },
   server: {
     port: WEB_PORT,

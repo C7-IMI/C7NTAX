@@ -72,6 +72,9 @@ async function signIn(email) {
 const measure = (text, style) => text.length * style.fontSize * 0.5 * (25.4 / 72);
 const context = (fields, extra = {}) => ({ fields, parameters: {}, report: {}, page: {}, group: null, ...extra });
 
+/** The administrator's row count for the ticket starter, so a scoped account can be compared to it. */
+let adminPreviewRows = 0;
+
 const text = (value, x, y, w, h, style) => createElement("text", { x, y, w, h, text: value, ...(style ? { style: { ...createElement("text").style, ...style } } : {}) });
 const field = (expression, x, y, w, h, format) => createElement("field", { x, y, w, h, expression, format: format ?? "text" });
 const total = (fn, expression, scope, x, y, w, h, format) => createElement("aggregate", { fn, expression, scope, x, y, w, h, format: format ?? "number" });
@@ -149,7 +152,7 @@ async function main() {
       try { evaluateExpression(source, context({})); return null; } catch (e) { return e.message; }
     };
     check(/no function called/i.test(throws("Math.max(1, 2)") ?? ""), "Math is not reachable — it is not in the function list");
-    check(/no function called/i.test(throws("constructor('return process')()") ?? ""), "constructor is not callable");
+    check(/no function called|Unexpected/i.test(throws("constructor('return process')()") ?? ""), "constructor is not callable");
     check(/no function called/i.test(throws("FETCH('http://example.com')") ?? ""), "and neither is anything else that is not declared");
     check(evaluateExpression("globalThis", context({})) === undefined, "globalThis is read as a field name and finds nothing");
     check(evaluateExpression("process", context({})) === undefined, "so is process");
@@ -184,6 +187,7 @@ async function main() {
 
     // A band shorter than the element in it would clip the value the moment the report ran.
     const shortBand = harnessDocument({ detailHeight: 2 });
+    shortBand.bands.find(band => band.kind === "detail").elements[1].h = 6;
     const shortIssues = validateTemplate(shortBand, { catalog });
     check(errorsOf(shortIssues).some(issue => issue.code === "element.overflow"), "an element taller than its band is an error");
     check(shortIssues.some(issue => issue.elementId && issue.bandId), "and the error names the element and its band, so the designer can select it");
@@ -352,11 +356,16 @@ async function main() {
     check(placedText.payload.lines.length * lineHeight <= innerHeight + 0.01, "and the lines stay inside the element's height");
     check(!wrappedLaid.refused && wrappedLaid.issues.length === 0, "with nothing to warn about");
 
-    // A failing expression warns and leaves a blank, rather than taking the page down with it.
+    // A failing expression warns and leaves a blank, rather than taking the page down with it. This is
+    // validation's blind spot by design: the source is declared, so it passes, and the run supplies no
+    // rows for it — which is exactly the case the layout engine has to survive.
     const broken = harnessDocument();
-    broken.bands[2].elements[0].expression = "NOPE(Fields.ticketNumber)";
+    broken.dataSources.push({ key: "second", label: "Second", source: "companies", filters: [], sortDir: "asc", limit: 10 });
+    broken.bands.find(band => band.kind === "detail").elements[0].expression = "DataSources.second.name";
     const brokenLaid = layoutReport({ document: broken, rows: [{ ticketNumber: "T-1", amount: 1 }], measure });
-    check(!brokenLaid.refused && brokenLaid.issues.some(issue => issue.code === "expression.runtime" && issue.severity === "warning"), "an expression that fails at run time warns and does not stop the report");
+    check(!brokenLaid.refused, "a declared but unbound data source does not stop the report");
+    check(brokenLaid.issues.some(issue => issue.code === "expression.runtime" && issue.severity === "warning"), "the element that reads it warns instead");
+    check(brokenLaid.pages[0].bands.some(band => band.kind === "detail"), "and the rest of the page is still drawn");
 
     // Damaged after it was saved: the render path refuses it again.
     const damaged = harnessDocument();
@@ -411,17 +420,26 @@ async function main() {
 
     // Aggregates, checked against arithmetic done by hand.
     const checks = [
-      ["SUM", "$72.00"], ["AVG", "$14.40"], ["MIN", "$5.00"], ["MAX", "$30.00"], ["COUNT", "5"], ["COUNTD", "5"],
+      ["SUM", "$72.00", "money"], ["AVG", "$14.40", "money"], ["MIN", "$5.00", "money"], ["MAX", "$30.00", "money"],
+      ["COUNT", "5", "number"], ["COUNTD", "5", "number"],
     ];
-    for (const [fn, expected] of checks) {
+    for (const [fn, expected, format] of checks) {
       const band = createBand("reportSummary", { height: 8 });
-      band.elements = [total(fn, "Fields.amount", "report", 0, 0, 40, 6, "money")];
+      band.elements = [total(fn, "Fields.amount", "report", 0, 0, 40, 6, format)];
       const withTotal = harnessDocument({ summary: band });
-      const result = layoutReport({ document: withTotal, rows, measure });
-      const value = bandText(result.pages[0], "reportSummary")[0] ?? "";
+      const walked = layoutReport({ document: withTotal, rows, measure });
+      const value = bandText(walked.pages[0], "reportSummary")[0] ?? "";
       check(value === expected, `${fn} over the report is ${expected} (${value})`);
     }
-    check(layoutReport({ document: harnessDocument({ summary: (() => { const b = createBand("reportSummary", { height: 8 }); b.elements = [total("COUNT", "", "report", 0, 0, 40, 6)]; return b; })() }), rows, measure }).pages.length === 1, "COUNT with no field counts rows");
+
+    const countAll = createBand("reportSummary", { height: 8 });
+    countAll.elements = [total("COUNT", "", "report", 0, 0, 40, 6, "number")];
+    const counted = layoutReport({ document: harnessDocument({ summary: countAll }), rows, measure });
+    check(bandText(counted.pages[0], "reportSummary")[0] === "5", "COUNT with no field counts rows");
+    const countedDistinct = createBand("reportSummary", { height: 8 });
+    countedDistinct.elements = [total("COUNTD", "Fields.status", "report", 0, 0, 40, 6, "number")];
+    const distinct = layoutReport({ document: harnessDocument({ summary: countedDistinct }), rows, measure });
+    check(bandText(distinct.pages[0], "reportSummary")[0] === "2", "and COUNTD counts the values a field actually has");
   }
 
   section("page totals are resolved after pagination");
@@ -518,6 +536,7 @@ async function main() {
     const preview = await call("POST", "/api/reports/designer/preview", { token: admin.token, body: { name: "Preview me", document: starter } });
     check(preview.status === 200, `a preview runs the document's data source (${preview.status})`);
     check(Array.isArray(preview.data.rows) && preview.data.rows.length > 0, `and returns rows (${preview.data.rows?.length})`);
+    adminPreviewRows = (preview.data.rows ?? []).length;
     check(preview.data.rows[0].ticketNumber !== undefined, "with the fields the document can reference");
     check(preview.data.document && preview.data.parameters !== undefined, "and echoes the normalised document and its parameters");
     check(preview.data.period?.label !== undefined, `stating the period it applied (${preview.data.period?.label})`);
@@ -546,6 +565,35 @@ async function main() {
     const withParameter = await call("POST", "/api/reports/designer/preview", { token: admin.token, body: { name: "Parameterised", document: viaParameter, parameters: { wanted: sample.status } } });
     check(withParameter.status === 200 && (withParameter.data.rows ?? []).every(row => row.status === sample.status), "and supplying it filters the same way a typed value does");
     check(withParameter.data.parameters.wanted === sample.status, "the resolved parameter travels with the rows");
+
+    // "is empty" and "is not empty" used to be sent to Prisma as a null comparison whatever the column
+    // was, which is a 500 on a column that cannot be null — and most of them cannot.
+    const emptyFilter = JSON.parse(JSON.stringify(starter));
+    emptyFilter.dataSources[0].filters = [{ field: "resolvedAt", op: "isNull" }];
+    emptyFilter.dataSources[0].limit = 2000;
+    const emptyResult = await call("POST", "/api/reports/designer/preview", { token: admin.token, body: { name: "Empty", document: emptyFilter } });
+    check(emptyResult.status === 200, `"is empty" on a column that can be empty answers (${emptyResult.status})`);
+    const emptyRows = emptyResult.data.rows ?? [];
+    check(emptyRows.length > 0 && emptyRows.every(row => row.resolvedAt === null), `and returns only rows with no value there (${emptyRows.length})`);
+
+    const notEmptyFilter = JSON.parse(JSON.stringify(emptyFilter));
+    notEmptyFilter.dataSources[0].filters = [{ field: "resolvedAt", op: "isNotNull" }];
+    const notEmptyResult = await call("POST", "/api/reports/designer/preview", { token: admin.token, body: { name: "Not empty", document: notEmptyFilter } });
+    check(notEmptyResult.status === 200 && (notEmptyResult.data.rows ?? []).every(row => row.resolvedAt !== null), `"is not empty" answers too (${notEmptyResult.status})`);
+    check((notEmptyResult.data.rows ?? []).length + emptyRows.length === preview.data.rows.length, "and the two halves add up to every row");
+
+    const requiredColumnFilter = JSON.parse(JSON.stringify(starter));
+    requiredColumnFilter.dataSources[0].filters = [{ field: "status", op: "isNotNull" }];
+    const requiredResult = await call("POST", "/api/reports/designer/preview", { token: admin.token, body: { name: "Required column", document: requiredColumnFilter } });
+    check(requiredResult.status === 200, `"is not empty" on a required column does not fail (${requiredResult.status})`);
+    check((requiredResult.data.rows ?? []).length === preview.data.rows.length, "it matches every row, because every row satisfies it");
+    check((requiredResult.data.notes ?? []).some(note => /cannot be empty/.test(note)), "and says it was simplified rather than pretending to filter");
+
+    const impossibleFilter = JSON.parse(JSON.stringify(starter));
+    impossibleFilter.dataSources[0].filters = [{ field: "status", op: "isNull" }];
+    const impossibleResult = await call("POST", "/api/reports/designer/preview", { token: admin.token, body: { name: "Impossible", document: impossibleFilter } });
+    check(impossibleResult.status === 200 && (impossibleResult.data.rows ?? []).length === 0, `"is empty" on a required column returns nothing rather than failing (${impossibleResult.status})`);
+    check((impossibleResult.data.notes ?? []).some(note => /cannot be empty/.test(note)), "and explains itself");
   }
 
   section("a template is a saved report");
@@ -618,8 +666,12 @@ async function main() {
     const ownClientName = companyId
       ? (await prisma.company.findUnique({ where: { id: companyId }, select: { name: true } }))?.name
       : null;
-    const foreignRows = rows => rows.filter(row => row.client && ownClientName && row.client !== ownClientName);
-    check(scopedRows.length === 0 || foreignRows(scopedRows).length === 0, `every row belongs to the scoped account's own client (${scopedRows.length} rows, ${foreignRows(scopedRows).length} foreign)`);
+    // A relation column arrives as its selected value, which for a client is `{ name }`.
+    const clientName = value => (value && typeof value === "object" ? value.name : value);
+    const foreignRows = rows => rows.filter(row => ownClientName && clientName(row.client) !== ownClientName);
+    check(scopedRows.length > 0, `a client-scoped account's preview returns its own rows (${scopedRows.length})`);
+    check(foreignRows(scopedRows).length === 0, `every row belongs to the scoped account's own client (${scopedRows.length} rows, ${foreignRows(scopedRows).length} foreign)`);
+    check(scopedRows.length < adminPreviewRows, `and it is a subset of what the administrator sees (${scopedRows.length} of ${adminPreviewRows})`);
 
     // A template that tries to widen its own scope cannot: the restriction is applied after its filters.
     const widening = JSON.parse(JSON.stringify(starter));

@@ -1781,15 +1781,15 @@
     "id": "dc9c78ac-cc36-4cdd-b68f-51bf6f6040b2",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Unable to create new ChatGPT Work threads in latest version of desktop app",
-    "description": "Status: Identified We are actively working on a fixed app version for Windows. Affected components Codex in ChatGPT Desktop (Partial outage)",
+    "description": "Auto-resolved: Unable to create new ChatGPT Work threads in latest version of desktop app\n\nStatus: Identified We are actively working on a fixed app version for Windows. Affected components Codex in ChatGPT Desktop (Partial outage)",
     "severity": "outage",
-    "status": "active",
+    "status": "resolved",
     "source": "rss",
     "sourceUrl": "https://status.openai.com//incidents/01M4ADHMMBK7K92NJFJ0DXRYJM",
     "detectedAt": "2026-10-07T05:36:00.295Z",
-    "resolvedAt": null,
+    "resolvedAt": "2026-10-07T11:54:21.120Z",
     "createdAt": "2026-10-07T05:36:00.297Z",
-    "updatedAt": "2026-10-07T11:08:54.687Z"
+    "updatedAt": "2026-10-07T11:54:21.121Z"
   },
   {
     "id": "590926e8-0d75-400c-8e86-5f62d5905a67",
