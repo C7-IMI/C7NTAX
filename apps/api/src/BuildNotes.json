@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.6.064",
+    "date": "2026-10-06",
+    "title": "Dependency wave: 128 advisories down to 4, none in the shipped product",
+    "changes": [
+      {
+        "text": "**`nodemailer` 6 → 10, and the second copy nobody noticed.** `packages/email` moved to nodemailer 10, but `mailparser` carried its own nodemailer 9 — which still held eight advisories including two high — so `mailparser` went to 3.9.36, whose html-to-text 10.0.1 also clears the `deepmerge-ts` high. Verified by sending real mail: a probe runs a small SMTP server and drives `EmailService` through it, checking the envelope, subject, HTML body, inline `cid` attachment, multipart/alternative and the MFA path (10/10).",
+        "type": "Fix"
+      },
+      {
+        "text": "**`vite` 5 → 8 with `@vitejs/plugin-react` 6, and the dev server is no longer on the LAN.** The advisory on the 5.x line is a `server.fs.deny` bypass on Windows, made worse because the boot script started Vite with `--host`; the flag is gone, so the dev server now binds to localhost and says so. Vite 8 reports esbuild 0.28.2 and builds the app the same way (1926 modules).",
+        "type": "Fix"
+      },
+      {
+        "text": "**`react-router-dom` 6 → 7.** The 6.x line has no fix for two moderate advisories, and the upgrade turned out to be a drop-in: the app only uses `BrowserRouter`, `Routes`/`Route`, `Link`, `Navigate`, `useNavigate`, `useParams`, `useLocation` and `useSearchParams`, all of which are the same in v7. The React Router v6 future-flag console warnings are gone as a side effect.",
+        "type": "Fix"
+      },
+      {
+        "text": "**`electron` 33 → 44 and `electron-builder` 24 → 26**, with the desktop build script's `electronVersion` pin updated. This was 13 of the 25 high advisories; the portable build was then **run end to end** (105 MB installer produced) and the packaged app **launched** — main, renderer, GPU and utility processes all came up.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The build tools' leftovers are gone too.** `electron-builder` 26 still pulls a stale `electron-builder-squirrel-windows@24.13.3`, which brought an old `app-builder-lib`, `builder-util-runtime` and `tar` 6 with it — nine tar advisories including the one critical. Targeted overrides (`app-builder-lib`, `builder-util-runtime`) resolve it. Also bumped: `uuid` 9 → 11, `turbo` 1 → 2 (with `pipeline` → `tasks` in `turbo.json`), and `mailparser`, plus overrides for `@xmldom/xmldom`, `js-yaml`, `source-map-js` and `tar`.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Nested advisories come from the shadowed pnpm config.** Overrides were being ignored for transitive resolutions because the root `package.json` still carried a legacy `workspaces` field alongside `pnpm-workspace.yaml`, which makes pnpm 9 stop reading the `pnpm` field. Removing it is what actually took the tree from 8 advisories to 4 — and it explains why the previous pass's overrides looked applied in the lockfile but not in the tree.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The audit is now a gate, not a report.** `security/audit-baseline.json` records every advisory with its scope (production vs build machine), `security/README.md` explains the rules and the four accepted risks with their reasons, and `pnpm guard:deps` fails on a new production advisory of any severity or a new high/critical one anywhere. It was proved to fail by removing an accepted entry (exit 1) before restoring it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**CI runs the checks that must not be remembered.** `.github/workflows/security.yml` runs `guard:routes`, both typechecks, `guard:deps`, gitleaks and a trivy filesystem scan on every push and pull request to `main`.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.063",
     "date": "2026-10-06",
     "title": "No sign-in token travels in a URL any more",

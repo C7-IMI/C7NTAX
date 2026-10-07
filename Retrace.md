@@ -3396,3 +3396,27 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - Steps G (Phase 1 majors + `security/audit-baseline.json`), H (CI wiring: `guard:routes`, the audit baseline, gitleaks/trivy) and I (the Azure package) remain, tracked in `files/W0-progress.md`.
 - Playwright's actionability checks time out on this app's animated rows ("waiting for element to be visible, enabled and stable"); `dispatchEvent("click")` plus a `window.open`/`fetch` hook in the page context verified the handler, and a coordinate click verified the wiring visually.
+
+**Prompt 219 — continued: W0 step G (the dependency wave, and the audit becomes a gate)**
+
+**What I did**
+- Started with the measurement, because the plan's numbers could not be trusted: wrote `scripts/audit-baseline.mjs`, which runs `pnpm audit` twice (production closure and everything) so every advisory is recorded with its **scope**, then compared. First run: 86 advisories, 11 in production, one critical.
+- **nodemailer 6 → 10 was not enough.** The residual nodemailer advisories were a *second* copy: `mailparser` carries its own nodemailer 9. Bumping `mailparser` to 3.9.36 (whose html-to-text 10 uses nodemailer 10 and deepmerge-ts 8) cleared eight advisories at once, including two high. Verified with an SMTP probe that runs a real server and asserts the envelope, subject, HTML body, inline `cid` attachment, multipart/alternative and the MFA path.
+- **vite 5 → 8** with `@vitejs/plugin-react` 6, and removed `--host` from the boot script — the advisory is a dev-server file-serving bypass, and binding the dev server to every interface is what made it matter.
+- **react-router-dom 6 → 7**, which two moderate production advisories required. It turned out to be a genuine drop-in; the app uses only the APIs that did not change, and the v6 future-flag console warnings disappeared with it.
+- **electron 33 → 44 and electron-builder 24 → 26.** That was 13 of the 25 highs. The portable installer was then built end to end and the packaged app launched — verified as four live processes, not just a build log line.
+- **Chased the last blocker to the real cause.** Nine tar advisories (including the critical) plus `app-builder-lib` and `builder-util-runtime` highs all came from one stale nested chain: `electron-builder 26 → app-builder-lib 26 → electron-builder-squirrel-windows@24.13.3`, which we never use. Targeted overrides fixed it. Then the deeper find: the overrides were being **ignored for transitive resolutions** because the root `package.json` still had a legacy `workspaces` field next to `pnpm-workspace.yaml`; pnpm 9 responds by not reading the `pnpm` field at all. Removing it took the tree from 8 advisories to 4 and explains why the earlier pass's overrides looked applied in the lockfile while the tree still had the old copies.
+- **Turbo 1 → 2** (`pipeline` → `tasks`) and `uuid` 9 → 11, the last two dev advisories with fixes.
+- Turned the audit into a gate: `security/audit-baseline.json` (every advisory with its scope plus four accepted risks carrying reasons), `security/README.md` (the rules, the commands, who is exposed), `pnpm guard:deps`, and `.github/workflows/security.yml` running `guard:routes`, both typechecks, the dependency gate, gitleaks and trivy. Proved the gate fails by removing an accepted entry (exit 1) and restoring it.
+
+**Decisions worth remembering**
+- **Count the advisories by scope, not by total.** "No critical or high in the shipped product" is the criterion, and the production closure was 11 of 86 — the number that mattered, and the one a bare `pnpm audit` total hides.
+- **A direct upgrade can leave the vulnerable copy behind.** The scanner reports a package name, not a copy; the fix only worked once I traced *which* copy was vulnerable. Reading `paths` from the audit JSON is what found `mailparser`'s nodemailer and the stale squirrel chain.
+- **Do not force an override that breaks a parent's contract.** `postcss-selector-parser` ≥7.1.6 would violate Tailwind 3's `^6.1.2`; that is an accepted risk with a reason and a revisit trigger (Tailwind 4), not an override.
+- **Accepted risks need reasons that say who is exposed.** Three of the four have no published fix and reach the build machine only; writing that down is what keeps the list reviewable instead of accumulating.
+- **A gate you have not seen fail is not a gate.** Both the route-guard check and the dependency check were proved to fail before being trusted.
+
+**Notes for next time**
+- Steps H (CI/CD wiring for the Azure target) and I (the Azure package) remain, tracked in `files/W0-progress.md`; Phase 1 is otherwise complete.
+- Running the connector suites needs `GRAPH_API_BASE=http://127.0.0.1:4600/v1.0`, `GRAPH_TOKEN_BASE=http://127.0.0.1:4600` and `WEB_ORIGIN=http://127.0.0.1:3010` in the API process plus `stub-microsoft.mjs` on :4600 (from the session files); without the versioned `/v1.0` base the stub 404s every Graph call, and without `WEB_ORIGIN` one assertion fails against the wrong origin.
+- `apps/api/clean-probe-residue.ts` now also removes connector-suite residue (`Attribution …` tickets, `Brandnewcorp*` clients, `.example` contacts) — run it before capturing snapshots.

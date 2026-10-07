@@ -10,7 +10,32 @@
       "moderate": 2
     }
   },
-  "accepted": [],
+  "accepted": [
+    {
+      "key": "braces|GHSA-vfj7-8cjw-p6xm",
+      "module": "braces",
+      "severity": "high",
+      "reason": "No fix published. Arrives only through tailwind's file watcher (chokidar, fast-glob) on the development machine, and the pattern it parses is our own source tree, not user input. Remove this entry when braces publishes a fix."
+    },
+    {
+      "key": "http-cache-semantics|GHSA-ch52-4w7c-c8xp",
+      "module": "http-cache-semantics",
+      "severity": "high",
+      "reason": "No fix published. Reached through @electron/get's HTTP cache on the build machine while downloading Electron; it never runs in the shipped product. Re-check at each electron-builder bump."
+    },
+    {
+      "key": "sprintf-js|GHSA-hp3w-g68c-fv3c",
+      "module": "sprintf-js",
+      "severity": "moderate",
+      "reason": "No fix published. Reached through global-agent/roarr in @electron/get on the build machine. Build-machine only, and the format strings are the library's own."
+    },
+    {
+      "key": "postcss-selector-parser|GHSA-rj75-hqrm-r3gf",
+      "module": "postcss-selector-parser",
+      "severity": "moderate",
+      "reason": "Tailwind 3 depends on the 6.x line, and 7.x is a breaking API change; the advisory is a build-time parse cost on our own CSS. Revisit with the Tailwind 4 upgrade."
+    }
+  ],
   "advisories": [
     {
       "key": "braces|GHSA-vfj7-8cjw-p6xm",
@@ -93,3 +118,4 @@
     }
   ]
 }
+

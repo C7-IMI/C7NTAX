@@ -1,0 +1,87 @@
+name: Security Gate
+
+# PLAN-018 Phase 3: the checks that must fail a build rather than be remembered.
+#   · route guards  — every authenticated API route carries a permission (P0-2)
+#   · typechecks    — API and web compile
+#   · dependencies  — no new production or high-severity advisory (Phase 1/3)
+#   · secrets       — gitleaks over the working tree and history
+#   · config/CVE    — trivy misconfiguration and dependency scan
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  guards:
+    name: Route guards and typechecks
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v3
+        with:
+          version: '9.1.0'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Every authenticated route carries a permission
+        run: pnpm guard:routes
+
+      - name: Typecheck the API
+        run: pnpm --filter @C7NTAX/api exec tsc --noEmit -p tsconfig.json
+
+      - name: Typecheck the web app
+        run: pnpm --filter @C7NTAX/web exec tsc --noEmit -p tsconfig.json
+
+  dependencies:
+    name: Dependency baseline
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v3
+        with:
+          version: '9.1.0'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Fails on a new production advisory of any severity, or a new high/critical one
+      # anywhere. Accepted risks carry their reasons in security/audit-baseline.json.
+      - name: No unaccepted advisories
+        run: pnpm guard:deps
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  misconfiguration:
+    name: Config and image scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scanners: config,secret,vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table

@@ -31,7 +31,8 @@
     "db:sample-off": "pnpm --filter @C7NTAX/api db:sample-off",
     "db:sample-on": "pnpm --filter @C7NTAX/api db:sample-on",
     "clean": "turbo run clean && rimraf node_modules",
-    "guard:routes": "node scripts/check-route-guards.mjs"
+    "guard:routes": "node scripts/check-route-guards.mjs",
+    "guard:deps": "node scripts/audit-baseline.mjs"
   },
   "devDependencies": {
     "@types/speakeasy": "^2.0.10",

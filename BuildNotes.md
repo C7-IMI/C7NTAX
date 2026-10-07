@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.063 | Last Updated: 2026-10-06
+## Version: 2026.10.6.064 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,19 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.064 — Dependency wave: 128 advisories down to 4, none in the shipped product
+- **[Fix]** **`nodemailer` 6 → 10, and the second copy nobody noticed.** `packages/email` moved to nodemailer 10, but `mailparser` carried its own nodemailer 9 — which still held eight advisories including two high — so `mailparser` went to 3.9.36, whose html-to-text 10.0.1 also clears the `deepmerge-ts` high. Verified by sending real mail: a probe runs a small SMTP server and drives `EmailService` through it, checking the envelope, subject, HTML body, inline `cid` attachment, multipart/alternative and the MFA path (10/10).
+- **[Fix]** **`vite` 5 → 8 with `@vitejs/plugin-react` 6, and the dev server is no longer on the LAN.** The advisory on the 5.x line is a `server.fs.deny` bypass on Windows, made worse because the boot script started Vite with `--host`; the flag is gone, so the dev server now binds to localhost and says so. Vite 8 reports esbuild 0.28.2 and builds the app the same way (1926 modules).
+- **[Fix]** **`react-router-dom` 6 → 7.** The 6.x line has no fix for two moderate advisories, and the upgrade turned out to be a drop-in: the app only uses `BrowserRouter`, `Routes`/`Route`, `Link`, `Navigate`, `useNavigate`, `useParams`, `useLocation` and `useSearchParams`, all of which are the same in v7. The React Router v6 future-flag console warnings are gone as a side effect.
+- **[Fix]** **`electron` 33 → 44 and `electron-builder` 24 → 26**, with the desktop build script's `electronVersion` pin updated. This was 13 of the 25 high advisories; the portable build was then **run end to end** (105 MB installer produced) and the packaged app **launched** — main, renderer, GPU and utility processes all came up.
+- **[Fix]** **The build tools' leftovers are gone too.** `electron-builder` 26 still pulls a stale `electron-builder-squirrel-windows@24.13.3`, which brought an old `app-builder-lib`, `builder-util-runtime` and `tar` 6 with it — nine tar advisories including the one critical. Targeted overrides (`app-builder-lib`, `builder-util-runtime`) resolve it. Also bumped: `uuid` 9 → 11, `turbo` 1 → 2 (with `pipeline` → `tasks` in `turbo.json`), and `mailparser`, plus overrides for `@xmldom/xmldom`, `js-yaml`, `source-map-js` and `tar`.
+- **[Fix]** **Nested advisories come from the shadowed pnpm config.** Overrides were being ignored for transitive resolutions because the root `package.json` still carried a legacy `workspaces` field alongside `pnpm-workspace.yaml`, which makes pnpm 9 stop reading the `pnpm` field. Removing it is what actually took the tree from 8 advisories to 4 — and it explains why the previous pass's overrides looked applied in the lockfile but not in the tree.
+- **[New]** **The audit is now a gate, not a report.** `security/audit-baseline.json` records every advisory with its scope (production vs build machine), `security/README.md` explains the rules and the four accepted risks with their reasons, and `pnpm guard:deps` fails on a new production advisory of any severity or a new high/critical one anywhere. It was proved to fail by removing an accepted entry (exit 1) before restoring it.
+- **[New]** **CI runs the checks that must not be remembered.** `.github/workflows/security.yml` runs `guard:routes`, both typechecks, `guard:deps`, gitleaks and a trivy filesystem scan on every push and pull request to `main`.
+- **Result:** advisories **128 → 4**, with **zero in production** (was 21); critical **2 → 0**; high **61 → 2** (both build-machine packages with no published fix). The four remaining are accepted with reasons: `braces`, `http-cache-semantics` and `sprintf-js` (no fix published, build machine only) and `postcss-selector-parser` (Tailwind 3 pins the 6.x line; revisit with Tailwind 4).
+- **Verification:** both typechecks at baseline (API 155 pre-existing errors, none in changed code; web clean), the six-persona permission matrix byte-identical to the previous step, the SMTP probe 10/10, the Graph connector suite 37/37 and the EWS/delegated connector suite 69/69, the web app walked through six pages plus a query-string route with no failed requests or page errors, `pnpm guard:routes` 323 routes and zero violations, the dependency gate green, and the desktop installer built and launched. Two findings from that walk: the connector suites need `GRAPH_API_BASE=http://127.0.0.1:4600/v1.0`, `GRAPH_TOKEN_BASE`, `WEB_ORIGIN=http://127.0.0.1:3010` and the stub server running — without them the fixtures silently test against real Microsoft and fail for the wrong reason.
+- **Rollback:** `git revert` this commit and run `pnpm install`; every bump is a manifest range, and the lockfile is regenerated rather than hand-edited. The `workspaces`-field removal and the overrides revert with it.
 
 ## 2026.10.6.063 — No sign-in token travels in a URL any more
 - **[Fix]** **The invoice PDF no longer carries your session token in its address.** "Download PDF" opened `/api/billing/invoices/<id>/pdf?token=<jwt>`, so a twelve-hour credential landed in browser history, in the proxy log and in anything that records request lines. It now fetches with the `Authorization` header and opens the document from an in-memory blob, so the token never leaves the request header.
@@ -1273,3 +1286,4 @@
 - **[New]** 10 third-party integration adapters (Flexpoint, QuickBooks, Pax8, Avanan, Proofpoint, SentinelOne, ITGlue, Microsoft 365, Azure, AWS)
 - **[New]** Electron desktop wrapper for Windows
 - **[New]** OpenAPI 3.1 specification
+
