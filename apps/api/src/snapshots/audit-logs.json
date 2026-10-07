@@ -26712,5 +26712,35 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T09:30:53.206Z"
+  },
+  {
+    "id": "e9895203-8431-4627-b6a7-02a388ed9044",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "technician",
+      "email": "sessionprobe1791366127621@probe.local",
+      "lastName": "Probe",
+      "password": "***",
+      "firstName": "Session",
+      "requireChange": false,
+      "credentialMode": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:42:07.966Z"
+  },
+  {
+    "id": "e200e667-674d-4880-9616-ac65a8a12ed0",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "d0b18514-ff0e-4e5d-a52b-e55ae42093a8",
+    "changes": {
+      "requireChange": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:42:08.611Z"
   }
 ]

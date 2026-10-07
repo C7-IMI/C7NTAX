@@ -31,6 +31,18 @@ const LOCKOUT_ENABLED = process.env.AUTH_HARDENING_ENABLED === "true";
 const MAX_LOGIN_ATTEMPTS = 5;
 
 /**
+ * bcrypt cost the hardening pass writes, and the prefix test that recognises it.
+ *
+ * `bcryptjs` writes `$2a$12$` while native bcrypt writes `$2b$12$`, so testing for one variant
+ * made every `$2a$12$` hash look stale: the account was re-hashed on **every** sign-in — a wasted
+ * 300 ms and a password row written on the hot path. Match the cost and the algorithm, not the
+ * vendor's letter. (`$2y$` is bcrypt's other spelling of the same thing.)
+ */
+const HARDENED_COST = 12;
+const HARDENED_HASH_PATTERN = /^\$2[aby]\$12\$/;
+const hashNeedsUpgrading = (hash: string): boolean => !HARDENED_HASH_PATTERN.test(hash);
+
+/**
  * Brute-force limit for the credential endpoints. Deliberately generous: it is a
  * floor against hammering, not the primary control (per-account lockout is, and
  * that is off unless AUTH_HARDENING_ENABLED is set). Office NAT, the boot script's
@@ -101,9 +113,9 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
     }
     if (bypass) logBypassSignIn(user.email);
 
-    // SOC 2 hardening (backlog item 11): rehash-on-login when enabled and hash cost < 12.
-    if (process.env.AUTH_HARDENING_ENABLED === "true" && !user.passwordHash.startsWith("$2b$12$")) {
-      const upgraded = await bcrypt.hash(password, 12);
+    // SOC 2 hardening (backlog item 11): rehash-on-login when enabled and the hash is below cost 12.
+    if (process.env.AUTH_HARDENING_ENABLED === "true" && hashNeedsUpgrading(user.passwordHash)) {
+      const upgraded = await bcrypt.hash(password, HARDENED_COST);
       await prisma.user.update({ where: { id: user.id }, data: { passwordHash: upgraded } });
     }
 

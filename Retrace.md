@@ -3817,3 +3817,20 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 **Notes for next time**
 - PLAN-013 #9 still holds the rest of the UI/UX pass (filter chips, bulk actions, skeletons, density, empty states, keyboard shortcuts). The sweep was the part that was a defect rather than a preference.
+
+**Prompt 220 — continued: PLAN-013 #8 (auth hardening — and the bug the probe found)**
+
+**What I did**
+- Checked what #8 actually still needed rather than assuming the plan's wording: `AUTH_HARDENING_ENABLED` already carried the 15-minute token, the bcrypt cost-12 rehash and the lockout; `security.yml` already ran gitleaks, trivy (`exit-code: 1`), the route-guard check, both typechecks and `guard:deps`; RLS waits on PLAN-003. So the honest scope was **verify the claims**, record the review outcomes, and fix anything the verification found.
+- Wrote `probe-auth-hardening.mjs`: a throwaway account with a legacy cost-10 hash, signed in, then observed — hash upgraded, password still valid, and **not re-hashed again** on the next sign-in. Plus the token's lifetime read from the JWT's own `exp`, and the five-attempt lockout with the sixth attempt refused as 423.
+- **The probe found a real defect on its second assertion group:** the rehash guard tested `startsWith("$2b$12$")`, but this application hashes with `bcryptjs`, which writes **`$2a$12$`**. Every hash the hardening pass wrote therefore still looked stale, so **every sign-in re-hashed the password** — a wasted ~300 ms on the product's hottest route and a password row rewritten on each login. Fixed by matching the algorithm and cost (`/^\$2[aby]\$12\$/`).
+- Ran the switch both ways: 11/11 with it on, 6/6 with it off (12-hour token, no lockout, hash untouched), and `probe-session` 34/34 unchanged.
+
+**Decisions worth remembering**
+- **A security switch that has never been executed is a comment.** Three of #8's claims were "done" in the plan and none had a test; one of them did not work.
+- **A cost check must not depend on the vendor's letter.** `$2a$`/`$2b$`/`$2y$` are the same bcrypt; the cost is the claim. Testing the prefix made an idempotent upgrade repeat forever.
+- **Not every hardening item should be built.** Refresh rotation adds a second source of truth for "am I signed in" when the cookie session is already primary; Argon2id buys little over tuned bcrypt and costs a native dependency in the image. Both are now recorded as decisions with reasons rather than left as unexplained gaps.
+
+**Notes for next time**
+- If PLAN-003 (multi-tenant) is ever taken up, #8's RLS pass is the piece that comes with it; the substitutes in force are company scoping and the per-contact portal scoping.
+- `AUTH_HARDENING_ENABLED=true` means persona accounts lock after five wrong passwords — worth remembering before any suite that deliberately fails sign-ins.

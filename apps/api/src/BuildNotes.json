@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.7.020",
+    "date": "2026-10-07",
+    "title": "The hardening switch was re-hashing every password on every sign-in",
+    "changes": [
+      {
+        "text": "**`AUTH_HARDENING_ENABLED` never recognised its own work.** The rehash-on-login guard tested `passwordHash.startsWith(\"$2b$12$\")`, but this application hashes with **`bcryptjs`**, which writes `$2a$12$`. So a hash the hardening pass had just written still looked stale, and **every** sign-in re-hashed the password — a wasted ~300 ms on the hottest route in the product and a password row rewritten on every login. The guard now matches the algorithm and cost (`/^\\$2[aby]\\$12\\$/`) rather than one vendor's letter, so an upgrade happens once and never again.",
+        "type": "Fix"
+      },
+      {
+        "text": "**`probe-auth-hardening.mjs` — the first thing to test what the hardening switch claims.** A throwaway account is created with a legacy cost-10 hash, signed in, and then observed: the stored hash becomes cost 12, still validates the same password, and is **left alone on the next sign-in** (the assertion that caught the bug above). With printouts for both settings, and a companion check that the switch off changes nothing.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`AUTH_HARDENING_ENABLED` verified in both directions.** With it on: a 15-minute token (read from the JWT's own `exp`, not from the config), five wrong passwords locking the account, and the correct password then refused as **423 locked** rather than as wrong credentials. With it off: a 12-hour token, no lockout, and the same password still working after five failures.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.019",
     "date": "2026-10-07",
     "title": "The API's refusal is shown as words, not as \"[object Object]\"",
