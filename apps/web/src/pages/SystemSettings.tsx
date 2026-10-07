@@ -18,7 +18,7 @@
  * that owns them named. Inventing an edit control for a connection string is precisely how the
  * previous version misled people.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import { PageHeader } from "../components/ui";
@@ -38,7 +38,13 @@ interface Deployment {
   mail: { configured: boolean; host: string | null; port: number; secure: boolean; hasCredentials: boolean; from: string | null };
   database: { configured: boolean; host: string | null; name: string | null };
   runtime: { nodeEnv: string; port: number; webOrigin: string | null; servesWeb: boolean };
-  addin: { enabled: boolean; directory: string };
+  addin: {
+    enabled: boolean;
+    environmentEnabled: boolean;
+    environmentSupplied: boolean;
+    directory: string;
+    assetsPresent: boolean;
+  };
 }
 
 interface AreaSummary {
@@ -69,8 +75,8 @@ function StatusCard({ icon: Icon, label, value, tone }: {
   );
 }
 
-function DeploymentRow({ icon: Icon, label, env, note, state }: {
-  icon: LucideIcon; label: string; env: string; note: string; state: "good" | "warn" | "info";
+function DeploymentRow({ icon: Icon, label, env, note, state, action }: {
+  icon: LucideIcon; label: string; env: string; note: ReactNode; state: "good" | "warn" | "info"; action?: ReactNode;
 }) {
   return (
     <div className="flex items-start gap-3 rounded-lg border border-surface-border px-3.5 py-3">
@@ -88,9 +94,15 @@ function DeploymentRow({ icon: Icon, label, env, note, state }: {
               <AlertTriangle size={11} /> not set
             </span>
           )}
+          {state === "info" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-surface-lighter text-gray-400 border-surface-border">
+              off
+            </span>
+          )}
         </div>
         <p className="text-xs text-gray-400 mt-1">{note}</p>
         <p className="text-[11px] text-gray-500 mt-1 font-mono">{env}</p>
+        {action}
       </div>
     </div>
   );
@@ -147,21 +159,43 @@ export function SystemSettingsPage() {
         ) : areas.length === 0 ? (
           <p className="text-xs text-gray-500">Your role cannot read any configuration area.</p>
         ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {areas.map(area => (
-              <Link
-                key={area.id}
-                to={`/admin/configuration/${area.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border border-surface-border px-3.5 py-2.5 hover:bg-surface-lighter transition-colors group"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm text-white">{area.label}</p>
-                  <p className="text-[11px] text-gray-500 truncate">{area.summary}</p>
-                </div>
-                <ArrowRight size={14} className="text-gray-600 group-hover:text-gray-400 shrink-0" />
-              </Link>
-            ))}
-          </div>
+          <>
+            {/* Devices and mail clients are the settings people come here looking for, so they are
+                named up front rather than buried in whichever area happens to own them. */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {[
+                { label: "Outlook add-in", to: "/admin/configuration/apps" },
+                { label: "Customer portal", to: "/admin/portal" },
+                { label: "Service alerts & monitors", to: "/admin/configuration/monitoring" },
+                { label: "Email connectors", to: "/admin/configuration/integrations" },
+                { label: "Sessions & security", to: "/admin/configuration/sessions" },
+                { label: "Billing & invoicing", to: "/admin/configuration/billing" },
+              ].map(shortcut => (
+                <Link
+                  key={shortcut.to + shortcut.label}
+                  to={shortcut.to}
+                  className="rounded-full border border-surface-border px-3 py-1 text-[11px] text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"
+                >
+                  {shortcut.label}
+                </Link>
+              ))}
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {areas.map(area => (
+                <Link
+                  key={area.id}
+                  to={`/admin/configuration/${area.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-surface-border px-3.5 py-2.5 hover:bg-surface-lighter transition-colors group"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm text-white">{area.label}</p>
+                    <p className="text-[11px] text-gray-500 truncate">{area.summary}</p>
+                  </div>
+                  <ArrowRight size={14} className="text-gray-600 group-hover:text-gray-400 shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -257,9 +291,28 @@ export function SystemSettingsPage() {
               <DeploymentRow
                 icon={Monitor}
                 label="Outlook add-in"
-                env="OUTLOOK_ADDIN_DIR · OUTLOOK_ADDIN_ENABLED"
-                note={`The taskpane is ${deployment.addin.enabled ? "served" : "switched off"} from ${deployment.addin.directory}. Whether mail can be filed depends on the same switch under CloudConnect, Email & Microsoft 365.`}
-                state="good"
+                env="OUTLOOK_ADDIN_ENABLED · OUTLOOK_ADDIN_DIR"
+                state={
+                  !deployment.addin.assetsPresent ? "warn"
+                    : deployment.addin.enabled ? "good"
+                      : "info"
+                }
+                note={
+                  !deployment.addin.assetsPresent
+                    ? `The taskpane's files are not at ${deployment.addin.directory}, so the add-in cannot be served whatever the switch says.`
+                    : deployment.addin.enabled
+                      ? `Serving. The taskpane is loaded from ${deployment.addin.directory} and the endpoint accepts a filed message.`
+                      : `Switched off. The taskpane and the endpoint both answer 404, so a mailbox that already has the add-in sideloaded is told the server does not support it.`
+                }
+                action={
+                  <Link
+                    to="/admin/configuration/apps"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs text-cyber-300 hover:text-cyber-200"
+                  >
+                    {deployment.addin.enabled ? "Switch the add-in off" : "Switch the add-in on"}
+                    <ArrowRight size={12} />
+                  </Link>
+                }
               />
             </>
           ) : (
@@ -271,7 +324,7 @@ export function SystemSettingsPage() {
           Secrets are never returned to the browser, so this screen can confirm that a variable is
           set but never show its value. Which integrations are live is under{" "}
           <Link to="/admin/configuration/integrations" className="text-cyber-300 hover:text-cyber-200">
-            CloudConnect, Email &amp; Microsoft 365
+            CloudConnect &amp; Email
           </Link>.
         </p>
       </div>

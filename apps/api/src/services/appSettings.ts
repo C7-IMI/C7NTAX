@@ -320,12 +320,19 @@ export async function clearConfigValue(
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
         const base = { ...(parsed as Record<string, unknown>) };
         const path = (address.path ?? field.id).split(".");
-        let cursor: Record<string, unknown> | undefined = base;
-        for (const part of path.slice(0, -1)) {
-          const step = cursor?.[part];
-          cursor = step && typeof step === "object" && !Array.isArray(step) ? (step as Record<string, unknown>) : undefined;
+        const leaf = path[path.length - 1];
+        if (leaf) {
+          // Walk to the parent, but only if every step really is an object: a path that does not
+          // exist must not be invented, or clearing one setting would add others.
+          let cursor: Record<string, unknown> = base;
+          let reached = true;
+          for (const part of path.slice(0, -1)) {
+            const next: unknown = cursor[part];
+            if (next && typeof next === "object" && !Array.isArray(next)) cursor = next as Record<string, unknown>;
+            else { reached = false; break; }
+          }
+          if (reached) delete cursor[leaf];
         }
-        if (cursor) delete cursor[path[path.length - 1]];
         await prisma.systemConfig.update({ where: { key }, data: { value: JSON.stringify(base) } });
       }
     }

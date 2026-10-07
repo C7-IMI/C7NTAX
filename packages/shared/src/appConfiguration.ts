@@ -703,7 +703,7 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
   // ── CloudConnect & Email ─────────────────────────────────────────
   {
     id: "integrations",
-    label: "CloudConnect, Email & Microsoft 365",
+    label: "CloudConnect & Email",
     summary: "Server-side status verification, verification throttling, the email connectors, and M365 offboarding.",
     icon: "Cloud",
     readPermission: Permission.IntegrationManage,
@@ -799,18 +799,6 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         unit: "bytes",
         restartRequired: true,
         affects: ["Email connectors", "Ticket attachments"],
-      },
-      {
-        id: "outlookAddin",
-        label: "Outlook add-in",
-        summary: "The add-in that files a message and its attachments as a ticket from Outlook.",
-        detail: "Off makes the add-in routes answer 404, so a deployed add-in reports that the server does not support it.",
-        type: "boolean",
-        source: "setting",
-        env: "OUTLOOK_ADDIN_ENABLED",
-        envMatch: "not-false",
-        default: true,
-        affects: ["Outlook add-in"],
       },
       {
         id: "m365Offboarding",
@@ -941,12 +929,25 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
   {
     id: "apps",
     label: "Client Apps & Notifications",
-    summary: "Push notification devices, and the companion clients this deployment serves.",
+    summary: "The Outlook add-in, push notification devices, and the companion clients this deployment serves.",
     icon: "Monitor",
     readPermission: Permission.SystemConfig,
     writePermission: Permission.SystemConfig,
-    governs: "Which companion clients this deployment serves.",
+    governs: "Which companion clients this deployment serves, and how it reaches a phone.",
     fields: [
+      {
+        id: "outlookAddin",
+        label: "Outlook add-in",
+        summary: "The add-in that files a message and its attachments as a ticket, from inside Outlook.",
+        detail:
+          "Governs both halves of it: the **taskpane** the mailbox loads, and the **endpoint** the taskpane calls. Off, both answer 404, so a mailbox that already has the add-in sideloaded is told the server does not support it rather than failing halfway through filing a message. On, the taskpane is served from the add-in directory and the endpoint accepts. Takes effect immediately; no restart.",
+        type: "boolean",
+        source: "setting",
+        env: "OUTLOOK_ADDIN_ENABLED",
+        envMatch: "not-false",
+        default: true,
+        affects: ["/addin taskpane", "Outlook add-in endpoint", "Tickets created from Outlook"],
+      },
       {
         id: "push",
         label: "Push notifications",

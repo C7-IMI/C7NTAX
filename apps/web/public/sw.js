@@ -1,6 +1,6 @@
 /* C7NTAX Service Worker — PWA shell caching + notifications */
 
-const CACHE_NAME = "C7NTAX-v3";
+const CACHE_NAME = "C7NTAX-v4";
 const STATIC_ASSETS = ["/", "/index.html", "/icon-192.png", "/manifest.json"];
 
 /**
@@ -14,14 +14,33 @@ function isDevServerRequest(url) {
 }
 
 /**
- * API responses are never cached.
+ * This worker only speaks for its own origin.
  *
- * They used to be, keyed by URL alone — which meant a response fetched with one
- * account's cookie was served back later to whoever was using the browser, most
- * visibly after signing out or when the API was unreachable. Tickets, clients,
- * invoices and now the customer portal all went through it. A cache key of
- * "URL" cannot express "as this person", so the honest answer when the API
- * cannot be reached is a failed request and a page that says so.
+ * It briefly spoke for everyone's, and the symptom was worth remembering: a page
+ * it controls fetched the Outlook add-in's taskpane from the API's origin, that
+ * deployment had the add-in switched off, and the answering 404 was cached by
+ * URL alone. Switching the add-in back on changed nothing in that browser, because
+ * the cache-first branch replayed the 404 — a live feature looked broken by a cached
+ * error. `http://127.0.0.1:4000/addin/taskpane.html` is not this worker's business,
+ * so it now says so.
+ */
+function isForeignOrigin(url) {
+  return new URL(url).origin !== self.location.origin;
+}
+
+/**
+ * A response is only ever stored if it succeeded.
+ *
+ * Caching an error is how a transient failure becomes permanent: the 404 above
+ * could not be displaced by any number of successful requests afterwards.
+ */
+function cacheable(response) {
+  return response.ok && response.type !== "opaqueredirect";
+}
+
+/**
+ * The dev-server and API guards below are deliberately after the origin check —
+ * a cross-origin request is never ours to reason about, whatever its path.
  */
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -33,14 +52,9 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      // A new cache name retires the old bucket, which is also what removes
-      // any API responses cached by an earlier version of this worker.
+      // A new cache name retires the old bucket, which is what removes API responses
+      // cached by an earlier version of this worker — and the cross-origin ones.
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
-      .then(() => caches.open(CACHE_NAME))
-      .then((cache) => cache.keys())
-      .then((requests) => Promise.all(
-        requests.filter((req) => new URL(req.url).pathname.startsWith("/api/")).map((req) => caches.open(CACHE_NAME).then((c) => c.delete(req)))
-      ))
   );
   self.clients.claim();
 });
@@ -48,6 +62,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
+  // Another origin's server, including the API: not ours to cache or answer.
+  if (isForeignOrigin(req.url)) return;
   // Dev server files (and the app itself in development): straight to the network
   if (isDevServerRequest(req.url)) return;
   // API calls: the network, and nothing else. No cache read, no cache write.
@@ -57,16 +73,15 @@ self.addEventListener("fetch", (event) => {
   if (req.mode === "navigate") {
     event.respondWith(
       fetch(req)
-        .then((res) => { const clone = res.clone(); caches.open(CACHE_NAME).then((c) => c.put(req, clone)); return res; })
+        .then((res) => { if (cacheable(res)) { const clone = res.clone(); caches.open(CACHE_NAME).then((c) => c.put(req, clone)); } return res; })
         .catch(() => caches.match(req))
     );
     return;
   }
-  // Static assets: cache-first
+  // Static assets: cache-first, but a stored copy is only ever a success
   event.respondWith(
     caches.match(req).then((cached) => cached || fetch(req).then((res) => {
-      const clone = res.clone();
-      caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+      if (cacheable(res)) { const clone = res.clone(); caches.open(CACHE_NAME).then((c) => c.put(req, clone)); }
       return res;
     }))
   );

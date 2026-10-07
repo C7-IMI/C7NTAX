@@ -182,9 +182,9 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Customer Portal", "The customer-facing sign-in, what a customer may see and do, and how it looks"],
         ["Service Alerts & Monitoring", "Uptime monitors, outbound alert webhooks, the social source and the poll interval"],
         ["Knowledge Base & AI", "Drafting articles from resolved tickets, the drafting model, and AI action proposals"],
-        ["CloudConnect, Email & Microsoft 365", "Connector verification, the mail connectors, Graph delivery and M365 offboarding"],
+        ["CloudConnect & Email", "Connector verification, the mail connectors, Graph delivery and M365 offboarding"],
         ["Billing & Invoicing", "Bill-through batches, the time rules and their defaults, quotes, bill-from-tickets"],
-        ["Client Apps & Notifications", "Push notification devices"],
+        ["Client Apps & Notifications", "The **Outlook add-in** — one switch serving its taskpane and accepting a filed message — and push notification devices"],
       ] },
       { kind: "note", text: "Some values belong to the deployment and are shown rather than editable — an outbound credential, a connection string, or a switch that decides whether authentication is enforced. They are reported with the environment variable that owns them, under **Set by the deployment**." },
       { kind: "h", text: "Deployment facts" },
@@ -209,7 +209,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["CLOUDCONNECT_LIVE_STATUS_ENABLED", "Server-side verification of connectors on a throttle", "ON"],
         ["KB_AUTOGEN_ENABLED", "Drafting a knowledge base article from a resolved ticket", "ON"],
         ["M365_OFFBOARD_ENABLED", "Raising an offboarding checklist for an inactive M365 account", "ON"],
-        ["OUTLOOK_ADDIN_ENABLED", "The Outlook add-in's batch endpoint (the taskpane itself is served from the add-in directory)", "ON"],
+        ["OUTLOOK_ADDIN_ENABLED", "The Outlook add-in: the taskpane the mailbox loads **and** the endpoint it calls (switch it under Client Apps & Notifications)", "ON"],
         ["AI_ACTIONS_ENABLED", "Risk-classified AI action proposals", "ON"],
         ["PUSH_ENABLED", "Push device registration", "ON"],
         ["PORTAL_ENABLED", "The customer portal (off unless set to true, or switched on under Customer Portal)", "off"],
@@ -335,7 +335,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
       { kind: "h", text: "M365 Graph connector" },
       { kind: "steps", items: [
-        "Set EMAIL_GRAPH_ENABLED=true in the environment and restart the API.",
+        "Check **Microsoft Graph delivery** is on under Administration → Configuration → CloudConnect & Email.",
         "Create an app registration in Entra ID with Mail.Read and grant client credentials.",
         "Create a connector with Transport = graph, the mailbox address as user, Tenant ID, Client ID, and Client Secret.",
         "The runtime obtains a Graph token and polls unread messages in the configured folder.",
@@ -406,7 +406,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Weighting", "Overtime counts at the agreement's multiplier (1.5 by default) towards billing and, for block and Cyber Care, towards the allowance — the 1.5:1 rule: two hours of evening work consume three"],
       ] },
       { kind: "steps", items: [
-        "Set TIME_RULES_ENABLED=true and restart the API.",
+        "Switch on **Time rules** under Administration → Configuration → Billing & Invoicing.",
         "Open the agreement and set its overtime cut-off, multiplier, and whether overtime applies at all.",
         "Log time as usual. Where a rule changed the entry, the invoice charges the **weighted** minutes rather than the typed ones.",
       ] },
@@ -419,7 +419,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
       { kind: "warn", text: "Generated invoices are drafts only — they are never emailed or synced until you send them." },
       { kind: "h", text: "Bill-through batch invoicing" },
-      { kind: "p", text: "For billing a whole period at once, the batch is a deliberate three-step artefact: money earned — time and **approved** expenses — becomes invoices, but nothing reaches a client without a human looking at it first. Gated by INVOICE_BATCH_ENABLED." },
+      { kind: "p", text: "For billing a whole period at once, the batch is a deliberate three-step artefact: money earned — time and **approved** expenses — becomes invoices, but nothing reaches a client without a human looking at it first. Switched on under Administration → Configuration → Billing & Invoicing, as **Bill-through batch invoicing**." },
       { kind: "steps", items: [
         "**Preview** works out what would be billed per client — hours, expenses, every line, and the total — and writes nothing at all.",
         "**Create** turns the preview into Draft invoices, held by the batch.",
@@ -444,7 +444,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       { kind: "h", text: "Add a monitor" },
       { kind: "steps", items: [
-        "Set UPTIME_MONITORS_ENABLED=true and restart the API.",
+        "Switch on **Uptime monitors** under Administration → Configuration → Service Alerts & Monitoring.",
         "Open Service Alerts → Uptime Monitors.",
         "Enter a name, choose the kind (Website / SSL expiry / DNS), and enter the target URL.",
         "Website: set the expected status (default 200). SSL: set the warning threshold in days (default 30).",
@@ -502,8 +502,8 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       { kind: "h", text: "Register a webhook" },
       { kind: "steps", items: [
-        "Set ALERT_WEBHOOKS_ENABLED=true and restart the API.",
-        "Open Alert Webhooks (Administration → Webhooks).",
+        "Switch on **Alert webhooks** under Administration → Configuration → Service Alerts & Monitoring.",
+        "Open Alert Webhooks (Administration → Alert Webhooks).",
         "Enter a name and the endpoint URL; select Register.",
         "The webhook is subscribed to alert.opened and alert.resolved events.",
       ] },
@@ -530,7 +530,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
       { kind: "h", text: "Approve or reject" },
       { kind: "steps", items: [
-        "Set AI_ACTIONS_ENABLED=true and restart the API.",
+        "Switch on **AI action proposals** under Administration → Configuration → Knowledge Base & AI.",
         "Open AI Actions to see pending proposals with their risk tier and summary.",
         "Select Approve or Reject; high-risk actions stay in approved state until executed.",
         "Every decision and proposal is written to the audit trail.",
@@ -566,14 +566,16 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
       { kind: "h", text: "Single sign-on (OIDC)" },
       { kind: "steps", items: [
-        "Set SSO_ENABLED=true and configure SSO_ISSUER, SSO_CLIENT_ID, SSO_CLIENT_SECRET, and SSO_REDIRECT_URI (it defaults to the web origin's callback).",
-        "Restart the API. The sign-in page shows Sign in with SSO once it is on, and nothing changes for anyone until then.",
+        "Ask the deployment to configure SSO_ISSUER, SSO_CLIENT_ID and SSO_CLIENT_SECRET — an identity provider's registration is not something a browser session can arrange.",
+        "Then switch on **Single sign-on (OIDC)** under Administration → Configuration → Sessions & Security. Its requirement banner reports whether the issuer is set.",
+        "The sign-in page shows Sign in with SSO once it is on, and nothing changes for anyone until then.",
         "First-time SSO users are provisioned automatically with a verified email address.",
         "Password and MFA sign-in remain available as a fallback.",
       ] },
       { kind: "h", text: "Passkeys" },
       { kind: "steps", items: [
-        "Set PASSKEY_ENABLED=true and WEBAUTHN_RP_ID to the app's hostname, then restart the API.",
+        "Ask the deployment to set WEBAUTHN_RP_ID to the app's hostname; that is a deployment value, because it identifies the origin a passkey is bound to.",
+        "Then switch on **Passkeys (WebAuthn)** under Administration → Configuration → Sessions & Security.",
         "Sign in with your password once, then add a passkey from Settings → Passkeys or from the sign-in page.",
         "Each registered device is listed with its name and last use. Rename one to something you will recognise, or remove a device you no longer hold.",
         "A removed credential stops working immediately, and your password always remains a way in.",
@@ -598,10 +600,11 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       { kind: "h", text: "Enable & install" },
       { kind: "steps", items: [
-        "Set OUTLOOK_ADDIN_ENABLED=true and restart the API.",
-        "Sideload the Office Web Add-in manifest (Administration → System → Outlook add-in asset).",
+        "Open **Administration → Configuration → Client Apps & Notifications** and switch on **Outlook add-in**. Both halves of the feature follow it: the taskpane the mailbox loads, and the endpoint it calls.",
+        "Sideload the Office Web Add-in manifest — it ships in the repository under `apps/outlook-addin/`, and the API serves the taskpane from `/addin`.",
         "Sign in to the add-in with your C7NTAX credentials.",
       ] },
+      { kind: "note", text: "There is no restart and no environment variable to set. Off, the taskpane and the endpoint **both** answer 404, so a mailbox that already has the add-in sideloaded is told the server does not support it rather than failing halfway through filing a message. Administration → System Settings shows the add-in's current state and links straight to the switch." },
       { kind: "h", text: "Use" },
       { kind: "steps", items: [
         "Select one or more messages in Outlook.",
@@ -610,6 +613,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
     ],
     related: [
+      { label: "Client Apps & Notifications", to: "/admin/configuration/apps" },
       { label: "Email-to-Ticket Setup", to: "/help/walkthroughs/email-tickets" },
       { label: "Help Index", to: "/help/index" },
     ],
@@ -963,9 +967,9 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Customer Portal", "The whole customer portal — see the Customer Portal walkthrough"],
         ["Service Alerts & Monitoring", "Uptime monitors, alert webhooks, the social source, the poll interval and the stale ceiling"],
         ["Knowledge Base & AI", "Drafting articles from resolved tickets, the model used for drafting, and AI action proposals"],
-        ["CloudConnect, Email & Microsoft 365", "Connector verification and its throttle, the mail connectors, Graph delivery, the Outlook add-in and M365 offboarding"],
+        ["CloudConnect & Email", "Connector verification and its throttle, the mail connectors, Graph delivery and M365 offboarding"],
         ["Billing & Invoicing", "Bill-through batches, the time rules and their defaults, quotes, and generate-from-tickets"],
-        ["Client Apps & Notifications", "Push notification devices"],
+        ["Client Apps & Notifications", "The Outlook add-in, and push notification devices"],
       ] },
       { kind: "h", text: "Change a setting" },
       { kind: "steps", items: [
@@ -1050,7 +1054,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         "The draft is built from the ticket's own resolution material — the internal notes the technician wrote *after* solving it.",
         "The article is filed as a **draft** with the ticket number attached and a line saying it needs a human review.",
       ] },
-      { kind: "note", text: "One article per ticket: asking twice returns the article already drafted rather than a second copy. Turn the whole feature off with KB_AUTOGEN_ENABLED=false." },
+      { kind: "note", text: "One article per ticket: asking twice returns the article already drafted rather than a second copy. The whole feature is switched from Administration → Configuration → Knowledge Base & AI, as **Draft articles from resolved tickets**." },
       { kind: "h", text: "Review before it is published" },
       { kind: "warn", text: "Nothing is ever published directly. An AI-authored article is a claim on the reader's time, so a person publishes, edits or discards it — and the draft says it was machine-written and which ticket it came from, so the claim can be checked." },
     ],
@@ -1080,7 +1084,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         "Each step is ticked off as it is done, so the departure has a record rather than a memory.",
       ] },
       { kind: "h", text: "What it deliberately does not do" },
-      { kind: "warn", text: "**It disables nothing.** The checklist is a piece of work with an owner and a record — a human still does the disabling, in the tenant, where the consequence of a mistake is visible. Turning the feature off with M365_OFFBOARD_ENABLED=false leaves the report working and raises no checklists." },
+      { kind: "warn", text: "**It disables nothing.** The checklist is a piece of work with an owner and a record — a human still does the disabling, in the tenant, where the consequence of a mistake is visible. Switching **Microsoft 365 offboarding** off under Administration → Configuration → CloudConnect &amp; Email leaves the report working and raises no checklists." },
     ],
     related: [
       { label: "CloudConnect Integrations", to: "/help/walkthroughs/cloudconnect" },

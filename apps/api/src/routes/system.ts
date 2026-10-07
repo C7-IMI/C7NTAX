@@ -5,13 +5,21 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { prisma } from "../index";
 import { getRetryCount, getRecoveryLog, resetPoller, isPaused } from "../services/poller";
 import { AppError } from "../middleware/errorHandler";
-import { Permission } from "@C7NTAX/shared";
+import { CONFIG_FIELDS, Permission, resolveEnvironmentValue } from "@C7NTAX/shared";
+import { configFlag, environmentSupplied } from "../services/appSettings";
+import { addinAssetsPresent, addinDirectory } from "../services/addinAssets";
 
 export const systemRouter = Router();
 systemRouter.use(authenticate);
 
 // ── Failover state (backed by SystemConfig; survives restarts) ─────
 const FAILOVER_KEY = "failover_state";
+
+/**
+ * The registry entry for the Outlook add-in, resolved once so the deployment report and the
+ * registry cannot disagree about which area owns the switch.
+ */
+const OUTLOOK_ADDIN_FIELD = CONFIG_FIELDS["apps.outlookAddin"];
 
 systemRouter.get("/failover/status", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try {
@@ -207,6 +215,7 @@ systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (_re
     }
   }
 
+  const addinDir = env.OUTLOOK_ADDIN_DIR || "(default: apps/outlook-addin)";
   const smtpHost = env.SMTP_HOST ?? "";
   res.json({
     mail: {
@@ -225,8 +234,23 @@ systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (_re
       servesWeb: env.SERVE_WEB === "true",
     },
     addin: {
-      enabled: env.OUTLOOK_ADDIN_ENABLED !== "false",
-      directory: env.OUTLOOK_ADDIN_DIR ?? "(default)",
+      /** The value in force, so this screen cannot disagree with what the add-in experiences. */
+      enabled: configFlag("apps", "outlookAddin"),
+      /**
+       * What the deployment's own environment would give it with nothing saved. Guarded because
+       * the registry is the authority: if the field is ever removed, this reports "no opinion"
+       * rather than failing the whole screen.
+       */
+      environmentEnabled: OUTLOOK_ADDIN_FIELD
+        ? resolveEnvironmentValue(OUTLOOK_ADDIN_FIELD, env as Record<string, string | undefined>)
+        : false,
+      environmentSupplied: OUTLOOK_ADDIN_FIELD ? environmentSupplied(OUTLOOK_ADDIN_FIELD) : false,
+      directory: addinDirectory(),
+      /**
+       * Whether the taskpane's files are on disk at all. A switch cannot serve a directory that
+       * is not there, and saying so here is the difference between "off" and "cannot be on".
+       */
+      assetsPresent: addinAssetsPresent(),
     },
   });
 });

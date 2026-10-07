@@ -38310,6 +38310,42 @@
     "createdAt": "2026-10-07T20:48:41.052Z"
   },
   {
+    "id": "8d063a92-5d5a-4e4e-80aa-7328cf03b1c4",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T21:10:30.327Z"
+  },
+  {
+    "id": "8c34c7aa-0d8e-4260-b2bf-cbf2cd3c4f01",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T21:10:30.338Z"
+  },
+  {
+    "id": "9908f8d1-b077-40d1-a6bc-af79cdb658c9",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T21:10:30.348Z"
+  },
+  {
     "id": "89f17f93-9d68-459f-b5ca-1af778fdf872",
     "action": "reports:create",
     "entity": "reports",
@@ -38907,6 +38943,42 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T20:49:20.550Z"
+  },
+  {
+    "id": "3449d5b2-ccec-4ee0-9e77-afc0aa624cd6",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T21:12:27.905Z"
+  },
+  {
+    "id": "af557bd6-b0da-4545-bf11-d785945f3b00",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T21:12:27.927Z"
+  },
+  {
+    "id": "e218de61-8657-46ad-953d-3150c2d047a9",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T21:12:27.954Z"
   },
   {
     "id": "355cf454-962e-4268-9cbe-dd42cd04779c",
@@ -45980,6 +46052,42 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T20:49:20.573Z"
+  },
+  {
+    "id": "718d3b6f-91b7-42dc-968b-8f4d2366a98c",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T21:13:22.642Z"
+  },
+  {
+    "id": "d9642c24-20ae-4073-bd20-8359864b4aa8",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T21:13:25.997Z"
+  },
+  {
+    "id": "a91f765f-20d9-41d6-a4a0-5069377eba92",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T21:13:52.896Z"
   },
   {
     "id": "97c15868-8351-4e69-a445-5f156a6b1330",
@@ -107670,6 +107778,18 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-07T20:51:01.606Z"
+  },
+  {
+    "id": "64397073-0d87-43a7-b5e3-1957335b56d5",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T21:13:50.629Z"
   },
   {
     "id": "2a51d636-c563-4268-bc9d-acaab84e68f8",
