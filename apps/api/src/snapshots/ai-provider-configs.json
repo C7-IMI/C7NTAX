@@ -12,51 +12,27 @@
     "updatedAt": "2026-10-06T20:15:46.070Z"
   },
   {
-    "id": "1eb96bf4-8f0c-478d-b860-5c48fa5ae167",
-    "name": "Persona probe provider 1791350435962",
+    "id": "5abb7bf4-4325-4dc6-a228-28838524cd14",
+    "name": "Persona probe provider 1791351890311",
     "provider": "local",
     "isActive": false,
     "isDefault": false,
     "apiEndpoint": null,
     "model": "gpt-4o-mini",
     "maxTokens": 2000,
-    "createdAt": "2026-10-07T05:20:35.965Z",
-    "updatedAt": "2026-10-07T05:20:35.965Z"
+    "createdAt": "2026-10-07T05:44:50.315Z",
+    "updatedAt": "2026-10-07T05:44:50.315Z"
   },
   {
-    "id": "816c6880-4456-43e0-8fd4-d098b12e7000",
-    "name": "Persona probe provider 1791350435967",
+    "id": "b33e28e5-6cca-44cd-8464-77eb1a1e1b9f",
+    "name": "Persona probe provider 1791351890316",
     "provider": "local",
     "isActive": false,
     "isDefault": false,
     "apiEndpoint": null,
     "model": "gpt-4o-mini",
     "maxTokens": 2000,
-    "createdAt": "2026-10-07T05:20:35.970Z",
-    "updatedAt": "2026-10-07T05:20:35.970Z"
-  },
-  {
-    "id": "5a1c5373-917d-4de1-82f1-1a89df5152fb",
-    "name": "Persona probe provider 1791351130628",
-    "provider": "local",
-    "isActive": false,
-    "isDefault": false,
-    "apiEndpoint": null,
-    "model": "gpt-4o-mini",
-    "maxTokens": 2000,
-    "createdAt": "2026-10-07T05:32:10.631Z",
-    "updatedAt": "2026-10-07T05:32:10.631Z"
-  },
-  {
-    "id": "48898cda-c251-49c0-b9d6-6c8da4ebaf16",
-    "name": "Persona probe provider 1791351130634",
-    "provider": "local",
-    "isActive": false,
-    "isDefault": false,
-    "apiEndpoint": null,
-    "model": "gpt-4o-mini",
-    "maxTokens": 2000,
-    "createdAt": "2026-10-07T05:32:10.636Z",
-    "updatedAt": "2026-10-07T05:32:10.636Z"
+    "createdAt": "2026-10-07T05:44:50.319Z",
+    "updatedAt": "2026-10-07T05:44:50.319Z"
   }
 ]

@@ -5,6 +5,7 @@ import { canAccessCompany, companyWhere } from "../middleware/companyScope";
 import { Permission, InvoiceStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { BillingEngine } from "@C7NTAX/billing";
+import { AGREEMENT_TYPES } from "../services/timeRules";
 import { escapeHtml } from "../services/emailHtml";
 import { v4 as uuid } from "uuid";
 
@@ -25,16 +26,57 @@ billingRouter.get("/agreements", requirePermission(Permission.BillingView), asyn
 
 billingRouter.post("/agreements", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
   try {
-    const { name, companyId, description, billingPeriod, price, startDate, endDate, cancellationDays } = req.body;
+    const { name, companyId, description, billingPeriod, price, startDate, endDate, cancellationDays, agreementType, hourlyRate, rateTier, blockHoursIncluded, overtimeEnabled, overtimeAfter, overtimeMultiplier } = req.body;
     if (!name || !companyId) throw new AppError("name and companyId required");
     const agreement = await prisma.serviceAgreement.create({
       // `autoRenew` from the client is not a ServiceAgreement column; `autoInvoiceEnabled` is the
       // persisted "keep billing automatically" switch, so it is left at its default.
-      data: { name, companyId, description: description || "", billingPeriod: billingPeriod || "monthly", billingAmount: price || 0, startDate: startDate ? new Date(startDate) : new Date(), endDate: endDate ? new Date(endDate) : null, followUpIntervalDays: cancellationDays || 30 },
+      data: {
+        name, companyId, description: description || "", billingPeriod: billingPeriod || "monthly", billingAmount: price || 0,
+        startDate: startDate ? new Date(startDate) : new Date(), endDate: endDate ? new Date(endDate) : null, followUpIntervalDays: cancellationDays || 30,
+        ...agreementTimeRules({ agreementType, hourlyRate, rateTier, blockHoursIncluded, overtimeEnabled, overtimeAfter, overtimeMultiplier }),
+      },
     });
     res.status(201).json(agreement);
   } catch (e) { next(e); }
 });
+
+/**
+ * The time-rule half of an agreement payload (PLAN-015 Phase A #1). Only the keys actually sent
+ * are returned, so a partial update cannot silently reset a value the caller never mentioned.
+ */
+function agreementTimeRules(body: Record<string, unknown>): Record<string, unknown> {
+  const updates: Record<string, unknown> = {};
+  if (body.agreementType !== undefined) {
+    if (!AGREEMENT_TYPES.includes(body.agreementType as never)) {
+      throw new AppError(`agreementType must be one of ${AGREEMENT_TYPES.join(", ")}`, 400);
+    }
+    updates.agreementType = body.agreementType;
+  }
+  if (body.rateTier !== undefined) updates.rateTier = body.rateTier === null ? null : String(body.rateTier).slice(0, 40);
+  if (body.hourlyRate !== undefined) {
+    const rate = body.hourlyRate === null || body.hourlyRate === "" ? null : Number(body.hourlyRate);
+    if (rate !== null && (!Number.isFinite(rate) || rate < 0)) throw new AppError("hourlyRate must be a positive number", 400);
+    updates.hourlyRate = rate;
+  }
+  if (body.blockHoursIncluded !== undefined) {
+    const hours = Number(body.blockHoursIncluded);
+    if (!Number.isFinite(hours) || hours < 0) throw new AppError("blockHoursIncluded must be zero or more", 400);
+    updates.blockHoursIncluded = hours;
+  }
+  if (body.overtimeEnabled !== undefined) updates.overtimeEnabled = !!body.overtimeEnabled;
+  if (body.overtimeAfter !== undefined) {
+    const clock = String(body.overtimeAfter ?? "").trim();
+    if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(clock)) throw new AppError("overtimeAfter must look like 18:00", 400);
+    updates.overtimeAfter = clock.padStart(5, "0");
+  }
+  if (body.overtimeMultiplier !== undefined) {
+    const multiplier = Number(body.overtimeMultiplier);
+    if (!Number.isFinite(multiplier) || multiplier < 1 || multiplier > 5) throw new AppError("overtimeMultiplier must be between 1 and 5", 400);
+    updates.overtimeMultiplier = multiplier;
+  }
+  return updates;
+}
 
 billingRouter.patch("/agreements/:id", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
   try {
@@ -46,6 +88,7 @@ billingRouter.patch("/agreements/:id", requirePermission(Permission.BillingManag
     if (req.body.status !== undefined) updates.isActive = req.body.status === "active";
     if (req.body.startDate) updates.startDate = new Date(req.body.startDate);
     if (req.body.endDate) updates.endDate = new Date(req.body.endDate);
+    Object.assign(updates, agreementTimeRules(req.body ?? {}));
     const agreement = await prisma.serviceAgreement.update({ where: { id: req.params.id }, data: updates });
     res.json(agreement);
   } catch (e) { next(e); }

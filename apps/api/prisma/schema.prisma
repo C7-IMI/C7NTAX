@@ -446,6 +446,15 @@ model TimeEntry {
   invoiceId   String?
   invoice     Invoice? @relation(fields: [invoiceId], references: [id])
 
+  // ─── Time rules (PLAN-015 Phase A #1), computed when TIME_RULES_ENABLED is on ────
+  /// Minutes worked after the agreement's overtime cut-off.
+  overtimeMinutes Int     @default(0)
+  /// Minutes that count for billing and against block balances — the plain minutes plus the
+  /// overtime weighting. Null when the rules were off, so "not computed" is distinguishable.
+  billedMinutes   Int?
+  /// The entry this one was split from when the work crossed midnight.
+  splitFrom       String?
+  agreementId     String?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -481,6 +490,23 @@ model ServiceAgreement {
   followUpEnabled       Boolean @default(true)
   followUpIntervalDays  Int     @default(7)
   maxFollowUps          Int     @default(3)
+
+  // ─── Agreement type & time rules (PLAN-015 Phase A #1) ────────────
+  /// "service" — flat recurring amount; "block" — prepaid hours; "cyberCare" — subscription with
+  /// an included allowance; "spot" — hourly at the agreement's rate.
+  agreementType      String  @default("service")
+  /// Rate for spot and Cyber Care overage work. Null on a flat service agreement.
+  hourlyRate         Float?
+  /// Which row of the shared spot-rate table this agreement quotes, for reporting.
+  rateTier           String?
+  /// Hours included per billing period on block and Cyber Care agreements.
+  blockHoursIncluded Float   @default(0)
+  /// Hours deducted so far in the current period, weighted the same way as billing.
+  blockHoursUsed     Float   @default(0)
+  overtimeEnabled    Boolean @default(true)
+  /// Local clock time after which work is overtime, "HH:MM".
+  overtimeAfter      String  @default("18:00")
+  overtimeMultiplier Float   @default(1.5)
 
   // Relationships
   invoices      Invoice[]

@@ -90,39 +90,21 @@
     "createdAt": "2026-10-07T02:20:42.827Z"
   },
   {
-    "id": "e97ee0c0-10de-4350-8dd7-cdf8b2071244",
-    "articleId": "78ae0d64-fd09-4ff7-9b67-537e2308ded6",
+    "id": "367e69d0-7075-44d1-bed9-682a5781ec40",
+    "articleId": "aa25b14d-6218-4b8b-a031-b0a57484e03a",
     "version": 1,
     "content": "probe",
     "changeNote": null,
     "authorId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T05:20:35.813Z"
+    "createdAt": "2026-10-07T05:44:50.157Z"
   },
   {
-    "id": "45c4d136-7c47-4e73-a1d4-f5a96f2ec510",
-    "articleId": "d8b1cc7f-e4b9-4108-a024-cfeb6dc3ffb4",
+    "id": "fad99b0e-a1fc-4f2a-aba7-60d026279573",
+    "articleId": "c7bca681-9fba-4f3c-9d8d-62378765865c",
     "version": 1,
     "content": "probe",
     "changeNote": null,
     "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T05:20:35.820Z"
-  },
-  {
-    "id": "0bb60230-60df-44dc-b7bd-5c01592e8168",
-    "articleId": "063540c9-60b2-4c5b-ade0-abda12455a2b",
-    "version": 1,
-    "content": "probe",
-    "changeNote": null,
-    "authorId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
-    "createdAt": "2026-10-07T05:32:10.464Z"
-  },
-  {
-    "id": "3c1cb9bb-40f5-4be4-a811-8c13e2c84212",
-    "articleId": "2daeb8fa-538f-424e-ac96-69bb0a898cab",
-    "version": 1,
-    "content": "probe",
-    "changeNote": null,
-    "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T05:32:10.469Z"
+    "createdAt": "2026-10-07T05:44:50.162Z"
   }
 ]

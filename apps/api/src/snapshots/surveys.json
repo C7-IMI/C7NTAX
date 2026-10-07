@@ -11,47 +11,25 @@
     "updatedAt": "2026-08-19T16:15:29.026Z"
   },
   {
-    "id": "e771335c-a9d0-4052-8270-74e1ad35d12d",
-    "name": "Persona probe survey 1791350435868",
+    "id": "7a2a2851-3a42-4e32-9947-02ea473d053e",
+    "name": "Persona probe survey 1791351890218",
     "description": null,
     "type": "csat",
     "isActive": true,
     "sendOnResolve": false,
     "sendDelayHours": 1,
-    "createdAt": "2026-10-07T05:20:35.873Z",
-    "updatedAt": "2026-10-07T05:20:35.873Z"
+    "createdAt": "2026-10-07T05:44:50.221Z",
+    "updatedAt": "2026-10-07T05:44:50.221Z"
   },
   {
-    "id": "d4c3a364-4e11-45bf-9692-cab0f802d4aa",
-    "name": "Persona probe survey 1791350435875",
+    "id": "3664a414-b0d8-42c6-9e8f-6246a7ed08e0",
+    "name": "Persona probe survey 1791351890222",
     "description": null,
     "type": "csat",
     "isActive": true,
     "sendOnResolve": false,
     "sendDelayHours": 1,
-    "createdAt": "2026-10-07T05:20:35.878Z",
-    "updatedAt": "2026-10-07T05:20:35.878Z"
-  },
-  {
-    "id": "3d054c7b-71fd-444f-a15f-130c5f9bd823",
-    "name": "Persona probe survey 1791351130529",
-    "description": null,
-    "type": "csat",
-    "isActive": true,
-    "sendOnResolve": false,
-    "sendDelayHours": 1,
-    "createdAt": "2026-10-07T05:32:10.532Z",
-    "updatedAt": "2026-10-07T05:32:10.532Z"
-  },
-  {
-    "id": "910abe09-f840-4004-8191-01f59bda9a4e",
-    "name": "Persona probe survey 1791351130534",
-    "description": null,
-    "type": "csat",
-    "isActive": true,
-    "sendOnResolve": false,
-    "sendDelayHours": 1,
-    "createdAt": "2026-10-07T05:32:10.537Z",
-    "updatedAt": "2026-10-07T05:32:10.537Z"
+    "createdAt": "2026-10-07T05:44:50.225Z",
+    "updatedAt": "2026-10-07T05:44:50.225Z"
   }
 ]

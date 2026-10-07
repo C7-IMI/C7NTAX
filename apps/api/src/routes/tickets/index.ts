@@ -11,6 +11,7 @@ import { EmailService } from "@C7NTAX/email";
 import { notifyTicketContact, notifyTicketNote, notifyTicketStatusChange } from "../../services/ticketNotifications";
 import { addTicketContact, listTicketContacts, removeTicketContact, resolveRecipients, ticketCcEmails, updateTicketContact, isEmailAddress, isValidEmail } from "../../services/ticketContacts";
 import { v4 as uuid } from "uuid";
+import { computeEntry, drawsFromBlock, blockHoursFor, settingsFrom, timeRulesEnabled } from "../../services/timeRules";
 import { sanitizeEmailHtml, htmlToText, extractInlineImages } from "../../services/emailHtml";
 import { logger } from "../../services/logger";
 import {
@@ -566,7 +567,7 @@ ticketsRouter.delete("/:id", requirePermission(Permission.TicketDelete), async (
 // ── Add time entry ──
 ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    const { startTime, endTime, description, internalNotes, billable, noCharge, minutes, date, workType, workRole, rate, userId } = req.body;
+    const { startTime, endTime, description, internalNotes, billable, noCharge, minutes, date, workType, workRole, rate, userId, agreementId } = req.body;
     let mins = 0;
     if (minutes) {
       mins = Math.round(Number(minutes));
@@ -580,14 +581,34 @@ ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async 
       if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return new Date(`${d}T00:00:00`);
       return d ? new Date(d as string) : new Date();
     };
+
+    // PLAN-015 Phase A #1. Off by default: with the rules off, an entry is stored exactly as
+    // it was typed, which is what every existing timesheet and report expects.
+    const startsAt = startTime ? new Date(startTime) : null;
+    const endsAt = endTime ? new Date(endTime) : null;
+    const ticket = timeRulesEnabled()
+      ? await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { serviceAgreementId: true, companyId: true } })
+      : null;
+    const linkedAgreementId = typeof agreementId === "string" && agreementId ? agreementId : ticket?.serviceAgreementId ?? null;
+    const agreement = timeRulesEnabled() && linkedAgreementId
+      ? await prisma.serviceAgreement.findUnique({ where: { id: linkedAgreementId } })
+      : null;
+    const settings = settingsFrom(agreement);
+    const computed = timeRulesEnabled()
+      ? computeEntry({ startTime: startsAt, endTime: endsAt, minutes: mins }, settings)
+      : null;
+
+    const isChargeable = (billable ?? true) && !(noCharge ?? false);
+
+    const primary = computed?.segments[0];
     const entry = await prisma.timeEntry.create({
       data: {
         ticketId: req.params.id,
         userId: typeof userId === "string" && userId ? userId : req.user!.userId,
-        minutes: mins,
-        date: parseWorkDate(date),
-        startTime: startTime ? new Date(startTime) : null,
-        endTime: endTime ? new Date(endTime) : null,
+        minutes: primary?.minutes ?? computed?.minutes ?? mins,
+        date: primary?.date ?? parseWorkDate(date),
+        startTime: primary?.startTime ?? startsAt,
+        endTime: primary?.endTime ?? endsAt,
         description: description || "",
         internalNotes: typeof internalNotes === "string" ? internalNotes : null,
         workType: typeof workType === "string" && workType ? workType : null,
@@ -595,11 +616,54 @@ ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async 
         rate: rate !== undefined && rate !== null && rate !== "" ? Number(rate) : null,
         billable: billable ?? true,
         noCharge: noCharge ?? false,
+        overtimeMinutes: primary?.overtimeMinutes ?? 0,
+        // Null means "the rules did not run", which is different from zero weighted minutes.
+        billedMinutes: computed ? (primary?.billedMinutes ?? computed.billedMinutes) : null,
+        agreementId: computed ? linkedAgreementId : null,
       },
       include: { user: { select: { id: true, firstName: true, lastName: true } } },
     });
+
+    // Work that crossed midnight is completed by its own row, linked back to the first.
+    const splitRows = [];
+    for (const segment of computed?.segments.slice(1) ?? []) {
+      splitRows.push(await prisma.timeEntry.create({
+        data: {
+          ticketId: entry.ticketId,
+          userId: entry.userId,
+          minutes: segment.minutes,
+          date: segment.date,
+          startTime: segment.startTime,
+          endTime: segment.endTime,
+          description: description || "",
+          internalNotes: typeof internalNotes === "string" ? internalNotes : null,
+          workType: entry.workType,
+          workRole: entry.workRole,
+          rate: entry.rate,
+          billable: entry.billable,
+          noCharge: entry.noCharge,
+          overtimeMinutes: segment.overtimeMinutes,
+          billedMinutes: segment.billedMinutes,
+          splitFrom: entry.id,
+          agreementId: linkedAgreementId,
+        },
+        include: { user: { select: { id: true, firstName: true, lastName: true } } },
+      }));
+    }
+
+    // A block or Cyber Care agreement spends its allowance at the same weighting the invoice uses.
+    if (computed && isChargeable && agreement && drawsFromBlock(agreement.agreementType) && computed.billedMinutes > 0) {
+      await prisma.serviceAgreement.update({
+        where: { id: agreement.id },
+        data: { blockHoursUsed: { increment: blockHoursFor(computed.billedMinutes) } },
+      });
+    }
+
     await notifyTicketContact(entry.ticketId, { eventLabel: "Time entry added", details: formatTimeEntryDetails(entry) });
-    res.status(201).json(entry);
+    res.status(201).json({
+      ...entry,
+      ...(splitRows.length ? { split: splitRows } : {}),
+    });
   } catch (e) { next(e); }
 });
 

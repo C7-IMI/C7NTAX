@@ -16,7 +16,7 @@ import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 
 // Types
 interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; }
-interface Agreement { id: string; name: string; description?: string; companyId?: string; company: { name?: string; id?: string } | null; billingPeriod: string; billingAmount: number; startDate: string; endDate?: string; isActive: boolean; autoInvoiceEnabled: boolean; followUpEnabled: boolean; _count?: { invoices: number } }
+interface Agreement { id: string; name: string; description?: string; companyId?: string; company: { name?: string; id?: string } | null; billingPeriod: string; billingAmount: number; startDate: string; endDate?: string; isActive: boolean; autoInvoiceEnabled: boolean; followUpEnabled: boolean; agreementType?: string; hourlyRate?: number | null; rateTier?: string | null; blockHoursIncluded?: number; blockHoursUsed?: number; overtimeEnabled?: boolean; overtimeAfter?: string; overtimeMultiplier?: number; _count?: { invoices: number } }
 interface Payment { id: string; amount: number; method: string; reference?: string; processedAt: string; invoice: { invoiceNumber: string; company: { name?: string } | null } }
 interface TimeEntry { id: string; description?: string; internalNotes?: string; minutes: number; billable: boolean; noCharge?: boolean; rate?: number | null; workType?: string | null; workRole?: string | null; date: string; ticket: { id?: string; ticketNumber: string; company?: { name?: string } | null } | null; invoiceId?: string; }
 interface Company { id: string; name: string; }
@@ -366,7 +366,7 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
   const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: "", companyId: "", description: "", billingPeriod: "monthly", price: 0, startDate: "", endDate: "", autoRenew: true });
+  const [form, setForm] = useState({ name: "", companyId: "", description: "", billingPeriod: "monthly", price: 0, startDate: "", endDate: "", autoRenew: true, agreementType: "service", hourlyRate: 0, rateTier: "", blockHoursIncluded: 0, overtimeEnabled: true, overtimeAfter: "18:00", overtimeMultiplier: 1.5 });
   const [sortAg, setSortAg] = useState<SortState | null>(null);
 
   const fetch = () => {
@@ -487,9 +487,46 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
             <input className="input-field" placeholder="Agreement name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
             <select className="input-field" value={form.companyId} onChange={e => setForm({...form, companyId: e.target.value})} required><option value="">Select client...</option>{companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
             <div className="grid grid-cols-2 gap-3">
-              <select className="input-field" value={form.billingPeriod} onChange={e => setForm({...form, billingPeriod: e.target.value})}><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="annual">Annual</option><option value="weekly">Weekly</option></select>
-              <input className="input-field" type="number" placeholder="Amount $" value={form.price} onChange={e => setForm({...form, price: Number(e.target.value)})} />
+              <div>
+                <label className="text-xs text-gray-500">Agreement type</label>
+                <select className="input-field" value={form.agreementType} onChange={e => setForm({ ...form, agreementType: e.target.value })}>
+                  <option value="service">Service — flat recurring amount</option>
+                  <option value="block">Block hours — prepaid allowance</option>
+                  <option value="cyberCare">Cyber Care — subscription with an allowance</option>
+                  <option value="spot">Spot — hourly</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Billing period</label>
+                <select className="input-field" value={form.billingPeriod} onChange={e => setForm({...form, billingPeriod: e.target.value})}><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="annual">Annual</option><option value="weekly">Weekly</option></select>
+              </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-xs text-gray-500">Recurring amount $</label><input className="input-field" type="number" placeholder="Amount $" value={form.price} onChange={e => setForm({...form, price: Number(e.target.value)})} /></div>
+              {(form.agreementType === "spot" || form.agreementType === "cyberCare") && (
+                <div>
+                  <label className="text-xs text-gray-500">Hourly rate $</label>
+                  <input className="input-field" type="number" placeholder="Hourly rate" value={form.hourlyRate} onChange={e => setForm({ ...form, hourlyRate: Number(e.target.value) })} />
+                </div>
+              )}
+            </div>
+            {(form.agreementType === "block" || form.agreementType === "cyberCare") && (
+              <div>
+                <label className="text-xs text-gray-500">Hours included per period</label>
+                <input className="input-field" type="number" placeholder="e.g. 10" value={form.blockHoursIncluded} onChange={e => setForm({ ...form, blockHoursIncluded: Number(e.target.value) })} />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-500">Overtime after (local)</label>
+                <input className="input-field" type="time" value={form.overtimeAfter} onChange={e => setForm({ ...form, overtimeAfter: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Overtime multiplier</label>
+                <input className="input-field" type="number" step="0.1" min="1" max="5" value={form.overtimeMultiplier} onChange={e => setForm({ ...form, overtimeMultiplier: Number(e.target.value) })} />
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-400"><input type="checkbox" checked={form.overtimeEnabled} onChange={e => setForm({ ...form, overtimeEnabled: e.target.checked })} />Weight work after the cut-off at the multiplier</label>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-xs text-gray-500">Start Date</label><input className="input-field" type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} required /></div>
               <div><label className="text-xs text-gray-500">End Date</label><input className="input-field" type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} /></div>

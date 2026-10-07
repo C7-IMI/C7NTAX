@@ -161,6 +161,40 @@ async function main() {
     () => prisma.checklist.count({ where: { name: { startsWith: "W1 session verification" } } }),
     () => prisma.checklist.deleteMany({ where: { name: { startsWith: "W1 session verification" } } }),
   );
+
+  // The time-rules probe and the browser check leave one client, agreement and ticket each.
+  const timeRuleCompanies = await prisma.company.findMany({
+    where: { OR: [{ name: { startsWith: "TimeRules Probe" } }, { name: { startsWith: "TimeRules Off Probe" } }] },
+    select: { id: true },
+  });
+  const timeRuleCompanyIds = timeRuleCompanies.map(c => c.id);
+  const timeRuleTickets = await prisma.ticket.findMany({ where: { companyId: { in: timeRuleCompanyIds } }, select: { id: true } });
+  const timeRuleTicketIds = timeRuleTickets.map(t => t.id);
+  await remove(
+    "time-rules probe time entries",
+    () => prisma.timeEntry.count({ where: { ticketId: { in: timeRuleTicketIds } } }),
+    () => prisma.timeEntry.deleteMany({ where: { ticketId: { in: timeRuleTicketIds } } }),
+  );
+  await remove(
+    "time-rules probe tickets",
+    () => Promise.resolve(timeRuleTicketIds.length),
+    () => prisma.ticket.deleteMany({ where: { id: { in: timeRuleTicketIds } } }),
+  );
+  await remove(
+    "time-rules probe agreements",
+    () => prisma.serviceAgreement.count({ where: { companyId: { in: timeRuleCompanyIds } } }),
+    () => prisma.serviceAgreement.deleteMany({ where: { companyId: { in: timeRuleCompanyIds } } }),
+  );
+  await remove(
+    "time-rules probe clients",
+    () => Promise.resolve(timeRuleCompanyIds.length),
+    () => prisma.company.deleteMany({ where: { id: { in: timeRuleCompanyIds } } }),
+  );
+  await remove(
+    "browser-check agreements",
+    () => prisma.serviceAgreement.count({ where: { name: { startsWith: "Probe block agreement" } } }),
+    () => prisma.serviceAgreement.deleteMany({ where: { name: { startsWith: "Probe block agreement" } } }),
+  );
   await remove(
     "stale sessions",
     () => prisma.userSession.count({ where: { invalidatedAt: { not: null } } }),

@@ -938,6 +938,20 @@
     "updatedAt": "2026-08-20T20:55:03.674Z"
   },
   {
+    "id": "dc9c78ac-cc36-4cdd-b68f-51bf6f6040b2",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "new thread failed on the latest desktop app version for personal accounts",
+    "description": "Status: Investigating We are investigating the issue for the listed services. Affected components Codex in ChatGPT Desktop (Partial outage)",
+    "severity": "outage",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.openai.com//incidents/01M4ADHMMBK7K92NJFJ0DXRYJM",
+    "detectedAt": "2026-10-07T05:36:00.295Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-07T05:36:00.297Z",
+    "updatedAt": "2026-10-07T05:36:00.297Z"
+  },
+  {
     "id": "33101683-f967-4082-966e-eeb7c53ea981",
     "serviceId": "eda5aa37-2863-4125-b626-468192066ff6",
     "title": "Possible service degradation reported for Comcast Xfinity (DownDetector)",
