@@ -10260,5 +10260,41 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T03:03:00.103Z"
+  },
+  {
+    "id": "e3e84163-53d9-4546-ae02-48b2a1e27151",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "85c59286-f76a-4b85-9c3d-ea666fe97390",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T03:37:28.699Z"
+  },
+  {
+    "id": "4d01d220-5161-4fc2-972e-410e2c9f350c",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "a95efa85-e317-41e7-b32e-e167ced9ae90",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T03:37:28.776Z"
+  },
+  {
+    "id": "25ea77b2-0fe2-4e8f-8599-c4780a91c4b1",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T03:38:00.127Z"
   }
 ]

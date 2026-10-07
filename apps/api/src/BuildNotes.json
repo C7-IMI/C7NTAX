@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.6.065",
+    "date": "2026-10-06",
+    "title": "The Azure deployment package: one image, two environments, and a pipeline that can promote them",
+    "changes": [
+      {
+        "text": "**One container image serves the API and the web application.** `Dockerfile` installs the locked workspace, builds the SPA, and runs the API with the web build beside it: non-root, healthchecked, `--frozen-lockfile`, and diagnostics that say what is missing instead of failing silently. Verified properly — the image was built, run against the development database, and driven end to end (health, the SPA at `/` and on a client route, 404 for an unknown API path, login, tickets, users, service alerts).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Production now has infrastructure, not just a plan.** `infra/main.bicep` creates the VNet with its subnets and NSG, Log Analytics, Key Vault with the three secrets, the container registry, a **VNet-injected PostgreSQL Flexible Server with no public endpoint**, the Container Apps environment and app, and the app's `AcrPull` and `Key Vault Secrets User` role assignments — so the app pulls its own image and reads its own secrets through managed identity, with no registry password or connection string in the deployment. Dev is Burstable/single-zone with 7-day backups; prod is General Purpose with zone-redundant HA, 35-day retention and geo-redundant backups. All three Bicep files **compile with no warnings** (`pnpm deploy:validate`).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A deployment command that fails in the right order.** `scripts/azure/deploy-env.ps1` runs preflight → infrastructure → image → schema → a new revision at **0% traffic** → health gate → traffic shift, and prints the rollback revision if any step fails. Secrets are read from the shell's environment (or the pipeline's secret store) and land in Key Vault; the script refuses to run without them. `-WhatIf` prints the entire plan, which is how it was verified here.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The schema can finally move dev → prod.** Production cannot be deployed with `db push`, and there was no migration history at all. `apps/api/prisma/migrations/0_init` (generated with `prisma migrate diff`) is the baseline, marked applied against the existing dev database, and `prisma migrate deploy` runs as its own pipeline step **before** the new revision takes traffic — so a bad release is still reversible by shifting traffic back.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**CI/CD: dev is automatic, prod is deliberate.** `.github/workflows/deploy-azure.yml` builds the image once, applies the schema, creates the revision at 0% traffic, gates on `/api/health`, then shifts and verifies — with the previous revision captured up front and restored automatically if any step fails. Prod only runs from a manual dispatch behind the GitHub `prod` environment's reviewers, which is the \"Push to Prod\" gate the plan describes. Authentication is OIDC federated credentials: no client secret in the repository.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`node scripts/azure/preflight.mjs` catches deploy-day failures on the developer's machine**: stale lockfile, uncommitted files, a missing migration, an environment variable the source reads but nobody documented, an unguarded route, a new advisory, or an image that runs as root. It already earned its place twice — it caught the two undocumented variables the new web-serving code introduced and the missing `deploy-azure.yml`.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The API can serve the SPA from its own origin** (`SERVE_WEB`), which is what makes one image possible: the CSP, the WebSocket path and the SSO redirects all already assume one origin. In development it stays off, so Vite remains the origin and the API stays an API — confirmed after the change (404 on `/` in dev, the SPA shell in the container).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`tsx` and `prisma` are runtime dependencies of the API**, not dev dependencies: the workspace packages publish TypeScript sources, so the container runs through `tsx`, and the migration step uses the Prisma CLI from the same image.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.064",
     "date": "2026-10-06",
     "title": "Dependency wave: 128 advisories down to 4, none in the shipped product",

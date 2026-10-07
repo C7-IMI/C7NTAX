@@ -1,0 +1,205 @@
+name: Deploy to Azure
+
+# PLAN-016 deploy pipeline.
+#
+#   · every push to main builds the image and deploys **dev**, so the environment under
+#     test always matches the branch
+#   · **prod is never automatic**: it runs only from a manual dispatch, which is the
+#     "Push to Prod" / "Go Live" action the plan describes
+#   · both environments go through the same ordered pipeline (image → schema → revision →
+#     health gate → traffic), so a failed health check leaves the running revision serving
+#
+# Authentication is OIDC federated credentials — there is no publish profile or client
+# secret stored in the repository. See infra/README.md for the one-time setup.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'PlanDocs/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment (prod requires the production GitHub environment approval)'
+        required: true
+        default: 'dev'
+        type: choice
+        options: [dev, prod]
+      image_tag:
+        description: 'Image tag to deploy (defaults to the commit sha)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+env:
+  RESOURCE_GROUP_DEV: rg-c7ntax-dev
+
+jobs:
+  build:
+    name: Build and push image
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      registry: ${{ steps.login.outputs.registry }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: tag
+        name: Derive the image tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - id: login
+        name: Resolve the registry
+        run: |
+          registry=$(az acr list --resource-group "${{ env.RESOURCE_GROUP_DEV }}" --query "[0].loginServer" -o tsv)
+          echo "registry=$registry" >> "$GITHUB_OUTPUT"
+
+      # The image is built once and promoted unchanged: the artifact dev verified is the
+      # artifact prod runs, which is the whole point of the dev/prod split.
+      - name: Build and push
+        run: |
+          az acr build --registry "${REGISTRY%%.*}" --image "c7ntax:${{ steps.tag.outputs.tag }}" .
+
+  migrate:
+    name: Apply schema (${{ github.event.inputs.environment || 'dev' }})
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # The same image, with the command overridden, so the schema is applied by exactly
+      # the code that expects it. Waits for the job and fails the pipeline on anything
+      # other than Succeeded, before any traffic moves.
+      - name: Run prisma migrate deploy
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RG="rg-c7ntax-${ENVIRONMENT}"
+          JOB="c7ntax-${ENVIRONMENT}-migrate"
+          az containerapp job create \
+            --name "$JOB" --resource-group "$RG" --environment "aca-c7ntax-${ENVIRONMENT}" \
+            --image "${{ needs.build.outputs.registry }}/c7ntax:${{ needs.build.outputs.tag }}" \
+            --command "npx prisma migrate deploy" \
+            --cpu 0.5 --memory 1.0Gi --replica-timeout 900 --replica-retry-limit 1 \
+            --registry-server "${{ needs.build.outputs.registry }}" --mi-system-assigned \
+            --only-show-errors
+          az containerapp job start --name "$JOB" --resource-group "$RG" --only-show-errors
+          for i in $(seq 1 60); do
+            state=$(az containerapp job execution list --name "$JOB" --resource-group "$RG" --query "[0].properties.status" -o tsv)
+            [ "$state" = "Succeeded" ] && exit 0
+            [ "$state" = "Failed" ] && { echo "migration job failed"; exit 1; }
+            sleep 10
+          done
+          echo "migration job did not finish in 10 minutes"; exit 1
+
+  deploy:
+    name: Deploy (${{ github.event.inputs.environment || 'dev' }})
+    needs: [build, migrate]
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture the current revision (for rollback)
+        id: previous
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RG="rg-c7ntax-${ENVIRONMENT}"
+          APP="c7ntax-${ENVIRONMENT}"
+          echo "revision=$(az containerapp revision list --name "$APP" --resource-group "$RG" --query "[?properties.trafficWeight>=\`100\`].name | [0]" -o tsv)" >> "$GITHUB_OUTPUT"
+
+      # A new revision is created and left at 0% traffic, then checked. Only a healthy
+      # revision is promoted, so a bad build never takes the environment down.
+      - name: Create the revision
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RG="rg-c7ntax-${ENVIRONMENT}"
+          APP="c7ntax-${ENVIRONMENT}"
+          SUFFIX="${ENVIRONMENT}-${{ needs.build.outputs.tag }}"
+          az containerapp revision set-mode --name "$APP" --resource-group "$RG" --mode multiple --only-show-errors
+          az containerapp update --name "$APP" --resource-group "$RG" \
+            --image "${{ needs.build.outputs.registry }}/c7ntax:${{ needs.build.outputs.tag }}" \
+            --revision-suffix "$SUFFIX" --only-show-errors
+          for i in $(seq 1 60); do
+            state=$(az containerapp revision list --name "$APP" --resource-group "$RG" --query "[?properties.revisionSuffix=='$SUFFIX'].properties.healthState | [0]" -o tsv)
+            [ "$state" = "Healthy" ] && exit 0
+            [ "$state" = "Unhealthy" ] && { echo "new revision is unhealthy"; exit 1; }
+            sleep 10
+          done
+          echo "new revision did not become healthy in 10 minutes"; exit 1
+
+      - name: Health gate on the new revision
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RG="rg-c7ntax-${ENVIRONMENT}"
+          APP="c7ntax-${ENVIRONMENT}"
+          FQDN=$(az containerapp revision show --name "$APP" --resource-group "$RG" --revision "${ENVIRONMENT}-${{ needs.build.outputs.tag }}" --query "properties.fqdn" -o tsv)
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "https://$FQDN/api/health" || true)
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "health gate failed for the new revision"; exit 1
+
+      - name: Shift traffic
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RG="rg-c7ntax-${ENVIRONMENT}"
+          APP="c7ntax-${ENVIRONMENT}"
+          az containerapp ingress traffic set --name "$APP" --resource-group "$RG" \
+            --revision "${ENVIRONMENT}-${{ needs.build.outputs.tag }}" --weight 100 --only-show-errors
+
+      - name: Verify the public endpoint
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RG="rg-c7ntax-${ENVIRONMENT}"
+          APP="c7ntax-${ENVIRONMENT}"
+          FQDN=$(az containerapp show --name "$APP" --resource-group "$RG" --query "properties.configuration.ingress.fqdn" -o tsv)
+          for path in /api/health /; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "https://$FQDN$path")
+            echo "$path -> $code"
+            [ "$code" = "200" ] || exit 1
+          done
+
+      - name: Roll back on failure
+        if: failure()
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RG="rg-c7ntax-${ENVIRONMENT}"
+          APP="c7ntax-${ENVIRONMENT}"
+          if [ -n "${{ steps.previous.outputs.revision }}" ]; then
+            az containerapp ingress traffic set --name "$APP" --resource-group "$RG" \
+              --revision "${{ steps.previous.outputs.revision }}" --weight 100 --only-show-errors
+            echo "traffic returned to ${{ steps.previous.outputs.revision }}"
+          fi

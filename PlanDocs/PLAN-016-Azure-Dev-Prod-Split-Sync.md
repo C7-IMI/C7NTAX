@@ -5,11 +5,11 @@
 
 # Azure Dev/Prod Split & Sync Plan
 
-> **Sequence:** Wave 3 · position 6 of 12 (re-sequenced 2026-10-06) · **Status:** ⬜ Not started — plan + decision record only (§15 recommends Azure; final call pending)
-> **Implemented:** nothing in-repo — no IaC, no container definitions, no deploy pipeline; `.github/workflows` contains only `desktop-build.yml`, so there is no CI that runs typecheck, tests or migrations.
-> **Outstanding:** every phase, plus the CI/CD the repository currently lacks entirely. Note the Prisma workflow: migrations are applied with `db push` in dev and there is no versioned migration history (PLAN-007 PI-01), which has to be fixed as part of this plan rather than after it.
-> **Depends on:** nothing — this is the foundation. **Unblocks:** PLAN-007's AV/CF/OR controls, PLAN-011's hosting/AI services, PLAN-005's update feed.
-> **Next action:** confirm Azure vs AWS, then build dev environment #1 (app + PostgreSQL + Key Vault equivalent) behind a CI pipeline that runs typecheck and tests before deploy.
+> **Sequence:** Wave 3 · position 6 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Packaged and validated — no deployment yet (no subscription attached). §15 recommends Azure; the final call is still the operator's.
+> **Implemented:** the deployment package now exists in-repo — `Dockerfile` + `.dockerignore` (one image serving the API and the built SPA from one origin), `infra/main.bicep` with `params/{dev,prod}.bicepparam` (VNet, NSG, Log Analytics, Key Vault + secrets, ACR, VNet-injected PostgreSQL Flexible Server, Container Apps environment and app, AcrPull/Key Vault role assignments), `infra/env/.env.production.example` (every variable the API reads), `scripts/azure/preflight.mjs`, `scripts/azure/deploy-env.ps1`, `scripts/azure/validate-bicep.mjs`, `.github/workflows/deploy-azure.yml`, `.github/workflows/security.yml`, and the Prisma migration baseline (`apps/api/prisma/migrations/0_init`) that makes `prisma migrate deploy` possible at all.
+> **Outstanding:** create the subscription-side objects (resource groups, deploy identity with federated credentials and role assignments, GitHub environments), run the first deployment, and add the ingress module (Application Gateway v2 with the two listeners, then Front Door Premium + WAF + DDoS Standard) before production goes live. The runbook in `infra/README.md` lists these in order with the exact commands.
+> **Depends on:** nothing in the repository — PLAN-018 (Wave 0) is complete, which is the security prerequisite this plan assumed. **Unblocks:** PLAN-007's AV/CF/OR controls, PLAN-011's hosting/AI services, PLAN-005's update feed.
+> **Next action:** run `node scripts/azure/preflight.mjs`, then `./scripts/azure/deploy-env.ps1 -Environment dev -WhatIf` against a real subscription, and review the `what-if` output before applying.
 
 **Plan Label:** Azure Dev/Prod Split & Sync Plan
 **Status:** ⬜ Not started — plan and decision record only (see the sequence block below).

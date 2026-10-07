@@ -6,8 +6,9 @@
  * from here, so the API and the UI share an origin — which is also what the CSP, the
  * cookie policy and the WebSocket path already assume.
  *
- * Enabled when `SERVE_WEB` is not "false" and the directory exists, so a deployment cannot
- * silently come up without a UI: a missing directory is logged loudly at startup.
+ * Enabled by `SERVE_WEB=true`, or by default when `NODE_ENV=production` and the build is
+ * present, so a deployment cannot silently come up without a UI; a missing directory is
+ * logged loudly at startup.
  */
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import fs from "node:fs";
@@ -25,8 +26,11 @@ export function webDistDir(): string {
 }
 
 export function mountWebApp(app: Express): void {
-  if (process.env.SERVE_WEB === "false") {
-    logger.info("web", "SERVE_WEB=false — the API will not serve the web application");
+  const requested = process.env.SERVE_WEB;
+  const productionDefault = process.env.NODE_ENV === "production" && requested !== "false";
+  if (requested !== "true" && !productionDefault) {
+    // Development keeps Vite as the origin for the SPA; the API stays an API.
+    logger.info("web", requested === "false" ? "SERVE_WEB=false — the API will not serve the web application" : "Not serving the web application (set SERVE_WEB=true, or run with NODE_ENV=production)");
     return;
   }
   const dir = webDistDir();
