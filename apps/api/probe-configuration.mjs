@@ -216,6 +216,19 @@ const viaLegacyRoute = await fetch(`${BASE}/api/system/config/config:portal`, {
 });
 check(viaLegacyRoute.status === 403, `the general key-value route refuses a registry row (${viaLegacyRoute.status})`);
 
+// …and neither may a *read*. The SSO callback parks its hand-off row here — the single-use code
+// and the signing-in user's whole token — so an ungated read was a way to take somebody else's
+// session without ever calling the exchange that exists to consume that code.
+const reservedRead = await get("/system/config/sso:oidc_code");
+check(reservedRead.status === 403, `a service-owned row cannot be read through the general route (${reservedRead.status})`);
+const reservedConnector = await get("/system/config/email_connector:1:oauth");
+check(reservedConnector.status === 403, `nor can a connector's OAuth state (${reservedConnector.status})`);
+const selfServiceRead = await get("/system/config/app_settings");
+check(selfServiceRead.status === 200, `the self-service keys are still readable (${selfServiceRead.status})`);
+const dump = await get("/system/configs");
+check(dump.status === 200 && !Object.keys(dump.data ?? {}).some(k => /^(email_connector:|oauth|sso:|sample_data)/.test(k)),
+  `the administrative dump leaves the service-owned rows out (${Object.keys(dump.data ?? {}).filter(k => /^(email_connector:|oauth|sso:|sample_data)/.test(k)).join(", ") || "none present"})`);
+
 section("Round-tripping a value leaves the store as it was found");
 
 const boardBefore = fieldOf("portal", "defaultBoardId");

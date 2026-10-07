@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { companyWhere, canAccessCompany } from "../middleware/companyScope";
 
 export const inventoryRouter = Router();
 inventoryRouter.use(authenticate);
@@ -11,7 +12,7 @@ inventoryRouter.use(authenticate);
 inventoryRouter.get("/assets", requirePermission(Permission.AssetView), async (req: AuthRequest, res, next) => {
   try {
     const { type, status, companyId, search, category, limit = "50", offset = "0" } = req.query as Record<string, string>;
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { ...companyWhere(req.user) };
     if (type) where.type = type;
     if (status) where.status = status;
     if (category) where.category = category;
@@ -43,7 +44,9 @@ inventoryRouter.get("/assets/:id", requirePermission(Permission.AssetView), asyn
     const asset = await prisma.asset.findUnique({
       where: { id: req.params.id },
     });
-    if (!asset) throw new AppError("Asset not found", 404);
+    // 404 rather than 403: an asset that exists but belongs to another company must not be
+    // distinguishable from one that does not exist.
+    if (!asset || !canAccessCompany(req.user, asset.companyId)) throw new AppError("Asset not found", 404);
     const assignments = await prisma.assetAssignment.findMany({
       where: { assetId: req.params.id },
       orderBy: { checkedOutAt: "desc" },

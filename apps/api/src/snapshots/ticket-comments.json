@@ -5300,5 +5300,16 @@
     "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
     "createdAt": "2026-10-07T22:27:37.968Z",
     "updatedAt": "2026-10-07T22:27:37.968Z"
+  },
+  {
+    "id": "b25d747d-a3df-49e4-9c66-6123b2183c05",
+    "body": "Deleted the stale mail profile and let autodiscover rebuild it. Outlook connected immediately.",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "44544811-3b87-42ce-a745-0506b3c996ae",
+    "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "createdAt": "2026-10-07T23:01:51.798Z",
+    "updatedAt": "2026-10-07T23:01:51.798Z"
   }
 ]

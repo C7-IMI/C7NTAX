@@ -147,14 +147,37 @@ const SELF_SERVICE_CONFIG_KEYS = new Set(["app_settings", "session_timeout", "de
 const RESERVED_CONFIG_PREFIXES = ["email_connector:", "oauth", "sso:", "sample_data"];
 const RESERVED_CONFIG_PATTERN = /secret|token|password|credential|apikey|api_key|private_?key/i;
 
-function assertConfigWriteAllowed(user: AuthRequest["user"], key: string): void {
-  if (RESERVED_CONFIG_PREFIXES.some(p => key.startsWith(p)) || RESERVED_CONFIG_PATTERN.test(key)) {
-    throw new AppError("That setting is managed by the system and cannot be edited here", 403);
+/** True for a row that no HTTP caller may see, administrator included. */
+function isReservedConfigKey(key: string): boolean {
+  return RESERVED_CONFIG_PREFIXES.some(p => key.startsWith(p)) || RESERVED_CONFIG_PATTERN.test(key);
+}
+
+/**
+ * One policy for reading and writing a `SystemConfig` row by name.
+ *
+ * Read used to be wide open, and that mattered more than it looks: the SSO callback parks the
+ * hand-off row here — the single-use code *and* the signing-in user's whole token — so any signed
+ * in account could poll `/api/system/config/sso:oidc_code` while somebody was signing in and take
+ * the token, never calling the exchange that exists to consume it. The reserved rows are therefore
+ * refused to everyone, reads included; a service reads them through Prisma, not through HTTP.
+ *
+ * The write side had this gate already, so the two share it rather than drifting apart — which is
+ * exactly how the read side came to be missing it.
+ */
+function assertConfigAccess(user: AuthRequest["user"], key: string, action: "read" | "write"): void {
+  if (isReservedConfigKey(key)) {
+    throw new AppError(
+      action === "read"
+        ? "That setting is managed by the system and is not readable here"
+        : "That setting is managed by the system and cannot be edited here",
+      403,
+    );
   }
-  // The registry's own rows are written through /api/configuration, which checks the section's
-  // permission, so they are not self-service here even for the keys an administrator may change.
+  // The registry's own rows are read and written through /api/configuration, which checks the
+  // section's permission, so they are not self-service here even for the keys an administrator may
+  // change.
   if (key.startsWith("config:")) {
-    throw new AppError("Use the configuration screen to change that setting", 403);
+    throw new AppError("Use the configuration screen for that setting", 403);
   }
   const isAdmin = !!user?.permissions?.includes(Permission.SystemConfig);
   if (!isAdmin && !SELF_SERVICE_CONFIG_KEYS.has(key)) {
@@ -164,6 +187,7 @@ function assertConfigWriteAllowed(user: AuthRequest["user"], key: string): void 
 
 systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
   try {
+    assertConfigAccess(req.user, String(req.params.key), "read");
     const config = await prisma.systemConfig.findUnique({ where: { key: req.params.key } });
     if (!config) { res.json({ key: req.params.key, value: null }); return; }
     res.json({ key: config.key, value: JSON.parse(config.value as string) });
@@ -172,7 +196,7 @@ systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
 
 systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
   try {
-    assertConfigWriteAllowed(req.user, String(req.params.key));
+    assertConfigAccess(req.user, String(req.params.key), "write");
     const config = await prisma.systemConfig.upsert({
       where: { key: req.params.key },
       create: { key: req.params.key, value: JSON.stringify(req.body.value) },
@@ -182,12 +206,16 @@ systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
-// The full config dump is an administrative view: it contains connector and SSO state.
+// The full config dump is an administrative view, and the service-owned rows are left out of it
+// even for an administrator: an SSO hand-off row carries a live token for two minutes, and an
+// administrator reading one is an administrator who can be somebody else. Nothing in the SPA reads
+// this route; what remains is the non-secret state an operator may want in one response.
 systemRouter.get("/configs", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try {
     const configs = await prisma.systemConfig.findMany();
     const map: Record<string, unknown> = {};
     for (const c of configs) {
+      if (isReservedConfigKey(c.key)) continue;
       try { map[c.key] = JSON.parse(c.value as string); } catch { map[c.key] = c.value; }
     }
     res.json(map);

@@ -142,7 +142,7 @@ Everything below was applied, typechecked, and probed live. `◐` means the dang
 
 | Item | Status | What shipped | What is still open |
 |---|---|---|---|
-| P0-1 | ◐ | `GET /system/configs` now requires `SystemConfig`; both `PATCH` handlers reject reserved prefixes (`email_connector:`, `oauth`, `sso:`, `sample_data`) and any key matching `/secret\|token\|password\|credential\|apikey\|private_?key/i`. | A wholesale `requirePermission` on the router would have broken the app: `/system/config/:key` (the app-wide `useContextMenusEnabled` read), `/system/changelog` (What's New), `/system/audit-logs` (every ticket's Audit Trail tab) and `/system/failover/status` are read by the SPA for *any* signed-in user, and `app_settings`/`session_timeout`/`default_landing_page` are legitimately self-service. Decide per remaining sub-route who may read it. |
+| P0-1 | ✅ | `GET /system/configs` now requires `SystemConfig` and leaves the service-owned rows out of the response altogether; `PATCH /config/:key` and `GET /config/:key` share **one** policy (`assertConfigAccess`) that refuses reserved prefixes (`email_connector:`, `oauth`, `sso:`, `sample_data`) and any key matching `/secret\|token\|password\|credential\|apikey\|private_?key/i` to everyone, and lets a non-administrator read or write only the three self-service keys. The read side was the missing half and it mattered: the SSO callback parks its hand-off row here — the single-use code *and* the signing-in user's whole token — so an ungated read let any signed-in account poll it and take the token without ever calling the exchange that exists to consume that code. | Closed 2026-10-07 (see Appendix C). No decision left open: the self-service keys stay readable by every signed-in account because three screens depend on them, and everything else is administrative. |
 | P0-2 | ✅ | 101 new guards across 13 routers (265 total, from 164) mapping every route to the permission it was designed for, including four the audit had missed (asset inventory, time off, the Outlook add-in) and the `/system` admin routes; the SPA nav declares the permission each page needs and filters against the role's set; a denied action surfaces the API message as a toast. `scripts/check-route-guards.mjs` (`pnpm guard:routes`) walks the router stack and reports **322 routes, 293 guarded, 0 violations** with a documented exemption list. | Three SPA-required `/system` reads stay open by decision (`config/:key`, `changelog`, `audit-logs`) — see P0-1. |
 | P0-3 | ✅ | `escapeHtml` (pre-existing, in `services/emailHtml.ts`) exported and applied to every interpolated value in the invoice template: line-item descriptions, payment method/reference, invoice number, company name/email, currency, status, status label. | — |
 | P0-4 | ◐ | `RoleManage` required for `role`/`roleId`/`permissions` changes; changing your **own** role or permissions (including self-deactivation) is refused; creating or updating a user into an administrative role (one carrying `role:manage` or `system:config`) requires `RoleManage`; `roleId` accepted as an identifier. | No "grant ceiling" (a `RoleManage` holder can still hand out permissions they do not hold). That is intentional for now — `Admin` needs it. |
@@ -190,7 +190,7 @@ Everything below was applied, typechecked, and probed live. `◐` means the dang
 | H3 | **Session cookies instead of `localStorage`** — the `sessionAuth` middleware and `c_session` cookie already exist but are unmounted (PLAN-001). HttpOnly + Secure + SameSite removes the "any XSS = takeover" property that makes A3 severe. | A3/A9. |
 | H4 | **Sanitize at render too** (`DOMPurify.sanitize` in the rich-text render path, upgraded), keeping the server sanitizer as the primary control. | Defence in depth for the one `innerHTML` sink; also handles HTML written before the sanitizer existed. |
 | H5 | **Company scoping as middleware**, not per-route discipline: a helper that every company-scoped query must pass through, plus the route-guard test from P0-2 extended to assert scoping. | A2's root cause is "each route remembers or doesn't". |
-| H5 | ◐ **Applied, not yet universal**: `middleware/companyScope.ts` (`isUnscoped`, `companyWhere`, `ticketCompanyWhere`, `canAccessCompany`) is in use across clients/contacts, billing and the eight reporting endpoints, following the `tickets/index.ts` convention (no company on the account = internal = unrestricted; a company = scoped; single records answer 404 not 403). | Extend it to the remaining company-scoped modules as they are touched, and add the scoping assertions to the route-guard check so a new route cannot forget. |
+| H5 | ◐ **Applied, not yet universal**: `middleware/companyScope.ts` (`isUnscoped`, `companyWhere`, `ticketCompanyWhere`, `canAccessCompany`) is in use across clients/contacts, billing, the eight reporting endpoints, and — from the 2026-10-07 audit round — **projects, quotes, inventory assets, schedule, the knowledge base and the Outlook add-in**, following the `tickets/index.ts` convention (no company on the account = internal = unrestricted; a company = scoped; single records answer 404 not 403). Writes that name a company check it too, so `companyId` in a request body is a request rather than an authority. | Extend it to the remaining company-scoped modules as they are touched (procurement, contracts, checklists, surveys, CRM opportunities), and add the scoping assertions to the route-guard check so a new route cannot forget. The assertions for the modules fixed in this round live in `probe-scoping.mjs`, which is the pattern to copy. |
 | H6 | **Egress audit log** — record every outbound URL the server fetches (with result) so SSRF attempts are visible. | SOC 2 + incident response. |
 | H6 | ✅ **Applied with H1**: the helper logs one line per attempt (`allowed … request to host`, then `-> status in Xms`, `redirected to …`, or the failure), so an SSRF attempt is visible in the log with the URL, the purpose and the outcome. | Consider promoting these lines from the log into a queryable audit row during the SOC 2 work. |
 
@@ -260,3 +260,65 @@ pnpm audit --json > $env:TEMP\audit-full.json
 # 4. current effective posture
 pnpm why <package> -r --depth 3
 ```
+
+## Appendix C — audit round 2026-10-07
+
+A repository-wide audit (functional *and* security) followed by a fresh run against the advisory
+database. What was found, what was fixed, and what is deliberately left:
+
+### Dependency advisory re-run
+
+`pnpm audit` reports **4 advisories, 0 in production**, all four already accepted in
+`security/audit-baseline.json` with reasons:
+
+| Package | Severity | Reachable through | Fixed in | State |
+|---|---|---|---|---|
+| `braces` | high | Tailwind's file watcher (`chokidar`, `fast-glob`) on the development machine | no release published | accepted — dev only, parses our own source |
+| `http-cache-semantics` | high | `@electron/get` on the build machine while downloading Electron | no release published | accepted — never runs in the shipped product |
+| `sprintf-js` | moderate | `global-agent` → `roarr` → `@electron/get` (`argparse` also pulls it) | no release published (package abandoned) | accepted — build machine only |
+| `postcss-selector-parser` | moderate | Tailwind 3's 6.x line | 7.1.6 | accepted — 7.x is a breaking API change; revisit with the Tailwind 4 upgrade |
+
+There is nothing left to upgrade safely: the two with a published fix are reachable only by moving a
+dependency across a **major** version (Tailwind 4, Electron 35+), which is exactly the kind of change
+this document's ordering reserves for its own PR. Everything a patch or minor bump could fix has
+already been fixed by the overrides.
+
+**The overrides were one toolchain away from being silently ignored.** `packageManager` pins pnpm
+9.1.0, which reads `overrides` only from the root `pnpm` field in `package.json`; pnpm 10+ reads them
+only from `pnpm-workspace.yaml`. Measured: a wrapper pnpm 11.20.0 prints *"the pnpm field … was
+ignored"* before handing over to the pinned 9.1.0, which does apply them — so the warning is
+misleading here and the tree is fine. It stops being misleading the moment something resolves without
+the pin: the same override in a project with no `packageManager` did nothing, and `qs` fell from the
+6.16.0 floor to 6.11.0. The twelve floors are therefore now declared in **both** files, re-resolving
+the repository with them in `pnpm-workspace.yaml` produced a byte-identical lockfile, and
+`scripts/audit-baseline.mjs` fails on drift between the two lists — a floor that only one package
+manager reads is not a floor.
+
+### Application findings
+
+| # | Severity | Finding | Action |
+|---|---|---|---|
+| 1 | HIGH | `GET /system/config/:key` had no gate: any signed-in account could read `sso:oidc_code`, whose value is the hand-off record — the single-use code **and** the signing-in user's whole token, live for two minutes. An administrator signing in through SSO could be impersonated by anyone polling the key. The route-guard exemption claimed the route was "guarded per key", which was true of `PATCH` and false of `GET`. | **Fixed** — one shared policy for read and write; reserved rows are refused to everyone and omitted from the `/system/configs` dump. `probe-configuration` grew from 87 to 91 assertions. |
+| 2 | HIGH | `GET /api/cloudconnect` returned the raw rows including `credentials` — cleartext M365 client secrets, ConnectWise key pairs, AWS `secretAccessKey` — to any caller with `IntegrationView`, which **Technicians** hold and `IntegrationManage` they do not. | **Fixed** for the role that should not have it: the projection withholds `credentials` from callers without `IntegrationManage` and reports `hasCredentials` instead; the manage-gated UI that edits them is unaffected, and the CloudConnect fix dialog now says so instead of opening a dialog whose save would be refused. `probe-cloudconnect-status` grew from 28 to 34 assertions. |
+| 3 | HIGH | Cross-company writes: `POST /projects`, `POST /quotes`, `POST /schedule` and the add-in's `POST /tickets` accepted a `companyId` from the request body, and `client_admin`/`client_user` hold the permissions to reach them. | **Fixed** — the body is checked against the caller's own company (`canAccessCompany`), the add-in pins a scoped account to its own client and refuses another up front with a 403 rather than a per-message "could not be created", and a scoped account is offered only its own client in the pane's picker. Assertions added to `probe-scoping` and `probe-outlook-addin`. |
+| 4 | MEDIUM | Cross-client reads: `GET /projects`, `/projects/:id`, `/inventory/assets`, `/inventory/assets/:id`, `/schedule` and `/quotes` had no company filter — the `companyId` query parameter was the caller's choice and absent by default, so a client-scoped account could enumerate every client's projects, assets, schedule and quote pricing. | **Fixed** — `companyWhere` merged into each query, `canAccessCompany` on each detail route (404, not 403). `probe-scoping` grew from 13 to 26 assertions. |
+| 5 | MEDIUM | The knowledge base served unpublished and internal articles to `KBView`, which client roles hold: `GET /kb/:slug` ignored `status` and `visibility`, and `GET /kb/drafts` and `?status=`/`?visibility=` were open to everyone with the permission — draft bodies carry the review note and the ticket they were drafted from. | **Fixed** for company-scoped accounts (staff unchanged): drafts are empty, the list ignores a request for drafts or internal articles, and a single unpublished/internal article answers 404. Assertions added to `probe-scoping`. |
+
+### Checked and clean
+
+Parameterised SQL only (the two `$queryRaw` call sites use tagged templates); no command injection
+(the `exec`/`execSync` calls use fixed `__dirname` paths and the seeding scripts are not routes); the
+invoice HTML escapes every interpolated value; path traversal is confined in the attachment and
+installer downloads; every server-side fetcher goes through the egress policy; no secrets are
+committed (only placeholders in the `.env` examples); session handling is HttpOnly + `SameSite=strict`
++ double-submit CSRF with hashed tokens and `timingSafeEqual`; the test bypass refuses production and
+non-loopback; portal sign-in uses CSPRNG codes, hashed at rest, attempt-capped and scoped.
+
+### Listed, not fixed — needs a decision or a wider change
+
+| Item | Why it is not fixed yet |
+|---|---|
+| **Report colour values reach an HTML sink unescaped.** `reportChartSvg.ts` / `reportOutput.ts` interpolate `style.color`, `style.background` and `border.color` into SVG attributes and `style="…"` strings, which are rendered through `dangerouslySetInnerHTML` and `document.write`; a saved report template accepts any string for a colour. | Exploitation depends on CSP not being inherited by the `window.open("", "_blank")` document — confidence is below the reporting bar. The fix is to validate colour values at save time (the registry already does this for accent colours) and escape at render; it touches the report renderer, so it belongs with the reporting work rather than an audit commit. |
+| **`cloudconnect` credentials are stored in cleartext.** | `email-connectors` stores `*Encrypted` columns and maps through a `toPublic()` view; aligning integrations with that is a schema change plus a migration, and the fix above already removes the read path that made it urgent. |
+| **The remaining company-scoped modules** (procurement, contracts, checklists, surveys, CRM opportunities). | Same fix as finding 4, but each needs its own probe assertions to be trustworthy; doing them in one pass would be a large, hard-to-review change. Recorded as the H5 remainder. |
+| **Majors for the two fixable advisories** (Tailwind 4, Electron 35+). | Both are behaviour-changing upgrades with their own verification (the desktop installer has to be rebuilt and launched); they are Phase 1's normal path, not an audit commit. |

@@ -52,12 +52,38 @@ async function main() {
 
   await prisma.integration.deleteMany({ where: { name: { startsWith: "Probe live " } } });
 
+  // ── Stored credentials are for the people who can change them ──────────────
+  // IntegrationView is held by technicians, IntegrationManage is not, so the list used to hand a
+  // technician the M365 client secret and the ConnectWise key pair for every client.
+  console.log("\nintegration secrets are only sent to an account that may manage them");
+  const technician = await signIn("persona.tech@c7ntax.local");
+  check(technician.status === 200, `a technician (view-only) signed in (${technician.status})`);
+
   /** New integrations default to switched off, so the probe enables them the way the page does. */
   const createEnabled = async (name, credentials) => {
     const created = await call("POST", "/api/cloudconnect", { token: admin.token, body: { kind: "quickbooks", name, credentials, settings: {} } });
     if (created.data?.id) await call("PATCH", `/api/cloudconnect/${created.data.id}`, { token: admin.token, body: { enabled: true } });
     return created;
   };
+
+  // A row with a secret in it, so "the value is present" and "the value is withheld" are both
+  // answerable rather than both reading as empty.
+  const seeded = await createEnabled(`Probe live secrets ${STAMP}`, { clientId: "probe", clientSecret: "probe-secret-value" });
+  check(seeded.status === 201, `an integration holding a secret exists (${seeded.status})`);
+
+  const asManager = await call("GET", "/api/cloudconnect", { token: admin.token });
+  const managerRow = (asManager.data?.data || []).find(r => r.id === seeded.data?.id);
+  check(
+    managerRow?.credentials?.clientSecret === "probe-secret-value",
+    `the account that may manage it still receives the value (${managerRow?.credentials?.clientSecret ? "present" : "absent"})`,
+  );
+
+  const asViewer = await call("GET", "/api/cloudconnect", { token: technician.token });
+  const viewerRow = (asViewer.data?.data || []).find(r => r.id === seeded.data?.id);
+  check(asViewer.status === 200, `a view-only account can still list integrations (${asViewer.status})`);
+  check(!!viewerRow && !("credentials" in viewerRow), "but the row carries no credentials object");
+  check(viewerRow?.hasCredentials === true, "and says instead that credentials are set");
+  await prisma.integration.deleteMany({ where: { id: seeded.data?.id } });
 
   console.log("\nan incomplete connection is never called at all");
   const incomplete = await createEnabled(`Probe live incomplete ${STAMP}`, { clientId: "abc", clientSecret: "" });

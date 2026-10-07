@@ -173,6 +173,32 @@ async function main() {
   const optionsDenied = await call("GET", "/api/outlook-addin/options", { token: readonly.token });
   check(optionsDenied.status === 403, `an account that cannot create tickets is refused (${optionsDenied.status})`);
 
+  console.log("\na client-scoped account can only file for its own client");
+  const scopedUser = await signIn("persona.clientadmin@c7ntax.local");
+  const scopedOptions = await call("GET", "/api/outlook-addin/options", { token: scopedUser.token });
+  const ownClients = scopedOptions.data?.clients || [];
+  check(scopedOptions.status === 200, `a client-scoped account can open the pane (${scopedOptions.status})`);
+  check(ownClients.length === 1, `and is offered exactly its own client (${ownClients.length})`);
+  const foreignCompany = (options.data.clients || []).find(c => !ownClients.some(own => own.id === c.id));
+  if (foreignCompany) {
+    const hijack = await call("POST", "/api/outlook-addin/tickets", {
+      token: scopedUser.token,
+      body: {
+        boardId: board.id,
+        emails: [{
+          internetMessageId: `<addin-scope-${STAMP}@probe.invalid>`,
+          from: `someone@${domain}`,
+          subject: `Addin probe ${STAMP} — scoped escalation`,
+          bodyText: "This must not be filed against another client.",
+          companyId: foreignCompany.id,
+        }],
+      },
+    });
+    check(hijack.status === 403, `filing for another client is refused (${hijack.status})`);
+    const leaked = await prisma.ticket.count({ where: { title: { contains: `Addin probe ${STAMP} — scoped escalation` } } });
+    check(leaked === 0, `and nothing was created (${leaked} tickets)`);
+  }
+
   console.log("\nwhat the user reviewed is what gets filed");
   const filed = await call("POST", "/api/outlook-addin/tickets", {
     token: admin.token,

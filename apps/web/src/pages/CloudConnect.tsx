@@ -273,6 +273,13 @@ export function CloudConnectPage() {
   // ── Error Fix Dialog handlers ──
 
   const openFixDialog = (integration: Integration, fieldErrors: FieldError[]) => {
+    // A view-only caller cannot save a fix, and the list no longer carries the stored values to
+    // prefill from, so say that rather than opening a dialog whose save is guaranteed to be
+    // refused by the API.
+    if (!canManageIntegrations) {
+      toast.error("Your role can view integrations but not change their credentials");
+      return;
+    }
     // A failure the server could name gives an exact field list. When it could not (a rejected
     // password rather than a missing one), every configured field becomes editable — the dialog's
     // whole purpose is to fix the connection here, and "all errors resolved" on a connection that

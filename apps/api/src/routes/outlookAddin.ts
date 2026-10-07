@@ -30,6 +30,7 @@ import {
 import type { ParsedEmail } from "@C7NTAX/email";
 import crypto from "crypto";
 import { configFlag } from "../services/appSettings";
+import { companyWhere } from "../middleware/companyScope";
 
 export const outlookAddinRouter = Router();
 
@@ -113,6 +114,34 @@ function reviewedFrom(email: AddinEmail): ReviewedEmailFields {
 }
 
 /**
+ * The reviewed fields, with the client pinned for a company-scoped account.
+ *
+ * The sender's domain is a hint and the request body is a request — neither is an authority — so an
+ * account scoped to one client always files under that client. Without this, a client contact could
+ * forward a message from another company and open a ticket against them, and the add-in's own
+ * domain matching would do it without the body even naming a client.
+ */
+function scopedReviewed(user: AuthRequest["user"], email: AddinEmail): ReviewedEmailFields {
+  const fields = reviewedFrom(email);
+  if (user?.companyId) fields.companyId = user.companyId;
+  return fields;
+}
+
+/**
+ * Refuse a client a scoped account cannot file for, before anything is attempted.
+ *
+ * Checked across the whole request rather than per message: the per-message handler reports a
+ * failure as "the ticket could not be created", which would tell the person a plausible story about
+ * a broken connection instead of the truth about their permissions.
+ */
+function assertScopedCompanies(user: AuthRequest["user"], emails: AddinEmail[]): void {
+  if (!user?.companyId) return;
+  if (emails.some(e => e.companyId && e.companyId !== user.companyId)) {
+    throw new AppError("That client is not one you can file tickets for", 403);
+  }
+}
+
+/**
  * Boards and clients for the pane's pickers.
  *
  * Not `/api/boards` and `/api/clients`: filing a ticket does not require the permissions those
@@ -120,8 +149,12 @@ function reviewedFrom(email: AddinEmail): ReviewedEmailFields {
  * could not file anything. This returns only what the pickers need, and only to somebody who can
  * create a ticket.
  */
-outlookAddinRouter.get("/options", requirePermission(Permission.TicketCreate), async (_req: AuthRequest, res, next) => {
+outlookAddinRouter.get("/options", requirePermission(Permission.TicketCreate), async (req: AuthRequest, res, next) => {
   try {
+    // A company-scoped account is offered only its own client in the picker: filing against
+    // another one is the write the scope exists to prevent, and offering it would only be an
+    // invitation to try. Internal staff are unscoped, so their picker is unchanged.
+    const scope = companyWhere(req.user);
     const [boards, clients] = await Promise.all([
       prisma.serviceBoard.findMany({
         where: { isActive: true },
@@ -129,6 +162,7 @@ outlookAddinRouter.get("/options", requirePermission(Permission.TicketCreate), a
         select: { id: true, name: true },
       }),
       prisma.company.findMany({
+        where: scope.companyId ? { id: scope.companyId } : {},
         orderBy: { name: "asc" },
         take: 500,
         select: { id: true, name: true },
@@ -188,6 +222,7 @@ outlookAddinRouter.post("/tickets", requirePermission(Permission.TicketCreate), 
     if (!boardId) throw new AppError("boardId required");
     if (!Array.isArray(emails) || emails.length === 0) throw new AppError("emails array required");
     if (mode !== "individual" && mode !== "bundled") throw new AppError("mode must be individual or bundled");
+    assertScopedCompanies(req.user, emails);
 
     const seen = await getSeen();
     const created: string[] = [];
@@ -220,7 +255,7 @@ outlookAddinRouter.post("/tickets", requirePermission(Permission.TicketCreate), 
         // A person selected this message and pressed Create, so an out-of-office reply is
         // something they meant to file rather than something a connector should filter.
         ignoreAutoReplies: false,
-        reviewed: reviewedFrom(parent),
+        reviewed: scopedReviewed(req.user, parent),
       });
 
       if (!ticketId) {
@@ -272,7 +307,7 @@ outlookAddinRouter.post("/tickets", requirePermission(Permission.TicketCreate), 
       try {
         const ticketId = await createTicketFromEmail(boardId, toParsedEmail(input, `addin-${i}`), {
           ignoreAutoReplies: false,
-          reviewed: reviewedFrom(input),
+          reviewed: scopedReviewed(req.user, input),
         });
         if (!ticketId) {
           skipped.push(input.subject || key);

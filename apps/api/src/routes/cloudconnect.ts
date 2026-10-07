@@ -185,8 +185,26 @@ cloudConnectRouter.get("/types", requirePermission(Permission.IntegrationView), 
 });
 
 // ── List configured integrations ─────────────────────────────────────────
-cloudConnectRouter.get("/", requirePermission(Permission.IntegrationView), async (_req, res, next) => {
+/**
+ * An integration row without its secrets, for a caller who may look but not manage.
+ *
+ * `credentials` is stored in clear text and hydrated straight into the connector, and
+ * `IntegrationView` is held by technicians as well as by managers — so this list was handing every
+ * technician the M365 client secret, the ConnectWise public/private key pair and the AWS
+ * `secretAccessKey` for every client in the provider. The values are only ever *used* by the
+ * server, and only ever *entered* through the manage-gated write routes, so a reader who cannot
+ * write has no use for them: `hasCredentials` is what a read-only screen actually needs, and the
+ * fix dialog that does need the values is on the manage-gated path.
+ */
+function toPublicIntegration(row: { credentials?: unknown }, canManage: boolean) {
+  if (canManage) return row;
+  const { credentials, ...rest } = row as Record<string, unknown> & { credentials?: Record<string, unknown> };
+  return { ...rest, hasCredentials: Object.keys(credentials ?? {}).length > 0 };
+}
+
+cloudConnectRouter.get("/", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
+    const canManage = !!req.user?.permissions?.includes(Permission.IntegrationManage);
     const rows = await prisma.integration.findMany({ orderBy: { createdAt: "desc" } });
     for (const row of rows) {
       hub.register({
@@ -199,7 +217,7 @@ cloudConnectRouter.get("/", requirePermission(Permission.IntegrationView), async
         lastSyncAt: row.lastSyncAt ?? undefined,
       });
     }
-    res.json({ data: rows });
+    res.json({ data: rows.map(row => toPublicIntegration(row, canManage)) });
   } catch (e) { next(e); }
 });
 

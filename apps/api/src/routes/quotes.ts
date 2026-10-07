@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { AppError } from "../middleware/errorHandler";
 import { Permission, InvoiceStatus } from "@C7NTAX/shared";
 import { configFlag } from "../services/appSettings";
+import { companyWhere, canAccessCompany } from "../middleware/companyScope";
 
 // Backlog item 1 — Quotes & service catalog. Additive, gated by QUOTES_ENABLED.
 export const quotesRouter = Router();
@@ -17,7 +18,10 @@ quotesRouter.use(authenticate);
 quotesRouter.get("/", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {
   try {
     const { companyId, status } = req.query as Record<string, string>;
-    const where: Record<string, unknown> = {};
+    // A company-scoped account sees its own quotes and nothing else, whatever it asks for — the
+    // filter below is the caller's *choice*, and this is the floor under it. Internal staff get {}
+    // and are unaffected.
+    const where: Record<string, unknown> = { ...companyWhere(req.user) };
     if (companyId) where.companyId = companyId;
     if (status) where.status = status;
     const quotes = await prisma.quote.findMany({
@@ -32,6 +36,8 @@ quotesRouter.post("/", requirePermission(Permission.InvoiceCreate), async (req: 
   try {
     const { companyId, title, contactId, notes, taxRate = 0, lineItems = [] } = req.body;
     if (!companyId || !title) throw new AppError("companyId and title required");
+    // A scoped account may only quote for its own company, whatever the body says.
+    if (!canAccessCompany(req.user, companyId)) throw new AppError("You can only create quotes for your own company", 403);
     if (!Array.isArray(lineItems) || lineItems.length === 0) throw new AppError("at least one line item required");
     const quoteNumber = `Q-${Date.now().toString(36).toUpperCase()}`;
     const items = lineItems.map((li: { description?: string; quantity?: number; unitPrice?: number; productId?: string }, i: number) => {
@@ -57,6 +63,10 @@ quotesRouter.patch("/:id/status", requirePermission(Permission.InvoiceCreate), a
     const allowed = ["draft", "sent", "accepted", "rejected"];
     const status = String(req.body.status || "");
     if (!allowed.includes(status)) throw new AppError("invalid status");
+    const existing = await prisma.quote.findUnique({ where: { id: req.params.id }, select: { companyId: true } });
+    // 404 rather than 403: an id that exists but is not yours should not be distinguishable from an
+    // id that does not exist.
+    if (!existing || !canAccessCompany(req.user, existing.companyId)) throw new AppError("Quote not found", 404);
     const quote = await prisma.quote.update({ where: { id: req.params.id }, data: { status } });
     res.json(quote);
   } catch (e) { next(e); }
@@ -65,7 +75,7 @@ quotesRouter.patch("/:id/status", requirePermission(Permission.InvoiceCreate), a
 quotesRouter.post("/:id/convert", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
   try {
     const quote = await prisma.quote.findUnique({ where: { id: req.params.id }, include: { lineItems: { orderBy: { sortOrder: "asc" } } } });
-    if (!quote) throw new AppError("Quote not found", 404);
+    if (!quote || !canAccessCompany(req.user, quote.companyId)) throw new AppError("Quote not found", 404);
     if (quote.status === "converted") throw new AppError("Quote already converted");
     const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
     const dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);

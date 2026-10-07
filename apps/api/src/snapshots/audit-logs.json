@@ -186153,6 +186153,18 @@
     "createdAt": "2026-10-07T22:58:56.324Z"
   },
   {
+    "id": "1d9fc001-f021-4f1c-b64b-8a37f9eac2c6",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:50.275Z"
+  },
+  {
     "id": "11e6669f-6ddf-4e07-8c0b-155a98c1b4f3",
     "action": "dashboard:update",
     "entity": "dashboard",
@@ -186308,5 +186320,3091 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T22:58:57.070Z"
+  },
+  {
+    "id": "7a60e7e2-62cc-44de-b678-b962ed194b63",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "5179a408-f003-4285-a49f-52dfe2e78d84",
+    "changes": {
+      "label": "Probe vault muyppjul edited",
+      "password": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:52.730Z"
+  },
+  {
+    "id": "652aec49-1782-493f-b3c1-61c7a2e1958a",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "5179a408-f003-4285-a49f-52dfe2e78d84",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:52.749Z"
+  },
+  {
+    "id": "b9a021fd-dbbc-4d0f-b679-c02c1cafcd77",
+    "action": "kumo_documents:create",
+    "entity": "kumo_documents",
+    "entityId": "documents",
+    "changes": {
+      "title": "Probe doc muyppjul",
+      "content": "first revision"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:52.781Z"
+  },
+  {
+    "id": "f517b54c-4684-431a-b7aa-c874601c85b1",
+    "action": "kumo_documents:update",
+    "entity": "kumo_documents",
+    "entityId": "9d6e6214-4d2a-405d-a283-3a30e825d39e",
+    "changes": {
+      "content": "second revision",
+      "changeLog": "added the runbook step"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:52.786Z"
+  },
+  {
+    "id": "0f58d65b-475e-423e-99f9-92fddbee7445",
+    "action": "kumo_passwords:delete",
+    "entity": "kumo_passwords",
+    "entityId": "5179a408-f003-4285-a49f-52dfe2e78d84",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:52.796Z"
+  },
+  {
+    "id": "c572e732-1591-4fd6-b724-2311d5d54483",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault shared muyppjul",
+      "category": "probe",
+      "password": "***",
+      "username": "probe2"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:52.821Z"
+  },
+  {
+    "id": "82cb05a8-d05f-4151-b6c2-f71c5d4c3704",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "137b6de6-9152-4bce-8022-e2506f94a2ad",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:52.828Z"
+  },
+  {
+    "id": "667a74a0-4ccd-4d96-a7b3-6d21f0895110",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "offboard",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:53.617Z"
+  },
+  {
+    "id": "1b8e14fc-9c42-46e1-a7b7-413c3e1a0745",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "9cafba3e-689e-4889-9d32-67529f8c2234",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:50.946Z"
+  },
+  {
+    "id": "ecb42ea8-e462-41ce-b332-a9d925b406bd",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "0f87b23b-7c89-4949-a590-3f09da9f55d2",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:50.998Z"
+  },
+  {
+    "id": "f721ca98-405e-4d11-894b-96348a1ec828",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault muyppjul",
+      "category": "probe",
+      "password": "***",
+      "username": "probe"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:01:52.713Z"
+  },
+  {
+    "id": "6afb1d32-0ddb-4852-aeb9-1e96b5e5208f",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:05:04.394Z"
+  },
+  {
+    "id": "73322161-41ca-4b49-8673-c4fa47acb6d1",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "services",
+    "changes": {
+      "name": "ProbeSocial muyptny9",
+      "enabled": true,
+      "category": "other",
+      "description": "probe",
+      "monitorEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:05:05.031Z"
+  },
+  {
+    "id": "14ffb610-ccee-4d35-9ac4-b3d85da0156b",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "e0b4c0bb-22f3-416f-8884-da2ff8674120",
+    "changes": {
+      "endTime": "2026-10-06T02:00:00.000Z",
+      "startTime": "2026-10-06T00:00:00.000Z",
+      "description": "Evening work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:07:01.385Z"
+  },
+  {
+    "id": "32f6931b-e97d-48c1-a29d-e5dc465efbfb",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "9db53e2b-0f4d-4bc2-8bfe-19fd2e70b348"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:07:01.478Z"
+  },
+  {
+    "id": "afa702fb-8330-4fd3-baed-e3cbf46c83a4",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "9db53e2b-0f4d-4bc2-8bfe-19fd2e70b348"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:07:01.513Z"
+  },
+  {
+    "id": "95bb40e6-7425-4341-9187-2a9539c9a2cc",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "9db53e2b-0f4d-4bc2-8bfe-19fd2e70b348"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:07:01.527Z"
+  },
+  {
+    "id": "e041e62d-de50-4663-a29f-381f8264e789",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "5b3ef6b8-13f0-46b3-88eb-7625849c3fee",
+    "changes": {
+      "reason": "Wrong period"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:07:01.579Z"
+  },
+  {
+    "id": "7977e6fc-2ab3-4d88-91a8-9588b88186b6",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "9db53e2b-0f4d-4bc2-8bfe-19fd2e70b348"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:07:01.648Z"
+  },
+  {
+    "id": "2cbe9dbd-e2e9-4a1a-8ee5-ab8cc1a59946",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "7abb8d19-8ec0-40ff-98bf-3e5f7dc2886f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:07:01.678Z"
+  },
+  {
+    "id": "63ed0031-0616-4b4a-b531-f1a014faf953",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "9db53e2b-0f4d-4bc2-8bfe-19fd2e70b348"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:07:01.708Z"
+  },
+  {
+    "id": "ca680d12-91d4-4b8a-bde7-11a24c6e854e",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "0155c6a7-aec4-4198-9b21-41dcb9c6b841",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:46.877Z"
+  },
+  {
+    "id": "86947ca9-b7b5-4a4f-ad72-896f9d497644",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "16d81b0d-2de8-4600-b429-fe8e5b419dbd",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:46.945Z"
+  },
+  {
+    "id": "cb5e8385-a5f4-4678-98c6-dffb8aa72e99",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "16d81b0d-2de8-4600-b429-fe8e5b419dbd",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:47.007Z"
+  },
+  {
+    "id": "fff7d72c-bf65-4d93-b241-d52a1e6f6381",
+    "action": "kb:create",
+    "entity": "kb",
+    "entityId": "f11d94f3-a610-4e5d-ad51-3eb046bb6741",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:47.909Z"
+  },
+  {
+    "id": "447aed24-71f1-491f-b046-c291f65403a5",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "f5c32db1-8a77-4170-9527-8a88c148639f",
+    "changes": {
+      "status": "resolved"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:47.976Z"
+  },
+  {
+    "id": "8cd3d28b-b734-401d-92a6-5082674d59dd",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "5150dafd-cf5e-4b0e-8e9c-64147e5af6d4",
+    "changes": {
+      "status": "resolved"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:50.510Z"
+  },
+  {
+    "id": "740dc38c-278e-4ecd-b022-02b8c072619b",
+    "action": "kb:update",
+    "entity": "kb",
+    "entityId": "6ec6bfd8-cce7-49b1-bce9-ff55fa1710a2",
+    "changes": {
+      "status": "published"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:50.530Z"
+  },
+  {
+    "id": "d75fbce9-d8b2-4a9c-be78-1287b1ac2908",
+    "action": "kb:delete",
+    "entity": "kb",
+    "entityId": "34618ce3-5540-482f-8d36-54343b7a62c0",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:50.552Z"
+  },
+  {
+    "id": "35e904c5-4736-431e-977b-b84d7e4dcc1c",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "eff27ed6-75d1-49c7-93c7-e2ead2ed30ce",
+    "changes": {
+      "endTime": "2026-10-06T02:00:00.000Z",
+      "startTime": "2026-10-06T00:00:00.000Z",
+      "description": "Evening work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:56.748Z"
+  },
+  {
+    "id": "fab72322-f7ff-4e77-8adb-44bdf551b454",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "53b12895-a361-41aa-adaa-14d9471f7f86"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:56.766Z"
+  },
+  {
+    "id": "04eefaa0-8b3e-4200-95f8-2bfb52519d21",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "53b12895-a361-41aa-adaa-14d9471f7f86"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:56.797Z"
+  },
+  {
+    "id": "5537b6df-4857-4249-90be-563b9d33ddd2",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "53b12895-a361-41aa-adaa-14d9471f7f86"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:56.813Z"
+  },
+  {
+    "id": "26b36ae4-8762-49e1-9c51-d73980f15795",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "df418d40-0342-4ac6-87c7-6941e282b32a",
+    "changes": {
+      "reason": "Wrong period"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:56.841Z"
+  },
+  {
+    "id": "41aba350-02e0-4b38-93b6-3efb70282bfe",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "53b12895-a361-41aa-adaa-14d9471f7f86"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:56.886Z"
+  },
+  {
+    "id": "20b6c4b8-546c-428c-9185-53cd220a7ab6",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "8c528cd4-30be-4e26-b52d-e0687bd2a1cb",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:56.915Z"
+  },
+  {
+    "id": "66ea5abc-5122-4d4b-95e8-ea554cdddbcf",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "53b12895-a361-41aa-adaa-14d9471f7f86"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:08:56.947Z"
+  },
+  {
+    "id": "8ec4f8d6-d612-46a9-bfb2-346f6c43895f",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "fb891998-3314-4aea-a545-d243c33c1bda",
+    "changes": {
+      "endTime": "2026-10-06T02:00:00.000Z",
+      "startTime": "2026-10-06T00:00:00.000Z",
+      "description": "Evening work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:36.836Z"
+  },
+  {
+    "id": "72bd04f6-755a-4201-bfc0-451c1b08894a",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "7ded73b1-998b-401e-b7fe-709dc0317d39"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:36.870Z"
+  },
+  {
+    "id": "d2839eb4-fdd7-4a4f-9fd8-8f61080bf815",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "7ded73b1-998b-401e-b7fe-709dc0317d39"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:36.902Z"
+  },
+  {
+    "id": "c3afd3c7-1488-4777-8b2c-5c5d3c86fe22",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "7ded73b1-998b-401e-b7fe-709dc0317d39"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:36.917Z"
+  },
+  {
+    "id": "0b929432-0284-463d-bf09-0925e2fc28a2",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "18b267de-76ea-42b9-93c1-f465fce56c71",
+    "changes": {
+      "reason": "Wrong period"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:36.949Z"
+  },
+  {
+    "id": "4e8a154b-0a2e-41d7-a2b2-be747ef12e92",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "7ded73b1-998b-401e-b7fe-709dc0317d39"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:37.054Z"
+  },
+  {
+    "id": "9c8e9ba4-6edf-4697-ad92-02e89b007ae3",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "2776de20-eaca-4b94-803d-9a3402c72a16",
+    "changes": {
+      "minutes": 60,
+      "description": "Other client work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:38.238Z"
+  },
+  {
+    "id": "a2e726bd-eb46-4279-b68e-78ca91fb5994",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "8058e2d6-3d97-4969-9b96-6badb82a466e"
+    },
+    "userId": "b7288430-6806-47a2-b7f5-4679597f239a",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:39.001Z"
+  },
+  {
+    "id": "088f9e62-8741-4137-9335-73082a4639f7",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate",
+    "changes": {
+      "companyId": "44ac07ea-7319-4ea2-a584-a39c91306418"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:39.050Z"
+  },
+  {
+    "id": "2f10b2eb-784a-4955-8137-7dac9d26c49f",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "escalated",
+          "pinned": true
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": false
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "workable",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:40.346Z"
+  },
+  {
+    "id": "f11b6798-3bd4-4fce-aab4-4ba51f1e45ee",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "workable",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": true
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "escalated",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:40.358Z"
+  },
+  {
+    "id": "b369336f-e7b5-45ab-8f83-08f558e0b57e",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "avg_age",
+          "pinned": true
+        },
+        {
+          "id": "escalated",
+          "pinned": true
+        },
+        {
+          "id": "new",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:40.369Z"
+  },
+  {
+    "id": "48fd99a8-5f58-4c21-a6ca-ee0444c809bf",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "profit_margin",
+          "pinned": true
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "new",
+          "pinned": true
+        },
+        {
+          "id": 42
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:40.376Z"
+  },
+  {
+    "id": "0c5ffa46-12a7-4a31-a23a-fe5c24425cbc",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "escalated",
+          "pinned": true
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": false
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "workable",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:40.474Z"
+  },
+  {
+    "id": "52c6fdea-cd8b-4218-bb26-1ca8fd3941e4",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "7ded73b1-998b-401e-b7fe-709dc0317d39"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:36.998Z"
+  },
+  {
+    "id": "127ef63d-d5a9-45b1-901a-9cb4b5fcc049",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "26955311-e908-45ff-bf73-8b36d4e3b425",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:37.025Z"
+  },
+  {
+    "id": "d4446bb4-f4d6-4a0b-9d6e-5088fd1b5786",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "254f1cef-edf6-4a0b-b91d-1f173f57ded0",
+    "changes": {
+      "minutes": 90,
+      "description": "Quarterly maintenance"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:38.083Z"
+  },
+  {
+    "id": "a917a278-8290-47d2-a13c-d3928d796b3e",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ecc308ba-e93f-4e1d-84ed-d01299d0ac06",
+    "changes": {
+      "rate": 250,
+      "minutes": 30
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:38.095Z"
+  },
+  {
+    "id": "015ef757-d21a-4eb4-927e-36960b84c1f6",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ecc308ba-e93f-4e1d-84ed-d01299d0ac06",
+    "changes": {
+      "minutes": 45,
+      "billable": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:38.109Z"
+  },
+  {
+    "id": "7c5de3c6-fba0-4127-abcc-59e94283c76e",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ecc308ba-e93f-4e1d-84ed-d01299d0ac06",
+    "changes": {
+      "minutes": 60,
+      "noCharge": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:38.120Z"
+  },
+  {
+    "id": "738442f1-a2d5-4f38-939f-7cba05d28550",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "44ac07ea-7319-4ea2-a584-a39c91306418"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:38.158Z"
+  },
+  {
+    "id": "e6ea2adb-8777-4278-bcc4-ccb0f5a1ee5b",
+    "action": "boards:delete",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:40.799Z"
+  },
+  {
+    "id": "66eed22a-3be0-4998-92d2-b2dfe9b1864c",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live incomplete muypzl56",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:41.773Z"
+  },
+  {
+    "id": "70d1cd3a-3c93-45d4-b726-835409db737a",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "c4220d3a-65a3-4359-b5b8-25d68747d096",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:41.808Z"
+  },
+  {
+    "id": "eb321e49-c6d1-4381-b9d9-7ab82b82a4a8",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live complete muypzl56",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:41.840Z"
+  },
+  {
+    "id": "aee60d6c-236f-487b-9e94-7956e2a3097d",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "f78e18e0-a3e9-44aa-b1fd-665c567c7d60",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:41.846Z"
+  },
+  {
+    "id": "e8e1a24d-c99f-479f-94e3-0c6d5babe538",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "f78e18e0-a3e9-44aa-b1fd-665c567c7d60",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:43.632Z"
+  },
+  {
+    "id": "9c1dbfb6-222f-4ee2-b9b9-919f760c574e",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live disabled muypzl56",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:43.648Z"
+  },
+  {
+    "id": "2fff5907-59ca-4c99-b278-69fb8ff845e7",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "96d3c095-31ae-4b28-add9-3959929fd88b",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:43.654Z"
+  },
+  {
+    "id": "ba5eeb78-47ec-4329-87bf-0990892897cf",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "96d3c095-31ae-4b28-add9-3959929fd88b",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:43.661Z"
+  },
+  {
+    "id": "daf40363-93d1-4d47-9644-03a47a841762",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.418Z"
+  },
+  {
+    "id": "aef083e8-ceb0-4111-81c3-e2952d77d3a0",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.445Z"
+  },
+  {
+    "id": "a0ef94f6-4b95-4060-aa12-87329dde106a",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "value": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.630Z"
+  },
+  {
+    "id": "7e123a3f-a05a-499f-9108-a338136c66ed",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.702Z"
+  },
+  {
+    "id": "0a331c68-eafa-449b-8ca2-f7c8a927ea04",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "value": 20
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.721Z"
+  },
+  {
+    "id": "a582cf50-6dca-403c-bfa5-f0c2368adff2",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.740Z"
+  },
+  {
+    "id": "a2e7b604-8cd4-4b4d-a8e2-3adf8f35014d",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 45
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.755Z"
+  },
+  {
+    "id": "20c3f180-66c5-4a6e-9a0a-b8f158da7b4c",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 5
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.784Z"
+  },
+  {
+    "id": "607e0397-6fdf-48f1-8ba0-434c165caea7",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.819Z"
+  },
+  {
+    "id": "17946a30-710e-41ce-8dbe-df24b067f559",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.875Z"
+  },
+  {
+    "id": "853f6457-ef26-423d-ad10-463ad0cfa448",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:44.953Z"
+  },
+  {
+    "id": "2a543317-d7f7-4102-b8b2-a0b27948364b",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:45.037Z"
+  },
+  {
+    "id": "0a3d5486-a4ce-4cf7-b0a2-5d00fb666a27",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:45.054Z"
+  },
+  {
+    "id": "73111b25-f9ac-43bc-96e9-648347b030ef",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.373Z"
+  },
+  {
+    "id": "ea6112f2-8d9e-490a-883f-b9f664ef6183",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.381Z"
+  },
+  {
+    "id": "61a6d0d9-3f53-449a-9e4f-92e8f4c8ac13",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.387Z"
+  },
+  {
+    "id": "85bf30eb-9657-40ac-9fb7-8adaa16c5098",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.409Z"
+  },
+  {
+    "id": "2fbfcc42-9834-4d15-81ee-20a5ac15772c",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "definitely_not_a_widget",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 99,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.425Z"
+  },
+  {
+    "id": "7f1543f0-3828-45d4-b2e4-91ee181bbc79",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.457Z"
+  },
+  {
+    "id": "9dc6d56c-76ca-47b4-a6dc-a111b4e58c9c",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.464Z"
+  },
+  {
+    "id": "69febb82-d207-43fc-8095-fb849c898c5e",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "recent_tickets",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.479Z"
+  },
+  {
+    "id": "491449f2-8190-4e52-8e70-8381bf775521",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.493Z"
+  },
+  {
+    "id": "34836383-aae4-4658-9ac1-0554ca5d39e4",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "today_revenue",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.503Z"
+  },
+  {
+    "id": "b5675e1b-afc4-419d-9fc9-4c7077ad5074",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:47.509Z"
+  },
+  {
+    "id": "d810ec27-bf84-4fe4-a4ba-a3990ed512aa",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-egress-1791414588263",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:48.276Z"
+  },
+  {
+    "id": "2b5f80cb-bcd4-4229-b177-61ee97912575",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "313ad824-b2e7-49ef-b192-1077eb7a89d5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:48.302Z"
+  },
+  {
+    "id": "cc5bd180-4fe6-4192-8b78-44bf73043231",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-redact-1791414588353",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:48.366Z"
+  },
+  {
+    "id": "4e502958-feee-4075-af5b-6c9f384c25e9",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "818f6616-fa02-479e-a344-b6f45e397273",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:09:48.407Z"
+  },
+  {
+    "id": "c3a58b85-6c21-4e6a-9b98-da5da678256f",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.311Z"
+  },
+  {
+    "id": "c96f09f6-0565-4ce6-8907-09f9dfabd618",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.333Z"
+  },
+  {
+    "id": "1f18f822-6056-440d-8996-877d402f4087",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "value": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.491Z"
+  },
+  {
+    "id": "a4834f6b-0537-4485-81b5-d218ce53df91",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.511Z"
+  },
+  {
+    "id": "0b7b2ee8-16e3-402f-80a8-6563928f7519",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "value": 20
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.532Z"
+  },
+  {
+    "id": "9384c064-6e8d-4d45-923a-c14a7e6525fd",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.551Z"
+  },
+  {
+    "id": "ae8be8f9-3789-4eab-866c-25fd4d65c2ea",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 45
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.573Z"
+  },
+  {
+    "id": "a50cf260-d479-4558-8ff2-25a7ae67e61c",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 5
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.594Z"
+  },
+  {
+    "id": "ca11492f-ab3f-4a2c-a6b6-651d2dc8975a",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.644Z"
+  },
+  {
+    "id": "a714dd99-3b0a-413f-b996-4ca95ec1c979",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.667Z"
+  },
+  {
+    "id": "01b0f50e-e85d-4fe4-bd52-0334e7829cd9",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.757Z"
+  },
+  {
+    "id": "de68bee5-b00c-4e48-9b46-1402a9588838",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.785Z"
+  },
+  {
+    "id": "6e7b31ca-3103-44f6-8e6a-36820bef6c51",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:28.801Z"
+  },
+  {
+    "id": "57b75646-8a28-4f0a-8460-31de5a0602ce",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live secrets muyq17xo",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:58.303Z"
+  },
+  {
+    "id": "61933a3b-6d77-4db8-9583-506005a98471",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "deff8277-a9c9-4cc2-973c-1438268f3959",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:58.313Z"
+  },
+  {
+    "id": "073c816f-1dfa-4348-8f33-8aa8a47bd27e",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live incomplete muyq17xo",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:58.339Z"
+  },
+  {
+    "id": "d7fbd312-956f-4c1d-bde4-13cf353a5c8c",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "d69d152d-cbb2-4e51-a2ec-e2bc1838f4fb",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:58.346Z"
+  },
+  {
+    "id": "155bd3b8-a6c4-4989-88f0-e84ef7358399",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live complete muyq17xo",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:58.363Z"
+  },
+  {
+    "id": "1ade04a3-aa86-43ed-81bc-9b501ff3197b",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "1e40a0f6-e3dd-48b8-97e1-5cfea5fcf94e",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:10:58.372Z"
+  },
+  {
+    "id": "7f1a2b07-be22-4433-a0cf-f51ad562d359",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "1e40a0f6-e3dd-48b8-97e1-5cfea5fcf94e",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:11:00.669Z"
+  },
+  {
+    "id": "f1a98836-ad31-49a7-833e-4dc00874a391",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live disabled muyq17xo",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:11:00.684Z"
+  },
+  {
+    "id": "14bcd33c-f21a-42d1-8fef-452d7804e791",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "86a3d3e8-aec5-4d28-88e0-02a66c6ce825",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:11:00.691Z"
+  },
+  {
+    "id": "21601839-1f92-4198-bee9-962173f98572",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "86a3d3e8-aec5-4d28-88e0-02a66c6ce825",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:11:00.700Z"
+  },
+  {
+    "id": "3fe9d2b9-0825-43cb-85df-f518f9585427",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T23:12:51.852Z",
+          "internetMessageId": "<addin-probe-muyq3njo@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:51.886Z"
+  },
+  {
+    "id": "64c53dcf-556a-4ea4-95e8-aaf850d43ceb",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyq3njo@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:51.897Z"
+  },
+  {
+    "id": "b65a1fd1-99d9-44c5-8006-3a5c46d93616",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muyq3njo@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muyq3njo@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muyq3njo@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:51.940Z"
+  },
+  {
+    "id": "595bfa63-fda2-4bd6-8a8f-eed355cd0998",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "preview",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "internetMessageId": "<addin-review-muyq3njo@probe.invalid>"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:51.952Z"
+  },
+  {
+    "id": "9b51e89b-04db-4300-8c28-725deb6bdf30",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo — scoped escalation",
+          "bodyText": "This must not be filed against another client.",
+          "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+          "internetMessageId": "<addin-scope-muyq3njo@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "29cd3439-d7e0-4c55-b4be-1c273bd52a56",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:52.334Z"
+  },
+  {
+    "id": "f4dfca56-fe3c-4f8b-b79e-bc69111f6f1d",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "priority": "High",
+          "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+          "contactName": "Reviewed Contact",
+          "internetMessageId": "<addin-review-muyq3njo@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:52.358Z"
+  },
+  {
+    "id": "4fd7236d-6767-46a0-bbe7-22c4b7d66f8a",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "bundled",
+      "emails": [
+        {
+          "from": "parent@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo — parent message",
+          "bodyText": "This one becomes the ticket.",
+          "internetMessageId": "<addin-parent-muyq3njo@probe.invalid>"
+        },
+        {
+          "from": "child.a@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo — context one",
+          "bodyText": "Context one.",
+          "internetMessageId": "<addin-child-a-muyq3njo@probe.invalid>"
+        },
+        {
+          "from": "child.b@umbrellacorp.net",
+          "subject": "Addin probe muyq3njo — context two",
+          "bodyText": "Context two.",
+          "internetMessageId": "<addin-child-b-muyq3njo@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "parentMessageId": "<addin-parent-muyq3njo@probe.invalid>"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:52.394Z"
+  },
+  {
+    "id": "e30a26c2-1739-4b7a-9771-15870a4e5965",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "never",
+      "lastBoardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "rememberBoard": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:52.415Z"
+  },
+  {
+    "id": "2c4e95f7-0f57-451d-9399-758b6bf49e36",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "banana",
+      "preview": "sometimes"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:52.436Z"
+  },
+  {
+    "id": "e0cd45ac-f398-4041-867f-7903140af501",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "ask",
+      "preview": "ask",
+      "lastBoardId": null,
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:12:52.444Z"
+  },
+  {
+    "id": "198a0eb0-6db0-440b-baae-88345f868f41",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Debug scoped filing",
+          "bodyText": "x",
+          "companyId": "0e4e42d9-b44f-4144-b772-001deda79d4a",
+          "internetMessageId": "<dbg-1791414783230@x.invalid>"
+        }
+      ],
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "29cd3439-d7e0-4c55-b4be-1c273bd52a56",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:03.240Z"
+  },
+  {
+    "id": "8310f94a-1a2d-403e-8d79-5045844beea4",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-07T23:13:51.962Z",
+          "internetMessageId": "<addin-probe-muyq4xwc@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:52.000Z"
+  },
+  {
+    "id": "c410ee0e-76ed-4509-a555-d6fa46cbb9cc",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muyq4xwc@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:52.010Z"
+  },
+  {
+    "id": "a7cf9223-a7d1-4881-831a-3ad76b7c4a48",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muyq4xwc@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muyq4xwc@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muyq4xwc@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:52.041Z"
+  },
+  {
+    "id": "2df67764-1277-4c99-93da-572e5c02d08f",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "preview",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "internetMessageId": "<addin-review-muyq4xwc@probe.invalid>"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:52.052Z"
+  },
+  {
+    "id": "9e58bf36-306c-4cb2-b0dc-38410ad1f874",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "bd1e275a-5a26-486e-8843-859dca6836da"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:41.110Z"
+  },
+  {
+    "id": "825de5e1-82da-409d-87e3-eb581ce9a86b",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "priority": "High",
+          "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+          "contactName": "Reviewed Contact",
+          "internetMessageId": "<addin-review-muyq4xwc@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:52.435Z"
+  },
+  {
+    "id": "72295a5d-adc7-4c5a-81cc-aedad736f239",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "bundled",
+      "emails": [
+        {
+          "from": "parent@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc — parent message",
+          "bodyText": "This one becomes the ticket.",
+          "internetMessageId": "<addin-parent-muyq4xwc@probe.invalid>"
+        },
+        {
+          "from": "child.a@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc — context one",
+          "bodyText": "Context one.",
+          "internetMessageId": "<addin-child-a-muyq4xwc@probe.invalid>"
+        },
+        {
+          "from": "child.b@umbrellacorp.net",
+          "subject": "Addin probe muyq4xwc — context two",
+          "bodyText": "Context two.",
+          "internetMessageId": "<addin-child-b-muyq4xwc@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "parentMessageId": "<addin-parent-muyq4xwc@probe.invalid>"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:52.471Z"
+  },
+  {
+    "id": "ca6bf9fe-c9bc-412d-865d-700b58cad61a",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "never",
+      "lastBoardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "rememberBoard": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:52.494Z"
+  },
+  {
+    "id": "3a6435b7-f484-4ec7-8b8f-6b0e86153561",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "banana",
+      "preview": "sometimes"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:52.522Z"
+  },
+  {
+    "id": "3a6665b4-b7c1-490c-849d-0aba34d2156d",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "ask",
+      "preview": "ask",
+      "lastBoardId": null,
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:13:52.530Z"
+  },
+  {
+    "id": "1cd599a3-4c7a-46f9-a16c-946f75557053",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "15a5e928-8ef7-446b-925d-cb85cd71945e",
+    "changes": {
+      "endTime": "2026-10-06T02:00:00.000Z",
+      "startTime": "2026-10-06T00:00:00.000Z",
+      "description": "Evening work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:41.045Z"
+  },
+  {
+    "id": "d74a7100-8eac-4d73-b6d0-8aa5597c4d26",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "bd1e275a-5a26-486e-8843-859dca6836da"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:41.060Z"
+  },
+  {
+    "id": "7a29eaa1-a635-4ba3-b10b-0d42f3fe8e49",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "bd1e275a-5a26-486e-8843-859dca6836da"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:41.092Z"
+  },
+  {
+    "id": "5b1ced0e-8a99-4363-9c29-a0fdcffead81",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "5dede824-5743-45f3-bc4b-22c2d657c72e",
+    "changes": {
+      "reason": "Wrong period"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:41.140Z"
+  },
+  {
+    "id": "0cd55cc8-a160-4df1-9d13-be73f3811baf",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "d247a410-b702-4bb2-8f30-2504287472a9",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:41.232Z"
+  },
+  {
+    "id": "bfc0c799-1386-4b51-a940-7667bbd49996",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "bd1e275a-5a26-486e-8843-859dca6836da"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:41.268Z"
+  },
+  {
+    "id": "fa2dca70-fbab-4a66-a0bb-cfe46d916819",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "34845bd4-008d-40f8-8e71-88d62b9aad09",
+    "changes": {
+      "minutes": 60,
+      "description": "Other client work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:42.466Z"
+  },
+  {
+    "id": "12aa5505-f858-4182-b7b3-5f8f32a51991",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "89a04f07-7870-4cda-a7f8-856027630e53"
+    },
+    "userId": "7f4082bd-e631-433a-b318-67dfeccd6f44",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:43.139Z"
+  },
+  {
+    "id": "cee970b8-45ff-49fe-a3c4-cba8507d700a",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate",
+    "changes": {
+      "companyId": "bc8dc581-8021-4d08-b053-2bbd39749ddc"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:43.148Z"
+  },
+  {
+    "id": "57463ec0-a93f-48bf-b2c2-d86a89a38bb8",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "escalated",
+          "pinned": true
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": false
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "workable",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:44.371Z"
+  },
+  {
+    "id": "4be7dcaf-0a8c-4ac9-ba8b-895c80c2e887",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "workable",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": true
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "escalated",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:44.384Z"
+  },
+  {
+    "id": "4d5f54ba-90d0-4e1a-8a93-ca97deb69168",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "avg_age",
+          "pinned": true
+        },
+        {
+          "id": "escalated",
+          "pinned": true
+        },
+        {
+          "id": "new",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:44.396Z"
+  },
+  {
+    "id": "6d9e65b9-1a19-4a1e-ad17-9397eac3400d",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "profit_margin",
+          "pinned": true
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "new",
+          "pinned": true
+        },
+        {
+          "id": 42
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:44.402Z"
+  },
+  {
+    "id": "66d43d48-547a-4ac1-a904-71266b121043",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "escalated",
+          "pinned": true
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": false
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "workable",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:44.455Z"
+  },
+  {
+    "id": "a8a65de9-4efb-418e-b990-e2cd9ed913b4",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "bd1e275a-5a26-486e-8843-859dca6836da"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:41.188Z"
+  },
+  {
+    "id": "4714d53c-b1ff-4767-af6e-30c1344e7934",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ff3000c8-8245-4594-9255-e7184894a34c",
+    "changes": {
+      "minutes": 90,
+      "description": "Quarterly maintenance"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:42.343Z"
+  },
+  {
+    "id": "4c375fa7-ba65-41f0-96e2-edc5d4be8150",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "492d1253-cb4c-465b-9bf6-298ceb863013",
+    "changes": {
+      "rate": 250,
+      "minutes": 30
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:42.355Z"
+  },
+  {
+    "id": "051759a8-5dcf-4346-85f7-51337c62728f",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "492d1253-cb4c-465b-9bf6-298ceb863013",
+    "changes": {
+      "minutes": 45,
+      "billable": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:42.376Z"
+  },
+  {
+    "id": "534f8411-0011-47b8-8894-2e7469249334",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "492d1253-cb4c-465b-9bf6-298ceb863013",
+    "changes": {
+      "minutes": 60,
+      "noCharge": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:42.389Z"
+  },
+  {
+    "id": "147bff05-17d2-48eb-b36e-7549aa0dfef0",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "bc8dc581-8021-4d08-b053-2bbd39749ddc"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:42.431Z"
+  },
+  {
+    "id": "eb2b5d7f-8198-4acc-a3dc-6768f330ba22",
+    "action": "boards:delete",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:44.787Z"
+  },
+  {
+    "id": "f34d0415-eea4-4dd1-a357-54d2c76262a7",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live secrets muyq63ob",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:46.086Z"
+  },
+  {
+    "id": "986f2900-7ebb-4bce-b9f2-bb95d876fe66",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "a4b50003-2cf6-4c61-a937-feb14e38f888",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:46.093Z"
+  },
+  {
+    "id": "7c11671a-b9a6-4e85-8828-051978310fc6",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live incomplete muyq63ob",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:46.116Z"
+  },
+  {
+    "id": "6d8bafba-93a5-4e01-8153-305189d0e454",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "12dbc700-042d-41ee-97c9-b105c9360521",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:46.125Z"
+  },
+  {
+    "id": "e47835a8-5222-48c4-91aa-5028aa31d965",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live complete muyq63ob",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:46.141Z"
+  },
+  {
+    "id": "e8555e5f-b013-4099-b8db-8f84721c38b8",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "083fa8ef-704f-476c-88bf-4f8cffba8b57",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:46.147Z"
+  },
+  {
+    "id": "ec4721a6-833d-46d6-8246-8e05b9f45cde",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "083fa8ef-704f-476c-88bf-4f8cffba8b57",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.258Z"
+  },
+  {
+    "id": "33840d98-8ad4-4472-a715-efe0b2c3999b",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live disabled muyq63ob",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.271Z"
+  },
+  {
+    "id": "86c77d7a-4ae8-417a-ae60-c13e80d3fad8",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "50563a6c-7506-4262-92d5-d40a3e1812d8",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.278Z"
+  },
+  {
+    "id": "b23f3dd0-219d-4fa8-8a28-6f22cf1f3efc",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "50563a6c-7506-4262-92d5-d40a3e1812d8",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.292Z"
+  },
+  {
+    "id": "42c31372-ceb9-4bc3-b294-607f438e312f",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.788Z"
+  },
+  {
+    "id": "67ba27eb-45dd-451e-b0e4-41593b20eea1",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.806Z"
+  },
+  {
+    "id": "46fa1403-4716-4e85-bd67-a7a04a037eb6",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "value": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.929Z"
+  },
+  {
+    "id": "45fac454-c193-4a53-a573-b8a3d56e32f3",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.952Z"
+  },
+  {
+    "id": "429c0097-bb95-49fe-8b29-4bb707a44f0f",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "value": 20
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.966Z"
+  },
+  {
+    "id": "41c1f723-0748-47af-bb82-738447eb100b",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:48.984Z"
+  },
+  {
+    "id": "068d1180-1f5f-4f61-b4c2-9648efc4d930",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 45
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:49.000Z"
+  },
+  {
+    "id": "d60795fc-c503-454e-aacd-7f0f433088dd",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 5
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:49.016Z"
+  },
+  {
+    "id": "3ca4c380-f8b2-4266-888e-0871317f96d2",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:49.080Z"
+  },
+  {
+    "id": "1936b975-5578-47bd-88d9-f164e7ed9769",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:49.109Z"
+  },
+  {
+    "id": "2114c784-3d86-474f-a6e5-ee4cee42e297",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:49.176Z"
+  },
+  {
+    "id": "f1a2db19-51fe-453b-a12d-3c5d6e63e86d",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:49.200Z"
+  },
+  {
+    "id": "3d51a82a-ff19-4581-9a39-57e5fefb3861",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:49.211Z"
+  },
+  {
+    "id": "d8a20353-72f8-48ad-adc8-91ec01e12213",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.116Z"
+  },
+  {
+    "id": "c1ff46c8-8d8b-4e51-b3ba-285e5b43b7b2",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.124Z"
+  },
+  {
+    "id": "4a634151-1be3-4b33-a5c7-912246759091",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.131Z"
+  },
+  {
+    "id": "f4c893e2-ef64-4a1b-a264-7897b5c6f57e",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.151Z"
+  },
+  {
+    "id": "7ad0777f-0fe0-4684-a402-be0fab0176de",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "definitely_not_a_widget",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 99,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.162Z"
+  },
+  {
+    "id": "d825349b-ee31-4475-b33f-47fa16c5a55b",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.187Z"
+  },
+  {
+    "id": "3f095105-29ed-420c-b1ab-1775615bff4e",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.194Z"
+  },
+  {
+    "id": "fd66267c-3bd0-42ff-9a7e-d977c2da50e2",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "recent_tickets",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.205Z"
+  },
+  {
+    "id": "991a5771-13e4-484f-8d33-c8fd0549b828",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.219Z"
+  },
+  {
+    "id": "33d489a5-f05b-4753-a5fe-ee4009d3b97b",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "today_revenue",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.226Z"
+  },
+  {
+    "id": "6020f525-4ad9-4e7f-a529-c9afa2d297b8",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.233Z"
+  },
+  {
+    "id": "806a3e93-559b-41d2-a2ed-db945d5e4e9b",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-egress-1791414891738",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.746Z"
+  },
+  {
+    "id": "447488d0-a76d-46fc-8954-8575a0397cc4",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "1af6fd87-1eb6-4146-8e6f-5f1b3d5a86c1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.768Z"
+  },
+  {
+    "id": "885c9d01-8edb-4a8f-b533-c93ee8ce072a",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-redact-1791414891809",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.816Z"
+  },
+  {
+    "id": "5fc68da9-1261-4bb6-b15c-d3a869ac43ce",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "a313778c-0320-4401-80f3-6ea84e313b3f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T23:14:51.853Z"
   }
 ]

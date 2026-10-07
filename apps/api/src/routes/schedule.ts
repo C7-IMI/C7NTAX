@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { companyWhere, canAccessCompany } from "../middleware/companyScope";
 
 export const scheduleRouter = Router();
 scheduleRouter.use(authenticate);
@@ -12,6 +13,14 @@ scheduleRouter.get("/", requirePermission(Permission.TicketView), async (req: Au
     const { userId, from, to, limit = "200" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
     if (userId) where.userId = userId;
+    // A company-scoped account sees only the entries booked against its own company's tickets.
+    // ScheduleEntry keeps `ticketId` as a scalar with no relation, so the scope is resolved to a
+    // ticket-id list first; internal staff skip the extra query entirely.
+    const { companyId: scopedTo } = companyWhere(req.user);
+    if (scopedTo) {
+      const companyTickets = await prisma.ticket.findMany({ where: { companyId: scopedTo }, select: { id: true } });
+      where.ticketId = { in: companyTickets.map((t) => t.id) };
+    }
     if (from || to) {
       where.startTime = {};
       if (from) (where.startTime as Record<string, unknown>).gte = new Date(from);
@@ -35,6 +44,12 @@ scheduleRouter.post("/", requirePermission(Permission.TicketCreate), async (req:
   try {
     const { title, startTime, endTime, userId, ticketId, location, color } = req.body;
     if (!title || !startTime || !endTime) throw new AppError("title, startTime, endTime required");
+    // Booking time against somebody else's ticket is the write half of the same scope the list
+    // applies.
+    if (ticketId) {
+      const ticket = await prisma.ticket.findUnique({ where: { id: ticketId }, select: { companyId: true } });
+      if (!ticket || !canAccessCompany(req.user, ticket.companyId)) throw new AppError("Ticket not found", 404);
+    }
     const entry = await prisma.scheduleEntry.create({ data: { title, startTime: new Date(startTime), endTime: new Date(endTime), userId: userId || req.user!.userId, ticketId: ticketId || null, location: location || null, description: req.body.description || null, color: color || null } });
     res.status(201).json(entry);
   } catch (e) { next(e); }

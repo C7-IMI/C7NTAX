@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { draftArticleFromTicket, autogenEnabled } from "../services/kbAutogen";
+import { isUnscoped } from "../middleware/companyScope";
 export const kbRouter = Router(); kbRouter.use(authenticate);
 
 // ── AI-drafted articles (PLAN-015 Phase B #11) ────────────────────────
@@ -20,8 +21,15 @@ kbRouter.post("/autogen/:ticketId", requirePermission(Permission.KBCreate), asyn
 });
 
 /** The drafts waiting for a human, newest first. */
-kbRouter.get("/drafts", requirePermission(Permission.KBView), async (_req: AuthRequest, res, next) => {
+kbRouter.get("/drafts", requirePermission(Permission.KBView), async (req: AuthRequest, res, next) => {
   try {
+    // A company-scoped account sees no drafts at all. `KBView` is held by client roles as well as
+    // by staff, and a draft is by definition unpublished — with the review note and the ticket it
+    // came from attached. Internal staff are unscoped and unaffected.
+    if (!isUnscoped(req.user)) {
+      res.json({ data: [], autogenEnabled: autogenEnabled() });
+      return;
+    }
     const drafts = await prisma.knowledgeBaseArticle.findMany({
       where: { status: "draft" },
       orderBy: { updatedAt: "desc" },
@@ -37,9 +45,13 @@ kbRouter.get("/drafts", requirePermission(Permission.KBView), async (_req: AuthR
 
 kbRouter.get("/", requirePermission(Permission.KBView), async (req: AuthRequest, res, next) => {
   try { const { search, categoryId, status, visibility, limit = "50", offset = "0" } = req.query as Record<string, string>;
-    const where: Record<string, unknown> = { status: status || "published" };
+    const scoped = !isUnscoped(req.user);
+    const where: Record<string, unknown> = { status: scoped ? "published" : status || "published" };
     if (categoryId) where.categoryId = categoryId;
-    if (visibility) where.visibility = visibility;
+    // A scoped account cannot ask for internal articles either: the query string is a request, and
+    // `visibility=internal` would hand it the notes written for staff.
+    if (scoped) where.visibility = { not: "internal" };
+    else if (visibility) where.visibility = visibility;
     if (search) where.OR = [{ title: { contains: search } }, { content: { contains: search } }];
     const [data, total] = await Promise.all([prisma.knowledgeBaseArticle.findMany({ where, skip: Number(offset), take: Number(limit), orderBy: { updatedAt: "desc" }, select: { id: true, title: true, slug: true, excerpt: true, content: true, status: true, visibility: true, tags: true, viewCount: true, helpfulCount: true, updatedAt: true, authorId: true, categoryId: true, aiGenerated: true, sourceTicketId: true, reviewNote: true } }), prisma.knowledgeBaseArticle.count({ where })]);
     res.json({ data, total }); }
@@ -69,7 +81,10 @@ kbRouter.post("/categories", requirePermission(Permission.KBCreate), async (req:
 
 kbRouter.get("/:slug", requirePermission(Permission.KBView), async (req: AuthRequest, res, next) => {
   try { const article = await prisma.knowledgeBaseArticle.findUnique({ where: { slug: req.params.slug } });
-    if (!article) throw new AppError("Not found", 404);
+    // An unpublished or internal article is not a client's to read, and 404 says the same thing as
+    // it does for a slug that does not exist — a client does not learn that a draft exists.
+    const visibleToScopedAccount = article?.status === "published" && article?.visibility !== "internal";
+    if (!article || (!isUnscoped(req.user) && !visibleToScopedAccount)) throw new AppError("Not found", 404);
     const [author, category, versions, links] = await Promise.all([
       prisma.user.findUnique({ where: { id: article.authorId }, select: { firstName: true, lastName: true } }),
       article.categoryId ? prisma.kBCategory.findUnique({ where: { id: article.categoryId } }) : Promise.resolve(null),
