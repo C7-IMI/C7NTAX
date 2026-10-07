@@ -3,6 +3,12 @@ import type { Request, Response, NextFunction } from "express";
 /** Token bucket rate limiter — per-IP sliding window, 100 req / 15 min */
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
+/** True for a request that came from this machine. */
+export function isLoopback(req: Request): boolean {
+  const ip = req.ip || req.socket.remoteAddress || "";
+  return ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
+}
+
 export function rateLimiter(maxReqs = 100, windowMs = 15 * 60 * 1000, skip?: (req: Request) => boolean) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (skip?.(req)) { next(); return; }

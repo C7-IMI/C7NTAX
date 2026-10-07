@@ -3322,3 +3322,20 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Step C is company scoping; steps D–H are listed in `files/W0-progress.md` with what each must prove.
 - Re-run `probe-permissions.mjs` after every step and diff against `baseline-permissions-reads.txt`; the file also records the personas and the bypass that is in force.
 - Cleanup reminders that cost time this round: the KB model is `knowledgeBaseArticle` (not `kBArticle`), chat sessions carry no title, and audit rows are Json so content filters need a JS pass rather than a Prisma query operator.
+
+**Prompt 219 — continued: W0 step C (company scoping)**
+
+**What I did**
+- Added one place that decides the tenant boundary (`middleware/companyScope.ts`) and applied it to the modules a scoped account can use to enumerate other companies: clients and contacts (list, detail, per-client children, writes), billing (dashboard, invoices, expenses, quotes, recurring) and the eight reporting endpoints, which were aggregating revenue, SLA and profitability across the entire business.
+- Followed the existing ticket convention rather than inventing one: no `companyId` on the account means internal staff and sees everything; a `companyId` means scoped. Single-record routes answer **404**, not 403, so an id that exists but is not yours is indistinguishable from one that does not exist.
+- Wrote the scoping suite the criterion deserves (13 assertions) rather than trusting status codes: clients seen, cross-company 404, empty child collections, every returned contact/invoice belonging to the caller's company, revenue not being the whole business's, internal staff unaffected, and a scoped technician seeing only their own tickets.
+- Found and fixed a real bug with it immediately: `Company` has no `companyId` column, so scoping the client *list* by `companyId` produced a **500** — the company table is narrowed by `id`. The helper now has a documented company-row variant and the mistake is recorded.
+- Caught a false regression the same way: 14 failures in the user-administration suite were **429s** from my own repeated loopback sign-ins exhausting the new credential limiter. Rather than raise the ceiling everywhere, loopback is now exempt **in development only**, and the suite went back to 63/63.
+
+**Decisions worth remembering**
+- **Assertions, not status codes.** A 200 on the client list proved nothing until the row count and the returned company ids were checked — the first run "passed" the visibility checks while returning a 500.
+- **Test-harness friction is a real signal about the controls.** The limiter was correct for production and wrong for a developer running suites against their own machine; the fix is a development-only loopback exemption rather than a weaker limit.
+- Anything added to this codebase that takes a `companyId` must ask which table it is scoping: rows with a `companyId` column, the `Company` table itself (scope by `id`), or models that reach a company through a relation (scope through the ticket).
+
+**Notes for next time**
+- Steps D–I remain, in `files/W0-progress.md`. Step D (the route-guard test) is the one that prevents this whole class from regressing, and it needs the exemption list written down: `auth.ts`, `webauthn.ts`, `ssoExchange.ts`, `push.ts` and the three documented `/system` carve-outs.

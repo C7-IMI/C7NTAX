@@ -8,7 +8,7 @@ import { authenticate, signToken, signMfaToken, JWT_SECRET, computePermissions, 
 import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
-import { rateLimiter } from "../middleware/rateLimiter";
+import { rateLimiter, isLoopback } from "../middleware/rateLimiter";
 import { isBypassAccount, isBypassLoginAttempt, logBypassSignIn } from "../services/testBypass";
 
 export const authRouter = Router();
@@ -31,7 +31,10 @@ const credentialLimiter = rateLimiter(300, 15 * 60 * 1000, (req) => {
   // Testing bypass: the exempt account is not limited, but only from this machine
   // (see isBypassLoginAttempt) or on requests it has already authenticated.
   const authed = (req as AuthRequest).user?.email;
-  return isBypassAccount(authed) || isBypassLoginAttempt(req.body?.email ?? req.body?.username, req.ip ?? req.socket.remoteAddress);
+  if (isBypassAccount(authed) || isBypassLoginAttempt(req.body?.email ?? req.body?.username, req.ip ?? req.socket.remoteAddress)) return true;
+  // Development loopback is not limited either: test harnesses sign in dozens of times
+  // from 127.0.0.1 and were tripping the bucket mid-suite. Production is untouched.
+  return process.env.NODE_ENV !== "production" && isLoopback(req);
 });
 
 /** Constant-time comparison for short one-time codes. */

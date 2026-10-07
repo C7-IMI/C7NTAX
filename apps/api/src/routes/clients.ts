@@ -5,6 +5,11 @@ import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { canAccessCompany, companyWhere } from "../middleware/companyScope";
 
+/** The Company table has no companyId column: a scoped account is narrowed by its own id. */
+function companyRowSelf(user?: AuthRequest["user"]): Record<string, unknown> {
+  return user?.companyId ? { id: user.companyId } : {};
+}
+
 export const clientsRouter = Router();
 clientsRouter.use(authenticate);
 
@@ -12,8 +17,9 @@ clientsRouter.use(authenticate);
 clientsRouter.get("/", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
   try {
     const { search, status, type, industry, territory, limit = "50", offset = "0", sort = "name" } = req.query as Record<string, string>;
-    // A company-scoped account only ever sees its own client record.
-    const where: Record<string, unknown> = { ...companyWhere(req.user) };
+    // A company-scoped account only ever sees its own client record. The Company table is
+    // the company, so it is narrowed by id rather than by a companyId column.
+    const where: Record<string, unknown> = companyRowSelf(req.user);
     if (status === "active") where.isActive = true;
     if (status === "inactive") where.isActive = false;
     if (type) where.companyType = type;

@@ -382,7 +382,7 @@ billingRouter.get("/dashboard", requirePermission(Permission.BillingView), async
   try {
     const scope = companyWhere(req.user);
     const [invoices, payments] = await Promise.all([
-      prisma.invoice.findMany({ where: scope, select: { status: true, total: true, dueDate: true, issueDate: true } }),
+      prisma.invoice.findMany({ where: { ...scope }, select: { status: true, total: true, dueDate: true, issueDate: true } }),
       prisma.payment.findMany({ where: scope.companyId ? { invoice: { companyId: scope.companyId } } : {}, select: { amount: true, processedAt: true, invoice: { select: { status: true } } } }),
     ]);
     const totalInvoiced = invoices.reduce((s,i) => s + i.total, 0);
@@ -435,7 +435,7 @@ billingRouter.post("/invoices/:id/recurring", requirePermission(Permission.Invoi
 // ── FI-038: Expenses ───────────────────────────────────────────────
 billingRouter.get("/expenses", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {
   try {
-    const expenses = await prisma.expense.findMany({ where: companyWhere(req.user), orderBy: { expenseDate: "desc" }, take: 200 });
+    const expenses = await prisma.expense.findMany({ where: { ...companyWhere(req.user) }, orderBy: { expenseDate: "desc" }, take: 200 });
     res.json({ data: expenses });
   } catch (e) { next(e); }
 });

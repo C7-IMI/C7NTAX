@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.6.060",
+    "date": "2026-10-06",
+    "title": "A client-scoped account can only ever see its own company",
+    "changes": [
+      {
+        "text": "**Permission was not the whole story: the modules were still serving every company's rows.** A scoped account could read its own client record *and* every other client's, their contacts, their agreements, their Kumo summary, their invoices and expenses — and, worst of all, the reporting endpoints, where revenue, SLA compliance, ticket volume and contract profitability are aggregated across the whole business. Those are now narrowed by company for any account that carries one, following the convention already used for tickets: internal staff have no `companyId` and see everything, a scoped account sees its own company.",
+        "type": "Fix"
+      },
+      {
+        "text": "**One place that decides the boundary** (`middleware/companyScope.ts`): a `where` fragment to merge into list, count and aggregate queries, a guard for a single record that answers **404 rather than 403** — an id that exists but is not yours must look exactly like an id that does not exist — and a variant for models (time entries) that reach a company through their ticket.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Client records are narrowed by id, not by company.** The `Company` table *is* the company, so scoping it by a `companyId` column is an invalid query — which is exactly what a scoped account hit the first time it asked for the client list: a 500. The scoping helper now has a documented company-row variant, and the mistake is the reason the verification is assertion-based rather than a status-code check.",
+        "type": "Update"
+      },
+      {
+        "text": "**Billing and expenses gained real gates while being scoped**: the finance dashboard, the quote endpoints and expense create/delete now require the billing permissions and check that the invoice, quote or expense belongs to the caller's company; the invoice PDF and payment-recording routes now share the same check as everything else instead of their own copy.",
+        "type": "Update"
+      },
+      {
+        "text": "**The credential rate limiter no longer trips on your own test suites.** Signing in repeatedly from `127.0.0.1` in development exhausted the 300-per-15-minute bucket mid-suite and produced a cascade of 429s that looked like a regression; loopback requests are now exempt **in development only**, and production keeps the limit exactly as it was.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.059",
     "date": "2026-10-06",
     "title": "Every module enforces a permission, and the navigation agrees with it",

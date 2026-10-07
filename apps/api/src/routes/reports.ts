@@ -48,9 +48,9 @@ reportsRouter.get("/data/ticket-volume", requirePermission(Permission.ReportView
   try {
     const scope = companyWhere(req.user);
     const total = await prisma.ticket.count({ where: scope });
-    const byStatus = await prisma.ticket.groupBy({ by: ["status"], where: scope, _count: { id: true } });
-    const byPriority = await prisma.ticket.groupBy({ by: ["priority"], where: scope, _count: { id: true } });
-    const byBoard = await prisma.ticket.groupBy({ by: ["boardId"], where: scope, _count: { id: true } });
+    const byStatus = await prisma.ticket.groupBy({ by: ["status"], where: { ...scope }, _count: { id: true } });
+    const byPriority = await prisma.ticket.groupBy({ by: ["priority"], where: { ...scope }, _count: { id: true } });
+    const byBoard = await prisma.ticket.groupBy({ by: ["boardId"], where: { ...scope }, _count: { id: true } });
     const boards = await prisma.serviceBoard.findMany({ select: { id: true, name: true } });
     const boardMap = new Map(boards.map(b => [b.id, b.name]));
     res.json({ total, byStatus: byStatus.map(s => ({ status: s.status, count: s._count.id })), byPriority: byPriority.map(p => ({ priority: p.priority, count: p._count.id })), byBoard: byBoard.map(b => ({ board: boardMap.get(b.boardId) || b.boardId, count: b._count.id })) });
@@ -167,8 +167,7 @@ reportsRouter.get("/data/time-tracking", requirePermission(Permission.ReportView
 // ── Client Satisfaction (placeholder) ──
 reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
-    const scope = companyWhere(req.user);
-    const companies = await prisma.company.findMany({ where: scope, select: { id: true, name: true }, take: 20 });
+    const companies = await prisma.company.findMany({ where: req.user?.companyId ? { id: req.user.companyId } : {}, select: { id: true, name: true }, take: 20 });
     const data = companies.map(c => ({
       client: c.name,
       npsScore: Math.round(30 + Math.random() * 50),
@@ -187,7 +186,7 @@ reportsRouter.get("/data/contract-profitability", requirePermission(Permission.R
   try {
     const scope = companyWhere(req.user);
     const agreements = await prisma.serviceAgreement.findMany({
-      where: scope,
+      where: { ...scope },
       include: { company: { select: { name: true } }, invoices: { where: { status: "paid" }, select: { total: true } } },
     });
     const data = agreements.map(a => {
