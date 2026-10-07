@@ -141,6 +141,14 @@ Outlook add-in button (ribbon)
   (f) API-down → clear error, no partial ticket.
 - **Regression:** existing connector/ticket/KB flows untouched; boot pipeline
   and typecheck baselines unchanged.
+- **Automated (implemented):** `apps/api/probe-outlook-addin.mjs` — 59 checks covering the pane's
+  files, ticket creation and dedup, `/options` and its 403, `/preview` resolving the client and
+  contact without creating anything, reviewed fields winning over deduction, the bundled ticket with
+  its `.eml` attachments, and per-user preferences.
+- **Simulator (implemented):** `GET /addin/taskpane.html?demo=1` runs the shipped pane against
+  example messages and canned answers, so the flow can be walked without installing anything. It is
+  offered from Administration → Configuration → Client Apps & Notifications. Being the real pane, it
+  cannot drift from the add-in it demonstrates.
 
 ## 9. Rollback plan
 

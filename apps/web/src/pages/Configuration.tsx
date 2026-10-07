@@ -465,6 +465,55 @@ export function ConfigurationHub() {
 
 // ── Section editor ──────────────────────────────────────────────────
 
+/**
+ * The add-in simulator, offered where the add-in is switched on.
+ *
+ * It opens the add-in's own taskpane with `?demo=1`, which runs the shipped pane against example
+ * messages and made-up answers: the mode question, the choice of message, the review and the result
+ * all behave as they do in Outlook, and nothing is created. A pop-up rather than a panel because the
+ * pane is 360px wide and built for a mailbox beside it — shown inline it would demonstrate a layout
+ * the add-in does not have.
+ */
+export function AddinSimulatorCard({ enabled }: { enabled: boolean }) {
+  const open = () => {
+    const width = 430;
+    const height = 780;
+    const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2));
+    const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2));
+    window.open(
+      "/addin/taskpane.html?demo=1",
+      "c7ntax-addin-simulator",
+      `popup=yes,width=${width},height=${height},left=${left},top=${top}`,
+    );
+  };
+
+  return (
+    <div className="card">
+      <div className="flex items-center gap-2 mb-1">
+        <Monitor size={16} className="text-cyber-400" />
+        <h3 className="text-sm font-semibold text-white">Add-in simulator</h3>
+        <Chip tone="info">nothing is created</Chip>
+      </div>
+      <p className="text-xs text-gray-400 leading-relaxed">
+        Walk through the flow without installing anything: pick one of the example selections, choose
+        one ticket each or a single bundled ticket, edit the review, and watch the result. It is the
+        real taskpane with example messages and made-up answers, so it behaves exactly as it does in
+        Outlook — and no ticket is filed, no mail is sent and no preference is saved.
+      </p>
+      <div className="flex items-center gap-3 mt-3">
+        <button type="button" className="btn-secondary text-sm inline-flex items-center gap-2" onClick={open} disabled={!enabled}>
+          <Monitor size={14} /> Open the simulator
+        </button>
+        <span className="text-[11px] text-gray-500">
+          {enabled
+            ? "Opens in a separate window, sized like the add-in's pane."
+            : "Switch the Outlook add-in on first — the simulator is served by the add-in's own endpoint."}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function ConfigurationSectionPage() {
   const { sectionId } = useParams<{ sectionId: string }>();
   const navigate = useNavigate();
@@ -502,6 +551,7 @@ export function ConfigurationSectionPage() {
   const Icon = iconFor(section.icon);
   const changeable = section.fields.filter(f => f.editable && !f.locked);
   const deployment = section.fields.filter(f => !f.editable || f.locked);
+  const addinEnabled = section.fields.find(f => f.id === "outlookAddin")?.value !== false;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
@@ -570,6 +620,8 @@ export function ConfigurationSectionPage() {
           ))}
         </div>
       )}
+
+      {section.id === "apps" && <AddinSimulatorCard enabled={addinEnabled} />}
 
       <p className="text-xs text-gray-500">
         A change is saved immediately and takes effect on the next action that reads it. Settings

@@ -155,6 +155,27 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .row { display: flex; gap: 8px; }
 .row > * { flex: 1; }
 
+/* ── Simulator strip ───────────────────────────────────────────────────────── */
+/* Shown only when the pane is opened with `?demo=1`. It is deliberately the plainest thing on the
+   screen: the point of the demo is the flow underneath it, and the strip only has to say that
+   nothing here is real and let the simulated selection be changed. */
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px;
+  margin-bottom: 10px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  flex: 0 0 auto;
+}
+
+.demo .demo-note { margin: 0; font-size: 11.5px; color: var(--warn); }
+.demo .demo-row { display: flex; gap: 6px; }
+.demo .demo-row button { flex: 1; padding: 6px 8px; font-size: 11.5px; }
+.demo .demo-row button[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+
 /* ── Steps ─────────────────────────────────────────────────────────────────── */
 .steps { display: flex; gap: 5px; padding-bottom: 10px; flex: 0 0 auto; }
 .steps span { height: 3px; flex: 1; border-radius: 2px; background: var(--border); }

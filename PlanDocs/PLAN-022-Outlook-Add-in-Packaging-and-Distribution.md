@@ -72,7 +72,7 @@ application mentioned the add-in at all.
 | Path | What |
 |---|---|
 | `C7NTAX-OutlookAddIn.wxs` | the definition: `Scope="perUser"`, the manifest and its README into `%LOCALAPPDATA%\C7NTAX\OutlookAddIn`, and the `HKCU` `REG_SZ` registration |
-| `build.ps1` | fetches the generated manifest from a running server, reads the version from `BuildNotes.md`, compiles the MSI, writes `build.json` |
+| `build.ps1` | fetches the generated manifest from a running server, checks the plugin record, compiles the MSI, and prepends the release to `artifacts/index.json` |
 | `install-README.template.txt` | the note that lands beside the manifest |
 
 **The manifest comes from the server, not from a substitution in the script.** The API is the only
@@ -81,11 +81,23 @@ means the installer and the manifest a user downloads by hand cannot diverge. Th
 consequence is stated rather than hidden: the installer is valid for one origin, and it is rebuilt
 when that origin changes.
 
-**Versions are mapped, not reused.** BuildNotes carries `2026.10.7.031`; Windows Installer requires
+**The plugin is versioned, and the installer must follow it.** `apps/outlook-addin/plugin.json`
+records the add-in's identity, its version and a hash of the files that make it up; `pnpm guard:plugin`
+fails when those files changed without the version moving, and `build.ps1` refuses to produce an
+installer at all. That is "if the plugin changes, the installer must be updated" expressed as
+something that fails rather than something somebody remembers.
+
+**Versions are mapped, not reused.** BuildNotes carries `2026.10.7.035`; Windows Installer requires
 `major < 256`, `minor < 256`, `build < 65536`, so a four-digit year does not fit. The mapping is
-`YY.M.PPPP`, giving `26.10.7031`, with the true version kept in `build.json`, the filename, and the
-UI. Choosing a version that ordered builds incorrectly would break the upgrade rule, and the
-symptom would be an upgrade that silently did nothing.
+`YY.M.PPPP`, giving `26.10.7035`, and it is the plugin's own version too — in the record, the
+filename, the manifest's `<Version>` and the UI, so the four cannot disagree. Choosing a version that
+ordered builds incorrectly would break the upgrade rule, and the symptom would be an upgrade that
+silently did nothing.
+
+**Every installer is kept.** `artifacts/index.json` is the release history — version, origin, payload
+hash and SHA-256 per artifact — served newest-first on C7NC → Outlook Add-in so an earlier plugin can
+be reinstalled for troubleshooting or a last-known-good rollback. Only names in that history are
+served, so a download path never becomes a filesystem path.
 
 **WiX 5, deliberately.** WiX 6 and later require accepting a fee-bearing licence (the Open Source
 Maintenance Fee) before they will build anything. Accepting a fee is the business's decision, not a
@@ -191,13 +203,18 @@ fails on the first message it tries to mark.
   manifest and README landed in `%LOCALAPPDATA%\C7NTAX\OutlookAddIn`, the manifest contained no
   placeholder, and the registry value existed with kind `String` (`REG_SZ`) and the right path;
   uninstalled with exit 0 and asserted the file, the value and the folder were gone.
-- **Download** — the versioned name and the versionless alias both return `200` with
-  `Content-Disposition: attachment` and a body matching `build.json`'s SHA-256, through the API and
-  through the Vite proxy. Unknown names and encoded traversal (`..%2f`, `%2e%2e%2f`) return `404`:
-  the route matches only the artifact name in `build.json`, so a path never reaches the filesystem.
+- **Download** — any version named in `artifacts/index.json` and the versionless alias both return
+  `200` with `Content-Disposition: attachment` and a body matching that release's SHA-256, through the
+  API and through the Vite proxy. Unknown names and encoded traversal (`..%2f`, `%2e%2e%2f`) return
+  `404`: the route matches only names in the history, so a path never reaches the filesystem.
+- **Plugin versioning** — `pnpm guard:plugin` was run against a genuine unversioned payload change and
+  reported both problems (the hash drifted and the newest installer was built from the old payload);
+  `build.ps1` refused to build; after `pnpm plugin:bump` and a rebuild it passed. The served manifest
+  reports the record's version (`<Version>26.10.7034.0</Version>`), and the install page lists every
+  released version with a working per-version download.
 - **Deployment report** — `/system/deployment` reports the origin, identity, manifest URL, the
-  artifact's version and size, and `matchesOrigin: true` for an installer built against the server
-  it is running on.
+  artifact's version and size, the plugin record, and `matchesOrigin: true` for an installer built
+  against the server it is running on.
 - **Browser** — the C7NC nav entry, the page rendering live installer facts, the section landing
   card, and both download links resolving to `/addin/installer/...`.
 - **Guards** — web typecheck 0 errors; API typecheck 150, the pre-existing baseline; route guards

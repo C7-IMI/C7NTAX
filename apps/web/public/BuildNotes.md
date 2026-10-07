@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.035 | Last Updated: 2026-10-07
+## Version: 2026.10.7.036 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,20 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.036 — The add-in says "bundle", and can be tried without installing it
+
+Two things: the wording the flow uses for its central choice, and a way to see the flow working before committing a machine to it.
+
+- **[Update]** **"One ticket, the rest attached" is now "Bundle into one ticket".** The old label described the mechanism — what happens to the other messages — without saying what the choice *is*, and a reader had to work out that "bundle" was the word they were looking for. The option now leads with the outcome: *All 3 messages become a single ticket. You choose which one the ticket is written from; the other 2 are attached to it as files you can open later.* The question above it reads **"Which message should the ticket be written from?"** rather than "which becomes the ticket", because the ticket is written *from* a message rather than being one. Everywhere the choice is referred to — the preferences screen, the saved-answers notice, the result line, the help walkthrough and the FAQ — now says bundle.
+- **[Update]** **The rest of the flow's wording was read for the first time as a reader rather than as its author.** The bundle question's explainer changed from *"Its subject, body and contact become the ticket's"* to *"The ticket takes this message's subject, body and contact, so pick the one that describes the work best"*; the attachment note no longer says messages "ride along as .eml attachments on the one ticket" but *"Each attached message is saved on the ticket as a file, so anyone reading it later can open the original."* The entry screen's promise for several messages is now *"You'll choose one ticket each or bundled, then whether to review"* instead of "you'll be asked how to handle them", which described a question without saying what it was about. The mockup, which is the design of record, says the same things.
+- **[New]** **A simulator, on the configuration page.** *Administration → Configuration → Client Apps & Notifications* now offers **Open the simulator**, which opens the add-in's own pane in a window sized like it, with three example selections — one email, three, and five with two senders matching no client — and made-up answers behind it. The questions, the choice of message, the review and the result all behave as they do in Outlook, and **nothing is created, sent or saved**.
+- **[New]** **The simulator is the shipped pane, not a copy of it.** `GET /addin/taskpane.html?demo=1` runs the real taskpane against canned answers; it is not a second interface written to look like the first. A separate demo screen drifts the moment the flow changes, and a demo that shows something the add-in does not do is worse than no demo. The canned answers are shaped like the server's own preview response, because the pane reads those fields.
+- **[Update]** **The simulator is gated where it is served.** It lives on the add-in's own endpoint, so it is offered only while the Outlook add-in is switched on; with the setting off the button says why and stays disabled, rather than opening a page that answers 404.
+- **Rollback:** the wording is text; the simulator is additive and reachable only through `?demo=1`. Turning the add-in setting off removes both the pane and the simulator (the simulator itself makes no request and writes nothing). The plugin version moved to `26.10.7036` because the pane's own files changed, so the previous installer remains available from the install page.
+- **Verification:** the guard **failed on the change before it was versioned**, naming both the drifted hash and the stale installer, then passed after `pnpm plugin:bump` and `pnpm installer:build`. The simulator was driven end to end in a browser on both origins (the API's and through the Vite proxy): all three selections, the bundle path with a chosen parent, the individual path skipping an already-ticketed message, the review's matched and unmatched clients, and the one-click path with saved preferences — which filed with no sheet at all. The simulator's launcher was exercised on the configuration page: the handler fires with `/addin/taskpane.html?demo=1`. No horizontal overflow at the pane's 430px width. Web typecheck 0; API typecheck 150, the pre-existing baseline; `probe-outlook-addin` 59/0; route guards 393/347/0; help links 75 routes.
 
 ---
 

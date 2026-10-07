@@ -11,10 +11,10 @@
  *
  *   1. **What is selected** — the messages themselves rather than a count, with the ones that
  *      already have a ticket flagged before anything is committed to.
- *   2. **How several become tickets** — one each, or one with the others attached. Asked, never
+ *   2. **How several become tickets** — one each, or bundled into one. Asked, never
  *      guessed: three unrelated problems and one incident look identical from here.
- *   3. **Which message is the ticket**, when bundling — a real choice with no sensible default,
- *      which is why bundling is the one answer that cannot be remembered.
+ *   3. **Which message the ticket is written from**, when bundling — a real choice with no sensible
+ *      default, which is why bundling is the one answer that cannot be remembered.
  *   4. **Whether to review** — and the review itself, showing the fields the *server* will fill in,
  *      editable, because a client is matched from the sender's domain and the pane cannot know it.
  *
@@ -28,6 +28,18 @@
 /* global Office */
 
 const TOKEN_KEY = "c7_addin_token";
+
+/**
+ * `?demo=1` runs this pane — the shipped one — against canned answers instead of the API, so the
+ * flow can be walked from a browser without installing anything or touching a mailbox. Nothing is
+ * submitted and nothing is saved.
+ *
+ * The simulator is the real pane rather than a second copy of the interface on purpose: a separate
+ * demo screen drifts the moment the flow changes, and a demo that shows something the add-in does
+ * not do is worse than no demo at all. Administration → Configuration → Client Apps & Notifications
+ * opens it in a pop-up window.
+ */
+const DEMO = new URLSearchParams(location.search).has("demo");
 
 const el = (id) => document.getElementById(id);
 
@@ -65,6 +77,7 @@ const state = {
  * session to confuse, and one whose requests cannot ride on somebody's browser login.
  */
 async function api(path, options = {}) {
+  if (DEMO) return demoAnswer(path, options);
   const res = await fetch(`/api${path}`, {
     ...options,
     credentials: "omit",
@@ -311,7 +324,7 @@ function screenEntry() {
         ? "You'll be asked whether to review it first."
         : state.prefs.mode === "individual"
           ? "One ticket per message, then you'll be asked whether to review."
-          : "You'll be asked how to handle them, then whether to review.";
+          : "You'll choose one ticket each or bundled, then whether to review.";
 
   return {
     body,
@@ -328,7 +341,7 @@ function savedPrefsNotice() {
     return `<p class="hint" style="margin:0">Nothing saved yet. <button class="linklike" data-prefs>Preferences</button></p>`;
   }
   const parts = [];
-  if (state.prefs.mode === "individual" && state.items.length > 1) parts.push("one ticket per message");
+  if (state.prefs.mode === "individual" && state.items.length > 1) parts.push("one ticket each");
   if (state.prefs.preview === "never") parts.push("no review");
   if (state.prefs.preview === "always") parts.push("always reviewing first");
   if (!state.prefs.rememberBoard) parts.push("a fixed board");
@@ -351,7 +364,7 @@ function screenBundle() {
   }
 
   const body = `
-    <p class="hint" style="margin:0 0 7px">Which message becomes the ticket?</p>
+    <p class="hint" style="margin:0 0 7px">Which message should the ticket be written from?</p>
     ${candidates.map((i) => `
       <button class="pick" role="radio" aria-checked="${i === state.parent}" data-parent="${i}" type="button">
         <span class="tick"></span>
@@ -361,7 +374,7 @@ function screenBundle() {
         </span>
         ${i === state.parent ? `<span class="chip chip-brand">The ticket</span>` : ""}
       </button>`).join("")}
-    <p class="hint">Its subject, body and contact become the ticket's, so pick the message that describes the work.</p>
+    <p class="hint">The ticket takes this message's subject, body and contact, so pick the one that describes the work best.</p>
 
     ${others.length ? `
       <p class="hint" style="margin:12px 0 7px">Attach the other ${others.length === 1 ? "message" : `${others.length} messages`}</p>
@@ -373,7 +386,7 @@ function screenBundle() {
             <span class="msg-sub">${escapeHtml(state.items[i].subject || "(no subject)")}</span>
           </span>
         </button>`).join("")}
-      <p class="hint">Attached messages ride along as .eml attachments on the one ticket, so a reply can point at the whole thread.</p>
+      <p class="hint">Each attached message is saved on the ticket as a file, so anyone reading it later can open the original.</p>
     ` : ""}
   `;
 
@@ -511,8 +524,8 @@ function screenPrefs() {
       </div>
 
       <p class="hint" style="margin:0">When several messages are selected</p>
-      ${pick(state.prefs.mode === "ask", 'data-pref-mode="ask"', "Ask me each time", "One ticket each, or one with the others attached — you choose.")}
-      ${pick(state.prefs.mode === "individual", 'data-pref-mode="individual"', "One ticket per message", "No question. Bundling still asks, because which message is the ticket is a real choice.")}
+      ${pick(state.prefs.mode === "ask", 'data-pref-mode="ask"', "Ask me each time", "One ticket each, or bundled into one — you choose.")}
+      ${pick(state.prefs.mode === "individual", 'data-pref-mode="individual"', "One ticket per message", "No question. Bundling still asks, because which message the ticket is written from is a real choice.")}
 
       <p class="hint" style="margin:6px 0 0">Before creating</p>
       ${pick(state.prefs.preview === "ask", 'data-pref-preview="ask"', "Ask each time", "You decide whether to review, per conversation.")}
@@ -541,14 +554,14 @@ function prefsOutcome() {
     return "Every selection asks how to handle it, and asks whether to review. Nothing is filed without a confirmation.";
   }
   if (preview === "never" && mode === "individual") {
-    return "Selecting messages and pressing Create files them straight away — one ticket per message, no review, no questions. Bundling still asks which message is the ticket.";
+    return "Selecting messages and pressing Create files them straight away — one ticket per message, no review, no questions. Bundling still asks which message the ticket is written from.";
   }
   if (preview === "never") {
-    return "With one message selected, pressing Create files it straight away. With several, you are still asked how to handle them.";
+    return "With one message selected, pressing Create files it straight away. With several, you are still asked whether to bundle them.";
   }
   if (preview === "always") {
     return "You always land on the review, so nothing is filed until you confirm." +
-      (mode === "individual" ? " Several messages are filed one ticket each without being asked." : " Several messages still ask how to handle them.");
+      (mode === "individual" ? " Several messages are filed one ticket each without being asked." : " Several messages still ask whether to bundle them.");
   }
   return "Your answers take effect on the next selection.";
 }
@@ -561,7 +574,7 @@ function screenResult() {
       <div class="card" style="text-align:center;padding:14px 10px">
         <h3 style="margin:0 0 3px;font-size:13.5px">${r.created ? plural(r.created, "ticket created", "tickets created") : "Nothing to create"}</h3>
         <p class="hint" style="margin:0">
-          ${r.bundled ? `One ticket, with ${plural(attachments.length, "message", "messages")} attached.` : "One ticket per message."}
+          ${r.bundled ? `Bundled into one ticket, with ${plural(attachments.length, "message", "messages")} attached.` : "One ticket per message."}
           ${r.skipped?.length ? ` ${plural(r.skipped.length, "message was", "messages were")} skipped.` : ""}
         </p>
       </div>
@@ -569,7 +582,9 @@ function screenResult() {
         <div class="result">
           <span class="num">${escapeHtml(x.ticketNumber || "Ticket")}</span>
           <span class="sub">${escapeHtml(x.subject || "")}</span>
-          <span class="state"><a href="/tickets/${encodeURIComponent(x.ticketId)}" target="_blank" rel="noreferrer" style="color:var(--brand);font-size:12px;font-weight:600">Open</a></span>
+          <span class="state">${DEMO
+            ? `<span class="chip chip-neutral">Example</span>`
+            : `<a href="/tickets/${encodeURIComponent(x.ticketId)}" target="_blank" rel="noreferrer" style="color:var(--brand);font-size:12px;font-weight:600">Open</a>`}</span>
         </div>`).join("")}
       ${(r.results || []).filter((x) => x.reason).map((x) => `
         <div class="result skipped">
@@ -598,7 +613,7 @@ function sheetMode() {
     <div class="scrim">
       <div class="sheet" role="dialog" aria-modal="true" aria-label="How should these messages become tickets">
         <h2>${plural(total, "message", "messages")} selected</h2>
-        <p>How should ${willFile === 1 ? "it" : `the ${willFile} that will be filed`} become tickets?</p>
+        <p>Choose how ${willFile === 1 ? "this message becomes a ticket" : `these ${willFile} messages become tickets`}.</p>
         ${dropped ? `<p class="hint warn" style="margin:0">${plural(dropped, "message already has", "messages already have")} a ticket and will be skipped.</p>` : ""}
 
         <button class="opt" role="radio" aria-checked="${state.mode === "individual"}" data-mode="individual" type="button">
@@ -607,8 +622,8 @@ function sheetMode() {
         </button>
 
         <button class="opt" role="radio" aria-checked="${state.mode === "bundled"}" data-mode="bundled" type="button">
-          <span class="opt-title">One ticket, the rest attached</span>
-          <span class="opt-sub">A single ticket. You pick which message is the ticket, and the other ${willFile - 1 === 1 ? "one is" : `${willFile - 1} are`} added to it as attachments.</span>
+          <span class="opt-title">Bundle into one ticket <span class="chip chip-neutral">One ticket</span></span>
+          <span class="opt-sub">All ${willFile} messages become a single ticket. You choose which one the ticket is written from; ${willFile === 2 ? "the other one is attached" : `the other ${willFile - 1} are attached`} to it as ${willFile === 2 ? "a file" : "files"} you can open later.</span>
         </button>
 
         <div class="row" style="margin-top:2px">
@@ -619,7 +634,7 @@ function sheetMode() {
         ${state.mode === "individual"
           ? `<label class="remember"><input type="checkbox" id="remember-mode" /><span>Remember this — create one ticket per message without asking</span></label>`
           : state.mode === "bundled"
-            ? `<p class="hint" style="margin:0">Bundling always asks which message is the ticket, so this answer cannot be remembered.</p>`
+            ? `<p class="hint" style="margin:0">Bundling always asks which message the ticket is written from, so this answer cannot be remembered.</p>`
             : ""}
       </div>
     </div>`;
@@ -833,6 +848,186 @@ function resetFlow() {
   seedEdits();
 }
 
+/* ── Simulator (`?demo=1`) ─────────────────────────────────────────────────── */
+
+const DEMO_CLIENTS = [
+  { id: "demo-umbrella", name: "Umbrella Corp", domain: "umbrellacorp.net" },
+  { id: "demo-northwind", name: "Northwind Traders", domain: "northwind.example" },
+  { id: "demo-contoso", name: "Contoso Ltd", domain: "contoso.com" },
+];
+
+const DEMO_BOARDS = [
+  { id: "demo-service-desk", name: "Service Desk" },
+  { id: "demo-projects", name: "Projects" },
+  { id: "demo-onboarding", name: "Onboarding" },
+];
+
+/** The example messages, in the shape `readSelection` produces, so the pane treats them alike. */
+const DEMO_INBOX = {
+  vpn: {
+    internetMessageId: "<demo-vpn@simulator.invalid>",
+    from: "jane.holt@umbrellacorp.net", fromName: "Jane Holt", hasAttachment: false,
+    subject: "VPN keeps dropping on the 3rd floor",
+    bodyText: "Hi team,\n\nSince yesterday afternoon the VPN drops every few minutes on the third floor. It reconnects on its own but it interrupts calls.\n\nNothing changed on our side that I know of.\n\nThanks,\nJane",
+  },
+  starter: {
+    internetMessageId: "<demo-starter@simulator.invalid>",
+    from: "marcus.reed@northwind.example", fromName: "Marcus Reed", hasAttachment: true,
+    subject: "New starter setup for next Monday",
+    bodyText: "Morning,\n\nWe have a new starter joining the finance team on Monday. Could you set up a laptop, a mailbox and access to the shared drive?\n\nHis details are in the attached form.\n\nRegards,\nMarcus",
+  },
+  invoice: {
+    internetMessageId: "<demo-invoice@simulator.invalid>",
+    from: "priya.raman@contoso.com", fromName: "Priya Raman", hasAttachment: false,
+    subject: "Invoice 4471 question",
+    bodyText: "Hi,\n\nInvoice 4471 looks like it has last month's support line on it twice. Can you check?\n\nPriya",
+    alreadyTicketed: true,
+  },
+  portal: {
+    internetMessageId: "<demo-portal@simulator.invalid>",
+    from: "tom.baker@gmail.example", fromName: "Tom Baker", hasAttachment: false,
+    subject: "Can't log into the portal",
+    bodyText: "Hi, I'm locked out of the customer portal. It says my code has expired but I only just got it.\n\nTom",
+  },
+  firewall: {
+    internetMessageId: "<demo-firewall@simulator.invalid>",
+    from: "sara.lee@unknownco.example", fromName: "Sara Lee", hasAttachment: true,
+    subject: "Renewal quote for the firewall",
+    bodyText: "Hello,\n\nOur firewall licence is up for renewal next month. Could you send over a quote?\n\nSara",
+  },
+};
+
+const DEMO_SCENARIOS = [
+  { id: "single", label: "One email", messages: ["vpn"], hint: "One message selected." },
+  { id: "several", label: "Three", messages: ["vpn", "starter", "invoice"], hint: "Three messages, one already ticketed." },
+  { id: "mixed", label: "Five, two unmatched", messages: ["vpn", "starter", "portal", "firewall", "invoice"], hint: "Five messages, two from senders with no matching client." },
+];
+
+let demoScenario = "several";
+
+const demoSelection = () =>
+  (DEMO_SCENARIOS.find((s) => s.id === demoScenario) || DEMO_SCENARIOS[1]).messages.map((key) => ({ ...DEMO_INBOX[key] }));
+const demoClientList = () => DEMO_CLIENTS.map(({ id, name }) => ({ id, name }));
+const demoIsTicketed = (id) => Object.values(DEMO_INBOX).some((m) => m.internetMessageId === id && m.alreadyTicketed);
+
+/**
+ * What the server would say, worked out from the example messages.
+ *
+ * It mirrors `previewEmailFields` rather than inventing its own shape, because the pane reads these
+ * fields — a demo that answered differently would demonstrate a flow the add-in does not have.
+ */
+function demoPreview(email) {
+  const domain = (email.from || "").split("@")[1] || "";
+  // The simulator's consumer-domain stand-in: Gmail addresses match no client, which is the case
+  // worth showing, because that is where the ticket ends up under a client nobody chose.
+  const matchable = domain && !/^gmail\./.test(domain) ? domain : "";
+  const matched = DEMO_CLIENTS.find((c) => c.domain === matchable) || null;
+  const title = (email.subject || "").replace(/^(re|fw|fwd)\s*:\s*/i, "") || "(no subject)";
+  const body = (email.bodyText || "").trim();
+  return {
+    key: email.internetMessageId,
+    subject: email.subject || "",
+    alreadyHasTicket: Boolean(email.alreadyTicketed),
+    title,
+    description: body || "(no message body)",
+    priority: /\b(urgent|locked out|drops every|failing|critical)\b/i.test(`${title}\n${body}`) ? "High" : "Normal",
+    matchedCompany: matched ? { id: matched.id, name: matched.name } : null,
+    fallbackCompany: matched ? null : { id: DEMO_CLIENTS[0].id, name: DEMO_CLIENTS[0].name },
+    // The simulator has no contact records, so a name is offered and nothing is attached to it.
+    matchedContact: null,
+    contactName: [email.fromName, email.from || ""].filter(Boolean)[0]?.replace(/[._]/g, " ") || "",
+  };
+}
+
+/** Ticket numbers that look like the real ones and are plainly not: the board's initials plus 1001. */
+function demoNumber(boardId, n) {
+  const board = DEMO_BOARDS.find((b) => b.id === boardId) || DEMO_BOARDS[0];
+  const prefix = board.name.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 3);
+  return `${prefix}-1001-${1000 + n}`;
+}
+
+function demoCreate(body) {
+  const emails = body.emails || [];
+  const slug = (s) => String(s || "message").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "message";
+
+  if (body.mode === "bundled") {
+    const parent = emails.find((e) => e.internetMessageId === body.parentMessageId) || emails[0];
+    if (!parent) return { created: 0, skipped: [], bundled: true, results: [], attachments: [] };
+    const attached = emails.filter((e) => e !== parent);
+    return {
+      created: 1,
+      skipped: [],
+      tickets: ["demo-bundled-1"],
+      bundled: true,
+      results: [
+        { subject: parent.subject, ticketId: "demo-bundled-1", ticketNumber: demoNumber(body.boardId, 1) },
+        ...attached.map((e) => ({ subject: e.subject, attached: true })),
+      ],
+      attachments: attached.map((e) => ({ subject: e.subject, filename: `${slug(e.subject)}.eml` })),
+    };
+  }
+
+  let n = 0;
+  const results = emails.map((e) => {
+    if (demoIsTicketed(e.internetMessageId)) return { subject: e.subject, reason: "already has a ticket" };
+    n += 1;
+    return { subject: e.subject, ticketId: `demo-ticket-${n}`, ticketNumber: demoNumber(body.boardId, n) };
+  });
+  return {
+    created: n,
+    skipped: results.filter((r) => r.reason).map((r) => r.subject),
+    tickets: results.filter((r) => r.ticketId).map((r) => r.ticketId),
+    bundled: false,
+    results,
+  };
+}
+
+/** The simulator's stand-in for the API. A short delay so the working states are visible. */
+async function demoAnswer(path, options = {}) {
+  await new Promise((resolve) => setTimeout(resolve, 220));
+  const method = (options.method || "GET").toUpperCase();
+  const body = options.body ? JSON.parse(options.body) : {};
+  if (path === "/outlook-addin/options") return { boards: DEMO_BOARDS, clients: demoClientList() };
+  if (path === "/outlook-addin/preferences") return method === "PATCH" ? { ...state.prefs, ...body } : { ...state.prefs };
+  if (path === "/outlook-addin/preview") return { messages: (body.emails || []).map(demoPreview) };
+  if (path === "/outlook-addin/tickets") return demoCreate(body);
+  throw new Error(`The simulator does not answer ${path}`);
+}
+
+/** The strip that says this is not real and lets the simulated selection be changed. */
+function demoStrip() {
+  const strip = el("demo");
+  if (!DEMO) return;
+  strip.hidden = false;
+  strip.innerHTML = `
+    <p class="demo-note">Simulator — the real add-in pane, with example messages. Nothing is created, sent or saved.</p>
+    <div class="demo-row">
+      ${DEMO_SCENARIOS.map((s) => `<button data-demo="${s.id}" aria-pressed="${s.id === demoScenario}" type="button">${escapeHtml(s.label)}</button>`).join("")}
+    </div>
+    <p class="hint" style="margin:0">${escapeHtml((DEMO_SCENARIOS.find((s) => s.id === demoScenario) || {}).hint || "")}</p>
+    <div class="demo-row"><button data-demo-restart type="button">Start this selection again</button></div>`;
+  strip.querySelectorAll("[data-demo]").forEach((button) => button.addEventListener("click", async () => {
+    demoScenario = button.dataset.demo;
+    await loadDemo();
+  }));
+  strip.querySelector("[data-demo-restart]").addEventListener("click", () => void loadDemo());
+}
+
+/** Load the simulated selection and its answers, then start the flow from the top. */
+async function loadDemo() {
+  state.items = demoSelection();
+  state.boards = DEMO_BOARDS;
+  state.clients = demoClientList();
+  state.boardId = state.boards[0].id;
+  state.ready = true;
+  const preview = await api("/outlook-addin/preview", { method: "POST", body: JSON.stringify({ emails: state.items }) });
+  state.preview = preview.messages || [];
+  state.sheet = null;
+  resetFlow();
+  demoStrip();
+  render();
+}
+
 /* ── Start ────────────────────────────────────────────────────────────────── */
 
 async function afterSignIn() {
@@ -884,6 +1079,18 @@ async function start() {
   el("signin-submit").addEventListener("click", signIn);
   el("password").addEventListener("keydown", (e) => { if (e.key === "Enter") signIn(); });
   el("signout").addEventListener("click", () => signOut());
+
+  if (DEMO) {
+    // No account, no mailbox and no server: the point is the flow, and asking for credentials to
+    // look at it would defeat that.
+    document.title = "C7NTAX — Email to ticket (simulator)";
+    el("signin").hidden = true;
+    el("panel").hidden = false;
+    el("prefs-open").hidden = false;
+    el("signout").hidden = true;
+    await loadDemo();
+    return;
+  }
 
   if (!state.token) {
     el("signin").hidden = false;

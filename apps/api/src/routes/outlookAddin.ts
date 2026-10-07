@@ -7,7 +7,7 @@
  *                      the ticket-creating role does not have
  *   POST /preview      what each selected message will become, **read-only**, so the review can be
  *                      shown before anything exists
- *   POST /tickets      create — one ticket per message, or one ticket with the others attached
+ *   POST /tickets      create — one ticket per message, or one bundled ticket with the others attached
  *   GET  /preferences  the saved answers that let the questions stop being asked
  *   PATCH /preferences
  *
@@ -197,7 +197,7 @@ outlookAddinRouter.post("/tickets", requirePermission(Permission.TicketCreate), 
     // "3 created" does not tell somebody which of their five messages was already done.
     const results: Array<{ subject: string; ticketId?: string; ticketNumber?: string; reason?: string; attached?: boolean }> = [];
 
-    // ── Bundled: one ticket from the parent, the rest attached ────────────────
+    // ── Bundled: one ticket written from the parent, the rest attached ────────
     if (mode === "bundled") {
       const parent =
         emails.find((e) => dedupKey(e) === parentMessageId) ??

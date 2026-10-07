@@ -10,8 +10,8 @@ uses and posts it to `POST /api/outlook-addin/tickets`, so the two paths produce
 | Selection | What the pane does |
 |---|---|
 | one message | asks whether to show the preview; creates the ticket |
-| several messages | first asks **one ticket each** or **one ticket with the others attached**, then which message is the parent |
-| bundling | the other messages are downloaded as `.eml` attachments on the parent ticket |
+| several messages | asks **One ticket each** or **Bundle into one ticket**, then which message the ticket is written from |
+| Bundle into one ticket | one ticket built from the chosen message, with the others saved on it as `.eml` files anyone can open later |
 | the preview | every field the server would fill in — board, client, contact, subject, description, priority — shown and editable before anything is submitted |
 
 The preview is not a client-side guess. A client is matched from the sender's domain and a contact
@@ -28,13 +28,25 @@ a question stop appearing. With both answers saved, a later selection files with
 sheet at all. Bundling is deliberately not rememberable: which message is the ticket changes per
 conversation.
 
+## The simulator (`?demo=1`)
+
+`GET /addin/taskpane.html?demo=1` runs **this pane** against example messages and made-up answers:
+the questions, the review and the result all behave as they do in Outlook, and nothing is created,
+sent or saved. It is offered as **Administration → Configuration → Client Apps & Notifications →
+Add-in simulator**, which opens it in a window sized like the pane.
+
+It is the shipped pane rather than a second copy of the interface on purpose — a separate demo screen
+drifts the moment the flow changes, and a demo that shows something the add-in does not do is worse
+than none. The canned answers live behind `demoAnswer()` in `taskpane.js` and mirror what
+`previewEmailFields` returns, because the pane reads those fields.
+
 ## What is here
 
 | File | What it is |
 |---|---|
 | `manifest.xml` | The add-in manifest: a `MessageReadCommandSurface` ribbon button that opens the taskpane. Served with its three placeholders resolved — see below, and do not edit them in place. |
 | `plugin.json` | The plugin's identity, version and **payload hash** — the record that makes "if the plugin changes, the installer must be rebuilt" enforceable. Maintained by `pnpm plugin:bump`; see [Versioning](#versioning). |
-| `taskpane.html` / `taskpane.js` | The pane: sign-in, selection summary, the questions, the preview, per-message results and preferences. |
+| `taskpane.html` / `taskpane.js` | The pane: sign-in, selection summary, the questions, the preview, per-message results, preferences — and the simulator (`?demo=1`). |
 | `commands.html` / `commands.js` | The function file Office requires. Deliberately behaviour-free — the button opens the pane rather than creating tickets blind. |
 | `styles.css` | Minimal styling that reads on Outlook's light and dark themes. |
 | `assets/icon-16.png`, `-32`, `-80` | Ribbon and manifest icons, derived from the app icon. |

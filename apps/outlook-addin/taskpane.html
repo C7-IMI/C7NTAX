@@ -32,6 +32,10 @@
     <!-- Signed in: the working panel. Three regions, because the flow is a sequence of decisions
          with one way forward: what is selected, the action, and whatever question is open. -->
     <section id="panel" hidden>
+      <!-- Only when the pane is opened with `?demo=1`, which is how Administration → Configuration
+           and C7NC offer a look at the flow without installing anything. It is the shipped pane
+           itself, so the simulator cannot drift away from the add-in it is demonstrating. -->
+      <div id="demo" class="demo" hidden></div>
       <div class="steps" id="steps" hidden><span></span><span></span><span></span><span></span></div>
       <div id="body" class="body"></div>
       <div id="foot" class="foot"></div>

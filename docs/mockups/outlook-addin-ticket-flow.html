@@ -370,10 +370,10 @@
           Single email <span class="count">1 message</span>
         </button>
         <button data-scenario="three">
-          Multiple emails <span class="count">3 messages</span>
+          Several emails <span class="count">3 messages</span>
         </button>
         <button data-scenario="many">
-          Multiple, with gaps <span class="count">5 messages</span>
+          Several emails, two unmatched <span class="count">5 messages</span>
         </button>
       </div>
       <p class="hint" id="scenario-hint"></p>
@@ -447,7 +447,7 @@ const SENDERS = {
 const SCENARIOS = {
   single: {
     host: "RE: VPN keeps dropping on the 3rd floor",
-    hint: "One message selected. No bundle choice to make — the flow goes straight to whether you want to look first.",
+    hint: "One message selected. Nothing to choose — bundling is only a question when there are several, so the flow goes straight to whether you want to look first.",
     emails: [
       {
         id: "m1", sender: SENDERS.jane, subject: "VPN keeps dropping on the 3rd floor",
@@ -458,7 +458,7 @@ const SCENARIOS = {
   },
   three: {
     host: "Inbox — 3 conversations selected",
-    hint: "Three messages from three different clients. One of them already has a ticket, which is the case the flow has to be honest about before the user has chosen anything.",
+    hint: "Three messages from three different clients. One of them already has a ticket, and the flow says so before anything is chosen.",
     emails: [
       {
         id: "m1", sender: SENDERS.jane, subject: "VPN keeps dropping on the 3rd floor",
@@ -479,7 +479,7 @@ const SCENARIOS = {
   },
   many: {
     host: "Inbox — 5 conversations selected",
-    hint: "Five messages, two of which come from senders with no matching client in C7NTAX — the case the preview exists for, because the fields it is about to fill in are wrong and nobody would know.",
+    hint: "Five messages, two of them from senders with no matching client in C7NTAX. Nothing is created until the review has shown which client each one landed on, because the wrong client is the field nobody would notice.",
     emails: [
       {
         id: "m1", sender: SENDERS.jane, subject: "VPN keeps dropping on the 3rd floor",
@@ -679,7 +679,7 @@ function screenEntry() {
         ? "You'll be asked whether to review it first."
         : state.prefs.mode === "individual"
           ? "One ticket per message, then you'll be asked whether to review."
-          : "You'll be asked how to handle them, then whether to review.";
+          : "You'll choose one ticket each or bundled, then whether to review.";
 
   const foot = `
     <button class="btn btn-primary btn-block" id="go">${label}</button>
@@ -717,7 +717,7 @@ function screenBundle() {
 
   const body = `
     <div>
-      <p class="label" style="margin-bottom:7px">Which message becomes the ticket?</p>
+      <p class="label" style="margin-bottom:7px">Which message should the ticket be written from?</p>
       ${candidates.map(e => `
         <button class="pick" role="radio" aria-checked="${e.id === state.parentId}" data-parent="${e.id}" type="button">
           <span class="tick"></span>
@@ -727,7 +727,7 @@ function screenBundle() {
           </span>
           ${e.id === state.parentId ? `<span class="chip chip-brand">The ticket</span>` : ""}
         </button>`).join("")}
-      <p class="hint">Its subject, body and contact become the ticket's, so pick the message that describes the work.</p>
+      <p class="hint">The ticket takes this message's subject, body and contact, so pick the one that describes the work best.</p>
     </div>
 
     <div>
@@ -740,7 +740,7 @@ function screenBundle() {
             <span class="msg-sub">${esc(e.subject)}</span>
           </span>
         </button>`).join("")}
-      <p class="hint">Attached messages ride along as attachments on the one ticket, so a reply can point at the whole thread.</p>
+      <p class="hint">Each attached message is saved on the ticket as a file, so anyone reading it later can open the original.</p>
     </div>
   `;
 
@@ -907,7 +907,7 @@ function screenResult() {
       <h3 style="margin:7px 0 3px;font-size:14px">${r.created.length ? plural(r.created.length, "ticket created", "tickets created") : "Nothing to create"}</h3>
       <p class="hint" style="margin:0">
         ${r.bundled
-          ? `One ticket, with ${otherLabel((r.attachments ?? []).length)} attached.`
+          ? `Bundled into one ticket, with ${otherLabel((r.attachments ?? []).length)} attached.`
           : "One ticket per message."}
         ${r.skipped.length ? ` ${plural(r.skipped.length, "message was", "messages were")} skipped.` : ""}
       </p>
@@ -952,7 +952,7 @@ function sheetMode() {
     <div class="scrim">
       <div class="sheet" role="dialog" aria-modal="true" aria-label="How should these messages become tickets">
         <h2>${plural(total, "message", "messages")} selected</h2>
-        <p>How should ${n === 1 ? "it" : `the ${n} that will be filed`} become tickets?</p>
+        <p>Choose how ${n === 1 ? "this message becomes a ticket" : `these ${n} messages become tickets`}.</p>
         ${dropped ? `<p class="hint warn" style="margin:0">${plural(dropped, "message already has", "messages already have")} a ticket and will be skipped.</p>` : ""}
 
         <button class="opt" role="radio" aria-checked="${state.mode === "individual"}" data-mode="individual" type="button">
@@ -961,8 +961,8 @@ function sheetMode() {
         </button>
 
         <button class="opt" role="radio" aria-checked="${state.mode === "bundled"}" data-mode="bundled" type="button">
-          <span class="opt-title">One ticket, the rest attached</span>
-          <span class="opt-sub">A single ticket. You pick which message is the ticket, and the ${n === 1 ? "others are" : "other " + (n - 1) + " are"} added to it as attachments.</span>
+          <span class="opt-title">Bundle into one ticket <span class="chip chip-neutral">One ticket</span></span>
+          <span class="opt-sub">All ${n} messages become a single ticket. You choose which one the ticket is written from; ${n === 2 ? "the other one is attached" : `the other ${n - 1} are attached`} to it as ${n === 2 ? "a file" : "files"} you can open later.</span>
         </button>
 
         <div class="row" style="margin-top:2px">
@@ -975,7 +975,7 @@ function sheetMode() {
             <input type="checkbox" id="remember-mode" />
             <span>Remember this — create one ticket per message without asking</span>
           </label>` : state.mode === "bundled" ? `
-          <p class="hint" style="margin:0">Bundling always asks which message is the ticket, so this answer cannot be remembered.</p>` : `
+          <p class="hint" style="margin:0">Bundling always asks which message the ticket is written from, so this answer cannot be remembered.</p>` : `
           <label class="remember">
             <input type="checkbox" id="remember-mode" />
             <span>Remember this answer</span>
@@ -1027,11 +1027,11 @@ function screenPrefs() {
       <p class="label">When several messages are selected</p>
       <button class="pick" role="radio" aria-checked="${state.prefs.mode === "ask"}" data-pref-mode="ask" type="button">
         <span class="tick"></span>
-        <span class="msg-body"><span class="msg-who">Ask me each time</span><span class="msg-sub">One ticket each, or one with the others attached — you choose.</span></span>
+        <span class="msg-body"><span class="msg-who">Ask me each time</span><span class="msg-sub">One ticket each, or bundled into one — you choose.</span></span>
       </button>
       <button class="pick" role="radio" aria-checked="${state.prefs.mode === "individual"}" data-pref-mode="individual" type="button">
         <span class="tick"></span>
-        <span class="msg-body"><span class="msg-who">One ticket per message</span><span class="msg-sub">No question. Bundling still asks, because which message is the ticket is a real choice.</span></span>
+        <span class="msg-body"><span class="msg-who">One ticket per message</span><span class="msg-sub">No question. Bundling still asks, because which message the ticket is written from is a real choice.</span></span>
       </button>
     </div>
 
@@ -1088,12 +1088,12 @@ function prefsOutcome() {
     return "Selecting messages and pressing Create files them straight away — one ticket per message, no review, no questions. Bundling still asks which message is the ticket.";
   }
   if (state.prefs.preview === "never") {
-    return "With one message selected, pressing Create files it straight away. With several, you are still asked how to handle them.";
+    return "With one message selected, pressing Create files it straight away. With several, you are still asked whether to bundle them.";
   }
   if (state.prefs.preview === "always") {
     const several = state.prefs.mode === "individual"
       ? " Several messages are filed one ticket each without being asked."
-      : " Several messages still ask how to handle them.";
+      : " Several messages still ask whether to bundle them.";
     return "You always land on the review, so nothing is filed until you confirm." + several;
   }
   return "Your answers take effect on the next selection.";
@@ -1215,7 +1215,7 @@ function render() {
 
 const CAPTIONS = {
   entry: "Step 1 — the pane opens knowing what is selected. One button, and it says what it will do.",
-  bundle: "Step 2 — bundled mode: choose the message that becomes the ticket, then which of the others ride along.",
+  bundle: "Step 2 — bundled: choose which message the ticket is written from, then which of the others are attached to it.",
   preview: "Step 3 — the review: the same editable field set for one ticket or five, with matches and gaps called out.",
   prefs: "Preferences — the only place a saved answer can be seen and undone, once it has stopped a question appearing.",
   result: "Step 4 — per-message outcomes, including what was skipped and why."
