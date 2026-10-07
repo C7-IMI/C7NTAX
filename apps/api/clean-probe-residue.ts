@@ -162,6 +162,39 @@ async function main() {
     () => prisma.checklist.deleteMany({ where: { name: { startsWith: "W1 session verification" } } }),
   );
 
+  // The Kumo audit probe and the browser checks create credentials and documents, and the
+  // trail those actions write is matched by the same names.
+  const kumoProbeWhere = { label: { startsWith: "Probe vault" } };
+  const kumoProbeDocs = await prisma.kumoDocument.findMany({ where: { title: { startsWith: "Probe doc" } }, select: { id: true } });
+  const kumoProbeDocIds = kumoProbeDocs.map(d => d.id);
+  const kumoProbePasswords = await prisma.kumoPassword.findMany({ where: kumoProbeWhere, select: { id: true } });
+  const kumoProbePasswordIds = kumoProbePasswords.map(p => p.id);
+  await remove(
+    "kumo probe audit rows",
+    () => prisma.kumoAuditLog.count({ where: { itemId: { in: [...kumoProbePasswordIds, ...kumoProbeDocIds] } } }),
+    () => prisma.kumoAuditLog.deleteMany({ where: { itemId: { in: [...kumoProbePasswordIds, ...kumoProbeDocIds] } } }),
+  );
+  await remove(
+    "kumo probe document revisions",
+    () => prisma.kumoDocumentRevision.count({ where: { documentId: { in: kumoProbeDocIds } } }),
+    () => prisma.kumoDocumentRevision.deleteMany({ where: { documentId: { in: kumoProbeDocIds } } }),
+  );
+  await remove(
+    "kumo probe documents",
+    () => Promise.resolve(kumoProbeDocIds.length),
+    () => prisma.kumoDocument.deleteMany({ where: { id: { in: kumoProbeDocIds } } }),
+  );
+  await remove(
+    "kumo probe access logs",
+    () => prisma.kumoPasswordAccessLog.count({ where: { passwordId: { in: kumoProbePasswordIds } } }),
+    () => prisma.kumoPasswordAccessLog.deleteMany({ where: { passwordId: { in: kumoProbePasswordIds } } }),
+  );
+  await remove(
+    "kumo probe credentials",
+    () => Promise.resolve(kumoProbePasswordIds.length),
+    () => prisma.kumoPassword.deleteMany({ where: { id: { in: kumoProbePasswordIds } } }),
+  );
+
   // The time-rules probe and the browser check leave one client, agreement and ticket each.
   const timeRuleCompanyWhere = { OR: [{ name: { startsWith: "TimeRules Probe" } }, { name: { startsWith: "TimeRules Off Probe" } }, { name: { startsWith: "Expense Probe" } }] };
   const timeRuleCompanies = await prisma.company.findMany({ where: timeRuleCompanyWhere, select: { id: true } });

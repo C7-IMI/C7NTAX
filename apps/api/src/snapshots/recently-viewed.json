@@ -313,5 +313,14 @@
     "entityName": "Acme Corporation — email security",
     "entityIcon": "monitor",
     "viewedAt": "2026-10-07T01:42:47.558Z"
+  },
+  {
+    "id": "0c19b4a4-5b9a-4598-b0c9-e90c5a4ddc95",
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "entityType": "password",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "entityName": "Acme Domain Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-10-07T07:32:02.422Z"
   }
 ]

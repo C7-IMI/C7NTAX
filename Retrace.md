@@ -3573,3 +3573,25 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - Phase B still open: per-user dashboard (#4), board drag-and-drop (#5), Kumo audit trail (#6), MFA QR screenshot (#7), outage board (#8), CloudConnect live statuses (#9), AI KB auto-generation (#11), M365 inactivity reports (#12), SMS (#13, decision-gated on a provider).
 - The probes for reports and the passkey suite both sign in as personas and **delete those personas' sessions on cleanup**, which logs the verification browser out. Order the browser work before the probe runs, or accept a re-login.
+
+**Prompt 220 — continued: W2-5 (Kumo audit trail, PLAN-015 Phase B #6)**
+
+**What I did**
+- Repaired the accidental one-line collapse of `model KumoPasswordAccessLog {` in the schema — Prisma would not validate it, so `migrate dev` refused to run at all. Worth recording as a reminder: this file is not safe to nudge with a careless single-line edit.
+- Added `KumoAuditLog` (`itemType`, `itemId`, `action`, `userId`, `summary`, `details Json`, `at`, indexed on `[itemType, itemId, at]` and `[userId]`) and migrated as `kumo_audit`.
+- Wrote `services/kumoAudit.ts`: `recordKumoAudit()` **swallows its own failures** — a credential save that worked must not be undone because the trail could not be written, and the log line is what makes that visible — plus `kumoAuditTrail()` (resolves the acting user for the panel) and `changedFields()`.
+- Wired the writes: password created / updated / **deactivated** / **revealed**, and document created / updated. Documents get no delete route, so there is nothing to record there.
+- `changedFields()` records the field **names** and skips bookkeeping columns. The plaintext secret is never written — my first probe run showed `["label","password","updatedById"]`, which is how I noticed `updatedById` was being reported as if a user had edited it.
+- `GET /kumo/audit/:itemType/:itemId`, gated on `kumo:view`, 404 for an unknown item **and** for an unknown item type, limit clamped to 200. An unknown id must not be distinguishable from a deleted record by an empty list.
+- UI: an **Audit trail** expander in the credential detail panel (next to the existing "Last changed by") and one in the document viewer. Loaded on demand and refetched after a reveal, so the entry you just made is there.
+
+**Decisions worth remembering**
+- **A `Json` details column, not a set of typed columns.** The fields worth recording differ per item type; the sentence in `summary` is what a human reads and the details are what an investigator filters.
+- **No values, anywhere.** An audit table that copies secrets becomes the weakest copy of the thing the vault exists to protect.
+- **Auditing never blocks the action.** Swallow-and-log is the deliberate trade: the alternative is a user unable to save a password because an audit insert timed out.
+- **Permission-gate the trail the same as the item.** It is derived from the item; if you may not see the credential, you may not see who touched it.
+
+**Notes for next time**
+- Assets, configs and links are not written to yet — the route and table accept them, and `kumoItemExists` already maps them, so a follow-up is a handful of `recordKumoAudit` calls.
+- **Defect found and deliberately NOT fixed:** in the credential panel the three auto-TOTP blocks (Setup TOTP, QR, live code) are nested inside the "Credentials Revealed" box, so the QR setup button is unreachable until a password is revealed. `git show HEAD` confirms it predates this change; recorded in BuildNotes 2026.10.7.007 and in the outstanding list rather than folded in here.
+- The superadmin/admin personas are the only ones holding Kumo permissions; the technician persona has none, which is what made the 403 assertions meaningful. My first probe version wrongly assumed the technician could reveal and failed two assertions — fixed by testing the gate with the technician and the *attribution* with a second administrator.

@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.7.007",
+    "date": "2026-10-07",
+    "title": "Every change to a shared Kumo credential or document now has a name against it",
+    "changes": [
+      {
+        "text": "**Kumo remembers who changed what.** \"Last changed by\" told you who touched a row last and nothing else: not who *revealed* a credential, not what the previous editor actually changed, not that anyone had. Shared vaults and shared runbooks are edited by many hands, and \"the password changed and nobody knows why\" is the question an audit asks. There is now a trail — a `KumoAuditLog` table with an entry per action, who did it, when, a sentence a person can read, and the field-level facts behind it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Recorded on the credential itself:** created, updated, deactivated, and **revealed** — the reveal is the event that matters most in a vault, and it is now named alongside the existing access log rather than living only in a table nobody opens.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Recorded on documents too:** created, and every edit, with the version number and the change log the editor supplied, so a runbook's history reads as prose instead of a revision list.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The trail names the fields that moved and never their values.** An edit says `label, password` — the password is an entry by name, not a copy of the secret; the plaintext never reaches the audit table, which would otherwise become the weakest copy of the very thing the vault protects. Bookkeeping columns (`updatedById`, `updatedAt`) are deliberately not dressed up as user edits.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A trail panel where the item is.** An **Audit trail** expander in the credential detail panel and in the document viewer, loaded on demand (nobody wants a history query on every open) and refetched when a reveal happens, so the entry you just created appears without a reload.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /kumo/audit/:itemType/:itemId`**, newest first, limit clamped, entries resolved to a person's name. Gated on Kumo view permission, 404 for an item that does not exist or a type that does (so an unknown id cannot be told apart from a deleted record by its empty trail), and the general audit `Json` is typed rather than free-form.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.006",
     "date": "2026-10-07",
     "title": "The custom report builder actually runs what you give it, and there is a Client Value Report",
