@@ -8883,5 +8883,72 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T02:48:49.217Z"
+  },
+  {
+    "id": "f4aaca2c-ee59-4dc5-b17d-6c424a0c1d28",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "email-connectors",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "folder": "INBOX",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "clientId": "11111111-2222-3333-4444-555555555555",
+      "tenantId": "cyber7group.onmicrosoft.com",
+      "transport": "office365",
+      "clientSecret": "***",
+      "pollIntervalSec": 30
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T03:00:30.913Z"
+  },
+  {
+    "id": "bb88c854-174c-43ed-846c-8df0070c1a50",
+    "action": "email-connectors:update",
+    "entity": "email-connectors",
+    "entityId": "cffd0f2b-ffdc-4bb2-8bf2-74f7051a2da9",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T03:00:31.381Z"
+  },
+  {
+    "id": "165c3589-0255-49b9-8edb-0522cd7c784d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "cffd0f2b-ffdc-4bb2-8bf2-74f7051a2da9",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T03:00:31.568Z"
+  },
+  {
+    "id": "4778ece3-93c4-40b0-9d86-dca8c49a598c",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "cffd0f2b-ffdc-4bb2-8bf2-74f7051a2da9",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T03:00:31.785Z"
+  },
+  {
+    "id": "1af04202-69cc-4481-a77e-fbd6724c0293",
+    "action": "email-connectors:delete",
+    "entity": "email-connectors",
+    "entityId": "cffd0f2b-ffdc-4bb2-8bf2-74f7051a2da9",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T03:00:31.808Z"
   }
 ]
