@@ -61,6 +61,7 @@ import { checklistsRouter } from "./routes/checklists";
 import { setupWebSocket } from "./ws";
 import { WEB_ORIGIN } from "@C7NTAX/shared";
 import { startWorkers } from "./worker";
+import { assertTestBypassConfig } from "./services/testBypass";
 // ── Startup logging ─────────────────────────────────────────────────
 logger.startup();
 
@@ -80,6 +81,11 @@ if (!process.env.JWT_SECRET) {
 if (!process.env.KUMO_MASTER_KEY) {
   logger.info("startup", "KUMO_MASTER_KEY is unset — the vault key is derived from JWT_SECRET. Set it explicitly before production.");
 }
+
+// ── Development test bypass ─────────────────────────────────────────
+// Refuses to run in production, refuses to run half-configured, and says so loudly
+// when it is on. See services/testBypass.ts.
+assertTestBypassConfig();
 
 export const prisma = new PrismaClient();
 export const app = express();

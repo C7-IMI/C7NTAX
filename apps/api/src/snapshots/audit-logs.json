@@ -8667,5 +8667,29 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T01:31:18.517Z"
+  },
+  {
+    "id": "f1834ace-ec7a-4ed5-8c0c-1d6d671528bc",
+    "action": "users:delete",
+    "entity": "users",
+    "entityId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:05:34.169Z"
+  },
+  {
+    "id": "627b8b8f-4765-4b52-9339-e1020ead2a21",
+    "action": "users:update",
+    "entity": "users",
+    "entityId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "changes": {
+      "isActive": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:05:34.436Z"
   }
 ]

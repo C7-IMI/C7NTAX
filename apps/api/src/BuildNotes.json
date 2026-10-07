@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.6.057",
+    "date": "2026-10-06",
+    "title": "One account can be exempted from the login interruptions, for testing only",
+    "changes": [
+      {
+        "text": "**A development-only bypass for a single account.** Waiting out a session expiry, getting locked out after a handful of bad passwords, or being stopped by a \"choose a new password\" prompt in the middle of clicking through the app is friction that has nothing to do with what is being tested — so one account can now be exempted from all four interruptions at once: the session expiry, the failed-attempt lockout, the sign-in rate limit, and the forced password change. The exempt account also gets a long-lived token (**720 hours** by default), which matters because turning `AUTH_HARDENING_ENABLED` on drops every session to **15 minutes** — the expiry that would otherwise end a testing session mid-task. A sign-in that finds a stale lock or a failed-attempt counter on the exempt account clears it, so a previous run cannot leave the account looking locked in the UI.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Configured with two environment variables, and impossible to leave on by accident.** `AUTH_TEST_BYPASS=true` plus `AUTH_TEST_BYPASS_ACCOUNT=<email>` in `apps/api/.env`, with an optional `AUTH_TEST_BYPASS_TOKEN_TTL`. It matches **one account, not a role** — an admin-wide rule would quietly exempt every administrator — the API **refuses to start at all in production** with the flag set, refuses to start half-configured (flag without an account), prints a loud warning on every boot while it is active, and logs each sign-in as the exempt account. `/api/auth/me` reports `testBypass: true` for it so the state is checkable rather than assumed. Setting `AUTH_TEST_BYPASS=false` (or deleting the lines) switches it off, and behaviour returns to normal on the next restart.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The sign-in rate limit gained a skip rule** rather than a raised ceiling. The exempt account is not limited, but only on requests it has already authenticated or from **this machine** — the limiter has to match on the submitted email before authentication exists, so allowing any caller to skip it by typing that address would have turned the exemption into a way around the limit. `rateLimiter` now takes an optional predicate used by the credential endpoints; every other endpoint's limiting is untouched.",
+        "type": "Update"
+      },
+      {
+        "text": "**The account-scoped exemption is wired into the session middleware too**, alongside the existing admin bypass, so when sessions are mounted the same account keeps its exemption instead of needing a second change.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.056",
     "date": "2026-10-06",
     "title": "The collapsed sidebar's user footer no longer collides",

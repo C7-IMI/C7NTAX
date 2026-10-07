@@ -9,6 +9,7 @@ import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword } from "@C7N
 import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
 import { rateLimiter } from "../middleware/rateLimiter";
+import { isBypassAccount, isBypassLoginAttempt, logBypassSignIn } from "../services/testBypass";
 
 export const authRouter = Router();
 const emailService = new EmailService();
@@ -26,7 +27,12 @@ const MAX_LOGIN_ATTEMPTS = 5;
  * that is off unless AUTH_HARDENING_ENABLED is set). Office NAT, the boot script's
  * health login and test scripts all share one IP bucket.
  */
-const credentialLimiter = rateLimiter(300, 15 * 60 * 1000);
+const credentialLimiter = rateLimiter(300, 15 * 60 * 1000, (req) => {
+  // Testing bypass: the exempt account is not limited, but only from this machine
+  // (see isBypassLoginAttempt) or on requests it has already authenticated.
+  const authed = (req as AuthRequest).user?.email;
+  return isBypassAccount(authed) || isBypassLoginAttempt(req.body?.email ?? req.body?.username, req.ip ?? req.socket.remoteAddress);
+});
 
 /** Constant-time comparison for short one-time codes. */
 function codesMatch(a: string, b: string): boolean {
@@ -54,14 +60,16 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
       return;
     }
 
-    if (LOCKOUT_ENABLED && user.isLocked) {
+    const bypass = isBypassAccount(user.email);
+
+    if (LOCKOUT_ENABLED && user.isLocked && !bypass) {
       res.status(423).json({ error: "Account locked after too many failed sign-in attempts — ask an administrator to unlock it" });
       return;
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
-      if (LOCKOUT_ENABLED) {
+      if (LOCKOUT_ENABLED && !bypass) {
         const attempts = user.loginAttempts + 1;
         await prisma.user.update({
           where: { id: user.id },
@@ -72,10 +80,14 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
       return;
     }
 
-    // A successful sign-in clears the counter.
-    if (LOCKOUT_ENABLED && user.loginAttempts > 0) {
-      await prisma.user.update({ where: { id: user.id }, data: { loginAttempts: 0 } });
+    // A successful sign-in clears the counter — and for the exempt account also any
+    // lock or residue left behind by an earlier run, whatever the lockout setting is,
+    // so a testing session can neither be blocked by one nor leave a stale locked row
+    // behind in the UI.
+    if (bypass ? (user.loginAttempts > 0 || user.isLocked) : (LOCKOUT_ENABLED && user.loginAttempts > 0)) {
+      await prisma.user.update({ where: { id: user.id }, data: { loginAttempts: 0, isLocked: false } });
     }
+    if (bypass) logBypassSignIn(user.email);
 
     // SOC 2 hardening (backlog item 11): rehash-on-login when enabled and hash cost < 12.
     if (process.env.AUTH_HARDENING_ENABLED === "true" && !user.passwordHash.startsWith("$2b$12$")) {
@@ -302,6 +314,6 @@ authRouter.get("/me", authenticate, async (req: AuthRequest, res, next) => {
       select: { id: true, email: true, firstName: true, lastName: true, role: true, companyId: true, mfaEnabled: true, mustChangePassword: true, lastLoginAt: true, createdAt: true },
     });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
-    res.json(user);
+    res.json({ ...user, testBypass: isBypassAccount(user.email) });
   } catch (e) { next(e); }
 });

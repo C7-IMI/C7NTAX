@@ -3,8 +3,9 @@ import type { Request, Response, NextFunction } from "express";
 /** Token bucket rate limiter — per-IP sliding window, 100 req / 15 min */
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
-export function rateLimiter(maxReqs = 100, windowMs = 15 * 60 * 1000) {
+export function rateLimiter(maxReqs = 100, windowMs = 15 * 60 * 1000, skip?: (req: Request) => boolean) {
   return (req: Request, res: Response, next: NextFunction): void => {
+    if (skip?.(req)) { next(); return; }
     const key = req.ip || req.socket.remoteAddress || "unknown";
     const now = Date.now();
     let bucket = buckets.get(key);

@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import type { SignOptions } from "jsonwebtoken";
 import { Permission, ROLE_PERMISSIONS, type SystemRole } from "@C7NTAX/shared";
+import { bypassTokenTtl, isBypassAccount } from "../services/testBypass";
 
 const JWT_SECRET = process.env.JWT_SECRET || "C7NTAX-dev-secret-change-in-prod";
 
@@ -80,7 +82,7 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
         return;
       }
       const [path = ""] = (req.originalUrl || req.url || "").split("?");
-      if (state.mustChangePassword && !PASSWORD_CHANGE_EXEMPT.includes(path)) {
+      if (state.mustChangePassword && !PASSWORD_CHANGE_EXEMPT.includes(path) && !isBypassAccount(req.user?.email)) {
         res.status(403).json({
           error: { message: "Choose a new password before continuing", code: "PASSWORD_CHANGE_REQUIRED" },
         });
@@ -164,6 +166,11 @@ export function requirePermission(...permissions: Permission[]) {
  * Generate a JWT token from a sign-payload (prisma result or ad-hoc object).
  */
 export function signToken(payload: SignTokenPayload): string {
+  // The test-bypass account gets a long-lived token so manual testing is not cut
+  // short by the 15-minute expiry that hardening switches on.
+  const expiresIn = (isBypassAccount(payload.email)
+    ? bypassTokenTtl()
+    : (process.env.AUTH_HARDENING_ENABLED === "true" ? "15m" : "12h")) as SignOptions["expiresIn"];
   return jwt.sign(
     {
       userId: payload.id,
@@ -174,7 +181,7 @@ export function signToken(payload: SignTokenPayload): string {
       tokenVersion: payload.tokenVersion ?? 0,
     } satisfies AuthUser,
     JWT_SECRET,
-    { expiresIn: process.env.AUTH_HARDENING_ENABLED === "true" ? "15m" : "12h" }
+    { expiresIn }
   );
 }
 

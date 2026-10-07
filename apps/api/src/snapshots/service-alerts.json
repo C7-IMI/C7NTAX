@@ -521,7 +521,7 @@
     "id": "8347b71f-f271-49e2-b2af-f335eb5841f8",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Workspace Agents Degraded and Responses Impacted",
-    "description": "Status: Investigating We are investigating the issue for workspace agents, users may not see the responses during the issue time. Affected components Agent (Degraded performance)",
+    "description": "Status: Identified We are implementing the mitigation. Affected components Agent (Degraded performance)",
     "severity": "degraded",
     "status": "active",
     "source": "rss",
@@ -529,7 +529,7 @@
     "detectedAt": "2026-10-07T01:16:26.775Z",
     "resolvedAt": null,
     "createdAt": "2026-10-07T01:16:26.776Z",
-    "updatedAt": "2026-10-07T01:16:26.776Z"
+    "updatedAt": "2026-10-07T01:56:23.501Z"
   },
   {
     "id": "90fa0286-2aef-4b63-934c-85c16cf67ce5",

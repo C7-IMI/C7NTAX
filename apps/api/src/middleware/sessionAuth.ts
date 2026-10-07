@@ -6,6 +6,7 @@
 
 import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../index";
+import { isBypassAccount } from "../services/testBypass";
 
 const SESSION_COOKIE = "c7_sid";
 const ADMIN_TIMEOUT_BYPASS = true; // Admin + Super Admin sessions never expire per PSA standard
@@ -90,9 +91,11 @@ export async function authenticateSession(
       return;
     }
 
-    // Inactivity timeout — admin + super_admin bypass per PSA standard
+    // Inactivity timeout — admin + super_admin bypass per PSA standard, and the
+    // account-scoped testing bypass when one is configured
     if (ADMIN_TIMEOUT_BYPASS &&
-        (session.user?.role?.systemRole === "admin" || session.user?.role?.systemRole === "super_admin")) {
+        (session.user?.role?.systemRole === "admin" || session.user?.role?.systemRole === "super_admin" ||
+         isBypassAccount(session.user?.email))) {
       // Admin and Super Admin sessions never expire from inactivity
     } else {
       const timeoutMs = await getSessionTimeoutMs();

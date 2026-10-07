@@ -3238,3 +3238,31 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - Counting `requirePermission` in a router file includes its import line, so `system.ts` reads 2 for one guarded route — subtract the import when reporting.
 - `Select-String` against `.env` at the repo root fails: the env file lives in `apps/api/`.
+
+---
+
+### Prompt 218 — Will W0 lock me out, and an account-scoped testing bypass
+**Timestamp:** 2026-10-06 | **Status:** Done — bypass implemented, both states probed, regressions green | **Duration:** ~1 h 15 m
+**BuildNotes IDs:** 2026.10.6.057 - One account can be exempted from the login interruptions, for testing only
+
+> Will implement W0 break the app or lock me out from the application? As far as lockouts go, I'm only concerned about the admin account being able to bypass timeouts and auth requirements for right now for testing purposes. Is it possible to exempt ONLY that account for the moment until I say disable the bypass
+
+**What I did**
+- Answered the lockout question by finding the one setting that actually causes it: `signToken` picks its lifetime from `AUTH_HARDENING_ENABLED` — `15m` when hardening is on, `12h` when it is off. So the moment W0's lockout item is switched on, every session drops to fifteen minutes, which is precisely the "timeout" that would interrupt a testing session. That, plus the remaining guards, is what the bypass had to cover.
+- Built `apps/api/src/services/testBypass.ts`: one account, matched by email, exempt from session expiry, lockout, the credential rate limit and the password-change gate, with a boot warning, a sign-in log line, and a `testBypass` flag on `/api/auth/me`.
+- Made it impossible to be on by accident: off unless `AUTH_TEST_BYPASS=true`, **throws** if that is set in production, throws if the flag is set without an account, and warns loudly on every boot. It matches one account rather than the admin role on purpose — a role rule would exempt every administrator, which is a much bigger hole than the one being asked for.
+- Extended `rateLimiter` with an optional skip predicate instead of raising the ceiling. The limiter has to match on the submitted email because `/login` is unauthenticated, so the exemption is additionally restricted to **loopback** requests: otherwise a remote caller could dodge the limit by typing the exempt address.
+- Wired the same account into the (not yet mounted) session middleware so the exemption survives when sessions are switched on, rather than needing a second change then.
+- Proved both states rather than asserting them: a second API instance on port 4100 with `AUTH_HARDENING_ENABLED=true AUTH_TEST_BYPASS=false` shows 15-minute tokens, no `testBypass` field, **423 after five bad passwords with the row left locked**, and **403 `PASSWORD_CHANGE_REQUIRED`** from a protected endpoint — the exact four behaviours the bypass neutralises on the main instance.
+- Restored the exempt account's row to `loginAttempts: 0, isLocked: false, mustChangePassword: false`, deleted the probe users and audit rows, and re-captured the snapshots.
+
+**Decisions worth remembering**
+- **The self-heal has to be independent of `LOCKOUT_ENABLED`.** The first version only cleared a lock when hardening was on, so with hardening off a pre-existing locked row stayed locked (usable, because the bypass ignores it, but the UI would still say "Account Locked"). A successful sign-in as the exempt account now clears the residue unconditionally.
+- **Environment is read per call, not at module load.** The API picks up `.env` as a side effect of importing Prisma, so a module-level `process.env` read depends on import order — a subtle way for a flag like this to silently read as off.
+- **`expiresIn` from a variable needs the `SignOptions["expiresIn"]` cast.** `jsonwebtoken` types it as `number | StringValue`, not `string`, and the API typecheck caught it (156 errors against the 155 baseline) before it ever ran.
+- The `.env` file is gitignored (`*.env`), so enabling it locally leaves no trace in the repository — which is the right place for it, but also means a second dev machine needs the same two lines.
+
+**Notes for next time**
+- Two API instances against one database is fine, but they each start the snapshot poller — re-capture and diff the fixtures before committing, which is now habit anyway.
+- The second instance is torn down by looking up its listener on port 4100 and terminating that specific PID; its log files were deleted with it.
+- The remaining W0 items and their lockout risk, for the answer: the permission matrix (P0-2) is the one that can lock anyone out if applied wrongly, which is why it needs the intended matrix rather than a guess; the `/api/system` gate on `GET /configs` already shipped with the four documented read carve-outs untouched.
