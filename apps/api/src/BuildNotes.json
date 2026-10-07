@@ -1,5 +1,48 @@
 [
   {
+    "version": "2026.10.7.028",
+    "date": "2026-10-07",
+    "title": "The Help section catches up with the product, and stops being able to drift",
+    "changes": [
+      {
+        "text": "**Six walkthroughs the product had been shipping without.** The Help section documented two dozen shipped changes as if they had not happened. It now covers the **Product Catalog** (types, the fields, cost versus sell price and who is allowed to see which, stock and reordering, the four surfaces that price from it, and why an item is retired rather than deleted); **Reporting & Business Reviews** (the five reporting areas, all nine standard reports and what each answers, how to read one, and the review pack at three cadences); the **Customer Portal** (turning it on, granting a client access, the emailed six-digit code, exactly what a customer can and cannot see, and why a ticket that is not theirs answers 404); **Expenses & Accounting Sync** (filing against a ticket, approval and the required reason for a rejection, how an expense reaches an invoice, and the push to accounting); the **Knowledge Base & AI drafts** (a draft never publishes itself, and says it was machine-written and which ticket it came from); and **M365 Inactivity & Offboarding** (the report, the checklist, and the deliberate refusal to disable anything).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The configuration reference was wrong about the feature flags — in both directions.** The old table said every flag defaulted off; most of them now **ship on and are turned off with `false`**, and a handful still ship off. Six flags the product reads were missing entirely (`INVOICE_BATCH_ENABLED`, `KB_AUTOGEN_ENABLED`, `M365_OFFBOARD_ENABLED`, `CLOUDCONNECT_LIVE_STATUS_ENABLED`, `SERVICE_ALERTS_SOCIAL_ENABLED`, `PORTAL_ENABLED`), and `AUTH_HARDENING_ENABLED` was described as \"15-min JWT + rehash-on-login\" when it also enables the **lockout after 5 failed sign-ins** and the forced password change. The table is rebuilt from the deployment's own environment template — 21 flags, each with what it gates and which way it defaults — and the two conventions are now stated instead of assumed.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The custom-report walkthrough described a builder that no longer exists.** It still said to pick a type from `ticket_summary` / `revenue` / `custom` and paste a config object. It now documents the designed report: what a band is, the seven element types, dragging and resizing in millimetres, the expression language and the palette that inserts into the expression you are typing in, totals and their three scopes, **running totals that survive a page break**, **charts**, **sub-reports** (including that a binding cannot read `Fields`, and why), the Design/Preview/Data tabs, the four exports, and scheduling.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The identity walkthrough became a session walkthrough.** Sign-in is a cookie session, not a token, and the product's most visible behaviour — being signed out mid-task — was not documented at all. It now covers the **30-minute idle default** (editable 5–480 minutes under Settings), the 12-hour ceiling, the **one-minute countdown warning with \"Stay signed in\"**, the fact that **administrators never idle out**, why the desktop shell and add-in have no such clock, TOTP enrolment and the refusal of a code from a foreign QR, passkey management, what hardening actually does, and the single-account **test exemption** that refuses to run in production.",
+        "type": "Update"
+      },
+      {
+        "text": "**Service Alerts, billing and the workspace were brought up to date.** Service Alerts now documents the **crimson count in the navigation** an outage is visible from anywhere in the product through, and the **Outage Board** — problems sorted to the top, each with its most recent observation, refreshing only while the tab is visible — plus the anti-flap rule and the fact that social chatter can only ever raise a notice. Billing gained the correct overtime rule (minutes after the **agreement's** cut-off, at the agreement's multiplier, 1.5:1 towards block and Cyber Care allowances, all behind `TIME_RULES_ENABLED` which ships off) and the **bill-through batch**: preview, hold, approve, reject — and why it cannot double-bill. Quotes now documents pricing from the catalog, and the workspace walkthrough gained **dashboard personalisation** (reorder, S/M/L, hide, reset, saved to your account) and the **⌘K command palette**.",
+        "type": "Update"
+      },
+      {
+        "text": "**Getting started, the FAQ and the Index were rebuilt rather than patched.** Getting started has a table of what each navigation area holds — so \"where would I find that\" has an answer — plus the session behaviour on first sign-in. The FAQ doubled, with a question for each thing a user has actually asked about: why a session ended, why a colleague is never timed out, whether the batch can double-bill, why a product cannot be deleted, why a report says a figure is unknown, how a customer signs in, and whether a departure disables anything. The Index is regrouped around ten areas with a row per topic.",
+        "type": "Update"
+      },
+      {
+        "text": "**A dead field that had already started lying.** Every help section carried an `anchors` array that nothing rendered — the \"On this page\" menu is derived from the headings — so the new sections' anchors named headings that did not exist and nobody could tell. Removed, along with the type that declared it; the sidebar is unchanged, because it was never reading it. The four core pages also looked themselves up by **array position** (`HELP_SECTIONS[0]`), which would have silently swapped pages if the array were ever reordered; they look themselves up by id now.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Bold and inline code rendered as literal asterisks and backticks.** The block renderer printed text as written, so the newly written emphasis — 93 bold marks and 10 inline-code marks naming buttons, flags and paths — appeared as `**New item**` on screen. The renderer now understands `**bold**` and `` `code` `` in paragraphs, steps, notes, tips, warnings and table cells, so a sentence can say which words are the button.",
+        "type": "Fix"
+      },
+      {
+        "text": "**`scripts/check-help-links.mjs` — the rule, made checkable.** The maintenance rule (\"update Help in the same change\") was a comment nobody could enforce, and the help section had drifted two dozen releases behind precisely because of that. The script reads the source and fails when a help link points at a route the router does not serve, or a walkthrough is missing from the Index — the two ways hand-written documentation rots. It runs in about a second, and `.github/copilot-instructions.md` now carries the rule so a future change to a feature, a flag or a default is expected to carry its Help update with it.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.027",
     "date": "2026-10-07",
     "title": "Charts, sub-reports and running totals: the last of the report designer",

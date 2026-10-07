@@ -4062,3 +4062,34 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 ---
 
+### Prompt 227 — Review the application and bring the Help section up to date
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~3 h
+**BuildNotes IDs:** 2026.10.7.028 - The Help section catches up with the product, and stops being able to drift
+
+> Review the application and update the help section with the appropriate and most recent documentation according to the current state of the application. Update, add, remove relevant info as necessary. Going forward, whenever a feature or part of the application is changes, determine whether the help section needs to be updated, then add the new info in the proper place.
+
+**What I did**
+- **Audited the help against the product rather than against the last release notes.** `apps/web/src/pages/HelpDoc.tsx` held four core pages and sixteen walkthroughs, and it had stopped at roughly 2026.10.7.000 — while two dozen changes went unrecorded: the Product Catalog, the reporting overhaul and the business review pack, the custom report designer (which the help still described as its *predecessor*), the customer portal, expenses, the session-authentication switch, dashboard personalisation, the outage board, knowledge-base drafts and M365 offboarding. I read each feature's own source — routes, pages, services, flags — and wrote from that, not from BuildNotes.
+- **Found the flag reference wrong in both directions.** The table said every flag defaulted off. In fact most now **ship on and are disabled with `false`**, and a few still ship off; six flags the product reads were missing; and `AUTH_HARDENING_ENABLED` was described as a token-expiry setting when it also turns on the **sign-in lockout** and the forced password change. Rebuilt from `infra/env/.env.production.example` — the deployment's own contract, which a preflight script verifies against the source — at 21 flags with what each gates, which way it defaults, and the two conventions stated instead of assumed.
+- **Added six walkthroughs** for features that had none: Product Catalog, Reporting & Business Reviews, Customer Portal, Expenses & Accounting Sync, Knowledge Base & AI Drafts, and M365 Inactivity & Offboarding.
+- **Rewrote four** rather than patching them: the custom-report walkthrough (now the designed report — bands, elements, expressions, running totals, charts, sub-reports, exports), identity (now sessions, the timeout and the warning, plus MFA/SSO/passkeys/hardening/test-exemption), Service Alerts (the nav indicator, the Outage Board, the anti-flap rule, social chatter), and billing (the real time rules, and the bill-through batch).
+- **Rebuilt the Index** around ten areas with a row per topic, doubled the FAQ with the questions a user actually asks, and gave Getting Started a table of what each navigation area holds.
+- **Removed two things that were actively harmful.** Every section carried an `anchors` array that nothing rendered — the "On this page" menu is derived from the headings — so it had already drifted and could only keep drifting; it is gone, with the type that declared it. And the four core pages found themselves by **array index** (`HELP_SECTIONS[0]`), which would have silently swapped pages on any reorder; they look themselves up by id, and a stale walkthrough slug now says so and points at the Index instead of rendering an empty page.
+- **Fixed a rendering defect I had just introduced**: the block renderer printed text as written, so 93 bold marks and 10 inline-code marks — the words that name buttons, flags and paths — showed up as literal `**New item**`. The renderer now understands `**bold**` and `` `code` `` in paragraphs, steps, notes, tips, warnings and table cells.
+- **Made the maintenance rule checkable, which is the part that matters going forward.** The rule existed as a comment in `HelpDoc.tsx` and it had failed for two dozen releases precisely because a comment cannot fail. `scripts/check-help-links.mjs` now reads the source and exits non-zero when a help link points at a route the router does not serve, or a walkthrough is missing from the Index. `.github/copilot-instructions.md` carries the rule so a future change to a feature, a flag or a default is expected to bring its Help update with it — and a change to a flag or a default is called out as a Help change in its own right, because the flags table is what users are pointed at.
+
+**Decisions worth remembering**
+- **Documentation drift is invisible until someone looks, so make it look for you.** Every check I added answers a question I had to answer by hand: does this link go anywhere, and can this walkthrough be found. Both were false and nothing said so.
+- **A field nothing reads is worse than a missing field.** The `anchors` array looked like documentation structure and was in fact a place for wrong information to sit unchallenged. Deleting it was the fix; formatting it to match would have preserved the trap.
+- **Write from the code, not from the changelog.** BuildNotes says what changed; the help has to say what *is*. Three of my first drafts were wrong in a way only the source caught — the flag polarity, the overtime trigger (the agreement's cut-off, not a global 6pm), and the portal's 404-not-403 refusal.
+- **Emphasis is part of a reference's job.** A walkthrough that names a button has to be able to say which words are the button, which is why the renderer gained inline bold and code rather than my stripping 103 marks back out of the text.
+- **The Help section is reachable as data.** Adding a walkthrough is a section in `HELP_SECTIONS` — no route, no menu — so the Index is the only thing that can silently fail to list it, and that is exactly what the guard checks.
+
+**Notes for next time**
+- The in-app help is served from a single data file; the route is `/help/walkthroughs/:slug`, so a new section needs no wiring. Anything not listed in the `index` section is effectively unreachable, which is why the guard treats "unlisted" as a failure and not a warning.
+- `node scripts/check-help-links.mjs` reads `App.tsx` for the route list and matches links against declared route shapes, so a link to `/tickets/123` resolves against the declared `/tickets/:id`. Run it after any Help change **and** after any change that renames a route.
+- The help text is plain sentences with two inline marks — `**bold**` and `` `code` `` — and only those two. A new mark would need adding to `inline()` in `HelpDoc.tsx`, and the guard does not check for unrendered ones, so check by eye or by grepping the rendered page for a stray marker.
+- The session trace seen live during verification is worth remembering as the documented behaviour: an idle tab returned to sign-in reading "Your session ended. Sign in to continue.", which is the sentence the identity walkthrough now promises.
+
+---
+

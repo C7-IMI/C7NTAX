@@ -5,3 +5,12 @@
 - The root `BuildNotes.md` is the source of truth for What's New. After changing it, run `node scripts/generate-buildnotes.mjs` to refresh `apps/web/public/BuildNotes.md` and `apps/api/src/BuildNotes.json`. Do not edit those generated files directly. The live What's New page reads BuildNotes through the API.
 - Include the corresponding BuildNotes version in each Retrace entry for a project change. For prompts with no project change, log the prompt in Retrace and state that no BuildNotes entry applies.
 - Before finishing a task, verify the new BuildNotes entry appears at the top, the generated fallbacks match it, and the prompt has been recorded in Retrace.
+
+# In-App Help Is Part Of The Change
+
+The product ships its own documentation at `/help` (`apps/web/src/pages/HelpDoc.tsx`). It is written by hand, so it drifts unless updating it is treated as part of the change rather than as a follow-up.
+
+- Whenever a feature is added, changed, or removed, decide whether the Help section needs to change, and make that change **in the same commit**. The rule in full is at the top of `HelpDoc.tsx`: update the feature's walkthrough (or add one), its rows in the `index` section, the `configuration` reference if a setting or flag is involved, and `faq` if a user would plausibly ask about it.
+- A new walkthrough is reachable as soon as it is a section in `HELP_SECTIONS` — the route is `/help/walkthroughs/:slug`, so no route or menu change is needed. It must still be listed in the Index, which is where people look for something they cannot name.
+- `node scripts/check-help-links.mjs` fails when a help link points at a route that does not exist or a walkthrough is missing from the Index. Run it after any Help change, and after any change that renames a route.
+- A change to a feature flag, an environment variable, a default, or a user-visible limit is a Help change: the flags table in the `configuration` section is the reference users are pointed at.
