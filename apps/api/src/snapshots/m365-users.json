@@ -15,6 +15,7 @@
     "businessPhone": null,
     "usageLocation": "US",
     "accountEnabled": true,
+    "lastSignInAt": null,
     "contactId": null,
     "raw": {
       "id": "user-001"
@@ -39,6 +40,7 @@
     "businessPhone": null,
     "usageLocation": "US",
     "accountEnabled": true,
+    "lastSignInAt": null,
     "contactId": null,
     "raw": {
       "id": "user-002"
@@ -63,6 +65,7 @@
     "businessPhone": null,
     "usageLocation": "US",
     "accountEnabled": true,
+    "lastSignInAt": null,
     "contactId": null,
     "raw": {
       "id": "user-003"

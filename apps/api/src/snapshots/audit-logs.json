@@ -7714,6 +7714,269 @@
     "createdAt": "2026-10-07T08:31:32.157Z"
   },
   {
+    "id": "53795def-5abb-41a3-ac75-3bcd4b41bc61",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "escalated",
+          "pinned": true
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": false
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "workable",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:09.236Z"
+  },
+  {
+    "id": "b88f4bab-7528-40ce-a4ac-e60764a2730a",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "de48bea1-1e11-4263-be2a-4c3763a73eb1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:10.724Z"
+  },
+  {
+    "id": "68b8d629-8bda-43fd-89f1-ada8edabc427",
+    "action": "kumo_documents:create",
+    "entity": "kumo_documents",
+    "entityId": "documents",
+    "changes": {
+      "title": "Probe doc muxuyol8",
+      "content": "first revision"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:10.791Z"
+  },
+  {
+    "id": "b12d2eec-99a6-46e5-90b7-f797ea562de9",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets by status",
+      "type": "custom",
+      "config": {
+        "limit": 25,
+        "sortBy": "createdAt",
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "title",
+          "status",
+          "client"
+        ],
+        "filters": [
+          {
+            "op": "in",
+            "field": "status",
+            "value": [
+              "new",
+              "in_progress"
+            ]
+          }
+        ],
+        "sortDir": "desc"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.680Z"
+  },
+  {
+    "id": "da58bb36-d07c-44bc-94d3-e3cc8109a85f",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets grouped",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "groupBy": "status"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.699Z"
+  },
+  {
+    "id": "abf6a754-7a75-4d71-a311-ed6a41497240",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad source",
+      "type": "custom",
+      "config": {
+        "source": "users; drop table"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.721Z"
+  },
+  {
+    "id": "3cc3ddca-6167-4dcc-b904-2b8cb141d98e",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad column",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "secretHash",
+          "password",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.734Z"
+  },
+  {
+    "id": "1ed26527-0d7e-41d1-89e5-89a28b35f23c",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad operator",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "sql",
+            "field": "status",
+            "value": "1=1"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.753Z"
+  },
+  {
+    "id": "1b03320a-8c26-4df2-bb63-2abca0f9626e",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad filter field",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "equals",
+            "field": "passwordHash",
+            "value": "x"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.771Z"
+  },
+  {
+    "id": "7c827013-9a35-4785-8330-cb47235b9230",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — expenses",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "expenses",
+        "columns": [
+          "description",
+          "amount",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.808Z"
+  },
+  {
+    "id": "11a9b622-e632-499a-abca-1eccb53137a4",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — time",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "time_entries",
+        "columns": [
+          "date",
+          "minutes",
+          "billedMinutes"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.831Z"
+  },
+  {
+    "id": "29daeaa3-37f8-4edd-b357-c6aa2e2f447b",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — scoped tickets",
+      "type": "custom",
+      "config": {
+        "limit": 200,
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "client"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.891Z"
+  },
+  {
     "id": "d61aadb2-e1bf-4874-8e2c-0175819d05ef",
     "action": "tickets:delete",
     "entity": "tickets",
@@ -10838,6 +11101,30 @@
     "createdAt": "2026-10-07T08:31:23.416Z"
   },
   {
+    "id": "0a1e8037-4e31-4b85-90e6-6187a329e824",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "offboard",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:40:06.813Z"
+  },
+  {
+    "id": "8a08fa59-0056-4005-bf7a-1489af7b57b3",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "40ba0a1c-b70b-4d69-9966-4bd8479ad607",
+    "changes": {
+      "requireChange": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:05.184Z"
+  },
+  {
     "id": "5410bca8-224d-4864-9e82-204405e42419",
     "action": "users:update",
     "entity": "users",
@@ -11555,6 +11842,303 @@
     "createdAt": "2026-10-07T08:31:24.406Z"
   },
   {
+    "id": "fdd14f71-f4fd-42d3-b92e-8220aba8aee3",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "technician",
+      "email": "sessionprobe1791362464231@probe.local",
+      "lastName": "Probe",
+      "password": "***",
+      "firstName": "Session",
+      "requireChange": false,
+      "credentialMode": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:04.552Z"
+  },
+  {
+    "id": "aff30f89-84e4-486a-b88f-de7fe8984ee5",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.657Z"
+  },
+  {
+    "id": "91058b82-c5c8-4695-99e8-5469e0d280f6",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.678Z"
+  },
+  {
+    "id": "3725dbfd-4126-468e-9d22-964c9fdbd24f",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.692Z"
+  },
+  {
+    "id": "eab11750-3fc7-46e8-bbc3-c15d01b35787",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "definitely_not_a_widget",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 99,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.734Z"
+  },
+  {
+    "id": "600f95cd-261a-4635-86d6-5f716d2d7e78",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.765Z"
+  },
+  {
+    "id": "d41de716-be4f-49aa-8110-ac608bf94891",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.770Z"
+  },
+  {
+    "id": "5ff65f00-3875-4007-b4e8-34adfbe0b1b7",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "recent_tickets",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.786Z"
+  },
+  {
+    "id": "050b9db4-ac8b-483f-bfd3-1679864a1789",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.799Z"
+  },
+  {
+    "id": "4920f80a-5620-4cae-a3f2-81b39cca191d",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "today_revenue",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.809Z"
+  },
+  {
+    "id": "ef801477-9adc-4a4d-860e-7cfd3012d0a2",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.817Z"
+  },
+  {
+    "id": "21011692-eef2-44c7-84d3-15ea31a08351",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "escalated",
+          "pinned": true
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": false
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "workable",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:09.129Z"
+  },
+  {
+    "id": "b58b5846-626d-43ee-97ea-6f6ef4483d4f",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "workable",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": true
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "escalated",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:09.148Z"
+  },
+  {
+    "id": "5ddd4be3-5bb7-4cbd-b0c2-f94532fcbc27",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "avg_age",
+          "pinned": true
+        },
+        {
+          "id": "escalated",
+          "pinned": true
+        },
+        {
+          "id": "new",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:09.159Z"
+  },
+  {
     "id": "f75092e0-648d-4c91-8048-681d01a8a418",
     "action": "service-alerts:create",
     "entity": "service-alerts",
@@ -11866,6 +12450,160 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T02:05:34.436Z"
+  },
+  {
+    "id": "d41f01fc-ea39-4e0a-8058-1bb09975a53f",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:07.721Z"
+  },
+  {
+    "id": "c859fc53-b13d-45b9-b595-f218d3982946",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "profit_margin",
+          "pinned": true
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "new",
+          "pinned": true
+        },
+        {
+          "id": 42
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:09.166Z"
+  },
+  {
+    "id": "f968b523-efd2-416d-8fab-6f3c8026418f",
+    "action": "boards:delete",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:09.476Z"
+  },
+  {
+    "id": "441ca48e-6886-43ef-a203-d618d7a61562",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault muxuyol8",
+      "category": "probe",
+      "password": "***",
+      "username": "probe"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:10.667Z"
+  },
+  {
+    "id": "d179f629-ee03-4a0b-ac8d-8dfed9b9d86d",
+    "action": "kumo_documents:update",
+    "entity": "kumo_documents",
+    "entityId": "000d99ca-6d9e-48cf-b402-a75321381e9e",
+    "changes": {
+      "content": "second revision",
+      "changeLog": "added the runbook step"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:10.833Z"
+  },
+  {
+    "id": "713fc445-4498-42db-abba-13485ddaba7a",
+    "action": "kumo_passwords:delete",
+    "entity": "kumo_passwords",
+    "entityId": "de48bea1-1e11-4263-be2a-4c3763a73eb1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:10.870Z"
+  },
+  {
+    "id": "9574844e-af8f-4e78-bfeb-e151ae6a706b",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault shared muxuyol8",
+      "category": "probe",
+      "password": "***",
+      "username": "probe2"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:10.908Z"
+  },
+  {
+    "id": "068724b6-7eb3-4695-82a6-d3549bb2acb0",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "ab9c6e09-3ac2-4de8-8904-b826082d9d38",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:10.918Z"
+  },
+  {
+    "id": "68d2f19e-6f17-419b-993e-ad07d88d0f96",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — ticket summary",
+      "type": "ticket_summary",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.945Z"
   },
   {
     "id": "7107ee73-ff73-4309-91b1-035febb69ee4",
@@ -12215,6 +12953,19 @@
     "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T08:31:25.561Z"
+  },
+  {
+    "id": "29305595-44b2-4aa3-960f-e69fb18f7967",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "de48bea1-1e11-4263-be2a-4c3763a73eb1",
+    "changes": {
+      "label": "Probe vault muxuyol8 edited",
+      "password": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:10.697Z"
   },
   {
     "id": "31f2b1f0-f7e2-4409-b5dc-3affdf217061",
@@ -22157,5 +22908,136 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T08:11:59.743Z"
+  },
+  {
+    "id": "4bbb066f-c3fc-4c7f-89e8-9a7d08cc43b4",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — client value",
+      "type": "client_value",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:12.961Z"
+  },
+  {
+    "id": "912b36a1-bf07-4fc0-b510-e7b308987081",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live incomplete muxuyqj3",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:14.099Z"
+  },
+  {
+    "id": "c23535dd-de18-4e19-ae00-091736e2990c",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "ed412032-a2de-477d-91bf-01c8db9d4029",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:14.116Z"
+  },
+  {
+    "id": "baa75080-96c4-4daf-917c-e508e4d86a31",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live complete muxuyqj3",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:14.151Z"
+  },
+  {
+    "id": "1312994e-e0fd-4461-8fd8-b5d720970bec",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "3534dc1a-7cc4-45dc-8300-463accbd9741",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:14.159Z"
+  },
+  {
+    "id": "4ebedb20-ee24-4519-a425-7781b11893af",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "3534dc1a-7cc4-45dc-8300-463accbd9741",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:16.078Z"
+  },
+  {
+    "id": "074f4171-70ef-46c6-a5d8-3f81dd44f6ca",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live disabled muxuyqj3",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:16.094Z"
+  },
+  {
+    "id": "749713b5-fac3-4de0-9f90-87f6d807d65c",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "2935b3bc-6069-4691-b265-e521e5d4ebab",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:16.104Z"
+  },
+  {
+    "id": "b1f70f94-d6ea-480a-a47c-aae4f913c2cb",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "2935b3bc-6069-4691-b265-e521e5d4ebab",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:16.113Z"
+  },
+  {
+    "id": "dd275237-081b-4024-8e73-f60c147ca278",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "offboard",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T08:41:17.426Z"
   }
 ]

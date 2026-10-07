@@ -3691,3 +3691,21 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The draft does not check the existing knowledge base for duplicates; that needs a similarity pass over titles and is recorded as the follow-up.
 - The probe needs a loopback model stub plus `EGRESS_ALLOW_PRIVATE=true`; the provider row it creates must be the most recently updated default, which is now a rule the code states rather than an accident.
+
+**Prompt 220 — continued: W2-11 (M365 inactivity + offboarding, PLAN-015 Phase B #12)**
+
+**What I did**
+- `M365User.lastSignInAt` (+ migration `m365_last_sign_in`), written by the sync from Graph's `signInActivity`.
+- `services/m365Inactivity.ts`: `bucketFor()` (30/60/90 days, with `null` as its own answer), `inactivityReport()` grouped by client through the matched contact, and `offboardUser()` raising an eight-task checklist.
+- `GET /cloudconnect/m365/inactivity` (integration:view) and `POST /cloudconnect/m365/users/:userId/offboard` (integration:manage, `M365_OFFBOARD_ENABLED`).
+- Adapter: sign-in activity fetched in a **separate try/catch** rather than added to the main `$select`, because a tenant without Entra P1 or `AuditLog.Read.All` would otherwise 400 the whole user sync.
+- UI: an inactive-accounts panel on CloudConnect — bucket strip, the honest note, per-client expansion with **Offboard** where a last sign-in exists.
+
+**Decisions worth remembering**
+- **Unknown is a finding, not a bucket to hide in.** The single most dangerous thing this feature could do is present "we could not read sign-in activity" as "these people have not signed in for 90 days". The report and the panel both say which of the two they are holding, and the probe asserts it.
+- **Offboarding produces a checklist, not a state change.** Disabling accounts is irreversible-ish and needs order and accountability; the checklist carries the order and the ticket trail.
+- **A refusal must not be silent, and must not be fatal.** The sync records that it could not read activity and continues.
+
+**Notes for next time**
+- `ChecklistTask.position`, not `sortOrder` — my first checklist create 500'd on it; worth remembering when touching checklists.
+- The failed first probe run left 14 M365 users, 4 clients, 2 integrations and 6 contacts behind, which the browser then showed. `clean-probe-residue.ts` now sweeps the M365 probe's artefacts — an interrupted probe leaves data, so run the cleaner after a failed probe, not only after a successful one.

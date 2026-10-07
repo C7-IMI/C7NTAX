@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.7.013",
+    "date": "2026-10-07",
+    "title": "The dormant Microsoft 365 accounts, and a departure checklist that disables nothing",
+    "changes": [
+      {
+        "text": "**Inactive accounts per client, from what the tenant actually reported.** `M365User` gained `lastSignInAt`; the M365 sync now reads sign-in activity **in a separate, optional call**, and `GET /cloudconnect/m365/inactivity` buckets every synced account by last sign-in — active, 30–60, 60–90, over 90 days — grouped by client, dormant accounts first.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"No sign-in data\" is not \"no sign-ins\".** Sign-in activity needs Entra ID P1 and `AuditLog.Read.All`; on a tenant that cannot answer, the report says **exactly that** and every account reads as **unknown, never as dormant**. A report that quietly counted \"we do not know\" as \"dormant\" is how an MSP ends up disabling live accounts. The panel states it too, rather than showing a reassuring zero.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`POST /cloudconnect/m365/users/:userId/offboard`** raises a standard departure checklist (revoke sessions, reset and disable, convert the mailbox, reclaim the licence, transfer OneDrive, check group memberships, reassign tickets, document the authorisation) against the client the account is mapped to. **It disables nothing**: the checklist is the deliverable, because the work is risky, order-dependent and should leave a record — and a second checklist for the same account is refused.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**An account mapped to no client is refused with the reason** (\"nowhere to file the checklist\") instead of being filed somewhere wrong; unknown synced users are a 404.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The M365 sync cannot be broken by a tenant that cannot answer.** Asking for `signInActivity` in the main `$select` would 400 the entire user sync on a tenant without the permission; it is a separate read whose refusal is recorded in the sync result and the sync continues.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.012",
     "date": "2026-10-07",
     "title": "Solved tickets write their own first draft of the knowledge base article",

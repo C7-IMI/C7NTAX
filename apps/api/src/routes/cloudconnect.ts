@@ -6,6 +6,7 @@ import { IntegrationHub } from "@C7NTAX/integrations";
 import type { IntegrationConfig } from "@C7NTAX/integrations";
 import { AppError } from "../middleware/errorHandler";
 import { liveStatusEnabled, noteManualVerification, verifyDueIntegrations } from "../services/integrationHealth";
+import { inactivityReport, offboardUser } from "../services/m365Inactivity";
 
 export const cloudConnectRouter = Router();
 cloudConnectRouter.use(authenticate);
@@ -225,6 +226,29 @@ cloudConnectRouter.patch("/:id", requirePermission(Permission.IntegrationManage)
     if (enabled !== undefined) data.enabled = enabled;
     const row = await prisma.integration.update({ where: { id: req.params.id }, data });
     res.json(row);
+  } catch (e) { next(e); }
+});
+
+// ── Microsoft 365 inactivity + offboarding (PLAN-015 Phase B #12) ─────────
+/**
+ * Who is dormant, per client. The report says how many accounts it could and could not read a
+ * sign-in for, because "no sign-in data" and "no sign-ins" are different findings.
+ */
+cloudConnectRouter.get("/m365/inactivity", requirePermission(Permission.IntegrationView), async (_req: AuthRequest, res, next) => {
+  try {
+    res.json(await inactivityReport());
+  } catch (e) { next(e); }
+});
+
+/**
+ * Raises an offboarding checklist for a synced account. It does not disable anything: the work is
+ * done by a person, in order, with a record that it happened.
+ */
+cloudConnectRouter.post("/m365/users/:userId/offboard", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
+  try {
+    const assignToId = typeof req.body?.assignToId === "string" ? req.body.assignToId : undefined;
+    const dueDate = typeof req.body?.dueDate === "string" && !isNaN(Date.parse(req.body.dueDate)) ? new Date(req.body.dueDate) : undefined;
+    res.status(201).json(await offboardUser(String(req.params.userId), req.user!.userId, { assignToId, dueDate }));
   } catch (e) { next(e); }
 });
 

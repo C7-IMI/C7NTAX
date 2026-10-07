@@ -655,6 +655,9 @@ model M365User {
   businessPhone   String?
   usageLocation   String?
   accountEnabled  Boolean  @default(true)
+  /// Last sign-in, when the tenant and the app registration allow reading it (PLAN-015 Phase B #12).
+  /// Null means "not known", which the inactivity report says plainly rather than treating as dormant.
+  lastSignInAt    DateTime?
   contactId       String?
   raw             Json     @default("{}")
   lastSyncedAt    DateTime @default(now())

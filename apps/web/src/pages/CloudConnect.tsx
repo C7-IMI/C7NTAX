@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
+import { useAuth } from "../hooks/useAuth";
 import {
   Plus, Plug, RefreshCw, Trash2, Key, Settings,
   ShieldCheck, Globe, Server, Cloud, CreditCard, FileText, Database,
-  Wifi, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X,
+  Wifi, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -60,6 +61,32 @@ const KIND_ICONS: Record<string, LucideIcon> = {
 };
 
 const POLL_INTERVAL_MS = 10000;
+
+interface InactivityReport {
+  generatedAt: string;
+  withSignInData: number;
+  withoutSignInData: number;
+  signInDataUnavailable: boolean;
+  totals: Record<string, number>;
+  disabledAccounts: number;
+  offboardingEnabled: boolean;
+  note: string;
+  clients: Array<{
+    companyId: string | null;
+    clientName: string;
+    counts: Record<string, number>;
+    disabled: number;
+    users: Array<{ id: string; displayName: string; userPrincipalName: string; lastSignInAt: string | null; daysSinceSignIn: number | null; bucket: string; accountEnabled: boolean }>;
+  }>;
+}
+
+const BUCKET_LABELS: Record<string, string> = {
+  active: "Active",
+  "30_60": "30–60 days",
+  "60_90": "60–90 days",
+  dormant: "Over 90 days",
+  unknown: "Unknown",
+};
 
 /** What the server last verified about a connection (PLAN-015 Phase B #9). */
 interface LiveStatusRow {
@@ -131,6 +158,8 @@ export function CloudConnectPage() {
   const [fixTestResults, setFixTestResults] = useState<Record<string, { status: "idle" | "testing" | "pass" | "fail"; error?: string }>>({});
   // Last verified health per integration, from the throttled server-side check
   const [liveStatus, setLiveStatus] = useState<Record<string, LiveStatusRow>>({});
+  const [inactivity, setInactivity] = useState<InactivityReport | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
 
   // ── Integration Action Panel state ──
   const [actionPanel, setActionPanel] = useState<{ open: boolean; integration: Integration } | null>(null);
@@ -140,17 +169,20 @@ export function CloudConnectPage() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [intRes, typeRes, statusRes] = await Promise.all([
+      const [intRes, typeRes, statusRes, inactivityRes] = await Promise.all([
         api.get("/cloudconnect"),
         api.get("/cloudconnect/types"),
         // Live health is verified server-side on a throttle, so this poll is cheap however
         // many browser tabs are open.
         api.get("/cloudconnect/status").catch(() => null),
+        // Only useful once an M365 tenant is connected; a refusal just hides the panel.
+        api.get("/cloudconnect/m365/inactivity").catch(() => null),
       ]);
       setIntegrations(intRes.data?.data || []);
       setTypes(typeRes.data?.types || []);
       const rows: LiveStatusRow[] = statusRes?.data?.data || [];
       setLiveStatus(Object.fromEntries(rows.map(r => [r.id, r])));
+      setInactivity(inactivityRes?.data?.clients ? inactivityRes.data : null);
     } catch { /* silent — avoid toast storms on poll */ }
     finally { setLoading(false); }
   }, []);
@@ -330,6 +362,24 @@ export function CloudConnectPage() {
     catch { toast.error("Failed"); }
   };
 
+  const { permissions } = useAuth();
+  const canManageIntegrations = permissions.includes("integration:manage");
+
+  /**
+   * Raises the offboarding checklist. Nothing is disabled here: the checklist is the deliverable,
+   * because the work is done by a person, in order, and should leave a record.
+   */
+  const handleOffboard = async (userId: string, label: string) => {
+    if (!confirm(`Raise an offboarding checklist for ${label}? Nothing is disabled automatically.`)) return;
+    try {
+      const r = await api.post(`/cloudconnect/m365/users/${userId}/offboard`, {});
+      toast.success(`Checklist raised: ${r.data?.tasks ?? 0} tasks`);
+    } catch (e: any) {
+      const msg = e?.response?.data?.error?.message || e?.response?.data?.error || "Could not raise the checklist";
+      toast.error(typeof msg === "string" ? msg : "Could not raise the checklist");
+    }
+  };
+
   // ── Render Helpers ────────────────────────────────────────────────
 
   const statusColor = (s: string) =>
@@ -432,6 +482,65 @@ export function CloudConnectPage() {
             <button onClick={handleCreate} className="btn-primary">Create Connection</button>
             <button onClick={() => { setShowAdd(false); setSelectedType(null); }} className="btn-secondary">Cancel</button>
           </div>
+        </div>
+      )}
+
+      {/* Microsoft 365 inactivity (PLAN-015 Phase B #12) — only shown once a tenant has synced */}
+      {!showAdd && inactivity && inactivity.clients.length > 0 && (
+        <div className="card space-y-3">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <Users size={15} className="text-cyber-400" /> Microsoft 365 inactive accounts
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">{inactivity.note}</p>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              {(["dormant", "60_90", "30_60", "active", "unknown"] as const).map(bucket => (
+                <span key={bucket} className="flex items-center gap-1.5">
+                  <span className={`w-1.5 h-1.5 rounded-full ${bucket === "dormant" ? "bg-red-500" : bucket === "60_90" ? "bg-orange-500" : bucket === "30_60" ? "bg-amber-500" : bucket === "active" ? "bg-emerald-500" : "bg-gray-600"}`} />
+                  <span className="text-gray-400">{BUCKET_LABELS[bucket]}</span>
+                  <span className="text-white font-medium">{inactivity.totals[bucket] ?? 0}</span>
+                </span>
+              ))}
+              <button onClick={() => setShowInactive(v => !v)} className="btn-secondary text-xs">{showInactive ? "Hide" : "Show accounts"}</button>
+            </div>
+          </div>
+
+          {showInactive && (
+            <div className="space-y-3 border-t border-surface-border pt-3">
+              {inactivity.clients.map(group => (
+                <div key={group.companyId ?? "unmapped"} className="space-y-1">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    {group.clientName}
+                    <span className="text-gray-600 normal-case tracking-normal font-normal ml-2">
+                      {group.counts.dormant ?? 0} over 90 days · {group.disabled} disabled
+                    </span>
+                  </p>
+                  {group.users.filter(u => u.bucket === "dormant" || u.bucket === "60_90" || u.bucket === "unknown").slice(0, 12).map(u => (
+                    <div key={u.id} className="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-surface-lighter/50">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white truncate">{u.displayName} {!u.accountEnabled && <span className="text-[10px] text-gray-500">(disabled)</span>}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {u.userPrincipalName} · {u.lastSignInAt ? `last sign-in ${u.daysSinceSignIn}d ago` : "no sign-in recorded"}
+                        </p>
+                      </div>
+                      <span className="badge bg-surface-lighter text-gray-400 text-[10px] shrink-0">{BUCKET_LABELS[u.bucket] ?? u.bucket}</span>
+                      {canManageIntegrations && inactivity.offboardingEnabled && u.bucket !== "unknown" && (
+                        <button onClick={() => handleOffboard(u.id, u.userPrincipalName)} className="btn-secondary text-xs shrink-0" title="Raise an offboarding checklist — it disables nothing by itself">
+                          Offboard
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <p className="text-xs text-gray-600">
+                An account with no sign-in recorded is reported as unknown, never as dormant — reading sign-in activity needs Entra ID P1 and <code className="font-mono">AuditLog.Read.All</code>.
+                Offboarding raises a checklist for a person to work through; it does not disable the account.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

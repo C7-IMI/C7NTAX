@@ -205,6 +205,23 @@ export class Microsoft365Adapter implements IIntegrationAdapter {
         result.recordsProcessed += users.length;
         (result as any).users = users;
         (result as any).userSelect = userSelect;
+
+        // Sign-in activity is a separate, optional read: it needs Entra ID P1 and
+        // AuditLog.Read.All, so asking for it in the main select would break the whole user sync
+        // on a tenant that cannot answer. A refusal here is reported and the sync continues.
+        try {
+          const activity = (await this.fetchAll(token, "/users", "id,signInActivity")) as Array<Record<string, unknown>>;
+          const byId = new Map(activity.map(a => [String(a.id), a.signInActivity as { lastSignInDateTime?: string } | undefined]));
+          let withData = 0;
+          for (const user of users) {
+            const sign = byId.get(String(user.id));
+            if (sign?.lastSignInDateTime) { user.signInActivity = sign; withData++; }
+          }
+          (result as any).signInActivityUsers = withData;
+        } catch (e: any) {
+          (result as any).signInActivityUnavailable = String(e?.message || e);
+          result.errors.push(`signInActivity: ${e.message} (needs Entra ID P1 and AuditLog.Read.All; sync continues without it)`);
+        }
       } catch (e: any) {
         result.errors.push(`users: ${e.message}`);
       }

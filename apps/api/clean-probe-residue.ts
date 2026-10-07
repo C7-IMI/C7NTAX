@@ -195,6 +195,48 @@ async function main() {
     () => prisma.kumoPassword.deleteMany({ where: { id: { in: kumoProbePasswordIds } } }),
   );
 
+  // The M365 inactivity probe creates a tenant integration, two clients, contacts, synced users and
+  // (when it gets that far) an offboarding checklist. An interrupted run leaves all of it behind.
+  const m365ProbeCompanies = await prisma.company.findMany({ where: { name: { startsWith: "Probe M365 " } }, select: { id: true } });
+  const m365ProbeCompanyIds = m365ProbeCompanies.map(c => c.id);
+  const m365ProbeContacts = await prisma.contact.findMany({ where: { companyId: { in: m365ProbeCompanyIds } }, select: { id: true } });
+  const m365ProbeContactIds = m365ProbeContacts.map(c => c.id);
+  const m365ProbeUsers = await prisma.m365User.findMany({
+    where: { OR: [{ azureObjectId: { startsWith: "probe-" } }, { integrationId: { in: (await prisma.integration.findMany({ where: { name: { startsWith: "Probe M365 tenant" } }, select: { id: true } })).map(i => i.id) } }] },
+    select: { id: true },
+  });
+  const m365ProbeChecklists = await prisma.checklist.findMany({ where: { OR: [{ companyId: { in: m365ProbeCompanyIds } }, { name: { startsWith: "M365 offboarding — Probe" } }] }, select: { id: true } });
+  await remove(
+    "m365 probe checklist tasks",
+    () => prisma.checklistTask.count({ where: { checklistId: { in: m365ProbeChecklists.map(c => c.id) } } }),
+    () => prisma.checklistTask.deleteMany({ where: { checklistId: { in: m365ProbeChecklists.map(c => c.id) } } }),
+  );
+  await remove(
+    "m365 probe checklists",
+    () => Promise.resolve(m365ProbeChecklists.length),
+    () => prisma.checklist.deleteMany({ where: { id: { in: m365ProbeChecklists.map(c => c.id) } } }),
+  );
+  await remove(
+    "m365 probe synced users",
+    () => Promise.resolve(m365ProbeUsers.length),
+    () => prisma.m365User.deleteMany({ where: { id: { in: m365ProbeUsers.map(u => u.id) } } }),
+  );
+  await remove(
+    "m365 probe contacts",
+    () => Promise.resolve(m365ProbeContactIds.length),
+    () => prisma.contact.deleteMany({ where: { id: { in: m365ProbeContactIds } } }),
+  );
+  await remove(
+    "m365 probe tenants",
+    () => prisma.integration.count({ where: { name: { startsWith: "Probe M365 tenant" } } }),
+    () => prisma.integration.deleteMany({ where: { name: { startsWith: "Probe M365 tenant" } } }),
+  );
+  await remove(
+    "m365 probe clients",
+    () => Promise.resolve(m365ProbeCompanyIds.length),
+    () => prisma.company.deleteMany({ where: { id: { in: m365ProbeCompanyIds } } }),
+  );
+
   // The time-rules probe and the browser check leave one client, agreement and ticket each.
   const timeRuleCompanyWhere = { OR: [{ name: { startsWith: "TimeRules Probe" } }, { name: { startsWith: "TimeRules Off Probe" } }, { name: { startsWith: "Expense Probe" } }] };
   const timeRuleCompanies = await prisma.company.findMany({ where: timeRuleCompanyWhere, select: { id: true } });
