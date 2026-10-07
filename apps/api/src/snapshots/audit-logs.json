@@ -11404,5 +11404,381 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T05:20:35.972Z"
+  },
+  {
+    "id": "57cbd337-08de-4307-a03c-f731a5b4bb8f",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "technician",
+      "email": "sessionprobe1791351071629@probe.local",
+      "lastName": "Probe",
+      "password": "***",
+      "firstName": "Session",
+      "requireChange": false,
+      "credentialMode": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:31:11.857Z"
+  },
+  {
+    "id": "fbf0bacb-f4ab-4873-92e9-1ff80b891499",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "d7e6dbcd-d442-4a76-9b20-658fe2dc65fb",
+    "changes": {
+      "requireChange": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:31:12.367Z"
+  },
+  {
+    "id": "53a06ee3-e6e6-413e-9a39-aae08174fd93",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-egress-1791351073681",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:31:13.689Z"
+  },
+  {
+    "id": "86e97824-7c31-44cd-a50c-ff63acaa533e",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "491b4f9e-d76a-41e5-a9e6-a00bcd023f90",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:31:13.704Z"
+  },
+  {
+    "id": "c7a9d1ea-eaee-4385-9342-dc5c7f0edb88",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-redact-1791351073732",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:31:13.738Z"
+  },
+  {
+    "id": "eea0f9de-cdd1-443e-92c9-2ae80f143f1d",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "b6621b8e-33ec-403b-8eff-9ab66023fbfa",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:31:13.757Z"
+  },
+  {
+    "id": "ab5ed9a5-cf8d-4f62-b636-b2cc91ab55e6",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:31:49.018Z"
+  },
+  {
+    "id": "cd0b0138-d99a-4e95-bcd3-a7b264f53cff",
+    "action": "kb:create",
+    "entity": "kb",
+    "entityId": "kb",
+    "changes": {
+      "tags": [],
+      "title": "Persona probe article 1791351130456",
+      "status": "draft",
+      "content": "probe",
+      "visibility": "internal"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.466Z"
+  },
+  {
+    "id": "850ae0b9-3eb3-45e1-861e-af733040caac",
+    "action": "kb:create",
+    "entity": "kb",
+    "entityId": "kb",
+    "changes": {
+      "tags": [],
+      "title": "Persona probe article 1791351130465",
+      "status": "draft",
+      "content": "probe",
+      "visibility": "internal"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.471Z"
+  },
+  {
+    "id": "efd699ea-3743-4cd9-ad35-2b8a89ff2b9e",
+    "action": "kb:create",
+    "entity": "kb",
+    "entityId": "categories",
+    "changes": {
+      "name": "Persona probe category 1791351130484"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.490Z"
+  },
+  {
+    "id": "90b11ac5-933a-4742-a45c-2e967e77bd8b",
+    "action": "kb:create",
+    "entity": "kb",
+    "entityId": "categories",
+    "changes": {
+      "name": "Persona probe category 1791351130489"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.494Z"
+  },
+  {
+    "id": "46b1f8cc-7bd5-46ab-accc-7051a4c1b1b9",
+    "action": "workflows:create",
+    "entity": "workflows",
+    "entityId": "rules",
+    "changes": {
+      "name": "Persona probe rule 1791351130507",
+      "entity": "ticket",
+      "actions": [],
+      "trigger": "ticket.created"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.514Z"
+  },
+  {
+    "id": "76253115-d1b2-4082-9522-15b105e189ac",
+    "action": "workflows:create",
+    "entity": "workflows",
+    "entityId": "rules",
+    "changes": {
+      "name": "Persona probe rule 1791351130513",
+      "entity": "ticket",
+      "actions": [],
+      "trigger": "ticket.created"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.518Z"
+  },
+  {
+    "id": "ec3f92d3-9c29-4eda-ab0a-0b706f961fe5",
+    "action": "surveys:create",
+    "entity": "surveys",
+    "entityId": "surveys",
+    "changes": {
+      "name": "Persona probe survey 1791351130529"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.535Z"
+  },
+  {
+    "id": "590e9bd3-5308-42eb-be81-eacbabb88fa9",
+    "action": "surveys:create",
+    "entity": "surveys",
+    "entityId": "surveys",
+    "changes": {
+      "name": "Persona probe survey 1791351130534"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.539Z"
+  },
+  {
+    "id": "d0e5ee54-330b-4bbb-bbf0-bb2a9167fe33",
+    "action": "chat:create",
+    "entity": "chat",
+    "entityId": "sessions",
+    "changes": {
+      "title": "Persona probe chat 1791351130550"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.556Z"
+  },
+  {
+    "id": "226aa09f-4b35-40fd-8d69-0c9aa7e97c64",
+    "action": "chat:create",
+    "entity": "chat",
+    "entityId": "sessions",
+    "changes": {
+      "title": "Persona probe chat 1791351130555"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.559Z"
+  },
+  {
+    "id": "9860fe64-124e-45f9-8b41-82888ca1935e",
+    "action": "chat:create",
+    "entity": "chat",
+    "entityId": "sessions",
+    "changes": {
+      "title": "Persona probe chat 1791351130559"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.563Z"
+  },
+  {
+    "id": "f8476798-a86a-406a-9847-5fb87db48626",
+    "action": "chat:create",
+    "entity": "chat",
+    "entityId": "sessions",
+    "changes": {
+      "title": "Persona probe chat 1791351130562"
+    },
+    "userId": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.567Z"
+  },
+  {
+    "id": "b0c3b1b7-108c-4aaf-bbe1-856230354f38",
+    "action": "chat:create",
+    "entity": "chat",
+    "entityId": "sessions",
+    "changes": {
+      "title": "Persona probe chat 1791351130568"
+    },
+    "userId": "fe948159-f6e8-44eb-9e8d-e2ce8e549bd1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.574Z"
+  },
+  {
+    "id": "38da2c63-c37b-48e9-bd47-6f9e82006f54",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Persona probe report 1791351130573",
+      "type": "ticket",
+      "config": {}
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.579Z"
+  },
+  {
+    "id": "2eab7aa0-490b-485d-8236-77cd4ac79faf",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Persona probe report 1791351130579",
+      "type": "ticket",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.583Z"
+  },
+  {
+    "id": "7f9611c6-456a-4a7b-ae5c-361c861654b1",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Persona probe client 1791351130592"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.598Z"
+  },
+  {
+    "id": "6dc62891-4594-484c-8c56-ba2e1eeaac22",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Persona probe client 1791351130597"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.601Z"
+  },
+  {
+    "id": "66f29f34-faaa-4846-8bb1-7ed9d5822a21",
+    "action": "system:create",
+    "entity": "system",
+    "entityId": "locales",
+    "changes": {
+      "code": "zz130611",
+      "name": "Persona Probe"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.617Z"
+  },
+  {
+    "id": "25910e1f-0d67-4fa9-b279-d1be7c8b74dd",
+    "action": "system:create",
+    "entity": "system",
+    "entityId": "locales",
+    "changes": {
+      "code": "zz130616",
+      "name": "Persona Probe"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.620Z"
+  },
+  {
+    "id": "1c4bf31e-11f3-4559-9594-28a93dda2f5f",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "Persona probe provider 1791351130628",
+      "model": "gpt-4o-mini",
+      "provider": "local"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.635Z"
+  },
+  {
+    "id": "754725a0-eacd-4295-9ca3-dd55496ed4bc",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "Persona probe provider 1791351130634",
+      "model": "gpt-4o-mini",
+      "provider": "local"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:32:10.638Z"
   }
 ]

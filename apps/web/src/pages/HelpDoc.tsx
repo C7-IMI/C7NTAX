@@ -444,8 +444,9 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "h", text: "Passkeys" },
       { kind: "steps", items: [
         "Set PASSKEY_ENABLED=true and restart the API.",
-        "Sign in with your password once, then register a passkey from the login page.",
-        "Subsequent sign-ins use the passkey; the credential counter is updated on every assertion.",
+        "Sign in with your password once, then add a passkey in Settings → Passkeys (or from the login page).",
+        "Subsequent sign-ins use the passkey; the credential counter and last-used time are updated on every assertion.",
+        "Settings lists each registered device — rename it to something you will recognise, or remove a device you no longer hold. Your password always remains a way in.",
       ] },
       { kind: "h", text: "Hardening flag" },
       { kind: "p", text: "AUTH_HARDENING_ENABLED switches JWTs to a 15-minute expiry and upgrades password hashes to bcrypt cost 12 on next login (rehash-on-login — no forced resets)." },

@@ -95,7 +95,14 @@ async function main() {
   check(gone === 0, "the row is gone");
 
   console.log("\nsign-in before an options call");
-  const noChallenge = await call("POST", "/api/auth/webauthn/login/verify", { body: { userId: techUser.id, response: { id: "x" } } });
+  // A 429 here means an earlier rate-limit check in the same minute; wait it out rather
+  // than reporting a failure about the limiter as if it were about the endpoint.
+  let noChallenge = await call("POST", "/api/auth/webauthn/login/verify", { body: { userId: techUser.id, response: { id: "x" } } });
+  if (noChallenge.status === 429) {
+    console.log("  note  the passkey limiter is still tripped — waiting 62s");
+    await new Promise(r => setTimeout(r, 62_000));
+    noChallenge = await call("POST", "/api/auth/webauthn/login/verify", { body: { userId: techUser.id, response: { id: "x" } } });
+  }
   check(noChallenge.status === 400, `verifying without a pending challenge is refused (${noChallenge.status})`);
 
   // Anything the probe planted goes; the two personas keep the accounts they had.

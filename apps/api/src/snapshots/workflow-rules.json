@@ -40,5 +40,29 @@
     "priority": 0,
     "createdAt": "2026-10-07T05:20:35.858Z",
     "updatedAt": "2026-10-07T05:20:35.858Z"
+  },
+  {
+    "id": "9374f0b6-64e8-45ee-820c-c53217dce0ed",
+    "name": "Persona probe rule 1791351130507",
+    "description": null,
+    "entity": "ticket",
+    "trigger": "ticket.created",
+    "conditions": [],
+    "isActive": true,
+    "priority": 0,
+    "createdAt": "2026-10-07T05:32:10.510Z",
+    "updatedAt": "2026-10-07T05:32:10.510Z"
+  },
+  {
+    "id": "7593f998-6468-4fb1-96eb-4545400f203f",
+    "name": "Persona probe rule 1791351130513",
+    "description": null,
+    "entity": "ticket",
+    "trigger": "ticket.created",
+    "conditions": [],
+    "isActive": true,
+    "priority": 0,
+    "createdAt": "2026-10-07T05:32:10.516Z",
+    "updatedAt": "2026-10-07T05:32:10.516Z"
   }
 ]

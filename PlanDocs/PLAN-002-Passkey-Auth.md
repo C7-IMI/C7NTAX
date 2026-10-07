@@ -5,13 +5,13 @@
 
 # Passkey Authentication — Implementation Plan
 
-> **Sequence:** Wave 1 · position 3 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Partial — roughly three quarters built
-> **Implemented:** `WebauthnCredential` model; `/api/auth/webauthn/{register,login}/options|verify` using `@simplewebauthn/server`; passkey sign-in and enrolment in `apps/web/src/pages/Login.tsx` with `@simplewebauthn/browser`, gated by `PASSKEY_ENABLED`. TOTP + email MFA untouched.
-> **Outstanding:** passkey management UI (list/rename/remove a device), per-role policy, recovery codes; plus this plan's SSO stage — OIDC start/callback and JIT provisioning exist in `routes/sso.ts` + `routes/ssoExchange.ts` behind `SSO_ENABLED`/`SSO_ISSUER`, but there is no login button and no SAML.
+> **Sequence:** Wave 1 · position 3 of 12 (re-sequenced 2026-10-06) · **Status:** 🟢 Passkey sign-in, enrolment and management shipped; policy and SAML open
+> **Implemented:** `WebauthnCredential` model (+ `deviceName`, `lastUsedAt`); `/api/auth/webauthn/{register,login}/options|verify` using `@simplewebauthn/server`; the assertion is matched to the credential that signed it; `GET|PATCH|DELETE /api/auth/webauthn/credentials` scoped to the owner; a 30/min rate limit on the Begin/Complete pair; the Passkeys card in Settings (list, rename, remove, add) and passkey sign-in and enrolment on the login page, gated by `PASSKEY_ENABLED`. TOTP + email MFA untouched.
+> **Outstanding:** deliberate, not accidental — (1) **per-role passkey policy**: no enforcement is switched on, because requiring a passkey for privileged roles on a live admin account is a lockout risk and the trigger conditions are the user's call; (2) **SAML** is not implemented (OIDC is, and the login page now shows the SSO button when `/auth/sso/status` reports it enabled); (3) **recovery codes** are unnecessary as specified — §10 makes the password the permanent fallback, and TOTP backup codes already exist for MFA.
 > **Depends on:** PLAN-001 (session lifetime). **Unblocks:** PLAN-007 SC-05, PLAN-013 #6, PLAN-012's identity exchange.
-> **Next action:** finish the management/recovery UI, then surface SSO on the login page.
+> **Next action:** decide the per-role policy trigger (which roles, and what happens when such a user has no passkey) before building settings UI for it.
 
-> **Status**: 🟡 Partial — passkey sign-in and enrolment shipped; management UI, per-role policy and recovery codes outstanding (see the sequence block below)  
+> **Status**: 🟢 Passkey sign-in, enrolment and management shipped (list, rename, remove, per-device labels); per-role policy and SAML remain open by decision  
 > **Target**: C7 Overwatch (C7NTAX)  
 > **Protocol**: WebAuthn Level 2 (W3C) via `@simplewebauthn/server` + `@simplewebauthn/browser`  
 > **Principle**: Passkey-first, password-retained — additive, never destructive

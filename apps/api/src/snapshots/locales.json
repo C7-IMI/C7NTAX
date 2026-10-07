@@ -18,6 +18,24 @@
     "createdAt": "2026-10-07T05:20:35.953Z"
   },
   {
+    "id": "b74f183b-0f25-4f91-b492-0b3095f076e2",
+    "code": "zz130611",
+    "name": "Persona Probe",
+    "isActive": true,
+    "isDefault": false,
+    "direction": "ltr",
+    "createdAt": "2026-10-07T05:32:10.614Z"
+  },
+  {
+    "id": "c32df868-b188-4744-98a7-c649944b2ec5",
+    "code": "zz130616",
+    "name": "Persona Probe",
+    "isActive": true,
+    "isDefault": false,
+    "direction": "ltr",
+    "createdAt": "2026-10-07T05:32:10.619Z"
+  },
+  {
     "id": "fafdc678-d104-44e2-9724-0380d2c0c86a",
     "code": "en-US",
     "name": "English (US)",

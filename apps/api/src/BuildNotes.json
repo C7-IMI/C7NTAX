@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.7.002",
+    "date": "2026-10-07",
+    "title": "Passkeys you can actually manage: see them, rename them, remove them — and a second device that works",
+    "changes": [
+      {
+        "text": "**A Passkeys card in Settings.** It lists every passkey on the account with the device label, when it was added, when it was last used and how it authenticates (this device, phone or tablet, security key), and it lets the owner rename a device to something recognisable or remove one they no longer hold. Registration starts from the same card, and the label is filled in from the browser (`Chrome on Windows`) rather than left as \"Passkey 2\".",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The management API behind it** — `GET`, `PATCH` and `DELETE` on `/api/auth/webauthn/credentials`, every one of them scoped to the authenticated user, so a passkey can only be renamed or removed by the account that owns it. The key material never leaves the server: the list returns labels and timestamps, not the public key or the signature counter.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Only the first passkey on an account ever worked.** Sign-in verification looked up *any* credential for the user rather than the one that signed the assertion, so a second device would have been verified against the first device's public key — and the counter update would have gone to the wrong row. The assertion now names the credential, and the right row gets the new counter and the last-used stamp.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Registration and sign-in were calling the browser library the deprecated way.** `@simplewebauthn/browser` 13 wants `startRegistration({ optionsJSON })` and `startAuthentication({ optionsJSON })`; the old shape still worked but logged a warning on every ceremony, which is how it was caught.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A dismissed prompt now reads like a decision, not a failure.** Cancelling the passkey sheet says so and points back to the password, an unsupported browser says that instead of showing a button that cannot work, and a device that already holds a credential for the account is told to remove it first. The login page only offers the passkey button where the browser can use one.",
+        "type": "Update"
+      },
+      {
+        "text": "**The passkey endpoints have a rate limit** (PLAN-002 §5.4): 30 requests a minute per address, which stops a script without tripping an office behind one NAT. Verified by hammering it — the 31st request in a minute is refused with 429.",
+        "type": "Update"
+      },
+      {
+        "text": "**Production's environment template documents `SESSION_AUTH_ENABLED`**, the flag the session work introduced. `scripts/azure/preflight.mjs` caught the omission by comparing what the source reads against what the template lists.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.001",
     "date": "2026-10-07",
     "title": "Session authentication is live: a real session cookie, an inactivity clock, and a warning before it runs out",
