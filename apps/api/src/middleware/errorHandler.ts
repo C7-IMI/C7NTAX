@@ -13,14 +13,23 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
   });
 
   res.status(status).json({
-    error: { message: status === 500 ? "Internal server error" : err.message, status },
+    error: {
+      message: status === 500 ? "Internal server error" : err.message,
+      status,
+      // A refusal that names only the first problem is not actionable for a client that wants to show
+      // all of them; `details` carries the list when the thrown error has one.
+      ...((err as { details?: unknown }).details ? { details: (err as { details?: unknown }).details } : {}),
+    },
   });
 }
 
 export class AppError extends Error {
   status: number;
-  constructor(message: string, status = 400) {
+  /** Extra structured information a client can act on, such as a list of validation problems. */
+  details?: unknown;
+  constructor(message: string, status = 400, details?: unknown) {
     super(message);
     this.status = status;
+    this.details = details;
   }
 }

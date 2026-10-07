@@ -27,7 +27,7 @@ import {
   type ShapeElement, type TemplateBand, type TemplateElement, type ReportTemplateDocument, type TemplateIssue,
 } from "./reportTemplate";
 import {
-  collectCalls, collectPaths, evaluateExpression, interpolateText, parseExpression,
+  collectCalls, collectPaths, evaluateExpression, interpolateText, parseExpression, parseTextSegments,
   type AggregateFunction, type AggregateScope, type ExpressionContext,
 } from "./reportExpression";
 import { formatValue, type ValueFormat } from "./reportFormat";
@@ -199,6 +199,24 @@ function deferredInfo(expression: string): DeferredInfo {
     const scopeArgument = call.name === "COUNT" && call.args.length === 1 ? call.args[0] : call.args[1];
     return scopeArgument?.kind === "string" && scopeArgument.value.toLowerCase() === "page";
   });
+  return { page, totalPages };
+}
+
+/**
+ * The same question for a text element, whose value is literal text with `{{ … }}` holes in it. Each
+ * hole is an expression in its own right, and `Page.totalPages` in a page footer is the reason this
+ * distinction matters at all: reading the whole string as one expression finds nothing and the footer
+ * keeps whatever page count existed when it was drawn.
+ */
+function deferredInfoForText(text: string): DeferredInfo {
+  let page = false;
+  let totalPages = false;
+  for (const segment of parseTextSegments(text)) {
+    if (!segment.expression) continue;
+    const info = deferredInfo(segment.expression);
+    page = page || info.page;
+    totalPages = totalPages || info.totalPages;
+  }
   return { page, totalPages };
 }
 
@@ -457,7 +475,7 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
         : element.type === "field"
           ? element.expression
           : element.text;
-      const info = deferredInfo(expression);
+      const info = element.type === "text" ? deferredInfoForText(element.text) : deferredInfo(expression);
       const isDeferred = info.page || info.totalPages;
 
       const resolve = (pageNumber: number, pageRows: Array<Record<string, unknown>>): string => {

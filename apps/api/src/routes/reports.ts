@@ -3,8 +3,13 @@ import type { NextFunction, Response } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
-import { runReportConfig, type ReportConfig } from "../services/reportRunner";
+import { runReportConfig, describeReportCatalog, type ReportConfig } from "../services/reportRunner";
 import { AppError } from "../middleware/errorHandler";
+import {
+  BAND_KINDS, ELEMENT_TYPES, FORMAT_LABELS, FUNCTIONS, PAGE_SIZES, STARTERS, VALUE_FORMATS,
+  AGGREGATE_SCOPES, DOCUMENT_VERSION, createBlankDocument, createStarter,
+} from "@C7NTAX/shared";
+import { catalogForValidation, resolveParameters, runTemplateDocument, validateDocument } from "../services/reportTemplates";
 import {
   agingReport, clientValueReport, contractProfitabilityReport, csatReport, monthlyReviewReport, parsePeriod,
   qbrReport, revenueReport, slaReport, ticketVolumeReport, timeTrackingReport, utilizationReport, weeklyReviewReport,
@@ -56,6 +61,92 @@ reportsRouter.get("/data/options", requirePermission(Permission.ReportView), asy
   } catch (e) { next(e); }
 });
 
+/**
+ * The designer's catalog (PLAN-020). Everything the designer offers — sources, fields, operators,
+ * functions, band kinds, page sizes, formats and the starter documents — comes from here, and every
+ * part of it is the same whitelist the runner enforces. There is no second list to drift.
+ */
+reportsRouter.get("/designer/catalog", requirePermission(Permission.ReportView), (_req: AuthRequest, res) => {
+  const catalog = describeReportCatalog();
+  res.json({
+    documentVersion: DOCUMENT_VERSION,
+    sources: catalog.sources,
+    operators: catalog.operators,
+    functions: FUNCTIONS,
+    bandKinds: BAND_KINDS,
+    elementTypes: ELEMENT_TYPES,
+    pageSizes: PAGE_SIZES,
+    formats: VALUE_FORMATS.map(key => ({ key, label: FORMAT_LABELS[key] })),
+    aggregateScopes: AGGREGATE_SCOPES,
+    starters: STARTERS,
+    branding: [
+      { key: "brand-mark", label: "C7NTAX mark", path: "/icon-192.png" },
+      { key: "brand-wordmark", label: "C7NTAX wordmark", path: "/brand/wordmark-on-dark.png" },
+    ],
+  });
+});
+
+/** A starter document for a source, so a new report is never an empty page. */
+reportsRouter.get("/designer/starter", requirePermission(Permission.ReportView), (req: AuthRequest, res, next) => {
+  try {
+    const catalog = describeReportCatalog();
+    const sourceKey = String(req.query.source ?? "tickets");
+    const source = catalog.sources.find(candidate => candidate.key === sourceKey);
+    if (!source) throw new AppError(`"${sourceKey}" is not a data source this product can report on.`, 400);
+    const kind = String(req.query.kind ?? "list");
+    const starter = STARTERS.find(candidate => candidate.kind === kind);
+    if (!starter) throw new AppError(`"${kind}" is not one of the starter layouts.`, 400);
+    const name = typeof req.query.name === "string" && req.query.name.trim() ? req.query.name.trim() : `${source.label} — ${starter.label}`;
+    const document = kind === "blank" ? createBlankDocument(name, source.key as never) : createStarter(starter.kind, source, name);
+    res.json({ document, issues: validateDocument(document, name).issues });
+  } catch (e) { next(e); }
+});
+
+/** Live validation for the designer: it posts the document it is editing and shows what comes back. */
+reportsRouter.post("/designer/validate", requirePermission(Permission.ReportCreate), (req: AuthRequest, res, next) => {
+  try {
+    const name = typeof req.body?.name === "string" ? req.body.name : "Untitled report";
+    const validation = validateDocument(req.body?.document ?? req.body, name);
+    res.json({ issues: validation.issues, document: validation.document, catalog: catalogForValidation() });
+  } catch (e) { next(e); }
+});
+
+/**
+ * A preview of a draft document: validate, then run its data source so the designer can lay the real
+ * rows out. Reading a report is enough to preview it; writing one is not required.
+ */
+reportsRouter.post("/designer/preview", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
+  try {
+    const period = await parsePeriod((req.body ?? {}) as Record<string, unknown>, req.user);
+    const supplied = { ...(req.body?.parameters ?? {}) } as Record<string, unknown>;
+    if (typeof req.body?.from === "string") supplied.from = req.body.from;
+    if (typeof req.body?.to === "string") supplied.to = req.body.to;
+    if (period.clientId) supplied.clientId = period.clientId;
+
+    const run = await runTemplateDocument(req.body?.document ?? req.body, {
+      name: typeof req.body?.name === "string" ? req.body.name : undefined,
+      parameters: supplied,
+      clientId: period.clientId,
+    });
+    if (run.validation.errors.length) {
+      throw new AppError(`${run.validation.errors.length} problem${run.validation.errors.length === 1 ? "" : "s"} in this template: ${run.validation.errors[0]!.message}`, 422);
+    }
+    res.json({
+      report: req.body?.name ?? run.validation.document.name,
+      document: run.validation.document,
+      parameters: run.parameters,
+      period,
+      columns: run.columns,
+      rows: run.rows,
+      data: run.rows,
+      truncated: run.truncated,
+      limit: run.limit,
+      notes: run.notes,
+      issues: run.validation.issues,
+    });
+  } catch (e) { next(e); }
+});
+
 reportsRouter.get("/", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const reports = await prisma.report.findMany({ orderBy: { name: "asc" } });
@@ -72,11 +163,14 @@ reportsRouter.get("/", requirePermission(Permission.ReportView), async (_req: Au
 reportsRouter.post("/", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
   try {
     if (!req.body?.name || typeof req.body.name !== "string" || !req.body.name.trim()) throw new AppError("A report needs a name");
+    const type = req.body.type || "custom";
+    // A template is validated before it is stored: an invalid document is a report that can never run.
+    if (type === "template") assertTemplateIsValid(req.body.config?.document, req.body.name);
     const r = await prisma.report.create({
       data: {
         name: req.body.name.trim(),
         description: req.body.description || null,
-        type: req.body.type || "custom",
+        type,
         config: req.body.config || {},
         createdById: req.user!.userId,
       },
@@ -94,9 +188,28 @@ reportsRouter.patch("/:id", requirePermission(Permission.ReportCreate), async (r
     if (req.body?.description !== undefined) updates.description = req.body.description || null;
     if (typeof req.body?.type === "string") updates.type = req.body.type;
     if (req.body?.config !== undefined) updates.config = req.body.config;
+    const nextType = (updates.type as string | undefined) ?? report.type;
+    const nextConfig = (updates.config as { document?: unknown } | undefined) ?? (report.config as { document?: unknown } | null);
+    if (nextType === "template") assertTemplateIsValid(nextConfig?.document, (updates.name as string | undefined) ?? report.name);
     res.json(await prisma.report.update({ where: { id: report.id }, data: updates }));
   } catch (e) { next(e); }
 });
+
+/**
+ * Refuses a template that does not pass the same validation the render path applies. The first problem
+ * is in the message so a plain HTTP client still learns something useful, and the full list travels in
+ * `details` for the designer to highlight.
+ */
+function assertTemplateIsValid(raw: unknown, name: string): void {
+  const validation = validateDocument(raw, name);
+  if (!validation.errors.length) return;
+  const first = validation.errors[0]!;
+  throw new AppError(
+    `This template has ${validation.errors.length} problem${validation.errors.length === 1 ? "" : "s"}: ${first.message}${first.path ? ` (${first.path})` : ""}`,
+    422,
+    validation.errors,
+  );
+}
 
 reportsRouter.delete("/:id", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
   try {
@@ -152,6 +265,28 @@ reportsRouter.get("/:id/run", requirePermission(Permission.ReportView), async (r
     if (!report) throw new AppError("Report not found", 404);
 
     const period = await parsePeriod(req.query as Record<string, unknown>, req.user);
+
+    // A designed report runs its own document: the rows come from the data source it declares, and the
+    // document travels with them so the designer's layout engine lays out the same rows the API ran.
+    if (report.type === "template") {
+      const supplied = { ...(req.query as Record<string, unknown>) };
+      if (period.clientId) supplied.clientId = period.clientId;
+      const run = await runTemplateDocument((report.config as { document?: unknown } | null)?.document, {
+        name: report.name,
+        parameters: supplied,
+        clientId: period.clientId,
+      });
+      if (run.validation.errors.length) {
+        throw new AppError(`This template has ${run.validation.errors.length} problem${run.validation.errors.length === 1 ? "" : "s"}: ${run.validation.errors[0]!.message}`, 422);
+      }
+      res.json({
+        report: report.name, type: report.type, generatedAt: new Date().toISOString(), period,
+        document: run.validation.document, parameters: run.parameters,
+        columns: run.columns, rows: run.rows, data: run.rows,
+        truncated: run.truncated, limit: run.limit, notes: run.notes, issues: run.validation.issues,
+      });
+      return;
+    }
 
     // A stored config is the point of the custom type, so it is what runs. The built-in types keep
     // their fixed shapes because saved reports and schedules already use them.

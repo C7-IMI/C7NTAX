@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import {
-  Calendar, Copy, Download, Filter, Pencil, Play, Plus, Printer, RefreshCw, Search, Trash2, X, AlertTriangle,
+  Calendar, Copy, Download, Filter, LayoutTemplate, Pencil, Play, Plus, Printer, RefreshCw, Search, Trash2, X, AlertTriangle,
 } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { apiErrorMessage } from "../lib/apiError";
@@ -10,6 +11,10 @@ import { downloadCsv } from "../lib/csv";
 import { ReportBody, exportCsv, exportExcel, exportPdf, labelFor, number, printReport, type Section } from "../components/reports/reportKit";
 import { REPORT_BY_ID, REPORT_TYPE_OPTIONS, STANDARD_REPORTS } from "../components/reports/standardReports";
 import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog";
+import { layoutReport, type ReportTemplateDocument } from "@C7NTAX/shared";
+import { measureTextMm } from "../lib/reportMeasure";
+import { exportTemplateCsv, exportTemplateExcel, exportTemplatePdf, printTemplateReport } from "../lib/reportOutput";
+import { LaidOutPageView } from "../components/reports/designer/PageRenderer";
 
 interface Schedule { id: string; frequency: string; timeOfDay: string; recipients: string[]; format: string; isActive: boolean; lastSentAt: string | null }
 interface SavedReport {
@@ -79,15 +84,88 @@ function sectionsForRun(payload: Record<string, unknown>, report: SavedReport): 
 }
 
 /**
+ * A designed report, run and laid out. The rows come from the API's run of the template's own data
+ * source and the pages from the same layout engine the designer previews with, so a saved report
+ * cannot look different from the design it came from.
+ */
+function TemplateReportView({ report, payload, onClose }: { report: SavedReport; payload: Record<string, unknown>; onClose: () => void }) {
+  const navigate = useNavigate();
+  const document = asTemplate(payload.document);
+  const laid = useMemo(() => {
+    if (!document) return null;
+    return layoutReport({
+      document,
+      rows: (payload.rows ?? []) as Array<Record<string, unknown>>,
+      parameters: (payload.parameters ?? {}) as Record<string, unknown>,
+      measure: measureTextMm,
+      limit: payload.limit as number | undefined,
+    });
+  }, [document, payload]);
+
+  if (!document || !laid) {
+    return <div className="card text-sm text-red-400">This template&apos;s document could not be read.</div>;
+  }
+
+  const meta = { title: report.name, subtitle: report.description ?? undefined, period: (payload.period as { label?: string } | undefined)?.label };
+  const warnings = laid.issues.filter(issue => issue.severity === "warning");
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-lg font-semibold text-white">{report.name}</h2>
+          <p className="text-sm text-gray-400">
+            {report.description ?? "Designed report"} · {laid.pages.length} page{laid.pages.length === 1 ? "" : "s"} · {laid.rowCount} row{laid.rowCount === 1 ? "" : "s"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => navigate(`/reports/custom/${report.id}/design`)}>
+            <LayoutTemplate size={14} /> Design
+          </button>
+          <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => printTemplateReport(laid, meta)}><Printer size={14} /> Print</button>
+          <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => exportTemplatePdf(laid, meta)}><Download size={14} /> PDF</button>
+          <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => exportTemplateExcel(laid, document, meta)}><Download size={14} /> Excel</button>
+          <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => exportTemplateCsv(laid, document, meta, downloadCsv)}><Download size={14} /> CSV</button>
+          <button className="btn-secondary text-sm" onClick={onClose}>Close</button>
+        </div>
+      </div>
+
+      {laid.refused ? (
+        <div className="card border-red-600/40 text-sm text-red-300">
+          This template has problems that stop it rendering: {laid.issues.filter(issue => issue.severity === "error").map(issue => issue.message).join(" ")}
+        </div>
+      ) : null}
+
+      {warnings.length ? (
+        <div className="card border-amber-600/40 text-xs text-amber-200 space-y-0.5">
+          {warnings.map((issue, index) => <p key={index}>{issue.message}</p>)}
+        </div>
+      ) : null}
+
+      <div className="space-y-4 overflow-auto">
+        {laid.pages.map(page => <LaidOutPageView key={page.number} page={page} laid={laid} zoom={0.85} />)}
+      </div>
+    </div>
+  );
+}
+
+/** A saved report's config carries its document; anything else is not a template we can draw. */
+function asTemplate(value: unknown): ReportTemplateDocument | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Partial<ReportTemplateDocument>;
+  return Array.isArray(candidate.bands) ? (value as ReportTemplateDocument) : null;
+}
+
+/**
  * Custom Reports.
  *
  * The landing page lists every saved report with what it is, who wrote it, when it runs and the
- * actions that work today — run, print, export, duplicate, schedule, edit, delete. The visual
- * designer is the next piece of work, planned in `PlanDocs/PLAN-020-Custom-Report-Designer.md`;
- * until it lands a report is still definable through its configuration, which is the engine the
- * designer will write into.
+ * actions that work today — run, print, export, duplicate, schedule, design, edit, delete. A designed
+ * report opens in the banded designer (`PlanDocs/PLAN-020-Custom-Report-Designer.md`); a config-driven
+ * one keeps the form it was written with.
  */
 export function CustomReportsPage() {
+  const navigate = useNavigate();
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +175,7 @@ export function CustomReportsPage() {
   const [viewing, setViewing] = useState<SavedReport | null>(null);
   const [editing, setEditing] = useState<SavedReport | null>(null);
   const [creating, setCreating] = useState(false);
+  const [designing, setDesigning] = useState(false);
   const [scheduling, setScheduling] = useState<SavedReport | null>(null);
   const [deleting, setDeleting] = useState<SavedReport | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -145,6 +224,27 @@ export function CustomReportsPage() {
     try {
       const r = await api.get(`/reports/${report.id}/run`);
       const payload = r.data as Record<string, unknown>;
+      const document = asTemplate(payload.document);
+      if (document) {
+        // A designed report exports from its layout, not from the section kit: its pages are its own.
+        const laid = layoutReport({
+          document,
+          rows: (payload.rows ?? []) as Array<Record<string, unknown>>,
+          parameters: (payload.parameters ?? {}) as Record<string, unknown>,
+          measure: measureTextMm,
+          limit: payload.limit as number | undefined,
+        });
+        const meta = { title: report.name, subtitle: report.description ?? undefined, period: (payload.period as { label?: string } | undefined)?.label };
+        if (action === "print") printTemplateReport(laid, meta);
+        else {
+          if (action === "pdf") exportTemplatePdf(laid, meta);
+          else if (action === "excel") exportTemplateExcel(laid, document, meta);
+          else exportTemplateCsv(laid, document, meta, downloadCsv);
+          toast.success(`${report.name} exported`);
+        }
+        return;
+      }
+
       const doc = {
         title: report.name,
         subtitle: report.description ?? undefined,
@@ -192,6 +292,10 @@ export function CustomReportsPage() {
 
   if (viewing) {
     const payload = (viewing.config?.__payload ?? {}) as Record<string, unknown>;
+    // A designed report renders from its own document; the section kit is for the other two kinds.
+    if (viewing.type === "template" && asTemplate(payload.document)) {
+      return <TemplateReportView report={viewing} payload={payload} onClose={() => setViewing(null)} />;
+    }
     const sections = sectionsForRun(payload, viewing);
     const doc = { title: viewing.name, subtitle: viewing.description ?? undefined, period: (payload.period as { label?: string } | undefined)?.label ?? "", sections };
     return (
@@ -223,19 +327,21 @@ export function CustomReportsPage() {
         </div>
         <div className="flex items-center gap-2">
           <button className="btn-secondary text-sm flex items-center gap-2" onClick={load}><RefreshCw size={14} /> Refresh</button>
+          <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => setDesigning(true)}><LayoutTemplate size={14} /> New designed report</button>
           <button className="btn-primary text-sm flex items-center gap-2" onClick={() => setCreating(true)}><Plus size={14} /> New report</button>
         </div>
       </div>
 
       <div className="card border-cyber-600/30 flex items-start gap-3">
-        <Pencil size={18} className="text-cyber-400 mt-0.5" />
+        <LayoutTemplate size={18} className="text-cyber-400 mt-0.5" />
         <div>
-          <h3 className="text-sm font-semibold text-white">The visual designer is the next piece of work</h3>
+          <h3 className="text-sm font-semibold text-white">Design a report, band by band</h3>
           <p className="text-xs text-gray-400 mt-1">
-            This screen lists and runs the saved reports. The drag-and-drop designer — bands, groups, totals, an expression
-            language and a page preview — is specified in <span className="font-mono">PlanDocs/PLAN-020-Custom-Report-Designer.md</span>,
-            which weighs building it here against embedding jsreport and recommends a route. Until then a report can still be
-            defined through its configuration, which is the same engine the designer will write into.
+            A designed report is built in the banded designer: page header, column captions, grouped rows,
+            totals in a group footer, a report summary and a page footer — with expressions, formats and a
+            page preview. It saves as a report of type <span className="font-mono">template</span>, so it runs,
+            exports, schedules and appears in this list beside the others. The decision behind it, and what each
+            phase added, is in <span className="font-mono">PlanDocs/PLAN-020-Custom-Report-Designer.md</span>.
           </p>
         </div>
       </div>
@@ -305,9 +411,14 @@ export function CustomReportsPage() {
                         <button onClick={() => void run(report)} disabled={busyId === report.id} className="btn-primary text-[11px] flex items-center gap-1 px-2 py-1">
                           <Play size={11} /> Run
                         </button>
+                        {report.type === "template" ? (
+                          <IconAction label="Open in the designer" icon={LayoutTemplate} onClick={() => navigate(`/reports/custom/${report.id}/design`)} />
+                        ) : null}
                         <IconAction label="Print" icon={Printer} onClick={() => void runAndThen(report, "print")} disabled={busyId === report.id} />
                         <IconAction label="Export PDF" icon={Download} onClick={() => void runAndThen(report, "pdf")} disabled={busyId === report.id} />
-                        <IconAction label="Edit" icon={Pencil} onClick={() => setEditing(report)} />
+                        {report.type === "template"
+                          ? null
+                          : <IconAction label="Edit" icon={Pencil} onClick={() => setEditing(report)} />}
                         <IconAction label="Duplicate" icon={Copy} onClick={() => void duplicate(report)} disabled={busyId === report.id} />
                         <IconAction label="Schedule" icon={Calendar} onClick={() => setScheduling(report)} />
                         <IconAction label="Delete" icon={Trash2} onClick={() => setDeleting(report)} danger />
@@ -334,6 +445,8 @@ export function CustomReportsPage() {
         />
       )}
 
+      {designing && <NewDesignedReportDialog onClose={() => setDesigning(false)} />}
+
       {scheduling && <ScheduleReportDialog reportId={scheduling.id} onClose={() => { setScheduling(null); load(); }} />}
 
       {deleting && (
@@ -355,11 +468,88 @@ export function CustomReportsPage() {
   );
 }
 
-function IconAction({ label, icon: Icon, onClick, disabled, danger }: { label: string; icon: typeof Printer; onClick: () => void; disabled?: boolean; danger?: boolean }) {
-  return (
+function IconAction({ label, icon: Icon, onClick, disabled, danger }: { label: string; icon: typeof Printer; onClick: () => void; disabled?: boolean; danger?: boolean }) {  return (
     <button onClick={onClick} disabled={disabled} title={label} aria-label={label} className={`btn-secondary text-[11px] px-2 py-1 ${danger ? "text-red-400 hover:text-red-300" : ""}`}>
       <Icon size={11} />
     </button>
+  );
+}
+
+/**
+ * Starting a designed report. A blank page is a bad first impression, so the starters are real
+ * documents — built by the API from the source's own catalog, which is why they are valid for whatever
+ * source is chosen rather than for the one they were written against.
+ */
+function NewDesignedReportDialog({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
+  const [source, setSource] = useState("tickets");
+  const [starter, setStarter] = useState("list");
+  const [sources, setSources] = useState<Array<{ key: string; label: string }>>([]);
+  const [starters, setStarters] = useState<Array<{ kind: string; label: string; help: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get("/reports/designer/catalog")
+      .then(response => {
+        setSources((response.data?.sources ?? []).map((entry: { key: string; label: string }) => ({ key: entry.key, label: entry.label })));
+        setStarters((response.data?.starters ?? []).map((entry: { kind: string; label: string; help: string }) => ({ kind: entry.kind, label: entry.label, help: entry.help })));
+      })
+      .catch(e => toast.error(apiErrorMessage(e, "Could not load the designer catalog")))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="card w-full max-w-lg space-y-4" onClick={event => event.stopPropagation()}>
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-white">New designed report</h3>
+            <p className="text-xs text-gray-400">Pick the data to report on and a layout to start from.</p>
+          </div>
+          <button className="text-gray-500 hover:text-gray-300" onClick={onClose} aria-label="Close"><X size={16} /></button>
+        </div>
+
+        {loading ? <TableSkeleton rows={3} /> : (
+          <>
+            <label className="block">
+              <span className="block text-xs text-gray-400 mb-1">Report on</span>
+              <select className="input-field" value={source} onChange={event => setSource(event.target.value)}>
+                {sources.map(entry => <option key={entry.key} value={entry.key}>{entry.label}</option>)}
+              </select>
+            </label>
+
+            <div className="space-y-2">
+              <span className="block text-xs text-gray-400">Start from</span>
+              {starters.map(entry => (
+                <button
+                  key={entry.kind}
+                  type="button"
+                  onClick={() => setStarter(entry.kind)}
+                  className={`w-full text-left rounded border p-2 transition-colors ${
+                    starter === entry.kind ? "border-cyber-500 bg-cyber-600/10" : "border-surface-lighter hover:border-cyber-500/50"
+                  }`}
+                >
+                  <span className="text-sm text-white">{entry.label}</span>
+                  <span className="block text-[11px] text-gray-400">{entry.help}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn-secondary text-sm" onClick={onClose}>Cancel</button>
+          <button
+            type="button"
+            className="btn-primary text-sm flex items-center gap-2"
+            disabled={loading}
+            onClick={() => navigate(`/reports/custom/new/design?source=${encodeURIComponent(source)}&starter=${encodeURIComponent(starter)}`)}
+          >
+            <LayoutTemplate size={14} /> Open the designer
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

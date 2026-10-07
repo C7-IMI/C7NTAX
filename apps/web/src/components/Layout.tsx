@@ -222,6 +222,7 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/reports/qbr": "A quarterly business review pack: service delivery, commercials, estate and risk against the quarter before.",
   "/reports/reviews": "Business reviews at weekly, monthly or quarterly cadence, each against the period before.",
   "/reports/custom": "Saved reports built on the reporting engine, with their schedules.",
+  "/reports/custom/:id/design": "The banded report designer: bands, fields, expressions, totals and a page preview.",
   "/reports/analytics": "Advanced analytics with visual charts and trend data.",
   "/help": "Documentation home — guided setup, FAQ, configuration reference, and a cross-linked index.",
   "/help/getting-started": "First login, the core ticket workflow, and team & boards setup.",

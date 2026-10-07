@@ -13,10 +13,18 @@
  * No SQL, no arbitrary field names, no relation traversal the config asks for but the whitelist
  * does not name — a report config is data typed by a user, so it gets the same suspicion as any
  * other input. Client scoping is applied by the caller and is not optional.
+ *
+ * The same whitelist is what the custom report **designer** (PLAN-020) reads: `describeReportCatalog`
+ * publishes the sources, their fields and their operators, so a template is written against exactly
+ * the fields this runner will accept — not against a second list that could drift from it.
  */
 import { prisma } from "../index";
+import { labelFor } from "@C7NTAX/shared";
 
 export type ReportSource = "tickets" | "invoices" | "time_entries" | "expenses" | "assets" | "contacts" | "companies";
+
+/** The kind of value a column holds, so the designer can pick a format and an alignment for it. */
+export type ReportFieldType = "text" | "number" | "money" | "minutes" | "date" | "boolean";
 
 interface FieldSpec {
   /** A field on the model, safe to select and filter. */
@@ -24,85 +32,138 @@ interface FieldSpec {
   /** What the runner uses when the config asks for a relation's value (e.g. a client name). */
   select?: Record<string, unknown>;
   label?: string;
+  type?: ReportFieldType;
+  /**
+   * Turns a selected relation into the single value a report wants to print. A user is
+   * `{ firstName, lastName }`, which has no one obvious value, so a column that presents a person
+   * flattens it here rather than making every expression do it.
+   */
+  flatten?: (value: unknown) => unknown;
 }
 
-const SOURCES: Record<ReportSource, { model: string; fields: Record<string, FieldSpec>; defaultSort: string; include?: Record<string, unknown> }> = {
+const personName = (value: unknown): unknown => {
+  if (!value || typeof value !== "object") return value;
+  const person = value as { firstName?: unknown; lastName?: unknown };
+  const name = [person.firstName, person.lastName].filter(part => typeof part === "string" && part).join(" ");
+  return name || null;
+};
+
+const SOURCES: Record<ReportSource, { model: string; label: string; fields: Record<string, FieldSpec>; defaultSort: string; include?: Record<string, unknown> }> = {
   tickets: {
     model: "ticket",
+    label: "Tickets",
     defaultSort: "createdAt",
     include: { company: { select: { name: true } } },
     fields: {
-      ticketNumber: { field: "ticketNumber" },
-      title: { field: "title" },
-      status: { field: "status" },
-      priority: { field: "priority" },
-      createdAt: { field: "createdAt" },
-      updatedAt: { field: "updatedAt" },
-      resolvedAt: { field: "resolvedAt" },
-      dueDate: { field: "dueDate" },
-      client: { field: "company", select: { name: true } },
+      ticketNumber: { field: "ticketNumber", type: "text" },
+      title: { field: "title", type: "text" },
+      status: { field: "status", type: "text" },
+      priority: { field: "priority", type: "text" },
+      source: { field: "source", type: "text" },
+      createdAt: { field: "createdAt", type: "date" },
+      updatedAt: { field: "updatedAt", type: "date" },
+      dueDate: { field: "dueDate", type: "date" },
+      firstResponseAt: { field: "firstResponseAt", type: "date" },
+      resolvedAt: { field: "resolvedAt", type: "date" },
+      closedAt: { field: "closedAt", type: "date" },
+      isOverdue: { field: "isOverdue", type: "boolean" },
+      client: { field: "company", select: { name: true }, type: "text" },
+      board: { field: "board", select: { name: true }, type: "text" },
+      category: { field: "category", select: { name: true }, type: "text" },
+      assignee: { field: "assignedTo", select: { firstName: true, lastName: true }, flatten: personName, type: "text" },
+      contact: { field: "contact", select: { firstName: true, lastName: true }, flatten: personName, type: "text" },
     },
   },
   invoices: {
     model: "invoice",
+    label: "Invoices",
     defaultSort: "issueDate",
     include: { company: { select: { name: true } } },
     fields: {
-      invoiceNumber: { field: "invoiceNumber" },
-      status: { field: "status" },
-      issueDate: { field: "issueDate" },
-      dueDate: { field: "dueDate" },
-      paidAt: { field: "paidAt" },
-      subtotal: { field: "subtotal" },
-      taxTotal: { field: "taxTotal" },
-      total: { field: "total" },
-      client: { field: "company", select: { name: true } },
+      invoiceNumber: { field: "invoiceNumber", type: "text" },
+      status: { field: "status", type: "text" },
+      currency: { field: "currency", type: "text" },
+      issueDate: { field: "issueDate", type: "date" },
+      dueDate: { field: "dueDate", type: "date" },
+      paidAt: { field: "paidAt", type: "date" },
+      subtotal: { field: "subtotal", type: "money" },
+      taxTotal: { field: "taxTotal", type: "money" },
+      total: { field: "total", type: "money" },
+      client: { field: "company", select: { name: true }, type: "text" },
     },
   },
   time_entries: {
     model: "timeEntry",
+    label: "Time entries",
     defaultSort: "date",
     include: { ticket: { select: { ticketNumber: true } } },
     fields: {
-      date: { field: "date" },
-      minutes: { field: "minutes" },
-      billedMinutes: { field: "billedMinutes" },
-      overtimeMinutes: { field: "overtimeMinutes" },
-      billable: { field: "billable" },
-      noCharge: { field: "noCharge" },
-      description: { field: "description" },
-      workType: { field: "workType" },
-      ticket: { field: "ticket", select: { ticketNumber: true } },
+      date: { field: "date", type: "date" },
+      minutes: { field: "minutes", type: "minutes" },
+      billedMinutes: { field: "billedMinutes", type: "minutes" },
+      overtimeMinutes: { field: "overtimeMinutes", type: "minutes" },
+      billable: { field: "billable", type: "boolean" },
+      noCharge: { field: "noCharge", type: "boolean" },
+      rate: { field: "rate", type: "money" },
+      description: { field: "description", type: "text" },
+      workType: { field: "workType", type: "text" },
+      technician: { field: "user", select: { firstName: true, lastName: true }, flatten: personName, type: "text" },
+      ticket: { field: "ticket", select: { ticketNumber: true }, type: "text" },
+      invoice: { field: "invoice", select: { invoiceNumber: true }, type: "text" },
     },
   },
   expenses: {
     model: "expense",
+    label: "Expenses",
     defaultSort: "expenseDate",
     fields: {
-      description: { field: "description" },
-      amount: { field: "amount" },
-      category: { field: "category" },
-      vendor: { field: "vendor" },
-      status: { field: "status" },
-      expenseDate: { field: "expenseDate" },
-      miles: { field: "miles" },
-      syncedAt: { field: "syncedAt" },
+      description: { field: "description", type: "text" },
+      amount: { field: "amount", type: "money" },
+      category: { field: "category", type: "text" },
+      vendor: { field: "vendor", type: "text" },
+      status: { field: "status", type: "text" },
+      expenseDate: { field: "expenseDate", type: "date" },
+      miles: { field: "miles", type: "number" },
+      syncedAt: { field: "syncedAt", type: "date" },
     },
   },
   assets: {
     model: "asset",
+    label: "Assets",
     defaultSort: "createdAt",
-    fields: { name: { field: "name" }, assetTag: { field: "assetTag" }, type: { field: "type" }, status: { field: "status" }, createdAt: { field: "createdAt" } },
+    fields: {
+      name: { field: "name", type: "text" },
+      assetTag: { field: "assetTag", type: "text" },
+      type: { field: "type", type: "text" },
+      status: { field: "status", type: "text" },
+      createdAt: { field: "createdAt", type: "date" },
+    },
   },
   contacts: {
     model: "contact",
+    label: "Contacts",
     defaultSort: "lastName",
-    fields: { firstName: { field: "firstName" }, lastName: { field: "lastName" }, email: { field: "email" }, phone: { field: "phone" }, title: { field: "title" }, createdAt: { field: "createdAt" } },
+    fields: {
+      firstName: { field: "firstName", type: "text" },
+      lastName: { field: "lastName", type: "text" },
+      email: { field: "email", type: "text" },
+      phone: { field: "phone", type: "text" },
+      title: { field: "title", type: "text" },
+      createdAt: { field: "createdAt", type: "date" },
+    },
   },
   companies: {
     model: "company",
+    label: "Clients",
     defaultSort: "name",
-    fields: { name: { field: "name" }, city: { field: "city" }, state: { field: "state" }, industry: { field: "industry" }, isActive: { field: "isActive" }, createdAt: { field: "createdAt" } },
+    fields: {
+      name: { field: "name", type: "text" },
+      city: { field: "city", type: "text" },
+      state: { field: "state", type: "text" },
+      industry: { field: "industry", type: "text" },
+      isActive: { field: "isActive", type: "boolean" },
+      createdAt: { field: "createdAt", type: "date" },
+    },
   },
 };
 
@@ -161,6 +222,55 @@ function coerce(value: unknown): unknown {
   return value;
 }
 
+export interface CatalogField { key: string; label: string; type: ReportFieldType; filterable: boolean }
+export interface ReportCatalog {
+  sources: Array<{ key: ReportSource; label: string; defaultSort: string; fields: CatalogField[] }>;
+  operators: Array<{ key: Operator; label: string; valueKind: "none" | "text" | "number" | "date" | "list" | "pair" }>;
+}
+
+const OPERATOR_LABELS: Record<Operator, { label: string; valueKind: "none" | "text" | "number" | "date" | "list" | "pair" }> = {
+  equals: { label: "is", valueKind: "text" },
+  notEquals: { label: "is not", valueKind: "text" },
+  contains: { label: "contains", valueKind: "text" },
+  startsWith: { label: "starts with", valueKind: "text" },
+  in: { label: "is one of", valueKind: "list" },
+  gte: { label: "on or after", valueKind: "date" },
+  lte: { label: "on or before", valueKind: "date" },
+  between: { label: "between", valueKind: "pair" },
+  isNull: { label: "is empty", valueKind: "none" },
+  isNotNull: { label: "is not empty", valueKind: "none" },
+};
+
+/**
+ * Everything the designer is allowed to know about the data it can report on: this list is the
+ * whitelist itself rather than a copy of it, so a template cannot name a field this runner would
+ * refuse, and adding a field here makes it available to every designer without a second change.
+ */
+export function describeReportCatalog(): ReportCatalog {
+  return {
+    sources: (Object.keys(SOURCES) as ReportSource[]).map(key => {
+      const spec = SOURCES[key];
+      return {
+        key,
+        label: spec.label,
+        defaultSort: spec.defaultSort,
+        fields: Object.entries(spec.fields).map(([fieldKey, field]) => ({
+          key: fieldKey,
+          label: field.label ?? labelFor(fieldKey),
+          type: field.type ?? "text",
+          filterable: true,
+        })),
+      };
+    }),
+    operators: OPERATORS.map(key => ({ key, ...OPERATOR_LABELS[key] })),
+  };
+}
+
+/** The source keys, for validating a document's data source before it is run. */
+export function reportSourceKeys(): ReportSource[] {
+  return Object.keys(SOURCES) as ReportSource[];
+}
+
 /** Runs a stored report config. `scope` is the caller's client restriction and is never optional. */
 export async function runReportConfig(config: ReportConfig, scope: Record<string, unknown> = {}): Promise<ReportRunResult> {
   const notes: string[] = [];
@@ -179,11 +289,13 @@ export async function runReportConfig(config: ReportConfig, scope: Record<string
   // itself as "client" is selected as `company` and renamed back on the way out.
   const select: Record<string, unknown> = {};
   const keyToColumn = new Map<string, string>();
+  const flatteners = new Map<string, (value: unknown) => unknown>();
   for (const column of columns) {
     const field = spec.fields[column];
     if (!field) continue;
     select[field.field] = field.select ? { select: field.select } : true;
     keyToColumn.set(field.field, column);
+    if (field.flatten) flatteners.set(column, field.flatten);
   }
 
   const sortField = config.sortBy ? spec.fields[config.sortBy] : undefined;
@@ -203,7 +315,11 @@ export async function runReportConfig(config: ReportConfig, scope: Record<string
   const truncated = rows.length > limit;
   const page = truncated ? rows.slice(0, limit) : rows;
   const renamed = page.map(row =>
-    Object.fromEntries(Object.entries(row).map(([key, value]) => [keyToColumn.get(key) ?? key, value])),
+    Object.fromEntries(Object.entries(row).map(([key, value]) => {
+      const column = keyToColumn.get(key) ?? key;
+      const flatten = flatteners.get(column);
+      return [column, flatten ? flatten(value) : value];
+    })),
   );
 
   // `groupBy` is a rollup of the selected rows rather than a second query: grouping in the

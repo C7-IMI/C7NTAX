@@ -40,6 +40,7 @@ import { InferenceSettingsPage } from "./pages/InferenceSettings";
 import { ProcurementPage } from "./pages/Procurement";
 import { ReportsPage, ReviewsPage } from "./pages/Reports";
 import { CustomReportsPage } from "./pages/CustomReports";
+import { ReportDesignerPage } from "./pages/ReportDesigner";
 import { SectionLanding, SECTION_DESCRIPTIONS } from "./pages/SectionLanding";
 import { ProductCatalogPage } from "./pages/ProductCatalog";
 import { NAV_TREE } from "./components/Layout";
@@ -134,6 +135,7 @@ function ProtectedRoutes() {
         <Route path="/reports/analytics" element={<ReportsPage tab="analytics" />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/reports/custom" element={<CustomReportsPage />} />
+        <Route path="/reports/custom/:id/design" element={<ReportDesignerPage />} />
         <Route path="/cloudconnect" element={<CloudConnectPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/roles" element={<RolesPage />} />

@@ -192,7 +192,8 @@ export function ReportBody({ sections, compact }: { sections: Section[]; compact
 
 // ── Turning sections into tables (the one shape every export uses) ──
 
-interface FlatTable { title: string; columns: Array<{ key: string; label: string }>; rows: Array<Record<string, unknown>> }
+/** The plain shape every writer below reads. A banded template produces the same shape from its bands. */
+export interface FlatTable { title: string; columns: Array<{ key: string; label: string }>; rows: Array<Record<string, unknown>> }
 
 /** Flattens every section to plain tables, so print, PDF, CSV and Excel cannot disagree. */
 export function sectionsToTables(sections: Section[]): FlatTable[] {
@@ -223,18 +224,112 @@ export function sectionsToTables(sections: Section[]): FlatTable[] {
 
 const fileBase = (title: string) => title.replace(/[^\w]+/g, "-");
 
-// ── Print ───────────────────────────────────────────────────────────
+/** A workbook name safe for SpreadsheetML and for a filename. */
+export const reportFileBase = fileBase;
 
 const escapeHtml = (value: string) => value.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
 
+// ── The writers, over plain tables ──────────────────────────────────
+//
+// These take `FlatTable[]` rather than a `ReportDocument`, so a banded template — which produces its
+// rows from bands rather than sections — exports through exactly the same writers. A second
+// spreadsheet implementation is how a designed report ends up opening differently from a standard one.
+
 /**
- * The printable report. It is a real document rather than `window.print()` on the console, because
- * printing the application printed the sidebar, the header and whatever else was on screen — which
- * is what the Print button used to do.
+ * SpreadsheetML 2003, which Excel opens natively as a workbook with typed cells and a sheet per
+ * table. An HTML table renamed `.xls` looks like it works right up to the moment a spreadsheet
+ * application is asked to open it, so this writes an actual spreadsheet format.
  */
-export function printReport(document_: ReportDocument): void {
-  const { title, subtitle, period, sections } = document_;
-  const body = sectionsToTables(sections).map(table => `
+export function tablesToExcel(tables: FlatTable[], title: string, subtitle?: string, period?: string): void {
+  const escapeXml = (value: string) => value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[c] as string));
+  const sheetName = (text: string, index: number) => escapeXml(text.replace(/[\\/?*[\]:]/g, "").slice(0, 28) || `Table ${index + 1}`);
+
+  const sheets = tables.map((table, index) => {
+    const header = `<Row>${table.columns.map(c => `<Cell ss:StyleID="head"><Data ss:Type="String">${escapeXml(c.label)}</Data></Cell>`).join("")}</Row>`;
+    const body = table.rows.map(row => `<Row>${table.columns.map(c => {
+      const raw = row[c.key];
+      const asText = raw === null || raw === undefined ? "" : String(raw);
+      const compact = asText.replace(/[,$]/g, "");
+      const asNumber = typeof raw === "number" ? raw : (compact !== "" && /^-?\d+(\.\d+)?$/.test(compact) ? Number(compact) : null);
+      return asNumber !== null
+        ? `<Cell><Data ss:Type="Number">${asNumber}</Data></Cell>`
+        : `<Cell><Data ss:Type="String">${escapeXml(asText)}</Data></Cell>`;
+    }).join("")}</Row>`).join("");
+    return `<Worksheet ss:Name="${sheetName(table.title, index)}"><Table>${header}${body}</Table></Worksheet>`;
+  }).join("");
+
+  const workbook = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Styles><Style ss:ID="head"><Font ss:Bold="1"/></Style></Styles>
+<Worksheet ss:Name="Report"><Table>
+<Row><Cell><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>
+<Row><Cell><Data ss:Type="String">${escapeXml([subtitle, period, `Generated ${new Date().toLocaleString()}`].filter(Boolean).join(" · "))}</Data></Cell></Row>
+</Table></Worksheet>${sheets}</Workbook>`;
+
+  const blob = new Blob([workbook], { type: "application/vnd.ms-excel" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${fileBase(title)}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const csvCell = (value: unknown): string => {
+  const text = value === null || value === undefined ? "" : String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+/** Every table as CSV, one after another with a blank line between, which is what a reader expects. */
+export function tablesToCsv(tables: FlatTable[]): string {
+  const lines: string[] = [];
+  for (const table of tables) {
+    lines.push(csvCell(table.title));
+    lines.push(table.columns.map(c => csvCell(c.label)).join(","));
+    for (const row of table.rows) lines.push(table.columns.map(c => csvCell(row[c.key])).join(","));
+    lines.push("");
+  }
+  return lines.join("\r\n");
+}
+
+/** The landscape PDF the standard reports use: a heading, then one autoTable per table. */
+export function tablesToPdf(tables: FlatTable[], title: string, subtitle?: string, period?: string): void {
+  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+  const width = doc.internal.pageSize.getWidth();
+  doc.setFontSize(16);
+  doc.text(title, 40, 40);
+  doc.setFontSize(9);
+  doc.setTextColor(100);
+  doc.text([subtitle, period, `Generated ${new Date().toLocaleString()} — C7NTAX Reporting`].filter(Boolean).join(" · "), 40, 56);
+  doc.setTextColor(0);
+
+  let cursor = 76;
+  for (const table of tables) {
+    if (cursor > doc.internal.pageSize.getHeight() - 80) { doc.addPage(); cursor = 60; }
+    doc.setFontSize(11);
+    doc.text(table.title, 40, cursor);
+    cursor += 6;
+    autoTable(doc, {
+      head: [table.columns.map(c => c.label)],
+      body: table.rows.map(row => table.columns.map(c => String(row[c.key] ?? "—"))),
+      startY: cursor,
+      styles: { fontSize: 8, cellPadding: 4 },
+      headStyles: { fillColor: [34, 211, 238], textColor: 15 },
+      alternateRowStyles: { fillColor: [247, 250, 252] },
+      margin: { left: 40, right: 40 },
+      tableWidth: width - 80,
+    });
+    const final = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable;
+    cursor = (final?.finalY ?? cursor) + 26;
+  }
+  doc.save(`${fileBase(title)}.pdf`);
+}
+
+/** The printable report as HTML tables — the same content as the PDF. */
+export function tablesToPrintWindow(tables: FlatTable[], title: string, subtitle?: string, period?: string): Window | null {
+  const body = tables.map(table => `
     <h2>${escapeHtml(table.title)}</h2>
     <table>
       <thead><tr>${table.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join("")}</tr></thead>
@@ -242,7 +337,7 @@ export function printReport(document_: ReportDocument): void {
     </table>`).join("");
 
   const window_ = window.open("", "_blank", "width=980,height=760");
-  if (!window_) return;
+  if (!window_) return null;
   window_.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
@@ -262,101 +357,36 @@ ${body || "<p>No data available.</p>"}
 </body></html>`);
   window_.document.close();
   window_.focus();
+  return window_;
+}
+
+// ── Print ───────────────────────────────────────────────────────────
+
+/**
+ * The printable report. It is a real document rather than `window.print()` on the console, because
+ * printing the application printed the sidebar, the header and whatever else was on screen — which
+ * is what the Print button used to do.
+ */
+export function printReport(document_: ReportDocument): void {
+  const window_ = tablesToPrintWindow(sectionsToTables(document_.sections), document_.title, document_.subtitle, document_.period);
+  if (!window_) return;
   setTimeout(() => window_.print(), 400);
 }
 
 // ── PDF ─────────────────────────────────────────────────────────────
 
 export function exportPdf(document_: ReportDocument): void {
-  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-  const width = doc.internal.pageSize.getWidth();
-  doc.setFontSize(16);
-  doc.text(document_.title, 40, 40);
-  doc.setFontSize(9);
-  doc.setTextColor(100);
-  doc.text([document_.subtitle, document_.period, `Generated ${new Date().toLocaleString()} — C7NTAX Reporting`].filter(Boolean).join(" · "), 40, 56);
-  doc.setTextColor(0);
-
-  let cursor = 76;
-  for (const table of sectionsToTables(document_.sections)) {
-    if (cursor > doc.internal.pageSize.getHeight() - 80) { doc.addPage(); cursor = 60; }
-    doc.setFontSize(11);
-    doc.text(table.title, 40, cursor);
-    cursor += 6;
-    autoTable(doc, {
-      head: [table.columns.map(c => c.label)],
-      body: table.rows.map(row => table.columns.map(c => String(row[c.key] ?? "—"))),
-      startY: cursor,
-      styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: [34, 211, 238], textColor: 15 },
-      alternateRowStyles: { fillColor: [247, 250, 252] },
-      margin: { left: 40, right: 40 },
-      tableWidth: width - 80,
-    });
-    const final = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable;
-    cursor = (final?.finalY ?? cursor) + 26;
-  }
-  doc.save(`${fileBase(document_.title)}.pdf`);
+  tablesToPdf(sectionsToTables(document_.sections), document_.title, document_.subtitle, document_.period);
 }
 
 // ── CSV ─────────────────────────────────────────────────────────────
 
-const csvCell = (value: unknown): string => {
-  const text = value === null || value === undefined ? "" : String(value);
-  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-};
-
 export function exportCsv(document_: ReportDocument, download: (filename: string, csv: string) => void): void {
-  const lines: string[] = [];
-  for (const table of sectionsToTables(document_.sections)) {
-    lines.push(csvCell(table.title));
-    lines.push(table.columns.map(c => csvCell(c.label)).join(","));
-    for (const row of table.rows) lines.push(table.columns.map(c => csvCell(row[c.key])).join(","));
-    lines.push("");
-  }
-  download(`${fileBase(document_.title)}.csv`, lines.join("\r\n"));
+  download(`${fileBase(document_.title)}.csv`, tablesToCsv(sectionsToTables(document_.sections)));
 }
 
 // ── Excel ───────────────────────────────────────────────────────────
 
-/**
- * SpreadsheetML 2003, which Excel opens natively as a workbook with typed cells and a sheet per
- * table. An HTML table renamed `.xls` looks like it works right up to the moment a spreadsheet
- * application is asked to open it, so this writes an actual spreadsheet format.
- */
 export function exportExcel(document_: ReportDocument): void {
-  const escapeXml = (value: string) => value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[c] as string));
-  const sheetName = (title: string, index: number) => escapeXml(title.replace(/[\\/?*[\]:]/g, "").slice(0, 28) || `Table ${index + 1}`);
-
-  const sheets = sectionsToTables(document_.sections).map((table, index) => {
-    const header = `<Row>${table.columns.map(c => `<Cell ss:StyleID="head"><Data ss:Type="String">${escapeXml(c.label)}</Data></Cell>`).join("")}</Row>`;
-    const body = table.rows.map(row => `<Row>${table.columns.map(c => {
-      const raw = row[c.key];
-      const asText = raw === null || raw === undefined ? "" : String(raw);
-      const compact = asText.replace(/[,$]/g, "");
-      const asNumber = typeof raw === "number" ? raw : (compact !== "" && /^-?\d+(\.\d+)?$/.test(compact) ? Number(compact) : null);
-      return asNumber !== null
-        ? `<Cell><Data ss:Type="Number">${asNumber}</Data></Cell>`
-        : `<Cell><Data ss:Type="String">${escapeXml(asText)}</Data></Cell>`;
-    }).join("")}</Row>`).join("");
-    return `<Worksheet ss:Name="${sheetName(table.title, index)}"><Table>${header}${body}</Table></Worksheet>`;
-  }).join("");
-
-  const workbook = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
-<Styles><Style ss:ID="head"><Font ss:Bold="1"/></Style></Styles>
-<Worksheet ss:Name="Report"><Table>
-<Row><Cell><Data ss:Type="String">${escapeXml(document_.title)}</Data></Cell></Row>
-<Row><Cell><Data ss:Type="String">${escapeXml([document_.subtitle, document_.period, `Generated ${new Date().toLocaleString()}`].filter(Boolean).join(" · "))}</Data></Cell></Row>
-</Table></Worksheet>${sheets}</Workbook>`;
-
-  const blob = new Blob([workbook], { type: "application/vnd.ms-excel" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${fileBase(document_.title)}.xls`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  tablesToExcel(sectionsToTables(document_.sections), document_.title, document_.subtitle, document_.period);
 }
