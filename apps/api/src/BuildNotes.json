@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.6.061",
+    "date": "2026-10-06",
+    "title": "A guard rail so an unguarded route can never ship again",
+    "changes": [
+      {
+        "text": "**`pnpm guard:routes` fails the build on any authenticated route without a permission check.** PLAN-018's actual root cause was not one missing permission — it was thirteen routers that imported `requirePermission` and never called it, with nothing in the build that could notice. The check walks every route declaration in `apps/api/src/routes`, reads the middleware between the path and the handler, and reports anything reachable by a signed-in account with no permission; routes that are deliberately open must be listed in the script with a reason. It reports **322 routes, 293 carrying a permission, zero violations**, and exits non-zero otherwise.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The exemption list is the documentation.** Five files are open on purpose and now say why in one place: `auth.ts` (credential routes run before a session exists), `webauthn.ts` (passkey registration still requires a session and identifies the user from the token), `ssoExchange.ts` (state-validated OIDC callback), `push.ts` (a user's own device subscriptions), `tenants.ts` (deferred with multi-tenant) — plus the three documented `/system` reads the SPA needs and the self-service config keys.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Four routes the audit had logged as \"still open\" are closed**, and the check found them rather than my memory: webhook delivery logs now require `SystemConfig`, bulk operations require `TicketView`/`TicketEdit`, and the role permission catalogue requires `RoleManage`.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A second dead-roles router was found while wiring that last guard**, and it is the same class of trap as the bulk webhook routes: `users.ts` declares its own `rolesRouter` with a handful of routes, nothing imports it — `index.ts` mounts the one from `roles.ts` — and the SPA reads `PERMISSION_CATEGORIES` straight from `@C7NTAX/shared`, so those routes are simply unreachable. They are guarded and commented rather than deleted in a security step; removing the block is a listed follow-up.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.060",
     "date": "2026-10-06",
     "title": "A client-scoped account can only ever see its own company",

@@ -415,6 +415,15 @@ rolesRouter.get("/", requirePermission(Permission.RoleManage), async (_req: Auth
   } catch (e) { next(e); }
 });
 
+// ── Roles ────────────────────────────────────────────────────────────
+// NOTE: this second roles router is NOT mounted — index.ts imports `rolesRouter` from
+// `./routes/roles`, and nothing imports this one, so every route below is unreachable
+// (the permissions catalogue it declares is also served to the SPA straight from
+// `@C7NTAX/shared`). Kept guarded while it exists; deleting it is a follow-up cleanup.
+rolesRouter.get("/permissions/catalog", requirePermission(Permission.RoleManage), async (_req: AuthRequest, res) => {
+  res.json({ data: PERMISSION_CATEGORIES });
+});
+
 // ── Get single role ──────────────────────────────────────────────────
 rolesRouter.get("/:id", requirePermission(Permission.RoleManage), async (req: AuthRequest, res, next) => {
   try {
@@ -463,9 +472,4 @@ rolesRouter.delete("/:id", requirePermission(Permission.RoleManage), async (req:
     await prisma.role.delete({ where: { id: req.params.id } });
     res.json({ message: "Role deleted" });
   } catch (e) { next(e); }
-});
-
-// ── Get permissions catalog (grouped) ────────────────────────────────
-rolesRouter.get("/permissions/catalog", async (_req: AuthRequest, res) => {
-  res.json({ data: PERMISSION_CATEGORIES });
 });

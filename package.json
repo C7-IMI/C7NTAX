@@ -28,7 +28,8 @@
     "db:migrate": "turbo run db:migrate",
     "db:sample-off": "pnpm --filter @C7NTAX/api db:sample-off",
     "db:sample-on": "pnpm --filter @C7NTAX/api db:sample-on",
-    "clean": "turbo run clean && rimraf node_modules"
+    "clean": "turbo run clean && rimraf node_modules",
+    "guard:routes": "node scripts/check-route-guards.mjs"
   },
   "devDependencies": {
     "@types/speakeasy": "^2.0.10",

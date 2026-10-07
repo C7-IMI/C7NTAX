@@ -688,16 +688,16 @@
   {
     "id": "c06c6cd9-c00f-428f-9298-c283ca0cad05",
     "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
-    "title": "Elevated errors loading usage data on platform.claude.com",
-    "description": "&lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 7&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;01:20&lt;/var&gt; UTC&lt;/small&gt;&lt;br&gt; &lt;strong&gt;Investigating&lt;/strong&gt; - We are investigating elevated errors loading usage data on the platform.claude.com Usage page and the Admin API usage report endpoint since 5 PM PT. Messages API requests are not affected. We will provide an update as soon as possible. &lt;/p&gt;",
+    "title": "Minor Service Outage",
+    "description": "Auto-resolved: Elevated errors loading usage data on platform.claude.com\n\nhttps://status.claude.com reports \"Minor Service Outage\".",
     "severity": "degraded",
-    "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://status.claude.com/incidents/wf2v8ms031sx",
+    "status": "resolved",
+    "source": "statuspage",
+    "sourceUrl": "https://status.claude.com/",
     "detectedAt": "2026-10-07T01:21:21.416Z",
-    "resolvedAt": null,
+    "resolvedAt": "2026-10-07T02:37:58.008Z",
     "createdAt": "2026-10-07T01:21:21.418Z",
-    "updatedAt": "2026-10-07T01:21:21.418Z"
+    "updatedAt": "2026-10-07T02:37:58.009Z"
   },
   {
     "id": "d54ded8b-1295-4a58-8f99-299907e1ffca",

@@ -5,7 +5,7 @@ import { AppError } from "../middleware/errorHandler";
 import { Permission } from "@C7NTAX/shared";
 export const bulkRouter = Router(); bulkRouter.use(authenticate);
 
-bulkRouter.post("/", async (req: AuthRequest, res, next) => {
+bulkRouter.post("/", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try { const { type, entity, config, ids } = req.body;
     if (!type || !entity) throw new AppError("type and entity required");
     const op = await prisma.bulkOperation.create({ data: { type, entity, config, createdById: req.user!.userId, totalCount: (ids || []).length } });
@@ -15,7 +15,7 @@ bulkRouter.post("/", async (req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-bulkRouter.get("/:id", async (req: AuthRequest, res, next) => {
+bulkRouter.get("/:id", requirePermission(Permission.TicketView), async (req: AuthRequest, res, next) => {
   try { const op = await prisma.bulkOperation.findUnique({ where: { id: req.params.id } }); if (!op) throw new AppError("Not found", 404); res.json(op); }
   catch (e) { next(e); }
 });

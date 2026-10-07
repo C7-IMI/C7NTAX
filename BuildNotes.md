@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.060 | Last Updated: 2026-10-06
+## Version: 2026.10.6.061 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.061 — A guard rail so an unguarded route can never ship again
+- **[New]** **`pnpm guard:routes` fails the build on any authenticated route without a permission check.** PLAN-018's actual root cause was not one missing permission — it was thirteen routers that imported `requirePermission` and never called it, with nothing in the build that could notice. The check walks every route declaration in `apps/api/src/routes`, reads the middleware between the path and the handler, and reports anything reachable by a signed-in account with no permission; routes that are deliberately open must be listed in the script with a reason. It reports **322 routes, 293 carrying a permission, zero violations**, and exits non-zero otherwise.
+- **[New]** **The exemption list is the documentation.** Five files are open on purpose and now say why in one place: `auth.ts` (credential routes run before a session exists), `webauthn.ts` (passkey registration still requires a session and identifies the user from the token), `ssoExchange.ts` (state-validated OIDC callback), `push.ts` (a user's own device subscriptions), `tenants.ts` (deferred with multi-tenant) — plus the three documented `/system` reads the SPA needs and the self-service config keys.
+- **[Fix]** **Four routes the audit had logged as "still open" are closed**, and the check found them rather than my memory: webhook delivery logs now require `SystemConfig`, bulk operations require `TicketView`/`TicketEdit`, and the role permission catalogue requires `RoleManage`.
+- **[Update]** **A second dead-roles router was found while wiring that last guard**, and it is the same class of trap as the bulk webhook routes: `users.ts` declares its own `rolesRouter` with a handful of routes, nothing imports it — `index.ts` mounts the one from `roles.ts` — and the SPA reads `PERMISSION_CATEGORIES` straight from `@C7NTAX/shared`, so those routes are simply unreachable. They are guarded and commented rather than deleted in a security step; removing the block is a listed follow-up.
+- **Verification:** the check passes on the current tree, and it was **proved to fail** by copying `clients.ts` with its guards stripped and running it again — 12 violations, exit code 1 — then restoring. Typecheck at baseline, the six-persona permission matrix byte-identical to the previous step, 13/13 scoping assertions and 63/63 user-administration checks still pass, and the four newly guarded routes were spot-checked live (technician 403 / admin 200 on webhook deliveries, technician 403 / admin 200 on the catalogue).
+- **Rollback:** delete `scripts/check-route-guards.mjs` and the `guard:routes` script entry; the four new guards revert with their routes.
 
 ## 2026.10.6.060 — A client-scoped account can only ever see its own company
 - **[Fix]** **Permission was not the whole story: the modules were still serving every company's rows.** A scoped account could read its own client record *and* every other client's, their contacts, their agreements, their Kumo summary, their invoices and expenses — and, worst of all, the reporting endpoints, where revenue, SLA compliance, ticket volume and contract profitability are aggregated across the whole business. Those are now narrowed by company for any account that carries one, following the convention already used for tickets: internal staff have no `companyId` and see everything, a scoped account sees its own company.

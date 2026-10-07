@@ -3339,3 +3339,20 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 **Notes for next time**
 - Steps D–I remain, in `files/W0-progress.md`. Step D (the route-guard test) is the one that prevents this whole class from regressing, and it needs the exemption list written down: `auth.ts`, `webauthn.ts`, `ssoExchange.ts`, `push.ts` and the three documented `/system` carve-outs.
+
+**Prompt 219 — continued: W0 step D (the route-guard check)**
+
+**What I did**
+- Wrote `scripts/check-route-guards.mjs` (with a `guard:routes` script) that parses every route declaration, reads the middleware between the path and the handler, and fails on anything reachable by a signed-in account with no permission check — with a documented exemption list for the five routers and three `/system` reads that are open on purpose. It now reports 322 routes, 293 guarded, zero violations.
+- Let it find the remaining gaps rather than working from my notes: it flagged exactly the four routes I had listed as "still open" — webhook delivery logs, two bulk routes and the role permission catalogue — which are now guarded, plus it surfaced a second dead router (`rolesRouter` declared in `users.ts`, never mounted, its catalogue route duplicated by a constant the SPA reads directly from the shared package).
+- Proved the check actually fails: a copy of `clients.ts` with its guards stripped produced 12 violations and exit code 1, then the file was removed and the check went green again.
+
+**Decisions worth remembering**
+- **A checker is worth more than a bigger diff.** Every gate added earlier was a one-off; this is the thing that stops the same class of hole returning, and it is the artefact the CI gate in step H will call.
+- **Exemptions must carry a reason in code**, or the next person deletes the check to make their build pass.
+- The dead-router discovery is the same failure mode as `/bulk/webhooks`: a route that exists in a file, looks protected, and is unreachable. Both were found by tooling, not by reading.
+- I left the dead code in place and commented rather than deleting ~70 lines inside a security step; it is listed as its own follow-up so the change stays reviewable.
+
+**Notes for next time**
+- Steps E (P0-5 + the egress helper), F (`?token=` removal), G (dependency majors + the audit baseline), H (CI wiring for this check) and I (the Azure package) remain, tracked in `files/W0-progress.md`.
+- The checker scans `apps/api/src/routes` recursively, so route files added later are covered automatically; a route declared across multiple lines is handled because it reads up to the handler token rather than assuming one line.

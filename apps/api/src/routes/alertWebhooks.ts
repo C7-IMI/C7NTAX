@@ -39,7 +39,7 @@ alertWebhooksRouter.delete("/:id", requirePermission(Permission.SystemConfig), a
   } catch (e) { next(e); }
 });
 
-alertWebhooksRouter.get("/deliveries", async (_req: AuthRequest, res, next) => {
+alertWebhooksRouter.get("/deliveries", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try {
     const deliveries = await prisma.alertWebhookDelivery.findMany({ orderBy: { createdAt: "desc" }, take: 100 });
     res.json({ data: deliveries });

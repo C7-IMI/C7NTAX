@@ -8763,5 +8763,187 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T02:33:22.329Z"
+  },
+  {
+    "id": "e3a4a343-a9d1-4383-9b2c-3a0c522031fa",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "email": "gen697653@probe.local",
+      "title": "Service Desk Analyst",
+      "roleId": "f032badc-4d32-463c-973d-5cf0559f273a",
+      "lastName": "Generated",
+      "timezone": "America/Chicago",
+      "username": "grace697653",
+      "firstName": "Grace",
+      "department": "Service Desk",
+      "credentialMode": "generate"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:18.583Z"
+  },
+  {
+    "id": "13d71768-043f-4435-8597-b02a075b33ab",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "email": "sub697653@probe.local",
+      "roleId": "f032badc-4d32-463c-973d-5cf0559f273a",
+      "isActive": false,
+      "lastName": "Subordinate",
+      "timezone": "UTC",
+      "firstName": "Sam",
+      "reportsToId": "b84dcdd4-b53a-4579-aab2-6789bc37fe82"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:18.926Z"
+  },
+  {
+    "id": "35e9ae9c-a4e8-470b-bf94-bfcc06ac8093",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "email": "inv697653@probe.local",
+      "roleId": "f032badc-4d32-463c-973d-5cf0559f273a",
+      "lastName": "Invited",
+      "firstName": "Ivy",
+      "credentialMode": "invite"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:19.445Z"
+  },
+  {
+    "id": "5cfc7dff-86d9-47ab-a9cd-de12922bc427",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "b84dcdd4-b53a-4579-aab2-6789bc37fe82",
+    "changes": {
+      "locked": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:21.613Z"
+  },
+  {
+    "id": "e89643f3-230e-4f44-9834-1b8ae34fb5cc",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "b84dcdd4-b53a-4579-aab2-6789bc37fe82",
+    "changes": {
+      "mode": "generate",
+      "unlock": true,
+      "requireChange": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:21.921Z"
+  },
+  {
+    "id": "0f559c45-a3f1-4244-a2aa-578c987c6506",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "b84dcdd4-b53a-4579-aab2-6789bc37fe82",
+    "changes": {
+      "mode": "manual",
+      "unlock": false,
+      "password": "***",
+      "requireChange": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:22.861Z"
+  },
+  {
+    "id": "31f2b1f0-f7e2-4409-b5dc-3affdf217061",
+    "action": "users:delete",
+    "entity": "users",
+    "entityId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:23.210Z"
+  },
+  {
+    "id": "b2834e46-10b0-4467-ace5-4402a1cf28fd",
+    "action": "users:update",
+    "entity": "users",
+    "entityId": "4e19fa8c-ea86-46ae-8f61-b59bb9b5015a",
+    "changes": {
+      "timezone": "America/Denver",
+      "username": "sam697653",
+      "department": "Field Services"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:23.240Z"
+  },
+  {
+    "id": "8c196ebf-a0cc-45ba-a522-dded796bc998",
+    "action": "users:update",
+    "entity": "users",
+    "entityId": "4e19fa8c-ea86-46ae-8f61-b59bb9b5015a",
+    "changes": {
+      "password": "***",
+      "requireChange": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:23.550Z"
+  },
+  {
+    "id": "f269fa53-2697-4075-94a9-b69f99c7b8ed",
+    "action": "users:update",
+    "entity": "users",
+    "entityId": "b84dcdd4-b53a-4579-aab2-6789bc37fe82",
+    "changes": {
+      "isActive": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:23.566Z"
+  },
+  {
+    "id": "8594bd62-fbb1-4895-b916-e23ccb0e34e5",
+    "action": "users:update",
+    "entity": "users",
+    "entityId": "4e19fa8c-ea86-46ae-8f61-b59bb9b5015a",
+    "changes": {
+      "isActive": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:23.573Z"
+  },
+  {
+    "id": "9bdafef8-3b5d-4eb8-9582-4180902c281f",
+    "action": "users:update",
+    "entity": "users",
+    "entityId": "47fdecf1-18b9-4e95-8a28-72402b9d3014",
+    "changes": {
+      "isActive": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:23.583Z"
+  },
+  {
+    "id": "a436e26f-6460-4783-a44d-c2399c6b1afb",
+    "action": "users:update",
+    "entity": "users",
+    "entityId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "changes": {
+      "isActive": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:38:23.593Z"
   }
 ]
