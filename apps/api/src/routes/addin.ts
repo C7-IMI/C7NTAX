@@ -10,7 +10,7 @@
 import express, { type Express, type Response } from "express";
 import { configFlag } from "../services/appSettings";
 import { addinAssetsPresent, addinDirectory } from "../services/addinAssets";
-import { installerBuild, installerDescriptor, installerStableName, publicOrigin, renderAddinManifest } from "../services/addinPackage";
+import { installerBuild, installerDescriptor, installerRelease, installerStableName, publicOrigin, renderAddinManifest } from "../services/addinPackage";
 
 /**
  * Office.js is only served from Microsoft's CDN (bundling it is not permitted), and Office
@@ -51,7 +51,7 @@ export function mountAddinRoutes(app: Express): void {
 
   const addinFiles = express.static(addinDirectory(), { index: "taskpane.html", extensions: ["html"] });
 
-  app.use("/addin", (req, res, next) => {
+  app.use("/addin", async (req, res, next) => {
     if (!configFlag("apps", "outlookAddin")) {
       res.status(404).json({ error: "Outlook add-in disabled" });
       return;
@@ -72,23 +72,28 @@ export function mountAddinRoutes(app: Express): void {
     }
 
     // What the application's own install page asks for: whether there is an installer to offer,
-    // and what it is — public, because the button is shown to every signed-in user and most of
-    // them cannot read the admin-only deployment report.
+    // what it is, and every earlier version still available to fall back to — public, because the
+    // button is shown to every signed-in user and most of them cannot read the admin-only
+    // deployment report.
     if (req.method === "GET" && req.path === "/installer") {
-      res.json(installerDescriptor());
+      res.json(await installerDescriptor());
       return;
     }
 
-    // The installer itself, matched against the artifact `installer/build.ps1` actually produced —
-    // under its versioned name or the versionless alias the application links to. Any other name
-    // falls through to the static handler, which is an honest 404: asking for a file by name is
-    // not a way to enumerate the filesystem, and encoded traversal never reaches a path.
+    // An installer, matched against the artifacts `installer/build.ps1` has recorded — by its
+    // versioned name or the versionless alias the application links to. Any other name falls
+    // through to the static handler, which is an honest 404: asking for a file by name is not a
+    // way to enumerate the filesystem, and encoded traversal never reaches a path.
     if (req.method === "GET" || req.method === "HEAD") {
       if (req.path.startsWith("/installer/")) {
-        const build = installerBuild();
         const wanted = req.path.slice("/installer/".length);
-        if (build && (wanted === build.fileName || wanted === installerStableName(build.fileName))) {
-          res.download(build.path, build.fileName);
+        const latest = installerBuild();
+        const release =
+          latest && wanted === installerStableName(latest.fileName)
+            ? latest
+            : installerRelease(wanted);
+        if (release) {
+          res.download(release.path, release.fileName);
           return;
         }
         next();

@@ -34,6 +34,89 @@ export interface EmailIngestOptions {
   autoCreateContact?: boolean;
   /** Out-of-office/auto-reply mail is skipped unless this is switched off. */
   ignoreAutoReplies?: boolean;
+  /**
+   * What the user confirmed in the add-in's review step.
+   *
+   * These win over anything deduced here, which is the whole point of the review: the add-in shows
+   * the same resolution this module performs, and a value the user changed is an instruction rather
+   * than a hint. Absent or blank fields fall back to deduction exactly as before, so a caller that
+   * does not know about the review behaves identically.
+   */
+  reviewed?: ReviewedEmailFields;
+}
+
+export type ReviewedEmailFields = {
+  boardId?: string;
+  companyId?: string | null;
+  contactName?: string | null;
+  title?: string;
+  description?: string;
+  priority?: string;
+};
+
+/**
+ * The fields an email will produce, and whether the client and contact matched — read-only.
+ *
+ * Exists for the add-in's preview, and it is deliberately the same resolution the create path runs
+ * rather than an approximation of it: a preview that guessed would be worse than no preview,
+ * because it would be believed. This performs no writes at all, so previewing cannot create a
+ * client, a contact or a ticket.
+ */
+export type EmailFieldPreview = {
+  title: string;
+  description: string;
+  priority: string;
+  /** The client the sender's domain matched, or null when nothing matched. */
+  matchedCompany: { id: string; name: string } | null;
+  /** The client the ticket would actually be filed under if nothing is chosen. */
+  fallbackCompany: { id: string; name: string } | null;
+  matchedContact: { id: string; name: string } | null;
+  contactName: string;
+};
+
+export async function previewEmailFields(email: ParsedEmail): Promise<EmailFieldPreview> {
+  const domain = extractDomain(email.from.email);
+  const matchable = domain && !CONSUMER_DOMAINS.has(domain) ? domain : "";
+
+  const matchedCompany = matchable
+    ? await prisma.company.findFirst({
+        where: {
+          OR: [
+            { email: { contains: matchable, mode: "insensitive" } },
+            { website: { contains: matchable, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true, name: true },
+      })
+    : null;
+
+  const fallbackCompany = matchedCompany
+    ? null
+    : await prisma.company.findFirst({ orderBy: { createdAt: "asc" }, select: { id: true, name: true } });
+
+  const existingContact = email.from.email
+    ? await prisma.contact.findFirst({
+        where: { email: { equals: email.from.email, mode: "insensitive" } },
+        select: { id: true, firstName: true, lastName: true },
+      })
+    : null;
+
+  const deduced = deduceName(email.from.name, email.from.email);
+  const description = emailBody(email).slice(0, 20000) || "(no message body)";
+
+  return {
+    title: stripSubjectPrefixes(email.subject) || `Email from ${email.from.email || "unknown"}`,
+    description,
+    priority: deducePriority(email.subject, description),
+    matchedCompany: matchedCompany ?? null,
+    fallbackCompany: fallbackCompany ?? null,
+    matchedContact: existingContact
+      ? { id: existingContact.id, name: `${existingContact.firstName} ${existingContact.lastName}`.trim() }
+      : null,
+    contactName: existingContact
+      ? `${existingContact.firstName} ${existingContact.lastName}`.trim()
+      : `${deduced.firstName || "Unknown"} ${deduced.lastName || "Sender"}`.trim(),
+  };
 }
 
 /**
@@ -78,6 +161,20 @@ async function resolveSender(from: ParsedEmail["from"], options: EmailIngestOpti
   const email = (from.email || "").trim().toLowerCase();
   const domain = extractDomain(email);
   const matchableDomain = domain && !CONSUMER_DOMAINS.has(domain) ? domain : "";
+
+  // A client the user picked in the add-in's review wins over everything below: it is the one
+  // value in the whole flow that cannot be inferred from the message, and the only reason the
+  // review offers a picker at all.
+  if (options.reviewed?.companyId) {
+    const chosen = await prisma.company.findUnique({ where: { id: options.reviewed.companyId } });
+    if (chosen) {
+      const contact = email
+        ? await prisma.contact.findFirst({ where: { email: { equals: email, mode: "insensitive" } } })
+        : null;
+      return { contact, company: chosen };
+    }
+    console.warn(`[EmailConnector] Reviewed client ${options.reviewed.companyId} no longer exists — matching the sender instead`);
+  }
 
   let contact = await prisma.contact.findFirst({
     where: { email: { equals: email, mode: "insensitive" } },
@@ -185,16 +282,119 @@ export async function createTicketFromEmail(boardId: string, email: ParsedEmail,
   // Auto-replies are dropped by default; a connector can opt to file them.
   if (options.ignoreAutoReplies !== false && isAutoReply(email.subject, email.bodyText)) return "";
 
-  const title = stripSubjectPrefixes(email.subject) || `Email from ${email.from.email || "unknown"}`;
-  const description = emailBody(email).slice(0, 20000) || "(no message body)";
-  const priority = deducePriority(email.subject, description);
+  const reviewed = options.reviewed ?? {};
+  const title = reviewed.title?.trim() || stripSubjectPrefixes(email.subject) || `Email from ${email.from.email || "unknown"}`;
+  const description = (reviewed.description?.trim() || emailBody(email)).slice(0, 20000) || "(no message body)";
+  const priority = reviewed.priority?.trim() || deducePriority(email.subject, description);
   const systemUser = await resolveSystemUser();
   const { contact, company } = await resolveSender(email.from, options);
 
-  const ticket = await createTicketWithNumber(boardId, email, company.id, contact?.id ?? null, title, description, priority, systemUser.id);
+  // The review's contact name is applied rather than ignored. An editable field that quietly
+  // does nothing is worse than one that is not offered: somebody who corrects "J. Doe" to
+  // "Jane Doe" and watches the ticket come back as "J. Doe" stops trusting the screen.
+  const reviewedContactId = await applyReviewedContactName(contact?.id ?? null, reviewed.contactName, email, company.id);
+
+  const ticket = await createTicketWithNumber(
+    reviewed.boardId?.trim() || boardId,
+    email,
+    company.id,
+    reviewedContactId ?? contact?.id ?? null,
+    title,
+    description,
+    priority,
+    systemUser.id,
+  );
 
   await attachEmailFiles(ticket.id, email, systemUser.id);
   return ticket.id;
+}
+
+/**
+ * Rename the matched contact to what the user confirmed, when they changed it.
+ *
+ * Returns the contact id to use. Creates nothing: a sender with no contact yet already gets one
+ * from `resolveSender`, and creating a second record here would file a duplicate for the same
+ * address.
+ */
+async function applyReviewedContactName(
+  contactId: string | null,
+  reviewedName: string | null | undefined,
+  email: ParsedEmail,
+  companyId: string,
+): Promise<string | null> {
+  const wanted = reviewedName?.trim();
+  if (!contactId || !wanted) return contactId;
+
+  const current = await prisma.contact.findUnique({
+    where: { id: contactId },
+    select: { firstName: true, lastName: true, companyId: true },
+  });
+  if (!current) return contactId;
+
+  const existing = `${current.firstName} ${current.lastName}`.trim();
+  if (existing === wanted) return contactId;
+
+  const { firstName, lastName } = deduceName(wanted, email.from.email);
+  await prisma.contact.update({
+    where: { id: contactId },
+    data: {
+      firstName: firstName || current.firstName,
+      lastName: lastName || current.lastName,
+      // The contact follows the chosen client: a corrected name on a ticket filed under a client
+      // the contact does not belong to is the beginning of a second, wrong record.
+      ...(current.companyId !== companyId ? { companyId } : {}),
+    },
+  });
+  console.log(`[OutlookAddIn] Contact ${contactId} renamed from "${existing}" to "${wanted}" during a reviewed ticket`);
+  return contactId;
+}
+
+/**
+ * Attach whole messages to a ticket, for the bundled submission.
+ *
+ * Each becomes a `.eml` — headers plus the plain-text body — rather than a re-rendered summary,
+ * because the point of attaching the other messages is that somebody can open the original later.
+ * Deliberately non-fatal, like the email connector's own attachments: the ticket exists, and
+ * failing here would report a failure for work that was done.
+ */
+export async function attachEmailsToTicket(
+  ticketId: string,
+  emails: Array<{ email: ParsedEmail; subject: string }>,
+  uploadedById: string,
+): Promise<Array<{ subject: string; filename: string }>> {
+  const written: Array<{ subject: string; filename: string }> = [];
+  for (const item of emails) {
+    const body = emailBody(item.email);
+    const eml = [
+      `From: ${item.email.from.name ? `${item.email.from.name} <${item.email.from.email}>` : item.email.from.email}`,
+      `To: ${(item.email.to || []).join("; ")}`,
+      item.email.cc?.length ? `Cc: ${item.email.cc.join("; ")}` : null,
+      `Subject: ${item.email.subject || "(no subject)"}`,
+      item.email.date ? `Date: ${new Date(item.email.date).toUTCString()}` : null,
+      `Message-ID: ${item.email.messageId || ""}`,
+      "Content-Type: text/plain; charset=utf-8",
+      "",
+      body || "(no message body)",
+    ].filter((line) => line !== null).join("\r\n");
+
+    const buffer = Buffer.from(eml, "utf8");
+    if (buffer.length > MAX_TICKET_ATTACHMENT_BYTES) {
+      console.warn(`[OutlookAddIn] "${item.subject}" is ${Math.round(buffer.length / 1024)} KB and was not attached (over the ${Math.round(MAX_TICKET_ATTACHMENT_BYTES / 1024 / 1024)} MB limit)`);
+      continue;
+    }
+
+    const filename = `${sanitizeAttachmentFilename(item.subject || "message").slice(0, 120) || "message"}.eml`;
+    try {
+      await storeTicketAttachments(
+        [{ filename, mimeType: "message/rfc822", buffer }],
+        { ticketId, uploadedById },
+      );
+      written.push({ subject: item.subject, filename });
+    } catch (e: any) {
+      console.error(`[OutlookAddIn] Could not attach "${item.subject}" to ticket ${ticketId}:`, e?.message || e);
+    }
+  }
+  return written;
 }
 
 /**

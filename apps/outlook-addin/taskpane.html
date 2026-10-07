@@ -13,6 +13,7 @@
   <header>
     <img src="assets/icon-32.png" alt="" width="20" height="20" />
     <h1>C7NTAX</h1>
+    <button id="prefs-open" class="ghost" hidden title="Preferences">⚙</button>
     <button id="signout" class="ghost" hidden>Sign out</button>
   </header>
 
@@ -28,17 +29,13 @@
       <p class="muted small">Signed in as the account whose permissions the ticket will be created with.</p>
     </section>
 
-    <!-- Signed in: the working panel. -->
+    <!-- Signed in: the working panel. Three regions, because the flow is a sequence of decisions
+         with one way forward: what is selected, the action, and whatever question is open. -->
     <section id="panel" hidden>
-      <div id="selection" class="card"></div>
-
-      <label>Board
-        <select id="board"></select>
-      </label>
-
-      <button id="create" class="primary">Create ticket</button>
-      <p id="status" class="muted small"></p>
-      <ul id="results" class="results"></ul>
+      <div class="steps" id="steps" hidden><span></span><span></span><span></span><span></span></div>
+      <div id="body" class="body"></div>
+      <div id="foot" class="foot"></div>
+      <div id="sheet"></div>
     </section>
   </main>
 

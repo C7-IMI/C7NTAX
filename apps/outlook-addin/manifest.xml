@@ -7,10 +7,15 @@
   through POST /api/outlook-addin/tickets.
 
   Replace the three placeholders before sideloading or submitting:
-    __ADDIN_HOST__   the https origin that serves this folder (production: the App Gateway hostname)
-    __ADDIN_GUID__   a GUID you generate once and keep forever; Office identifies the add-in by it
+    __ADDIN_HOST__     the https origin that serves this folder (production: the App Gateway hostname)
+    __ADDIN_GUID__     the add-in's identity, from plugin.json
+    __ADDIN_VERSION__  the plugin version, from plugin.json
   The icons ship with the folder and are served from the same origin, because Office fetches
   manifest icons over HTTPS and will not load the add-in if they are unreachable.
+
+  Do not edit the values in place: the server replaces all three when it serves the manifest, so
+  an edit here would be overwritten and would break every other deployment that shares this file.
+  The identity and the version live in plugin.json, and `pnpm plugin:bump` maintains them.
 -->
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -18,7 +23,7 @@
            xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
            xsi:type="MailApp">
   <Id>__ADDIN_GUID__</Id>
-  <Version>1.0.0.0</Version>
+  <Version>__ADDIN_VERSION__</Version>
   <ProviderName>C7 Intelligence</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="C7NTAX — Email to ticket" />

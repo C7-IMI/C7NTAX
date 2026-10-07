@@ -44,6 +44,11 @@ model User {
   /// default", which is deliberate: it keeps a later change to the default reaching everyone who
   /// never chose one. Personal rather than instance-wide, which is why it is not in SystemConfig.
   landingPage     String?
+  /// The Outlook add-in's saved answers — whether several messages are filed as one ticket each,
+  /// whether the review is offered, and the last board used. Per user rather than per device: the
+  /// taskpane's own storage is shared by every account that signs in on that machine, and these
+  /// settings decide whether a ticket is filed without asking.
+  addinPreferences Json?
   /// What an hour of this person's time costs us, used by the margin reports. Null means
   /// "not recorded", which the reports state rather than assuming a figure.
   costRate        Float?

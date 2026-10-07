@@ -28,19 +28,19 @@
   Use a manifest file instead of asking a server. For a build with no API reachable.
 
 .PARAMETER Version
-  The package version, X.Y.Z. Defaults to the version from `BuildNotes.md`, which is where this
-  repository already keeps it.
+  Overrides the MSI package version. The plugin version normally comes from `plugin.json`, which
+  `pnpm plugin:bump` maintains — do not pass this unless you are testing the packaging itself.
 
 .PARAMETER OutputDirectory
-  Where the artifact and its `build.json` go. Defaults to `installer/artifacts`.
+  Where the artifacts and the history `index.json` go. Defaults to `installer/artifacts`.
 
 .EXAMPLE
   ./build.ps1 -ApiUrl https://tax.cyber7group.com
 
 .EXAMPLE
-  ./build.ps1 -ApiUrl http://localhost:4000 -Version 2026.10.7
+  ./build.ps1 -ApiUrl http://localhost:4000
 #>
-[CmdletBinding(DefaultParameterSetName = "Server")]
+[CmdletBinding()]
 param(
   [Parameter(ParameterSetName = "Server")]
   [string]$ApiUrl = "http://localhost:4000",
@@ -119,37 +119,37 @@ try {
     -replace "__ADDIN_HOST__", $origin `
     -replace "__ADDIN_ID__", $addinId | Set-Content -Path $stagedReadme -Encoding UTF8
 
-  # ── The version ─────────────────────────────────────────────────────────────
-  if (-not $Version) {
-    # BuildNotes.md is this repository's record of the current release, so the installer takes
-    # its version from the same place the changelog does rather than inventing one. Its versions
-    # carry four parts (2026.10.7.031), and Windows Installer cannot accept that: the major field
-    # must be below 256 and the build field below 65536, so a four-digit year does not fit.
-    #
-    # Mapped to YY.M.PPPP instead — 2026.10.7.031 becomes 26.10.7031 — which keeps every field in
-    # range, stays monotonic as the changelog advances (patch dominates, the build number breaks
-    # ties) and leaves the true version in `build.json` and in the Add/Remove Programs entry's
-    # help link. A version that cannot order two builds correctly would break MajorUpgrade, and
-    # the failure would look like an upgrade that silently did nothing.
-    $buildNotes = Join-Path $repoRoot "BuildNotes.md"
-    $match = Select-String -Path $buildNotes -Pattern '^##\s+(\d{4})\.(\d+)\.(\d+)\.(\d+)' | Select-Object -First 1
-    if (-not $match) { throw "Could not read a version from $buildNotes. Pass -Version explicitly." }
-    $g = $match.Matches[0].Groups
-    $productVersion = "$($g[1].Value).$($g[2].Value).$($g[3].Value).$($g[4].Value)"
-    $Version = "{0}.{1}.{2}" -f $g[1].Value.Substring(2), $g[2].Value, ([int]$g[3].Value * 1000 + [int]$g[4].Value)
-  } else {
-    $productVersion = $Version
+  # ── The plugin, and the version ─────────────────────────────────────────────
+  # The plugin's identity, version and payload hash come from its own record, through the same
+  # node implementation the API and the guard use — so the version an operator reads on the
+  # install page is the version stamped into this MSI, and the artifact records exactly which
+  # payload it was built from.
+  $meta = (& node (Join-Path $repoRoot "scripts\plugin-metadata.mts") print) | ConvertFrom-Json
+  if (-not $meta.version -or $meta.version -eq "0.0.0") {
+    throw "The plugin has no version. Run: pnpm plugin:bump"
   }
+  if ($meta.sourceHash -ne $meta.actualHash) {
+    # The rule the whole record exists for: a plugin that changed without being versioned must not
+    # produce an installer, or the history would show two different payloads under one version.
+    throw "The plugin payload has changed since it was versioned. Run: pnpm plugin:bump (and rebuild the installer)."
+  }
+
+  $productVersion = $meta.release
+  if (-not $Version) { $Version = $meta.version }
   if ($Version -notmatch '^\d{1,3}\.\d{1,3}\.\d{1,5}$' -or
       [int]($Version -split '\.')[0] -ge 256 -or
       [int]($Version -split '\.')[1] -ge 256 -or
       [int]($Version -split '\.')[2] -ge 65536) {
     throw "Version must be major(<256).minor(<256).build(<65536) for Windows Installer: got '$Version'."
   }
+  Write-Host "Plugin     $($meta.version) (release $productVersion)" -ForegroundColor Cyan
+  Write-Host "Payload    $($meta.actualHash.Substring(0,12))" -ForegroundColor Cyan
 
   # ── Build ───────────────────────────────────────────────────────────────────
   New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
-  $fileName = "C7NTAX-OutlookAddIn-$productVersion.msi"
+  # Named for the plugin version, because that is what the package registers: an operator reading
+  # a filename in a downloads folder is reading the version of the add-in they are about to install.
+  $fileName = "C7NTAX-OutlookAddIn-$($meta.version).msi"
   $artifact = Join-Path $OutputDirectory $fileName
   # WiX appends to an existing package rather than replacing it, which produced a 5 MB
   # installer the first time it was rebuilt over itself.
@@ -168,31 +168,49 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "wix build failed with exit code $LASTEXITCODE" }
   if (-not (Test-Path $artifact)) { throw "wix reported success but produced no artifact at $artifact" }
 
-  # ── Record what was built ───────────────────────────────────────────────────
-  # An MSI is a binary: the version and the origin inside it cannot be read back out, and the
-  # application has to be able to tell an operator whether the installer it is offering belongs
-  # to this server. This is that record, and it lives beside the artifact so the two travel
-  # together.
-  $info = [ordered]@{
-    fileName = $fileName
-    version  = $Version
-    # The version the changelog carries. Reported separately because the two differ by design:
-    # Windows Installer cannot hold a four-digit year in its major field.
+  # ── Record what was built, and keep every version before it ─────────────────
+  # An MSI is a binary: its version, the origin baked into it and the payload it came from cannot
+  # be read back out. This record is those facts, and the history is what makes a rollback
+  # possible — a plugin change can be the reason a mailbox misbehaves, and the remedy is to
+  # install the version that worked rather than to wait for a fix.
+  $entry = [ordered]@{
+    fileName       = $fileName
+    pluginVersion  = $meta.version
+    # The application release the plugin shipped in, so a version traces back to BuildNotes.
     productVersion = $productVersion
-    addinHost = $origin
-    addinId  = $addinId
-    builtAt  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-    sha256   = (Get-FileHash -Path $artifact -Algorithm SHA256).Hash.ToLowerInvariant()
-    size     = (Get-Item $artifact).Length
-    wix      = $wixVersion
+    addinHost      = $origin
+    addinId        = $addinId
+    # Which payload this installer was built from. The guard compares it against the plugin's own
+    # files, which is how "the plugin changed and the installer did not" becomes a failure rather
+    # than something somebody has to remember.
+    sourceHash     = $meta.actualHash
+    builtAt        = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    sha256         = (Get-FileHash -Path $artifact -Algorithm SHA256).Hash.ToLowerInvariant()
+    size           = (Get-Item $artifact).Length
+    wix            = $wixVersion
   }
-  $info | ConvertTo-Json | Set-Content -Path (Join-Path $OutputDirectory "build.json") -Encoding UTF8
+
+  $indexPath = Join-Path $OutputDirectory "index.json"
+  $releases = @()
+  if (Test-Path $indexPath) {
+    try { $releases = @((Get-Content -Path $indexPath -Raw | ConvertFrom-Json).releases) } catch { $releases = @() }
+  }
+  # Newest first, and a rebuild of the same version replaces its entry rather than appearing twice:
+  # two rows for one version would make "last known good" ambiguous.
+  $kept = @($releases | Where-Object { $_ -and $_.fileName -ne $fileName })
+  [ordered]@{ latest = $fileName; releases = @($entry) + $kept } |
+    ConvertTo-Json -Depth 5 | Set-Content -Path $indexPath -Encoding UTF8
+
+  # The old single-build record is superseded by the history; leaving it would be a second answer
+  # to the same question.
+  Remove-Item -Path (Join-Path $OutputDirectory "build.json") -Force -ErrorAction SilentlyContinue
 
   Write-Host ""
   Write-Host "Built $artifact" -ForegroundColor Green
-  Write-Host ("  {0:N0} bytes, sha256 {1}" -f $info.size, $info.sha256)
+  Write-Host ("  {0:N0} bytes, sha256 {1}" -f $entry.size, $entry.sha256)
   Write-Host "  Install it with:  msiexec /i `"$artifact`" /qn"
   Write-Host "  Or per-user only: msiexec /i `"$artifact`" ALLUSERS=2 MSIINSTALLPERUSER=1"
+  Write-Host "  History now holds $(@($entry) + $kept | Measure-Object | Select-Object -ExpandProperty Count) version(s) in $OutputDirectory"
 }
 finally {
   Remove-Item -Path $stage -Recurse -Force -ErrorAction SilentlyContinue

@@ -8,7 +8,7 @@ import { AppError } from "../middleware/errorHandler";
 import { CONFIG_FIELDS, Permission, resolveEnvironmentValue } from "@C7NTAX/shared";
 import { configFlag, environmentSupplied } from "../services/appSettings";
 import { addinAssetsPresent, addinDirectory } from "../services/addinAssets";
-import { addinId, installerBuild, installerDescriptor, installerDirectory, publicOrigin } from "../services/addinPackage";
+import { addinCurrentSourceHash, addinId, addinPlugin, installerBuild, installerDirectory, installerHistory, publicOrigin, type InstallerRelease } from "../services/addinPackage";
 
 export const systemRouter = Router();
 systemRouter.use(authenticate);
@@ -202,7 +202,7 @@ systemRouter.get("/configs", requirePermission(Permission.SystemConfig), async (
  * relay reports whether credentials are set, not what they are, and the database URL is reduced
  * to host and database name because the connection string carries a password.
  */
-systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (req: AuthRequest, res) => {
+systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res) => {
   const env = process.env;
   const databaseUrl = env.DATABASE_URL ?? "";
   let database: { configured: boolean; host: string | null; name: string | null } = { configured: false, host: null, name: null };
@@ -219,11 +219,14 @@ systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (req
   const addinDir = env.OUTLOOK_ADDIN_DIR || "(default: apps/outlook-addin)";
   const smtpHost = env.SMTP_HOST ?? "";
   /**
-   * The origin the add-in's URLs must carry, and the installer actually built here. Both are
-   * resolved once so the two halves of the report cannot describe different deployments.
+   * The origin the add-in's URLs must carry, the plugin in force, and the installers actually
+   * built here. All resolved once so the halves of the report cannot describe different
+   * deployments, and hashed once rather than per installer row.
    */
   const origin = publicOrigin(req);
   const installer = installerBuild();
+  const plugin = addinPlugin();
+  const currentSourceHash = await addinCurrentSourceHash();
   res.json({
     mail: {
       configured: Boolean(smtpHost),
@@ -263,31 +266,62 @@ systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (req
       manifestId: addinId(),
       manifestUrl: `${origin}/addin/manifest.xml`,
       /**
-       * The Windows installer, when this deployment has one. Null rather than an empty object
-       * because "there is no installer here" is a fact the screen has to state plainly, and
-       * `installerDirectory` is reported alongside it so an operator knows where to put one.
-       *
-       * The artifact's own fields come from the same descriptor the public endpoint serves, so the
-       * version a user is told they are downloading and the version an administrator is told was
-       * built cannot drift apart.
+       * The plugin as an artifact: the version stamped into the manifest and the MSI, the release
+       * it shipped in, and the hash of the files that make it up.
+       */
+      plugin: {
+        version: plugin.version,
+        release: plugin.release,
+        sourceHash: plugin.sourceHash,
+        currentSourceHash,
+        /**
+         * Whether the plugin's files have changed since it was versioned. True means somebody
+         * edited the add-in and did not run `pnpm plugin:bump`, so the version Office reports
+         * describes a payload that no longer exists.
+         */
+        modifiedSinceVersioned: Boolean(plugin.sourceHash) && plugin.sourceHash !== currentSourceHash,
+      },
+      /**
+       * The Windows installers this deployment has, newest first. Null rather than an empty object
+       * when there are none, because "there is no installer here" is a fact the screen has to state
+       * plainly, and `installerDirectory` is reported alongside it so an operator knows where to
+       * put one.
        */
       installer: installer
         ? {
-            ...installerDescriptor(),
-            /** The origin baked into the manifest this installer registers. */
-            addinHost: installer.addinHost,
-            /**
-             * Whether that origin is this server's. An installer built for another host registers a
-             * manifest that points at the wrong place, and the only symptom is an add-in that loads
-             * an empty pane — so the mismatch is reported, not left to be discovered.
-             */
-            matchesOrigin: installer.addinHost === origin,
+            ...installerDescriptorFor(installer, currentSourceHash, origin),
+            /** Every earlier version, so a plugin change can be rolled back. */
+            versions: installerHistory().map((release) =>
+              installerDescriptorFor(release, currentSourceHash, origin),
+            ),
           }
         : null,
       installerDirectory: installerDirectory(),
     },
   });
 });
+
+/**
+ * One history entry, described for the deployment report.
+ *
+ * `matchesOrigin` is the fact worth reporting: an installer built for another host registers a
+ * manifest pointing somewhere the taskpane does not exist, and the only symptom is an add-in that
+ * installs cleanly and then opens an empty pane.
+ */
+function installerDescriptorFor(release: InstallerRelease, currentSourceHash: string, origin: string) {
+  return {
+    fileName: release.fileName,
+    pluginVersion: release.pluginVersion,
+    productVersion: release.productVersion,
+    size: release.size,
+    builtAt: release.builtAt,
+    sha256: release.sha256,
+    addinHost: release.addinHost,
+    matchesOrigin: release.addinHost === origin,
+    matchesPlugin: release.sourceHash === currentSourceHash,
+    downloadPath: `/addin/installer/${release.fileName}`,
+  };
+}
 
 // ── Self-healing poller status ──
 systemRouter.get("/poller/status", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
