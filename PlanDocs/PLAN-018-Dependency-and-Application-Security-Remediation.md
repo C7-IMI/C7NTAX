@@ -1,7 +1,8 @@
 # PLAN-018 — Dependency & Application Security Remediation
 
 > **Sequence:** Wave 0 — pre-deployment blocker, runs alongside PLAN-017 and ahead of every cloud step in PLAN-016
-> **Status:** Planning — this document only. No code changed.
+> **Status:** 🟠 Phase 0 partly applied — the behaviour-preserving subset shipped 2026-10-06 (invoice escaping, config-dump and reserved-key guard, webhook-secret stripping, role/permission guards, fail-closed auth, CSPRNG MFA, credential limiter, OIDC state + safe provisioning, dead-dependency removal, low-risk pins: 128 → 99 advisory instances). See the Phase 0 status table for what each item still owes.
+> **Being closed now:** Phase 0 remainder → Phase 1 (dependency majors + audit baseline) → Phase 3 (CI gate), with a multi-role test-persona harness driving the verification. Completing W0 means the eight acceptance criteria in §6, not every item in Phase 2 — the structural items (H1–H6) are explicitly scheduled with PLAN-001/PLAN-016, and H1 lands here only because P0-5 depends on it.
 > **Implemented:** Nothing yet. The audit below is the deliverable.
 > **Outstanding:** 11 application findings (2 critical, 4 high, 4 medium, 1 low) and 30 vulnerable dependency groups across four tiers, of which **1 critical and 16 high** are in code we actually ship.
 > **Depends on:** nothing. Everything here can be fixed on `main` today.
