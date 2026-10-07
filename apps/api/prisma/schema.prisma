@@ -516,6 +516,25 @@ model ServiceAgreement {
   updatedAt     DateTime @updatedAt
 }
 
+model BillingBatch {
+  id          String   @id @default(uuid())
+  /// Everything up to and including this date is what the batch bills.
+  billThroughDate DateTime
+  /// preview → approved | rejected. A batch is a review artefact: it holds draft invoices
+  /// until somebody approves them.
+  status      String   @default("preview")
+  notes       String?
+  createdById String
+  approvedById String?
+  approvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  invoices    Invoice[]
+
+  @@index([status])
+}
+
 model Invoice {
   id             String   @id @default(uuid())
   invoiceNumber  String   @unique
