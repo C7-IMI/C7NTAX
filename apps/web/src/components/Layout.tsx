@@ -470,6 +470,9 @@ export function Layout({ children }: { children: ReactNode }) {
     const linkTo = node.to || "#";
     const isDragging = dragId === node.id;
     const isTopLevel = depth === 0;
+    // Service Alerts reads as a live alert channel rather than a page, so its label and icon
+    // carry the alert colour (matching its count badge) instead of the neutral nav grey.
+    const isAlerts = node.id === "service-alerts";
 
     // In collapsed mode, top-level items are just icon buttons
     if (collapsed && isTopLevel) {
@@ -495,7 +498,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
-              <node.icon size={20} />
+              <node.icon size={20} className={isAlerts ? "text-alert-red" : undefined} />
               {node.id === "service-alerts" && alertCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{alertCount}</span>
               )}
@@ -559,8 +562,8 @@ export function Layout({ children }: { children: ReactNode }) {
                 active ? "nav-item--active bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
-              <node.icon size={18} />
-              {!collapsed && node.label}
+              <node.icon size={18} className={isAlerts ? "text-alert-red" : undefined} />
+              {!collapsed && (isAlerts ? <span className="text-alert-red">{node.label}</span> : node.label)}
               {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
                 <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
               )}

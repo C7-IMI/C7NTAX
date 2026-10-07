@@ -27,15 +27,6 @@
     "viewedAt": "2026-08-20T00:39:21.151Z"
   },
   {
-    "id": "0ecb409e-f25c-4a5a-8bcc-557e395e6c34",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "document",
-    "entityId": "626b9f7b-c83b-494c-8612-bd8c9d513738",
-    "entityName": "Server Reboot Procedure",
-    "entityIcon": "book",
-    "viewedAt": "2026-08-20T04:03:03.385Z"
-  },
-  {
     "id": "a609140c-653e-44e7-9b88-50e68c53deb6",
     "userId": "f918a052-ea24-465a-814c-416308ffddb7",
     "entityType": "asset",
@@ -225,15 +216,6 @@
     "viewedAt": "2026-10-06T20:57:19.804Z"
   },
   {
-    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "organization",
-    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "entityName": "Acme Corporation",
-    "entityIcon": "building",
-    "viewedAt": "2026-10-06T21:00:43.577Z"
-  },
-  {
     "id": "6aa75c1c-25e9-4c20-a76b-2e3e17892645",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "asset",
@@ -259,5 +241,77 @@
     "entityName": "Acme Corporation — VOICE VLAN",
     "entityIcon": "monitor",
     "viewedAt": "2026-10-06T21:51:31.989Z"
+  },
+  {
+    "id": "3add6980-5013-4bfa-8f26-ed55cb50161f",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "config",
+    "entityId": "84faeb18-a63c-4f62-9549-9f0ff1e33f8a",
+    "entityName": "Stark Enterprises — domain controller",
+    "entityIcon": "server",
+    "viewedAt": "2026-10-07T01:41:18.248Z"
+  },
+  {
+    "id": "a048a2e7-7c9b-439b-9983-024209cb1c9f",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "document",
+    "entityId": "11f3437d-6576-4a14-b707-84a88be41b3a",
+    "entityName": "Password Policy",
+    "entityIcon": "book",
+    "viewedAt": "2026-10-07T01:41:23.677Z"
+  },
+  {
+    "id": "0ecb409e-f25c-4a5a-8bcc-557e395e6c34",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "document",
+    "entityId": "626b9f7b-c83b-494c-8612-bd8c9d513738",
+    "entityName": "Server Reboot Procedure",
+    "entityIcon": "book",
+    "viewedAt": "2026-10-07T01:41:29.864Z"
+  },
+  {
+    "id": "eea3b238-9650-43cc-bc1b-7e66004e0f05",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "f55ea2a4-d7c5-483d-a090-55378a73e7fa",
+    "entityName": "Acme Corporation — endpoint protection licences",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-07T01:41:46.593Z"
+  },
+  {
+    "id": "4e3e53fc-d894-483e-b89a-f8d6e1ae850a",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "652eabcf-b283-41fe-aa36-3176625e8d03",
+    "entityName": "Acme Corporation — Microsoft 365 licences",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-07T01:41:54.248Z"
+  },
+  {
+    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "organization",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "entityName": "Acme Corporation",
+    "entityIcon": "building",
+    "viewedAt": "2026-10-07T01:42:09.489Z"
+  },
+  {
+    "id": "bcf56167-354d-4967-ac41-c3f0546669cc",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "25cde33c-578b-4abe-8fe9-a8eed1bf30b8",
+    "entityName": "Acme Corporation — domain admin account",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-07T01:42:18.704Z"
+  },
+  {
+    "id": "2ba9a6eb-2582-4763-9ee4-791615aea989",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "asset",
+    "entityId": "c6e5e16a-51e2-4086-9470-9640f794282f",
+    "entityName": "Acme Corporation — email security",
+    "entityIcon": "monitor",
+    "viewedAt": "2026-10-07T01:42:47.558Z"
   }
 ]
