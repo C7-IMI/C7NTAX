@@ -941,7 +941,7 @@
     "id": "dc9c78ac-cc36-4cdd-b68f-51bf6f6040b2",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Unable to create new ChatGPT Work threads in latest version of desktop app",
-    "description": "Status: Investigating We are investigating the issue. Version 26.1002.51308 is affected Affected components Codex in ChatGPT Desktop (Partial outage)",
+    "description": "Status: Identified we have identified the issue, working on rolling back to the previous version. Affected components Codex in ChatGPT Desktop (Partial outage)",
     "severity": "outage",
     "status": "active",
     "source": "rss",
@@ -949,7 +949,7 @@
     "detectedAt": "2026-10-07T05:36:00.295Z",
     "resolvedAt": null,
     "createdAt": "2026-10-07T05:36:00.297Z",
-    "updatedAt": "2026-10-07T05:46:45.085Z"
+    "updatedAt": "2026-10-07T05:56:25.211Z"
   },
   {
     "id": "33101683-f967-4082-966e-eeb7c53ea981",

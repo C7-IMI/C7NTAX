@@ -6,6 +6,10 @@ import { Permission, InvoiceStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { BillingEngine } from "@C7NTAX/billing";
 import { AGREEMENT_TYPES } from "../services/timeRules";
+import { pushExpense } from "../services/expenseSync";
+
+/** The categories an expense can be filed under (PLAN-015 Phase A #2). */
+export const EXPENSE_CATEGORIES = ["parking", "hardware", "mileage", "travel", "software", "other"];
 import { escapeHtml } from "../services/emailHtml";
 import { v4 as uuid } from "uuid";
 
@@ -478,27 +482,152 @@ billingRouter.post("/invoices/:id/recurring", requirePermission(Permission.Invoi
 // ── FI-038: Expenses ───────────────────────────────────────────────
 billingRouter.get("/expenses", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {
   try {
-    const expenses = await prisma.expense.findMany({ where: { ...companyWhere(req.user) }, orderBy: { expenseDate: "desc" }, take: 200 });
+    const { status, ticketId, companyId } = req.query as Record<string, string | undefined>;
+    const expenses = await prisma.expense.findMany({
+      where: {
+        ...companyWhere(req.user),
+        ...(status ? { status } : {}),
+        ...(ticketId ? { ticketId } : {}),
+        ...(companyId ? { companyId } : {}),
+      },
+      orderBy: { expenseDate: "desc" },
+      take: 200,
+    });
     res.json({ data: expenses });
   } catch (e) { next(e); }
 });
 
-billingRouter.post("/expenses", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
+/** Submitting out-of-pocket costs is technician work, so this only needs ticket edit — the
+ * approval that follows is what billing permission is for. */
+billingRouter.post("/expenses", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    const { description, amount, category, companyId, ticketId, receiptUrl, expenseDate } = req.body;
-    if (!description || !amount) throw new AppError("description and amount required", 400);
-    if (companyId && !canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
-    const exp = await prisma.expense.create({
-      data: { description, amount, category: category || "other", companyId: companyId || null, ticketId: ticketId || null, receiptUrl, expenseDate: expenseDate ? new Date(expenseDate) : new Date(), createdById: req.user!.userId },
+    const { description, amount, category, vendor, miles, companyId, ticketId, receiptUrl, expenseDate } = req.body;
+    if (!description || amount === undefined || amount === null || amount === "") throw new AppError("description and amount required", 400);
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value < 0) throw new AppError("amount must be a positive number", 400);
+    if (category !== undefined && !EXPENSE_CATEGORIES.includes(category)) {
+      throw new AppError(`category must be one of ${EXPENSE_CATEGORIES.join(", ")}`, 400);
+    }
+
+    // A ticket-scoped expense takes its client from the ticket, so the two can never disagree.
+    let effectiveCompanyId = companyId || null;
+    if (ticketId) {
+      const ticket = await prisma.ticket.findUnique({ where: { id: String(ticketId) }, select: { companyId: true } });
+      if (!ticket) throw new AppError("Ticket not found", 404);
+      if (effectiveCompanyId && effectiveCompanyId !== ticket.companyId) {
+        throw new AppError("The client does not match the ticket's client", 400);
+      }
+      effectiveCompanyId = ticket.companyId;
+    }
+    if (effectiveCompanyId && !canAccessCompany(req.user, effectiveCompanyId)) throw new AppError("Client not found", 404);
+
+    const expense = await prisma.expense.create({
+      data: {
+        description: String(description),
+        amount: value,
+        category: category || "other",
+        vendor: vendor ? String(vendor).slice(0, 120) : null,
+        miles: miles !== undefined && miles !== null && miles !== "" ? Number(miles) : null,
+        companyId: effectiveCompanyId,
+        ticketId: ticketId || null,
+        receiptUrl: receiptUrl || null,
+        expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
+        createdById: req.user!.userId,
+        status: "submitted",
+      },
     });
-    res.status(201).json(exp);
+    res.status(201).json(expense);
+  } catch (e) { next(e); }
+});
+
+/** Editing is for the person who filed it, while it is still waiting for a decision. */
+billingRouter.patch("/expenses/:id", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
+  try {
+    const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
+    if (!existing || !canAccessCompany(req.user, existing.companyId)) throw new AppError("Expense not found", 404);
+    const isOwner = existing.createdById === req.user!.userId;
+    const canApprove = req.user!.permissions.includes(Permission.BillingManage);
+    if (!isOwner && !canApprove) throw new AppError("You can only edit your own expenses", 403);
+    if (existing.status !== "submitted" && !canApprove) throw new AppError("This expense has already been decided", 409);
+
+    const updates: Record<string, unknown> = {};
+    for (const key of ["description", "vendor", "receiptUrl"] as const) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key] === null ? null : String(req.body[key]).slice(0, 200);
+    }
+    if (req.body.category !== undefined) {
+      if (!EXPENSE_CATEGORIES.includes(req.body.category)) throw new AppError(`category must be one of ${EXPENSE_CATEGORIES.join(", ")}`, 400);
+      updates.category = req.body.category;
+    }
+    if (req.body.amount !== undefined) {
+      const value = Number(req.body.amount);
+      if (!Number.isFinite(value) || value < 0) throw new AppError("amount must be a positive number", 400);
+      updates.amount = value;
+    }
+    if (req.body.miles !== undefined) updates.miles = req.body.miles === null || req.body.miles === "" ? null : Number(req.body.miles);
+    if (req.body.expenseDate !== undefined && req.body.expenseDate) updates.expenseDate = new Date(req.body.expenseDate);
+
+    const expense = await prisma.expense.update({ where: { id: existing.id }, data: updates });
+    res.json(expense);
+  } catch (e) { next(e); }
+});
+
+/** The approval step. Only billing permission may move an expense out of `submitted`. */
+billingRouter.post("/expenses/:id/approve", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
+  try {
+    const { note } = req.body ?? {};
+    const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
+    if (!existing || !canAccessCompany(req.user, existing.companyId)) throw new AppError("Expense not found", 404);
+    if (existing.status === "approved") throw new AppError("This expense is already approved", 409);
+    if (existing.invoiceId) throw new AppError("This expense is already on an invoice", 409);
+    const expense = await prisma.expense.update({
+      where: { id: existing.id },
+      data: { status: "approved", approvedById: req.user!.userId, approvedAt: new Date(), decisionNote: note ? String(note).slice(0, 500) : null },
+    });
+    res.json(expense);
+  } catch (e) { next(e); }
+});
+
+billingRouter.post("/expenses/:id/reject", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
+  try {
+    const { note } = req.body ?? {};
+    const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
+    if (!existing || !canAccessCompany(req.user, existing.companyId)) throw new AppError("Expense not found", 404);
+    if (existing.invoiceId) throw new AppError("This expense is already on an invoice", 409);
+    if (!note || !String(note).trim()) throw new AppError("Say why the expense was rejected", 400);
+    const expense = await prisma.expense.update({
+      where: { id: existing.id },
+      data: { status: "rejected", approvedById: req.user!.userId, approvedAt: new Date(), decisionNote: String(note).trim().slice(0, 500) },
+    });
+    res.json(expense);
+  } catch (e) { next(e); }
+});
+
+/** Push an approved expense to the connected accounting system (PLAN-015 Phase A #2). */
+billingRouter.post("/expenses/:id/sync", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
+  try {
+    const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
+    if (!existing || !canAccessCompany(req.user, existing.companyId)) throw new AppError("Expense not found", 404);
+    if (existing.status !== "approved") throw new AppError("Approve the expense before pushing it to accounting", 409);
+
+    const result = await pushExpense(existing);
+    if (!result.pushed) {
+      // 409, not 500: nothing is broken, the other system simply is not ready for this expense.
+      res.status(409).json({ error: result.reason ?? "The expense could not be pushed" });
+      return;
+    }
+    const expense = await prisma.expense.update({
+      where: { id: existing.id },
+      data: { externalSystem: result.externalSystem ?? null, externalId: result.externalId ?? null, syncedAt: new Date() },
+    });
+    res.json({ ...expense, synced: true });
   } catch (e) { next(e); }
 });
 
 billingRouter.delete("/expenses/:id", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
   try {
-    const expense = await prisma.expense.findUnique({ where: { id: req.params.id }, select: { companyId: true } });
+    const expense = await prisma.expense.findUnique({ where: { id: req.params.id }, select: { companyId: true, createdById: true, status: true, invoiceId: true } });
     if (!expense || !canAccessCompany(req.user, expense.companyId)) throw new AppError("Expense not found", 404);
+    if (expense.invoiceId) throw new AppError("This expense is on an invoice — remove it from the invoice first", 409);
     await prisma.expense.delete({ where: { id: req.params.id } });
     res.json({ message: "Deleted" });
   }

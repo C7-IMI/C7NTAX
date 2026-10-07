@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.7.004",
+    "date": "2026-10-07",
+    "title": "Out-of-pocket costs can finally be filed by the technician who spent the money",
+    "changes": [
+      {
+        "text": "**A technician can file an expense against their ticket.** Before this, adding an expense needed the billing permission, so the person who actually paid for parking could not record it — the plan's own words for the gap were \"technician out-of-pocket costs untracked\". Filing now needs only the ticket permission, the client is taken from the ticket (so the two can never disagree), and the expense starts life awaiting a decision.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Approval is a real workflow, not a flag.** `Expense` gained a status (`submitted` → `approved` | `rejected`), who decided and when, and a reason. Approving needs the billing permission, a rejection has to say why, and an expense that already sits on an invoice cannot be deleted out from under it — 409 instead.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Expenses gained the fields the plan asks for**: vendor, miles for mileage, and the parking/hardware/mileage/travel/software/other categories, validated rather than free text.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The ticket's Expenses tab shows the decision state.** Filed costs appear with SUBMITTED/APPROVED/REJECTED badges, and Approve/Reject/Push appear only for someone who can act on them — the buttons follow the permission, so the page never offers what the API will refuse. A technician sees their own ticket's expenses without being handed the client-wide billing list, which stays closed to them.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Approved expenses push to the connected accounting system** — and say so honestly when they cannot. The CloudConnect adapters read from their providers; none can create an expense, because every provider wants reference data the PSA does not own. So the push is explicit: an enabled QuickBooks or FlexPoint integration with a configured `expensePushUrl`, the request going out through the same egress policy as everything else, and the provider's id recorded against the expense. With no integration it answers \"Connect QuickBooks or FlexPoint in CloudConnect first\" rather than pretending; a URL the policy refuses is reported as a configuration problem, not a 500.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.003",
     "date": "2026-10-07",
     "title": "Agreements that know their type, and a time engine that charges the evening hours properly",

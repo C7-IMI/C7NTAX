@@ -163,10 +163,8 @@ async function main() {
   );
 
   // The time-rules probe and the browser check leave one client, agreement and ticket each.
-  const timeRuleCompanies = await prisma.company.findMany({
-    where: { OR: [{ name: { startsWith: "TimeRules Probe" } }, { name: { startsWith: "TimeRules Off Probe" } }] },
-    select: { id: true },
-  });
+  const timeRuleCompanyWhere = { OR: [{ name: { startsWith: "TimeRules Probe" } }, { name: { startsWith: "TimeRules Off Probe" } }, { name: { startsWith: "Expense Probe" } }] };
+  const timeRuleCompanies = await prisma.company.findMany({ where: timeRuleCompanyWhere, select: { id: true } });
   const timeRuleCompanyIds = timeRuleCompanies.map(c => c.id);
   const timeRuleTickets = await prisma.ticket.findMany({ where: { companyId: { in: timeRuleCompanyIds } }, select: { id: true } });
   const timeRuleTicketIds = timeRuleTickets.map(t => t.id);
@@ -194,6 +192,26 @@ async function main() {
     "browser-check agreements",
     () => prisma.serviceAgreement.count({ where: { name: { startsWith: "Probe block agreement" } } }),
     () => prisma.serviceAgreement.deleteMany({ where: { name: { startsWith: "Probe block agreement" } } }),
+  );
+
+  // The expense probe files costs against a throwaway ticket and configures a throwaway
+  // accounting integration; both are named, so both can go.
+  const expenseProbeTickets = await prisma.ticket.findMany({ where: { title: { in: ["Expense probe", "Time rules probe", "Time rules off probe"] } }, select: { id: true } });
+  const expenseProbeTicketIds = expenseProbeTickets.map(t => t.id);
+  await remove(
+    "expense probe expenses",
+    () => prisma.expense.count({ where: { OR: [{ ticketId: { in: expenseProbeTicketIds } }, { description: { startsWith: "Parking at the client" } }] } }),
+    () => prisma.expense.deleteMany({ where: { OR: [{ ticketId: { in: expenseProbeTicketIds } }, { description: { startsWith: "Parking at the client" } }] } }),
+  );
+  await remove(
+    "expense probe tickets",
+    () => Promise.resolve(expenseProbeTicketIds.length),
+    () => prisma.ticket.deleteMany({ where: { id: { in: expenseProbeTicketIds } } }),
+  );
+  await remove(
+    "probe accounting integrations",
+    () => prisma.integration.count({ where: { name: { startsWith: "Probe accounting" } } }),
+    () => prisma.integration.deleteMany({ where: { name: { startsWith: "Probe accounting" } } }),
   );
   await remove(
     "stale sessions",

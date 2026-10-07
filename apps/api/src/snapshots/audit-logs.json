@@ -12614,5 +12614,716 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T05:46:31.110Z"
+  },
+  {
+    "id": "d7c9dca0-8826-4d13-a878-83a76a1eab7b",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "7661f8de-5145-4864-97f5-dd324bd5b0a7",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:52:51.337Z"
+  },
+  {
+    "id": "172f162d-be69-4173-b201-3a039604d34d",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "530ec3d7-9574-4f74-b7e8-02d2bd9d069b",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:52:51.430Z"
+  },
+  {
+    "id": "9312d13f-13a9-49da-a882-a503b67e2a3b",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "9197c04f-5956-4c3e-b612-e1cfc2e97bec",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:53:39.748Z"
+  },
+  {
+    "id": "589e8719-9572-4ef0-b0ad-d0c3d9b4875b",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "058126d0-aa35-4e34-a8bf-90463294fbca",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:53:39.857Z"
+  },
+  {
+    "id": "55f9e5da-729c-4ebf-b8c9-b1ff883ee75f",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "058126d0-aa35-4e34-a8bf-90463294fbca",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:53:39.939Z"
+  },
+  {
+    "id": "e4ed114f-6308-4d7f-8274-394335fe5e33",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "8cc6645c-0930-40aa-90ae-c25f047a3aaa",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:53:50.869Z"
+  },
+  {
+    "id": "fbe0ec43-44c1-4c83-b898-c2ac7d4094ae",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "a2847fee-7ac0-44fa-b6c3-eed63fc6b604",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:53:50.934Z"
+  },
+  {
+    "id": "fe8d9034-7644-45df-a4e1-a817abbd0baf",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "a2847fee-7ac0-44fa-b6c3-eed63fc6b604",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:53:50.988Z"
+  },
+  {
+    "id": "2170630d-1288-41d2-8c9c-a867adbcd01c",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "de129651-2a55-4e4a-82d1-71277d229adc",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:54:22.887Z"
+  },
+  {
+    "id": "38d36d14-4e8b-40db-97b0-e79642f77693",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "deb0eb13-fbef-4d18-959e-5438565dd28c",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:54:22.945Z"
+  },
+  {
+    "id": "e997afbc-3647-4daf-9019-e2484b9756b7",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "deb0eb13-fbef-4d18-959e-5438565dd28c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:54:23.010Z"
+  },
+  {
+    "id": "7d2d4b6a-4c12-46b7-9bfc-b0d373fbb975",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "be514c1d-801d-435a-aeab-f4db5bc3dfbf",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:54:28.200Z"
+  },
+  {
+    "id": "a436afc0-9122-435c-94bc-9e0ec5f2618d",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "49cc6358-f993-4af5-82ad-3af80c74eb1a",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:54:28.259Z"
+  },
+  {
+    "id": "6ff7eb93-95ab-4d3e-9280-54fd2751bd5a",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "49cc6358-f993-4af5-82ad-3af80c74eb1a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:54:28.312Z"
+  },
+  {
+    "id": "acf60940-fc7f-42a4-b3ea-c9b7b207bf6e",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "5c7bf19d-e19e-40d9-962f-79a7cad2da37",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:54:37.780Z"
+  },
+  {
+    "id": "679edb60-13a2-4184-b6a8-ca44e15ed097",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "9b466941-26ba-49d5-8c7c-4d70fabe0c42",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:54:37.841Z"
+  },
+  {
+    "id": "133eab87-2be2-46a6-ac9c-aa569ab263c9",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "9b466941-26ba-49d5-8c7c-4d70fabe0c42",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:54:37.891Z"
+  },
+  {
+    "id": "6190285e-c877-4090-a3b5-c2bca3d35a7e",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "miles": null,
+      "amount": 18.75,
+      "vendor": "Q-Park",
+      "category": "parking",
+      "ticketId": "e28544bc-cb82-4d42-8020-a49b4a2a3a80",
+      "description": "Browser check — parking",
+      "expenseDate": "2026-10-07T06:55:37.480Z"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T06:55:37.506Z"
+  },
+  {
+    "id": "21512a21-b572-45b4-9567-3a480de04259",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "cefd1d8e-b621-4e67-91b4-5c1ab565d8f8",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T06:56:07.771Z"
+  },
+  {
+    "id": "275d0c78-6136-47fb-9834-8f53387e9151",
+    "action": "billing:delete",
+    "entity": "billing",
+    "entityId": "cefd1d8e-b621-4e67-91b4-5c1ab565d8f8",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T06:56:19.249Z"
+  },
+  {
+    "id": "5be961df-ddab-4d4a-8482-50d704126806",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "technician",
+      "email": "sessionprobe1791356187140@probe.local",
+      "lastName": "Probe",
+      "password": "***",
+      "firstName": "Session",
+      "requireChange": false,
+      "credentialMode": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:56:27.456Z"
+  },
+  {
+    "id": "7077bd08-9950-4d4c-82d3-0534603c1f1e",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "d8970262-525f-4594-b099-97217b601a34",
+    "changes": {
+      "requireChange": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:56:28.104Z"
+  },
+  {
+    "id": "ca7de04a-2181-4631-a981-894e26852c76",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-1791356189723",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "http://localhost:5432/"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:56:29.734Z"
+  },
+  {
+    "id": "69e9c6c4-d0e2-4a70-aed5-0aa4cd7d1a24",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-1791356189732",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://10.42.0.9/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:56:29.740Z"
+  },
+  {
+    "id": "00184210-4982-48ec-8afe-747397c9b9d7",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-egress-1791356189744",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:56:29.755Z"
+  },
+  {
+    "id": "4415796f-218d-4484-a922-a663589bcc84",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "1108b9f4-a240-4e9d-9fdf-af595b624565",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:56:29.776Z"
+  },
+  {
+    "id": "4345801a-ca70-491a-b708-5671bf8a582c",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-redact-1791356189822",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:56:29.835Z"
+  },
+  {
+    "id": "cba2f766-8f5d-4ee9-a95a-3b58ea08eb1c",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "17c5ac3e-f2dc-4e11-963b-7b5b59b3a545",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:56:29.861Z"
+  },
+  {
+    "id": "2a8f9712-3a4d-4687-957b-1c9fe37efa15",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:27.780Z"
+  },
+  {
+    "id": "3525a6bb-c66a-40d9-a86e-8a7e80e26378",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "agreements",
+    "changes": {
+      "name": "Probe block agreement",
+      "rateTier": "advanced",
+      "companyId": "9154557e-0a2f-41f5-a541-d538ba4c4885",
+      "hourlyRate": 250,
+      "agreementType": "block",
+      "blockHoursIncluded": 10
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:29.125Z"
+  },
+  {
+    "id": "794f7ab9-b04a-46ab-8189-fbc06be189b7",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bbb37f10-ed06-4e75-adca-7b5b975b97ec",
+    "changes": {
+      "endTime": "2026-10-07T02:00:00.000Z",
+      "startTime": "2026-10-07T00:00:00.000Z",
+      "description": "Evening maintenance"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:29.145Z"
+  },
+  {
+    "id": "1c97a34a-d3e6-4894-a916-4c75d3ce5318",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bbb37f10-ed06-4e75-adca-7b5b975b97ec",
+    "changes": {
+      "endTime": "2026-10-07T00:00:00.000Z",
+      "startTime": "2026-10-06T22:00:00.000Z",
+      "description": "Late afternoon work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:29.158Z"
+  },
+  {
+    "id": "c8462f76-2355-43c8-9866-d7f3b5e20684",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bbb37f10-ed06-4e75-adca-7b5b975b97ec",
+    "changes": {
+      "endTime": "2026-10-06T16:30:00.000Z",
+      "startTime": "2026-10-06T14:00:00.000Z",
+      "description": "Morning work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:29.171Z"
+  },
+  {
+    "id": "a26b18e8-a43c-4ed9-b476-4f9ea0e833c1",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bbb37f10-ed06-4e75-adca-7b5b975b97ec",
+    "changes": {
+      "endTime": "2026-10-07T06:00:00.000Z",
+      "startTime": "2026-10-07T04:00:00.000Z",
+      "description": "Overnight cutover"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:29.185Z"
+  },
+  {
+    "id": "e036afb0-73e8-4a8c-bbac-8c85b3bc945f",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bbb37f10-ed06-4e75-adca-7b5b975b97ec",
+    "changes": {
+      "endTime": "2026-10-07T02:00:00.000Z",
+      "noCharge": true,
+      "startTime": "2026-10-07T00:00:00.000Z",
+      "description": "Goodwill work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:29.196Z"
+  },
+  {
+    "id": "38beca02-dd78-4cc2-90fe-9196d11dfeb5",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bbb37f10-ed06-4e75-adca-7b5b975b97ec",
+    "changes": {
+      "minutes": 90,
+      "description": "No clock"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:29.209Z"
+  },
+  {
+    "id": "ea4ab047-5188-4f95-b7b2-19e9ce8fa77b",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "fcf021b9-3d82-4b8d-9186-e0ec8f95dd04",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:30.032Z"
+  },
+  {
+    "id": "24ada843-1692-4a5e-b225-ea4e53128372",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "bbacc45c-9d92-44b2-acfb-9198db0f1593",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:30.087Z"
+  },
+  {
+    "id": "badab469-af0d-41b6-8425-aafac72aeea0",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "bbacc45c-9d92-44b2-acfb-9198db0f1593",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:30.137Z"
+  },
+  {
+    "id": "6d72d145-9bd9-4953-9502-0c12145dcd08",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-1791356275720",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "http://localhost:5432/"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:55.728Z"
+  },
+  {
+    "id": "ccd2039b-37b7-4bae-b017-2cf3043f25a7",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-1791356275727",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://10.42.0.9/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:55.734Z"
+  },
+  {
+    "id": "f356f9ca-15c8-447c-923f-e745f8b86354",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-egress-1791356275740",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:55.751Z"
+  },
+  {
+    "id": "cdf2dc6f-4883-46b0-95be-d3d3d5406b05",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "e2a7f061-5da3-4f44-ad77-345e11a9808c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:55.773Z"
+  },
+  {
+    "id": "5c907cd4-1708-4e92-8f91-9953bfca0887",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-redact-1791356275807",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:55.818Z"
+  },
+  {
+    "id": "c791b203-6702-4a46-82b9-d7bec01122c7",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "e1b9e87a-c598-4ba9-933a-5e7e1af68eca",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:57:55.845Z"
+  },
+  {
+    "id": "82120de2-93ea-4e44-8f1b-b771676f30d8",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:58:29.305Z"
+  },
+  {
+    "id": "82e8fdee-c229-4fa0-bbee-8400644316d8",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-egress-1791356339849",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:58:59.862Z"
+  },
+  {
+    "id": "390a5cd4-a51d-4d2b-8d02-50b66039c22d",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "70cb6a21-9bb4-4f94-a48e-18c753e943a9",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:58:59.889Z"
+  },
+  {
+    "id": "edc5a584-fecd-4cb1-bba9-7db1f8276067",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-redact-1791356339924",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:58:59.934Z"
+  },
+  {
+    "id": "fe7ef7a3-0bed-45a4-b4a9-660c99123d77",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "54268e58-759e-4eee-a632-59264e02e04a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:58:59.963Z"
+  },
+  {
+    "id": "5b3f8eea-30b9-421c-89a0-4a3a7708323e",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T06:59:38.368Z"
   }
 ]

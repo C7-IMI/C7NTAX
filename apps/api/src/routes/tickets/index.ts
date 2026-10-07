@@ -667,6 +667,19 @@ ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async 
   } catch (e) { next(e); }
 });
 
+// ── Ticket expenses (PLAN-015 Phase A #2) ──
+// A technician filing an out-of-pocket cost needs to see what they filed without holding the
+// billing permission, which would show them every client's money. This is scoped to the ticket.
+ticketsRouter.get("/:id/expenses", requirePermission(Permission.TicketView), async (req: AuthRequest, res, next) => {
+  try {
+    const expenses = await prisma.expense.findMany({
+      where: { ticketId: req.params.id },
+      orderBy: { expenseDate: "desc" },
+    });
+    res.json({ data: expenses });
+  } catch (e) { next(e); }
+});
+
 // ── Batch update tickets ──
 ticketsRouter.post("/batch", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {

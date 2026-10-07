@@ -3515,3 +3515,22 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Phase A #2 (expenses) already has an `Expense` model and `/billing/expenses` CRUD; what is missing is the ticket-detail tab, the approval flow and the QuickBooks/FlexPoint push, so it is smaller than the plan implies. #3 (bill-through batch invoicing with preview/approve) sits on top of both and is the larger piece.
 - The verification browser and the probe suites now cover session, scoping, egress, passkey and time rules; the sweep matrix and both typechecks stay at baseline (API 152, web 0 — the pre-existing errors are untouched and un-introduced).
 - `TIME_RULES_ENABLED` is set in the dev `.env` and documented in the production template as a `<true|false>` placeholder, so the preflight stays at zero failures.
+
+**Prompt 220 — continued: W2-2 (expense module, PLAN-015 Phase A #2)**
+
+**What I did**
+- Checked the plan's claim against the code and found it half-true: an `Expense` model and CRUD already existed, but **the person with the receipt could not file it** — `POST /billing/expenses` required `billing:manage`, so a technician's parking money had nowhere to go. That is exactly the gap the plan names, so it is what this step closed first.
+- **Server:** filing now needs only `ticket:edit`; the client is taken from the ticket so the two can never disagree; categories, vendor and miles are validated fields rather than free text; a `status` machine (`submitted` → `approved` | `rejected`) with who decided, when and why; a ticket-scoped list (`GET /tickets/:id/expenses`) so a technician sees what they filed without being handed every client's billing; and a push to the connected accounting system.
+- **The push is honest by construction.** The CloudConnect adapters read from their providers — none can create an expense, and inventing a QuickBooks Purchase payload without the tenant's account refs would be fiction. So an approved expense pushes to an explicitly configured `expensePushUrl` on an enabled QuickBooks/FlexPoint integration, through the same egress policy as everything else, and when there is nothing to push to the API says so in words instead of reporting success.
+- **UI:** the ticket's Expenses tab gained the vendor, miles and status columns, the decision buttons appear only for someone who can act on them, and the push button reports the reason it could not push.
+- **Two things the verification caught**: a URL the egress policy refuses surfaced as a **500** (the `assertSafeUrlLiteral` call sat outside the try block), and an interrupted probe run left a ticket, a client and two expenses behind because its cleanup swallowed failures. Both fixed — the refusal is now a 409 that names the URL, and the residue cleaner learned the expense probe's shapes.
+
+**Decisions worth remembering**
+- **Filing and approving are different jobs and now different permissions.** A technician records what they spent; billing decides whether it is chargeable. Conflating them is what made the previous behaviour useless.
+- **Do not loosen `billing:view` to make a tab work.** The technician's expense list is scoped to the ticket instead, which is the smallest surface that solves the actual problem.
+- **A missing integration is not an error, it is a state.** 409 with the sentence "Connect QuickBooks or FlexPoint in CloudConnect first" is more useful than a 500 and more truthful than a silent no-op.
+- **Probe cleanup must assert, not hope.** A `.catch(() => {})` on the last delete hid a leftover row across three suite runs.
+
+**Notes for next time**
+- Phase A #3 (bill-through batch invoicing) is the last piece of the chain and now has everything it needs: agreement types and rates, weighted time, and approved expenses with a client each.
+- `probe-egress.mjs` asserts that private addresses are refused, so it must run against an API **without** `EGRESS_ALLOW_PRIVATE=true`; the stub-based suites (connectors, expense push) need it set. Two runs of the battery, not one, if both are being exercised in the same session.

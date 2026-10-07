@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../hooks/useAuth";
+import { Permission } from "@C7NTAX/shared";
 import { orgTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { InferencePanel } from "../components/InferencePanel";
 import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical, ExternalLink, AppWindow, SquareArrowOutUpRight, UserCheck, Flag, CircleDot, Copy, Eraser, Check, AlertTriangle, Loader2 } from "lucide-react";
@@ -24,6 +25,14 @@ const STATUS_COLORS: Record<string, string> = {
 const PRIORITY_COLORS: Record<string, string> = {
   critical: "bg-red-600/20 text-red-400", high: "bg-orange-600/20 text-orange-400",
   medium: "bg-amber-600/20 text-amber-400", low: "bg-gray-600/20 text-gray-400",
+};
+
+/** Expense approval states (PLAN-015 Phase A #2). */
+const EXPENSE_STATUS_COLORS: Record<string, string> = {
+  submitted: "bg-amber-600/20 text-amber-400",
+  approved: "bg-green-600/20 text-green-400",
+  rejected: "bg-red-600/20 text-red-400",
+  billed: "bg-cyber-600/20 text-cyber-400",
 };
 
 const BATCH_ACTIONS = [
@@ -939,7 +948,7 @@ export function TicketDetailPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const menu = useContextMenu();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, permissions: myPermissions } = useAuth();
   const [ticket, setTicket] = useState<Record<string,unknown>|null>(null);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<Record<string,string>>({});
@@ -1000,6 +1009,7 @@ export function TicketDetailPage() {
   const [activeTab, setActiveTab] = useState("ticket");
   const [cf, setCf] = useState<Record<string, any>>({});
   const [expenses, setExpenses] = useState<any[]>([]);
+  const canManageBilling = myPermissions.includes(Permission.BillingManage);
   const [schedEntries, setSchedEntries] = useState<any[]>([]);
   const [auditEntries, setAuditEntries] = useState<any[]>([]);
   const [assetResults, setAssetResults] = useState<any[]>([]);
@@ -1014,7 +1024,7 @@ export function TicketDetailPage() {
   const [linkQuery, setLinkQuery] = useState("");
   const [linkRel, setLinkRel] = useState("related");
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
-  const [expenseForm, setExpenseForm] = useState({ description: "", amount: "", category: "other", expenseDate: "" });
+  const [expenseForm, setExpenseForm] = useState({ description: "", amount: "", category: "other", vendor: "", miles: "", expenseDate: "" });
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ title: "", startTime: "", endTime: "", location: "", description: "", userId: "" });
   const [schedulePurpose, setSchedulePurpose] = useState<"schedule" | "follow-up">("schedule");
@@ -1049,8 +1059,25 @@ export function TicketDetailPage() {
   };
   const uuidish = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
+  const loadExpenses = async () => {
+    try {
+      const r = await api.get(`/tickets/${id}/expenses`);
+      setExpenses(r.data?.data || []);
+    } catch { /* the tab shows what it has */ }
+  };
+
+  const expenseDecision = async (expenseId: string, decision: "approve" | "reject", note?: string) => {
+    try {
+      await api.post(`/billing/expenses/${expenseId}/${decision}`, decision === "reject" ? { note } : {});
+      toast.success(decision === "approve" ? "Expense approved" : "Expense rejected");
+      await loadExpenses();
+    } catch (err: unknown) {
+      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed");
+    }
+  };
+
   useEffect(() => {
-    if (activeTab === "expenses" || activeTab === "finance") api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((e: any) => e.ticketId === id))).catch(() => {});
+    if (activeTab === "expenses" || activeTab === "finance") void loadExpenses();
     if (activeTab === "schedule") api.get("/schedule?limit=200").then(r => setSchedEntries((Array.isArray(r.data) ? r.data : (r.data?.data || [])).filter((e: any) => e.ticketId === id))).catch(() => {});
     if (activeTab === "audittrail") api.get(`/system/audit-logs?entity=tickets&entityId=${encodeURIComponent(id ?? "")}`).then(r => setAuditEntries(r.data?.data || [])).catch(() => {});
     if (activeTab === "configurations") { api.get("/kumo/assets?limit=50").then(r => setAssetResults(r.data?.data || r.data || [])).catch(() => {}); api.get("/kumo/configs/servers").then(r => setKumoConfigResults(r.data?.data || r.data || [])).catch(() => {}); }
@@ -2156,14 +2183,48 @@ export function TicketDetailPage() {
           </div>
           {expenses.length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">No expenses on this ticket.</p> : (
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-surface-border text-left text-gray-400 text-xs uppercase"><th className="px-2 py-2">Description</th><th className="px-2 py-2">Category</th><th className="px-2 py-2">Date</th><th className="px-2 py-2 text-right">Amount</th><th className="px-2 py-2 w-8"></th></tr></thead>
+              <thead><tr className="border-b border-surface-border text-left text-gray-400 text-xs uppercase"><th className="px-2 py-2">Description</th><th className="px-2 py-2">Category</th><th className="px-2 py-2">Vendor</th><th className="px-2 py-2">Date</th><th className="px-2 py-2">Status</th><th className="px-2 py-2 text-right">Amount</th><th className="px-2 py-2 w-24"></th></tr></thead>
               <tbody>{expenses.map((e: any) => (
                 <tr key={e.id} className="border-b border-surface-border/50">
-                  <td className="px-2 py-2 text-white text-xs">{e.description}</td>
+                  <td className="px-2 py-2 text-white text-xs">{e.description}{e.miles ? <span className="text-gray-500"> · {e.miles} mi</span> : null}</td>
                   <td className="px-2 py-2 text-gray-400 text-xs capitalize">{e.category}</td>
+                  <td className="px-2 py-2 text-gray-400 text-xs">{e.vendor || "—"}</td>
                   <td className="px-2 py-2 text-gray-400 text-xs">{new Date(e.expenseDate).toLocaleDateString()}</td>
+                  <td className="px-2 py-2">
+                    <span className={`badge text-[10px] ${EXPENSE_STATUS_COLORS[e.status || "submitted"] || EXPENSE_STATUS_COLORS.submitted}`} title={e.decisionNote || undefined}>
+                      {(e.status || "submitted").toUpperCase()}{e.syncedAt ? " · SYNCED" : ""}
+                    </span>
+                  </td>
                   <td className="px-2 py-2 text-right text-cyber-400 text-xs font-medium">${(e.amount || 0).toFixed(2)}</td>
-                  <td className="px-2 py-2"><button onClick={async () => { try { await api.delete(`/billing/expenses/${e.id}`); toast.success("Deleted"); api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((x: any) => x.ticketId === id))).catch(() => {}); } catch { toast.error("Failed"); } }} className="text-gray-500 hover:text-red-400"><Trash2 size={12} /></button></td>
+                  <td className="px-2 py-2 text-right whitespace-nowrap">
+                    {canManageBilling && (e.status || "submitted") === "submitted" && (
+                      <>
+                        <button
+                          onClick={async () => { await expenseDecision(e.id, "approve"); }}
+                          className="text-[10px] text-green-400 hover:text-green-300 mr-2"
+                        >Approve</button>
+                        <button
+                          onClick={async () => {
+                            const note = window.prompt("Why is this expense being rejected?") || "";
+                            if (!note.trim()) return;
+                            await expenseDecision(e.id, "reject", note);
+                          }}
+                          className="text-[10px] text-amber-400 hover:text-amber-300 mr-2"
+                        >Reject</button>
+                      </>
+                    )}
+                    {canManageBilling && (e.status || "submitted") === "approved" && !e.syncedAt && (
+                      <button
+                        onClick={async () => {
+                          try { await api.post(`/billing/expenses/${e.id}/sync`); toast.success("Pushed to accounting"); }
+                          catch (err: unknown) { toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not push"); }
+                          void loadExpenses();
+                        }}
+                        className="text-[10px] text-cyber-400 hover:text-cyber-300 mr-2"
+                      >Push</button>
+                    )}
+                    <button onClick={async () => { try { await api.delete(`/billing/expenses/${e.id}`); toast.success("Deleted"); void loadExpenses(); } catch (err: unknown) { toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed"); } }} className="text-gray-500 hover:text-red-400"><Trash2 size={12} /></button>
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
@@ -2453,14 +2514,18 @@ export function TicketDetailPage() {
 
       {showExpenseDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowExpenseDialog(false)}>
-          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); try { await api.post("/billing/expenses", { ...expenseForm, amount: Number(expenseForm.amount), ticketId: id, expenseDate: expenseForm.expenseDate || new Date().toISOString() }); toast.success("Expense added"); setShowExpenseDialog(false); setExpenseForm({ description: "", amount: "", category: "other", expenseDate: "" }); api.get("/billing/expenses").then(r => setExpenses((r.data?.data || r.data || []).filter((x: any) => x.ticketId === id))).catch(() => {}); } catch { toast.error("Failed"); } }}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); try { await api.post("/billing/expenses", { ...expenseForm, amount: Number(expenseForm.amount), ticketId: id, miles: expenseForm.miles === "" ? null : Number(expenseForm.miles), expenseDate: expenseForm.expenseDate || new Date().toISOString() }); toast.success("Expense submitted for approval"); setShowExpenseDialog(false); setExpenseForm({ description: "", amount: "", category: "other", vendor: "", miles: "", expenseDate: "" }); await loadExpenses(); } catch (err: unknown) { toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed"); } }}>
             <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Receipt size={16} /> Add Expense</h3>
             <input className="input-field" placeholder="Description *" value={expenseForm.description} onChange={e => setExpenseForm({ ...expenseForm, description: e.target.value })} required />
             <div className="grid grid-cols-2 gap-2">
               <input className="input-field" type="number" placeholder="Amount *" step="0.01" min={0} value={expenseForm.amount} onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })} required />
               <select className="input-field" value={expenseForm.category} onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}>
-                <option value="other">Other</option><option value="travel">Travel</option><option value="hardware">Hardware</option><option value="software">Software</option><option value="parts">Parts</option><option value="labor">Labor</option>
+                <option value="other">Other</option><option value="parking">Parking</option><option value="hardware">Hardware</option><option value="mileage">Mileage</option><option value="travel">Travel</option><option value="software">Software</option>
               </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <input className="input-field" placeholder="Vendor" value={expenseForm.vendor} onChange={e => setExpenseForm({ ...expenseForm, vendor: e.target.value })} />
+              <input className="input-field" type="number" placeholder="Miles" step="0.1" min={0} value={expenseForm.miles} onChange={e => setExpenseForm({ ...expenseForm, miles: e.target.value })} />
             </div>
             <input className="input-field" type="date" value={expenseForm.expenseDate} onChange={e => setExpenseForm({ ...expenseForm, expenseDate: e.target.value })} />
             <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowExpenseDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Add</button></div>

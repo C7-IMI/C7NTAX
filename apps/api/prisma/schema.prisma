@@ -1746,8 +1746,25 @@ model Expense {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // ─── PLAN-015 Phase A #2: out-of-pocket costs and their approval ────
+  vendor         String?
+  /// Miles travelled, for the mileage category. The amount stays explicit: the rate is a policy
+  /// decision that belongs to the business, not to this table.
+  miles          Float?
+  /// submitted → approved | rejected → billed once an invoice carries it.
+  status         String   @default("submitted")
+  approvedById   String?
+  approvedAt     DateTime?
+  decisionNote   String?
+  /// Where an approved expense was pushed, and what the other system called it.
+  externalSystem String?
+  externalId     String?
+  syncedAt       DateTime?
+
   @@index([companyId])
   @@index([category])
+  @@index([status])
+  @@index([ticketId])
 }
 
 // ── FI-040: Alerting System ────────────────────────────────────────
