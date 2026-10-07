@@ -3216,3 +3216,25 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - `aside > div.border-t` is the footer selector for a cropped screenshot, and the aside is `fixed` at the small breakpoint with `lg:relative` — so a "collapsed" width of 64px is only meaningful above `lg`, which is worth confirming before trusting any collapsed-mode measurement.
 - Collapsed-mode geometry worth keeping in the regression list: avatar `16,726 32x32`, sign-out `20,764 24x24`, 6px gap, footer `717` + `79px` tall, each element the topmost at its own centre, and the last nav item scrollable to `665-705`.
+
+---
+
+### Prompt 217 — What W0 actually requires
+**Timestamp:** 2026-10-06 | **Status:** Answered from the code and the plan; no code change | **Duration:** ~20 min
+**BuildNotes IDs:** none — no project change (explanation only)
+
+> Explain what needs to happen for W0
+
+**What I did**
+- Re-measured the current state instead of quoting the plan back: counted routes versus `requirePermission` calls in every router named by the audit (`reports.ts` 12/0, `kb.ts` 6/0, `chat.ts` 5/0, `surveys.ts` 6/0, `alerts.ts` 6/0, `workflows.ts` 4/0, `inference.ts` 8/0, `sso.ts` 4/0, `clients.ts` 12/1, `system.ts` 29/1), listed the ungated `/api/system` writes, and confirmed `?token=` is still accepted in `middleware/auth.ts:57` and still generated in `Billing.tsx:125`, the global limiter is still `rateLimiter(9999, 60_000)` at `index.ts:142`, lockout is still `AUTH_HARDENING_ENABLED`-gated, `.github/workflows` holds only `desktop-build.yml`, there is no `security/` directory, and the versions to move are `nodemailer ^6.9.0`, `electron ^33.2.1` **plus** `--config.electronVersion=33.4.11` in `apps/desktop`'s build script, `electron-builder ^24.13.0` and `vite ^5.3.0`.
+- Mapped the remainder onto the plan's own eight acceptance criteria so the answer is "two met, three partial, three not met" rather than a vague list, then grouped the work into four streams by what they need from the user: a permission decision, an outbound-host decision, a session/transport decision, and three dependency change windows plus the CI gate.
+- Called out the two items that are decisions rather than implementation (hard-failing on a missing `KUMO_MASTER_KEY`, and switching lockout on), because they look like tasks and are not.
+
+**Decisions worth remembering**
+- **The route inventory is the argument for the guard test, not the guard itself.** Zero-guard routers are how this happened in the first place, so the test that walks the stack and fails on any authenticated route without a guard is the deliverable that keeps it fixed — and it is also what makes the documented `/api/system` carve-outs safe, because exemptions become explicit rather than accidental.
+- **W0's last item and W1's position 2 are the same job.** P0-12 (no token in a query string) is really "stop using `localStorage` + JWT", which is PLAN-001's unmounted session middleware — worth doing once, in order, rather than twice.
+- The `electron` upgrade has a second half that is easy to miss: the runtime the installer bundles is pinned in a **build script flag**, so bumping the devDependency alone would leave the shipped runtime unchanged.
+
+**Notes for next time**
+- Counting `requirePermission` in a router file includes its import line, so `system.ts` reads 2 for one guarded route — subtract the import when reporting.
+- `Select-String` against `.env` at the repo root fails: the env file lives in `apps/api/`.
