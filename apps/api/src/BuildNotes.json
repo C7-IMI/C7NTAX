@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.7.024",
+    "date": "2026-10-07",
+    "title": "Product Catalog: one place a price is written down, and four places it is used",
+    "changes": [
+      {
+        "text": "**Administration → Product Catalog** (`/admin/products`), modelled on how Autotask PSA, ConnectWise and Scoro treat a catalogue: a `Product` model carrying the identity (`sku` unique, `name`, `description`, `productType` across hardware / software / licence / subscription / service / bundle / other, `category`/`subcategory`, `manufacturer`), the commercial half (`costPrice`, `sellPrice`, `taxable`, `billingPeriod` one-off / monthly / quarterly / annual), the supply half (`vendorId` + `vendorSku`, `unit` across each / hour / day / user / seat / month / licence / GB, `purchaseUrl`, `warrantyMonths`) and the stock half (`trackStock`, `stockOnHand`, `reorderPoint`, `reorderQuantity`). Nothing new is invented about how the app charges: the page is the source, the existing billing path is the consumer.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Cost and margin are permissioned, and the split is the point.** `product:manage` sees cost and margin and is the only permission that may change a cost price; the finance role (`billing:manage`) sees them too because it prices purchase orders at cost; a viewer gets the sell price and nothing else — the API removes the field rather than hiding it in the UI. New permissions `product:view/create/edit/manage/delete` with a **Product Catalog** group, granted to Manager (view/create/edit/manage), Technician, Dispatcher, BillingManager and ReadOnly (view); the client-facing roles get none — a client contact reading the internal catalogue is a 403, not an empty page. `seed-product-catalog.ts` backfills the role rows (permissions come from the row, not the enum) and seeds 8 starter items: 4 roles merged, 8 products.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`apps/api/src/routes/products.ts`** — list (search, type, category, active, low-stock, paging), filters (counts by type, categories, manufacturers, the low-stock count), suppliers, detail including **where the item is used** (quote / purchase-order / invoice lines), create with an SKU derived from the name when none is given and a 409 when the SKU clashes, patch, duplicate-as-a-variation, stock adjustments, and a delete that **refuses with 409 and names the record holding it** — a product that has been quoted is retired, not deleted. Stock is a counter plus the audit trail the write middleware already keeps; a per-warehouse ledger is a bigger feature and is recorded as a follow-up rather than half-built.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The catalogue is wired into the four places a line is priced, and each line keeps the `productId` it came from.** A new `ProductPicker` (search-as-you-type over the catalogue, free text still allowed — the catalogue is a convenience, not a gate) is in the ticket **Products** tab (fills the sell price), the quote line (sell price, and the created line reports back as a quote line using the product) and the procurement line (**cost** price, because a purchase order is what we pay). On the billing side, hardware and licences sold on a ticket are now raised as **their own invoice lines** instead of being re-typed on the invoice: `customFields.ticketProducts` is read by the generate-from-tickets path, the preview reports the products waiting to be billed, and the ticket is marked `productsBilled` so the same laptop is not charged twice.",
+        "type": "Update"
+      },
+      {
+        "text": "**The ticket Products tab called the charged price \"Unit Cost\".** The invoice line uses that figure as `unitPrice`, so the column and its dialog now say **Unit Price**; the picker defaulting from the catalogue's sell price is then coherent with the label rather than contradicting it.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The catalogue page's summary cards say what they count.** They total the rows on screen, so once a filter is applied they read **Matching** / **Active in view** / **Recurring in view** — the old wording claimed a whole-catalogue figure while showing a filtered one, and \"Active 0\" over a full catalogue reads as a fault.",
+        "type": "Update"
+      },
+      {
+        "text": "**The Cost and Margin columns were invisible in the browser for a non-obvious reason:** Vite had pre-bundled an older copy of `@C7NTAX/shared` (`apps/web/node_modules/.vite/deps/@C7NTAX_shared.js`) with no `product:*` members, so `Permission.ProductManage` was `undefined` in the browser and `permissions.includes(undefined)` was false — while the API enforced correctly. Clearing `.vite`, rebuilding `packages/shared` and restarting Vite fixed it. Recorded because the same trap catches any new enum member.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.023",
     "date": "2026-10-07",
     "title": "The remaining work, sequenced: what to decide before what gets built",

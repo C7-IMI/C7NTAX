@@ -4,14 +4,16 @@ import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, ShoppingCart, Truck, CheckCircle, X, Building } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { ProductPicker } from "../components/ProductPicker";
 
 interface PO{id:string;poNumber:string;vendorId:string;status:string;total:number;expectedAt?:string;createdAt:string;vendor?:{name:string};}
+interface POItem{description:string;quantity:number;unitPrice:number;productId?:string|null;sku?:string|null;}
 
 export function ProcurementPage(){
   const [pos,setPos]=useState<PO[]>([]);
   const [loading,setLoading]=useState(true);
   const [showNew,setShowNew]=useState(false);
-  const [form,setForm]=useState({vendorId:"",items:[{description:"",quantity:1,unitPrice:0}]});
+  const [form,setForm]=useState<{vendorId:string;items:POItem[]}>({vendorId:"",items:[{description:"",quantity:1,unitPrice:0}]});
   const [vendors,setVendors]=useState<Array<{id:string;name:string}>>([]);
 
   const fetch=()=>{api.get("/procurement/orders?limit=50").then(r=>setPos(r.data.data||r.data||[])).catch(()=>{}).finally(()=>setLoading(false))};
@@ -19,6 +21,9 @@ export function ProcurementPage(){
 
   const addItem=()=>setForm({...form,items:[...form.items,{description:"",quantity:1,unitPrice:0}]});
   const updateItem=(i:number,field:string,val:string|number)=>setForm({...form,items:form.items.map((item,idx)=>idx===i?{...item,[field]:val}:item)});
+  // A line's price is what we pay the vendor, so the catalog's cost price is the default — the
+  // sell price only appears for a role the API withholds cost from.
+  const pickProduct=(i:number,p:{id:string;sku:string;name:string;costPrice?:number;sellPrice:number})=>setForm({...form,items:form.items.map((item,idx)=>idx===i?{...item,description:p.name,productId:p.id,sku:p.sku,unitPrice:p.costPrice??p.sellPrice}:item)});
 
   const handleCreate=async(e:React.FormEvent)=>{e.preventDefault();
     const subtotal=form.items.reduce((s,i)=>s+i.quantity*i.unitPrice,0);
@@ -37,7 +42,7 @@ export function ProcurementPage(){
     {showNew&&(<div className="card"><form onSubmit={handleCreate} className="space-y-3">
       <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">New Purchase Order</h3><button type="button" onClick={()=>setShowNew(false)} className="text-gray-500 hover:text-white"><X size={18}/></button></div>
       <select className="input-field" value={form.vendorId} onChange={e=>setForm({...form,vendorId:e.target.value})} required><option value="">Select vendor...</option>{vendors.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select>
-      <div className="space-y-2">{form.items.map((item,i)=>(<div key={i} className="grid grid-cols-12 gap-2"><input className="input-field col-span-5" placeholder="Description" value={item.description} onChange={e=>updateItem(i,"description",e.target.value)}/><input className="input-field col-span-2" type="number" placeholder="Qty" value={item.quantity} onChange={e=>updateItem(i,"quantity",Number(e.target.value))}/><input className="input-field col-span-3" type="number" placeholder="Price" value={item.unitPrice} onChange={e=>updateItem(i,"unitPrice",Number(e.target.value))}/><span className="col-span-2 text-xs text-gray-500 self-center">${(item.quantity*item.unitPrice).toFixed(2)}</span></div>))}</div>
+      <div className="space-y-2">{form.items.map((item,i)=>(<div key={i} className="grid grid-cols-12 gap-2 items-start"><div className="col-span-5"><ProductPicker value={item.description} onValueChange={text=>setForm({...form,items:form.items.map((it,idx)=>idx===i?{...it,description:text,productId:null,sku:null}:it)})} onPick={p=>pickProduct(i,p)} pickedSku={item.sku} priceBasis="cost" placeholder="Description or catalog item"/></div><input className="input-field col-span-2" type="number" placeholder="Qty" value={item.quantity} onChange={e=>updateItem(i,"quantity",Number(e.target.value))}/><input className="input-field col-span-3" type="number" placeholder="Price" value={item.unitPrice} onChange={e=>updateItem(i,"unitPrice",Number(e.target.value))}/><span className="col-span-2 text-xs text-gray-500 self-center">${(item.quantity*item.unitPrice).toFixed(2)}</span></div>))}</div>
       <button type="button" onClick={addItem} className="text-xs text-cyber-400 hover:text-cyber-300">+ Add Line Item</button>
       <div className="flex gap-2"><button type="submit" className="btn-primary text-sm"><ShoppingCart size={14} className="inline mr-1"/>Create PO</button><button type="button" onClick={()=>setShowNew(false)} className="btn-secondary text-sm">Cancel</button></div>
     </form></div>)}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api";
+import { ProductPicker } from "../components/ProductPicker";
 
 type Quote = { id: string; quoteNumber: string; title: string; status: string; total: number; company: { id: string; name: string } | null };
 type Client = { id: string; name: string };
@@ -13,6 +14,8 @@ export function QuotesPage() {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [unitPrice, setUnitPrice] = useState("150");
+  const [productId, setProductId] = useState<string | null>(null);
+  const [productSku, setProductSku] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
   const load = () => {
@@ -27,9 +30,9 @@ export function QuotesPage() {
     try {
       await api.post("/quotes", {
         companyId, title,
-        lineItems: [{ description, quantity: Number(quantity) || 1, unitPrice: Number(unitPrice) || 0 }],
+        lineItems: [{ description, quantity: Number(quantity) || 1, unitPrice: Number(unitPrice) || 0, ...(productId ? { productId } : {}) }],
       });
-      setTitle(""); setDescription(""); setMessage("Quote created");
+      setTitle(""); setDescription(""); setProductId(null); setProductSku(null); setMessage("Quote created");
       load();
     } catch (e: unknown) { setMessage(e instanceof Error ? e.message : "Create failed"); }
   };
@@ -48,7 +51,16 @@ export function QuotesPage() {
           <option value="">Select client…</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <input placeholder="Line description" value={description} onChange={e => setDescription(e.target.value)} style={{ padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />
+        <div style={{ width: 280 }}>
+          <ProductPicker
+            value={description}
+            onValueChange={text => { setDescription(text); setProductId(null); setProductSku(null); }}
+            onPick={p => { setDescription(p.name); setProductId(p.id); setProductSku(p.sku); setUnitPrice(String(p.sellPrice)); }}
+            pickedSku={productSku}
+            priceBasis="sell"
+            placeholder="Line description or catalog item"
+          />
+        </div>
         <input placeholder="Qty" value={quantity} onChange={e => setQuantity(e.target.value)} style={{ width: 70, padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />
         <input placeholder="Rate" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} style={{ width: 90, padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />
         <button onClick={create} style={{ padding: "8px 16px", background: "#2563eb", border: "none", color: "#fff", borderRadius: 6, cursor: "pointer" }}>Create quote</button>

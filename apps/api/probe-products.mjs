@@ -2,8 +2,9 @@
  * Product catalog (Administration → Product Catalog).
  *
  * What is under test:
- *   1. **Cost and margin are commercial data.** Only `product:manage` sees them, and only
- *      `product:manage` may change a cost price — a viewer gets the sell price and nothing else.
+ *   1. **Cost and margin are commercial data.** `product:manage` sees them, and so does the
+ *      finance role (`billing:manage`) that prices purchase orders — but only `product:manage`
+ *      may change a cost price, and a viewer gets the sell price and nothing else.
  *   2. **A product in use is deactivated, not deleted.** The delete route refuses and names the
  *      record that holds it.
  *   3. **The catalog is one source of prices.** A quote line, a purchase-order line and an invoice
@@ -108,6 +109,31 @@ async function main() {
   check((readonlyList.data?.data || []).every(p => p.costPrice === undefined), "without cost either");
   const editorList = await call("GET", "/api/products?limit=5", { token: editor.token });
   check(editorList.status === 200 && (editorList.data?.data || []).every(p => p.costPrice === undefined), "an editor without product:manage also sees no cost");
+
+  // Finance buys at cost, so `billing:manage` sees it too — but that is a read: the editor above
+  // is the only role that may change a cost price, and it needs `product:manage` for that.
+  const financeRole = await prisma.role.create({
+    data: {
+      name: `Catalog Probe Finance ${stamp}`,
+      systemRole: "billing_manager",
+      permissions: ["billing:view", "billing:manage", "invoice:create", "invoice:send", "product:view"],
+    },
+    select: { id: true },
+  });
+  const financeEmail = `catalog.finance.${stamp}@c7ntax.local`;
+  const financeUser = await prisma.user.create({
+    data: {
+      email: financeEmail, firstName: "Catalog", lastName: "Finance", isActive: true, emailVerified: true,
+      mustChangePassword: false, mfaEnabled: false, roleId: financeRole.id, passwordHash: bcrypt.hashSync(PW, 10),
+    },
+    select: { id: true },
+  });
+  const finance = await signIn(financeEmail);
+  const financeList = await call("GET", "/api/products?limit=500", { token: finance.token });
+  const financeLaptop = (financeList.data?.data || []).find(p => p.sku === "HW-LAPTOP-14");
+  check(finance.status === 200 && financeLaptop?.costPrice === 950, `billing:manage sees cost for procurement (${financeLaptop?.costPrice})`);
+  check(financeLaptop?.margin === 300, "and the margin that implies, since a PO is priced at cost");
+  check((await call("PATCH", `/api/products/${financeLaptop?.id}`, { token: finance.token, body: { costPrice: 1 } })).status === 403, "but cannot change a cost price");
 
   console.log("\nthe catalog is a permission, not a page");
   const clientAdminList = await call("GET", "/api/products?limit=5", { token: clientAdmin.token });
@@ -244,12 +270,14 @@ async function main() {
   await prisma.serviceAgreement.deleteMany({ where: { companyId: client.id } });
   await prisma.company.delete({ where: { id: client.id } });
   await prisma.product.deleteMany({ where: { id: { in: [item.id, explicitSku.data?.id, recurring.data?.id].filter(Boolean) } } });
-  await prisma.userSession.deleteMany({ where: { userId: { in: [adminUser.id, editorUser.id] } } });
+  await prisma.userSession.deleteMany({ where: { userId: { in: [adminUser.id, editorUser.id, financeUser.id] } } });
   await prisma.user.delete({ where: { id: editorUser.id } }).catch(() => {});
+  await prisma.user.delete({ where: { id: financeUser.id } }).catch(() => {});
   await prisma.role.delete({ where: { id: editorRole.id } }).catch(() => {});
+  await prisma.role.delete({ where: { id: financeRole.id } }).catch(() => {});
   await prisma.vendor.delete({ where: { id: vendor.id } }).catch(() => {});
   await prisma.$disconnect();
-  console.log("  note  probe products, quote, purchase order, invoice, ticket, client, editor role and vendor removed");
+  console.log("  note  probe products, quote, purchase order, invoice, ticket, client, editor role, finance role and vendor removed");
 
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail === 0 ? 0 : 1);

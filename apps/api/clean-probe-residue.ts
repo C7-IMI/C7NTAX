@@ -364,7 +364,7 @@ async function main() {
     () => Promise.resolve(probeProductIds.length),
     () => prisma.product.deleteMany({ where: { id: { in: probeProductIds } } }),
   );
-  const browserQuotes = await prisma.quote.findMany({ where: { title: { startsWith: "Browser guard check" } }, select: { id: true } });
+  const browserQuotes = await prisma.quote.findMany({ where: { title: { in: ["Browser guard check", "Browser catalog picker check"] } }, select: { id: true } });
   const browserQuoteIds = browserQuotes.map(q => q.id);
   await remove(
     "browser-check quote lines",

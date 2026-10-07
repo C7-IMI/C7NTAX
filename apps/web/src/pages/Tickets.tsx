@@ -12,6 +12,7 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { RichTextEditor, toAttachmentDraft, EMAIL_PROFILE, type EmailAttachmentDraft } from "../components/richText";
 import { RecipientField, recipientFromContact, offOrgRecipients, offOrgSummary, type Recipient, type RecipientSuggestion } from "../components/RecipientField";
+import { ProductPicker } from "../components/ProductPicker";
 import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
@@ -1086,6 +1087,7 @@ export function TicketDetailPage() {
   const [cf, setCf] = useState<Record<string, any>>({});
   const [expenses, setExpenses] = useState<any[]>([]);
   const canManageBilling = myPermissions.includes(Permission.BillingManage);
+  const canSearchCatalog = myPermissions.includes(Permission.ProductView);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [schedEntries, setSchedEntries] = useState<any[]>([]);
@@ -1096,7 +1098,7 @@ export function TicketDetailPage() {
   const [configDialogQuery, setConfigDialogQuery] = useState("");
   const [incomingLinks, setIncomingLinks] = useState<any[]>([]);
   const [showProductDialog, setShowProductDialog] = useState(false);
-  const [productForm, setProductForm] = useState({ name: "", qty: 1, unitCost: 0 });
+  const [productForm, setProductForm] = useState<{ name: string; qty: number; unitCost: number; sku?: string | null; productId?: string | null }>({ name: "", qty: 1, unitCost: 0 });
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkResults, setLinkResults] = useState<any[]>([]);
   const [linkQuery, setLinkQuery] = useState("");
@@ -2130,10 +2132,10 @@ export function TicketDetailPage() {
           ) : (
             <>
               <table className="w-full text-sm">
-                <thead><tr className="border-b border-surface-border text-left text-gray-400 text-xs uppercase"><th className="px-2 py-2">Item</th><th className="px-2 py-2">Qty</th><th className="px-2 py-2">Unit Cost</th><th className="px-2 py-2 text-right">Total</th><th className="px-2 py-2 w-8"></th></tr></thead>
+                <thead><tr className="border-b border-surface-border text-left text-gray-400 text-xs uppercase"><th className="px-2 py-2">Item</th><th className="px-2 py-2">Qty</th><th className="px-2 py-2">Unit Price</th><th className="px-2 py-2 text-right">Total</th><th className="px-2 py-2 w-8"></th></tr></thead>
                 <tbody>{cfArr("ticketProducts").map((p: any) => (
                   <tr key={p.id} className="border-b border-surface-border/50">
-                    <td className="px-2 py-2 text-white text-xs">{p.name}</td>
+                    <td className="px-2 py-2 text-white text-xs">{p.name}{p.sku && <span className="block font-mono text-[10px] text-gray-500">{p.sku}</span>}</td>
                     <td className="px-2 py-2 text-gray-400 text-xs">{p.qty}</td>
                     <td className="px-2 py-2 text-gray-400 text-xs">${(p.unitCost || 0).toFixed(2)}</td>
                     <td className="px-2 py-2 text-right text-cyber-400 text-xs font-medium">${((p.qty || 0) * (p.unitCost || 0)).toFixed(2)}</td>
@@ -2576,8 +2578,20 @@ export function TicketDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowProductDialog(false)}>
           <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={e => { e.preventDefault(); if (!productForm.name.trim()) return; persistCF("ticketProducts", [...cfArr("ticketProducts"), { id: uuidish(), ...productForm }]); setProductForm({ name: "", qty: 1, unitCost: 0 }); setShowProductDialog(false); toast.success("Added"); }}>
             <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Package size={16} /> Add Product</h3>
-            <input className="input-field" placeholder="Product name *" value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} required />
-            <div className="grid grid-cols-2 gap-2"><input className="input-field" type="number" placeholder="Qty" min={1} value={productForm.qty} onChange={e => setProductForm({ ...productForm, qty: Number(e.target.value) })} /><input className="input-field" type="number" placeholder="Unit cost" step="0.01" min={0} value={productForm.unitCost} onChange={e => setProductForm({ ...productForm, unitCost: Number(e.target.value) })} /></div>
+            {canSearchCatalog ? (
+              <ProductPicker
+                value={productForm.name}
+                onValueChange={name => setProductForm({ ...productForm, name, sku: null, productId: null })}
+                onPick={p => setProductForm({ ...productForm, name: p.name, sku: p.sku, productId: p.id, unitCost: p.sellPrice })}
+                pickedSku={productForm.sku ?? null}
+                priceBasis="sell"
+                autoFocus
+                required
+              />
+            ) : (
+              <input className="input-field" placeholder="Product name *" value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} required />
+            )}
+            <div className="grid grid-cols-2 gap-2"><input className="input-field" type="number" placeholder="Qty" min={1} value={productForm.qty} onChange={e => setProductForm({ ...productForm, qty: Number(e.target.value) })} /><input className="input-field" type="number" placeholder="Unit price" step="0.01" min={0} value={productForm.unitCost} onChange={e => setProductForm({ ...productForm, unitCost: Number(e.target.value) })} /></div>
             <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowProductDialog(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Add</button></div>
           </form>
         </div>

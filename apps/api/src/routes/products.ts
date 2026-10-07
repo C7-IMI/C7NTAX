@@ -33,9 +33,9 @@ export const PRODUCT_TYPES = ["hardware", "software", "license", "subscription",
 export const BILLING_PERIODS = ["none", "monthly", "quarterly", "annual"];
 export const PRODUCT_UNITS = ["each", "hour", "day", "user", "seat", "month", "licence", "GB"];
 
-/** Cost and margin: only for the people who maintain the commercial side of the catalog. */
+/** Cost and margin: the people who maintain the catalog, plus the finance role that buys at cost. */
 function seesCost(permissions: string[]): boolean {
-  return permissions.includes(Permission.ProductManage);
+  return permissions.includes(Permission.ProductManage) || permissions.includes(Permission.BillingManage);
 }
 
 /** The fields a caller may see, with cost withheld when they may not. */

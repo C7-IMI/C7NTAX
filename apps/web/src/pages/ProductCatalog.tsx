@@ -234,6 +234,9 @@ export function ProductCatalogPage() {
     return { active, recurring, oneOff, low, monthly };
   }, [products]);
 
+  // The cards count the rows on screen, so their wording says so once a filter narrows the list.
+  const isFiltered = Boolean(search || typeFilter || categoryFilter || lowStockOnly);
+
   const csvColumns: CsvColumn<Product>[] = [
     { key: "sku", label: "SKU", value: p => p.sku },
     { key: "name", label: "Name", value: p => p.name },
@@ -304,9 +307,9 @@ export function ProductCatalogPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <SummaryCard icon={Package} label="In the catalog" value={String(products.length)} />
-        <SummaryCard icon={Power} label="Active" value={String(totals.active)} color="text-green-400" />
-        <SummaryCard icon={RefreshCw} label="Recurring" value={String(totals.recurring)} color="text-cyber-400" />
+        <SummaryCard icon={Package} label={isFiltered ? "Matching" : "In the catalog"} value={String(products.length)} />
+        <SummaryCard icon={Power} label={isFiltered ? "Active in view" : "Active"} value={String(totals.active)} color="text-green-400" />
+        <SummaryCard icon={RefreshCw} label={isFiltered ? "Recurring in view" : "Recurring"} value={String(totals.recurring)} color="text-cyber-400" />
         <SummaryCard icon={AlertTriangle} label="Below reorder point" value={String(totals.low)} color={totals.low ? "text-amber-400" : "text-gray-400"} />
         <SummaryCard icon={Boxes} label="Monthly list value" value={`$${totals.monthly.toFixed(2)}`} />
       </div>

@@ -3883,3 +3883,33 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 **Notes for next time**
 - PLAN-019 §10 is the maintenance rule for itself: when a decision in §9 is made, strike it here and in the registry and record the answer in BuildNotes — otherwise the next reader plans from a stale overlay.
+
+---
+
+### Prompt 221 — Product Catalog: Administration gets a catalogue, and four surfaces price from it
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~1 session
+**BuildNotes IDs:** 2026.10.7.024 - Product Catalog: one place a price is written down, and four places it is used
+
+> I need to add a subsection under Adminstration called Product Catalog. It should be for adding products such as hardware, software, licenses, etc.
+>
+> Use AutotaskPSA, Connectwise Asio, and Scoro as reference to build out the section and configuration options/dialogs. Wire it into other relevant parts of the application
+
+**What I did**
+- Built the feature end to end rather than a settings page: a `Product` model (`sku` unique, identity, commercial, supply and stock halves, with `productType`, `unit`, `billingPeriod` as constrained sets), `productId` on quote, purchase-order and invoice line items, and migration `20261007103400_product_catalog`.
+- Split the permissions deliberately: `product:view/create/edit/manage/delete` in a new **Product Catalog** group, granted to Manager (view/create/edit/manage), Technician, Dispatcher, BillingManager and ReadOnly (view) — **no client-facing role**, because an internal catalogue is not a client document. Cost and margin go to `product:manage`, and I extended that to `billing:manage` once the purchase-order picker needed a cost price to prefill: finance reads cost, only the catalogue's owner may change one. `seed-product-catalog.ts` backfilled the role rows (permissions live in the row when non-empty, so an enum change alone would have hidden the feature from everybody) and seeded 8 starter items.
+- Wrote `routes/products.ts`: search/filter/paging, filters for the dropdowns and counts, suppliers, detail including **where the item is used**, create with SKU derivation and a clash check, patch, duplicate-as-a-variation, stock adjustments, and a delete that refuses with a 409 naming the record that holds the product. Stock is a counter plus the existing audit trail — a per-warehouse ledger is a real feature and is recorded as a follow-up rather than half-built.
+- Wired it into every place a line is priced, through one new `ProductPicker` (search-as-you-type, free text still allowed): the ticket **Products** tab (sell price), the quote line (sell price), the procurement line (**cost** price). On billing, products sold on a ticket are now raised as their own invoice lines with the `productId` kept, the preview reports them, and the ticket is marked `productsBilled` so the same item is not charged twice.
+- Renamed the ticket tab's "Unit Cost" to **Unit Price** — the invoice charges that figure, so the old label contradicted the catalogue defaulting from the sell price. Made the catalogue page's summary cards say **Matching / Active in view** when a filter is narrowing the list, because they count what is on screen.
+- Found and fixed a non-obvious blocker during browser verification: **Cost and Margin were invisible** although the API returned them. Vite had pre-bundled an older `@C7NTAX/shared`, so `Permission.ProductManage` was `undefined` in the browser and `permissions.includes(undefined)` was false. Clearing `apps/web/node_modules/.vite`, rebuilding the package and restarting Vite fixed it.
+- Verified: `probe-products.mjs` **82/82** (including three new assertions that `billing:manage` sees cost but cannot change it), `billing-generate` 45/45, `billing-batch` 36/36, `guard:routes` 371 routes / 324 guarded / 0 violations, API typecheck at the 152 pre-existing with none in the new files, web typecheck 0. Browser end to end: create, edit, retire, low-stock filter, the delete guard naming the quote line, a quote line priced 1250 and reported as a catalogue use, a purchase order line prefilled **950 from cost**, and a ticket product row carrying its SKU.
+
+**Decisions worth remembering**
+- **A catalogue is only worth building if the lines consume it.** A product page that nothing prices from is a second place to keep a price, which is worse than the first. The `productId` on the line is what makes it one source.
+- **The permission split is the feature.** Cost and margin withheld from the API rather than hidden in the UI, a client role refused outright, and a finance role allowed to read cost without being able to change it — three different answers to "who is this for".
+- **A delete guard needs to name the holder.** "Cannot delete" leaves the user hunting; "used by 1 quote line — deactivate it instead" tells them what to do instead, and the same counts are what the UI shows as *where it is used*.
+- **Check the browser console before doubting the API.** The missing columns were a stale bundle of a workspace package, not a permission bug — the API was right the whole time.
+
+**Notes for next time**
+- Adding a member to `@C7NTAX/shared` needs `apps/web/node_modules/.vite` cleared (or a Vite restart) or the browser keeps the old enum; this will not be the last time it bites.
+- Recorded follow-ups: per-client price tiers, per-warehouse stock, a `TicketProduct` table instead of `customFields.ticketProducts`, and a per-product tax rate (the tax engine is a known gap, which is why `taxable` is a flag only).
+- `clean-probe-residue.ts` now sweeps catalogue probes, the UI-created products and the throwaway quotes that hold them — line rows first, because the delete guard would (correctly) refuse.
