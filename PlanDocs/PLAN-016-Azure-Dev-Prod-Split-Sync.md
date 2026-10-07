@@ -10,6 +10,27 @@
 > **Outstanding:** create the subscription-side objects (resource groups, deploy identity with federated credentials and role assignments, GitHub environments), run the first deployment, and add the ingress module (Application Gateway v2 with the two listeners, then Front Door Premium + WAF + DDoS Standard) before production goes live. The runbook in `infra/README.md` lists these in order with the exact commands.
 > **Depends on:** nothing in the repository — PLAN-018 (Wave 0) is complete, which is the security prerequisite this plan assumed. **Unblocks:** PLAN-007's AV/CF/OR controls, PLAN-011's hosting/AI services, PLAN-005's update feed.
 > **Next action:** run `node scripts/azure/preflight.mjs`, then `./scripts/azure/deploy-env.ps1 -Environment dev -WhatIf` against a real subscription, and review the `what-if` output before applying.
+>
+> **HARD STOP — everything from here needs your subscription.** No `az` or `bicep` CLI is available in this environment, no subscription is attached, and no DNS zone or certificate is under our control. The first deployment, the resource groups, the deploy identity with federated credentials, the GitHub environments and the ingress module (Application Gateway v2, then Front Door + WAF) are all blocked on that. Writing more Bicep without a way to compile it (`bicep build`) would be unverifiable text, which is worse than a plan.
+>
+> ### Decisions collected at this step (the ones the implementation waves deferred)
+>
+> Every one of these is a decision, not unfinished code. Each is also recorded in BuildNotes under the version that raised it.
+>
+> | # | Decision | Raised by | Why it cannot be guessed here |
+> |---|---|---|---|
+> | 1 | **Azure or AWS?** (§15 recommends Azure) | PLAN-016 §15 | The whole deployment package, the ingress choice and PLAN-011's AI services differ. |
+> | 2 | **SMS provider** (Twilio / Azure Communication Services / MessageBird) + sender ID | PLAN-015 Phase B #13 | Provider choice determines the client library, the cost model and the compliance story. Nothing was built for it. |
+> | 3 | **Production feature-flag values** — `TIME_RULES_ENABLED`, `INVOICE_BATCH_ENABLED`, `KB_AUTOGEN_ENABLED`, `M365_OFFBOARD_ENABLED`, `CLOUDCONNECT_LIVE_STATUS_ENABLED`, `SERVICE_ALERTS_SOCIAL_ENABLED`, `OUTLOOK_ADDIN_ENABLED` | several waves | Each flag's off state is a tested rollback; which ones are on in production is a billing and risk decision. |
+> | 4 | **Customer invoice email** — build it, and from which address? | PLAN-015 Phase A #3 | The plan assumed an "existing path" that does not exist; approval issues and syncs without claiming to have emailed anybody. |
+> | 5 | **Passkey challenge store** — move to a table before running more than one replica | PLAN-002 | In-memory today; a second replica breaks a ceremony in progress. |
+> | 6 | **CloudConnect health memory** — same, before replicas | PLAN-015 Phase B #9 | In-process today; a restart forgets, replicas disagree. |
+> | 7 | **Per-role passkey policy and SAML** — adopt or stay with TOTP/SSO-as-is | PLAN-002 | Deliberately left open by decision in Wave 1. |
+> | 8 | **Spot-rate tiers** — confirm $100/$250/$275/$400 | PLAN-015 Phase A #1 | Seeded as the plan stated them; they are commercial. |
+> | 9 | **M365 `AuditLog.Read.All` + Entra ID P1** — grant, or accept "unknown" | PLAN-015 Phase B #12 | Without it the inactivity report says unknown for every account, by design. |
+> | 10 | **Outlook add-in** — tenant-side: `__ADDIN_HOST__` and a GUID; SSO needs the PLAN-017 registration; AppSource needs a Partner Center account | PLAN-012 | Deployment and business decisions; the internal admin-center path needs no review. |
+> | 11 | **PLAN-017 registration** — register the Entra app, consent `Mail.ReadWrite`, scope to the mailbox | PLAN-017 | Tenant-side execution; the code is done and waiting. |
+> | 12 | **DNS, TLS certificate and hostnames** for dev and prod | PLAN-016 | Needed by the ingress module and by the add-in manifest. |
 
 **Plan Label:** Azure Dev/Prod Split & Sync Plan
 **Status:** ⬜ Not started — plan and decision record only (see the sequence block below).

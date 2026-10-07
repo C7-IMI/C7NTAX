@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.015 | Last Updated: 2026-10-07
+## Version: 2026.10.7.016 | Last Updated: 2026-10-07
 
 ---
 
@@ -13,6 +13,11 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.7.016 — Bookkeeping: what the waves changed in the plan registry, and the decisions collected for the Azure step
+- **[Update]** **The plan registry now reflects what actually shipped.** `PlanDocs/README.md` had drifted from the code: PLAN-001 still read "infrastructure written, never wired" after session auth went live, PLAN-002 still read "roughly three quarters built" after credential management shipped, PLAN-015 read "Phase A untouched" after Phase A and most of Phase B landed, and PLAN-012 read "backend half of phase 1" after the add-in was built. Each row now states the version that closed it and names what genuinely remains. A registry that overstates the work left is as misleading as one that understates it — the next person to read it plans from it.
+- **[Update]** **PLAN-016's status is now an explicit hard stop**, with the twelve decisions the implementation waves deferred collected in one table in the plan header: the SMS provider, Azure-vs-AWS, the production feature-flag values, the customer invoice email, the passkey challenge store and the CloudConnect health memory (both must move to a table before more than one replica), per-role passkey policy and SAML, the spot-rate tiers, the M365 sign-in permission, the add-in host/GUID and submission route, the PLAN-017 registration, and DNS/TLS.
+- **Verification:** documentation only — `node scripts/azure/preflight.mjs` runs clean (0 failures), the plan registry's markdown tables render, and every version referenced in the rows exists in `BuildNotes.md`.
 
 ## 2026.10.7.015 — The Outlook add-in is a real add-in, and its pane is a real pane
 - **[New]** **The add-in exists.** `apps/outlook-addin/` holds the manifest (a `MessageReadCommandSurface` ribbon button), the taskpane, the function file Office requires, its own styles, and 16/32/80 ribbon icons derived from the app icon. It is **served by the API at `/addin`** on the same origin as `/api`, so the pane calls the API with relative URLs and no CORS — and the manifest's HTTPS URLs point at the same host.

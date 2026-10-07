@@ -3744,3 +3744,18 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The manifest is not added to any build; it is a source file with two placeholders to replace per deployment (`__ADDIN_HOST__`, `__ADDIN_GUID__`).
 - SSO and AppSource submission are decisions, not code: they need the Entra registration (PLAN-017) and a Partner Center account respectively.
+
+**Prompt 220 — continued: W2-13 (registry bookkeeping + the decision table, PLAN-016)**
+
+**What I did**
+- Re-read `PlanDocs/README.md` against the code and corrected the rows that had drifted: PLAN-001 (session auth is mounted and shipped, not "never wired"), PLAN-002 (credential management shipped), PLAN-015 (Phase A complete and Phase B complete except SMS), PLAN-016 (explicit hard stop), PLAN-012 (add-in built; SSO and submission are decisions).
+- Added the **twelve-decision table** to PLAN-016's header — the collection point you asked for — with, for each: what raised it and why it cannot be guessed here.
+- Wrote the consolidated outstanding-items list to the session workspace (`files/OUTSTANDING-ITEMS.md`): decisions, external blockers, in-process state that must move before replicas, the deliberate deviations from the plans, the recorded limitations, and multi-tenant (excluded by instruction).
+
+**Decisions worth remembering**
+- **A registry that overstates the work left is as misleading as one that understates it.** Every stale row here would have sent the next reader to rebuild something that exists.
+- **Writing down what was deliberately not done is part of the work.** Four deviations from the plan (agreement model, browser-side QR decode, board layout shared per board, no audit column) each had a reason; leaving them implicit would make them look like oversights.
+- **Bicep without `bicep build` is unverifiable text.** The ingress module was deliberately not written for that reason, rather than producing something that looks finished and cannot compile.
+
+**Notes for next time**
+- The remaining buildable work is SMS (blocked on provider choice) and the later waves (PLAN-013, 011, 007, 004, 005, 014). Everything in W1/W2 and the Outlook add-in is shipped and verified.
