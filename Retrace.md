@@ -3378,3 +3378,21 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - Steps F (P0-12 `?token=`), G (Phase 1 majors + `security/audit-baseline.json`), H (CI wiring for the check, the audit baseline, gitleaks/trivy) and I (the Azure package) remain, tracked in `files/W0-progress.md`.
 - `apps/api/clean-probe-residue.ts` is the dev-only cleaner for verification residue (probe users, their roles, and the audit rows that *mention* them — the create rows are written by the admin, so matching on the actor is not enough); run it then `npx tsx src/snapshot-capture.ts` before committing snapshots.
+
+**Prompt 219 — continued: W0 step F (no sign-in token in any URL)**
+
+**What I did**
+- Replaced the invoice PDF link (`…/pdf?token=<jwt>`) with an authenticated `fetch` and an object URL, so the token never leaves the request header. The tab is opened **synchronously before** the fetch: a popup raised after an `await` has lost the click's activation and is blocked, which is exactly what happened the first time I tested it. If the browser blocks it anyway, the document is handed over as a download instead of nothing happening.
+- Removed the query-string token fallback from `authenticate` altogether, after confirming the invoice link was its only consumer (the WebSocket handshake reads the query itself and is the documented exception — browsers cannot set an `Authorization` header on a `WebSocket`, and the access log does not record upgrades).
+- Closed the same exposure on the way in, not just on the way out: the OIDC callback used to redirect the browser to `/login?token=<jwt>`. It now redirects with a **single-use, two-minute code**; a new `/auth/sso/exchange` route swaps the code for the token in the body of a POST, comparing the code with `timingSafeEqual` and deleting it on first use.
+- Verified with a 14-assertion live-API suite: `?token=` on the invoice route answers 401 while the identical request with the header answers 200 and still returns the document with its original content type; the code exchanges exactly once and a reused, stale, wrong or missing code is refused with 400; the exchanged token works against `/users/me`. Then drove the UI: the button fetches without a token in the URL and produces a `text/html` blob of the invoice.
+
+**Decisions worth remembering**
+- **A short-lived code beats a token in a URL, and beats a bigger refactor for now.** The cookie-session work (H3/PLAN-001) eventually replaces `localStorage`, but the exposure had to close today, and the authorization-code shape is the standard answer: single use, two minutes, exchanged in a POST body.
+- **User activation is a real constraint on "fetch then open".** Any handler that opens a window must call `window.open` before its first `await`, or the browser treats it as a popup and blocks it — a silent failure that a unit test would never catch. It only appeared because I clicked the real button.
+- **Check both directions of a token change.** It is not enough that the URL no longer contains the token; the API must also stop *accepting* it from the query string, or the exposure remains open for anyone who can construct the request.
+- Morgan already redacted `?token=` in the request line, which is why the log half looked mitigated — the browser history, proxy and support-bundle halves were not, and `?token=` was still a working credential.
+
+**Notes for next time**
+- Steps G (Phase 1 majors + `security/audit-baseline.json`), H (CI wiring: `guard:routes`, the audit baseline, gitleaks/trivy) and I (the Azure package) remain, tracked in `files/W0-progress.md`.
+- Playwright's actionability checks time out on this app's animated rows ("waiting for element to be visible, enabled and stable"); `dispatchEvent("click")` plus a `window.open`/`fetch` hook in the page context verified the handler, and a coordinate click verified the wiring visually.

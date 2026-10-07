@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.6.063",
+    "date": "2026-10-06",
+    "title": "No sign-in token travels in a URL any more",
+    "changes": [
+      {
+        "text": "**The invoice PDF no longer carries your session token in its address.** \"Download PDF\" opened `/api/billing/invoices/<id>/pdf?token=<jwt>`, so a twelve-hour credential landed in browser history, in the proxy log and in anything that records request lines. It now fetches with the `Authorization` header and opens the document from an in-memory blob, so the token never leaves the request header.",
+        "type": "Fix"
+      },
+      {
+        "text": "**`?token=` is no longer accepted anywhere on the API.** The auth middleware took a token from the query string for that one link; it now reads the `Authorization` header only. A request that presents a token in the query string is treated as unauthenticated.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The SSO sign-in hand-off no longer puts the token in the redirect.** The OIDC callback used to bounce the browser to `/login?token=<jwt>` — the same exposure, on the route that creates a session. It now redirects with a **single-use, two-minute code** that the sign-in page exchanges for the token in the body of a POST; the code is compared in constant time, deleted on first use, and refused if it is stale or wrong. The token itself is never in a URL.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The tab is opened before the fetch, not after.** A browser only allows a popup raised while the click is still \"active\"; waiting for the response first loses that and the tab is silently blocked. The window is opened synchronously and pointed at the blob when the bytes arrive, with a file download as the fallback if the browser blocks the popup anyway.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.062",
     "date": "2026-10-06",
     "title": "Outbound requests go through one policy, and credentials stay out of the audit log",

@@ -52,12 +52,12 @@ export interface SignTokenPayload {
  * a deactivation takes effect immediately instead of when the token expires.
  */
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction): void {
+  // Only the Authorization header: a token in a query string ends up in browser history,
+  // proxy logs and the access log, so `?token=` is no longer accepted (see PLAN-018 P0-12).
   let token: string | undefined;
   const header = req.headers.authorization;
   if (header?.startsWith("Bearer ")) {
     token = header.slice(7);
-  } else if (req.query.token && typeof req.query.token === "string") {
-    token = req.query.token;
   }
 
   if (!token) {

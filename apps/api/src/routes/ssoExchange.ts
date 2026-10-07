@@ -16,6 +16,10 @@ const enabled = () => process.env.SSO_ENABLED === "true" && !!process.env.SSO_IS
 const SSO_STATE_KEY = "sso:oidc_state";
 /** How long a started sign-in stays valid. */
 const SSO_STATE_TTL_MS = 10 * 60 * 1000;
+/** The hand-off code placed in the redirect back to the sign-in page (never the token). */
+const SSO_CODE_KEY = "sso:oidc_code";
+/** How long that hand-off code can be exchanged for the token. */
+const SSO_CODE_TTL_MS = 2 * 60 * 1000;
 
 function base64url(input: string | Buffer): string {
   return Buffer.from(input).toString("base64url");
@@ -134,7 +138,42 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
     }
     if (!user) return res.status(500).json({ error: "User provisioning failed" });
     const token = signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "read_only") as SystemRole, tokenVersion: user.tokenVersion });
-    res.redirect(`${process.env.WEB_ORIGIN || "http://localhost:3010"}/login?token=${encodeURIComponent(token)}`);
+    // The token itself must not travel in a URL (browser history, proxy logs, morgan), so
+    // the redirect carries a single-use code that the sign-in page swaps for the token in
+    // the body of a POST. The code expires in two minutes and is deleted on first use.
+    const handoffCode = crypto.randomBytes(24).toString("hex");
+    const handoff = JSON.stringify({ code: handoffCode, token, createdAt: new Date().toISOString() });
+    await prisma.systemConfig.upsert({
+      where: { key: SSO_CODE_KEY },
+      create: { key: SSO_CODE_KEY, value: handoff },
+      update: { value: handoff },
+    });
+    res.redirect(`${process.env.WEB_ORIGIN || "http://localhost:3010"}/login?sso_code=${handoffCode}`);
+  } catch (e) { next(e); }
+});
+
+/**
+ * Swap the single-use code from the OIDC redirect for the token. Unauthenticated by
+ * necessity — it is the step that creates the session — so the code is the credential:
+ * single use, two-minute TTL, and compared in constant time.
+ */
+ssoExchangeRouter.post("/exchange", async (req, res, next) => {
+  try {
+    if (!enabled()) return res.status(404).json({ error: "SSO disabled" });
+    const suppliedCode = typeof req.body?.code === "string" ? req.body.code : "";
+    if (!suppliedCode) return res.status(400).json({ error: "No code supplied" });
+    const stored = await prisma.systemConfig.findUnique({ where: { key: SSO_CODE_KEY } });
+    let held: { code?: string; token?: string; createdAt?: string } = {};
+    try { held = stored ? JSON.parse(stored.value as string) : {}; } catch { held = {}; }
+    const ageMs = held.createdAt ? Date.now() - new Date(held.createdAt).getTime() : Infinity;
+    const supplied = Buffer.from(suppliedCode);
+    const expected = Buffer.from(held.code || "");
+    const matches = supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
+    if (!matches || !held.token || ageMs > SSO_CODE_TTL_MS) {
+      return res.status(400).json({ error: "This sign-in link is invalid or has expired — start again" });
+    }
+    await prisma.systemConfig.deleteMany({ where: { key: SSO_CODE_KEY } });
+    res.json({ token: held.token });
   } catch (e) { next(e); }
 });
 

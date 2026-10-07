@@ -120,9 +120,34 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
   const handleSend = async (id: string) => {
     try { await api.post(`/billing/invoices/${id}/send`); toast.success("Sent"); fetchInvoices(); } catch { toast.error("Failed"); }
   };
-  const handleInvoicePdf = (inv: Invoice) => {
+  const handleInvoicePdf = async (inv: Invoice) => {
+    // Fetched with the Authorization header and opened from a blob: the token must never
+    // appear in a URL, where it would land in history, proxy logs and the access log.
+    // The tab is opened synchronously first — a popup raised after an `await` has lost the
+    // click's activation and is blocked — then pointed at the blob when the fetch resolves.
     const token = localStorage.getItem("c7_token");
-    window.open(`/api/billing/invoices/${inv.id}/pdf?token=${token}`, "_blank");
+    const win = window.open("", "_blank");
+    if (win) win.opener = null;
+    try {
+      const res = await fetch(`/api/billing/invoices/${inv.id}/pdf`, {
+        headers: token ? { authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) { win?.close(); toast.error("Could not open the invoice"); return; }
+      const url = URL.createObjectURL(await res.blob());
+      if (win) {
+        win.location.href = url;
+      } else {
+        // The popup was blocked anyway: hand the file over instead of doing nothing.
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${inv.invoiceNumber || "invoice"}.html`;
+        link.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch {
+      win?.close();
+      toast.error("Could not open the invoice");
+    }
   };
   const openPay = (inv: Invoice) => {
     setPayForm({ invoiceId: inv.id, amount: inv.total, method: "other", reference: "" });

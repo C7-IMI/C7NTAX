@@ -19,13 +19,17 @@ export function LoginPage() {
   const [ssoEnabled, setSsoEnabled] = useState(false);
   const [passkeyEnabled, setPasskeyEnabled] = useState(false);
 
-  // SSO callback: accept ?token= from the OIDC exchange and store it.
+  // SSO callback: the redirect carries a single-use code, which is exchanged for the
+  // token in the body of a POST — the token itself never appears in a URL.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    if (!token) return;
+    const code = params.get("sso_code");
+    if (!code) return;
     window.history.replaceState({}, "", "/login");
-    completeSignIn(token).then(() => navigate("/")).catch(() => toast.error("That sign-in link has expired"));
+    api.post("/auth/sso/exchange", { code })
+      .then(r => completeSignIn(r.data.token))
+      .then(() => navigate("/"))
+      .catch(() => toast.error("That sign-in link has expired — start again"));
   }, [completeSignIn, navigate]);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.6.062 | Last Updated: 2026-10-06
+## Version: 2026.10.6.063 | Last Updated: 2026-10-06
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.6.063 — No sign-in token travels in a URL any more
+- **[Fix]** **The invoice PDF no longer carries your session token in its address.** "Download PDF" opened `/api/billing/invoices/<id>/pdf?token=<jwt>`, so a twelve-hour credential landed in browser history, in the proxy log and in anything that records request lines. It now fetches with the `Authorization` header and opens the document from an in-memory blob, so the token never leaves the request header.
+- **[Fix]** **`?token=` is no longer accepted anywhere on the API.** The auth middleware took a token from the query string for that one link; it now reads the `Authorization` header only. A request that presents a token in the query string is treated as unauthenticated.
+- **[Fix]** **The SSO sign-in hand-off no longer puts the token in the redirect.** The OIDC callback used to bounce the browser to `/login?token=<jwt>` — the same exposure, on the route that creates a session. It now redirects with a **single-use, two-minute code** that the sign-in page exchanges for the token in the body of a POST; the code is compared in constant time, deleted on first use, and refused if it is stale or wrong. The token itself is never in a URL.
+- **[Update]** **The tab is opened before the fetch, not after.** A browser only allows a popup raised while the click is still "active"; waiting for the response first loses that and the tab is silently blocked. The window is opened synchronously and pointed at the blob when the bytes arrive, with a file download as the fallback if the browser blocks the popup anyway.
+- **Verification:** a live-API suite (14 assertions) proves `?token=` on the invoice route answers **401** while the same request with the header answers 200 and still returns the 5 KB invoice document with its original content type; the SSO code exchanges exactly once, and a reused, stale, wrong or missing code is refused **400**; and the browser was driven to confirm the button fetches without a token in the URL and produces the document blob. The six-persona permission matrix is identical to the previous step, `pnpm guard:routes` passes (323 routes, 0 violations), the API typecheck is at its 155-error baseline with none in the changed files, and the web typecheck is clean.
+- **Rollback:** `git revert` this commit. Four files, no schema or data change.
 
 ## 2026.10.6.062 — Outbound requests go through one policy, and credentials stay out of the audit log
 - **[New]** **One helper decides every outbound request** (`services/egress.ts`). The server fetches URLs that an administrator or an operator types in — an AI provider's endpoint, a status page, a monitor URL, an SSO issuer — and each of those could previously be aimed at the metadata service, an internal admin panel or a database port, with the stored API key travelling along on the inference call. Requests are now http(s) only (https for anything public), loopback/RFC1918/link-local destinations are refused before a socket opens, **every address a hostname resolves to** is checked so a public name cannot point inward, and every call carries a timeout.
