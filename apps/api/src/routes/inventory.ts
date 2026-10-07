@@ -8,7 +8,7 @@ export const inventoryRouter = Router();
 inventoryRouter.use(authenticate);
 
 // ── List assets ─────────────────────────────────────────────────────
-inventoryRouter.get("/assets", async (req: AuthRequest, res, next) => {
+inventoryRouter.get("/assets", requirePermission(Permission.AssetView), async (req: AuthRequest, res, next) => {
   try {
     const { type, status, companyId, search, category, limit = "50", offset = "0" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
@@ -38,7 +38,7 @@ inventoryRouter.get("/assets", async (req: AuthRequest, res, next) => {
 });
 
 // ── Get single asset ─────────────────────────────────────────────────
-inventoryRouter.get("/assets/:id", async (req: AuthRequest, res, next) => {
+inventoryRouter.get("/assets/:id", requirePermission(Permission.AssetView), async (req: AuthRequest, res, next) => {
   try {
     const asset = await prisma.asset.findUnique({
       where: { id: req.params.id },
@@ -53,7 +53,7 @@ inventoryRouter.get("/assets/:id", async (req: AuthRequest, res, next) => {
 });
 
 // ── Create asset ─────────────────────────────────────────────────────
-inventoryRouter.post("/assets", async (req: AuthRequest, res, next) => {
+inventoryRouter.post("/assets", requirePermission(Permission.AssetCreate), async (req: AuthRequest, res, next) => {
   try {
     const { name, assetTag, type } = req.body;
     if (!name || !assetTag || !type) throw new AppError("name, assetTag, and type are required", 400);
@@ -73,7 +73,7 @@ inventoryRouter.post("/assets", async (req: AuthRequest, res, next) => {
 });
 
 // ── Update asset ─────────────────────────────────────────────────────
-inventoryRouter.patch("/assets/:id", async (req: AuthRequest, res, next) => {
+inventoryRouter.patch("/assets/:id", requirePermission(Permission.AssetEdit), async (req: AuthRequest, res, next) => {
   try {
     const allowed = ["name", "assetTag", "serialNumber", "model", "manufacturer", "type", "category",
       "status", "department", "vendor", "purchaseOrder", "location", "building", "room", "companyId",
@@ -95,7 +95,7 @@ inventoryRouter.patch("/assets/:id", async (req: AuthRequest, res, next) => {
 });
 
 // ── Delete asset ─────────────────────────────────────────────────────
-inventoryRouter.delete("/assets/:id", async (req: AuthRequest, res, next) => {
+inventoryRouter.delete("/assets/:id", requirePermission(Permission.AssetDelete), async (req: AuthRequest, res, next) => {
   try {
     await prisma.asset.delete({ where: { id: req.params.id } });
     res.json({ message: "Asset deleted" });
@@ -103,7 +103,7 @@ inventoryRouter.delete("/assets/:id", async (req: AuthRequest, res, next) => {
 });
 
 // ── Checkout / assign asset ──────────────────────────────────────────
-inventoryRouter.post("/assets/:id/checkout", async (req: AuthRequest, res, next) => {
+inventoryRouter.post("/assets/:id/checkout", requirePermission(Permission.AssetEdit), async (req: AuthRequest, res, next) => {
   try {
     const { assignedToId, ticketId, notes } = req.body;
     const asset = await prisma.asset.findUnique({ where: { id: req.params.id } });
@@ -122,7 +122,7 @@ inventoryRouter.post("/assets/:id/checkout", async (req: AuthRequest, res, next)
 });
 
 // ── Checkin / return asset ───────────────────────────────────────────
-inventoryRouter.post("/assignments/:id/checkin", async (req: AuthRequest, res, next) => {
+inventoryRouter.post("/assignments/:id/checkin", requirePermission(Permission.AssetEdit), async (req: AuthRequest, res, next) => {
   try {
     const assignment = await prisma.assetAssignment.findUnique({ where: { id: req.params.id } });
     if (!assignment) throw new AppError("Assignment not found", 404);
@@ -141,7 +141,7 @@ inventoryRouter.post("/assignments/:id/checkin", async (req: AuthRequest, res, n
 // ── Import assets from CSV ──────────────────────────────────────────
 const ASSET_FIELDS = ["name", "assetTag", "type", "category", "status", "serialNumber", "model", "manufacturer", "department", "vendor", "location", "building", "room", "purchaseDate", "purchasePrice", "purchaseOrder", "warrantyExpiry", "costCenter", "depreciationMethod", "usefulLife", "salvageValue", "ipAddress", "macAddress", "osName", "osVersion", "notes"];
 
-inventoryRouter.post("/assets/import", async (req: AuthRequest, res, next) => {
+inventoryRouter.post("/assets/import", requirePermission(Permission.AssetCreate), async (req: AuthRequest, res, next) => {
   try {
     const { rows } = req.body;
     if (!Array.isArray(rows) || rows.length === 0) throw new AppError("No data rows provided", 400);

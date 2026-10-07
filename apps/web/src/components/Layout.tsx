@@ -13,6 +13,7 @@ import { KumoTrail } from "./KumoTrail";
 import { useTheme } from "../hooks/useTheme";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
+import { Permission } from "@C7NTAX/shared";
 import { CommandPalette, type PaletteItem } from "./CommandPalette";
 import { MyAccountMenu } from "./MyAccountMenu";
 import { UI_P1, UI_P2, UI_KUMO_ORGS, setUiP1, setUiP2 } from "../lib/uiFlags";
@@ -23,55 +24,57 @@ export type NavNode = {
   to?: string;
   icon: LucideIcon;
   label: string;
+  /** Hidden from anyone without this permission, mirroring the API gate on the same module. */
+  permission?: Permission;
   children?: NavNode[];
 };
 
 export const NAV_TREE: NavNode[] = [
   { id: "home", to: "/home", icon: Home, label: "Home" },
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { id: "service-alerts", to: "/service-alerts", icon: AlertTriangle, label: "Service Alerts" },
-  { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets" },
-  { id: "boards", to: "/boards", icon: Columns3, label: "Service Boards" },
-  { id: "pipeline", to: "/opportunities", icon: Target, label: "Pipeline" },
+  { id: "service-alerts", to: "/service-alerts", icon: AlertTriangle, label: "Service Alerts", permission: Permission.ServiceAlertView },
+  { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets", permission: Permission.TicketView },
+  { id: "boards", to: "/boards", icon: Columns3, label: "Service Boards", permission: Permission.BoardView },
+  { id: "pipeline", to: "/opportunities", icon: Target, label: "Pipeline", permission: Permission.OpportunityView },
   {
     id: "administration", icon: Shield, label: "Administration", children: [
-      { id: "admin-general", to: "/admin", icon: Settings, label: "General Settings" },
-      { id: "admin-boards", to: "/admin/boards", icon: Columns3, label: "Service Boards" },
-      { id: "admin-service-alerts", to: "/admin/service-alerts", icon: AlertTriangle, label: "Service Alerts" },
-      { id: "admin-system", to: "/admin/system", icon: Settings, label: "System Settings" },
-      { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs" },
-      { id: "admin-cloudconnect", to: "/cloudconnect", icon: Cloud, label: "CloudConnect" },
+      { id: "admin-general", to: "/admin", icon: Settings, label: "General Settings", permission: Permission.SystemConfig },
+      { id: "admin-boards", to: "/admin/boards", icon: Columns3, label: "Service Boards", permission: Permission.BoardManage },
+      { id: "admin-service-alerts", to: "/admin/service-alerts", icon: AlertTriangle, label: "Service Alerts", permission: Permission.ServiceAlertManage },
+      { id: "admin-system", to: "/admin/system", icon: Settings, label: "System Settings", permission: Permission.SystemConfig },
+      { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs", permission: Permission.SystemConfig },
+      { id: "admin-cloudconnect", to: "/cloudconnect", icon: Cloud, label: "CloudConnect", permission: Permission.IntegrationManage },
       { id: "admin-changelog", to: "/admin/changelog", icon: Sparkles, label: "What's New" },
     ],
   },
   {
     id: "clients", icon: Building2, label: "Clients", children: [
-      { id: "clients-list", to: "/clients", icon: Building2, label: "Client List" },
-      { id: "clients-contacts", to: "/clients/contacts", icon: Users, label: "Contacts" },
+      { id: "clients-list", to: "/clients", icon: Building2, label: "Client List", permission: Permission.ClientView },
+      { id: "clients-contacts", to: "/clients/contacts", icon: Users, label: "Contacts", permission: Permission.ContactView },
     ],
   },
   {
     id: "assets", icon: Monitor, label: "Assets", children: [
-      { id: "assets-inventory", to: "/assets", icon: Monitor, label: "Asset Inventory" },
-      { id: "assets-procurement", to: "/procurement", icon: DollarSign, label: "Procurement" },
+      { id: "assets-inventory", to: "/assets", icon: Monitor, label: "Asset Inventory", permission: Permission.AssetView },
+      { id: "assets-procurement", to: "/procurement", icon: DollarSign, label: "Procurement", permission: Permission.ProcurementView },
     ],
   },
   {
     id: "users-roles", icon: Users, label: "Users & Roles", children: [
-      { id: "users-list", to: "/users", icon: Users, label: "Manage Users" },
-      { id: "users-roles", to: "/roles", icon: Shield, label: "Manage Roles" },
+      { id: "users-list", to: "/users", icon: Users, label: "Manage Users", permission: Permission.UserManage },
+      { id: "users-roles", to: "/roles", icon: Shield, label: "Manage Roles", permission: Permission.RoleManage },
     ],
   },
   {
     id: "projects", icon: FolderKanban, label: "Projects", children: [
-      { id: "projects-list", to: "/projects", icon: FolderKanban, label: "Project List" },
-      { id: "calendar", to: "/calendar", icon: Calendar, label: "Calendar" },
-      { id: "pto", to: "/pto", icon: Clock, label: "Time Off" },
+      { id: "projects-list", to: "/projects", icon: FolderKanban, label: "Project List", permission: Permission.ProjectView },
+      { id: "calendar", to: "/calendar", icon: Calendar, label: "Calendar", permission: Permission.ScheduleView },
+      { id: "pto", to: "/pto", icon: Clock, label: "Time Off", permission: Permission.PTOView },
     ],
   },
-  { id: "kb", to: "/kb", icon: BookOpen, label: "Knowledge Base" },
+  { id: "kb", to: "/kb", icon: BookOpen, label: "Knowledge Base", permission: Permission.KBView },
   {
-    id: "kumo", icon: Database, label: "Kumo", children: [
+    id: "kumo", icon: Database, label: "Kumo", permission: Permission.KumoView, children: [
       { id: "kumo-dashboard", to: "/kumo", icon: LayoutDashboard, label: "Dashboard" },
       ...(UI_KUMO_ORGS ? [{ id: "kumo-organizations", to: "/kumo/organizations", icon: Building2, label: "Organizations" }] : []),
       { id: "kumo-assets", to: "/kumo/assets", icon: Monitor, label: "Assets" },
@@ -83,17 +86,17 @@ export const NAV_TREE: NavNode[] = [
     ],
   },
   {
-    id: "billing", icon: DollarSign, label: "Billing", children: [
+    id: "billing", icon: DollarSign, label: "Billing", permission: Permission.BillingView, children: [
       { id: "billing-dashboard", to: "/billing/dashboard", icon: TrendingUp, label: "Finance Dashboard" },
       { id: "billing-invoices", to: "/billing", icon: Receipt, label: "Invoices" },
-      { id: "billing-agreements", to: "/billing/agreements", icon: ClipboardList, label: "Agreements" },
-      { id: "billing-payments", to: "/billing/payments", icon: CreditCard, label: "Payments" },
+      { id: "billing-agreements", to: "/billing/agreements", icon: ClipboardList, label: "Agreements", permission: Permission.ServiceAgreementView },
+      { id: "billing-payments", to: "/billing/payments", icon: CreditCard, label: "Payments", permission: Permission.PaymentView },
       { id: "billing-time", to: "/billing/time", icon: Timer, label: "Time & Expenses" },
       { id: "billing-reports", to: "/billing/reports", icon: BarChart3, label: "Reports" },
     ],
   },
   {
-    id: "reports", icon: TrendingUp, label: "Reporting", children: [
+    id: "reports", icon: TrendingUp, label: "Reporting", permission: Permission.ReportView, children: [
       { id: "reports-dashboard", to: "/reports", icon: TrendingUp, label: "Dashboards" },
       { id: "reports-standard", to: "/reports/standard", icon: ClipboardList, label: "Standard Reports" },
       { id: "reports-analytics", to: "/reports/analytics", icon: BarChart3, label: "Analytics" },
@@ -109,6 +112,24 @@ export const NAV_TREE: NavNode[] = [
     ],
   },
 ];
+
+/**
+ * Drop what the signed-in role cannot reach, so the navigation never advertises a page
+ * whose API calls would come back 403. A group disappears once all of its children do.
+ */
+export function filterNavByPermission(nodes: NavNode[], permissions: string[]): NavNode[] {
+  const out: NavNode[] = [];
+  for (const node of nodes) {
+    const allowed = !node.permission || permissions.includes(node.permission);
+    if (node.children) {
+      const children = filterNavByPermission(node.children, permissions);
+      if (allowed && children.length) out.push({ ...node, children });
+      continue;
+    }
+    if (allowed) out.push(node);
+  }
+  return out;
+}
 
 function loadExpanded(): Set<string> {
   try {
@@ -218,7 +239,10 @@ function getSectionDescription(pathname: string): string {
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, logout, permissions } = useAuth();
+
+  // The navigation only offers what the API will actually serve for this role.
+  const visibleTree = useMemo(() => filterNavByPermission(NAV_TREE, permissions), [permissions]);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -240,7 +264,7 @@ export function Layout({ children }: { children: ReactNode }) {
         if (n.children) walk(n.children, n.label);
       }
     };
-    walk(NAV_TREE);
+    walk(visibleTree);
     const actions: PaletteItem[] = [
       { id: "act-new-ticket", label: "New Ticket", group: "Actions", keywords: "create ticket new", run: () => navigate("/tickets") },
       { id: "act-theme", label: theme === "dark" ? "Switch to light mode" : "Switch to dark mode", group: "Actions", run: toggleTheme },
@@ -374,7 +398,7 @@ export function Layout({ children }: { children: ReactNode }) {
   };
 
   const orderedTree = navOrder
-    .map(id => NAV_TREE.find(n => n.id === id))
+    .map(id => visibleTree.find(n => n.id === id))
     .filter(Boolean) as NavNode[];
 
   // ── Collapse persistence ───────────────────────────────────────

@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { prisma } from "../index";
-import { authenticate, type AuthRequest } from "../middleware/auth";
+import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
+import { Permission } from "@C7NTAX/shared";
 export const reportsRouter = Router(); reportsRouter.use(authenticate);
 
-reportsRouter.get("/", async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const reports = await prisma.report.findMany({ orderBy: { name: "asc" } });
     const [authors, schedules] = await Promise.all([
@@ -16,12 +17,12 @@ reportsRouter.get("/", async (_req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-reportsRouter.post("/", async (req: AuthRequest, res, next) => {
+reportsRouter.post("/", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
   try { const r = await prisma.report.create({ data: { name: req.body.name, description: req.body.description || null, type: req.body.type || "custom", config: req.body.config || {}, createdById: req.user!.userId } }); res.status(201).json(r); }
   catch (e) { next(e); }
 });
 
-reportsRouter.get("/:id/run", async (req: AuthRequest, res, next) => {
+reportsRouter.get("/:id/run", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try { const report = await prisma.report.findUnique({ where: { id: req.params.id } }); if (!report) { res.status(404).json({ error: "Not found" }); return; }
     // Run report based on type
     let data: unknown[] = [];
@@ -34,14 +35,14 @@ reportsRouter.get("/:id/run", async (req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-reportsRouter.post("/:id/schedules", async (req: AuthRequest, res, next) => {
+reportsRouter.post("/:id/schedules", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
   try { const s = await prisma.reportSchedule.create({ data: { reportId: req.params.id, frequency: req.body.frequency, dayOfWeek: req.body.dayOfWeek || null, dayOfMonth: req.body.dayOfMonth || null, timeOfDay: req.body.timeOfDay, recipients: req.body.recipients, format: req.body.format || "pdf" } }); res.status(201).json(s); }
   catch (e) { next(e); }
 });
 
 // ── Standard report data endpoints ──
 
-reportsRouter.get("/data/ticket-volume", async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/ticket-volume", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const total = await prisma.ticket.count();
     const byStatus = await prisma.ticket.groupBy({ by: ["status"], _count: { id: true } });
@@ -53,7 +54,7 @@ reportsRouter.get("/data/ticket-volume", async (_req: AuthRequest, res, next) =>
   } catch (e) { next(e); }
 });
 
-reportsRouter.get("/data/sla-compliance", async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/sla-compliance", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const now = new Date();
     const tickets = await prisma.ticket.findMany({
@@ -78,7 +79,7 @@ reportsRouter.get("/data/sla-compliance", async (_req: AuthRequest, res, next) =
   } catch (e) { next(e); }
 });
 
-reportsRouter.get("/data/technician-utilization", async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/technician-utilization", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
     const timeEntries = await prisma.timeEntry.findMany({
@@ -96,7 +97,7 @@ reportsRouter.get("/data/technician-utilization", async (_req: AuthRequest, res,
   } catch (e) { next(e); }
 });
 
-reportsRouter.get("/data/revenue-summary", async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/revenue-summary", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const [paid, outstanding, byMonth] = await Promise.all([
       prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "paid" } }),
@@ -114,7 +115,7 @@ reportsRouter.get("/data/revenue-summary", async (_req: AuthRequest, res, next) 
 });
 
 // ── Ticket Aging Report ──
-reportsRouter.get("/data/ticket-aging", async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/ticket-aging", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const now = new Date();
     const tickets = await prisma.ticket.findMany({
@@ -135,7 +136,7 @@ reportsRouter.get("/data/ticket-aging", async (_req: AuthRequest, res, next) => 
 });
 
 // ── Time Tracking Report ──
-reportsRouter.get("/data/time-tracking", async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/time-tracking", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const timeEntries = await prisma.timeEntry.findMany({
       orderBy: { date: "desc" },
@@ -155,7 +156,7 @@ reportsRouter.get("/data/time-tracking", async (_req: AuthRequest, res, next) =>
 });
 
 // ── Client Satisfaction (placeholder) ──
-reportsRouter.get("/data/csat", async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const companies = await prisma.company.findMany({ select: { id: true, name: true }, take: 20 });
     const data = companies.map(c => ({
@@ -172,7 +173,7 @@ reportsRouter.get("/data/csat", async (_req: AuthRequest, res, next) => {
 });
 
 // ── Contract Profitability Report ──
-reportsRouter.get("/data/contract-profitability", async (_req: AuthRequest, res, next) => {
+reportsRouter.get("/data/contract-profitability", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
     const agreements = await prisma.serviceAgreement.findMany({
       include: { company: { select: { name: true } }, invoices: { where: { status: "paid" }, select: { total: true } } },

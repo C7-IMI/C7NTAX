@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { authenticate, type AuthRequest } from "../middleware/auth";
+import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
+import { Permission } from "@C7NTAX/shared";
 import { inferenceEngine, type InferenceOutput } from "../services/inference";
 import { AppError } from "../middleware/errorHandler";
 import { prisma } from "../index";
@@ -8,7 +9,7 @@ export const inferenceRouter = Router();
 inferenceRouter.use(authenticate);
 
 // ── Analyze a ticket for suggestions + patterns ──
-inferenceRouter.post("/suggestions", async (req: AuthRequest, res, next) => {
+inferenceRouter.post("/suggestions", requirePermission(Permission.InferenceView), async (req: AuthRequest, res, next) => {
   try {
     const { ticketId, forceRefresh } = req.body;
     if (!ticketId) throw new AppError("ticketId required");
@@ -27,7 +28,7 @@ inferenceRouter.post("/suggestions", async (req: AuthRequest, res, next) => {
 });
 
 // ── List detected patterns ──
-inferenceRouter.get("/patterns", async (req: AuthRequest, res, next) => {
+inferenceRouter.get("/patterns", requirePermission(Permission.InferenceView), async (req: AuthRequest, res, next) => {
   try {
     const { category, severity, status, limit } = req.query as Record<string, string>;
     const patterns = await inferenceEngine.listPatterns({
@@ -38,7 +39,7 @@ inferenceRouter.get("/patterns", async (req: AuthRequest, res, next) => {
 });
 
 // ── Trigger pattern detection refresh ──
-inferenceRouter.post("/patterns/refresh", async (req: AuthRequest, res, next) => {
+inferenceRouter.post("/patterns/refresh", requirePermission(Permission.InferenceManage), async (req: AuthRequest, res, next) => {
   try {
     const patterns = await inferenceEngine.refreshPatterns(req.body.boardId);
     res.json({ success: true, patterns, count: patterns.length });
@@ -46,7 +47,7 @@ inferenceRouter.post("/patterns/refresh", async (req: AuthRequest, res, next) =>
 });
 
 // ── List AI provider configs ──
-inferenceRouter.get("/providers", async (_req: AuthRequest, res, next) => {
+inferenceRouter.get("/providers", requirePermission(Permission.InferenceView), async (_req: AuthRequest, res, next) => {
   try {
     const providers = await prisma.aiProviderConfig.findMany();
     const safe = providers.map(({ apiKey, ...rest }) => ({ ...rest, hasApiKey: !!apiKey }));
@@ -55,7 +56,7 @@ inferenceRouter.get("/providers", async (_req: AuthRequest, res, next) => {
 });
 
 // ── Create/update provider config ──
-inferenceRouter.post("/providers", async (req: AuthRequest, res, next) => {
+inferenceRouter.post("/providers", requirePermission(Permission.InferenceManage), async (req: AuthRequest, res, next) => {
   try {
     const { name, provider, model, apiKey, apiEndpoint, maxTokens, temperature, topP, isActive, isDefault, config } = req.body;
     if (!name || !provider) throw new AppError("name and provider required");
@@ -74,7 +75,7 @@ inferenceRouter.post("/providers", async (req: AuthRequest, res, next) => {
 });
 
 // ── Update provider config ──
-inferenceRouter.patch("/providers/:id", async (req: AuthRequest, res, next) => {
+inferenceRouter.patch("/providers/:id", requirePermission(Permission.InferenceManage), async (req: AuthRequest, res, next) => {
   try {
     const allowed = ["name","provider","model","apiKey","apiEndpoint","maxTokens","temperature","topP","isActive","isDefault","config"];
     const updates: Record<string, unknown> = {};
@@ -91,7 +92,7 @@ inferenceRouter.patch("/providers/:id", async (req: AuthRequest, res, next) => {
 });
 
 // ── Delete provider ──
-inferenceRouter.delete("/providers/:id", async (req: AuthRequest, res, next) => {
+inferenceRouter.delete("/providers/:id", requirePermission(Permission.InferenceManage), async (req: AuthRequest, res, next) => {
   try {
     await prisma.aiProviderConfig.delete({ where: { id: req.params.id } });
     res.json({ message: "Provider removed" });
@@ -99,7 +100,7 @@ inferenceRouter.delete("/providers/:id", async (req: AuthRequest, res, next) => 
 });
 
 // ── Test provider connection ──
-inferenceRouter.post("/providers/:id/test", async (req: AuthRequest, res, next) => {
+inferenceRouter.post("/providers/:id/test", requirePermission(Permission.InferenceManage), async (req: AuthRequest, res, next) => {
   try {
     const provider = await prisma.aiProviderConfig.findUnique({ where: { id: req.params.id } });
     if (!provider) throw new AppError("Provider not found", 404);

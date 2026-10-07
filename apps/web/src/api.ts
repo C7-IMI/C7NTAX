@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 
 /**
  * Authenticated Axios instance.
@@ -16,11 +17,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 globally — only redirect when NOT already on the login page
+// Handle 403 globally — the API enforces a permission per module, so a denied *action*
+// should explain itself. Background reads are left silent: pages already decide how to
+// degrade, and a toast per denied panel would be noise.
+let lastDeniedAt = 0;
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status;
+    const method = String(err.config?.method || "get").toLowerCase();
+    if (status === 403 && method !== "get") {
+      const body = err.response?.data?.error;
+      const code = typeof body === "object" ? body?.code : undefined;
+      if (code !== "PASSWORD_CHANGE_REQUIRED" && Date.now() - lastDeniedAt > 3000) {
+        lastDeniedAt = Date.now();
+        toast.error(typeof body === "string" ? body : body?.message || "Your role does not allow that");
+      }
+    }
+    if (status === 401) {
       const onLoginPage = window.location.pathname === "/login";
       const bypass = localStorage.getItem("c7_bypass") === "1";
       if (!onLoginPage && !bypass) {

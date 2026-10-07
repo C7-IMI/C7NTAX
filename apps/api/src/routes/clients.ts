@@ -8,7 +8,7 @@ export const clientsRouter = Router();
 clientsRouter.use(authenticate);
 
 // ── List companies / clients ────────────────────────────────────────
-clientsRouter.get("/", async (req: AuthRequest, res, next) => {
+clientsRouter.get("/", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
   try {
     const { search, status, type, industry, territory, limit = "50", offset = "0", sort = "name" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
@@ -45,7 +45,7 @@ clientsRouter.get("/", async (req: AuthRequest, res, next) => {
 });
 
 // ── Get ALL contacts (standalone contacts page) — MUST be before /:id ─
-clientsRouter.get("/contacts", async (req: AuthRequest, res, next) => {
+clientsRouter.get("/contacts", requirePermission(Permission.ContactView), async (req: AuthRequest, res, next) => {
   try {
     const { search, companyId, limit = "100", offset = "0" } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
@@ -72,7 +72,7 @@ clientsRouter.get("/contacts", async (req: AuthRequest, res, next) => {
 // ── Look up who owns an address ──────────────────────────────────────
 // Used by the recipient fields to name the organisation an outside address
 // actually belongs to, so a warning can say "that is Stark's John Smith".
-clientsRouter.get("/contacts/lookup", async (req: AuthRequest, res, next) => {
+clientsRouter.get("/contacts/lookup", requirePermission(Permission.ContactView), async (req: AuthRequest, res, next) => {
   try {
     const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
     if (!email) throw new AppError("email is required", 400);
@@ -85,7 +85,7 @@ clientsRouter.get("/contacts/lookup", async (req: AuthRequest, res, next) => {
 });
 
 // ── Create contact ───────────────────────────────────────────────────
-clientsRouter.post("/contacts", async (req: AuthRequest, res, next) => {
+clientsRouter.post("/contacts", requirePermission(Permission.ContactCreate), async (req: AuthRequest, res, next) => {
   try {
     const { companyId, firstName, lastName, email } = req.body;
     if (!companyId || !firstName || !lastName || !email) {
@@ -102,7 +102,7 @@ clientsRouter.post("/contacts", async (req: AuthRequest, res, next) => {
 });
 
 // ── Update contact ───────────────────────────────────────────────────
-clientsRouter.patch("/contacts/:id", async (req: AuthRequest, res, next) => {
+clientsRouter.patch("/contacts/:id", requirePermission(Permission.ContactEdit), async (req: AuthRequest, res, next) => {
   try {
     const allowed = ["firstName","lastName","email","phone","mobile","title","department","notes","isPrimary","isActive","companyId"];
     const data: Record<string, unknown> = {};
@@ -116,7 +116,7 @@ clientsRouter.patch("/contacts/:id", async (req: AuthRequest, res, next) => {
 });
 
 // ── Get single client ────────────────────────────────────────────────
-clientsRouter.get("/:id", async (req: AuthRequest, res, next) => {
+clientsRouter.get("/:id", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
   try {
     const company = await prisma.company.findUnique({
       where: { id: req.params.id },
@@ -134,7 +134,7 @@ clientsRouter.get("/:id", async (req: AuthRequest, res, next) => {
 });
 
 // ── Create client ────────────────────────────────────────────────────
-clientsRouter.post("/", async (req: AuthRequest, res, next) => {
+clientsRouter.post("/", requirePermission(Permission.ClientCreate), async (req: AuthRequest, res, next) => {
   try {
     const { name } = req.body;
     if (!name) throw new AppError("name is required", 400);
@@ -157,7 +157,7 @@ clientsRouter.post("/", async (req: AuthRequest, res, next) => {
 });
 
 // ── Update client ────────────────────────────────────────────────────
-clientsRouter.patch("/:id", async (req: AuthRequest, res, next) => {
+clientsRouter.patch("/:id", requirePermission(Permission.ClientEdit), async (req: AuthRequest, res, next) => {
   try {
     const allowed = ["name","legalName","taxId","phone","fax","email","billingEmail","website",
       "addressLine1","addressLine2","city","state","postalCode","country",
@@ -186,7 +186,7 @@ clientsRouter.patch("/:id", async (req: AuthRequest, res, next) => {
 });
 
 // ── Delete client ────────────────────────────────────────────────────
-clientsRouter.delete("/:id", async (req: AuthRequest, res, next) => {
+clientsRouter.delete("/:id", requirePermission(Permission.ClientDelete), async (req: AuthRequest, res, next) => {
   try {
     await prisma.company.delete({ where: { id: req.params.id } });
     res.json({ message: "Client deleted" });
@@ -194,7 +194,7 @@ clientsRouter.delete("/:id", async (req: AuthRequest, res, next) => {
 });
 
 // ── Get a client's service agreements (used by the ticket form) ──────
-clientsRouter.get("/:id/agreements", async (req: AuthRequest, res, next) => {
+clientsRouter.get("/:id/agreements", requirePermission(Permission.ServiceAgreementView), async (req: AuthRequest, res, next) => {
   try {
     const agreements = await prisma.serviceAgreement.findMany({
       where: { companyId: req.params.id },
@@ -206,7 +206,7 @@ clientsRouter.get("/:id/agreements", async (req: AuthRequest, res, next) => {
 });
 
 // ── Get client contacts ──────────────────────────────────────────────
-clientsRouter.get("/:id/contacts", async (req: AuthRequest, res, next) => {
+clientsRouter.get("/:id/contacts", requirePermission(Permission.ContactView), async (req: AuthRequest, res, next) => {
   try {
     const contacts = await prisma.contact.findMany({
       where: { companyId: req.params.id },
@@ -217,7 +217,7 @@ clientsRouter.get("/:id/contacts", async (req: AuthRequest, res, next) => {
 });
 
 // ── FI-033: Client Kumo summary ────────────────────────────────────
-clientsRouter.get("/:id/kumo", authenticate, async (req: AuthRequest, res, next) => {
+clientsRouter.get("/:id/kumo", requirePermission(Permission.KumoView), authenticate, async (req: AuthRequest, res, next) => {
   try {
     const [assets, passwords, documents, domains, certificates] = await Promise.all([
       prisma.kumoAsset.count({ where: { companyId: req.params.id } }),

@@ -14,14 +14,14 @@ aiActionsRouter.use((_req, res, next) => {
 });
 aiActionsRouter.use(authenticate);
 
-aiActionsRouter.get("/", async (_req: AuthRequest, res, next) => {
+aiActionsRouter.get("/", requirePermission(Permission.InferenceView), async (_req: AuthRequest, res, next) => {
   try {
     const actions = await prisma.aiAction.findMany({ orderBy: { createdAt: "desc" }, take: 100, include: { audit: { orderBy: { at: "desc" }, take: 10 } } });
     res.json({ data: actions });
   } catch (e) { next(e); }
 });
 
-aiActionsRouter.post("/", async (req: AuthRequest, res, next) => {
+aiActionsRouter.post("/", requirePermission(Permission.InferenceManage), async (req: AuthRequest, res, next) => {
   try {
     const { entityType, entityId, title, summary, riskTier = "low", payload } = req.body;
     if (!entityType || !title) throw new AppError("entityType and title required");

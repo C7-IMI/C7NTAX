@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.6.059",
+    "date": "2026-10-06",
+    "title": "Every module enforces a permission, and the navigation agrees with it",
+    "changes": [
+      {
+        "text": "**The API now checks a permission on 265 routes, up from 164.** Thirteen routers mounted `authenticate` and nothing else, which meant any signed-in account — including a client contact — could read the knowledge base, internal chat sessions, surveys, workflow rules, alerts, AI actions, inference providers and their stored keys, the revenue and SLA report data per company, SSO configuration, the audit log, and every client's record; and could write to most of them. Each route now carries the permission its module was designed around: reads take the module's **View** permission, writes take the **Create/Edit/Delete/Manage** capability, and administration takes `SystemConfig`, `UserManage`, `RoleManage` or `SecurityManage`.",
+        "type": "Fix"
+      },
+      {
+        "text": "**System administration is now genuinely administrative.** `/system` had one guarded route out of 29; the failover reset, locale, translation, exchange-rate, retention-policy, field-permission, calendar-sync and poller/snapshot-poller controls — all writes — plus their unused read counterparts now require `SystemConfig`. Deliberately left open, and recorded in the plan as carve-outs: `GET/PATCH /system/config/:key` (the self-service keys and the app-wide context-menu flag, protected per key by the existing guard), `GET /system/changelog` (What's New) and `GET /system/audit-logs` (every ticket's Audit Trail tab).",
+        "type": "Fix"
+      },
+      {
+        "text": "**Three routers the original audit list had missed** are now gated too: asset inventory (`Asset*`), time off (`PTOView`/`PTORequest`/`PTOApprove`) and the Outlook add-in's ticket endpoint (`TicketCreate`). Four remain unguarded on purpose and each is defensible — `auth.ts` (the credential routes), `webauthn.ts` (passkey registration and sign-in; registration still requires a signed-in session and identifies the user from the token, not the body), `ssoExchange.ts` (the OIDC callback, which validates its state) and `push.ts` (a user's own device subscriptions).",
+        "type": "Fix"
+      },
+      {
+        "text": "**The navigation no longer advertises what the API refuses.** Every nav entry carries the permission its page needs, and the sidebar — plus the ⌘K command palette — filters against the signed-in role's permission set, dropping a group once all of its children are gone. A technician now sees Tickets, Service Boards, Clients, Assets, Projects, KB and Reporting but no Billing, Kumo, Pipeline, Users & Roles or Time Off, which matches exactly what the API returns for that role. Denied *actions* (a POST/PATCH/DELETE) surface the API's message as a toast; denied background reads stay silent, since pages already decide how to degrade.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.058",
     "date": "2026-10-06",
     "title": "Roles now hold the permissions they were always meant to have",

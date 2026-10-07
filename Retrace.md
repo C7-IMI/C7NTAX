@@ -3302,3 +3302,23 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **Step order for the rest of W0:** B) gate the nine ungated routers (reads by module view permission, writes by the matching create/edit/delete/manage) plus company scoping, and make the SPA nav permission-aware so a hidden page cannot look broken; C) the route-guard test that walks the Express stack and fails on any authenticated route without a guard or an explicit exemption; D) P0-5 with H1's egress helper; E) P0-12 (`?token=` removal); F) Phase 1 majors + `security/audit-baseline.json` + the CI gate.
 - Re-run `probe-permissions.mjs` after every step and diff against the stored matrix; keep `baseline-permissions-reads.txt` as the reference.
 - The sweep is status-only — it does not yet assert *scoping* (that a scoped persona sees only its own company's rows). Extend it before step B's scoping work.
+
+**Prompt 219 — continued: W0 step B (the permission matrix)**
+
+**What I did**
+- Finished the gate work in sub-steps, each with its own sweep diff. 101 new guards across 13 routers (265 total, from 164): the nine the audit named, plus `/system`'s admin routes, plus three the audit list had missed entirely (asset inventory, time off, and the Outlook add-in's ticket endpoint).
+- Kept the three SPA-required `/system` reads open on purpose — `config/:key`, `changelog`, `audit-logs` — after checking the front end for every `/system/` call site, and gated the rest (including `/system/failover/status`, which only the admin settings page uses).
+- Added the UI half so the app does not look broken: each nav entry declares the permission its page needs, the sidebar and ⌘K palette filter against the role's permission set (a group disappears when its children do), and denied *actions* surface the API message as a toast while denied background reads stay silent.
+- Verified passkeys are not an auth bypass while I was in there: `/webauthn/register/*` both require `authenticate` and take the user from the token, not the request body.
+- Cleaned every probe artefact out of the database and the fixtures, and confirmed the persona accounts' own rows are left healthy.
+
+**Decisions worth remembering**
+- **The role reconciliation had to come first.** With the drifted rows, a gate on Contacts would have 403'd the admin, and KB/Projects/Chat/AI-suggestion gates would have cut off every technician. Fixing the data before wiring the guards is what made the sweep diff four lines long instead of a page of breakage.
+- **Status-only sweeps are not enough to call a step done.** The nav filter had a real bug — a group's own permission was ignored when it had children, so Billing and Kumo stayed visible to a technician even though the API denied them — and it only appeared because I checked the rendered navigation per role in the browser, not just the API matrix.
+- **Guard per module, not per router.** Where a role legitimately uses one endpoint of a module (technicians and the ticket contact picker), the route takes the permission that role already holds rather than the module's nominal one.
+- **`authenticate` is not a guard.** Four routers legitimately have no permission guard, and the route-guard test in step D needs that exemption list written down or it will fire on all of them.
+
+**Notes for next time**
+- Step C is company scoping; steps D–H are listed in `files/W0-progress.md` with what each must prove.
+- Re-run `probe-permissions.mjs` after every step and diff against `baseline-permissions-reads.txt`; the file also records the personas and the bypass that is in force.
+- Cleanup reminders that cost time this round: the KB model is `knowledgeBaseArticle` (not `kBArticle`), chat sessions carry no title, and audit rows are Json so content filters need a JS pass rather than a Prisma query operator.

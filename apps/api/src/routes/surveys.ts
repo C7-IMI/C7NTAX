@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { prisma } from "../index";
-import { authenticate, type AuthRequest } from "../middleware/auth";
+import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
+import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 export const surveysRouter = Router(); surveysRouter.use(authenticate);
 
-surveysRouter.get("/", async (_req: AuthRequest, res, next) => {
+surveysRouter.get("/", requirePermission(Permission.SurveyView), async (_req: AuthRequest, res, next) => {
   try {
     const surveys = await prisma.survey.findMany();
     const [questionCounts, responseCounts] = await Promise.all([
@@ -18,12 +19,12 @@ surveysRouter.get("/", async (_req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-surveysRouter.post("/", async (req: AuthRequest, res, next) => {
+surveysRouter.post("/", requirePermission(Permission.SurveyCreate), async (req: AuthRequest, res, next) => {
   try { const s = await prisma.survey.create({ data: { name: req.body.name, description: req.body.description || null, type: req.body.type || "csat", sendOnResolve: req.body.sendOnResolve || false, sendDelayHours: req.body.sendDelayHours || 1 } }); res.status(201).json(s); }
   catch (e) { next(e); }
 });
 
-surveysRouter.get("/:id", async (req: AuthRequest, res, next) => {
+surveysRouter.get("/:id", requirePermission(Permission.SurveyView), async (req: AuthRequest, res, next) => {
   try {
     const s = await prisma.survey.findUnique({ where: { id: req.params.id } });
     if (!s) throw new AppError("Not found", 404);
@@ -47,12 +48,12 @@ surveysRouter.get("/:id", async (req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-surveysRouter.post("/:id/questions", async (req: AuthRequest, res, next) => {
+surveysRouter.post("/:id/questions", requirePermission(Permission.SurveyManage), async (req: AuthRequest, res, next) => {
   try { const q = await prisma.surveyQuestion.create({ data: { surveyId: req.params.id, text: req.body.text, type: req.body.type || "rating", required: req.body.required ?? true, sortOrder: req.body.sortOrder || 0, choices: req.body.choices || [] } }); res.status(201).json(q); }
   catch (e) { next(e); }
 });
 
-surveysRouter.post("/:id/responses", async (req: AuthRequest, res, next) => {
+surveysRouter.post("/:id/responses", requirePermission(Permission.SurveyView), async (req: AuthRequest, res, next) => {
   try {
     const { ticketId, answers, npsScore } = req.body;
     const resp = await prisma.surveyResponse.create({
@@ -66,7 +67,7 @@ surveysRouter.post("/:id/responses", async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
-surveysRouter.get("/responses/:id", async (req: AuthRequest, res, next) => {
+surveysRouter.get("/responses/:id", requirePermission(Permission.SurveyView), async (req: AuthRequest, res, next) => {
   try {
     const response = await prisma.surveyResponse.findUnique({ where: { id: req.params.id } });
     if (!response) { res.json(null); return; }

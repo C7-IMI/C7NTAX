@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../index";
-import { authenticate, type AuthRequest } from "../middleware/auth";
+import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
+import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { createTicketFromEmail } from "../services/emailToTicket";
 import type { ParsedEmail } from "@C7NTAX/email";
@@ -42,7 +43,7 @@ type AddinEmail = {
   receivedAt?: string;
 };
 
-outlookAddinRouter.post("/tickets", async (req: AuthRequest, res, next) => {
+outlookAddinRouter.post("/tickets", requirePermission(Permission.TicketCreate), async (req: AuthRequest, res, next) => {
   try {
     const { boardId, emails = [] } = req.body as { boardId?: string; emails?: AddinEmail[] };
     if (!boardId) throw new AppError("boardId required");

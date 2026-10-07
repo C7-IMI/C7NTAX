@@ -13,7 +13,7 @@ systemRouter.use(authenticate);
 // ── Failover state (backed by SystemConfig; survives restarts) ─────
 const FAILOVER_KEY = "failover_state";
 
-systemRouter.get("/failover/status", async (_req: AuthRequest, res, next) => {
+systemRouter.get("/failover/status", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try {
     const row = await prisma.systemConfig.findUnique({ where: { key: FAILOVER_KEY } });
     const v = (row?.value || {}) as { count?: number; lastResetAt?: string | null };
@@ -21,7 +21,7 @@ systemRouter.get("/failover/status", async (_req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
-systemRouter.post("/failover/reset", async (_req: AuthRequest, res, next) => {
+systemRouter.post("/failover/reset", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try {
     await prisma.systemConfig.upsert({
       where: { key: FAILOVER_KEY },
@@ -33,7 +33,7 @@ systemRouter.post("/failover/reset", async (_req: AuthRequest, res, next) => {
 });
 
 // I18N / translations
-systemRouter.get("/locales", async (_req: AuthRequest, res, next) => {
+systemRouter.get("/locales", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try {
     const locales = await prisma.locale.findMany();
     const translationCounts = await prisma.translation.groupBy({ by: ["localeCode"], _count: { _all: true } });
@@ -43,12 +43,12 @@ systemRouter.get("/locales", async (_req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-systemRouter.post("/locales", async (req: AuthRequest, res, next) => {
+systemRouter.post("/locales", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { res.status(201).json(await prisma.locale.create({ data: { code: req.body.code, name: req.body.name, direction: req.body.direction || "ltr" } })); }
   catch (e) { next(e); }
 });
 
-systemRouter.get("/translations/:localeCode", async (req: AuthRequest, res, next) => {
+systemRouter.get("/translations/:localeCode", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { const ns = req.query.namespace as string || "common";
     const translations = await prisma.translation.findMany({ where: { localeCode: req.params.localeCode, namespace: ns } });
     const map: Record<string, string> = {};
@@ -57,18 +57,18 @@ systemRouter.get("/translations/:localeCode", async (req: AuthRequest, res, next
   catch (e) { next(e); }
 });
 
-systemRouter.post("/translations", async (req: AuthRequest, res, next) => {
+systemRouter.post("/translations", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { res.status(201).json(await prisma.translation.create({ data: { localeCode: req.body.localeCode, key: req.body.key, value: req.body.value, namespace: req.body.namespace || "common" } })); }
   catch (e) { next(e); }
 });
 
 // Currency
-systemRouter.get("/currencies", async (_req: AuthRequest, res, next) => {
+systemRouter.get("/currencies", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try { res.json(await prisma.currency.findMany()); }
   catch (e) { next(e); }
 });
 
-systemRouter.get("/exchange-rates", async (_req: AuthRequest, res, next) => {
+systemRouter.get("/exchange-rates", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try {
     const rates = await prisma.exchangeRate.findMany();
     const currencies = await prisma.currency.findMany();
@@ -78,40 +78,40 @@ systemRouter.get("/exchange-rates", async (_req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-systemRouter.post("/exchange-rates", async (req: AuthRequest, res, next) => {
+systemRouter.post("/exchange-rates", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { res.status(201).json(await prisma.exchangeRate.create({ data: { fromCurrency: req.body.fromCurrency, toCurrency: req.body.toCurrency, rate: req.body.rate } })); }
   catch (e) { next(e); }
 });
 
 // Retention policies
-systemRouter.get("/retention-policies", async (_req: AuthRequest, res, next) => {
+systemRouter.get("/retention-policies", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try { res.json(await prisma.retentionPolicy.findMany()); }
   catch (e) { next(e); }
 });
 
-systemRouter.post("/retention-policies", async (req: AuthRequest, res, next) => {
+systemRouter.post("/retention-policies", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { res.status(201).json(await prisma.retentionPolicy.create({ data: { entity: req.body.entity, retentionDays: req.body.retentionDays, archiveAction: req.body.archiveAction || "archive", condition: req.body.condition || {} } })); }
   catch (e) { next(e); }
 });
 
 // Field permissions
-systemRouter.get("/field-permissions", async (_req: AuthRequest, res, next) => {
+systemRouter.get("/field-permissions", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
   try { res.json(await prisma.fieldPermission.findMany()); }
   catch (e) { next(e); }
 });
 
-systemRouter.post("/field-permissions", async (req: AuthRequest, res, next) => {
+systemRouter.post("/field-permissions", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { res.status(201).json(await prisma.fieldPermission.create({ data: { entity: req.body.entity, field: req.body.field, roleName: req.body.roleName, canRead: req.body.canRead ?? true, canWrite: req.body.canWrite ?? false } })); }
   catch (e) { next(e); }
 });
 
 // Calendar sync configs
-systemRouter.get("/calendar-sync", async (req: AuthRequest, res, next) => {
+systemRouter.get("/calendar-sync", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { res.json(await prisma.calendarSyncConfig.findMany({ where: { userId: req.user!.userId } })); }
   catch (e) { next(e); }
 });
 
-systemRouter.post("/calendar-sync", async (req: AuthRequest, res, next) => {
+systemRouter.post("/calendar-sync", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try { res.status(201).json(await prisma.calendarSyncConfig.create({ data: { userId: req.user!.userId, provider: req.body.provider, syncScheduleEntries: req.body.syncScheduleEntries ?? true, syncPto: req.body.syncPto ?? true } })); }
   catch (e) { next(e); }
 });
@@ -209,25 +209,25 @@ systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
 
 // ── Self-healing poller status ──
 
-systemRouter.get("/poller/status", async (_req: AuthRequest, res) => {
+systemRouter.get("/poller/status", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
   res.json({ paused: isPaused(), retryCount: getRetryCount(), maxRetries: 10, recoveryLog: getRecoveryLog() });
 });
 
-systemRouter.post("/poller/reset", async (_req: AuthRequest, res) => {
+systemRouter.post("/poller/reset", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
   resetPoller();
   res.json({ success: true, message: "Poller reset successfully" });
 });
 
 // ── Snapshot poller status ─────────────────────────────────────────
 
-systemRouter.get("/snapshot-poller/status", async (_req: AuthRequest, res) => {
+systemRouter.get("/snapshot-poller/status", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
   try {
     const { getStatus } = await import("../services/snapshotPoller");
     res.json(getStatus());
   } catch { res.json({ error: "Snapshot poller not loaded" }); }
 });
 
-systemRouter.post("/snapshot-poller/force", async (_req: AuthRequest, res) => {
+systemRouter.post("/snapshot-poller/force", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
   try {
     const { forcePoll } = await import("../services/snapshotPoller");
     await forcePoll();
@@ -235,7 +235,7 @@ systemRouter.post("/snapshot-poller/force", async (_req: AuthRequest, res) => {
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
-systemRouter.post("/snapshot-poller/pause", async (_req: AuthRequest, res) => {
+systemRouter.post("/snapshot-poller/pause", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
   try {
     const { setPaused } = await import("../services/snapshotPoller");
     setPaused(true);
@@ -243,7 +243,7 @@ systemRouter.post("/snapshot-poller/pause", async (_req: AuthRequest, res) => {
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
-systemRouter.post("/snapshot-poller/resume", async (_req: AuthRequest, res) => {
+systemRouter.post("/snapshot-poller/resume", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
   try {
     const { setPaused } = await import("../services/snapshotPoller");
     setPaused(false);

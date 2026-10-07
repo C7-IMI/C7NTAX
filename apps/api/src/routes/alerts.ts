@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { prisma } from "../index";
-import { authenticate, type AuthRequest } from "../middleware/auth";
+import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
+import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 
 export const alertsRouter = Router();
 alertsRouter.use(authenticate);
 
-alertsRouter.post("/", async (req: AuthRequest, res, next) => {
+alertsRouter.post("/", requirePermission(Permission.ServiceAlertManage), async (req: AuthRequest, res, next) => {
   try {
     const { name, entityType, triggerDays, enabled, notifyEmail } = req.body;
     if (!name || !entityType) throw new AppError("name and entityType required", 400);
@@ -15,25 +16,25 @@ alertsRouter.post("/", async (req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
-alertsRouter.get("/rules", async (_req: AuthRequest, res, next) => {
+alertsRouter.get("/rules", requirePermission(Permission.ServiceAlertView), async (_req: AuthRequest, res, next) => {
   try { const rules = await prisma.alertRule.findMany({ orderBy: { name: "asc" } }); res.json({ data: rules }); }
   catch (e) { next(e); }
 });
 
-alertsRouter.delete("/rules/:id", async (req: AuthRequest, res, next) => {
+alertsRouter.delete("/rules/:id", requirePermission(Permission.ServiceAlertManage), async (req: AuthRequest, res, next) => {
   try { await prisma.alertRule.delete({ where: { id: req.params.id } }); res.json({ message: "Deleted" }); }
   catch (e) { next(e); }
 });
 
 
-alertsRouter.get("/", async (_req: AuthRequest, res, next) => {
+alertsRouter.get("/", requirePermission(Permission.ServiceAlertView), async (_req: AuthRequest, res, next) => {
   try {
     const alerts = await prisma.alertLog.findMany({ where: { dismissed: false }, orderBy: { createdAt: "desc" }, take: 50 });
     res.json({ data: alerts });
   } catch (e) { next(e); }
 });
 
-alertsRouter.post("/check", async (_req: AuthRequest, res, next) => {
+alertsRouter.post("/check", requirePermission(Permission.ServiceAlertManage), async (_req: AuthRequest, res, next) => {
   try {
     const rules = await prisma.alertRule.findMany({ where: { enabled: true } });
     const results = [];
@@ -57,7 +58,7 @@ alertsRouter.post("/check", async (_req: AuthRequest, res, next) => {
   } catch (e) { next(e); }
 });
 
-alertsRouter.patch("/:id/dismiss", async (req: AuthRequest, res, next) => {
+alertsRouter.patch("/:id/dismiss", requirePermission(Permission.ServiceAlertView), async (req: AuthRequest, res, next) => {
   try {
     await prisma.alertLog.update({ where: { id: req.params.id }, data: { dismissed: true, dismissedBy: req.user!.userId, dismissedAt: new Date() } });
     res.json({ message: "Dismissed" });

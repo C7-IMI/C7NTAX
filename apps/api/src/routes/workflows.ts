@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { prisma } from "../index";
-import { authenticate, type AuthRequest } from "../middleware/auth";
+import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
+import { Permission } from "@C7NTAX/shared";
 export const workflowsRouter = Router(); workflowsRouter.use(authenticate);
 
-workflowsRouter.get("/rules", async (_req: AuthRequest, res, next) => {
+workflowsRouter.get("/rules", requirePermission(Permission.WorkflowView), async (_req: AuthRequest, res, next) => {
   try {
     const rules = await prisma.workflowRule.findMany({ orderBy: { priority: "asc" } });
     const [actions, executionCounts] = await Promise.all([
@@ -16,7 +17,7 @@ workflowsRouter.get("/rules", async (_req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-workflowsRouter.post("/rules", async (req: AuthRequest, res, next) => {
+workflowsRouter.post("/rules", requirePermission(Permission.WorkflowCreate), async (req: AuthRequest, res, next) => {
   try { const rule = await prisma.workflowRule.create({
     data: { name: req.body.name, description: req.body.description || null, entity: req.body.entity, trigger: req.body.trigger, conditions: req.body.conditions || [], isActive: req.body.isActive ?? true, priority: req.body.priority || 0 },
   });
@@ -28,7 +29,7 @@ workflowsRouter.post("/rules", async (req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-workflowsRouter.patch("/rules/:id", async (req: AuthRequest, res, next) => {
+workflowsRouter.patch("/rules/:id", requirePermission(Permission.WorkflowEdit), async (req: AuthRequest, res, next) => {
   try { const allowed = ["name","isActive","priority","conditions","trigger"];
     const updates: Record<string, unknown> = {};
     for (const k of allowed) if (req.body[k] !== undefined) updates[k] = req.body[k];
@@ -36,7 +37,7 @@ workflowsRouter.patch("/rules/:id", async (req: AuthRequest, res, next) => {
   catch (e) { next(e); }
 });
 
-workflowsRouter.get("/rules/:id/executions", async (req: AuthRequest, res, next) => {
+workflowsRouter.get("/rules/:id/executions", requirePermission(Permission.WorkflowView), async (req: AuthRequest, res, next) => {
   try { res.json(await prisma.workflowExecution.findMany({ where: { ruleId: req.params.id }, orderBy: { startedAt: "desc" }, take: 100 })); }
   catch (e) { next(e); }
 });
