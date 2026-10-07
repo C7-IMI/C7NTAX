@@ -1,12 +1,61 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, computePermissions, type AuthRequest } from "../middleware/auth";
-import { Permission, ROLE_PERMISSIONS, SystemRole, PERMISSION_CATEGORIES } from "@C7NTAX/shared";
+import { Permission, ROLE_PERMISSIONS, SystemRole, PERMISSION_CATEGORIES, validatePassword } from "@C7NTAX/shared";
 import bcrypt from "bcryptjs";
+import { randomInt } from "node:crypto";
+import { EmailService } from "@C7NTAX/email";
 import { AppError } from "../middleware/errorHandler";
 
 export const usersRouter = Router();
 usersRouter.use(authenticate);
+const emailService = new EmailService();
+
+/** Password handed to a user when an administrator does not choose one. */
+function generateStrongPassword(length = 20): string {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnopqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#$%&*_-+=";
+  const all = upper + lower + digits + symbols;
+  const chars = [
+    upper[randomInt(upper.length)],
+    lower[randomInt(lower.length)],
+    digits[randomInt(digits.length)],
+    symbols[randomInt(symbols.length)],
+  ];
+  while (chars.length < length) chars.push(all[randomInt(all.length)]);
+  // Shuffle so the four guaranteeing characters are not always in the same place.
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
+}
+
+/** Mail the credentials a user needs for their first sign-in. */
+async function sendWelcomeEmail(
+  user: { email: string; firstName: string; lastName: string },
+  temporaryPassword: string,
+  mustChangePassword: boolean
+): Promise<void> {
+  const origin = process.env.WEB_ORIGIN || process.env.CORS_ORIGIN || "http://localhost:3010";
+  await emailService.send({
+    to: user.email,
+    subject: "C7NTAX — Your account is ready",
+    html: [
+      `<p>Hello ${user.firstName},</p>`,
+      `<p>An account has been created for you in C7NTAX.</p>`,
+      `<p><strong>Sign in:</strong> <a href="${origin}">${origin}</a><br/>`,
+      `<strong>Email:</strong> ${user.email}<br/>`,
+      `<strong>Temporary password:</strong> ${temporaryPassword}</p>`,
+      mustChangePassword
+        ? `<p>You will be asked to choose your own password the first time you sign in.</p>`
+        : `<p>Please keep this password somewhere safe.</p>`,
+    ].join("\n"),
+  });
+}
+
 
 // ── List users ───────────────────────────────────────────────────────
 usersRouter.get("/", requirePermission(Permission.UserManage), async (req: AuthRequest, res, next) => {
@@ -31,9 +80,10 @@ usersRouter.get("/", requirePermission(Permission.UserManage), async (req: AuthR
         orderBy: { createdAt: "desc" },
         select: {
           id: true, email: true, username: true, firstName: true, lastName: true, title: true,
+          department: true,
           role: { select: { id: true, systemRole: true, name: true, permissions: true } },
-          permissions: true, isActive: true, isLocked: true, mfaEnabled: true, lastLoginAt: true,
-          createdAt: true, company: { select: { id: true, name: true } },
+          permissions: true, isActive: true, isLocked: true, mfaEnabled: true, mustChangePassword: true,
+          lastLoginAt: true, createdAt: true, company: { select: { id: true, name: true } },
         },
       }),
       prisma.user.count({ where }),
@@ -60,7 +110,11 @@ usersRouter.get("/:id", requirePermission(Permission.UserManage), async (req: Au
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.params.id },
-      include: { company: true, role: true },
+      include: {
+        company: true,
+        role: true,
+        reportsTo: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
     });
     if (!user) throw new AppError("User not found", 404);
     const { passwordHash, mfaSecret, ...safe } = user;
@@ -71,40 +125,208 @@ usersRouter.get("/:id", requirePermission(Permission.UserManage), async (req: Au
 // ── Create user ──────────────────────────────────────────────────────
 usersRouter.post("/", requirePermission(Permission.UserManage), async (req: AuthRequest, res, next) => {
   try {
-    const { email, password, firstName, lastName, role: roleName, companyId, permissions } = req.body;
-    if (!email || !password || !roleName) throw new AppError("email, password, and role are required");
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const {
+      email, password, firstName, lastName, username, title, phone, mobile,
+      department, timezone, reportsToId, companyId, permissions, role, roleId, isActive,
+      credentialMode, requireChange: requireChangeRaw, sendEmail,
+    } = req.body ?? {};
+
+    if (!email) throw new AppError("Email is required", 400);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) throw new AppError("Enter a valid email address", 400);
+    if (!firstName || !String(firstName).trim()) throw new AppError("First name is required", 400);
+    if (!lastName || !String(lastName).trim()) throw new AppError("Last name is required", 400);
+    if (!roleId && !role) throw new AppError("A role is required", 400);
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const normalizedUsername = username ? String(username).trim() : null;
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) throw new AppError("Email already in use", 409);
+    if (normalizedUsername) {
+      const takenUsername = await prisma.user.findUnique({ where: { username: normalizedUsername } });
+      if (takenUsername) throw new AppError("Username already in use", 409);
+    }
 
-    const roleRecord = await prisma.role.findFirst({ where: { systemRole: roleName } });
-    if (!roleRecord) throw new AppError(`Role "${roleName}" not found`, 400);
+    const roleRecord = roleId
+      ? await prisma.role.findUnique({ where: { id: roleId } })
+      : await prisma.role.findFirst({ where: { systemRole: role } });
+    if (!roleRecord) throw new AppError(`Role "${roleId ?? role}" not found`, 400);
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    if (reportsToId) {
+      const manager = await prisma.user.findUnique({ where: { id: reportsToId } });
+      if (!manager) throw new AppError("The selected manager does not exist", 400);
+    }
+
+    // How the first password is decided:
+    //   set      — the administrator typed one (policy-checked)
+    //   generate — the server makes one and shows it once (default)
+    //   invite   — the server makes one, mails it, and never shows it to the administrator
+    const mode: "set" | "generate" | "invite" =
+      credentialMode === "set" || credentialMode === "invite" ? credentialMode : "generate";
+
+    const person = { email: normalizedEmail, firstName: String(firstName), lastName: String(lastName), username: normalizedUsername, title, phone, mobile };
+
+    let plainPassword: string;
+    if (mode === "set") {
+      if (!password) throw new AppError("A password is required when you choose to set one", 400);
+      plainPassword = String(password);
+      const problem = validatePassword(plainPassword, person);
+      if (problem) throw new AppError(problem, 400);
+    } else {
+      plainPassword = generateStrongPassword();
+    }
+
+    const mustChangePassword = mode === "invite" ? true : (requireChangeRaw ?? true);
+
     const user = await prisma.user.create({
       data: {
-        email, passwordHash,
-        firstName: firstName || null, lastName: lastName || null,
-        roleId: roleRecord.id, companyId: companyId || null,
-        permissions: permissions || [],
+        email: normalizedEmail,
+        username: normalizedUsername,
+        passwordHash: await bcrypt.hash(plainPassword, 12),
+        firstName: person.firstName,
+        lastName: person.lastName,
+        title: title || null,
+        phone: phone || null,
+        mobile: mobile || null,
+        department: department || null,
+        timezone: timezone || null,
+        reportsToId: reportsToId || null,
+        roleId: roleRecord.id,
+        companyId: companyId || null,
+        permissions: Array.isArray(permissions) ? permissions : [],
+        isActive: isActive === undefined ? true : !!isActive,
+        mustChangePassword: !!mustChangePassword,
+        passwordChangedAt: new Date(),
       },
-      include: { role: true },
+      include: { role: true, company: { select: { id: true, name: true } } },
     });
+
+    // Only mail it out when asked — and when the administrator cannot see it.
+    let emailed = false;
+    let emailError: string | undefined;
+    const shouldEmail = mode === "invite" || !!sendEmail;
+    if (shouldEmail) {
+      try {
+        await sendWelcomeEmail(user, plainPassword, !!mustChangePassword);
+        emailed = true;
+      } catch (e) {
+        emailError = e instanceof Error ? e.message : "Failed to send the email";
+      }
+    }
+
     const { passwordHash: _, mfaSecret: __, ...safe } = user;
-    res.status(201).json(safe);
+    res.status(201).json({
+      ...safe,
+      // Shown once so the administrator can hand it over; never sent for an invite.
+      temporaryPassword: mode === "invite" ? undefined : plainPassword,
+      mustChangePassword: !!mustChangePassword,
+      emailed,
+      ...(emailError ? { emailError } : {}),
+    });
+  } catch (e) { next(e); }
+});
+
+// ── Reset a user's password ──────────────────────────────────────────
+// A temporary password is shown once; the user is asked to choose their own
+// at the next sign-in, and passwordChangedAt invalidates tokens issued before
+// the reset (see middleware/auth.ts).
+usersRouter.post("/:id/reset-password", requirePermission(Permission.SecurityManage), async (req: AuthRequest, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) throw new AppError("User not found", 404);
+
+    const { mode = "generate", password, requireChange = true, unlock = true, sendEmail = false } = req.body ?? {};
+    const manual = mode === "manual";
+    const temporaryPassword = manual ? String(password ?? "") : generateStrongPassword();
+
+    if (manual) {
+      const problem = validatePassword(temporaryPassword, user);
+      if (problem) throw new AppError(problem, 400);
+      if (await bcrypt.compare(temporaryPassword, user.passwordHash)) {
+        throw new AppError("The new password must be different from the current one", 400);
+      }
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: await bcrypt.hash(temporaryPassword, 12),
+        passwordChangedAt: new Date(),
+        mustChangePassword: !!requireChange,
+        // Retires every session that signed in with the old password.
+        tokenVersion: { increment: 1 },
+        // Clearing the failed-attempt counter is the point of unlocking here.
+        ...(unlock ? { isLocked: false, loginAttempts: 0 } : {}),
+        mfaEmailCode: null,
+        mfaEmailCodeExpires: null,
+      },
+    });
+
+    let emailed = false;
+    let emailError: string | undefined;
+    if (sendEmail) {
+      try {
+        await sendWelcomeEmail(user, temporaryPassword, !!requireChange);
+        emailed = true;
+      } catch (e) {
+        emailError = e instanceof Error ? e.message : "Failed to send the email";
+      }
+    }
+
+    res.json({
+      message: "Password reset",
+      temporaryPassword,
+      mustChangePassword: !!requireChange,
+      unlocked: !!unlock,
+      emailed,
+      ...(emailError ? { emailError } : {}),
+    });
   } catch (e) { next(e); }
 });
 
 // ── Update user ──────────────────────────────────────────────────────
 usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: AuthRequest, res, next) => {
   try {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!target) throw new AppError("User not found", 404);
+
     const updates: Record<string, unknown> = {};
-    const allowed = ["firstName", "lastName", "title", "phone", "mobile", "companyId", "isActive", "permissions"];
+    const allowed = [
+      "firstName", "lastName", "title", "phone", "mobile", "companyId", "isActive", "permissions",
+      "username", "department", "timezone", "reportsToId",
+    ];
     for (const key of allowed) {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     }
-    if (req.body.password) {
-      updates.passwordHash = await bcrypt.hash(req.body.password, 12);
+
+    if (updates.username) {
+      const username = String(updates.username).trim();
+      const taken = await prisma.user.findUnique({ where: { username } });
+      if (taken && taken.id !== target.id) throw new AppError("Username already in use", 409);
+      updates.username = username;
     }
+
+    if (updates.reportsToId) {
+      if (updates.reportsToId === target.id) throw new AppError("A user cannot report to themselves", 400);
+      const manager = await prisma.user.findUnique({ where: { id: String(updates.reportsToId) } });
+      if (!manager) throw new AppError("The selected manager does not exist", 400);
+    }
+
+    // Deactivating yourself locks you out of the screen you are standing on.
+    if (updates.isActive === false && req.user!.userId === target.id) {
+      throw new AppError("You cannot deactivate your own account", 400);
+    }
+
+    if (req.body.password) {
+      const problem = validatePassword(String(req.body.password), {
+        email: target.email, firstName: target.firstName, lastName: target.lastName,
+      });
+      if (problem) throw new AppError(problem, 400);
+      updates.passwordHash = await bcrypt.hash(String(req.body.password), 12);
+      updates.passwordChangedAt = new Date();
+      updates.mustChangePassword = req.body.requireChange ?? true;
+      updates.tokenVersion = { increment: 1 };
+    }
+
     // Handle role change — update roleId
     if (req.body.role) {
       const roleRecord = await prisma.role.findFirst({ where: { systemRole: req.body.role } });

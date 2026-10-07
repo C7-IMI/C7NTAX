@@ -97,7 +97,7 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
       user = await prisma.user.findUnique({ where: { id: created.id }, include: { role: true } });
     }
     if (!user) return res.status(500).json({ error: "User provisioning failed" });
-    const token = signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole });
+    const token = signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole, tokenVersion: user.tokenVersion });
     res.redirect(`${process.env.WEB_ORIGIN || "http://localhost:3010"}/login?token=${encodeURIComponent(token)}`);
   } catch (e) { next(e); }
 });

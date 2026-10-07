@@ -110,6 +110,6 @@ webauthnRouter.post("/login/verify", async (req, res, next) => {
     challenges.delete(`login:${userId}`);
     const user = await prisma.user.findUnique({ where: { id: userId }, include: { role: true } });
     if (!user) throw new AppError("User not found", 404);
-    res.json({ token: signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole }) });
+    res.json({ token: signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole, tokenVersion: user.tokenVersion }) });
   } catch (e) { next(e); }
 });

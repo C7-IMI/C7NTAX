@@ -30,6 +30,20 @@ model User {
   lastLoginAt     DateTime?
   emailVerified   Boolean  @default(false)
 
+  // Credentials — a temporary password handed out by an admin is only good for
+  // one sign-in. tokenVersion is stamped into every JWT and bumped whenever the
+  // password changes, which retires tokens issued before the change.
+  mustChangePassword Boolean   @default(false)
+  passwordChangedAt  DateTime?
+  tokenVersion       Int       @default(0)
+
+  // Placement — parity with Autotask "Resources" and Asio "Members"
+  department      String?
+  timezone        String?
+  reportsToId     String?
+  reportsTo       User?     @relation("UserReportsTo", fields: [reportsToId], references: [id], onDelete: SetNull)
+  directReports   User[]    @relation("UserReportsTo")
+
   // MFA
   mfaEnabled        Boolean  @default(false)
   mfaSecret         String?

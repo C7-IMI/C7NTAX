@@ -9,6 +9,8 @@ interface User {
   role?: string;
   companyId?: string;
   mfaEnabled?: boolean;
+  /** Set after an administrator resets the password; cleared once changed. */
+  mustChangePassword?: boolean;
   active?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -21,8 +23,12 @@ interface AuthState {
   token: string | null;
   loading: boolean;
   landingPage: LandingPage;
-  login: (email: string, password: string) => Promise<{ mfaRequired?: boolean; mfaToken?: string; landingPage?: LandingPage }>;
+  login: (email: string, password: string) => Promise<{ mfaRequired?: boolean; mfaToken?: string; landingPage?: LandingPage; mustChangePassword?: boolean }>;
   loginMfa: (mfaToken: string, code: string) => Promise<LandingPage | undefined>;
+  /** Finish a sign-in that produced a token elsewhere, and load the profile. */
+  completeSignIn: (token: string) => Promise<User>;
+  /** Swap in the token issued by a password change and clear the pending flag. */
+  markPasswordChanged: (token: string) => void;
   logout: () => void;
   setLandingPage: (lp: LandingPage) => void;
 }
@@ -46,8 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (token) {
       api.get("/users/me")
-        .then((res) => { if (!cancelled) setUser(res.data); })
-        .catch(() => {
+        .then((res) => { if (!cancelled) setUser(res.data); })        .catch(() => {
           if (!cancelled) { localStorage.removeItem("c7_token"); localStorage.removeItem("c7_user"); setToken(null); }
         })
         .finally(() => { if (!cancelled) setLoading(false); });
@@ -66,24 +71,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     localStorage.setItem("c7_token", res.data.token);
     setToken(res.data.token);
-    setUser(res.data.user);
+    setUser({ ...res.data.user, mustChangePassword: !!res.data.mustChangePassword });
     if (res.data.landingPage) {
       setLandingPage(res.data.landingPage);
       localStorage.setItem("c7_landing", JSON.stringify(res.data.landingPage));
     }
-    return { landingPage: res.data.landingPage || landingPage };
+    return { landingPage: res.data.landingPage || landingPage, mustChangePassword: !!res.data.mustChangePassword };
   }, [landingPage]);
 
   const loginMfa = useCallback(async (mfaToken: string, code: string) => {
     const res = await api.post("/auth/mfa/verify", { mfaToken, code });
     localStorage.setItem("c7_token", res.data.token);
     setToken(res.data.token);
-    setUser(res.data.user);
+    setUser({ ...res.data.user, mustChangePassword: !!res.data.mustChangePassword });
     if (res.data.landingPage) {
       setLandingPage(res.data.landingPage);
       localStorage.setItem("c7_landing", JSON.stringify(res.data.landingPage));
     }
     return res.data.landingPage as LandingPage | undefined;
+  }, []);
+
+  /** Adopt a token produced outside the password form (SSO redirect, passkey). */
+  const completeSignIn = useCallback(async (nextToken: string) => {
+    localStorage.setItem("c7_token", nextToken);
+    const res = await api.get("/users/me");
+    setToken(nextToken);
+    setUser(res.data);
+    setLoading(false);
+    return res.data as User;
+  }, []);
+
+  const markPasswordChanged = useCallback((nextToken: string) => {
+    localStorage.setItem("c7_token", nextToken);
+    setToken(nextToken);
+    setUser(u => (u ? { ...u, mustChangePassword: false } : u));
   }, []);
 
   const logout = useCallback(() => {
@@ -98,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, landingPage, login, loginMfa, logout, setLandingPage }}>
+    <AuthContext.Provider value={{ user, token, loading, landingPage, login, loginMfa, completeSignIn, markPasswordChanged, logout, setLandingPage }}>
       {children}
     </AuthContext.Provider>
   );

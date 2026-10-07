@@ -55,6 +55,27 @@ import { HelpGettingStarted, HelpFaq, HelpConfiguration, HelpIndex, HelpWalkthro
 import { UI_KUMO_ORGS } from "./lib/uiFlags";
 import { ChecklistsPage } from "./pages/Checklists";
 import { ChecklistDetailPage } from "./pages/ChecklistDetail";
+import { ChangePasswordForm } from "./components/users/ChangePasswordForm";
+
+/**
+ * Held in front of the whole app while an administrator's reset is outstanding:
+ * the API refuses every other route until the password is changed, so there is
+ * nothing useful to show behind it.
+ */
+function PasswordChangeGate() {
+  const { user, markPasswordChanged, logout } = useAuth();
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-navy-900 p-4">
+      <ChangePasswordForm
+        firstName={user?.firstName}
+        email={user?.email}
+        onChanged={markPasswordChanged}
+        onSignOut={logout}
+      />
+    </div>
+  );
+}
+
 function ProtectedRoutes() {
   const navigate = useNavigate();
 
@@ -74,6 +95,7 @@ function ProtectedRoutes() {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
+  if (user.mustChangePassword) return <PasswordChangeGate />;
   return (
     <Layout>
       <DesktopNavBridge />

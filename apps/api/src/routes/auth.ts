@@ -4,7 +4,7 @@ import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import { prisma } from "../index";
 import { authenticate, signToken, signMfaToken, JWT_SECRET, computePermissions, type AuthRequest } from "../middleware/auth";
-import { ROLE_PERMISSIONS, SystemRole, Permission } from "@C7NTAX/shared";
+import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
 
@@ -44,7 +44,7 @@ authRouter.post("/login", async (req, res, next) => {
     // If MFA is enabled, send back a temporary token
     if (user.mfaEnabled) {
       const mfaToken = signMfaToken(user.id);
-      res.json({ mfaRequired: true, mfaToken });
+      res.json({ mfaRequired: true, mfaToken, mustChangePassword: user.mustChangePassword });
       return;
     }
 
@@ -53,6 +53,7 @@ authRouter.post("/login", async (req, res, next) => {
       companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
       mfaEnabled: false, active: true,
+      tokenVersion: user.tokenVersion,
     });
 
     // Update last login
@@ -63,7 +64,56 @@ authRouter.post("/login", async (req, res, next) => {
     let landingPage = { path: "/", label: "Dashboard" };
     if (landingConfig) { try { landingPage = JSON.parse(landingConfig.value as string); } catch { /* use default */ } }
 
-    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, landingPage });
+    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, landingPage, mustChangePassword: user.mustChangePassword });
+  } catch (e) { next(e); }
+});
+
+// ── POST /api/auth/change-password ──────────────────────────────────
+// Self-service password change, and the step that clears mustChangePassword.
+// A fresh token is returned because the old one predates passwordChangedAt.
+authRouter.post("/change-password", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body ?? {};
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ error: { message: "Your current password and a new password are required" } });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId }, include: { role: true } });
+    if (!user) { res.status(404).json({ error: { message: "User not found" } }); return; }
+
+    if (!(await bcrypt.compare(String(currentPassword), user.passwordHash))) {
+      res.status(400).json({ error: { message: "Your current password is incorrect" } });
+      return;
+    }
+    if (String(currentPassword) === String(newPassword)) {
+      res.status(400).json({ error: { message: "The new password must be different from the current one" } });
+      return;
+    }
+
+    const problem = validatePassword(String(newPassword), user);
+    if (problem) { res.status(400).json({ error: { message: problem } }); return; }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: await bcrypt.hash(String(newPassword), 12),
+        passwordChangedAt: new Date(),
+        mustChangePassword: false,
+        // Retires every token issued before this change.
+        tokenVersion: { increment: 1 },
+      },
+    });
+
+    const token = signToken({
+      id: user.id, email: user.email, role: user.role.systemRole as SystemRole,
+      companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
+      firstName: user.firstName, lastName: user.lastName,
+      mfaEnabled: user.mfaEnabled, active: user.isActive,
+      tokenVersion: (user.tokenVersion ?? 0) + 1,
+    });
+
+    res.json({ message: "Password changed", token });
   } catch (e) { next(e); }
 });
 
@@ -132,11 +182,12 @@ authRouter.post("/mfa/verify", async (req, res, next) => {
       companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
       mfaEnabled: user.mfaEnabled, active: user.isActive,
+      tokenVersion: user.tokenVersion,
     });
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
-    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role } });
+    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, mustChangePassword: user.mustChangePassword });
   } catch (e) { next(e); }
 });
 
@@ -192,11 +243,12 @@ authRouter.post("/mfa/verify-email", async (req, res, next) => {
       companyId: user.companyId, permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], (user.permissions || []) as string[]),
       firstName: user.firstName, lastName: user.lastName,
       mfaEnabled: user.mfaEnabled, active: user.isActive,
+      tokenVersion: user.tokenVersion,
     });
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
-    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role } });
+    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, mustChangePassword: user.mustChangePassword });
   } catch (e) { next(e); }
 });
 
@@ -205,7 +257,7 @@ authRouter.get("/me", authenticate, async (req: AuthRequest, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true, companyId: true, mfaEnabled: true, lastLoginAt: true, createdAt: true },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, companyId: true, mfaEnabled: true, mustChangePassword: true, lastLoginAt: true, createdAt: true },
     });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
     res.json(user);

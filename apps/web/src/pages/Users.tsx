@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
 import {
   Plus, Search, Shield, X, Save, Edit3, Check, AlertTriangle,
   Mail, Phone, Building2, Clock, KeyRound, UserCheck, UserX, ShieldAlert,
-  ChevronLeft, ChevronDown, Copy, Key, Eye, EyeOff,
+  ChevronLeft, ChevronDown, Copy, Key,
   ExternalLink, UserCog, Lock, Unlock, Download, RotateCw, Eraser, ShieldCheck,
 } from "lucide-react";
 import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from "@C7NTAX/shared";
@@ -12,7 +12,9 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
-import { generatePassword } from "../lib/generatePassword";
+import { NewUserDialog, type RoleOption, type ClientOption } from "../components/users/NewUserDialog";
+import { ResetPasswordDialog } from "../components/users/ResetPasswordDialog";
+import { timezoneOptions } from "../lib/timezones";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-600/20 text-green-400",
@@ -23,16 +25,18 @@ interface UserFull {
   id: string; email: string; username?: string | null;
   firstName: string | null; lastName: string | null;
   phone?: string | null; mobile?: string | null; title?: string | null;
+  department?: string | null; timezone?: string | null; reportsToId?: string | null;
+  reportsTo?: { id: string; firstName: string | null; lastName: string | null; email: string } | null;
   role: { id: string; name: string; systemRole: string; permissions: string[] };
   permissions: string[];
   company?: { id: string; name: string } | null;
   companyId?: string | null;
   isActive: boolean; isLocked: boolean;
   mfaEnabled: boolean;
+  mustChangePassword?: boolean;
+  passwordChangedAt?: string | null;
   lastLoginAt?: string | null; createdAt: string;
 }
-
-interface RoleOption { id: string; name: string; systemRole: string; permissions: string[]; }
 
 /** Confirmation for the destructive actions a right-click menu can start. */
 function MenuConfirmDialog({ state, busy, onCancel, onConfirm }: {
@@ -80,10 +84,11 @@ export function UsersPage() {
   const [showCopyUser, setShowCopyUser] = useState(false);
   const [userDropdown, setUserDropdown] = useState(false);
   const [sort, setSort] = useState<SortState | null>(null);
-  const [createForm, setCreateForm] = useState({ email: "", password: "", firstName: "", lastName: "", role: "technician" });
+  const [createDefaults, setCreateDefaults] = useState<{ roleId?: string; companyId?: string; department?: string; timezone?: string; fromName?: string } | undefined>();
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [resetTarget, setResetTarget] = useState<UserFull | null>(null);
+  const timezones = useMemo(() => timezoneOptions(), []);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showCreatePwd, setShowCreatePwd] = useState(false);
-  const [showChangePwd, setShowChangePwd] = useState(false);
   const menu = useContextMenu();
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -105,7 +110,14 @@ export function UsersPage() {
     } catch { /* silently fail */ }
   }, []);
 
-  useEffect(() => { fetchUsers(); fetchRoles(); }, [fetchUsers, fetchRoles]);
+  const fetchClients = useCallback(async () => {
+    try {
+      const r = await api.get("/clients", { params: { limit: 200, sort: "name" } });
+      setClients(r.data?.data || []);
+    } catch { /* the client picker is optional */ }
+  }, []);
+
+  useEffect(() => { fetchUsers(); fetchRoles(); fetchClients(); }, [fetchUsers, fetchRoles, fetchClients]);
 
   const refreshUser = async (id: string) => {
     try {
@@ -163,10 +175,13 @@ export function UsersPage() {
     try {
       const payload: Record<string, any> = {};
       // Only send fields the API accepts
-      const allowed = ["firstName", "lastName", "title", "phone", "mobile", "companyId", "isActive"];
+      const allowed = [
+        "firstName", "lastName", "username", "title", "phone", "mobile",
+        "companyId", "department", "timezone", "reportsToId", "isActive",
+      ];
       for (const k of allowed) if (form[k] !== undefined) payload[k] = form[k];
-      if (form.password) payload.password = form.password;
-      if (form.role?.systemRole) payload.role = form.role.systemRole;
+      if (form.roleId) payload.roleId = form.roleId;
+      else if (form.role?.systemRole) payload.role = form.role.systemRole;
       if (tab === "permissions") {
         payload.permissions = [...permSet];
       }
@@ -174,27 +189,11 @@ export function UsersPage() {
       toast.success("User updated");
       setSaving(false);
       setEditing(false);
-      // Clear password field after save
-      setForm({ ...form, password: "" });
       await fetchUsers();
       await refreshUser(selected.id);
     } catch (e: any) {
       toast.error(e?.response?.data?.error?.message || e?.response?.data?.error || "Failed to save");
       setSaving(false);
-    }
-  };
-
-  // ── Create user ──
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await api.post("/users", createForm);
-      toast.success("User created");
-      setShowCreate(false);
-      setCreateForm({ email: "", password: "", firstName: "", lastName: "", role: "technician" });
-      await fetchUsers();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.error?.message || "Failed to create user");
     }
   };
 
@@ -238,6 +237,7 @@ export function UsersPage() {
     { key: "email", label: "Email", value: u => u.email },
     { key: "role", label: "Role", value: u => u.role?.name ?? "" },
     { key: "systemRole", label: "System Role", value: u => u.role?.systemRole ?? "" },
+    { key: "department", label: "Department", value: u => u.department ?? "" },
     { key: "company", label: "Company", value: u => u.company?.name ?? "" },
     { key: "mfa", label: "MFA", value: u => (u.mfaEnabled ? "Enabled" : "Disabled") },
     { key: "status", label: "Status", value: u => (u.isActive ? "Active" : "Inactive") },
@@ -287,6 +287,10 @@ export function UsersPage() {
       ? { label: "Unlock account", icon: Unlock, onSelect: () => void setUserLocked(u, false) }
       : { label: "Lock account", icon: Lock, onSelect: () => void setUserLocked(u, true) },
     {
+      label: "Reset password…", icon: Key, hint: u.mustChangePassword ? "change pending" : undefined,
+      onSelect: () => setResetTarget(u),
+    },
+    {
       label: "Reset MFA", icon: ShieldCheck, disabled: !u.mfaEnabled, hint: u.mfaEnabled ? undefined : "not enrolled",
       onSelect: () => setMenuConfirm({
         title: "Reset MFA?",
@@ -310,7 +314,7 @@ export function UsersPage() {
   const sectionMenuEntries = (): MenuEntry[] => [
     {
       label: "New user", icon: Plus,
-      onSelect: () => { setCreateForm({ email: "", password: "", firstName: "", lastName: "", role: "technician" }); setShowCreate(true); },
+      onSelect: () => { setCreateDefaults(undefined); setShowCreate(true); },
     },
     { label: "Create from existing user…", icon: UserCog, onSelect: () => setShowCopyUser(true) },
     { label: "Refresh list", icon: RotateCw, onSelect: () => void fetchUsers() },
@@ -354,7 +358,7 @@ export function UsersPage() {
               <div className="fixed inset-0 z-40" onClick={() => setUserDropdown(false)} />
               <div className="absolute right-0 z-50 mt-1.5 w-52 bg-surface border border-surface-border rounded-lg shadow-lg overflow-hidden">
                 <button
-                  onClick={() => { setUserDropdown(false); setCreateForm({ email: "", password: "", firstName: "", lastName: "", role: "technician" }); setShowCreate(true); }}
+                  onClick={() => { setUserDropdown(false); setCreateDefaults(undefined); setShowCreate(true); }}
                   className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-surface-lighter flex items-center gap-2 transition-colors"
                 >
                   <Plus size={14} className="text-cyber-400" /> Create New
@@ -448,12 +452,12 @@ export function UsersPage() {
                 <button
                   key={u.id}
                   onClick={() => {
-                    setCreateForm({
-                      email: "",
-                      password: "",
-                      firstName: "",
-                      lastName: "",
-                      role: u.role?.systemRole || "technician",
+                    setCreateDefaults({
+                      roleId: u.role?.id,
+                      companyId: u.company?.id,
+                      department: u.department ?? undefined,
+                      timezone: u.timezone ?? undefined,
+                      fromName: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email,
                     });
                     setShowCopyUser(false);
                     setShowCreate(true);
@@ -478,40 +482,23 @@ export function UsersPage() {
         </div>
       )}
 
-      {/* ── Create User Modal ── */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
-          <form className="card w-full max-w-md mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={handleCreate}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">New User</h3>
-              <button type="button" onClick={() => setShowCreate(false)} className="text-gray-500 hover:text-white"><X size={18} /></button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <input className="input-field" placeholder="First name" value={createForm.firstName} onChange={e => setCreateForm({ ...createForm, firstName: e.target.value })} />
-              <input className="input-field" placeholder="Last name" value={createForm.lastName} onChange={e => setCreateForm({ ...createForm, lastName: e.target.value })} />
-            </div>
-            <input className="input-field" placeholder="Email" type="email" value={createForm.email} onChange={e => setCreateForm({ ...createForm, email: e.target.value })} required />
-            <div className="flex gap-1">
-              <input className="input-field flex-1" placeholder="Password" type={showCreatePwd ? "text" : "password"} value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} required minLength={8} />
-              <button type="button" onClick={() => setShowCreatePwd(!showCreatePwd)}
-                className="btn-secondary text-xs py-1 px-1.5 flex items-center shrink-0" title={showCreatePwd ? "Hide" : "Show"}>
-                {showCreatePwd ? <EyeOff size={13} /> : <Eye size={13} />}
-              </button>
-              <button type="button" onClick={() => setCreateForm({ ...createForm, password: generatePassword() })}
-                className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
-                <Key size={12} /> Generate
-              </button>
-            </div>
-            <select className="input-field" value={createForm.role} onChange={e => setCreateForm({ ...createForm, role: e.target.value })}>
-              {Object.values(SystemRole).map(r => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
-            </select>
-            <div className="flex gap-2 justify-end pt-2">
-              <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
-              <button type="submit" className="btn-primary text-sm">Create User</button>
-            </div>
-          </form>
-        </div>
-      )}
+      {/* ── Create User Dialog ── */}
+      <NewUserDialog
+        open={showCreate}
+        onClose={() => { setShowCreate(false); setCreateDefaults(undefined); }}
+        onCreated={() => { void fetchUsers(); }}
+        roles={roles}
+        clients={clients}
+        users={users}
+        defaults={createDefaults}
+      />
+
+      {/* ── Reset Password Dialog ── */}
+      <ResetPasswordDialog
+        user={resetTarget}
+        onClose={() => setResetTarget(null)}
+        onDone={() => { void fetchUsers(); if (selected) void refreshUser(selected.id); }}
+      />
 
       {/* ── User Detail Slide-over ── */}
       {selected && (
@@ -592,25 +579,41 @@ export function UsersPage() {
                       </div>
                     </Grid>
                   </Section>
-                  {editing && (
-                    <Section title="Change Password">
-                      <div className="max-w-xs">
-                        <Label>New Password</Label>
-                        <div className="flex gap-1">
-                          <input className="input-field flex-1" type={showChangePwd ? "text" : "password"} placeholder="Leave blank to keep current"
-                            value={String(form.password || "")} onChange={e => setForm({ ...form, password: e.target.value })} />
-                          <button type="button" onClick={() => setShowChangePwd(!showChangePwd)}
-                            className="btn-secondary text-xs py-1 px-1.5 flex items-center shrink-0" title={showChangePwd ? "Hide" : "Show"}>
-                            {showChangePwd ? <EyeOff size={13} /> : <Eye size={13} />}
-                          </button>
-                          <button type="button" onClick={() => setForm({ ...form, password: generatePassword() })}
-                            className="btn-secondary text-xs py-1 px-2 flex items-center gap-1 shrink-0" title="Generate password">
-                            <Key size={12} /> Generate
-                          </button>
-                        </div>
+                  <Section title="Placement">
+                    <Grid cols={2}>
+                      <Field label="Department" value={selected.department} editing={editing} form={form} setForm={setForm} field="department" />
+                      <div>
+                        <Label>Time zone</Label>
+                        {editing ? (
+                          <select className="input-field text-sm py-1.5" value={String(form.timezone ?? selected.timezone ?? "")}
+                            onChange={e => setForm({ ...form, timezone: e.target.value })}>
+                            <option value="">—</option>
+                            {timezones.map(tz => <option key={tz} value={tz}>{tz.replace(/_/g, " ")}</option>)}
+                          </select>
+                        ) : (
+                          <p className="text-sm text-white">{selected.timezone?.replace(/_/g, " ") || "—"}</p>
+                        )}
                       </div>
-                    </Section>
-                  )}
+                      <div>
+                        <Label>Reports to</Label>
+                        {editing ? (
+                          <select className="input-field text-sm py-1.5" value={String(form.reportsToId ?? selected.reportsToId ?? "")}
+                            onChange={e => setForm({ ...form, reportsToId: e.target.value })}>
+                            <option value="">Nobody</option>
+                            {users.filter(x => x.id !== selected.id).map(u => (
+                              <option key={u.id} value={u.id}>{`${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <p className="text-sm text-white">
+                            {selected.reportsTo
+                              ? `${selected.reportsTo.firstName ?? ""} ${selected.reportsTo.lastName ?? ""}`.trim() || selected.reportsTo.email
+                              : "—"}
+                          </p>
+                        )}
+                      </div>
+                    </Grid>
+                  </Section>
                 </div>
               )}
 
@@ -762,6 +765,29 @@ export function UsersPage() {
               {/* ── Security Tab ── */}
               {tab === "security" && (
                 <div className="space-y-4">
+                  <Section title="Password">
+                    <div className="flex items-center justify-between gap-4 py-2">
+                      <div>
+                        <p className="text-sm text-white font-medium">Sign-in password</p>
+                        <p className="text-xs text-gray-500">
+                          {selected.mustChangePassword
+                            ? "A reset is pending — a new password is required at the next sign-in"
+                            : selected.passwordChangedAt
+                              ? `Last changed ${new Date(selected.passwordChangedAt).toLocaleDateString()}`
+                              : "Never changed since the account was created"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {selected.mustChangePassword && (
+                          <span className="badge bg-amber-600/20 text-amber-400 text-xs">Change pending</span>
+                        )}
+                        <button onClick={() => setResetTarget(selected)}
+                          className="bg-cyber-600/15 text-cyber-400 hover:bg-cyber-600/25 px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1.5">
+                          <Key size={13} /> Reset password
+                        </button>
+                      </div>
+                    </div>
+                  </Section>
                   <Section title="Account Status">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between py-2">
@@ -781,9 +807,30 @@ export function UsersPage() {
                           <p className="text-sm text-white font-medium">MFA</p>
                           <p className="text-xs text-gray-500">{selected.mfaEnabled ? "Enabled" : "Not configured"}</p>
                         </div>
-                        <span className={`badge text-xs ${selected.mfaEnabled ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>
-                          {selected.mfaEnabled ? "Secure" : "Not Set"}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`badge text-xs ${selected.mfaEnabled ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>
+                            {selected.mfaEnabled ? "Secure" : "Not Set"}
+                          </span>
+                          {selected.mfaEnabled && (
+                            <button
+                              onClick={() => setMenuConfirm({
+                                title: "Reset MFA?",
+                                body: `${`${selected.firstName ?? ""} ${selected.lastName ?? ""}`.trim() || selected.email} will need to enrol an authenticator again at their next sign-in.`,
+                                confirmLabel: "Reset MFA",
+                                run: async () => {
+                                  try {
+                                    await api.post(`/users/${selected.id}/reset-mfa`);
+                                    toast.success("MFA reset");
+                                    await fetchUsers();
+                                    await refreshUser(selected.id);
+                                  } catch (e: any) { toast.error(e?.response?.data?.error?.message || "Failed to reset MFA"); }
+                                },
+                              })}
+                              className="bg-amber-600/10 text-amber-400 hover:bg-amber-600/20 px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1.5">
+                              <ShieldCheck size={13} /> Reset MFA
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center justify-between py-2">
                         <div>

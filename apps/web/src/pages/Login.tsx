@@ -9,7 +9,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 
 export function LoginPage() {
-  const { login, loginMfa } = useAuth();
+  const { login, loginMfa, completeSignIn } = useAuth();
   const navigate = useNavigate();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
@@ -23,12 +23,10 @@ export function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
-    if (token) {
-      localStorage.setItem("c7_token", token);
-      window.history.replaceState({}, "", "/login");
-      navigate("/");
-    }
-  }, [navigate]);
+    if (!token) return;
+    window.history.replaceState({}, "", "/login");
+    completeSignIn(token).then(() => navigate("/")).catch(() => toast.error("That sign-in link has expired"));
+  }, [completeSignIn, navigate]);
 
   useEffect(() => {
     api.get("/auth/sso/status").then(r => setSsoEnabled(!!r.data?.enabled)).catch(() => {});
@@ -44,7 +42,7 @@ export function LoginPage() {
       const { data } = await api.post("/auth/webauthn/login/options", { email: loginId });
       const auth = await startAuthentication(data.options);
       const verify = await api.post("/auth/webauthn/login/verify", { userId: data.userId, response: auth });
-      localStorage.setItem("c7_token", verify.data.token);
+      await completeSignIn(verify.data.token);
       navigate("/");
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message || "Passkey login failed";
