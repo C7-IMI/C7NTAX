@@ -20,6 +20,7 @@
  * the UI can show exactly which source went silent and why.
  */
 import { prisma } from "../index";
+import { assertSafeOutboundUrl, safeFetch } from "./egress";
 import tls from "node:tls";
 import { promises as dns } from "node:dns";
 
@@ -153,8 +154,9 @@ function looksLikeChallenge(body: string): boolean {
 async function observeFeed(service: { name: string; rssUrl: string | null }): Promise<SourceObservation | null> {
   if (!service.rssUrl) return null;
   try {
-    const resp = await fetch(service.rssUrl, {
-      signal: AbortSignal.timeout(12000),
+    const resp = await safeFetch(service.rssUrl, {
+      purpose: "monitor",
+      timeoutMs: 12000,
       headers: { "user-agent": USER_AGENT, accept: "application/rss+xml, application/atom+xml, text/xml, application/xml;q=0.9, */*;q=0.8" },
     });
     if (!resp.ok) {
@@ -198,8 +200,8 @@ async function observeFeed(service: { name: string; rssUrl: string | null }): Pr
       detail: youngest === null ? "no incidents in the feed" : `no incidents in the last 24h (newest item ${Math.round(youngest / 3600000)}h old)`,
     };
   } catch (e: any) {
-    snapshot.errors.push(`${service.name}: fetch failed for ${service.rssUrl} (${e?.name || "error"})`);
-    return { source: "rss", verdict: "unknown", detail: `feed unreachable (${e?.name || "error"})` };
+    snapshot.errors.push(`${service.name}: fetch failed for ${service.rssUrl} (${e?.message || e?.name || "error"})`);
+    return { source: "rss", verdict: "unknown", detail: `feed unreachable (${e?.message || e?.name || "error"})` };
   }
 }
 
@@ -221,8 +223,9 @@ async function observeStatusPage(service: { statusPageUrl: string | null }): Pro
     return { source: "statuspage", verdict: "unknown", detail: "status page URL is not a valid URL" };
   }
   try {
-    const resp = await fetch(`${origin}/api/v2/status.json`, {
-      signal: AbortSignal.timeout(12000),
+    const resp = await safeFetch(`${origin}/api/v2/status.json`, {
+      purpose: "monitor",
+      timeoutMs: 12000,
       headers: { "user-agent": USER_AGENT, accept: "application/json" },
     });
     const contentType = resp.headers.get("content-type") || "";
@@ -262,8 +265,9 @@ async function observeDownDetector(service: { name: string; downDetectorUrl: str
   if (!service.downDetectorUrl) return null;
   try {
     const readerBase = process.env.DD_READER_BASE_URL || "https://r.jina.ai/";
-    const resp = await fetch(readerBase + service.downDetectorUrl, {
-      signal: AbortSignal.timeout(20000),
+    const resp = await safeFetch(readerBase + service.downDetectorUrl, {
+      purpose: "monitor",
+      timeoutMs: 20000,
       headers: { "user-agent": USER_AGENT },
     });
     if (!resp.ok) {
@@ -294,8 +298,8 @@ async function observeDownDetector(service: { name: string; downDetectorUrl: str
       detail: blocked ? "challenge page - source blocked" : "no recognisable status line",
     };
   } catch (e: any) {
-    snapshot.errors.push(`${service.name}: DownDetector fetch failed for ${service.downDetectorUrl} (${e?.name || "error"})`);
-    return { source: "downdetector", verdict: "unknown", detail: `page unreachable (${e?.name || "error"})` };
+    snapshot.errors.push(`${service.name}: DownDetector fetch failed for ${service.downDetectorUrl} (${e?.message || e?.name || "error"})`);
+    return { source: "downdetector", verdict: "unknown", detail: `page unreachable (${e?.message || e?.name || "error"})` };
   }
 }
 
@@ -307,7 +311,7 @@ async function observeMonitor(service: { name: string; monitorKind: string; moni
   const cfg = (service.monitorConfig || {}) as { expectStatus?: number; sslWarnDays?: number };
   try {
     if (kind === "website") {
-      const resp = await fetch(service.monitorUrl, { signal: AbortSignal.timeout(15000) });
+      const resp = await safeFetch(service.monitorUrl, { purpose: "monitor", timeoutMs: 15000 });
       const expect = cfg.expectStatus || 200;
       if (resp.status !== expect) {
         return { source: "website", verdict: "problem", severity: "outage", title: `${service.name}: HTTP ${resp.status} (expected ${expect})`, body: `website monitor (${service.monitorUrl})`, link: service.monitorUrl, detail: `HTTP ${resp.status}` };
@@ -315,6 +319,9 @@ async function observeMonitor(service: { name: string; monitorKind: string; moni
       return { source: "website", verdict: "clear", detail: `HTTP ${resp.status} as expected` };
     }
     if (kind === "ssl") {
+      // The ssl and dns checks open a connection straight to the host below, so they apply
+      // the same address policy as a fetch rather than relying on one.
+      await assertSafeOutboundUrl(service.monitorUrl, "monitor");
       const u = new URL(service.monitorUrl);
       const host = u.hostname;
       const port = u.port ? Number(u.port) : 443;
@@ -338,6 +345,7 @@ async function observeMonitor(service: { name: string; monitorKind: string; moni
       return { source: "ssl", verdict: "clear", detail: `certificate valid for ${days} more days` };
     }
     const u = new URL(service.monitorUrl);
+    await assertSafeOutboundUrl(service.monitorUrl, "monitor");
     await dns.resolve4(u.hostname);
     return { source: "dns", verdict: "clear", detail: `${u.hostname} resolves` };
   } catch (e: any) {

@@ -17,12 +17,29 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { EgressError, assertSafeUrlLiteral } from "../services/egress";
 import { getMonitorStatus, runAlertCheck } from "../services/alertMonitor";
 
 export const serviceAlertsRouter = Router();
 serviceAlertsRouter.use(authenticate);
 
 const SERVICE_FIELDS = ["name", "category", "description", "statusPageUrl", "downDetectorUrl", "rssUrl", "monitorKind", "monitorUrl", "monitorConfig", "monitorEnabled", "enabled", "sortOrder"] as const;
+
+/** URL fields the monitor will fetch — rejected on save if they point somewhere unsafe. */
+const SERVICE_URL_FIELDS = ["statusPageUrl", "downDetectorUrl", "rssUrl", "monitorUrl"] as const;
+
+function checkServiceUrls(data: Record<string, unknown>): void {
+  for (const f of SERVICE_URL_FIELDS) {
+    const value = data[f];
+    if (typeof value !== "string" || !value.trim()) continue;
+    try {
+      assertSafeUrlLiteral(value.trim());
+    } catch (e) {
+      if (e instanceof EgressError) throw new AppError(`${f} rejected: ${e.message}`, 400);
+      throw e;
+    }
+  }
+}
 
 // ── Read: active alerts ──
 serviceAlertsRouter.get("/", requirePermission(Permission.ServiceAlertView), async (_req: AuthRequest, res, next) => {
@@ -109,6 +126,7 @@ serviceAlertsRouter.post("/services", requirePermission(Permission.ServiceAlertM
     }
     const existing = await prisma.serviceAlertService.findUnique({ where: { name: data.name as string } });
     if (existing) throw new AppError(`A service named "${data.name}" already exists`, 409);
+    checkServiceUrls(data);
     const service = await prisma.serviceAlertService.create({ data: data as any });
     res.status(201).json(service);
   } catch (e) { next(e); }
@@ -123,6 +141,7 @@ serviceAlertsRouter.patch("/services/:id", requirePermission(Permission.ServiceA
       if (body[f] !== undefined) data[f] = body[f];
     }
     if (data.name && typeof data.name === "string") data.name = (data.name as string).trim();
+    checkServiceUrls(data);
     const service = await prisma.serviceAlertService.update({ where: { id: req.params.id }, data: data as any });
     res.json(service);
   } catch (e) { next(e); }

@@ -3,10 +3,22 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { Permission } from "@C7NTAX/shared";
 import { inferenceEngine, type InferenceOutput } from "../services/inference";
 import { AppError } from "../middleware/errorHandler";
+import { EgressError, assertSafeUrlLiteral } from "../services/egress";
 import { prisma } from "../index";
 
 export const inferenceRouter = Router();
 inferenceRouter.use(authenticate);
+
+/** A provider endpoint is called with the stored API key attached, so it is checked on save. */
+function checkEndpoint(apiEndpoint: unknown): void {
+  if (typeof apiEndpoint !== "string" || !apiEndpoint.trim()) return;
+  try {
+    assertSafeUrlLiteral(apiEndpoint.trim());
+  } catch (e) {
+    if (e instanceof EgressError) throw new AppError(`Endpoint rejected: ${e.message}`, 400);
+    throw e;
+  }
+}
 
 // ── Analyze a ticket for suggestions + patterns ──
 inferenceRouter.post("/suggestions", requirePermission(Permission.InferenceView), async (req: AuthRequest, res, next) => {
@@ -60,6 +72,7 @@ inferenceRouter.post("/providers", requirePermission(Permission.InferenceManage)
   try {
     const { name, provider, model, apiKey, apiEndpoint, maxTokens, temperature, topP, isActive, isDefault, config } = req.body;
     if (!name || !provider) throw new AppError("name and provider required");
+    checkEndpoint(apiEndpoint);
 
     // If setting as default, unset any existing default
     if (isDefault) {
@@ -80,6 +93,7 @@ inferenceRouter.patch("/providers/:id", requirePermission(Permission.InferenceMa
     const allowed = ["name","provider","model","apiKey","apiEndpoint","maxTokens","temperature","topP","isActive","isDefault","config"];
     const updates: Record<string, unknown> = {};
     for (const k of allowed) if (req.body[k] !== undefined) updates[k] = req.body[k];
+    checkEndpoint(updates.apiEndpoint);
 
     if (updates.isDefault) {
       await prisma.aiProviderConfig.updateMany({ where: { isDefault: true, id: { not: req.params.id } }, data: { isDefault: false } });

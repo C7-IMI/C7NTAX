@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { signToken } from "../middleware/auth";
+import { safeFetch } from "../services/egress";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { SystemRole } from "@C7NTAX/shared";
@@ -21,10 +22,10 @@ function base64url(input: string | Buffer): string {
 }
 
 async function jwksKey(issuer: string, kid: string): Promise<string> {
-  const discovery = await fetch(`${issuer.replace(/\/$/, "")}/.well-known/openid-configuration`);
+  const discovery = await safeFetch(`${issuer.replace(/\/$/, "")}/.well-known/openid-configuration`, { purpose: "sso" });
   if (!discovery.ok) throw new Error("OIDC discovery failed");
   const { jwks_uri } = (await discovery.json()) as { jwks_uri: string };
-  const jwks = await fetch(jwks_uri);
+  const jwks = await safeFetch(jwks_uri, { purpose: "sso" });
   const { keys } = (await jwks.json()) as { keys: Array<{ kid: string; n: string; e: string; kty: string }> };
   const key = keys.find((k) => k.kid === kid);
   if (!key) throw new Error("No matching JWKS key");
@@ -48,7 +49,7 @@ ssoExchangeRouter.get("/oidc/start", async (req, res, next) => {
   try {
     if (!enabled()) return res.status(404).json({ error: "SSO disabled" });
     const issuer = process.env.SSO_ISSUER!.replace(/\/$/, "");
-    const discovery = await fetch(`${issuer}/.well-known/openid-configuration`);
+    const discovery = await safeFetch(`${issuer}/.well-known/openid-configuration`, { purpose: "sso" });
     const { authorization_endpoint } = (await discovery.json()) as { authorization_endpoint: string };
     const state = crypto.randomBytes(16).toString("hex");
     // Remember the nonce so the callback can prove it started this handshake.
@@ -86,9 +87,9 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
     await prisma.systemConfig.deleteMany({ where: { key: SSO_STATE_KEY } });
 
     const issuer = process.env.SSO_ISSUER!.replace(/\/$/, "");
-    const discovery = await fetch(`${issuer}/.well-known/openid-configuration`);
+    const discovery = await safeFetch(`${issuer}/.well-known/openid-configuration`, { purpose: "sso" });
     const { token_endpoint } = (await discovery.json()) as { token_endpoint: string };
-    const tokenRes = await fetch(token_endpoint, {
+    const tokenRes = await safeFetch(token_endpoint, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({

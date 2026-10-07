@@ -8945,5 +8945,75 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T02:38:23.593Z"
+  },
+  {
+    "id": "3744d35b-0430-4095-9cb6-6548571b6019",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-egress-1791341020189",
+      "model": "m",
+      "apiKey": "sk-not-a-real-key",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:43:40.199Z"
+  },
+  {
+    "id": "7bc75876-c797-4f7a-ac29-9f51a3dc191e",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "c2e485cd-218f-4637-ab82-6ed80797d558",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:43:40.226Z"
+  },
+  {
+    "id": "b322ac37-d3cf-47f3-a94e-e95bef302cf0",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-egress-1791341038910",
+      "model": "m",
+      "apiKey": "sk-not-a-real-key",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:43:58.918Z"
+  },
+  {
+    "id": "1bd3c5a8-9faa-4ee7-8b35-74bacdb252a1",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "fc560efb-c05d-4d8b-aa46-36ce7c90cdcf",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:43:58.935Z"
+  },
+  {
+    "id": "d8b7abad-1370-4e58-a316-07381f80dad6",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T02:44:36.496Z"
   }
 ]

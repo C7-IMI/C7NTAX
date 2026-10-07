@@ -1,4 +1,5 @@
 import { prisma } from "../../index";
+import { EgressError, safeFetch } from "../egress";
 import type { SuggestionResult } from "./types";
 
 /**
@@ -76,7 +77,17 @@ async function callProvider(
   const effectiveProvider = { ...provider, model: process.env.INFERENCE_MODEL || provider.model };
   const body = buildRequestBody(effectiveProvider, prompt);
   const start = Date.now();
-  const res = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(body) });
+  // Every provider endpoint is validated and fetched through the egress policy: an admin
+  // can point this at an internal address, and the stored API key travels with the call.
+  // A blocked endpoint behaves like an unreachable one: log and let the keyword layer answer.
+  let res: Response;
+  try {
+    res = await safeFetch(endpoint, { purpose: "inference", method: "POST", headers, body: JSON.stringify(body) });
+  } catch (e) {
+    const detail = e instanceof EgressError ? e.message : (e as Error).message;
+    console.error(`[LLM] endpoint ${endpoint} blocked or unreachable: ${detail}`);
+    return { suggestions: [], summary: "", tokensUsed: 0 };
+  }
   const json = (await res.json()) as Record<string, unknown>;
   const latencyMs = Date.now() - start;
 

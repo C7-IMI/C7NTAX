@@ -826,6 +826,20 @@
     "updatedAt": "2026-09-01T14:24:09.982Z"
   },
   {
+    "id": "2cb7d7df-02ce-4c41-a38a-3f1b2960f072",
+    "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
+    "title": "Minor Service Outage",
+    "description": "Auto-resolved: Elevated errors loading usage data on platform.claude.com\n\nhttps://status.claude.com reports \"Minor Service Outage\".",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "statuspage",
+    "sourceUrl": "https://status.claude.com/",
+    "detectedAt": "2026-10-07T02:38:42.214Z",
+    "resolvedAt": "2026-10-07T02:43:26.767Z",
+    "createdAt": "2026-10-07T02:38:42.216Z",
+    "updatedAt": "2026-10-07T02:43:26.770Z"
+  },
+  {
     "id": "eee1377a-2063-4ef5-a9d8-bf1181d3bd85",
     "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
     "title": "Possible service degradation reported for Claude (DownDetector)",
