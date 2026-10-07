@@ -480,7 +480,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-07T08:52:47.585Z",
+    "lastLoginAt": "2026-10-07T09:06:23.201Z",
     "emailVerified": false,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -497,7 +497,7 @@
     "permissions": [],
     "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
     "createdAt": "2026-10-07T02:14:32.826Z",
-    "updatedAt": "2026-10-07T08:52:47.587Z"
+    "updatedAt": "2026-10-07T09:06:23.205Z"
   },
   {
     "id": "fe948159-f6e8-44eb-9e8d-e2ce8e549bd1",
@@ -579,7 +579,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-07T08:52:50.713Z",
+    "lastLoginAt": "2026-10-07T09:07:10.057Z",
     "emailVerified": false,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -596,7 +596,7 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-10-07T02:14:32.822Z",
-    "updatedAt": "2026-10-07T08:52:50.715Z"
+    "updatedAt": "2026-10-07T09:07:10.059Z"
   },
   {
     "id": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
@@ -612,7 +612,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-07T08:22:01.133Z",
+    "lastLoginAt": "2026-10-07T09:08:48.630Z",
     "emailVerified": true,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -629,6 +629,6 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-10-07T08:22:01.135Z"
+    "updatedAt": "2026-10-07T09:08:48.632Z"
   }
 ]

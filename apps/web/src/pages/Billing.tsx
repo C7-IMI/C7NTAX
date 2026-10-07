@@ -42,9 +42,18 @@ const PERIOD_COLORS: Record<string, string> = {
   annual: "bg-cyber-600/20 text-cyber-400", weekly: "bg-amber-600/20 text-amber-400",
 };
 
-/** The API's own message when it sent one — more useful than a generic "Failed". */
-const apiMessage = (err: unknown, fallback: string) =>
-  (err as { response?: { data?: { error?: string } } })?.response?.data?.error || fallback;
+/**
+ * The API's own message when it sent one — more useful than a generic "Failed".
+ * Two shapes are in the wild: middleware refuses with `{ error: "…" }` while route handlers that
+ * call `next(new AppError(…))` come back as `{ error: { message, status } }`. Read both, because
+ * the alternative is a toast that says "[object Object]".
+ */
+const apiMessage = (err: unknown, fallback: string) => {
+  const error = (err as { response?: { data?: { error?: unknown } } })?.response?.data?.error;
+  if (typeof error === "string" && error) return error;
+  const message = (error as { message?: unknown } | undefined)?.message;
+  return typeof message === "string" && message ? message : fallback;
+};
 
 const TABS = [
   { id: "invoices", label: "Invoices", icon: Receipt },
@@ -163,7 +172,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
       const r = await api.post("/billing/invoices/generate-from-tickets", { companyId: genForm.companyId });
       const created: Invoice = r.data.invoice;
       const entries = Number(r.data.entriesIncluded ?? 0);
-      const tickets: string[] = r.data.tickets || [];
+      const tickets = (created.sourceTickets ?? []).map(t => t.ticketNumber);
       toast.success([
         `Created ${created.invoiceNumber}`,
         `from ${entries} time ${entries === 1 ? "entry" : "entries"}`,
@@ -346,7 +355,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
         <div className="text-center py-12 card"><Receipt size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No invoices</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
-          <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase tracking-wider"><SortableHeader field="invoiceNumber" label="Invoice" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="company.name" label="Client" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden sm:table-cell" /><SortableHeader field="total" label="Amount" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="issueDate" label="Issued" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="dueDate" label="Due" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="status" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><th className="p-3 text-right">Actions</th></tr></thead>
+          <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase tracking-wider"><SortableHeader field="invoiceNumber" label="Invoice" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="company.name" label="Client" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden sm:table-cell" /><th className="p-3 hidden lg:table-cell">Tickets</th><SortableHeader field="total" label="Amount" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="issueDate" label="Issued" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="dueDate" label="Due" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="status" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><th className="p-3 text-right">Actions</th></tr></thead>
           <tbody>{sortData(invoices, sort?.field || "dueDate", sort?.direction || "desc").map(inv => (
             <tr key={inv.id} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 cursor-pointer focus:outline-none focus:bg-surface-lighter/30" onDoubleClick={() => handleInvoicePdf(inv)} onClick={() => setViewInvoice(inv)}
               onContextMenu={(e) => menu.open(e, invoiceMenuEntries(inv), invoiceMenuHeader(inv))}
@@ -354,6 +363,22 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
             >
               <td className="p-3 font-medium text-white">{inv.invoiceNumber}</td>
               <td className="p-3 text-gray-300 hidden sm:table-cell">{inv.company?.name || "—"}</td>
+              <td className="p-3 hidden lg:table-cell">
+                {inv.sourceTickets && inv.sourceTickets.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-1">
+                    {inv.sourceTickets.slice(0, 3).map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        title={`Open ${t.ticketNumber}`}
+                        onClick={e => { e.stopPropagation(); navigate(`/tickets/${t.id}`); }}
+                        className="badge bg-cyber-600/20 text-cyber-400 hover:bg-cyber-600/30"
+                      >{t.ticketNumber}</button>
+                    ))}
+                    {inv.sourceTickets.length > 3 && <span className="text-gray-500 text-xs">+{inv.sourceTickets.length - 3}</span>}
+                  </div>
+                ) : <span className="text-gray-600">—</span>}
+              </td>
               <td className="p-3">${inv.total.toFixed(2)}</td>
               <td className="p-3 text-gray-400 hidden md:table-cell">{new Date(inv.issueDate).toLocaleDateString()}</td>
               <td className="p-3 text-gray-400 hidden md:table-cell">{new Date(inv.dueDate).toLocaleDateString()}</td>
@@ -429,6 +454,21 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
               <div><p className="text-gray-500">Total</p><p className="text-white font-bold text-lg">${viewInvoice.total.toFixed(2)}</p></div>
               {viewInvoice.subtotal !== undefined && <div><p className="text-gray-500">Subtotal</p><p className="text-white">${viewInvoice.subtotal.toFixed(2)}</p></div>}
             </div>
+            {viewInvoice.sourceTickets && viewInvoice.sourceTickets.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-400 mb-2">Billed from</h4>
+                <div className="flex flex-wrap gap-1">
+                  {viewInvoice.sourceTickets.map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => { setViewInvoice(null); navigate(`/tickets/${t.id}`); }}
+                      className="badge bg-cyber-600/20 text-cyber-400 hover:bg-cyber-600/30"
+                    >{t.ticketNumber}</button>
+                  ))}
+                </div>
+              </div>
+            )}
             {viewInvoice.lineItems && viewInvoice.lineItems.length > 0 && (
               <div><h4 className="text-sm font-semibold text-gray-400 mb-2">Line Items</h4>
                 <div className="space-y-1">{(viewInvoice.lineItems || []).map((li, i) => (

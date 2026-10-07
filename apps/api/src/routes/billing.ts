@@ -131,19 +131,20 @@ billingRouter.get("/invoices", requirePermission(Permission.BillingView), async 
     const billedTime = invoiceIds.length
       ? await prisma.timeEntry.findMany({
           where: { invoiceId: { in: invoiceIds } },
-          select: { invoiceId: true, ticket: { select: { ticketNumber: true } } },
+          select: { invoiceId: true, ticket: { select: { id: true, ticketNumber: true } } },
         })
       : [];
-    const ticketsByInvoice = new Map<string, Set<string>>();
+    const ticketsByInvoice = new Map<string, Map<string, { id: string; ticketNumber: string }>>();
     for (const entry of billedTime) {
-      if (!entry.invoiceId || !entry.ticket?.ticketNumber) continue;
-      if (!ticketsByInvoice.has(entry.invoiceId)) ticketsByInvoice.set(entry.invoiceId, new Set());
-      ticketsByInvoice.get(entry.invoiceId)!.add(entry.ticket.ticketNumber);
+      if (!entry.invoiceId || !entry.ticket) continue;
+      if (!ticketsByInvoice.has(entry.invoiceId)) ticketsByInvoice.set(entry.invoiceId, new Map());
+      ticketsByInvoice.get(entry.invoiceId)!.set(entry.ticket.id, entry.ticket);
     }
     res.json({
       data: invoices.map(invoice => ({
         ...invoice,
-        sourceTickets: [...(ticketsByInvoice.get(invoice.id) ?? [])].sort(),
+        sourceTickets: [...(ticketsByInvoice.get(invoice.id)?.values() ?? [])]
+          .sort((a, b) => a.ticketNumber.localeCompare(b.ticketNumber)),
       })),
       total,
     });
@@ -190,6 +191,9 @@ function ticketLineItems(entries: UnbilledEntry[], agreement: { billingAmount: n
 /** What a client's unbilled time would add up to. Reads only, so the dialog can show it first. */
 billingRouter.get("/invoices/unbilled/:companyId", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
   try {
+    // The preview exists to serve the generate dialog, so it disappears with the feature rather
+    // than hinting at an endpoint this deployment has switched off.
+    if (process.env.BILLING_FROM_TICKETS_ENABLED === "false") throw new AppError("Generate-from-tickets disabled", 404);
     const companyId = String(req.params.companyId);
     if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
     const agreement = await resolveBillingAgreement(companyId);
@@ -267,10 +271,15 @@ billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permissi
       include: { lineItems: true },
     });
     await prisma.timeEntry.updateMany({ where: { id: { in: timeEntries.map((te) => te.id) } }, data: { invoiceId: invoice.id } });
+    // Answer in the same shape the invoice list uses (`sourceTickets`, `company`) so the caller can
+    // open what it just created without a second round trip or an empty client field.
     res.status(201).json({
-      invoice,
+      invoice: {
+        ...invoice,
+        company: await prisma.company.findUnique({ where: { id: companyId }, select: { id: true, name: true } }),
+        sourceTickets: [...new Map(timeEntries.map(te => [te.ticket.id, te.ticket])).values()].sort((a, b) => a.ticketNumber.localeCompare(b.ticketNumber)),
+      },
       entriesIncluded: timeEntries.length,
-      tickets: [...new Map(timeEntries.map(te => [te.ticket.id, te.ticket])).values()].map(t => t.ticketNumber).sort(),
     });
   } catch (e) { next(e); }
 });

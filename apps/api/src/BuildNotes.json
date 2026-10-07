@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.7.017",
+    "date": "2026-10-07",
+    "title": "Billing from tickets: you see the money before you bill it, and the invoice remembers which tickets it came from",
+    "changes": [
+      {
+        "text": "**`GET /billing/invoices/unbilled/:companyId`** answers what a client's unbilled time would add up to — entries, hours, amount, the tickets behind it, and the agreement whose rate will be used. It reads only. The Generate dialog now shows that summary as soon as a client is picked, because \"Generate\" that either writes an empty draft or fails with \"no unbilled time\" is a coin flip the operator cannot see coming.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Every invoice list row now names its source tickets.** `GET /billing/invoices` carries `sourceTickets` (id + number, one grouped query for the page, not a lookup per invoice), the Billing table has a Tickets column of chips that open the ticket, the invoice view lists them under \"Billed from\", the right-click menu has \"Open source ticket…\", and the CSV export carries the column. Before this, an invoice gave no way back to the work it charged for.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`POST /billing/invoices/generate-from-tickets` was registered twice.** Express serves the first match, so the second handler — a different response shape, sitting further down the file where it read as authoritative — was unreachable dead code. Removed. `FinanceDashboard`'s panel was reading *that* handler's field names, so it had been reporting \"Draft invoice undefined generated (undefined line items)\" against an endpoint that worked; it now reads `{ invoice, entriesIncluded }` and says what it created.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The double rounding, the unnamed lines and the guessable rate are gone.** Both generate paths now share `resolveBillingAgreement`, `unbilledTimeEntries` and `ticketLineItems`, so the preview cannot promise a rate the invoice does not use. An untyped time entry is described as `Ticket TK-1042` instead of `Time entry 9f3c21ab`, entries come back in date order, and the exact subtotal the preview showed is the one written.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Generating an invoice is now company-scoped.** `POST /invoices/generate` accepted any `companyId` without checking it, so a company-scoped account could bill a client it cannot see. Both generate paths and the preview now return 404 for a client outside the account's scope, matching the read paths that were already scoped.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The kill switch covers the preview too.** With `BILLING_FROM_TICKETS_ENABLED=false` the dialog's preview 404s alongside the endpoint it serves — a feature that is off should not leave one endpoint hinting that it exists. Billing itself is untouched by the flag.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.016",
     "date": "2026-10-07",
     "title": "Bookkeeping: what the waves changed in the plan registry, and the decisions collected for the Azure step",

@@ -3759,3 +3759,24 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 **Notes for next time**
 - The remaining buildable work is SMS (blocked on provider choice) and the later waves (PLAN-013, 011, 007, 004, 005, 014). Everything in W1/W2 and the Outlook add-in is shipped and verified.
+
+**Prompt 220 — continued: PLAN-013 #5 (billing from tickets — the dialog and the linked-ticket column)**
+
+**What I did**
+- Started on PLAN-013, the last wave with buildable items left, and took #5 ("generate-from-tickets modal + linked-ticket column") first because it was the smallest and most self-contained.
+- **Found a route registered twice.** `POST /billing/invoices/generate-from-tickets` existed twice in `billing.ts`: the first handler was live and returned `{ invoice, entriesIncluded }`, the second — further down, with a different response shape — was unreachable, because Express serves the first match. Deleted it rather than leaving a handler that reads as authoritative and never runs.
+- **That dead handler had a live consequence.** `FinanceDashboard`'s "Generate from tickets" panel read *its* field names (`invoiceNumber`, `lineItems`), so the panel had been toasting "Draft invoice undefined generated (undefined line items)" while the endpoint underneath worked correctly. It now reads the real shape.
+- **Extracted the shared core** so the numbers cannot drift: `resolveBillingAgreement`, `unbilledTimeEntries` and `ticketLineItems` are now used by both generate paths, letting the new preview promise exactly what the write produces.
+- **Added `GET /billing/invoices/unbilled/:companyId`** (read-only: entries, minutes, amount, tickets, agreement) and rebuilt the Generate dialog around it: pick a client, see "2 entries · 2.00 h, $425.00, from UIV-A…, UIV-B…", and the Generate button is disabled with a reason when there is nothing to bill — instead of the old dialog, which posted to `/invoices/generate` and cheerfully wrote an empty draft when the client had no unbilled time.
+- **Linked the money back to the work.** `GET /billing/invoices` now returns `sourceTickets` (one grouped query for the page), and the Billing page shows them as chips in a new Tickets column, under "Billed from" in the invoice view, in the right-click menu ("Open source ticket…"), and in the CSV export. Line descriptions now say `Ticket TK-1042` rather than `Time entry 9f3c21ab`.
+- **Closed an authorization hole I walked into.** `POST /invoices/generate` accepted any `companyId` without checking scope, so a company-scoped account could bill a client it cannot see; both generate paths and the preview now 404 outside the account's scope, matching the read paths.
+- **Verified:** `probe-billing-generate.mjs` 45/45 (new) and `probe-billing-generate-flag.mjs` 6/6 with the flag off (new), then in the browser end to end — the preview, the toast naming both tickets, the invoice opening with its "Billed from" chips, a chip navigating to the right ticket, and "—" for the older invoices that have no source tickets.
+
+**Decisions worth remembering**
+- **A dead route is worse than a missing one.** It compiles, it reads correctly, it is never reached, and somebody — in this case the finance dashboard — codes against its shape.
+- **A preview is not a nicety here.** "Generate" either writing an empty draft or failing was a coin flip; the same helpers now answer both the question and the write.
+- **The kill switch has to cover the preview.** A feature that is off should not leave an endpoint hinting it exists; the preview 404s with the generate path.
+
+**Notes for next time**
+- The web app reads API errors in two shapes: middleware refuses with `{ error: "…" }` while `next(new AppError(…))` returns `{ error: { message, status } }`. `Billing.tsx` and `FinanceDashboard.tsx` now understand both; **19 other call sites still assume the string shape** and will toast "[object Object]" — recorded for the PLAN-013 #9 UI/UX pass.
+- PLAN-013 #3 (customer portal) is next: the identity dependency (PLAN-001/002) is satisfied, and company scoping substitutes for the multi-tenant isolation that is out of scope.

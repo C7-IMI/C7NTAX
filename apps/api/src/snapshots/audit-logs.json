@@ -23921,5 +23921,219 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T08:52:52.957Z"
+  },
+  {
+    "id": "6e93897b-53e0-4b0a-b51b-d70df38429f7",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "7362ed3a-4d2e-47de-9902-575f700c0660",
+    "changes": {
+      "minutes": 90,
+      "description": "Quarterly maintenance"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:05:02.845Z"
+  },
+  {
+    "id": "aa3faac7-2187-4fde-a38a-3a32162d6f75",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "cfe97846-71d7-40ca-ab86-7c4e7af555b1",
+    "changes": {
+      "rate": 250,
+      "minutes": 30
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:05:02.872Z"
+  },
+  {
+    "id": "ed92b0b3-2b01-4355-b8e5-2e3dfe2c49d1",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "cfe97846-71d7-40ca-ab86-7c4e7af555b1",
+    "changes": {
+      "minutes": 45,
+      "billable": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:05:02.888Z"
+  },
+  {
+    "id": "4130e0a7-b70f-490d-939b-75d8261a0503",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "cfe97846-71d7-40ca-ab86-7c4e7af555b1",
+    "changes": {
+      "minutes": 60,
+      "noCharge": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:05:02.907Z"
+  },
+  {
+    "id": "509d390d-70cf-469e-969c-bb2afea3dcc8",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "c73e1dae-9855-4aff-ac9f-45bb58891bef"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:05:02.957Z"
+  },
+  {
+    "id": "17323692-cf5c-4b48-b944-96e221197a5e",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "ea475475-6845-4cf6-9507-a39bfd0e49b0",
+    "changes": {
+      "minutes": 60,
+      "description": "Other client work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:05:03.011Z"
+  },
+  {
+    "id": "f390bce7-ddd3-4100-96a2-3033883273f1",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "eca6382f-814b-4508-8f40-df27e4a18655"
+    },
+    "userId": "a44acdd7-35b4-4cb3-ae83-2af2f0b5a957",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:05:03.526Z"
+  },
+  {
+    "id": "9bef9cf6-18fc-468b-b18c-a0510d893b56",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate",
+    "changes": {
+      "companyId": "c73e1dae-9855-4aff-ac9f-45bb58891bef"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:05:03.540Z"
+  },
+  {
+    "id": "bd87b191-3cb3-4162-8298-91b5cf29a19b",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "a6e27d6f-5043-4ce0-9c7f-6041d82eb678",
+    "changes": {
+      "minutes": 90,
+      "description": "Quarterly maintenance"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:06:22.740Z"
+  },
+  {
+    "id": "b6cd87d6-87b0-4d4d-84ec-29ba38087ce7",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "50b63f9b-14bf-4ec8-89bc-eed1b4342205",
+    "changes": {
+      "rate": 250,
+      "minutes": 30
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:06:22.752Z"
+  },
+  {
+    "id": "e05fe470-01cc-40b7-ac6d-738de5fb693b",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "50b63f9b-14bf-4ec8-89bc-eed1b4342205",
+    "changes": {
+      "minutes": 45,
+      "billable": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:06:22.763Z"
+  },
+  {
+    "id": "112e0980-9f0a-4276-ab47-7e83ed9712ed",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "50b63f9b-14bf-4ec8-89bc-eed1b4342205",
+    "changes": {
+      "minutes": 60,
+      "noCharge": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:06:22.774Z"
+  },
+  {
+    "id": "d5c3e717-319d-47a3-a642-a9f44b019c6a",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "79309775-73dd-4ce1-8861-bdbd56ddc4bc"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:06:22.816Z"
+  },
+  {
+    "id": "b995d983-ea87-4326-8fbc-8df9ca6be9f8",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "35870960-1607-4c70-9661-bb4aed5b50c5",
+    "changes": {
+      "minutes": 60,
+      "description": "Other client work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:06:22.880Z"
+  },
+  {
+    "id": "1ab2700c-b928-48db-bcd3-de553ee0db91",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "5013084a-0882-4b68-96c2-6f0213dc874b"
+    },
+    "userId": "3c370a2c-9a98-4e69-9db2-4fe08afd18de",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:06:23.399Z"
+  },
+  {
+    "id": "5c9992d3-3c74-4c17-abea-638724ad5146",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate",
+    "changes": {
+      "companyId": "79309775-73dd-4ce1-8861-bdbd56ddc4bc"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:06:23.409Z"
+  },
+  {
+    "id": "f6ca1ba1-6284-4a7c-8937-053c28d43c10",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "4a15c786-102c-4aa8-8ae7-84648d6260ac"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T09:09:42.472Z"
   }
 ]

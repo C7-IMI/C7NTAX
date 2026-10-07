@@ -62,9 +62,13 @@ export function FinanceDashboardPage() {
               setGenLoading(true);
               try {
                 const r = await api.post("/billing/invoices/generate-from-tickets", { companyId: genCompanyId });
-                toast.success(`Draft invoice ${r.data.invoiceNumber} generated (${r.data.lineItems} line items)`);
+                toast.success(`Draft invoice ${r.data.invoice.invoiceNumber} generated (${r.data.entriesIncluded} time entries)`);
               } catch (err: unknown) {
-                toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Generate failed");
+                const apiError = (err as { response?: { data?: { error?: unknown } } })?.response?.data?.error;
+                const message = typeof apiError === "string" ? apiError
+                  : typeof (apiError as { message?: unknown } | undefined)?.message === "string" ? (apiError as { message: string }).message
+                    : "Generate failed";
+                toast.error(message);
               } finally { setGenLoading(false); }
             }}
           >
