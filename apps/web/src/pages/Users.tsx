@@ -138,6 +138,9 @@ export function UsersPage() {
     setPermSet(new Set([...rolePerms, ...userOverrides]));
     setEditing(false);
     setTab("profile");
+    // The list projection leaves out placement (time zone, manager), so load the
+    // full record; the row renders immediately from what the list already has.
+    void refreshUser(user.id);
   };
 
   const closeDetail = () => { setSelected(null); setEditing(false); };

@@ -3057,3 +3057,31 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - `.gitignore` hides `prisma/migrations/` — easy to miss, and it silently invalidates the schema-migration half of PLAN-016 and any "migrations are the source of truth" assumption about production.
 - The scanners already exist locally (`startup/security-scanners.ps1`, SOC 2 backlog item 11), so CI work there is a port, not new code.
 - `scripts/typecheck-diff.sh` is bash and `apps/desktop` needs Windows; keep web/API jobs on `ubuntu-latest` and only the desktop job on `windows-latest`.
+
+---
+
+### Prompt 211 — Reset password (menu + security tab) and a robust New User dialog
+**Timestamp:** 2026-10-06 | **Status:** Done — feature built, verified live, logged and committed | **Duration:** ~3 h
+**BuildNotes IDs:** 2026.10.6.052 - Resetting a user's password, and a New User dialog that matches how PSA tools create people
+> I need to add a reset password option to the right click menu of manage users as well as in the security tab.
+
+> The new user dialog needs to be more robust. Use AUtoaskPSA and ConnectWise Asio and reference for user creation features, layout, and functions
+
+**What I did**
+- **Schema** (`apps/api/prisma/schema.prisma`, pushed + client regenerated): `mustChangePassword`, `passwordChangedAt`, `tokenVersion`, `department`, `timezone`, `reportsToId` + the `UserReportsTo` self-relation.
+- **Shared policy** (`packages/shared/src/passwordPolicy.ts`): `MIN_PASSWORD_LENGTH`, `validatePassword(password, {email, firstName, lastName})`, `passwordPolicyChecks()` for the live checklist — used by the API and all three dialogs so the rules can't drift from the message.
+- **API** — `routes/users.ts`: create hardened (required names, email format/case-insensitive duplicate check, username conflict, manager existence, role by id or systemRole, new fields, three credential modes, policy, optional welcome email) and `POST /users/:id/reset-password` (generate/manual, `requireChange`, `unlock` clearing `loginAttempts`, optional email). `routes/auth.ts`: `POST /auth/change-password`, `mustChangePassword` in the login/MFA responses and `/auth/me`. `middleware/auth.ts`: session validity re-checked per request — a retired token is 401, a pending change is 403 `PASSWORD_CHANGE_REQUIRED` everywhere except `/auth/me`, `/auth/change-password` and `/users/me`.
+- **Web** — new `components/users/{PasswordFields,NewUserDialog,ResetPasswordDialog,ChangePasswordForm}.tsx` and `lib/timezones.ts`; `pages/Users.tsx` wired (menu entry, Security-tab Password section, Placement on the profile tab, copy-from-user prefill, full record load on open); `App.tsx` gained the password-change gate; `hooks/useAuth.tsx` gained `completeSignIn` and `markPasswordChanged`.
+
+**Decisions worth remembering**
+- **`passwordChangedAt` + JWT `iat` was not good enough.** The first implementation compared the token's `iat` to the change time, which meant a token minted in the same second survived (the probe caught it because it runs at machine speed). Replaced with a **`tokenVersion`** stamped into every JWT and bumped on every password write — deterministic, no clock assumptions, and it needed `signToken` callers (login, MFA ×2, change-password, SSO exchange, passkey) to pass the current version or they would have self-rejected.
+- **A reset does have to end existing sessions.** The middleware already loaded the user on every request for permission refresh, so the version check rides along free.
+- **`firstName`/`lastName` are required in the schema**, so the old dialog could produce a raw Prisma error by omitting them — that is why validation now happens before the insert.
+- **Forced change is enforced by the API, not the SPA.** A passkey/SSO sign-in bypasses the login-time hint, so the gate keys off `/users/me` and every other route 403s until the password is changed. The `Login.tsx` SSO/passkey paths also had to start calling `completeSignIn` — they previously wrote the token to localStorage and navigated without telling the auth context, which left the user on the sign-in screen.
+- Sample data matters here: the new fields were null on every seeded user, so the organisation's placement (department, time zone, reporting line) was written into the database **and** into `apps/api/src/snapshots/users.json` so it survives a reseed.
+
+**Notes for next time**
+- Adding an export to `@C7NTAX/shared` does **not** hot-reload: Vite has the package pre-bundled (`optimizeDeps.include`), so the dev server must be restarted and `node_modules/.vite/deps` cleared, otherwise the app dies with "does not provide an export named …" and renders nothing.
+- The `SnapshotPoller` service re-captures `apps/api/src/snapshots/*.json` automatically every ~5 min whenever a watched table's row count changes, so test rows I create land in the snapshots within minutes. Anything created during a probe must be deleted from the database *and* the snapshots re-captured before committing, or the reseed fixtures pick up the test data.
+- The audit middleware skips `/api/users/me` but logs everything else under `users`, including resets — rows for users that were then deleted have to be cleaned separately.
+- `git status` on `apps/api/src/snapshots` is the fastest way to spot whether a poller fired during a session.
