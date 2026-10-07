@@ -5,6 +5,10 @@ export * from "./features";
 export * from "./constants";
 export * from "./passwordStrength";
 export * from "./passwordPolicy";
+export * from "./reportFormat";
+export * from "./reportExpression";
+export * from "./reportTemplate";
+export * from "./reportLayout";
 
 // Resolve star-export collisions: the hand-written interfaces in types.ts are
 // canonical for entity names (schemas.ts derives same-named zod types).

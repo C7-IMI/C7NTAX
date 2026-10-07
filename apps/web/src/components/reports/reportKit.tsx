@@ -10,9 +10,14 @@
 import type { ReactNode } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import {
+  duration as durationValue, formatValue as formatValueIn, labelFor as labelForValue,
+  money as moneyValue, number as numberValue, unwrapValue, type ValueFormat,
+} from "@C7NTAX/shared";
 
 export type Tone = "neutral" | "good" | "warn" | "bad" | "info";
-export type ColumnFormat = "text" | "number" | "money" | "percent" | "minutes" | "hours" | "date" | "yesno";
+/** The formats a column can ask for. Defined once in `@C7NTAX/shared` so the banded engine and this kit agree. */
+export type ColumnFormat = ValueFormat;
 
 export interface TableColumn { key: string; label: string; format?: ColumnFormat; align?: "left" | "right"; }
 export interface KpiItem { label: string; value: string; sub?: string; tone?: Tone; }
@@ -30,68 +35,17 @@ export interface ReportDocument { title: string; subtitle?: string; period?: str
 
 // ── Formatting ──────────────────────────────────────────────────────
 
-export const money = (value: unknown): string =>
-  `$${Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-export const number = (value: unknown): string => Number(value ?? 0).toLocaleString();
-
-/** "6h 15m" — a duration a person reads at a glance rather than a decimal. */
-export function duration(minutes: unknown): string {
-  const total = Math.round(Number(minutes ?? 0));
-  if (!total) return "0m";
-  const sign = total < 0 ? "-" : "";
-  const abs = Math.abs(total);
-  const hours = Math.floor(abs / 60);
-  const rest = abs % 60;
-  if (!hours) return `${sign}${rest}m`;
-  return rest ? `${sign}${hours}h ${rest}m` : `${sign}${hours}h`;
-}
-
-const humanise = (value: string) => value.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-
 /**
- * A column key as a heading: camelCase and snake_case both become words, and each word is
- * capitalised, so a row key of `ticketNumber` reads as "Ticket Number" on screen and in a file.
+ * The formatters live in `@C7NTAX/shared` and are re-exported here, because the banded template
+ * engine needs the same answers: a number formatted as money must read the same in a table and in a
+ * band, and a date must not be printed two ways in one product.
  */
-export function labelFor(key: string): string {
-  return key
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/_/g, " ")
-    .trim()
-    .replace(/\b\w/g, c => c.toUpperCase());
-}
-
-/**
- * A cell's value as text. Custom report rows carry relation values as objects (a ticket's client is
- * `{ name: "Acme" }`), which used to print as "[object Object]" — a single-value object is unwrapped
- * to that value instead, and anything genuinely structured is written out as JSON.
- */
-function unwrap(value: unknown): unknown {
-  if (!value || typeof value !== "object" || value instanceof Date) return value;
-  if (Array.isArray(value)) return value.length === 1 ? unwrap(value[0]) : value.map(v => unwrap(v)).join(", ");
-  const scalars = Object.values(value as Record<string, unknown>).filter(v => v !== null && v !== undefined && typeof v !== "object");
-  if (scalars.length === 1) return scalars[0];
-  const named = (value as { name?: unknown }).name ?? (value as { title?: unknown }).title ?? (value as { label?: unknown }).label;
-  return named ?? JSON.stringify(value);
-}
-
-export function formatValue(value: unknown, format: ColumnFormat = "text"): string {
-  const unwrapped = unwrap(value);
-  if (unwrapped === null || unwrapped === undefined || unwrapped === "") return "—";
-  switch (format) {
-    case "money": return money(unwrapped);
-    case "number": return number(unwrapped);
-    case "percent": return `${Number(unwrapped).toLocaleString()}%`;
-    case "minutes": return duration(unwrapped);
-    case "hours": return `${Number(unwrapped).toLocaleString()}h`;
-    case "date": return String(unwrapped);
-    case "yesno": return unwrapped ? "Yes" : "No";
-    default: {
-      const text = String(unwrapped);
-      // A status or priority code reads as a label; anything already written stays as it is.
-      return /^[a-z0-9]+(_[a-z0-9]+)*$/.test(text) && text.length < 40 ? humanise(text) : text;
-    }
-  }
-}
+export const money = moneyValue;
+export const number = numberValue;
+export const duration = durationValue;
+export const labelFor = labelForValue;
+export const formatValue = formatValueIn;
+export { unwrapValue as unwrap };
 
 export const TONE_TEXT: Record<Tone, string> = {
   neutral: "text-white",
