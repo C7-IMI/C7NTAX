@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.022 | Last Updated: 2026-10-07
+## Version: 2026.10.7.023 | Last Updated: 2026-10-07
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.7.023 — The remaining work, sequenced: what to decide before what gets built
+- **[New]** **PLAN-019 — `PlanDocs/PLAN-019-Remaining-Work-and-Go-Live-Sequencing.md`.** An advisory overlay, not a new workstream: it orders the items the other plans already own into three tiers, gives each step an **exit condition**, and lists the ten decisions with the owner, what each unblocks and the cost of deciding late. It adds nothing to the backlog and changes nothing in the code.
+- **[New]** **Tier 1 is the sequencing recommendation worth reading first.** 3.1 recommends a starting value for every production flag with its reason — including holding the three *billing* flags (`TIME_RULES_ENABLED`, `INVOICE_BATCH_ENABLED`, `BILLING_FROM_TICKETS_ENABLED`) until the spot rates are confirmed, because they change what a client is billed, and `M365_OFFBOARD_ENABLED=false` until the tenant grant exists. 3.2 lists the three pieces of console work that need no subscription (the PLAN-017 registration, DNS/TLS, the add-in host/GUID). 3.3 is the subscription handover, which is the largest single unblock available. 3.4 recommends **deploying dev first and running the battery against it**, and names the environment-specific surprises to expect there (CSP on the add-in path, cookie flags under a real hostname, absolute manifest URLs, `migrate deploy`, the service-worker cache).
+- **[New]** **Two practices the session that produced it argues for.** §6.1: run the 19 suites (617 assertions) as one battery script, with the two caveats that they need their own database before CI and that each suite must ship in the same commit as the claim it proves. §6.2: a 30-minute click-through of the primary surfaces on a *fresh* environment — every defect found in this programme's last stretch (a duplicated route the finance dashboard had coded against, an auth guard re-hashing every password on every sign-in, a service worker retaining another user's cached API responses) was found by using the product, not by reading it.
+- **[Update]** **The plan registry now carries PLAN-019 as an overlay row** in both the sequence table and the registry, marked *advice only — nothing applied*, so it cannot be mistaken for scheduled work.
+- **Verification:** documentation only. The plan's seven tables were checked for internal consistency, the registry diff is two added lines with no row removed, and the generated What's New fallbacks were regenerated and matched.
+- **Rollback:** delete the document and the two registry rows.
 
 ## 2026.10.7.022 — The ticket search box said "Search tickets…" and filtered nothing
 - **[Fix]** **The Tickets list search box now searches.** It was a bare input with no `value`, no `onChange` and no reader — typing in it moved the cursor and nothing else, on the primary list surface. It is now bound to a `q` URL parameter, debounced at 300 ms so three keystrokes are one request, and passed to the API as `search` (which already matched ticket number and subject and had no caller). Verified: 25 rows → **0** for a nonsense term, the URL carries `?q=…`, and the box follows the URL so Back/Forward and a shared link both work.

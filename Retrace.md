@@ -3867,3 +3867,19 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 **Notes for next time**
 - #9's remaining items — an empty-state audit, breadcrumb parity, mobile table→card transforms — are additive polish. The defect-shaped parts of #9 and #8 are now done.
+
+**Prompt 220 — continued: PLAN-019, the sequencing document for what is left**
+
+**What I did**
+- Turned the recommendations I had just given into `PlanDocs/PLAN-019-Remaining-Work-and-Go-Live-Sequencing.md`, written in the house plan format (Plan ID / Title / Source / Indexed, then a `> **Sequence:**` block) and marked **recommendation only — nothing applied** in both the status line and the registry, so it cannot be mistaken for scheduled work.
+- Structure: §2 the shape of what is left (the four kinds, and the observation that **there is no dependency chain left in the codebase** — everything waits on a decision or an external object, not on more code); §3 Tier 1 with the flag-value recommendations and their reasons, the three console tasks, the subscription handover, and the dev-first deployment recommendation with the environment surprises to expect; §4–§5 Tiers 2 and 3; §6 the two practices (one battery runner, a fresh-environment click-through); §7 what returns together if multi-tenant is ever taken up; §8 the ordered path with an exit condition per step; §9 the ten decisions with owners; §10 how to keep the document honest.
+- Registered it in `PlanDocs/README.md` as an **overlay** row in both tables — the sequence table's row says explicitly that it adds no work of its own and orders the rows above it.
+- Recorded BuildNotes 2026.10.7.023, regenerated the What's New fallbacks, and logged this prompt.
+
+**Decisions worth remembering**
+- **An advisory document has to look like one.** Marking it "recommendation only, nothing applied" in the status line and the registry is what stops a plan document from being read later as a commitment somebody else made.
+- **Sequencing is a real deliverable when the constraint stops being code.** With no dependency chain left, the useful artefact is not another plan but the order of the decisions and the exit condition for each step.
+- **Recommendations are cheapest before they are implemented.** Every flag value in §3.1 has a tested off state, so changing your mind costs a variable, not a release.
+
+**Notes for next time**
+- PLAN-019 §10 is the maintenance rule for itself: when a decision in §9 is made, strike it here and in the registry and record the answer in BuildNotes — otherwise the next reader plans from a stale overlay.

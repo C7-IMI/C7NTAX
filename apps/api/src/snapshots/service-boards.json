@@ -1,35 +1,5 @@
 [
   {
-    "id": "81f12ded-6039-4c63-81b5-3d520ea1e854",
-    "name": "Infrastructure Service Desk",
-    "description": "Data Center Infrastructure",
-    "ticketCode": "INF",
-    "isActive": true,
-    "slaResponseMinutes": 120,
-    "slaResolutionMinutes": 480,
-    "autoCloseEnabled": true,
-    "autoCloseDays": 14,
-    "followUpEnabled": true,
-    "followUpIntervalHours": 24,
-    "createdAt": "2026-08-12T06:04:15.108Z",
-    "updatedAt": "2026-10-06T22:37:39.558Z"
-  },
-  {
-    "id": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
-    "name": "Intelligence Service Desk",
-    "description": "AI Software Development",
-    "ticketCode": "INT",
-    "isActive": true,
-    "slaResponseMinutes": 240,
-    "slaResolutionMinutes": 1440,
-    "autoCloseEnabled": true,
-    "autoCloseDays": 14,
-    "followUpEnabled": true,
-    "followUpIntervalHours": 24,
-    "createdAt": "2026-08-12T06:25:38.113Z",
-    "updatedAt": "2026-10-06T22:37:55.413Z"
-  },
-  {
     "id": "8be4cb6f-9838-4715-99e0-501d083de0b5",
     "name": "MSP Service Desk",
     "description": "General IT support",
@@ -43,6 +13,36 @@
     "followUpIntervalHours": 24,
     "createdAt": "2026-08-12T06:04:15.109Z",
     "updatedAt": "2026-10-06T22:38:01.338Z"
+  },
+  {
+    "id": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "name": "Infrastructure Desk",
+    "description": "Data Center Infrastructure",
+    "ticketCode": "INF",
+    "isActive": true,
+    "slaResponseMinutes": 120,
+    "slaResolutionMinutes": 480,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-12T06:04:15.108Z",
+    "updatedAt": "2026-10-07T10:25:11.031Z"
+  },
+  {
+    "id": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
+    "name": "Intelligence Desk",
+    "description": "AI Software Development",
+    "ticketCode": "INT",
+    "isActive": true,
+    "slaResponseMinutes": 240,
+    "slaResolutionMinutes": 1440,
+    "autoCloseEnabled": true,
+    "autoCloseDays": 14,
+    "followUpEnabled": true,
+    "followUpIntervalHours": 24,
+    "createdAt": "2026-08-12T06:25:38.113Z",
+    "updatedAt": "2026-10-07T10:25:20.773Z"
   },
   {
     "id": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",

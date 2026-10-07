@@ -504,6 +504,34 @@
     "updatedAt": "2026-10-06T22:01:27.045Z"
   },
   {
+    "id": "ef7f40b9-b245-4664-8f67-964d4e7844f1",
+    "serviceId": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
+    "title": "Social reports about Azure on X",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Azure (rss clear, statuspage unknown, downdetector unknown).\n\nProbeSocial muxxuo6c is down again, nothing loads",
+    "severity": "informational",
+    "status": "resolved",
+    "source": "social",
+    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
+    "detectedAt": "2026-10-07T10:06:39.541Z",
+    "resolvedAt": "2026-10-07T10:14:58.042Z",
+    "createdAt": "2026-10-07T10:06:39.542Z",
+    "updatedAt": "2026-10-07T10:14:58.043Z"
+  },
+  {
+    "id": "77e6f3f7-34f1-460d-a06e-c399ed776d98",
+    "serviceId": "d2abce0b-f02e-46c4-86c4-441a23f69571",
+    "title": "Social reports about Sample Website Monitor on X",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Sample Website Monitor (website clear).\n\nProbeSocial muxxuo6c is down again, nothing loads",
+    "severity": "informational",
+    "status": "resolved",
+    "source": "social",
+    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
+    "detectedAt": "2026-10-07T10:06:45.036Z",
+    "resolvedAt": "2026-10-07T10:15:24.641Z",
+    "createdAt": "2026-10-07T10:06:45.038Z",
+    "updatedAt": "2026-10-07T10:15:24.643Z"
+  },
+  {
     "id": "cf3914e6-e952-49e2-a8c5-cf8043828adc",
     "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
     "title": "Social reports about Claude on X",
@@ -1330,6 +1358,20 @@
     "updatedAt": "2026-10-07T10:06:58.126Z"
   },
   {
+    "id": "1824a9f6-e980-49f2-9d29-52bfacada6f7",
+    "serviceId": "dd78254f-41ec-4b2e-a4d5-45c213ee4e64",
+    "title": "Social reports about Deepseek on X",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Deepseek (rss clear, statuspage unknown, downdetector unknown).\n\nProbeSocial muxxuo6c is down again, nothing loads",
+    "severity": "informational",
+    "status": "resolved",
+    "source": "social",
+    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
+    "detectedAt": "2026-10-07T10:06:21.310Z",
+    "resolvedAt": "2026-10-07T10:14:43.369Z",
+    "createdAt": "2026-10-07T10:06:21.312Z",
+    "updatedAt": "2026-10-07T10:14:43.370Z"
+  },
+  {
     "id": "c06c6cd9-c00f-428f-9298-c283ca0cad05",
     "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
     "title": "Minor Service Outage",
@@ -1342,6 +1384,20 @@
     "resolvedAt": "2026-10-07T02:37:58.008Z",
     "createdAt": "2026-10-07T01:21:21.418Z",
     "updatedAt": "2026-10-07T02:37:58.009Z"
+  },
+  {
+    "id": "9538cb90-294d-4a96-8a00-604bf8ee84c8",
+    "serviceId": "c257f011-db38-41f4-8988-fcdc6f0852b5",
+    "title": "Social reports about Meraki on X",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Meraki (rss clear, statuspage clear, downdetector unknown).\n\nProbeSocial muxxuo6c is down again, nothing loads",
+    "severity": "informational",
+    "status": "resolved",
+    "source": "social",
+    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
+    "detectedAt": "2026-10-07T10:06:23.323Z",
+    "resolvedAt": "2026-10-07T10:14:45.840Z",
+    "createdAt": "2026-10-07T10:06:23.324Z",
+    "updatedAt": "2026-10-07T10:14:45.841Z"
   },
   {
     "id": "b0fb3d68-acc7-4ae2-ac7c-de881e3098f3",
@@ -1412,34 +1468,6 @@
     "resolvedAt": "2026-10-07T10:06:19.261Z",
     "createdAt": "2026-10-07T10:02:37.398Z",
     "updatedAt": "2026-10-07T10:06:19.262Z"
-  },
-  {
-    "id": "1824a9f6-e980-49f2-9d29-52bfacada6f7",
-    "serviceId": "dd78254f-41ec-4b2e-a4d5-45c213ee4e64",
-    "title": "Social reports about Deepseek on X",
-    "description": "ProbeSocial muxxuo6c is down again, nothing loads",
-    "severity": "informational",
-    "status": "active",
-    "source": "social",
-    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
-    "detectedAt": "2026-10-07T10:06:21.310Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-07T10:06:21.312Z",
-    "updatedAt": "2026-10-07T10:06:21.312Z"
-  },
-  {
-    "id": "9538cb90-294d-4a96-8a00-604bf8ee84c8",
-    "serviceId": "c257f011-db38-41f4-8988-fcdc6f0852b5",
-    "title": "Social reports about Meraki on X",
-    "description": "ProbeSocial muxxuo6c is down again, nothing loads",
-    "severity": "informational",
-    "status": "active",
-    "source": "social",
-    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
-    "detectedAt": "2026-10-07T10:06:23.323Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-07T10:06:23.324Z",
-    "updatedAt": "2026-10-07T10:06:23.324Z"
   },
   {
     "id": "496db139-3998-45c2-a5df-a48bcad380e7",
@@ -1722,32 +1750,32 @@
     "updatedAt": "2026-10-07T08:10:51.460Z"
   },
   {
-    "id": "ef7f40b9-b245-4664-8f67-964d4e7844f1",
-    "serviceId": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
-    "title": "Social reports about Azure on X",
-    "description": "ProbeSocial muxxuo6c is down again, nothing loads",
-    "severity": "informational",
-    "status": "active",
-    "source": "social",
-    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
-    "detectedAt": "2026-10-07T10:06:39.541Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-07T10:06:39.542Z",
-    "updatedAt": "2026-10-07T10:06:39.542Z"
-  },
-  {
     "id": "aa46119f-de04-497c-a5a6-91407d9c56f7",
     "serviceId": "24fbae05-cb7b-41b2-b61e-0c8f40f368a7",
     "title": "Social reports about AWS on X",
-    "description": "ProbeSocial muxxuo6c is down again, nothing loads",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for AWS (rss clear, statuspage unknown, downdetector unknown).\n\nProbeSocial muxxuo6c is down again, nothing loads",
     "severity": "informational",
-    "status": "active",
+    "status": "resolved",
     "source": "social",
     "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
     "detectedAt": "2026-10-07T10:06:43.587Z",
-    "resolvedAt": null,
+    "resolvedAt": "2026-10-07T10:15:04.156Z",
     "createdAt": "2026-10-07T10:06:43.588Z",
-    "updatedAt": "2026-10-07T10:06:43.588Z"
+    "updatedAt": "2026-10-07T10:15:04.157Z"
+  },
+  {
+    "id": "d399a123-29ff-485e-9b56-a9d49fb74526",
+    "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
+    "title": "Social reports about Google Workspace on X",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Google Workspace (rss clear, statuspage unknown, downdetector unknown).\n\nProbeSocial muxxuo6c is down again, nothing loads",
+    "severity": "informational",
+    "status": "resolved",
+    "source": "social",
+    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
+    "detectedAt": "2026-10-07T10:06:44.081Z",
+    "resolvedAt": "2026-10-07T10:15:12.372Z",
+    "createdAt": "2026-10-07T10:06:44.082Z",
+    "updatedAt": "2026-10-07T10:15:12.373Z"
   },
   {
     "id": "590926e8-0d75-400c-8e86-5f62d5905a67",
@@ -1904,20 +1932,6 @@
     "updatedAt": "2026-10-07T10:03:45.119Z"
   },
   {
-    "id": "d399a123-29ff-485e-9b56-a9d49fb74526",
-    "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
-    "title": "Social reports about Google Workspace on X",
-    "description": "ProbeSocial muxxuo6c is down again, nothing loads",
-    "severity": "informational",
-    "status": "active",
-    "source": "social",
-    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
-    "detectedAt": "2026-10-07T10:06:44.081Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-07T10:06:44.082Z",
-    "updatedAt": "2026-10-07T10:06:44.082Z"
-  },
-  {
     "id": "94566372-2e31-440f-8b72-e4d72052c79e",
     "serviceId": "eda5aa37-2863-4125-b626-468192066ff6",
     "title": "Social reports about Comcast Xfinity on X",
@@ -1958,20 +1972,6 @@
     "resolvedAt": null,
     "createdAt": "2026-10-07T10:06:44.845Z",
     "updatedAt": "2026-10-07T10:06:44.845Z"
-  },
-  {
-    "id": "77e6f3f7-34f1-460d-a06e-c399ed776d98",
-    "serviceId": "d2abce0b-f02e-46c4-86c4-441a23f69571",
-    "title": "Social reports about Sample Website Monitor on X",
-    "description": "ProbeSocial muxxuo6c is down again, nothing loads",
-    "severity": "informational",
-    "status": "active",
-    "source": "social",
-    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
-    "detectedAt": "2026-10-07T10:06:45.036Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-07T10:06:45.038Z",
-    "updatedAt": "2026-10-07T10:06:45.038Z"
   },
   {
     "id": "3a8d75ec-b0e5-46b5-beb8-b8b3c292cbb4",

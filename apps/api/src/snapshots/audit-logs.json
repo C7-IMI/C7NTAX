@@ -28891,5 +28891,43 @@
     "userId": "system",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T10:10:05.791Z"
+  },
+  {
+    "id": "19f64e57-fca6-435a-a6f2-d8fe4c29ef72",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "name": "Infrastructure Desk",
+      "ticketCode": "INF",
+      "description": "Data Center Infrastructure",
+      "autoCloseDays": 14,
+      "followUpEnabled": true,
+      "autoCloseEnabled": true,
+      "slaResponseMinutes": 120,
+      "slaResolutionMinutes": 480
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T10:25:11.034Z"
+  },
+  {
+    "id": "68ae412b-4bbd-4174-bfe6-b186610d38f6",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "9e4422d8-18fb-4f5e-b922-5ef5597880f8",
+    "changes": {
+      "name": "Intelligence Desk",
+      "ticketCode": "INT",
+      "description": "AI Software Development",
+      "autoCloseDays": 14,
+      "followUpEnabled": true,
+      "autoCloseEnabled": true,
+      "slaResponseMinutes": 240,
+      "slaResolutionMinutes": 1440
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T10:25:20.775Z"
   }
 ]
