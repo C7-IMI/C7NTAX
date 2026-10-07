@@ -46,5 +46,21 @@
     "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-10-06T20:18:17.362Z",
     "updatedAt": "2026-10-06T20:18:17.362Z"
+  },
+  {
+    "id": "0774f465-b7ac-4c87-9a71-eedb4c64693b",
+    "quoteNumber": "Q-MUXZCZDT",
+    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "contactId": null,
+    "title": "Browser guard check",
+    "status": "draft",
+    "subtotal": 400,
+    "taxRate": 0,
+    "taxTotal": 0,
+    "total": 400,
+    "notes": null,
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-07T10:44:16.292Z",
+    "updatedAt": "2026-10-07T10:44:16.292Z"
   }
 ]

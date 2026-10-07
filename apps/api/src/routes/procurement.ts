@@ -51,10 +51,10 @@ procurementRouter.post("/orders", requirePermission(Permission.BillingManage), a
     if (!vendorId) throw new AppError("vendorId required");
     const poNumber = `PO-${Date.now().toString(36).toUpperCase()}`;
     let subtotal = 0;
-    const items = [...(lineItems || []), ...(bodyItems || [])].map((li: { description: string; quantity: number; unitPrice: number }) => {
+    const items = [...(lineItems || []), ...(bodyItems || [])].map((li: { description: string; quantity: number; unitPrice: number; productId?: string }) => {
       const total = li.quantity * li.unitPrice;
       subtotal += total;
-      return { description: li.description, quantity: li.quantity, unitPrice: li.unitPrice, total };
+      return { description: li.description, quantity: li.quantity, unitPrice: li.unitPrice, total, productId: li.productId ? String(li.productId) : null };
     });
     const po = await prisma.purchaseOrder.create({
       data: { poNumber, vendorId, subtotal, taxTotal: 0, total: subtotal, createdById: req.user!.userId },

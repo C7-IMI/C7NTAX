@@ -124,6 +124,14 @@ export enum Permission {
   ProcurementCreate = "procurement:create",
   ProcurementApprove = "procurement:approve",
 
+  // ── Product catalog ──
+  ProductView = "product:view",
+  ProductCreate = "product:create",
+  ProductEdit = "product:edit",
+  ProductDelete = "product:delete",
+  /// Cost, margin, price changes and stock adjustments — the commercial half of the catalog.
+  ProductManage = "product:manage",
+
   // ── Knowledge Base ──
   KBView = "kb:view",
   KBCreate = "kb:create",
@@ -256,6 +264,10 @@ export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: P
     permissions: [Permission.ProcurementView, Permission.ProcurementCreate, Permission.ProcurementApprove],
   },
   {
+    key: "products", label: "Product Catalog",
+    permissions: [Permission.ProductView, Permission.ProductCreate, Permission.ProductEdit, Permission.ProductDelete, Permission.ProductManage],
+  },
+  {
     key: "kb", label: "Knowledge Base",
     permissions: [Permission.KBView, Permission.KBCreate, Permission.KBEdit, Permission.KBDelete, Permission.KBManage],
   },
@@ -334,6 +346,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.ServiceAgreementView, Permission.ServiceAgreementManage,
     Permission.AssetView, Permission.AssetCreate, Permission.AssetEdit,
     Permission.ProcurementView, Permission.ProcurementCreate,
+    Permission.ProductView, Permission.ProductCreate, Permission.ProductEdit, Permission.ProductManage,
     Permission.KBView, Permission.KBCreate, Permission.KBEdit,
     Permission.ScheduleView, Permission.ScheduleManage,
     Permission.ContractView, Permission.ContractCreate, Permission.ContractEdit,
@@ -357,6 +370,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.ClientView, Permission.ContactView,
     Permission.ProjectView,
     Permission.AssetView,
+    Permission.ProductView,
     Permission.KBView,
     Permission.ScheduleView,
     Permission.ChatView,
@@ -371,6 +385,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.ServiceAlertView,
     Permission.ClientView, Permission.ContactView,
     Permission.ProjectView,
+    Permission.ProductView,
     Permission.ScheduleView, Permission.ScheduleManage,
     Permission.ChatView,
     Permission.ReportView,
@@ -385,6 +400,8 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.ReportView, Permission.ReportExport, Permission.ReportCreate,
     Permission.ContractView, Permission.ContractCreate, Permission.ContractEdit,
     Permission.ProcurementView,
+    // Billing reads the catalog to price and invoice; it does not maintain it.
+    Permission.ProductView,
   ],
   [SystemRole.ClientAdmin]: [
     // A client-facing role: no internal chat and no internal HR surfaces. Everything
@@ -415,6 +432,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.ContactView, Permission.BillingView, Permission.ReportView,
     Permission.ProjectView, Permission.AssetView, Permission.KBView,
     Permission.ScheduleView, Permission.ChatView,
+    Permission.ProductView,
   ],
 };
 

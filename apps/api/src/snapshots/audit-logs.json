@@ -28929,5 +28929,718 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-07T10:25:20.775Z"
+  },
+  {
+    "id": "f07a0364-c0f2-426c-ba70-e0f7255cdb8f",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "products",
+    "changes": {
+      "name": "Probe Firewall 1791369438117",
+      "unit": "each",
+      "category": "Networking",
+      "vendorId": "a5ed9f83-ec33-44ce-b258-eae517677cfa",
+      "costPrice": 400,
+      "sellPrice": 700,
+      "trackStock": true,
+      "productType": "hardware",
+      "stockOnHand": 1,
+      "reorderPoint": 2,
+      "warrantyMonths": 12
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.520Z"
+  },
+  {
+    "id": "beee452f-76ed-4160-ac16-99f56e829b14",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "products",
+    "changes": {
+      "sku": "sw-probe-1791369438117",
+      "name": "Probe Switch 1791369438117",
+      "sellPrice": 300
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.529Z"
+  },
+  {
+    "id": "9a946398-7e09-42bc-82cb-7465f1edc849",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "products",
+    "changes": {
+      "name": "Probe Seat 1791369438117",
+      "costPrice": 6,
+      "sellPrice": 10,
+      "productType": "subscription",
+      "billingPeriod": "monthly"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.535Z"
+  },
+  {
+    "id": "74b9d791-c111-4709-b0e7-7b83894e34cd",
+    "action": "products:update",
+    "entity": "products",
+    "entityId": "e0d870fe-7eef-44e6-a5c3-65fbf2a53d75",
+    "changes": {
+      "description": "Edited by an editor"
+    },
+    "userId": "06156fd8-9a9b-43e6-99a6-357349491018",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.603Z"
+  },
+  {
+    "id": "ab1e5964-f055-4f47-9370-a847cb8c9451",
+    "action": "products:update",
+    "entity": "products",
+    "entityId": "aaf4f3bc-567d-4507-b468-f0eae27d46ef",
+    "changes": {
+      "isActive": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.652Z"
+  },
+  {
+    "id": "8129c2c2-cc29-4a21-8d2f-d1739b32748b",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "e0d870fe-7eef-44e6-a5c3-65fbf2a53d75",
+    "changes": {
+      "delta": 4,
+      "reason": "Delivery"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.686Z"
+  },
+  {
+    "id": "40c79c6f-40cb-4018-b763-991adbc6a50b",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "e0d870fe-7eef-44e6-a5c3-65fbf2a53d75",
+    "changes": {
+      "delta": -5
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.693Z"
+  },
+  {
+    "id": "9b6939be-da95-45d2-98a5-f9ac695bbff9",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "e0d870fe-7eef-44e6-a5c3-65fbf2a53d75",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.718Z"
+  },
+  {
+    "id": "375690f7-583c-4cec-a635-d29c41b4b72c",
+    "action": "products:delete",
+    "entity": "products",
+    "entityId": "8583aa50-2120-467c-8b25-5628cfde4410",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.727Z"
+  },
+  {
+    "id": "152e5105-8fb5-4ef0-a954-e8cf7db821e2",
+    "action": "quotes:create",
+    "entity": "quotes",
+    "entityId": "quotes",
+    "changes": {
+      "title": "Catalog probe quote",
+      "companyId": "62dbef2e-96cf-41e8-bc77-e1ae45c8d32a",
+      "lineItems": [
+        {
+          "quantity": 2,
+          "productId": "e0d870fe-7eef-44e6-a5c3-65fbf2a53d75",
+          "unitPrice": 700,
+          "description": "Probe Firewall 1791369438117"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.743Z"
+  },
+  {
+    "id": "658cbf1a-d3b6-400a-90ca-c4a20ec93978",
+    "action": "products:delete",
+    "entity": "products",
+    "entityId": "e0d870fe-7eef-44e6-a5c3-65fbf2a53d75",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.766Z"
+  },
+  {
+    "id": "79374218-a3df-4c92-805d-eb98b9f51896",
+    "action": "procurement:create",
+    "entity": "procurement",
+    "entityId": "orders",
+    "changes": {
+      "vendorId": "a5ed9f83-ec33-44ce-b258-eae517677cfa",
+      "lineItems": [
+        {
+          "quantity": 1,
+          "productId": "e0d870fe-7eef-44e6-a5c3-65fbf2a53d75",
+          "unitPrice": 400,
+          "description": "Probe Firewall 1791369438117"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:19.775Z"
+  },
+  {
+    "id": "cd63a4b0-54d8-409b-8602-7ce2b0caa143",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "products",
+    "changes": {
+      "name": "Probe Firewall 1791369476579",
+      "unit": "each",
+      "category": "Networking",
+      "vendorId": "c7489c4c-e814-44e1-8f08-1a48a0a6fbbf",
+      "costPrice": 400,
+      "sellPrice": 700,
+      "trackStock": true,
+      "productType": "hardware",
+      "stockOnHand": 1,
+      "reorderPoint": 2,
+      "warrantyMonths": 12
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.784Z"
+  },
+  {
+    "id": "4b95820b-6ee3-41f3-9566-2781f8a94b59",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "products",
+    "changes": {
+      "sku": "sw-probe-1791369476579",
+      "name": "Probe Switch 1791369476579",
+      "sellPrice": 300
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.789Z"
+  },
+  {
+    "id": "adad1c15-2bdc-4fee-a2c0-64b339e3d73b",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "products",
+    "changes": {
+      "name": "Probe Seat 1791369476579",
+      "costPrice": 6,
+      "sellPrice": 10,
+      "productType": "subscription",
+      "billingPeriod": "monthly"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.794Z"
+  },
+  {
+    "id": "51d84ab1-a7cd-47b3-a4e7-390f08a8ce15",
+    "action": "products:update",
+    "entity": "products",
+    "entityId": "1630bcf0-e15e-4168-8ba4-593cb622ae45",
+    "changes": {
+      "description": "Edited by an editor"
+    },
+    "userId": "bafdb2a4-ef0d-4248-a255-4e458c780999",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.844Z"
+  },
+  {
+    "id": "5b0f83d8-4d3a-4c6f-9185-9a2f9a12b2f5",
+    "action": "products:update",
+    "entity": "products",
+    "entityId": "12dc219d-af94-4079-bbee-e33015fe14ea",
+    "changes": {
+      "isActive": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.879Z"
+  },
+  {
+    "id": "b7042477-28e1-4622-9b03-b482eb93895c",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "1630bcf0-e15e-4168-8ba4-593cb622ae45",
+    "changes": {
+      "delta": 4,
+      "reason": "Delivery"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.902Z"
+  },
+  {
+    "id": "22c11eb3-64f3-4b18-93d1-30e9838201e6",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "1630bcf0-e15e-4168-8ba4-593cb622ae45",
+    "changes": {
+      "delta": -5
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.906Z"
+  },
+  {
+    "id": "243b7e08-53da-477b-8950-8fe9be06e981",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "1630bcf0-e15e-4168-8ba4-593cb622ae45",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.924Z"
+  },
+  {
+    "id": "353d072c-2c88-48d4-a92c-b0bf872e21e3",
+    "action": "products:delete",
+    "entity": "products",
+    "entityId": "ac91499c-3273-40e3-9caa-0187a213345b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.931Z"
+  },
+  {
+    "id": "683c3273-5ba2-439b-9811-fbc51e9aed7d",
+    "action": "quotes:create",
+    "entity": "quotes",
+    "entityId": "quotes",
+    "changes": {
+      "title": "Catalog probe quote",
+      "companyId": "9d649df9-8418-494d-ba09-290f85541e4b",
+      "lineItems": [
+        {
+          "quantity": 2,
+          "productId": "1630bcf0-e15e-4168-8ba4-593cb622ae45",
+          "unitPrice": 700,
+          "description": "Probe Firewall 1791369476579"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.942Z"
+  },
+  {
+    "id": "a8163444-7720-49c7-8633-67bf57f54228",
+    "action": "procurement:create",
+    "entity": "procurement",
+    "entityId": "orders",
+    "changes": {
+      "vendorId": "c7489c4c-e814-44e1-8f08-1a48a0a6fbbf",
+      "lineItems": [
+        {
+          "quantity": 1,
+          "productId": "1630bcf0-e15e-4168-8ba4-593cb622ae45",
+          "unitPrice": 400,
+          "description": "Probe Firewall 1791369476579"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.962Z"
+  },
+  {
+    "id": "8079e7d1-7d20-404f-98b6-e31e571979eb",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "9d649df9-8418-494d-ba09-290f85541e4b"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:37:57.991Z"
+  },
+  {
+    "id": "7203b88c-0ead-46f1-af8b-fab24350aa39",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "6561c6d1-91a5-42ef-86f7-014d20a3c925",
+    "changes": {
+      "minutes": 90,
+      "description": "Quarterly maintenance"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:03.077Z"
+  },
+  {
+    "id": "9a7bb86b-efcc-4805-bc25-27bd21124183",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "8bf5fd23-ab39-4cfa-96f5-c923296d1249",
+    "changes": {
+      "rate": 250,
+      "minutes": 30
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:03.086Z"
+  },
+  {
+    "id": "e8b84bf8-4a66-4779-b642-9c35cdf2e7d9",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "8bf5fd23-ab39-4cfa-96f5-c923296d1249",
+    "changes": {
+      "minutes": 45,
+      "billable": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:03.094Z"
+  },
+  {
+    "id": "446cda6f-956a-44ba-9723-791868821261",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "8bf5fd23-ab39-4cfa-96f5-c923296d1249",
+    "changes": {
+      "minutes": 60,
+      "noCharge": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:03.101Z"
+  },
+  {
+    "id": "ce673ee4-f416-4240-be8d-20a43df8b90d",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "274257b0-53d7-4a69-a4cb-b7dcbab44b4c"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:03.127Z"
+  },
+  {
+    "id": "4f276e38-19fc-4962-b7e0-469beb7ec051",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "8f91b2bd-6398-44f6-8c7d-89f6dd1cf5f2",
+    "changes": {
+      "minutes": 60,
+      "description": "Other client work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:03.162Z"
+  },
+  {
+    "id": "f47f639c-9b8f-409c-babc-fb301f87d40d",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate-from-tickets",
+    "changes": {
+      "companyId": "16233bab-6344-46b6-a9f3-d8314f44ea70"
+    },
+    "userId": "91e74f1b-c687-4b19-a93a-952e55a32098",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:03.597Z"
+  },
+  {
+    "id": "6f6eb47d-c0f0-47c2-ab63-30fb55cdfa50",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "generate",
+    "changes": {
+      "companyId": "274257b0-53d7-4a69-a4cb-b7dcbab44b4c"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:03.605Z"
+  },
+  {
+    "id": "d9637874-4175-45f3-9921-850fd2dfd5d4",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "8e1fc4b6-ee6f-4780-b13c-7fd125d6f13c",
+    "changes": {
+      "endTime": "2026-10-06T02:00:00.000Z",
+      "startTime": "2026-10-06T00:00:00.000Z",
+      "description": "Evening work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:04.134Z"
+  },
+  {
+    "id": "f7116dfb-c8f1-4b62-bc8d-d63f2765cf1f",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "7b72e54b-9eca-4463-a526-bc2d81a2dd7f"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:04.150Z"
+  },
+  {
+    "id": "6520c134-b74a-4f60-a9d6-778adbd76d8a",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "7b72e54b-9eca-4463-a526-bc2d81a2dd7f"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:04.194Z"
+  },
+  {
+    "id": "b8d87044-f99b-4482-ae90-809f9b4844a8",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "302db21d-3cd4-4f63-80fc-90c2950b7b58",
+    "changes": {
+      "reason": "Wrong period"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:04.214Z"
+  },
+  {
+    "id": "bacb25d9-454a-475d-a782-d6780adf669b",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "7b72e54b-9eca-4463-a526-bc2d81a2dd7f"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:04.301Z"
+  },
+  {
+    "id": "92e6d4c4-222a-457f-baf5-44544cdbbdef",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "ca1acdbf-8fcd-46af-966e-ab6068f0eeb8",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:05.030Z"
+  },
+  {
+    "id": "82d3dead-3dac-45b9-a10b-ec8c63630046",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "1ef7ca49-87b7-4ae0-80d2-63da5be69cb7",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:05.076Z"
+  },
+  {
+    "id": "47a3dbae-2cde-4502-bdc0-ad34d4fe961d",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "1ef7ca49-87b7-4ae0-80d2-63da5be69cb7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:05.116Z"
+  },
+  {
+    "id": "9e1cb9a3-31b2-4f59-8709-bb1305c28a61",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "7b72e54b-9eca-4463-a526-bc2d81a2dd7f"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:04.179Z"
+  },
+  {
+    "id": "a4c07e01-c763-46ae-b405-626fbe7c291c",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "7b72e54b-9eca-4463-a526-bc2d81a2dd7f"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:04.256Z"
+  },
+  {
+    "id": "fd5b3bfe-cb9e-4a43-a414-5959f13d8def",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "8fa81846-e9e7-45fe-bba7-b1fbaefe5712",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T10:38:04.279Z"
+  },
+  {
+    "id": "f059c741-afc8-4072-bf04-a122a939251a",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "products",
+    "changes": {
+      "name": "UI Verify Router",
+      "unit": "each",
+      "notes": "",
+      "taxable": true,
+      "category": "Networking",
+      "isActive": true,
+      "vendorId": "",
+      "costPrice": "250",
+      "sellPrice": "400",
+      "vendorSku": "",
+      "trackStock": false,
+      "description": "",
+      "productType": "hardware",
+      "purchaseUrl": "",
+      "stockOnHand": 0,
+      "subcategory": "",
+      "manufacturer": "",
+      "reorderPoint": null,
+      "billingPeriod": "none",
+      "warrantyMonths": null,
+      "reorderQuantity": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T10:43:52.823Z"
+  },
+  {
+    "id": "a50fb051-67ae-48d5-ae1d-a28b0bc64724",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "292b3929-510a-4745-877f-11971519678d",
+    "changes": {
+      "delta": -1,
+      "reason": "Issued"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T10:44:01.633Z"
+  },
+  {
+    "id": "6bf2fd33-e839-4f52-9007-bfbbefde02b9",
+    "action": "products:create",
+    "entity": "products",
+    "entityId": "292b3929-510a-4745-877f-11971519678d",
+    "changes": {
+      "delta": 1,
+      "reason": "Browser check finished"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T10:44:16.259Z"
+  },
+  {
+    "id": "5ad6b314-f5e6-4299-a2d2-691f72e59453",
+    "action": "quotes:create",
+    "entity": "quotes",
+    "entityId": "quotes",
+    "changes": {
+      "title": "Browser guard check",
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "lineItems": [
+        {
+          "quantity": 1,
+          "productId": "2d97bf44-0240-410d-8f4c-38a9947fe8a6",
+          "unitPrice": 400,
+          "description": "UI Verify Router"
+        }
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T10:44:16.307Z"
+  },
+  {
+    "id": "25c99734-c312-489a-b9e6-5b4d4f86a647",
+    "action": "products:update",
+    "entity": "products",
+    "entityId": "2d97bf44-0240-410d-8f4c-38a9947fe8a6",
+    "changes": {
+      "isActive": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T10:44:39.225Z"
+  },
+  {
+    "id": "7def1065-1e46-4682-8785-a9f51794e0b8",
+    "action": "products:update",
+    "entity": "products",
+    "entityId": "2d97bf44-0240-410d-8f4c-38a9947fe8a6",
+    "changes": {
+      "isActive": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T10:45:05.447Z"
   }
 ]

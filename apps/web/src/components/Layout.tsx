@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
-  AlertTriangle, XCircle, Settings2, ListOrdered, Globe,
+  AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
@@ -43,6 +43,7 @@ export const NAV_TREE: NavNode[] = [
       { id: "admin-general", to: "/admin", icon: Settings, label: "General Settings", permission: Permission.SystemConfig },
       { id: "admin-boards", to: "/admin/boards", icon: Columns3, label: "Service Boards", permission: Permission.BoardManage },
       { id: "admin-service-alerts", to: "/admin/service-alerts", icon: AlertTriangle, label: "Service Alerts", permission: Permission.ServiceAlertManage },
+      { id: "admin-products", to: "/admin/products", icon: Package, label: "Product Catalog", permission: Permission.ProductView },
       { id: "admin-system", to: "/admin/system", icon: Settings, label: "System Settings", permission: Permission.SystemConfig },
       { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs", permission: Permission.SystemConfig },
       { id: "admin-cloudconnect", to: "/cloudconnect", icon: Cloud, label: "CloudConnect", permission: Permission.IntegrationManage },

@@ -612,6 +612,8 @@ model InvoiceLineItem {
   total       Float
   invoiceId   String
   invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  /// Set when the line came from the product catalog, so an invoice can be traced to a SKU.
+  productId   String?
 }
 
 model Payment {
@@ -1103,6 +1105,8 @@ model POLineItem {
   unitPrice   Float
   total       Float
   assetId     String?
+  /// Set when the line came from the product catalog — the cost side of the same item.
+  productId   String?
 }
 
 model PtoRequest {
@@ -1961,6 +1965,51 @@ model QuoteLineItem {
   unitPrice   Float  @default(0)
   total       Float  @default(0)
   sortOrder   Int    @default(0)
+  /// Set when the line came from the product catalog; an ad-hoc line leaves it null.
+  productId   String?
+}
+
+/// A sellable or reorderable item: hardware, software, a licence, a subscription or a service.
+/// The catalog is the single source of the description, price and billing period that tickets,
+/// quotes, purchase orders and invoices copy from, so the same thing is never priced twice.
+model Product {
+  id             String   @id @default(uuid())
+  sku            String   @unique
+  name           String
+  description    String?
+  /// hardware | software | license | subscription | service | bundle | other
+  productType    String   @default("hardware")
+  /// Free-text grouping shown in the catalog's filters — "Networking", "Security", "Backup".
+  category       String?
+  subcategory    String?
+  manufacturer   String?
+  /// The vendor this is bought from, so procurement can suggest it when ordering.
+  vendorId       String?
+  vendorSku      String?
+  /// each | hour | user | month | seat | GB | licence | day
+  unit           String   @default("each")
+  costPrice      Float    @default(0)
+  sellPrice      Float    @default(0)
+  /// none | monthly | quarterly | annual — a recurring price is what makes it a subscription.
+  billingPeriod  String   @default("none")
+  taxable        Boolean  @default(true)
+  isActive       Boolean  @default(true)
+  /// Stock is only counted for things that are held; licences and services usually are not.
+  trackStock     Boolean  @default(false)
+  stockOnHand    Int      @default(0)
+  reorderPoint   Int?
+  reorderQuantity Int?
+  warrantyMonths Int?
+  purchaseUrl    String?
+  notes          String?
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([productType])
+  @@index([category])
+  @@index([isActive])
+  @@index([vendorId])
 }
 
 model WebauthnCredential {

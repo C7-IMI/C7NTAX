@@ -33,9 +33,9 @@ quotesRouter.post("/", requirePermission(Permission.InvoiceCreate), async (req: 
     if (!companyId || !title) throw new AppError("companyId and title required");
     if (!Array.isArray(lineItems) || lineItems.length === 0) throw new AppError("at least one line item required");
     const quoteNumber = `Q-${Date.now().toString(36).toUpperCase()}`;
-    const items = lineItems.map((li: { description?: string; quantity?: number; unitPrice?: number }, i: number) => {
+    const items = lineItems.map((li: { description?: string; quantity?: number; unitPrice?: number; productId?: string }, i: number) => {
       const quantity = Number(li.quantity || 1), unitPrice = Number(li.unitPrice || 0);
-      return { description: String(li.description || ""), quantity, unitPrice, total: +(quantity * unitPrice).toFixed(2), sortOrder: i };
+      return { description: String(li.description || ""), quantity, unitPrice, total: +(quantity * unitPrice).toFixed(2), sortOrder: i, productId: li.productId ? String(li.productId) : null };
     });
     const subtotal = +items.reduce((s, li) => s + li.total, 0).toFixed(2);
     const taxTotal = +(subtotal * (Number(taxRate) || 0)).toFixed(2);

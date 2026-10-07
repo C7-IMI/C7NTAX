@@ -175,6 +175,67 @@ function unbilledTimeEntries(companyId: string) {
 
 type UnbilledEntry = Awaited<ReturnType<typeof unbilledTimeEntries>>[number];
 
+/**
+ * Products sold on a client's tickets that have not been billed yet.
+ *
+ * They live in the ticket's `customFields.ticketProducts` (the Products tab's own storage), and
+ * they are billed as their own invoice lines so hardware and licences do not have to be re-typed
+ * on the invoice. An entry that came from the catalog carries `productId`, which the line keeps.
+ */
+async function unbilledTicketProducts(companyId: string) {
+  const tickets = await prisma.ticket.findMany({
+    where: { companyId },
+    select: { id: true, ticketNumber: true, customFields: true },
+  });
+  const rows: Array<{ ticketId: string; ticketNumber: string; productId: string | null; name: string; sku: string | null; quantity: number; unitPrice: number }> = [];
+  for (const ticket of tickets) {
+    const custom = (ticket.customFields ?? {}) as Record<string, unknown>;
+    if (custom.productsBilled === true) continue;
+    const products = Array.isArray(custom.ticketProducts) ? custom.ticketProducts as Array<Record<string, unknown>> : [];
+    for (const p of products) {
+      const quantity = Number(p.qty ?? p.quantity ?? 1);
+      const unitPrice = Number(p.unitCost ?? p.unitPrice ?? p.price ?? 0);
+      const name = String(p.name ?? p.description ?? "").trim();
+      if (!name || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice)) continue;
+      rows.push({
+        ticketId: ticket.id,
+        ticketNumber: ticket.ticketNumber,
+        productId: p.productId ? String(p.productId) : null,
+        name,
+        sku: p.sku ? String(p.sku) : null,
+        quantity,
+        unitPrice,
+      });
+    }
+  }
+  return rows;
+}
+
+/** One invoice line per product sold on a ticket, priced at what was agreed on the ticket. */
+function productLineItems(rows: Awaited<ReturnType<typeof unbilledTicketProducts>>) {
+  return rows.map(r => {
+    const quantity = +r.quantity.toFixed(2);
+    const unitPrice = +r.unitPrice.toFixed(2);
+    return {
+      description: r.sku ? `${r.name} (${r.sku})` : r.name,
+      quantity,
+      unitPrice,
+      total: +(quantity * unitPrice).toFixed(2),
+      productId: r.productId,
+    };
+  });
+}
+
+/** Marks the tickets whose products have just been put on an invoice. */
+async function markProductsBilled(ticketIds: string[]) {
+  if (ticketIds.length === 0) return;
+  const tickets = await prisma.ticket.findMany({ where: { id: { in: ticketIds } }, select: { id: true, customFields: true } });
+  await Promise.all(tickets.map(t => prisma.ticket.update({
+    where: { id: t.id },
+    data: { customFields: { ...((t.customFields ?? {}) as Record<string, unknown>), productsBilled: true } },
+  })));
+}
+
 /** One invoice line per time entry; an entry's own rate beats the agreement's default. */
 function ticketLineItems(entries: UnbilledEntry[], agreement: { billingAmount: number }) {
   const defaultRate = agreement.billingAmount > 0 ? agreement.billingAmount : 150;
@@ -198,12 +259,17 @@ billingRouter.get("/invoices/unbilled/:companyId", requirePermission(Permission.
     if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
     const agreement = await resolveBillingAgreement(companyId);
     const entries = await unbilledTimeEntries(companyId);
-    const lineItems = ticketLineItems(entries, agreement);
+    const soldProducts = await unbilledTicketProducts(companyId);
+    const lineItems = [...ticketLineItems(entries, agreement), ...productLineItems(soldProducts)];
     res.json({
       entries: entries.length,
       minutes: entries.reduce((sum, te) => sum + te.minutes, 0),
+      products: soldProducts.map(p => ({ ticketNumber: p.ticketNumber, name: p.name, sku: p.sku, quantity: p.quantity, unitPrice: p.unitPrice })),
       amount: +lineItems.reduce((sum, li) => sum + li.total, 0).toFixed(2),
-      tickets: [...new Map(entries.map(te => [te.ticket.id, te.ticket])).values()].sort((a, b) => a.ticketNumber.localeCompare(b.ticketNumber)),
+      tickets: [...new Map([
+        ...entries.map(te => [te.ticket.id, te.ticket] as const),
+        ...soldProducts.map(p => [p.ticketId, { id: p.ticketId, ticketNumber: p.ticketNumber }] as const),
+      ]).values()].sort((a, b) => a.ticketNumber.localeCompare(b.ticketNumber)),
       agreement: { id: agreement.id, name: agreement.name, billingAmount: agreement.billingAmount },
     });
   } catch (e) { next(e); }
@@ -256,8 +322,9 @@ billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permissi
     if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
     const agreement = await resolveBillingAgreement(companyId, req.body?.agreementId ?? null);
     const timeEntries = await unbilledTimeEntries(companyId);
-    if (timeEntries.length === 0) throw new AppError("No unbilled time entries found");
-    const lineItems = ticketLineItems(timeEntries, agreement);
+    const soldProducts = await unbilledTicketProducts(companyId);
+    if (timeEntries.length === 0 && soldProducts.length === 0) throw new AppError("No unbilled time entries or products found");
+    const lineItems = [...ticketLineItems(timeEntries, agreement), ...productLineItems(soldProducts)];
 
     const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
     const dueDate = new Date(); dueDate.setDate(dueDate.getDate() + 30);
@@ -271,15 +338,23 @@ billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permissi
       include: { lineItems: true },
     });
     await prisma.timeEntry.updateMany({ where: { id: { in: timeEntries.map((te) => te.id) } }, data: { invoiceId: invoice.id } });
+    // The tickets whose products were just billed are marked, so a second run cannot charge for
+    // the same hardware twice.
+    await markProductsBilled([...new Set(soldProducts.map(p => p.ticketId))]);
     // Answer in the same shape the invoice list uses (`sourceTickets`, `company`) so the caller can
     // open what it just created without a second round trip or an empty client field.
+    const sourceTicketIds = new Map<string, { id: string; ticketNumber: string }>([
+      ...timeEntries.map(te => [te.ticket.id, te.ticket] as const),
+      ...soldProducts.map(p => [p.ticketId, { id: p.ticketId, ticketNumber: p.ticketNumber }] as const),
+    ]);
     res.status(201).json({
       invoice: {
         ...invoice,
         company: await prisma.company.findUnique({ where: { id: companyId }, select: { id: true, name: true } }),
-        sourceTickets: [...new Map(timeEntries.map(te => [te.ticket.id, te.ticket])).values()].sort((a, b) => a.ticketNumber.localeCompare(b.ticketNumber)),
+        sourceTickets: [...sourceTicketIds.values()].sort((a, b) => a.ticketNumber.localeCompare(b.ticketNumber)),
       },
       entriesIncluded: timeEntries.length,
+      productsIncluded: soldProducts.length,
     });
   } catch (e) { next(e); }
 });

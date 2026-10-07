@@ -5,7 +5,8 @@
     "quantity": 1,
     "unitPrice": 2400,
     "total": 2400,
-    "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340"
+    "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340",
+    "productId": null
   },
   {
     "id": "484f7b8d-f0f4-48e0-89dc-63603490f5b9",
@@ -13,7 +14,8 @@
     "quantity": 5,
     "unitPrice": 170,
     "total": 850,
-    "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340"
+    "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340",
+    "productId": null
   },
   {
     "id": "6d5dc4ee-f4ae-458e-8662-51ea8fdbac47",
@@ -21,6 +23,7 @@
     "quantity": 1,
     "unitPrice": 75,
     "total": 75,
-    "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340"
+    "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340",
+    "productId": null
   }
 ]

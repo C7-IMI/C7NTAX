@@ -6,7 +6,8 @@
     "quantity": 10,
     "unitPrice": 150,
     "total": 1500,
-    "sortOrder": 1
+    "sortOrder": 1,
+    "productId": null
   },
   {
     "id": "77201616-9e5c-408a-96f3-44462f969c26",
@@ -15,7 +16,8 @@
     "quantity": 60,
     "unitPrice": 72,
     "total": 4320,
-    "sortOrder": 0
+    "sortOrder": 0,
+    "productId": null
   },
   {
     "id": "3a3dbb37-1757-4156-9468-f7fd5b986548",
@@ -24,7 +26,8 @@
     "quantity": 1,
     "unitPrice": 480,
     "total": 480,
-    "sortOrder": 0
+    "sortOrder": 0,
+    "productId": null
   },
   {
     "id": "366bbdd2-eb81-457b-be03-83a9fce3e53d",
@@ -33,7 +36,8 @@
     "quantity": 60,
     "unitPrice": 72,
     "total": 4320,
-    "sortOrder": 0
+    "sortOrder": 0,
+    "productId": null
   },
   {
     "id": "576906ca-3a3c-4a64-8937-f0039e23591e",
@@ -42,6 +46,17 @@
     "quantity": 1,
     "unitPrice": 480,
     "total": 480,
-    "sortOrder": 0
+    "sortOrder": 0,
+    "productId": null
+  },
+  {
+    "id": "7e2a6953-e791-4181-ae9f-a988aa28f212",
+    "quoteId": "0774f465-b7ac-4c87-9a71-eedb4c64693b",
+    "description": "UI Verify Router",
+    "quantity": 1,
+    "unitPrice": 400,
+    "total": 400,
+    "sortOrder": 0,
+    "productId": "2d97bf44-0240-410d-8f4c-38a9947fe8a6"
   }
 ]

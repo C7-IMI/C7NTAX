@@ -336,11 +336,53 @@ async function main() {
     () => prisma.userSession.deleteMany({ where: { invalidatedAt: { not: null } } }),
   );
 
+  // The product-catalog probe and the browser checks add products, quote lines that hold them,
+  // and one throwaway quote. Line rows are removed first: they carry the productId, and the
+  // catalog's own delete guard would refuse to remove a referenced product (as it should).
+  const probeProducts = await prisma.product.findMany({
+    where: { OR: [{ name: { startsWith: "Probe " } }, { name: { startsWith: "UI Verify" } }, { sku: { startsWith: "PROBE-" } }, { sku: { startsWith: "UI-VERIFY-" } }] },
+    select: { id: true },
+  });
+  const probeProductIds = probeProducts.map(p => p.id);
+  await remove(
+    "catalog probe quote lines",
+    () => prisma.quoteLineItem.count({ where: { productId: { in: probeProductIds } } }),
+    () => prisma.quoteLineItem.deleteMany({ where: { productId: { in: probeProductIds } } }),
+  );
+  await remove(
+    "catalog probe purchase-order lines",
+    () => prisma.pOLineItem.count({ where: { productId: { in: probeProductIds } } }),
+    () => prisma.pOLineItem.deleteMany({ where: { productId: { in: probeProductIds } } }),
+  );
+  await remove(
+    "catalog probe invoice lines",
+    () => prisma.invoiceLineItem.count({ where: { productId: { in: probeProductIds } } }),
+    () => prisma.invoiceLineItem.deleteMany({ where: { productId: { in: probeProductIds } } }),
+  );
+  await remove(
+    "catalog probe products",
+    () => Promise.resolve(probeProductIds.length),
+    () => prisma.product.deleteMany({ where: { id: { in: probeProductIds } } }),
+  );
+  const browserQuotes = await prisma.quote.findMany({ where: { title: { startsWith: "Browser guard check" } }, select: { id: true } });
+  const browserQuoteIds = browserQuotes.map(q => q.id);
+  await remove(
+    "browser-check quote lines",
+    () => prisma.quoteLineItem.count({ where: { quoteId: { in: browserQuoteIds } } }),
+    () => prisma.quoteLineItem.deleteMany({ where: { quoteId: { in: browserQuoteIds } } }),
+  );
+  await remove(
+    "browser-check quotes",
+    () => Promise.resolve(browserQuoteIds.length),
+    () => prisma.quote.deleteMany({ where: { id: { in: browserQuoteIds } } }),
+  );
+
   console.log("remaining:", JSON.stringify({
     users: await prisma.user.count(),
     providers: await prisma.aiProviderConfig.count(),
     services: await prisma.serviceAlertService.count(),
     audits: await prisma.auditLog.count(),
+    products: await prisma.product.count(),
   }));
 }
 

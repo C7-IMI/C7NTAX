@@ -41,6 +41,7 @@ import { ProcurementPage } from "./pages/Procurement";
 import { ReportsPage } from "./pages/Reports";
 import { CustomReportsPage } from "./pages/CustomReports";
 import { SectionLanding, SECTION_DESCRIPTIONS } from "./pages/SectionLanding";
+import { ProductCatalogPage } from "./pages/ProductCatalog";
 import { NAV_TREE } from "./components/Layout";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { HomePage } from "./pages/HomePage";
@@ -145,6 +146,7 @@ function ProtectedRoutes() {
         <Route path="/kumo/configs" element={<KumoConfigsPage />} />
         <Route path="/admin/logs" element={<AuditLogsSection />} />
         <Route path="/admin/boards" element={<ServiceBoardsSection />} />
+        <Route path="/admin/products" element={<ProductCatalogPage />} />
         <Route path="/admin/system" element={<SystemSettingsPage />} />
         <Route path="/admin" element={<AuditLogsSection />} />
         <Route path="/admin/changelog" element={<ChangelogPage />} />
