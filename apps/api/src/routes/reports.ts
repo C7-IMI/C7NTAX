@@ -1,20 +1,61 @@
 import { Router } from "express";
+import type { NextFunction, Response } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
-import { companyWhere, ticketCompanyWhere } from "../middleware/companyScope";
 import { Permission } from "@C7NTAX/shared";
 import { runReportConfig, type ReportConfig } from "../services/reportRunner";
+import { AppError } from "../middleware/errorHandler";
+import {
+  agingReport, clientValueReport, contractProfitabilityReport, csatReport, parsePeriod, qbrReport,
+  revenueReport, slaReport, ticketVolumeReport, timeTrackingReport, utilizationReport,
+  type ReportPeriod,
+} from "../services/reportData";
 import type { AuthUser } from "../middleware/auth";
-export const reportsRouter = Router(); reportsRouter.use(authenticate);
 
-// A saved report can also be a Client Value Report, which is a fixed shape rather than a config.
-reportsRouter.get("/data/client-value", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try { res.json(await clientValueReport(req.user)); } catch (e) { next(e); }
+export const reportsRouter = Router();
+reportsRouter.use(authenticate);
+
+/**
+ * Every standard report answers `?from=&to=&clientId=&boardId=` and returns its own numbers plus
+ * the period it actually applied, so the screen can print "All time" or the range it was given
+ * rather than leaving the reader to guess. `parsePeriod` resolves the client against the account's
+ * own scope — a query parameter can narrow a report but never widen it.
+ */
+const standardReport = (build: (user: AuthUser | undefined, period: ReportPeriod) => Promise<unknown>) =>
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const period = await parsePeriod(req.query as Record<string, unknown>, req.user);
+      res.json(await build(req.user, period));
+    } catch (e) { next(e); }
+  };
+
+reportsRouter.get("/data/ticket-volume", requirePermission(Permission.ReportView), standardReport(ticketVolumeReport));
+reportsRouter.get("/data/sla-compliance", requirePermission(Permission.ReportView), standardReport(slaReport));
+reportsRouter.get("/data/technician-utilization", requirePermission(Permission.ReportView), standardReport(utilizationReport));
+reportsRouter.get("/data/revenue-summary", requirePermission(Permission.ReportView), standardReport(revenueReport));
+reportsRouter.get("/data/ticket-aging", requirePermission(Permission.ReportView), standardReport(agingReport));
+reportsRouter.get("/data/time-tracking", requirePermission(Permission.ReportView), standardReport(timeTrackingReport));
+reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), standardReport(csatReport));
+reportsRouter.get("/data/contract-profitability", requirePermission(Permission.ReportView), standardReport(contractProfitabilityReport));
+reportsRouter.get("/data/client-value", requirePermission(Permission.ReportView), standardReport(clientValueReport));
+reportsRouter.get("/data/quarterly-business-review", requirePermission(Permission.ReportView), standardReport(qbrReport));
+
+/** The options a report's own filters offer: the clients and boards the account can see. */
+reportsRouter.get("/data/options", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
+  try {
+    const scoped = req.user?.companyId;
+    const [clients, boards] = await Promise.all([
+      scoped
+        ? prisma.company.findMany({ where: { id: scoped }, select: { id: true, name: true } })
+        : prisma.company.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+      prisma.serviceBoard.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    ]);
+    res.json({ clients, boards });
+  } catch (e) { next(e); }
 });
 
-reportsRouter.get("/", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
+reportsRouter.get("/", requirePermission(Permission.ReportView), async (_req: AuthRequest, res, next) => {
   try {
-    const scope = companyWhere(req.user);
     const reports = await prisma.report.findMany({ orderBy: { name: "asc" } });
     const [authors, schedules] = await Promise.all([
       prisma.user.findMany({ where: { id: { in: [...new Set(reports.map(r => r.createdById))] } }, select: { id: true, firstName: true, lastName: true } }),
@@ -27,291 +68,192 @@ reportsRouter.get("/", requirePermission(Permission.ReportView), async (req: Aut
 });
 
 reportsRouter.post("/", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
-  try { const r = await prisma.report.create({ data: { name: req.body.name, description: req.body.description || null, type: req.body.type || "custom", config: req.body.config || {}, createdById: req.user!.userId } }); res.status(201).json(r); }
-  catch (e) { next(e); }
+  try {
+    if (!req.body?.name || typeof req.body.name !== "string" || !req.body.name.trim()) throw new AppError("A report needs a name");
+    const r = await prisma.report.create({
+      data: {
+        name: req.body.name.trim(),
+        description: req.body.description || null,
+        type: req.body.type || "custom",
+        config: req.body.config || {},
+        createdById: req.user!.userId,
+      },
+    });
+    res.status(201).json(r);
+  } catch (e) { next(e); }
+});
+
+reportsRouter.patch("/:id", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const report = await prisma.report.findUnique({ where: { id: req.params.id } });
+    if (!report) throw new AppError("Report not found", 404);
+    const updates: Record<string, unknown> = {};
+    if (typeof req.body?.name === "string" && req.body.name.trim()) updates.name = req.body.name.trim();
+    if (req.body?.description !== undefined) updates.description = req.body.description || null;
+    if (typeof req.body?.type === "string") updates.type = req.body.type;
+    if (req.body?.config !== undefined) updates.config = req.body.config;
+    res.json(await prisma.report.update({ where: { id: report.id }, data: updates }));
+  } catch (e) { next(e); }
+});
+
+reportsRouter.delete("/:id", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const report = await prisma.report.findUnique({ where: { id: req.params.id } });
+    if (!report) throw new AppError("Report not found", 404);
+    // A system report is seeded rather than written, so removing it would silently change what the
+    // console ships with. Schedules go with the report they belong to.
+    if (report.isSystem) throw new AppError(`${report.name} ships with the product and cannot be deleted`, 409);
+    await prisma.reportSchedule.deleteMany({ where: { reportId: report.id } });
+    await prisma.report.delete({ where: { id: report.id } });
+    res.json({ deleted: true, name: report.name });
+  } catch (e) { next(e); }
+});
+
+/** Copies a report so a variation is a two-field edit rather than a retype. */
+reportsRouter.post("/:id/duplicate", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const report = await prisma.report.findUnique({ where: { id: req.params.id } });
+    if (!report) throw new AppError("Report not found", 404);
+    const copy = await prisma.report.create({
+      data: {
+        name: `${report.name} (copy)`.slice(0, 120),
+        description: report.description,
+        type: report.type,
+        config: report.config ?? {},
+        createdById: req.user!.userId,
+      },
+    });
+    res.status(201).json(copy);
+  } catch (e) { next(e); }
+});
+
+reportsRouter.post("/schedules/:scheduleId/run", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const schedule = await prisma.reportSchedule.findUnique({ where: { id: req.params.scheduleId } });
+    if (!schedule) throw new AppError("Schedule not found", 404);
+    res.json(await prisma.reportSchedule.update({ where: { id: schedule.id }, data: { lastSentAt: new Date() } }));
+  } catch (e) { next(e); }
+});
+
+reportsRouter.delete("/schedules/:scheduleId", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const schedule = await prisma.reportSchedule.findUnique({ where: { id: req.params.scheduleId } });
+    if (!schedule) throw new AppError("Schedule not found", 404);
+    await prisma.reportSchedule.delete({ where: { id: schedule.id } });
+    res.json({ deleted: true });
+  } catch (e) { next(e); }
 });
 
 reportsRouter.get("/:id/run", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
     const report = await prisma.report.findUnique({ where: { id: req.params.id } });
-    if (!report) { res.status(404).json({ error: "Not found" }); return; }
+    if (!report) throw new AppError("Report not found", 404);
 
-    // A stored config is the point of the custom type, so it is what runs. The two built-in
-    // types keep their fixed shapes because saved reports and schedules already use them.
+    const period = await parsePeriod(req.query as Record<string, unknown>, req.user);
+
+    // A stored config is the point of the custom type, so it is what runs. The built-in types keep
+    // their fixed shapes because saved reports and schedules already use them.
     if (report.type === "custom") {
-      const result = await runReportConfig((report.config ?? {}) as ReportConfig, reportScope(req.user, report.config));
-      res.json({ report: report.name, type: report.type, generatedAt: new Date().toISOString(), ...result, data: result.rows });
+      const source = (report.config as ReportConfig | undefined)?.source;
+      const scope = source === "time_entries"
+        ? (period.clientId ? { ticket: { companyId: period.clientId } } : {})
+        : (period.clientId ? { companyId: period.clientId } : {});
+      const result = await runReportConfig((report.config ?? {}) as ReportConfig, scope);
+      res.json({ report: report.name, type: report.type, generatedAt: new Date().toISOString(), period, ...result, data: result.rows });
       return;
     }
 
-    let data: unknown[] = [];
-    switch (report.type) {
-      case "ticket_summary": data = await prisma.ticket.findMany({ where: { ...ticketCompanyWhere(req.user) }, take: 500, orderBy: { createdAt: "desc" }, select: { ticketNumber: true, title: true, status: true, priority: true, createdAt: true } }); break;
-      case "revenue": data = await prisma.invoice.findMany({ where: { status: "paid", ...companyWhere(req.user) }, take: 500, select: { invoiceNumber: true, total: true, paidAt: true, company: { select: { name: true } } } }); break;
-      case "client_value": {
-        const clientValue = await clientValueReport(req.user);
-        res.json({ report: report.name, type: report.type, generatedAt: new Date().toISOString(), columns: Object.keys(clientValue[0] ?? {}), data: clientValue });
-        return;
-      }
-      default: data = [];
+    const built = await runBuiltIn(report.type, req.user, period);
+    if (built) {
+      res.json({ report: report.name, type: report.type, generatedAt: new Date().toISOString(), period, ...built });
+      return;
     }
-    res.json({ report: report.name, type: report.type, generatedAt: new Date().toISOString(), data });
+    res.json({
+      report: report.name, type: report.type, generatedAt: new Date().toISOString(), period,
+      columns: [], data: [],
+      note: `No runner is registered for the report type "${report.type}". Pick a source in the editor or change the type.`,
+    });
   }
   catch (e) { next(e); }
 });
+
+/**
+ * A saved report of a standard type runs the same code as the Standard Reports screen, so a saved
+ * report can never show a different number from the screen it was saved from.
+ */
+async function runBuiltIn(type: string, user: AuthUser | undefined, period: ReportPeriod): Promise<Record<string, unknown> | null> {
+  const runners: Record<string, (u: AuthUser | undefined, p: ReportPeriod) => Promise<unknown>> = {
+    ticket_summary: ticketVolumeReport,
+    ticket_volume: ticketVolumeReport,
+    sla: slaReport,
+    revenue: revenueReport,
+    utilization: utilizationReport,
+    aging: agingReport,
+    csat: csatReport,
+    time: timeTrackingReport,
+    time_tracking: timeTrackingReport,
+    contract: contractProfitabilityReport,
+    contract_profitability: contractProfitabilityReport,
+    client_value: clientValueReport,
+    qbr: qbrReport,
+    quarterly_business_review: qbrReport,
+  };
+  const runner = runners[type];
+  if (!runner) return null;
+  const result = await runner(user, period);
+
+  // A saved report's reader expects rows. A structured payload keeps its headline list as the rows
+  // and carries the rest of the object alongside, rather than being flattened into something the
+  // report's own columns no longer describe.
+  const headline = pickHeadline(result);
+  if (headline) {
+    const summary = Object.fromEntries(Object.entries(result as Record<string, unknown>).filter(([k]) => k !== "period"));
+    return { columns: Object.keys(headline[0] ?? {}), data: headline, summary };
+  }
+  return { columns: Object.keys(result as object), data: [], summary: result };
+}
+
+/**
+ * The list a structured report is *about*, used when a saved report needs rows. The preferred keys
+ * come first so a saved satisfaction report shows its clients rather than its 0–10 distribution,
+ * and anything unlisted falls back to the first array of objects the payload holds.
+ */
+function pickHeadline(result: unknown): Array<Record<string, unknown>> | null {
+  if (Array.isArray(result)) return result as Array<Record<string, unknown>>;
+  if (!result || typeof result !== "object") return null;
+  const payload = result as Record<string, unknown>;
+  const preferred = [
+    "clients", "byClient", "technicians", "agreements", "byTechnician", "byAssignee", "byTicket",
+    "byBoard", "byStatus", "byPriority", "trend", "byDate", "monthlyRevenue", "aging", "breaches",
+  ];
+  for (const key of preferred) {
+    const value = payload[key];
+    if (Array.isArray(value) && value.length && typeof value[0] === "object") return value as Array<Record<string, unknown>>;
+  }
+  for (const value of Object.values(payload)) {
+    if (Array.isArray(value) && value.length && typeof value[0] === "object") return value as Array<Record<string, unknown>>;
+  }
+  return null;
+}
 
 reportsRouter.post("/:id/schedules", requirePermission(Permission.ReportCreate), async (req: AuthRequest, res, next) => {
-  try { const s = await prisma.reportSchedule.create({ data: { reportId: req.params.id, frequency: req.body.frequency, dayOfWeek: req.body.dayOfWeek || null, dayOfMonth: req.body.dayOfMonth || null, timeOfDay: req.body.timeOfDay, recipients: req.body.recipients, format: req.body.format || "pdf" } }); res.status(201).json(s); }
-  catch (e) { next(e); }
-});
-
-/**
- * The client restriction for a report of a given source. Sources that hang off a ticket (time
- * entries) are narrowed through the ticket; everything else by its own `companyId`. A report
- * config can never widen this.
- */
-function reportScope(user?: AuthUser, config?: unknown): Record<string, unknown> {
-  const source = (config as ReportConfig | undefined)?.source;
-  return source === "time_entries" ? ticketCompanyWhere(user) : companyWhere(user);
-}
-
-/**
- * Client Value Report (PLAN-015 Phase B #10): what each client is worth in attention and money —
- * volume, the open/resolved split, how quickly we first replied, who is actually in touch, and
- * the hours and charges recorded against them.
- */
-async function clientValueReport(user?: AuthUser) {
-  const clients = await prisma.company.findMany({
-    where: { isActive: true, ...(companyWhere(user).companyId ? { id: companyWhere(user).companyId } : {}) },
-    select: { id: true, name: true, industry: true },
-    orderBy: { name: "asc" },
-  });
-  if (clients.length === 0) return [];
-
-  const since = new Date();
-  since.setDate(since.getDate() - 90);
-  const clientIds = clients.map(c => c.id);
-
-  const [tickets, comments, timeEntries, expenses] = await Promise.all([
-    prisma.ticket.findMany({
-      where: { companyId: { in: clientIds } },
-      select: { id: true, companyId: true, status: true, priority: true, createdAt: true, contactId: true, additionalContacts: { select: { contactId: true } } },
-    }),
-    prisma.ticketComment.findMany({
-      where: { ticket: { companyId: { in: clientIds } }, isInternal: false },
-      select: { ticketId: true, createdAt: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.timeEntry.findMany({ where: { ticket: { companyId: { in: clientIds } } }, select: { ticketId: true, minutes: true, billedMinutes: true } }),
-    prisma.expense.findMany({ where: { companyId: { in: clientIds }, status: { in: ["approved", "billed"] } }, select: { companyId: true, amount: true } }),
-  ]);
-
-  const firstReply = new Map<string, Date>();
-  for (const comment of comments) {
-    if (!firstReply.has(comment.ticketId)) firstReply.set(comment.ticketId, comment.createdAt);
-  }
-
-  const rows = clients.map(client => {
-    const theirs = tickets.filter(t => t.companyId === client.id);
-    const open = theirs.filter(t => !["resolved", "closed", "cancelled"].includes(t.status)).length;
-    const recent = theirs.filter(t => t.createdAt >= since);
-    const replyTimes = theirs
-      .map(t => {
-        const reply = firstReply.get(t.id);
-        return reply ? (reply.getTime() - t.createdAt.getTime()) / 60000 : null;
-      })
-      .filter((minutes): minutes is number => minutes !== null);
-    const people = new Set<string>();
-    for (const t of theirs) {
-      if (t.contactId) people.add(t.contactId);
-      for (const extra of t.additionalContacts) people.add(extra.contactId);
-    }
-    const entryIds = new Set(theirs.map(t => t.id));
-    const minutes = timeEntries.filter(te => entryIds.has(te.ticketId)).reduce((sum, te) => sum + te.minutes, 0);
-    const billedMinutes = timeEntries.filter(te => entryIds.has(te.ticketId)).reduce((sum, te) => sum + (te.billedMinutes ?? te.minutes), 0);
-    const expenseTotal = expenses.filter(e => e.companyId === client.id).reduce((sum, e) => sum + e.amount, 0);
-
-    return {
-      client: client.name,
-      industry: client.industry ?? "",
-      ticketsTotal: theirs.length,
-      ticketsLast90Days: recent.length,
-      open,
-      resolvedOrClosed: theirs.length - open,
-      highPriority: theirs.filter(t => t.priority === "critical" || t.priority === "high").length,
-      activePeople: people.size,
-      avgFirstReplyMinutes: replyTimes.length ? Math.round(replyTimes.reduce((a, b) => a + b, 0) / replyTimes.length) : null,
-      hoursLogged: +(minutes / 60).toFixed(2),
-      hoursBilled: +(billedMinutes / 60).toFixed(2),
-      approvedExpenses: +expenseTotal.toFixed(2),
-    };
-  });
-
-  return rows.sort((a, b) => b.ticketsTotal - a.ticketsTotal);
-}
-
-// ── Standard report data endpoints ──
-
-reportsRouter.get("/data/ticket-volume", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
-    const scope = companyWhere(req.user);
-    const total = await prisma.ticket.count({ where: scope });
-    const byStatus = await prisma.ticket.groupBy({ by: ["status"], where: { ...scope }, _count: { id: true } });
-    const byPriority = await prisma.ticket.groupBy({ by: ["priority"], where: { ...scope }, _count: { id: true } });
-    const byBoard = await prisma.ticket.groupBy({ by: ["boardId"], where: { ...scope }, _count: { id: true } });
-    const boards = await prisma.serviceBoard.findMany({ select: { id: true, name: true } });
-    const boardMap = new Map(boards.map(b => [b.id, b.name]));
-    res.json({ total, byStatus: byStatus.map(s => ({ status: s.status, count: s._count.id })), byPriority: byPriority.map(p => ({ priority: p.priority, count: p._count.id })), byBoard: byBoard.map(b => ({ board: boardMap.get(b.boardId) || b.boardId, count: b._count.id })) });
-  } catch (e) { next(e); }
-});
-
-reportsRouter.get("/data/sla-compliance", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try {
-    const scope = companyWhere(req.user);
-    const now = new Date();
-    const tickets = await prisma.ticket.findMany({
-      where: { status: { notIn: ["closed", "cancelled"] }, ...scope },
-      include: { board: { select: { slaResponseMinutes: true, slaResolutionMinutes: true } } },
+    const { frequency, dayOfWeek, dayOfMonth, timeOfDay, recipients, format } = req.body ?? {};
+    if (!["daily", "weekly", "monthly"].includes(String(frequency))) throw new AppError("frequency must be daily, weekly or monthly");
+    if (!timeOfDay) throw new AppError("timeOfDay is required");
+    const report = await prisma.report.findUnique({ where: { id: req.params.id }, select: { id: true } });
+    if (!report) throw new AppError("Report not found", 404);
+    const s = await prisma.reportSchedule.create({
+      data: {
+        reportId: report.id,
+        frequency,
+        dayOfWeek: dayOfWeek === undefined || dayOfWeek === null || dayOfWeek === "" ? null : Number(dayOfWeek),
+        dayOfMonth: dayOfMonth === undefined || dayOfMonth === null || dayOfMonth === "" ? null : Number(dayOfMonth),
+        timeOfDay,
+        recipients: Array.isArray(recipients) ? recipients.filter((r: unknown) => typeof r === "string" && r.includes("@")) : [],
+        format: format || "pdf",
+      },
     });
-    let metResponse = 0, breachedResponse = 0, metResolution = 0, breachedResolution = 0;
-    for (const t of tickets) {
-      const age = (now.getTime() - new Date(t.createdAt).getTime()) / 60000;
-      const respSla = t.board?.slaResponseMinutes || 240;
-      const resSla = t.board?.slaResolutionMinutes || 1440;
-      if (t.firstResponseAt) {
-        const respTime = (new Date(t.firstResponseAt).getTime() - new Date(t.createdAt).getTime()) / 60000;
-        respTime <= respSla ? metResponse++ : breachedResponse++;
-      } else { age > respSla ? breachedResponse++ : metResponse++; }
-      if (t.resolvedAt) {
-        const resTime = (new Date(t.resolvedAt).getTime() - new Date(t.createdAt).getTime()) / 60000;
-        resTime <= resSla ? metResolution++ : breachedResolution++;
-      } else { age > resSla ? breachedResolution++ : metResolution++; }
-    }
-    res.json({ metResponse, breachedResponse, metResolution, breachedResolution, totalTickets: tickets.length });
-  } catch (e) { next(e); }
-});
-
-reportsRouter.get("/data/technician-utilization", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try {
-    const scope = companyWhere(req.user);
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
-    const timeEntries = await prisma.timeEntry.findMany({
-      where: { date: { gte: thirtyDaysAgo }, ...ticketCompanyWhere(req.user) },
-      include: { user: { select: { id: true, firstName: true, lastName: true } } },
-    });
-    const byUser: Record<string, { name: string; billable: number; nonBillable: number }> = {};
-    for (const te of timeEntries) {
-      const uid = te.userId;
-      if (!byUser[uid]) byUser[uid] = { name: `${te.user.firstName} ${te.user.lastName}`, billable: 0, nonBillable: 0 };
-      if (te.billable) byUser[uid].billable += te.minutes;
-      else byUser[uid].nonBillable += te.minutes;
-    }
-    res.json(Object.entries(byUser).map(([id, data]) => ({ userId: id, ...data })));
-  } catch (e) { next(e); }
-});
-
-reportsRouter.get("/data/revenue-summary", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try {
-    const scope = companyWhere(req.user);
-    const [paid, outstanding, byMonth] = await Promise.all([
-      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "paid", ...scope } }),
-      prisma.invoice.aggregate({ _sum: { total: true }, where: { status: { in: ["sent", "partial", "overdue"] }, ...scope } }),
-      prisma.invoice.findMany({ where: { status: "paid", paidAt: { not: null }, ...scope }, select: { paidAt: true, total: true }, orderBy: { paidAt: "desc" }, take: 200 }),
-    ]);
-    const monthly: Record<string, number> = {};
-    for (const inv of byMonth) {
-      if (!inv.paidAt) continue;
-      const key = new Date(inv.paidAt).toISOString().slice(0, 7);
-      monthly[key] = (monthly[key] || 0) + inv.total;
-    }
-    res.json({ totalPaid: paid._sum.total || 0, totalOutstanding: outstanding._sum.total || 0, monthlyRevenue: Object.entries(monthly).slice(0, 12).reverse().map(([month, amount]) => ({ month, amount })) });
-  } catch (e) { next(e); }
-});
-
-// ── Ticket Aging Report ──
-reportsRouter.get("/data/ticket-aging", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try {
-    const scope = companyWhere(req.user);
-    const now = new Date();
-    const tickets = await prisma.ticket.findMany({
-      where: { status: { notIn: ["closed", "cancelled"] }, ...scope },
-      select: { createdAt: true, updatedAt: true, title: true, ticketNumber: true, status: true, priority: true },
-    });
-    const aging = { lessThan1Day: 0, oneTo3Days: 0, threeTo7Days: 0, sevenTo30Days: 0, over30Days: 0, total: tickets.length };
-    for (const t of tickets) {
-      const age = (now.getTime() - new Date(t.createdAt).getTime()) / 86400000;
-      if (age < 1) aging.lessThan1Day++;
-      else if (age < 3) aging.oneTo3Days++;
-      else if (age < 7) aging.threeTo7Days++;
-      else if (age < 30) aging.sevenTo30Days++;
-      else aging.over30Days++;
-    }
-    res.json(aging);
-  } catch (e) { next(e); }
-});
-
-// ── Time Tracking Report ──
-reportsRouter.get("/data/time-tracking", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try {
-    const scope = companyWhere(req.user);
-    const timeEntries = await prisma.timeEntry.findMany({
-      where: ticketCompanyWhere(req.user),
-      orderBy: { date: "desc" },
-      take: 200,
-      include: { user: { select: { firstName: true, lastName: true } }, ticket: { select: { ticketNumber: true, title: true } } },
-    });
-    const byDate: Record<string, { date: string; totalMinutes: number; entries: number; billable: number }> = {};
-    for (const te of timeEntries) {
-      const d = new Date(te.date).toISOString().slice(0, 10);
-      if (!byDate[d]) byDate[d] = { date: d, totalMinutes: 0, entries: 0, billable: 0 };
-      byDate[d].totalMinutes += te.minutes;
-      byDate[d].entries++;
-      if (te.billable) byDate[d].billable += te.minutes;
-    }
-    res.json({ entries: timeEntries.length, totalMinutes: timeEntries.reduce((s, t) => s + t.minutes, 0), totalBillable: timeEntries.filter(t => t.billable).reduce((s, t) => s + t.minutes, 0), byDate: Object.values(byDate).sort((a, b) => b.date.localeCompare(a.date)) });
-  } catch (e) { next(e); }
-});
-
-// ── Client Satisfaction (placeholder) ──
-reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try {
-    const companies = await prisma.company.findMany({ where: req.user?.companyId ? { id: req.user.companyId } : {}, select: { id: true, name: true }, take: 20 });
-    const data = companies.map(c => ({
-      client: c.name,
-      npsScore: Math.round(30 + Math.random() * 50),
-      responseRate: Math.round(40 + Math.random() * 40),
-      satisfaction: Math.round(70 + Math.random() * 25),
-      surveysSent: Math.round(5 + Math.random() * 30),
-      surveysCompleted: Math.round(2 + Math.random() * 15),
-      trend: ["improving", "stable", "declining"][Math.floor(Math.random() * 3)],
-    }));
-    res.json(data);
-  } catch (e) { next(e); }
-});
-
-// ── Contract Profitability Report ──
-reportsRouter.get("/data/contract-profitability", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try {
-    const scope = companyWhere(req.user);
-    const agreements = await prisma.serviceAgreement.findMany({
-      where: { ...scope },
-      include: { company: { select: { name: true } }, invoices: { where: { status: "paid" }, select: { total: true } } },
-    });
-    const data = agreements.map(a => {
-      const revenue = a.invoices.reduce((s, i) => s + i.total, 0);
-      const cost = revenue * (0.4 + Math.random() * 0.3);
-      const margin = revenue - cost;
-      return {
-        agreement: a.name,
-        client: a.company?.name || "—",
-        billingPeriod: a.billingPeriod,
-        billingAmount: a.billingAmount,
-        revenueCollected: Math.round(revenue),
-        estimatedCost: Math.round(cost),
-        margin: Math.round(margin),
-        marginPercent: revenue > 0 ? Math.round((margin / revenue) * 100) : 0,
-      };
-    });
-    res.json(data);
+    res.status(201).json(s);
   } catch (e) { next(e); }
 });

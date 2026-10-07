@@ -1,51 +1,67 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
+import toast from "react-hot-toast";
 import {
-  TrendingUp, BarChart3, PieChart, Download, Filter, Clock, CheckCircle,
-  XCircle, AlertTriangle, Ticket, DollarSign, Users, Activity,
-  ClipboardList, Calendar, Timer, FileText, Printer, type LucideIcon,
+  TrendingUp, BarChart3, ClipboardList, Download, Filter, CheckCircle, AlertTriangle,
+  Ticket, DollarSign, Clock, Printer, Presentation, Calendar, FileText, X, RefreshCw,
+  type LucideIcon,
 } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
-interface TicketVolume { total: number; byStatus: Array<{ status: string; count: number }>; byPriority: Array<{ priority: string; count: number }>; byBoard: Array<{ board: string; count: number }>; }
-interface SlaData { metResponse: number; breachedResponse: number; metResolution: number; breachedResolution: number; totalTickets: number; }
-interface Utilization { userId: string; name: string; billable: number; nonBillable: number; }
-interface RevenueData { totalPaid: number; totalOutstanding: number; monthlyRevenue: Array<{ month: string; amount: number }>; }
+import { ReportsSkeleton, TableSkeleton } from "../components/ui/Skeleton";
+import { apiErrorMessage } from "../lib/apiError";
+import { downloadCsv } from "../lib/csv";
+import { ReportBody, exportCsv, exportExcel, exportPdf, money, number, printReport, sectionsToTables, type Section } from "../components/reports/reportKit";
+import { REPORT_BY_ID, STANDARD_REPORTS, type StandardReport } from "../components/reports/standardReports";
+import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog";
 
 const TABS: Array<{ id: string; label: string; icon: LucideIcon; to: string }> = [
   { id: "dashboard", label: "Dashboards", icon: BarChart3, to: "/reports" },
   { id: "standard", label: "Standard Reports", icon: ClipboardList, to: "/reports/standard" },
+  { id: "qbr", label: "Quarterly Business Review", icon: Presentation, to: "/reports/qbr" },
+  { id: "custom", label: "Custom Reports", icon: Filter, to: "/reports/custom" },
   { id: "analytics", label: "Analytics", icon: TrendingUp, to: "/reports/analytics" },
 ];
 
-const STATUS_COLORS: Record<string, string> = {
-  new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
-  waiting_on_client: "bg-amber-600/20 text-amber-400", on_hold: "bg-purple-600/20 text-purple-400",
-  resolved: "bg-green-600/20 text-green-400", closed: "bg-gray-600/20 text-gray-400",
-  cancelled: "bg-red-600/20 text-red-400", pending_approval: "bg-orange-600/20 text-orange-400",
-};
+export interface ReportFilters { from: string; to: string; clientId: string; boardId: string }
+export interface FilterOptions { clients: Array<{ id: string; name: string }>; boards: Array<{ id: string; name: string }> }
 
-function formatMinutes(m: number) { return `${(m / 60).toFixed(1)}h`; }
-function formatCurrency(n: number) { return `$${n.toLocaleString()}`; }
+const EMPTY_FILTERS: ReportFilters = { from: "", to: "", clientId: "", boardId: "" };
+
+const filterQuery = (filters: ReportFilters): Record<string, string> =>
+  Object.fromEntries(Object.entries(filters).filter(([, value]) => value)) as Record<string, string>;
+
+/** The period the server actually applied, so the screen can never imply a range it did not use. */
+const periodLabel = (payload: unknown): string => (payload as { period?: { label?: string } } | null)?.period?.label ?? "";
+
+/** The filter options every report shares, loaded once per page. */
+function useReportOptions(): FilterOptions {
+  const [options, setOptions] = useState<FilterOptions>({ clients: [], boards: [] });
+  useEffect(() => {
+    api.get("/reports/data/options")
+      .then(r => setOptions({ clients: r.data?.clients ?? [], boards: r.data?.boards ?? [] }))
+      .catch(() => setOptions({ clients: [], boards: [] }));
+  }, []);
+  return options;
+}
 
 export function ReportsPage({ tab: initialTab }: { tab?: string }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(initialTab || "dashboard");
 
-  // The route owns the tab: /reports, /reports/standard and /reports/analytics all
-  // render this component, so moving between them re-renders it with a new prop
-  // rather than remounting it. Without this the screen stayed on whichever
-  // subsection was opened first.
+  // The route owns the tab: every /reports* route renders this component, so moving between them
+  // re-renders it with a new prop rather than remounting it.
   useEffect(() => { setActiveTab(initialTab || "dashboard"); }, [initialTab]);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-semibold text-white">Reporting</h2>
-          <p className="text-sm text-gray-400">Dashboards, reports, and analytics</p>
+          <p className="text-sm text-gray-400">Dashboards, reports and analytics — every figure computed from the same source</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link to="/reports/custom" className="btn-secondary text-sm flex items-center gap-2"><Filter size={14} /> Custom Reports</Link>
+          <Link to="/reports/qbr" className="btn-primary text-sm flex items-center gap-2"><Presentation size={14} /> Quarterly Business Review</Link>
         </div>
       </div>
 
@@ -53,7 +69,11 @@ export function ReportsPage({ tab: initialTab }: { tab?: string }) {
         {TABS.map(tab => {
           const Icon = tab.icon;
           return (
-            <button key={tab.id} onClick={() => navigate(tab.to)} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${activeTab === tab.id ? "bg-surface border border-b-0 border-surface-border text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter/50"}`}>
+            <button
+              key={tab.id}
+              onClick={() => navigate(tab.to)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${activeTab === tab.id ? "bg-surface border border-b-0 border-surface-border text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter/50"}`}
+            >
               <Icon size={15} />{tab.label}
             </button>
           );
@@ -62,150 +82,613 @@ export function ReportsPage({ tab: initialTab }: { tab?: string }) {
 
       {activeTab === "dashboard" && <DashboardTab />}
       {activeTab === "standard" && <StandardReportsTab />}
+      {activeTab === "qbr" && <QbrTab />}
       {activeTab === "analytics" && <AnalyticsTab />}
     </div>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  DASHBOARD TAB
+//  Filter bar
+// ═══════════════════════════════════════════════════════════════════
+
+function FilterBar({
+  report, filters, onChange, options, onRefresh, busy, quarterPicker,
+}: {
+  report: StandardReport;
+  filters: ReportFilters;
+  onChange: (next: ReportFilters) => void;
+  options: FilterOptions;
+  onRefresh: () => void;
+  busy: boolean;
+  quarterPicker?: { value: string; options: Array<{ label: string }>; onSelect: (label: string) => void };
+}) {
+  const showPeriod = report.filters.period && !quarterPicker;
+  const active = Boolean(filters.from || filters.to || filters.clientId || filters.boardId);
+  return (
+    <div className="card flex flex-wrap items-end gap-3">
+      {quarterPicker && (
+        <div>
+          <label className="text-[11px] text-gray-500 block mb-1">Quarter</label>
+          <select className="input-field text-sm" value={quarterPicker.value} onChange={e => quarterPicker.onSelect(e.target.value)}>
+            {quarterPicker.options.map(q => <option key={q.label} value={q.label}>{q.label}</option>)}
+          </select>
+        </div>
+      )}
+      {showPeriod && (
+        <>
+          <div>
+            <label className="text-[11px] text-gray-500 block mb-1">From</label>
+            <input type="date" className="input-field text-sm" value={filters.from} onChange={e => onChange({ ...filters, from: e.target.value })} />
+          </div>
+          <div>
+            <label className="text-[11px] text-gray-500 block mb-1">To</label>
+            <input type="date" className="input-field text-sm" value={filters.to} onChange={e => onChange({ ...filters, to: e.target.value })} />
+          </div>
+        </>
+      )}
+      {report.filters.client && (
+        <div>
+          <label className="text-[11px] text-gray-500 block mb-1">Client</label>
+          <select className="input-field text-sm" value={filters.clientId} onChange={e => onChange({ ...filters, clientId: e.target.value })}>
+            <option value="">All clients</option>
+            {options.clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+      )}
+      {report.filters.board && (
+        <div>
+          <label className="text-[11px] text-gray-500 block mb-1">Board</label>
+          <select className="input-field text-sm" value={filters.boardId} onChange={e => onChange({ ...filters, boardId: e.target.value })}>
+            <option value="">All boards</option>
+            {options.boards.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+        </div>
+      )}
+      {active && (
+        <button className="btn-secondary text-xs flex items-center gap-1.5" onClick={() => onChange({ ...EMPTY_FILTERS })}>
+          <X size={12} /> Clear filters
+        </button>
+      )}
+      <div className="ml-auto flex items-center gap-2">
+        <span className="text-[11px] text-gray-500">{active ? "Filtered" : "All time"}</span>
+        <button className="btn-secondary text-xs flex items-center gap-1.5" onClick={onRefresh} disabled={busy}>
+          <RefreshCw size={12} className={busy ? "animate-spin" : ""} /> Refresh
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Report viewer — the detail view every entry point shares
+// ═══════════════════════════════════════════════════════════════════
+
+function ReportViewer({
+  report, filters, onFilters, options, onClose, quarterPicker,
+}: {
+  report: StandardReport;
+  filters: ReportFilters;
+  onFilters: (next: ReportFilters) => void;
+  options: FilterOptions;
+  onClose?: () => void;
+  quarterPicker?: { value: string; options: Array<{ label: string }>; onSelect: (label: string) => void };
+}) {
+  const [payload, setPayload] = useState<unknown>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showExport, setShowExport] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    api.get(report.endpoint, { params: filterQuery(filters) })
+      .then(r => setPayload(r.data))
+      .catch(e => { setError(apiErrorMessage(e, "Could not run the report")); setPayload(null); })
+      .finally(() => setLoading(false));
+  }, [report.endpoint, filters]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const sections: Section[] = useMemo(() => (payload ? report.build(payload as Record<string, unknown>) : []), [payload, report]);
+  const document_ = useMemo(
+    () => ({ title: report.title, subtitle: report.description, period: periodLabel(payload), sections }),
+    [report, payload, sections],
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <report.icon size={18} className="text-cyber-400" />
+          <div>
+            <h3 className="text-base font-semibold text-white">{report.title}</h3>
+            <p className="text-xs text-gray-500">{report.description}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="btn-secondary text-xs flex items-center gap-1.5" onClick={() => printReport(document_)} disabled={!payload}><Printer size={13} /> Print</button>
+          <button className="btn-secondary text-xs flex items-center gap-1.5" onClick={() => setShowExport(true)} disabled={!payload}><Download size={13} /> Export</button>
+          {onClose && <button className="btn-secondary text-xs" onClick={onClose}>Close</button>}
+        </div>
+      </div>
+
+      <FilterBar report={report} filters={filters} onChange={onFilters} options={options} onRefresh={load} busy={loading} quarterPicker={quarterPicker} />
+
+      {payload != null && (
+        <p className="text-xs text-gray-500">
+          {periodLabel(payload) ? `Period: ${periodLabel(payload)} · ` : ""}
+          Generated {new Date().toLocaleString()} · {sections.length} section{sections.length === 1 ? "" : "s"}
+        </p>
+      )}
+
+      {loading ? <ReportsSkeleton /> : error ? (
+        <div className="card border-red-600/40">
+          <p className="text-sm text-red-400 flex items-center gap-2"><AlertTriangle size={14} /> {error}</p>
+          <button className="btn-secondary text-xs mt-3" onClick={load}>Try again</button>
+        </div>
+      ) : (
+        <ReportBody sections={sections} />
+      )}
+
+      {showExport && (
+        <ExportDialog document_={document_} report={report} filters={filters} options={options} onClose={() => setShowExport(false)} />
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Export — the filters offered here are applied, not decorative
+// ═══════════════════════════════════════════════════════════════════
+
+function ExportDialog({
+  document_, report, filters, options, onClose,
+}: {
+  document_: { title: string; subtitle?: string; period?: string; sections: Section[] };
+  report: StandardReport;
+  filters: ReportFilters;
+  options: FilterOptions;
+  onClose: () => void;
+}) {
+  const [format, setFormat] = useState<"pdf" | "excel" | "csv">("pdf");
+  const [exportFilters, setExportFilters] = useState<ReportFilters>({ ...filters });
+  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState<Section[] | null>(null);
+  const [previewPeriod, setPreviewPeriod] = useState("");
+
+  // The export runs against the filter set chosen *here*, so the file matches the options picked
+  // rather than whichever ones the screen happened to be showing.
+  const runPreview = useCallback(async () => {
+    setBusy(true);
+    try {
+      const r = await api.get(report.endpoint, { params: filterQuery(exportFilters) });
+      setPreview(report.build(r.data as Record<string, unknown>));
+      setPreviewPeriod(periodLabel(r.data));
+    } catch (e) {
+      toast.error(apiErrorMessage(e, "Could not prepare the export"));
+      setPreview(null);
+    } finally {
+      setBusy(false);
+    }
+  }, [report, exportFilters]);
+
+  useEffect(() => { void runPreview(); }, [runPreview]);
+
+  const tables = preview ? sectionsToTables(preview) : [];
+  const rowCount = tables.reduce((sum, t) => sum + t.rows.length, 0);
+  const changed = JSON.stringify(exportFilters) !== JSON.stringify(filters);
+
+  const doExport = () => {
+    if (!preview) return;
+    const doc = { ...document_, period: previewPeriod || document_.period, sections: preview };
+    if (format === "pdf") exportPdf(doc);
+    else if (format === "excel") exportExcel(doc);
+    else exportCsv(doc, downloadCsv);
+    toast.success(`${report.title} exported as ${format === "excel" ? "Excel" : format.toUpperCase()}`);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div className="card w-full max-w-3xl max-h-[90vh] overflow-y-auto space-y-4" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Export {report.title}</h3>
+            <p className="text-xs text-gray-500">{tables.length} table{tables.length === 1 ? "" : "s"} · {number(rowCount)} rows{previewPeriod ? ` · ${previewPeriod}` : ""}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-white" aria-label="Close"><X size={18} /></button>
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-500 block mb-2">Format</label>
+          <div className="flex gap-2 flex-wrap">
+            {([{ id: "pdf", label: "PDF", hint: "Print-ready, one table per block" }, { id: "excel", label: "Excel (.xls)", hint: "A sheet per table, typed cells" }, { id: "csv", label: "CSV", hint: "Every table, stacked" }] as const).map(f => (
+              <button
+                key={f.id}
+                onClick={() => setFormat(f.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors text-left ${format === f.id ? "bg-cyber-600/20 border-cyber-500/40 text-cyber-400" : "border-surface-border text-gray-400 hover:text-white hover:bg-surface-lighter"}`}
+              >
+                <span className="block">{f.label}</span>
+                <span className="block text-[10px] text-gray-500">{f.hint}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {report.filters.period && (
+            <>
+              <div><label className="text-xs text-gray-500 block mb-1">From</label><input type="date" className="input-field" value={exportFilters.from} onChange={e => setExportFilters({ ...exportFilters, from: e.target.value })} /></div>
+              <div><label className="text-xs text-gray-500 block mb-1">To</label><input type="date" className="input-field" value={exportFilters.to} onChange={e => setExportFilters({ ...exportFilters, to: e.target.value })} /></div>
+            </>
+          )}
+          {report.filters.client && (
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Report by client</label>
+              <select className="input-field" value={exportFilters.clientId} onChange={e => setExportFilters({ ...exportFilters, clientId: e.target.value })}>
+                <option value="">All clients</option>
+                {options.clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+          {report.filters.board && (
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Board</label>
+              <select className="input-field" value={exportFilters.boardId} onChange={e => setExportFilters({ ...exportFilters, boardId: e.target.value })}>
+                <option value="">All boards</option>
+                {options.boards.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs text-gray-500">Preview — exactly what the file will contain</label>
+            {changed && (
+              <button className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1" onClick={() => void runPreview()} disabled={busy}>
+                <RefreshCw size={11} className={busy ? "animate-spin" : ""} /> Apply these filters
+              </button>
+            )}
+          </div>
+          <div className="bg-surface-lighter rounded-lg p-3 max-h-72 overflow-auto">
+            {busy ? <p className="text-sm text-gray-500">Preparing…</p>
+              : preview && preview.length ? <ReportBody sections={preview} compact /> : <p className="text-sm text-gray-500">Nothing to preview.</p>}
+          </div>
+        </div>
+
+        <div className="flex gap-2 justify-end">
+          <button onClick={onClose} className="btn-secondary text-sm">Cancel</button>
+          <button onClick={doExport} className="btn-primary text-sm flex items-center gap-1.5" disabled={!preview || busy}>
+            <Download size={14} /> Export {format === "excel" ? "Excel" : format.toUpperCase()}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Standard reports
+// ═══════════════════════════════════════════════════════════════════
+
+function StandardReportsTab() {
+  const options = useReportOptions();
+  const [open, setOpen] = useState<StandardReport | null>(null);
+  const [filters, setFilters] = useState<ReportFilters>({ ...EMPTY_FILTERS });
+  const [exporting, setExporting] = useState<StandardReport | null>(null);
+  const [printing, setPrinting] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  /** Print from a card runs the report first and prints *that*, rather than the application. */
+  const print = async (report: StandardReport) => {
+    setPrinting(report.id);
+    try {
+      const r = await api.get(report.endpoint, { params: filterQuery(filters) });
+      printReport({
+        title: report.title,
+        subtitle: report.description,
+        period: periodLabel(r.data),
+        sections: report.build(r.data as Record<string, unknown>),
+      });
+    } catch (e) {
+      toast.error(apiErrorMessage(e, "Could not prepare the report for printing"));
+    } finally {
+      setPrinting(null);
+    }
+  };
+
+  if (open) {
+    return <ReportViewer report={open} filters={filters} onFilters={setFilters} options={options} onClose={() => setOpen(null)} />;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="card flex items-start gap-2">
+        <Filter size={16} className="text-cyber-400 mt-0.5" />
+        <p className="text-xs text-gray-400">
+          {STANDARD_REPORTS.length} standard reports. Each answers the same set of filters, and what you see on screen is
+          what prints and what exports — the file is built from the same sections as the page.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {STANDARD_REPORTS.map(report => (
+          <div key={report.id} className="card hover:border-cyber-500/30 transition-colors group flex flex-col">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-cyber-600/10"><report.icon size={18} className="text-cyber-400" /></div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-white text-sm group-hover:text-cyber-400">{report.title}</h3>
+                <p className="text-xs text-gray-500 mt-1">{report.description}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2 flex-wrap">
+              <button onClick={() => (report.quarters ? navigate("/reports/qbr") : setOpen(report))} className="btn-primary text-xs flex items-center gap-1.5 px-3 py-1.5">
+                <FileText size={12} /> Run Report
+              </button>
+              <button onClick={() => void print(report)} disabled={printing === report.id} className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-1.5">
+                <Printer size={12} /> {printing === report.id ? "Preparing…" : "Print"}
+              </button>
+              <button onClick={() => setExporting(report)} className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-1.5"><Download size={12} /> Export</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {exporting && (
+        <ExportDialog
+          document_={{ title: exporting.title, subtitle: exporting.description, sections: [] }}
+          report={exporting}
+          filters={filters}
+          options={options}
+          onClose={() => setExporting(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Quarterly business review
+// ═══════════════════════════════════════════════════════════════════
+
+function QbrTab() {
+  const options = useReportOptions();
+  const [filters, setFilters] = useState<ReportFilters>({ ...EMPTY_FILTERS });
+  const [quarters, setQuarters] = useState<Array<{ label: string; from: string; to: string }>>([]);
+  const [quarter, setQuarter] = useState("");
+
+  // The quarter list comes from the report itself, so the picker and the pack agree on which
+  // quarters exist. Loaded once: choosing a quarter should not re-derive the list.
+  useEffect(() => {
+    api.get("/reports/data/quarterly-business-review")
+      .then(r => {
+        const list = (r.data?.quarters ?? []) as Array<{ label: string; from: string; to: string }>;
+        setQuarters(list);
+        setQuarter(r.data?.reviewedQuarter ?? list[0]?.label ?? "");
+      })
+      .catch(() => {});
+  }, []);
+
+  const pickQuarter = (label: string) => {
+    const found = quarters.find(q => q.label === label);
+    setQuarter(label);
+    if (found) setFilters(current => ({ ...current, from: found.from.slice(0, 10), to: found.to.slice(0, 10) }));
+  };
+
+  const report = REPORT_BY_ID.get("qbr");
+  if (!report) return <p className="text-sm text-gray-500">The Quarterly Business Review report is unavailable.</p>;
+
+  return (
+    <div className="space-y-4">
+      <div className="card border-cyber-600/30">
+        <div className="flex items-start gap-3">
+          <Presentation size={18} className="text-cyber-400 mt-0.5" />
+          <div>
+            <h3 className="text-sm font-semibold text-white">Quarterly Business Review</h3>
+            <p className="text-xs text-gray-400 mt-1">
+              A full pack for a customer meeting: service delivery, targets, commercials, estate and risk, against the
+              quarter before. It opens on the last finished quarter, and compares like with like — a quarter still in
+              progress is measured against the same number of days of its predecessor.
+            </p>
+          </div>
+        </div>
+      </div>
+      <ReportViewer
+        report={report}
+        filters={filters}
+        onFilters={setFilters}
+        options={options}
+        quarterPicker={quarters.length ? { value: quarter, options: quarters, onSelect: pickQuarter } : undefined}
+      />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Dashboard
 // ═══════════════════════════════════════════════════════════════════
 
 function DashboardTab() {
-  const [ticketVolume, setTicketVolume] = useState<TicketVolume | null>(null);
-  const [sla, setSla] = useState<SlaData | null>(null);
-  const [utilization, setUtilization] = useState<Utilization[]>([]);
-  const [revenue, setRevenue] = useState<RevenueData | null>(null);
+  const [volume, setVolume] = useState<Record<string, unknown> | null>(null);
+  const [sla, setSla] = useState<Record<string, unknown> | null>(null);
+  const [utilization, setUtilization] = useState<Array<Record<string, unknown>>>([]);
+  const [revenue, setRevenue] = useState<Record<string, unknown> | null>(null);
+  const [aging, setAging] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
     Promise.all([
-      api.get("/reports/data/ticket-volume").then(r => setTicketVolume(r.data)).catch(() => {}),
-      api.get("/reports/data/sla-compliance").then(r => setSla(r.data)).catch(() => {}),
-      api.get("/reports/data/technician-utilization").then(r => setUtilization(r.data)).catch(() => {}),
-      api.get("/reports/data/revenue-summary").then(r => setRevenue(r.data)).catch(() => {}),
+      api.get("/reports/data/ticket-volume").then(r => setVolume(r.data)).catch(() => setVolume(null)),
+      api.get("/reports/data/sla-compliance").then(r => setSla(r.data)).catch(() => setSla(null)),
+      api.get("/reports/data/technician-utilization").then(r => setUtilization(r.data?.technicians ?? [])).catch(() => setUtilization([])),
+      api.get("/reports/data/revenue-summary").then(r => setRevenue(r.data)).catch(() => setRevenue(null)),
+      api.get("/reports/data/ticket-aging").then(r => setAging(r.data)).catch(() => setAging(null)),
     ]).finally(() => setLoading(false));
   }, []);
+  useEffect(() => { load(); }, [load]);
 
-  if (loading) return <div className="text-center py-20 text-gray-500">Loading dashboard data...</div>;
+  if (loading) return <ReportsSkeleton />;
 
-  const slaResponsePct = sla ? Math.round((sla.metResponse / (sla.metResponse + sla.breachedResponse)) * 100) : 0;
-  const slaResolutionPct = sla ? Math.round((sla.metResolution / (sla.metResolution + sla.breachedResolution)) * 100) : 0;
+  const base = { title: "C7NTAX — Reporting Dashboard", subtitle: "Volume, compliance, revenue and receivables", period: "All time" };
+  const responsePct = Number(sla?.responseCompliancePct ?? 0);
+  const resolutionPct = Number(sla?.resolutionCompliancePct ?? 0);
+  const statuses = (volume?.byStatus ?? []) as Array<{ label: string; count: number }>;
+  const priorities = (volume?.byPriority ?? []) as Array<{ label: string; count: number }>;
+  const boards = (volume?.byBoard ?? []) as Array<{ label: string; count: number }>;
+  const monthly = (revenue?.monthlyRevenue ?? []) as Array<{ month: string; invoiced: number; collected: number }>;
+  const buckets = (aging?.buckets ?? []) as Array<{ label: string; count: number; pct: number }>;
+  const total = Number(volume?.total ?? 0);
+  const maxBoard = Math.max(...boards.map(b => b.count), 1);
+  const maxMonth = Math.max(...monthly.map(m => Math.max(m.invoiced, m.collected)), 1);
+
+  const printDashboard = () => printReport({
+    ...base,
+    sections: [
+      {
+        kind: "kpis",
+        items: [
+          { label: "Tickets", value: number(total) },
+          { label: "Open", value: number(volume?.open ?? 0) },
+          { label: "Response compliance", value: `${responsePct}%` },
+          { label: "Resolution compliance", value: `${resolutionPct}%` },
+        ],
+      },
+      {
+        kind: "kpis",
+        items: [
+          { label: "Collected (all time)", value: money(revenue?.totalPaidAllTime ?? 0) },
+          { label: "Outstanding", value: money(revenue?.totalOutstanding ?? 0) },
+          { label: "Overdue", value: money(revenue?.totalOverdue ?? 0) },
+          { label: "Collection rate", value: `${number(revenue?.collectionRate ?? 0)}%` },
+        ],
+      },
+      { kind: "table", title: "Tickets by status", columns: [{ key: "label", label: "Status" }, { key: "count", label: "Tickets", align: "right" }, { key: "share", label: "Share", align: "right", format: "percent" }], rows: statuses.map(s => ({ ...s, share: total ? Math.round((s.count / total) * 1000) / 10 : 0 })) },
+      { kind: "table", title: "Tickets by priority", columns: [{ key: "label", label: "Priority" }, { key: "count", label: "Tickets", align: "right" }], rows: priorities },
+      { kind: "table", title: "Tickets by board", columns: [{ key: "label", label: "Board" }, { key: "count", label: "Tickets", align: "right" }], rows: boards },
+      { kind: "table", title: "Monthly revenue", columns: [{ key: "month", label: "Month" }, { key: "invoiced", label: "Invoiced", align: "right", format: "money" }, { key: "collected", label: "Collected", align: "right", format: "money" }], rows: monthly },
+      { kind: "table", title: "Receivables ageing", columns: [{ key: "label", label: "Bucket" }, { key: "invoices", label: "Invoices", align: "right" }, { key: "amount", label: "Amount", align: "right", format: "money" }], rows: (revenue?.aging ?? []) as Array<Record<string, unknown>> },
+      { kind: "table", title: "Open tickets by age", columns: [{ key: "label", label: "Age" }, { key: "count", label: "Tickets", align: "right" }, { key: "pct", label: "Share", align: "right", format: "percent" }], rows: buckets },
+      {
+        kind: "table",
+        title: "Technician activity",
+        columns: [
+          { key: "name", label: "Technician" },
+          { key: "billable", label: "Billable hours", align: "right" },
+          { key: "nonBillable", label: "Non-billable", align: "right" },
+          { key: "closed", label: "Resolved", align: "right" },
+          { key: "utilization", label: "Utilization", align: "right" },
+        ],
+        rows: utilization.map(u => ({
+          name: String(u.name ?? "—"),
+          billable: Math.round(Number(u.billableMinutes ?? 0) / 6) / 10,
+          nonBillable: Math.round(Number(u.nonBillableMinutes ?? 0) / 6) / 10,
+          closed: number(u.ticketsClosed),
+          utilization: u.utilizationPct === null || u.utilizationPct === undefined ? "—" : `${number(u.utilizationPct)}%`,
+        })),
+      },
+    ],
+  });
 
   return (
-    <div className="space-y-6">
-      {/* KPI Cards */}
+    <div className="space-y-5">
+      <div className="flex justify-end gap-2">
+        <button onClick={load} className="btn-secondary text-xs flex items-center gap-1.5"><RefreshCw size={12} /> Refresh</button>
+        <button onClick={printDashboard} className="btn-secondary text-xs flex items-center gap-1.5"><Printer size={12} /> Print dashboard</button>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard icon={Ticket} label="Total Tickets" value={ticketVolume?.total || 0} color="text-cyber-400" />
-        <KPICard icon={CheckCircle} label="SLA Response" value={`${slaResponsePct}%`} color={slaResponsePct >= 80 ? "text-green-400" : "text-red-400"} />
-        <KPICard icon={DollarSign} label="Revenue (Paid)" value={formatCurrency(revenue?.totalPaid || 0)} color="text-green-400" />
-        <KPICard icon={Clock} label="Outstanding" value={formatCurrency(revenue?.totalOutstanding || 0)} color="text-amber-400" />
+        <KpiCard icon={Ticket} label="Open tickets" value={number(volume?.open ?? 0)} sub={`${number(total)} in total`} tone="info" />
+        <KpiCard icon={CheckCircle} label="Response compliance" value={`${responsePct}%`} sub={`Resolution ${resolutionPct}%`} tone={responsePct >= 90 ? "good" : responsePct >= 70 ? "warn" : "bad"} />
+        <KpiCard icon={DollarSign} label="Collected (all time)" value={money(revenue?.totalPaidAllTime ?? 0)} sub={`${money(revenue?.totalOutstanding ?? 0)} outstanding`} tone="good" />
+        <KpiCard icon={Clock} label="Overdue" value={money(revenue?.totalOverdue ?? 0)} sub={`${number(revenue?.openCount ?? 0)} open invoices`} tone="bad" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ticket Status Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2"><PieChart size={16} className="text-cyber-400"/>Ticket Status</h3>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Tickets by status</h3>
           <div className="space-y-2">
-            {(ticketVolume?.byStatus || []).map(s => {
-              const pct = ticketVolume?.total ? Math.round((s.count / ticketVolume.total) * 100) : 0;
-              return (
-                <div key={s.status} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className={`badge ${STATUS_COLORS[s.status] || ""}`}>{s.status.replace(/_/g, " ")}</span>
-                    <span className="text-gray-500">{s.count} ({pct}%)</span>
-                  </div>
-                  <div className="h-2 bg-surface-lighter rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${s.status === "new" ? "bg-blue-500" : s.status === "in_progress" ? "bg-cyber-500" : s.status === "resolved" ? "bg-green-500" : s.status === "closed" ? "bg-gray-500" : s.status === "waiting_on_client" ? "bg-amber-500" : s.status === "on_hold" ? "bg-purple-500" : "bg-red-500"}`} style={{ width: `${pct}%` }} />
-                  </div>
+            {statuses.map(s => (
+              <div key={s.label} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-300 capitalize">{s.label}</span>
+                  <span className="text-gray-500">{number(s.count)} ({total ? Math.round((s.count / total) * 100) : 0}%)</span>
                 </div>
-              );
-            })}
+                <div className="h-2 bg-surface-lighter rounded-full overflow-hidden"><div className="h-full bg-cyber-500 rounded-full" style={{ width: `${total ? Math.max(2, Math.round((s.count / total) * 100)) : 2}%` }} /></div>
+              </div>
+            ))}
+            {statuses.length === 0 && <p className="text-sm text-gray-600">No tickets.</p>}
           </div>
         </div>
 
-        {/* Priority Distribution */}
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2"><AlertTriangle size={16} className="text-cyber-400"/>Ticket Priority</h3>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Tickets by priority</h3>
           <div className="space-y-2">
-            {(ticketVolume?.byPriority || []).map(p => {
-              const pct = ticketVolume?.total ? Math.round((p.count / ticketVolume.total) * 100) : 0;
-              const color = p.priority === "critical" ? "bg-red-500" : p.priority === "high" ? "bg-orange-500" : p.priority === "medium" ? "bg-amber-500" : "bg-gray-500";
-              return (
-                <div key={p.priority} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-300 capitalize">{p.priority}</span>
-                    <span className="text-gray-500">{p.count} ({pct}%)</span>
-                  </div>
-                  <div className="h-2 bg-surface-lighter rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
-                  </div>
+            {priorities.map(p => (
+              <div key={p.label} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-300 capitalize">{p.label}</span>
+                  <span className="text-gray-500">{number(p.count)}</span>
                 </div>
-              );
-            })}
+                <div className="h-2 bg-surface-lighter rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${p.label === "critical" ? "bg-red-500" : p.label === "high" ? "bg-orange-500" : p.label === "medium" ? "bg-amber-500" : "bg-gray-500"}`} style={{ width: `${Math.max(2, Math.round((p.count / Math.max(...priorities.map(x => x.count), 1)) * 100))}%` }} />
+                </div>
+              </div>
+            ))}
+            {priorities.length === 0 && <p className="text-sm text-gray-600">No tickets.</p>}
           </div>
         </div>
 
-        {/* SLA Compliance */}
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Timer size={16} className="text-cyber-400"/>SLA Compliance</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-surface-lighter rounded-lg p-3 text-center">
-              <p className="text-xs text-gray-500 mb-1">Response SLA</p>
-              <p className={`text-2xl font-bold ${slaResponsePct >= 80 ? "text-green-400" : "text-red-400"}`}>{slaResponsePct}%</p>
-              <p className="text-xs text-gray-600 mt-1">{sla?.metResponse || 0} met · {sla?.breachedResponse || 0} breached</p>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Tickets by board</h3>
+          <div className="space-y-2">
+            {boards.map(b => (
+              <div key={b.label} className="space-y-1">
+                <div className="flex items-center justify-between text-xs"><span className="text-gray-300">{b.label}</span><span className="text-gray-500">{number(b.count)}</span></div>
+                <div className="h-1.5 bg-surface-lighter rounded-full overflow-hidden"><div className="h-full bg-cyber-500 rounded-full" style={{ width: `${Math.max(2, Math.round((b.count / maxBoard) * 100))}%` }} /></div>
+              </div>
+            ))}
+            {boards.length === 0 && <p className="text-sm text-gray-600">No tickets.</p>}
+          </div>
+        </div>
+
+        <div className="card">
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Invoiced against collected</h3>
+          {monthly.length === 0 ? <p className="text-sm text-gray-600">No invoices yet.</p> : (
+            <div className="space-y-3">
+              {monthly.slice(-8).map(m => (
+                <div key={m.month} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs"><span className="text-gray-300">{m.month}</span><span className="text-gray-500">{money(m.invoiced)} invoiced · {money(m.collected)} collected</span></div>
+                  <div className="h-2 bg-surface-lighter rounded-full overflow-hidden"><div className="h-full bg-cyber-500" style={{ width: `${Math.max(2, Math.round((m.invoiced / maxMonth) * 100))}%` }} /></div>
+                  <div className="h-2 bg-surface-lighter rounded-full overflow-hidden"><div className="h-full bg-green-500" style={{ width: `${Math.max(2, Math.round((m.collected / maxMonth) * 100))}%` }} /></div>
+                </div>
+              ))}
             </div>
-            <div className="bg-surface-lighter rounded-lg p-3 text-center">
-              <p className="text-xs text-gray-500 mb-1">Resolution SLA</p>
-              <p className={`text-2xl font-bold ${slaResolutionPct >= 80 ? "text-green-400" : "text-red-400"}`}>{slaResolutionPct}%</p>
-              <p className="text-xs text-gray-600 mt-1">{sla?.metResolution || 0} met · {sla?.breachedResolution || 0} breached</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Board Distribution */}
-        <div className="card">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Activity size={16} className="text-cyber-400"/>Tickets by Board</h3>
-          <div className="space-y-2">
-            {(ticketVolume?.byBoard || []).map(b => {
-              const max = Math.max(...(ticketVolume?.byBoard || []).map(x => x.count), 1);
-              const pct = Math.round((b.count / max) * 100);
-              return (
-                <div key={b.board} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs"><span className="text-gray-300">{b.board}</span><span className="text-gray-500">{b.count}</span></div>
-                  <div className="h-1.5 bg-surface-lighter rounded-full overflow-hidden"><div className="h-full bg-cyber-500 rounded-full" style={{ width: `${pct}%` }} /></div>
-                </div>
-              );
-            })}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Technician Utilization */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Users size={16} className="text-cyber-400"/>Technician Utilization (30 days)</h3>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Technician activity</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">Technician</th><th className="p-3">Billable</th><th className="p-3">Non-Billable</th><th className="p-3">Total</th><th className="p-3">Billable %</th></tr></thead>
+            <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase">
+              <th className="p-3">Technician</th><th className="p-3">Billable</th><th className="p-3">Non-billable</th><th className="p-3">Total</th><th className="p-3">Billable %</th><th className="p-3">Resolved</th>
+            </tr></thead>
             <tbody>
-              {utilization.map(u => {
-                const total = u.billable + u.nonBillable;
-                const pct = total > 0 ? Math.round((u.billable / total) * 100) : 0;
-                return (
-                  <tr key={u.userId} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
-                    <td className="p-3 text-white font-medium">{u.name}</td>
-                    <td className="p-3 text-green-400">{formatMinutes(u.billable)}</td>
-                    <td className="p-3 text-gray-400">{formatMinutes(u.nonBillable)}</td>
-                    <td className="p-3 text-white">{formatMinutes(total)}</td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-16 bg-surface-lighter rounded-full overflow-hidden"><div className="h-full bg-cyber-500 rounded-full" style={{ width: `${pct}%` }} /></div>
-                        <span className="text-xs text-gray-400">{pct}%</span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {utilization.map(u => (
+                <tr key={String(u.userId)} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
+                  <td className="p-3 text-white font-medium">{String(u.name ?? "—")}</td>
+                  <td className="p-3 text-green-400">{Math.round(Number(u.billableMinutes ?? 0) / 6) / 10}h</td>
+                  <td className="p-3 text-gray-400">{Math.round(Number(u.nonBillableMinutes ?? 0) / 6) / 10}h</td>
+                  <td className="p-3 text-white">{Math.round(Number(u.totalMinutes ?? 0) / 6) / 10}h</td>
+                  <td className="p-3 text-gray-300">{number(u.billablePct)}%</td>
+                  <td className="p-3 text-gray-300">{number(u.ticketsClosed)}</td>
+                </tr>
+              ))}
+              {utilization.length === 0 && <tr><td colSpan={6} className="p-3 text-gray-600">No time recorded.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -214,380 +697,82 @@ function DashboardTab() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-//  STANDARD REPORTS TAB
-// ═══════════════════════════════════════════════════════════════════
-
-function StandardReportsTab() {
-  const [reportData, setReportData] = useState<{type:string;title:string;data:unknown}|null>(null);
-  const [showExport, setShowExport] = useState<{type:string;title:string;data:unknown}|null>(null);
-  const [exportForm, setExportForm] = useState({ format:"pdf", clientId:"", dateFrom:"", dateTo:"" });
-  const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
-  useEffect(() => { api.get("/clients?limit=100").then(r=>setCompanies(r.data.data||[])).catch(()=>{}); }, []);
-
-  const reports = [
-    { icon: Ticket, title: "Ticket Volume Report", desc: "Tickets by status, priority, board, and assignee with date range filtering", type: "ticket_summary" },
-    { icon: Timer, title: "SLA Performance Report", desc: "Response and resolution time compliance by board and technician", type: "sla" },
-    { icon: DollarSign, title: "Revenue Report", desc: "Monthly revenue, outstanding balances, payments collected", type: "revenue" },
-    { icon: Users, title: "Technician Productivity", desc: "Billable hours, utilization rates, and ticket throughput per technician", type: "utilization" },
-    { icon: Clock, title: "Ticket Aging Report", desc: "Aging analysis of open tickets: <1d, 1-3d, 3-7d, 7-30d, >30d", type: "aging" },
-    { icon: CheckCircle, title: "Client Satisfaction Report", desc: "Survey response rates, NPS scores, and satisfaction trends by client", type: "csat" },
-    { icon: Calendar, title: "Time Tracking Report", desc: "Detailed time entries by date, technician, project, and billable status", type: "time" },
-    { icon: ClipboardList, title: "Contract Profitability", desc: "Revenue vs cost per service agreement with margin analysis", type: "contract" },
-  ];
-
-  const fetchData = async (type: string) => {
-    const map: Record<string,string> = {
-      ticket_summary: "/reports/data/ticket-volume", sla: "/reports/data/sla-compliance",
-      revenue: "/reports/data/revenue-summary", utilization: "/reports/data/technician-utilization",
-      aging: "/reports/data/ticket-aging", csat: "/reports/data/csat",
-      time: "/reports/data/time-tracking", contract: "/reports/data/contract-profitability",
-    };
-    if (map[type]) { const { data } = await api.get(map[type]); return data; }
-    return null;
-  };
-  const handleRun = async (type: string) => { const data = await fetchData(type); if (data) setReportData({ type, title: reports.find(r=>r.type===type)?.title||type, data }); };
-  const handleOpenExport = async (type: string) => { const data = await fetchData(type); if (data) setShowExport({ type, title: reports.find(r=>r.type===type)?.title||type, data }); };
-  const handlePrint = () => window.print();
-  const handleExport = () => {
-    if (!showExport) return;
-    const fmt = exportForm.format;
-    if (fmt === "csv") {
-      const rows: unknown[] = Array.isArray(showExport.data) ? showExport.data : [showExport.data];
-      const headers = rows.length>0 ? Object.keys(rows[0] as object).join(",") : "";
-      const content = headers+"\n"+rows.map(r=>Object.values(r as object).map(v=>typeof v==="object"?JSON.stringify(v):String(v)).join(",")).join("\n");
-      const blob = new Blob([content],{type:"text/csv"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href=url; a.download=`${showExport.title.replace(/\s+/g,"_")}.csv`; a.click(); URL.revokeObjectURL(url);
-    } else if (fmt === "pdf") {
-      const doc = new jsPDF({ orientation: "landscape" });
-      doc.setFontSize(16); doc.text(showExport.title, 14, 20);
-      doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()} — C7NTAX Reporting`, 14, 28);
-      const data = showExport.data;
-      if (Array.isArray(data) && data.length > 0) {
-        const cols = Object.keys(data[0] as object).filter(k => !k.startsWith("_"));
-        const rows = (data as Array<Record<string,unknown>>).map(r => cols.map(c => {
-          const v = r[c]; if (v === null || v === undefined) return "—";
-          if (typeof v === "number") return v.toLocaleString();
-          if (typeof v === "string" && /^[a-z]+(_[a-z]+)*$/.test(v)) return v.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-          return typeof v === "object" ? JSON.stringify(v) : String(v);
-        }));
-        autoTable(doc, { head: [cols.map(c => c.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()))], body: rows, startY: 34, styles: { fontSize: 8 }, headStyles: { fillColor: [34, 211, 238] } });
-      } else if (data && typeof data === "object") {
-        const entries = Object.entries(data as Record<string,unknown>).filter(([k]) => !k.startsWith("_"));
-        autoTable(doc, { head: [["Key","Value"]], body: entries.map(([k,v]) => {
-          const val = v !== null && v !== undefined ? (typeof v === "number" ? v.toLocaleString() : typeof v === "string" && /^[a-z]+(_[a-z]+)*$/.test(v) ? v.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()) : typeof v === "object" ? JSON.stringify(v) : String(v)) : "—";
-          return [k.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()), val];
-        }), startY: 34, styles: { fontSize: 8 } });
-      }
-      doc.save(`${showExport.title.replace(/\s+/g,"_")}.pdf`);
-    } else {
-      const w = window.open("","_blank","width=900,height=700")!;
-      w.document.write(generateReportHTML(showExport.title, showExport.data));
-      w.document.close(); setTimeout(()=>w.print(),500);
-    }
-    setShowExport(null);
-  };
-
-  return (<>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {reports.map(r => (
-        <div key={r.type} className="card hover:border-cyber-500/30 transition-colors group">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-cyber-600/10"><r.icon size={18} className="text-cyber-400" /></div>
-            <div className="flex-1"><h3 className="font-semibold text-white text-sm group-hover:text-cyber-400">{r.title}</h3><p className="text-xs text-gray-500 mt-1">{r.desc}</p></div>
-          </div>
-          <div className="mt-4 flex items-center gap-2 flex-wrap">
-            <button onClick={()=>handleRun(r.type)} className="btn-primary text-xs flex items-center gap-1.5 px-3 py-1.5"><FileText size={12}/>Run Report</button>
-            <button onClick={()=>handleRun(r.type)} className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-1.5"><Printer size={12}/>Print</button>
-            <button onClick={()=>handleOpenExport(r.type)} className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-1.5"><Download size={12}/>Export</button>
-          </div>
-        </div>
-      ))}
+function KpiCard({ icon: Icon, label, value, sub, tone }: { icon: LucideIcon; label: string; value: string | number; sub?: string; tone: "good" | "warn" | "bad" | "info" }) {
+  const colour = tone === "good" ? "text-green-400" : tone === "warn" ? "text-amber-400" : tone === "bad" ? "text-red-400" : "text-cyber-400";
+  return (
+    <div className="bg-surface rounded-xl border border-surface-border p-4 flex items-center gap-3">
+      <div className="p-2 rounded-lg bg-surface-lighter"><Icon size={18} className={colour} /></div>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className={`text-lg font-bold ${colour}`}>{value}</p>
+        {sub && <p className="text-[11px] text-gray-500 truncate">{sub}</p>}
+      </div>
     </div>
-
-    {/* Report Preview Modal */}
-    {reportData && (<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={()=>setReportData(null)}>
-      <div className="card w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4"><h3 className="text-lg font-semibold text-white">{reportData.title}</h3>
-          <div className="flex items-center gap-2">
-            <button onClick={handlePrint} className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-1.5"><Printer size={12}/>Print</button>
-            <button onClick={()=>{setReportData(null);handleOpenExport(reportData.type);}} className="btn-primary text-xs flex items-center gap-1.5 px-3 py-1.5"><Download size={12}/>Export</button>
-            <button onClick={()=>setReportData(null)} className="text-gray-500 hover:text-white">✕</button>
-          </div>
-        </div>
-        <ReportPreview data={reportData.data} type={reportData.type}/>
-      </div>
-    </div>)}
-
-    {/* Export Modal */}
-    {showExport && (<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={()=>setShowExport(null)}>
-      <div className="card w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto space-y-4" onClick={e=>e.stopPropagation()}>
-        <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">Export Report</h3><button onClick={()=>setShowExport(null)} className="text-gray-500 hover:text-white">✕</button></div>
-        <p className="text-sm text-gray-400">{showExport.title}</p>
-        <div><label className="text-xs text-gray-500 block mb-2">Format</label>
-          <div className="flex gap-2">{[{id:"pdf",label:"PDF"},{id:"csv",label:"CSV"},{id:"xls",label:"XLS"},{id:"doc",label:"DOC"}].map(f=>(<button key={f.id} onClick={()=>setExportForm({...exportForm,format:f.id})} className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${exportForm.format===f.id?"bg-cyber-600/20 border-cyber-500/40 text-cyber-400":"border-surface-border text-gray-400 hover:text-white hover:bg-surface-lighter"}`}>{f.label}</button>))}</div>
-        </div>
-        <div><label className="text-xs text-gray-500 block mb-2">Report by Client</label><select className="input-field" value={exportForm.clientId} onChange={e=>setExportForm({...exportForm,clientId:e.target.value})}><option value="">All Clients</option>{companies.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-        <div className="grid grid-cols-2 gap-3"><div><label className="text-xs text-gray-500 block mb-1">From</label><input type="date" className="input-field" value={exportForm.dateFrom} onChange={e=>setExportForm({...exportForm,dateFrom:e.target.value})}/></div><div><label className="text-xs text-gray-500 block mb-1">To</label><input type="date" className="input-field" value={exportForm.dateTo} onChange={e=>setExportForm({...exportForm,dateTo:e.target.value})}/></div></div>
-        <div><label className="text-xs text-gray-500 block mb-2">Preview</label><div className="bg-surface-lighter rounded-lg p-3 max-h-48 overflow-auto"><ReportPreview data={showExport.data} type={showExport.type} compact/></div></div>
-        <div className="flex gap-2 justify-end"><button onClick={()=>setShowExport(null)} className="btn-secondary text-sm">Cancel</button><button onClick={handleExport} className="btn-primary text-sm flex items-center gap-1.5"><Download size={14}/>Export</button></div>
-      </div>
-    </div>)}
-  </>);
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  ANALYTICS TAB
+//  Analytics
 // ═══════════════════════════════════════════════════════════════════
 
 function AnalyticsTab() {
-  const [revenue, setRevenue] = useState<RevenueData | null>(null);
+  const [revenue, setRevenue] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showSchedule, setShowSchedule] = useState(false);
-  const [scheduleReports, setScheduleReports] = useState<Array<{ id: string; name: string }>>([]);
-  const [scheduleForm, setScheduleForm] = useState({ reportId: "", dayOfWeek: "1", timeOfDay: "06:00", recipients: "" });
-  const [scheduleBusy, setScheduleBusy] = useState(false);
 
-  const openSchedule = async () => {
-    try {
-      const r = await api.get("/reports");
-      const list = (r.data || []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name }));
-      setScheduleReports(list);
-      setScheduleForm((f) => ({ ...f, reportId: f.reportId || list[0]?.id || "" }));
-      setShowSchedule(true);
-    } catch { setShowSchedule(true); }
-  };
+  useEffect(() => {
+    api.get("/reports/data/revenue-summary").then(r => setRevenue(r.data)).catch(() => setRevenue(null)).finally(() => setLoading(false));
+  }, []);
 
-  const submitSchedule = async () => {
-    if (!scheduleForm.reportId) return;
-    setScheduleBusy(true);
-    try {
-      await api.post(`/reports/${scheduleForm.reportId}/schedules`, {
-        frequency: "weekly",
-        dayOfWeek: Number(scheduleForm.dayOfWeek),
-        timeOfDay: scheduleForm.timeOfDay,
-        recipients: scheduleForm.recipients ? scheduleForm.recipients.split(",").map((s) => s.trim()).filter(Boolean) : [],
-        format: "pdf",
-      });
-      setShowSchedule(false);
-    } catch { /* surfaced by toast on caller */ } finally { setScheduleBusy(false); }
-  };
-
-  const exportDashboardPdf = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16); doc.text("C7NTAX — Dashboard Export", 14, 18);
-    doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
-    const rows: Array<[string, string]> = [
-      ["Total Paid", `$${(revenue?.totalPaid || 0).toLocaleString()}`],
-      ["Total Outstanding", `$${(revenue?.totalOutstanding || 0).toLocaleString()}`],
-      ["Collection Rate", `${revenue?.totalPaid && (revenue.totalPaid + (revenue.totalOutstanding || 0)) > 0 ? Math.round((revenue.totalPaid / (revenue.totalPaid + (revenue.totalOutstanding || 0))) * 100) : 0}%`],
-    ];
-    autoTable(doc, { startY: 32, head: [["Metric", "Value"]], body: rows });
-    doc.save("c7ntax-dashboard.pdf");
-  };
-  useEffect(() => { api.get("/reports/data/revenue-summary").then(r => setRevenue(r.data)).catch(() => {}); }, []);
-
-  const maxRevenue = Math.max(...(revenue?.monthlyRevenue || []).map(m => m.amount), 1);
-  /** Tallest bar, in pixels. A percentage height here is a percentage of a flex
-   *  column whose own height comes from its content, which resolves to nothing —
-   *  the bars rendered with zero height and the chart looked empty. */
+  const monthly = (revenue?.monthlyRevenue ?? []) as Array<{ month: string; invoiced: number; collected: number }>;
+  const maxMonth = Math.max(...monthly.map(m => Math.max(m.invoiced, m.collected)), 1);
   const BAR_MAX_PX = 140;
 
+  if (loading) return <TableSkeleton />;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2"><TrendingUp size={16} className="text-cyber-400"/>Monthly Revenue Trend</h3>
-        {revenue?.monthlyRevenue && revenue.monthlyRevenue.length > 0 ? (
-          <div className="space-y-3">
-            <div className="flex items-end gap-2 h-48">
-              {revenue.monthlyRevenue.map(m => {
-                const barHeight = Math.max(4, Math.round((m.amount / maxRevenue) * BAR_MAX_PX));
-                return (
-                  <div key={m.month} className="flex-1 flex flex-col items-center gap-1 group cursor-pointer">
-                    <span className="text-xs text-gray-500 opacity-0 group-hover:opacity-100">${m.amount.toLocaleString()}</span>
-                    <div className="w-full bg-cyber-500 rounded-t hover:bg-cyber-400 transition-colors" style={{ height: `${barHeight}px` }} />
-                    <span className="text-[10px] text-gray-600">{m.month}</span>
-                  </div>
-                );
-              })}
-            </div>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2"><TrendingUp size={16} className="text-cyber-400" />Monthly revenue</h3>
+        {monthly.length > 0 ? (
+          <div className="flex items-end gap-2 h-48">
+            {monthly.map(m => (
+              <div key={m.month} className="flex-1 flex flex-col items-center gap-1 group" title={`${m.month}: ${money(m.invoiced)} invoiced, ${money(m.collected)} collected`}>
+                <span className="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100">{money(m.invoiced)}</span>
+                <div className="w-full bg-cyber-500 rounded-t hover:bg-cyber-400 transition-colors" style={{ height: `${Math.max(4, Math.round((m.invoiced / maxMonth) * BAR_MAX_PX))}px` }} />
+                <div className="w-full bg-green-500 rounded-b hover:bg-green-400 transition-colors" style={{ height: `${Math.max(2, Math.round((m.collected / maxMonth) * BAR_MAX_PX * 0.6))}px` }} />
+                <span className="text-[10px] text-gray-600">{m.month}</span>
+              </div>
+            ))}
           </div>
         ) : <p className="text-gray-500 text-sm">No revenue data available</p>}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Financial Overview</h3>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Financial overview</h3>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-gray-400">Total Invoiced</span><span className="text-white">{formatCurrency(revenue?.totalPaid || 0)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-400">Total Outstanding</span><span className="text-amber-400">{formatCurrency(revenue?.totalOutstanding || 0)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-400">Collection Rate</span><span className="text-green-400">{revenue?.totalPaid && revenue.totalPaid + (revenue?.totalOutstanding || 0) > 0 ? Math.round((revenue.totalPaid / (revenue.totalPaid + (revenue?.totalOutstanding || 0))) * 100) : 0}%</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Invoiced (period)</span><span className="text-white">{money(revenue?.invoicedInPeriod ?? 0)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Collected (period)</span><span className="text-green-400">{money(revenue?.collectedInPeriod ?? 0)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Outstanding</span><span className="text-amber-400">{money(revenue?.totalOutstanding ?? 0)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Overdue</span><span className="text-red-400">{money(revenue?.totalOverdue ?? 0)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Collection rate</span><span className="text-cyber-400">{number(revenue?.collectionRate ?? 0)}%</span></div>
           </div>
         </div>
         <div className="card">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Quick Actions</h3>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Quick actions</h3>
           <div className="space-y-2">
-            <button onClick={exportDashboardPdf} className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Download size={14}/>Export Dashboard PDF</button>
-            <button onClick={openSchedule} className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Calendar size={14}/>Schedule Weekly Report</button>
-            <Link to="/reports/custom" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Filter size={14}/>Custom Report Builder</Link>
+            <button onClick={() => setShowSchedule(true)} className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Calendar size={14} />Schedule a saved report</button>
+            <Link to="/reports/standard" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><ClipboardList size={14} />Standard reports</Link>
+            <Link to="/reports/custom" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Filter size={14} />Custom reports</Link>
+            <Link to="/reports/qbr" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Presentation size={14} />Quarterly business review</Link>
           </div>
         </div>
       </div>
 
-      {showSchedule && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className="card w-full max-w-md p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Schedule Weekly Report</h3>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Report</label>
-              <select className="input-field w-full" value={scheduleForm.reportId} onChange={(e) => setScheduleForm({ ...scheduleForm, reportId: e.target.value })}>
-                <option value="">Select a report…</option>
-                {scheduleReports.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Day of week</label>
-                <select className="input-field w-full" value={scheduleForm.dayOfWeek} onChange={(e) => setScheduleForm({ ...scheduleForm, dayOfWeek: e.target.value })}>
-                  {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d, i) => <option key={i} value={String(i)}>{d}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Time</label>
-                <input className="input-field w-full" type="time" value={scheduleForm.timeOfDay} onChange={(e) => setScheduleForm({ ...scheduleForm, timeOfDay: e.target.value })} />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Recipients (comma-separated)</label>
-              <input className="input-field w-full" placeholder="finance@example.com, ops@example.com" value={scheduleForm.recipients} onChange={(e) => setScheduleForm({ ...scheduleForm, recipients: e.target.value })} />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button className="btn-secondary text-sm px-3 py-1.5" onClick={() => setShowSchedule(false)}>Cancel</button>
-              <button className="btn-primary text-sm px-3 py-1.5" disabled={scheduleBusy || !scheduleForm.reportId} onClick={submitSchedule}>{scheduleBusy ? "Scheduling…" : "Schedule"}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showSchedule && <ScheduleReportDialog onClose={() => setShowSchedule(false)} />}
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
-function KPICard({ icon: Icon, label, value, color }: { icon: LucideIcon; label: string; value: string | number; color: string }) {
-  return (
-    <div className="bg-surface rounded-xl border border-surface-border p-4 flex items-center gap-3">
-      <div className="p-2 rounded-lg bg-surface-lighter"><Icon size={18} className={color} /></div>
-      <div><p className="text-xs text-gray-500">{label}</p><p className={`text-lg font-bold ${color}`}>{value}</p></div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//  REPORT PREVIEW COMPONENT
-// ═══════════════════════════════════════════════════════════════════
-
-function ReportPreview({ data, type, compact }: { data: unknown; type: string; compact?: boolean }) {
-  if (!data) return <p className="text-gray-500 text-sm">No data</p>;
-  const d = data as Record<string,unknown>;
-
-  // ── Universal card-based preview for any data ──
-  const renderValue = (v: unknown): string => {
-    if (v === null || v === undefined) return "—";
-    if (typeof v === "number") return v.toLocaleString();
-    if (typeof v === "boolean") return v ? "Yes" : "No";
-    if (typeof v === "string") {
-      // Format status/priority codes to readable text
-      if (/^[a-z]+(_[a-z]+)*$/.test(v) && v.length < 40) return v.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-      return v;
-    }
-    if (Array.isArray(v) && v.length > 0 && typeof v[0] === "object") return `${v.length} items`;
-    return JSON.stringify(v).slice(0, 120);
-  };
-
-  // Build a key-value table from any data object
-  const entries: Array<[string, unknown]> = [];
-  for (const [key, val] of Object.entries(d)) {
-    if (key.startsWith("_")) continue;
-    entries.push([key.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/^./,c=>c.toUpperCase()), val]);
-  }
-
-  // If data is an array, show as table
-  if (Array.isArray(data)) {
-    const arr = data as Array<Record<string,unknown>>;
-    if (arr.length === 0) return <p className="text-gray-500 text-sm">No records found</p>;
-    const cols = Object.keys(arr[0] ?? {}).filter(k => !k.startsWith("_"));
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead><tr className="border-b border-surface-border">{cols.map(c => <th key={c} className="text-left p-2 text-gray-500 uppercase font-semibold">{c.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/^./,c=>c.toUpperCase())}</th>)}</tr></thead>
-          <tbody>{arr.map((row,i) => <tr key={i} className="border-b border-surface-border/30 hover:bg-surface-lighter/20">{cols.map(c => <td key={c} className="p-2 text-white">{renderValue(row[c])}</td>)}</tr>)}</tbody>
-        </table>
-        {!compact && <p className="text-xs text-gray-600 mt-2">{arr.length} record{arr.length!==1?"s":""}</p>}
-      </div>
-    );
-  }
-
-  // Object data — show as value cards
-  return (
-    <div className={compact ? "space-y-1" : "space-y-3"}>
-      <div className={`grid ${compact ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"} gap-2`}>
-        {entries.map(([label, value]) => (
-          <div key={label} className="bg-surface-lighter rounded-lg px-3 py-2">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">{label}</p>
-            <p className="text-sm font-medium text-white">{renderValue(value)}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function generateReportHTML(title: string, data: unknown): string {
-  const now = new Date().toLocaleString();
-  const renderValue = (v: unknown): string => {
-    if (v === null || v === undefined) return "—";
-    if (typeof v === "number") return v.toLocaleString();
-    if (typeof v === "string" && /^[a-z]+(_[a-z]+)*$/.test(v) && v.length < 40) return v.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-    if (Array.isArray(v) && v.length > 0 && typeof v[0] === "object") {
-      const cols = Object.keys(v[0] as object).filter(k => !k.startsWith("_"));
-      return `<table style="margin:4px 0;font-size:11px"><thead><tr>${cols.map(c => `<th>${c.replace(/([A-Z])/g," $1").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())}</th>`).join("")}</tr></thead><tbody>${v.map(row => `<tr>${cols.map(c => `<td>${renderValue((row as Record<string,unknown>)[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
-    }
-    if (typeof v === "object") return JSON.stringify(v);
-    return String(v);
-  };
-
-  let bodyHtml = "";
-  if (Array.isArray(data) && data.length > 0) {
-    const cols = Object.keys((data[0] as object) || {}).filter(k => !k.startsWith("_"));
-    bodyHtml = `<table><thead><tr>${cols.map(c => `<th>${c.replace(/([A-Z])/g," $1").replace(/_/g," ")}</th>`).join("")}</tr></thead><tbody>${(data as Array<Record<string,unknown>>).map(row => `<tr>${cols.map(c => `<td>${renderValue(row[c])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
-  } else if (data && typeof data === "object") {
-    const entries = Object.entries(data as Record<string,unknown>).filter(([k]) => !k.startsWith("_"));
-    bodyHtml = `<table><tbody>${entries.map(([k,v]) => `<tr><th>${k.replace(/([A-Z])/g," $1").replace(/_/g," ")}</th><td>${renderValue(v)}</td></tr>`).join("")}</tbody></table>`;
-  }
-
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#1e293b;padding:32px}
-  h1{font-size:22px;color:#0b1120;border-bottom:3px solid #22d3ee;padding-bottom:8px;margin-bottom:4px}
-  .meta{font-size:12px;color:#64748b;margin-bottom:20px}
-  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
-  th{text-align:left;padding:8px 10px;background:#f1f5f9;border-bottom:2px solid #cbd5e1;font-weight:600;color:#334155}
-  td{padding:8px 10px;border-bottom:1px solid #e2e8f0;color:#1e293b;vertical-align:top}
-  tr:nth-child(even) td{background:#f8fafc}
-  @media print{body{padding:16px}}
-</style></head><body>
-<h1>${title}</h1><p class="meta">Generated: ${now} — C7NTAX Reporting</p>
-${bodyHtml || "<p>No data available</p>"}
-</body></html>`;
-}
-
-function renderTable(data: unknown): string {
-  if (!data || typeof data !== "object") return "";
-  const obj = data as Record<string,unknown>;
-  const arr = (Array.isArray(obj.data) ? obj.data : Array.isArray(obj) ? obj : []) as Array<Record<string,unknown>>;
-  if (!arr.length) return "<p>No records</p>";
-  const keys = Object.keys(arr[0] ?? {});
-  return '<table><thead><tr>'+keys.map(k=>'<th>'+k+'</th>').join("")+'</tr></thead><tbody>'+arr.map(row=>'<tr>'+keys.map(k=>'<td>'+(typeof row[k]==="object"?JSON.stringify(row[k]):String(row[k]??""))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';
-}
+export default ReportsPage;

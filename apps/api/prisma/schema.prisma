@@ -40,6 +40,9 @@ model User {
   // Placement — parity with Autotask "Resources" and Asio "Members"
   department      String?
   timezone        String?
+  /// What an hour of this person's time costs us, used by the margin reports. Null means
+  /// "not recorded", which the reports state rather than assuming a figure.
+  costRate        Float?
   reportsToId     String?
   reportsTo       User?     @relation("UserReportsTo", fields: [reportsToId], references: [id], onDelete: SetNull)
   directReports   User[]    @relation("UserReportsTo")

@@ -81,7 +81,7 @@ usersRouter.get("/", requirePermission(Permission.UserManage), async (req: AuthR
         orderBy: { createdAt: "desc" },
         select: {
           id: true, email: true, username: true, firstName: true, lastName: true, title: true,
-          department: true,
+          department: true, costRate: true,
           role: { select: { id: true, systemRole: true, name: true, permissions: true } },
           permissions: true, isActive: true, isLocked: true, mfaEnabled: true, mustChangePassword: true,
           lastLoginAt: true, createdAt: true, company: { select: { id: true, name: true } },
@@ -129,7 +129,7 @@ usersRouter.post("/", requirePermission(Permission.UserManage), async (req: Auth
     const {
       email, password, firstName, lastName, username, title, phone, mobile,
       department, timezone, reportsToId, companyId, permissions, role, roleId, isActive,
-      credentialMode, requireChange: requireChangeRaw, sendEmail,
+      credentialMode, requireChange: requireChangeRaw, sendEmail, costRate,
     } = req.body ?? {};
 
     if (!email) throw new AppError("Email is required", 400);
@@ -198,6 +198,7 @@ usersRouter.post("/", requirePermission(Permission.UserManage), async (req: Auth
         mobile: mobile || null,
         department: department || null,
         timezone: timezone || null,
+        costRate: costRate === undefined || costRate === null || costRate === "" ? null : Number(costRate),
         reportsToId: reportsToId || null,
         roleId: roleRecord.id,
         companyId: companyId || null,
@@ -315,10 +316,15 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
     let passwordReset = false;
     const allowed = [
       "firstName", "lastName", "title", "phone", "mobile", "companyId", "isActive", "permissions",
-      "username", "department", "timezone", "reportsToId",
+      "username", "department", "timezone", "reportsToId", "costRate",
     ];
     for (const key of allowed) {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
+    // An internal cost rate is what the margin reports price labour with, so an empty box clears it
+    // rather than storing zero — "not recorded" and "free" are different answers.
+    if (updates.costRate !== undefined) {
+      updates.costRate = updates.costRate === null || updates.costRate === "" ? null : Number(updates.costRate);
     }
 
     if (updates.username) {
