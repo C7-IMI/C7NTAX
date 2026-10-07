@@ -100,6 +100,8 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
   const [statusFilter, setStatusFilter] = useState("");
   const [showGenerate, setShowGenerate] = useState(false);
   const [genForm, setGenForm] = useState({ companyId: "", agreementId: "" });
+  const [showBatch, setShowBatch] = useState(false);
+  const [batchFlagged, setBatchFlagged] = useState(false);
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
   const [payForm, setPayForm] = useState({ invoiceId: "", amount: 0, method: "other", reference: "" });
   const [showPay, setShowPay] = useState(false);
@@ -111,6 +113,14 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
     api.get(url).then(r => setInvoices(r.data.data || [])).catch(() => toast.error("Failed")).finally(() => setLoading(false));
   };
   useEffect(() => { setLoading(true); fetchInvoices(); }, [statusFilter]);
+
+  // Bill-through batches are flag-gated on the API, so the button appears only where the
+  // endpoints actually answer — a 404 means the feature is switched off server-side.
+  useEffect(() => {
+    api.get("/billing/batches?limit=1")
+      .then(() => setBatchFlagged(true))
+      .catch(() => setBatchFlagged(false));
+  }, []);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,7 +277,12 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
           <option value="paid">Paid</option><option value="overdue">Overdue</option><option value="void">Void</option>
         </select>
         <button onClick={() => setShowGenerate(true)} className="btn-primary flex items-center gap-2 text-sm ml-auto"><Plus size={16} />Generate Invoice</button>
+        {batchFlagged && (
+          <button onClick={() => setShowBatch(true)} className="btn-secondary flex items-center gap-2 text-sm"><ClipboardList size={16} />Bill through…</button>
+        )}
       </div>
+
+      {showBatch && <BatchInvoiceDialog companies={companies} onClose={() => setShowBatch(false)} onChanged={fetchInvoices} />}
 
       {/* Invoice Table */}
       {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : invoices.length === 0 ? (
@@ -537,6 +552,189 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
         </Modal>
       )}
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  BILL-THROUGH BATCH DIALOG  (PLAN-015 Phase A #3)
+// ═══════════════════════════════════════════════════════════════════
+
+interface BatchClientPreview {
+  companyId: string;
+  companyName: string;
+  hours: number;
+  subtotal: number;
+  lineItems: { description: string; quantity: number; unitPrice: number; total: number; source: string }[];
+}
+
+/**
+ * Preview → create drafts → approve or discard. Three steps rather than one because the whole
+ * point of a batch is that a human looks at what is about to be billed before it is billed.
+ */
+function BatchInvoiceDialog({ companies, onClose, onChanged }: { companies: Company[]; onClose: () => void; onChanged: () => void }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [through, setThrough] = useState(today);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [preview, setPreview] = useState<{ clients: BatchClientPreview[]; totals: { clients: number; invoicesAmount: number; hours: number; expenses: number } } | null>(null);
+  const [batchId, setBatchId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
+  const [discardReason, setDiscardReason] = useState("");
+  const [results, setResults] = useState<{ invoiceNumber: string; total: number; pushed?: boolean; pushReason?: string }[] | null>(null);
+
+  const runPreview = async () => {
+    setBusy(true);
+    try {
+      const { data } = await api.post("/billing/batches/preview", { billThroughDate: through });
+      setPreview(data);
+      setSelected((data.clients || []).map((c: BatchClientPreview) => c.companyId));
+      toast.success(`${(data.clients || []).length} client${(data.clients || []).length === 1 ? "" : "s"} with unbilled work`);
+    } catch (err: unknown) {
+      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not build the preview");
+    } finally { setBusy(false); }
+  };
+
+  const createDrafts = async () => {
+    setBusy(true);
+    try {
+      const { data } = await api.post("/billing/batches", { billThroughDate: through, companyIds: selected });
+      if (!data?.batch) { toast.error("Nothing to bill in that period"); return; }
+      setBatchId(data.batch.id);
+      toast.success(`${data.batch.invoiceCount} draft invoice${data.batch.invoiceCount === 1 ? "" : "s"} created`);
+    } catch (err: unknown) {
+      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not create the batch");
+    } finally { setBusy(false); }
+  };
+
+  const approve = async () => {
+    if (!batchId) return;
+    setBusy(true);
+    try {
+      const { data } = await api.post(`/billing/batches/${batchId}/approve`);
+      setResults(data.results || []);
+      toast.success(`Batch approved — ${(data.results || []).length} invoice(s) issued`);
+      onChanged();
+    } catch (err: unknown) {
+      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not approve the batch");
+    } finally { setBusy(false); }
+  };
+
+  const discard = async () => {
+    if (!batchId) return;
+    const reason = discardReason.trim();
+    if (!reason) { toast.error("Say why the batch is being discarded"); return; }
+    setBusy(true);
+    try {
+      await api.post(`/billing/batches/${batchId}/reject`, { reason });
+      toast.success("Batch discarded — the work is unbilled again");
+      setBatchId(null);
+      setPreview(null);
+      setDiscardOpen(false);
+      setDiscardReason("");
+      onChanged();
+    } catch (err: unknown) {
+      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not discard the batch");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Modal onClose={onClose}>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-white">Bill through</h3>
+        {!results && (
+          <>
+            <p className="text-xs text-gray-400">
+              Everything unbilled up to and including this date becomes a draft invoice per client. Nothing is issued until you approve the batch.
+            </p>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="text-xs text-gray-500">Bill through</label>
+                <input type="date" className="input-field" value={through} onChange={e => setThrough(e.target.value)} />
+              </div>
+              <button onClick={runPreview} disabled={busy} className="btn-secondary text-sm">Preview</button>
+            </div>
+          </>
+        )}
+
+        {preview && !batchId && !results && (
+          <>
+            <div className="text-xs text-gray-400">
+              {preview.totals.clients} client(s) · {preview.totals.hours} h · {preview.totals.expenses} expense(s) ·{' '}
+              <span className="text-cyber-400 font-medium">${preview.totals.invoicesAmount.toFixed(2)}</span>
+            </div>
+            <div className="max-h-64 overflow-y-auto divide-y divide-surface-border/60">
+              {preview.clients.map(client => (
+                <label key={client.companyId} className="flex items-start gap-3 py-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={selected.includes(client.companyId)}
+                    onChange={e => setSelected(prev => e.target.checked ? [...prev, client.companyId] : prev.filter(id => id !== client.companyId))}
+                  />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm text-white">{client.companyName}</span>
+                    <span className="block text-xs text-gray-500">{client.hours} h · {client.lineItems.length} line(s)</span>
+                  </span>
+                  <span className="text-sm text-cyber-400 font-medium">${client.subtotal.toFixed(2)}</span>
+                </label>
+              ))}
+              {preview.clients.length === 0 && <p className="text-sm text-gray-500 py-4 text-center">Nothing unbilled in that period.</p>}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={onClose} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={createDrafts} disabled={busy || selected.length === 0} className="btn-primary text-sm">Create drafts</button>
+            </div>
+          </>
+        )}
+
+        {batchId && !results && (
+          <>
+            <p className="text-sm text-gray-300">The drafts are held by this batch. Approving issues them and offers each one to the connected accounting system.</p>
+            {discardOpen && (
+              <div>
+                <label className="text-xs text-gray-500">Why is this batch being discarded?</label>
+                <input className="input-field" autoFocus value={discardReason} onChange={e => setDiscardReason(e.target.value)} placeholder="Wrong period, wrong rates, missing work…" />
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              {discardOpen ? (
+                <>
+                  <button onClick={() => { setDiscardOpen(false); setDiscardReason(""); }} disabled={busy} className="btn-secondary text-sm">Cancel</button>
+                  <button onClick={discard} disabled={busy || !discardReason.trim()} className="btn-secondary text-sm text-amber-300">Discard batch</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setDiscardOpen(true)} disabled={busy} className="btn-secondary text-sm text-amber-300">Discard batch</button>
+                  <button onClick={approve} disabled={busy} className="btn-primary text-sm">Approve batch</button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+
+        {results && (
+          <>
+            <div className="divide-y divide-surface-border/60">
+              {results.map(r => (
+                <div key={r.invoiceNumber} className="flex items-center justify-between py-2 text-sm">
+                  <span className="text-white">{r.invoiceNumber}</span>
+                  <span className="text-gray-400">${r.total.toFixed(2)}</span>
+                  <span className={r.pushed ? "text-green-400 text-xs" : "text-amber-400 text-xs"} title={r.pushReason}>
+                    {r.pushed ? "Issued · sent to accounting" : "Issued · not pushed"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {results.some(r => !r.pushed) && (
+              <p className="text-xs text-amber-300">
+                Some invoices were issued but not pushed: {results.find(r => !r.pushed)?.pushReason}
+              </p>
+            )}
+            <div className="flex justify-end"><button onClick={onClose} className="btn-primary text-sm">Done</button></div>
+          </>
+        )}
+      </div>
+    </Modal>
   );
 }
 

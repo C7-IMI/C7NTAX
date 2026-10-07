@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.004 | Last Updated: 2026-10-07
+## Version: 2026.10.7.005 | Last Updated: 2026-10-07
 
 ---
 
@@ -13,6 +13,18 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.7.005 — Bill-through batch invoicing: preview it, hold it, approve it — and it can never double-bill
+- **[New]** **A month of work becomes invoices in three deliberate steps.** Preview works out what each client owes for everything unbilled up to a date — weighted hours at the agreed rate plus approved expenses — and **writes nothing**, so it is safe to run as often as you like. Create turns that into *draft* invoices held by a batch. Approve issues them; Discard throws the drafts away and puts the work back.
+- **[New]** **The time engine reaches the invoice.** Billing uses `billedMinutes`, so two hours of evening work at 1.5:1 bills as three — the acceptance case from the plan, now asserted end to end (a two-hour 19:00–21:00 entry produced a three-hour line).
+- **[New]** **Approved expenses bill themselves.** They arrive as their own invoice line with the vendor and mileage in the description, which is what closes the loop on the expense work: a technician's $45 cable ends up on the client's invoice without anyone retyping it.
+- **[New]** **Work cannot be billed twice.** Creating a batch claims its time entries and expenses by pointing them at the draft invoice, so a second run in the same period finds nothing — and discarding returns them to the pool, including putting an expense back to `approved`. An approved batch refuses to be discarded (void the invoices instead) and cannot be approved twice.
+- **[New]** **`billThroughDate` per client**, moved when a batch is approved, so "how far have we billed this client" is a fact rather than a guess.
+- **[New]** **Invoices are offered to the connected accounting system on approval**, through the same egress policy as everything else, with each invoice's outcome reported individually — an invoice that was issued but not pushed says so instead of pretending. The `Billing → Invoices` tab gained a **Bill through…** button that appears only when the feature is switched on server-side, and a dialog that previews per client with checkboxes, shows the draft step, and takes a reason before discarding.
+- **[Fix]** **`window.prompt` is not supported in this environment — or in Electron.** The discard and expense-rejection flows used it to ask for a reason, which meant those buttons did nothing. Both now use an inline input, which also works in the desktop shell.
+- **[Fix]** **The Azure preflight crashed on a worktree mid-rename** (it read every file `git ls-files` named, including one staged for deletion). It now skips files that are not there.
+- **Verification:** 36/36 billing-batch assertions — weighted hours and expense lines in the preview with nothing written, draft creation with the work claimed, an empty second preview, discard returning time *and* the expense to `approved`, approval issuing and pushing against a local stub (payload, invoice number, total, both lines), the bill-through date moving, approving twice refused, an approved batch refusing discard, and an empty period reporting "nothing to bill"; **and the routes answer 404 with `INVOICE_BATCH_ENABLED=false`**, which is the rollback. Plus the browser: preview showed 5 clients and $20,437.50, creating drafts produced 5 drafts held by the batch, and discarding restored every hour and expense — the invoice list ended exactly where it started. Regression: 34/34 session, 13/13 scoping, 21/21 egress, 18/18 passkey, 24/24 time rules, 27/27 expenses, `guard:routes` 340 routes/0 violations, both typechecks at baseline, preflight 0 failures.
+- **Known limitation, recorded rather than implied:** the plan's "approve batch → email (existing path)" assumes an invoice email that does not exist anywhere in the application — the send endpoint flips the status and nothing more. Approval therefore issues and syncs, and does not claim to have emailed anybody. A customer invoice email (the PDF already renders) is a follow-up, not something this step pretended to do.
 
 ## 2026.10.7.004 — Out-of-pocket costs can finally be filed by the technician who spent the money
 - **[New]** **A technician can file an expense against their ticket.** Before this, adding an expense needed the billing permission, so the person who actually paid for parking could not record it — the plan's own words for the gap were "technician out-of-pocket costs untracked". Filing now needs only the ticket permission, the client is taken from the ticket (so the two can never disagree), and the expense starts life awaiting a decision.

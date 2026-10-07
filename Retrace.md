@@ -3534,3 +3534,24 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - Phase A #3 (bill-through batch invoicing) is the last piece of the chain and now has everything it needs: agreement types and rates, weighted time, and approved expenses with a client each.
 - `probe-egress.mjs` asserts that private addresses are refused, so it must run against an API **without** `EGRESS_ALLOW_PRIVATE=true`; the stub-based suites (connectors, expense push) need it set. Two runs of the battery, not one, if both are being exercised in the same session.
+
+**Prompt 220 — continued: W2-3 (bill-through batch invoicing, PLAN-015 Phase A #3)**
+
+**What I did**
+- Built the last link in the billing chain as a **two-step artefact** rather than a one-shot script: preview computes what each client owes and writes nothing; create turns it into draft invoices held by a batch; approve issues them; discard returns the work. The plan asked for preview/approve, and the reason is the same one the plan gives — nobody wants a script emailing clients an invoice no human has looked at.
+- **`services/billingBatch.ts`** does the arithmetic the earlier steps made possible: weighted minutes (`billedMinutes`) at the agreement rate, approved expenses as their own lines with vendor and mileage, one invoice per client, `billThroughDate` moved on approval.
+- **Claiming is what stops double-billing.** Creating a batch points the time entries and expenses at the draft invoice, so a second run in the same period finds nothing at all — and discarding reverses it, including putting an expense back to `approved` rather than leaving it `billed`.
+- **Approval issues and pushes**: invoices go to `sent`, each is offered to the configured accounting endpoint through the egress policy, and every outcome is reported per invoice. An invoice that was issued but not pushed says so with the reason, which is the opposite of the silent-success pattern this codebase has been carefully avoiding.
+- **UI:** a **Bill through…** button on Billing → Invoices that only appears when the API answers the batch endpoints (it probes once — a 404 means the flag is off), then a three-stage dialog: preview with per-client checkboxes, the held drafts with Approve/Discard, and a results list.
+- **Two defects found while verifying, both fixed:** `window.prompt` is unsupported in this browser **and in Electron**, so the discard and expense-rejection buttons did nothing — both now use an inline reason input; and the Azure preflight crashed on a worktree mid-rename because it read every path `git ls-files` reported, including one staged for deletion.
+
+**Decisions worth remembering**
+- **Read-only preview is a feature, not a convenience.** It means the same call can back a "what would we bill?" screen, a dry run before a board meeting, and the first step of the dialog, without any risk of writing.
+- **A batch is the review artefact.** Keeping the drafts grouped under it is what makes "approve these twelve invoices" a single deliberate action, and what makes undoing it possible at all.
+- **Do not claim to email invoices.** The plan's phrase "email (existing path)" refers to something that does not exist — the send endpoint flips a status. Approval issues and syncs, and the BuildNotes entry says plainly that nobody was emailed rather than implying it.
+- **Two API configurations are needed to run the whole suite.** `probe-egress.mjs` asserts that private addresses are refused, so it needs the API *without* `EGRESS_ALLOW_PRIVATE`; the stub-based suites (expense push, batch push) need it *with*. The battery is therefore two passes with a restart between, and that is now written down instead of being rediscovered each time.
+
+**Notes for next time**
+- Phase A is complete. Phase B is the remainder: per-user dashboard, board drag-and-drop, report writer + client value report, Kumo audit trail, outage board, live connection statuses, KB auto-generation, M365 inactivity reports, SMS.
+- The invoice email is the one real gap left in the billing chain: the PDF renderer exists, so it is a template plus an attachment, not a new subsystem.
+- `PNPM`-managed integration rows are global rather than per-client, which is why both pushes resolve "the" accounting integration; if a second client ever needs a different accounting system, that lookup becomes a join on the client.

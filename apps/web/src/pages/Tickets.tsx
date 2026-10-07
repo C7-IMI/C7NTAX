@@ -1010,6 +1010,8 @@ export function TicketDetailPage() {
   const [cf, setCf] = useState<Record<string, any>>({});
   const [expenses, setExpenses] = useState<any[]>([]);
   const canManageBilling = myPermissions.includes(Permission.BillingManage);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const [schedEntries, setSchedEntries] = useState<any[]>([]);
   const [auditEntries, setAuditEntries] = useState<any[]>([]);
   const [assetResults, setAssetResults] = useState<any[]>([]);
@@ -2203,14 +2205,29 @@ export function TicketDetailPage() {
                           onClick={async () => { await expenseDecision(e.id, "approve"); }}
                           className="text-[10px] text-green-400 hover:text-green-300 mr-2"
                         >Approve</button>
-                        <button
-                          onClick={async () => {
-                            const note = window.prompt("Why is this expense being rejected?") || "";
-                            if (!note.trim()) return;
-                            await expenseDecision(e.id, "reject", note);
-                          }}
-                          className="text-[10px] text-amber-400 hover:text-amber-300 mr-2"
-                        >Reject</button>
+                        {rejectingId === e.id ? (
+                          <span className="inline-flex items-center gap-1 mr-2">
+                            <input
+                              className="input-field text-[10px] py-0.5 w-40"
+                              autoFocus
+                              placeholder="Why? (required)"
+                              value={rejectReason}
+                              onChange={ev => setRejectReason(ev.target.value)}
+                              onKeyDown={ev => { if (ev.key === "Enter" && rejectReason.trim()) void expenseDecision(e.id, "reject", rejectReason).then(() => { setRejectingId(null); setRejectReason(""); }); if (ev.key === "Escape") setRejectingId(null); }}
+                            />
+                            <button
+                              onClick={async () => { await expenseDecision(e.id, "reject", rejectReason); setRejectingId(null); setRejectReason(""); }}
+                              disabled={!rejectReason.trim()}
+                              className="text-[10px] text-amber-400 hover:text-amber-300"
+                            >Send</button>
+                            <button onClick={() => { setRejectingId(null); setRejectReason(""); }} className="text-[10px] text-gray-500 hover:text-gray-300">Cancel</button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => { setRejectingId(e.id); setRejectReason(""); }}
+                            className="text-[10px] text-amber-400 hover:text-amber-300 mr-2"
+                          >Reject</button>
+                        )}
                       </>
                     )}
                     {canManageBilling && (e.status || "submitted") === "approved" && !e.syncedAt && (

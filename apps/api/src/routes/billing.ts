@@ -6,7 +6,18 @@ import { Permission, InvoiceStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { BillingEngine } from "@C7NTAX/billing";
 import { AGREEMENT_TYPES } from "../services/timeRules";
-import { pushExpense } from "../services/expenseSync";
+import { pushExpense } from "../services/accountingSync";
+import { approveBatch, createBatch, invoiceBatchEnabled, previewBatch, rejectBatch } from "../services/billingBatch";
+
+/**
+ * The client a scoped caller is limited to, or null for someone who may see every client.
+ * Billing routes use it so a client-scoped account cannot bill somebody else's work.
+ */
+function scopedCompanyId(user: AuthRequest["user"]): string | null {
+  if (!user) return null;
+  if (user.permissions.includes(Permission.TicketViewAll)) return null;
+  return user.companyId ?? null;
+}
 
 /** The categories an expense can be filed under (PLAN-015 Phase A #2). */
 export const EXPENSE_CATEGORIES = ["parking", "hardware", "mileage", "travel", "software", "other"];
@@ -476,6 +487,109 @@ billingRouter.post("/invoices/:id/recurring", requirePermission(Permission.Invoi
     if (!existing || !canAccessCompany(req.user, existing.companyId)) throw new AppError("Invoice not found", 404);
     const inv = await prisma.invoice.update({ where: { id: req.params.id }, data: { isRecurring: true, recurrenceRule, nextGenerationDate: new Date() } });
     res.json(inv);
+  } catch (e) { next(e); }
+});
+
+// ── Bill-through batches (PLAN-015 Phase A #3, gated by INVOICE_BATCH_ENABLED) ──
+
+/** The flag is a hard gate: with it off these routes answer 404, as if they did not exist. */
+billingRouter.use("/batches", (req, res, next) => {
+  if (!invoiceBatchEnabled()) { res.status(404).json({ error: "Batch invoicing is disabled" }); return; }
+  next();
+});
+
+const parseThroughDate = (value: unknown): Date => {
+  if (!value) throw new AppError("billThroughDate required", 400);
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) throw new AppError("billThroughDate must be a date", 400);
+  // A bill-through date is inclusive of the whole day it names.
+  date.setHours(23, 59, 59, 999);
+  return date;
+};
+
+/** What a batch would bill. Writes nothing, which is what makes it safe to run repeatedly. */
+billingRouter.post("/batches/preview", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const companyIds = Array.isArray(req.body?.companyIds) ? req.body.companyIds : undefined;
+    for (const id of companyIds ?? []) {
+      if (!canAccessCompany(req.user, id)) throw new AppError("Client not found", 404);
+    }
+    const preview = await previewBatch({
+      billThroughDate: parseThroughDate(req.body?.billThroughDate),
+      companyIds,
+      scopeCompanyId: scopedCompanyId(req.user),
+    });
+    res.json(preview);
+  } catch (e) { next(e); }
+});
+
+/** Turn the preview into draft invoices. */
+billingRouter.post("/batches", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
+  try {
+    const companyIds = Array.isArray(req.body?.companyIds) ? req.body.companyIds : undefined;
+    for (const id of companyIds ?? []) {
+      if (!canAccessCompany(req.user, id)) throw new AppError("Client not found", 404);
+    }
+    const { batch, preview, invoices } = await createBatch({
+      billThroughDate: parseThroughDate(req.body?.billThroughDate),
+      companyIds,
+      scopeCompanyId: scopedCompanyId(req.user),
+      createdById: req.user!.userId,
+      notes: req.body?.notes,
+    });
+    if (!batch) {
+      res.status(200).json({ batch: null, preview, message: "Nothing to bill in that period" });
+      return;
+    }
+    res.status(201).json({
+      batch: { ...batch, invoiceCount: invoices?.length ?? 0, total: preview.totals.invoicesAmount },
+      preview,
+      invoices: (invoices ?? []).map(i => ({ id: i.id, invoiceNumber: i.invoiceNumber, companyId: i.companyId, total: i.total })),
+    });
+  } catch (e) { next(e); }
+});
+
+billingRouter.get("/batches", requirePermission(Permission.BillingView), async (_req: AuthRequest, res, next) => {
+  try {
+    const batches = await prisma.billingBatch.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { invoices: { select: { id: true, invoiceNumber: true, companyId: true, total: true, status: true } } },
+    });
+    res.json({ data: batches.map(b => ({ ...b, invoiceCount: b.invoices.length, total: +b.invoices.reduce((s, i) => s + i.total, 0).toFixed(2) })) });
+  } catch (e) { next(e); }
+});
+
+billingRouter.get("/batches/:id", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {
+  try {
+    const batch = await prisma.billingBatch.findUnique({
+      where: { id: req.params.id },
+      include: { invoices: { include: { lineItems: true, company: { select: { id: true, name: true } } } } },
+    });
+    if (!batch) throw new AppError("Batch not found", 404);
+    if (batch.invoices.some(i => !canAccessCompany(req.user, i.companyId))) throw new AppError("Batch not found", 404);
+    res.json(batch);
+  } catch (e) { next(e); }
+});
+
+/** Approve: the drafts become issued invoices and are offered to accounting. */
+billingRouter.post("/batches/:id/approve", requirePermission(Permission.InvoiceSend), async (req: AuthRequest, res, next) => {
+  try {
+    const batch = await prisma.billingBatch.findUnique({ where: { id: req.params.id }, include: { invoices: { select: { companyId: true } } } });
+    if (!batch) throw new AppError("Batch not found", 404);
+    if (batch.invoices.some(i => !canAccessCompany(req.user, i.companyId))) throw new AppError("Batch not found", 404);
+    const result = await approveBatch(batch.id, req.user!.userId);
+    res.json(result);
+  } catch (e) { next(e); }
+});
+
+/** Reject: the drafts are discarded and the work returns to the unbilled pool. */
+billingRouter.post("/batches/:id/reject", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
+  try {
+    const reason = String(req.body?.reason ?? "").trim();
+    if (!reason) throw new AppError("Say why the batch was discarded", 400);
+    const result = await rejectBatch(String(req.params.id), reason, req.user!.userId);
+    res.json(result);
   } catch (e) { next(e); }
 });
 

@@ -121,6 +121,9 @@ console.log("\nenvironment contract");
     for (const dir of sources) {
       const files = run(`git ls-files "${dir.replace(/\\/g, "/")}"`).out.split("\n").filter(f => f.endsWith(".ts"));
       for (const file of files) {
+        // A worktree mid-edit can name files that are staged for deletion; skipping them keeps
+        // the preflight useful before a commit instead of crashing on it.
+        if (!existsSync(path.join(root, file))) continue;
         const body = readFileSync(path.join(root, file), "utf8");
         for (const match of body.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)) used.add(match[1]);
       }

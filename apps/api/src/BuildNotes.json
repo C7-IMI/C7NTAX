@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.7.005",
+    "date": "2026-10-07",
+    "title": "Bill-through batch invoicing: preview it, hold it, approve it — and it can never double-bill",
+    "changes": [
+      {
+        "text": "**A month of work becomes invoices in three deliberate steps.** Preview works out what each client owes for everything unbilled up to a date — weighted hours at the agreed rate plus approved expenses — and **writes nothing**, so it is safe to run as often as you like. Create turns that into *draft* invoices held by a batch. Approve issues them; Discard throws the drafts away and puts the work back.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The time engine reaches the invoice.** Billing uses `billedMinutes`, so two hours of evening work at 1.5:1 bills as three — the acceptance case from the plan, now asserted end to end (a two-hour 19:00–21:00 entry produced a three-hour line).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Approved expenses bill themselves.** They arrive as their own invoice line with the vendor and mileage in the description, which is what closes the loop on the expense work: a technician's $45 cable ends up on the client's invoice without anyone retyping it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Work cannot be billed twice.** Creating a batch claims its time entries and expenses by pointing them at the draft invoice, so a second run in the same period finds nothing — and discarding returns them to the pool, including putting an expense back to `approved`. An approved batch refuses to be discarded (void the invoices instead) and cannot be approved twice.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`billThroughDate` per client**, moved when a batch is approved, so \"how far have we billed this client\" is a fact rather than a guess.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Invoices are offered to the connected accounting system on approval**, through the same egress policy as everything else, with each invoice's outcome reported individually — an invoice that was issued but not pushed says so instead of pretending. The `Billing → Invoices` tab gained a **Bill through…** button that appears only when the feature is switched on server-side, and a dialog that previews per client with checkboxes, shows the draft step, and takes a reason before discarding.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`window.prompt` is not supported in this environment — or in Electron.** The discard and expense-rejection flows used it to ask for a reason, which meant those buttons did nothing. Both now use an inline input, which also works in the desktop shell.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The Azure preflight crashed on a worktree mid-rename** (it read every file `git ls-files` named, including one staged for deletion). It now skips files that are not there.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.004",
     "date": "2026-10-07",
     "title": "Out-of-pocket costs can finally be filed by the technician who spent the money",

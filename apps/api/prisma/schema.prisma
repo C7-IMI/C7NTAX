@@ -183,6 +183,9 @@ model Company {
   // Portal access
   portalEnabled   Boolean  @default(false)
 
+  /// How far this client has been billed by a bill-through batch (PLAN-015 Phase A #3).
+  billThroughDate DateTime?
+
   // Sub-organizations (HQ, branches, departments)
   parentId        String?
   parent          Company?  @relation("CompanyHierarchy", fields: [parentId], references: [id])
@@ -561,6 +564,10 @@ model Invoice {
   company        Company  @relation(fields: [companyId], references: [id])
   agreementId    String?
   agreement      ServiceAgreement? @relation(fields: [agreementId], references: [id])
+
+  /// Set when the invoice came out of a bill-through batch (PLAN-015 Phase A #3).
+  batchId        String?
+  batch          BillingBatch? @relation(fields: [batchId], references: [id])
 
   lineItems      InvoiceLineItem[]
   timeEntries    TimeEntry[]
