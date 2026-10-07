@@ -13,6 +13,7 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { apiErrorMessage } from "../lib/apiError";
 
 // Types
 interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; sourceTickets?: Array<{ id: string; ticketNumber: string }>; }
@@ -40,19 +41,6 @@ const STATUS_COLORS: Record<string, string> = {
 const PERIOD_COLORS: Record<string, string> = {
   monthly: "bg-blue-600/20 text-blue-400", quarterly: "bg-purple-600/20 text-purple-400",
   annual: "bg-cyber-600/20 text-cyber-400", weekly: "bg-amber-600/20 text-amber-400",
-};
-
-/**
- * The API's own message when it sent one — more useful than a generic "Failed".
- * Two shapes are in the wild: middleware refuses with `{ error: "…" }` while route handlers that
- * call `next(new AppError(…))` come back as `{ error: { message, status } }`. Read both, because
- * the alternative is a toast that says "[object Object]".
- */
-const apiMessage = (err: unknown, fallback: string) => {
-  const error = (err as { response?: { data?: { error?: unknown } } })?.response?.data?.error;
-  if (typeof error === "string" && error) return error;
-  const message = (error as { message?: unknown } | undefined)?.message;
-  return typeof message === "string" && message ? message : fallback;
 };
 
 const TABS = [
@@ -150,7 +138,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
     setGenError("");
     api.get(`/billing/invoices/unbilled/${genForm.companyId}`)
       .then(r => { if (!cancelled) setGenPreview(r.data); })
-      .catch(err => { if (!cancelled) setGenError(apiMessage(err, "Could not check unbilled time")); });
+      .catch(err => { if (!cancelled) setGenError(apiErrorMessage(err, "Could not check unbilled time")); });
     return () => { cancelled = true; };
   }, [showGenerate, genForm.companyId]);
 
@@ -184,7 +172,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
       fetchInvoices();
       setViewInvoice(created);
     } catch (err: unknown) {
-      toast.error(apiMessage(err, "Could not generate the invoice"));
+      toast.error(apiErrorMessage(err, "Could not generate the invoice"));
     } finally { setGenBusy(false); }
   };
   const handleSend = async (id: string) => {
@@ -716,7 +704,7 @@ function BatchInvoiceDialog({ companies, onClose, onChanged }: { companies: Comp
       setSelected((data.clients || []).map((c: BatchClientPreview) => c.companyId));
       toast.success(`${(data.clients || []).length} client${(data.clients || []).length === 1 ? "" : "s"} with unbilled work`);
     } catch (err: unknown) {
-      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not build the preview");
+      toast.error(apiErrorMessage(err, "Could not build the preview"));
     } finally { setBusy(false); }
   };
 
@@ -728,7 +716,7 @@ function BatchInvoiceDialog({ companies, onClose, onChanged }: { companies: Comp
       setBatchId(data.batch.id);
       toast.success(`${data.batch.invoiceCount} draft invoice${data.batch.invoiceCount === 1 ? "" : "s"} created`);
     } catch (err: unknown) {
-      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not create the batch");
+      toast.error(apiErrorMessage(err, "Could not create the batch"));
     } finally { setBusy(false); }
   };
 
@@ -741,7 +729,7 @@ function BatchInvoiceDialog({ companies, onClose, onChanged }: { companies: Comp
       toast.success(`Batch approved — ${(data.results || []).length} invoice(s) issued`);
       onChanged();
     } catch (err: unknown) {
-      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not approve the batch");
+      toast.error(apiErrorMessage(err, "Could not approve the batch"));
     } finally { setBusy(false); }
   };
 
@@ -759,7 +747,7 @@ function BatchInvoiceDialog({ companies, onClose, onChanged }: { companies: Comp
       setDiscardReason("");
       onChanged();
     } catch (err: unknown) {
-      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not discard the batch");
+      toast.error(apiErrorMessage(err, "Could not discard the batch"));
     } finally { setBusy(false); }
   };
 

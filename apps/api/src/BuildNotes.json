@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.7.019",
+    "date": "2026-10-07",
+    "title": "The API's refusal is shown as words, not as \"[object Object]\"",
+    "changes": [
+      {
+        "text": "**Every surface that reads the API's error envelope now understands both shapes.** The API answers two ways on purpose: middleware that refuses before a route runs sends `{ error: \"…\" }` (sign-in, rate limits, the session timeout), while a route calling `next(new AppError(…))` is rendered by the error handler as `{ error: { message, status } }`. Thirteen call sites read only the first shape, so a rule enforced *inside* a route — a bad monitor target, a ticket that cannot be deleted, a contact that will not accept the address — surfaced as a toast reading `[object Object]`. The new `lib/apiError.ts` reads both, preferring the API's own words and falling back to the caller's message when the API sent nothing readable, and the sites were switched to it: 6 in Service Alerts settings, 9 in Tickets (delete, field updates, contacts, schedule, assignment, attachments, sending email), 4 in Billing (batch preview/create/approve/discard), the Finance dashboard's generate panel, and the portal client's own helper.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The three fixes recorded in 2026.10.7.017 for Billing and the Finance dashboard are now the shared implementation** rather than two private copies of the same idea — which is what stopped the sweep from being a third.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.018",
     "date": "2026-10-07",
     "title": "A customer portal, built so a customer can only ever see their own tickets",

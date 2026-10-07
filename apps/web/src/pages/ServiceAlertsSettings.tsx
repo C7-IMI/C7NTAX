@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import api from "../api";
+import { apiErrorMessage } from "../lib/apiError";
 import toast from "react-hot-toast";
 import {
   AlertTriangle, Plus, Pencil, Trash2, RefreshCw, Globe, Rss, TrendingDown,
@@ -91,7 +92,7 @@ export function ServiceAlertsSettingsPage() {
       setServices(svc.data?.data || svc.data || []);
       setMonitor(mon.data || null);
     } catch (e: any) {
-      toast.error(e?.response?.data?.error || "Failed to load Service Alerts configuration");
+      toast.error(apiErrorMessage(e, "Failed to load Service Alerts configuration"));
     } finally {
       setLoading(false);
     }
@@ -106,7 +107,7 @@ export function ServiceAlertsSettingsPage() {
       toast.success(`Monitor check complete — ${r.data?.created || 0} created, ${r.data?.resolved || 0} resolved`);
       await load();
     } catch (e: any) {
-      toast.error(e?.response?.data?.error || "Monitor check failed");
+      toast.error(apiErrorMessage(e, "Monitor check failed"));
     } finally {
       setRefreshing(false);
     }
@@ -149,7 +150,7 @@ export function ServiceAlertsSettingsPage() {
       setForm({ ...emptyForm }); setEditing(false); setShowForm(false);
       await load();
     } catch (e: any) {
-      toast.error(e?.response?.data?.error || "Save failed");
+      toast.error(apiErrorMessage(e, "Save failed"));
     } finally {
       setSaving(false);
     }
@@ -162,7 +163,7 @@ export function ServiceAlertsSettingsPage() {
       toast.success("Service deleted");
       await load();
     } catch (e: any) {
-      toast.error(e?.response?.data?.error || "Delete failed");
+      toast.error(apiErrorMessage(e, "Delete failed"));
     }
   };
 
@@ -171,7 +172,7 @@ export function ServiceAlertsSettingsPage() {
       await api.patch(`/service-alerts/services/${s.id}`, { enabled });
       setServices(prev => prev.map(x => x.id === s.id ? { ...x, enabled } : x));
     } catch (e: any) {
-      toast.error(e?.response?.data?.error || "Update failed");
+      toast.error(apiErrorMessage(e, "Update failed"));
     }
   };
 
@@ -188,7 +189,7 @@ export function ServiceAlertsSettingsPage() {
       setManual({ serviceId: "", title: "", severity: "degraded" });
       await load();
     } catch (e: any) {
-      toast.error(e?.response?.data?.error || "Failed to create alert");
+      toast.error(apiErrorMessage(e, "Failed to create alert"));
     }
   };
 

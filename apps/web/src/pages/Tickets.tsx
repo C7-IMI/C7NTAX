@@ -14,6 +14,7 @@ import { RichTextEditor, toAttachmentDraft, EMAIL_PROFILE, type EmailAttachmentD
 import { RecipientField, recipientFromContact, offOrgRecipients, offOrgSummary, type Recipient, type RecipientSuggestion } from "../components/RecipientField";
 import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { apiErrorMessage } from "../lib/apiError";
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
@@ -439,7 +440,7 @@ export function TicketsPage() {
       setDeleteTarget(null);
       fetchTickets();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Could not delete ticket");
+      toast.error(apiErrorMessage(error, "Could not delete ticket"));
     } finally { setDeleting(false); }
   };
 
@@ -1074,7 +1075,7 @@ export function TicketDetailPage() {
       toast.success(decision === "approve" ? "Expense approved" : "Expense rejected");
       await loadExpenses();
     } catch (err: unknown) {
-      toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed");
+      toast.error(apiErrorMessage(err, "Failed"));
     }
   };
 
@@ -1360,7 +1361,7 @@ export function TicketDetailPage() {
       toast.success(`${person.name || person.email} added to the ticket`);
       load();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Could not add that contact");
+      toast.error(apiErrorMessage(error, "Could not add that contact"));
     }
   };
 
@@ -1438,9 +1439,8 @@ export function TicketDetailPage() {
       setEmailCc([]);
       setEmailBcc([]);
       load();
-    } catch (error: any) {
-      const apiError = error?.response?.data?.error;
-      toast.error(typeof apiError === "string" ? apiError : apiError?.message || "Could not send email");
+    } catch (error: unknown) {
+      toast.error(apiErrorMessage(error, "Could not send email"));
     } finally {
       setSendingEmail(false);
     }
@@ -1495,7 +1495,7 @@ export function TicketDetailPage() {
       setScheduleForm({ title: "", startTime: "", endTime: "", location: "", description: "", userId: "" });
       setTabRefresh((value) => value + 1);
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Could not create schedule entry");
+      toast.error(apiErrorMessage(error, "Could not create schedule entry"));
     }
   };
 
@@ -1507,7 +1507,7 @@ export function TicketDetailPage() {
       setShowMoreActions(false);
       load();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || `Could not update ${field}`);
+      toast.error(apiErrorMessage(error, `Could not update ${field}`));
     } finally {
       setMoreActionsBusy(false);
     }
@@ -1532,7 +1532,7 @@ export function TicketDetailPage() {
       await api.patch(`/tickets/${id}`, { assignedToId: userId });
       toast.success(userId ? "Assigned" : "Unassigned");
       load();
-    } catch (error: any) { toast.error(error?.response?.data?.error || "Could not assign"); }
+    } catch (error: any) { toast.error(apiErrorMessage(error, "Could not assign")); }
   };
 
   const confirmDeleteTicket = async () => {
@@ -1542,7 +1542,7 @@ export function TicketDetailPage() {
       toast.success("Ticket deleted");
       navigate("/tickets");
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Could not delete ticket");
+      toast.error(apiErrorMessage(error, "Could not delete ticket"));
       setDeleting(false);
       setDeleteOpen(false);
     }
@@ -1634,7 +1634,7 @@ export function TicketDetailPage() {
       setAttachForm({ file: null });
       load();
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Could not attach file");
+      toast.error(apiErrorMessage(error, "Could not attach file"));
     } finally {
       setUploadingAttachment(false);
     }
@@ -1652,7 +1652,7 @@ export function TicketDetailPage() {
       link.remove();
       URL.revokeObjectURL(url);
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Could not download file");
+      toast.error(apiErrorMessage(error, "Could not download file"));
     }
   };
 
@@ -2234,13 +2234,13 @@ export function TicketDetailPage() {
                       <button
                         onClick={async () => {
                           try { await api.post(`/billing/expenses/${e.id}/sync`); toast.success("Pushed to accounting"); }
-                          catch (err: unknown) { toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Could not push"); }
+                          catch (err: unknown) { toast.error(apiErrorMessage(err, "Could not push")); }
                           void loadExpenses();
                         }}
                         className="text-[10px] text-cyber-400 hover:text-cyber-300 mr-2"
                       >Push</button>
                     )}
-                    <button onClick={async () => { try { await api.delete(`/billing/expenses/${e.id}`); toast.success("Deleted"); void loadExpenses(); } catch (err: unknown) { toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed"); } }} className="text-gray-500 hover:text-red-400"><Trash2 size={12} /></button>
+                    <button onClick={async () => { try { await api.delete(`/billing/expenses/${e.id}`); toast.success("Deleted"); void loadExpenses(); } catch (err: unknown) { toast.error(apiErrorMessage(err, "Failed")); } }} className="text-gray-500 hover:text-red-400"><Trash2 size={12} /></button>
                   </td>
                 </tr>
               ))}</tbody>
@@ -2531,7 +2531,7 @@ export function TicketDetailPage() {
 
       {showExpenseDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowExpenseDialog(false)}>
-          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); try { await api.post("/billing/expenses", { ...expenseForm, amount: Number(expenseForm.amount), ticketId: id, miles: expenseForm.miles === "" ? null : Number(expenseForm.miles), expenseDate: expenseForm.expenseDate || new Date().toISOString() }); toast.success("Expense submitted for approval"); setShowExpenseDialog(false); setExpenseForm({ description: "", amount: "", category: "other", vendor: "", miles: "", expenseDate: "" }); await loadExpenses(); } catch (err: unknown) { toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed"); } }}>
+          <form className="card w-full max-w-sm mx-4 space-y-3" onClick={e => e.stopPropagation()} onSubmit={async e => { e.preventDefault(); try { await api.post("/billing/expenses", { ...expenseForm, amount: Number(expenseForm.amount), ticketId: id, miles: expenseForm.miles === "" ? null : Number(expenseForm.miles), expenseDate: expenseForm.expenseDate || new Date().toISOString() }); toast.success("Expense submitted for approval"); setShowExpenseDialog(false); setExpenseForm({ description: "", amount: "", category: "other", vendor: "", miles: "", expenseDate: "" }); await loadExpenses(); } catch (err: unknown) { toast.error(apiErrorMessage(err, "Failed")); } }}>
             <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Receipt size={16} /> Add Expense</h3>
             <input className="input-field" placeholder="Description *" value={expenseForm.description} onChange={e => setExpenseForm({ ...expenseForm, description: e.target.value })} required />
             <div className="grid grid-cols-2 gap-2">

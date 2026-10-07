@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.018 | Last Updated: 2026-10-07
+## Version: 2026.10.7.019 | Last Updated: 2026-10-07
 
 ---
 
@@ -13,6 +13,12 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.7.019 — The API's refusal is shown as words, not as "[object Object]"
+- **[Fix]** **Every surface that reads the API's error envelope now understands both shapes.** The API answers two ways on purpose: middleware that refuses before a route runs sends `{ error: "…" }` (sign-in, rate limits, the session timeout), while a route calling `next(new AppError(…))` is rendered by the error handler as `{ error: { message, status } }`. Thirteen call sites read only the first shape, so a rule enforced *inside* a route — a bad monitor target, a ticket that cannot be deleted, a contact that will not accept the address — surfaced as a toast reading `[object Object]`. The new `lib/apiError.ts` reads both, preferring the API's own words and falling back to the caller's message when the API sent nothing readable, and the sites were switched to it: 6 in Service Alerts settings, 9 in Tickets (delete, field updates, contacts, schedule, assignment, attachments, sending email), 4 in Billing (batch preview/create/approve/discard), the Finance dashboard's generate panel, and the portal client's own helper.
+- **[Update]** **The three fixes recorded in 2026.10.7.017 for Billing and the Finance dashboard are now the shared implementation** rather than two private copies of the same idea — which is what stopped the sweep from being a third.
+- **Verification:** web typecheck 0 errors, API typecheck at its 152 pre-existing, and the object shape proved end to end in the browser: submitting a wrong portal code renders **"That code is not valid"** — an `AppError` message crossing the shared helper into the page — where a string-only read would have shown `[object Object]`. The three remaining reads (`api.ts`, `EmailConnectorsPanel`, `usePasskey`, `Checklists`) were already shape-agnostic and were left alone.
+- **Rollback:** revert the commit; the helper is additive and the messages it produces are the ones the API already sent.
 
 ## 2026.10.7.018 — A customer portal, built so a customer can only ever see their own tickets
 - **[New]** **The portal exists: `/portal`, signed in with an emailed six-digit code.** `/api/portal/auth/request` answers **202 whatever happens** — the same body for an address with a portal account and one without — so the endpoint cannot be used to list customers. A code lives ten minutes, works once, dies with the next code requested, and is stored **hashed**, because a database read should not recover a live credential. Three codes per contact per fifteen minutes, five attempts per code, and the attempt is counted against the code rather than the caller.

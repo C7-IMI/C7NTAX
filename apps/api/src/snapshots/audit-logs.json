@@ -8797,6 +8797,18 @@
     "createdAt": "2026-10-06T23:53:39.198Z"
   },
   {
+    "id": "53436b1a-8a28-4d39-ae19-30a907205f72",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "nobody.at.all@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T09:36:19.375Z"
+  },
+  {
     "id": "bf64920f-a031-4b03-b405-8507bbeac49d",
     "action": "email-connectors:create",
     "entity": "email-connectors",

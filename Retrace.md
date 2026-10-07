@@ -3802,3 +3802,18 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - `PortalLoginCode`/`PortalSession` rows are never pruned by a job yet: expired codes and dead sessions accumulate (small, and they are the audit of who signed in). Add a retention sweep with the other retention policies.
 - The portal has no attachment support, no profile screen, and sends the provider no notification when a customer replies — all recorded in the outstanding-items list rather than implied.
+
+**Prompt 220 — continued: PLAN-013 #9 (the error-envelope sweep, first slice of the UI/UX pass)**
+
+**What I did**
+- Finished what 2026.10.7.017 started, deliberately rather than piecemeal: the API has two error envelopes (`{ error: "…" }` from middleware, `{ error: { message, status } }` from `next(new AppError(…))`), and **thirteen web call sites read only the first**, so a rule enforced inside a route showed up as a toast reading `[object Object]`.
+- Added `apps/web/src/lib/apiError.ts` (`apiErrorMessage`) that reads both, and switched the sites: 6 in Service Alerts settings, 9 in Tickets (delete, field updates, contact add, schedule entry, assignment, attachment upload/download, send email, push), 4 in Billing, the Finance dashboard's generate panel, and the portal client — which now delegates to the shared helper instead of carrying its own copy.
+- Checked the three remaining readers (`api.ts`, `EmailConnectorsPanel`'s `errText`, `usePasskey`'s message helper, `Checklists`) and left them: they were already shape-agnostic.
+- **Verified** with a real object-shaped refusal in the browser: a wrong portal code renders "That code is not valid" instead of `[object Object]`. Web typecheck 0, API typecheck at the 152 pre-existing.
+
+**Decisions worth remembering**
+- **Two envelopes are fine; reading only one is not.** The fix is a helper at the boundary, not a change to the API contract — the middleware answers before a route exists and the error handler renders what a route throws; both are honest.
+- **Look for the class, not the instance.** 2026.10.7.017 patched the two places the billing work touched and recorded the rest; leaving it there would have meant a third copy of the same idea later.
+
+**Notes for next time**
+- PLAN-013 #9 still holds the rest of the UI/UX pass (filter chips, bulk actions, skeletons, density, empty states, keyboard shortcuts). The sweep was the part that was a defect rather than a preference.

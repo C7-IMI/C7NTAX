@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api";
+import { apiErrorMessage } from "../lib/apiError";
 import { DollarSign, TrendingUp, Clock, AlertTriangle, Receipt, CreditCard } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -64,11 +65,7 @@ export function FinanceDashboardPage() {
                 const r = await api.post("/billing/invoices/generate-from-tickets", { companyId: genCompanyId });
                 toast.success(`Draft invoice ${r.data.invoice.invoiceNumber} generated (${r.data.entriesIncluded} time entries)`);
               } catch (err: unknown) {
-                const apiError = (err as { response?: { data?: { error?: unknown } } })?.response?.data?.error;
-                const message = typeof apiError === "string" ? apiError
-                  : typeof (apiError as { message?: unknown } | undefined)?.message === "string" ? (apiError as { message: string }).message
-                    : "Generate failed";
-                toast.error(message);
+                toast.error(apiErrorMessage(err, "Generate failed"));
               } finally { setGenLoading(false); }
             }}
           >

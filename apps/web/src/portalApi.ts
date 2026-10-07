@@ -1,4 +1,5 @@
 import axios from "axios";
+import { apiErrorMessage } from "./lib/apiError";
 
 /**
  * The customer portal's own API client (PLAN-013 #3).
@@ -54,10 +55,7 @@ portalApi.interceptors.request.use((config) => {
 
 /** The API's own message, whichever of the two error shapes it used. */
 export function portalErrorMessage(err: unknown, fallback: string): string {
-  const error = (err as { response?: { data?: { error?: unknown } } })?.response?.data?.error;
-  if (typeof error === "string" && error) return error;
-  const message = (error as { message?: unknown } | undefined)?.message;
-  return typeof message === "string" && message ? message : fallback;
+  return apiErrorMessage(err, fallback);
 }
 
 export default portalApi;
