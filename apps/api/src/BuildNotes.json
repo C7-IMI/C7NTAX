@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.7.010",
+    "date": "2026-10-07",
+    "title": "An Outage Board, and social reports that can never shout louder than they should",
+    "changes": [
+      {
+        "text": "**An Outage Board tab.** The Service Alerts page showed everything as one long scroll, which answers \"what is happening\" only by reading the whole page. The board is one row per monitored service — **status**, the **last incident** (active or already resolved, with when it was detected and a link back to the source), and **what each source reported** — sorted so problems are at the top, with a five-figure summary: outages, degraded, notices, operational, and **how many services are currently unreadable** (every configured source unknown, so nothing is being detected for them). It refreshes on the same visibility-gated poll as the rest of the page, so it costs nothing extra while the tab is hidden.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A social (X) source, behind configuration.** Off unless `X_BEARER_TOKEN` is set: a deployment that has not configured X gets **no social observation at all** — not an \"unknown\" one — so nothing on screen claims to be watching a source it cannot read. It searches X's recent-search endpoint for the service's own name (no retweets, English, a two-hour window), and a resolution post can retire a notice the same poll.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Social chatter can raise a notice, and only a notice.** The weakest source in the set is treated as the weakest source in the set: a complaint is recorded as **informational**, never as an outage, with a title that says where it came from and a link to the post. An MSP reading a red banner should be reading the vendor's status page, not somebody's afternoon.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A broken token is \"unknown\", and unknown never means all-clear.** A 401, a 403, a rate-limit and an HTTP error are each reported as unknown *with the reason* (the 401 line says the credentials were rejected), the alert is **kept** rather than resolved, and the HTTP error also lands in the run's error list. Silent credential death is how a monitoring system starts lying.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`INVOICE_BATCH_ENABLED` was missing from the deployment template** — the Azure preflight caught the env contract gap from the batch-invoicing step. Now documented next to the other feature flags, and the preflight is back to **0 failures**.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.009",
     "date": "2026-10-07",
     "title": "A board leads with the tile its desk cares about",

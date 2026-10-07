@@ -3633,3 +3633,21 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - The `Arrange` button is revealed on card hover; keyboard focus reaches it, but it is intentionally quiet because it is a rare action.
 - `probe-permissions.mjs` covers boards only through `read:boards`; the layout routes have their own permission assertions in `probe-board-layout.mjs` (403 for read-only and for a technician on the write, 403 on reset, 401 unauthenticated).
+
+**Prompt 220 — continued: W2-8 (Outage Board + social source, PLAN-015 Phase B #8)**
+
+**What I did**
+- **Outage Board tab** on the Service Alerts page: one row per monitored service with status, the last incident (active or resolved, with when and a source link), the per-source verdict chips, and a five-figure summary that includes how many services are **unreadable** — a board that only counts outages would look calm on a day the poller is blind. Problems sort to the top; the tab rides the existing 60-second visibility-gated poll.
+- **A social (X) source** in `alertMonitor.ts` behind `X_BEARER_TOKEN` / `X_API_BASE_URL` / `SERVICE_ALERTS_SOCIAL_ENABLED`. Absent without a token (no "unknown" placeholder), recent-search for the service's name, no retweets, a two-hour window.
+- **Social is capped at `informational`.** The plan lists Twitter/X next to status pages; treating chatter as equal evidence is how a monitoring product starts crying wolf, so a social complaint raises a notice with its source in the title, and only the vendor's own sources can raise an outage.
+- **Every failure mode of the token is "unknown" with a reason** — 401 says the credentials were rejected, 429 says the rate limit, 5xx logs an error — and an alert is never resolved by a source that went silent.
+- **Fixed an env-contract gap from an earlier step:** `INVOICE_BATCH_ENABLED` was used in code but missing from `infra/env/.env.production.example`, which the Azure preflight flagged. Documented; preflight back to 0 failures.
+
+**Decisions worth remembering**
+- **A source that is not configured must not appear at all.** The tempting shortcut is to report "unknown — X not configured", which is technically honest and operationally wrong: it turns every service card into a permanent warning about a feature nobody enabled. `probe-outage-board-social-off.mjs` exists specifically to keep that true.
+- **Severity is the ceiling for a source, not just its verdict.** `informational` flows through the existing severity ranking, so the alert stays a notice even when social is the only source reporting.
+- **Assertions must respect the poller's own floors.** My first probe expected two clear polls to resolve an alert and it failed: the resolver also requires the alert to be older than the poll interval. The probe now ages the row deliberately and asserts *why* it was held rather than skipping the check.
+
+**Notes for next time**
+- The X query comes from the service name, so common names can match unrelated posts — recorded in BuildNotes and in the plan as the reason a per-service query column is a follow-up.
+- Two API configurations again for this one: the stub phase needs `EGRESS_ALLOW_PRIVATE=true` plus the token and `X_API_BASE_URL` pointing at the loopback stub; the "off" phase needs the token **unset**.
