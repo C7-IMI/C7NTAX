@@ -19,6 +19,7 @@ Legend: ✅ complete · 🟡 partial (in the codebase now) · ⬜ not started ·
 
 | Order | Plan | Title | Wave | Status | What is actually left |
 |---|---|---|---|---|---|
+| **W0** | **PLAN-018** | **Dependency & application security remediation (CVE review)** | **W0 — pre-deployment blocker** | 🟡 audited, nothing fixed | **Phase 0**: 12 application hotfixes (2 critical authz holes, an XSS in the invoice renderer, a role-escalation path, SSO state/role, fail-open auth, lockout + rate limits). **Phase 1**: dependency upgrades — 1 critical + 16 high vulnerable groups in shipped code, incl. `electron` 33 → fixed line, `nodemailer` 6 → 10, `axios`, and removing unused `node-forge`/`mjml`. **Phase 2/3**: structural hardening + the CI gate that keeps it fixed |
 | 1 | PLAN-017 | Microsoft 365 OAuth app: build & deploy | W1 — finish the foundation | ⬜ runbook complete, execution pending | Tenant-side only: register the app, consent `Mail.ReadWrite`, scope it to the mailbox, test + enable the connector |
 | 2 | PLAN-001 | Session-based authentication & permissions | W1 | 🟡 infrastructure written, never wired | Mount `sessionAuth` (or retire it), add refresh rotation for app sessions, ship the idle-timeout warning |
 | 3 | PLAN-002 | Passkey authentication (+ SSO stage) | W1 | 🟡 roughly three quarters built | Passkey management/recovery UI, per-role policy, surface SSO on the login page, SAML |
@@ -40,6 +41,7 @@ Legend: ✅ complete · 🟡 partial (in the codebase now) · ⬜ not started ·
 
 | Wave | Theme | Plans | Why this wave |
 |---|---|---|---|
+| **W0** | **Security & exposure** | 018 | Not a feature wave: these are defects in what is already shipped. Two critical authorization gaps and an XSS in the invoice renderer mean any authenticated account — including a client contact — reaches every company's data, and nothing here is fixed by the cloud split. It also has to land *before* PLAN-016, because that plan is the first time the API is reachable from the internet, and it upgrades the Electron runtime already installed on user machines |
 | **W1** | Finish the half-built foundation | 017, 001, 002 | Three things are *nearly* done and currently deliver nothing: the Microsoft 365 go-live (code shipped, tenant setup pending), session auth (models + middleware exist, never mounted) and identity (passkeys work, surrounding flows do not). Cheap to close, and W2/W3 features reuse them |
 | **W2** | Revenue & daily operations | 015, 013 | The PSA money path is the largest functional gap left (agreements, overtime, expenses, batch invoicing) and the portal/UI work needs no cloud migration. PLAN-013 #9 UI/UX is deliberately parallel-safe |
 | **W3** | Platform & compliance | 016, 007 | Everything hosting-related is blocked on a real dev/prod split; SOC 2's infrastructure controls (and its CI scanners) land on top of that. The *code-side* SOC 2 controls may be pulled forward into W2 |
@@ -97,7 +99,8 @@ with the code, the code won and the line was corrected.
 | PLAN-014 | C7NTRL RMM Product Line & PSA Integration Plan | `PLAN-014-C7NTRL-RMM-Product-Line-and-PSA-Integration.md` | `PLAN-C7NTRL-RMM-Product-Line-and-PSA-Integration.md` | 2026-08-18 | ⬜ Not started (external gate) |
 | PLAN-015 | C7NTAX Feature Backlog — UI, Billing, Kumo, Integrations & Infrastructure | `PLAN-015-Feature-Backlog-UI-Billing-Kumo-Integrations.md` | `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` | 2026-08-18 | 🟡 Partial (Phase A untouched) |
 | PLAN-016 | Azure Dev/Prod Split & Sync Plan | `PLAN-016-Azure-Dev-Prod-Split-Sync.md` | `PLAN-Azure-Dev-Prod-Split-and-Sync.md` | 2026-10-05 | ⬜ Not started (decision advisory) |
-| PLAN-017 | Microsoft 365 OAuth App: Build & Deployment Plan | `PLAN-017-Microsoft-365-OAuth-App-Setup.md` | authored in `PlanDocs/` | 2026-10-06 | ⬜ Ready to execute (runbook) |
+| PLAN-017 | Microsoft 365 OAuth app: build & deploy | `PLAN-017-Microsoft-365-OAuth-App-Setup.md` | authored in `PlanDocs/` | 2026-10-06 | ⬜ Ready to execute (runbook) |
+| PLAN-018 | Dependency & application security remediation (CVE review) | `PLAN-018-Dependency-and-Application-Security-Remediation.md` | authored in `PlanDocs/` | 2026-10-06 | 🟡 Audited, nothing fixed (W0) |
 
 ---
 
@@ -125,6 +128,18 @@ useful, for three reasons:
 **Multi-tenant (PLAN-003) is deferred by decision** and removed from the active
 sequence. Because several plans cited it as a prerequisite, each of those now
 names the substitute it will use instead (see §1.2).
+
+**Wave 0 (PLAN-018) was added after the re-sequence, not during it.** A security
+review of the shipped code and its dependencies found defects that are independent
+of every plan above: two routers reachable by any authenticated account with no
+permission gate (so a client contact reads every company's data), an XSS in the
+invoice renderer, a role-escalation path through `PATCH /api/users`, an
+unvalidated OIDC `state` that provisions unknown identities as admins, and 1
+critical + 16 high vulnerable dependency groups inside code we ship — including
+the `electron` runtime already installed on user machines. None of these are
+fixed by any other plan, and PLAN-016 is the first time the API becomes
+reachable from the internet, so they are positioned ahead of it rather than
+slotted into a feature wave.
 
 ---
 
