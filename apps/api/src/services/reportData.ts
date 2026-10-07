@@ -90,6 +90,15 @@ function companyFilter(period: ReportPeriod): { companyId?: string } {
   return period.clientId ? { companyId: period.clientId } : {};
 }
 
+/**
+ * The same restriction for a query against the `Company` model itself, whose own key is `id` —
+ * using `companyId` there asks for a column that does not exist, which is a 500 rather than an
+ * empty list, and only for an account that is scoped to a client.
+ */
+function companySelfFilter(period: ReportPeriod): { id?: string } {
+  return period.clientId ? { id: period.clientId } : {};
+}
+
 /** The same restriction for a model that reaches its client through a ticket. */
 function ticketCompanyFilter(period: ReportPeriod): Record<string, unknown> {
   return period.clientId ? { ticket: { companyId: period.clientId } } : {};
@@ -297,6 +306,7 @@ export async function slaReport(user: AuthUser | undefined, period: ReportPeriod
   }
 
   let impossibleResolutions = 0;
+  let repliesBeforeCreation = 0;
 
   const rows: Row[] = tickets.map(t => {
     const board = boardById.get(t.boardId);
@@ -305,6 +315,7 @@ export async function slaReport(user: AuthUser | undefined, period: ReportPeriod
     const ageMinutes = Math.round((now - t.createdAt.getTime()) / 60000);
     const stamped = t.firstResponseAt ? Math.round((t.firstResponseAt.getTime() - t.createdAt.getTime()) / 60000) : null;
     const reply = replyByTicket.get(t.id);
+    if (reply && reply < t.createdAt) repliesBeforeCreation++;
     const replied = reply && reply >= t.createdAt ? Math.round((reply.getTime() - t.createdAt.getTime()) / 60000) : null;
     const responseMinutes = stamped ?? replied;
     const responseSource: Row["responseSource"] = stamped !== null ? "stamp" : replied !== null ? "reply" : "none";
@@ -399,10 +410,16 @@ export async function slaReport(user: AuthUser | undefined, period: ReportPeriod
     resolutionCompliancePct: pct(resolution.met, resolution.met + resolution.breached + resolution.missed),
     avgResponseMinutes: responseTimes.length ? Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length) : null,
     avgResolutionMinutes: resolutionTimes.length ? Math.round(resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length) : null,
-    responseSources: { stamp: fromStamp, reply: fromReply, none: noResponse },
+    responseSources: { stamp: fromStamp, reply: fromReply, none: noResponse, replyBeforeCreation: repliesBeforeCreation },
     dataQuality: {
       impossibleResolutions,
-      note: impossibleResolutions > 0 ? impossibleDurationNote(impossibleResolutions) : null,
+      repliesBeforeCreation,
+      note: [
+        impossibleResolutions > 0 ? impossibleDurationNote(impossibleResolutions) : null,
+        repliesBeforeCreation > 0
+          ? `${plural(repliesBeforeCreation, "ticket")} ${repliesBeforeCreation === 1 ? "has a reply dated" : "have replies dated"} before the ticket was created, so ${repliesBeforeCreation === 1 ? "it is" : "they are"} counted as having no reply recorded.`
+          : null,
+      ].filter(Boolean).join(" ") || null,
     },
     byBoard: group(r => r.board),
     byTechnician: group(r => r.assignedTo),
@@ -538,7 +555,7 @@ export async function revenueReport(user: AuthUser | undefined, period: ReportPe
       where: { invoice: { ...scope }, ...dateRange("processedAt", period) },
       select: { amount: true, method: true, processedAt: true, invoice: { select: { invoiceNumber: true, companyId: true } } },
     }),
-    prisma.company.findMany({ where: { isActive: true, ...scope }, select: { id: true, name: true } }),
+    prisma.company.findMany({ where: { isActive: true, ...companySelfFilter(period) }, select: { id: true, name: true } }),
   ]);
 
   const allTimePaid = await prisma.invoice.aggregate({ _sum: { total: true }, where: { status: "paid", ...scope } });
@@ -1091,74 +1108,135 @@ export async function contractProfitabilityReport(user: AuthUser | undefined, pe
 
 export interface Quarter { label: string; start: Date; end: Date; previous: { label: string; start: Date; end: Date } }
 
+/** The three review cadences the business-review report runs at. */
+export type ReviewGranularity = "week" | "month" | "quarter";
+
+export interface ReviewWindow { label: string; start: Date; end: Date }
+export interface ReviewPlan {
+  granularity: ReviewGranularity;
+  current: ReviewWindow;
+  previous: ReviewWindow;
+  options: Array<{ label: string; from: string; to: string }>;
+}
+
+const DAY_MS = 86400000;
+const startOfDay = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+/** Monday, matching how this product already labels a week. */
+const startOfWeek = (d: Date) => {
+  const day = startOfDay(d);
+  const offset = (day.getUTCDay() + 6) % 7;
+  return new Date(day.getTime() - offset * DAY_MS);
+};
+const startOfMonth = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+const startOfQuarter = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), Math.floor(d.getUTCMonth() / 3) * 3, 1));
+
+const monthName = (d: Date) => d.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+const shortDate = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+
 /**
- * The quarter a date falls in, and the one before it. Boundaries are built in UTC from the date's
- * UTC parts so a report means the same quarter whatever timezone the server runs in, and the end of
- * a quarter is the last millisecond of its last day rather than midnight of the next one.
+ * The review window a granularity is about, the one before it, and the list a picker offers.
+ *
+ * With no range given the report uses the last **finished** period rather than the one in progress:
+ * reviewing a week that started yesterday reports almost nothing, and a business review is about a
+ * period somebody can draw a conclusion from. Boundaries are built in UTC from the date's UTC parts
+ * so a report means the same period whatever timezone the server runs in, and a period's end is the
+ * last millisecond of its last day rather than midnight of the next one.
  */
+export function reviewPlan(granularity: ReviewGranularity, reference: Date): ReviewPlan {
+  const label = (d: Date) => {
+    if (granularity === "week") return `Week of ${shortDate(d)}`;
+    if (granularity === "month") return monthName(d);
+    return `Q${Math.floor(d.getUTCMonth() / 3) + 1} ${d.getUTCFullYear()}`;
+  };
+  const startOf = granularity === "week" ? startOfWeek : granularity === "month" ? startOfMonth : startOfQuarter;
+  const nextStart = (start: Date) => {
+    if (granularity === "week") return new Date(start.getTime() + 7 * DAY_MS);
+    if (granularity === "month") return new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
+    return new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 3, 1));
+  };
+  const previousStart = (start: Date) => {
+    if (granularity === "week") return new Date(start.getTime() - 7 * DAY_MS);
+    if (granularity === "month") return new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() - 1, 1));
+    return new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() - 3, 1));
+  };
+  const endOf = (start: Date) => new Date(nextStart(start).getTime() - 1);
+
+  const window = (start: Date): ReviewWindow => ({ label: label(start), start, end: endOf(start) });
+
+  // The most recent period that has finished: step back to the day before this period began and
+  // take the period that day falls in. Stepping back one day from *today* is not enough — mid-week
+  // and mid-month it lands in the period still being reported.
+  const lastFinishedStart = startOf(new Date(startOf(reference).getTime() - DAY_MS));
+  const current = window(lastFinishedStart);
+  const previous = { ...window(previousStart(lastFinishedStart)), label: label(previousStart(lastFinishedStart)) };
+
+  const count = granularity === "quarter" ? 8 : 12;
+  const options: Array<{ label: string; from: string; to: string }> = [];
+  for (let i = 0; i < count; i++) {
+    let start = lastFinishedStart;
+    for (let step = 0; step < i; step++) start = previousStart(start);
+    const w = window(start);
+    options.push({ label: w.label, from: w.start.toISOString(), to: w.end.toISOString() });
+  }
+
+  return { granularity, current, previous, options };
+}
+
+/** The quarter a date falls in, and the one before it — kept for the quarter-specific callers. */
 export function quarterOf(reference: Date): Quarter {
-  const year = reference.getUTCFullYear();
-  const startMonth = Math.floor(reference.getUTCMonth() / 3) * 3;
-  const start = new Date(Date.UTC(year, startMonth, 1, 0, 0, 0, 0));
-  const end = new Date(Date.UTC(year, startMonth + 3, 1, 0, 0, 0, 0) - 1);
-  const prevStart = new Date(Date.UTC(year, startMonth - 3, 1, 0, 0, 0, 0));
-  const prevEnd = new Date(start.getTime() - 1);
-  const label = (d: Date) => `Q${Math.floor(d.getUTCMonth() / 3) + 1} ${d.getUTCFullYear()}`;
-  return { label: label(start), start, end, previous: { label: label(prevStart), start: prevStart, end: prevEnd } };
+  const plan = reviewPlan("quarter", reference);
+  return { label: plan.current.label, start: plan.current.start, end: plan.current.end, previous: plan.previous };
 }
 
 /** The most recently finished quarter — what a business review is normally about. */
 export function lastCompletedQuarter(reference: Date): Quarter {
-  return quarterOf(new Date(Date.UTC(reference.getUTCFullYear(), reference.getUTCMonth(), 1) - 86400000));
+  return quarterOf(reference);
 }
 
-/** The eight quarters ending with the most recent completed one, for the report's picker. */
+/** The quarters ending with the most recent completed one, for the report's picker. */
 export function recentQuarters(reference: Date, count = 8): Array<{ label: string; from: string; to: string }> {
-  const latest = lastCompletedQuarter(reference);
-  const list: Array<{ label: string; from: string; to: string }> = [];
-  for (let i = 0; i < count; i++) {
-    const start = new Date(Date.UTC(latest.start.getUTCFullYear(), latest.start.getUTCMonth() - i * 3, 1));
-    const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 3, 1) - 1);
-    list.push({ label: `Q${Math.floor(start.getUTCMonth() / 3) + 1} ${start.getUTCFullYear()}`, from: start.toISOString(), to: end.toISOString() });
-  }
-  return list;
+  return reviewPlan("quarter", reference).options.slice(0, count);
 }
 
 /**
- * The Quarterly Business Review: the shape of a QBR pack, assembled from the reports above so the
- * numbers a customer is shown in the meeting are the same numbers the team sees day to day. It is
- * deliberately additive — one quarter's service delivery, commercials, clients and risks — and it
+ * The business review — the shape of a QBR pack, assembled from the reports above so the numbers a
+ * customer is shown in the meeting are the same numbers the team sees day to day. It is
+ * deliberately additive — one period's service delivery, commercials, clients and risks — and it
  * says when a comparison cannot be made rather than printing a zero.
+ *
+ * One implementation serves all three cadences, because a weekly and a monthly review are the same
+ * pack over a different window: copying it three times is how the three drift apart.
  */
-export async function qbrReport(user: AuthUser | undefined, period: ReportPeriod) {
+export async function businessReviewReport(user: AuthUser | undefined, period: ReportPeriod, granularity: ReviewGranularity = "quarter") {
   const explicitFrom = period.from ? new Date(period.from) : null;
   const explicitTo = period.to ? new Date(period.to) : null;
   const now = new Date();
 
-  // With no range the review is of the last *finished* quarter, which is what a business review is
-  // normally about — reviewing a quarter that started yesterday would report almost nothing.
-  const quarter = explicitFrom && explicitTo
-    ? quarterOf(new Date(Date.UTC(explicitFrom.getUTCFullYear(), explicitFrom.getUTCMonth(), 1)))
-    : lastCompletedQuarter(now);
+  // With no range the review is of the last *finished* period — reviewing a week that started
+  // yesterday would report almost nothing.
+  const plan = reviewPlan(granularity, now);
+  const chosen = explicitFrom && explicitTo
+    ? { label: period.label, start: explicitFrom, end: explicitTo, previous: { label: plan.previous.label, start: plan.previous.start, end: plan.previous.end } }
+    : { ...plan.current, previous: plan.previous };
 
-  const rangeStart = explicitFrom ?? quarter.start;
-  const rangeEnd = explicitTo ?? quarter.end;
+  const rangeStart = chosen.start;
+  const rangeEnd = chosen.end;
 
-  // A comparison has to be like for like. A finished quarter is compared with the whole quarter
-  // before it; a quarter still in progress is compared with the same number of elapsed days of the
-  // one before it, which is stated in the notes rather than left as a puzzle.
-  const elapsedDays = Math.max(1, Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86400000) + 1);
-  const quarterLength = Math.round((quarter.end.getTime() - quarter.start.getTime()) / 86400000) + 1;
-  const partial = elapsedDays < quarterLength;
-  const previousEnd = partial
-    ? new Date(quarter.previous.start.getTime() + elapsedDays * 86400000 - 1)
-    : quarter.previous.end;
+  // A comparison has to be like for like. A finished period is compared with the whole period
+  // before it; a period still in progress is compared with the same number of elapsed days of its
+  // predecessor, which the notes state rather than leaving as a puzzle.
+  const elapsedDays = Math.max(1, Math.round((rangeEnd.getTime() - rangeStart.getTime()) / DAY_MS) + 1);
+  const periodLength = Math.round((plan.current.end.getTime() - plan.current.start.getTime()) / DAY_MS) + 1;
+  const partial = elapsedDays < periodLength;
+  const previousStart = explicitFrom && explicitTo ? chosen.previous.start : plan.previous.start;
+  const previousEnd = partial ? new Date(previousStart.getTime() + elapsedDays * DAY_MS - 1) : (explicitFrom && explicitTo ? chosen.previous.end : plan.previous.end);
 
   const window = { from: rangeStart.toISOString(), to: rangeEnd.toISOString() };
-  const previousRange = { from: quarter.previous.start.toISOString(), to: previousEnd.toISOString() };
+  const previousRange = { from: previousStart.toISOString(), to: previousEnd.toISOString() };
+  const periodNoun = granularity === "week" ? "week" : granularity === "month" ? "month" : "quarter";
 
-  const current = { ...period, ...window, label: explicitFrom ? period.label : quarter.label, days: elapsedDays };
-  const previous = { ...period, ...previousRange, label: quarter.previous.label, days: Math.round((previousEnd.getTime() - quarter.previous.start.getTime()) / 86400000) + 1 };
+  const current = { ...period, ...window, label: explicitFrom ? period.label : chosen.label, days: elapsedDays };
+  const previous = { ...period, ...previousRange, label: chosen.previous.label, days: Math.round((previousEnd.getTime() - previousStart.getTime()) / DAY_MS) + 1 };
 
   const [volume, priorVolume, sla, priorSla, time, priorTime, revenue, priorRevenue, csat, contracts, aging, util] = await Promise.all([
     ticketVolumeReport(user, current),
@@ -1201,9 +1279,9 @@ export async function qbrReport(user: AuthUser | undefined, period: ReportPeriod
 
   if (priorVolume.total > 0) {
     const change = delta(volume.total, priorVolume.total);
-    if (change !== null) highlights.push(`Ticket volume ${change >= 0 ? "rose" : "fell"} ${Math.abs(change)}% against ${quarter.previous.label} (${volume.total} vs ${priorVolume.total}).`);
+    if (change !== null) highlights.push(`Ticket volume ${change >= 0 ? "rose" : "fell"} ${Math.abs(change)}% against ${previous.label} (${volume.total} vs ${priorVolume.total}).`);
   } else {
-    watchItems.push(`No tickets were logged in ${quarter.previous.label}, so there is no volume comparison to make.`);
+    watchItems.push(`No tickets were logged in ${previous.label}, so there is no volume comparison to make.`);
   }
   if (sla.responseCompliancePct) highlights.push(`Response compliance landed at ${sla.responseCompliancePct}% with ${plural(sla.response.met + sla.response.breached + sla.response.missed, "answered ticket")} against ${plural(sla.evaluated, "ticket")}.`);
   if (sla.response.breached > 0 || sla.response.missed > 0) {
@@ -1220,7 +1298,7 @@ export async function qbrReport(user: AuthUser | undefined, period: ReportPeriod
   }
   if (revenue.invoicedInPeriod > 0) {
     const change = delta(revenue.invoicedInPeriod, priorRevenue.invoicedInPeriod);
-    highlights.push(`$${revenue.invoicedInPeriod.toLocaleString()} invoiced and $${revenue.collectedInPeriod.toLocaleString()} collected (${revenue.collectionRate}% collection rate)${change !== null ? `, ${change >= 0 ? "up" : "down"} ${Math.abs(change)}% on ${quarter.previous.label}` : ""}.`);
+    highlights.push(`$${revenue.invoicedInPeriod.toLocaleString()} invoiced and $${revenue.collectedInPeriod.toLocaleString()} collected (${revenue.collectionRate}% collection rate)${change !== null ? `, ${change >= 0 ? "up" : "down"} ${Math.abs(change)}% on ${previous.label}` : ""}.`);
   }
   if (revenue.totalOverdue > 0) {
     const overdueCount = revenue.aging.filter(a => a.label !== "Not yet due").reduce((s, a) => s + a.invoices, 0);
@@ -1237,7 +1315,7 @@ export async function qbrReport(user: AuthUser | undefined, period: ReportPeriod
   const warrantySoon = assets.filter(a => a.warrantyExpiry && a.warrantyExpiry.getTime() > now.getTime() && a.warrantyExpiry.getTime() < now.getTime() + 90 * 86400000).length;
 
   return {
-    period: { ...current, label: current.label, quarter: quarter.label, previousLabel: quarter.previous.label },
+    period: { ...current, label: current.label, periodLabel: chosen.label, previousLabel: previous.label, granularity },
     comparisons: {
       tickets: { current: volume.total, previous: priorVolume.total, changePct: delta(volume.total, priorVolume.total) },
       hours: { current: hours(time.totals.minutes), previous: hours(priorTime.totals.minutes), changePct: delta(time.totals.minutes, priorTime.totals.minutes) },
@@ -1313,16 +1391,25 @@ export async function qbrReport(user: AuthUser | undefined, period: ReportPeriod
     },
     highlights: highlights.slice(0, 8),
     watchItems: watchItems.slice(0, 8),
-    /** The picker's list, so the screen and the report agree about which quarters exist. */
-    quarters: recentQuarters(now),
-    reviewedQuarter: quarter.label,
-    comparedWith: quarter.previous.label,
+    granularity,
+    /** The picker's list, so the screen and the report agree about which periods exist. */
+    periodOptions: plan.options,
+    /** Kept under its quarter-era name so a saved report written before the cadences existed still reads it. */
+    quarters: plan.options,
+    reviewedPeriod: chosen.label,
+    reviewedQuarter: chosen.label,
+    comparedWith: previous.label,
     notes: [
-      `Reviewed ${quarter.label} against ${quarter.previous.label}${partial ? `, over the same ${elapsedDays} days because ${quarter.label} is not finished` : ""}.`,
+      `Reviewed ${chosen.label} against ${previous.label}${partial ? `, over the same ${elapsedDays} days because the ${periodNoun} is not finished` : ""}.`,
       "Every figure is computed from the same sources as the standard reports, so the pack and the console cannot disagree.",
     ],
   };
 }
+
+/** The three cadences, as thin wrappers so each report has its own endpoint and its own card. */
+export const weeklyReviewReport = (user: AuthUser | undefined, period: ReportPeriod) => businessReviewReport(user, period, "week");
+export const monthlyReviewReport = (user: AuthUser | undefined, period: ReportPeriod) => businessReviewReport(user, period, "month");
+export const qbrReport = (user: AuthUser | undefined, period: ReportPeriod) => businessReviewReport(user, period, "quarter");
 
 // ═══════════════════════════════════════════════════════════════════
 //  10. Client value
@@ -1336,11 +1423,18 @@ export async function qbrReport(user: AuthUser | undefined, period: ReportPeriod
 export async function clientValueReport(user: AuthUser | undefined, period: ReportPeriod) {
   const scope = companyFilter(period);
   const clients = await prisma.company.findMany({
-    where: { isActive: true, ...scope },
+    where: { isActive: true, ...companySelfFilter(period) },
     select: { id: true, name: true, industry: true, serviceLevel: true, createdAt: true },
     orderBy: { name: "asc" },
   });
-  if (clients.length === 0) return { period, clients: [], note: "No active clients in scope." };
+  if (clients.length === 0) {
+    return {
+      period,
+      totals: { clients: 0, tickets: 0, hoursLogged: 0, invoiced: 0, outstanding: 0, recurringAnnualValue: 0 },
+      clients: [],
+      note: "No active clients in scope.",
+    };
+  }
 
   const since = new Date();
   since.setDate(since.getDate() - 90);

@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
-  AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package,
+  AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
@@ -102,6 +102,8 @@ export const NAV_TREE: NavNode[] = [
     id: "reports", icon: TrendingUp, label: "Reporting", permission: Permission.ReportView, children: [
       { id: "reports-dashboard", to: "/reports", icon: TrendingUp, label: "Dashboards" },
       { id: "reports-standard", to: "/reports/standard", icon: ClipboardList, label: "Standard Reports" },
+      { id: "reports-qbr", to: "/reports/qbr", icon: Presentation, label: "Quarterly Business Review" },
+      { id: "reports-custom", to: "/reports/custom", icon: Filter, label: "Custom Reports" },
       { id: "reports-analytics", to: "/reports/analytics", icon: BarChart3, label: "Analytics" },
     ],
   },
@@ -217,6 +219,8 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/billing/reports": "Revenue summaries, aging reports, and billing analytics.",
   "/reports": "KPI dashboards with real-time ticket, SLA, and technician metrics.",
   "/reports/standard": "Pre-built reports: ticket volume, SLA, revenue, utilization.",
+  "/reports/qbr": "A quarterly business review pack: service delivery, commercials, estate and risk against the quarter before.",
+  "/reports/custom": "Saved reports built on the reporting engine, with their schedules.",
   "/reports/analytics": "Advanced analytics with visual charts and trend data.",
   "/help": "Documentation home — guided setup, FAQ, configuration reference, and a cross-linked index.",
   "/help/getting-started": "First login, the core ticket workflow, and team & boards setup.",

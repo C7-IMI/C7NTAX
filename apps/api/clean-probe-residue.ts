@@ -377,6 +377,29 @@ async function main() {
     () => prisma.quote.deleteMany({ where: { id: { in: browserQuoteIds } } }),
   );
 
+  // Saved reports and their schedules, left behind by the reporting probes and the browser checks
+  // that verified the reports screens. Schedules are removed first: they point at the report.
+  const probeReportWhere = {
+    OR: [
+      { name: { startsWith: "Browser check" } },
+      { name: { startsWith: "Browser report" } },
+      { name: { startsWith: "Report probe" } },
+      { name: { startsWith: "Probe report" } },
+    ],
+  };
+  const probeReports = await prisma.report.findMany({ where: probeReportWhere, select: { id: true } });
+  const probeReportIds = probeReports.map(r => r.id);
+  await remove(
+    "probe report schedules",
+    () => prisma.reportSchedule.count({ where: { reportId: { in: probeReportIds } } }),
+    () => prisma.reportSchedule.deleteMany({ where: { reportId: { in: probeReportIds } } }),
+  );
+  await remove(
+    "probe saved reports",
+    () => Promise.resolve(probeReportIds.length),
+    () => prisma.report.deleteMany({ where: { id: { in: probeReportIds } } }),
+  );
+
   console.log("remaining:", JSON.stringify({
     users: await prisma.user.count(),
     providers: await prisma.aiProviderConfig.count(),

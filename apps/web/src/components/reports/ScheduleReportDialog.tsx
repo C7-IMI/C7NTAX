@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api";
+import api from "../../api";
 import toast from "react-hot-toast";
 import { Calendar, X } from "lucide-react";
 import { apiErrorMessage } from "../../lib/apiError";
@@ -22,7 +22,7 @@ export function ScheduleReportDialog({ onClose, reportId }: { onClose: () => voi
 
   useEffect(() => {
     api.get("/reports")
-      .then(r => {
+      .then((r: { data: SavedReport[] }) => {
         const list = (r.data ?? []) as SavedReport[];
         setReports(list);
         setForm(f => ({ ...f, reportId: f.reportId || list[0]?.id || "" }));

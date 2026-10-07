@@ -72,7 +72,7 @@ async function main(): Promise<void> {
   // Analytics: custom reports + schedule
   if ((await count("report")) === 0 && user) {
     const r1 = await p.report.create({ data: { name: "Monthly Ticket Volume", description: "Standard ticket volume report", type: "ticket_summary", createdById: user.id } });
-    await p.report.create({ data: { name: "Client Value Report", description: "Value delivered per client", type: "revenue", createdById: user.id } });
+    await p.report.create({ data: { name: "Client Value Report", description: "Value delivered per client", type: "client_value", createdById: user.id } });
     await p.reportSchedule.create({ data: { reportId: r1.id, frequency: "weekly", dayOfWeek: 1, timeOfDay: "06:00", recipients: ["ops@example.com"], format: "pdf" } });
     log("report + reportSchedule seeded");
   }

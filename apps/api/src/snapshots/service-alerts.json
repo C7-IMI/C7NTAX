@@ -1778,6 +1778,20 @@
     "updatedAt": "2026-10-07T10:15:12.373Z"
   },
   {
+    "id": "dc9c78ac-cc36-4cdd-b68f-51bf6f6040b2",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "Unable to create new ChatGPT Work threads in latest version of desktop app",
+    "description": "Status: Identified We are actively working on a fixed app version for Windows. Affected components Codex in ChatGPT Desktop (Partial outage)",
+    "severity": "outage",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.openai.com//incidents/01M4ADHMMBK7K92NJFJ0DXRYJM",
+    "detectedAt": "2026-10-07T05:36:00.295Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-07T05:36:00.297Z",
+    "updatedAt": "2026-10-07T11:08:54.687Z"
+  },
+  {
     "id": "590926e8-0d75-400c-8e86-5f62d5905a67",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Social reports about GitHub on X",
@@ -1874,20 +1888,6 @@
     "resolvedAt": "2026-10-07T08:11:12.531Z",
     "createdAt": "2026-10-07T08:05:56.034Z",
     "updatedAt": "2026-10-07T08:11:12.532Z"
-  },
-  {
-    "id": "dc9c78ac-cc36-4cdd-b68f-51bf6f6040b2",
-    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
-    "title": "Unable to create new ChatGPT Work threads in latest version of desktop app",
-    "description": "Status: Identified We have identified the issue. We have released an updated app version for Linux and macOS. We are actively working to roll out the fix for Windows. Affected components Codex in ChatGPT Desktop (Partial outage)",
-    "severity": "outage",
-    "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://status.openai.com//incidents/01M4ADHMMBK7K92NJFJ0DXRYJM",
-    "detectedAt": "2026-10-07T05:36:00.295Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-07T05:36:00.297Z",
-    "updatedAt": "2026-10-07T09:32:05.033Z"
   },
   {
     "id": "ba7fe9d6-5fa9-46e4-8c1e-85403fb193a0",

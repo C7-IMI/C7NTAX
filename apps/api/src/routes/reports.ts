@@ -6,8 +6,8 @@ import { Permission } from "@C7NTAX/shared";
 import { runReportConfig, type ReportConfig } from "../services/reportRunner";
 import { AppError } from "../middleware/errorHandler";
 import {
-  agingReport, clientValueReport, contractProfitabilityReport, csatReport, parsePeriod, qbrReport,
-  revenueReport, slaReport, ticketVolumeReport, timeTrackingReport, utilizationReport,
+  agingReport, clientValueReport, contractProfitabilityReport, csatReport, monthlyReviewReport, parsePeriod,
+  qbrReport, revenueReport, slaReport, ticketVolumeReport, timeTrackingReport, utilizationReport, weeklyReviewReport,
   type ReportPeriod,
 } from "../services/reportData";
 import type { AuthUser } from "../middleware/auth";
@@ -39,6 +39,8 @@ reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), standa
 reportsRouter.get("/data/contract-profitability", requirePermission(Permission.ReportView), standardReport(contractProfitabilityReport));
 reportsRouter.get("/data/client-value", requirePermission(Permission.ReportView), standardReport(clientValueReport));
 reportsRouter.get("/data/quarterly-business-review", requirePermission(Permission.ReportView), standardReport(qbrReport));
+reportsRouter.get("/data/monthly-business-review", requirePermission(Permission.ReportView), standardReport(monthlyReviewReport));
+reportsRouter.get("/data/weekly-business-review", requirePermission(Permission.ReportView), standardReport(weeklyReviewReport));
 
 /** The options a report's own filters offer: the clients and boards the account can see. */
 reportsRouter.get("/data/options", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
@@ -197,6 +199,10 @@ async function runBuiltIn(type: string, user: AuthUser | undefined, period: Repo
     client_value: clientValueReport,
     qbr: qbrReport,
     quarterly_business_review: qbrReport,
+    weekly_review: weeklyReviewReport,
+    weekly_business_review: weeklyReviewReport,
+    monthly_review: monthlyReviewReport,
+    monthly_business_review: monthlyReviewReport,
   };
   const runner = runners[type];
   if (!runner) return null;

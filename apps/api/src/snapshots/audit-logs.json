@@ -30810,5 +30810,851 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-07T10:58:14.441Z"
+  },
+  {
+    "id": "2b44788a-a47b-4de7-8afb-adee6ee0bbc9",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Report probe volume 1791372147533",
+      "type": "ticket_summary",
+      "config": {},
+      "description": "Probe: a saved report of a standard type"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:22:28.509Z"
+  },
+  {
+    "id": "8647a908-729e-43ea-b4f8-c96482af6400",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Report probe open tickets 1791372147533",
+      "type": "custom",
+      "config": {
+        "limit": 50,
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "title",
+          "status",
+          "client"
+        ],
+        "filters": [
+          {
+            "op": "in",
+            "field": "status",
+            "value": [
+              "new",
+              "in_progress"
+            ]
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:22:28.529Z"
+  },
+  {
+    "id": "f5a2d723-3f64-42c1-ae22-69773a90fb18",
+    "action": "reports:update",
+    "entity": "reports",
+    "entityId": "692205ef-4057-4f20-99cf-3d8a233c87d7",
+    "changes": {
+      "name": "Report probe renamed 1791372147533"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:22:28.543Z"
+  },
+  {
+    "id": "fe4f1009-895b-4353-8316-aeb2b2e209b5",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "692205ef-4057-4f20-99cf-3d8a233c87d7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:22:28.548Z"
+  },
+  {
+    "id": "578f46b7-6c72-4834-8a3c-b866b0ad094e",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "692205ef-4057-4f20-99cf-3d8a233c87d7",
+    "changes": {
+      "format": "pdf",
+      "frequency": "monthly",
+      "timeOfDay": "07:00",
+      "dayOfMonth": 1,
+      "recipients": [
+        "finance@example.com",
+        "not-an-address"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:22:28.553Z"
+  },
+  {
+    "id": "434c53df-cd2a-4488-8114-c43d94ef9e76",
+    "action": "reports:delete",
+    "entity": "reports",
+    "entityId": "692205ef-4057-4f20-99cf-3d8a233c87d7",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:22:28.569Z"
+  },
+  {
+    "id": "fd7041f4-775c-41f0-a33e-430bb8e81bf5",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Report probe bad source 1791372147533",
+      "type": "custom",
+      "config": {
+        "source": "users"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:22:28.588Z"
+  },
+  {
+    "id": "35f26c23-04fc-410f-8020-af27eb834353",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Report probe volume 1791372201440",
+      "type": "ticket_summary",
+      "config": {},
+      "description": "Probe: a saved report of a standard type"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:22.415Z"
+  },
+  {
+    "id": "fcf86efe-f4f5-4ade-bcc4-b6cb8fc31b45",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Report probe open tickets 1791372201440",
+      "type": "custom",
+      "config": {
+        "limit": 50,
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "title",
+          "status",
+          "client"
+        ],
+        "filters": [
+          {
+            "op": "in",
+            "field": "status",
+            "value": [
+              "new",
+              "in_progress"
+            ]
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:22.433Z"
+  },
+  {
+    "id": "afce41f7-e610-4b84-ab4e-962d5c251fd7",
+    "action": "reports:update",
+    "entity": "reports",
+    "entityId": "db435f53-5dbd-474e-8e6a-b4445e54a8b4",
+    "changes": {
+      "name": "Report probe renamed 1791372201440"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:22.445Z"
+  },
+  {
+    "id": "7766dfdc-5af9-4902-8c87-965533ceb857",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "db435f53-5dbd-474e-8e6a-b4445e54a8b4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:22.450Z"
+  },
+  {
+    "id": "0e9e5784-1e03-4885-9dd9-a18edbcd9966",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "db435f53-5dbd-474e-8e6a-b4445e54a8b4",
+    "changes": {
+      "format": "pdf",
+      "frequency": "monthly",
+      "timeOfDay": "07:00",
+      "dayOfMonth": 1,
+      "recipients": [
+        "finance@example.com",
+        "not-an-address"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:22.456Z"
+  },
+  {
+    "id": "ac0548ad-b000-439c-900e-6311603593be",
+    "action": "reports:delete",
+    "entity": "reports",
+    "entityId": "db435f53-5dbd-474e-8e6a-b4445e54a8b4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:22.471Z"
+  },
+  {
+    "id": "12355835-9a36-4c4b-8b94-087f2ad8e224",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Report probe bad source 1791372201440",
+      "type": "custom",
+      "config": {
+        "source": "users"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:22.489Z"
+  },
+  {
+    "id": "8cc95dd1-2033-4111-a9ea-50c966239640",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets by status",
+      "type": "custom",
+      "config": {
+        "limit": 25,
+        "sortBy": "createdAt",
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "title",
+          "status",
+          "client"
+        ],
+        "filters": [
+          {
+            "op": "in",
+            "field": "status",
+            "value": [
+              "new",
+              "in_progress"
+            ]
+          }
+        ],
+        "sortDir": "desc"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.115Z"
+  },
+  {
+    "id": "49c298f4-6b8b-47a0-b932-d66aa2bb881d",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets grouped",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "groupBy": "status"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.126Z"
+  },
+  {
+    "id": "41a208d3-ab5b-4d2b-b247-294906b93f28",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad source",
+      "type": "custom",
+      "config": {
+        "source": "users; drop table"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.140Z"
+  },
+  {
+    "id": "9c5fd2cd-25a4-4bb1-b102-ef356f426540",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad column",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "secretHash",
+          "password",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.148Z"
+  },
+  {
+    "id": "e647c881-350a-440b-955e-86b081f77d02",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad operator",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "sql",
+            "field": "status",
+            "value": "1=1"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.159Z"
+  },
+  {
+    "id": "f4f8a4a7-6e00-4715-978d-70e31e752113",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad filter field",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "equals",
+            "field": "passwordHash",
+            "value": "x"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.174Z"
+  },
+  {
+    "id": "ca7f9f5e-92d2-4336-ab8b-2ba70601e554",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — expenses",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "expenses",
+        "columns": [
+          "description",
+          "amount",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.184Z"
+  },
+  {
+    "id": "034bd1aa-54a6-47c1-956d-441bc1495b81",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — time",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "time_entries",
+        "columns": [
+          "date",
+          "minutes",
+          "billedMinutes"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.194Z"
+  },
+  {
+    "id": "246bc046-7bb4-420b-a81d-6b1c56bc091b",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — scoped tickets",
+      "type": "custom",
+      "config": {
+        "limit": 200,
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "client"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.209Z"
+  },
+  {
+    "id": "0e9ceca2-db1d-4530-a1c6-47f7a9883b52",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — ticket summary",
+      "type": "ticket_summary",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.218Z"
+  },
+  {
+    "id": "856386d6-1988-424d-b8f9-7a5cbd91caa6",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — client value",
+      "type": "client_value",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:23:23.227Z"
+  },
+  {
+    "id": "f6ae2996-ca9c-45fe-9b61-fd88204b5531",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Report probe volume 1791372281006",
+      "type": "ticket_summary",
+      "config": {},
+      "description": "Probe: a saved report of a standard type"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:42.227Z"
+  },
+  {
+    "id": "50f6c2ad-796d-4761-a098-e9e22d371612",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Report probe open tickets 1791372281006",
+      "type": "custom",
+      "config": {
+        "limit": 50,
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "title",
+          "status",
+          "client"
+        ],
+        "filters": [
+          {
+            "op": "in",
+            "field": "status",
+            "value": [
+              "new",
+              "in_progress"
+            ]
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:42.245Z"
+  },
+  {
+    "id": "50f7ee00-c60b-4b4a-8104-cde19b59648d",
+    "action": "reports:update",
+    "entity": "reports",
+    "entityId": "dbcd9875-cf20-4aac-83dd-e6dda8190cf8",
+    "changes": {
+      "name": "Report probe renamed 1791372281006"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:42.260Z"
+  },
+  {
+    "id": "793f7d15-d518-48f1-9890-18a6056b9ca0",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "dbcd9875-cf20-4aac-83dd-e6dda8190cf8",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:42.264Z"
+  },
+  {
+    "id": "fcb51130-e385-47aa-86c3-ef6b7ac68f74",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "dbcd9875-cf20-4aac-83dd-e6dda8190cf8",
+    "changes": {
+      "format": "pdf",
+      "frequency": "monthly",
+      "timeOfDay": "07:00",
+      "dayOfMonth": 1,
+      "recipients": [
+        "finance@example.com",
+        "not-an-address"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:42.271Z"
+  },
+  {
+    "id": "9baf5007-f814-42a0-888a-d7519b3eead6",
+    "action": "reports:delete",
+    "entity": "reports",
+    "entityId": "dbcd9875-cf20-4aac-83dd-e6dda8190cf8",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:42.286Z"
+  },
+  {
+    "id": "5b02804f-58de-4a78-add9-c01e99eb5467",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Report probe bad source 1791372281006",
+      "type": "custom",
+      "config": {
+        "source": "users"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:42.421Z"
+  },
+  {
+    "id": "9afb098d-00ad-4d83-a2df-434a1d67ff00",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets by status",
+      "type": "custom",
+      "config": {
+        "limit": 25,
+        "sortBy": "createdAt",
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "title",
+          "status",
+          "client"
+        ],
+        "filters": [
+          {
+            "op": "in",
+            "field": "status",
+            "value": [
+              "new",
+              "in_progress"
+            ]
+          }
+        ],
+        "sortDir": "desc"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.044Z"
+  },
+  {
+    "id": "6056f007-1b3e-495b-a3d3-3dd8b9d65766",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets grouped",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "groupBy": "status"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.054Z"
+  },
+  {
+    "id": "fedca330-92ce-49bb-a68f-c5eafb39eca2",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad source",
+      "type": "custom",
+      "config": {
+        "source": "users; drop table"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.066Z"
+  },
+  {
+    "id": "58b300ae-40b0-4e7e-a28c-1c81b771995f",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad column",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "secretHash",
+          "password",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.075Z"
+  },
+  {
+    "id": "05407663-4119-45d9-b472-668d24b6464f",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad operator",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "sql",
+            "field": "status",
+            "value": "1=1"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.086Z"
+  },
+  {
+    "id": "b34c4fea-732b-462b-bf24-4a7f3f8eb8ff",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad filter field",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "equals",
+            "field": "passwordHash",
+            "value": "x"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.097Z"
+  },
+  {
+    "id": "47859cab-c37d-4a1d-8d94-6a5f81da3d3c",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — expenses",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "expenses",
+        "columns": [
+          "description",
+          "amount",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.109Z"
+  },
+  {
+    "id": "ca9572fe-4807-4f24-8189-86e8f862b6b0",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — time",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "time_entries",
+        "columns": [
+          "date",
+          "minutes",
+          "billedMinutes"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.120Z"
+  },
+  {
+    "id": "b1024a19-b7b3-4e22-9bb9-c07ba08c2a69",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — scoped tickets",
+      "type": "custom",
+      "config": {
+        "limit": 200,
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "client"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.136Z"
+  },
+  {
+    "id": "7d29203b-6ca3-4949-88e8-d400278a7e51",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — ticket summary",
+      "type": "ticket_summary",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.145Z"
+  },
+  {
+    "id": "7ea3125d-5569-4e82-aacd-e4377c5e2826",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — client value",
+      "type": "client_value",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T11:24:43.160Z"
+  },
+  {
+    "id": "59f29b34-da58-49a6-affa-a4dddd194862",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "a78d1e07-5ec7-45ae-9768-be02f6387c76",
+    "changes": {
+      "format": "pdf",
+      "dayOfWeek": 1,
+      "frequency": "weekly",
+      "timeOfDay": "06:00",
+      "dayOfMonth": null,
+      "recipients": [
+        "report-probe@example.com"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T11:25:20.391Z"
+  },
+  {
+    "id": "196d0d63-0da3-4141-9653-0f1ad4e87442",
+    "action": "reports:delete",
+    "entity": "reports",
+    "entityId": "02e411fd-546c-47a4-b3a4-d8b3b4fd92a8",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-07T11:25:50.420Z"
   }
 ]

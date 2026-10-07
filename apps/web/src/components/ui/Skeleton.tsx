@@ -41,3 +41,24 @@ export function CardSkeleton({ rows = 3 }: { rows?: number }) {
     </div>
   );
 }
+
+/**
+ * The shape of a report that is being computed: a row of headline figures, then its tables. A
+ * report is several sections rather than one table, so a plain table skeleton would promise a
+ * layout the page is not going to show.
+ */
+export function ReportsSkeleton({ kpis = 4, groups = 3 }: { kpis?: number; groups?: number }) {
+  return (
+    <div className="space-y-5" aria-hidden="true">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Array.from({ length: kpis }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+      </div>
+      {Array.from({ length: groups }).map((_, i) => (
+        <div key={i} className="card space-y-3">
+          <Skeleton className="h-4 w-48" />
+          {Array.from({ length: 4 }).map((__, j) => <Skeleton key={j} className="h-8 w-full" />)}
+        </div>
+      ))}
+    </div>
+  );
+}

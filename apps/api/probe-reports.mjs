@@ -113,6 +113,10 @@ async function main() {
   const summary = await make("Probe — ticket summary", {}, "ticket_summary");
   const summaryRun = await call("GET", `/api/reports/${summary}/run`, { token: admin.token });
   check(summaryRun.status === 200 && Array.isArray(summaryRun.data?.data), `the built-in ticket summary still runs (${summaryRun.status})`);
+  check(summaryRun.data?.summary?.total !== undefined, `and carries the whole report alongside its rows (${summaryRun.data?.summary?.total})`);
+
+  // Client value answers as a structured report now (totals plus a client list) rather than a bare
+  // array, so a saved report of that type is presented by the same builder the screen uses.
   const clientValue = await make("Probe — client value", {}, "client_value");
   const clientValueRun = await call("GET", `/api/reports/${clientValue}/run`, { token: admin.token });
   const rows = clientValueRun.data?.data || [];
@@ -121,12 +125,19 @@ async function main() {
   check(["client", "ticketsTotal", "open", "resolvedOrClosed", "activePeople", "hoursLogged", "hoursBilled"].every(k => k in first), `the row carries the value columns (${Object.keys(first).slice(0, 5).join(", ")}…)`);
   check(rows.every(r => r.open + r.resolvedOrClosed === r.ticketsTotal), "open plus resolved equals the total for every client");
   check(typeof first.avgFirstReplyMinutes === "number" || first.avgFirstReplyMinutes === null, `first-reply time is present or explicitly absent (${first.avgFirstReplyMinutes})`);
+  check(clientValueRun.data?.summary?.totals !== undefined, `with the book totals alongside (${clientValueRun.data?.summary?.totals?.clients} clients)`);
 
   const endpoint = await call("GET", "/api/reports/data/client-value", { token: admin.token });
-  check(endpoint.status === 200 && Array.isArray(endpoint.data), `the client value endpoint answers directly (${endpoint.status})`);
+  check(endpoint.status === 200 && Array.isArray(endpoint.data?.clients), `the client value endpoint answers directly (${endpoint.status})`);
+  check(endpoint.data?.totals?.clients === endpoint.data.clients.length, `and its totals agree with its rows (${endpoint.data?.totals?.clients})`);
+  check(endpoint.data.clients.every(c => "invoiced" in c && "outstanding" in c), "each client carries the commercial half too");
 
   const scopedValue = await call("GET", "/api/reports/data/client-value", { token: scoped.token });
-  check(Array.isArray(scopedValue.data) && scopedValue.data.length <= 1, `a scoped account sees one client at most here too (${scopedValue.data?.length})`);
+  check(Array.isArray(scopedValue.data?.clients) && scopedValue.data.clients.length <= 1, `a scoped account sees one client at most here too (${scopedValue.data?.clients?.length})`);
+
+  const scopedVolume = await call("GET", "/api/reports/data/ticket-volume", { token: scoped.token });
+  const scopedCompany = await prisma.user.findUnique({ where: { email: "persona.tech.scoped@c7ntax.local" }, select: { companyId: true } });
+  check(scopedVolume.status === 200 && scopedVolume.data?.period?.clientId === scopedCompany.companyId, `a scoped account's report is narrowed to its own client without being asked (${scopedVolume.data?.period?.clientName})`);
 
   await prisma.report.deleteMany({ where: { id: { in: created } } });
   await prisma.reportSchedule.deleteMany({ where: { reportId: { in: created } } }).catch(() => {});

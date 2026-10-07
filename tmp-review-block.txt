@@ -1,0 +1,290 @@
+// ═══════════════════════════════════════════════════════════════════
+//  10. Business reviews (weekly / monthly / quarterly)
+// ═══════════════════════════════════════════════════════════════════
+
+const change = (value: unknown): string => {
+  if (value === null || value === undefined) return "No comparable period";
+  const n = Number(value);
+  return `${n >= 0 ? "+" : ""}${n}% vs the period before`;
+};
+
+/**
+ * The business-review pack, once, for all three cadences. A weekly review and a quarterly review
+ * are the same document over a different window — writing it three times is how the three end up
+ * disagreeing — so the builder takes the cadence's nouns and endpoint, and the server supplies the
+ * window, the comparison and the list of periods the picker offers.
+ */
+function businessReview({ id, title, description, endpoint, icon, noun, periodLabel }: {
+  id: string;
+  title: string;
+  description: string;
+  endpoint: string;
+  icon: LucideIcon;
+  noun: string;
+  periodLabel: string;
+}): StandardReport {
+  return {
+    id,
+    title,
+    description,
+    icon,
+    endpoint,
+    filters: { client: true },
+    quarters: true,
+    periodNoun: noun,
+    periodLabel,
+    build: payload => {
+      const comparisons = record(payload.comparisons);
+      const delivery = record(payload.serviceDelivery);
+      const hours = record(delivery.hours);
+      const commercials = record(payload.commercials);
+      const agreementTotals = record(commercials.agreementTotals);
+      const estate = record(payload.estate);
+      const satisfaction = record(payload.satisfaction);
+      const clients = record(payload.clients);
+      const risk = record(payload.risk);
+      const slaDetail = record(delivery.sla);
+      const resp = record(slaDetail.response);
+      const reso = record(slaDetail.resolution);
+      const ticketDelta = record(comparisons.tickets);
+      const hoursDelta = record(comparisons.hours);
+      const invoicedDelta = record(comparisons.invoiced);
+      const collectedDelta = record(comparisons.collected);
+      const compliance = record(comparisons.responseCompliancePct);
+      const reviewed = text(payload.reviewedPeriod ?? payload.reviewedQuarter, "The period");
+      const comparedWith = text(payload.comparedWith, "the period before");
+
+      return [
+        {
+          kind: "kpis",
+          title: `${reviewed} against ${comparedWith}`,
+          items: [
+            { label: "Tickets", value: number(ticketDelta.current), sub: change(ticketDelta.changePct), tone: "info" },
+            { label: "Hours delivered", value: `${number(hoursDelta.current)}h`, sub: change(hoursDelta.changePct), tone: "info" },
+            { label: "Invoiced", value: money(invoicedDelta.current), sub: change(invoicedDelta.changePct), tone: "good" },
+            { label: "Collected", value: money(collectedDelta.current), sub: change(collectedDelta.changePct), tone: "good" },
+          ],
+        },
+        { kind: "notes", title: "Highlights", items: list<string>(payload.highlights), tone: "good" },
+        { kind: "notes", title: "Watch items", items: list<string>(payload.watchItems), tone: "warn" },
+        {
+          kind: "kpis",
+          title: "Service delivery",
+          items: [
+            { label: "Opened", value: number(delivery.opened) },
+            { label: "Resolved", value: number(delivery.closed), tone: "good" },
+            { label: "Backlog at close", value: number(delivery.backlog), tone: "warn" },
+            { label: "Response compliance", value: `${number(slaDetail.responseCompliancePct)}%`, tone: toneFor(num(slaDetail.responseCompliancePct)), sub: `Was ${number(compliance.previous)}%` },
+            { label: "Resolution compliance", value: `${number(slaDetail.resolutionCompliancePct)}%`, tone: toneFor(num(slaDetail.resolutionCompliancePct)) },
+            { label: "Average first response", value: delivery.firstResponseHours === null || delivery.firstResponseHours === undefined ? "Not recorded" : `${delivery.firstResponseHours}h` },
+            { label: "Average time to resolve", value: delivery.resolutionHours === null || delivery.resolutionHours === undefined ? "—" : `${delivery.resolutionHours}h` },
+            { label: "Hours billable", value: `${number(hours.billable)} of ${number(hours.total)}`, tone: "info" },
+          ],
+        },
+        {
+          kind: "table",
+          title: "Targets met, late and missed",
+          columns: [
+            { key: "target", label: "Target" },
+            { key: "met", label: "Met", align: "right" },
+            { key: "late", label: "Answered late", align: "right" },
+            { key: "missed", label: "Missed", align: "right" },
+            { key: "awaiting", label: "Inside target", align: "right" },
+          ],
+          rows: [
+            { target: "First response", met: num(resp.met), late: num(resp.breached), missed: num(resp.missed), awaiting: num(resp.awaiting) },
+            { target: "Resolution", met: num(reso.met), late: num(reso.breached), missed: num(reso.missed), awaiting: num(reso.awaiting) },
+          ],
+        },
+        { kind: "bars", title: "Hours by work type", rows: list<Payload>(hours.byWorkType).map(w => ({ label: text(w.workType), value: num(w.minutes), display: duration(w.minutes) })) },
+        {
+          kind: "table",
+          title: "Delivery by technician",
+          columns: [
+            { key: "name", label: "Technician" },
+            { key: "closed", label: "Resolved", align: "right" },
+            { key: "billableHours", label: "Billable hours", align: "right" },
+            { key: "utilizationPct", label: "Utilization", align: "right" },
+          ],
+          rows: list<Payload>(delivery.ticketsClosedByTechnician) as Array<Record<string, unknown>>,
+          emptyText: "No technician activity in this period.",
+        },
+        { kind: "bars", title: "Tickets opened by period", rows: list<Payload>(delivery.trend).map(t => ({ label: text(t.period), value: num(t.opened), display: `${number(t.opened)} opened · ${number(t.closed)} resolved` })) },
+        {
+          kind: "kpis",
+          title: "Commercials",
+          items: [
+            { label: "Invoiced", value: money(commercials.invoiced), tone: "good" },
+            { label: "Collected", value: money(commercials.collected), tone: "good" },
+            { label: "Outstanding", value: money(commercials.outstanding), tone: "warn" },
+            { label: "Overdue", value: money(commercials.overdue), tone: "bad" },
+            { label: "Collection rate", value: `${number(commercials.collectionRate)}%`, tone: toneFor(num(commercials.collectionRate), 95) },
+            { label: "Average invoice", value: money(commercials.averageInvoice), tone: "info" },
+            { label: "Recurring annual value", value: money(agreementTotals.annualisedValue), tone: "info" },
+            { label: "Agreement margin", value: `${number(agreementTotals.marginPct)}%`, tone: "info" },
+          ],
+        },
+        {
+          kind: "table",
+          title: `Revenue by client this ${noun}`,
+          columns: [
+            { key: "client", label: "Client" },
+            { key: "invoices", label: "Invoices", align: "right" },
+            { key: "invoiced", label: "Invoiced", align: "right", format: "money" },
+            { key: "collected", label: "Collected", align: "right", format: "money" },
+            { key: "outstanding", label: "Outstanding", align: "right", format: "money" },
+            { key: "oldest", label: "Oldest overdue", align: "right" },
+          ],
+          rows: list<Payload>(commercials.byClient).map(r => ({ ...r, oldest: num(r.oldestOverdueDays) ? `${number(r.oldestOverdueDays)} days` : "Current" })),
+        },
+        {
+          kind: "table",
+          title: "Agreements",
+          columns: [
+            { key: "agreement", label: "Agreement" },
+            { key: "client", label: "Client" },
+            { key: "billingAmount", label: "Billing", align: "right", format: "money" },
+            { key: "annualisedValue", label: "Annualised", align: "right", format: "money" },
+            { key: "invoiced", label: "Invoiced", align: "right", format: "money" },
+            { key: "hoursDelivered", label: "Hours", align: "right" },
+            { key: "margin", label: "Margin", align: "right", format: "money" },
+            { key: "marginPct", label: "Margin %", align: "right", format: "percent" },
+          ],
+          rows: list<Payload>(commercials.agreements),
+          emptyText: "No agreements in scope.",
+        },
+        {
+          kind: "table",
+          title: "Catalogue items sold",
+          columns: [
+            { key: "product", label: "Product" },
+            { key: "sku", label: "SKU" },
+            { key: "type", label: "Type" },
+            { key: "quantity", label: "Quantity", align: "right" },
+            { key: "lines", label: "Lines", align: "right" },
+            { key: "revenue", label: "Revenue", align: "right", format: "money" },
+          ],
+          rows: list<Payload>(commercials.topProducts),
+          emptyText: `No catalogue items were invoiced this ${noun}.`,
+        },
+        {
+          kind: "table",
+          title: "Clients by tickets",
+          columns: [{ key: "label", label: "Client" }, { key: "count", label: "Tickets", align: "right" }],
+          rows: list<Payload>(clients.byTickets),
+        },
+        {
+          kind: "table",
+          title: "Open work by client",
+          columns: [
+            { key: "label", label: "Client" },
+            { key: "open", label: "Open", align: "right" },
+            { key: "over30", label: "Over 30 days", align: "right" },
+            { key: "avgAgeDays", label: "Average age (days)", align: "right" },
+          ],
+          rows: list<Payload>(clients.aging),
+        },
+        {
+          kind: "table",
+          title: "Risk — targets missed and answered late",
+          columns: [
+            { key: "ticketNumber", label: "Ticket" },
+            { key: "title", label: "Subject" },
+            { key: "client", label: "Client" },
+            { key: "assignedTo", label: "Assigned" },
+            { key: "ageHours", label: "Age", align: "right", format: "hours" },
+            { key: "responseOutcome", label: "Response" },
+            { key: "resolutionOutcome", label: "Resolution" },
+          ],
+          rows: list<Payload>(risk.slaBreaches),
+          emptyText: `Nothing breached a target this ${noun}.`,
+        },
+        {
+          kind: "table",
+          title: "Risk — largest outstanding invoices",
+          columns: [
+            { key: "invoiceNumber", label: "Invoice" },
+            { key: "client", label: "Client" },
+            { key: "amount", label: "Amount", align: "right", format: "money" },
+            { key: "due", label: "Due" },
+            { key: "daysOverdue", label: "Days overdue", align: "right" },
+          ],
+          rows: (risk.largestOutstanding as Array<Record<string, unknown>>) ?? [],
+          emptyText: "Nothing outstanding.",
+        },
+        {
+          kind: "facts",
+          title: "Estate under management",
+          items: [
+            { label: "Assets", value: number(estate.assets) },
+            { label: "Warranties expiring in 90 days", value: number(estate.warrantyExpiringIn90Days) },
+            ...list<Payload>(estate.byType).map(t => ({ label: text(t.type), value: number(t.count) })),
+          ],
+        },
+        {
+          kind: "kpis",
+          title: "Satisfaction",
+          items: [
+            { label: "Responses", value: number(satisfaction.responses) },
+            { label: "NPS", value: satisfaction.nps === null || satisfaction.nps === undefined ? "No scores" : number(satisfaction.nps), tone: num(satisfaction.nps) >= 30 ? "good" : "warn" },
+            { label: "Average score", value: satisfaction.averageScore === null || satisfaction.averageScore === undefined ? "—" : `${satisfaction.averageScore} / 10`, tone: "info" },
+          ],
+        },
+        {
+          kind: "table",
+          title: "Satisfaction by client",
+          columns: [
+            { key: "client", label: "Client" },
+            { key: "responses", label: "Responses", align: "right" },
+            { key: "averageScore", label: "Average", align: "right" },
+            { key: "nps", label: "NPS", align: "right" },
+            { key: "promoters", label: "Promoters", align: "right" },
+            { key: "detractors", label: "Detractors", align: "right" },
+          ],
+          rows: list<Payload>(satisfaction.byClient),
+        },
+        {
+          kind: "facts",
+          title: "How this pack was built",
+          items: [
+            { label: "Cadence", value: `${periodLabel} — reviewed ${reviewed}` },
+            { label: "Compared with", value: comparedWith },
+            { label: "Every figure comes from", value: "The same sources as the standard reports" },
+          ],
+        },
+        { kind: "notes", title: "Notes", items: list<string>(payload.notes), tone: "info" },
+      ];
+    },
+  };
+}
+
+const weeklyReview = businessReview({
+  id: "weekly-review",
+  title: "Weekly Business Review",
+  description: "Last week's service, targets, commercials and risks, against the week before",
+  endpoint: "/reports/data/weekly-business-review",
+  icon: Calendar,
+  noun: "week",
+  periodLabel: "Last completed week",
+});
+
+const monthlyReview = businessReview({
+  id: "monthly-review",
+  title: "Monthly Business Review",
+  description: "Last month's service, targets, commercials and risks, against the month before",
+  endpoint: "/reports/data/monthly-business-review",
+  icon: Calendar,
+  noun: "month",
+  periodLabel: "Last completed month",
+});
+
+const qbr = businessReview({
+  id: "qbr",
+  title: "Quarterly Business Review",
+  description: "The service, commercial and risk picture for a quarter, against the one before it",
+  endpoint: "/reports/data/quarterly-business-review",
+  icon: Presentation,
+  noun: "quarter",
+  periodLabel: "Last completed quarter",
+});
+

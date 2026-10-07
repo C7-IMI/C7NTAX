@@ -127,6 +127,7 @@ function ProtectedRoutes() {
         <Route path="/billing/reports" element={<BillingPage tab="reports" />} />
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/reports/standard" element={<ReportsPage tab="standard" />} />
+        <Route path="/reports/qbr" element={<ReportsPage tab="qbr" />} />
         <Route path="/reports/analytics" element={<ReportsPage tab="analytics" />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/reports/custom" element={<CustomReportsPage />} />

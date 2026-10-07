@@ -125,6 +125,8 @@ export interface ReportRunResult {
   rows: Record<string, unknown>[];
   truncated: boolean;
   notes: string[];
+  /** The row ceiling the run was given, so the caller can say what it stopped at. */
+  limit?: number;
 }
 
 /** Builds a Prisma `where` from the config's filters, ignoring anything not whitelisted. */
@@ -220,9 +222,9 @@ export async function runReportConfig(config: ReportConfig, scope: Record<string
         counts.set(label, (counts.get(label) ?? 0) + 1);
       }
       const grouped = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([value, count]) => ({ [key]: value, count }));
-      return { source, columns: [key, "count"], rows: grouped, truncated: false, notes };
+      return { source, columns: [key, "count"], rows: grouped, truncated: false, notes, limit };
     }
   }
 
-  return { source, columns, rows: renamed, truncated, notes };
+  return { source, columns, rows: renamed, truncated, notes, limit };
 }

@@ -1008,9 +1008,9 @@ async function main() {
   log("\nReporting and other surfaces:");
   await ensure("reports", () => prisma.report.count(), async () => {
     const rows = [
-      { name: "Ticket volume by client", description: "Tickets opened per client per week, with SLA breach counts.", type: "tickets", config: { groupBy: "company", period: "week" } },
-      { name: "Technician utilisation", description: "Billable hours against available hours per technician.", type: "time", config: { groupBy: "user", period: "month" } },
-      { name: "Recurring revenue by agreement", description: "Monthly recurring value per service agreement.", type: "billing", config: { groupBy: "agreement", period: "month" } },
+      { name: "Ticket volume by client", description: "Tickets per client, rolled up by client.", type: "custom", config: { source: "tickets", columns: ["ticketNumber", "title", "status", "client"], groupBy: "client", limit: 500 } },
+      { name: "Technician utilisation", description: "Billable hours, throughput and utilization per technician.", type: "utilization", config: {} },
+      { name: "Agreement profitability", description: "Revenue against cost per service agreement, with margin.", type: "contract", config: {} },
     ];
     await prisma.report.createMany({ data: rows.map((row) => ({ ...row, isSystem: false, createdById: primary.id })) });
     return rows.length;

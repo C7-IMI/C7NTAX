@@ -1,5 +1,16 @@
 [
   {
+    "id": "300f7292-d13a-462f-b3c7-445e03c626dc",
+    "name": "Client Value Report",
+    "description": "Value delivered per client",
+    "type": "client_value",
+    "config": {},
+    "isSystem": false,
+    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-08-19T16:15:28.983Z",
+    "updatedAt": "2026-10-07T11:21:02.661Z"
+  },
+  {
     "id": "f037556f-a402-427b-bcf0-0038efea3b3d",
     "name": "Browser check — open tickets",
     "description": null,
@@ -39,16 +50,5 @@
     "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-08-19T16:15:28.982Z",
     "updatedAt": "2026-08-19T16:15:28.982Z"
-  },
-  {
-    "id": "300f7292-d13a-462f-b3c7-445e03c626dc",
-    "name": "Client Value Report",
-    "description": "Value delivered per client",
-    "type": "revenue",
-    "config": {},
-    "isSystem": false,
-    "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "createdAt": "2026-08-19T16:15:28.983Z",
-    "updatedAt": "2026-08-19T16:15:28.983Z"
   }
 ]
