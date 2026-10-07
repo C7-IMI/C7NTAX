@@ -8,6 +8,7 @@ import { AppError } from "../middleware/errorHandler";
 import { CONFIG_FIELDS, Permission, resolveEnvironmentValue } from "@C7NTAX/shared";
 import { configFlag, environmentSupplied } from "../services/appSettings";
 import { addinAssetsPresent, addinDirectory } from "../services/addinAssets";
+import { addinId, installerBuild, installerDescriptor, installerDirectory, publicOrigin } from "../services/addinPackage";
 
 export const systemRouter = Router();
 systemRouter.use(authenticate);
@@ -201,7 +202,7 @@ systemRouter.get("/configs", requirePermission(Permission.SystemConfig), async (
  * relay reports whether credentials are set, not what they are, and the database URL is reduced
  * to host and database name because the connection string carries a password.
  */
-systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (_req: AuthRequest, res) => {
+systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (req: AuthRequest, res) => {
   const env = process.env;
   const databaseUrl = env.DATABASE_URL ?? "";
   let database: { configured: boolean; host: string | null; name: string | null } = { configured: false, host: null, name: null };
@@ -217,6 +218,12 @@ systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (_re
 
   const addinDir = env.OUTLOOK_ADDIN_DIR || "(default: apps/outlook-addin)";
   const smtpHost = env.SMTP_HOST ?? "";
+  /**
+   * The origin the add-in's URLs must carry, and the installer actually built here. Both are
+   * resolved once so the two halves of the report cannot describe different deployments.
+   */
+  const origin = publicOrigin(req);
+  const installer = installerBuild();
   res.json({
     mail: {
       configured: Boolean(smtpHost),
@@ -251,6 +258,33 @@ systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (_re
        * is not there, and saying so here is the difference between "off" and "cannot be on".
        */
       assetsPresent: addinAssetsPresent(),
+      /** Where the manifest's URLs point, and the identity Office knows the add-in by. */
+      origin,
+      manifestId: addinId(),
+      manifestUrl: `${origin}/addin/manifest.xml`,
+      /**
+       * The Windows installer, when this deployment has one. Null rather than an empty object
+       * because "there is no installer here" is a fact the screen has to state plainly, and
+       * `installerDirectory` is reported alongside it so an operator knows where to put one.
+       *
+       * The artifact's own fields come from the same descriptor the public endpoint serves, so the
+       * version a user is told they are downloading and the version an administrator is told was
+       * built cannot drift apart.
+       */
+      installer: installer
+        ? {
+            ...installerDescriptor(),
+            /** The origin baked into the manifest this installer registers. */
+            addinHost: installer.addinHost,
+            /**
+             * Whether that origin is this server's. An installer built for another host registers a
+             * manifest that points at the wrong place, and the only symptom is an add-in that loads
+             * an empty pane — so the mismatch is reported, not left to be discovered.
+             */
+            matchesOrigin: installer.addinHost === origin,
+          }
+        : null,
+      installerDirectory: installerDirectory(),
     },
   });
 });

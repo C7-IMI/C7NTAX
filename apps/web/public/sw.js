@@ -1,6 +1,6 @@
 /* C7NTAX Service Worker — PWA shell caching + notifications */
 
-const CACHE_NAME = "C7NTAX-v4";
+const CACHE_NAME = "C7NTAX-v5";
 const STATIC_ASSETS = ["/", "/index.html", "/icon-192.png", "/manifest.json"];
 
 /**
@@ -68,6 +68,10 @@ self.addEventListener("fetch", (event) => {
   if (isDevServerRequest(req.url)) return;
   // API calls: the network, and nothing else. No cache read, no cache write.
   if (new URL(req.url).pathname.startsWith("/api/")) return;
+  // The Outlook add-in: the taskpane, the generated manifest and the installer download. It is
+  // served by the API, so the same rule applies — and a downloaded installer that came back out
+  // of a cache would be a rebuilt installer nobody ever receives.
+  if (new URL(req.url).pathname.startsWith("/addin/")) return;
   // Navigations: network-first, so a reload always picks up the current app and
   // the cached copy only serves an offline start
   if (req.mode === "navigate") {

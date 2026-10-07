@@ -8,6 +8,7 @@ import {
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
   AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio,
+  MonitorSmartphone, Mail,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
@@ -110,6 +111,16 @@ export const NAV_TREE: NavNode[] = [
       { id: "reports-reviews", to: "/reports/reviews", icon: Presentation, label: "Business Reviews" },
       { id: "reports-custom", to: "/reports/custom", icon: Filter, label: "Custom Reports" },
       { id: "reports-analytics", to: "/reports/analytics", icon: BarChart3, label: "Analytics" },
+    ],
+  },
+  {
+    // C7NC — the C7NTAX companion clients. A parent section rather than a page under
+    // Administration because these are things a *user* installs on their own machine, not
+    // settings an administrator changes, and a technician should not have to find them behind
+    // a settings screen. Deliberately carries no permission: the download is offered to anyone
+    // who can sign in, and the deployment facts behind it are gated by the API.
+    id: "c7nc", icon: MonitorSmartphone, label: "C7NC", children: [
+      { id: "c7nc-outlook", to: "/c7nc/outlook-addin", icon: Mail, label: "Outlook Add-in" },
     ],
   },
   {
@@ -235,6 +246,9 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/reports/custom": "Saved reports built on the reporting engine, with their schedules.",
   "/reports/custom/:id/design": "The banded report designer: bands, fields, expressions, totals and a page preview.",
   "/reports/analytics": "Advanced analytics with visual charts and trend data.",
+  "/c7nc": "C7NTAX companion clients — the add-ins and apps that put C7NTAX inside the tools you already work in.",
+  "/c7nc/outlook-addin": "Install the Outlook add-in, which turns the email you are reading into a C7NTAX ticket.",
+  "/section/c7nc": "C7NTAX companion clients — the add-ins and apps that put C7NTAX inside the tools you already work in.",
   "/help": "Documentation home — guided setup, FAQ, configuration reference, and a cross-linked index.",
   "/help/getting-started": "First login, the core ticket workflow, and team & boards setup.",
   "/help/faq": "Answers to common questions about tickets, billing, integrations, and Kumo.",

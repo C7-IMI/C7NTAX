@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  C7NTAX — Windows installer for the Outlook add-in.
+
+  What it does, in the order it matters:
+
+   1. copies a manifest whose URLs already point at a real deployment into the signed-in
+      user's own profile, and
+   2. registers that manifest in the per-user key Office reads for a sideloaded add-in.
+
+  Both halves are per-user and need no administrator: an Office web add-in is registered in
+  the hive of the person who will run it, so a machine-wide package would write the wrong
+  place and appear to work only for whoever ran it. That is also why `Scope` is `perUser`.
+
+  The registry value **name** is the manifest's `<Id>` GUID, so the build passes it in
+  (`-d AddinId=...`) from the manifest it staged — the name and the manifest cannot drift
+  apart, because neither is written down twice.
+
+  Preprocessor variables (all supplied by `build.ps1`):
+    ManifestSource  absolute path to the staged, origin-resolved manifest
+    ReadmeSource    absolute path to the README.txt installed beside it
+    AddinId         the manifest's <Id>, used as the registry value name
+    ProductVersion  X.Y.Z, from the repository's own version
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="C7NTAX Outlook add-in"
+    Manufacturer="C7 Intelligence"
+    Version="$(var.ProductVersion)"
+    UpgradeCode="626a532a-3dc2-459b-b02e-f79d57e75f1c"
+    Scope="perUser"
+    Compressed="yes">
+
+    <SummaryInformation
+      Description="Registers the C7NTAX email-to-ticket add-in with Outlook for the current user."
+      Manufacturer="C7 Intelligence" />
+
+    <!-- An upgrade replaces the previous copy, and a downgrade is refused rather than silently
+         installed: the identity Office knows the add-in by has to keep matching its cache. -->
+    <MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="A newer version of the C7NTAX Outlook add-in is already installed." />
+    <!-- No licence page and no custom UI: there is nothing to choose. -->
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="C7NTAXRoot" Name="C7NTAX">
+        <Directory Id="ADDINDIR" Name="OutlookAddIn" />
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="C7NTAX Outlook add-in" Level="1" AllowAbsent="no">
+      <ComponentGroupRef Id="AddinComponents" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="AddinComponents" Directory="ADDINDIR">
+      <Component Id="cmpManifest" Guid="9b0d1c4a-2f6e-4a51-8c3d-7e5f1a2b6c40">
+        <File Id="fileManifest" Name="manifest.xml" Source="$(var.ManifestSource)" KeyPath="yes" />
+        <File Id="fileReadme" Name="README.txt" Source="$(var.ReadmeSource)" />
+      </Component>
+
+      <!--
+        The sideload registration.
+
+        `Root="HKCU"` maps to MSI registry root 1, which is the current user's hive regardless of
+        how the package was invoked — the property that makes this package safe to install
+        without elevation.
+
+        `Type="string"` is REG_SZ, and it matters: Office does not read REG_EXPAND_SZ here, and a
+        value written with the wrong type registers an add-in that never appears.
+
+        The value is the manifest's path below `[ADDINDIR]`, so it follows a relocated
+        LOCALAPPDATA rather than baking one machine's path into the package.
+      -->
+      <Component Id="cmpRegistration" Directory="ADDINDIR" Guid="4c7a2e18-6d93-4b0f-9a25-3e8b5f0d7a63">
+        <RegistryValue
+          Id="regAddin"
+          Root="HKCU"
+          Key="Software\Microsoft\Office\16.0\Wef\Developer"
+          Name="$(var.AddinId)"
+          Type="string"
+          Value="[ADDINDIR]manifest.xml"
+          KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

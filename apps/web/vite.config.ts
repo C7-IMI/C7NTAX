@@ -41,6 +41,10 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": API_ORIGIN,
+      // The add-in's taskpane, its generated manifest and its installer download. Proxied so a
+      // link on the C7NC page resolves same-origin in development exactly as it does in a
+      // deployment — including the manifest, whose URLs are built from the host it was asked on.
+      "/addin": API_ORIGIN,
       "/ws": { target: API_ORIGIN.replace("http", "ws"), ws: true },
     },
   },

@@ -45,6 +45,7 @@ import { CustomReportsPage } from "./pages/CustomReports";
 import { ReportDesignerPage } from "./pages/ReportDesigner";
 import { SectionLanding, SECTION_DESCRIPTIONS } from "./pages/SectionLanding";
 import { ProductCatalogPage } from "./pages/ProductCatalog";
+import { OutlookAddInPage } from "./pages/OutlookAddIn";
 import { NAV_TREE } from "./components/Layout";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { HomePage } from "./pages/HomePage";
@@ -159,6 +160,9 @@ function ProtectedRoutes() {
         <Route path="/admin/configuration" element={<ConfigurationHub />} />
         <Route path="/admin/configuration/:sectionId" element={<ConfigurationSectionPage />} />
         <Route path="/admin/portal" element={<CustomerPortalSettingsPage />} />
+        {/* C7NC — the companion clients. Not under Administration: these are things a user
+            installs on their own machine, and the page is offered to anyone who can sign in. */}
+        <Route path="/c7nc/outlook-addin" element={<OutlookAddInPage />} />
         <Route path="/admin" element={<ConfigurationHub />} />
         <Route path="/admin/changelog" element={<ChangelogPage />} />
         <Route path="/billing/dashboard" element={<FinanceDashboardPage />} />

@@ -104,6 +104,9 @@ export const SECTION_DESCRIPTIONS: Record<string, Record<string, string>> = {
     "reports-standard": "Pre-built reports: ticket volume, SLA, revenue, technician utilization",
     "reports-analytics": "Advanced analytics with visual charts and trend data",
   },
+  c7nc: {
+    "c7nc-outlook": "Install the add-in that turns the email you are reading into a C7NTAX ticket",
+  },
   kumo: {
     "kumo-dashboard": "IT documentation overview with recently viewed items",
     "kumo-assets": "Flexible assets with custom templates and dynamic fields",
