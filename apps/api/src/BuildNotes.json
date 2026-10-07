@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.7.014",
+    "date": "2026-10-07",
+    "title": "A QR screenshot is enough to enrol, and a foreign one is refused",
+    "changes": [
+      {
+        "text": "**Two-factor enrolment accepts a screenshot of the QR.** The workflow this exists for: a user screenshotted their authenticator QR (or was handed the image) and now needs the base32 key to type in by hand, because the screen that showed it is gone. `apps/web/src/lib/qrEnrolment.ts` reads the image, extracts the `otpauth://` enrolment and hands back the key — and the key above it is now grouped in fours with a copy button, the way manual entry expects it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The image is decoded in the browser and never uploaded.** A QR screenshot is that user's own credential material; there is no reason for it to leave the machine, and doing it here also avoids giving the server an image-decoding dependency to do the same arithmetic. `BarcodeDetector` is used where the browser has it, with **jsQR** as the fallback.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A screenshot that belongs to somebody else is refused, by name.** Silently enrolling with a secret that is not this account's would produce an authenticator whose codes the server always rejects, with nothing on screen explaining why. A foreign QR is reported — \"it carries the issuer “Kumo” and the account “Kumo: QR probe secret”; codes from it will not be accepted by this account\" — and a summary that is not an authenticator enrolment, or an image with no QR in it, says so instead of failing silently.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.013",
     "date": "2026-10-07",
     "title": "The dormant Microsoft 365 accounts, and a departure checklist that disables nothing",

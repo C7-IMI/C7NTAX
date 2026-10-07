@@ -3709,3 +3709,19 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - `ChecklistTask.position`, not `sortOrder` — my first checklist create 500'd on it; worth remembering when touching checklists.
 - The failed first probe run left 14 M365 users, 4 clients, 2 integrations and 6 contacts behind, which the browser then showed. `clean-probe-residue.ts` now sweeps the M365 probe's artefacts — an interrupted probe leaves data, so run the cleaner after a failed probe, not only after a successful one.
+
+**Prompt 220 — continued: W2-12 (MFA QR screenshot enrolment, PLAN-015 Phase B #7)**
+
+**What I did**
+- `apps/web/src/lib/qrEnrolment.ts`: read an image, decode the QR (`BarcodeDetector` when present, **jsQR** otherwise — one new dependency, in the web app), parse the `otpauth://` URI, and hand back the secret plus the issuer and account it claims.
+- `MFASetup.tsx`: a drop-or-choose zone under the key, a copy button, and the key grouped in fours. The account's own QR matches and says so; a QR for anything else is refused with the issuer and account named; an image with no QR, or a QR that is not a TOTP enrolment, says which it is.
+- Verified in the browser, because that is where the decoding happens: the page's own QR data URL was turned into a `File` and dropped (matched), then a genuinely different enrolment generated through the Kumo vault was dropped (refused, with "Kumo" and the password label named).
+
+**Decisions worth remembering**
+- **The screenshot never leaves the browser.** It is the user's own credential material; uploading it would put a second copy of a second factor on the server for no gain, and would need an image-decoding dependency server-side.
+- **Compare, do not adopt.** Accepting the secret from an uploaded image and enrolling with it would be the obvious implementation and the wrong one: a user could enrol with a secret from another system and then wonder why every code is rejected. The page compares against the pending secret and explains a mismatch.
+- **This is a deliberate deviation from the plan's "server-side decode", recorded in BuildNotes with the reason.**
+
+**Notes for next time**
+- `MFASetup` regenerates its pending secret on every visit (pre-existing). That means a screenshot taken before a reload now reports as a foreign enrolment — the message is honest, but rotate-on-load is the actual defect and is recorded rather than changed here.
+- The bundle grew by jsQR (~40KB); `BarcodeDetector` handles Chrome/Edge so the library is only the fallback.

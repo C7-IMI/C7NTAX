@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.013 | Last Updated: 2026-10-07
+## Version: 2026.10.7.014 | Last Updated: 2026-10-07
 
 ---
 
@@ -13,6 +13,15 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.7.014 — A QR screenshot is enough to enrol, and a foreign one is refused
+- **[New]** **Two-factor enrolment accepts a screenshot of the QR.** The workflow this exists for: a user screenshotted their authenticator QR (or was handed the image) and now needs the base32 key to type in by hand, because the screen that showed it is gone. `apps/web/src/lib/qrEnrolment.ts` reads the image, extracts the `otpauth://` enrolment and hands back the key — and the key above it is now grouped in fours with a copy button, the way manual entry expects it.
+- **[New]** **The image is decoded in the browser and never uploaded.** A QR screenshot is that user's own credential material; there is no reason for it to leave the machine, and doing it here also avoids giving the server an image-decoding dependency to do the same arithmetic. `BarcodeDetector` is used where the browser has it, with **jsQR** as the fallback.
+- **[New]** **A screenshot that belongs to somebody else is refused, by name.** Silently enrolling with a secret that is not this account's would produce an authenticator whose codes the server always rejects, with nothing on screen explaining why. A foreign QR is reported — "it carries the issuer “Kumo” and the account “Kumo: QR probe secret”; codes from it will not be accepted by this account" — and a summary that is not an authenticator enrolment, or an image with no QR in it, says so instead of failing silently.
+- **Verification:** browser-driven end to end, because that is where the decode happens — the account's own QR data URL was turned into a `File` and dropped on the zone (matched: "This is the enrolment code for this account"), and a **genuinely different** TOTP enrolment generated through the Kumo password vault was dropped next (refused, with the issuer and account named, and the mismatch banner rendered). Regression: 34/34 session, 13/13 scoping, 31/31 dashboard, 34/34 Kumo audit, 36/36 M365 inactivity, `guard:routes` 354 routes/315 with permission/0 violations, web typecheck 0, API typecheck 152 (pre-existing only), Azure preflight 0 failures.
+- **Rollback:** the feature is one page and one module with a new dependency; removing the dropzone restores the previous screen exactly, and enrolment itself is untouched (the server's `/auth/mfa/setup` and `/auth/mfa/verify-setup` are unchanged).
+- **Deviation from the plan, recorded deliberately:** the plan said "server-side QR-decode". It is done in the browser instead — the screenshot stays on the user's machine, no image ever reaches the API, and the server gains nothing to decode, sanitise or rate-limit.
+- **Known limitation, recorded rather than implied:** the enrolment screen regenerates its pending secret on every visit (pre-existing behaviour), so a screenshot taken before a reload no longer matches and is reported as a foreign enrolment. The message says what it found rather than "invalid", but the underlying rotate-on-load is the real fix and is left alone here.
 
 ## 2026.10.7.013 — The dormant Microsoft 365 accounts, and a departure checklist that disables nothing
 - **[New]** **Inactive accounts per client, from what the tenant actually reported.** `M365User` gained `lastSignInAt`; the M365 sync now reads sign-in activity **in a separate, optional call**, and `GET /cloudconnect/m365/inactivity` buckets every synced account by last sign-in — active, 30–60, 60–90, over 90 days — grouped by client, dormant accounts first.
