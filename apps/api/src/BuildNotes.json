@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.6.053",
+    "date": "2026-10-06",
+    "title": "Security audit: every CVE in the dependency tree, and the exploitable paths in our own code",
+    "changes": [
+      {
+        "text": "**A full dependency-CVE audit against the CVE Project's database, filtered to what we actually ship.** Every workspace's real dependency closure was rebuilt from `pnpm-lock.yaml` (911 dependencies) and matched against the advisory data, then each finding was re-read from the primary `CVEProject/cvelistv5` record for its CWE, affected range and patch version, and finally checked against the code to see whether the vulnerable function is ever called. `pnpm audit` reports 128 advisory instances; **26 survive the reachability filter**, split into the production API, the browser bundle, the Electron desktop runtime and build-only tooling. The short version: **1 critical and 16 high in code we ship**, the worst of them being `electron` 33 (38 advisories, including ASAR-integrity bypass) which is already installed on users' machines, `nodemailer` 6 reaching the address parser with addresses taken from inbound email, `axios` 1.19, and a critical `proxy-addr` IP-spoofing bug that is harmless today **only** because `trust proxy` is unset — i.e. it arms itself the moment the planned reverse-proxy deployment lands.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Three dependencies are dead weight carrying CVEs.** `node-forge` (a signature-verification forgery with no upstream fix) is never referenced anywhere in `packages/integrations`; `mjml` (with `html-minifier`'s unpatched ReDoS and `deepmerge-ts`' stack exhaustion behind it) is never compiled — a comment in the email package even says production \"should use MJML\". Removing both clears three of the high findings outright, and `dompurify` is declared in the web app but never imported, which is the opposite problem: it should be in the render path.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**An adversarial pass over our own code found two critical authorization holes and a stored XSS.** `/api/system/*` and the `clients`, `reports`, `kb`, `chat`, `surveys`, `workflows`, `alerts`, `aiActions` and `bulk` routers mount `authenticate` and then never call the `requirePermission` they import — with no company scoping either, so **any signed-in account, including a client contact, can read or delete every company's records and rewrite system config**. The invoice \"PDF\" endpoint builds HTML by string interpolation and serves it as `text/html`, so a line-item description or payment reference becomes script execution in the browser of the admin who opens the invoice. `PATCH /api/users/:id` needs only `UserManage` (which managers hold) but accepts `role` and a raw `permissions` array for any user including the caller, so a manager can promote themselves to super admin. The OIDC callback never validates the `state` it generates and provisions unknown identities with the **admin** role. Also confirmed: `authenticate` fails open on a database error, failed logins are never counted (the Security tab's \"Account Locked\" state has nothing behind it), the global rate limiter is `9999` per minute, `GET /api/alert-webhooks` returns each webhook's HMAC secret to any authenticated user, and the JWT fallback secret is a public constant that also derives the Kumo vault key when `KUMO_MASTER_KEY` is unset.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The remediation is planned as `PLAN-018`, positioned as Wave 0 — ahead of the cloud split.** Phase 0 is twelve single-file fixes (permission gates, output escaping, the role-escalation guard, SSO state and provisioning, fail-closed auth, account lockout, per-endpoint rate limits, no token in query strings). Phase 1 is one dependency PR: remove the dead packages, upgrade `nodemailer` 6→10, `axios`, `electron` (plus the pinned `electronVersion`) and `electron-builder` 24→26, and pin the transitive fixes with `pnpm.overrides`, recording the four upstream-unfixed advisories as explicit accepted risks with their reachability reasoning. Phase 2 covers the structural causes — one egress helper with a host allow-list, Redis-backed rate limiting, HttpOnly session cookies instead of `localStorage`, defence-in-depth rendering, and company scoping as middleware rather than per-route discipline. Phase 3 puts the whole thing on a CI gate with a committed audit baseline, secret scanning and grouped update PRs.",
+        "type": "New Feature"
+      },
+      {
+        "text": "`PlanDocs/README.md` gained the new Wave 0 row, the registry entry for PLAN-018, and a note explaining why a security wave sits ahead of every feature wave.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.052",
     "date": "2026-10-06",
     "title": "Resetting a user's password, and a New User dialog that matches how PSA tools create people",

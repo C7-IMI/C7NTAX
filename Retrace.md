@@ -3085,3 +3085,31 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - The `SnapshotPoller` service re-captures `apps/api/src/snapshots/*.json` automatically every ~5 min whenever a watched table's row count changes, so test rows I create land in the snapshots within minutes. Anything created during a probe must be deleted from the database *and* the snapshots re-captured before committing, or the reseed fixtures pick up the test data.
 - The audit middleware skips `/api/users/me` but logs everything else under `users`, including resets — rows for users that were then deleted have to be cleaned separately.
 - `git status` on `apps/api/src/snapshots` is the fastest way to spot whether a poller fired during a session.
+
+---
+
+### Prompt 212 — CVE review against cvelistv5, exploit paths in our code, and an implementation doc
+**Timestamp:** 2026-10-06 | **Status:** Done — audited, doc authored, registered as PLAN-018; no code changed | **Duration:** ~2 h
+**BuildNotes IDs:** 2026.10.6.053 - Security audit: every CVE in the dependency tree, and the exploitable paths in our own code
+> REview the CVE database:
+
+> https://github.com/CVEProject/cvelistv5
+
+> Check the codebase against CVEs and list potential exploits and code changes/updates that need to happen. create an implementation doc
+
+**What I did**
+- Ran the CVE work in the requested order: `pnpm audit --json` for the installed tree (911 deps, 128 advisory instances), then **rebuilt each workspace's real dependency closure from `pnpm-lock.yaml`** (lockfile v9: `importers` → `snapshots` BFS) so an advisory only counts where the package is actually installed, then `semver.satisfies(installed, advisory.vulnerable_versions)` to drop out-of-range hits — 128 instances collapse to 26 real ones.
+- Re-read every material CVE from the primary record in `CVEProject/cvelistv5` (`cves/<year>/<bucket>/<CVE>.json` via raw.githubusercontent.com) and pulled the published CWE, affected range and patch version into the doc's Appendix A rather than trusting advisory summaries.
+- Split the results into four tiers that match how the product actually ships: production API runtime, browser bundle, **Electron desktop runtime** (a devDependency in name, the runtime on user machines in fact), and build/CI tooling only — then verified reachability in code for each (e.g. `node-forge` and `mjml` are declared but never called; `uuid` only uses `v4`; `axios`'s affected issues are in the fetch adapter we do not use).
+- Ran an **independent adversarial code review** (security-review agent) and verified its top findings line-by-line myself before writing them down: `requirePermission` counts per router, the invoice template, the OIDC callback, the login path, the webhook list query, the lockout fields.
+- Wrote `PlanDocs/PLAN-018-Dependency-and-Application-Security-Remediation.md`: method, Part A findings (13, with verification notes), Part B tiered dependency tables, Phase 0/1/2/3 remediation with file-level changes and acceptance criteria, verification plan, rollback, acceptance criteria, Appendix A (CVE records) and Appendix B (reproducible commands). Registered it in `PlanDocs/README.md` as **Wave 0** with a note on why a security wave precedes the feature waves.
+
+**Headline results**
+- Dependencies: 1 critical + 16 high inside shipped code. `electron@33.4.11` alone carries 38 advisories; `nodemailer@6.10.1` reaches its address parser with addresses from inbound email; `proxy-addr@2.0.7` is a critical IP-spoofing bug that is currently dormant **only** because `trust proxy` is unset; removing two unused packages clears three highs.
+- Application: two critical authorization holes (`/api/system/*` and the clients/reports/kb/chat/surveys/workflows/alerts/bulk routers mount `authenticate` and never call the `requirePermission` they import, with no company scoping), a stored XSS in the invoice renderer (`text/html` + unescaped interpolation), a manager → super-admin escalation through `PATCH /api/users/:id`, an unvalidated OIDC `state` combined with JIT provisioning as `admin`, fail-open auth on DB error, no real lockout, a 9999/min limiter, webhook secrets in a list response, and a public JWT fallback secret that also derives the Kumo vault key.
+
+**Notes for next time**
+- **`pnpm audit` output is not a worklist.** Its 128 instances included packages we never install, versions outside the vulnerable range, and functions we never call — the lockfile-closure + `semver.satisfies` filter is what makes it actionable, and it is worth keeping as a script.
+- The two most dangerous findings were **not** CVE-driven at all: a router that imports a guard and never uses it, and a router that was written before the guard existed. A route-inventory test would have caught both.
+- `pnpm why` output is easy to mis-filter; the closure walk over the lockfile produced far more reliable "who pulls this in" data than the command.
+- The security-review agent's severity ratings held up under verification, with two corrections worth recording: the invoice XSS needs a shared origin to reach `localStorage` (true in dev and in the planned single-hostname deployment, not universally), and the SSRF findings are privileged-insider (user-level auth required) rather than anonymous.
