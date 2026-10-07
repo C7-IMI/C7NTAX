@@ -40,6 +40,106 @@
     "updatedAt": "2026-10-07T16:36:15.614Z"
   },
   {
+    "id": "fa7349b9-dbd1-4c00-b1e2-52ecf9295c69",
+    "name": "Persona probe category 1791406615128",
+    "slug": "persona-probe-category-1791406615128",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:56:55.131Z",
+    "updatedAt": "2026-10-07T20:56:55.131Z"
+  },
+  {
+    "id": "d2aadb8b-de0c-4030-bde1-dce20cc1dfee",
+    "name": "Persona probe category 1791406615140",
+    "slug": "persona-probe-category-1791406615140",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:56:55.143Z",
+    "updatedAt": "2026-10-07T20:56:55.143Z"
+  },
+  {
+    "id": "4b942786-8d07-42b0-aba3-7e337ac44f0f",
+    "name": "Persona probe category 1791406637060",
+    "slug": "persona-probe-category-1791406637060",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:57:17.065Z",
+    "updatedAt": "2026-10-07T20:57:17.065Z"
+  },
+  {
+    "id": "ee845081-af1e-4a56-834d-8340f797a68c",
+    "name": "Persona probe category 1791406637068",
+    "slug": "persona-probe-category-1791406637068",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:57:17.074Z",
+    "updatedAt": "2026-10-07T20:57:17.074Z"
+  },
+  {
+    "id": "ed88133b-d002-457a-a88f-984434ccb06f",
+    "name": "Persona probe category 1791406646440",
+    "slug": "persona-probe-category-1791406646440",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:57:26.444Z",
+    "updatedAt": "2026-10-07T20:57:26.444Z"
+  },
+  {
+    "id": "4289a1e8-53cc-4365-9535-77c68d360db8",
+    "name": "Persona probe category 1791406646445",
+    "slug": "persona-probe-category-1791406646445",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:57:26.448Z",
+    "updatedAt": "2026-10-07T20:57:26.448Z"
+  },
+  {
+    "id": "6a54495a-4696-4124-9967-545834a7ac43",
+    "name": "Persona probe category 1791406649355",
+    "slug": "persona-probe-category-1791406649355",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:57:29.358Z",
+    "updatedAt": "2026-10-07T20:57:29.358Z"
+  },
+  {
+    "id": "82324cee-ff98-4a71-8768-b3d9ad9abbfe",
+    "name": "Persona probe category 1791406649360",
+    "slug": "persona-probe-category-1791406649360",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:57:29.363Z",
+    "updatedAt": "2026-10-07T20:57:29.363Z"
+  },
+  {
+    "id": "e3441a2e-7966-447b-bfe1-63c18d0cf0e0",
+    "name": "Persona probe category 1791406658213",
+    "slug": "persona-probe-category-1791406658213",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:57:38.216Z",
+    "updatedAt": "2026-10-07T20:57:38.216Z"
+  },
+  {
+    "id": "4950dfb9-ffbb-4512-ada7-6f120ffc4dca",
+    "name": "Persona probe category 1791406658218",
+    "slug": "persona-probe-category-1791406658218",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T20:57:38.221Z",
+    "updatedAt": "2026-10-07T20:57:38.221Z"
+  },
+  {
     "id": "3eda292d-9004-4f65-abb8-b6c4f9afbbab",
     "name": "How-To",
     "slug": "how-to",

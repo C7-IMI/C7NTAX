@@ -201,7 +201,7 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/quotes": "Quote a piece of work from the product catalog and track it to acceptance.",
   "/ai-actions": "Risk-classified AI proposals awaiting review, and the record of what was approved.",
   "/admin/boards": "Manage service boards, SLA policies, email connectors, and automations.",
-  "/admin/system": "System-level configuration for database, backups, and integration settings.",
+  "/admin/system": "This instance's operational state, its deployment facts, and a signpost to every setting.",
   "/admin/logs": "View cumulative audit trail and track all changes across the system.",
   "/admin/changelog": "Release history and feature changelog for C7NTAX.",
   "/cloudconnect": "Connect third-party services with 16 available connector types.",

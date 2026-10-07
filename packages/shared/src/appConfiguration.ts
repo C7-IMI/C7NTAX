@@ -941,7 +941,7 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
   {
     id: "apps",
     label: "Client Apps & Notifications",
-    summary: "Push notification devices and the desktop client.",
+    summary: "Push notification devices, and the companion clients this deployment serves.",
     icon: "Monitor",
     readPermission: Permission.SystemConfig,
     writePermission: Permission.SystemConfig,

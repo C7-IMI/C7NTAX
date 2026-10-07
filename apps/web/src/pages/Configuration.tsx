@@ -147,9 +147,10 @@ export function RequirementBanner({ requirement }: { requirement: RenderedRequir
 }
 
 /** One setting: its control, where its value comes from, and what it changes. */
-export function FieldCard({ field, onSave, busy }: {
+export function FieldCard({ field, onSave, onClear, busy }: {
   field: RenderedField;
   onSave: (field: RenderedField, value: boolean | number | string) => Promise<boolean>;
+  onClear: (field: RenderedField) => Promise<boolean>;
   busy: boolean;
 }) {
   const [draft, setDraft] = useState<string>(String(field.value ?? ""));
@@ -281,13 +282,22 @@ export function FieldCard({ field, onSave, busy }: {
         </p>
       )}
       {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
-      {field.editable && !field.locked && (
-        <div className="mt-2 flex items-center gap-3">
-          <span className="text-[11px] text-gray-600">
-            Default when nothing is saved: <span className="font-mono">{JSON.stringify(field.default)}</span>
-          </span>
-        </div>
-      )}
+      <div className="mt-2 flex items-center gap-3 flex-wrap">
+        <span className="text-[11px] text-gray-600">
+          Default when nothing is saved: <span className="font-mono">{JSON.stringify(field.default)}</span>
+        </span>
+        {field.saved !== null && field.editable && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void onClear(field)}
+            className="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-white disabled:opacity-40"
+            title="Remove the saved value so the deployment's own applies again"
+          >
+            <RotateCcw size={11} /> Use {field.fromEnvironment || field.env ? "the deployment's value" : "the default"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -341,7 +351,25 @@ export function useConfigurationSection(sectionId: string) {
     }
   }, [section, reload]);
 
-  return { section, sections, loaded, loading, error, save, reload };
+  /** Removes the saved value, so the deployment's own applies again. */
+  const clear = useCallback(async (field: RenderedField) => {
+    if (!section) return false;
+    try {
+      await api.delete(`/configuration/${section.id}/${field.id}`);
+      if (section.id === "workspace" && field.id === "contextMenus") {
+        primeContextMenusSetting(field.fallback !== false);
+      }
+      await reload();
+      toast.success(`${field.label} is back to the deployment's value`);
+      return true;
+    } catch (e: unknown) {
+      const error = (e as { response?: { data?: { error?: { message?: string } | string } } })?.response?.data?.error;
+      toast.error(typeof error === "string" ? error : (error?.message || "That value could not be cleared"));
+      return false;
+    }
+  }, [section, reload]);
+
+  return { section, sections, loaded, loading, error, save, clear, reload };
 }
 
 // ── Hub ─────────────────────────────────────────────────────────────
@@ -404,7 +432,7 @@ export function ConfigurationHub() {
                     </div>
                     <p className="text-xs text-gray-400 mt-1">{section.summary}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                      <Chip>{section.fields.length} settings</Chip>
+                      <Chip>{section.fields.length} {section.fields.length === 1 ? "setting" : "settings"}</Chip>
                       {section.fields.some(f => f.restartRequired) && <Chip tone="warn">restart required</Chip>}
                       {unused.length > 0 && <Chip tone="warn">{unused.length} unmet requirement{unused.length === 1 ? "" : "s"}</Chip>}
                     </div>
@@ -440,7 +468,7 @@ export function ConfigurationHub() {
 export function ConfigurationSectionPage() {
   const { sectionId } = useParams<{ sectionId: string }>();
   const navigate = useNavigate();
-  const { section, sections, loaded, loading, error, save } = useConfigurationSection(sectionId ?? "");
+  const { section, sections, loaded, loading, error, save, clear } = useConfigurationSection(sectionId ?? "");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -452,6 +480,12 @@ export function ConfigurationSectionPage() {
     try { return await save(field, value); }
     finally { setBusy(false); }
   }, [save]);
+
+  const clearField = useCallback(async (field: RenderedField) => {
+    setBusy(true);
+    try { return await clear(field); }
+    finally { setBusy(false); }
+  }, [clear]);
 
   if (loading) return <div className="space-y-6 animate-fade-in"><TableSkeleton /></div>;
   if (!section) {
@@ -518,7 +552,7 @@ export function ConfigurationSectionPage() {
             {!section.writable && <Chip tone="warn">read only for your role</Chip>}
           </div>
           {changeable.map(field => (
-            <FieldCard key={field.id} field={field} onSave={saveField} busy={busy} />
+            <FieldCard key={field.id} field={field} onSave={saveField} onClear={clearField} busy={busy} />
           ))}
           {changeable.length === 0 && (
             <p className="text-xs text-gray-500">
@@ -532,7 +566,7 @@ export function ConfigurationSectionPage() {
         <div className="card">
           <h3 className="text-sm font-semibold text-white mb-4">Set by the deployment</h3>
           {deployment.map(field => (
-            <FieldCard key={field.id} field={field} onSave={saveField} busy={busy} />
+            <FieldCard key={field.id} field={field} onSave={saveField} onClear={clearField} busy={busy} />
           ))}
         </div>
       )}

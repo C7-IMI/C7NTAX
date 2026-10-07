@@ -282,6 +282,63 @@ export async function writeConfigValue(
 }
 
 /**
+ * Clears a stored setting, so the field falls back to the deployment's own value.
+ *
+ * The counterpart to saving, and the reason the UI can offer "use the deployment's value": a
+ * setting that can only be overwritten can never be got back to what the deployment intended.
+ * For a field stored at a path inside a shared row, only that path is removed — `app_settings`
+ * holds more than the one value this registry shows.
+ */
+export async function clearConfigValue(
+  sectionId: string,
+  fieldId: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const field = findConfigField(sectionId, fieldId);
+  if (!field) return { ok: false, message: "Unknown setting" };
+  if (field.source !== "setting" || field.locked) {
+    return { ok: false, message: "That setting is managed by the deployment and cannot be changed here" };
+  }
+
+  const { prisma } = await import("../index");
+  const address = field.store;
+  const key = address?.key ?? configSectionKey(sectionId);
+
+  try {
+    if (!address?.key) {
+      const current = storedSectionValues(sectionId);
+      delete current[field.id];
+      if (Object.keys(current).length === 0) {
+        await prisma.systemConfig.deleteMany({ where: { key } });
+      } else {
+        await prisma.systemConfig.update({ where: { key }, data: { value: JSON.stringify(current) } });
+      }
+    } else if (address.scalar) {
+      await prisma.systemConfig.deleteMany({ where: { key } });
+    } else {
+      const row = await prisma.systemConfig.findUnique({ where: { key } });
+      const parsed = row ? parseStoredValue(row.value) : undefined;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const base = { ...(parsed as Record<string, unknown>) };
+        const path = (address.path ?? field.id).split(".");
+        let cursor: Record<string, unknown> | undefined = base;
+        for (const part of path.slice(0, -1)) {
+          const step = cursor?.[part];
+          cursor = step && typeof step === "object" && !Array.isArray(step) ? (step as Record<string, unknown>) : undefined;
+        }
+        if (cursor) delete cursor[path[path.length - 1]];
+        await prisma.systemConfig.update({ where: { key }, data: { value: JSON.stringify(base) } });
+      }
+    }
+  } catch (error) {
+    logger.error("settings.clear", error instanceof Error ? error : new Error(String(error)), { sectionId, fieldId });
+    return { ok: false, message: "The setting could not be cleared" };
+  }
+
+  await refreshSettings(true);
+  return { ok: true };
+}
+
+/**
  * Field ids the configuration route may write, so the router can reject an unknown key before
  * touching the database. Because a field names its own storage address, this list is also what
  * makes the shared configuration plausible: only addresses declared in the registry are

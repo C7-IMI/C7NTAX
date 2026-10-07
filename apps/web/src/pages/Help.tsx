@@ -60,6 +60,8 @@ export function HelpPage() {
           {[
             { label: "Tickets", to: "/tickets" },
             { label: "Product Catalog", to: "/admin/products" },
+            { label: "Configuration", to: "/admin/configuration" },
+            { label: "Customer Portal", to: "/admin/portal" },
             { label: "Business Reviews", to: "/reports/reviews" },
             { label: "Design a Report", to: "/reports/custom" },
             { label: "Service Boards", to: "/boards" },

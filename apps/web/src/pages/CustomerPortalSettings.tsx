@@ -98,7 +98,7 @@ function PortalPreview({ name, accent, logo, welcome, support }: {
 }
 
 export function CustomerPortalSettingsPage() {
-  const { section, sections, loaded, loading, error, save } = useConfigurationSection("portal");
+  const { section, sections, loaded, loading, error, save, clear } = useConfigurationSection("portal");
   const [busy, setBusy] = useState(false);
   const [overview, setOverview] = useState<PortalOverview | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
@@ -127,6 +127,15 @@ export function CustomerPortalSettingsPage() {
       return ok;
     } finally { setBusy(false); }
   }, [save, loadOverview]);
+
+  const clearField = useCallback(async (field: RenderedField) => {
+    setBusy(true);
+    try {
+      const ok = await clear(field);
+      if (ok) await loadOverview();
+      return ok;
+    } finally { setBusy(false); }
+  }, [clear, loadOverview]);
 
   const patchClient = useCallback(async (client: PortalClient, body: Record<string, unknown>) => {
     setSavingClient(client.id);
@@ -221,7 +230,7 @@ export function CustomerPortalSettingsPage() {
           <div className="card">
             <h3 className="text-sm font-semibold text-white mb-4">Portal settings</h3>
             {changeable.map(f => (
-              <FieldCard key={f.id} field={f} onSave={saveField} busy={busy} />
+              <FieldCard key={f.id} field={f} onSave={saveField} onClear={clearField} busy={busy} />
             ))}
           </div>
 
@@ -229,7 +238,7 @@ export function CustomerPortalSettingsPage() {
             <div className="card">
               <h3 className="text-sm font-semibold text-white mb-4">Set by the deployment</h3>
               {deployment.map(f => (
-                <FieldCard key={f.id} field={f} onSave={saveField} busy={busy} />
+                <FieldCard key={f.id} field={f} onSave={saveField} onClear={clearField} busy={busy} />
               ))}
             </div>
           )}

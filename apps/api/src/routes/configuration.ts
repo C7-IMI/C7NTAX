@@ -29,6 +29,7 @@ import {
   type ConfigSectionSpec,
 } from "@C7NTAX/shared";
 import {
+  clearConfigValue,
   configValue,
   environmentSupplied,
   fallbackValue,
@@ -86,6 +87,7 @@ function renderField(
     type: field.type,
     source: field.source,
     env: field.env ?? null,
+    envMatch: field.envMatch ?? null,
     default: field.default,
     min: field.min ?? null,
     max: field.max ?? null,
@@ -306,5 +308,36 @@ configurationRouter.patch(
 
     res.json({ ok: true, section: section.id, field: fieldId, value: result.value });
   } catch (e) { next(e); }
+  },
+);
+
+/**
+ * Clear a stored setting so it falls back to the deployment's own value.
+ *
+ * Its own route rather than `PATCH` with a null, because "unset" and "set to the default" are
+ * different states and the screen has to be able to say which one it is in.
+ */
+configurationRouter.delete(
+  "/:sectionId/:fieldId",
+  requirePermission(
+    Permission.SystemConfig, Permission.SecurityManage, Permission.BillingManage,
+    Permission.KBManage, Permission.IntegrationManage, Permission.ServiceAlertManage,
+  ),
+  async (req: AuthRequest, res, next) => {
+    try {
+      const section = CONFIG_SECTIONS.find(s => s.id === String(req.params.sectionId));
+      if (!section) throw new AppError("Unknown configuration section", 404);
+      if (!has(req, section.writePermission)) throw new AppError("Insufficient permissions", 403);
+
+      const fieldId = String(req.params.fieldId);
+      if (!section.fields.some(f => f.id === fieldId)) throw new AppError("Unknown setting", 404);
+      if (!isWritableConfigField(section.id, fieldId)) {
+        throw new AppError("That setting is managed by the deployment and cannot be changed here", 403);
+      }
+
+      const result = await clearConfigValue(section.id, fieldId);
+      if (!result.ok) throw new AppError(result.message, 400);
+      res.json({ ok: true, section: section.id, field: fieldId, cleared: true });
+    } catch (e) { next(e); }
   },
 );

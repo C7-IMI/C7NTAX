@@ -1,5 +1,64 @@
 [
   {
+    "version": "2026.10.7.029",
+    "date": "2026-10-07",
+    "title": "Configuration stops being a form: one registry, one screen, and the customer portal's own section",
+    "changes": [
+      {
+        "text": "**One declaration, both ends.** `packages/shared/src/appConfiguration.ts` describes every configurable thing in the product once: its label and what it changes, whether it is a setting or a deployment fact, the environment variable it stands in for **and how that variable was read**, the value it falls back to, its range or choices, whether it needs a restart, and which screens it affects. The API validates writes against it and the screen draws itself from it, so **a field that does nothing cannot be drawn** — the drift that produced the old screens is no longer possible without deleting a declaration.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A value is decided in one order, and the old one still wins.** A saved setting, then the deployment's environment variable, then the documented default. Every flag's original test is reproduced exactly — including whether it shipped on and was turned off with `false`, or shipped off and was turned on with `true` — so a deployment configured the old way behaves identically. The probe suite asserts both directions across all 21 boolean flags.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Eighteen flags became settings, and take effect immediately.** The customer portal, uptime monitors, alert webhooks, the social outage source, knowledge-base drafting and its model, M365 offboarding, CloudConnect live verification and its throttle, the email connectors, Graph delivery, the Outlook add-in, AI actions, bill-through batch invoicing, the time rules, quotes, push notifications, bill-from-tickets and the session switch are all configurable from the screen — no restart. Two (the alert poll interval and the stale ceiling) are sampled once by the monitor as it starts and say **Needs a restart**.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Administration → Configuration**, a hub over eight areas: Workspace, Sessions & Security, Customer Portal, Service Alerts & Monitoring, Knowledge Base & AI, CloudConnect/Email/Microsoft 365, Billing & Invoicing, and Client Apps. Each field shows its value, what the deployment's own value is, whether one is overriding the other, what it changes, and — where a saved value is shadowing the deployment — a **Use the deployment's value** control to let it go. There is no Save button; a switch applies on click and a field applies when it is left.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Administration → Customer Portal**, the section the request was for. The portal's limits were module constants and its behaviour was fixed; each is now a setting — code lifetime, attempts per code, codes per customer per window and the window itself, session lifetime, signed-in devices — alongside **which tickets a customer sees** (only their own, or every ticket at their client), **whether they may raise and reply**, the board their tickets land on, and branding (accent, logo, welcome line, support address) **shown against a live preview**. Below it: a per-client access table with each client's usable-contact count, and the last 25 portal sessions with their state.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /api/portal/branding`**, unauthenticated and identical for every visitor, so the **sign-in page** wears the configured name and accent rather than the product's own. The portal's welcome line, support address, and the two permission switches travel with the customer's identity so a button that would be refused is never drawn.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The personal landing page is personal again.** My Settings was writing the **instance-wide** `default_landing_page` key, so one person's preference silently became everyone's. `User.landingPage` is a new column, set through `PATCH /auth/me/landing-page`; sign-in resolves the person's own choice, then the instance default, then the dashboard. Choosing the dashboard clears the override rather than storing one, so a later change to the instance default still reaches everyone who never chose.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The idle timeout is not a personal preference either.** My Settings now shows it read-only to anyone without the configuration permission, and routes administrators through the validated endpoint — the same 5–480 range the configuration screen enforces. The standalone self-service write to a global policy is gone.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Administration → System Settings is honest.** Company name, time zone, date format, SMTP credentials, password policy, API keys, the connection string, the backup schedule and the retention policy — none of which anything read — are removed as controls. What replaced them is **`GET /api/system/deployment`**: whether a mail relay answers (host, port, TLS, whether credentials are set, the from address), the database host and name **with the credentials stripped**, the runtime, and where the Outlook add-in is served from. The screen reports the self-healing poller and its recovery history, and then points at every setting. It has nothing to save.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Four shipped features were unreachable.** Quotes (under Billing), Uptime Monitors and Alert Webhooks (under Administration) and AI Actions had routes and no navigation entry, so they could only be reached by typing a URL. They are in the navigation now.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A latent security hole removed with the duplication.** `/system/config/:key` was defined three times; Express takes the first match, so the second and third `PATCH` handlers never ran — and two of them did not call the write guard. Deleting the duplicates also closed that, and the survivor now refuses any registry-owned key so those rows have exactly one way in, through the endpoint that checks the section's permission and validates the value.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Deployment-owned values are reported, never editable.** An outbound credential, a connection string, and the two switches that decide **whether authentication is enforced at all** (`SESSION_AUTH_ENABLED`, marked required, and `AUTH_HARDENING_ENABLED`, which controls lockout and token lifetime) appear under **Set by the deployment** with the variable that owns them. A configuration screen that could turn off account lockout from a browser session would be a privilege-escalation path with a friendly label.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`apps/api/probe-configuration.mjs` — 78 assertions.** Resolution order, the polarity of every converted flag in both directions, validation (choices, ranges, colours, clock times, unknown fields, unknown areas, deployment-owned fields, required fields), the general key-value route refusing a registry row, per-client access and branding, permissions per area, and that nothing the suite changed is left behind.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.028",
     "date": "2026-10-07",
     "title": "The Help section catches up with the product, and stops being able to drift",
