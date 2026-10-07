@@ -27,6 +27,11 @@ const EXEMPTIONS = [
   { file: "ssoExchange.ts", match: /.*/, reason: "OIDC start/callback, validated with a single-use state" },
   // A user's own device subscriptions — no permission applies.
   { file: "push.ts", match: /.*/, reason: "per-device push subscriptions for the signed-in user" },
+  {
+    file: "dashboard.ts",
+    match: /.*/,
+    reason: "the signed-in user's own dashboard layout; there is no id in the path, the row is keyed to the caller, and the widget catalogue is filtered by their permissions",
+  },
   { file: "users.ts", match: /GET \/me$/, reason: "a user reading their own record" },
   {
     file: "system.ts",

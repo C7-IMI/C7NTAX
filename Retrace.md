@@ -3595,3 +3595,23 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Assets, configs and links are not written to yet — the route and table accept them, and `kumoItemExists` already maps them, so a follow-up is a handful of `recordKumoAudit` calls.
 - **Defect found and deliberately NOT fixed:** in the credential panel the three auto-TOTP blocks (Setup TOTP, QR, live code) are nested inside the "Credentials Revealed" box, so the QR setup button is unreachable until a password is revealed. `git show HEAD` confirms it predates this change; recorded in BuildNotes 2026.10.7.007 and in the outstanding list rather than folded in here.
 - The superadmin/admin personas are the only ones holding Kumo permissions; the technician persona has none, which is what made the 403 assertions meaningful. My first probe version wrongly assumed the technician could reveal and failed two assertions — fixed by testing the gate with the technician and the *attribution* with a second administrator.
+
+**Prompt 220 — continued: W2-6 (per-user dashboard, PLAN-015 Phase B #4)**
+
+**What I did**
+- `UserDashboardConfig` (`userId @unique`, `widgets Json`), migration `20261007073715_user_dashboard_config`, and `services/dashboardLayout.ts` holding the **catalogue** and `normaliseLayout()`.
+- `GET|PUT|DELETE /dashboard/layout`. Every route acts on the caller's own row: there is no id in the path that could point at somebody else's dashboard, which is why it is an exemption in `check-route-guards.mjs` with that reason written down rather than a fake permission.
+- **The catalogue lives on the server** and the saved layout is *reconciled* against it — unknown ids dropped, duplicates collapsed, sizes corrected, and widgets added since the last save appended rather than missing. A preference file that can drift out of step with the code is how a dashboard ends up with a permanent hole in it.
+- Widgets are filtered by permission on **both** the read and the write, so an account cannot save a widget it was never offered (the write test asserts exactly that with an invented `today_revenue` id).
+- Rewrote `Dashboard.tsx`: drag-to-reorder plus arrow buttons, S/M/L width, show/hide, save, reset, and a "N widgets hidden" line so a hidden widget is not forgotten. Native HTML5 drag — no new dependency for a preference screen.
+- Two widgets are new: **active alerts** (the live count from `/service-alerts/status`, the same call the nav badge uses) and **my time this week** (the caller's own time entries since Monday).
+
+**Decisions worth remembering**
+- **Order + three widths, not free-form resizing.** A validated fixed grid is what makes a saved layout safe to trust and to render from the server's own description; pixel geometry would need a layout engine and a reason to exist.
+- **Refuse to hide everything.** Blanking the dashboard is never intentional and is a two-click trap otherwise.
+- **A widget this page cannot draw renders nothing.** Hence the catalogue check: an id with no renderer is not an empty card.
+- **The count endpoint is not the list endpoint.** I first reused `/tickets?limit=1` for the recent list and the browser showed one row instead of eight — the count trick and the list are separate requests.
+
+**Notes for next time**
+- The plan's "pin to top" is satisfied by order; a real pin would need a second field and a reason beyond the drag.
+- The technician persona lacks `billing:view`, which is the account that proves the catalogue filter (8 of 10 widgets). My first version of the probe asserted the *read-only* persona saw fewer and failed — read-only holds every view permission in this roster.

@@ -55,6 +55,7 @@ import { emailConnectorsRouter } from "./routes/email-connectors";
 import { quotesRouter } from "./routes/quotes";
 import { outlookAddinRouter } from "./routes/outlookAddin";
 import { pushRouter } from "./routes/push";
+import { dashboardRouter } from "./routes/dashboard";
 import { aiActionsRouter } from "./routes/aiActions";
 import { alertWebhooksRouter } from "./routes/alertWebhooks";
 import { ssoExchangeRouter } from "./routes/ssoExchange";
@@ -200,6 +201,7 @@ app.use("/api/email-connectors", emailConnectorsRouter);
 app.use("/api/quotes", quotesRouter);
 app.use("/api/outlook-addin", outlookAddinRouter);
 app.use("/api/push", pushRouter);
+app.use("/api/dashboard", dashboardRouter);
 app.use("/api/ai-actions", aiActionsRouter);
 app.use("/api/alert-webhooks", alertWebhooksRouter);
 

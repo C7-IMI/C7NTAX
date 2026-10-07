@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.7.008",
+    "date": "2026-10-07",
+    "title": "The dashboard is yours: arrange it, size it, hide what you do not use",
+    "changes": [
+      {
+        "text": "**A per-user dashboard.** The overview was one fixed grid of six stat cards and nine links, identical for everybody and identical forever. It is now assembled from a **widget catalogue** you arrange: drag a widget by its handle (or use the arrows) to reorder, pick **S / M / L** for its width, hide the ones you do not use, save. The layout follows **your account**, not the browser, so it is there on the next machine you sign in from — and **Reset** puts the catalogue order back.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The catalogue is the server's, not the browser's.** `GET /dashboard/layout` returns your arrangement *reconciled against* the catalogue: unknown widget ids are dropped, duplicates collapsed, an impossible width corrected, and a widget added since you last saved is **appended rather than missing**. Retiring or renaming a widget cannot leave a user staring at a hole where it used to be.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**It is filtered by what you can actually load.** A widget that reads billing data is offered only to an account holding `billing:view`; the technician persona is offered 8 of 10 widgets, the administrator 10. That check runs on **both** the read and the write, so a save cannot smuggle in a widget the user was never offered.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A saved layout is input, and is treated like one:** a non-array is refused (400), a list over 50 entries is refused, and hiding *everything* is refused — a dashboard that cannot be blanked by accident.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The widgets themselves pull their own data:** open / waiting / all / resolved tickets, overdue invoices, active clients, **active alerts** (the live count from the same endpoint the nav badge uses), **my time this week** (your own entries since Monday, from the ticket-time data the time engine now weights), a **recent tickets** list, and quick links. Two of those — active alerts and my time — are new to the dashboard.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.007",
     "date": "2026-10-07",
     "title": "Every change to a shared Kumo credential or document now has a name against it",

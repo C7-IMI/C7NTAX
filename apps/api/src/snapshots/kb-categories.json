@@ -60,6 +60,26 @@
     "updatedAt": "2026-10-07T07:34:45.000Z"
   },
   {
+    "id": "c2010977-f657-4a72-9fc9-aa0798764ee8",
+    "name": "Persona probe category 1791359004585",
+    "slug": "persona-probe-category-1791359004585",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T07:43:24.589Z",
+    "updatedAt": "2026-10-07T07:43:24.589Z"
+  },
+  {
+    "id": "75ce3a27-b696-44ab-bae6-6ab6cd4b6684",
+    "name": "Persona probe category 1791359004594",
+    "slug": "persona-probe-category-1791359004594",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T07:43:24.597Z",
+    "updatedAt": "2026-10-07T07:43:24.597Z"
+  },
+  {
     "id": "3eda292d-9004-4f65-abb8-b6c4f9afbbab",
     "name": "How-To",
     "slug": "how-to",

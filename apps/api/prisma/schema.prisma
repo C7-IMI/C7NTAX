@@ -68,6 +68,7 @@ model User {
   notifications   Notification[]
   webauthnCredentials WebauthnCredential[]
   pushDevices     PushDevice[]
+  dashboardConfig UserDashboardConfig?
   outlookAddinTokens OutlookAddinToken[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -1953,6 +1954,19 @@ model PushDevice {
   platform   String    @default("web") // web, ios, android
   lastSeenAt DateTime?
   createdAt  DateTime  @default(now())
+}
+
+/// A user's own dashboard: which widgets, in what order, at what size (PLAN-015 Phase B #4).
+/// The row is keyed to the user, and the widgets it names are validated against a server-side
+/// catalogue — a saved layout is a preference, not a program.
+model UserDashboardConfig {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// [{ id, size, visible }] in display order.
+  widgets   Json     @default("[]")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 model AiAction {
