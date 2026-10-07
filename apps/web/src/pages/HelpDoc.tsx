@@ -3,9 +3,17 @@ import { BookOpen, HelpCircle, Settings2, ListOrdered, ChevronRight, Lightbulb, 
 
 // ── PSA-style documentation frame (structure modeled on Autotask / ConnectWise Asio / HaloPSA docs) ──
 // Sections are grouped: "core" (the four Help subsections) and "walkthroughs" (step-by-step
-// feature guides). Every feature walkthrough must be listed in the Index section and linked
-// from related sections. MAINTENANCE RULE: whenever a feature is added, updated, changed, or
-// removed, its walkthrough here and its Index rows must be updated in the same change.
+// feature guides).
+//
+// MAINTENANCE RULE — this file is part of the change, not a follow-up to it. Whenever a feature is
+// added, updated, changed or removed:
+//   1. update that feature's walkthrough below (or add one if it has none);
+//   2. update its rows in the "index" section, and the relevant rows in "configuration";
+//   3. add the question to "faq" if a user would plausibly ask it;
+//   4. link the walkthrough from the sections it belongs beside.
+// A walkthrough is reachable as soon as it is in this array (the route is /help/walkthroughs/:slug),
+// so a new section needs no route or menu change — but it must be listed in the Index, because that
+// is where people look for something they cannot name.
 
 export type HelpSection = {
   id: string;
@@ -13,7 +21,6 @@ export type HelpSection = {
   group: "core" | "walkthroughs";
   title: string;
   description: string;
-  anchors: Array<{ id: string; label: string }>;
   blocks: HelpBlock[];
   related: Array<{ label: string; to: string; external?: boolean }>;
 };
@@ -34,19 +41,14 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/getting-started",
     title: "Getting Started",
     description: "Set up your workspace, create your first ticket, and learn the core workflow.",
-    anchors: [
-      { id: "first-login", label: "First login & profile" },
-      { id: "core-workflow", label: "The core ticket workflow" },
-      { id: "team-setup", label: "Team & boards setup" },
-    ],
     blocks: [
       { kind: "h", text: "First login & profile" },
-      { kind: "p", text: "Sign in with your email or username. If multi-factor authentication (MFA) is enabled for your account, complete the second step with your authenticator app or email code. SSO and passkey sign-in are available when your administrator has enabled them (see the MFA, SSO & Passkeys walkthrough)." },
+      { kind: "p", text: "Sign in with your email or username. Sign-in creates a **session** that stays alive while you work and ends after 30 minutes of inactivity — a minute before that, a warning appears with a countdown and a **Stay signed in** button, so a timeout never costs you an unsaved edit. Administrators are exempt. Multi-factor authentication (TOTP, with an emailed fallback) and passkeys are available where your administrator has enabled them; see Identity, Sessions & Sign-in." },
       { kind: "steps", items: [
-        "Sign in at the login page and complete MFA if prompted.",
+        "Sign in and complete MFA if you have it.",
         "Open My Account (top right) to review your profile.",
-        "Choose your default landing page under Settings → Preferences.",
-        "Browse the navigation pane to explore Dashboard, Tickets, Service Boards, Clients, Billing, and Kumo.",
+        "Browse the navigation pane once, so you know where things are.",
+        "Press **⌘K** (or Ctrl+K) and type a page name — the quickest way to reach anywhere.",
       ] },
       { kind: "tip", text: "Press T anywhere outside a text field to jump straight to Tickets." },
       { kind: "h", text: "The core ticket workflow" },
@@ -54,21 +56,42 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "steps", items: [
         "Open Tickets and select New Ticket (or press T to open the list first).",
         "Pick the client, board, category, and priority. Priority is deduced automatically if you leave it unset.",
-        "Add time entries as you work — billable entries flow into invoices (see Billing & Agreements walkthrough).",
-        "Resolve the ticket when work is complete; follow-ups and auto-close rules are configured per board.",
+        "Add time entries as you work, and file any out-of-pocket cost on the ticket's **Expenses** tab — billable time and approved expenses flow into invoices.",
+        "Resolve the ticket when work is complete. A resolved ticket can be drafted into a knowledge base article so the fix does not leave with you.",
+        "Follow-ups and auto-close rules are configured per board.",
       ] },
+      { kind: "h", text: "Finding your way around" },
+      { kind: "table", headers: ["Area", "Holds"], rows: [
+        ["Home & Dashboard", "The workspace home and the dashboard you arrange yourself"],
+        ["Service Alerts", "Vendor status feeds, your own uptime checks, and the outage board"],
+        ["Tickets", "Every ticket, with saved columns, filters and batch actions"],
+        ["Service Boards", "Board layouts, SLA policies and email connectors"],
+        ["Pipeline", "Opportunities and deals"],
+        ["Clients", "Client records, contacts, and each client's portal access"],
+        ["Assets & Procurement", "The asset inventory and purchase orders"],
+        ["Projects", "Projects, the shared Calendar, and Time Off"],
+        ["Knowledge Base", "Articles, categories and drafts"],
+        ["Kumo", "Passwords, configurations, documents, checklists, assets and domains"],
+        ["Billing", "Invoices, agreements, payments, time and expenses, and finance reports"],
+        ["Reporting", "Dashboards, standard reports, business reviews and designed reports"],
+        ["Administration", "Settings, boards, service alerts, the product catalog, audit logs, integrations and What's New"],
+      ] },
+      { kind: "note", text: "The navigation only offers what your role is allowed to open, so a missing area is a permission rather than a fault — ask an administrator to check your role." },
       { kind: "h", text: "Team & boards setup" },
       { kind: "p", text: "Administrators configure service boards, SLA policies, and team permissions under Administration → Service Boards." },
       { kind: "steps", items: [
         "Create a service board for each team or client group.",
-        "Attach an email connector so inbound mail becomes tickets automatically (see Email-to-Ticket Setup walkthrough).",
+        "Attach an email connector so inbound mail becomes tickets automatically (see Email-to-Ticket Setup).",
         "Assign technicians via Users & Roles → Manage Users and Manage Roles.",
+        "Add the items you sell to Administration → Product Catalog, so quoting and billing price from one place.",
       ] },
-      { kind: "note", text: "Board layouts, batch ticket actions, and keyboard shortcuts are covered in the UI Shortcuts & Batch Actions walkthrough." },
+      { kind: "note", text: "Board layouts, batch ticket actions, the dashboard and keyboard shortcuts are covered in the Workspace, Shortcuts & Batch Actions walkthrough." },
     ],
     related: [
+      { label: "Workspace, Shortcuts & Batch Actions", to: "/help/walkthroughs/shortcuts" },
       { label: "Email-to-Ticket Setup", to: "/help/walkthroughs/email-tickets" },
-      { label: "Billing & Agreements", to: "/help/walkthroughs/billing-agreements" },
+      { label: "Identity, Sessions & Sign-in", to: "/help/walkthroughs/identity-security" },
+      { label: "Billing, Agreements & Overtime", to: "/help/walkthroughs/billing-agreements" },
       { label: "FAQ", to: "/help/faq" },
       { label: "Help Index", to: "/help/index" },
       { label: "Tickets", to: "/tickets" },
@@ -79,30 +102,48 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/faq",
     title: "FAQ",
     description: "Answers to the most common questions about tickets, billing, integrations, and Kumo.",
-    anchors: [
-      { id: "tickets-faq", label: "Tickets" },
-      { id: "billing-faq", label: "Billing & agreements" },
-      { id: "integrations-faq", label: "Integrations & alerts" },
-      { id: "kumo-faq", label: "Kumo & security" },
-    ],
     blocks: [
       { kind: "h", text: "Tickets" },
       { kind: "p", text: "Q: Why was a ticket's priority changed automatically? — A: The priority deduction engine adjusts priority from keywords and SLA rules; you can override it manually." },
       { kind: "p", text: "Q: Can I acknowledge or close many tickets at once? — A: Yes. Select the checkboxes on the left of the ticket list, then apply a batch action from the bulk bar." },
       { kind: "p", text: "Q: Can emails create tickets automatically? — A: Yes. Configure a monitored mailbox or M365 Graph connector under Administration → Service Boards → Email connectors." },
-      { kind: "h", text: "Billing & agreements" },
-      { kind: "p", text: "Q: How do I invoice unbilled ticket time? — A: Open the Finance Dashboard and use Generate draft invoice — a draft is created and time entries are linked." },
-      { kind: "p", text: "Q: What agreement types are supported? — A: Block hours, all-you-can-eat (Cyber Care), and variable hourly spot billing. Overtime rules, midnight splits, and block-hour deductions follow the agreement engine." },
+      { kind: "p", text: "Q: Does the customer get told when their ticket changes? — A: Yes. A customer note, a time entry or a status change emails the ticket's customer contact — an internal note does not." },
+      { kind: "p", text: "Q: Can a solved ticket write the knowledge base article? — A: It can draft one. Open a resolved ticket and ask for a draft; it is filed unpublished, with the ticket number attached, for a person to review." },
+      { kind: "h", text: "Sign-in & sessions" },
+      { kind: "p", text: "Q: Why was I signed out? — A: The session ended after 30 minutes of inactivity. The sign-in page says the session timed out rather than showing a generic error, and in future a countdown warning appears a minute before it does." },
+      { kind: "p", text: "Q: Can I stay signed in longer? — A: Yes, but not per person: an administrator can change the timeout under Settings (5–480 minutes). No session lives longer than 12 hours whatever the setting." },
+      { kind: "p", text: "Q: Why does my colleague never get timed out? — A: Administrators and super-admins are exempt from the inactivity timeout. It is a role, not a personal preference." },
+      { kind: "p", text: "Q: I am locked out and need to get back in. — A: AUTH_HARDENING_ENABLED locks an account after 5 failed sign-ins. For diagnosis there is a single named test-exemption account (AUTH_TEST_BYPASS) that skips the lockout, the timeout and the password-change gate; it refuses to run in production and should be unset everywhere real." },
+      { kind: "h", text: "Billing, expenses & catalog" },
+      { kind: "p", text: "Q: How do I invoice unbilled ticket time? — A: Either the Finance Dashboard's **Generate draft invoice** for one client, or the bill-through batch, which previews a whole period across clients before creating anything." },
+      { kind: "p", text: "Q: Can the batch double-bill somebody? — A: No. The preview only considers time and expenses that are not already on an invoice, and creating the batch marks them. Rejecting the batch clears the marks and deletes the drafts, so the work is picked up again next time." },
+      { kind: "p", text: "Q: How does a technician claim back a cost they paid for? — A: On the ticket's Expenses tab. It is filed as pending, and somebody with billing-manage approves or rejects it — and a rejection has to say why." },
+      { kind: "p", text: "Q: Where does a quote's price come from? — A: The Product Catalog. Search a line item by name or SKU and the description and sell price are copied in, so the price quoted and the price invoiced are the same number." },
+      { kind: "p", text: "Q: Why can't my technician see what an item cost us? — A: Cost and margin are only returned to accounts holding the catalog's manage permission — the sell price is what someone attaching an item needs. It is enforced on the server, not hidden in the interface." },
+      { kind: "p", text: "Q: Why can't I delete a product? — A: Because it has been quoted, ordered or billed. Deleting it would leave a record pointing at an SKU that no longer exists, so retire it instead — it leaves the pickers and every existing record keeps its numbers." },
+      { kind: "h", text: "Reporting" },
+      { kind: "p", text: "Q: Why does a report say a figure is unknown instead of showing a number? — A: Because it genuinely cannot be known from the data, and estimating it would be inventing a number. Where a figure is incomplete the report says what is missing — how many hours carry no cost rate, for example." },
+      { kind: "p", text: "Q: Which period does a business review use? — A: The last **finished** one, and it compares like for like: a period still in progress is measured against the same number of days of its predecessor, never against the whole of it." },
+      { kind: "p", text: "Q: Can I build my own report? — A: Yes — Reporting → Custom Reports → New designed report. Bands, expressions, totals, charts and sub-reports, exported as Print, PDF, Excel or CSV, or scheduled as a PDF." },
       { kind: "h", text: "Integrations & alerts" },
-      { kind: "p", text: "Q: Where do I fix a broken integration? — A: CloudConnect shows live connection status; fix credentials inline and re-test without leaving the page." },
+      { kind: "p", text: "Q: Where do I fix a broken integration? — A: CloudConnect shows live connection status; fix credentials inline and re-test without leaving the page. With live status on, a chip means \"last verified\", not \"last saved\"." },
       { kind: "p", text: "Q: Can outages open tickets automatically? — A: Alert webhooks deliver alert.opened / alert.resolved events; wire them to your ticket automation." },
+      { kind: "p", text: "Q: A single poll failed — will the alert flap? — A: No. Auto-resolution needs two consecutive all-clear polls and a minimum alert age, so one transient fetch gap cannot open and close an alert." },
+      { kind: "p", text: "Q: Can social chatter raise an outage? — A: No. Chatter can only ever raise an informational notice, never an outage — it is a signal, not proof." },
+      { kind: "h", text: "Customer portal" },
+      { kind: "p", text: "Q: How does a customer sign in? — A: They enter their email address at /portal and we email a six-digit code. It works once and expires in ten minutes, so there is no customer password to manage." },
+      { kind: "p", text: "Q: A customer says the portal does not recognise them. — A: Their company needs **Portal access** switched on under Clients, and their email address must be one of that company's contacts." },
+      { kind: "p", text: "Q: Can a customer see anything they should not? — A: No. The restriction is applied on the server from the signed-in contact's company, after anything the request asked for. A ticket that is not theirs answers 404 rather than 403, because whether it exists is itself information." },
+      { kind: "p", text: "Q: Does a customer see internal notes? — A: No. Internal notes are never sent to the portal." },
       { kind: "h", text: "Kumo & security" },
       { kind: "p", text: "Q: Are passwords encrypted? — A: Yes — Kumo stores passwords AES-256 encrypted, with TOTP and access logs." },
-      { kind: "p", text: "Q: Who changed a shared document? — A: Each Kumo item shows an audit trail with the last modified date and user." },
+      { kind: "p", text: "Q: Who changed a shared document? — A: Each Kumo item shows an audit trail with the action, the user who made the change, and the last modified date." },
+      { kind: "p", text: "Q: Does the product disable a departed user's Microsoft 365 account? — A: No, deliberately. The inactivity report finds dormant accounts and an offboarding raises an ordered checklist with an owner and a record; a human still does the disabling, in the tenant, where the consequence of a mistake is visible." },
     ],
     related: [
       { label: "Getting Started", to: "/help/getting-started" },
       { label: "Configuration", to: "/help/configuration" },
+      { label: "Help Index", to: "/help/index" },
       { label: "CloudConnect", to: "/cloudconnect" },
       { label: "Finance Dashboard", to: "/billing/dashboard" },
       { label: "Kumo", to: "/kumo" },
@@ -113,47 +154,59 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/configuration",
     title: "Configuration",
     description: "Reference for the settings, dialogs, and options available in C7NTAX.",
-    anchors: [
-      { id: "boards-config", label: "Service boards" },
-      { id: "alerts-config", label: "Service alerts & uptime" },
-      { id: "integrations-config", label: "CloudConnect connectors" },
-      { id: "identity-config", label: "Identity: MFA, SSO, passkeys" },
-      { id: "flags-config", label: "Feature flags" },
-    ],
     blocks: [
       { kind: "h", text: "Service boards" },
       { kind: "p", text: "Administration → Service Boards configures boards, SLA policies, categories, and email connectors. Drag board tiles to reorder and pin preferred elements to the top; the layout is saved per board." },
       { kind: "h", text: "Service alerts & uptime" },
-      { kind: "p", text: "Service Alerts monitors vendor status feeds (RSS + DownDetector). Uptime Monitors adds website, SSL-expiry, and DNS checks — each with expected status codes and SSL warning thresholds." },
+      { kind: "p", text: "Service Alerts monitors vendor status feeds (RSS + DownDetector), 24/7 staffed NOC feeds, and — when the social source is enabled — public chatter. Uptime Monitors adds website, SSL-expiry, and DNS checks — each with expected status codes and SSL warning thresholds." },
       { kind: "table", headers: ["Monitor kind", "Checks", "Config"], rows: [
         ["website", "HTTP status against expectStatus", "expectStatus (default 200)"],
         ["ssl", "Certificate expiry in days", "sslWarnDays (default 30)"],
         ["dns", "A-record resolution", "target hostname in monitorUrl"],
       ] },
       { kind: "h", text: "CloudConnect connectors" },
-      { kind: "p", text: "CloudConnect hosts 16 connector types (M365, Pax8, ITGlue, Proofpoint, Avanan, SentinelOne, QuickBooks, Flexpoint, and more). Each connector has a Test Connection action; status chips update live and credentials can be fixed and re-tested inline." },
-      { kind: "h", text: "Identity: MFA, SSO, passkeys" },
-      { kind: "p", text: "MFA uses TOTP (authenticator apps) with email fallback. Administrators can enable SSO (OIDC — Keycloak, Entra ID, Okta, Auth0) via environment configuration, and users can register passkeys for passwordless sign-in." },
+      { kind: "p", text: "CloudConnect hosts the connector types the product ships (M365, Pax8, ITGlue, Proofpoint, Avanan, SentinelOne, QuickBooks, Flexpoint, and more). Each connector has a Test Connection action; status chips update live and credentials can be fixed and re-tested inline. With live status on, the server verifies connections on a throttle and reports what it last observed, so a chip means \"last checked\" rather than \"last saved\"." },
+      { kind: "h", text: "Identity & sessions" },
+      { kind: "p", text: "Sign-in is a cookie session by default. The idle timeout is **30 minutes**, editable under Settings (5–480 minutes), and no session lives longer than 12 hours whatever the setting. **Administrators and the exempt test account never idle out.** A warning with a countdown appears one minute before a timeout, with **Stay signed in** to extend." },
+      { kind: "p", text: "MFA adds a TOTP authenticator (with emailed-code fallback and one-time backup codes). SSO over OIDC — Entra ID, Keycloak, Okta, Auth0 — is switched on with the SSO variables below. Passkeys give passwordless sign-in and are listed, renameable and removable under Settings → Passkeys; a password always remains a way in." },
+      { kind: "h", text: "Product catalog" },
+      { kind: "p", text: "One entry per thing you sell or reorder, so a ticket, a quote, a purchase order and an invoice all copy the same numbers. Cost price and margin are only returned to accounts holding the catalog's manage permission — a technician attaching an item needs the sell price, not what it cost you." },
+      { kind: "h", text: "Customer portal" },
+      { kind: "p", text: "Absent unless switched on: every portal route answers 404, so a deployment that has not enabled it does not advertise a customer sign-in page. Once on, a client's contacts can use it only after **Portal access** is turned on for that client." },
       { kind: "h", text: "Feature flags" },
+      { kind: "p", text: "Two conventions, and the difference matters: some flags **ship on and are turned off with false**, and a few **ship off and are turned on with true**. The table says which is which. Every flag is read at process start, so changing one needs a restart." },
       { kind: "table", headers: ["Flag", "Enables", "Default"], rows: [
-        ["SSO_ENABLED", "OIDC SSO login", "off"],
-        ["PASSKEY_ENABLED", "WebAuthn passkeys", "off"],
-        ["UPTIME_MONITORS_ENABLED", "website/SSL/DNS checks", "off"],
-        ["ALERT_WEBHOOKS_ENABLED", "Alert webhook endpoints", "off"],
-        ["AI_ACTIONS_ENABLED", "Risk-classified AI actions", "off"],
-        ["EMAIL_GRAPH_ENABLED", "M365 Graph mail transport", "off"],
-        ["OUTLOOK_ADDIN_ENABLED", "Outlook add-in batch endpoint", "off"],
-        ["PUSH_ENABLED", "Push device registration", "off"],
-        ["BILLING_FROM_TICKETS_ENABLED", "Generate invoice from ticket time", "off"],
-        ["AUTH_HARDENING_ENABLED", "15-min JWT + rehash-on-login", "off"],
+        ["AUTH_HARDENING_ENABLED", "15-minute tokens, lockout after 5 failed sign-ins, forced password change, hash upgrade on next sign-in", "off"],
+        ["SESSION_AUTH_ENABLED", "The cookie session (false falls back to token-only auth)", "ON"],
+        ["PASSKEY_ENABLED", "WebAuthn passkeys (also set WEBAUTHN_RP_ID to the app host)", "off"],
+        ["SSO_ENABLED", "OIDC single sign-on (needs SSO_ISSUER, SSO_CLIENT_ID, SSO_CLIENT_SECRET)", "off"],
+        ["EMAIL_CONNECTORS_ENABLED", "Inbound mailbox polling at all", "ON"],
+        ["EMAIL_CONNECTORS_CLOUD_ENABLED", "Cloud (Graph) mail transports", "ON"],
+        ["EMAIL_GRAPH_ENABLED", "The M365 Graph transport itself", "ON"],
+        ["QUOTES_ENABLED", "Quotes and convert-to-invoice", "ON"],
+        ["BILLING_FROM_TICKETS_ENABLED", "Generate an invoice draft from unbilled ticket time", "ON"],
+        ["INVOICE_BATCH_ENABLED", "Bill-through batch invoicing (preview, hold, approve)", "off"],
+        ["TIME_RULES_ENABLED", "The agreement time engine: overtime weighting and the midnight split", "off"],
+        ["UPTIME_MONITORS_ENABLED", "Website, SSL and DNS checks", "ON"],
+        ["ALERT_WEBHOOKS_ENABLED", "Alert webhook endpoints and their delivery log", "ON"],
+        ["SERVICE_ALERTS_SOCIAL_ENABLED", "Social reports (needs X_BEARER_TOKEN; can only ever raise a notice)", "ON"],
+        ["CLOUDCONNECT_LIVE_STATUS_ENABLED", "Server-side verification of connectors on a throttle", "ON"],
+        ["KB_AUTOGEN_ENABLED", "Drafting a knowledge base article from a resolved ticket", "ON"],
+        ["M365_OFFBOARD_ENABLED", "Raising an offboarding checklist for an inactive M365 account", "ON"],
+        ["OUTLOOK_ADDIN_ENABLED", "The Outlook add-in's static assets and batch endpoint", "ON"],
+        ["AI_ACTIONS_ENABLED", "Risk-classified AI action proposals", "ON"],
+        ["PUSH_ENABLED", "Push device registration", "ON"],
+        ["PORTAL_ENABLED", "The customer portal (absolutely off unless set to true)", "off"],
       ] },
-      { kind: "warn", text: "Flags default off. Enable per environment and verify the feature before broad rollout." },
+      { kind: "p", text: "**Testing only.** `AUTH_TEST_BYPASS` exempts a single named account from the login interruptions so a locked-out administrator can still get in while something is being diagnosed. It refuses to run in production, and it must be left unset anywhere real." },
+      { kind: "warn", text: "Flags are read at start-up. A change needs a restart, and the recommended values for each environment live in the deployment's environment template — not in the database." },
     ],
     related: [
       { label: "Getting Started", to: "/help/getting-started" },
+      { label: "Identity, Sessions & Sign-in", to: "/help/walkthroughs/identity-security" },
       { label: "Help Index", to: "/help/index" },
       { label: "Service Alerts", to: "/service-alerts" },
-      { label: "Uptime Monitors", to: "/service-alerts/monitors" },
+      { label: "Product Catalog", to: "/admin/products" },
       { label: "CloudConnect", to: "/cloudconnect" },
       { label: "Settings", to: "/settings" },
     ],
@@ -163,64 +216,76 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/index",
     title: "Index",
     description: "Every help topic, walkthrough, and product area — grouped by feature set.",
-    anchors: [
-      { id: "getting-started-set", label: "Getting started & UI" },
-      { id: "ticketing-set", label: "Ticketing & email" },
-      { id: "billing-set", label: "Billing & agreements" },
-      { id: "monitoring-set", label: "Monitoring & alerts" },
-      { id: "integrations-set", label: "Integrations" },
-      { id: "ai-set", label: "AI" },
-      { id: "identity-set", label: "Identity & security" },
-      { id: "kumo-set", label: "Kumo & knowledge" },
-    ],
     blocks: [
-      { kind: "h", text: "Getting started & UI" },
+      { kind: "h", text: "Getting started & workspace" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
-        ["First login & profile", "/help/getting-started"],
-        ["Core ticket workflow", "/help/getting-started"],
-        ["Team & boards setup", "/help/getting-started"],
-        ["Keyboard shortcuts & batch actions", "/help/walkthroughs/shortcuts"],
-        ["Ticket list columns (Choose Columns, drag reorder, Timestamp/Technician)", "/help/walkthroughs/shortcuts"],
-        ["Custom reports, PDF export & weekly scheduling", "/help/walkthroughs/custom-reports"],
+        ["First login, profile and the core workflow", "/help/getting-started"],
+        ["Finding your way around the navigation", "/help/getting-started"],
+        ["Your dashboard: reorder, resize, hide, reset", "/help/walkthroughs/shortcuts"],
+        ["Command palette (⌘K) and keyboard shortcuts", "/help/walkthroughs/shortcuts"],
+        ["Ticket list columns (visibility, order, Timestamp/Technician)", "/help/walkthroughs/shortcuts"],
+        ["Batch ticket operations", "/help/walkthroughs/shortcuts"],
+        ["Service boards, SLA policies and layout", "/help/configuration"],
       ] },
       { kind: "h", text: "Ticketing & email" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
         ["Email-to-Ticket Setup (IMAP / M365 Graph)", "/help/walkthroughs/email-tickets"],
         ["Outlook Add-in", "/help/walkthroughs/outlook-addin"],
-        ["Batch ticket operations", "/help/walkthroughs/shortcuts"],
+        ["Customer notifications on notes, time and status", "/help/faq"],
       ] },
-      { kind: "h", text: "Billing & agreements" },
+      { kind: "h", text: "Billing, expenses & catalog" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
-        ["Quotes & convert to invoice", "/help/walkthroughs/quotes-invoices"],
-        ["Generate invoice from ticket time", "/help/walkthroughs/billing-agreements"],
-        ["Agreement types, overtime & block-hour rules", "/help/walkthroughs/billing-agreements"],
+        ["Product Catalog (hardware, software, licences, services)", "/help/walkthroughs/product-catalog"],
+        ["Quotes & convert to invoice, priced from the catalog", "/help/walkthroughs/quotes-invoices"],
+        ["Agreement types and the time engine (overtime, midnight split)", "/help/walkthroughs/billing-agreements"],
+        ["Generate a draft invoice from ticket time", "/help/walkthroughs/billing-agreements"],
+        ["Bill-through batch invoicing (preview, hold, approve)", "/help/walkthroughs/billing-agreements"],
+        ["Expenses: filing, approval, and the accounting push", "/help/walkthroughs/expenses"],
+      ] },
+      { kind: "h", text: "Reporting & reviews" },
+      { kind: "table", headers: ["Topic", "Where"], rows: [
+        ["The five reporting areas, and the nine standard reports", "/help/walkthroughs/reporting"],
+        ["Business Reviews: weekly, monthly and quarterly", "/help/walkthroughs/reporting"],
+        ["Designing a report: bands, expressions, totals", "/help/walkthroughs/custom-reports"],
+        ["Charts, sub-reports and running totals", "/help/walkthroughs/custom-reports"],
+        ["Print, PDF, Excel, CSV and scheduling", "/help/walkthroughs/custom-reports"],
       ] },
       { kind: "h", text: "Monitoring & alerts" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
-        ["Service Alerts (RSS / DownDetector)", "/help/walkthroughs/service-alerts"],
+        ["Service Alerts, the nav indicator and the Outage Board", "/help/walkthroughs/service-alerts"],
         ["Uptime Monitors (website / SSL / DNS)", "/help/walkthroughs/uptime-monitors"],
         ["Alert Webhooks", "/help/walkthroughs/alert-webhooks"],
       ] },
-      { kind: "h", text: "Integrations" },
+      { kind: "h", text: "Integrations & automation" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
-        ["CloudConnect connectors & QuickBooks", "/help/walkthroughs/cloudconnect"],
+        ["CloudConnect connectors, live verification and QuickBooks", "/help/walkthroughs/cloudconnect"],
+        ["M365 inactivity report and offboarding checklists", "/help/walkthroughs/m365-offboarding"],
         ["Email connectors", "/help/walkthroughs/email-tickets"],
       ] },
       { kind: "h", text: "AI" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
         ["AI Actions (risk-classified)", "/help/walkthroughs/ai-actions"],
+        ["Drafting a knowledge base article from a ticket", "/help/walkthroughs/knowledge-base"],
       ] },
       { kind: "h", text: "Identity & security" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
-        ["MFA, SSO & Passkeys", "/help/walkthroughs/identity-security"],
-        ["Feature flags", "/help/configuration"],
+        ["Sessions and the inactivity timeout", "/help/walkthroughs/identity-security"],
+        ["MFA, SSO (OIDC) and passkeys", "/help/walkthroughs/identity-security"],
+        ["Hardening, lockout and the test-exemption account", "/help/walkthroughs/identity-security"],
+        ["Every feature flag, and what it gates", "/help/configuration"],
+      ] },
+      { kind: "h", text: "Customer portal" },
+      { kind: "table", headers: ["Topic", "Where"], rows: [
+        ["Turning the portal on and granting a client access", "/help/walkthroughs/customer-portal"],
+        ["How a customer signs in, and what they can see", "/help/walkthroughs/customer-portal"],
       ] },
       { kind: "h", text: "Kumo & knowledge" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
-        ["Kumo: passwords, documents & audit", "/help/walkthroughs/kumo"],
+        ["Kumo: passwords, configurations, documents, checklists and audit", "/help/walkthroughs/kumo"],
+        ["Knowledge Base articles, categories and AI drafts", "/help/walkthroughs/knowledge-base"],
         ["Knowledge Base", "/kb"],
       ] },
-      { kind: "note", text: "MAINTENANCE RULE: whenever a feature is added, updated, changed, or removed, update its walkthrough and Index rows in the same change so documentation stays accurate." },
+      { kind: "note", text: "MAINTENANCE RULE: whenever a feature is added, updated, changed, or removed, update its walkthrough here and in the Index rows in the same change. Every walkthrough in this file is also linked from the Help home page, so a new one is reachable without editing the menu." },
     ],
     related: [
       { label: "Getting Started", to: "/help/getting-started" },
@@ -236,7 +301,6 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/walkthroughs/email-tickets",
     title: "Email-to-Ticket Setup (IMAP / M365 Graph)",
     description: "Configure monitored mailboxes so inbound email becomes tickets automatically.",
-    anchors: [{ id: "imap-setup", label: "IMAP connector" }, { id: "graph-setup", label: "M365 Graph connector" }, { id: "usage", label: "Usage" }],
     blocks: [
       { kind: "h", text: "IMAP connector" },
       { kind: "steps", items: [
@@ -266,25 +330,32 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: "quotes-invoices", group: "walkthroughs",
     path: "/help/walkthroughs/quotes-invoices",
     title: "Quotes & Convert to Invoice",
-    description: "Create quotes from your service catalog and convert accepted quotes into draft invoices.",
-    anchors: [{ id: "create-quote", label: "Create a quote" }, { id: "convert", label: "Convert to invoice" }],
+    description: "Build a quote from the catalog and turn an accepted one into a draft invoice.",
     blocks: [
       { kind: "h", text: "Create a quote" },
       { kind: "steps", items: [
         "Open Quotes from the navigation.",
-        "Enter the title, select the client, and add one or more line items (description, quantity, unit price).",
+        "Enter the title, select the client, and add one or more line items.",
         "Save — the quote is created in draft status with totals computed.",
       ] },
+      { kind: "h", text: "Price it from the catalog" },
+      { kind: "steps", items: [
+        "In a line's description field, type to search the **Product Catalog** by name or SKU.",
+        "Pick the item: its description and **sell price** are copied into the line, and the line keeps a link to the SKU.",
+        "Adjust the quantity or the price on the line if this quote is a special — the catalog is not changed by quoting it.",
+      ] },
+      { kind: "tip", text: "Quoting from the catalog is what keeps a price quoted today and the price invoiced next month the same number, without anybody retyping it." },
       { kind: "h", text: "Convert to invoice" },
       { kind: "steps", items: [
         "Open the quote and select Convert to invoice.",
         "A draft invoice is created from the quote's line items with a new invoice number.",
         "Review the invoice under Billing → Invoices before sending.",
       ] },
-      { kind: "tip", text: "Quotes never email clients automatically — conversion only creates a draft invoice." },
+      { kind: "note", text: "Quotes never email clients automatically — conversion only creates a draft invoice." },
     ],
     related: [
-      { label: "Billing & Agreements", to: "/help/walkthroughs/billing-agreements" },
+      { label: "Product Catalog", to: "/help/walkthroughs/product-catalog" },
+      { label: "Billing, Agreements & Overtime", to: "/help/walkthroughs/billing-agreements" },
       { label: "Help Index", to: "/help/index" },
       { label: "Billing", to: "/billing" },
     ],
@@ -292,35 +363,53 @@ export const HELP_SECTIONS: HelpSection[] = [
   {
     id: "billing-agreements", group: "walkthroughs",
     path: "/help/walkthroughs/billing-agreements",
-    title: "Billing, Agreements & Overtime Rules",
-    description: "Agreement types, bill-through billing, overtime, midnight splits, and block-hour deductions.",
-    anchors: [{ id: "agreement-types", label: "Agreement types" }, { id: "time-rules", label: "Time rules" }, { id: "bill-through", label: "Generate from tickets" }],
+    title: "Billing, Agreements & Overtime",
+    description: "Agreement types, the time engine, generating from tickets, and bill-through batch invoicing.",
     blocks: [
       { kind: "h", text: "Agreement types" },
-      { kind: "table", headers: ["Type", "Behavior"], rows: [
-        ["Block hours", "Prepaid hours; overtime deducts 1.5 block hours per 1 hour of overtime"],
-        ["All-you-can-eat (Cyber Care)", "Flat coverage; no per-hour billing"],
-        ["Variable hourly (spot)", "Per-hour rates: $100 / $250 / $275 / $400 tiers"],
+      { kind: "table", headers: ["Type", "Behaviour"], rows: [
+        ["Service", "Ordinary hourly or fixed work, billed as agreed on the contract"],
+        ["Block hours", "Prepaid hours; work draws the allowance down rather than being invoiced per hour"],
+        ["All-you-can-eat (Cyber Care)", "Flat coverage; no per-hour billing, but the allowance still records what was consumed"],
+        ["Variable hourly (spot)", "Per-hour tiers — Standard $100, Advanced $250, Specialist $275, Emergency $400"],
       ] },
-      { kind: "h", text: "Time rules" },
+      { kind: "p", text: "Block and Cyber Care agreements **draw from an allowance**; Service and spot agreements are billed per hour. Every rate, cut-off and multiplier below is settable per agreement, so one client's evening rate does not become everybody's." },
+      { kind: "h", text: "The time engine" },
+      { kind: "p", text: "TIME_RULES_ENABLED turns on three rules that are decided in one place rather than by whoever types the timesheet. **With it off, a time entry is stored exactly as it is typed** — which is why it ships off and is a billing sign-off decision rather than a technical one." },
+      { kind: "table", headers: ["Rule", "What it does"], rows: [
+        ["Midnight split", "Work that crosses midnight becomes two entries, the second linked to the first — \"23:00–01:00 Tuesday\" hides two different days of labour, and every report wants them apart"],
+        ["Overtime", "Minutes after the agreement's cut-off (18:00 by default) are overtime"],
+        ["Weighting", "Overtime counts at the agreement's multiplier (1.5 by default) towards billing and, for block and Cyber Care, towards the allowance — the 1.5:1 rule: two hours of evening work consume three"],
+      ] },
       { kind: "steps", items: [
-        "Set TIME_RULES_ENABLED=true to activate the agreement/time engine.",
-        "Entries ending after 6:00 PM are calculated at time-and-a-half (×1.5).",
-        "Entries crossing midnight are split into two distinct entries linked by splitFrom.",
-        "Block-hour agreements deduct 1.5 block hours for every 1 hour of overtime applied.",
+        "Set TIME_RULES_ENABLED=true and restart the API.",
+        "Open the agreement and set its overtime cut-off, multiplier, and whether overtime applies at all.",
+        "Log time as usual. Where a rule changed the entry, the invoice charges the **weighted** minutes rather than the typed ones.",
       ] },
+      { kind: "note", text: "Where a figure was not computed, it is stored as null rather than zero — so \"not computed\" stays distinguishable from \"computed as nothing\"." },
       { kind: "h", text: "Generate from tickets" },
       { kind: "steps", items: [
         "Open the Finance Dashboard.",
-        "Enter the Company ID and select Generate draft invoice.",
+        "Choose the client and select **Generate draft invoice**.",
         "Unbilled billable time entries become draft invoice line items and are linked to the invoice.",
       ] },
       { kind: "warn", text: "Generated invoices are drafts only — they are never emailed or synced until you send them." },
+      { kind: "h", text: "Bill-through batch invoicing" },
+      { kind: "p", text: "For billing a whole period at once, the batch is a deliberate three-step artefact: money earned — time and **approved** expenses — becomes invoices, but nothing reaches a client without a human looking at it first. Gated by INVOICE_BATCH_ENABLED." },
+      { kind: "steps", items: [
+        "**Preview** works out what would be billed per client — hours, expenses, every line, and the total — and writes nothing at all.",
+        "**Create** turns the preview into Draft invoices, held by the batch.",
+        "**Approve** issues them and pushes them to the accounting system. **Reject** throws the drafts away and leaves the time and expenses unbilled for the next run.",
+      ] },
+      { kind: "p", text: "Rates are taken in order: the time entry's own rate, then the agreement's hourly rate, then the agreement's recurring amount as a day rate." },
+      { kind: "note", text: "**It cannot double-bill.** The preview only ever considers time entries and expenses that are not already on an invoice, and creating the batch marks them as billed. Rejecting clears the marks and deletes the drafts, so the next run picks the same work up again." },
     ],
     related: [
       { label: "Quotes & Convert to Invoice", to: "/help/walkthroughs/quotes-invoices" },
+      { label: "Expenses & Accounting Sync", to: "/help/walkthroughs/expenses" },
       { label: "Help Index", to: "/help/index" },
       { label: "Finance Dashboard", to: "/billing/dashboard" },
+      { label: "Agreements", to: "/billing/agreements" },
     ],
   },
   {
@@ -328,7 +417,6 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/walkthroughs/uptime-monitors",
     title: "Uptime Monitors (Website / SSL / DNS)",
     description: "Configure website, SSL-expiry, and DNS checks with alerting.",
-    anchors: [{ id: "add-monitor", label: "Add a monitor" }, { id: "behavior", label: "Behavior" }],
     blocks: [
       { kind: "h", text: "Add a monitor" },
       { kind: "steps", items: [
@@ -351,19 +439,29 @@ export const HELP_SECTIONS: HelpSection[] = [
   {
     id: "service-alerts", group: "walkthroughs",
     path: "/help/walkthroughs/service-alerts",
-    title: "Service Alerts & Outage Monitoring",
-    description: "Monitor vendor status feeds (RSS + DownDetector) and track incidents.",
-    anchors: [{ id: "add-service", label: "Add a monitored service" }, { id: "lifecycle", label: "Alert lifecycle" }],
+    title: "Service Alerts & the Outage Board",
+    description: "Monitor vendor status feeds, work the outage board, and know what a status actually means.",
     blocks: [
+      { kind: "h", text: "The nav indicator" },
+      { kind: "p", text: "Service Alerts sits at the top of the navigation pane and turns **crimson with a count** whenever something is wrong, so an outage is visible from anywhere in the product without opening the page. An all-clear hides the indicator rather than showing a zero." },
       { kind: "h", text: "Add a monitored service" },
       { kind: "steps", items: [
         "Open Service Alerts → Settings (Administration → Service Alerts).",
         "Add a service with its category, status page URL, DownDetector URL, and/or RSS feed URL.",
         "Keep monitorEnabled on and set a sort order.",
-        "The monitor polls every 5 minutes and classifies outage/degraded vs restored keywords.",
+        "The monitor polls on the interval shown on the page and classifies outage, degraded and restored keywords.",
+      ] },
+      { kind: "h", text: "The Outage Board" },
+      { kind: "p", text: "The second tab is a **triage board**: one row per monitored service, the problems sorted to the top, each with its most recent observation and the time it was seen. It counts outages and degradations at the top, refreshes on the same poll as the rest of the page, and only while the tab is visible — so a board left open in a background tab is not quietly polling." },
+      { kind: "steps", items: [
+        "Scan the outage and degraded counts first; they are the only numbers that need a decision.",
+        "Read a row's last observation to see what was actually fetched, not just that it failed.",
+        "Use the service's own status page link when a feed and a vendor disagree.",
       ] },
       { kind: "h", text: "Alert lifecycle" },
-      { kind: "p", text: "Outage items open an active alert (severity outage or degraded). Auto-resolution requires two consecutive all-clear polls and a minimum alert age — a single transient fetch gap cannot flap an alert. Manual alerts are never auto-resolved." },
+      { kind: "p", text: "A problem opens an active alert (severity outage, degraded, or a mere notice). Auto-resolution requires two consecutive all-clear polls **and** a minimum alert age, so a single transient fetch gap cannot flap an alert open and shut. Manual alerts are never auto-resolved by monitor checks." },
+      { kind: "h", text: "Social reports" },
+      { kind: "p", text: "When the social source is enabled and a token is configured, public chatter is read as a signal — and it can **only ever raise an informational notice**, never an outage. Chatter is not proof, and the product refuses to treat it as such; turning the source off leaves everything else unchanged." },
     ],
     related: [
       { label: "Uptime Monitors", to: "/help/walkthroughs/uptime-monitors" },
@@ -377,7 +475,6 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/walkthroughs/alert-webhooks",
     title: "Alert Webhooks",
     description: "Register webhook endpoints to receive alert events and inspect delivery logs.",
-    anchors: [{ id: "register", label: "Register a webhook" }, { id: "deliveries", label: "Delivery log" }],
     blocks: [
       { kind: "h", text: "Register a webhook" },
       { kind: "steps", items: [
@@ -400,7 +497,6 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/walkthroughs/ai-actions",
     title: "AI Actions (Risk-Classified)",
     description: "Propose, review, and audit AI-suggested actions with risk-tier controls.",
-    anchors: [{ id: "tiers", label: "Risk tiers" }, { id: "decide", label: "Approve or reject" }],
     blocks: [
       { kind: "h", text: "Risk tiers" },
       { kind: "table", headers: ["Tier", "Behavior"], rows: [
@@ -424,35 +520,48 @@ export const HELP_SECTIONS: HelpSection[] = [
   {
     id: "identity-security", group: "walkthroughs",
     path: "/help/walkthroughs/identity-security",
-    title: "MFA, SSO & Passkeys",
-    description: "Configure multi-factor authentication, OIDC single sign-on, and WebAuthn passkeys.",
-    anchors: [{ id: "mfa", label: "MFA" }, { id: "sso", label: "SSO (OIDC)" }, { id: "passkeys", label: "Passkeys" }, { id: "hardening", label: "Hardening flag" }],
+    title: "Identity, Sessions & Sign-in",
+    description: "How sign-in works, the inactivity timeout, multi-factor authentication, SSO and passkeys.",
     blocks: [
-      { kind: "h", text: "MFA" },
+      { kind: "h", text: "Sessions & the inactivity timeout" },
+      { kind: "p", text: "Signing in creates a **session**, held in an httpOnly cookie and paired with a CSRF token. Every request the browser makes slides the session forward, so ordinary work never interrupts you." },
+      { kind: "steps", items: [
+        "Idle for 30 minutes (the default) and the session ends; you are returned to the sign-in page, which says the session timed out rather than showing a generic error.",
+        "One minute before that, a warning appears with a countdown and a **Stay signed in** button. Pressing it extends the session without losing what you were doing.",
+        "Administrators are exempt: an admin or super-admin session never ends from inactivity, so a long-running piece of work is never cut off.",
+        "Change the timeout under Settings (between 5 and 480 minutes). The setting is enforced by the server, so it applies to every signed-in browser immediately.",
+        "No session lives longer than 12 hours regardless of the setting.",
+      ] },
+      { kind: "note", text: "The desktop shell and the Outlook add-in use a bearer token rather than the cookie, and therefore have no inactivity clock — the warning only appears where it means something." },
+      { kind: "h", text: "Multi-factor authentication" },
       { kind: "steps", items: [
         "Open MFA Setup from Settings and scan the QR code with your authenticator app.",
-        "Enter the 6-digit code to verify; backup codes are provided.",
-        "At login, complete MFA with the app code or the emailed code.",
+        "Enter the 6-digit code to verify. The enrolment is accepted only for the secret it issued — a code from a different QR code, or a screenshot of somebody else's, is refused.",
+        "Store the one-time backup codes you are shown; they are the way in if the device is lost.",
+        "At sign-in, complete MFA with the app code or the emailed fallback code.",
       ] },
-      { kind: "h", text: "SSO (OIDC)" },
+      { kind: "h", text: "Single sign-on (OIDC)" },
       { kind: "steps", items: [
-        "Set SSO_ENABLED=true and configure SSO_ISSUER, SSO_CLIENT_ID, SSO_CLIENT_SECRET, and SSO_REDIRECT_URI (defaults to the web origin callback).",
-        "Restart the API; the login page shows a Sign in with SSO button when enabled.",
-        "First-time SSO users are provisioned automatically with an admin role and verified email.",
-        "Existing password/MFA login remains available as fallback.",
+        "Set SSO_ENABLED=true and configure SSO_ISSUER, SSO_CLIENT_ID, SSO_CLIENT_SECRET, and SSO_REDIRECT_URI (it defaults to the web origin's callback).",
+        "Restart the API. The sign-in page shows Sign in with SSO once it is on, and nothing changes for anyone until then.",
+        "First-time SSO users are provisioned automatically with a verified email address.",
+        "Password and MFA sign-in remain available as a fallback.",
       ] },
       { kind: "h", text: "Passkeys" },
       { kind: "steps", items: [
-        "Set PASSKEY_ENABLED=true and restart the API.",
-        "Sign in with your password once, then add a passkey in Settings → Passkeys (or from the login page).",
-        "Subsequent sign-ins use the passkey; the credential counter and last-used time are updated on every assertion.",
-        "Settings lists each registered device — rename it to something you will recognise, or remove a device you no longer hold. Your password always remains a way in.",
+        "Set PASSKEY_ENABLED=true and WEBAUTHN_RP_ID to the app's hostname, then restart the API.",
+        "Sign in with your password once, then add a passkey from Settings → Passkeys or from the sign-in page.",
+        "Each registered device is listed with its name and last use. Rename one to something you will recognise, or remove a device you no longer hold.",
+        "A removed credential stops working immediately, and your password always remains a way in.",
       ] },
-      { kind: "h", text: "Hardening flag" },
-      { kind: "p", text: "AUTH_HARDENING_ENABLED switches JWTs to a 15-minute expiry and upgrades password hashes to bcrypt cost 12 on next login (rehash-on-login — no forced resets)." },
+      { kind: "h", text: "Hardening & lockout" },
+      { kind: "p", text: "AUTH_HARDENING_ENABLED is the production posture, and it does four things at once: tokens drop to a 15-minute expiry, a failed sign-in is counted and the account locks after 5 attempts, an administrator-issued password must be changed at next sign-in, and an older password hash is upgraded to the current cost on the next successful sign-in — **rehash on login, never a forced reset**. It is off in development so nobody locks themselves out of their own desk." },
+      { kind: "h", text: "The test-exemption account" },
+      { kind: "p", text: "For diagnosing a lockout, a single named account can be exempted from the login interruptions — the lockout, the timeout and the password-change gate — with AUTH_TEST_BYPASS. It **refuses to run in production**, and it should be unset everywhere real; it exists so an administrator can get back in while the cause is being found, not as a convenience." },
     ],
     related: [
       { label: "Configuration", to: "/help/configuration" },
+      { label: "Getting Started", to: "/help/getting-started" },
       { label: "Help Index", to: "/help/index" },
       { label: "Settings", to: "/settings" },
     ],
@@ -462,7 +571,6 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/walkthroughs/outlook-addin",
     title: "Outlook Add-in",
     description: "Convert selected Outlook messages into C7NTAX tickets from the mailbox.",
-    anchors: [{ id: "enable", label: "Enable & install" }, { id: "use", label: "Use" }],
     blocks: [
       { kind: "h", text: "Enable & install" },
       { kind: "steps", items: [
@@ -487,7 +595,6 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/walkthroughs/cloudconnect",
     title: "CloudConnect Integrations",
     description: "Connect third-party services, test connections, and fix credentials inline.",
-    anchors: [{ id: "connect", label: "Add a connector" }, { id: "test-fix", label: "Test & fix inline" }, { id: "quickbooks", label: "QuickBooks Online" }],
     blocks: [
       { kind: "h", text: "Add a connector" },
       { kind: "steps", items: [
@@ -501,12 +608,14 @@ export const HELP_SECTIONS: HelpSection[] = [
         "Fix any failing fields in place and re-test without leaving the page.",
         "Connection status chips refresh live so broken integrations are visible immediately.",
       ] },
+      { kind: "note", text: "With live status on, the server re-verifies connections on a throttle and reports what it last observed — so a chip means \"last verified at\", not \"the last time somebody saved the form\". Switch it off and only the stored status is returned, with no calls made at all." },
       { kind: "h", text: "QuickBooks Online" },
-      { kind: "p", text: "QuickBooks uses Client ID, Client Secret, Realm ID, and Access Token. Enter all four, then test. Sync pushes invoices and payments through the billing flow." },
+      { kind: "p", text: "QuickBooks uses Client ID, Client Secret, Realm ID, and Access Token. Enter all four, then test. Sync pushes invoices and payments through the billing flow, and approved expenses are pushed the same way." },
     ],
     related: [
+      { label: "Expenses & Accounting Sync", to: "/help/walkthroughs/expenses" },
+      { label: "M365 Inactivity & Offboarding", to: "/help/walkthroughs/m365-offboarding" },
       { label: "Email-to-Ticket Setup", to: "/help/walkthroughs/email-tickets" },
-      { label: "Billing & Agreements", to: "/help/walkthroughs/billing-agreements" },
       { label: "Help Index", to: "/help/index" },
       { label: "CloudConnect", to: "/cloudconnect" },
     ],
@@ -516,7 +625,6 @@ export const HELP_SECTIONS: HelpSection[] = [
     path: "/help/walkthroughs/kumo",
     title: "Kumo: Passwords, Documents & Audit",
     description: "Store passwords and documents, and audit who changed what and when.",
-    anchors: [{ id: "passwords", label: "Passwords" }, { id: "documents", label: "Documents & files" }, { id: "audit", label: "Audit trail" }],
     blocks: [
       { kind: "h", text: "Passwords" },
       { kind: "steps", items: [
@@ -542,51 +650,105 @@ export const HELP_SECTIONS: HelpSection[] = [
   {
     id: "custom-reports", group: "walkthroughs",
     path: "/help/walkthroughs/custom-reports",
-    title: "Custom Reports & Scheduling",
-    description: "Build custom reports, run them on demand, export dashboard PDFs, and schedule weekly deliveries.",
-    anchors: [{ id: "create-report", label: "Create a report" }, { id: "run-report", label: "Run a report" }, { id: "export-schedule", label: "Export & schedule" }],
+    title: "Designing a Report (bands, charts, sub-reports)",
+    description: "Build a designed report band by band, add charts and sub-reports, then export or schedule it.",
     blocks: [
-      { kind: "h", text: "Create a report" },
+      { kind: "h", text: "Start a designed report" },
       { kind: "steps", items: [
-        "Open Reporting → Analytics → Custom Report Builder (or /reports/custom).",
-        "Enter a name, pick a type (ticket_summary, revenue, or custom), and optionally a config JSON object.",
-        "Select Create report — it appears in Your reports.",
+        "Open Reporting → Custom Reports and select **New designed report**.",
+        "Choose what to report on (Tickets, Invoices, Time entries, Expenses, Assets, Contacts, Clients) and a layout to start from: blank page, simple list, grouped list with totals, or summary with grand totals.",
+        "Select **Open the designer**. The report is a draft until you save it, and a name is suggested from your choices.",
       ] },
-      { kind: "h", text: "Run a report" },
+      { kind: "note", text: "A designed report is stored as an ordinary saved report, so it lists, runs, exports, schedules, duplicates and deletes beside every other report you have." },
+      { kind: "h", text: "Bands and elements" },
+      { kind: "p", text: "A report is a stack of **bands**, each printed at a defined moment: Report Title once at the top, Page Header and Column Header on every page, Group Header and Group Footer around each group, Data once per row, Column Footer and Page Footer at the bottom, and Report Summary once after the last row." },
       { kind: "steps", items: [
-        "In the report list, select Run.",
-        "Results render in a table below (up to 500 rows for built-in types).",
+        "Select a band to set its height, whether it repeats after a page break, and whether it starts a new page.",
+        "Add an element from the palette: **Text, Field, Total, Chart, Sub-report, Line, Box** or **Image**.",
+        "Drag an element to move it and its handles to resize — in millimetres, snapped to a millimetre (hold **Alt** for a quarter). Arrows nudge, **Shift+arrows** move 5mm, **Delete** removes, **Ctrl+D** duplicates.",
+        "**Ctrl+Z** and **Ctrl+Shift+Z** undo and redo; **Ctrl+S** saves.",
       ] },
-      { kind: "h", text: "Export & schedule" },
+      { kind: "tip", text: "The canvas shows each element with its real value from the preview, so a column that will not fit is obvious before you print it." },
+      { kind: "h", text: "Expressions, totals and running totals" },
+      { kind: "p", text: "A field prints an expression over the current row — `Fields.status`, or `UPPER(Fields.client)` — and text elements can mix literal words with values using `{{ … }}`, so a caption reads \"Client: {{Fields.client}}\". The palette inserts a field, a built-in (`Page.number`, `Page.totalPages`, `Report.name`, `Group.value`) or any of the forty functions **into the expression you were last typing in**, with the caret landing inside the brackets." },
+      { kind: "table", headers: ["Element", "What it does"], rows: [
+        ["Total", "SUM, AVG, MIN, MAX, COUNT or COUNTD over one of three scopes: the whole report, the current group, or the current page. A page total is resolved after pagination, so it is the total of the rows actually on that page."],
+        ["Running total", "RUNNINGSUM, RUNNINGAVG or RUNNINGCOUNT keep adding up as the rows print and carry over a page break by construction. Scoped to a group (RUNNINGSUM(Fields.amount, 'status'), or 'group' for the innermost) it restarts the moment that group opens. 'page' is not a valid scope for a running total."],
+      ] },
+      { kind: "h", text: "Charts" },
       { kind: "steps", items: [
-        "Analytics → Quick Actions → Export Dashboard PDF downloads a summary PDF.",
-        "Schedule Weekly Report opens a dialog: choose the report, day of week, time, and recipients (comma-separated), then Schedule.",
-        "Schedules are stored per report and delivered in PDF format.",
+        "Add a **Chart** element. It draws a column, bar, line, pie or donut from the report's own rows.",
+        "Choose the **category field** that groups the rows and the **value field** to fold inside them, then how to fold it — SUM, COUNT, AVG, MIN, MAX or COUNTD — over the report, the current group or the current page.",
+        "Optionally set a title, print values on the bars, and show the legend.",
+        "**Categories** is a cut-off: beyond it the tail folds into one bar labelled Other (n) so the axis stays readable, and the folded values are kept rather than dropped.",
+      ] },
+      { kind: "note", text: "A chart needs room. Below roughly 40×30mm there is nowhere for the axis labels and the legend to go, and the designer says so while you are still laying it out." },
+      { kind: "h", text: "Sub-reports" },
+      { kind: "steps", items: [
+        "Add a **Sub-report** element and choose the saved designed report it should print, from the list of every report you have designed.",
+        "Bind any parameter the chosen report declares — one expression box each, with the required ones marked. A binding is worked out from *this* report's parameters, such as `Parameters.status`.",
+        "The sub-report prints **inside this report's pages**: it brings its own title and column captions, runs its own data source, and does not change this report's page count, page numbering or row count.",
+      ] },
+      { kind: "warn", text: "A binding cannot read Fields — the sub-report's rows are fetched once, before this report's rows are read, so there is no row to read yet. Sub-reports nest up to three deep, and a report that would print itself is skipped with a note instead of looping." },
+      { kind: "h", text: "Design, Preview and Data" },
+      { kind: "table", headers: ["Tab", "Shows"], rows: [
+        ["Design", "The bands with live values, where you place elements."],
+        ["Preview", "The paginated pages exactly as they will print, including charts and sub-reports."],
+        ["Data", "The rows the report selected, with the parameters and the date range."],
+      ] },
+      { kind: "p", text: "Anything the designer cannot work out is listed at the top as a problem or a warning rather than silently printing wrong. Nothing that fails validation can be saved or run." },
+      { kind: "h", text: "Print, PDF, Excel, CSV" },
+      { kind: "p", text: "All four read the same laid-out pages, so a page break in the preview is the page break in the PDF. **Print** and **PDF** reproduce the design, including charts. **Excel** and **CSV** take one row per data row with the group each row belongs to, because a spreadsheet of positioned text boxes would be useless." },
+      { kind: "h", text: "Scheduling" },
+      { kind: "steps", items: [
+        "From the Custom Reports list, open a report's schedule options.",
+        "Choose the cadence and the recipients, then save.",
+        "Schedules are stored per report and delivered as a PDF.",
       ] },
     ],
     related: [
+      { label: "Reporting & Business Reviews", to: "/help/walkthroughs/reporting" },
       { label: "Help Index", to: "/help/index" },
-      { label: "Configuration", to: "/help/configuration" },
-      { label: "Reports", to: "/reports" },
-      { label: "Custom Report Builder", to: "/reports/custom" },
+      { label: "Custom Reports", to: "/reports/custom" },
+      { label: "Standard Reports", to: "/reports/standard" },
     ],
   },
   {
     id: "shortcuts", group: "walkthroughs",
     path: "/help/walkthroughs/shortcuts",
-    title: "UI Shortcuts & Batch Actions",
-    description: "Keyboard shortcuts, batch ticket operations, and list conventions.",
-    anchors: [{ id: "keys", label: "Keyboard shortcuts" }, { id: "batch", label: "Batch actions" }],
+    title: "Workspace, Shortcuts & Batch Actions",
+    description: "Arrange your dashboard, use the command palette and keyboard shortcuts, and work many tickets at once.",
     blocks: [
+      { kind: "h", text: "Your dashboard" },
+      { kind: "p", text: "The dashboard is assembled from widgets, and its arrangement **follows your account rather than the browser** — so it is the same on any machine you sign in from." },
+      { kind: "steps", items: [
+        "Select **Customise** to open the widget list.",
+        "Drag a widget by its handle to reorder it, or use the arrows if you prefer keys.",
+        "Pick **S**, **M** or **L** for its width in the grid.",
+        "Hide the widgets you do not use — a hidden widget is remembered, and the header says how many are hidden.",
+        "Select **Reset** to go back to the standard layout.",
+      ] },
+      { kind: "note", text: "A widget that was hidden or renamed in an earlier version degrades quietly rather than breaking the page: an unknown widget is simply skipped." },
+      { kind: "h", text: "Command palette (⌘K)" },
+      { kind: "steps", items: [
+        "Press **⌘K** (or **Ctrl+K**) anywhere to open the palette.",
+        "Type to search pages, actions and settings; the arrow keys move and Enter runs the highlighted entry.",
+        "Use it for jumping to a page, creating a ticket, switching the theme, or turning a UI feature on and off.",
+      ] },
       { kind: "h", text: "Keyboard shortcuts" },
       { kind: "table", headers: ["Key", "Action"], rows: [
-        ["T", "Jump to Tickets (when not typing in a field)"],
+        ["T", "Jump to Tickets (when you are not typing in a field)"],
+        ["⌘K / Ctrl+K", "Open the command palette"],
+        ["⌘S / Ctrl+S", "Save, inside the report designer"],
+        ["⌘Z / Ctrl+Z", "Undo, inside the report designer (add Shift to redo)"],
+        ["⌘D / Ctrl+D", "Duplicate the selected report element"],
+        ["Alt", "Hold while dragging a report element to place it on a quarter of a millimetre"],
       ] },
       { kind: "h", text: "Batch actions" },
       { kind: "steps", items: [
         "Open Tickets and tick the checkboxes on the left of the rows.",
         "Choose the batch action (acknowledge, close, and more) from the bulk bar.",
-        "Confirm — results are applied to all selected tickets with a summary toast.",
+        "Confirm — results are applied to all selected tickets with a summary toast. A failed row is reported rather than silently skipped.",
       ] },
       { kind: "h", text: "Ticket list columns" },
       { kind: "steps", items: [
@@ -600,7 +762,240 @@ export const HELP_SECTIONS: HelpSection[] = [
     related: [
       { label: "Getting Started", to: "/help/getting-started" },
       { label: "Help Index", to: "/help/index" },
+      { label: "Dashboard", to: "/" },
       { label: "Tickets", to: "/tickets" },
+    ],
+  },
+  {
+    id: "product-catalog", group: "walkthroughs",
+    path: "/help/walkthroughs/product-catalog",
+    title: "Product Catalog (hardware, software, licences, services)",
+    description: "One entry per thing you sell or reorder, so four surfaces price from the same numbers.",
+    blocks: [
+      { kind: "h", text: "Add an item" },
+      { kind: "steps", items: [
+        "Open Administration → Product Catalog.",
+        "Select **New item** and pick the type: hardware, software, licence, subscription, service or bundle.",
+        "Give it a name and an SKU, then set the prices and, if you stock it, the stock levels.",
+        "Save. The item is immediately available to every surface that prices from the catalog.",
+      ] },
+      { kind: "h", text: "What an item holds" },
+      { kind: "table", headers: ["Group", "Fields"], rows: [
+        ["Identity", "Type, category, subcategory, manufacturer, name, description, SKU"],
+        ["Commercial", "Unit, cost price, sell price, recurring billing period, taxable"],
+        ["Stock", "Stocked, quantity on hand, reorder point, reorder quantity"],
+        ["Supply", "Supplier, supplier part number, purchase link, warranty in months"],
+        ["Notes", "Internal notes, kept out of anything a customer sees"],
+      ] },
+      { kind: "h", text: "Cost, sell price and margin" },
+      { kind: "p", text: "Cost and margin are **commercial data**: they are returned only to accounts that hold the catalog's manage permission. A technician attaching an item to a ticket sees the sell price and not what it cost — which is deliberate, not a gap, and it is enforced on the server rather than by hiding a column. The list also shows a recurring price's annualised value, so a per-month figure is comparable with a one-off." },
+      { kind: "h", text: "Stock & reordering" },
+      { kind: "steps", items: [
+        "Tick **Stocked** and set on hand, reorder point and reorder quantity.",
+        "Use **stock in** and **stock out** as parts arrive and are used. Each write is recorded with who made it and when.",
+        "Filter by **Low stock only** to see everything at or below its reorder point.",
+      ] },
+      { kind: "note", text: "Stock is a counter plus the audit trail rather than a per-warehouse ledger — it answers \"do we have any left\", not \"which shelf\"." },
+      { kind: "h", text: "Where the catalog is used" },
+      { kind: "table", headers: ["Surface", "Which price it takes"], rows: [
+        ["Quotes", "Sell price — a quote line searches the catalog as you type"],
+        ["Tickets", "Sell price — an item attached to a ticket"],
+        ["Procurement / purchase orders", "Cost price"],
+        ["Invoices", "Sell price, copied when the line is created"],
+      ] },
+      { kind: "p", text: "Search any of those pickers by name or SKU. Choosing a catalog item copies its description and price into the line, so the numbers are typed once." },
+      { kind: "h", text: "Retiring an item" },
+      { kind: "p", text: "A product that has been quoted, ordered or billed is **retired** rather than deleted — deleting it would leave an order or an invoice pointing at an SKU that no longer exists, so the delete is refused and says which record holds it. A retired item disappears from the pickers but every existing record keeps its numbers. Use **Retire from the catalog** and **Put back in the catalog** to move an item in and out." },
+    ],
+    related: [
+      { label: "Quotes & Convert to Invoice", to: "/help/walkthroughs/quotes-invoices" },
+      { label: "Expenses & Accounting Sync", to: "/help/walkthroughs/expenses" },
+      { label: "Help Index", to: "/help/index" },
+      { label: "Product Catalog", to: "/admin/products" },
+    ],
+  },
+  {
+    id: "reporting", group: "walkthroughs",
+    path: "/help/walkthroughs/reporting",
+    title: "Reporting & Business Reviews",
+    description: "The dashboard, the nine standard reports, the business review packs, and analytics.",
+    blocks: [
+      { kind: "h", text: "The five reporting areas" },
+      { kind: "table", headers: ["Area", "What it is"], rows: [
+        ["Dashboards", "The at-a-glance reporting home: the numbers a desk looks at first."],
+        ["Standard Reports", "Nine reports built into the product, each with its own filters."],
+        ["Business Reviews", "One review pack at three cadences — weekly, monthly and quarterly."],
+        ["Custom Reports", "Designed reports you build yourself (see Designing a Report)."],
+        ["Analytics", "Ad-hoc analysis over the same data."],
+      ] },
+      { kind: "h", text: "Standard reports" },
+      { kind: "table", headers: ["Report", "Answers"], rows: [
+        ["Ticket Volume", "How much is coming in, by status, priority, board and technician, over time"],
+        ["SLA Performance", "Are we meeting the promises, and where are the misses"],
+        ["Technician Productivity", "Hours, utilisation and throughput per person"],
+        ["Revenue", "What has been billed and what is outstanding"],
+        ["Ticket Aging", "What has been open too long, by age band"],
+        ["Time Tracking", "Where the hours actually went"],
+        ["Client Satisfaction", "Survey responses and trends, from the responses that exist"],
+        ["Contract Profitability", "Revenue against labour cost, approved expenses and catalogue cost"],
+        ["Client Value", "What each client is worth, and what they cost to serve"],
+      ] },
+      { kind: "h", text: "Reading a report" },
+      { kind: "steps", items: [
+        "Set the period and any client or board filter at the top; the report re-runs when you change them.",
+        "Read the tiles first — they carry the headline figures and their direction of travel.",
+        "Charts and tables underneath break the tiles down.",
+        "Select **Print**, **PDF**, **Excel** or **CSV** to take it away.",
+      ] },
+      { kind: "note", text: "Where a figure genuinely cannot be known, the report **says so and tells you why** rather than estimating it — for example how many delivered hours carry no cost rate, so a margin that reads well can be seen to be incomplete." },
+      { kind: "h", text: "Business reviews (weekly, monthly, quarterly)" },
+      { kind: "p", text: "A business review is a **pack** rather than a table: service delivery, targets, commercials, the estate and risk — the same sections at all three cadences, only the window changes. It opens on the last **finished** period, so a review is never mid-flight." },
+      { kind: "steps", items: [
+        "Open Reporting → Business Reviews and choose the cadence: Weekly, Monthly or Quarterly.",
+        "Pick the period from the list, which the report itself supplies — so the picker and the pack always agree on which periods exist.",
+        "Compare like for like: a period still in progress is measured against the same number of days of its predecessor, not against the whole previous period.",
+        "Follow the quick links at the bottom for the quarterly and weekly views directly.",
+      ] },
+      { kind: "tip", text: "The **Quarterly Business Review** is the customer-facing pack: hand it to a client as the record of what changed, what it cost and what is at risk." },
+      { kind: "h", text: "Filters and the period" },
+      { kind: "p", text: "Every report takes a date range, a client and a board, and tells you the period it actually applied — so \"All time\" and a named range are never confused. A client-scoped account's reports are narrowed to its own client automatically and cannot be widened by a filter." },
+    ],
+    related: [
+      { label: "Designing a Report", to: "/help/walkthroughs/custom-reports" },
+      { label: "Help Index", to: "/help/index" },
+      { label: "Dashboards", to: "/reports" },
+      { label: "Standard Reports", to: "/reports/standard" },
+      { label: "Business Reviews", to: "/reports/reviews" },
+    ],
+  },
+  {
+    id: "customer-portal", group: "walkthroughs",
+    path: "/help/walkthroughs/customer-portal",
+    title: "Customer Portal",
+    description: "Let a client's contacts raise and follow their own tickets, and see nothing else.",
+    blocks: [
+      { kind: "h", text: "Turn the portal on" },
+      { kind: "steps", items: [
+        "Set PORTAL_ENABLED=true and restart the API.",
+        "Outbound email (SMTP) must be configured, because sign-in is an emailed code.",
+        "Optionally set PORTAL_DEFAULT_BOARD_ID; without it, portal tickets land on the oldest active service board.",
+      ] },
+      { kind: "warn", text: "Off is genuinely off: every portal route answers 404, so a deployment that has not switched it on does not advertise a customer sign-in page at all." },
+      { kind: "h", text: "Grant a client access" },
+      { kind: "steps", items: [
+        "Open the client under Clients.",
+        "Switch on **Portal access**.",
+        "That client's contacts can now use the portal. A contact of a client without it cannot, whatever email address they use.",
+      ] },
+      { kind: "h", text: "How a customer signs in" },
+      { kind: "steps", items: [
+        "A customer visits `/portal` and enters their email address.",
+        "**We email a six-digit code.** It works once and expires in ten minutes.",
+        "Entering it signs them in. There is no password for a customer to choose, forget or reuse.",
+      ] },
+      { kind: "note", text: "An email address that is not a contact of a portal-enabled client is refused in the same way as one that is — the reply does not reveal whether the address exists." },
+      { kind: "h", text: "What a customer can see" },
+      { kind: "table", headers: ["They can", "They cannot"], rows: [
+        ["See the tickets belonging to their own company", "See any other client's tickets, or that other clients exist"],
+        ["Raise a new ticket and read the replies on their own", "See internal notes — those are never sent to a portal"],
+        ["Follow a ticket's status and history", "Browse the catalog, billing, Kumo, reports or any staff area"],
+      ] },
+      { kind: "h", text: "Why they can only see their own" },
+      { kind: "p", text: "The restriction is applied on the server from the signed-in contact's company, after anything the request asked for — so it cannot be widened by a URL, a query parameter or a crafted request. A ticket that is not theirs answers **404 rather than 403**, because whether a ticket exists is itself information a customer should not be given." },
+    ],
+    related: [
+      { label: "Configuration", to: "/help/configuration" },
+      { label: "Email-to-Ticket Setup", to: "/help/walkthroughs/email-tickets" },
+      { label: "Help Index", to: "/help/index" },
+    ],
+  },
+  {
+    id: "expenses", group: "walkthroughs",
+    path: "/help/walkthroughs/expenses",
+    title: "Expenses & Accounting Sync",
+    description: "File an out-of-pocket cost against a ticket, approve it, and push it to accounting.",
+    blocks: [
+      { kind: "h", text: "File an expense" },
+      { kind: "p", text: "The technician who spent the money files it, against the ticket it belongs to — which is what makes the cost traceable to the work rather than to a monthly total nobody can explain." },
+      { kind: "steps", items: [
+        "Open the ticket and go to its **Expenses** tab.",
+        "Select the add button and fill in the description, amount, category, vendor, miles (if you drove) and the date.",
+        "Save. The toast says the expense was **submitted for approval** — filing one never approves it.",
+      ] },
+      { kind: "h", text: "Approve or reject" },
+      { kind: "steps", items: [
+        "Someone holding the billing-manage permission reviews the pending expense.",
+        "**Approve** records who approved it and when.",
+        "**Reject** requires a reason — the product refuses a rejection with no explanation, because \"no\" without a why is not something a technician can act on.",
+        "A technician can still edit their own expense until it has been decided.",
+      ] },
+      { kind: "h", text: "How an expense reaches an invoice" },
+      { kind: "steps", items: [
+        "Open Billing → Time & Expenses to see every expense, filterable, with the ticket each one came from and a CSV export.",
+        "Approved expenses are picked up by bill-through invoicing: the batch preview counts them before anything is created.",
+        "The invoice records which tickets — and therefore which expenses — it came from.",
+      ] },
+      { kind: "h", text: "Push to accounting" },
+      { kind: "p", text: "An approved expense can be pushed to the connected accounting system, which is the QuickBooks connector under CloudConnect. The push is refused unless the expense is approved first, so nothing reaches the ledger that nobody has signed off." },
+    ],
+    related: [
+      { label: "Billing, Agreements & Overtime", to: "/help/walkthroughs/billing-agreements" },
+      { label: "Product Catalog", to: "/help/walkthroughs/product-catalog" },
+      { label: "Help Index", to: "/help/index" },
+      { label: "Time & Expenses", to: "/billing/time" },
+    ],
+  },
+  {
+    id: "knowledge-base", group: "walkthroughs",
+    path: "/help/walkthroughs/knowledge-base",
+    title: "Knowledge Base & AI Drafts",
+    description: "Write articles, and turn a solved ticket into a draft that a person still has to publish.",
+    blocks: [
+      { kind: "h", text: "Articles & categories" },
+      { kind: "p", text: "The Knowledge Base holds articles in categories, each with a draft or published state. Only published articles are visible to anyone who is looking for an answer." },
+      { kind: "h", text: "Draft an article from a ticket" },
+      { kind: "p", text: "The expensive knowledge is the kind that leaves with the person who solved the ticket, and those tickets are already in the product. A resolved ticket can be drafted into an article that says what it was, what it looked like, and how it was fixed." },
+      { kind: "steps", items: [
+        "Open a **resolved** ticket and use the knowledge-base draft action.",
+        "The draft is built from the ticket's own resolution material — the internal notes the technician wrote *after* solving it.",
+        "The article is filed as a **draft** with the ticket number attached and a line saying it needs a human review.",
+      ] },
+      { kind: "note", text: "One article per ticket: asking twice returns the article already drafted rather than a second copy. Turn the whole feature off with KB_AUTOGEN_ENABLED=false." },
+      { kind: "h", text: "Review before it is published" },
+      { kind: "warn", text: "Nothing is ever published directly. An AI-authored article is a claim on the reader's time, so a person publishes, edits or discards it — and the draft says it was machine-written and which ticket it came from, so the claim can be checked." },
+    ],
+    related: [
+      { label: "Kumo", to: "/help/walkthroughs/kumo" },
+      { label: "Help Index", to: "/help/index" },
+      { label: "Knowledge Base", to: "/kb" },
+    ],
+  },
+  {
+    id: "m365-offboarding", group: "walkthroughs",
+    path: "/help/walkthroughs/m365-offboarding",
+    title: "M365 Inactivity & Offboarding",
+    description: "Find the Microsoft 365 accounts nobody is using, and give a departure an order and a record.",
+    blocks: [
+      { kind: "h", text: "The inactivity report" },
+      { kind: "steps", items: [
+        "Connect Microsoft 365 under CloudConnect and grant the audit permission the connector asks for.",
+        "Open the inactivity report to see the accounts that have not been used, by age band.",
+        "Treat a dormant account as a licence to reclaim and a risk to close — the report is the evidence either way.",
+      ] },
+      { kind: "note", text: "Without the audit permission every account reads **unknown** rather than \"active\". That is deliberate: an unanswerable question is reported as unanswerable, not guessed at." },
+      { kind: "h", text: "Raise an offboarding checklist" },
+      { kind: "steps", items: [
+        "From the report, start an offboarding for an inactive account.",
+        "The checklist lists the work in order, and can be assigned to a person with a due date.",
+        "Each step is ticked off as it is done, so the departure has a record rather than a memory.",
+      ] },
+      { kind: "h", text: "What it deliberately does not do" },
+      { kind: "warn", text: "**It disables nothing.** The checklist is a piece of work with an owner and a record — a human still does the disabling, in the tenant, where the consequence of a mistake is visible. Turning the feature off with M365_OFFBOARD_ENABLED=false leaves the report working and raises no checklists." },
+    ],
+    related: [
+      { label: "CloudConnect Integrations", to: "/help/walkthroughs/cloudconnect" },
+      { label: "Help Index", to: "/help/index" },
+      { label: "CloudConnect", to: "/cloudconnect" },
     ],
   },
 ];
@@ -690,12 +1085,31 @@ function HelpDocPage({ section }: { section: HelpSection }) {
   );
 }
 
-export function HelpGettingStarted() { const s = HELP_SECTIONS[0]!; useLocation(); return <HelpDocPage section={s} />; }
-export function HelpFaq() { const s = HELP_SECTIONS[1]!; useLocation(); return <HelpDocPage section={s} />; }
-export function HelpConfiguration() { const s = HELP_SECTIONS[2]!; useLocation(); return <HelpDocPage section={s} />; }
-export function HelpIndex() { const s = HELP_SECTIONS[3]!; useLocation(); return <HelpDocPage section={s} />; }
+export function HelpGettingStarted() { return <HelpCore id="getting-started" />; }
+export function HelpFaq() { return <HelpCore id="faq" />; }
+export function HelpConfiguration() { return <HelpCore id="configuration" />; }
+export function HelpIndex() { return <HelpCore id="index" />; }
+
+/** Looks the section up by id rather than by position, so reordering the array cannot swap a page. */
+function HelpCore({ id }: { id: string }) {
+  const section = HELP_SECTIONS.find(candidate => candidate.id === id);
+  if (!section) return null;
+  return <HelpDocPage section={section} />;
+}
+
 export function HelpWalkthrough() {
   const { pathname } = useLocation();
-  const s = HELP_SECTIONS.find((x) => x.path === pathname) || HELP_SECTIONS[0]!;
-  return <HelpDocPage section={s} />;
+  const section = HELP_SECTIONS.find(candidate => candidate.path === pathname);
+  if (!section) {
+    return (
+      <div className="card p-6">
+        <h1 className="text-xl font-bold text-white">That walkthrough has moved</h1>
+        <p className="text-sm text-gray-400 mt-2">
+          It is no longer part of the documentation. The <Link className="text-cyber-400 hover:text-cyber-300" to="/help/index">Help Index</Link> lists
+          every topic, and <Link className="text-cyber-400 hover:text-cyber-300" to="/help">Help Home</Link> lists every walkthrough.
+        </p>
+      </div>
+    );
+  }
+  return <HelpDocPage section={section} />;
 }

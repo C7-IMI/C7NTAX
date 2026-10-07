@@ -17,7 +17,7 @@ export function HelpPage() {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-xl font-bold text-white">Help</h1>
-        <p className="text-sm text-gray-400 mt-1">Documentation and reference for C7NTAX — structured like the major PSA help centers (Autotask, ConnectWise Asio, HaloPSA): guided getting-started content, a question-and-answer section, configuration reference, step-by-step feature walkthroughs, and a cross-linked index. Documentation is maintained alongside every feature change.</p>
+        <p className="text-sm text-gray-400 mt-1">Documentation and reference for C7NTAX — structured like the major PSA help centers (Autotask, ConnectWise Asio, HaloPSA): guided getting-started content, a question-and-answer section, configuration reference, step-by-step feature walkthroughs, and a cross-linked index. Documentation is maintained alongside every feature change, so if something here disagrees with the product, the product is right and this is a bug.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -59,6 +59,9 @@ export function HelpPage() {
         <div className="flex flex-wrap gap-2">
           {[
             { label: "Tickets", to: "/tickets" },
+            { label: "Product Catalog", to: "/admin/products" },
+            { label: "Business Reviews", to: "/reports/reviews" },
+            { label: "Design a Report", to: "/reports/custom" },
             { label: "Service Boards", to: "/boards" },
             { label: "CloudConnect", to: "/cloudconnect" },
             { label: "Kumo", to: "/kumo" },
