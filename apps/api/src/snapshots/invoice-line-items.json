@@ -22,21 +22,5 @@
     "unitPrice": 75,
     "total": 75,
     "invoiceId": "e32346d9-5997-4902-9fd1-0f56ff668340"
-  },
-  {
-    "id": "5f7f2eff-061c-4348-8fcf-38ede78197c4",
-    "description": "Quarterly maintenance",
-    "quantity": 1.5,
-    "unitPrice": 200,
-    "total": 300,
-    "invoiceId": "aa442639-d892-4982-a827-d01192f03baf"
-  },
-  {
-    "id": "833d4fa2-b89d-4a45-b343-cfb576830a62",
-    "description": "Ticket UIV-B-1791364150568",
-    "quantity": 0.5,
-    "unitPrice": 250,
-    "total": 125,
-    "invoiceId": "aa442639-d892-4982-a827-d01192f03baf"
   }
 ]

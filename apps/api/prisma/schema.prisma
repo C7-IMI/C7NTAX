@@ -183,6 +183,10 @@ model Company {
 
   // Portal access
   portalEnabled   Boolean  @default(false)
+  /// Accent colour for the customer portal, `#rrggbb`. Null uses the app's own theme.
+  portalAccentColor String?
+  /// Logo shown on the portal, absolute URL or a path under the API's `/uploads`.
+  portalLogoUrl   String?
 
   /// How far this client has been billed by a bill-through batch (PLAN-015 Phase A #3).
   billThroughDate DateTime?
@@ -226,6 +230,8 @@ model Contact {
 
   tickets     Ticket[]
   ticketContacts TicketContact[]
+  portalLoginCodes PortalLoginCode[]
+  portalSessions   PortalSession[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -2042,4 +2048,41 @@ model OutlookAddinToken {
   tokenHash String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+// ─── Customer portal (PLAN-013 #3) ──────────────────────────────────
+
+/// A one-time sign-in code emailed to a customer contact. Only the hash is stored,
+/// so a database read cannot recover a live code.
+model PortalLoginCode {
+  id         String    @id @default(uuid())
+  contactId  String
+  contact    Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([contactId])
+  @@index([expiresAt])
+}
+
+/// A signed-in customer contact. Deliberately separate from `UserSession`: a customer is
+/// a Contact, not a staff User, and a portal token must never be usable on a staff route.
+model PortalSession {
+  id             String    @id @default(uuid())
+  sessionToken   String    @unique // sha256 of the cookie value
+  csrfToken      String
+  contactId      String
+  contact        Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  ipAddress      String?
+  userAgent      String?
+  lastActivityAt DateTime  @default(now())
+  expiresAt      DateTime
+  invalidatedAt  DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([contactId])
+  @@index([expiresAt])
 }

@@ -128,31 +128,5 @@
     "nextFollowUpAt": "2026-10-26T20:16:16.417Z",
     "createdAt": "2026-10-06T20:16:16.639Z",
     "updatedAt": "2026-10-06T20:16:16.639Z"
-  },
-  {
-    "id": "aa442639-d892-4982-a827-d01192f03baf",
-    "invoiceNumber": "INV-MUXVZDFD",
-    "status": "draft",
-    "issueDate": "2026-10-07T09:09:42.457Z",
-    "dueDate": "2026-11-06T10:09:42.457Z",
-    "paidAt": null,
-    "subtotal": 425,
-    "taxRate": 0,
-    "taxTotal": 0,
-    "total": 425,
-    "currency": "USD",
-    "notes": null,
-    "quoteStatus": null,
-    "isRecurring": false,
-    "recurrenceRule": null,
-    "nextGenerationDate": null,
-    "companyId": "4a15c786-102c-4aa8-8ae7-84648d6260ac",
-    "agreementId": "c1f9ea9b-c3d3-4f54-b58d-e4aa300d37f6",
-    "batchId": null,
-    "followUpCount": 0,
-    "lastFollowUpAt": null,
-    "nextFollowUpAt": null,
-    "createdAt": "2026-10-07T09:09:42.459Z",
-    "updatedAt": "2026-10-07T09:09:42.459Z"
   }
 ]

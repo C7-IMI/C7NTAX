@@ -24135,5 +24135,387 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-07T09:09:42.472Z"
+  },
+  {
+    "id": "b6869e8b-6ce3-439e-836d-be65225707cc",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "0edc3ede-159b-4cd9-89bd-d4038cb0c169",
+    "changes": {
+      "endTime": "2026-10-06T02:00:00.000Z",
+      "startTime": "2026-10-06T00:00:00.000Z",
+      "description": "Evening work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:02.719Z"
+  },
+  {
+    "id": "75b170d2-7a15-469b-a935-eec3eff1205c",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "32543959-96a8-4a79-b811-6009d56b93f6"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:02.746Z"
+  },
+  {
+    "id": "3c362007-9ded-4da3-af6b-dc7b9a4262ee",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "32543959-96a8-4a79-b811-6009d56b93f6"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:02.790Z"
+  },
+  {
+    "id": "cb57eff4-bc35-4e72-b157-b2069ec1dea9",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "preview",
+    "changes": {
+      "companyIds": [
+        "32543959-96a8-4a79-b811-6009d56b93f6"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:02.806Z"
+  },
+  {
+    "id": "95ac2d5d-be31-412f-92b9-8f5d016bdc94",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "298c615a-07df-4d29-926c-3b9cd94c7be4",
+    "changes": {
+      "reason": "Wrong period"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:02.838Z"
+  },
+  {
+    "id": "b2c524d0-8c57-400f-9c14-f7fa679026d1",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "32543959-96a8-4a79-b811-6009d56b93f6"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:02.885Z"
+  },
+  {
+    "id": "66247855-5f1a-416c-b14b-1c6f3b440d30",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "646369da-88e3-491f-b753-648289deb9ec",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:02.919Z"
+  },
+  {
+    "id": "5874fc4d-9418-4b98-8287-bc9d6c7da81d",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "e489d722-f9fb-43f3-bf83-f4a6a992f295",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:03.835Z"
+  },
+  {
+    "id": "911ab10c-acba-4d31-a692-0286b2c33912",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "96fc1c2f-7b6f-4d64-86ec-823f35c43d2d",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:03.899Z"
+  },
+  {
+    "id": "cb4f2877-df1f-429c-8f22-be4f0a35950a",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "96fc1c2f-7b6f-4d64-86ec-823f35c43d2d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:03.943Z"
+  },
+  {
+    "id": "faf3e4aa-cf95-450a-b13f-beb030adf968",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "batches",
+    "changes": {
+      "companyIds": [
+        "32543959-96a8-4a79-b811-6009d56b93f6"
+      ],
+      "billThroughDate": "2026-10-08"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:02.947Z"
+  },
+  {
+    "id": "fde53090-921a-4805-9591-52fcbfeac6f2",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets by status",
+      "type": "custom",
+      "config": {
+        "limit": 25,
+        "sortBy": "createdAt",
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "title",
+          "status",
+          "client"
+        ],
+        "filters": [
+          {
+            "op": "in",
+            "field": "status",
+            "value": [
+              "new",
+              "in_progress"
+            ]
+          }
+        ],
+        "sortDir": "desc"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:05.922Z"
+  },
+  {
+    "id": "ba28d956-be76-462b-ad86-8b659a31bcfc",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets grouped",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "groupBy": "status"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:05.952Z"
+  },
+  {
+    "id": "4702e16a-4486-4344-9370-647394839ae9",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad source",
+      "type": "custom",
+      "config": {
+        "source": "users; drop table"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:05.982Z"
+  },
+  {
+    "id": "2d05dde7-62e5-4eb8-8a13-b497710f54cb",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad column",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "secretHash",
+          "password",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:06.008Z"
+  },
+  {
+    "id": "fb6129dd-6be4-4518-8648-961b5911c00a",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad operator",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "sql",
+            "field": "status",
+            "value": "1=1"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:06.040Z"
+  },
+  {
+    "id": "4944f32d-cd8b-4e01-b216-5f64acb12b8c",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad filter field",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "equals",
+            "field": "passwordHash",
+            "value": "x"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:06.067Z"
+  },
+  {
+    "id": "a3a37c69-29f3-4285-80de-4913fe8a16fb",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — expenses",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "expenses",
+        "columns": [
+          "description",
+          "amount",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:06.088Z"
+  },
+  {
+    "id": "d94d0de5-e883-4b9b-b92f-dec19ea69fb2",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — time",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "time_entries",
+        "columns": [
+          "date",
+          "minutes",
+          "billedMinutes"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:06.102Z"
+  },
+  {
+    "id": "a22b920b-7e16-4594-9c9b-45aaa3f06345",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — scoped tickets",
+      "type": "custom",
+      "config": {
+        "limit": 200,
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "client"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:06.136Z"
+  },
+  {
+    "id": "f702fdd0-041e-4581-a9ff-b2bcc2abeebe",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — ticket summary",
+      "type": "ticket_summary",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:06.149Z"
+  },
+  {
+    "id": "3db071da-0053-4df0-bacf-ed2ca7e252eb",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — client value",
+      "type": "client_value",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T09:13:06.164Z"
   }
 ]
