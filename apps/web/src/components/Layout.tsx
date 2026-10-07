@@ -245,11 +245,20 @@ export function Layout({ children }: { children: ReactNode }) {
 
   // A cookie session can idle out; a bearer-token client cannot, so the warning is only
   // shown where it means something (PLAN-001 §3.2).
-  const { showWarning, secondsRemaining } = useActivityMonitor({
+  const { showWarning, secondsRemaining, dismissWarning } = useActivityMonitor({
     timeoutMs: session.timeoutMinutes * 60 * 1000,
     enabled: session.cookieMode,
     onTimeout: () => logout(),
   });
+
+  // Staying signed in clears the warning itself. Waiting for the next activity event would
+  // work for a mouse click but not for a keyboard or assistive-technology activation, and a
+  // failed extension is left to the API's 401 handling so the sign-in page keeps the reason.
+  const staySignedIn = useCallback(async () => {
+    const extended = await extendSession();
+    if (extended !== false) dismissWarning();
+    return extended;
+  }, [extendSession, dismissWarning]);
 
   // The navigation only offers what the API will actually serve for this role.
   const visibleTree = useMemo(() => filterNavByPermission(NAV_TREE, permissions), [permissions]);
@@ -786,7 +795,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <SessionTimeoutWarning
         visible={showWarning}
         secondsRemaining={secondsRemaining}
-        onExtend={extendSession}
+        onExtend={staySignedIn}
         onLogout={logout}
       />
     </div>

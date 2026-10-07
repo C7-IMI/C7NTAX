@@ -1,5 +1,25 @@
 [
   {
+    "id": "7be0d8c7-7e02-4338-a099-11605e2afb46",
+    "name": "Persona probe category 1791350435830",
+    "slug": "persona-probe-category-1791350435830",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T05:20:35.833Z",
+    "updatedAt": "2026-10-07T05:20:35.833Z"
+  },
+  {
+    "id": "5ff0fc60-3a1f-4240-9141-3573c57f5d19",
+    "name": "Persona probe category 1791350435836",
+    "slug": "persona-probe-category-1791350435836",
+    "description": null,
+    "parentId": null,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T05:20:35.839Z",
+    "updatedAt": "2026-10-07T05:20:35.839Z"
+  },
+  {
     "id": "3eda292d-9004-4f65-abb8-b6c4f9afbbab",
     "name": "How-To",
     "slug": "how-to",
@@ -18,45 +38,5 @@
     "sortOrder": 2,
     "createdAt": "2026-08-19T16:15:29.003Z",
     "updatedAt": "2026-08-19T16:15:29.003Z"
-  },
-  {
-    "id": "edd4a870-c113-4c88-ac95-63cec184d83b",
-    "name": "Persona probe category 1791349395833",
-    "slug": "persona-probe-category-1791349395833",
-    "description": null,
-    "parentId": null,
-    "sortOrder": 0,
-    "createdAt": "2026-10-07T05:03:15.837Z",
-    "updatedAt": "2026-10-07T05:03:15.837Z"
-  },
-  {
-    "id": "98227e61-d768-4772-a98e-d0287eea19bd",
-    "name": "Persona probe category 1791349395838",
-    "slug": "persona-probe-category-1791349395838",
-    "description": null,
-    "parentId": null,
-    "sortOrder": 0,
-    "createdAt": "2026-10-07T05:03:15.841Z",
-    "updatedAt": "2026-10-07T05:03:15.841Z"
-  },
-  {
-    "id": "026bd56e-e377-4470-bf83-e16e6cbb075b",
-    "name": "Persona probe category 1791349452814",
-    "slug": "persona-probe-category-1791349452814",
-    "description": null,
-    "parentId": null,
-    "sortOrder": 0,
-    "createdAt": "2026-10-07T05:04:12.817Z",
-    "updatedAt": "2026-10-07T05:04:12.817Z"
-  },
-  {
-    "id": "9aa7816d-1601-477c-be10-0ad37a98ef11",
-    "name": "Persona probe category 1791349452819",
-    "slug": "persona-probe-category-1791349452819",
-    "description": null,
-    "parentId": null,
-    "sortOrder": 0,
-    "createdAt": "2026-10-07T05:04:12.822Z",
-    "updatedAt": "2026-10-07T05:04:12.822Z"
   }
 ]

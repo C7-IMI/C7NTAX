@@ -21,10 +21,9 @@ export function SessionTimeoutWarning({ visible, secondsRemaining, onExtend, onL
   const stay = async () => {
     setExtending(true);
     try {
-      const ok = await onExtend();
-      // A failed extension means the session is already gone: signing out is the honest
-      // outcome, rather than dismissing the warning over a dead session.
-      if (ok === false) onLogout();
+      // A failure is handled by the API layer, which redirects to the sign-in page with the
+      // reason; signing out here as well would race that redirect and lose the explanation.
+      await onExtend();
     } finally {
       setExtending(false);
     }

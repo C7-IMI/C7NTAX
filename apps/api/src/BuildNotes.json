@@ -1,5 +1,48 @@
 [
   {
+    "version": "2026.10.7.001",
+    "date": "2026-10-07",
+    "title": "Session authentication is live: a real session cookie, an inactivity clock, and a warning before it runs out",
+    "changes": [
+      {
+        "text": "**Signing in now creates a session, not just a token.** `POST /api/auth/login` (and the MFA, passkey and SSO paths) sets an opaque session cookie that is `HttpOnly`, `SameSite=Strict` and `Secure` in production; the database stores only its SHA-256, so a stolen database copy cannot be replayed as a sign-in. Every write that rides on the cookie must also echo a CSRF token back in a header (double-submit, constant-time compare), the CSRF value lives in a cookie the scripts can read, and one live session per account is the rule — a new sign-in retires the previous one, which is the ConnectWise behaviour the plan asked for.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Sessions end when they should.** Changing a password or having an administrator reset one ends every session for that account, deactivating a user does the same, and signing out ends the session **server-side** rather than only clearing the browser's cookie — a copied cookie cannot outlive the sign-out.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**An inactivity timeout that warns before it acts.** The idle clock is 30 minutes by default (configurable with the `session_timeout` setting) and runs server-side, where it cannot be edited away. The browser mirrors it: a minute before the deadline a modal appears with a live countdown, \"Stay signed in\" resets the server's clock (not just the modal), and \"Sign out now\" ends the session. Verified in the browser with a real countdown, a real extension that moved the database timestamp, and the terminal case.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Administrators are exempt, and the browser is told so.** Admin and Super Admin sessions (plus the development bypass account) never expire from inactivity, matching the PSA convention used by Autotask and ConnectWise. The session endpoint reports that exemption as a zero timeout, so the browser never shows a warning for a timeout the server will not enforce.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The sign-in page says why you are back.** A session that ended from inactivity or from being signed out elsewhere redirects to `/login?reason=timeout|expired`, and the page explains it in a banner instead of silently dropping you at a login form.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`authenticate` is session-first, and the old path still works.** A request is resolved from the cookie first and falls back to the existing bearer token untouched, which keeps the desktop shell, the Outlook add-in and scripts working — the desktop app cannot rely on cookies at all, because it loads the UI from `app://c7ntax`. The middleware grew a helper for the shared permission refresh and password-change gate, so all 326 guarded routes behave exactly as before.",
+        "type": "Update"
+      },
+      {
+        "text": "**The SPA keeps its token in memory, not in storage, whenever the cookie is usable.** Storage is only written when the browser cannot hold a cookie session (the desktop shell and add-in), which removes the long-lived token from `localStorage` in the normal browser case; the session bootstrap reads `/auth/session` and only trusts a stored token when there is no cookie session to prefer.",
+        "type": "Update"
+      },
+      {
+        "text": "**The verification harness grew instead of being rebuilt.** `probe-session.mjs` (34 assertions), the corrected write probes in `probe-permissions.mjs`, and `clean-probe-residue.ts` — which now also clears the sweep's knowledge-base, workflow, survey, report, client, locale and stale-session rows, still dry-run by default.",
+        "type": "Update"
+      },
+      {
+        "text": "**The old session middleware was not just unmounted, it was broken.** It referenced a Prisma model that did not exist and was imported nowhere; it has been rewritten against a real `UserSession` table (migrated, not `db push`ed) and is the live path now.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.065",
     "date": "2026-10-06",
     "title": "The Azure deployment package: one image, two environments, and a pipeline that can promote them",

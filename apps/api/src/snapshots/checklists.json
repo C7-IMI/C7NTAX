@@ -108,16 +108,5 @@
     "createdById": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-10-06T20:16:16.683Z",
     "updatedAt": "2026-10-06T20:16:16.683Z"
-  },
-  {
-    "id": "6e3cd4b6-6bef-4416-a4a4-0b8b2e2957b4",
-    "name": "W1 session verification (delete me)",
-    "description": null,
-    "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "assignedToId": null,
-    "dueDate": null,
-    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "createdAt": "2026-10-07T05:08:14.253Z",
-    "updatedAt": "2026-10-07T05:08:14.253Z"
   }
 ]

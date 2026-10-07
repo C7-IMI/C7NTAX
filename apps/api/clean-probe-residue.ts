@@ -109,6 +109,64 @@ async function main() {
     () => prisma.company.deleteMany({ where: probeCompanyWhere }),
   );
 
+  // The permission sweep's write probes create one row per persona in each module. Every
+  // name carries the "Persona probe" prefix, except the locale, which uses a generated code.
+  const sweepCompanyWhere = { name: { startsWith: "Persona probe client" } };
+  const sweepArticles = await prisma.knowledgeBaseArticle.findMany({ where: { title: { startsWith: "Persona probe article" } }, select: { id: true } });
+  const sweepArticleIds = sweepArticles.map(a => a.id);
+  await remove(
+    "sweep kb articles",
+    () => Promise.resolve(sweepArticleIds.length),
+    async () => {
+      await prisma.kBArticleVersion.deleteMany({ where: { articleId: { in: sweepArticleIds } } }).catch(() => ({ count: 0 }));
+      await prisma.kBArticleAttachment.deleteMany({ where: { articleId: { in: sweepArticleIds } } }).catch(() => ({ count: 0 }));
+      await prisma.kBArticleTicket.deleteMany({ where: { articleId: { in: sweepArticleIds } } }).catch(() => ({ count: 0 }));
+      return prisma.knowledgeBaseArticle.deleteMany({ where: { id: { in: sweepArticleIds } } });
+    },
+  );
+  await remove(
+    "sweep kb categories",
+    () => prisma.kBCategory.count({ where: { name: { startsWith: "Persona probe category" } } }),
+    () => prisma.kBCategory.deleteMany({ where: { name: { startsWith: "Persona probe category" } } }),
+  );
+  await remove(
+    "sweep workflow rules",
+    () => prisma.workflowRule.count({ where: { name: { startsWith: "Persona probe rule" } } }),
+    () => prisma.workflowRule.deleteMany({ where: { name: { startsWith: "Persona probe rule" } } }),
+  );
+  await remove(
+    "sweep surveys",
+    () => prisma.survey.count({ where: { name: { startsWith: "Persona probe survey" } } }),
+    () => prisma.survey.deleteMany({ where: { name: { startsWith: "Persona probe survey" } } }),
+  );
+  await remove(
+    "sweep reports",
+    () => prisma.report.count({ where: { name: { startsWith: "Persona probe report" } } }),
+    () => prisma.report.deleteMany({ where: { name: { startsWith: "Persona probe report" } } }),
+  );
+  // Chat sessions are not matched: the model carries no title, so a sweep-created session
+  // cannot be told apart from a real one, and deleting by age would be a guess.
+  await remove(
+    "sweep clients",
+    () => prisma.company.count({ where: sweepCompanyWhere }),
+    () => prisma.company.deleteMany({ where: sweepCompanyWhere }),
+  );
+  await remove(
+    "sweep locales",
+    () => prisma.locale.count({ where: { name: "Persona Probe" } }),
+    () => prisma.locale.deleteMany({ where: { name: "Persona Probe" } }),
+  );
+  await remove(
+    "sweep checklists",
+    () => prisma.checklist.count({ where: { name: { startsWith: "W1 session verification" } } }),
+    () => prisma.checklist.deleteMany({ where: { name: { startsWith: "W1 session verification" } } }),
+  );
+  await remove(
+    "stale sessions",
+    () => prisma.userSession.count({ where: { invalidatedAt: { not: null } } }),
+    () => prisma.userSession.deleteMany({ where: { invalidatedAt: { not: null } } }),
+  );
+
   console.log("remaining:", JSON.stringify({
     users: await prisma.user.count(),
     providers: await prisma.aiProviderConfig.count(),
