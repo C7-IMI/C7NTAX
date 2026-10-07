@@ -1579,6 +1579,23 @@ model KumoPassword {
   @@index([companyId, category])
 }
 
+/// Who changed what in Kumo (PLAN-015 Phase B #6). Shared credentials and documents are edited by
+/// many hands, and "last editor" alone cannot answer "who removed the DNS entry?".
+model KumoAuditLog {
+  id        String   @id @default(uuid())
+  itemType  String   // password | document | asset | config | link
+  itemId    String
+  action    String   // created | updated | deleted | revealed | viewed
+  userId    String?
+  /// A short human sentence for the panel; details carry the field-level facts.
+  summary   String?
+  details   Json     @default("{}")
+  at        DateTime @default(now())
+
+  @@index([itemType, itemId, at])
+  @@index([userId])
+}
+
 model KumoPasswordAccessLog {
   id            String       @id @default(uuid())
   passwordId    String

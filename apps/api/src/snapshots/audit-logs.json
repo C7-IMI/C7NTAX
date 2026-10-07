@@ -14558,5 +14558,633 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-07T07:20:49.397Z"
+  },
+  {
+    "id": "963524a7-873c-427f-b159-b93920a74ebb",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault muxsb7x2",
+      "category": "probe",
+      "password": "***",
+      "username": "probe"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:26:56.740Z"
+  },
+  {
+    "id": "7e93ff84-b0de-4b63-850c-4afb97167c2a",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "e49c5b1f-7424-4bba-9688-2a8c1933b344",
+    "changes": {
+      "label": "Probe vault muxsb7x2 edited",
+      "password": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:26:56.763Z"
+  },
+  {
+    "id": "56350920-8a35-45b3-8c62-066800fa42cf",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "e49c5b1f-7424-4bba-9688-2a8c1933b344",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:26:56.782Z"
+  },
+  {
+    "id": "321ce44c-f3e4-45fc-b321-0a541391f6ab",
+    "action": "kumo_documents:create",
+    "entity": "kumo_documents",
+    "entityId": "documents",
+    "changes": {
+      "title": "Probe doc muxsb7x2",
+      "content": "first revision"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:26:56.817Z"
+  },
+  {
+    "id": "39a81371-32a0-4528-8378-041571a07e06",
+    "action": "kumo_documents:update",
+    "entity": "kumo_documents",
+    "entityId": "bcc0d50f-120d-4419-8734-e6dc670b6c40",
+    "changes": {
+      "content": "second revision",
+      "changeLog": "added the runbook step"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:26:56.822Z"
+  },
+  {
+    "id": "7bc538ad-07af-47f0-b55c-ff6e48d81606",
+    "action": "kumo_passwords:delete",
+    "entity": "kumo_passwords",
+    "entityId": "e49c5b1f-7424-4bba-9688-2a8c1933b344",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:26:56.831Z"
+  },
+  {
+    "id": "69479dea-32c2-4205-980f-c39d9ec42537",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault tech muxsb7x2",
+      "category": "probe",
+      "password": "***",
+      "username": "probe2"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:26:56.865Z"
+  },
+  {
+    "id": "1dffe3aa-3aee-46cb-9188-4cdd9224b247",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault muxsczdq",
+      "category": "probe",
+      "password": "***",
+      "username": "probe"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:18.985Z"
+  },
+  {
+    "id": "ec0c58c3-4659-40c2-bab4-98bab6d99702",
+    "action": "kumo_passwords:update",
+    "entity": "kumo_passwords",
+    "entityId": "0f129918-64ac-4475-9a98-10b025852f28",
+    "changes": {
+      "label": "Probe vault muxsczdq edited",
+      "password": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:19.002Z"
+  },
+  {
+    "id": "94369f03-5227-4758-97ac-03932ee62fde",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "0f129918-64ac-4475-9a98-10b025852f28",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:19.020Z"
+  },
+  {
+    "id": "26bf7cf1-64df-414a-bd89-5700034914be",
+    "action": "kumo_documents:create",
+    "entity": "kumo_documents",
+    "entityId": "documents",
+    "changes": {
+      "title": "Probe doc muxsczdq",
+      "content": "first revision"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:19.050Z"
+  },
+  {
+    "id": "942fbce4-e06d-4600-8c9f-05ae3b57f5cb",
+    "action": "kumo_documents:update",
+    "entity": "kumo_documents",
+    "entityId": "1c45dfbb-5899-47e8-b891-cd19d0d74bba",
+    "changes": {
+      "content": "second revision",
+      "changeLog": "added the runbook step"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:19.056Z"
+  },
+  {
+    "id": "be8f5bb0-23f6-4a7a-88d7-f57c1150d4c8",
+    "action": "kumo_passwords:delete",
+    "entity": "kumo_passwords",
+    "entityId": "0f129918-64ac-4475-9a98-10b025852f28",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:19.066Z"
+  },
+  {
+    "id": "3b33d166-38df-4a6d-b7fe-44eac9ad3f69",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "passwords",
+    "changes": {
+      "label": "Probe vault shared muxsczdq",
+      "category": "probe",
+      "password": "***",
+      "username": "probe2"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:19.095Z"
+  },
+  {
+    "id": "159e78c9-9143-4ead-9158-ba500ce3bfc5",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "75f3e2c6-3b23-4780-bd2c-30cce533e23b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "793ff9e8-cefc-43a9-8fc3-91fb12421b5d",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:19.100Z"
+  },
+  {
+    "id": "44f27ab8-b997-4a48-aa5f-f2a071d1eae8",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "technician",
+      "email": "sessionprobe1791358106725@probe.local",
+      "lastName": "Probe",
+      "password": "***",
+      "firstName": "Session",
+      "requireChange": false,
+      "credentialMode": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:26.950Z"
+  },
+  {
+    "id": "554d51ee-784c-4b6e-a924-41046c984f0d",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "47787105-efa9-40d3-ac1c-5b814f5ee595",
+    "changes": {
+      "requireChange": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:27.409Z"
+  },
+  {
+    "id": "2b2eb150-352f-4fb8-8650-9f6c4a85dc60",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-egress-1791358108653",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:28.661Z"
+  },
+  {
+    "id": "dd14cfb5-35ea-44a4-97ca-19edd6baec2a",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "d2e63768-2d0f-444e-bc3c-343076263dad",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:28.682Z"
+  },
+  {
+    "id": "597ad950-72d1-44ee-b60f-4a38acdd98f8",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "probe-redact-1791358108715",
+      "model": "m",
+      "apiKey": "***",
+      "isActive": false,
+      "provider": "custom",
+      "apiEndpoint": "https://api.openai.com/v1/chat/completions"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:28.722Z"
+  },
+  {
+    "id": "cf7a06da-8955-4d40-900e-72f19013445f",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "511eddf3-fb5a-4265-a312-8fa723409eb2",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:28.745Z"
+  },
+  {
+    "id": "84e52117-6222-4279-bcad-0ba37e02a03c",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:28:59.588Z"
+  },
+  {
+    "id": "335ce5cd-5b75-46c8-ad64-325f81a22175",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets by status",
+      "type": "custom",
+      "config": {
+        "limit": 25,
+        "sortBy": "createdAt",
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "title",
+          "status",
+          "client"
+        ],
+        "filters": [
+          {
+            "op": "in",
+            "field": "status",
+            "value": [
+              "new",
+              "in_progress"
+            ]
+          }
+        ],
+        "sortDir": "desc"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.201Z"
+  },
+  {
+    "id": "7cdcaa0f-e9c1-4fb3-9458-9b28e1448240",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — tickets grouped",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "groupBy": "status"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.213Z"
+  },
+  {
+    "id": "7a122dcb-fbce-480b-8d72-26193765bd01",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad source",
+      "type": "custom",
+      "config": {
+        "source": "users; drop table"
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.226Z"
+  },
+  {
+    "id": "042d0dd4-08d7-4164-8696-0f8659d2bb3e",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad column",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "secretHash",
+          "password",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.236Z"
+  },
+  {
+    "id": "d05626cf-36dc-45d7-9c85-49206b3dbb2f",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad operator",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "sql",
+            "field": "status",
+            "value": "1=1"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.245Z"
+  },
+  {
+    "id": "3c1d8a61-06ae-45e0-8909-3089081e8fe6",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — bad filter field",
+      "type": "custom",
+      "config": {
+        "source": "tickets",
+        "filters": [
+          {
+            "op": "equals",
+            "field": "passwordHash",
+            "value": "x"
+          }
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.258Z"
+  },
+  {
+    "id": "79e7197d-b2c6-40d4-8694-7c9e25970c80",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — expenses",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "expenses",
+        "columns": [
+          "description",
+          "amount",
+          "status"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.268Z"
+  },
+  {
+    "id": "bcb0a13e-f07b-4e16-be76-92862f979c8a",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — time",
+      "type": "custom",
+      "config": {
+        "limit": 5,
+        "source": "time_entries",
+        "columns": [
+          "date",
+          "minutes",
+          "billedMinutes"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.278Z"
+  },
+  {
+    "id": "3abb4259-6f0a-4e99-af21-57bc50c752bd",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — scoped tickets",
+      "type": "custom",
+      "config": {
+        "limit": 200,
+        "source": "tickets",
+        "columns": [
+          "ticketNumber",
+          "client"
+        ]
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.292Z"
+  },
+  {
+    "id": "a50947f2-c2da-4496-9086-b8f8a89edc26",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — ticket summary",
+      "type": "ticket_summary",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.300Z"
+  },
+  {
+    "id": "6e0140ac-c6ba-4c3e-af8c-08bec1b5c531",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "reports",
+    "changes": {
+      "name": "Probe — client value",
+      "type": "client_value",
+      "config": {}
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:29:00.308Z"
+  },
+  {
+    "id": "ab62e65d-8bb5-4f3f-9467-769608159f1d",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "agreements",
+    "changes": {
+      "name": "Probe block agreement",
+      "rateTier": "advanced",
+      "companyId": "0cad2f34-260e-4bc4-ae87-00b04a6d6302",
+      "hourlyRate": 250,
+      "agreementType": "block",
+      "blockHoursIncluded": 10
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:30:07.516Z"
+  },
+  {
+    "id": "390ac621-0715-4ab4-80dc-ef115201c1e4",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "e16dc9e0-407a-4c70-8342-cd0cdfcc77e7",
+    "changes": {
+      "endTime": "2026-10-07T02:00:00.000Z",
+      "startTime": "2026-10-07T00:00:00.000Z",
+      "description": "Evening maintenance"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:30:07.532Z"
+  },
+  {
+    "id": "bcc24ba8-c0ad-46de-8499-e13b2eaf724e",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "e16dc9e0-407a-4c70-8342-cd0cdfcc77e7",
+    "changes": {
+      "endTime": "2026-10-07T00:00:00.000Z",
+      "startTime": "2026-10-06T22:00:00.000Z",
+      "description": "Late afternoon work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:30:07.541Z"
+  },
+  {
+    "id": "295559b0-58fb-438c-978f-90b659d0c80c",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "e16dc9e0-407a-4c70-8342-cd0cdfcc77e7",
+    "changes": {
+      "endTime": "2026-10-06T16:30:00.000Z",
+      "startTime": "2026-10-06T14:00:00.000Z",
+      "description": "Morning work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:30:07.550Z"
+  },
+  {
+    "id": "60a31b75-7d7b-46ef-87c9-1f2370ef061e",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "e16dc9e0-407a-4c70-8342-cd0cdfcc77e7",
+    "changes": {
+      "endTime": "2026-10-07T06:00:00.000Z",
+      "startTime": "2026-10-07T04:00:00.000Z",
+      "description": "Overnight cutover"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:30:07.559Z"
+  },
+  {
+    "id": "27876c6d-50f7-4ebc-b546-e73e133fffcb",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "e16dc9e0-407a-4c70-8342-cd0cdfcc77e7",
+    "changes": {
+      "endTime": "2026-10-07T02:00:00.000Z",
+      "noCharge": true,
+      "startTime": "2026-10-07T00:00:00.000Z",
+      "description": "Goodwill work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:30:07.567Z"
+  },
+  {
+    "id": "11e3ff57-a73c-4241-94ec-405437fbcb4d",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "e16dc9e0-407a-4c70-8342-cd0cdfcc77e7",
+    "changes": {
+      "minutes": 90,
+      "description": "No clock"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:30:07.576Z"
   }
 ]

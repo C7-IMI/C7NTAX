@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { Permission, passwordStrengthLevel } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { encrypt, decrypt, secureClear } from "../services/kumoCrypto";
+import { recordKumoAudit, kumoAuditTrail, changedFields } from "../services/kumoAudit";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 
@@ -22,6 +23,17 @@ async function resolveCompanyId(requested: unknown, fallback: string | null | un
     return company.id;
   }
   return fallback ?? null;
+}
+
+/** Whether the audited item still exists — an unknown id should read as 404, not an empty trail. */
+async function kumoItemExists(itemType: string, itemId: string): Promise<boolean> {
+  switch (itemType) {
+    case "password": return !!(await prisma.kumoPassword.findUnique({ where: { id: itemId }, select: { id: true } }));
+    case "document": return !!(await prisma.kumoDocument.findUnique({ where: { id: itemId }, select: { id: true } }));
+    case "asset": return !!(await prisma.kumoAsset.findUnique({ where: { id: itemId }, select: { id: true } }));
+    case "config": return !!(await prisma.kumoServer.findUnique({ where: { id: itemId }, select: { id: true } }));
+    default: return false;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -316,6 +328,7 @@ kumoRouter.post("/passwords", requirePermission(Permission.KumoPasswordsCreate),
       select: { id: true, label: true, username: true, email: true, url: true, category: true, createdAt: true },
     });
     res.status(201).json(pw);
+    void recordKumoAudit({ itemType: "password", itemId: pw.id, action: "created", userId: req.user!.userId, summary: `Created "${label}"` });
   } catch (e) { next(e); }
 });
 
@@ -334,14 +347,28 @@ kumoRouter.patch("/passwords/:id", requirePermission(Permission.KumoPasswordsEdi
     }
     if (Object.keys(data).length === 0) throw new AppError("No fields to update", 400);
     data.updatedById = req.user!.userId;
+    const before = await prisma.kumoPassword.findUnique({ where: { id: req.params.id } });
     const pw = await prisma.kumoPassword.update({ where: { id: req.params.id }, data, select: { id: true, label: true } });
+    // The trail names the fields that moved; it never carries the new secret.
+    const changed = changedFields((before ?? {}) as Record<string, unknown>, data)
+      .map(field => (field === "encryptedPassword" || field === "iv" || field === "authTag" ? "password" : field));
+    void recordKumoAudit({
+      itemType: "password",
+      itemId: pw.id,
+      action: "updated",
+      userId: req.user!.userId,
+      summary: `Updated ${[...new Set(changed)].join(", ") || "nothing"}`,
+      details: { fields: [...new Set(changed)] },
+    });
     res.json(pw);
   } catch (e) { next(e); }
 });
 
 kumoRouter.delete("/passwords/:id", requirePermission(Permission.KumoPasswordsDelete), async (req: AuthRequest, res, next) => {
   try {
-    await prisma.kumoPassword.update({ where: { id: req.params.id }, data: { isActive: false } });
+    const id = String(req.params.id);
+    await prisma.kumoPassword.update({ where: { id }, data: { isActive: false } });
+    void recordKumoAudit({ itemType: "password", itemId: id, action: "deleted", userId: req.user!.userId, summary: "Deactivated" });
     res.json({ message: "Password deactivated" });
   } catch (e) { next(e); }
 });
@@ -369,6 +396,7 @@ kumoRouter.post("/passwords/:id/reveal", requirePermission(Permission.KumoPasswo
     await prisma.kumoPasswordAccessLog.create({
       data: { passwordId: pw.id, accessedById: req.user!.userId, accessType: "reveal", ipAddress: req.ip || req.socket.remoteAddress, userAgent: req.get("User-Agent")?.slice(0, 300) || "", success: true },
     });
+    void recordKumoAudit({ itemType: "password", itemId: pw.id, action: "revealed", userId: req.user!.userId, summary: `Revealed "${pw.label}"` });
     const result = { id: pw.id, label: pw.label, username: pw.username, passwordPlaintext: plaintext, updatedBy: updatedByName };
     // Clear plaintext from memory after response
     setImmediate(() => { secureClear(Buffer.from(plaintext, "utf8")); });
@@ -384,6 +412,22 @@ kumoRouter.get("/passwords/:id/access-logs", requirePermission(Permission.KumoPa
       take: 100,
     });
     res.json({ data: logs });
+  } catch (e) { next(e); }
+});
+
+/**
+ * The shared trail for one item — who touched this credential or document, and what they did.
+ * Behind the same view permission as the item itself; the caller has already been scoped to the
+ * client by the item they can see, and entries carry no secret material.
+ */
+kumoRouter.get("/audit/:itemType/:itemId", requirePermission(Permission.KumoView), async (req: AuthRequest, res, next) => {
+  try {
+    const itemType = String(req.params.itemType ?? "");
+    const itemId = String(req.params.itemId ?? "");
+    if (!itemType || !itemId) throw new AppError("itemType and itemId are required", 400);
+    const limit = Number(req.query.limit ?? 50);
+    if (!(await kumoItemExists(itemType, itemId))) throw new AppError("Not found", 404);
+    res.json({ data: await kumoAuditTrail(itemType, itemId, Number.isFinite(limit) ? limit : 50) });
   } catch (e) { next(e); }
 });
 
@@ -559,6 +603,7 @@ kumoRouter.post("/documents", requirePermission(Permission.KumoDocumentCreate), 
       data: { title, slug, currentContent: content, currentVersion: 1, folderId: folderId || null, visibility: visibility || "internal", companyId: await resolveCompanyId(companyId, req.user!.companyId), authorId: req.user!.userId },
     });
     await prisma.kumoDocumentRevision.create({ data: { documentId: doc.id, version: 1, content, authorId: req.user!.userId } });
+    void recordKumoAudit({ itemType: "document", itemId: doc.id, action: "created", userId: req.user!.userId, summary: `Created "${title}" (v1)` });
     res.status(201).json(doc);
   } catch (e) { next(e); }
 });
@@ -576,6 +621,15 @@ kumoRouter.patch("/documents/:id", requirePermission(Permission.KumoDocumentEdit
     if (content !== undefined) {
       await prisma.kumoDocumentRevision.create({ data: { documentId: doc.id, version: doc.currentVersion, content, changeLog: changeLog || null, authorId: req.user!.userId } });
     }
+    const touched = [title !== undefined ? "title" : null, content !== undefined ? "content" : null, folderId !== undefined ? "folder" : null, visibility !== undefined ? "visibility" : null, status !== undefined ? "status" : null].filter((f): f is string => !!f);
+    void recordKumoAudit({
+      itemType: "document",
+      itemId: doc.id,
+      action: "updated",
+      userId: req.user!.userId,
+      summary: `${touched.length ? `Updated ${touched.join(", ")}` : "Updated"} — v${doc.currentVersion}${changeLog ? `: ${changeLog}` : ""}`,
+      details: { fields: touched, version: doc.currentVersion, changeLog: changeLog ?? null },
+    });
     res.json(doc);
   } catch (e) { next(e); }
 });

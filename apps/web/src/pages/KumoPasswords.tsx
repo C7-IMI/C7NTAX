@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Shield, Eye, EyeOff, Search, X, Save, Clock, Edit3, Trash2, Copy, Building2, Key, ExternalLink, Download, RotateCw, Eraser, ShieldCheck, KeyRound } from "lucide-react";
+import { Plus, Shield, Eye, EyeOff, Search, X, Save, Clock, Edit3, Trash2, Copy, Building2, Key, ExternalLink, Download, RotateCw, Eraser, ShieldCheck, KeyRound, History, ChevronDown, ChevronUp } from "lucide-react";
 import { generatePassword } from "../lib/generatePassword";
 import { PASSWORD_STRENGTH_LEVELS, scorePassword, passwordStrengthLevel } from "@C7NTAX/shared";
 import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
@@ -29,6 +29,9 @@ export function KumoPasswordsPage() {
   const [manualTotpCode, setManualTotpCode] = useState<{ enabled: boolean; code: string; remaining: number } | null>(null);
   const [showNewPwd, setShowNewPwd] = useState(false);
   const [showEditPwd, setShowEditPwd] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditTrail, setAuditTrail] = useState<any[] | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const menu = useContextMenu();
 
@@ -87,7 +90,38 @@ export function KumoPasswordsPage() {
 
   const selectPassword = (p: any) => { 
     setSelected(p); setEditing(false); setEditForm({ ...p }); setRevealData(null); setShowEditPwd(false);
+    // The trail belongs to the credential that is open, so collapse it and drop the old entries.
+    setAuditOpen(false); setAuditTrail(null); setAuditError(null);
     api.post("/kumo/recently-viewed", { entityType: "password", entityId: p.id, entityName: p.label || p.username || p.email, entityIcon: "key" }).catch(() => {});
+  };
+
+  /**
+   * Who touched this credential and what they did. Loaded on demand rather than with the
+   * credential, and always refetched, because a reveal or an edit just added an entry.
+   */
+  const loadAudit = async (passwordId: string) => {
+    const r = await api.get(`/kumo/audit/password/${passwordId}`, { params: { limit: 25 } });
+    return (r.data.data || []) as any[];
+  };
+
+  /** Keeps an open trail current after the user does something the trail records. */
+  const refreshAuditIfOpen = async (passwordId: string) => {
+    if (!auditOpen) return;
+    try { setAuditTrail(await loadAudit(passwordId)); } catch { /* keep what is on screen */ }
+  };
+
+  const toggleAudit = async () => {
+    if (!selected) return;
+    if (auditOpen) { setAuditOpen(false); return; }
+    setAuditOpen(true);
+    setAuditError(null);
+    setAuditTrail(null);
+    try {
+      setAuditTrail(await loadAudit(selected.id));
+    } catch (e: any) {
+      setAuditTrail([]);
+      setAuditError(e?.response?.data?.error?.message || "Could not load the audit trail");
+    }
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -124,6 +158,7 @@ export function KumoPasswordsPage() {
       const r = await api.post(`/kumo/passwords/${selected.id}/reveal`);
       setRevealData(r.data);
       setTimeout(() => setRevealData(null), 30000);
+      void refreshAuditIfOpen(selected.id);
     } catch (e: any) {
       const msg = e?.response?.data?.error?.message || e?.response?.data?.error || e?.message || "Access denied";
       toast.error(typeof msg === "string" ? msg : "Access denied");
@@ -382,6 +417,31 @@ export function KumoPasswordsPage() {
                   </div>
                 </div>
               )}
+
+              <div className="bg-surface-lighter rounded-lg p-3">
+                <button onClick={toggleAudit} className="w-full flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5"><History size={12} /> Audit trail</span>
+                  {auditOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+                {auditOpen && (
+                  <div className="mt-2 space-y-2">
+                    {auditError && <p className="text-xs text-red-400">{auditError}</p>}
+                    {!auditError && auditTrail === null && <p className="text-xs text-gray-500">Loading…</p>}
+                    {!auditError && auditTrail?.length === 0 && <p className="text-xs text-gray-500">Nothing recorded for this credential yet.</p>}
+                    {auditTrail?.map((entry: any) => (
+                      <div key={entry.id} className="flex items-start gap-2 text-xs border-l-2 border-cyber-500/30 pl-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-300">{entry.summary || entry.action}</p>
+                          <p className="text-gray-500">
+                            {new Date(entry.at).toLocaleString()} · {entry.user?.name || "unknown user"}
+                          </p>
+                        </div>
+                        <span className="text-[10px] uppercase text-gray-600 shrink-0">{entry.action}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Manual TOTP Section */}
               <div className="bg-surface-lighter rounded-lg p-3 space-y-2">

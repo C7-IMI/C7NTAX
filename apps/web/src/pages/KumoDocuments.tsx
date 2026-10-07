@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Folder, FileText, ChevronRight, X, Save, Clock, ExternalLink, SquareArrowOutUpRight, AppWindow, Copy, Download, RotateCw, Eraser } from "lucide-react";
+import { Plus, Folder, FileText, ChevronRight, ChevronDown, ChevronUp, History, X, Save, Clock, ExternalLink, SquareArrowOutUpRight, AppWindow, Copy, Download, RotateCw, Eraser } from "lucide-react";
 import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
@@ -20,6 +20,9 @@ export function KumoDocumentsPage() {
   const [folderCompanyId, setFolderCompanyId] = useState("");
   const [companies, setCompanies] = useState<any[]>([]);
   const [viewDoc, setViewDoc] = useState<any>(null);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditTrail, setAuditTrail] = useState<any[] | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Set by the organization screen, e.g. /kumo/documents?doc=<id>&filter=unviewed
@@ -66,9 +69,30 @@ export function KumoDocumentsPage() {
   };
 
   const openDoc = async (id: string) => {
-    try { const r = await api.get(`/kumo/documents/${id}`); setViewDoc(r.data); 
+    try { const r = await api.get(`/kumo/documents/${id}`); setViewDoc(r.data);
+      // The trail belongs to the document being opened, so collapse it and drop the old entries.
+      setAuditOpen(false); setAuditTrail(null); setAuditError(null);
       if (r.data) api.post("/kumo/recently-viewed", { entityType: "document", entityId: id, entityName: r.data.title, entityIcon: "book" }).catch(() => {}); }
     catch { toast.error("Failed to load"); }
+  };
+
+  /**
+   * Who created this document and who has edited it since. Loaded on demand, because most
+   * readers only want the content, and refetched every time so it reflects the latest edit.
+   */
+  const toggleAudit = async () => {
+    if (!viewDoc) return;
+    if (auditOpen) { setAuditOpen(false); return; }
+    setAuditOpen(true);
+    setAuditTrail(null);
+    setAuditError(null);
+    try {
+      const r = await api.get(`/kumo/audit/document/${viewDoc.id}`, { params: { limit: 25 } });
+      setAuditTrail(r.data.data || []);
+    } catch (e: any) {
+      setAuditTrail([]);
+      setAuditError(e?.response?.data?.error?.message || "Could not load the audit trail");
+    }
   };
 
   // Open the document a deep link points at.
@@ -320,6 +344,29 @@ export function KumoDocumentsPage() {
                 ))}
               </div>
             )}
+
+            <div className="bg-surface-lighter rounded-lg p-3">
+              <button onClick={toggleAudit} className="w-full flex items-center justify-between text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <span className="flex items-center gap-1.5"><History size={12} /> Audit trail</span>
+                {auditOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              {auditOpen && (
+                <div className="mt-2 space-y-2">
+                  {auditError && <p className="text-xs text-red-400">{auditError}</p>}
+                  {!auditError && auditTrail === null && <p className="text-xs text-gray-500">Loading…</p>}
+                  {!auditError && auditTrail?.length === 0 && <p className="text-xs text-gray-500">Nothing recorded for this document yet.</p>}
+                  {auditTrail?.map((entry: any) => (
+                    <div key={entry.id} className="flex items-start gap-2 text-xs border-l-2 border-cyber-500/30 pl-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-300">{entry.summary || entry.action}</p>
+                        <p className="text-gray-500">{new Date(entry.at).toLocaleString()} · {entry.user?.name || "unknown user"}</p>
+                      </div>
+                      <span className="text-[10px] uppercase text-gray-600 shrink-0">{entry.action}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
