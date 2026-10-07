@@ -3,7 +3,14 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { companyWhere, ticketCompanyWhere } from "../middleware/companyScope";
 import { Permission } from "@C7NTAX/shared";
+import { runReportConfig, type ReportConfig } from "../services/reportRunner";
+import type { AuthUser } from "../middleware/auth";
 export const reportsRouter = Router(); reportsRouter.use(authenticate);
+
+// A saved report can also be a Client Value Report, which is a fixed shape rather than a config.
+reportsRouter.get("/data/client-value", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
+  try { res.json(clientValueReport(req.user)); } catch (e) { next(e); }
+});
 
 reportsRouter.get("/", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
@@ -25,15 +32,31 @@ reportsRouter.post("/", requirePermission(Permission.ReportCreate), async (req: 
 });
 
 reportsRouter.get("/:id/run", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try { const report = await prisma.report.findUnique({ where: { id: req.params.id } }); if (!report) { res.status(404).json({ error: "Not found" }); return; }
-    // Run report based on type
+  try {
+    const report = await prisma.report.findUnique({ where: { id: req.params.id } });
+    if (!report) { res.status(404).json({ error: "Not found" }); return; }
+
+    // A stored config is the point of the custom type, so it is what runs. The two built-in
+    // types keep their fixed shapes because saved reports and schedules already use them.
+    if (report.type === "custom") {
+      const result = await runReportConfig((report.config ?? {}) as ReportConfig, reportScope(req.user, report.config));
+      res.json({ report: report.name, type: report.type, generatedAt: new Date().toISOString(), ...result, data: result.rows });
+      return;
+    }
+
     let data: unknown[] = [];
     switch (report.type) {
-      case "ticket_summary": data = await prisma.ticket.findMany({ take: 500, orderBy: { createdAt: "desc" }, select: { ticketNumber: true, title: true, status: true, priority: true, createdAt: true } }); break;
-      case "revenue": data = await prisma.invoice.findMany({ where: { status: "paid" }, take: 500, select: { invoiceNumber: true, total: true, paidAt: true, company: { select: { name: true } } } }); break;
+      case "ticket_summary": data = await prisma.ticket.findMany({ where: { ...ticketCompanyWhere(req.user) }, take: 500, orderBy: { createdAt: "desc" }, select: { ticketNumber: true, title: true, status: true, priority: true, createdAt: true } }); break;
+      case "revenue": data = await prisma.invoice.findMany({ where: { status: "paid", ...companyWhere(req.user) }, take: 500, select: { invoiceNumber: true, total: true, paidAt: true, company: { select: { name: true } } } }); break;
+      case "client_value": {
+        const clientValue = await clientValueReport(req.user);
+        res.json({ report: report.name, type: report.type, generatedAt: new Date().toISOString(), columns: Object.keys(clientValue[0] ?? {}), data: clientValue });
+        return;
+      }
       default: data = [];
     }
-    res.json({ report: report.name, type: report.type, generatedAt: new Date().toISOString(), data }); }
+    res.json({ report: report.name, type: report.type, generatedAt: new Date().toISOString(), data });
+  }
   catch (e) { next(e); }
 });
 
@@ -41,6 +64,91 @@ reportsRouter.post("/:id/schedules", requirePermission(Permission.ReportCreate),
   try { const s = await prisma.reportSchedule.create({ data: { reportId: req.params.id, frequency: req.body.frequency, dayOfWeek: req.body.dayOfWeek || null, dayOfMonth: req.body.dayOfMonth || null, timeOfDay: req.body.timeOfDay, recipients: req.body.recipients, format: req.body.format || "pdf" } }); res.status(201).json(s); }
   catch (e) { next(e); }
 });
+
+/**
+ * The client restriction for a report of a given source. Sources that hang off a ticket (time
+ * entries) are narrowed through the ticket; everything else by its own `companyId`. A report
+ * config can never widen this.
+ */
+function reportScope(user?: AuthUser, config?: unknown): Record<string, unknown> {
+  const source = (config as ReportConfig | undefined)?.source;
+  return source === "time_entries" ? ticketCompanyWhere(user) : companyWhere(user);
+}
+
+/**
+ * Client Value Report (PLAN-015 Phase B #10): what each client is worth in attention and money —
+ * volume, the open/resolved split, how quickly we first replied, who is actually in touch, and
+ * the hours and charges recorded against them.
+ */
+async function clientValueReport(user?: AuthUser) {
+  const clients = await prisma.company.findMany({
+    where: { isActive: true, ...(companyWhere(user).companyId ? { id: companyWhere(user).companyId } : {}) },
+    select: { id: true, name: true, industry: true },
+    orderBy: { name: "asc" },
+  });
+  if (clients.length === 0) return [];
+
+  const since = new Date();
+  since.setDate(since.getDate() - 90);
+  const clientIds = clients.map(c => c.id);
+
+  const [tickets, comments, timeEntries, expenses] = await Promise.all([
+    prisma.ticket.findMany({
+      where: { companyId: { in: clientIds } },
+      select: { id: true, companyId: true, status: true, priority: true, createdAt: true, contactId: true, additionalContacts: { select: { contactId: true } } },
+    }),
+    prisma.ticketComment.findMany({
+      where: { ticket: { companyId: { in: clientIds } }, isInternal: false },
+      select: { ticketId: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.timeEntry.findMany({ where: { ticket: { companyId: { in: clientIds } } }, select: { ticketId: true, minutes: true, billedMinutes: true } }),
+    prisma.expense.findMany({ where: { companyId: { in: clientIds }, status: { in: ["approved", "billed"] } }, select: { companyId: true, amount: true } }),
+  ]);
+
+  const firstReply = new Map<string, Date>();
+  for (const comment of comments) {
+    if (!firstReply.has(comment.ticketId)) firstReply.set(comment.ticketId, comment.createdAt);
+  }
+
+  const rows = clients.map(client => {
+    const theirs = tickets.filter(t => t.companyId === client.id);
+    const open = theirs.filter(t => !["resolved", "closed", "cancelled"].includes(t.status)).length;
+    const recent = theirs.filter(t => t.createdAt >= since);
+    const replyTimes = theirs
+      .map(t => {
+        const reply = firstReply.get(t.id);
+        return reply ? (reply.getTime() - t.createdAt.getTime()) / 60000 : null;
+      })
+      .filter((minutes): minutes is number => minutes !== null);
+    const people = new Set<string>();
+    for (const t of theirs) {
+      if (t.contactId) people.add(t.contactId);
+      for (const extra of t.additionalContacts) people.add(extra.contactId);
+    }
+    const entryIds = new Set(theirs.map(t => t.id));
+    const minutes = timeEntries.filter(te => entryIds.has(te.ticketId)).reduce((sum, te) => sum + te.minutes, 0);
+    const billedMinutes = timeEntries.filter(te => entryIds.has(te.ticketId)).reduce((sum, te) => sum + (te.billedMinutes ?? te.minutes), 0);
+    const expenseTotal = expenses.filter(e => e.companyId === client.id).reduce((sum, e) => sum + e.amount, 0);
+
+    return {
+      client: client.name,
+      industry: client.industry ?? "",
+      ticketsTotal: theirs.length,
+      ticketsLast90Days: recent.length,
+      open,
+      resolvedOrClosed: theirs.length - open,
+      highPriority: theirs.filter(t => t.priority === "critical" || t.priority === "high").length,
+      activePeople: people.size,
+      avgFirstReplyMinutes: replyTimes.length ? Math.round(replyTimes.reduce((a, b) => a + b, 0) / replyTimes.length) : null,
+      hoursLogged: +(minutes / 60).toFixed(2),
+      hoursBilled: +(billedMinutes / 60).toFixed(2),
+      approvedExpenses: +expenseTotal.toFixed(2),
+    };
+  });
+
+  return rows.sort((a, b) => b.ticketsTotal - a.ticketsTotal);
+}
 
 // ── Standard report data endpoints ──
 
