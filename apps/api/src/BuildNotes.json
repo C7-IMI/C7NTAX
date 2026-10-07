@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.6.054",
+    "date": "2026-10-06",
+    "title": "Closing the exploitable paths from the security audit, without changing how the app behaves",
+    "changes": [
+      {
+        "text": "**Stored XSS in the invoice \"PDF\".** The endpoint builds its HTML with string interpolation and serves it as `text/html`, so a line-item description, a payment method or a payment reference containing `<img src=x onerror=…>` executed in the browser of the admin or manager who opened the invoice — and because the API and the SPA share an origin, that script could read the JWT straight out of `localStorage`. Every interpolated value (line items, payment method and reference, invoice number, company name and email, currency, status) is now escaped with the `escapeHtml` that already existed in the email service; the invoice's real content renders exactly as before.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Any signed-in account could read and rewrite system configuration.** `GET /api/system/configs` now requires `SystemConfig`, and both configuration write paths refuse reserved prefixes (`email_connector:`, `oauth`, `sso:`, `sample_data`) and any key whose name looks like a secret (`secret`, `token`, `password`, `credential`, `apikey`, `private_key`). This is deliberately **not** a blanket router guard: four `/api/system` routes are read by the SPA for every signed-in user — the context-menu flag, What's New, a ticket's Audit Trail tab and failover status — and three keys are legitimately self-service, so those paths are untouched and were verified working afterwards. Which of the remaining sub-routes need a gate is a decision, not a guess, and it is recorded as open in `PLAN-018`.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Every webhook's HMAC signing secret was returned to any authenticated user** by the alert-webhook list. The list now requires `SystemConfig` and strips `secret`. The `/bulk/webhooks` copy of that route turns out to be unreachable — `/bulk/:id` is registered first and shadows it — so that route is now correctly guarded but dead; the plan records the correction.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Managing users was a route to becoming an administrator.** `PATCH /api/users/:id` accepted `role` and a raw `permissions` array for any user including the caller on nothing more than `UserManage`, which managers hold. Role, `roleId` and permission changes now require `RoleManage`, nobody can change their own role or permissions (including deactivating themselves), and a user cannot be created into or moved into an administrative role — one carrying `role:manage` or `system:config` — without `RoleManage`. Editing a profile and creating an ordinary technician still work exactly as before, and the admin path was regression-tested. The escalation was latent rather than live: no role in the seed holds `user:manage` without `role:manage`, so it was one custom role away.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Sign-in hardening, with the two behaviour changes kept behind a switch.** `authenticate` now fails closed — a database error returns 401 instead of continuing on the token's stale permissions — and the API refuses to boot in production with a missing `JWT_SECRET` or with the public fallback value, warning instead when `KUMO_MASTER_KEY` is unset (the Kumo vault key is derived from the JWT secret in that case). Morgan redacts `?token=` from the request lines it logs. Email-MFA codes come from the CSPRNG and are compared in constant time. The credential endpoints — `/auth/login`, MFA verify, verify-email, send-MFA-email and change-password — have their own limiter (300 per 15 minutes per IP) rather than relying on the effectively-off global one. Account lockout (5 attempts, HTTP 423) is fully implemented but **defaults to off** behind `AUTH_HARDENING_ENABLED`, so the current \"call the service desk\" flow and the existing Security-tab locked state are unchanged until it is switched on deliberately.",
+        "type": "Fix"
+      },
+      {
+        "text": "**SSO could be used to mint an administrator.** The OIDC `state` that the flow generated was never checked on the callback, and an unknown identity was provisioned with the **admin** role. The state is now persisted and validated single-use with a 10-minute expiry, unknown identities arrive **inactive and read-only** and are refused with 403 until an administrator enables them, and the role claim no longer falls back to `admin`.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Dependencies: 128 advisory instances down to 99.** `mjml` and `node-forge` are gone — neither was ever called, and removing them took 198 packages with them, including the unpatched `html-minifier` and `deepmerge-ts`; `morgan` → 1.12.1, `axios` → 1.20.0 (web and integrations), `react-router-dom` → 6.30.6, `dompurify` → 3.4.16, and root `pnpm.overrides` now pin `proxy-addr` 2.0.8, `brace-expansion` in both of its major lines, `semver` 5.7.2 and `qs` 6.16.0 — each pinned inside the major version it was already on, so nothing else in the tree shifts. The remaining majors (`nodemailer` 6→10, `vite`/`esbuild`, `electron` plus `electron-builder`) and the committed audit baseline are deliberately left for their own change window.",
+        "type": "Update"
+      },
+      {
+        "text": "**`PLAN-018` now says what actually shipped** — a Phase 0 status table marking each of the twelve items done, partial or open, with the four `/api/system` carve-outs written down so a future pass does not break the app by \"finishing\" the fix, the `bulk.ts` shadowing correction, the re-rated A4 severity, and the exact verification used.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.6.053",
     "date": "2026-10-06",
     "title": "Security audit: every CVE in the dependency tree, and the exploitable paths in our own code",

@@ -3113,3 +3113,35 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - The two most dangerous findings were **not** CVE-driven at all: a router that imports a guard and never uses it, and a router that was written before the guard existed. A route-inventory test would have caught both.
 - `pnpm why` output is easy to mis-filter; the closure walk over the lockfile produced far more reliable "who pulls this in" data than the command.
 - The security-review agent's severity ratings held up under verification, with two corrections worth recording: the invoice XSS needs a shared origin to reach `localStorage` (true in dev and in the planned single-hostname deployment, not universally), and the SSRF findings are privileged-insider (user-level auth required) rather than anonymous.
+
+---
+
+### Prompt 213 — Applying the security fixes that cannot change how the app behaves
+**Timestamp:** 2026-10-06 | **Status:** Done — implemented, probed, typechecked, walked through in the browser | **Duration:** ~2 h
+**BuildNotes IDs:** 2026.10.6.054 - Closing the exploitable paths from the security audit, without changing how the app behaves
+
+> what do you recommend that won't break the application?
+
+**What I did**
+- Treated "won't break the application" as a hard constraint, not a preference: before writing any fix I checked **which `/api/system/*` routes the SPA actually calls** (the app-wide `useContextMenusEnabled` read via `/system/config/:key`, What's New via `/system/changelog`, every ticket's Audit Trail tab via `/system/audit-logs`, failover status) and confirmed that `GET /system/configs` is called by no frontend code at all. That one check is what turned "gate the router" (which would have broken four pages) into "gate the dump endpoint and refuse reserved keys".
+- Applied only fixes whose blast radius I could prove: invoice HTML escaping, the config dump/reserved-key guard, webhook secret stripping, the role/permission guards, fail-closed `authenticate`, boot assertions on `JWT_SECRET`, CSPRNG + constant-time MFA codes, a dedicated credential limiter, SSO state validation and safe JIT provisioning, and the dependency work.
+- Kept the two genuine **behaviour changes behind a switch or a default**: account lockout is implemented but `AUTH_HARDENING_ENABLED` defaults to off (the "account locked" support flow is unchanged), and `KUMO_MASTER_KEY` missing warns rather than throws (throwing would brick every existing dev vault, since the key is derived from `JWT_SECRET` today).
+- Made the permission-aware UI honest rather than decorative: `useAuth` now exposes the caller's `permissions` derived from the role, `Users.tsx` gates the Permissions tab on `RoleManage` instead of on "am I in edit mode", and the New User dialog filters administrative roles out unless the caller may grant them.
+- Verified by building probes rather than by reading: a 28-check security probe and an invoice probe that seeds a hostile invoice with Prisma and asserts both that the escaping happens and that the real content still renders.
+- Wrote the "what shipped" back into `PLAN-018` as a per-item status table, so the next pass cannot "finish" the fix by adding the blanket router guard and taking out four pages.
+
+**Decisions worth remembering**
+- **The carve-out list is the important artifact.** Four `/api/system` routes are legitimately readable by any signed-in user and three config keys are legitimately self-service (`app_settings`, `session_timeout`, `default_landing_page`). This is now written into both the plan and the BuildNotes entry, because the "obvious" completion of P0-1 is exactly the change that breaks the app.
+- **`/bulk/webhooks` was never reachable** — `/bulk/:id` is registered first and shadows it — so one of the reported webhook-secret exposures was dead code. Guarded anyway, and the incorrection is recorded as a correction in the plan rather than quietly fixed.
+- **The role-escalation hole was latent, not live.** It needs a role that holds `user:manage` without `role:manage`, and the seed has only Admin, Super Admin, Client Admin, Read Only and Technician. The severity line in the plan was re-rated accordingly; the fix shipped because it is three lines.
+- **Removing `mjml` and `node-forge` took 198 packages with them** (`html-minifier`, `deepmerge-ts`, …) and cleared three high findings without a single version bump — the cheapest security win in the whole audit.
+- **`pnpm.overrides` with version-range keys** (`"brace-expansion@<1.1.21": "^1.1.21"`) pin inside the existing major, so nothing else in the tree shifts. pnpm 9.1.0 warns that the `pnpm` field is ignored and honours it anyway (the lockfile records it).
+- The limiter I added has to be generous enough to survive my own probes: at 50/15 min the earlier automated logins tripped it and produced a false 429 failure. 300/15 min is the tested value.
+
+**Notes for next time**
+- **`probe-*.mjs` files must not live inside the repo.** I created the invoice probe at `apps/api/probe-invoice-xss.mjs` and the **auto-sync task committed and pushed it** before I finished — it contains the default dev credentials. It is deleted in this change; probes belong in the session `files/` directory, run from `apps/api` so Prisma resolves.
+- **Auto-sync captures the snapshots mid-session.** `apps/api/src/snapshots/{users,roles,audit-logs}.json` were committed *while probe users existed*, so "clean up the database" has to be followed by `npx tsx src/snapshot-capture.ts` and a re-diff against HEAD, or the reseed fixtures ship with test users in them.
+- Cleaning probes needs three passes: the users, the roles the probes created (named `User Management only <timestamp>`, 0 members), and the audit rows — including the rows the *admin* wrote **about** those users (`entity: "users"`, `entityId` in the probe ids) and rows whose `changes` JSON still contains `@probe.local` or the role name. Deleting only "rows by probe actors" left eleven behind.
+- Non-UUID `entityId` values in the audit log make automatic orphan detection unreliable; those older "probe"-named rows predate this work and were left alone.
+- A `view` of a file immediately after an `edit` can still show the pre-edit text — re-grep to confirm before concluding the edit did not apply.
+- The Next.js-style `validateDOMNesting` console error on `/kumo/checklists` (a `<th>` inside a `<th>`) is pre-existing and unrelated; left alone deliberately.

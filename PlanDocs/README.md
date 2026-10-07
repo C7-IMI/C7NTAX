@@ -19,7 +19,7 @@ Legend: ✅ complete · 🟡 partial (in the codebase now) · ⬜ not started ·
 
 | Order | Plan | Title | Wave | Status | What is actually left |
 |---|---|---|---|---|---|
-| **W0** | **PLAN-018** | **Dependency & application security remediation (CVE review)** | **W0 — pre-deployment blocker** | 🟡 audited, nothing fixed | **Phase 0**: 12 application hotfixes (2 critical authz holes, an XSS in the invoice renderer, a role-escalation path, SSO state/role, fail-open auth, lockout + rate limits). **Phase 1**: dependency upgrades — 1 critical + 16 high vulnerable groups in shipped code, incl. `electron` 33 → fixed line, `nodemailer` 6 → 10, `axios`, and removing unused `node-forge`/`mjml`. **Phase 2/3**: structural hardening + the CI gate that keeps it fixed |
+| **W0** | **PLAN-018** | **Dependency & application security remediation (CVE review)** | **W0 — pre-deployment blocker** | 🟠 Phase 0 partly applied | **Applied:** invoice XSS escaping, the config-dump/reserved-key guard, webhook secret stripping, the role/permission guards, fail-closed auth + boot assertions, CSPRNG MFA + credential rate limits, SSO state validation and safe provisioning, dead-dependency removal and the low-risk bumps (128 → 99 advisory instances). **Left:** the per-router permission matrix and company scoping (P0-2, needs decisions — a blanket guard would break four `/api/system` routes the SPA reads for every user), the inference/SSRF host policy (P0-5, needs the egress helper), the `?token=` removal (P0-12, needs the cookie session work), and the majors — `electron` 33 → fixed line, `nodemailer` 6 → 10, `vite`/`esbuild` — plus the audit baseline and CI gate |
 | 1 | PLAN-017 | Microsoft 365 OAuth app: build & deploy | W1 — finish the foundation | ⬜ runbook complete, execution pending | Tenant-side only: register the app, consent `Mail.ReadWrite`, scope it to the mailbox, test + enable the connector |
 | 2 | PLAN-001 | Session-based authentication & permissions | W1 | 🟡 infrastructure written, never wired | Mount `sessionAuth` (or retire it), add refresh rotation for app sessions, ship the idle-timeout warning |
 | 3 | PLAN-002 | Passkey authentication (+ SSO stage) | W1 | 🟡 roughly three quarters built | Passkey management/recovery UI, per-role policy, surface SSO on the login page, SAML |
@@ -100,7 +100,7 @@ with the code, the code won and the line was corrected.
 | PLAN-015 | C7NTAX Feature Backlog — UI, Billing, Kumo, Integrations & Infrastructure | `PLAN-015-Feature-Backlog-UI-Billing-Kumo-Integrations.md` | `PLAN-C7NTAX-Feature-Backlog-UI-Billing-Kumo-Integrations.md` | 2026-08-18 | 🟡 Partial (Phase A untouched) |
 | PLAN-016 | Azure Dev/Prod Split & Sync Plan | `PLAN-016-Azure-Dev-Prod-Split-Sync.md` | `PLAN-Azure-Dev-Prod-Split-and-Sync.md` | 2026-10-05 | ⬜ Not started (decision advisory) |
 | PLAN-017 | Microsoft 365 OAuth app: build & deploy | `PLAN-017-Microsoft-365-OAuth-App-Setup.md` | authored in `PlanDocs/` | 2026-10-06 | ⬜ Ready to execute (runbook) |
-| PLAN-018 | Dependency & application security remediation (CVE review) | `PLAN-018-Dependency-and-Application-Security-Remediation.md` | authored in `PlanDocs/` | 2026-10-06 | 🟡 Audited, nothing fixed (W0) |
+| PLAN-018 | Dependency & application security remediation (CVE review) | `PLAN-018-Dependency-and-Application-Security-Remediation.md` | authored in `PlanDocs/` | 2026-10-06 | 🟠 Partly applied — Phase 0 status table inside the plan |
 
 ---
 
@@ -140,6 +140,17 @@ the `electron` runtime already installed on user machines. None of these are
 fixed by any other plan, and PLAN-016 is the first time the API becomes
 reachable from the internet, so they are positioned ahead of it rather than
 slotted into a feature wave.
+
+**What has since been applied from Wave 0 (2026-10-06):** the invoice XSS escaping,
+the config-dump and reserved-key guard, webhook-secret stripping, the
+role/permission guards on user management, fail-closed auth with boot assertions on
+the JWT secret, CSPRNG MFA codes plus a per-endpoint credential limiter, OIDC state
+validation with inactive/read-only provisioning, removal of the two unused
+CVE-carrying packages and the low-risk version pins (128 → 99 advisory instances).
+The items deliberately left open all need a decision or a wider change — the
+per-router permission matrix and company scoping, the egress host policy, the
+`?token=` removal, and the `nodemailer`/`vite`/`electron` majors — and each is
+marked in the plan's Phase 0 status table.
 
 ---
 
