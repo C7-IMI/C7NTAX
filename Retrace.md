@@ -3145,3 +3145,27 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Non-UUID `entityId` values in the audit log make automatic orphan detection unreliable; those older "probe"-named rows predate this work and were left alone.
 - A `view` of a file immediately after an `edit` can still show the pre-edit text — re-grep to confirm before concluding the edit did not apply.
 - The Next.js-style `validateDOMNesting` console error on `/kumo/checklists` (a `<th>` inside a `<th>`) is pre-existing and unrelated; left alone deliberately.
+
+---
+
+### Prompt 214 — What remains across the plan docs, excluding multi-tenant
+**Timestamp:** 2026-10-06 | **Status:** Answered from the registry and each plan's sequence block; no code change | **Duration:** ~15 min
+**BuildNotes IDs:** none — no project change (question answered from existing plan documents)
+
+> What remain in the plan docs to implement other than multi-tenant?
+
+**What I did**
+- Read the registry (`PlanDocs/README.md` §1 sequence table, §1.2 dependency notes, §2 registry) and then the `> **Sequence:**` block at the top of every active plan, which carries `Implemented` / `Outstanding` / `Depends on` / `Next action` per plan — so the answer is the documents' own verified status, not a re-derivation.
+- Grouped the remainder by wave and separated it into **code**, **tenant/config-only** and **decision-blocked**, because those three need different kinds of session and only the first is a normal implementation request.
+- Checked the three plans that are closed or superseded (008 complete, 006 folded into 005, 010 superseded by 016) so they are not presented as outstanding work.
+
+**The remainder at a glance (everything except PLAN-003 multi-tenant)**
+- **W0 PLAN-018 (partly applied):** per-router permission matrix + company scoping (P0-2), inference/SSRF host policy (P0-5), `?token=` removal (P0-12), the `nodemailer` 6→10 / `vite` / `electron` majors, and the audit baseline + CI gate; then Phase 2 structural items (one egress helper, Redis rate limiting/lockout, HttpOnly cookie sessions, render-time sanitising, company scoping as middleware).
+- **W1 foundation:** PLAN-017 is **tenant-side only** (app registration, `Mail.ReadWrite` consent, Exchange RBAC scope or delegated sign-in, then verify and flip the connector to Watching — nothing in the repo is pending); PLAN-001 needs a wire-in-or-retire decision, plus refresh rotation/revocation and the idle-timeout modal; PLAN-002 needs the passkey management UI (list/rename/remove), per-role policy, recovery codes, then an SSO login button and SAML; PLAN-009 has one optional item (outbound acknowledgment email) plus two design deviations to record.
+- **W2 revenue & daily ops:** PLAN-015 **Phase A is untouched** — agreements + time engine (overtime ×1.5 after 18:00, midnight split, block-hour 1.5:1, `TIME_RULES_ENABLED`), expenses with approval + QuickBooks/FlexPoint sync, bill-through batch invoicing with preview/approve; Phase B remainder is a list of about ten smaller items. PLAN-013 still owes the customer portal (#3, no `/portal` routes exist), the billing-from-tickets UI (#5), security hardening (#8) and the UI/UX pass (#9).
+- **W3 platform:** PLAN-016 is everything plus the CI/CD the repo lacks (no typecheck/test/deploy pipeline; migrations are `db push` with no versioned history), and still needs the Azure-vs-AWS call; PLAN-007's independent code controls (SC-03/04/05/06/09/11/12) can start now, the infrastructure controls hang on PLAN-016.
+- **W4/W5/W6:** PLAN-011 is all eight phases plus the action layer/MCP moved in from PLAN-013 #7; PLAN-012 needs `POST /api/auth/office-sso`, the manifest, taskpane and packaging; PLAN-004 and PLAN-005 both start with a decision (store apps vs PWA-only; mac/linux targets + signing + auto-update); PLAN-014 waits on C7NTRL phases in the other repository.
+
+**Notes for next time**
+- The per-plan `> **Sequence:**` block is the single best source for "what is left" — it was written from the code, and it keeps `Outstanding` separate from `Implemented` so a status question does not require re-reading the plan bodies.
+- "Remaining" is not one kind of work: PLAN-017 is a tenant console session, PLAN-016 is a decision plus infrastructure, and PLAN-015 Phase A is the only large coding item in the near waves. Answering "what's left" without that split reads as more coding than there actually is.
