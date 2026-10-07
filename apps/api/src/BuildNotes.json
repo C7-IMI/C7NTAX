@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.7.006",
+    "date": "2026-10-07",
+    "title": "The custom report builder actually runs what you give it, and there is a Client Value Report",
+    "changes": [
+      {
+        "text": "**A \"custom\" report returned nothing, because nothing ran it.** `GET /reports/:id/run` understood two hardcoded types and answered an empty array for everything else, so every config a user typed in the builder came back empty. There is now a runner: a config says which **source** to read, which **columns** to show, what to **filter** on, and how to sort and limit — and it produces rows.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The runner is a whitelist, not a query language.** Sources are named (tickets, invoices, time entries, expenses, assets, contacts, companies) and so are the fields and operators; anything outside them is **dropped and reported in the response** rather than run. A report config is text somebody typed into a form, so it gets treated like any other input — there is no SQL to inject and no field to reach for that the whitelist does not name. Columns that present themselves as `client` still resolve through the relation, which is what makes the output readable.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`groupBy` gives a rollup** — counts per status, per priority, per client — without a second query type, and the response says when a result was truncated at the row limit.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A Client Value Report**, per client: total tickets and the last 90 days, the open-versus-resolved split, critical/high count, how many people actually got in touch, **average first reply** (the first customer-visible comment against the ticket's creation), hours logged, hours billed (which respects the overtime weighting) and approved expenses. Available as a saved report type and as `GET /reports/data/client-value`, and scoped — a client-scoped account sees only its own row.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.005",
     "date": "2026-10-07",
     "title": "Bill-through batch invoicing: preview it, hold it, approve it — and it can never double-bill",

@@ -163,9 +163,9 @@ function coerce(value: unknown): unknown {
 export async function runReportConfig(config: ReportConfig, scope: Record<string, unknown> = {}): Promise<ReportRunResult> {
   const notes: string[] = [];
   const source = (config.source ?? "tickets") as ReportSource;
-  if (!SOURCES[source]) throw Object.assign(new Error(`Unknown report source "${config.source}"`), { status: 400 });
+  const spec = SOURCES[source];
+  if (!spec) throw Object.assign(new Error(`Unknown report source "${config.source}"`), { status: 400 });
 
-  const spec = SOURCES[source] as { model: string; fields: Record<string, FieldSpec>; defaultSort: string; include?: Record<string, unknown> };
   const requested = (config.columns ?? []).map(c => String(c));
   const columns = requested.length ? requested.filter(c => c in spec.fields) : Object.keys(spec.fields);
   const droppedColumns = requested.filter(c => !(c in spec.fields));
@@ -173,17 +173,24 @@ export async function runReportConfig(config: ReportConfig, scope: Record<string
 
   const where = { ...buildWhere(source, config, notes), ...scope };
 
+  // Prisma's `select` is keyed by the real field or relation name, so a column that presents
+  // itself as "client" is selected as `company` and renamed back on the way out.
   const select: Record<string, unknown> = {};
+  const keyToColumn = new Map<string, string>();
   for (const column of columns) {
     const field = spec.fields[column];
-    if (field) select[column] = field.select ? { select: field.select } : true;
+    if (!field) continue;
+    select[field.field] = field.select ? { select: field.select } : true;
+    keyToColumn.set(field.field, column);
   }
 
-  const sortBy = config.sortBy && config.sortBy in spec.fields ? spec.fields[config.sortBy].field : spec.defaultSort;
+  const sortField = config.sortBy ? spec.fields[config.sortBy] : undefined;
+  const sortBy = sortField ? sortField.field : spec.defaultSort;
   const sortDir = config.sortDir === "asc" ? "asc" : "desc";
   const limit = Math.min(Math.max(Number(config.limit) || 200, 1), 2000);
 
-  const model = (prisma as unknown as Record<string, { findMany: (args: unknown) => Promise<Record<string, unknown>[]> }>)[spec.model];
+  const model = (prisma as unknown as Record<string, { findMany: (args: unknown) => Promise<Record<string, unknown>[]> } | undefined>)[spec.model];
+  if (!model) throw Object.assign(new Error(`Report source "${source}" is not runnable`), { status: 400 });
   const rows = await model.findMany({
     where,
     select,
@@ -193,17 +200,21 @@ export async function runReportConfig(config: ReportConfig, scope: Record<string
 
   const truncated = rows.length > limit;
   const page = truncated ? rows.slice(0, limit) : rows;
+  const renamed = page.map(row =>
+    Object.fromEntries(Object.entries(row).map(([key, value]) => [keyToColumn.get(key) ?? key, value])),
+  );
 
   // `groupBy` is a rollup of the selected rows rather than a second query: grouping in the
   // database would need the column list to be known at compile time, and a report's row count
   // is bounded anyway.
   if (config.groupBy) {
     const key = config.groupBy;
-    if (!(key in spec.fields)) {
+    const field = key in spec.fields ? spec.fields[key] : undefined;
+    if (!field) {
       notes.push(`ignored unknown groupBy "${key}"`);
     } else {
       const counts = new Map<string, number>();
-      for (const row of page) {
+      for (const row of renamed) {
         const value = row[key];
         const label = value === null || value === undefined ? "(none)" : String(typeof value === "object" ? JSON.stringify(value) : value);
         counts.set(label, (counts.get(label) ?? 0) + 1);
@@ -213,5 +224,5 @@ export async function runReportConfig(config: ReportConfig, scope: Record<string
     }
   }
 
-  return { source, columns, rows: page as Record<string, unknown>[], truncated, notes };
+  return { source, columns, rows: renamed, truncated, notes };
 }

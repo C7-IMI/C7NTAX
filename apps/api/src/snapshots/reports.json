@@ -1,5 +1,35 @@
 [
   {
+    "id": "f037556f-a402-427b-bcf0-0038efea3b3d",
+    "name": "Browser check — open tickets",
+    "description": null,
+    "type": "custom",
+    "config": {
+      "limit": 5,
+      "source": "tickets",
+      "columns": [
+        "ticketNumber",
+        "title",
+        "status",
+        "client"
+      ],
+      "filters": [
+        {
+          "op": "in",
+          "field": "status",
+          "value": [
+            "new",
+            "in_progress"
+          ]
+        }
+      ]
+    },
+    "isSystem": false,
+    "createdById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "createdAt": "2026-10-07T07:20:49.394Z",
+    "updatedAt": "2026-10-07T07:20:49.394Z"
+  },
+  {
     "id": "a78d1e07-5ec7-45ae-9768-be02f6387c76",
     "name": "Monthly Ticket Volume",
     "description": "Standard ticket volume report",

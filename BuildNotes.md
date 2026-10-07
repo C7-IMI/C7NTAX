@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.005 | Last Updated: 2026-10-07
+## Version: 2026.10.7.006 | Last Updated: 2026-10-07
 
 ---
 
@@ -13,6 +13,14 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.7.006 — The custom report builder actually runs what you give it, and there is a Client Value Report
+- **[Fix]** **A "custom" report returned nothing, because nothing ran it.** `GET /reports/:id/run` understood two hardcoded types and answered an empty array for everything else, so every config a user typed in the builder came back empty. There is now a runner: a config says which **source** to read, which **columns** to show, what to **filter** on, and how to sort and limit — and it produces rows.
+- **[New]** **The runner is a whitelist, not a query language.** Sources are named (tickets, invoices, time entries, expenses, assets, contacts, companies) and so are the fields and operators; anything outside them is **dropped and reported in the response** rather than run. A report config is text somebody typed into a form, so it gets treated like any other input — there is no SQL to inject and no field to reach for that the whitelist does not name. Columns that present themselves as `client` still resolve through the relation, which is what makes the output readable.
+- **[New]** **`groupBy` gives a rollup** — counts per status, per priority, per client — without a second query type, and the response says when a result was truncated at the row limit.
+- **[New]** **A Client Value Report**, per client: total tickets and the last 90 days, the open-versus-resolved split, critical/high count, how many people actually got in touch, **average first reply** (the first customer-visible comment against the ticket's creation), hours logged, hours billed (which respects the overtime weighting) and approved expenses. Available as a saved report type and as `GET /reports/data/client-value`, and scoped — a client-scoped account sees only its own row.
+- **Verification:** 24/24 assertions — a custom config returning 25 filtered rows with the relation column resolved, the rollup shape, an unknown **source** refused with a 400, unknown columns dropped *and named in the notes*, unknown operators and filter fields ignored with a note, four other sources running, client scoping holding for both a saved report and the value report (one client at most), the built-in types still working, and `open + resolved === total` for every client. Browser-verified from the app origin: a config created and run through the real endpoints returned `[{ ticketNumber: "NOC-2011", …, client: { name: "Umbrella Corp" } }]` and the value report listed all five clients.
+- **Rollback:** the runner only reads, and the built-in types keep their previous shapes — reverting the route restores the old behaviour with no data change.
 
 ## 2026.10.7.005 — Bill-through batch invoicing: preview it, hold it, approve it — and it can never double-bill
 - **[New]** **A month of work becomes invoices in three deliberate steps.** Preview works out what each client owes for everything unbilled up to a date — weighted hours at the agreed rate plus approved expenses — and **writes nothing**, so it is safe to run as often as you like. Create turns that into *draft* invoices held by a batch. Approve issues them; Discard throws the drafts away and puts the work back.

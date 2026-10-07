@@ -3555,3 +3555,21 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - Phase A is complete. Phase B is the remainder: per-user dashboard, board drag-and-drop, report writer + client value report, Kumo audit trail, outage board, live connection statuses, KB auto-generation, M365 inactivity reports, SMS.
 - The invoice email is the one real gap left in the billing chain: the PDF renderer exists, so it is a template plus an attachment, not a new subsystem.
 - `PNPM`-managed integration rows are global rather than per-client, which is why both pushes resolve "the" accounting integration; if a second client ever needs a different accounting system, that lookup becomes a join on the client.
+
+**Prompt 220 — continued: W2-4 (custom report writer + Client Value Report, PLAN-015 Phase B #10)**
+
+**What I did**
+- Confirmed the plan's claim: `GET /reports/:id/run` switched on two hardcoded types and returned `data: []` for **everything else**, so a "custom" report — the one type the builder exists for — always came back empty. That is the "broken writer".
+- Wrote `services/reportRunner.ts`: a config names a **source**, columns, filters, sort and limit, and the runner reads it — behind a whitelist of sources, fields and operators. Nothing outside the whitelist is run; it is dropped and **named in the response notes**, which is the difference between a report that failed silently and one that tells you why it is not showing what you asked for.
+- Kept the DB out of the loop for grouping: `groupBy` rolls up the returned rows rather than generating a second query type, which keeps the surface small and the response shape predictable.
+- Added the **Client Value Report** — tickets, the open/resolved split, last-90-day volume, how many people are actually in touch, average first reply (first customer-visible comment against ticket creation), hours logged, hours billed (weighted, so the time engine's overtime shows up here too) and approved expenses — as a saved report type and as a direct endpoint, both client-scoped.
+- **Two bugs found by probing, both mine**: a relation column selected under its alias (`client`) instead of the relation name (`company`) made every report with that column 500, and the new direct endpoint returned `res.json(promise)` — an empty `{}` — because I forgot the `await` on an async helper. The probe caught both within a minute of first run, which is the argument for writing the assertions before believing the feature works.
+
+**Decisions worth remembering**
+- **A whitelist beats a query language for a user-typed config.** There is no SQL path at all, and a field nobody anticipated cannot be reached by guessing its name.
+- **Say what was ignored.** Silently dropping an unknown column is how a report ends up "wrong" without anyone knowing why.
+- **Scope is applied by the caller, never by the config.** A saved report cannot widen what its runner sees, and the sources that hang off a ticket are narrowed through the ticket.
+
+**Notes for next time**
+- Phase B still open: per-user dashboard (#4), board drag-and-drop (#5), Kumo audit trail (#6), MFA QR screenshot (#7), outage board (#8), CloudConnect live statuses (#9), AI KB auto-generation (#11), M365 inactivity reports (#12), SMS (#13, decision-gated on a provider).
+- The probes for reports and the passkey suite both sign in as personas and **delete those personas' sessions on cleanup**, which logs the verification browser out. Order the browser work before the probe runs, or accept a re-login.

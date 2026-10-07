@@ -9,7 +9,7 @@ export const reportsRouter = Router(); reportsRouter.use(authenticate);
 
 // A saved report can also be a Client Value Report, which is a fixed shape rather than a config.
 reportsRouter.get("/data/client-value", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
-  try { res.json(clientValueReport(req.user)); } catch (e) { next(e); }
+  try { res.json(await clientValueReport(req.user)); } catch (e) { next(e); }
 });
 
 reportsRouter.get("/", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {

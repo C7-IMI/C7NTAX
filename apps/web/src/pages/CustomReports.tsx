@@ -11,7 +11,7 @@ export function CustomReportsPage() {
   const [type, setType] = useState("ticket_summary");
   const [config, setConfig] = useState("{}");
   const [message, setMessage] = useState("");
-  const [results, setResults] = useState<{ report: string; type: string; data: Array<Record<string, unknown>> } | null>(null);
+  const [results, setResults] = useState<{ report: string; type: string; data: Array<Record<string, unknown>>; truncated?: boolean; notes?: string[] } | null>(null);
 
   const load = () => api.get("/reports").then(r => setReports(r.data || [])).catch(() => setReports([]));
 
@@ -49,11 +49,23 @@ export function CustomReportsPage() {
           <select className="input-field" value={type} onChange={(e) => setType(e.target.value)}>
             <option value="ticket_summary">Ticket summary</option>
             <option value="revenue">Revenue (paid invoices)</option>
+            <option value="client_value">Client value</option>
             <option value="custom">Custom</option>
           </select>
         </div>
         <input className="input-field" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-        <textarea className="input-field" rows={3} placeholder='Config JSON, e.g. {"filters": {"status": "open"}}' value={config} onChange={(e) => setConfig(e.target.value)} />
+        <textarea
+          className="input-field font-mono text-xs"
+          rows={5}
+          placeholder='Config JSON, e.g. {"source":"tickets","columns":["ticketNumber","title","status","client"],"filters":[{"field":"status","op":"in","value":["new","in_progress"]}],"sortBy":"createdAt","sortDir":"desc","limit":200}'
+          value={config}
+          onChange={(e) => setConfig(e.target.value)}
+        />
+        <p className="text-xs text-gray-500">
+          Sources: tickets · invoices · time_entries · expenses · assets · contacts · companies. Operators: equals, notEquals,
+          contains, startsWith, in, gte, lte, between, isNull, isNotNull. Add <span className="font-mono">groupBy</span> for a count rollup.
+          Anything outside the whitelist is ignored rather than run.
+        </p>
         <div className="flex items-center gap-3">
           <button className="btn-primary flex items-center gap-2" onClick={create}><Plus size={14} /> Create report</button>
           {message && <span className="text-xs text-cyber-400">{message}</span>}
@@ -84,7 +96,14 @@ export function CustomReportsPage() {
 
       {results && (
         <div className="card p-5">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Results — {results.report} ({results.type})</h3>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            Results — {results.report} ({results.type}){results.truncated ? " · truncated at the row limit" : ""}
+          </h3>
+          {results.notes?.length ? (
+            <ul className="mb-3 text-xs text-amber-300 list-disc list-inside">
+              {results.notes.map((note: string, i: number) => <li key={i}>{note}</li>)}
+            </ul>
+          ) : null}
           {results.data.length === 0 ? <p className="text-gray-600 text-sm">No rows returned.</p> : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
