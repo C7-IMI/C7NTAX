@@ -5,14 +5,14 @@
 
 # C7NTAX Feature Backlog — UI, Billing, Kumo, Integrations & Infrastructure (PLAN-015)
 
-> **Sequence:** Wave 2 · position 4 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Partial — Phase B landed piecemeal, Phase A untouched
-> **Implemented:** bulk ticket operations (list + `routes/bulk.ts` + `BulkOperation` model), Kumo file manager, QuickBooks Online adapter, CloudConnect per-field fix/re-test, Service Alerts severity + RSS/Statuspage/DownDetector (+ website/SSL/DNS monitors), M365 user sync, and the checklists/rich-text-editor surfaces built from the same backlog.
-> **Outstanding — Phase A (nothing started):** agreements + time engine (agreement types, spot rate tables, overtime ×1.5 after 18:00, midnight split with `splitFrom`, block-hour 1.5:1 deduction, behind `TIME_RULES_ENABLED`), expense module with approval + QuickBooks/FlexPoint sync, bill-through batch invoicing with preview/approve (`INVOICE_BATCH_ENABLED`).
+> **Sequence:** Wave 2 · position 4 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Phase A #1 shipped (agreements + time engine); #2 and #3 open; Phase B landed piecemeal
+> **Implemented:** Phase A #1 — `ServiceAgreement` carries the agreement type (`service`/`block`/`cyberCare`/`spot`), hourly rate, spot-rate tier, included and used block hours, and the overtime policy (cut-off, multiplier); `services/timeRules.ts` computes overtime weighting, the midnight split (`splitFrom`) and the 1.5:1 block deduction, applied by `POST /tickets/:id/time` behind `TIME_RULES_ENABLED` (default off); the New Agreement dialog collects the type-specific fields. Plus bulk ticket operations, Kumo file manager, QuickBooks Online adapter, CloudConnect per-field fix/re-test, Service Alerts severity + RSS/Statuspage/DownDetector (+ website/SSL/DNS monitors), M365 user sync, and the checklists/rich-text-editor surfaces built from the same backlog.
+> **Outstanding — Phase A:** #2 expense module (an `Expense` model and `/billing/expenses` CRUD exist; the ticket-tab UI, approval flow and QuickBooks/FlexPoint push do not) and #3 bill-through batch invoicing with preview/approve (`INVOICE_BATCH_ENABLED`).
 > **Outstanding — Phase B remainder:** per-user dashboard, board drag-and-drop layout, SMS validation, report-writer fix + client value report, Kumo audit trail, QR-screenshot MFA decode, outage board tab, live/polled API connection statuses, KB auto-generation from resolved tickets, M365 inactivity reports + auto-offboarding.
-> **Depends on:** Phase A is self-contained (item 1 is the foundation for 2 and 3); Phase B items are independent; the AWS/Azure packaging items move with PLAN-016.
-> **Next action:** start Phase A #1 (agreements + time engine) — it unblocks expenses and batch invoicing, which together are the largest remaining revenue gap.
+> **Depends on:** Phase A #2/#3 depend on #1 (now done); Phase B items are independent; the AWS/Azure packaging items move with PLAN-016.
+> **Next action:** start Phase A #2 (expenses: ticket tab, approval flow, QuickBooks/FlexPoint push reusing the CloudConnect adapters), then #3 on top of it.
 
-**Plan ID:** PLAN-015 | **Status:** 🟡 Partial — Phase B landed piecemeal, Phase A untouched (see the sequence block below) | **Date:** 2026-08-18 | **Revised:** 2026-08-18 (strict dependency-order renumbering)
+**Plan ID:** PLAN-015 | **Status:** 🟡 Phase A #1 shipped (agreements + time engine), #2/#3 open, Phase B landed piecemeal (see the sequence block below) | **Date:** 2026-08-18 | **Revised:** 2026-10-07
 **References:** PLAN-001…014 (`PlanDocs/`), `PLAN-C7NTAX-Competitive-Review-and-Modernization.md` (PLAN-013), `PLAN-C7NTAX-Now-Deployable-Backlog.md`, C7NTRL-001 (`C7-IMI/C7NTRL`).
 
 Legend: ✅ implemented · ⚠️ similar exists (upgrade) · 📋 planned in existing docs · ❌ new in this plan.

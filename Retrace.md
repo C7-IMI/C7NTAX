@@ -3495,3 +3495,23 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - The passkey challenge store is still in-memory, with a comment saying so: fine for a single instance, wrong for the Container Apps replicas PLAN-016 deploys. It needs a table (or a signed challenge) before the app runs more than one replica.
 - Open decisions for PLAN-002: the per-role policy trigger, and whether SAML is wanted at all given OIDC is implemented and surfaced on the login page.
 - The verification browser holds a CDP virtual authenticator for the life of the session; the passkey it created was removed through the UI, and `webauthnCredential` is back to empty.
+
+**Prompt 220 — continued: W2-1 (agreements + time engine, PLAN-015 Phase A #1)**
+
+**What I did**
+- Read the Phase A spec against the code before writing anything, and it changed the shape of the work: the plan says "extend `Contract`", but `Contract` is a lightweight record with no link to tickets or invoices, while **`ServiceAgreement`** is what invoices bills against and what `Ticket.serviceAgreementId` points at. Block hours, allowances and rates only mean anything on the model that the invoice is generated from, so the fields went there — and the plan's status block now says so rather than leaving a reader to find out.
+- **The engine is its own module** (`services/timeRules.ts`), pure and testable, with the three rules expressed as decisions rather than spread through a route: overtime after a per-agreement cut-off, the midnight split, and the 1.5:1 weighting that both billing and the allowance use.
+- **Wired into `POST /tickets/:id/time`** behind `TIME_RULES_ENABLED`, off by default. The route resolves the agreement from the ticket (or an explicit `agreementId`), computes the segments, writes the split row with `splitFrom`, and deducts the weighted hours from a block or Cyber Care balance — but only for chargeable work.
+- **UI:** the New Agreement dialog now asks for the agreement type and shows the fields that belong to it (hourly rate for spot/Cyber Care, hours included for block/Cyber Care, the cut-off and multiplier for everything). Without that the feature would have been configurable only by hand in the database.
+- **Two clean-up findings worth keeping:** the probe leaked four clients because their delete ran before the agreement that referenced them was gone (the `catch` swallowed it), and `noUncheckedIndexedAccess` caught the segment loop. Both fixed; the residue cleaner learned the new probe's shapes, including the browser-check agreement.
+
+**Decisions worth remembering**
+- **Overtime is decided for the window, then falls on its last minutes.** My first implementation weighted each calendar segment on its own clock, which made the hour after midnight *plain* time — so the same out-of-hours job would cost less purely because the clock rolled over. The probe caught it (the post-midnight hour was billed at 60 instead of 90), and the rule is now: work that entered overtime stays overtime until it stops.
+- **"Off by default" is a claim to test, not assert.** `probe-time-rules-flag.mjs` runs against an API started with the flag off and checks that entries are stored as typed, nothing is split, nothing is weighted and no balance moves. That is the rollback, verified the same way the passkey flag was.
+- **Where a spec and the schema disagree, follow the data model and say why.** Extending `Contract` would have produced decorative fields; extending the agreement produced a working chain into invoicing, which is what Phase A is for.
+- **Open decision left open.** The spot-rate tiers ($100/$250/$275/$400) are exposed as a shared table with a note that the values are pending confirmation — the plan lists that as an open decision, so the code should not pretend it is settled.
+
+**Notes for next time**
+- Phase A #2 (expenses) already has an `Expense` model and `/billing/expenses` CRUD; what is missing is the ticket-detail tab, the approval flow and the QuickBooks/FlexPoint push, so it is smaller than the plan implies. #3 (bill-through batch invoicing with preview/approve) sits on top of both and is the larger piece.
+- The verification browser and the probe suites now cover session, scoping, egress, passkey and time rules; the sweep matrix and both typechecks stay at baseline (API 152, web 0 — the pre-existing errors are untouched and un-introduced).
+- `TIME_RULES_ENABLED` is set in the dev `.env` and documented in the production template as a `<true|false>` placeholder, so the preflight stays at zero failures.

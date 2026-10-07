@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.7.003",
+    "date": "2026-10-07",
+    "title": "Agreements that know their type, and a time engine that charges the evening hours properly",
+    "changes": [
+      {
+        "text": "**Agreements now have a type, and it means something.** A service agreement can be a flat recurring service, a **block** of prepaid hours, a **Cyber Care** subscription with an allowance, or **spot** hourly work — with an hourly rate, which spot-rate tier it quotes, the hours included per period, and a running total of the hours spent. `POST`/`PATCH /api/billing/agreements` validate all of it (an unknown type, an impossible cut-off like `25:99` or a multiplier outside 1–5 are refused with a 400 rather than stored), and the New Agreement dialog asks for the type with the fields that belong to it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Overtime is weighted, not guessed.** Work after the agreement's cut-off — 18:00 local by default, configurable per agreement along with the multiplier — counts as overtime towards billing and towards the allowance. Two hours entirely after six o'clock is billed as **three**, which is the plan's own acceptance test and now the first assertion in the suite.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Work that crosses midnight becomes two entries.** A timesheet that says \"23:00–01:00 Tuesday\" hides two different days of labour and every report downstream wants them apart, so the entry is split at midnight: the original keeps the pre-midnight stretch, the second row carries the rest, sits on its own work date, and points back at the first through `splitFrom`. Both hours are weighted as overtime, because a job that starts at 23:00 does not become cheaper when the clock rolls over.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Block and Cyber Care allowances are spent by the same arithmetic as the invoice.** The four hours of an evening job that billed as six deduct six hours from the balance, not four. Goodwill and no-charge entries never touch it, and an entry recorded as a bare number of minutes (no clock attached) is never weighted, because there is nothing to compare with the cut-off.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`TIME_RULES_ENABLED`, off by default.** With the flag off, every entry is stored exactly as typed: no weighting, no split, no balance movement, and `billedMinutes` stays null so \"not computed\" is distinguishable from \"computed as zero\".",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.002",
     "date": "2026-10-07",
     "title": "Passkeys you can actually manage: see them, rename them, remove them — and a second device that works",

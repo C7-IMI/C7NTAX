@@ -11799,6 +11799,19 @@
     "createdAt": "2026-10-07T05:39:19.812Z"
   },
   {
+    "id": "f75967cd-8603-4902-acd3-a3ba341b1a9f",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bc456be9-67a2-418a-a4c1-6df62717bfa3",
+    "changes": {
+      "minutes": 90,
+      "description": "No clock"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:46:31.119Z"
+  },
+  {
     "id": "9a333d19-635d-4a40-801b-81c48a02cdd2",
     "action": "tickets:create",
     "entity": "tickets",
@@ -12513,5 +12526,93 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T05:44:50.321Z"
+  },
+  {
+    "id": "01528528-f013-4ad7-b746-d4df1952b677",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "agreements",
+    "changes": {
+      "name": "Probe block agreement",
+      "rateTier": "advanced",
+      "companyId": "8456fa0a-c3a1-4ebc-af96-520221c2532b",
+      "hourlyRate": 250,
+      "agreementType": "block",
+      "blockHoursIncluded": 10
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:46:31.035Z"
+  },
+  {
+    "id": "b0d36867-cc5f-4151-8060-3fb748891cb3",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bc456be9-67a2-418a-a4c1-6df62717bfa3",
+    "changes": {
+      "endTime": "2026-10-07T02:00:00.000Z",
+      "startTime": "2026-10-07T00:00:00.000Z",
+      "description": "Evening maintenance"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:46:31.070Z"
+  },
+  {
+    "id": "316d88e1-b678-4745-b473-ae074afff318",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bc456be9-67a2-418a-a4c1-6df62717bfa3",
+    "changes": {
+      "endTime": "2026-10-07T00:00:00.000Z",
+      "startTime": "2026-10-06T22:00:00.000Z",
+      "description": "Late afternoon work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:46:31.084Z"
+  },
+  {
+    "id": "b5a32f40-11a2-4b44-b5de-9960e9765c23",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bc456be9-67a2-418a-a4c1-6df62717bfa3",
+    "changes": {
+      "endTime": "2026-10-06T16:30:00.000Z",
+      "startTime": "2026-10-06T14:00:00.000Z",
+      "description": "Morning work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:46:31.092Z"
+  },
+  {
+    "id": "8063d17e-9d24-4c8e-877b-cb0f184b2473",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bc456be9-67a2-418a-a4c1-6df62717bfa3",
+    "changes": {
+      "endTime": "2026-10-07T06:00:00.000Z",
+      "startTime": "2026-10-07T04:00:00.000Z",
+      "description": "Overnight cutover"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:46:31.102Z"
+  },
+  {
+    "id": "92d81420-4a48-4380-84e1-3fbbf7fab4bd",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "bc456be9-67a2-418a-a4c1-6df62717bfa3",
+    "changes": {
+      "endTime": "2026-10-07T02:00:00.000Z",
+      "noCharge": true,
+      "startTime": "2026-10-07T00:00:00.000Z",
+      "description": "Goodwill work"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T05:46:31.110Z"
   }
 ]
