@@ -8,6 +8,7 @@ import { initials, avatarColor } from "../lib/format";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface Organization {
   id: string;
@@ -272,7 +273,7 @@ export function KumoOrganizationsPage() {
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading...</div>
+          <TableSkeleton />
         ) : error ? (
           <div className="p-8 text-center space-y-2">
             <p className="text-sm text-gray-400">{error}</p>

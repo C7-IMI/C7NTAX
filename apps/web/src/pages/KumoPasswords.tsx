@@ -9,6 +9,7 @@ import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 export function KumoPasswordsPage() {
   const [passwords, setPasswords] = useState<any[]>([]);
@@ -331,7 +332,7 @@ export function KumoPasswordsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Password list */}
         <div className="lg:col-span-1 space-y-1">
-          {loading ? <div className="text-center py-8 text-gray-500">Loading...</div> :
+          {loading ? <TableSkeleton /> :
            filtered.length === 0 ? <div className="card py-8 text-center text-gray-500 text-sm">No passwords</div> :
            filtered.map(p => (
             <button key={p.id} onClick={() => selectPassword(p)}

@@ -8,6 +8,7 @@ import { KumoAssetDialog } from "../components/KumoAssetDialog";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface KumoAsset {
   id: string; name: string; templateId: string; status: string; companyId: string | null;
@@ -213,7 +214,7 @@ export function KumoAssetsPage() {
       </div>
 
       {/* Asset list */}
-      {loading ? <div className="text-center py-8 text-gray-500">Loading...</div> :
+      {loading ? <TableSkeleton /> :
        filtered.length === 0 ? <div className="card text-center py-8 text-gray-500">No assets found</div> :
        <div className="card overflow-hidden p-0">
         <div className="overflow-x-auto">

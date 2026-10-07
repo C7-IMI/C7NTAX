@@ -7,6 +7,7 @@ import { orgTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock, Plus, Ticket, Users, ExternalLink, UserCheck, UserX, Copy, Download, RotateCw, Eraser } from "lucide-react";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface Contact {
   id: string; firstName: string; lastName: string; email: string;
@@ -210,7 +211,7 @@ export function ContactsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-2">
-          {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : filtered.length === 0 ? <div className="text-center py-12 card"><Mail size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No contacts</p></div> : filtered.map(c => (
+          {loading ? <TableSkeleton /> : filtered.length === 0 ? <div className="text-center py-12 card"><Mail size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No contacts</p></div> : filtered.map(c => (
             <div key={c.id} tabIndex={0} className={`card hover:border-cyber-500/30 transition-colors cursor-pointer focus:outline-none focus:border-cyber-500/50 ${selected?.id === c.id ? "border-cyber-500/30" : ""}`}
               onClick={() => selectContact(c)}
               onContextMenu={(e) => menu.open(e, contactMenuEntries(c), contactMenuHeader(c))}

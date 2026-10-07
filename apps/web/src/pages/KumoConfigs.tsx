@@ -7,6 +7,7 @@ import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 export function KumoConfigsPage() {
   const [configs, setConfigs] = useState<any[]>([]);
@@ -167,7 +168,7 @@ export function KumoConfigsPage() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-1 space-y-1">
-          {loading ? <div className="text-center py-8 text-gray-500">Loading...</div> :
+          {loading ? <TableSkeleton /> :
            filtered.length === 0 ? <div className="card py-8 text-center text-gray-500 text-sm">No configurations</div> :
            filtered.map(c => (
             <button key={c.id} onClick={() => { setSelected(c); api.post("/kumo/recently-viewed", { entityType: "config", entityId: c.id, entityName: c.kumoAsset?.name || c.hostname, entityIcon: "server" }).catch(() => {}); }}

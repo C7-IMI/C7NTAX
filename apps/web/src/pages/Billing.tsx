@@ -14,6 +14,7 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 // Types
 interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; sourceTickets?: Array<{ id: string; ticketNumber: string }>; }
@@ -339,7 +340,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
       {showBatch && <BatchInvoiceDialog companies={companies} onClose={() => setShowBatch(false)} onChanged={fetchInvoices} />}
 
       {/* Invoice Table */}
-      {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : invoices.length === 0 ? (
+      {loading ? <TableSkeleton /> : invoices.length === 0 ? (
         <div className="text-center py-12 card"><Receipt size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No invoices</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
@@ -582,7 +583,7 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />New Agreement</button>
       </div>
 
-      {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : agreements.length === 0 ? (
+      {loading ? <TableSkeleton /> : agreements.length === 0 ? (
         <div className="text-center py-12 card"><ClipboardList size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No service agreements</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
@@ -955,7 +956,7 @@ function PaymentsTab() {
         </select>
       </div>
 
-      {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : filtered.length === 0 ? (
+      {loading ? <TableSkeleton /> : filtered.length === 0 ? (
         <div className="text-center py-12 card"><CreditCard size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No payments recorded</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
@@ -1172,7 +1173,7 @@ function TimeExpensesTab() {
         </select>
       </div>
 
-      {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : filtered.length === 0 ? (
+      {loading ? <TableSkeleton /> : filtered.length === 0 ? (
         <div className="text-center py-12 card"><Timer size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No time entries</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">

@@ -4,6 +4,7 @@ import { PageHeader } from "../components/ui";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, Search, Monitor, Server, Laptop, Smartphone, Network, Database, Wrench, FileText, Upload, Download, AlertTriangle, CheckCircle, XCircle, ArrowUpDown, Wifi } from "lucide-react";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface Asset {
   id: string; name: string; assetTag: string; type: string; category?: string;
@@ -266,7 +267,7 @@ export function AssetsPage() {
 
       {/* Asset list */}
       <div className="card overflow-hidden p-0">
-        {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> :
+        {loading ? <TableSkeleton /> :
          assets.length === 0 ? <div className="p-8 text-center text-gray-500">No assets found</div> :
          <div className="overflow-x-auto">
           <table className="w-full text-sm">

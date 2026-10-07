@@ -8,6 +8,7 @@ import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Br
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 
 interface DomainRow {
@@ -235,7 +236,7 @@ export function KumoDomainsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-1 space-y-1">
           {loading ? (
-            <div className="text-center py-8 text-gray-500">Loading...</div>
+            <TableSkeleton />
           ) : visible.length === 0 ? (
             <div className="card py-8 text-center text-gray-500 text-sm">
               {filter === "expired" ? "Nothing has expired." : filter === "upcoming" ? "Nothing expiring in the next 90 days." : "No domains or certificates yet."}

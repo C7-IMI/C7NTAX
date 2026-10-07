@@ -7,6 +7,7 @@ import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Br
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 export function KumoDocumentsPage() {
   const [folders, setFolders] = useState<any[]>([]);
@@ -249,7 +250,7 @@ export function KumoDocumentsPage() {
         </div>
 
         <div className="lg:col-span-3">
-          {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> :
+          {loading ? <TableSkeleton /> :
            visibleDocuments.length === 0 ? <div className="text-center py-12 card"><FileText size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">{docFilter ? "No documents match this filter" : "No documents"}</p></div> :
            <div className="space-y-2">
             {visibleDocuments.map(d => (

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, BookOpen, Search, Eye, ThumbsUp, Sparkles, Check, Trash2, ExternalLink } from "lucide-react";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface Article{id:string;title:string;slug:string;excerpt?:string;content?:string;status:string;visibility:string;tags:string[];viewCount:number;helpfulCount:number;updatedAt:string;aiGenerated?:boolean;sourceTicketId?:string|null;reviewNote?:string|null;}
 
@@ -82,7 +83,7 @@ export function KnowledgeBasePage(){
           <div className="flex gap-2"><button type="submit" className="btn-primary text-sm">Create</button><button type="button" onClick={()=>setShowNew(false)} className="btn-secondary text-sm">Cancel</button></div>
         </form></div>)}
 
-        {loading?<div className="text-center py-12 text-gray-500">Loading...</div>:filtered.length===0?<div className="text-center py-12 card"><BookOpen size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">No articles</p></div>:filtered.map(a=>(<div key={a.id} className="card hover:border-cyber-500/30 transition-colors cursor-pointer group" onClick={()=>setSelected(a)}>
+        {loading?<TableSkeleton />:filtered.length===0?<div className="text-center py-12 card"><BookOpen size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">No articles</p></div>:filtered.map(a=>(<div key={a.id} className="card hover:border-cyber-500/30 transition-colors cursor-pointer group" onClick={()=>setSelected(a)}>
           <div className="flex items-start justify-between"><div className="flex-1"><h3 className="font-semibold text-white text-sm group-hover:text-cyber-400">{a.title}</h3>{a.excerpt&&<p className="text-xs text-gray-500 mt-1 line-clamp-2">{a.excerpt}</p>}</div>
             <div className="flex items-center gap-2 shrink-0"><span className={"badge text-xs "+(SC[a.status]||"")}>{a.status}</span><span className={"badge text-xs "+(VC[a.visibility]||"")}>{a.visibility}</span></div></div>
           <div className="flex items-center gap-4 mt-2 text-xs text-gray-500"><span className="flex items-center gap-1"><Eye size={12}/>{a.viewCount}</span><span className="flex items-center gap-1"><ThumbsUp size={12}/>{a.helpfulCount}</span><span>{new Date(a.updatedAt).toLocaleDateString()}</span>{a.tags?.map(t=><span key={t} className="bg-surface-lighter rounded px-1.5 py-0.5 text-gray-600">{t}</span>)}</div>

@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { Pencil } from "lucide-react";
 import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { KumoAssetDialog } from "../components/KumoAssetDialog";
+import { PageSkeleton } from "../components/ui/Skeleton";
 
 export function KumoAssetDetailPage() {
   const { id } = useParams();
@@ -36,7 +37,7 @@ export function KumoAssetDetailPage() {
       : null
   );
 
-  if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
+  if (loading) return <PageSkeleton />;
   if (!asset) return <div className="text-center py-12 text-gray-500">Asset not found</div>;
 
   return (

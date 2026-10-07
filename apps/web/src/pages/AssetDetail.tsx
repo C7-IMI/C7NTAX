@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Save, X, Monitor, ChevronLeft, Clock, User, FileText, MapPin, DollarSign, Wifi, HardDrive, Package } from "lucide-react";
+import { PageSkeleton } from "../components/ui/Skeleton";
 
 const TYPE_COLORS: Record<string, string> = { hardware: "bg-blue-600/20 text-blue-400", software: "bg-purple-600/20 text-purple-400", license: "bg-amber-600/20 text-amber-400", server: "bg-cyber-600/20 text-cyber-400", laptop: "bg-green-600/20 text-green-400", mobile: "bg-pink-600/20 text-pink-400", network: "bg-orange-600/20 text-orange-400", other: "bg-gray-600/20 text-gray-400" };
 const STATUS_COLORS: Record<string, string> = { available: "bg-green-600/20 text-green-400", assigned: "bg-cyber-600/20 text-cyber-400", maintenance: "bg-amber-600/20 text-amber-400", retired: "bg-gray-600/20 text-gray-400", lost: "bg-red-600/20 text-red-400" };
@@ -63,7 +64,7 @@ export function AssetDetailPage() {
     finally { setSaving(false); }
   };
 
-  if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
+  if (loading) return <PageSkeleton />;
   if (!asset) return <div className="text-center py-12 text-gray-500">Asset not found</div>;
 
   return (

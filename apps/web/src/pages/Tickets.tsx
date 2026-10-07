@@ -15,6 +15,7 @@ import { RecipientField, recipientFromContact, offOrgRecipients, offOrgSummary, 
 import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
+import { TableSkeleton, PageSkeleton } from "../components/ui/Skeleton";
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
@@ -797,7 +798,7 @@ export function TicketsPage() {
       )}
 
       <div className="card overflow-hidden p-0">
-        {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
+        {loading ? <TableSkeleton /> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
             <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white">{paged.length > 0 && paged.every((t: any) => selectedIds.has(t.id)) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>
             <th className="px-4 py-3 w-10"></th>
@@ -1656,7 +1657,7 @@ export function TicketDetailPage() {
     }
   };
 
-  if(!ticket) return <div className="p-8 text-center text-gray-500">Loading...</div>;
+  if(!ticket) return <PageSkeleton />;
 
   return (
     <div

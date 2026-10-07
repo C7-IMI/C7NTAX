@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, FolderKanban, Calendar, DollarSign, CheckCircle, Clock } from "lucide-react";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface Project{id:string;name:string;description?:string;companyId?:string;status:string;priority:string;startDate?:string;endDate?:string;budget:number;budgetSpent?:number;}
 
@@ -37,7 +38,7 @@ export function ProjectsPage(){
       <div className="flex gap-2"><button type="submit" className="btn-primary text-sm">Create</button><button type="button" onClick={()=>setShowNew(false)} className="btn-secondary text-sm">Cancel</button></div>
     </form></div>)}
 
-    {loading?<div className="text-center py-12 text-gray-500">Loading...</div>:projects.length===0?<div className="text-center py-12 card"><FolderKanban size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">No projects</p></div>:(
+    {loading?<TableSkeleton />:projects.length===0?<div className="text-center py-12 card"><FolderKanban size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">No projects</p></div>:(
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {projects.map(p=>(<div key={p.id} className="card hover:border-cyber-500/30 transition-colors group">
           <div className="flex items-start justify-between"><div><h3 className="font-semibold text-white text-sm">{p.name}</h3>{p.description&&<p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{p.description}</p>}</div><span className={"badge text-xs "+(SC[p.status]||"")}>{p.status.replace(/_/g," ")}</span></div>

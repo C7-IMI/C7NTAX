@@ -7,6 +7,7 @@ import { useCalendarScale } from "../hooks/useCalendarScale";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { Calendar, Clock, MapPin, Plus, ChevronLeft, ChevronRight, Ticket, Copy, Download, RotateCw, Eraser, Eye } from "lucide-react";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface ScheduleEntry {
   id: string; title: string; description?: string; startTime: string; endTime: string;
@@ -235,7 +236,7 @@ export function CalendarPage() {
           Scheduled Events {selectedDate ? `— ${filteredEntries.length} on this date` : `— ${entries.length} total`}
         </h3>
         {loading ? (
-          <div className="text-center py-8 text-gray-500">Loading...</div>
+          <TableSkeleton />
         ) : filteredEntries.length === 0 ? (
           <div className="py-8 text-center text-gray-500">
             <Calendar size={36} className="text-gray-600 mx-auto mb-2" />

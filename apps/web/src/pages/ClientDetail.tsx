@@ -4,6 +4,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Save, X, ChevronLeft, Building2, Users, FileText, DollarSign, Ticket, ClipboardList, Clock, Mail, Phone, Globe, MapPin, Badge, Briefcase } from "lucide-react";
+import { PageSkeleton } from "../components/ui/Skeleton";
 
 const TYPE_OPTIONS = ["Client", "Prospect", "Vendor", "Partner"];
 const INDUSTRY_OPTIONS = ["", "Technology", "Healthcare", "Finance", "Manufacturing", "Legal", "Education", "Government", "Non-Profit", "Retail", "Construction"];
@@ -34,7 +35,7 @@ export function ClientDetailPage() {
     finally { setSaving(false); }
   };
 
-  if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
+  if (loading) return <PageSkeleton />;
   if (!client) return <div className="text-center py-12 text-gray-500">Client not found</div>;
 
   const tabs = [

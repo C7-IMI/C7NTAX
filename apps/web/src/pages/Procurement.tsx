@@ -3,6 +3,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, ShoppingCart, Truck, CheckCircle, X, Building } from "lucide-react";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface PO{id:string;poNumber:string;vendorId:string;status:string;total:number;expectedAt?:string;createdAt:string;vendor?:{name:string};}
 
@@ -41,7 +42,7 @@ export function ProcurementPage(){
       <div className="flex gap-2"><button type="submit" className="btn-primary text-sm"><ShoppingCart size={14} className="inline mr-1"/>Create PO</button><button type="button" onClick={()=>setShowNew(false)} className="btn-secondary text-sm">Cancel</button></div>
     </form></div>)}
 
-    {loading?<div className="text-center py-12 text-gray-500">Loading...</div>:pos.length===0?<div className="text-center py-12 card"><ShoppingCart size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">No purchase orders</p></div>:(
+    {loading?<TableSkeleton />:pos.length===0?<div className="text-center py-12 card"><ShoppingCart size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">No purchase orders</p></div>:(
       <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">PO #</th><th className="p-3">Vendor</th><th className="p-3">Amount</th><th className="p-3">Status</th><th className="p-3 hidden md:table-cell">Created</th><th className="p-3 text-right">Actions</th></tr></thead>
         <tbody>{pos.map(po=>(<tr key={po.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
           <td className="p-3 font-medium text-white font-mono text-xs">{po.poNumber}</td><td className="p-3 text-gray-300">{po.vendor?.name||"—"}</td>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Zap, Trash2, Check, X, Cpu, TestTube } from "lucide-react";
+import { PageSkeleton } from "../components/ui/Skeleton";
 
 interface Provider { id: string; name: string; provider: string; model: string; isActive: boolean; isDefault: boolean; hasApiKey: boolean; temperature: number; maxTokens: number; }
 
@@ -121,7 +122,7 @@ export function InferenceSettingsPage() {
       )}
 
       {/* Provider list */}
-      {loading ? <div className="text-center py-8 text-gray-500">Loading...</div> : providers.length === 0 ? (
+      {loading ? <PageSkeleton /> : providers.length === 0 ? (
         <div className="text-center py-12 card">
           <Zap size={40} className="text-gray-600 mx-auto mb-3" />
           <p className="text-gray-500">No AI providers configured</p>

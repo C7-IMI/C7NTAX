@@ -3,6 +3,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { useCalendarScale } from "../hooks/useCalendarScale";
 import { Calendar, Clock, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -166,7 +167,7 @@ export function PTOPage() {
         <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between">
           <h3 className="text-sm font-semibold text-white">PTO Requests {selectedDate ? `— ${filteredRequests.length} on this date` : `— ${requests.length} total`}</h3>
         </div>
-        {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> :
+        {loading ? <TableSkeleton /> :
          filteredRequests.length === 0 ? <div className="py-8 text-center text-gray-500"><Calendar size={36} className="text-gray-600 mx-auto mb-2" /><p className="text-sm">{selectedDate ? "No requests on this date" : "No PTO requests"}</p></div> :
         <table className="w-full text-sm">
           <thead><tr className="border-b border-surface-border text-left text-gray-400 text-xs uppercase"><th className="px-4 py-3">Type</th><th className="px-4 py-3">Dates</th><th className="px-4 py-3">Hours</th><th className="px-4 py-3">Status</th></tr></thead>

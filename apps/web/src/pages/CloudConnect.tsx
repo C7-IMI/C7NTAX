@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { EmailConnectorsPanel } from "../components/EmailConnectorsPanel";
+import { PageSkeleton } from "../components/ui/Skeleton";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -546,7 +547,7 @@ export function CloudConnectPage() {
 
       {/* Integration List */}
       {!showAdd && (
-        loading ? <div className="text-center py-8 text-gray-500"><Loader2 size={24} className="animate-spin mx-auto mb-2" /> Loading...</div> :
+        loading ? <PageSkeleton /> :
         integrations.length === 0 ? <div className="card text-center py-8 text-gray-500">No connections configured.</div> :
         <div className="space-y-3">
           {integrations.map((int: any) => {

@@ -3,6 +3,7 @@ import api from "../api";
 import { PageHeader } from "../components/ui";
 import { FileText, ChevronDown, ChevronRight, Shield, Clock, User, Plus } from "lucide-react";
 import toast from "react-hot-toast";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface LogEntry {
   id: string; date: string;
@@ -136,7 +137,7 @@ export function AuditLogsSection() {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <div><h2 className="text-lg font-semibold text-white">Audit Logs</h2><p className="text-sm text-gray-400 mt-0.5">Every change across the entire application — creation, updates, deletions, settings, and permissions</p></div>
-      {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : logs.length === 0 ? <div className="card text-center py-8 text-gray-500">No audit log entries yet</div> : (
+      {loading ? <TableSkeleton /> : logs.length === 0 ? <div className="card text-center py-8 text-gray-500">No audit log entries yet</div> : (
         <div className="space-y-3">
           {logs.map(day => (
             <div key={day.id} className="card">
@@ -216,7 +217,7 @@ export function ServiceBoardsSection() {
         </div>
       )}
 
-      {loading ? <div className="text-center py-12 text-gray-500">Loading...</div> : boards.length === 0 ? <div className="card text-center py-8 text-gray-500">No boards configured</div> : (
+      {loading ? <TableSkeleton /> : boards.length === 0 ? <div className="card text-center py-8 text-gray-500">No boards configured</div> : (
         <div className="space-y-3">
           {boards.map((b: any) => (
             <div key={b.id} className="card space-y-3">

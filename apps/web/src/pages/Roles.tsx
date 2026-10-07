@@ -6,6 +6,7 @@ import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from 
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 interface RoleRow {
   id: string; name: string; systemRole: string; permissions: string[];
@@ -579,7 +580,7 @@ export function RolesPage() {
             </div>
 
             {membersLoading ? (
-              <div className="text-center py-8 text-gray-500">Loading...</div>
+              <TableSkeleton />
             ) : (
               <>
                 {/* Current members */}

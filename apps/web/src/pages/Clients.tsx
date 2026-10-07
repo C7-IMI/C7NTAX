@@ -7,6 +7,7 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown, ExternalLink, AppWindow, SquareArrowOutUpRight, Copy, Download, RotateCw, Eraser, Ticket, Cloud, KeyRound, Server } from "lucide-react";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 const TYPE_COLORS: Record<string, string> = {
   Client: "bg-cyber-600/20 text-cyber-400", Prospect: "bg-amber-600/20 text-amber-400",
@@ -179,7 +180,7 @@ export function ClientsPage() {
 
       {/* Client List */}
       <div className="card overflow-hidden p-0">
-        {loading ? <div className="p-8 text-center text-gray-500">Loading...</div> :
+        {loading ? <TableSkeleton /> :
          clients.length === 0 ? <div className="p-8 text-center text-gray-500">No clients found</div> :
          <div className="overflow-x-auto">
           <table className="w-full text-sm">

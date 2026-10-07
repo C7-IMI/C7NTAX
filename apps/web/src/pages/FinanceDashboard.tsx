@@ -3,6 +3,7 @@ import api from "../api";
 import { apiErrorMessage } from "../lib/apiError";
 import { DollarSign, TrendingUp, Clock, AlertTriangle, Receipt, CreditCard } from "lucide-react";
 import toast from "react-hot-toast";
+import { TableSkeleton } from "../components/ui/Skeleton";
 
 export function FinanceDashboardPage() {
   const [data, setData] = useState<any>(null);
@@ -14,7 +15,7 @@ export function FinanceDashboardPage() {
     api.get("/billing/dashboard").then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
+  if (loading) return <TableSkeleton />;
   if (!data) return <div className="text-center py-12 text-gray-500">No billing data available</div>;
 
   return (
