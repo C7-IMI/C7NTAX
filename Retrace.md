@@ -4278,7 +4278,7 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 ### Prompt 233 — Implement the add-in flow, version the plugin, and keep every installer
 **Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~3 h
-**BuildNotes IDs:** 2026.10.7.034 - The add-in flow ships, the plugin gets a version, and every installer is kept
+**BuildNotes IDs:** 2026.10.7.034 - The add-in flow ships, the plugin gets a version, and every installer is kept; 2026.10.7.035 - A picked client no longer swallows the contact, and the flow is under test
 
 > Looks great. Implment it. update the plugin and installer as well. Going forward if changes are made to the plugin, the installer should be updated too.
 >
@@ -4296,6 +4296,7 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **Replaced the single `build.json` with a release history** (`installer/artifacts/index.json`): version, release, origin, payload hash, build time and SHA-256 per artifact, newest first, with a rebuild of the same version replacing its entry rather than adding a second. The API serves **only** names in that history, so a download path can never become a filesystem path.
 - **Added the Installer versions card to C7NC → Outlook Add-in** — every version with its own Download, the current one labelled **Newest**, an entry built from different files marked **Older plugin files**, and a stale banner naming the rebuild command when the newest installer does not match the plugin being served.
 - **Found and fixed a second real bug by driving the pane in a browser:** every write returned `403 CSRF token missing or invalid` while every read worked. `fetch` sends the origin's cookies by default, so with a valid C7NTAX session cookie present the API demanded a CSRF header despite the bearer token. The pane is a token client, so it now sends `credentials: "omit"`. Also corrected a hint that told the user the wrong thing about the unmatched-client case.
+- **Found a third bug by extending the add-in's own probe: choosing a client in the review skipped contact creation, so the contact name the user had just confirmed was dropped.** The probe section for the reviewed fields failed on its rename assertion, which looked like a probe assumption and turned out to be a behaviour: when the review supplies a client, sender resolution returned that client and stopped, and the contact lookup on that path was lookup-only — so for a sender with no contact yet the ticket was filed against **no contact at all**. A picked client now wins over *matching* rather than over the rest of resolution: the contact is created under the chosen client and the reviewed name is applied to it. Fixed in `resolveSender`, and the probe grew from 32 checks to **59** covering `/options`, `/preview`, the reviewed fields, the bundled ticket and per-user preferences.
 
 **Decisions worth remembering**
 - **A guard is only worth having if you have watched it fail.** Both the plugin guard and the build were run against a genuine unversioned change first; a check that has only ever passed is indistinguishable from a check that does nothing.
@@ -4307,7 +4308,9 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The review has to be able to change the outcome, or it is decoration.** Hence read-only preview on the server, and reviewed values applied in preference to deduction.
 
 **Notes for next time**
-- **Keep the three CI guards green together:** `guard:config` (43 reads, all declared), `guard:plugin`, `guard:routes` (393/347/0), plus `check-help-links.mjs` (75 routes / 20 walkthroughs / 44 links).
-- **A payload change now needs both steps:** `pnpm plugin:bump` then `pnpm installer:build`. Building without the bump is refused rather than silently producing a mislabelled MSI.
+- **Keep the three CI guards green together:** `guard:config` (43 reads, all declared), `guard:plugin`, `guard:routes` (393/347/0), plus `check-help-links.mjs` (75 routes / 20 walkthroughs / 44 links). The add-in's own probe is the fourth regression gate, and the one that found the contact defect — extend it whenever the flow changes.
+- **A probe assertion that fails is a question, not an obstacle.** "and renamed the contact it will be filed against" failed as `undefined undefined`, which was one grep away from a genuine defect. Read the failure before relaxing the check.
+- **A payload change now needs both steps:** `pnpm plugin:bump` then `pnpm installer:build`. Building without the bump is refused rather than silently producing a mislabelled MSI. A server-side change that does not touch the plugin needs neither — the guard compares the plugin against its installer, not against the release.
 - **Diagnose the add-in in the browser, not by reading the code.** Real Office.js overwrites a stubbed `window.Office` and switches the pane back off; block `**/appsforoffice.microsoft.com/**` and cache-bust `**/addin/taskpane.*`, and the whole flow is drivable without Outlook.
 - **Both "empty pane" causes are now reported rather than guessed at** — an installer built for another origin, and an installer built before the current plugin files. Both appear on the C7NC page with the command that fixes them.
+- **The probe leaves nothing behind:** tickets, attachment rows, the `.eml` files those rows point at, the contacts it created, and the sessions it signed in with are all removed, and it restores the admin's preferences to defaults.

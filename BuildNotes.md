@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.034 | Last Updated: 2026-10-07
+## Version: 2026.10.7.035 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,18 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.035 — A picked client no longer swallows the contact, and the flow is under test
+
+Verifying 2026.10.7.034 turned up a defect in the reviewed path, and the add-in's own probe covered the pane's assets but none of the flow the release had just added. Both are fixed here.
+
+- **[Fix]** **Choosing a client in the review skipped contact creation, so the contact name the user had just confirmed was dropped.** When the review supplies a client, sender resolution returned that client and stopped — which was fine while the client was the only thing being overridden, but the contact lookup on that path was lookup-only. For a sender with no contact yet, the result was a ticket filed against **no contact at all**, while the review had shown a name and offered to edit it. A picked client now wins over *matching* rather than over the rest of resolution: the contact is created as usual under the chosen client, and the reviewed name is applied to it. *An editable field that quietly does nothing is worse than one that is not offered* — the rule the reviewed fields already follow elsewhere.
+- **[Update]** **The add-in probe now covers the flow, not just the pane's files.** `/options` (with the 403 for an account that cannot create tickets), `/preview` naming the client and contact it resolved and creating nothing, reviewed priority and client winning over deduction, the contact rename and its move to the chosen client, the bundled path's one ticket with two `.eml` attachments and two attachment rows, and preferences round-tripping **per user** — a technician's account on the same machine still asks. 32 checks became **59**.
+- **[Update]** **The probe cleans up its attachment files too.** Rows cascade away with the ticket, but the `.eml` files under `apps/api/data/ticket-attachments` do not, so a probe that bundles messages would have left them behind.
+- **Rollback:** the fix is a handful of lines in one function, and the probe is additive. Neither changes an API shape, a schema or a plugin file — so no installer rebuild was needed, and `pnpm guard:plugin` still reports plugin 26.10.7034 matching its MSI.
+- **Verification:** `probe-outlook-addin.mjs` **59 passed, 0 failed**, including the four checks that failed before the fix; `probe-configuration` 87, `probe-session` 34, `probe-portal` 90, each 0 failed; API typecheck 150, the pre-existing baseline, with no error in any changed file; web typecheck 0.
 
 ---
 

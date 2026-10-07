@@ -122,6 +122,15 @@ must not change the hash the record holds. `guard:plugin` and `build.ps1` both *
 produce an installer for an unversioned plugin — see
 [the installer documentation](../../installer/README.md#the-plugin-version-and-the-installers).
 
+## Verifying it
+
+`cd apps/api && node probe-outlook-addin.mjs` exercises the whole flow against a running API:
+the pane's files and the controls it renders, ticket creation and dedup, `/options` and its 403 for
+an account that cannot create tickets, `/preview` naming the client and contact it resolved without
+creating anything, reviewed fields winning over deduction, the bundled ticket with its `.eml`
+attachments, and preferences round-tripping per user. It removes everything it made, including the
+attachment files and the contacts.
+
 ## What is not done yet (and why)
 
 - **Microsoft SSO (the `POST /api/auth/office-sso` flow)** is not implemented. It needs the Entra app
