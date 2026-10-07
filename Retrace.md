@@ -3356,3 +3356,25 @@ Read the API surface before writing any entry, so nothing is offered that does n
 **Notes for next time**
 - Steps E (P0-5 + the egress helper), F (`?token=` removal), G (dependency majors + the audit baseline), H (CI wiring for this check) and I (the Azure package) remain, tracked in `files/W0-progress.md`.
 - The checker scans `apps/api/src/routes` recursively, so route files added later are covered automatically; a route declared across multiple lines is handled because it reads up to the handler token rather than assuming one line.
+
+**Prompt 219 — continued: W0 step E (the egress policy, closing A5/A10 and landing H1/H6)**
+
+**What I did**
+- Added `services/egress.ts` as the single place an outbound request is decided: http(s) only and https for anything public, literal loopback/RFC1918/link-local addresses refused before a socket is opened, **every resolved address** checked so a public name cannot resolve inward, a timeout on every call, and one log line per attempt with its URL, purpose and outcome (H6).
+- Put the policy on the fetchers the server owns — the inference provider call, all four alert-monitor sources (RSS, Statuspage, the DownDetector reader, the website/ssl/dns monitors) and the SSO discovery/JWKS/token calls — and on the two write paths that store a URL (`POST/PATCH /inference/providers`, `POST/PATCH /service-alerts/services`), so a bad value is refused with a readable message instead of being stored.
+- Checked the ssl and dns monitors separately: they open a socket and resolve a name directly rather than using `fetch`, so they apply the address check themselves.
+- **Tuned the rule after the probe caught it breaking something real.** Blanket-refusing redirects broke the Google Workspace status feed (it answers 301), which is exactly the kind of behaviour change the request forbids. Redirects are now followed one hop at a time with the policy re-applied to each target, capped at three, so a public URL can still redirect while a redirect into a private range is refused.
+- Hardened the private opt-in while testing it: `EGRESS_ALLOW_PRIVATE=true` (for a local Ollama server) relaxes loopback/RFC1918 but **never** link-local, so `169.254.169.254` is refused even in the most permissive development configuration.
+- Found a second leak in the same code path: the audit middleware wrote `apiKey` verbatim into the audit row for a provider change. Redaction now matches secret-*looking* key names (`apiKey`, `api_key`, `accessToken`, `refresh_token`, `webhookSecret`, `smtp_password`, `signingKey`, …) case- and separator-insensitively while still recording lookalikes such as `tokenVersion`.
+- Verified with two suites: a 28-assertion policy probe (address classification, every blocked/allowed URL shape, DNS-resolved private and unresolvable names, a redirect into the metadata service via a local redirect server, the opt-in) and a 21-assertion live-API suite (refused on save with a readable message, a refused update leaves the stored value untouched, a legitimate endpoint still accepted, the key `***` in the audit row, and the alert monitor resolving all 14 configured services with no egress refusals). Persona read sweep after the change: identical to step D. `pnpm guard:routes`: 322 routes, 0 violations. Typecheck back to the 155-error baseline, none in these files.
+
+**Decisions worth remembering**
+- **Follow redirects, validate every hop — do not refuse them.** The strict version was "safer" and wrong: it silently broke a production data source. The SSRF property that matters is that the *target* is checked, not that redirects never happen.
+- **A private allow-list must still exclude link-local.** An opt-in for a local model server is reasonable; an opt-in that also permits the cloud metadata service is a vulnerability with a switch on it, so the link-local range is exempt from the exemption.
+- **Validate on save and again before the request.** The save-time check gives the operator a readable 400 while they are typing; the call-time check is what protects a row that was written before the policy existed.
+- **The audit row is a sink too.** A control that stops credentials reaching a stranger's server still leaks them into the database if the audit middleware stores the request body unredacted.
+- The probe found the regression because it asserted the *monitor still works*, not just that blocking works. A security step needs both directions or it will happily "pass" while the feature it guards is dead.
+
+**Notes for next time**
+- Steps F (P0-12 `?token=`), G (Phase 1 majors + `security/audit-baseline.json`), H (CI wiring for the check, the audit baseline, gitleaks/trivy) and I (the Azure package) remain, tracked in `files/W0-progress.md`.
+- `apps/api/clean-probe-residue.ts` is the dev-only cleaner for verification residue (probe users, their roles, and the audit rows that *mention* them — the create rows are written by the admin, so matching on the actor is not enough); run it then `npx tsx src/snapshot-capture.ts` before committing snapshots.

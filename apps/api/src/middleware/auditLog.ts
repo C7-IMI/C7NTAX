@@ -29,13 +29,25 @@ function extractEntity(path: string): string {
   return base;
 }
 
+/** Keys whose value must never be stored in an audit row, matched on the name so
+ *  camelCase, snake_case and similar spellings are all covered. */
+const SECRET_KEY_PARTS = ["password", "secret", "apikey", "privatekey", "authtag", "credential"];
+/** Exact names, so a lookalike such as `tokenVersion` is still recorded. */
+const SECRET_KEY_EXACT = new Set([
+  "iv", "token", "accesstoken", "refreshtoken", "idtoken", "bearertoken", "authtoken",
+  "authorization", "signingkey", "encryptionkey", "webhooktoken", "sessiontoken",
+]);
+
+function isSecretKey(key: string): boolean {
+  const normalized = key.toLowerCase().replace(/[_-]/g, "");
+  return SECRET_KEY_EXACT.has(normalized) || SECRET_KEY_PARTS.some(part => normalized.includes(part));
+}
+
 function summarizeChanges(body: Record<string, unknown>): Record<string, unknown> {
   if (!body || Object.keys(body).length === 0) return { note: "delete" };
   const safe: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(body)) {
-    if (k === "password" || k === "passwordHash" || k === "encryptedPassword" ||
-        k === "clientSecret" || k === "secret" || k === "privateKey" ||
-        k === "iv" || k === "authTag") {
+    if (isSecretKey(k)) {
       safe[k] = "***";
     } else if (typeof v === "string" && v.length > 200) {
       safe[k] = v.slice(0, 200) + "...";
