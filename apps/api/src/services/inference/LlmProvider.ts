@@ -1,6 +1,7 @@
 import { prisma } from "../../index";
 import { EgressError, safeFetch } from "../egress";
 import type { SuggestionResult } from "./types";
+import { configText } from "../appSettings";
 
 /**
  * LLM-based inference provider.
@@ -172,7 +173,7 @@ export async function llmJsonCompletion<T = Record<string, unknown>>(
   else if (provider.provider === "anthropic") { headers["x-api-key"] = provider.apiKey!; headers["anthropic-version"] = "2023-06-01"; }
   else if (provider.provider === "azure_openai") headers["api-key"] = provider.apiKey!;
 
-  const model = options.model || process.env.KB_AUTOGEN_MODEL || process.env.INFERENCE_MODEL || provider.model;
+  const model = options.model || configText("knowledge", "draftModel") || process.env.INFERENCE_MODEL || provider.model;
   const body = buildRequestBody(
     { provider: provider.provider, model, maxTokens: options.maxTokens ?? provider.maxTokens, temperature: options.temperature ?? provider.temperature, topP: provider.topP },
     prompt,

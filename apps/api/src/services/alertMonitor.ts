@@ -23,7 +23,7 @@ import { prisma } from "../index";
 import { assertSafeOutboundUrl, safeFetch } from "./egress";
 import tls from "node:tls";
 import { promises as dns } from "node:dns";
-import { configFlag, configNumber } from "./appSettings";
+import { configFlag, configNumber, refreshSettings } from "./appSettings";
 
 /**
  * The poll interval is read when the monitor starts rather than per poll: it also defines the
@@ -620,7 +620,8 @@ export async function runAlertCheck(): Promise<MonitorSnapshot> {
   return snapshot;
 }
 
-export function startAlertMonitor(): void {
+export async function startAlertMonitor(): Promise<void> {
+  await refreshSettings(true);
   readMonitorTiming();
   log("info", `Service Alerts monitor started (${POLL_INTERVAL_MS / 60000}-minute interval, ${STALE_AFTER_HOURS}h stale ceiling)`);
   // First run shortly after boot so the dashboard is populated quickly.

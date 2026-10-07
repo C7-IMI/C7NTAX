@@ -31,6 +31,8 @@ import { AssetsPage } from "./pages/Assets";
 import { AssetDetailPage } from "./pages/AssetDetail";
 import { KnowledgeBasePage } from "./pages/KnowledgeBase";
 import { AuditLogsSection, ServiceBoardsSection } from "./pages/Administration";
+import { ConfigurationHub, ConfigurationSectionPage } from "./pages/Configuration";
+import { CustomerPortalSettingsPage } from "./pages/CustomerPortalSettings";
 import { ChangelogPage } from "./pages/Changelog";
 import { CalendarPage } from "./pages/Calendar";
 import { PTOPage } from "./pages/PTO";
@@ -154,7 +156,10 @@ function ProtectedRoutes() {
         <Route path="/admin/boards" element={<ServiceBoardsSection />} />
         <Route path="/admin/products" element={<ProductCatalogPage />} />
         <Route path="/admin/system" element={<SystemSettingsPage />} />
-        <Route path="/admin" element={<AuditLogsSection />} />
+        <Route path="/admin/configuration" element={<ConfigurationHub />} />
+        <Route path="/admin/configuration/:sectionId" element={<ConfigurationSectionPage />} />
+        <Route path="/admin/portal" element={<CustomerPortalSettingsPage />} />
+        <Route path="/admin" element={<ConfigurationHub />} />
         <Route path="/admin/changelog" element={<ChangelogPage />} />
         <Route path="/billing/dashboard" element={<FinanceDashboardPage />} />
         <Route path="/quotes" element={<QuotesPage />} />

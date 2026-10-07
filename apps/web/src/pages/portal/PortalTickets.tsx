@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Plus, RefreshCw, Send } from "lucide-react";
 import portalApi, { portalErrorMessage } from "../../portalApi";
+import { ON_ACCENT_COLOUR } from "../../lib/colourTokens";
 import { portalAccent, usePortalAuth } from "./PortalApp";
 
 interface PortalTicket {
@@ -26,12 +27,15 @@ const STATUS_CLASSES: Record<string, string> = {
 };
 
 export function PortalTickets() {
-  const { me, refresh } = usePortalAuth();
+  const { me, refresh, policy } = usePortalAuth();
   const [tickets, setTickets] = useState<PortalTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"open" | "all">("open");
   const [showNew, setShowNew] = useState(false);
   const accent = portalAccent(me?.company);
+  // A provider who has switched raising tickets off gets a portal without the button, and the
+  // API refuses the call too — a hidden button is not a permission.
+  const canRaise = policy?.allowTicketCreation !== false;
 
   const load = () => {
     setLoading(true);
@@ -59,20 +63,24 @@ export function PortalTickets() {
             <button onClick={() => setFilter("all")} className={`px-3 py-1.5 ${filter === "all" ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white"}`}>All</button>
           </div>
           <button onClick={load} className="btn-secondary text-xs flex items-center gap-1.5" title="Refresh"><RefreshCw size={14} /> Refresh</button>
-          <button onClick={() => setShowNew(v => !v)} className="btn-primary text-xs flex items-center gap-1.5" style={{ backgroundColor: accent, color: "#04121b" }}>
-            <Plus size={14} /> New ticket
-          </button>
+          {canRaise && (
+            <button onClick={() => setShowNew(v => !v)} className="btn-primary text-xs flex items-center gap-1.5" style={{ backgroundColor: accent, color: ON_ACCENT_COLOUR }}>
+              <Plus size={14} /> New ticket
+            </button>
+          )}
         </div>
       </div>
 
-      {showNew && <NewTicketForm onCreated={() => { setShowNew(false); setFilter("all"); load(); void refresh(); }} onCancel={() => setShowNew(false)} />}
+      {showNew && canRaise && <NewTicketForm onCreated={() => { setShowNew(false); setFilter("all"); load(); void refresh(); }} onCancel={() => setShowNew(false)} />}
 
       {loading ? (
         <div className="card p-8 text-center text-sm text-gray-500">Loading your tickets…</div>
       ) : visible.length === 0 ? (
         <div className="card p-8 text-center space-y-2">
           <p className="text-sm text-gray-400">{filter === "open" ? "You have no open tickets." : "You have not raised any tickets yet."}</p>
-          <p className="text-xs text-gray-600">Use “New ticket” to tell your provider what you need.</p>
+          {canRaise
+            ? <p className="text-xs text-gray-600">Use “New ticket” to tell your provider what you need.</p>
+            : <p className="text-xs text-gray-600">Contact your provider directly to have something added.</p>}
         </div>
       ) : (
         <div className="card divide-y divide-surface-border/60 p-0">
@@ -139,7 +147,7 @@ function NewTicketForm({ onCreated, onCancel }: { onCreated: () => void; onCance
         </div>
         <div className="ml-auto flex gap-2">
           <button type="button" className="btn-secondary text-sm" onClick={onCancel}>Cancel</button>
-          <button type="submit" className="btn-primary text-sm flex items-center gap-1.5" style={{ backgroundColor: accent, color: "#04121b" }} disabled={busy || !title.trim() || !description.trim()}>
+          <button type="submit" className="btn-primary text-sm flex items-center gap-1.5" style={{ backgroundColor: accent, color: ON_ACCENT_COLOUR }} disabled={busy || !title.trim() || !description.trim()}>
             <Send size={14} /> {busy ? "Sending…" : "Submit ticket"}
           </button>
         </div>

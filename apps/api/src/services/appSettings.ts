@@ -163,6 +163,14 @@ export function configText(sectionId: string, fieldId: string): string {
   return value === undefined || value === null ? "" : String(value);
 }
 
+/** The saved value for a field, or `undefined` when nothing has ever been saved. */
+export function savedValue(sectionId: string, fieldId: string): unknown {
+  const field = findConfigField(sectionId, fieldId);
+  if (!field) return undefined;
+  const value = storedValueFor(field, sectionId);
+  return value === null ? undefined : value;
+}
+
 /** Everything stored for one section, for the configuration screen. */
 export function storedSectionValues(sectionId: string): ConfigSectionValue {
   return { ...(storedSections.get(configSectionKey(sectionId)) ?? {}) };
@@ -245,6 +253,8 @@ export async function writeConfigValue(
         });
       } else {
         const path = (address.path ?? field.id).split(".");
+        const leaf = path[path.length - 1];
+        if (!leaf) return { ok: false, message: "That setting has no storage address" };
         const base: Record<string, unknown> =
           parsed && typeof parsed === "object" && !Array.isArray(parsed) ? { ...(parsed as Record<string, unknown>) } : {};
         let cursor: Record<string, unknown> = base;
@@ -253,7 +263,7 @@ export async function writeConfigValue(
           cursor[part] = step && typeof step === "object" && !Array.isArray(step) ? { ...(step as Record<string, unknown>) } : {};
           cursor = cursor[part] as Record<string, unknown>;
         }
-        cursor[path[path.length - 1]] = coerced.value;
+        cursor[leaf] = coerced.value;
         const encoded = JSON.stringify(base);
         await prisma.systemConfig.upsert({
           where: { key },
@@ -263,10 +273,7 @@ export async function writeConfigValue(
       }
     }
   } catch (error) {
-    logger.error("settings.write", "Failed to save a configuration value", {
-      sectionId, fieldId,
-      message: error instanceof Error ? error.message : String(error),
-    });
+    logger.error("settings.write", error instanceof Error ? error : new Error(String(error)), { sectionId, fieldId });
     return { ok: false, message: "The setting could not be saved" };
   }
 

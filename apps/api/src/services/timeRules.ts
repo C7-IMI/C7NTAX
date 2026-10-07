@@ -75,7 +75,7 @@ export function settingsFrom(agreement: {
   return {
     overtimeEnabled: agreement?.overtimeEnabled ?? defaults.overtimeEnabled,
     overtimeAfter: normaliseClock(agreement?.overtimeAfter) ?? defaults.overtimeAfter,
-    overtimeMultiplier: Number(agreement?.overtimeMultiplier) > 0 ? Number(agreement.overtimeMultiplier) : defaults.overtimeMultiplier,
+    overtimeMultiplier: Number(agreement?.overtimeMultiplier ?? 0) > 0 ? Number(agreement?.overtimeMultiplier) : defaults.overtimeMultiplier,
   };
 }
 

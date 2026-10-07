@@ -128,6 +128,25 @@ export function configSectionKey(sectionId: string): string {
   return `config:${sectionId}`;
 }
 
+/**
+ * The pages a sign-in may land on. Shared rather than written twice, because the personal
+ * preference screen and the instance setting have to offer the same list or one of them will
+ * quietly stop being reachable.
+ */
+export const LANDING_PAGES: ReadonlyArray<{ path: string; label: string }> = [
+  { path: "/", label: "Dashboard" },
+  { path: "/tickets", label: "Tickets" },
+  { path: "/boards", label: "Service Boards" },
+  { path: "/opportunities", label: "Sales Pipeline" },
+  { path: "/projects", label: "Projects" },
+  { path: "/assets", label: "Asset Inventory" },
+  { path: "/kb", label: "Knowledge Base" },
+  { path: "/clients", label: "Clients" },
+  { path: "/billing", label: "Billing" },
+  { path: "/cloudconnect", label: "CloudConnect" },
+  { path: "/users", label: "Users" },
+];
+
 export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
   // ── Workspace ────────────────────────────────────────────────────
   {

@@ -48,6 +48,7 @@ import { workflowsRouter } from "./routes/workflows";
 import { reportsRouter } from "./routes/reports";
 import { ssoRouter } from "./routes/sso";
 import { systemRouter } from "./routes/system";
+import { configurationRouter } from "./routes/configuration";
 import { bulkRouter } from "./routes/bulk";
 import { inferenceRouter } from "./routes/inference";
 import { kumoRouter } from "./routes/kumo";
@@ -210,6 +211,7 @@ app.use("/api/push", pushRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/ai-actions", aiActionsRouter);
 app.use("/api/alert-webhooks", alertWebhooksRouter);
+app.use("/api/configuration", configurationRouter);
 
 // PLAN-012: the Outlook add-in's taskpane is served from the same origin as the API, because the
 // manifest's URLs must be HTTPS and same-origin is what lets the pane call /api without CORS.
@@ -255,6 +257,11 @@ setupWebSocket(server);
 server.listen(PORT, () => {
   console.log(`[C7NTAX] API running on port ${PORT}`);
   logger.info("server", `API listening on port ${PORT} (${process.env.NODE_ENV || "development"})`);
+  // Application settings are read from the database from here on. Loaded before the services
+  // below, because they sample their intervals once as they start.
+  void import("./services/appSettings")
+    .then(async s => { await s.refreshSettings(true); s.startSettingsRefresh(); })
+    .catch(() => {});
   startWorkers();
   import("./services/poller").then(p => p.startPoller()).catch(() => {});
   import("./services/snapshotPoller").then(p => p.startSnapshotPoller()).catch(() => {});

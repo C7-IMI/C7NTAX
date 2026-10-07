@@ -119,15 +119,21 @@ systemRouter.post("/calendar-sync", requirePermission(Permission.SystemConfig), 
 // ── System Config (landing page, etc.) ──
 
 /**
- * Keys the application itself writes from ordinary screens (Settings, System
- * Settings). Anything else is administrative and needs `SystemConfig`.
+ * Keys the application itself writes from ordinary screens. Anything else is administrative and
+ * needs `SystemConfig`.
+ *
+ * The set is deliberately short and the general configuration screen no longer uses this route:
+ * `/api/configuration` addresses a section and a field declared in the shared registry, so it
+ * cannot name a row it does not own and needs no list of exclusions. What remains here is the
+ * compatibility surface the SPA still reads — the right-click menu preference, the idle timeout
+ * and the landing page — plus the connector state the email services own.
  */
 const SELF_SERVICE_CONFIG_KEYS = new Set(["app_settings", "session_timeout", "default_landing_page"]);
 
 /**
- * Keys a request may never write, whoever is asking: connector credentials and
- * OAuth handshake state are owned by the services that create them, and the
- * sample-data switches change what the whole instance contains.
+ * Keys a request may never write, whoever is asking: connector credentials and OAuth handshake
+ * state are owned by the services that create them, and the sample-data switches change what the
+ * whole instance contains.
  */
 const RESERVED_CONFIG_PREFIXES = ["email_connector:", "oauth", "sso:", "sample_data"];
 const RESERVED_CONFIG_PATTERN = /secret|token|password|credential|apikey|api_key|private_?key/i;
@@ -135,6 +141,11 @@ const RESERVED_CONFIG_PATTERN = /secret|token|password|credential|apikey|api_key
 function assertConfigWriteAllowed(user: AuthRequest["user"], key: string): void {
   if (RESERVED_CONFIG_PREFIXES.some(p => key.startsWith(p)) || RESERVED_CONFIG_PATTERN.test(key)) {
     throw new AppError("That setting is managed by the system and cannot be edited here", 403);
+  }
+  // The registry's own rows are written through /api/configuration, which checks the section's
+  // permission, so they are not self-service here even for the keys an administrator may change.
+  if (key.startsWith("config:")) {
+    throw new AppError("Use the configuration screen to change that setting", 403);
   }
   const isAdmin = !!user?.permissions?.includes(Permission.SystemConfig);
   if (!isAdmin && !SELF_SERVICE_CONFIG_KEYS.has(key)) {
@@ -174,41 +185,53 @@ systemRouter.get("/configs", requirePermission(Permission.SystemConfig), async (
   } catch (e) { next(e); }
 });
 
-// ── Get single system config ──
-systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
-  try {
-    const c = await prisma.systemConfig.findUnique({ where: { key: req.params.key } });
-    if (!c) return res.json({ value: null });
-    let value: unknown;
-    try { value = JSON.parse(c.value as string); } catch { value = c.value; }
-    res.json({ value });
-  } catch (e) { next(e); }
-});
+/**
+ * The non-secret facts about how this instance is deployed.
+ *
+ * Exists so the System Settings screen can state what it actually knows instead of offering an
+ * edit control for a value only a deployment can change. Passwords are never returned: the mail
+ * relay reports whether credentials are set, not what they are, and the database URL is reduced
+ * to host and database name because the connection string carries a password.
+ */
+systemRouter.get("/deployment", requirePermission(Permission.SystemConfig), (_req: AuthRequest, res) => {
+  const env = process.env;
+  const databaseUrl = env.DATABASE_URL ?? "";
+  let database: { configured: boolean; host: string | null; name: string | null } = { configured: false, host: null, name: null };
+  if (databaseUrl) {
+    try {
+      const url = new URL(databaseUrl);
+      database = { configured: true, host: `${url.hostname}${url.port ? `:${url.port}` : ""}`, name: url.pathname.replace(/^\//, "") || null };
+    } catch {
+      // An unparseable URL is still a configured one; only the readable half is unknown.
+      database = { configured: true, host: null, name: null };
+    }
+  }
 
-// ── Save system config ──
-systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
-  try {
-    assertConfigWriteAllowed(req.user, String(req.params.key));
-    const { key } = req.params;
-    const value = typeof req.body.value === "string" ? req.body.value : JSON.stringify(req.body.value);
-    await prisma.systemConfig.upsert({ where: { key }, create: { key, value }, update: { value } });
-    res.json({ success: true });
-  } catch (e) { next(e); }
-});
-
-// ── Get single system config ──
-systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
-  try {
-    const c = await prisma.systemConfig.findUnique({ where: { key: req.params.key } });
-    if (!c) return res.json({ value: null });
-    let value: unknown;
-    try { value = JSON.parse(c.value as string); } catch { value = c.value; }
-    res.json({ value });
-  } catch (e) { next(e); }
+  const smtpHost = env.SMTP_HOST ?? "";
+  res.json({
+    mail: {
+      configured: Boolean(smtpHost),
+      host: smtpHost || null,
+      port: env.SMTP_PORT ? Number(env.SMTP_PORT) : 587,
+      secure: env.SMTP_SECURE === "true",
+      hasCredentials: Boolean(env.SMTP_USER && env.SMTP_PASS),
+      from: env.SMTP_FROM ?? null,
+    },
+    database,
+    runtime: {
+      nodeEnv: env.NODE_ENV ?? "development",
+      port: Number(env.PORT) || 4000,
+      webOrigin: env.WEB_ORIGIN ?? null,
+      servesWeb: env.SERVE_WEB === "true",
+    },
+    addin: {
+      enabled: env.OUTLOOK_ADDIN_ENABLED !== "false",
+      directory: env.OUTLOOK_ADDIN_DIR ?? "(default)",
+    },
+  });
 });
 
 // ── Self-healing poller status ──
-
 systemRouter.get("/poller/status", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
   res.json({ paused: isPaused(), retryCount: getRetryCount(), maxRetries: 10, recoveryLog: getRecoveryLog() });
 });

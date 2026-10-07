@@ -9,8 +9,9 @@
  *   3. Sign-in cannot be used to enumerate customers: requesting a code answers 202 whatever
  *      happens, and the code is only emailed to a contact of a client with the portal enabled.
  *
- * The whole surface is absent (`404`) unless `PORTAL_ENABLED=true`, consistent with the other
- * phase flags: a deployment that has not switched the portal on should not advertise it.
+ * The whole surface is absent (`404`) unless the portal is switched on — the `portal.enabled`
+ * setting or its `PORTAL_ENABLED` environment variable — consistent with the other phase flags:
+ * a deployment that has not switched the portal on should not advertise it.
  */
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
@@ -25,12 +26,15 @@ import {
   createPortalSession,
   issueLoginCode,
   portalEligibleContact,
+  portalEnabled,
   requirePortalSession,
   requirePortalWrite,
   resolvePortalSession,
   setPortalCookies,
   type PortalContact,
 } from "../services/portalAuth";
+import { configFlag, configText } from "../services/appSettings";
+import { resolvePortalBoardId } from "../services/portalBoard";
 
 export const portalRouter = Router();
 const emailService = new EmailService();
@@ -45,29 +49,34 @@ const STATUS_LABELS: Record<string, string> = {
 
 /** Every portal route is behind the flag; the router is mounted unconditionally. */
 portalRouter.use((_req: Request, res: Response, next: NextFunction) => {
-  if (process.env.PORTAL_ENABLED !== "true") {
+  if (!portalEnabled()) {
     res.status(404).json({ error: "The customer portal is not enabled on this deployment" });
     return;
   }
   next();
 });
 
-/** Which board a portal-raised ticket lands on: the configured one, else the oldest active board. */
-async function resolvePortalBoardId(): Promise<string> {
-  const configured = process.env.PORTAL_DEFAULT_BOARD_ID?.trim();
-  if (configured) {
-    const board = await prisma.serviceBoard.findUnique({ where: { id: configured }, select: { id: true } });
-    if (board) return board.id;
-    logger.warn("portal.board", "PORTAL_DEFAULT_BOARD_ID does not exist — falling back to the oldest active board", { configured });
-  }
-  const fallback = await prisma.serviceBoard.findFirst({
-    where: { isActive: true },
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
+/**
+ * The portal's identity, available **before** sign-in so the sign-in page can wear the right
+ * colours and say who is asking. Nothing here is a customer fact: it is the same for every
+ * visitor, which is what makes it safe to answer without a session.
+ */
+portalRouter.get("/branding", (_req: Request, res: Response) => {
+  res.json({
+    name: configText("workspace", "companyName") || "Customer portal",
+    accentColor: configText("portal", "accentColor") || null,
+    logoUrl: configText("portal", "logoUrl") || null,
+    welcomeText: configText("portal", "welcomeText") || "",
+    supportEmail: configText("portal", "supportEmail") || "",
+    allowTicketCreation: configFlag("portal", "allowTicketCreation"),
+    allowReplies: configFlag("portal", "allowReplies"),
   });
-  if (!fallback) throw new AppError("There is no service board to raise tickets on — ask your provider to configure one", 503);
-  return fallback.id;
-}
+});
+
+/**
+ * Which board a portal-raised ticket lands on: the configured one, else the environment's, else
+ * the oldest active board. See `services/portalBoard`.
+ */
 
 async function resolvePortalActor(): Promise<{ id: string }> {
   const existing = await prisma.user.findUnique({ where: { email: PORTAL_ACTOR_EMAIL }, select: { id: true } });
@@ -89,22 +98,30 @@ async function resolvePortalActor(): Promise<{ id: string }> {
 }
 
 /**
- * "Mine" for the portal: a ticket this contact raised, is the contact on, or was added to as
- * an additional contact. Company membership alone is deliberately not enough — a client with
- * three hundred employees should not have each of them reading the others' tickets.
+ * "Mine" for the portal. Contact scope — the default — is a ticket this contact raised, is the
+ * contact on, or was added to as an additional contact. Company membership alone is deliberately
+ * not enough: a client with three hundred employees should not have each of them reading the
+ * others' tickets. A provider serving one-mailbox small businesses can open it up to the whole
+ * client with the `portal.visibility` setting, knowing that is the trade it makes.
  */
-function ticketWhereForContact(contactId: string) {
+function ticketWhereForContact(contactId: string, companyId?: string) {
   return {
     OR: [
       { contactId },
       { additionalContacts: { some: { contactId } } },
+      ...(configText("portal", "visibility") === "company" && companyId ? [{ companyId }] : []),
     ],
   };
 }
 
-async function loadPortalTicket(ticketId: string, contactId: string) {
+/** The same scope as a value, so the ticket-detail path can reuse it. */
+function portalScope(principal: { contactId: string; companyId: string }) {
+  return ticketWhereForContact(principal.contactId, principal.companyId);
+}
+
+async function loadPortalTicket(ticketId: string, principal: { contactId: string; companyId: string }) {
   const ticket = await prisma.ticket.findFirst({
-    where: { id: ticketId, ...ticketWhereForContact(contactId) },
+    where: { id: ticketId, ...portalScope(principal) },
     select: {
       id: true, ticketNumber: true, title: true, description: true, status: true, priority: true,
       createdAt: true, updatedAt: true, resolvedAt: true, closedAt: true,
@@ -149,8 +166,10 @@ interface PortalBranding {
 function portalCompanySummary(company: PortalBranding) {
   return {
     name: company.name,
-    accentColor: company.portalAccentColor,
-    logoUrl: company.portalLogoUrl,
+    // A client's own colour wins; otherwise the instance default, so a provider can brand every
+    // portal once and still let one client override it.
+    accentColor: company.portalAccentColor || configText("portal", "accentColor") || null,
+    logoUrl: company.portalLogoUrl || configText("portal", "logoUrl") || null,
   };
 }
 
@@ -249,12 +268,21 @@ portalRouter.get("/me", requirePortalSession, async (req: Request, res: Response
     });
     if (!contact) throw new AppError("Ticket not found", 404);
     const open = await prisma.ticket.count({
-      where: { ...ticketWhereForContact(principal.contactId), status: { notIn: ["resolved", "closed"] } },
+      where: { ...portalScope(principal), status: { notIn: ["resolved", "closed"] } },
     });
     res.json({
       contact: { firstName: contact.firstName, lastName: contact.lastName, email: contact.email, phone: contact.phone },
       company: portalCompanySummary(contact.company),
       openTickets: open,
+      // The portal's own rules travel with the identity, so a button that would be refused is
+      // never drawn in the first place.
+      portal: {
+        welcomeText: configText("portal", "welcomeText") || "",
+        supportEmail: configText("portal", "supportEmail") || "",
+        allowTicketCreation: configFlag("portal", "allowTicketCreation"),
+        allowReplies: configFlag("portal", "allowReplies"),
+        visibility: configText("portal", "visibility") || "contact",
+      },
     });
   } catch (e) { next(e); }
 });
@@ -267,7 +295,7 @@ portalRouter.get("/tickets", requirePortalSession, async (req: Request, res: Res
     const status = typeof req.query.status === "string" ? req.query.status : "";
     const limit = Math.min(Number(req.query.limit) || 50, 100);
     const where = {
-      ...ticketWhereForContact(principal.contactId),
+      ...portalScope(principal),
       ...(status ? { status } : {}),
     };
     const [tickets, total] = await Promise.all([
@@ -289,7 +317,7 @@ portalRouter.get("/tickets", requirePortalSession, async (req: Request, res: Res
 portalRouter.get("/tickets/:id", requirePortalSession, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const principal = req.portalContact!;
-    const ticket = await loadPortalTicket(String(req.params.id), principal.contactId);
+    const ticket = await loadPortalTicket(String(req.params.id), principal);
     res.json({
       ...portalTicketSummary(ticket),
       description: ticket.description,
@@ -312,6 +340,11 @@ portalRouter.get("/tickets/:id", requirePortalSession, async (req: Request, res:
 portalRouter.post("/tickets", requirePortalWrite, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const principal = req.portalContact!;
+    // A client that must go through the phone can have the form taken away; the refusal is
+    // here as well as in the UI because a hidden button is not a permission.
+    if (!configFlag("portal", "allowTicketCreation")) {
+      throw new AppError("Your provider has not enabled raising tickets through the portal — please contact them directly", 403);
+    }
     const title = String(req.body?.title ?? "").trim();
     const description = String(req.body?.description ?? "").trim();
     const priority = ["low", "medium", "high"].includes(String(req.body?.priority)) ? String(req.body.priority) : "medium";
@@ -369,12 +402,15 @@ portalRouter.post("/tickets", requirePortalWrite, async (req: Request, res: Resp
 portalRouter.post("/tickets/:id/reply", requirePortalWrite, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const principal = req.portalContact!;
+    if (!configFlag("portal", "allowReplies")) {
+      throw new AppError("Replying through the portal is not enabled — please contact your provider directly", 403);
+    }
     const body = String(req.body?.body ?? "").trim();
     if (!body) throw new AppError("Please write a message");
     if (body.length > 20000) throw new AppError("That message is too long");
 
     const ticket = await prisma.ticket.findFirst({
-      where: { id: String(req.params.id), ...ticketWhereForContact(principal.contactId) },
+      where: { id: String(req.params.id), ...portalScope(principal) },
       select: { id: true, status: true },
     });
     if (!ticket) throw new AppError("Ticket not found", 404);

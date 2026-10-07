@@ -15,24 +15,34 @@ import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../index";
 import { logger } from "./logger";
+import { configFlag, configNumber } from "./appSettings";
+
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
 
 export const PORTAL_COOKIE = "c7_portal";
 export const PORTAL_CSRF_COOKIE = "c7_portal_csrf";
 export const PORTAL_CSRF_HEADER = "x-portal-csrf";
 
-/** Codes live ten minutes: long enough for a mail hop, short enough to be useless later. */
-const CODE_TTL_MS = 10 * 60 * 1000;
-const CODE_MAX_ATTEMPTS = 5;
-/** At most three codes per contact per window, so the endpoint cannot be used as a mail relay. */
-const CODE_MAX_PER_WINDOW = 3;
-const CODE_WINDOW_MS = 15 * 60 * 1000;
+/**
+ * The portal's limits are configuration, not constants. Each was a plausible default when the
+ * portal shipped and each is a judgement call a provider has to be able to make for itself —
+ * how long a code lives, how many guesses it tolerates, how long a customer stays signed in.
+ * They are read per call, so a change in Administration → Customer Portal takes effect on the
+ * next sign-in rather than at the next restart.
+ */
+const codeTtlMs = (): number => Math.max(1, configNumber("portal", "codeExpiryMinutes", 10)) * MINUTE_MS;
+const codeMaxAttempts = (): number => Math.max(1, configNumber("portal", "maxVerifyAttempts", 5));
+/** At most this many codes per contact per window, so the endpoint cannot be used as a mail relay. */
+const codeMaxPerWindow = (): number => Math.max(1, configNumber("portal", "codesPerWindow", 3));
+const codeWindowMs = (): number => Math.max(1, configNumber("portal", "codeWindowMinutes", 15)) * MINUTE_MS;
 /** A customer session is not an all-day credential. */
-const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+const sessionTtlMs = (): number => Math.max(1, configNumber("portal", "sessionHours", 8)) * HOUR_MS;
 /** Devices a customer may keep signed in at once, oldest retired first. */
-const MAX_ACTIVE_SESSIONS = 5;
+const maxActiveSessions = (): number => Math.max(1, configNumber("portal", "maxDevices", 5));
 
-/** The portal is off unless a deployment turns it on. */
-export const portalEnabled = (): boolean => process.env.PORTAL_ENABLED === "true";
+/** The portal is off unless a setting or the environment turns it on. */
+export const portalEnabled = (): boolean => configFlag("portal", "enabled");
 const isProduction = (): boolean => process.env.NODE_ENV === "production";
 
 const hash = (value: string): string => createHash("sha256").update(value).digest("hex");
@@ -85,9 +95,9 @@ export type PortalContact = NonNullable<Awaited<ReturnType<typeof portalEligible
  */
 export async function issueLoginCode(contactId: string): Promise<string | null> {
   const recent = await prisma.portalLoginCode.count({
-    where: { contactId, createdAt: { gte: new Date(Date.now() - CODE_WINDOW_MS) } },
+    where: { contactId, createdAt: { gte: new Date(Date.now() - codeWindowMs()) } },
   });
-  if (recent >= CODE_MAX_PER_WINDOW) {
+  if (recent >= codeMaxPerWindow()) {
     logger.warn("portal.code", "Sign-in code request refused: too many recent codes", { contactId, recent });
     return null;
   }
@@ -98,7 +108,7 @@ export async function issueLoginCode(contactId: string): Promise<string | null> 
   });
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   await prisma.portalLoginCode.create({
-    data: { contactId, codeHash: hash(code), expiresAt: new Date(Date.now() + CODE_TTL_MS) },
+    data: { contactId, codeHash: hash(code), expiresAt: new Date(Date.now() + codeTtlMs()) },
   });
   return code;
 }
@@ -116,7 +126,7 @@ export async function consumeLoginCode(contactId: string, code: string): Promise
   });
   if (!row) return "invalid";
   if (row.expiresAt.getTime() < Date.now()) return "expired";
-  if (row.attempts >= CODE_MAX_ATTEMPTS) return "too-many-attempts";
+  if (row.attempts >= codeMaxAttempts()) return "too-many-attempts";
 
   const candidate = Buffer.from(hash(code.trim()));
   const expected = Buffer.from(row.codeHash);
@@ -138,7 +148,7 @@ export interface CreatedPortalSession {
 export async function createPortalSession(contactId: string, req: Request): Promise<CreatedPortalSession> {
   const sessionToken = randomBytes(32).toString("hex");
   const csrfToken = randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  const expiresAt = new Date(Date.now() + sessionTtlMs());
 
   // Cap concurrent devices rather than allowing one, which would sign a customer out of their
   // phone every time they used their laptop.
@@ -147,7 +157,7 @@ export async function createPortalSession(contactId: string, req: Request): Prom
     orderBy: { createdAt: "asc" },
     select: { id: true },
   });
-  const excess = live.length - (MAX_ACTIVE_SESSIONS - 1);
+  const excess = live.length - (maxActiveSessions() - 1);
   if (excess > 0) {
     await prisma.portalSession.updateMany({
       where: { id: { in: live.slice(0, excess).map(s => s.id) } },

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Headset, MailCheck, ShieldCheck } from "lucide-react";
 import portalApi, { portalErrorMessage, setPortalToken } from "../../portalApi";
-import { usePortalAuth } from "./PortalApp";
+import { ON_ACCENT_COLOUR } from "../../lib/colourTokens";
+import { usePortalAuth, portalAccent } from "./PortalApp";
 
 /**
  * Two steps, one screen: an address, then the code that proves the mailbox.
@@ -9,13 +10,15 @@ import { usePortalAuth } from "./PortalApp";
  * the API answers the same way whether or not the address belongs to a portal account.
  */
 export function PortalLogin() {
-  const { refresh, signedOut } = usePortalAuth();
+  const { refresh, signedOut, branding, policy } = usePortalAuth();
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [unavailable, setUnavailable] = useState(false);
+  const accent = portalAccent(branding);
+  const title = branding?.name || "Customer portal";
 
   const sendCode = async () => {
     setBusy(true);
@@ -54,10 +57,16 @@ export function PortalLogin() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="card w-full max-w-md space-y-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-cyber-600/10"><Headset size={20} className="text-cyber-400" /></div>
+          {branding?.logoUrl
+            ? <img src={branding.logoUrl} alt={title} className="h-10 w-10 rounded object-contain bg-navy-900" />
+            : (
+              <div className="p-2 rounded-lg" style={{ backgroundColor: `${accent}1a` }}>
+                <Headset size={20} style={{ color: accent }} />
+              </div>
+            )}
           <div>
-            <h1 className="text-lg font-semibold text-white">Customer portal</h1>
-            <p className="text-xs text-gray-400">Sign in to raise and follow your tickets</p>
+            <h1 className="text-lg font-semibold text-white">{title}</h1>
+            <p className="text-xs text-gray-400">{policy?.welcomeText || "Sign in to raise and follow your tickets"}</p>
           </div>
         </div>
 
@@ -82,13 +91,19 @@ export function PortalLogin() {
               />
             </div>
             {error && <p className="text-sm text-red-400" role="alert">{error}</p>}
-            <button type="submit" className="btn-primary w-full" disabled={busy || !email}>
+            <button type="submit" className="btn-primary w-full" style={{ backgroundColor: accent, color: ON_ACCENT_COLOUR }} disabled={busy || !email}>
               {busy ? "Sending…" : "Email me a sign-in code"}
             </button>
             <p className="text-xs text-gray-500 flex items-start gap-1.5">
               <ShieldCheck size={14} className="mt-0.5 shrink-0 text-gray-500" />
-              We will email a six-digit code. It works once and expires in ten minutes.
+              We will email a six-digit code. It works once and expires shortly.
             </p>
+            {policy?.supportEmail && (
+              <p className="text-xs text-gray-500">
+                Trouble signing in? Email{" "}
+                <a href={`mailto:${policy.supportEmail}`} className="text-gray-400 hover:text-gray-300">{policy.supportEmail}</a>.
+              </p>
+            )}
           </form>
         ) : (
           <form onSubmit={verify} className="space-y-3">

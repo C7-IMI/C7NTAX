@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 import { randomInt, timingSafeEqual } from "node:crypto";
 import { prisma } from "../index";
 import { authenticate, signToken, signMfaToken, JWT_SECRET, computePermissions, type AuthRequest } from "../middleware/auth";
-import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword } from "@C7NTAX/shared";
+import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword, LANDING_PAGES } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
 import { rateLimiter, isLoopback } from "../middleware/rateLimiter";
@@ -64,6 +64,33 @@ function codesMatch(a: string, b: string): boolean {
   const right = Buffer.from(String(b));
   if (left.length !== right.length) return false;
   return timingSafeEqual(left, right);
+}
+
+/**
+ * Where this sign-in should land.
+ *
+ * The person's own choice wins, then the instance default an administrator set in
+ * Administration → Configuration → Workspace, then the dashboard. The personal choice lives on
+ * the user record because it is not a fact about the deployment — before this existed the
+ * personal screen wrote the instance-wide key, so one person's preference silently became
+ * everyone's.
+ */
+async function resolveLandingPage(user: { landingPage?: string | null }): Promise<{ path: string; label: string }> {
+  if (user.landingPage) {
+    const chosen = LANDING_PAGES.find(p => p.path === user.landingPage);
+    if (chosen) return { path: chosen.path, label: chosen.label };
+  }
+  const config = await prisma.systemConfig.findUnique({ where: { key: "default_landing_page" } });
+  if (config) {
+    try {
+      const parsed = JSON.parse(config.value as string) as { path?: string; label?: string };
+      if (parsed?.path) {
+        const chosen = LANDING_PAGES.find(p => p.path === parsed.path);
+        return { path: parsed.path, label: parsed.label || chosen?.label || parsed.path };
+      }
+    } catch { /* an unreadable default is not worth failing a sign-in over */ }
+  }
+  return { path: "/", label: "Dashboard" };
 }
 
 // ── POST /api/auth/login ────────────────────────────────────────────
@@ -137,10 +164,7 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
     // Update last login
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
-    // Fetch default landing page
-    const landingConfig = await prisma.systemConfig.findUnique({ where: { key: "default_landing_page" } });
-    let landingPage = { path: "/", label: "Dashboard" };
-    if (landingConfig) { try { landingPage = JSON.parse(landingConfig.value as string); } catch { /* use default */ } }
+    const landingPage = await resolveLandingPage(user);
 
     res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, landingPage, mustChangePassword: user.mustChangePassword });
   } catch (e) { next(e); }
@@ -346,6 +370,27 @@ authRouter.get("/me", authenticate, async (req: AuthRequest, res, next) => {
 });
 
 /**
+ * The signed-in person's own landing page.
+ *
+ * Self-service on purpose: the instance default belongs to an administrator, but where *you*
+ * land is not a fact about the deployment. Choosing the dashboard clears the override rather
+ * than storing one, so a later change to the instance default reaches anyone who never chose.
+ */
+authRouter.patch("/me/landing-page", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const path = String(req.body?.path ?? "").trim();
+    const allowed = LANDING_PAGES.find(p => p.path === path);
+    if (!allowed) { res.status(400).json({ error: "That page is not one of the available landing pages" }); return; }
+
+    // Choosing the dashboard clears the override rather than storing one, so a later change to
+    // the instance default reaches anyone who never chose a page of their own.
+    const stored = allowed.path === "/" ? null : allowed.path;
+    await prisma.user.update({ where: { id: req.user!.userId }, data: { landingPage: stored } });
+    res.json({ landingPage: await resolveLandingPage({ landingPage: stored }) });
+  } catch (e) { next(e); }
+});
+
+/**
  * Session state for the SPA (PLAN-001 §3.1/§3.2). Deliberately unauthenticated: it is how
  * the client finds out whether the cookie is still good before it renders a signed-in UI,
  * and it answers 401 rather than 403 so a caller can tell "not signed in" from "no rights".
@@ -370,7 +415,7 @@ authRouter.get("/session", async (req, res) => {
   // An exempt session reports a zero timeout so the browser never warns about an expiry the
   // server will not enforce.
   const exempt = result.session.idleTimeoutExempt;
-  const timeoutMs = exempt ? 0 : await getSessionTimeoutMs();
+  const timeoutMs = exempt ? 0 : getSessionTimeoutMs();
   res.json({
     user,
     permissions: computePermissions(user.role.systemRole as SystemRole, (user.role.permissions || []) as string[], []),
@@ -393,7 +438,7 @@ authRouter.post("/session/extend", async (req, res) => {
   }
   await touchSession(result.session.sessionId);
   const exempt = result.session.idleTimeoutExempt;
-  const timeoutMs = exempt ? 0 : await getSessionTimeoutMs();
+  const timeoutMs = exempt ? 0 : getSessionTimeoutMs();
   res.json({ extended: true, timeoutMinutes: exempt ? 0 : Math.round(timeoutMs / 60000), lastActivityAt: new Date().toISOString() });
 });
 

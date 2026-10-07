@@ -8,6 +8,7 @@ import { BillingEngine } from "@C7NTAX/billing";
 import { AGREEMENT_TYPES } from "../services/timeRules";
 import { pushExpense } from "../services/accountingSync";
 import { approveBatch, createBatch, invoiceBatchEnabled, previewBatch, rejectBatch } from "../services/billingBatch";
+import { configFlag } from "../services/appSettings";
 
 /**
  * The client a scoped caller is limited to, or null for someone who may see every client.
@@ -254,7 +255,7 @@ billingRouter.get("/invoices/unbilled/:companyId", requirePermission(Permission.
   try {
     // The preview exists to serve the generate dialog, so it disappears with the feature rather
     // than hinting at an endpoint this deployment has switched off.
-    if (process.env.BILLING_FROM_TICKETS_ENABLED === "false") throw new AppError("Generate-from-tickets disabled", 404);
+    if (!configFlag("billing", "billFromTickets")) throw new AppError("Generate-from-tickets disabled", 404);
     const companyId = String(req.params.companyId);
     if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);
     const agreement = await resolveBillingAgreement(companyId);
@@ -316,7 +317,7 @@ billingRouter.post("/invoices/generate", requirePermission(Permission.InvoiceCre
 // it looked authoritative; it has been removed rather than left to mislead.
 billingRouter.post("/invoices/generate-from-tickets", requirePermission(Permission.InvoiceCreate), async (req: AuthRequest, res, next) => {
   try {
-    if (process.env.BILLING_FROM_TICKETS_ENABLED === "false") throw new AppError("Generate-from-tickets disabled", 404);
+    if (!configFlag("billing", "billFromTickets")) throw new AppError("Generate-from-tickets disabled", 404);
     const companyId = String(req.body?.companyId ?? "");
     if (!companyId) throw new AppError("companyId required");
     if (!canAccessCompany(req.user, companyId)) throw new AppError("Client not found", 404);

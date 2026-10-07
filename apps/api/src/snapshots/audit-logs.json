@@ -27439,6 +27439,78 @@
     "createdAt": "2026-10-07T09:13:06.164Z"
   },
   {
+    "id": "de6d8e49-5b18-45ae-b745-e6df8f25a7ee",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "visibility",
+    "changes": {
+      "value": "company"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T20:36:52.372Z"
+  },
+  {
+    "id": "47f62d92-b070-4875-a4c4-9b13069b5b22",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "accentColor",
+    "changes": {
+      "value": "#B91C1C"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T20:36:52.409Z"
+  },
+  {
+    "id": "e212f306-69fa-4ada-a866-a1d0296e389a",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 45
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T20:36:52.430Z"
+  },
+  {
+    "id": "c754adef-9705-40dc-a36e-122140142ca8",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "visibility",
+    "changes": {
+      "value": "contact"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T20:36:52.435Z"
+  },
+  {
+    "id": "9398b29b-436a-40fb-98bd-d8b7d7bcaa44",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 30
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T20:36:52.441Z"
+  },
+  {
+    "id": "8d797083-1ff6-4bff-8eaf-a0113cab5f17",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "accentColor",
+    "changes": {
+      "value": ""
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T20:36:52.446Z"
+  },
+  {
     "id": "02218e3e-d001-463e-b119-febee0f8b068",
     "action": "portal:create",
     "entity": "portal",

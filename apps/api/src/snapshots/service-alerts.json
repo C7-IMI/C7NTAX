@@ -619,7 +619,7 @@
     "id": "88d7eed1-9fa4-4360-ae78-69a9426544de",
     "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
     "title": "Elevated errors on platform.claude.com",
-    "description": "&lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 7&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;13:25&lt;/var&gt; UTC&lt;/small&gt;&lt;br&gt; &lt;strong&gt;Investigating&lt;/strong&gt; - We are investigating elevated errors affecting usage data on the platform.claude.com Usage page and the Admin API usage report. Core functionality is not affected. We will provide an update as soon as possible. &lt;/p&gt;",
+    "description": "&lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 7&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;17:28&lt;/var&gt; UTC&lt;/small&gt;&lt;br&gt; &lt;strong&gt;Identified&lt;/strong&gt; - We&apos;ve identified the cause of errors loading usage data. The Admin API usage report has recovered, and fixes for the platform.claude.com Usage and Rate limits pages are in progress. The most recent 30 minutes of usage may be delayed. Core functionality is not affected. &lt;/p&gt; &lt;p&gt;",
     "severity": "degraded",
     "status": "active",
     "source": "rss",
@@ -627,7 +627,7 @@
     "detectedAt": "2026-10-07T13:26:28.280Z",
     "resolvedAt": null,
     "createdAt": "2026-10-07T13:26:28.282Z",
-    "updatedAt": "2026-10-07T14:11:24.019Z"
+    "updatedAt": "2026-10-07T18:31:15.551Z"
   },
   {
     "id": "7ab015c8-3881-462c-a469-c5f93f4e35ad",
@@ -814,16 +814,16 @@
   {
     "id": "e12f3273-bbf2-454e-8a30-11cee5df160b",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
-    "title": "Dot in Codex may fail to create new threads",
-    "description": "Status: Investigating We are investigating the issue for the listed services. Affected components dots (Degraded performance)",
+    "title": "Degraded performance in Codex and Work mode: Dot turn failures, delayed responses, and reduced proactivity",
+    "description": "Auto-resolved: Degraded performance in Codex and Work mode: Dot turn failures, delayed responses, and reduced proactivity\n\nStatus: Investigating We are investigating the issue for the listed services. Affected components dots (Degraded performance)",
     "severity": "degraded",
-    "status": "active",
+    "status": "resolved",
     "source": "rss",
-    "sourceUrl": "https://status.openai.com//incidents/01M4BK9J2M83R4SSC71D9FXW45",
+    "sourceUrl": "https://status.openai.com//incidents/01M4BP5JE7DKJSP3VG2S2DCWF2",
     "detectedAt": "2026-10-07T16:33:55.625Z",
-    "resolvedAt": null,
+    "resolvedAt": "2026-10-07T18:26:00.765Z",
     "createdAt": "2026-10-07T16:33:55.627Z",
-    "updatedAt": "2026-10-07T16:36:03.964Z"
+    "updatedAt": "2026-10-07T18:26:00.767Z"
   },
   {
     "id": "cdb66145-0f0e-4eab-bfd6-8398f4c0d5ba",
@@ -1482,6 +1482,20 @@
     "resolvedAt": "2026-10-07T08:05:19.170Z",
     "createdAt": "2026-10-07T08:04:00.172Z",
     "updatedAt": "2026-10-07T08:05:19.172Z"
+  },
+  {
+    "id": "ac6845d4-bd2f-418b-97fb-db14733d1424",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Incident with Git Operations, Issues, Actions and Pull Requests",
+    "description": "Auto-resolved: Incident with Git Operations, Issues, Actions and Pull Requests\n\n&lt;p&gt; &lt;small&gt;Oct &lt;var data-var=&apos;date&apos;&gt; 7&lt;/var&gt;, &lt;var data-var=&apos;time&apos;&gt;17:25&lt;/var&gt; UTC&lt;/small&gt;&lt;br&gt; &lt;strong&gt;Update&lt;/strong&gt; - We observed widespread impact across GitHub services from 16:52 UTC to 17:01 UTC, and are investigating the root cause. All systems have recovered. This incident is a reoccurrence of the incident from earlier in the day https://www.githubstatus.com/incidents/djlmxz2zd0j7. Durable mitigation is in p",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://www.githubstatus.com/incidents/qpfv5p86dmrl",
+    "detectedAt": "2026-10-07T17:20:57.474Z",
+    "resolvedAt": "2026-10-07T17:30:53.644Z",
+    "createdAt": "2026-10-07T17:20:57.476Z",
+    "updatedAt": "2026-10-07T17:30:53.646Z"
   },
   {
     "id": "112af389-b729-4f52-9dec-45c88cd7f1d8",

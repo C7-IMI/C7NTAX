@@ -24,14 +24,13 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { prisma } from "../index";
 import { isBypassAccount } from "../services/testBypass";
 import { logger } from "../services/logger";
+import { configFlag, configNumber } from "../services/appSettings";
 
 export const SESSION_COOKIE = "c7_sid";
 export const CSRF_COOKIE = "c7_csrf";
 export const CSRF_HEADER = "x-csrf-token";
 
-/** Admin and Super Admin sessions never expire from inactivity (PLAN-001 §5.2). */
-const ADMIN_TIMEOUT_BYPASS = true;
-/** Default idle timeout when no setting is stored. */
+/** Admin and Super Admin sessions never expire from inactivity unless the setting turns that off. */
 const DEFAULT_TIMEOUT_MINUTES = 30;
 /** Longest a session may live without any activity check at all. */
 const MAX_SESSION_HOURS = 12;
@@ -39,27 +38,38 @@ const MAX_SESSION_HOURS = 12;
 /**
  * Whether this account is excused from the inactivity timeout. Callers that tell the browser
  * about the timeout use this too, so an exempt session never shows a warning that will not fire.
+ *
+ * The authentication test-bypass account is always excused: it exists precisely to get into a
+ * deployment that has just enforced authentication, so it cannot depend on a setting that an
+ * ordinary administrator can turn off.
  */
 export function idleTimeoutExempt(systemRole: string | null | undefined, email: string): boolean {
-  return ADMIN_TIMEOUT_BYPASS && (systemRole === "admin" || systemRole === "super_admin" || isBypassAccount(email));
+  if (isBypassAccount(email)) return true;
+  if (!configFlag("sessions", "exemptAdministrators")) return false;
+  return systemRole === "admin" || systemRole === "super_admin";
 }
 
-export const sessionAuthEnabled = (): boolean => process.env.SESSION_AUTH_ENABLED !== "false";
+export const sessionAuthEnabled = (): boolean => configFlag("sessions", "sessionAuth");
 const isProduction = (): boolean => process.env.NODE_ENV === "production";
 
 const hashToken = (token: string): string => createHash("sha256").update(token).digest("hex");
 
-/** Idle timeout in milliseconds: SystemConfig `session_timeout` (minutes), else 30. */
-export async function getSessionTimeoutMs(): Promise<number> {
-  try {
-    const cfg = await prisma.systemConfig.findUnique({ where: { key: "session_timeout" } });
-    if (cfg?.value !== undefined && cfg?.value !== null) {
-      const raw = cfg.value as unknown;
-      const minutes = typeof raw === "number" ? raw : Number(typeof raw === "string" ? JSON.parse(raw) : raw);
-      if (Number.isFinite(minutes) && minutes >= 5 && minutes <= 480) return minutes * 60 * 1000;
-    }
-  } catch { /* fall through to the default */ }
-  return DEFAULT_TIMEOUT_MINUTES * 60 * 1000;
+/**
+ * Idle timeout in milliseconds, from the `sessions.sessionTimeout` setting — the stored
+ * `session_timeout` row, which is what Administration → Configuration writes. Values outside
+ * the permitted range are refused at write time, so a read only ever needs the default.
+ */
+export function getSessionTimeoutMs(): number {
+  const minutes = configNumber("sessions", "sessionTimeout", DEFAULT_TIMEOUT_MINUTES);
+  if (!Number.isFinite(minutes) || minutes < 5 || minutes > 480) return DEFAULT_TIMEOUT_MINUTES * 60 * 1000;
+  return minutes * 60 * 1000;
+}
+
+/** The hard ceiling on a session's life, from configuration. */
+function maxSessionMs(): number {
+  const hours = configNumber("sessions", "maxSessionHours", MAX_SESSION_HOURS);
+  const safe = Number.isFinite(hours) && hours >= 1 ? hours : MAX_SESSION_HOURS;
+  return safe * 3600 * 1000;
 }
 
 export interface CreatedSession {
@@ -76,8 +86,8 @@ export interface CreatedSession {
 export async function createSession(user: { id: string; email: string }, req: Request): Promise<CreatedSession> {
   const sessionToken = randomBytes(32).toString("hex");
   const csrfToken = randomBytes(32).toString("hex");
-  const timeoutMs = await getSessionTimeoutMs();
-  const expiresAt = new Date(Date.now() + Math.min(timeoutMs * 4, MAX_SESSION_HOURS * 3600 * 1000));
+  const timeoutMs = getSessionTimeoutMs();
+  const expiresAt = new Date(Date.now() + Math.min(timeoutMs * 4, maxSessionMs()));
 
   await prisma.userSession.updateMany({
     where: { userId: user.id, invalidatedAt: null },
@@ -165,7 +175,7 @@ export async function resolveSession(req: Request): Promise<
   const exempt = idleTimeoutExempt(user.role?.systemRole, user.email);
 
   if (!exempt) {
-    const timeoutMs = await getSessionTimeoutMs();
+    const timeoutMs = getSessionTimeoutMs();
     if (Date.now() - record.lastActivityAt.getTime() > timeoutMs) {
       await prisma.userSession.update({ where: { id: record.id }, data: { invalidatedAt: new Date() } });
       logger.info("session", `session for ${user.email} timed out after ${Math.round(timeoutMs / 60000)} minutes idle`);

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AlertTriangle, ChevronLeft, Clock, Send, User } from "lucide-react";
 import portalApi, { portalErrorMessage } from "../../portalApi";
+import { ON_ACCENT_COLOUR } from "../../lib/colourTokens";
 import { portalAccent, usePortalAuth } from "./PortalApp";
 
 interface PortalComment {
@@ -30,7 +31,7 @@ interface PortalTicketDetailData {
 
 export function PortalTicketDetail() {
   const { id } = useParams<{ id: string }>();
-  const { me } = usePortalAuth();
+  const { me, policy } = usePortalAuth();
   const [ticket, setTicket] = useState<PortalTicketDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
@@ -108,24 +109,33 @@ export function PortalTicketDetail() {
         ))}
       </div>
 
-      <form onSubmit={submitReply} className="card space-y-3">
-        <h3 className="text-sm font-semibold">{closed ? "Reply and reopen" : "Add a message"}</h3>
-        {closed && <p className="text-xs text-gray-400">This ticket was closed. Replying will reopen it so your provider sees it in their queue.</p>}
-        <textarea
-          className="input-field text-sm"
-          rows={4}
-          value={reply}
-          onChange={e => setReply(e.target.value)}
-          placeholder="Add anything that will help, such as what changed or what you have tried."
-          required
-        />
-        {error && <p className="text-sm text-red-400" role="alert">{error}</p>}
-        <div className="flex justify-end">
-          <button type="submit" className="btn-primary text-sm flex items-center gap-1.5" style={{ backgroundColor: accent, color: "#04121b" }} disabled={busy || !reply.trim()}>
-            <Send size={14} /> {busy ? "Sending…" : closed ? "Reply and reopen" : "Send reply"}
-          </button>
+      {policy?.allowReplies === false ? (
+        <div className="card">
+          <p className="text-sm text-gray-400">
+            Replying through the portal is switched off for this deployment. Please contact your
+            provider{policy?.supportEmail ? <> at <a href={`mailto:${policy.supportEmail}`} className="text-gray-300 hover:text-white">{policy.supportEmail}</a></> : null} to add anything to this ticket.
+          </p>
         </div>
-      </form>
+      ) : (
+        <form onSubmit={submitReply} className="card space-y-3">
+          <h3 className="text-sm font-semibold">{closed ? "Reply and reopen" : "Add a message"}</h3>
+          {closed && <p className="text-xs text-gray-400">This ticket was closed. Replying will reopen it so your provider sees it in their queue.</p>}
+          <textarea
+            className="input-field text-sm"
+            rows={4}
+            value={reply}
+            onChange={e => setReply(e.target.value)}
+            placeholder="Add anything that will help, such as what changed or what you have tried."
+            required
+          />
+          {error && <p className="text-sm text-red-400" role="alert">{error}</p>}
+          <div className="flex justify-end">
+            <button type="submit" className="btn-primary text-sm flex items-center gap-1.5" style={{ backgroundColor: accent, color: ON_ACCENT_COLOUR }} disabled={busy || !reply.trim()}>
+              <Send size={14} /> {busy ? "Sending…" : closed ? "Reply and reopen" : "Send reply"}
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

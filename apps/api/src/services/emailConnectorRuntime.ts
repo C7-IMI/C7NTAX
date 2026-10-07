@@ -36,6 +36,7 @@ import {
 import { prisma } from "../index";
 import { decryptPassword, encryptPassword } from "./emailConnectorCrypto";
 import { createTicketFromEmail, appendEmailToTicket, type EmailIngestOptions } from "./emailToTicket";
+import { configFlag, refreshSettings } from "./appSettings";
 
 export const emailConnectorManager = new EmailConnectorManager();
 
@@ -381,7 +382,7 @@ async function pollOnlineOnce(row: ConnectorRow): Promise<void> {
 }
 
 function cloudTransportsDisabled(): boolean {
-  return process.env.EMAIL_CONNECTORS_CLOUD_ENABLED === "false" || process.env.EMAIL_GRAPH_ENABLED === "false";
+  return !configFlag("integrations", "emailCloudConnectors") || !configFlag("integrations", "graphApi");
 }
 
 function startOnlinePoller(row: ConnectorRow): void {
@@ -528,7 +529,8 @@ export async function pollEmailConnectorNow(row: ConnectorRow): Promise<void> {
 
 /** Load enabled EmailConnector rows and start polling each one. */
 export async function hydrateEmailConnectors(): Promise<void> {
-  if (process.env.EMAIL_CONNECTORS_ENABLED === "false") return;
+  await refreshSettings(true);
+  if (!configFlag("integrations", "emailConnectors")) return;
   const rows = await prisma.emailConnector.findMany({ where: { enabled: true } });
   for (const row of rows) {
     try {

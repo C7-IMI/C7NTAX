@@ -1,169 +1,286 @@
-import { useState, useEffect } from "react";
+/**
+ * Administration → System Settings.
+ *
+ * This screen used to be a form of about thirty controls that nothing read: company name, time
+ * zone, date format, SMTP credentials, password policy, an API key block and a database
+ * connection string, all written into one `app_settings` row that only `general.contextMenus`
+ * was ever read from. The single control on it that did something was indistinguishable from the
+ * twenty-nine that did not, which is worse than having no screen at all.
+ *
+ * So it now holds only what it can prove:
+ *   · a signpost to every setting that takes effect, and how many there are in each area;
+ *   · the operational state of this instance — whether the poller is alive, what it has had to
+ *     heal — which is read from the running process rather than from a stored value;
+ *   · the deployment facts it can read without exposing a credential: whether a mail relay
+ *     answers, which database this instance is on, and where the Outlook add-in is served from.
+ *
+ * Infrastructure values that only a deployment can change are shown as facts with the variable
+ * that owns them named. Inventing an edit control for a connection string is precisely how the
+ * previous version misled people.
+ */
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
-import toast from "react-hot-toast";
-import { primeContextMenusSetting } from "../hooks/useContextMenusEnabled";
-import { Save, RotateCw, Shield, Mail, Database, Radio, Wrench, AlertTriangle, CheckCircle, XCircle, Clock, Activity, type LucideIcon } from "lucide-react";
+import { PageHeader } from "../components/ui";
+import {
+  Activity, AlertTriangle, ArrowRight, CheckCircle, Clock, Database, Mail,
+  Monitor, RotateCw, Server, XCircle, type LucideIcon,
+} from "lucide-react";
 
-const TABS = [
-  { id: "general", label: "General", icon: Wrench },
-  { id: "email", label: "Email", icon: Mail },
-  { id: "security", label: "Security", icon: Shield },
-  { id: "integration", label: "Integration", icon: Radio },
-  { id: "database", label: "Database", icon: Database },
-  { id: "failover", label: "Failover & Recovery", icon: Activity },
-];
-
-interface SystemSettings {
-  general: { companyName: string; timezone: string; dateFormat: string; defaultLanguage: string; sessionTimeout: number; homepageDashboard: string; contextMenus: boolean };
-  email: { smtpHost: string; smtpPort: number; smtpUser: string; smtpPass: string; fromAddress: string; emailFooter: string; alertRecipient: string };
-  security: { passwordMinLength: number; requireMfa: boolean; ipWhitelist: string; auditRetentionDays: number; sessionLockoutMinutes: number };
-  integration: { apiKeys: string; webhookUrl: string; webhookSecret: string };
-  database: { backupSchedule: string; retentionPolicy: string; connectionString: string };
+interface PollerStatus {
+  paused: boolean;
+  retryCount: number;
+  maxRetries: number;
+  recoveryLog: Array<{ at?: string; time?: string; event?: string; message?: string; result?: string }>;
 }
-interface FailoverStatus { running: boolean; cycles: number; maxRetries: number; lastCheck: string; lastResult: string; history: Array<{ time: string; event: string; result: string }>; }
 
-export function SystemSettingsPage() {
-  const [activeTab, setActiveTab] = useState("general");
-  const [settings, setSettings] = useState<SystemSettings>({ general: { companyName: "C7NTAX", timezone: "America/Chicago", dateFormat: "MM/DD/YYYY", defaultLanguage: "en", sessionTimeout: 30, homepageDashboard: "/", contextMenus: true }, email: { smtpHost: "", smtpPort: 587, smtpUser: "", smtpPass: "", fromAddress: "noreply@c7ntax.com", emailFooter: "C7NTAX – Professional Services Automation", alertRecipient: "admin@c7ntax.com" }, security: { passwordMinLength: 8, requireMfa: false, ipWhitelist: "", auditRetentionDays: 90, sessionLockoutMinutes: 15 }, integration: { apiKeys: "", webhookUrl: "", webhookSecret: "" }, database: { backupSchedule: "0 2 * * *", retentionPolicy: "30d", connectionString: "postgresql://localhost:5432/c7_overwatch" } });
-  const [saving, setSaving] = useState(false);
-  const [failover, setFailover] = useState<FailoverStatus>({ running: true, cycles: 0, maxRetries: 10, lastCheck: new Date().toISOString(), lastResult: "healthy", history: [] });
+interface Deployment {
+  mail: { configured: boolean; host: string | null; port: number; secure: boolean; hasCredentials: boolean; from: string | null };
+  database: { configured: boolean; host: string | null; name: string | null };
+  runtime: { nodeEnv: string; port: number; webOrigin: string | null; servesWeb: boolean };
+  addin: { enabled: boolean; directory: string };
+}
 
-  useEffect(() => { loadSettings(); }, []);
-  const loadSettings = () => {
-    api.get("/system/config/app_settings").then(r => { if (r.data && r.data.value) setSettings(prev => ({ ...prev, ...(typeof r.data.value === "string" ? JSON.parse(r.data.value) : r.data.value) })); }).catch(() => {});
-    api.get("/system/failover/status").then(r => setFailover(r.data)).catch(() => {});
-  };
+interface AreaSummary {
+  id: string;
+  label: string;
+  summary: string;
+  fields: Array<{ source: string }>;
+}
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await api.patch("/system/config/app_settings", { value: JSON.stringify(settings) });
-      // Right-click menus resolve their state from this config, so push the new
-      // value to anything already mounted instead of waiting for a reload.
-      primeContextMenusSetting(settings.general.contextMenus !== false);
-      toast.success("Settings saved");
-    } catch { toast.error("Failed to save"); }
-    finally { setSaving(false); }
-  };
+const TONE = {
+  good: "bg-emerald-600/10 text-emerald-400",
+  bad: "bg-red-600/10 text-red-400",
+  warn: "bg-amber-600/10 text-amber-400",
+  info: "bg-cyber-600/10 text-cyber-400",
+} as const;
 
-  const handleReset = () => api.post("/system/failover/reset").then(() => { toast.success("Failover counter reset"); loadSettings(); }).catch(() => toast.error("Failed"));
-
-  const f = (section: keyof SystemSettings) => settings[section] as Record<string, unknown>;
-  const s = (section: keyof SystemSettings, key: string, value: unknown) => setSettings(prev => ({ ...prev, [section]: { ...prev[section], [key]: value } }));
-
+function StatusCard({ icon: Icon, label, value, tone }: {
+  icon: LucideIcon; label: string; value: string; tone: keyof typeof TONE;
+}) {
   return (
-    <div className="space-y-6 animate-fade-in max-w-5xl">
-      <div className="flex items-center justify-between"><div><h2 className="text-lg font-semibold text-white">System Settings</h2><p className="text-sm text-gray-400">Configure application-wide settings and monitoring</p></div><button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2 text-sm"><Save size={14} />{saving ? "Saving..." : "Save Changes"}</button></div>
-
-      <div className="flex items-center gap-1 border-b border-surface-border pb-0 overflow-x-auto">
-        {TABS.map(tab => { const Icon = tab.icon; return (<button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${activeTab === tab.id ? "bg-surface border border-b-0 border-surface-border text-cyber-400" : "text-gray-400 hover:text-white hover:bg-surface-lighter/50"}`}><Icon size={15} />{tab.label}</button>); })}
-      </div>
-
-      <div className="card space-y-4">
-        {activeTab === "general" && <GeneralTab s={s} f={f} />}
-        {activeTab === "email" && <EmailTab s={s} f={f} />}
-        {activeTab === "security" && <SecurityTab s={s} f={f} />}
-        {activeTab === "integration" && <IntegrationTab s={s} f={f} />}
-        {activeTab === "database" && <DatabaseTab s={s} f={f} />}
-        {activeTab === "failover" && <FailoverTab failover={failover} onReset={handleReset} onRefresh={loadSettings} />}
+    <div className={`rounded-xl p-3 flex items-center gap-3 ${TONE[tone].split(" ")[0]}`}>
+      <Icon size={18} className={`shrink-0 ${TONE[tone].split(" ")[1]}`} />
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className={`text-sm font-semibold truncate ${TONE[tone].split(" ")[1]}`}>{value}</p>
       </div>
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) { return <div><label className="text-xs text-gray-500 block mb-1 uppercase tracking-wider">{label}</label>{children}</div>; }
-
-function GeneralTab({ s, f }: { s: (section: "general", key: string, value: unknown) => void; f: (section: "general") => Record<string, unknown> }) {
-  const g = f("general");
-  return (<div className="grid grid-cols-2 gap-4">
-    <Field label="Company Name"><input className="input-field" value={String(g.companyName || "")} onChange={e => s("general", "companyName", e.target.value)} /></Field>
-    <Field label="Time Zone"><select className="input-field" value={String(g.timezone || "")} onChange={e => s("general", "timezone", e.target.value)}><option value="America/Chicago">America/Chicago</option><option value="America/New_York">America/New York</option><option value="America/Los_Angeles">America/Los Angeles</option><option value="Europe/London">Europe/London</option></select></Field>
-    <Field label="Date Format"><select className="input-field" value={String(g.dateFormat || "")} onChange={e => s("general", "dateFormat", e.target.value)}><option value="MM/DD/YYYY">MM/DD/YYYY</option><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option></select></Field>
-    <Field label="Default Language"><input className="input-field" value={String(g.defaultLanguage || "")} onChange={e => s("general", "defaultLanguage", e.target.value)} /></Field>
-    <Field label="Session Timeout (minutes)"><input className="input-field" type="number" value={String(g.sessionTimeout || "")} onChange={e => s("general", "sessionTimeout", Number(e.target.value))} /></Field>
-    <Field label="Homepage Dashboard"><input className="input-field" value={String(g.homepageDashboard || "/")} onChange={e => s("general", "homepageDashboard", e.target.value)} /></Field>
-    <div className="col-span-2">
-      <Field label="Interface">
-        <label className="flex items-center gap-2 text-sm text-gray-400 mt-1">
-          <input type="checkbox" checked={g.contextMenus !== false} onChange={e => s("general", "contextMenus", e.target.checked)} />
-          Application right-click menus (Tickets, and other enabled sections)
-        </label>
-      </Field>
-      <p className="text-xs text-gray-500 mt-1">When off, right-clicking anywhere in those sections shows the browser menu instead of the C7NTAX menu. Text fields always keep the browser menu.</p>
-    </div>
-  </div>);
-}
-
-function EmailTab({ s, f }: { s: (section: "email", key: string, value: unknown) => void; f: (section: "email") => Record<string, unknown> }) {
-  const g = f("email");
-  return (<div className="grid grid-cols-2 gap-4">
-    <Field label="SMTP Host"><input className="input-field" value={String(g.smtpHost || "")} onChange={e => s("email", "smtpHost", e.target.value)} /></Field>
-    <Field label="SMTP Port"><input className="input-field" type="number" value={String(g.smtpPort || "")} onChange={e => s("email", "smtpPort", Number(e.target.value))} /></Field>
-    <Field label="SMTP Username"><input className="input-field" value={String(g.smtpUser || "")} onChange={e => s("email", "smtpUser", e.target.value)} /></Field>
-    <Field label="SMTP Password"><input className="input-field" type="password" value={String(g.smtpPass || "")} onChange={e => s("email", "smtpPass", e.target.value)} /></Field>
-    <Field label="From Address"><input className="input-field" value={String(g.fromAddress || "")} onChange={e => s("email", "fromAddress", e.target.value)} /></Field>
-    <Field label="Alert Recipient"><input className="input-field" value={String(g.alertRecipient || "")} onChange={e => s("email", "alertRecipient", e.target.value)} /></Field>
-    <div className="col-span-2"><Field label="Email Footer"><textarea className="input-field" rows={2} value={String(g.emailFooter || "")} onChange={e => s("email", "emailFooter", e.target.value)} /></Field></div>
-  </div>);
-}
-
-function SecurityTab({ s, f }: { s: (section: "security", key: string, value: unknown) => void; f: (section: "security") => Record<string, unknown> }) {
-  const g = f("security");
-  return (<div className="grid grid-cols-2 gap-4">
-    <Field label="Min Password Length"><input className="input-field" type="number" value={String(g.passwordMinLength || "")} onChange={e => s("security", "passwordMinLength", Number(e.target.value))} /></Field>
-    <Field label="Session Lockout (min)"><input className="input-field" type="number" value={String(g.sessionLockoutMinutes || "")} onChange={e => s("security", "sessionLockoutMinutes", Number(e.target.value))} /></Field>
-    <Field label="Audit Retention (days)"><input className="input-field" type="number" value={String(g.auditRetentionDays || "")} onChange={e => s("security", "auditRetentionDays", Number(e.target.value))} /></Field>
-    <div><Field label="Require MFA"><label className="flex items-center gap-2 text-sm text-gray-400 mt-1"><input type="checkbox" checked={Boolean(g.requireMfa)} onChange={e => s("security", "requireMfa", e.target.checked)} />Enable mandatory MFA</label></Field></div>
-    <div className="col-span-2"><Field label="IP Whitelist (comma-separated)"><input className="input-field" value={String(g.ipWhitelist || "")} onChange={e => s("security", "ipWhitelist", e.target.value)} placeholder="192.168.1.0/24,10.0.0.1" /></Field></div>
-  </div>);
-}
-
-function IntegrationTab({ s, f }: { s: (section: "integration", key: string, value: unknown) => void; f: (section: "integration") => Record<string, unknown> }) {
-  const g = f("integration");
-  return (<div className="grid grid-cols-2 gap-4">
-    <div className="col-span-2"><Field label="API Keys (JSON)"><textarea className="input-field" rows={4} value={String(g.apiKeys || "")} onChange={e => s("integration", "apiKeys", e.target.value)} placeholder='{"stripe":"sk_...","azure":"..."}' /></Field></div>
-    <Field label="Webhook URL"><input className="input-field" value={String(g.webhookUrl || "")} onChange={e => s("integration", "webhookUrl", e.target.value)} /></Field>
-    <Field label="Webhook Secret"><input className="input-field" type="password" value={String(g.webhookSecret || "")} onChange={e => s("integration", "webhookSecret", e.target.value)} /></Field>
-  </div>);
-}
-
-function DatabaseTab({ s, f }: { s: (section: "database", key: string, value: unknown) => void; f: (section: "database") => Record<string, unknown> }) {
-  const g = f("database");
-  return (<div className="grid grid-cols-2 gap-4">
-    <div className="col-span-2"><Field label="Connection String"><input className="input-field font-mono text-xs" value={String(g.connectionString || "")} onChange={e => s("database", "connectionString", e.target.value)} /></Field></div>
-    <Field label="Backup Schedule (cron)"><input className="input-field font-mono" value={String(g.backupSchedule || "")} onChange={e => s("database", "backupSchedule", e.target.value)} /></Field>
-    <Field label="Retention Policy"><select className="input-field" value={String(g.retentionPolicy || "")} onChange={e => s("database", "retentionPolicy", e.target.value)}><option value="7d">7 days</option><option value="30d">30 days</option><option value="90d">90 days</option><option value="1y">1 year</option></select></Field>
-  </div>);
-}
-
-function FailoverTab({ failover, onReset, onRefresh }: { failover: FailoverStatus; onReset: () => void; onRefresh: () => void }) {
-  return (<div className="space-y-4">
-    <div className="grid grid-cols-3 gap-3">
-      <StatusCard icon={failover.running ? CheckCircle : XCircle} label="Poller Status" value={failover.running ? "Running" : "Stopped"} color={failover.running ? "text-green-400" : "text-red-400"} bg={failover.running ? "bg-green-600/10" : "bg-red-600/10"} />
-      <StatusCard icon={RotateCw} label="Recovery Cycles" value={`${failover.cycles} / ${failover.maxRetries}`} color="text-cyber-400" bg="bg-cyber-600/10" />
-      <StatusCard icon={failover.lastResult === "healthy" ? CheckCircle : AlertTriangle} label="Last Check" value={failover.lastResult} color={failover.lastResult === "healthy" ? "text-green-400" : "text-amber-400"} bg={failover.lastResult === "healthy" ? "bg-green-600/10" : "bg-amber-600/10"} />
-    </div>
-
-    <div className="flex items-center gap-2">
-      <button onClick={onReset} className="btn-primary text-sm flex items-center gap-2"><RotateCw size={14} />Reset Retry Counter</button>
-      <button onClick={onRefresh} className="btn-secondary text-sm">Refresh Status</button>
-    </div>
-
-    <div>
-      <h4 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2"><Clock size={14} />Recovery History</h4>
-      <div className="space-y-1 max-h-48 overflow-y-auto">
-        {failover.history.length === 0 ? <p className="text-xs text-gray-600">No recovery events</p> : failover.history.map((h, i) => (
-          <div key={i} className="flex items-center gap-3 text-xs py-1.5 px-3 bg-surface-lighter rounded">
-            <span className="text-gray-500">{new Date(h.time).toLocaleTimeString()}</span>
-            <span className="text-white">{h.event}</span>
-            <span className={h.result === "success" ? "text-green-400" : "text-red-400"}>{h.result}</span>
-          </div>
-        ))}
+function DeploymentRow({ icon: Icon, label, env, note, state }: {
+  icon: LucideIcon; label: string; env: string; note: string; state: "good" | "warn" | "info";
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-surface-border px-3.5 py-3">
+      <Icon size={16} className="mt-0.5 shrink-0 text-gray-500" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm text-white">{label}</p>
+          {state === "good" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-emerald-500/10 text-emerald-300 border-emerald-500/30">
+              <CheckCircle size={11} /> configured
+            </span>
+          )}
+          {state === "warn" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-amber-500/10 text-amber-300 border-amber-500/30">
+              <AlertTriangle size={11} /> not set
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-400 mt-1">{note}</p>
+        <p className="text-[11px] text-gray-500 mt-1 font-mono">{env}</p>
       </div>
     </div>
-  </div>);
+  );
 }
 
-function StatusCard({ icon: Icon, label, value, color, bg }: { icon: LucideIcon; label: string; value: string; color: string; bg: string }) {
-  return (<div className={`${bg} rounded-xl p-3 flex items-center gap-3`}><Icon size={18} className={color} /><div><p className="text-xs text-gray-500">{label}</p><p className={`text-sm font-bold ${color}`}>{value}</p></div></div>);
+export function SystemSettingsPage() {
+  const [poller, setPoller] = useState<PollerStatus | null>(null);
+  const [deployment, setDeployment] = useState<Deployment | null>(null);
+  const [areas, setAreas] = useState<AreaSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    const [pollerRes, deploymentRes, configRes] = await Promise.allSettled([
+      api.get("/system/poller/status"),
+      api.get("/system/deployment"),
+      api.get("/configuration"),
+    ]);
+    if (pollerRes.status === "fulfilled") setPoller(pollerRes.value.data);
+    if (deploymentRes.status === "fulfilled") setDeployment(deploymentRes.value.data);
+    if (configRes.status === "fulfilled") setAreas(configRes.value.data?.sections ?? []);
+    if (pollerRes.status === "rejected" && deploymentRes.status === "rejected") {
+      setError("The API is not answering, so this instance's state cannot be read.");
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const resetRetries = async () => {
+    try { await api.post("/system/failover/reset"); } catch { /* the refresh reports the truth */ }
+    await load();
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in max-w-5xl">
+      <PageHeader
+        title="System Settings"
+        subtitle="This instance's operational state, and a signpost to every setting that takes effect."
+        actions={<button onClick={() => void load()} className="btn-secondary text-sm flex items-center gap-2"><RotateCw size={14} /> Refresh</button>}
+      />
+
+      {error && <div className="card border-red-500/30 text-sm text-red-300">{error}</div>}
+
+      <div className="card">
+        <h3 className="text-sm font-semibold text-white mb-1">Configuration</h3>
+        <p className="text-xs text-gray-400 mb-4">
+          Application settings live on one screen, where every field names the environment variable
+          it stands in for, the behaviour it changes, and whether a restart is needed. These are the
+          areas your role can read:
+        </p>
+        {loading ? (
+          <p className="text-xs text-gray-500">Loading…</p>
+        ) : areas.length === 0 ? (
+          <p className="text-xs text-gray-500">Your role cannot read any configuration area.</p>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {areas.map(area => (
+              <Link
+                key={area.id}
+                to={`/admin/configuration/${area.id}`}
+                className="flex items-center justify-between gap-3 rounded-lg border border-surface-border px-3.5 py-2.5 hover:bg-surface-lighter transition-colors group"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm text-white">{area.label}</p>
+                  <p className="text-[11px] text-gray-500 truncate">{area.summary}</p>
+                </div>
+                <ArrowRight size={14} className="text-gray-600 group-hover:text-gray-400 shrink-0" />
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="card">
+        <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+          <Activity size={15} className="text-cyber-400" /> Instance health
+        </h3>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <StatusCard
+            icon={poller && !poller.paused ? CheckCircle : XCircle}
+            label="Self-healing poller"
+            value={loading ? "…" : poller ? (poller.paused ? "Paused" : "Running") : "Unknown"}
+            tone={!poller ? "warn" : poller.paused ? "bad" : "good"}
+          />
+          <StatusCard
+            icon={RotateCw}
+            label="Recovery retries used"
+            value={poller ? `${poller.retryCount} / ${poller.maxRetries}` : "…"}
+            tone={poller && poller.retryCount >= poller.maxRetries ? "warn" : "info"}
+          />
+          <StatusCard
+            icon={deployment ? Server : AlertTriangle}
+            label="Serving"
+            value={deployment ? `API on ${deployment.runtime.port}${deployment.runtime.servesWeb ? " + web" : ""}` : "…"}
+            tone={deployment ? "info" : "warn"}
+          />
+        </div>
+
+        <div className="flex items-center gap-2 mt-4">
+          <button onClick={() => void resetRetries()} className="btn-secondary text-sm flex items-center gap-2">
+            <RotateCw size={14} /> Reset retry counter
+          </button>
+        </div>
+
+        <div className="mt-5">
+          <h4 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+            <Clock size={14} /> Recovery history
+          </h4>
+          <div className="space-y-1 max-h-48 overflow-y-auto">
+            {(poller?.recoveryLog?.length ?? 0) === 0 ? (
+              <p className="text-xs text-gray-600">No recovery events — nothing has needed self-healing.</p>
+            ) : (
+              poller?.recoveryLog.map((entry, index) => (
+                <div key={index} className="flex items-center gap-3 text-xs py-1.5 px-3 bg-surface-lighter rounded">
+                  <span className="text-gray-500 whitespace-nowrap">
+                    {entry.at || entry.time ? new Date(entry.at || entry.time || "").toLocaleString() : ""}
+                  </span>
+                  <span className="text-white min-w-0 truncate">{entry.event || entry.message}</span>
+                  {entry.result && (
+                    <span className={entry.result === "success" ? "text-emerald-400" : "text-red-400"}>{entry.result}</span>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3 className="text-sm font-semibold text-white mb-1">Provided by the deployment</h3>
+        <p className="text-xs text-gray-400 mb-4">
+          Read from the environment the API started with. These are not editable from a browser
+          session on purpose: a mail password and a database connection string do not belong in a
+          settings row that a support session can read. The variable that owns each one is named so
+          it can be found in the deployment's own configuration.
+        </p>
+
+        <div className="space-y-2">
+          {deployment ? (
+            <>
+              <DeploymentRow
+                icon={Mail}
+                label="Outbound mail relay"
+                env="SMTP_HOST · SMTP_PORT · SMTP_USER · SMTP_PASS · SMTP_FROM"
+                note={
+                  deployment.mail.configured
+                    ? `Ticket notifications, portal sign-in codes and connector error mail are sent through ${deployment.mail.host}:${deployment.mail.port}${deployment.mail.secure ? " (TLS)" : ""}${deployment.mail.hasCredentials ? " with credentials" : " without credentials"}${deployment.mail.from ? `, from ${deployment.mail.from}` : ""}.`
+                    : "No relay is configured, so notification mail, portal sign-in codes and connector error reports cannot be sent."
+                }
+                state={deployment.mail.configured ? "good" : "warn"}
+              />
+              <DeploymentRow
+                icon={Database}
+                label="Database"
+                env="DATABASE_URL"
+                note={
+                  deployment.database.configured
+                    ? `This instance is running on ${deployment.database.name ?? "an unnamed database"} at ${deployment.database.host ?? "an unreadable address"}. Migrations are applied on start.`
+                    : "No database URL is set, so nothing that touches stored data will work."
+                }
+                state={deployment.database.configured ? "good" : "warn"}
+              />
+              <DeploymentRow
+                icon={Monitor}
+                label="Outlook add-in"
+                env="OUTLOOK_ADDIN_DIR · OUTLOOK_ADDIN_ENABLED"
+                note={`The taskpane is ${deployment.addin.enabled ? "served" : "switched off"} from ${deployment.addin.directory}. Whether mail can be filed depends on the same switch under CloudConnect, Email & Microsoft 365.`}
+                state="good"
+              />
+            </>
+          ) : (
+            <p className="text-xs text-gray-500">The deployment's own configuration could not be read.</p>
+          )}
+        </div>
+
+        <p className="text-[11px] text-gray-600 mt-4">
+          Secrets are never returned to the browser, so this screen can confirm that a variable is
+          set but never show its value. Which integrations are live is under{" "}
+          <Link to="/admin/configuration/integrations" className="text-cyber-300 hover:text-cyber-200">
+            CloudConnect, Email &amp; Microsoft 365
+          </Link>.
+        </p>
+      </div>
+
+      <p className="text-xs text-gray-500">
+        There is nothing to save on this screen. Everything that changes behaviour lives under{" "}
+        <Link to="/admin/configuration" className="text-cyber-300 hover:text-cyber-200">Configuration</Link>,
+        where each setting is validated and applied as soon as it is changed.
+      </p>
+    </div>
+  );
 }

@@ -5,6 +5,7 @@ import { PasskeyManager } from "../components/PasskeyManager";
 import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Target, FolderKanban, Monitor, BookOpen } from "lucide-react";
 import api from "../api";
 import toast from "react-hot-toast";
+import { Permission } from "@C7NTAX/shared";
 
 const LANDING_OPTIONS = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -21,10 +22,11 @@ const LANDING_OPTIONS = [
 ];
 
 export function SettingsPage() {
-  const { user, landingPage, setLandingPage } = useAuth();
+  const { user, landingPage, setLandingPage, permissions } = useAuth();
   const [selectedPath, setSelectedPath] = useState(landingPage.path);
   const [sessionTimeout, setSessionTimeout] = useState(30);
   const [savingTimeout, setSavingTimeout] = useState(false);
+  const canConfigureSystem = (permissions ?? []).includes(Permission.SystemConfig);
 
   useEffect(() => { setSelectedPath(landingPage.path); }, [landingPage.path]);
 
@@ -36,31 +38,42 @@ export function SettingsPage() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  // Load session timeout on mount
+  // Load the idle timeout so an administrator can see and change it here as well.
   useEffect(() => {
+    if (!canConfigureSystem) return;
     api.get("/system/config/session_timeout").then(r => {
       setSessionTimeout(r.data?.value || 30);
     }).catch(() => {});
-  }, []);
+  }, [canConfigureSystem]);
 
   const saveSessionTimeout = async () => {
     setSavingTimeout(true);
     try {
-      await api.patch("/system/config/session_timeout", { value: sessionTimeout });
-      toast.success(`Session timeout set to ${sessionTimeout} minutes`);
-    } catch { toast.error("Failed to save"); }
+      // Through the configuration API, so the same range check applies here as on the
+      // configuration screen: 5–480 minutes.
+      await api.patch("/configuration/sessions/sessionTimeout", { value: sessionTimeout });
+      toast.success(`Idle timeout set to ${sessionTimeout} minutes for everyone`);
+    } catch (e: unknown) {
+      const message = (e as { response?: { data?: { error?: { message?: string } | string } } })?.response?.data?.error;
+      toast.error(typeof message === "string" ? message : (message?.message || "Failed to save"));
+    }
     finally { setSavingTimeout(false); }
   };
 
   const handleChange = async (path: string) => {
     const option = LANDING_OPTIONS.find(o => o.path === path);
     if (!option) return;
+    const previous = selectedPath;
     setSelectedPath(path);
     try {
-      await api.patch("/system/config/default_landing_page", { value: { path: option.path, label: option.label } });
+      // Personal: stored against the signed-in account, not the instance.
+      await api.patch("/auth/me/landing-page", { path: option.path, label: option.label });
       setLandingPage({ path: option.path, label: option.label });
-      toast.success(`Default landing page set to ${option.label}`);
-    } catch { toast.error("Failed to save setting"); }
+      toast.success(`You will now land on ${option.label}`);
+    } catch {
+      setSelectedPath(previous);
+      toast.error("Failed to save your landing page");
+    }
   };
 
   return (
@@ -86,8 +99,11 @@ export function SettingsPage() {
       </div>
 
       <div className="card scroll-mt-6" id="landing">
-        <h3 className="font-semibold text-white mb-4">Default Landing Page</h3>
-        <p className="text-xs text-gray-500 mb-3">Choose which section opens after login</p>
+        <h3 className="font-semibold text-white mb-4">My Default Landing Page</h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Which section opens for you after signing in. This is your own preference — it does not
+          affect anyone else. The instance-wide default is set under Administration → Configuration → Workspace.
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {LANDING_OPTIONS.map((opt) => {
             const Icon = opt.icon;
@@ -128,24 +144,38 @@ export function SettingsPage() {
 
       <div className="card scroll-mt-6" id="session">
         <h3 className="font-semibold text-white mb-4">Session Timeout</h3>
-        <p className="text-xs text-gray-500 mb-3">Inactivity timeout in minutes before users are logged out. Super Admin and Admin users are never timed out.</p>
-        <div className="flex items-center gap-3">
-          <input
-            type="number"
-            className="input-field w-24"
-            min={5} max={480}
-            value={sessionTimeout}
-            onChange={e => setSessionTimeout(Number(e.target.value))}
-          />
-          <span className="text-sm text-gray-400">minutes</span>
-          <button
-            onClick={saveSessionTimeout}
-            disabled={savingTimeout}
-            className="btn-primary text-xs py-1.5 px-3"
-          >
-            {savingTimeout ? "Saving..." : "Save"}
-          </button>
-        </div>
+        <p className="text-xs text-gray-500 mb-3">
+          Inactivity timeout in minutes before users are signed out. This applies to everyone in the
+          organisation, so it is an administrative setting rather than a personal one — it lives in
+          Administration → Configuration → Sessions &amp; Security.
+        </p>
+        {canConfigureSystem ? (
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              className="input-field w-24"
+              min={5} max={480}
+              value={sessionTimeout}
+              onChange={e => setSessionTimeout(Number(e.target.value))}
+            />
+            <span className="text-sm text-gray-400">minutes</span>
+            <button
+              onClick={saveSessionTimeout}
+              disabled={savingTimeout}
+              className="btn-primary text-xs py-1.5 px-3"
+            >
+              {savingTimeout ? "Saving..." : "Save for everyone"}
+            </button>
+            <Link to="/admin/configuration/sessions" className="text-xs text-cyber-300 hover:text-cyber-200">
+              All session settings
+            </Link>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">
+            Currently <span className="text-white font-medium">{sessionTimeout} minutes</span> of inactivity.
+            Administrators and Super Admins are never timed out.
+          </p>
+        )}
         <p className="text-[10px] text-gray-600 mt-2">Default: 30 minutes. Range: 5–480 minutes (8 hours).</p>
       </div>
 

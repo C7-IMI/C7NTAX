@@ -40,6 +40,10 @@ model User {
   // Placement — parity with Autotask "Resources" and Asio "Members"
   department      String?
   timezone        String?
+  /// Where this person lands after signing in, as a route path. Null means "use the instance
+  /// default", which is deliberate: it keeps a later change to the default reaching everyone who
+  /// never chose one. Personal rather than instance-wide, which is why it is not in SystemConfig.
+  landingPage     String?
   /// What an hour of this person's time costs us, used by the margin reports. Null means
   /// "not recorded", which the reports state rather than assuming a figure.
   costRate        Float?
