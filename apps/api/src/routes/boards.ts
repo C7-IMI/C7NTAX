@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { Permission, TicketStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { encryptPassword } from "../services/emailConnectorCrypto";
+import { normaliseBoardTiles } from "../services/boardLayout";
 
 export const boardsRouter = Router();
 boardsRouter.use(authenticate);
@@ -20,6 +21,11 @@ boardsRouter.get("/metrics", requirePermission(Permission.BoardView), async (req
     const threeDaysAgo = new Date(now.getTime() - 3 * 86400000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000);
+
+    // Every board's arrangement in one query, so the list renders in the saved order without a
+    // request per card.
+    const layouts = await prisma.boardLayout.findMany({ where: { boardId: { in: boards.map(b => b.id) } }, select: { boardId: true, tiles: true } });
+    const layoutByBoard = new Map(layouts.map(l => [l.boardId, l.tiles]));
 
     const metrics = await Promise.all(boards.map(async (board) => {
       const [open, workable, newTickets, onHold, waiting, stale3, stale7, stale30, escalations, avgAgeResult, activeClient] = await Promise.all([
@@ -69,6 +75,8 @@ boardsRouter.get("/metrics", requirePermission(Permission.BoardView), async (req
         boardId: board.id,
         boardName: board.name,
         boardDescription: board.description,
+        tiles: normaliseBoardTiles(layoutByBoard.get(board.id)),
+        layoutPersonalised: layoutByBoard.has(board.id),
         metrics: {
           open,
           workable,
@@ -144,6 +152,46 @@ boardsRouter.patch("/:id", requirePermission(Permission.BoardManage), async (req
     if (followUpIntervalMinutes !== undefined) data.followUpIntervalMinutes = followUpIntervalMinutes;
     const board = await prisma.serviceBoard.update({ where: { id: req.params.id }, data });
     res.json(board);
+  } catch (e) { next(e); }
+});
+
+// ─── Tile arrangement (PLAN-015 Phase B #5) ───
+
+/**
+ * A board card's tile order is shared with everybody who looks at the board, so it is a
+ * management action like any other board setting: reading it needs board:view, changing it needs
+ * board:manage.
+ */
+boardsRouter.get("/:id/layout", requirePermission(Permission.BoardView), async (req: AuthRequest, res, next) => {
+  try {
+    const board = await prisma.serviceBoard.findUnique({ where: { id: req.params.id }, select: { id: true } });
+    if (!board) throw new AppError("Board not found", 404);
+    const saved = await prisma.boardLayout.findUnique({ where: { boardId: board.id }, select: { tiles: true, updatedAt: true } });
+    res.json({ tiles: normaliseBoardTiles(saved?.tiles), personalised: !!saved, updatedAt: saved?.updatedAt ?? null });
+  } catch (e) { next(e); }
+});
+
+boardsRouter.put("/:id/layout", requirePermission(Permission.BoardManage), async (req: AuthRequest, res, next) => {
+  try {
+    const board = await prisma.serviceBoard.findUnique({ where: { id: req.params.id }, select: { id: true } });
+    if (!board) throw new AppError("Board not found", 404);
+    const body = req.body as { tiles?: unknown };
+    if (!Array.isArray(body?.tiles)) throw new AppError("tiles must be an array", 400);
+    if (body.tiles.length > 30) throw new AppError("too many tiles", 400);
+    const tiles = normaliseBoardTiles(body.tiles);
+    const row = await prisma.boardLayout.upsert({
+      where: { boardId: board.id },
+      update: { tiles: tiles as object, updatedById: req.user!.userId },
+      create: { boardId: board.id, tiles: tiles as object, updatedById: req.user!.userId },
+    });
+    res.json({ tiles, personalised: true, updatedAt: row.updatedAt });
+  } catch (e) { next(e); }
+});
+
+boardsRouter.delete("/:id/layout", requirePermission(Permission.BoardManage), async (req: AuthRequest, res, next) => {
+  try {
+    await prisma.boardLayout.deleteMany({ where: { boardId: req.params.id } });
+    res.json({ tiles: normaliseBoardTiles(null), personalised: false, updatedAt: null });
   } catch (e) { next(e); }
 });
 

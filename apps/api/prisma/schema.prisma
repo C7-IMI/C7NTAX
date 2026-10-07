@@ -256,9 +256,24 @@ model ServiceBoard {
   tickets         Ticket[]
   emailConnectors EmailConnector[]
   categories      TicketCategory[]
+  layout          BoardLayout?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+/// How a board's metric tiles are arranged (PLAN-015 Phase B #5). One row per board: the tiles a
+/// board card shows are the same for everybody, so this is a team-level arrangement — pinned
+/// tiles first, then the order somebody chose — rather than a per-user preference.
+model BoardLayout {
+  id        String       @id @default(uuid())
+  boardId   String       @unique
+  board     ServiceBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  /// [{ id, pinned }] in display order.
+  tiles     Json         @default("[]")
+  updatedById String?
+  updatedAt DateTime     @updatedAt
+  createdAt DateTime     @default(now())
 }
 
 model TicketCategory {

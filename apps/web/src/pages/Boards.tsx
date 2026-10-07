@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
-import { RefreshCw, Clock, AlertTriangle, Users, TrendingUp, Inbox, Pause, MessageSquare, Calendar, type LucideIcon } from "lucide-react";
+import toast from "react-hot-toast";
+import { useAuth } from "../hooks/useAuth";
+import { RefreshCw, Clock, AlertTriangle, Users, TrendingUp, Inbox, Pause, MessageSquare, Calendar, GripVertical, Pin, PinOff, ArrowUp, ArrowDown, Save, RotateCcw, SlidersHorizontal, type LucideIcon } from "lucide-react";
 
 interface BoardMetrics {
   boardId: string; boardName: string; boardDescription: string | null;
+  tiles: { id: string; pinned: boolean }[];
+  layoutPersonalised: boolean;
   metrics: {
     open: number; workable: number; new: number; onHold: number;
     waitingOnResponse: number; stale3Days: number; stale7Days: number; stale30Days: number;
@@ -13,10 +17,28 @@ interface BoardMetrics {
   };
 }
 
+type TileState = { id: string; pinned: boolean };
+
+/** Labels for the editor, where the tiles are shown as names rather than live numbers. */
+const BOARD_TILE_LABELS: Record<string, string> = {
+  new: "New",
+  workable: "Workable",
+  on_hold: "On Hold",
+  waiting: "Waiting",
+  escalated: "Escalated",
+  avg_age: "Avg Age",
+};
+
 export function BoardsPage() {
+  const { permissions } = useAuth();
+  const canArrange = permissions.includes("board:manage");
   const [boards, setBoards] = useState<BoardMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [editingBoard, setEditingBoard] = useState<string | null>(null);
+  const [draft, setDraft] = useState<TileState[]>([]);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const fetchMetrics = useCallback(async () => {
     try {
@@ -34,6 +56,72 @@ export function BoardsPage() {
     const interval = setInterval(fetchMetrics, 15000);
     return () => clearInterval(interval);
   }, [fetchMetrics]);
+
+  const startArranging = (board: BoardMetrics) => {
+    setEditingBoard(board.boardId);
+    setDraft((board.tiles || []).map(t => ({ ...t })));
+  };
+
+  const moveTile = (from: number, to: number) => {
+    if (to < 0 || to >= draft.length || from === to) return;
+    setDraft(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      if (moved) next.splice(to, 0, moved);
+      return next;
+    });
+  };
+
+  const saveArrangement = async (boardId: string) => {
+    setSaving(true);
+    try {
+      await api.put(`/boards/${boardId}/layout`, { tiles: draft });
+      toast.success("Arrangement saved");
+      setEditingBoard(null);
+      await fetchMetrics();
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error?.message || "Could not save the arrangement");
+    } finally { setSaving(false); }
+  };
+
+  const resetArrangement = async (boardId: string) => {
+    try {
+      const r = await api.delete(`/boards/${boardId}/layout`);
+      setDraft((r.data.tiles || []).map((t: TileState) => ({ ...t })));
+      toast.success("Arrangement reset");
+      setEditingBoard(null);
+      await fetchMetrics();
+    } catch { toast.error("Could not reset the arrangement"); }
+  };
+
+  /** A pinned tile leads the card, so the arrangement only has to be re-sorted after a pin. */
+  const togglePin = (id: string) => {
+    setDraft(prev => {
+      const next = prev.map(t => (t.id === id ? { ...t, pinned: !t.pinned } : t));
+      return [...next.filter(t => t.pinned), ...next.filter(t => !t.pinned)];
+    });
+  };
+
+  const renderTile = (tile: TileState, board: BoardMetrics) => {
+    const m = board.metrics;
+    const boardUrl = `/tickets?boardId=${board.boardId}`;
+    const avgAge = m.averageAgeDays;
+    const tone = avgAge <= 7
+      ? { color: "text-emerald-400", bg: "bg-emerald-600/15", note: "under a week" }
+      : avgAge <= 14
+        ? { color: "text-amber-300", bg: "bg-amber-500/15", note: "one to two weeks" }
+        : { color: "text-red-300", bg: "bg-red-600/15", note: "over two weeks" };
+    const pinned = tile.pinned ? "ring-1 ring-orange-500/40" : "";
+    switch (tile.id) {
+      case "new": return <StatusBadge key={tile.id} to={`${boardUrl}&status=new`} icon={Inbox} label="New" value={m.new} color="text-blue-400" bg="bg-blue-600/15" border={pinned ? "border-orange-600" : "border-transparent"} hover="hover:border-orange-500" />;
+      case "workable": return <StatusBadge key={tile.id} to={`${boardUrl}&status=in_progress`} icon={Clock} label="Workable" value={m.workable} color="text-cyber-400" border={pinned ? "border-orange-600" : "border-transparent"} hover="hover:border-orange-500" />;
+      case "on_hold": return <StatusBadge key={tile.id} to={`${boardUrl}&status=on_hold`} icon={Pause} label="On Hold" value={m.onHold} color="text-purple-400" bg="bg-purple-600/15" border={pinned ? "border-orange-600" : "border-transparent"} />;
+      case "waiting": return <StatusBadge key={tile.id} to={`${boardUrl}&status=waiting_on_client,waiting_on_third_party`} icon={MessageSquare} label="Waiting" value={m.waitingOnResponse} color="text-amber-400" bg="bg-amber-600/15" border={pinned ? "border-orange-600" : "border-transparent"} />;
+      case "escalated": return <StatusBadge key={tile.id} to={`${boardUrl}&status=open&priority=critical`} icon={AlertTriangle} label="Escalated" value={m.escalations} color="text-red-400" bg="bg-red-600/15" border="border-orange-600" hover="hover:border-orange-500" />;
+      case "avg_age": return <MetricBadge key={tile.id} icon={TrendingUp} label="Avg Age" value={`${m.averageAgeDays}d`} color={tone.color} bg={tone.bg} title={`Average age of open tickets on this board: ${m.averageAgeDays} day${m.averageAgeDays === 1 ? "" : "s"} (${tone.note})`} />;
+      default: return null;
+    }
+  };
 
   if (loading) return <div className="flex items-center justify-center py-20 text-gray-500">Loading boards...</div>;
 
@@ -58,14 +146,7 @@ export function BoardsPage() {
         {boards.map((board) => {
           const m = board.metrics;
           const boardUrl = `/tickets?boardId=${board.boardId}`;
-          // Average age of open tickets: under a week is healthy, up to two
-          // weeks needs attention, beyond that the board is backing up.
-          const avgAge = m.averageAgeDays;
-          const avgAgeTone = avgAge <= 7
-            ? { color: "text-emerald-400", bg: "bg-emerald-600/15", note: "under a week" }
-            : avgAge <= 14
-              ? { color: "text-amber-300", bg: "bg-amber-500/15", note: "one to two weeks" }
-              : { color: "text-red-300", bg: "bg-red-600/15", note: "over two weeks" };
+          const editing = editingBoard === board.boardId;
           return (
             <div
               key={board.boardId}
@@ -82,20 +163,57 @@ export function BoardsPage() {
                     <p className="text-xs text-gray-500 mt-0.5">{board.boardDescription}</p>
                   )}
                 </div>
-                <span className="text-[10px] text-gray-600 font-mono">{m.open} open</span>
+                <div className="flex items-center gap-2">
+                  {canArrange && !editing && (
+                    <button onClick={() => startArranging(board)} className="text-[10px] text-gray-500 hover:text-white flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Arrange the tiles on this board">
+                      <SlidersHorizontal size={11} /> Arrange
+                    </button>
+                  )}
+                  <span className="text-[10px] text-gray-600 font-mono">{m.open} open</span>
+                </div>
               </div>
 
-              {/* Primary metrics row — status items are clickable and filter tickets */}
-              <div className="grid grid-cols-3 gap-2">
-                <StatusBadge to={`${boardUrl}&status=new`} icon={Inbox} label="New" value={m.new} color="text-blue-400" bg="bg-blue-600/15" />
-                <StatusBadge to={`${boardUrl}&status=in_progress`} icon={Clock} label="Workable" value={m.workable} color="text-cyber-400" border="border-orange-600" hover="hover:border-orange-500" />
-                <StatusBadge to={`${boardUrl}&status=on_hold`} icon={Pause} label="On Hold" value={m.onHold} color="text-purple-400" bg="bg-purple-600/15" />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <StatusBadge to={`${boardUrl}&status=waiting_on_client,waiting_on_third_party`} icon={MessageSquare} label="Waiting" value={m.waitingOnResponse} color="text-amber-400" bg="bg-amber-600/15" />
-                <StatusBadge to={`${boardUrl}&status=open&priority=critical`} icon={AlertTriangle} label="Escalated" value={m.escalations} color="text-red-400" bg="bg-red-600/15" border="border-orange-600" hover="hover:border-orange-500" />
-                <MetricBadge icon={TrendingUp} label="Avg Age" value={`${m.averageAgeDays}d`} color={avgAgeTone.color} bg={avgAgeTone.bg} title={`Average age of open tickets on this board: ${m.averageAgeDays} day${m.averageAgeDays === 1 ? "" : "s"} (${avgAgeTone.note})`} />
-              </div>
+              {editing ? (
+                <div className="space-y-2">
+                  <p className="text-[10px] text-gray-500">
+                    Drag a tile by its handle, or use the arrows. A pin moves a tile to the front — the desk that owns this board sees the same arrangement.
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {draft.map((tile, index) => (
+                      <div
+                        key={tile.id}
+                        draggable
+                        onDragStart={() => setDragIndex(index)}
+                        onDragOver={e => e.preventDefault()}
+                        onDrop={() => { if (dragIndex !== null) moveTile(dragIndex, index); setDragIndex(null); }}
+                        onDragEnd={() => setDragIndex(null)}
+                        className={`rounded-lg border px-2.5 py-2 flex flex-col gap-1 ${tile.pinned ? "border-orange-600 bg-orange-600/10" : "border-surface-border"} ${dragIndex === index ? "opacity-60" : ""}`}
+                      >
+                        <div className="flex items-center gap-1">
+                          <GripVertical size={11} className="text-gray-600 cursor-grab shrink-0" />
+                          <span className="text-[10px] font-semibold text-gray-300 truncate">{BOARD_TILE_LABELS[tile.id] ?? tile.id}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => moveTile(index, index - 1)} disabled={index === 0} className="text-gray-500 hover:text-white disabled:opacity-30" title="Move earlier"><ArrowUp size={11} /></button>
+                          <button onClick={() => moveTile(index, index + 1)} disabled={index === draft.length - 1} className="text-gray-500 hover:text-white disabled:opacity-30" title="Move later"><ArrowDown size={11} /></button>
+                          <button onClick={() => togglePin(tile.id)} className={`ml-auto ${tile.pinned ? "text-orange-400" : "text-gray-500 hover:text-white"}`} title={tile.pinned ? "Unpin" : "Pin to the front"}>
+                            {tile.pinned ? <PinOff size={11} /> : <Pin size={11} />}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 justify-end">
+                    <button onClick={() => resetArrangement(board.boardId)} className="btn-secondary text-xs flex items-center gap-1"><RotateCcw size={12} /> Reset</button>
+                    <button onClick={() => setEditingBoard(null)} className="btn-secondary text-xs">Cancel</button>
+                    <button onClick={() => saveArrangement(board.boardId)} disabled={saving} className="btn-primary text-xs flex items-center gap-1"><Save size={12} /> {saving ? "Saving…" : "Save"}</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {(board.tiles || []).map(tile => renderTile(tile, board))}
+                </div>
+              )}
 
               {/* Stale ticket warnings */}
               {(m.stale3Days > 0 || m.stale7Days > 0 || m.stale30Days > 0) && (
