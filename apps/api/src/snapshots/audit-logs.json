@@ -9969,6 +9969,46 @@
     "createdAt": "2026-10-07T07:49:04.902Z"
   },
   {
+    "id": "32a1874e-1091-4a44-a011-109ca3846567",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "services",
+    "changes": {
+      "name": "ProbeSocial muxt9ton",
+      "enabled": true,
+      "category": "other",
+      "description": "probe",
+      "monitorEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:53:51.529Z"
+  },
+  {
+    "id": "fc219791-c141-4015-9f4f-ad0596dcb3da",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:57:27.802Z"
+  },
+  {
+    "id": "4a516337-074e-46e6-859d-bd1089af7dfb",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:58:00.834Z"
+  },
+  {
     "id": "88ebbabf-b8e7-4c53-9327-9943f52bb1f2",
     "action": "users:delete",
     "entity": "users",
@@ -9991,6 +10031,66 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T01:31:18.517Z"
+  },
+  {
+    "id": "f75092e0-648d-4c91-8048-681d01a8a418",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:54:27.038Z"
+  },
+  {
+    "id": "f37d32d0-0e75-4728-8795-07a1f7be1fc8",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:55:01.765Z"
+  },
+  {
+    "id": "2befa71a-2e44-42e9-bd20-d34fbf195b66",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:55:33.106Z"
+  },
+  {
+    "id": "3f0bbb80-a278-4898-9105-c4824ad5c756",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:55:59.731Z"
+  },
+  {
+    "id": "59be2777-c8fd-403d-86c2-5f8a06411614",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:56:17.961Z"
   },
   {
     "id": "f1834ace-ec7a-4ed5-8c0c-1d6d671528bc",
@@ -10063,6 +10163,42 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T02:32:40.081Z"
+  },
+  {
+    "id": "b00f9457-c7ae-40fa-ae52-554f823a6dad",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:58:34.308Z"
+  },
+  {
+    "id": "0c8d7077-d7f6-4241-a1f0-b2b65bdc612a",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:59:14.663Z"
+  },
+  {
+    "id": "99473d9d-96ae-4c75-8062-772899b77c9d",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:59:43.851Z"
   },
   {
     "id": "b8d2086a-e363-48a5-a9d0-02920acdaf74",
@@ -10856,6 +10992,34 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T03:02:07.562Z"
+  },
+  {
+    "id": "d787c1a6-d6b7-4fcb-b407-fc0698326254",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:59:29.497Z"
+  },
+  {
+    "id": "19c9cea1-6927-4bc6-ac37-c66d07262571",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "services",
+    "changes": {
+      "name": "ProbeSocial muxthosa",
+      "enabled": true,
+      "category": "other",
+      "description": "probe",
+      "monitorEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-07T07:59:58.391Z"
   },
   {
     "id": "2ee93a6f-a5f3-45d9-a9bc-790df9987f8a",

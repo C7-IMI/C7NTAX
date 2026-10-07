@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-10-07T07:49:11.397Z",
-  "totalRecords": 4501,
+  "capturedAt": "2026-10-07T08:00:04.938Z",
+  "totalRecords": 4544,
   "tables": {
     "role": 5,
     "user": 16,
@@ -37,7 +37,7 @@
     "kumoLink": 3,
     "kumoDomain": 5,
     "kumoCertificate": 5,
-    "auditLog": 1316,
+    "auditLog": 1329,
     "kumoFile": 2,
     "kumoTemplateField": 107,
     "kumoAssetFieldValue": 1020,
@@ -45,8 +45,8 @@
     "expense": 3,
     "alertRule": 1,
     "alertLog": 1,
-    "serviceAlertService": 14,
-    "serviceAlert": 131,
+    "serviceAlertService": 15,
+    "serviceAlert": 160,
     "quote": 3,
     "quoteLineItem": 5,
     "aiAction": 10,

@@ -238,5 +238,22 @@
     "sortOrder": 20,
     "createdAt": "2026-08-14T05:55:14.948Z",
     "updatedAt": "2026-10-06T19:17:36.374Z"
+  },
+  {
+    "id": "46281404-5a27-4cb5-911c-2d9a5b185259",
+    "name": "ProbeSocial muxthosa",
+    "category": "other",
+    "description": "probe",
+    "statusPageUrl": null,
+    "downDetectorUrl": null,
+    "rssUrl": null,
+    "monitorKind": "vendor",
+    "monitorUrl": null,
+    "monitorConfig": null,
+    "monitorEnabled": true,
+    "enabled": true,
+    "sortOrder": 0,
+    "createdAt": "2026-10-07T07:59:58.388Z",
+    "updatedAt": "2026-10-07T07:59:58.388Z"
   }
 ]

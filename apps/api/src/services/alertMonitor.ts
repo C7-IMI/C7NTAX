@@ -28,6 +28,7 @@ const POLL_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
 const ITEM_WINDOW_MS = 24 * 60 * 60 * 1000; // consider feed items from last 24h
 const MIN_ALERT_AGE_MS = POLL_INTERVAL_MS; // never resolve on the poll that created it
 const REQUIRED_CLEAR_POLLS = 2; // consecutive all-clear polls before resolving
+const SOCIAL_WINDOW_MS = 2 * 60 * 60 * 1000; // social posts older than two hours are not evidence
 const USER_AGENT = "C7NTAX-ServiceAlerts/1.0";
 
 function positiveIntFromEnv(name: string, fallback: number): number {
@@ -57,7 +58,7 @@ const RESTORED_PATTERNS = [
 export type SourceVerdict = "problem" | "restored" | "clear" | "unknown";
 
 export interface SourceObservation {
-  source: "rss" | "statuspage" | "downdetector" | "website" | "ssl" | "dns";
+  source: "rss" | "statuspage" | "downdetector" | "website" | "ssl" | "dns" | "social";
   verdict: SourceVerdict;
   /** Human-readable reason, shown per source in the UI. */
   detail: string;
@@ -303,8 +304,70 @@ async function observeDownDetector(service: { name: string; downDetectorUrl: str
   }
 }
 
-/** website / ssl / dns monitors (gated by UPTIME_MONITORS_ENABLED). */
-async function observeMonitor(service: { name: string; monitorKind: string; monitorUrl: string | null; monitorConfig: unknown }): Promise<SourceObservation | null> {
+/**
+ * Social reports (X / Twitter), behind configuration.
+ *
+ * This is the weakest source in the set and is treated as such: it reads the recent-search endpoint
+ * for the service's own name, and a complaint is recorded as an **informational** observation, never
+ * as proof of an outage — social chatter earns a notice on the board, not a red banner. Nothing is
+ * fetched at all unless a bearer token is configured, so a deployment that has not set one does not
+ * silently look like it is watching a source it cannot read.
+ */
+async function observeSocial(service: { name: string }): Promise<SourceObservation | null> {
+  if (process.env.SERVICE_ALERTS_SOCIAL_ENABLED === "false") return null;
+  const token = process.env.X_BEARER_TOKEN;
+  if (!token) return null;
+  const base = process.env.X_API_BASE_URL || "https://api.x.com";
+  const query = `"${service.name}" (outage OR down OR "not working" OR degraded) -is:retweet lang:en`;
+  try {
+    const url = `${base.replace(/\/$/, "")}/2/tweets/search/recent?max_results=10&tweet.fields=created_at,text&query=${encodeURIComponent(query)}`;
+    const resp = await safeFetch(url, {
+      purpose: "monitor",
+      timeoutMs: 12000,
+      headers: { authorization: `Bearer ${token}`, "user-agent": USER_AGENT },
+    });
+    if (resp.status === 401 || resp.status === 403) {
+      return { source: "social", verdict: "unknown", detail: `X rejected the credentials (HTTP ${resp.status})` };
+    }
+    if (resp.status === 429) {
+      return { source: "social", verdict: "unknown", detail: "X rate limit reached for this window" };
+    }
+    if (!resp.ok) {
+      snapshot.errors.push(`${service.name}: X search HTTP ${resp.status}`);
+      return { source: "social", verdict: "unknown", detail: `X returned HTTP ${resp.status}` };
+    }
+    const payload = (await resp.json().catch(() => null)) as { data?: Array<{ id: string; text: string; created_at?: string }> } | null;
+    const tweets = payload?.data ?? [];
+    const now = Date.now();
+    const recent = tweets.filter((t) => !t.created_at || now - Date.parse(t.created_at) <= SOCIAL_WINDOW_MS);
+    const complaining = recent.find((t) => classify(t.text) === "outage" && !RESTORED_PATTERNS.some((r) => r.test(t.text)));
+    if (complaining) {
+      const when = complaining.created_at ? new Date(complaining.created_at).toISOString().slice(0, 16).replace("T", " ") + "Z" : "undated";
+      return {
+        source: "social",
+        verdict: "problem",
+        severity: "informational",
+        title: `Social reports about ${service.name} on X`,
+        body: complaining.text.slice(0, 300),
+        link: `https://x.com/i/web/status/${complaining.id}`,
+        detail: `a post ${when} mentions a problem (${recent.length} recent post${recent.length === 1 ? "" : "s"} read)`,
+      };
+    }
+    const resolving = recent.find((t) => classify(t.text) === "restored");
+    if (resolving) {
+      return { source: "social", verdict: "restored", detail: "a recent post says it is resolved" };
+    }
+    return {
+      source: "social",
+      verdict: "clear",
+      detail: `${recent.length} recent post${recent.length === 1 ? "" : "s"}, none reporting a problem`,
+    };
+  } catch (e: any) {
+    return { source: "social", verdict: "unknown", detail: `X unreachable (${e?.message || e?.name || "error"})` };
+  }
+}
+
+/** website / ssl / dns monitors (gated by UPTIME_MONITORS_ENABLED). */async function observeMonitor(service: { name: string; monitorKind: string; monitorUrl: string | null; monitorConfig: unknown }): Promise<SourceObservation | null> {
   if (service.monitorKind === "vendor" || !service.monitorUrl) return null;
   if (process.env.UPTIME_MONITORS_ENABLED === "false") return null;
   const kind = service.monitorKind as "website" | "ssl" | "dns";
@@ -517,6 +580,7 @@ export async function runAlertCheck(): Promise<MonitorSnapshot> {
             observeStatusPage(service),
             observeDownDetector(service),
             observeMonitor(service),
+            observeSocial(service),
           ])
         ).filter((o): o is SourceObservation => o !== null);
         sourceStatus[service.id] = {

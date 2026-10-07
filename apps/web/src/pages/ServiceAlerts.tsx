@@ -77,6 +77,7 @@ const SOURCE_LABELS: Record<string, string> = {
   website: "Website",
   ssl: "SSL",
   dns: "DNS",
+  social: "X (Twitter)",
   manual: "Manual",
 };
 
@@ -119,6 +120,8 @@ export function ServiceAlertsPage() {
   const [monitor, setMonitor] = useState<MonitorSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [tab, setTab] = useState<"live" | "board">(() =>
+    new URLSearchParams(window.location.search).get("tab") === "board" ? "board" : "live");
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -159,6 +162,36 @@ export function ServiceAlertsPage() {
   }));
   const unreadable = [...unreadableBySource.entries()].sort((a, b) => b[1] - a[1]);
 
+  /**
+   * The outage board: one row per monitored service, problems first, each with its most recent
+   * incident — active or already resolved — so the board answers "what is happening, and what
+   * happened last" without anybody opening a service at a time.
+   */
+  const boardRows = enabledServices.map(s => {
+    const activeAlert = s.alerts.find(a => a.status === "active") ?? null;
+    const history = resolved.filter(a => a.serviceId === s.id);
+    const lastIncident = activeAlert ?? history.sort((a, b) => Date.parse(b.detectedAt) - Date.parse(a.detectedAt))[0] ?? null;
+    const state: "outage" | "degraded" | "notice" | "operational" = activeAlert
+      ? (activeAlert.severity === "outage" ? "outage" : activeAlert.severity === "degraded" ? "degraded" : "notice")
+      : "operational";
+    const unreadableSources = (s.sourceStatus?.sources ?? []).filter(src => src.verdict === "unknown").length;
+    const configuredSources = s.sourceStatus?.sources.length ?? 0;
+    return { service: s, state, lastIncident, activeAlert, unreadableSources, configuredSources };
+  }).sort((a, b) => {
+    const rank = { outage: 0, degraded: 1, notice: 2, operational: 3 } as const;
+    return rank[a.state] - rank[b.state] || a.service.sortOrder - b.service.sortOrder || a.service.name.localeCompare(b.service.name);
+  });
+
+  const notifyCount = boardRows.filter(r => r.state === "notice").length;
+  const blindCount = boardRows.filter(r => r.configuredSources > 0 && r.configuredSources === r.unreadableSources).length;
+
+  const STATE_STYLE = {
+    outage: { badge: "bg-red-600/20 text-red-300", dot: "bg-red-500", icon: WifiOff, label: "Outage" },
+    degraded: { badge: "bg-amber-500/20 text-amber-300", dot: "bg-amber-500", icon: TrendingDown, label: "Degraded" },
+    notice: { badge: "bg-cyber-600/20 text-cyber-300", dot: "bg-cyber-500", icon: Info, label: "Notice" },
+    operational: { badge: "bg-emerald-500/20 text-emerald-300", dot: "bg-emerald-500", icon: CheckCircle2, label: "Operational" },
+  } as const;
+
   if (loading) {
     return <div className="flex items-center justify-center py-24 text-gray-500">Loading Service Alerts…</div>;
   }
@@ -174,6 +207,17 @@ export function ServiceAlertsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-surface-lighter">
+            {([["live", "Live"], ["board", "Outage Board"]] as const).map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setTab(value)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === value ? "bg-cyber-600/20 text-cyber-300" : "text-gray-400 hover:text-white"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <button
             className="btn-secondary text-sm flex items-center gap-1.5"
             onClick={() => { setRefreshing(true); void load(true); }}
@@ -205,6 +249,107 @@ export function ServiceAlertsPage() {
         </div>
       )}
 
+      {tab === "board" ? (
+        <div className="space-y-4">
+          {/* One line answering "how bad is it right now, and what are we blind to" */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            {([
+              { key: "outage", value: outageCount, label: "Outages" },
+              { key: "degraded", value: degradedCount, label: "Degraded" },
+              { key: "notice", value: notifyCount, label: "Notices" },
+              { key: "operational", value: operational.length, label: "Operational" },
+            ] as const).map(item => {
+              const style = STATE_STYLE[item.key];
+              return (
+                <div key={item.key} className="card flex items-center gap-3 !py-3">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${style.badge}`}><style.icon size={17} /></div>
+                  <div>
+                    <p className="text-xl font-bold text-white leading-none">{item.value}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{item.label}</p>
+                  </div>
+                </div>
+              );
+            })}
+            <div className="card flex items-center gap-3 !py-3" title="Services where every configured source is unreadable — nothing is being detected for them right now">
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${blindCount > 0 ? "bg-amber-500/15 text-amber-400" : "bg-emerald-500/15 text-emerald-400"}`}><Radio size={17} /></div>
+              <div>
+                <p className="text-xl font-bold text-white leading-none">{blindCount}</p>
+                <p className="text-xs text-gray-400 mt-0.5">Unreadable</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card !p-0 overflow-hidden">
+            <div className="hidden md:grid grid-cols-12 gap-3 px-5 py-2.5 text-[10px] uppercase tracking-wider text-gray-500 border-b border-surface-border">
+              <span className="col-span-3">Service</span>
+              <span className="col-span-2">Status</span>
+              <span className="col-span-4">Last incident</span>
+              <span className="col-span-3">Sources</span>
+            </div>
+            <div className="divide-y divide-surface-border">
+              {boardRows.map(row => {
+                const style = STATE_STYLE[row.state];
+                const incident = row.lastIncident;
+                return (
+                  <div key={row.service.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 px-5 py-3 items-start">
+                    <div className="md:col-span-3 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${style.dot}`} />
+                        <span className="font-medium text-white text-sm truncate">{row.service.name}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">{CATEGORY_LABELS[row.service.category] || row.service.category}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <span className={`badge ${style.badge}`}>{style.label}</span>
+                    </div>
+                    <div className="md:col-span-4 min-w-0">
+                      {incident ? (
+                        <>
+                          <p className="text-sm text-gray-200 line-clamp-2">{incident.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {row.activeAlert ? "active" : "resolved"} · detected {timeAgo(incident.detectedAt)}
+                            {incident.sourceUrl && (
+                              <a href={incident.sourceUrl} target="_blank" rel="noreferrer" className="ml-2 text-cyber-400 hover:text-cyber-300 inline-flex items-center gap-0.5">
+                                source <ExternalLink size={11} />
+                              </a>
+                            )}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-gray-500">No incident on record.</p>
+                      )}
+                    </div>
+                    <div className="md:col-span-3 space-y-1.5">
+                      <SourceChips status={row.service.sourceStatus} />
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {row.service.downDetectorUrl && (
+                          <a href={row.service.downDetectorUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-cyber-300" title="DownDetector">
+                            <Radio size={12} /> DownDetector
+                          </a>
+                        )}
+                        {row.service.statusPageUrl && (
+                          <a href={row.service.statusPageUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-cyber-300" title="Official status page">
+                            <Globe size={12} /> Status
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {boardRows.length === 0 && (
+                <p className="px-5 py-6 text-sm text-gray-500">No monitored services are configured.</p>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-500">
+            Problems sort to the top. The board refreshes on the same poll as the rest of this page ({Math.max(1, Math.round((monitor?.pollIntervalMs ?? 300000) / 60000))} min), and only while the tab is visible.
+            {monitor?.lastCheckAt && <> Last check {timeAgo(monitor.lastCheckAt)}.</>}
+          </p>
+        </div>
+      ) : (
+      <>
       {/* Summary strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card flex items-center gap-3 !py-4">
@@ -373,6 +518,8 @@ export function ServiceAlertsPage() {
             ))}
           </div>
         </section>
+      )}
+      </>
       )}
     </div>
   );
