@@ -122,6 +122,18 @@ export function OAuthAppWizard({
   const steps = STEPS[path];
   const stepName = steps[step] ?? steps[0]!;
 
+  /**
+   * Move to a step by name.
+   *
+   * The steps differ per path, so an index is only meaningful next to the list it belongs to —
+   * `setStep(step + 1)` after starting a sign-in landed back on the screen it was already showing,
+   * because "Tenant" and "Sign in" are adjacent and the intent was a jump, not a step.
+   */
+  const goTo = useCallback((target: string) => {
+    const index = STEPS[path].indexOf(target);
+    if (index >= 0) setStep(index);
+  }, [path]);
+
   useEffect(() => {
     api.get("/oauth-app")
       .then((r) => {
@@ -172,7 +184,7 @@ export function OAuthAppWizard({
         if (cancelled) return;
         if (data.status === "authorized") {
           setAuthorised({ account: data.account ?? null, tenantId: data.tenantId ?? null });
-          setStep((s) => s + 1);
+          goTo("Create & consent");
           return;
         }
         if (data.status === "pending") {
@@ -187,7 +199,7 @@ export function OAuthAppWizard({
 
     timer = window.setTimeout(tick, Math.max(2, session.interval || 5) * 1000);
     return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
-  }, [path, session, stepName]);
+  }, [path, session, stepName, goTo]);
 
   const start = useCallback(async () => {
     setError(null);
@@ -202,13 +214,13 @@ export function OAuthAppWizard({
         displayName: form.displayName.trim(),
       });
       setSession(data as StartedSession);
-      setStep(1);
+      goTo("Sign in");
     } catch (e) {
       setError(apiErrorMessage(e, "Could not start the deployment"));
     } finally {
       setBusy(null);
     }
-  }, [form, needsMailbox]);
+  }, [form, goTo, needsMailbox]);
 
   const deploy = useCallback(async () => {
     if (!session) return;
@@ -217,14 +229,14 @@ export function OAuthAppWizard({
     try {
       const { data } = await api.post(`/oauth-app/${session.sessionId}/deploy`);
       setDeployed(data as DeploymentResult);
-      setStep((s) => s + 1);
+      goTo("Mailbox scope");
       toast.success((data as DeploymentResult).reusedRegistration ? "Registration reused and consented" : "Registration created and consented");
     } catch (e) {
       setError(apiErrorMessage(e, "Could not deploy the app registration"));
     } finally {
       setBusy(null);
     }
-  }, [session]);
+  }, [goTo, session]);
 
   const importValues = useCallback(async () => {
     setBusy("import");
@@ -235,7 +247,9 @@ export function OAuthAppWizard({
         tenantId: manual.tenantId.trim() || undefined,
         clientId: manual.clientId.trim() || undefined,
         clientSecret: manual.clientSecret.trim() || undefined,
-        mailbox: manual.mailbox.trim() || undefined,
+        // The script's output has no mailbox in it — the mailbox was chosen two steps back, so it is
+        // sent along rather than lost, which is what made the wizard warn about a mailbox it had.
+        mailbox: manual.mailbox.trim() || form.mailbox.trim() || undefined,
         mode: form.mode,
       });
       setImported({
@@ -247,14 +261,14 @@ export function OAuthAppWizard({
         warnings: data.warnings ?? [],
         source: data.source,
       });
-      setStep((s) => s + 1);
+      goTo("Finish");
       toast.success(data.source === "script" ? "Read the script's output" : "Values accepted");
     } catch (e) {
       setError(apiErrorMessage(e, "Could not read those values"));
     } finally {
       setBusy(null);
     }
-  }, [form.mode, form.mailbox, manual, scriptJson]);
+  }, [form.mode, form.mailbox, goTo, manual, scriptJson]);
 
   // ── What the last screen will hand to the connector ───────────────────────
   const values: WizardValues | null = deployed
@@ -273,15 +287,15 @@ export function OAuthAppWizard({
   };
 
   const primary = (() => {
-    if (stepName === "How") return { label: "Continue", action: () => setStep(1), disabled: false };
+    if (stepName === "How") return { label: "Continue", action: () => goTo("Tenant"), disabled: false };
     if (stepName === "Tenant") {
       return path === "deploy"
         ? { label: "Start sign-in", action: () => void start(), disabled: busy === "start" }
-        : { label: "Show me the command", action: () => setStep((s) => s + 1), disabled: false };
+        : { label: "Show me the command", action: () => goTo("Run the script"), disabled: false };
     }
     if (stepName === "Sign in") return null;
     if (stepName === "Create & consent") return { label: "Create the app and grant consent", action: () => void deploy(), disabled: busy === "deploy" };
-    if (stepName === "Mailbox scope") return { label: "Continue", action: () => setStep((s) => s + 1), disabled: false };
+    if (stepName === "Mailbox scope") return { label: "Continue", action: () => goTo("Finish"), disabled: false };
     if (stepName === "Run the script") return { label: "Read these values", action: () => void importValues(), disabled: busy === "import" };
     return { label: "Fill the connector", action: finish, disabled: false };
   })();
@@ -457,7 +471,7 @@ export function OAuthAppWizard({
             <p className="text-xs text-gray-400 inline-flex items-center gap-2">
               <Loader2 size={13} className="animate-spin text-cyber-400" /> Waiting for the sign-in to be approved…
             </p>
-            <button className="btn-secondary text-xs" onClick={() => { setSession(null); setStep(1); setError(null); }}>
+            <button className="btn-secondary text-xs" onClick={() => { setSession(null); goTo("Tenant"); setError(null); }}>
               <ArrowLeft size={13} className="inline mr-1" /> Start over
             </button>
           </div>

@@ -5074,3 +5074,41 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **A key's usage counters are written fire-and-forget**, so "1 request" in the table lags the call that made it by one render — deliberate, because a failed usage write must never fail the request it describes.
 - **`eventIntakeBoardId` is settable through `PATCH /api/system/config/:key`** by anything holding `system:config` (it is not a reserved key), which is how the page writes it; the pattern generalises if another gateway-level setting appears.
 - **The next natural extensions** are an outbound webhook for the event gateway (the reverse direction is currently alert-only), an API-keys card in CloudConnect beside the connectors it belongs with, and deleting the unmounted `users.ts::rolesRouter`.
+
+---
+
+### Prompt 257 — Deploying the Microsoft 365 OAuth app from inside the connector
+
+**Timestamp:** 2026-10-08 03:35 | **Status:** Complete | **Duration:** ~75 min
+
+**BuildNotes IDs:** **2026.10.8.012** — "The Microsoft 365 OAuth app is deployed from the connector"
+
+**Prompt**
+
+> Add a deploy OAuth app button that will pop up a wizard which will walk me through setting up, installing, and connecting the OAuth app you already created or a new one if necessary. Once it's complete, the information should be automatically populated into the connector field.
+
+**What I did**
+- **Read what already existed before designing anything.** `O365/New-C7NTAXMailboxApp.ps1` (22 KB) already does the whole job — device-code sign-in, app registration, the Graph permission ids, admin consent, the client secret, the Exchange Online scoping commands — and `PlanDocs/PLAN-017` is the reasoning behind it. The wizard is that sequence with the console removed, so the ids and the order are deliberately identical; where the script writes a JSON file for a human to paste, this fills the form directly.
+- **Built the deployment service** (`apps/api/src/services/oauthAppDeploy.ts`): device-code sign-in against Microsoft's public Graph command-line client (so no app has to exist to bootstrap, and the admin's token is used for one task), then find-or-create the registration by display name, record `requiredResourceAccess` with the application **role** id of `Mail.ReadWrite`, create the service principal consent points at, grant consent with all three ids, mint a 12-month secret — and for the delegated flow, register this instance's own redirect URI and create no secret at all.
+- **Built the API** (`apps/api/src/routes/oauthApp.ts`, mounted at `/api/oauth-app`): `GET /` (facts, permissions, redirect URI, the by-hand command), `POST /start`, `GET /:id`, `POST /:id/poll`, `POST /:id/deploy`, `POST /import` — every one gated on `integration:manage`, with an audit row per deployment and per import that names the tenant, the client id and the secret's expiry.
+- **Built the wizard** (`apps/web/src/components/OAuthAppWizard.tsx`) with the **Deploy OAuth app** button in both Microsoft 365 modes of `EmailConnectorsPanel`, and `onComplete` writing the four values into the connector's form (and setting the auth mode the deployment implies). Two paths: deploy from here, or take the script's output.
+- **Turned the Exchange Online half into instructions rather than pretending**: Graph has no route to the RBAC-for-Applications cmdlets, so the wizard prints them with the app id, the service principal id and the mailbox substituted, and warns that an unscoped app-only registration can read every mailbox in the tenant.
+- **Found and fixed a secret leak I introduced.** The generic audit middleware records request bodies and redacts by *key name*; `POST /import` carries the secret inside a JSON string, which that check cannot see, so the credential set was being written to the audit log in clear text. The wizard's routes now skip the generic middleware and audit themselves (never the value), and `scriptJson` is treated as sensitive in the generic path too.
+- **Found and fixed two wizard bugs by driving it rather than reading it**: "Start sign-in" advanced one step *from* Tenant instead of jumping to the sign-in screen (so the code never appeared, which is exactly the kind of thing a code review does not catch), and the mailbox chosen two steps earlier was not sent with a pasted script file, so the wizard warned about a mailbox it already had. Steps are addressed by name now.
+- **Updated Help in the same change** — the Microsoft 365 walkthrough said the app needs `Mail.Read`, which is the trap PLAN-017 warns about; it now says `Mail.ReadWrite`, describes the wizard, the Exchange Online scoping and the delegated flow, and has a configuration reference and four FAQ entries — plus `O365/README.md` and `docs/API.md`, and curated summaries for the six new operations in the spec.
+- **Verified with a stub Microsoft** (`apps/api/probe-oauth-app.mjs`, **71 checks**): every Graph call asserted against the contract — the role id versus the delegated scope id, the three-id consent, the redirect URI, the secret's lifetime, reuse on a second run, the refusals, and the audit trail including the absence of the secret. Then the wizard itself was driven in a browser through both paths against the same stub, both ending with the connector's four fields filled.
+
+**Decisions worth remembering**
+- **The script was the specification.** Every id, the order of consent and the whole set of gotchas came from `New-C7NTAXMailboxApp.ps1`, and the wizard was written to agree with it rather than to re-derive anything — a second implementation that "improves" on a proven one is a second place for `Mail.Read` to appear.
+- **Sign in as the administrator, hold nothing.** The device-code flow against Microsoft's own public client means this application never stores a credential for a customer's tenant and needs no app of its own to bootstrap. The token lives in memory for the length of one deployment.
+- **Idempotent by name, like the script.** Running it twice reuses the registration and consents again instead of creating a duplicate, which is what makes "just run it again" safe advice — and what makes the *third* run's secret the only thing that differs.
+- **A wizard is not a substitute for the step Graph cannot do.** The mailbox scoping stays a set of commands to run, printed with the ids filled in, because pretending otherwise would leave an app able to read every mailbox in the tenant while the UI said it was finished.
+- **The two paths are not a hedge; they are different tenants.** Deploying from here needs this instance to reach Microsoft's sign-in endpoint and an administrator willing to approve a code; the script path needs neither, and covers "the registration already exists".
+- **Audit rows written by the route beat a generic middleware row.** The generic one knows the path and the body; the route knows what the change *means* — and only the route can be trusted with a body that carries a secret inside a string.
+
+**Notes for next time**
+- **The base URLs are read at process start** (`GRAPH_TOKEN_BASE`, `GRAPH_API_BASE` — the same variables `packages/email/src/graphFetch.ts` uses), which is what let a stub stand in for Microsoft for the whole 71 checks. Point the API at the stub, restart, run the probe: the header of `probe-oauth-app.mjs` has the three lines.
+- **Consent propagation is 30–60 minutes** and an immediate `ErrorAccessDenied` is expected, so the wizard says so on the finish screen rather than letting it read as a failure.
+- **`isFallbackPublicClient` only when there is no secret**: forgot it and the delegated code exchange is rejected; set it on an app-only registration and Entra allows a public client that should not exist.
+- **A second secret on every reused run** is honest but untidy — the natural follow-up is to offer removing the previous secret, which needs the `keyId` the deployment already records.
+- **The stub pattern is worth reusing for the other connectors**: an HTTP server implementing the vendor's contract, asserting the *call* as well as the answer, caught a wrong permission id and two UI bugs that reading the code had not.

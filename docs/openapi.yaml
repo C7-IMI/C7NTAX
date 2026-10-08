@@ -68,6 +68,8 @@ tags:
     description: "43 operations"
   - name: "Nav"
     description: "3 operations"
+  - name: "Oauth App"
+    description: "6 operations"
   - name: "Outlook add-in"
     description: "5 operations"
   - name: "Portal"
@@ -4209,6 +4211,135 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/oauth-app":
+    get:
+      tags: ["Oauth App"]
+      operationId: "getOauthApp"
+      summary: "What the OAuth app wizard needs before it starts"
+      description: "The permissions a deployment will request (`Mail.ReadWrite` as an application role, `Mail.ReadWrite`/`User.Read`/`offline_access` delegated), the redirect URI this instance must be registered with for the delegated flow, the default registration name, and the by-hand command that does the same thing from a terminal. `integration:manage`."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["integration:manage"]
+      x-source: "oauthApp.ts · oauthAppRouter.get"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              example: {"authClientId":"14d82eec-204b-4c2f-b7e8-296a70dab67e","defaultDisplayName":"C7NTAX Email Connector","permissions":{"application":["Mail.ReadWrite"],"delegated":["Mail.ReadWrite","User.Read","offline_access"]},"redirectUri":"https://psa.example.com/api/email-connectors/oauth/callback","secretMonths":12,"script":{"file":"O365/New-C7NTAXMailboxApp.ps1","command":"pwsh -File O365/New-C7NTAXMailboxApp.ps1 -TenantId <tenant> -DelegateMailbox <mailbox>"}}
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/oauth-app/{sessionId}":
+    get:
+      tags: ["Oauth App"]
+      operationId: "getOauthAppbySessionId"
+      summary: "Where a deployment got to, without contacting Microsoft"
+      description: "The session's own state: pending, authorized, declined, expired or failed, plus the tenant, mode, mailbox and display name it was started with."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["integration:manage"]
+      x-source: "oauthApp.ts · oauthAppRouter.get"
+      parameters:
+        - name: "sessionId"
+          in: path
+          required: true
+          schema: { type: "string" }
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/oauth-app/{sessionId}/deploy":
+    post:
+      tags: ["Oauth App"]
+      operationId: "postOauthAppbySessionIddeploy"
+      summary: "Create or reuse the registration, grant consent, mint the secret"
+      description: "The same sequence as `O365/New-C7NTAXMailboxApp.ps1`, over Graph: find or create the application by display name (an existing one is *reused*, not duplicated), record `requiredResourceAccess` with the application role id of `Mail.ReadWrite` (and the delegated scope ids plus the redirect URI when the delegated flow is wanted), create the service principal consent is granted *to*, grant admin consent with all three ids, and create a client secret for 12 months unless the flow is delegated (which uses PKCE and must not have one). Also returns the Exchange Online commands that scope an app-only registration to one mailbox — Graph has no route to those. The secret is returned once and never stored by this API; the audit row keeps the expiry instead."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["integration:manage"]
+      x-source: "oauthApp.ts · oauthAppRouter.post"
+      parameters:
+        - name: "sessionId"
+          in: path
+          required: true
+          schema: { type: "string" }
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              example: {"tenantId":"contoso.onmicrosoft.com","clientId":"1a2b3c4d-…","clientSecret":"…","secretExpiry":"2027-10-08T00:00:00Z","displayName":"C7NTAX Email Connector","mode":"AppOnly","reusedRegistration":false,"permissions":{"application":["Mail.ReadWrite"],"delegated":[]},"scopingCommands":"New-ServicePrincipal -AppId 1a2b3c4d-… -ObjectId sp-… -DisplayName \"C7NTAX Email Connector\"","warnings":["Confirm the Exchange Online scoping commands were run: until they are, an app-only registration can read every mailbox in the tenant."]}
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/oauth-app/{sessionId}/poll":
+    post:
+      tags: ["Oauth App"]
+      operationId: "postOauthAppbySessionIdpoll"
+      summary: "Has the administrator approved the sign-in yet?"
+      description: "Asks Microsoft. Answers `pending` while the code is unapproved (and lengthens the interval if Microsoft says `slow_down`), `authorized` once a token has been granted — with the account and tenant id read from that token's claims — or `declined`/`expired` with the reason. Deploying before this says `authorized` is refused with 409."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["integration:manage"]
+      x-source: "oauthApp.ts · oauthAppRouter.post"
+      parameters:
+        - name: "sessionId"
+          in: path
+          required: true
+          schema: { type: "string" }
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/oauth-app/import":
+    post:
+      tags: ["Oauth App"]
+      operationId: "postOauthAppimport"
+      summary: "Read the script's output (or the four values) instead of deploying from here"
+      description: "The offline path through the wizard, for a tenant this instance cannot reach the Microsoft sign-in endpoint, or a registration that already exists. Paste the contents of `O365/out/c7ntax-m365-app.json` in `scriptJson`, or send `tenantId`/`clientId`/`clientSecret`/`mailbox` directly. Refuses a client id that is not a GUID, and refuses a registration granted `Mail.Read` instead of `Mail.ReadWrite` — the connector marks messages read, so read-only connects and then fails on the first message."
+      requestBody:
+        content:
+          application/json:
+            example: {"scriptJson":"{ \"tenantId\": \"contoso.onmicrosoft.com\", \"clientId\": \"1a2b3c4d-…\", \"secret\": \"…\", \"mode\": \"AppOnly\" }"}
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["integration:manage"]
+      x-source: "oauthApp.ts · oauthAppRouter.post"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              example: {"tenantId":"contoso.onmicrosoft.com","clientId":"1a2b3c4d-…","clientSecret":"…","mailbox":"servicedesk@contoso.com","mode":"AppOnly","source":"script","warnings":["Confirm the Exchange Online scoping commands were run: until they are, an app-only registration can read every mailbox in the tenant."]}
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/oauth-app/start":
+    post:
+      tags: ["Oauth App"]
+      operationId: "postOauthAppstart"
+      summary: "Begin a deployment: a device code for the tenant administrator"
+      description: "Starts the OAuth device-code flow against Microsoft's public Graph command-line client, so nothing about the tenant is held here and the administrator signs in themselves. Returns the code to type and the URL to open; poll the session until it is authorised. The tenant may be a GUID or a primary domain, and a tenant that does not exist is refused by name."
+      requestBody:
+        content:
+          application/json:
+            example: {"tenant":"contoso.onmicrosoft.com","mode":"AppOnly","mailbox":"servicedesk@contoso.com","displayName":"C7NTAX Email Connector"}
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["integration:manage"]
+      x-source: "oauthApp.ts · oauthAppRouter.post"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              example: {"sessionId":"8f2c…","userCode":"ABCD-EFGH","verificationUri":"https://microsoft.com/devicelogin","verificationUriComplete":"https://microsoft.com/devicelogin?otc=ABCD-EFGH","expiresIn":900,"interval":5}
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
   "/api/outlook-addin/options":
     get:
       tags: ["Outlook add-in"]
@@ -6924,5 +7055,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 52 of 412 operations carry a curated summary from docs/api-operations.json;
+# 58 of 418 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

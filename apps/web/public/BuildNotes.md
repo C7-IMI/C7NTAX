@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.011 | Last Updated: 2026-10-08
+## Version: 2026.10.8.012 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,25 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.012 — The Microsoft 365 OAuth app is deployed from the connector
+
+Setting up the Microsoft 365 email connector meant leaving the product: run `O365/New-C7NTAXMailboxApp.ps1`, sign in with a device code at a Microsoft URL, then copy four values — one of which cannot be read a second time — into a form. **Deploy OAuth app** in the connector does the same work in place and fills the form with what comes back.
+
+- **[New]** **The wizard** (`Deploy OAuth app`, beside the Microsoft 365 connector's App-only and delegated modes): six steps — how, which tenant, sign in, create & consent, scope the mailbox, finish — with the step rail showing where you are and what is left. It ends by writing the tenant id, client id, client secret and mailbox straight into the connector's fields, and it scrolls them into view, because a filled form nobody sees reads as nothing having happened.
+- **[New]** **Two ways through, because the tenant decides which is possible.** *Deploy it from here* uses the OAuth device-code flow against Microsoft's public Graph command-line client: the administrator approves a code in their own browser, so this application never holds a credential for the tenant, and the token that comes back is used for this one task. *Run the script, or use an app you already have* shows the exact `New-C7NTAXMailboxApp.ps1` command for the tenant and mailbox chosen and takes its `out/c7ntax-m365-app.json` — for a registration that already exists, or a tenant this instance cannot reach Microsoft from.
+- **[New]** **The deployment itself** (`POST /api/oauth-app/start`, `…/{id}/poll`, `…/{id}/deploy`): find or create the application by display name, record `requiredResourceAccess` with the **application** role id of `Mail.ReadWrite`, create the service principal consent is granted *to*, grant admin consent with all three ids (principal, resource, AppRole), and mint a 12-month client secret — or none at all for the delegated flow, which is a public client using PKCE. It registers this instance's own redirect URI on a delegated deployment, and returns the **Exchange Online** commands that scope an app-only registration to one mailbox, because Graph has no route to those and an unscoped app-only app can read every mailbox in the tenant.
+- **[New]** **Idempotent by registration name**, exactly as the script is: a second run reuses `C7NTAX Email Connector`, consents again (an "already granted" answer is not a failure) and mints a further secret rather than duplicating the application.
+- **[New]** **`POST /api/oauth-app/import`** — the script's JSON, or the four values typed by hand. It refuses a client id that is not a GUID, and it refuses a registration granted **`Mail.Read`** instead of `Mail.ReadWrite`: a read-only app connects, reads the mailbox and then fails on the first message it tries to mark, so the wizard says so instead of saving a connector that will fail on its first email.
+- **[Fix]** **A client secret could reach the audit log.** The generic audit middleware records request bodies and redacts them by *key name*, and `POST /api/oauth-app/import` carries the secret inside a JSON **string** that check cannot see — so the whole credential set was stored in clear text. The wizard's routes are now skipped by the generic middleware and audited by the route instead (tenant, client id, secret **expiry**, never the value), and `scriptJson` is treated as a sensitive key in the generic path as well.
+- **[Fix]** **"Start sign-in" appeared to do nothing.** It advanced one step from *Tenant* instead of jumping to the *Sign in* screen, so the code was never shown — found by driving the wizard in a browser rather than reading the code. Steps are addressed by name now, so a path that adds or drops a step cannot reintroduce it.
+- **[Fix]** **The mailbox was dropped on the way into an import.** The wizard's own mailbox field was not sent with a pasted file, so it warned about a mailbox it had already been given.
+- **[Update]** **Help caught up with the connector**: the Microsoft 365 walkthrough said the app needs `Mail.Read` — it needs `Mail.ReadWrite` — and now covers the app-only requirement, the wizard, the Exchange Online scoping and the delegated flow, with a configuration reference and four FAQ entries (setting it up, why not `Mail.Read`, consent taking 30–60 minutes, and using the script instead).
+- **[Update]** `O365/README.md` and `docs/API.md` describe both routes to the same result, and the six new operations carry curated summaries so the generated specification explains them (`418 operations`, `58 curated`).
+
+Verified in `apps/api/probe-oauth-app.mjs` — **71 checks** against a stub Microsoft that records every call: the device-code sign-in and its claims, the application **role** id of Mail.ReadWrite (`e2a3a72e-…`, not the delegated scope `024d486e-…`), the three-id consent, the service principal consent points at, the secret's twelve-month lifetime, the delegated path's redirect URI and PKCE-with-no-secret, reuse on a second run, every refusal (unknown tenant, declined sign-in, deploying before signing in, `Mail.Read`, a non-GUID client id, a paste that is not JSON) and the audit trail — including that no secret value reaches it. Then the wizard itself was driven in a browser through **both** paths against the same stub, ending with the connector's four fields filled from each.
 
 ---
 

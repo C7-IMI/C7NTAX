@@ -417,6 +417,32 @@ an HTTP error — instead of pretending the record arrived.
 Outbound requests from connectors and pushes go through the egress policy
 (`apps/api/src/services/egress.ts`), which refuses private-network and non-HTTPS destinations.
 
+### Microsoft 365: deploying the app registration
+
+The email connector reads a Microsoft 365 mailbox with an **app-only** `Mail.ReadWrite` registration, so
+something has to exist in the tenant before the connector can be saved. `O365/New-C7NTAXMailboxApp.ps1`
+does it from a terminal; the same sequence is available as an API so a wizard can drive it inside the
+product (Administration → CloudConnect → Email Connectors → **Deploy OAuth app**):
+
+```bash
+GET  /api/oauth-app                    # the permissions, the redirect URI, the by-hand command
+POST /api/oauth-app/start              # a device code for the tenant administrator
+POST /api/oauth-app/{id}/poll          # pending → authorized | declined | expired
+POST /api/oauth-app/{id}/deploy        # create or reuse, consent, mint the secret
+POST /api/oauth-app/import             # or read the script's out/c7ntax-m365-app.json
+```
+
+Sign-in is the OAuth **device-code** flow against Microsoft's public Graph command-line client, so this
+application never holds a credential for the tenant: the administrator approves a code in their own
+browser and the token that comes back is used for one task. Deployment is idempotent **by display
+name** — an existing `C7NTAX Email Connector` registration is reused, consented again, and given a
+further secret rather than a duplicate being created — and it returns the **Exchange Online** commands
+that scope an app-only registration to one mailbox, because Graph has no route to those and an unscoped
+app-only app can read every mailbox in the tenant. `POST /api/oauth-app/import` is the path for a
+tenant this instance cannot reach Microsoft from: paste the script's JSON and the four values come back.
+Everything is gated on `integration:manage`, and each deployment or import writes an audit row
+(`entity: "oauth_app"`) naming the tenant, the client id and the secret's expiry — never the secret.
+
 ---
 
 ## 10. Outbound webhooks — C7NTAX telling you

@@ -213941,5 +213941,48 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-08T08:00:20.983Z"
+  },
+  {
+    "id": "9d265f6e-df53-4201-9a46-332987a8fbc0",
+    "action": "oauth_app.deployed",
+    "entity": "oauth_app",
+    "entityId": "object-1",
+    "changes": {
+      "mode": "AppOnly",
+      "account": "admin@contoso.com",
+      "mailbox": "servicedesk@contoso.com",
+      "clientId": "99999999-8888-7777-6666-000000000001",
+      "tenantId": "standalone-tenant-id",
+      "displayName": "C7NTAX Email Connector",
+      "permissions": {
+        "delegated": [],
+        "application": [
+          "Mail.ReadWrite"
+        ]
+      },
+      "secretExpiry": "2027-10-03T08:02:57.484Z",
+      "reusedRegistration": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T08:02:57.487Z"
+  },
+  {
+    "id": "124ffc54-1b9f-4b29-994d-68ccdc217c65",
+    "action": "oauth_app.imported",
+    "entity": "oauth_app",
+    "entityId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    "changes": {
+      "mode": "AppOnly",
+      "source": "script",
+      "mailbox": null,
+      "clientId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "tenantId": "fabrikam.onmicrosoft.com",
+      "hasSecret": true,
+      "secretExpiry": "2027-10-08T00:00:00Z"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T08:03:21.681Z"
   }
 ]

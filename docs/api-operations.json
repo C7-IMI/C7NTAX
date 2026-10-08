@@ -6,15 +6,22 @@
     "where the document is completed. Add an entry when an operation's purpose is not obvious from its",
     "path, when it is what an integrator will reach for, or when its behaviour needs a warning."
   ],
-
   "POST /api/auth/login": {
     "summary": "Sign in and receive a session token",
     "description": "Email and password in, a bearer token out. When MFA is enabled the answer is an mfaToken instead, which POST /api/auth/verify-mfa exchanges for the real token. A token is what the Authorization header carries for a person; a program should use an API key instead.",
-    "requestExample": { "email": "person@example.com", "password": "…" }
+    "requestExample": {
+      "email": "person@example.com",
+      "password": "…"
+    }
   },
-  "GET /api/auth/me": { "summary": "The signed-in identity, with its permissions", "description": "The cheapest way for a client to confirm a credential works and to learn the permissions it holds." },
-  "POST /api/auth/mfa/verify": { "summary": "Exchange an MFA challenge for a session token", "description": "The second half of MFA sign-in: the mfaToken from POST /api/auth/login plus a TOTP code." },
-
+  "GET /api/auth/me": {
+    "summary": "The signed-in identity, with its permissions",
+    "description": "The cheapest way for a client to confirm a credential works and to learn the permissions it holds."
+  },
+  "POST /api/auth/mfa/verify": {
+    "summary": "Exchange an MFA challenge for a session token",
+    "description": "The second half of MFA sign-in: the mfaToken from POST /api/auth/login plus a TOTP code."
+  },
   "GET /api/api-keys/permissions": {
     "summary": "Every scope a key may be issued with",
     "description": "The permission catalogue, so a client can build a key without hard-coding scope names, plus the purposes a key can be labelled with (rmm, siem, flexpoint, quickbooks, monitoring, scheduler, other)."
@@ -22,17 +29,54 @@
   "GET /api/api-keys": {
     "summary": "The key inventory",
     "description": "Names, prefixes, scopes, owner, last use and state — never the secret and never its hash. `?includeRevoked=true` keeps the history.",
-    "responseExample": { "data": [{ "id": "…", "name": "RMM production", "prefix": "c7k_075c9e9baaf5efd7", "sourceKind": "rmm", "permissions": ["ticket:create", "ticket:view"], "state": "active", "lastUsedAt": "2026-10-08T07:31:02.000Z" }] }
+    "responseExample": {
+      "data": [
+        {
+          "id": "…",
+          "name": "RMM production",
+          "prefix": "c7k_075c9e9baaf5efd7",
+          "sourceKind": "rmm",
+          "permissions": [
+            "ticket:create",
+            "ticket:view"
+          ],
+          "state": "active",
+          "lastUsedAt": "2026-10-08T07:31:02.000Z"
+        }
+      ]
+    }
   },
   "POST /api/api-keys": {
     "summary": "Issue a key for a program",
     "description": "The only time the secret is returned — store it in the client, and revoke the key if it is lost. The key acts as `userId` (the caller by default), intersected with `permissions`, so it can never exceed the account it borrows.",
-    "requestExample": { "name": "RMM production", "sourceKind": "rmm", "permissions": ["ticket:create", "ticket:view"], "expiresAt": "2027-10-08T00:00:00Z" },
-    "responseExample": { "id": "…", "name": "RMM production", "prefix": "c7k_075c9e9baaf5efd7", "key": "c7k_075c9e9baaf5efd7.…", "permissions": ["ticket:create", "ticket:view"] }
+    "requestExample": {
+      "name": "RMM production",
+      "sourceKind": "rmm",
+      "permissions": [
+        "ticket:create",
+        "ticket:view"
+      ],
+      "expiresAt": "2027-10-08T00:00:00Z"
+    },
+    "responseExample": {
+      "id": "…",
+      "name": "RMM production",
+      "prefix": "c7k_075c9e9baaf5efd7",
+      "key": "c7k_075c9e9baaf5efd7.…",
+      "permissions": [
+        "ticket:create",
+        "ticket:view"
+      ]
+    }
   },
-  "POST /api/api-keys/:id/rotate": { "summary": "Issue a new secret for the same key", "description": "Scopes, owner and name stay; the previous secret stops working immediately." },
-  "DELETE /api/api-keys/:id": { "summary": "Revoke a key", "description": "Recorded as a state rather than a deletion, so the inventory keeps its history. Requests using the key are refused from the next call." },
-
+  "POST /api/api-keys/:id/rotate": {
+    "summary": "Issue a new secret for the same key",
+    "description": "Scopes, owner and name stay; the previous secret stops working immediately."
+  },
+  "DELETE /api/api-keys/:id": {
+    "summary": "Revoke a key",
+    "description": "Recorded as a state rather than a deletion, so the inventory keeps its history. Requests using the key are refused from the next call."
+  },
   "POST /api/events": {
     "summary": "Receive an event from another system (RMM, SIEM, monitoring)",
     "description": "The gateway every outside system sends to. Idempotent by (source, externalId): a repeat attaches to the ticket the first event opened and counts the occurrence, and `kind: recovery` closes that ticket instead of opening one. Needs ticket:create. Returns what happened — whether a ticket was opened, joined or closed — rather than only that the request was understood.",
@@ -43,76 +87,302 @@
       "severity": "high",
       "title": "Disk 0 on RP-SRV-01 is 94% full",
       "description": "Free space below the 10% threshold.",
-      "client": { "name": "Acme Corporation" },
-      "data": { "device": "RP-SRV-01", "freePercent": 6 }
+      "client": {
+        "name": "Acme Corporation"
+      },
+      "data": {
+        "device": "RP-SRV-01",
+        "freePercent": 6
+      }
     },
-    "responseExample": { "eventId": "…", "ticketId": "…", "ticketNumber": "ACME-1001-1042", "created": true, "merged": false, "recovered": false, "occurrences": 1 }
+    "responseExample": {
+      "eventId": "…",
+      "ticketId": "…",
+      "ticketNumber": "ACME-1001-1042",
+      "created": true,
+      "merged": false,
+      "recovered": false,
+      "occurrences": 1
+    }
   },
-  "GET /api/events": { "summary": "Recently received events, with the ticket each became", "description": "Filter with ?source= and ?state=open|recovered. Useful for answering \"did the RMM reach us?\"." },
-  "GET /api/events/sources": { "summary": "Which systems have sent events, and how many" },
-
+  "GET /api/events": {
+    "summary": "Recently received events, with the ticket each became",
+    "description": "Filter with ?source= and ?state=open|recovered. Useful for answering \"did the RMM reach us?\"."
+  },
+  "GET /api/events/sources": {
+    "summary": "Which systems have sent events, and how many"
+  },
   "POST /api/flexpoint/sync": {
     "summary": "Pull FlexPoint now",
     "description": "Reads customers, invoices and deposits according to the connection's options, stores them, links customers to clients, and records settled payments when that option is on. The same work the Sync button on C7NC → FlexPoint does. A scheduler can call this on a timer: FlexPoint publishes no webhooks, so nothing arrives on its own.",
-    "responseExample": { "success": true, "recordsProcessed": 42, "stored": { "customers": 12, "invoices": 28, "deposits": 2 }, "linked": { "byExternalUri": 9, "byName": 1, "created": 0, "ambiguous": 0 }, "paymentsRecorded": 1, "invoicesMarked": 1, "errors": [] }
+    "responseExample": {
+      "success": true,
+      "recordsProcessed": 42,
+      "stored": {
+        "customers": 12,
+        "invoices": 28,
+        "deposits": 2
+      },
+      "linked": {
+        "byExternalUri": 9,
+        "byName": 1,
+        "created": 0,
+        "ambiguous": 0
+      },
+      "paymentsRecorded": 1,
+      "invoicesMarked": 1,
+      "errors": []
+    }
   },
   "GET /api/flexpoint": {
     "summary": "The FlexPoint picture: connection, options, counts, client receivables",
     "description": "Everything the configuration page is drawn from, and the cheapest way to read a client's receivable in bulk."
   },
-  "PUT /api/flexpoint/options": { "summary": "Change what FlexPoint does here", "description": "What to pull, how customers are matched to clients, whether clients are created for unmatched customers, whether the client id is written back, whether settled payments are recorded, and whether invoices may be pushed. Writes to FlexPoint or to the ledger are off until switched on." },
-  "POST /api/flexpoint/link": { "summary": "Tie a FlexPoint customer to a client, or untie it", "description": "One customer per client — linking replaces any previous one. `customerId: null` clears the link without touching FlexPoint." },
-  "GET /api/flexpoint/clients/:companyId": { "summary": "One client's receivable", "description": "Open balance, overdue, what has been received, the invoices FlexPoint holds, and the FlexPoint payments recorded here." },
-  "POST /api/flexpoint/invoices/:invoiceId/push": { "summary": "Create or update this invoice in FlexPoint", "description": "Refused unless \"push invoices\" is switched on for the connection. Idempotent: an invoice that already carries a FlexPoint id is updated rather than created twice." },
-  "GET /api/flexpoint/invoices": { "summary": "Local invoices with their FlexPoint state" },
-
+  "PUT /api/flexpoint/options": {
+    "summary": "Change what FlexPoint does here",
+    "description": "What to pull, how customers are matched to clients, whether clients are created for unmatched customers, whether the client id is written back, whether settled payments are recorded, and whether invoices may be pushed. Writes to FlexPoint or to the ledger are off until switched on."
+  },
+  "POST /api/flexpoint/link": {
+    "summary": "Tie a FlexPoint customer to a client, or untie it",
+    "description": "One customer per client — linking replaces any previous one. `customerId: null` clears the link without touching FlexPoint."
+  },
+  "GET /api/flexpoint/clients/:companyId": {
+    "summary": "One client's receivable",
+    "description": "Open balance, overdue, what has been received, the invoices FlexPoint holds, and the FlexPoint payments recorded here."
+  },
+  "POST /api/flexpoint/invoices/:invoiceId/push": {
+    "summary": "Create or update this invoice in FlexPoint",
+    "description": "Refused unless \"push invoices\" is switched on for the connection. Idempotent: an invoice that already carries a FlexPoint id is updated rather than created twice."
+  },
+  "GET /api/flexpoint/invoices": {
+    "summary": "Local invoices with their FlexPoint state"
+  },
   "POST /api/cloudconnect": {
     "summary": "Add a connector",
     "description": "kind, name, credentials and settings. `GET /api/cloudconnect/types` publishes what each connector needs, including the field labels and explanations the configuration dialog shows.",
-    "requestExample": { "kind": "flexpoint", "name": "FlexPoint production", "credentials": { "apiSecret": "…" }, "settings": {} }
+    "requestExample": {
+      "kind": "flexpoint",
+      "name": "FlexPoint production",
+      "credentials": {
+        "apiSecret": "…"
+      },
+      "settings": {}
+    }
   },
-  "GET /api/cloudconnect/types": { "summary": "The connector catalogue", "description": "Every connector kind, what it does, the credentials it needs (with labels, hints and the vendor's own API reference) and the settings it honours." },
-  "POST /api/cloudconnect/:id/test": { "summary": "Verify a connector now", "description": "A real call to the provider. On failure the answer names the fields at fault and how to fix them." },
-  "POST /api/cloudconnect/:id/sync": { "summary": "Read from a connector now", "description": "For FlexPoint this runs the full FlexPoint sync (linking and payments included); for every other kind it stores what the adapter returned." },
-  "GET /api/cloudconnect/:id/synced-entities": { "summary": "What a connector has brought in" },
-  "GET /api/cloudconnect/status": { "summary": "Live health of every connection", "description": "State, detail, when it was last verified and whether it is stale, without calling the provider." },
-
+  "GET /api/cloudconnect/types": {
+    "summary": "The connector catalogue",
+    "description": "Every connector kind, what it does, the credentials it needs (with labels, hints and the vendor's own API reference) and the settings it honours."
+  },
+  "POST /api/cloudconnect/:id/test": {
+    "summary": "Verify a connector now",
+    "description": "A real call to the provider. On failure the answer names the fields at fault and how to fix them."
+  },
+  "POST /api/cloudconnect/:id/sync": {
+    "summary": "Read from a connector now",
+    "description": "For FlexPoint this runs the full FlexPoint sync (linking and payments included); for every other kind it stores what the adapter returned."
+  },
+  "GET /api/cloudconnect/:id/synced-entities": {
+    "summary": "What a connector has brought in"
+  },
+  "GET /api/cloudconnect/status": {
+    "summary": "Live health of every connection",
+    "description": "State, detail, when it was last verified and whether it is stale, without calling the provider."
+  },
   "POST /api/tickets": {
     "summary": "Open a ticket",
     "description": "The same ticket a person would open, with the fields an integrator needs: board, client, contact, priority, assignee. Prefer POST /api/events for monitoring traffic — it is idempotent, and this is not.",
-    "requestExample": { "title": "Printer offline", "boardId": "…", "companyId": "…", "priority": "medium", "description": "Reported by the client's office manager." }
+    "requestExample": {
+      "title": "Printer offline",
+      "boardId": "…",
+      "companyId": "…",
+      "priority": "medium",
+      "description": "Reported by the client's office manager."
+    }
   },
-  "GET /api/tickets": { "summary": "List tickets", "description": "Filtered and paginated. A client-scoped credential only ever sees its own client's tickets." },
-  "GET /api/tickets/:id": { "summary": "One ticket with its thread" },
-  "PATCH /api/tickets/:id": { "summary": "Update a ticket", "description": "Status, priority, assignment, board and the rest. Status changes are what fire the ticket's notifications." },
-  "POST /api/tickets/:id/comments": { "summary": "Add a note or reply to a ticket", "description": "`isInternal: true` keeps the note off the customer's copy, which is what an integration's working notes should be." },
-
-  "GET /api/clients": { "summary": "List clients", "description": "The client list, filterable by status, type, territory and search." },
-  "POST /api/clients": { "summary": "Create a client", "description": "Only `name` is required. This is what the FlexPoint option \"create clients for unmatched customers\" calls internally." },
-
-  "GET /api/billing/invoices": { "summary": "List invoices" },
-  "POST /api/billing/invoices/generate": { "summary": "Generate an invoice from unbilled time" },
-  "POST /api/billing/invoices/:id/send": { "summary": "Send an invoice to the client" },
-  "POST /api/billing/invoices/:id/record-payment": { "summary": "Record a payment against an invoice" },
-  "POST /api/billing/batches/:id/approve": { "summary": "Approve a bill-through batch", "description": "Issues every draft in the batch and offers each invoice to the connected accounting system. When the connection is FlexPoint and pushing is allowed, that push goes through FlexPoint's merchant API." },
-
-  "GET /api/service-alerts": { "summary": "Current service alerts", "description": "What the alert banner and the Outage Board read." },
-  "POST /api/service-alerts": { "summary": "Raise a service alert" },
-  "GET /api/alert-webhooks": { "summary": "The outbound webhook endpoints", "description": "Where this application sends service_alert.raised and service_alert.resolved, with the signing secret and which events each endpoint wants." },
-  "POST /api/alert-webhooks/:id/test": { "summary": "Send a test delivery to a webhook" },
-  "GET /api/alert-webhooks/deliveries": { "summary": "What was delivered, and what failed" },
-
-  "GET /api/system/changelog": { "summary": "What's New — the release notes as structured data" },
-  "GET /api/system/audit-logs": { "summary": "The audit trail", "description": "Actions with their actor, entity and timestamp. This is the join an SIEM wants: correlate a detection with the change someone made after it." },
-  "GET /api/system/config/:key": { "summary": "Read one configuration value" },
-  "GET /api/configuration": { "summary": "The configuration registry", "description": "Every setting the application reads: value, source (default, environment, or saved), what changing it affects, and what it defaults to." },
-
-  "GET /api/portal/tickets": { "summary": "The customer portal's own ticket list", "description": "Portal routes are authenticated by a contact's one-time code, not by a staff session — they are listed here so the surface is complete, not as something an integration should call." },
-
-  "GET /api/kb": { "summary": "Knowledge base articles", "description": "The published articles, with /api/kb/drafts for the ones not published and /api/kb/categories for the tree." },
-  "GET /api/reports": { "summary": "Report definitions" },
-  "GET /api/reports/:id/run": { "summary": "Run a report and get its rows", "description": "The custom report designer's runner: a stored template rendered against live data, returning the rows and the totals it computed." },
-  "GET /api/products": { "summary": "The product catalogue" },
-  "GET /api/dashboard/layout": { "summary": "The signed-in user's dashboard layout", "description": "Per-user, not global: this is the arrangement of the widgets on the caller's own dashboard." },
-  "GET /api/nav/favorites": { "summary": "The signed-in user's pinned navigation" }
+  "GET /api/tickets": {
+    "summary": "List tickets",
+    "description": "Filtered and paginated. A client-scoped credential only ever sees its own client's tickets."
+  },
+  "GET /api/tickets/:id": {
+    "summary": "One ticket with its thread"
+  },
+  "PATCH /api/tickets/:id": {
+    "summary": "Update a ticket",
+    "description": "Status, priority, assignment, board and the rest. Status changes are what fire the ticket's notifications."
+  },
+  "POST /api/tickets/:id/comments": {
+    "summary": "Add a note or reply to a ticket",
+    "description": "`isInternal: true` keeps the note off the customer's copy, which is what an integration's working notes should be."
+  },
+  "GET /api/clients": {
+    "summary": "List clients",
+    "description": "The client list, filterable by status, type, territory and search."
+  },
+  "POST /api/clients": {
+    "summary": "Create a client",
+    "description": "Only `name` is required. This is what the FlexPoint option \"create clients for unmatched customers\" calls internally."
+  },
+  "GET /api/billing/invoices": {
+    "summary": "List invoices"
+  },
+  "POST /api/billing/invoices/generate": {
+    "summary": "Generate an invoice from unbilled time"
+  },
+  "POST /api/billing/invoices/:id/send": {
+    "summary": "Send an invoice to the client"
+  },
+  "POST /api/billing/invoices/:id/record-payment": {
+    "summary": "Record a payment against an invoice"
+  },
+  "POST /api/billing/batches/:id/approve": {
+    "summary": "Approve a bill-through batch",
+    "description": "Issues every draft in the batch and offers each invoice to the connected accounting system. When the connection is FlexPoint and pushing is allowed, that push goes through FlexPoint's merchant API."
+  },
+  "GET /api/service-alerts": {
+    "summary": "Current service alerts",
+    "description": "What the alert banner and the Outage Board read."
+  },
+  "POST /api/service-alerts": {
+    "summary": "Raise a service alert"
+  },
+  "GET /api/alert-webhooks": {
+    "summary": "The outbound webhook endpoints",
+    "description": "Where this application sends service_alert.raised and service_alert.resolved, with the signing secret and which events each endpoint wants."
+  },
+  "POST /api/alert-webhooks/:id/test": {
+    "summary": "Send a test delivery to a webhook"
+  },
+  "GET /api/alert-webhooks/deliveries": {
+    "summary": "What was delivered, and what failed"
+  },
+  "GET /api/system/changelog": {
+    "summary": "What's New — the release notes as structured data"
+  },
+  "GET /api/system/audit-logs": {
+    "summary": "The audit trail",
+    "description": "Actions with their actor, entity and timestamp. This is the join an SIEM wants: correlate a detection with the change someone made after it."
+  },
+  "GET /api/system/config/:key": {
+    "summary": "Read one configuration value"
+  },
+  "GET /api/configuration": {
+    "summary": "The configuration registry",
+    "description": "Every setting the application reads: value, source (default, environment, or saved), what changing it affects, and what it defaults to."
+  },
+  "GET /api/portal/tickets": {
+    "summary": "The customer portal's own ticket list",
+    "description": "Portal routes are authenticated by a contact's one-time code, not by a staff session — they are listed here so the surface is complete, not as something an integration should call."
+  },
+  "GET /api/kb": {
+    "summary": "Knowledge base articles",
+    "description": "The published articles, with /api/kb/drafts for the ones not published and /api/kb/categories for the tree."
+  },
+  "GET /api/reports": {
+    "summary": "Report definitions"
+  },
+  "GET /api/reports/:id/run": {
+    "summary": "Run a report and get its rows",
+    "description": "The custom report designer's runner: a stored template rendered against live data, returning the rows and the totals it computed."
+  },
+  "GET /api/products": {
+    "summary": "The product catalogue"
+  },
+  "GET /api/dashboard/layout": {
+    "summary": "The signed-in user's dashboard layout",
+    "description": "Per-user, not global: this is the arrangement of the widgets on the caller's own dashboard."
+  },
+  "GET /api/nav/favorites": {
+    "summary": "The signed-in user's pinned navigation"
+  },
+  "GET /api/oauth-app": {
+    "summary": "What the OAuth app wizard needs before it starts",
+    "description": "The permissions a deployment will request (`Mail.ReadWrite` as an application role, `Mail.ReadWrite`/`User.Read`/`offline_access` delegated), the redirect URI this instance must be registered with for the delegated flow, the default registration name, and the by-hand command that does the same thing from a terminal. `integration:manage`.",
+    "responseExample": {
+      "authClientId": "14d82eec-204b-4c2f-b7e8-296a70dab67e",
+      "defaultDisplayName": "C7NTAX Email Connector",
+      "permissions": {
+        "application": [
+          "Mail.ReadWrite"
+        ],
+        "delegated": [
+          "Mail.ReadWrite",
+          "User.Read",
+          "offline_access"
+        ]
+      },
+      "redirectUri": "https://psa.example.com/api/email-connectors/oauth/callback",
+      "secretMonths": 12,
+      "script": {
+        "file": "O365/New-C7NTAXMailboxApp.ps1",
+        "command": "pwsh -File O365/New-C7NTAXMailboxApp.ps1 -TenantId <tenant> -DelegateMailbox <mailbox>"
+      }
+    }
+  },
+  "POST /api/oauth-app/start": {
+    "summary": "Begin a deployment: a device code for the tenant administrator",
+    "description": "Starts the OAuth device-code flow against Microsoft's public Graph command-line client, so nothing about the tenant is held here and the administrator signs in themselves. Returns the code to type and the URL to open; poll the session until it is authorised. The tenant may be a GUID or a primary domain, and a tenant that does not exist is refused by name.",
+    "requestExample": {
+      "tenant": "contoso.onmicrosoft.com",
+      "mode": "AppOnly",
+      "mailbox": "servicedesk@contoso.com",
+      "displayName": "C7NTAX Email Connector"
+    },
+    "responseExample": {
+      "sessionId": "8f2c…",
+      "userCode": "ABCD-EFGH",
+      "verificationUri": "https://microsoft.com/devicelogin",
+      "verificationUriComplete": "https://microsoft.com/devicelogin?otc=ABCD-EFGH",
+      "expiresIn": 900,
+      "interval": 5
+    }
+  },
+  "POST /api/oauth-app/import": {
+    "summary": "Read the script's output (or the four values) instead of deploying from here",
+    "description": "The offline path through the wizard, for a tenant this instance cannot reach the Microsoft sign-in endpoint, or a registration that already exists. Paste the contents of `O365/out/c7ntax-m365-app.json` in `scriptJson`, or send `tenantId`/`clientId`/`clientSecret`/`mailbox` directly. Refuses a client id that is not a GUID, and refuses a registration granted `Mail.Read` instead of `Mail.ReadWrite` — the connector marks messages read, so read-only connects and then fails on the first message.",
+    "requestExample": {
+      "scriptJson": "{ \"tenantId\": \"contoso.onmicrosoft.com\", \"clientId\": \"1a2b3c4d-…\", \"secret\": \"…\", \"mode\": \"AppOnly\" }"
+    },
+    "responseExample": {
+      "tenantId": "contoso.onmicrosoft.com",
+      "clientId": "1a2b3c4d-…",
+      "clientSecret": "…",
+      "mailbox": "servicedesk@contoso.com",
+      "mode": "AppOnly",
+      "source": "script",
+      "warnings": [
+        "Confirm the Exchange Online scoping commands were run: until they are, an app-only registration can read every mailbox in the tenant."
+      ]
+    }
+  },
+  "POST /api/oauth-app/:sessionId/poll": {
+    "summary": "Has the administrator approved the sign-in yet?",
+    "description": "Asks Microsoft. Answers `pending` while the code is unapproved (and lengthens the interval if Microsoft says `slow_down`), `authorized` once a token has been granted — with the account and tenant id read from that token's claims — or `declined`/`expired` with the reason. Deploying before this says `authorized` is refused with 409."
+  },
+  "POST /api/oauth-app/:sessionId/deploy": {
+    "summary": "Create or reuse the registration, grant consent, mint the secret",
+    "description": "The same sequence as `O365/New-C7NTAXMailboxApp.ps1`, over Graph: find or create the application by display name (an existing one is *reused*, not duplicated), record `requiredResourceAccess` with the application role id of `Mail.ReadWrite` (and the delegated scope ids plus the redirect URI when the delegated flow is wanted), create the service principal consent is granted *to*, grant admin consent with all three ids, and create a client secret for 12 months unless the flow is delegated (which uses PKCE and must not have one). Also returns the Exchange Online commands that scope an app-only registration to one mailbox — Graph has no route to those. The secret is returned once and never stored by this API; the audit row keeps the expiry instead.",
+    "responseExample": {
+      "tenantId": "contoso.onmicrosoft.com",
+      "clientId": "1a2b3c4d-…",
+      "clientSecret": "…",
+      "secretExpiry": "2027-10-08T00:00:00Z",
+      "displayName": "C7NTAX Email Connector",
+      "mode": "AppOnly",
+      "reusedRegistration": false,
+      "permissions": {
+        "application": [
+          "Mail.ReadWrite"
+        ],
+        "delegated": []
+      },
+      "scopingCommands": "New-ServicePrincipal -AppId 1a2b3c4d-… -ObjectId sp-… -DisplayName \"C7NTAX Email Connector\"",
+      "warnings": [
+        "Confirm the Exchange Online scoping commands were run: until they are, an app-only registration can read every mailbox in the tenant."
+      ]
+    }
+  },
+  "GET /api/oauth-app/:sessionId": {
+    "summary": "Where a deployment got to, without contacting Microsoft",
+    "description": "The session's own state: pending, authorized, declined, expired or failed, plus the tenant, mode, mailbox and display name it was started with."
+  }
 }

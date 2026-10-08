@@ -51,6 +51,14 @@ public client and is overridable with `-AuthClientId` if a tenant prefers its ow
 
 ## Running it
 
+There is now a second way to run it: **C7NTAX → Administration → CloudConnect → Email Connectors → Deploy
+OAuth app**. That wizard performs the same sequence through the API (device-code sign-in, create or
+reuse the registration, consent, secret, the Exchange Online commands) and fills the connector's
+form with the result, so nothing is copied out of this console. It can also take *this script's* output:
+run the script, paste `out/c7ntax-m365-app.json` into the wizard, and it fills the same four fields.
+Use whichever suits the tenant — the script remains the reference, and the one to read if you want to
+see exactly what is being called.
+
 Look before you leap — every Graph call is printed and nothing is called:
 
 ```powershell
