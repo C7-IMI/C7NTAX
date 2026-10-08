@@ -65,7 +65,7 @@ export function missingCredentials(kind: string, credentials: Record<string, str
     datto: ["apiKey", "apiSecret"],
     freshdesk: ["domain", "apiKey"],
     xero: ["clientId", "clientSecret", "tenantId"],
-    flexpoint: ["apiKey"],
+    flexpoint: ["apiSecret"],
   };
   const required = requirements[kind] ?? [];
   return required.filter(field => {

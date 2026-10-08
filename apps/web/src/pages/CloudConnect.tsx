@@ -5,7 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import {
   Plus, Plug, RefreshCw, Trash2, Key, Settings,
   ShieldCheck, Globe, Server, Cloud, CreditCard, FileText, Database,
-  Wifi, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users,
+  Wifi, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users, Info, ExternalLink,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -34,18 +34,43 @@ interface SyncLog {
   recordsFailed: number; startedAt: string; completedAt: string | null;
 }
 
+/** One credential, and how it should be asked for. */
+interface CredentialField {
+  key: string;
+  /** Falls back to the key turned into words, which is all the older connectors provide. */
+  label?: string;
+  type?: "text" | "password" | "number";
+  placeholder?: string;
+  /** Where the value comes from, printed under the input. */
+  hint?: string;
+}
+
 interface IntegrationType {
   kind: string; name: string; description: string;
   requiredCredentials: string[];
+  /**
+   * How each credential should be presented. A connector that describes its own fields gets its own
+   * labels and its own sentence about where the value comes from — which matters when the value is
+   * not an "API key" you can generate anywhere, but something the vendor issues in a particular
+   * screen. A connector that does not falls back to the derived label.
+   */
+  credentialFields?: CredentialField[];
   requiredScopes?: string[];
+  /** The vendor's own API reference. */
+  docsUrl?: string;
+  docsLabel?: string;
+  /** Why this connector is shaped the way it is — one paragraph, above the fields. */
+  guidance?: { tone?: "info" | "warn"; text: string };
   settings?: Array<{
     key: string; label: string; type: string; default?: any;
     options?: string[];
+    /** What the setting actually does, printed under the control. */
+    hint?: string;
   }>;
 }
 
 const KIND_LABELS: Record<string, string> = {
-  flexpoint: "Flexpoint Payments", quickbooks: "QuickBooks Online", pax8: "Pax8",
+  flexpoint: "FlexPoint (billing & AR)", quickbooks: "QuickBooks Online", pax8: "Pax8",
   avanan: "Avanan", proofpoint: "Proofpoint", sentinelone: "SentinelOne",
   itglue: "ITGlue", microsoft365: "Microsoft 365", azure: "Azure", aws: "AWS",
   connectwise: "ConnectWise PSA", halopsa: "HaloPSA",
@@ -408,6 +433,13 @@ export function CloudConnectPage() {
 
   const IconFor = (kind: string): LucideIcon => KIND_ICONS[kind] || Plug;
 
+  /** The credential inputs for the chosen connector: its own field list, or the plain names. */
+  const credentialFields: CredentialField[] = selectedType
+    ? (selectedType.credentialFields?.length
+        ? selectedType.credentialFields
+        : (selectedType.requiredCredentials || []).map(key => ({ key })))
+    : [];
+
   // ── Render ────────────────────────────────────────────────────────
 
   return (
@@ -479,45 +511,83 @@ export function CloudConnectPage() {
                 <button onClick={() => { setShowAdd(false); setSelectedType(null); }} className="text-gray-500 hover:text-white">Cancel</button>
               </div>
               <p className="text-sm text-gray-400 -mt-3">{selectedType.description}</p>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Connection Name</label>
-                <input className="input-field" value={formName} onChange={e => setFormName(e.target.value)} />
+
+              {/* What this connector is, in the vendor's terms — read before the first field. */}
+              {selectedType.guidance && (
+                <div className={`flex items-start gap-2 rounded-lg border p-3 ${selectedType.guidance.tone === "warn" ? "border-amber-500/20 bg-amber-500/5" : "border-cyber-500/20 bg-cyber-500/5"}`}>
+                  {selectedType.guidance.tone === "warn"
+                    ? <Info size={14} className="text-amber-400 mt-0.5 shrink-0" />
+                    : <ShieldCheck size={14} className="text-cyber-400 mt-0.5 shrink-0" />}
+                  <p className="text-xs text-gray-300 leading-relaxed">{selectedType.guidance.text}</p>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 -mt-2">
+                <label className="text-xs text-gray-500">Connection name</label>
+                <input className="input-field !w-auto flex-1 max-w-sm" value={formName} onChange={e => setFormName(e.target.value)} />
               </div>
-              {selectedType.requiredCredentials?.length > 0 && (
+
+              {credentialFields.length > 0 && (
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"><Key size={13} /> Credentials</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {selectedType.requiredCredentials.map(c => (
-                      <div key={c}>
-                        <label className="text-xs text-gray-500 block mb-1">{formatCredLabel(c)}</label>
-                        <input className="input-field" type={isSecretCred(c) ? "password" : "text"}
-                          value={credForm[c] || ""} onChange={e => setCredForm(p => ({ ...p, [c]: e.target.value }))} />
+                    {credentialFields.map(f => (
+                      <div key={f.key}>
+                        <label className="text-xs text-gray-500 block mb-1">
+                          {f.label || formatCredLabel(f.key)}
+                          {selectedType.requiredCredentials?.includes(f.key) && <span className="text-cyber-400"> *</span>}
+                        </label>
+                        <input className="input-field"
+                          type={f.type || (isSecretCred(f.key) ? "password" : "text")}
+                          placeholder={f.placeholder}
+                          autoComplete={isSecretCred(f.key) ? "new-password" : "off"}
+                          value={credForm[f.key] || ""} onChange={e => setCredForm(p => ({ ...p, [f.key]: e.target.value }))} />
+                        {f.hint && <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{f.hint}</p>}
                       </div>
                     ))}
                   </div>
+                  {selectedType.docsUrl && (
+                    <a href={selectedType.docsUrl} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-cyber-400 hover:text-cyber-300">
+                      {selectedType.docsLabel || "API reference"} <ExternalLink size={11} />
+                    </a>
+                  )}
+                  {selectedType.requiredScopes?.length && (
+                    <p className="text-[11px] text-gray-500">
+                      Needs: <span className="font-mono">{selectedType.requiredScopes.join(", ")}</span>
+                    </p>
+                  )}
                 </div>
               )}
+
               {selectedType.settings?.length && <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-gray-400 uppercase flex items-center gap-2"><Settings size={13} /> Settings</h4>
                 {selectedType.settings.map(s => (
-                  s.type === "boolean" ? (
-                    <label key={s.key} className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={settingsForm[s.key] !== false}
-                        onChange={e => setSettingsForm(p => ({ ...p, [s.key]: e.target.checked }))} className="rounded" />
-                      <span className="text-sm text-gray-300">{s.label}</span>
-                    </label>
-                  ) : s.type === "select" && s.options ? (
-                    <div key={s.key}><label className="text-xs text-gray-500 block mb-1">{s.label}</label>
-                      <select className="input-field" value={settingsForm[s.key] || ""}
-                        onChange={e => setSettingsForm(p => ({ ...p, [s.key]: e.target.value }))}>
-                        {s.options.map((o: string) => <option key={o} value={o}>{o}</option>)}
-                      </select></div>
-                  ) : (
-                    <div key={s.key}><label className="text-xs text-gray-500 block mb-1">{s.label}</label>
-                      <input className="input-field" type={s.type === "number" ? "number" : "text"}
-                        value={settingsForm[s.key] ?? ""}
-                        onChange={e => setSettingsForm(p => ({ ...p, [s.key]: s.type === "number" ? Number(e.target.value) : e.target.value }))} /></div>
-                  )
+                  <div key={s.key}>
+                    {s.type === "boolean" ? (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={settingsForm[s.key] !== false}
+                          onChange={e => setSettingsForm(p => ({ ...p, [s.key]: e.target.checked }))} className="rounded" />
+                        <span className="text-sm text-gray-300">{s.label}</span>
+                      </label>
+                    ) : s.type === "select" && s.options ? (
+                      <>
+                        <label className="text-xs text-gray-500 block mb-1">{s.label}</label>
+                        <select className="input-field" value={settingsForm[s.key] || ""}
+                          onChange={e => setSettingsForm(p => ({ ...p, [s.key]: e.target.value }))}>
+                          {s.options.map((o: string) => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      </>
+                    ) : (
+                      <>
+                        <label className="text-xs text-gray-500 block mb-1">{s.label}</label>
+                        <input className="input-field" type={s.type === "number" ? "number" : "text"}
+                          value={settingsForm[s.key] ?? ""}
+                          onChange={e => setSettingsForm(p => ({ ...p, [s.key]: s.type === "number" ? Number(e.target.value) : e.target.value }))} />
+                      </>
+                    )}
+                    {s.hint && <p className={`text-[11px] text-gray-500 mt-1 leading-relaxed ${s.type === "boolean" ? "ml-6" : ""}`}>{s.hint}</p>}
+                  </div>
                 ))}
               </div>}
               <div className="flex gap-3 pt-2">

@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.009",
+    "date": "2026-10-08",
+    "title": "Add Connection works, and FlexPoint is a real connector",
+    "changes": [
+      {
+        "text": "**Add Connection now visibly opens.** The flow was rendering *after* the email-connectors panel, which is a full form: the type grid opened 104 px below the fold, so the only thing that changed on screen was the button disappearing. The flow now takes the page over — the grid, or the configuration form once a type is chosen, is the first thing under the header, the page scrolls to it, and the email connectors and the connection list step aside until it is finished or cancelled.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The connector count in the header is counted, not typed** — it said \"16 connectors available\" whatever the server actually offered, and now reports the list the API returned.",
+        "type": "Update"
+      },
+      {
+        "text": "**A connector can describe its own configuration dialog.** Credentials and settings carry their own labels, one line saying where the value comes from, and the connector may add a paragraph of guidance plus a link to the vendor's own API reference. Sixteen connectors that say nothing beyond a field name still render exactly as they did.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**FlexPoint is now a real connector, built from FlexPoint's own API document.** They publish an OpenAPI 3.1.1 spec (\"FlexPoint API\" v1.0) at `apps.getflexpoint.com/core-api/swagger/v1/swagger.json`, and the adapter now follows it: one **merchant API secret** exchanged at `/api/v1/auth/login-merchant` for a short-lived bearer token (refreshed on a 401), then Customers, Invoices and Deposits under `/api/merchant/v1`, read with `offset` + `page_size` paging and stopped by the `record-count` header. The dialog asks for the merchant secret and the base URL, explains that one connection reads one merchant, offers only the three resource switches the adapter honours, and links the vendor's API reference. A failure says which resource and why — \"the merchant API secret was rejected\" rather than \"connection failed\".",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The dialog is honest about what FlexPoint cannot do**: their API has no webhooks, no product catalogue and no subscription resource, so nothing is offered for them, and there is no fake \"sync interval\" — nothing schedules a per-connection sync, so a setting that did nothing is not presented as if it worked.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Two documents claimed FlexPoint uses an `x-api-key` header.** It does not; the merchant secret is exchanged for a bearer token. Corrected in `docs/SESSION_AUTH_PLAN.md` and `PlanDocs/PLAN-001-Session-Auth.md`, and the required-credential list the health check uses was updated with them.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.008",
     "date": "2026-10-08",
     "title": "The tab strips look like something you press",

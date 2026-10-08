@@ -4947,3 +4947,47 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The pill regex artefact is worth remembering.** In a JS template literal, `\d` collapses to `d`, so a probe that measures contrast silently reads `NaN` and reports a failed check that is not a failure. Write `\\d` inside a template-literal probe, and check the raw strings before believing an assertion.
 - **Reach for `items-stretch` on a pill group whose children differ in content height** — a count in one tab is enough to make the tabs uneven.
 - **If the "Why" toggle is approved**, PLAN-023 §6 is the order to do it in, and `FieldCard` is the only file that has to change.
+
+---
+
+### Prompt 254 — Fixing the Add Connection button, and building the FlexPoint connector from the vendor's API
+
+**Timestamp:** 2026-10-08 02:20 | **Status:** Complete | **Duration:** ~75 min
+
+**BuildNotes IDs:** **2026.10.8.009** — "Add Connection works, and FlexPoint is a real connector"
+
+**Prompt**
+
+> The Add Connection button doesn't work. Fix it.
+>
+> Also, I need to add a connector for Flexpoint:
+>
+> https://www.getflexpoint.com/
+>
+> Use the Flexpoint API docs to create the connector configuration dialog.
+
+**What I did**
+- **Reproduced the button fault before touching it.** Clicking Add Connection *did* toggle the state — and the browser said the "Select Service Type" grid landed at **y = 1004 px in a 900 px viewport**, because the flow rendered *after* the email-connectors panel, which is a full form. The only visible change was the button vanishing. So the fault was layout, not wiring, and a fix that "made the click do something" would have missed it.
+- **Made the flow own the page**: the type grid — or the configuration form once a type is chosen — now renders first under the header, inside a ref that is scrolled into view when the flow opens, and the email-connectors panel and the connection list step aside until it is finished or cancelled. Verified at **top = 210 px** with an empty scroll position.
+- **Counted the connectors instead of typing the number.** The header said "16 connectors available" as a literal; it now reports what `/cloudconnect/types` returned.
+- **Made the dialog able to explain itself.** `IntegrationType` gained optional `credentialFields` (label, type, placeholder, hint), `guidance` and `docsUrl`/`docsLabel`, and settings gained `hint`. A connector that supplies none of it renders exactly as before, which was checked against Microsoft 365.
+- **Looked up the FlexPoint API properly rather than guessing it**, and the guess in the repository was wrong twice over: the stub adapter ("Payment processing and transaction data", `apiKey` + `x-api-key`) targeted `https://api.flexpoint.com`, a host that does not exist, and assumed an API-key header their API does not use. FlexPoint publish an **OpenAPI 3.1.1 document** ("FlexPoint API" v1.0) at `apps.getflexpoint.com/core-api/swagger/v1/swagger.json`, and I read the claims off it directly — the two-route auth (`POST /api/v1/auth/login-merchant` with `{secret}` → `{token}`), the global `Bearer` JWT scheme, the twelve resource paths under `/api/merchant/v1`, the `offset`/`page_size` paging and the `record-count` header documented in the operation descriptions.
+- **Rewrote the adapter against that document**: per-connection token cache with a 25-minute expiry (the tokens live ~30 minutes) refreshed on a 401, Customers/Invoices/Deposits paging stopped by `record-count` or a short page, a `MAX_PAGES` ceiling so a runaway list cannot loop, failures that name the resource, and a `testConnection` that reads one customer so "connected" means the resource API accepted the token, not merely that the secret exchanged.
+- **Built the dialog around what the connector really is**: one merchant secret (masked, marked required, with the path to it — FlexPoint → Settings → WebAPI → New API Credentials → Create Token), the base URL with the real default as its placeholder, three sync switches named after the actual resources, `page_size` with FlexPoint's own 50/200 bounds, a guidance paragraph, and a link to their Swagger reference.
+- **Left out what would have been a lie.** No sync interval (nothing schedules a per-connection sync — the only interval in the product is Microsoft 365's own) and nothing for webhooks, subscriptions or a product catalogue, because FlexPoint's API has none of them.
+- **Corrected the documents that had it wrong** (`docs/SESSION_AUTH_PLAN.md`, `PlanDocs/PLAN-001-Session-Auth.md`, "None — `x-api-key: {apiKey}` header") and the *second* copy of the required-credential list, in `services/integrationHealth.ts`, which would otherwise have reported every new FlexPoint connection as "Incomplete — missing Api Key" for ever.
+- **Verified four ways**: the adapter against a stubbed network (**21 checks**), the API end to end with a real connection created and deleted (**20 checks**, including a genuine refusal from `apps.getflexpoint.com` for a fake secret — which is what proves the host, route and body are right), the dialog in a browser (**17 checks**), and the button fix (**9 checks**).
+
+**Decisions worth remembering**
+- **A button that "does nothing" is usually a button whose effect is off-screen.** Measure where the thing landed before changing the handler: the handler was fine, the placement was not.
+- **Read the vendor's own machine-readable spec where one exists.** A served OpenAPI document answered in one fetch what a marketing site could not answer at all — and it falsified two things the repository asserted. The stub's invented host, header and resources had been sitting in the tree looking plausible.
+- **Match the dialog to the API, not to the shape of other dialogs.** The field asked for is the one the API consumes (`secret`), named the way the product names it (the merchant API secret), and the resource switches are the three lists the adapter actually reads.
+- **Do not offer a setting that does nothing.** `syncIntervalMinutes` is in the registry for Microsoft 365 and is read by nothing else; copying it into FlexPoint's dialog would have looked right and been hollow.
+- **One credential list, three copies — find them all.** The dialog, the route's error diagnosis and the health check each had their own; changing one would have produced a connection that saves, tests, and is then permanently reported as incomplete.
+- **A verification connection is created and then deleted.** The end-to-end run exercises the real write path and leaves the database as it found it.
+
+**Notes for next time**
+- **The accounting push is a separate mechanism, and is untouched.** `accountingSync.ts` posts expenses and invoices to an integration's `settings.expensePushUrl` / `invoicePushUrl` with its own token or key — it does not go through the adapter. FlexPoint's API *can* create invoices (`POST /api/merchant/v1/Invoices`, requiring a `customerId` and status), so wiring the push through the real API — mapping a C7NTAX client to a FlexPoint customer first — is the natural next step and is deliberately not done here.
+- **The other fifteen connectors still hold guessed hosts and endpoints.** FlexPoint is now the only one written against a first-party document; the same one-fetch check would be worth doing across the rest.
+- **`integrationHealth` never calls an adapter** — it judges "incomplete" from the credential list alone and "verified" from the last manual test — so a wrong name in that map is silent until someone reads the pill.
+- **Two probe-side artefacts to fix if they are ever touched:** `probe-expenses.mjs` seeds a `flexpoint` row to test the *push* path (unrelated to this adapter), and the harness lesson repeats — in a JS template literal `\n` and `\d` collapse, so escape them as `\\n` and `\\d` inside probe strings.

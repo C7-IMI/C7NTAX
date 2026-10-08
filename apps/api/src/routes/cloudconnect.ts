@@ -78,7 +78,7 @@ function getRequiredCredentials(kind: string): string[] {
     halopsa: ["tenantUrl", "clientId", "clientSecret"],
     kantata: ["accessToken"], scoro: ["apiKey", "companyAccountId"],
     autotask: ["username", "password", "integrationCode"],
-    flexpoint: ["apiKey", "baseUrl"], quickbooks: ["clientId", "clientSecret", "realmId", "accessToken"],
+    flexpoint: ["apiSecret"], quickbooks: ["clientId", "clientSecret", "realmId", "accessToken"],
     pax8: ["apiKey", "baseUrl"], avanan: ["apiKey", "baseUrl"],
     proofpoint: ["principal", "secret", "baseUrl"], sentinelone: ["apiToken", "baseUrl"],
     itglue: ["apiKey", "baseUrl"], azure: ["accessToken", "subscriptionId"],
@@ -116,6 +116,7 @@ function getCredFix(cred: string): string {
     secretAccessKey: "Shown once when you create an AWS access key",
     region: "AWS region code, e.g., us-east-1, eu-west-2",
     subscriptionId: "Azure Portal → Subscriptions → copy Subscription ID",
+    apiSecret: "FlexPoint → Settings → WebAPI → New API Credentials → Create Token, then copy the credential it shows you",
   };
   return fixes[cred] || `Enter a valid ${formatCredLabel(cred)}`;
 }
@@ -132,6 +133,7 @@ function getCredExample(cred: string): string {
     secret: "abc123xyz...", companyAccountId: "12345", accessKeyId: "AKIAIOSFODNN7EXAMPLE",
     secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
     region: "us-east-1", subscriptionId: "00000000-0000-0000-0000-000000000000",
+    apiSecret: "the value FlexPoint shows once, when the credential is created",
   };
   return ex[cred] || `Enter your ${formatCredLabel(cred)}`;
 }
@@ -170,7 +172,48 @@ cloudConnectRouter.get("/types", requirePermission(Permission.IntegrationView), 
       { kind: "kantata", name: "Kantata", description: "Workspaces, tasks, time entries, invoices via Kantata REST API", requiredCredentials: ["accessToken"] },
       { kind: "scoro", name: "Scoro", description: "Contacts, projects, invoices, events via Scoro RPC API", requiredCredentials: ["apiKey", "companyAccountId"] },
       { kind: "autotask", name: "AutoTask PSA", description: "Tickets, contacts, accounts, resources via AutoTask REST API", requiredCredentials: ["username", "password", "integrationCode"] },
-      { kind: "flexpoint", name: "Flexpoint Payments", description: "Payment processing and transaction data", requiredCredentials: ["apiKey", "baseUrl"] },
+      /*
+       * FlexPoint. Written against their own OpenAPI document
+       * (`https://apps.getflexpoint.com/core-api/swagger/v1/swagger.json`): one merchant secret
+       * exchanged for a bearer token, customers/invoices/deposits, offset paging, no webhooks. The
+       * fields below name exactly what the adapter reads, and the settings are the ones it
+       * actually honours — a "sync interval" is deliberately absent, because nothing schedules a
+       * per-integration sync (the only interval in the product is Microsoft 365's own).
+       */
+      {
+        kind: "flexpoint",
+        name: "FlexPoint",
+        description: "Billing and accounts-receivable automation for MSPs — customers, invoices and settled deposits, through FlexPoint's merchant API.",
+        requiredCredentials: ["apiSecret"],
+        credentialFields: [
+          {
+            key: "apiSecret",
+            label: "Merchant API secret",
+            type: "password",
+            required: true,
+            hint: "FlexPoint → Settings → WebAPI → New API Credentials → Create Token. C7NTAX exchanges it for a short-lived token itself, so this is the only credential needed.",
+          },
+          {
+            key: "baseUrl",
+            label: "API base URL",
+            type: "text",
+            placeholder: "https://apps.getflexpoint.com/core-api",
+            hint: "Leave as it is unless FlexPoint gives you a different host.",
+          },
+        ],
+        guidance: {
+          tone: "info",
+          text: "One connection reads one merchant: FlexPoint's API carries no account or tenant id, because the API secret is what identifies the merchant. The credential is created inside the FlexPoint product (Settings → WebAPI), so it cannot be generated from here — the merchant must already have API access. FlexPoint sends no webhooks, so nothing arrives on its own: press Sync (or Test) and C7NTAX reads customers, invoices and deposits at that moment. Their API has no product catalogue and no subscription resource, so neither is offered.",
+        },
+        docsUrl: "https://apps.getflexpoint.com/core-api/swagger/index.html",
+        docsLabel: "FlexPoint API reference (Swagger)",
+        settings: [
+          { key: "syncCustomers", label: "Sync customers", type: "boolean", default: true, hint: "GET /api/merchant/v1/Customers — names, addresses, phone, email and external reference." },
+          { key: "syncInvoices", label: "Sync invoices", type: "boolean", default: true, hint: "GET /api/merchant/v1/Invoices — amounts, dates, status, PO number and the payment link." },
+          { key: "syncDeposits", label: "Sync deposits (settled payouts)", type: "boolean", default: true, hint: "GET /api/merchant/v1/Deposits — payouts settled to the merchant's bank account." },
+          { key: "pageSize", label: "Records per request (page_size, max 200)", type: "number", default: 50, hint: "FlexPoint's own default is 50 and its maximum is 200. Leave it alone unless a large account is slow to sync." },
+        ],
+      },
       { kind: "quickbooks", name: "QuickBooks Online", description: "Invoices, payments, customers, accounts via Intuit API", requiredCredentials: ["clientId", "clientSecret", "realmId", "accessToken"] },
       { kind: "pax8", name: "Pax8", description: "Products, subscriptions, invoices", requiredCredentials: ["apiKey", "baseUrl"] },
       { kind: "avanan", name: "Avanan", description: "Email security incidents and threat data", requiredCredentials: ["apiKey", "baseUrl"] },

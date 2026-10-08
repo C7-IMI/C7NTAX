@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.008 | Last Updated: 2026-10-08
+## Version: 2026.10.8.009 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,21 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.009 — Add Connection works, and FlexPoint is a real connector
+
+Two things were wrong with CloudConnect. The button that starts a new connection appeared to do nothing, and FlexPoint — one of the sixteen connectors — was configured against an API that does not exist.
+
+- **[Fix]** **Add Connection now visibly opens.** The flow was rendering *after* the email-connectors panel, which is a full form: the type grid opened 104 px below the fold, so the only thing that changed on screen was the button disappearing. The flow now takes the page over — the grid, or the configuration form once a type is chosen, is the first thing under the header, the page scrolls to it, and the email connectors and the connection list step aside until it is finished or cancelled.
+- **[Update]** **The connector count in the header is counted, not typed** — it said "16 connectors available" whatever the server actually offered, and now reports the list the API returned.
+- **[New]** **A connector can describe its own configuration dialog.** Credentials and settings carry their own labels, one line saying where the value comes from, and the connector may add a paragraph of guidance plus a link to the vendor's own API reference. Sixteen connectors that say nothing beyond a field name still render exactly as they did.
+- **[New]** **FlexPoint is now a real connector, built from FlexPoint's own API document.** They publish an OpenAPI 3.1.1 spec ("FlexPoint API" v1.0) at `apps.getflexpoint.com/core-api/swagger/v1/swagger.json`, and the adapter now follows it: one **merchant API secret** exchanged at `/api/v1/auth/login-merchant` for a short-lived bearer token (refreshed on a 401), then Customers, Invoices and Deposits under `/api/merchant/v1`, read with `offset` + `page_size` paging and stopped by the `record-count` header. The dialog asks for the merchant secret and the base URL, explains that one connection reads one merchant, offers only the three resource switches the adapter honours, and links the vendor's API reference. A failure says which resource and why — "the merchant API secret was rejected" rather than "connection failed".
+- **[New]** **The dialog is honest about what FlexPoint cannot do**: their API has no webhooks, no product catalogue and no subscription resource, so nothing is offered for them, and there is no fake "sync interval" — nothing schedules a per-connection sync, so a setting that did nothing is not presented as if it worked.
+- **[Fix]** **Two documents claimed FlexPoint uses an `x-api-key` header.** It does not; the merchant secret is exchanged for a bearer token. Corrected in `docs/SESSION_AUTH_PLAN.md` and `PlanDocs/PLAN-001-Session-Auth.md`, and the required-credential list the health check uses was updated with them.
+
+Verified in four places. The adapter, against a stubbed network, **21 checks**: the sign-in route and body, one sign-in covering every request of a sync, bearer tokens on every resource call, offset paging, `record-count` ending an exact page boundary, a short page ending the walk, a 401 signing in again and retrying once, one failing resource not hiding the others, an empty secret refused before any request, settings honoured, and a custom base URL trimmed. The API, **20 checks** end to end: the connector's published fields and guidance, a connection created from the dialog's payload, a test and a sync that both report the refusal honestly and are logged, and the verification connection removed again. The dialog, in a browser, **17 checks**: the guidance, the masked and marked-required secret, the base URL placeholder, seven explanations, the API-reference link opening in a new tab, the three sync switches on by default, `page_size` at 50, creating a connection from the dialog with its confirmation toast, and a connector without any of this metadata still rendering as before. The Add Connection fix, **9 checks**: the list view on load, the grid opening on screen at the top of the page, the scroll, the panel stepping aside, and Cancel restoring the list.
 
 ---
 

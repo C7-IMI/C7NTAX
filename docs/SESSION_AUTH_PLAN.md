@@ -906,7 +906,7 @@ All 16 CloudConnect integrations must continue to function after the session aut
 | 4 | **HaloPSA** | OAuth 2.0 client_credentials (clientId, clientSecret → access token) | `tenantUrl`, `clientId`, `clientSecret` | None — obtains its own bearer token via `/auth/token` endpoint |
 | 5 | **Kantata** | Bearer token (accessToken) | `accessToken` | None — `Authorization: Bearer {accessToken}` per Kantata REST API |
 | 6 | **Scoro** | API key + company account ID in JSON-RPC body | `apiKey`, `companyAccountId` | None — sends `apiKey` and `company_account_id` in request payload per Scoro RPC spec |
-| 7 | **Flexpoint Payments** | API key header | `apiKey`, `baseUrl` | None — `x-api-key: {apiKey}` header |
+| 7 | **FlexPoint** | Merchant API secret exchanged for a bearer JWT (`POST /api/v1/auth/login-merchant`, body `{secret}`) | `apiSecret`, `baseUrl` (base URL optional — defaults to `https://apps.getflexpoint.com/core-api`) | None — `Authorization: Bearer <token>` on `/api/merchant/v1/*`. **There is no `x-api-key` header in FlexPoint's API**; the earlier entry here was wrong (corrected 2026-10-08 against their own OpenAPI document, `apps.getflexpoint.com/core-api/swagger/v1/swagger.json`, "FlexPoint API" v1.0) |
 | 8 | **QuickBooks Online** | OAuth 2.0 (clientId, clientSecret, realmId, accessToken with refresh) | `clientId`, `clientSecret`, `realmId`, `accessToken` | None — uses Intuit OAuth token, supports refresh via `refreshAccessToken()` |
 | 9 | **Pax8** | API key header | `apiKey`, `baseUrl` | None — `Authorization: Bearer {apiKey}` per Pax8 API |
 | 10 | **Avanan** | API key header | `apiKey`, `baseUrl` | None — `x-api-key: {apiKey}` header |
