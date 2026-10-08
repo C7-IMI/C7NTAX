@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.004",
+    "date": "2026-10-08",
+    "title": "Tints that were never painted, and the pale labels they were hiding",
+    "changes": [
+      {
+        "text": "**Theme colours now accept an opacity modifier.** Each one is wrapped in `color-mix` with the alpha handed to the colour, so `bg-cyber-600/20`, `bg-surface-lighter/40`, `divide-surface-border/60` and the rest paint what they say they paint — and still follow the theme, because the colour is still the theme's. This closes the trap in every place it appeared rather than one class at a time.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The light theme reads the pale shades at the 800 shade of the same family.** `text-green-400` is #4ade80 whatever the theme, which is 1.4:1 on a white surface and worse on a tint of its own colour; the light theme now keeps the family and moves the shade, hover variants included, and maps the un-themed light end of `gray`/`slate` onto the text tokens. That is one block of CSS covering roughly 480 places that were written for a dark surface.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The accent tints are lighter on the light theme.** A crimson tint on white carries far more weight than the same tint on a near-black surface: at the authored strength the crimson label on top measured 3.5:1 at `/30` and 4.4:1 at `/20`, and now measures 6:1 or better.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The nav's alert count reads.** It was white on `bg-red-500` (3.5:1) in the dark theme and near-black on red in the light theme, because `text-white` follows the theme's text colour; it is now a `.badge-count`, white on a solid red in both.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The comments that described the trap were rewritten**, since they explained the old behaviour as though it were permanent.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.003",
     "date": "2026-10-08",
     "title": "The portal can live at an address of its own",

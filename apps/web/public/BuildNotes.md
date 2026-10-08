@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.003 | Last Updated: 2026-10-08
+## Version: 2026.10.8.004 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,22 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.004 — Tints that were never painted, and the pale labels they were hiding
+
+A class like `bg-cyber-600/20` asked for a subtle tint and got nothing at all, because a theme colour declared as a bare `var()` cannot take an opacity modifier in Tailwind — so the utility emitted no rule. The same colours, left as the Tailwind palette, then put pale labels on pale tints: a status badge measured **1.3:1** on the light theme.
+
+- **[Fix]** **Theme colours now accept an opacity modifier.** Each one is wrapped in `color-mix` with the alpha handed to the colour, so `bg-cyber-600/20`, `bg-surface-lighter/40`, `divide-surface-border/60` and the rest paint what they say they paint — and still follow the theme, because the colour is still the theme's. This closes the trap in every place it appeared rather than one class at a time.
+- **[Fix]** **The light theme reads the pale shades at the 800 shade of the same family.** `text-green-400` is #4ade80 whatever the theme, which is 1.4:1 on a white surface and worse on a tint of its own colour; the light theme now keeps the family and moves the shade, hover variants included, and maps the un-themed light end of `gray`/`slate` onto the text tokens. That is one block of CSS covering roughly 480 places that were written for a dark surface.
+- **[Fix]** **The accent tints are lighter on the light theme.** A crimson tint on white carries far more weight than the same tint on a near-black surface: at the authored strength the crimson label on top measured 3.5:1 at `/30` and 4.4:1 at `/20`, and now measures 6:1 or better.
+- **[Fix]** **The nav's alert count reads.** It was white on `bg-red-500` (3.5:1) in the dark theme and near-black on red in the light theme, because `text-white` follows the theme's text colour; it is now a `.badge-count`, white on a solid red in both.
+- **[Update]** **The comments that described the trap were rewritten**, since they explained the old behaviour as though it were permanent.
+
+Verified by measurement rather than by eye. A browser sweep walks every visible text run on a page, composites its real backdrop — through every translucent layer above it — and measures the contrast: **189 failing runs before, 0 after**, across 16 pages in both themes; 0 across the four colour schemes and the two base themes on a further 11 page-theme combinations; **31 checks** that the tints paint a real colour in both themes and still follow the theme; **8 checks** on the components and hover states the remap touches. Web typecheck clean, production build clean.
+
+Three pages still fail, and are unchanged by this: Quotes, AI Actions and Calendar style themselves with **raw hex** rather than theme colours, which is exactly what the design-token lint's legacy allowlist records. Measured against the previous theme files, they report the identical 16 failing runs, because no theme change can reach a colour that is written into the page.
 
 ---
 
