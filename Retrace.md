@@ -4784,3 +4784,37 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **`.badge-count` is new and has one home.** If a second solid-fill count badge appears, it should use it rather than `bg-red-500 text-white`.
 - **The sweep is a throwaway harness, not a test.** It is the tool that found and then cleared 189 failures, and it is worth keeping in mind for the next theme change; its two traps are that `innerText` applies `text-transform`, and that Tailwind only generates the classes your source actually uses — injecting a made-up class measures a rule that does not exist.
 - **The auto-sync swept the code into its own commits** (`1e41ca2` for the config and `f0f9e8a` for the stylesheet and the badge), leaving only the records to commit by hand.
+
+---
+
+### Prompt 249 — Favorites, and a right-click menu on the navigation
+**Timestamp:** 2026-10-08 | **Status:** ✅ Completed | **Duration:** ~1 h 45 m
+**BuildNotes IDs:** 2026.10.8.005 — Favorites at the top of the navigation, and a menu on every section
+
+> I need to add a Parent section named Favortes to the left nav pane at the top. It will be the same level as Home. I need a right click menu that is context aware in relation to the nav pane with various options (expand all, collapse all, open in new tab, open in new window, etc.). Also add a Pin to Favorites option.
+>
+> Once pinned, the section will be dispalyed (copied, not moved) as a subsection under the favorites parent. I should be able to pin any section or subsection to Favorites. I want to be able to adjust the order just like in the standard nav pane.
+
+**What I did**
+- **Built Favorites on the navigation's own machinery rather than beside it.** The pane already had a drag order (`c7_nav_order`), an expanded-set and a width in localStorage, so pins are `c7_nav_favorites` next to them, reconciled against the tree on load exactly as the saved order is: an id that no longer exists is dropped rather than left as a dead row.
+- **A pin is a copy.** `renderNode` gained an option that marks a row as a pinned copy: it resolves the *same* node out of the visible tree, so a pinned section is drawn with the icon, label and children it has where it lives, and the row it was pinned from gains a small star — the pin is visible from both ends, and nothing moves.
+- **Gave the copy its own open state.** The first cut shared the tree's expanded set, which meant pinning Administration poured its thirteen children into Favorites and closing it there closed the section you were reading. A copy is a shortcut, so it now starts closed and opens on its own key (`favorites:<id>`).
+- **Reused the product's context-menu pattern** (`useContextMenu`, `ContextMenu`, and `lib/menuActions`' open-in-new-tab/new-window/copy helpers) rather than inventing a nav-specific menu, so the navigation obeys the same "Application right-click menus" setting as the rest of the app, supports Shift+F10, and leaves the browser's own menu to text fields.
+- **Made each menu about what was right-clicked.** A leaf offers open/copy; a section adds its own expand and collapse; a pinned copy adds Move up, Move down and Remove from Favorites; the pane's own menu carries the whole-navigation actions. A section with no page of its own still has a destination — its landing page — so no entry is ever missing for a section.
+- **Kept the order mechanism identical to the tree's**: drag by a handle, drop on the row you want to displace, persisted on drop, plus keyboard Move up/Move down for anyone who would rather not drag.
+- **Documented it in Help** — a section in the Workspace walkthrough, two FAQ answers, and a mention in Getting Started, since "how do I pin a section" is a question the navigation now provokes.
+- **Verified in a browser with 50 checks**: the section's position, level and first-row placement; both menus and every entry; pinning a section and a subsection; the star left behind in the tree; the copy's independent open state; reordering by menu and by drag; the order surviving a reload; the collapsed sidebar showing the pins as icons; and clearing the pins without touching the navigation.
+
+**Decisions worth remembering**
+- **"Copied, not moved" is a rendering decision, not a data decision.** Nothing is removed from `NAV_TREE` or reordered in it; Favorites is a second pass over the same tree in a different order, which is why the tree's drag order and Favorites' drag order cannot interfere with each other.
+- **A pinned copy of a section is a section, so it should behave like one** — same icon, same children, same landing page — with exactly one deliberate difference: the copy's open state is its own, because a shortcut that unfolds the whole area is not a shortcut.
+- **Reconciliation belongs on read.** Ids are dropped when the tree no longer has them, the same way the saved nav order drops unknown ids, so renaming or removing a section can never leave a broken row behind.
+- **Permission filtering does the right thing for free.** A pinned section the role cannot open simply has no node in the visible tree, so it is not drawn — and the pin survives, so it comes back if the permission does.
+- **Per browser, like the rest of the navigation layout.** Pins sit in localStorage beside the order, the expanded set and the width; a dashboard-style per-account store exists if cross-device favourites are ever wanted, and that would be the moment to add one.
+
+**Notes for next time**
+- **The auto-sync swept the code into its own commits** (`9c62d76`, `2f26a66`) while this was being verified, leaving the records to commit by hand — the same pattern as the previous two prompts.
+- **A synthetic drag has to be two turns.** Dispatching `dragstart` and `drop` in one synchronous run leaves the "row being dragged" state unset, so the drop looks like a no-op; a real drag has that gap, and the harness has to reproduce it.
+- **In the collapsed sidebar a section is a button, not a link**, so a check that counts links under Favorites finds only the pinned leaves. Count rows, not anchors.
+- **`text-amber-400/80` is not on the light theme's remap list** (which covers `-300`, `-400`, `-500` and a few alpha variants), so the pin mark uses plain `text-amber-400` and inherits the light theme's darker amber. A new pale shade in a new component has to be added to that block, or it lands pale on the light theme.
+- **The pane's menu currently offers no way to reset the section order**; if that is wanted, it belongs beside Expand all in the same menu.

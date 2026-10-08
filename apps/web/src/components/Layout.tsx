@@ -849,7 +849,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <node.icon size={18} />
               {!collapsed && <span className="flex-1 text-left truncate">{node.label}</span>}
               {!collapsed && favorites.includes(node.id) && !options.favorite && (
-                <Star size={12} className="shrink-0 text-amber-400/80" aria-label="Pinned to Favorites" />
+                <Star size={12} className="shrink-0 text-amber-400" aria-label="Pinned to Favorites" />
               )}
               {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
                 <span className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
@@ -873,7 +873,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <node.icon size={18} className={isAlerts ? "text-alert-red" : undefined} />
               {!collapsed && (isAlerts ? <span className="text-alert-red">{node.label}</span> : node.label)}
               {!collapsed && favorites.includes(node.id) && !options.favorite && (
-                <Star size={12} className="shrink-0 text-amber-400/80" aria-label="Pinned to Favorites" />
+                <Star size={12} className="shrink-0 text-amber-400" aria-label="Pinned to Favorites" />
               )}
               {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
                 <span className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>

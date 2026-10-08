@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.004 | Last Updated: 2026-10-08
+## Version: 2026.10.8.005 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,21 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.005 — Favorites at the top of the navigation, and a menu on every section
+
+Pinning is a copy, not a move: the section keeps its place in the tree and appears again under a Favorites header at the top of the pane — and every section now answers a right-click with a menu about itself.
+
+- **[New]** **Favorites sits at the top of the navigation, level with Home.** Right-click any section or subsection and choose **Pin to Favorites**; the pinned section appears under Favorites, drawn exactly as it is in the tree — heading, icon, children and all — and a small star is left behind where it already lives, so a copy is visibly a copy. Subsections can be pinned just as sections can.
+- **[New]** **The pinned order is yours.** Drag a pinned row by its handle, exactly as the tree's top level is dragged, or right-click one for **Move up** and **Move down**. The order is kept with the other navigation layout preferences and comes back after a reload.
+- **[New]** **A right-click menu on the navigation, aware of what was clicked.** A page offers **Open**, **Open in new tab**, **Open in new window** and **Copy link**; a section adds **Expand this section** / **Collapse this section**; a pinned copy adds its order and **Remove from Favorites**; and the pane itself offers **Expand all**, **Collapse all**, **Remove all favorites** and the sidebar toggle. Shift+F10 opens the same menu from the keyboard, and text fields keep the browser's own menu.
+- **[Update]** **Favorites is open by default and says what it is for while it is empty**, so the feature is discoverable rather than hidden behind a collapsed header.
+- **[Update]** **A collapsed sidebar keeps the pins in reach**: the star stays at the top and the pinned sections sit under it as icons.
+- **[Update]** **A pinned copy opens and closes on its own.** Pinning a large area does not unfold it into Favorites, and closing it there leaves the section you were reading in the tree untouched.
+
+Verified in a browser with **50 checks**, covering the section's position and level, both menus and their entries, pinning a section and a subsection, the pin mark left in the tree, independent open state, reordering by menu and by dragging, the stored order surviving a reload, the collapsed sidebar, and removing pins without disturbing the navigation. Targeted typecheck clean, and the help-link guard green with the new FAQ answers and walkthrough section in place.
 
 ---
 
