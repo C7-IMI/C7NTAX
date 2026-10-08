@@ -10,16 +10,30 @@ import {
 /**
  * The modern navigation pane: a rail of domains, and the destinations inside one of them.
  *
- * Why two columns rather than one list. The tree this replaces put every section and every nested row
- * into one scrolling region, so opening a section moved everything below it — and with fifteen
- * sections the region is longer than the screen before anything is opened. Splitting it means the
- * rail keeps its position while the column scrolls, and the rail's length is fixed by the number of
- * *domains*, which is a design decision rather than a consequence of the feature list.
+ * **The rail is permanent; the sections fly out over the content.** An earlier version put the two
+ * columns side by side and reserved 432px for them, which on a 1280px window took a third of the
+ * screen and squeezed every page in the application — the header's own toolbar is a fixed 644px, so
+ * the cost landed on the page title and on the tables below it. Widening is not available (the point
+ * of the pane is to hold a growing tree) and redesigning every page to fit a narrower column is a
+ * much larger change than this one. So the column overlays instead: the rail is 200px, narrower than
+ * the 256px the tree occupied, and the list of destinations appears on top of the content when it is
+ * asked for and then goes away.
+ *
+ * What that buys beyond width: the rail is the whole navigation at rest, so "where am I" is answerable
+ * without opening anything, and the list of destinations is a focused thing you are looking at rather
+ * than a second column competing with the page.
+ *
+ * Why it opens on a click and not on hover: a panel that appears whenever the pointer crosses the rail
+ * is a panel that flashes open on the way to somewhere else. Switching an open panel on hover was tried
+ * and removed as well — it made the *click* that followed ambiguous, because moving onto a row had
+ * already opened that row's panel, so the click appeared to close it. One gesture, one meaning: clicking
+ * a domain opens it, clicking it again closes it, and Esc, a click outside and the close button do the
+ * same.
  *
  * What is deliberately absent: the rail cannot be reordered. The classic pane lets somebody drag
- * sections into their own order, which is a reasonable way to cope with a tree that is the wrong shape.
- * A stable rail is the point here — the ordering that adapts is *inside* a domain, on the rows, and it
- * adapts by itself.
+ * sections into their own order, which is a reasonable way to cope with a tree that is the wrong
+ * shape. A stable rail is the point here — the ordering that adapts is inside a domain, on the rows,
+ * and it adapts by itself.
  *
  * Everything the pane shows comes from `NAV_TREE` (see `lib/navModel.ts`): the same routes, the same
  * permissions, the same icons. Nothing about a page changes when this pane is switched on, which is
@@ -31,7 +45,6 @@ export function NavPaneModern({
   alertCount,
   collapsed,
   assistantInRail,
-  onExpand,
   onNodeContextMenu,
 }: {
   tree: NavNode[];
@@ -39,16 +52,12 @@ export function NavPaneModern({
   alertCount: number;
   collapsed: boolean;
   assistantInRail: boolean;
-  /** Called when a domain is chosen while the pane is collapsed, so the column can be shown. */
-  onExpand: () => void;
   onNodeContextMenu?: (event: React.MouseEvent, node: NavNode) => void;
 }) {
   const { pathname } = useLocation();
+  const paneRef = useRef<HTMLDivElement>(null);
 
-  const [domainId, setDomainId] = useState<string>(() => {
-    try { return localStorage.getItem(NAV_STORAGE_KEYS.domain) || ""; } catch { return ""; }
-  });
-  const [peekId, setPeekId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [usage, setUsage] = useState<Record<string, UseRecord>>(readNavUsage);
   const [order, setOrder] = useState<RowOrder>(() => {
     try { return localStorage.getItem(NAV_STORAGE_KEYS.order) === "az" ? "az" : "learned"; } catch { return "learned"; }
@@ -84,49 +93,48 @@ export function NavPaneModern({
       }
     : null;
 
-  const domains = useMemo(
+  const railDomains = useMemo(
     () => (other ? [...model.domains, other] : model.domains),
     [model.domains, other],
   );
-
-  const allItems = useMemo(
-    () => [...domains, ...model.utilities].flatMap((domain) => domain.items),
-    [domains, model.utilities],
+  const everything = useMemo(
+    () => [...railDomains, ...model.utilities],
+    [railDomains, model.utilities],
   );
+  const allItems = useMemo(() => everything.flatMap((domain) => domain.items), [everything]);
 
   /** Longest matching route wins, so `/billing/dashboard` does not also light up `/billing`. */
-  const activeTo = useMemo(() => {
-    const matches = allItems.filter((item) =>
-      item.to === "/" ? pathname === "/" : pathname === item.to || pathname.startsWith(`${item.to}/`));
-    return matches.sort((a, b) => b.to.length - a.to.length)[0]?.to ?? null;
-  }, [allItems, pathname]);
-
-  const domainForPath = useCallback(
-    (path: string): string | null => {
-      const matches = allItems.filter((item) =>
-        item.to === "/" ? path === "/" : path === item.to || path.startsWith(`${item.to}/`));
-      const best = matches.sort((a, b) => b.to.length - a.to.length)[0];
-      if (!best) return null;
-      return [...domains, ...model.utilities].find((d) => d.items.some((i) => i.id === best.id))?.id ?? null;
-    },
-    [allItems, domains, model.utilities],
+  const activeItem = useMemo(
+    () =>
+      allItems
+        .filter((item) => (item.to === "/" ? pathname === "/" : pathname === item.to || pathname.startsWith(`${item.to}/`)))
+        .sort((a, b) => b.to.length - a.to.length)[0] ?? null,
+    [allItems, pathname],
+  );
+  const activeId = useMemo(
+    () => everything.find((domain) => domain.items.some((item) => item.id === activeItem?.id))?.id ?? null,
+    [everything, activeItem],
   );
 
-  // The rail says where you are, so it follows the route. A domain clicked by hand stays until
-  // something is actually opened, which is what makes browsing the rail harmless.
-  useEffect(() => {
-    const next = domainForPath(pathname);
-    if (next) setDomainId((current) => (current === next ? current : next));
-  }, [pathname, domainForPath]);
+  // Navigating anywhere closes the panel: it was opened to choose a destination, and the choice is made.
+  useEffect(() => { setOpenId(null); setFilter(""); }, [pathname]);
 
-  // A stored domain can disappear — a permission withdrawn, an instance that only had one domain.
+  // Clicking away, or Escape, closes it. A document listener rather than a click-catching overlay,
+  // which would have to sit above the rail and steal the clicks that open the panel in the first place.
   useEffect(() => {
-    if (domains.length && !domains.some((d) => d.id === domainId)) setDomainId(domains[0].id);
-  }, [domains, domainId]);
+    if (!openId) return;
+    const onPointer = (event: MouseEvent) => {
+      if (paneRef.current && !paneRef.current.contains(event.target as Node)) setOpenId(null);
+    };
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpenId(null); };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [openId]);
 
-  useEffect(() => {
-    try { localStorage.setItem(NAV_STORAGE_KEYS.domain, domainId); } catch { /* ignore */ }
-  }, [domainId]);
   useEffect(() => {
     try { localStorage.setItem(NAV_STORAGE_KEYS.order, order); } catch { /* ignore */ }
   }, [order]);
@@ -134,38 +142,30 @@ export function NavPaneModern({
     try { localStorage.setItem(NAV_STORAGE_KEYS.quietOpen, foldedOpen ? "1" : "0"); } catch { /* ignore */ }
   }, [foldedOpen]);
 
-  const shownId = peekId ?? domainId;
-  const activeDomain =
-    [...domains, ...model.utilities].find((d) => d.id === shownId) ??
-    [...domains, ...model.utilities].find((d) => d.id === domainId) ??
-    domains[0] ??
-    null;
-  const peeking = !!peekId && peekId !== domainId;
+  const openDomain = openId ? everything.find((domain) => domain.id === openId) ?? null : null;
 
-  const choose = (id: string) => {
-    setDomainId(id);
-    setPeekId(null);
+  const toggleDomain = useCallback((domain: NavDomain) => {
+    setOpenId((current) => (current === domain.id ? null : domain.id));
     setFilter("");
-    // A collapsed pane has no column to show, so choosing a domain is also a request to open it.
-    if (collapsed) onExpand();
-  };
+  }, []);
 
-  const open = (item: NavDestination) => {
+  const openItem = (item: NavDestination) => {
     setUsage((current) => recordNavUse(item.id, current));
+    setOpenId(null);
   };
 
-  /* ── The column's contents ──────────────────────────────────────────────────────────────── */
+  /* ── The flyout's contents ─────────────────────────────────────────────────────────────── */
 
   const pinned = useMemo(
-    () => (activeDomain ? activeDomain.items.filter((item) => favorites.includes(item.id)) : []),
-    [activeDomain, favorites],
+    () => (openDomain ? openDomain.items.filter((item) => favorites.includes(item.id)) : []),
+    [openDomain, favorites],
   );
 
   const rest = useMemo(() => {
-    if (!activeDomain) return { visible: [] as NavDestination[], folded: [] as NavDestination[] };
-    const unpinned = activeDomain.items.filter((item) => !favorites.includes(item.id));
+    if (!openDomain) return { visible: [] as NavDestination[], folded: [] as NavDestination[] };
+    const unpinned = openDomain.items.filter((item) => !favorites.includes(item.id));
     return orderRows(unpinned, usage, order);
-  }, [activeDomain, favorites, usage, order]);
+  }, [openDomain, favorites, usage, order]);
 
   const filtered = useMemo(() => {
     const needle = filter.trim().toLowerCase();
@@ -175,23 +175,33 @@ export function NavPaneModern({
     );
   }, [allItems, filter]);
 
-  const badgeFor = (id: string) => (id === "service-alerts" || id === "admin-service-alerts" ? alertCount : 0);
+  /**
+   * "In use" is a claim, and with nothing opened yet there is no usage to make it — the rows are then
+   * simply the section's contents in their declared order, and saying otherwise would be the pane
+   * pretending to know something it has not been told.
+   */
+  const hasUsage = rest.visible.some((item) => usage[item.id]);
+
+  // The badge belongs to the alert board, not to the page that configures it: the settings row lives
+  // under Platform and must not put a count on Platform's rail row.
+  const badgeFor = (id: string) => (id === "service-alerts" ? alertCount : 0);
 
   const row = (item: NavDestination) => {
     const node = nodeById.get(item.id);
     const count = badgeFor(item.id);
+    const isActive = activeItem?.id === item.id;
     return (
       <Link
         key={item.id}
         to={item.to}
-        onClick={() => open(item)}
+        onClick={() => openItem(item)}
         onContextMenu={node && onNodeContextMenu ? (e) => onNodeContextMenu(e, node) : undefined}
-        title={node ? `${item.label} — ${item.to}` : item.to}
-        aria-current={activeTo === item.to ? "page" : undefined}
+        title={`${item.label} — ${item.to}`}
+        aria-current={isActive ? "page" : undefined}
         className={`nav-item flex items-center gap-2.5 py-2 text-sm transition-colors ${
           item.child ? "pl-8 pr-3" : "px-3"
         } ${
-          activeTo === item.to
+          isActive
             ? "nav-item--active bg-surface-lighter text-white"
             : "text-gray-400 hover:text-white hover:bg-surface-lighter"
         }`}
@@ -205,7 +215,7 @@ export function NavPaneModern({
             title={`${count} active service alert${count === 1 ? "" : "s"}`}
           >{count}</span>
         )}
-        {favorites.includes(item.id) && activeTo !== item.to && (
+        {favorites.includes(item.id) && !isActive && (
           <Pin size={11} className="shrink-0 text-amber-400" aria-label="Pinned to Favourites" />
         )}
       </Link>
@@ -224,26 +234,26 @@ export function NavPaneModern({
       </div>
     );
 
-  /* ── The rail ───────────────────────────────────────────────────────────────────────────── */
+  /* ── The rail ─────────────────────────────────────────────────────────────────────────── */
 
   const railItem = (domain: NavDomain) => {
-    const selected = domain.id === domainId;
+    const isActive = domain.id === activeId;
+    const isOpen = domain.id === openId;
     const badge = domain.items.reduce((n, item) => n + badgeFor(item.id), 0);
     return (
       <button
         key={domain.id}
         type="button"
-        onClick={() => choose(domain.id)}
-        onMouseEnter={() => setPeekId(domain.id)}
-        onFocus={() => setPeekId(domain.id)}
-        aria-current={selected ? "true" : undefined}
-        title={collapsed ? domain.label : domain.what}
+        onClick={() => toggleDomain(domain)}
+        aria-expanded={isOpen}
+        aria-current={isActive ? "true" : undefined}
+        title={`${domain.label} — ${domain.what}`}
         data-nav-domain={domain.id}
         className={`nav-item w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
-          selected
-            ? "nav-item--active bg-surface-lighter text-white font-medium"
-            : peeking && peekId === domain.id
-              ? "bg-surface-lighter/60 text-white"
+          isOpen
+            ? "bg-surface-lighter text-white"
+            : isActive
+              ? "nav-item--active text-white"
               : "text-gray-400 hover:text-white hover:bg-surface-lighter"
         }`}
       >
@@ -260,34 +270,37 @@ export function NavPaneModern({
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
-    // Scoped to the pane so it never competes with the application's own shortcuts, which are global.
-    if (event.key === "/" && !/^(INPUT|TEXTAREA)$/.test((event.target as HTMLElement).tagName)) {
+    const tag = (event.target as HTMLElement).tagName;
+    const typing = tag === "INPUT" || tag === "TEXTAREA";
+    // Scoped to the pane, so it never competes with the application's own global shortcuts.
+    if (event.key === "/" && !typing && openId) {
       event.preventDefault();
       filterRef.current?.focus();
       return;
     }
-    if (/^[1-9]$/.test(event.key) && !/^(INPUT|TEXTAREA)$/.test((event.target as HTMLElement).tagName)) {
-      const target = domains[Number(event.key) - 1];
-      if (target) { event.preventDefault(); choose(target.id); }
+    if (/^[1-9]$/.test(event.key) && !typing) {
+      const target = railDomains[Number(event.key) - 1];
+      if (target) { event.preventDefault(); setOpenId(target.id); setFilter(""); }
       return;
     }
-    if (event.key === "Escape") {
-      if (filter) { setFilter(""); return; }
-      if (peeking) setPeekId(null);
+    if (event.key === "ArrowRight" && !typing) {
+      const current = openId
+        ? everything.find((domain) => domain.id === openId)
+        : railDomains.find((domain) => domain.id === activeId);
+      if (current) { event.preventDefault(); setOpenId(current.id); }
     }
   };
 
   return (
-    <div className="flex-1 flex min-h-0" onKeyDown={onKeyDown} data-nav-pane="modern">
-      {/* ── Rail ─────────────────────────────────────────────────────────────────────────── */}
+    <div className="flex-1 flex min-h-0 relative" ref={paneRef} onKeyDown={onKeyDown} data-nav-pane="modern">
+      {/* ── Rail ───────────────────────────────────────────────────────────────────────────── */}
       <div
-        className={`flex flex-col shrink-0 overflow-y-auto border-r border-surface-border ${collapsed ? "w-full px-1 py-3" : "w-[196px] px-2 py-3"}`}
-        onMouseLeave={() => setPeekId(null)}
+        className={`flex flex-col shrink-0 overflow-y-auto ${collapsed ? "w-full px-1 py-3" : "w-[200px] px-2 py-3"}`}
         role="navigation"
         aria-label="Sections"
       >
         <div className={collapsed ? "flex flex-col items-center gap-0.5" : "flex flex-col gap-0.5"}>
-          {domains.map(railItem)}
+          {railDomains.map(railItem)}
         </div>
 
         <div className={`mt-auto pt-3 ${collapsed ? "flex flex-col items-center gap-0.5" : "flex flex-col gap-0.5"}`}>
@@ -296,15 +309,31 @@ export function NavPaneModern({
         </div>
       </div>
 
-      {/* ── Destinations ─────────────────────────────────────────────────────────────────── */}
-      {!collapsed && activeDomain && (
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden" data-nav-column={activeDomain.id}>
+      {/* ── Destination list, over the content ─────────────────────────────────────────────── */}
+      {openDomain && (
+        <div
+          className="absolute left-full top-0 h-full w-[252px] z-40 flex flex-col bg-surface border-l border-r border-surface-border shadow-2xl"
+          data-nav-flyout={openDomain.id}
+          role="group"
+          aria-label={`${openDomain.label} destinations`}
+        >
           <div className="px-3 pt-3 pb-2 border-b border-surface-border shrink-0">
-            <div className="flex items-center gap-2">
-              <activeDomain.icon size={15} className="shrink-0 text-cyber-400" />
-              <h2 className="text-sm font-semibold text-white truncate">{activeDomain.label}</h2>
+            <div className="flex items-start gap-2">
+              <openDomain.icon size={15} className="mt-0.5 shrink-0 text-cyber-400" />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm font-semibold text-white truncate">{openDomain.label}</h2>
+                <p className="mt-0.5 text-[11px] leading-snug text-gray-500">{openDomain.what}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpenId(null)}
+                title="Close (Esc)"
+                aria-label="Close"
+                className="shrink-0 -mt-0.5 p-1 rounded text-gray-600 hover:text-white hover:bg-surface-lighter"
+              >
+                <ChevronDown size={14} className="rotate-90" />
+              </button>
             </div>
-            <p className="mt-1 text-[11px] leading-snug text-gray-500">{activeDomain.what}</p>
             <div className="mt-2 flex items-center gap-1.5">
               <input
                 ref={filterRef}
@@ -312,18 +341,18 @@ export function NavPaneModern({
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder="Filter…  ( / )"
-                aria-label={`Filter ${activeDomain.label}`}
-                className="flex-1 min-w-0 bg-surface border border-surface-border rounded-md px-2 py-1 text-xs text-white placeholder:text-gray-600"
+                aria-label={`Filter ${openDomain.label}`}
+                className="flex-1 min-w-0 bg-surface-light border border-surface-border rounded-md px-2 py-1 text-xs text-white placeholder:text-gray-600"
               />
               <button
                 type="button"
                 onClick={() => setOrder(order === "learned" ? "az" : "learned")}
                 title={
                   order === "learned"
-                    ? "Ordered by what you open. Switch to A–Z to keep this column still."
+                    ? "Ordered by what you open. Switch to A–Z to keep this list still."
                     : "Alphabetical. Switch back to order by what you open."
                 }
-                aria-label="Change how this column is ordered"
+                aria-label="Change how this list is ordered"
                 className="shrink-0 p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-surface-lighter"
               >
                 {order === "learned" ? <Rows3 size={14} /> : <Compass size={14} />}
@@ -343,9 +372,9 @@ export function NavPaneModern({
                 {group("pinned", "Pinned", pinned)}
                 {group(
                   "rows",
-                  order === "learned" ? "In use" : "All",
+                  hasUsage && order === "learned" ? "In use" : "Sections",
                   rest.visible,
-                  activeDomain.items.length > FOLD_THRESHOLD && order === "learned" ? (
+                  hasUsage && openDomain.items.length > FOLD_THRESHOLD && order === "learned" ? (
                     <span className="ml-auto text-[10px] text-gray-700" title="Rows are folded only once you have opened something in this section">
                       ordered by what you open
                     </span>
@@ -355,7 +384,7 @@ export function NavPaneModern({
                   <div className="mt-1 border-t border-surface-border/60 pt-1">
                     <button
                       type="button"
-                      onClick={() => setFoldedOpen((v) => !v)}
+                      onClick={() => setFoldedOpen((value) => !value)}
                       aria-expanded={foldedOpen}
                       className="w-full flex items-center gap-2 px-3 py-2 text-[11px] text-gray-600 hover:text-gray-300"
                     >

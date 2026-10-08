@@ -188747,6 +188747,30 @@
     "createdAt": "2026-10-08T17:35:38.607Z"
   },
   {
+    "id": "926c25b4-8b9c-46a7-a507-22776f98dfb6",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "navigationStyle",
+    "changes": {
+      "value": "classic"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:09:06.208Z"
+  },
+  {
+    "id": "d334c6b9-5c42-4a81-91e9-7e277e0835d2",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "navigationStyle",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:09:11.001Z"
+  },
+  {
     "id": "1b8e14fc-9c42-46e1-a7b7-413c3e1a0745",
     "action": "billing:create",
     "entity": "billing",
@@ -189445,6 +189469,54 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-08T17:35:41.209Z"
+  },
+  {
+    "id": "43f1d526-58bf-437c-9376-34fe01a20971",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "navigationStyle",
+    "changes": {
+      "value": "classic"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:09:21.575Z"
+  },
+  {
+    "id": "c115e406-6a0f-4659-8d1e-51b002c72029",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "navigationStyle",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:09:21.642Z"
+  },
+  {
+    "id": "47c4ee6e-1d8f-4af8-be5e-85fc9ecbbf10",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "navigationStyle",
+    "changes": {
+      "value": "classic"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:09:32.670Z"
+  },
+  {
+    "id": "512a7d48-a1a1-493a-857f-8da7e233c468",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "navigationStyle",
+    "changes": {
+      "value": "modern"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:09:35.673Z"
   },
   {
     "id": "52c6fdea-cd8b-4218-bb26-1ca8fd3941e4",

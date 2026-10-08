@@ -25,6 +25,7 @@ import api from "../api";
 import { PageHeader } from "../components/ui";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { primeContextMenusSetting } from "../hooks/useContextMenusEnabled";
+import { refreshNavigationSettings } from "../hooks/useNavigationStyle";
 import { ACCENT_COLOUR_HINT, DEFAULT_ACCENT_COLOUR, HEX_COLOUR_PATTERN } from "../lib/colourTokens";
 
 // ── Types mirroring the API's rendered registry ─────────────────────
@@ -355,6 +356,12 @@ export function useConfigurationSection(sectionId: string) {
       if (section.id === "workspace" && field.id === "contextMenus") {
         primeContextMenusSetting(value !== false);
       }
+      // The navigation pane is the same shape of change but a bigger one: it is on screen while the
+      // setting is being saved, so it has to redraw from the value the API now holds rather than
+      // from a guess about what was just written.
+      if (section.id === "workspace" && (field.id === "navigationStyle" || field.id === "assistantInRail")) {
+        refreshNavigationSettings();
+      }
       await reload();
       toast.success(`${field.label} saved`);
       return true;
@@ -372,6 +379,9 @@ export function useConfigurationSection(sectionId: string) {
       await api.delete(`/configuration/${section.id}/${field.id}`);
       if (section.id === "workspace" && field.id === "contextMenus") {
         primeContextMenusSetting(field.fallback !== false);
+      }
+      if (section.id === "workspace" && (field.id === "navigationStyle" || field.id === "assistantInRail")) {
+        refreshNavigationSettings();
       }
       await reload();
       toast.success(`${field.label} is back to the deployment's value`);

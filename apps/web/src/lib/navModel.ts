@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3, Bot, Building2, Clock, Database, DollarSign, FolderKanban,
+  AlertTriangle, BarChart3, Bot, Building2, Clock, Database, DollarSign, FolderKanban,
   HelpCircle, Home, Settings2, Shield, SquareTerminal, Ticket,
 } from "lucide-react";
 import type { NavNode } from "../components/Layout";
@@ -86,13 +86,10 @@ const DOMAIN_SPECS: DomainSpec[] = [
     id: "desk",
     label: "Service desk",
     icon: Ticket,
-    what: "The queue, the boards it sits on, the monitoring that fills it, and the articles you answer with.",
+    what: "The queue, the boards it sits on, and the articles you answer with.",
     rows: [
       { id: "tickets" },
       { id: "boards" },
-      { id: "service-alerts" },
-      { id: "admin-monitors" },
-      { id: "admin-webhooks" },
       { id: "kb" },
     ],
   },
@@ -151,7 +148,7 @@ const DOMAIN_SPECS: DomainSpec[] = [
     id: "kumo",
     label: "Kumo",
     icon: Database,
-    what: "The documentation app inside this one — clients' passwords, configurations, documents and checks.",
+    what: "The documentation app inside this one: passwords, configurations, documents and checks.",
     rows: [
       { id: "kumo-dashboard" },
       { id: "kumo-organizations" },
@@ -184,6 +181,27 @@ const DOMAIN_SPECS: DomainSpec[] = [
       // Thirteen setting rows become one destination. The hub already exists and already presents
       // these as sections; the navigation was the only place that insisted on listing them all.
       { id: "admin-configuration", children: ["admin-boards", "admin-service-alerts"] },
+    ],
+  },
+  {
+    /**
+     * Service Alerts keeps a parent-level row, and it sits last in the rail — beneath Platform —
+     * as a section of its own.
+     *
+     * The reason is the badge. This is the only row in the navigation that reports the state of the
+     * instance rather than the shape of it: burying it one level inside a domain means the count is
+     * invisible until somebody opens that domain, which is the wrong trade for the one alarming
+     * number on the screen. The two rows that raise the alerts came with it rather than staying
+     * behind in the settings drawer, because a monitor and the alert it opens are one story.
+     */
+    id: "alerts",
+    label: "Service alerts",
+    icon: AlertTriangle,
+    what: "What is currently wrong, and the checks and endpoints that raise it.",
+    rows: [
+      { id: "service-alerts" },
+      { id: "admin-monitors" },
+      { id: "admin-webhooks" },
     ],
   },
 ];
@@ -300,20 +318,27 @@ export function buildNavPane(
     return { id: spec.id, label: spec.label, icon: spec.icon, what: spec.what, items };
   };
 
-  const domainById = new Map(DOMAIN_SPECS.map((spec) => [spec.id, spec]));
   const spineSpecs = [...DOMAIN_SPECS];
   if (options.assistantInRail) {
-    const at = spineSpecs.findIndex((spec) => spec.id === ASSISTANT_SPINE_AFTER);
-    spineSpecs.splice(at + 1, 0, UTILITY_SPECS.assistant);
+    const assistant = UTILITY_SPECS.assistant;
+    if (assistant) {
+      const after = spineSpecs.findIndex((spec) => spec.id === ASSISTANT_SPINE_AFTER);
+      // `at` is -1 only if the anchor domain was removed, in which case the end of the spine is the
+      // sensible place rather than index 0.
+      spineSpecs.splice(after < 0 ? spineSpecs.length : after + 1, 0, assistant);
+    }
   }
 
   // A group with nothing in it is not a group: a permission can empty a whole domain, and an empty
   // rail row that opens an empty column is worse than no row.
   const domains = spineSpecs.map(buildDomain).filter((domain) => domain.items.length > 0);
 
-  const utilities = (options.assistantInRail ? ["help", "prefs", "console"] : ["assistant", "help", "prefs", "console"])
+  const utilityIds = options.assistantInRail
+    ? ["help", "prefs", "console"]
+    : ["assistant", "help", "prefs", "console"];
+  const utilities = utilityIds
     .map((id) => UTILITY_SPECS[id])
-    .filter(Boolean)
+    .filter((spec): spec is DomainSpec => !!spec)
     .map(buildDomain)
     .filter((domain) => domain.items.length > 0);
 
@@ -401,28 +426,68 @@ export interface OrderedRows {
  * Order and fold one domain's rows.
  *
  * Pinned rows are removed by the caller before this runs, so a favourite is not also listed here.
+ *
+ * **Nothing is folded until something in the domain has been opened.** With no usage every row is
+ * equally "not opened yet", so folding would be a guess — and a pane that hides rows on first run, on
+ * the strength of a guess, is a worse first run than the tree it replaced. The fold appears once there
+ * is something real to rank against, which is also the first moment it means anything.
+ *
+ * Rows are ranked as **units**: a hub and the pages inside it travel together and are folded together.
+ * Treating a child as an independent row put "Service board settings" above the parent it belongs to
+ * and then folded that parent away, which reads as a page that came from nowhere.
  */
+interface RowUnit {
+  parent: NavDestination;
+  children: NavDestination[];
+}
+
+function toUnits(items: readonly NavDestination[]): RowUnit[] {
+  const units: RowUnit[] = [];
+  for (const item of items) {
+    const last = units[units.length - 1];
+    // A child always follows the row that owns it, so the unit on top is the right one to join.
+    if (item.child && last) last.children.push(item);
+    else units.push({ parent: item, children: [] });
+  }
+  return units;
+}
+
+const flattenUnits = (units: readonly RowUnit[]): NavDestination[] =>
+  units.flatMap((unit) => [unit.parent, ...unit.children]);
+
+const unitUse = (unit: RowUnit, usage: Record<string, UseRecord>): number =>
+  Math.max(...[unit.parent, ...unit.children].map((item) => navScore(usage[item.id])));
+
 export function orderRows(
   items: NavDestination[],
   usage: Record<string, UseRecord>,
   order: RowOrder,
 ): OrderedRows {
+  const units = toUnits(items);
+
   if (order === "az") {
-    return { visible: [...items].sort((a, b) => a.label.localeCompare(b.label)), folded: [] };
+    return {
+      visible: flattenUnits([...units].sort((a, b) => a.parent.label.localeCompare(b.parent.label))),
+      folded: [],
+    };
   }
 
-  const opened = items.filter((item) => usage[item.id]);
-  const never = items.filter((item) => !usage[item.id]);
+  const used = units.filter((unit) => [unit.parent, ...unit.children].some((item) => usage[item.id]));
+  if (used.length === 0) return { visible: items, folded: [] };
 
-  const visible = [...opened].sort((a, b) => navScore(usage[b.id]) - navScore(usage[a.id]));
-  // Children stay with the row that owns them, and a hub's contents are never folded: the hub itself
-  // is the thing someone came for.
-  const keepNever = never.filter((item) => item.child).concat(
-    never.filter((item) => !item.child).slice(0, Math.max(0, FOLD_THRESHOLD - visible.length)),
-  );
-  const folded = never.filter((item) => !keepNever.includes(item));
+  const unused = units.filter((unit) => !used.includes(unit));
+  used.sort((a, b) => unitUse(b, usage) - unitUse(a, usage));
 
-  return { visible: [...visible, ...keepNever], folded };
+  // What is left of the budget after the rows actually in use, spent on whole units.
+  let budget = Math.max(0, FOLD_THRESHOLD - used.reduce((n, unit) => n + 1 + unit.children.length, 0));
+  const kept: RowUnit[] = [];
+  for (const unit of unused) {
+    const size = 1 + unit.children.length;
+    if (size <= budget) { kept.push(unit); budget -= size; }
+  }
+  const folded = unused.filter((unit) => !kept.includes(unit));
+
+  return { visible: flattenUnits([...used, ...kept]), folded: flattenUnits(folded) };
 }
 
 export const NAV_STORAGE_KEYS = {

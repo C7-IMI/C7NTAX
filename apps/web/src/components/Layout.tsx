@@ -776,15 +776,6 @@ export function Layout({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  /**
-   * The modern pane needs the sidebar open to show a domain's destinations, so choosing one while
-   * collapsed asks for the column rather than opening an empty rail row.
-   */
-  const expandSidebar = useCallback(() => {
-    setCollapsed(false);
-    localStorage.setItem("c7_sidebar_collapsed", "false");
-  }, []);
-
   // ── Resize handling ────────────────────────────────────────────
   const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -1006,9 +997,9 @@ export function Layout({ children }: { children: ReactNode }) {
   const sidebarStyle = collapsed
     ? { width: "64px" }
     : modernNav
-      // Fixed rather than draggable: the pane is a rail plus a column, and a width the user sets
-      // would fight the column it has to fit. Collapsing still gives the icon-only rail.
-      ? { width: "448px" }
+      // Rail only. The destinations fly out over the content, so this is the whole cost of the modern
+      // pane — 200px, narrower than the 256px the tree occupied — and no page has to lay out around it.
+      ? { width: "200px" }
       : { width: `${sidebarWidth}px` };
 
   return (
@@ -1055,16 +1046,36 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation — one of two panes, from the same tree. See lib/navModel.ts and
+            NavPaneModern.tsx for the modern one; the classic branch below is deliberately
+            unchanged so that switching back is a setting rather than a code change. */}
         <nav
-          className={`flex-1 py-3 overflow-y-auto ${collapsed ? "px-1.5" : "px-2"}`}
-          onContextMenu={(e) => {
+          className={
+            modernNav
+              ? // No `overflow-hidden` here: the destination list is positioned beyond this box on
+                // purpose, and clipping it would hide the panel. The rail and the flyout each scroll
+                // themselves.
+                "flex-1 flex flex-col min-h-0"
+              : `flex-1 py-3 overflow-y-auto ${collapsed ? "px-1.5" : "px-2"}`
+          }
+          onContextMenu={modernNav ? undefined : (e) => {
             // The pane's own menu: what applies to the navigation as a whole rather than to the
             // section under the pointer (a section stops the event and opens its own).
             if (isTextEntryTarget(e.target)) return;
             navMenu.open(e, paneMenuEntries(), { title: "Navigation", subtitle: "Right-click a section for its own menu" });
           }}
         >
+          {modernNav ? (
+            <NavPaneModern
+              tree={visibleTree}
+              favorites={favorites}
+              alertCount={alertCount}
+              collapsed={collapsed}
+              assistantInRail={navigation.assistantInRail}
+              onNodeContextMenu={openNodeMenu}
+            />
+          ) : (
+          <>
           {/* ── Favorites ───────────────────────────────────────────────────────────
               Pinned sections, drawn as copies: the section keeps its place in the tree below and
               a second copy appears here, in its own order, at the top of the navigation. */}
@@ -1109,6 +1120,8 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className={collapsed ? "flex flex-col items-center gap-1" : ""}>
             {orderedTree.map(n => renderNode(n))}
           </div>
+          </>
+          )}
         </nav>
 
         <ContextMenu state={navMenu.menuState} onClose={navMenu.close} />
@@ -1138,8 +1151,9 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* Resize handle */}
-        {!collapsed && (
+        {/* Resize handle — classic only: the modern pane is a rail plus a column, and a width the
+            user drags would fight the column it has to fit. */}
+        {!collapsed && !modernNav && (
           <div
             className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-cyber-500/30 transition-colors group"
             onMouseDown={handleResizeMouseDown}

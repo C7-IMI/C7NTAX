@@ -65,6 +65,25 @@ export function primeNavigationSettings(next: NavigationSettings): void {
   subscribers.forEach((notify) => notify(next));
 }
 
+/**
+ * Re-reads the setting and pushes it to every mounted pane.
+ *
+ * The settings screen calls this rather than computing the new value: whether a save, a clear or a
+ * deployment fallback produced what the API now reports is the API's business, and reconstructing it
+ * here is how the screen and the pane would eventually disagree.
+ */
+export function refreshNavigationSettings(): void {
+  cached = null;
+  inflight = api.get(`/system/config/${APP_SETTINGS_CONFIG_KEY}`)
+    .then((r) => parseNavigationSettings(r.data?.value))
+    .catch(() => DEFAULT_SETTING)
+    .then((value) => {
+      cached = value;
+      subscribers.forEach((notify) => notify(value));
+      return value;
+    });
+}
+
 export function useNavigationSettings(): NavigationSettings {
   const [setting, setSetting] = useState<NavigationSettings>(() => cached ?? DEFAULT_SETTING);
 
