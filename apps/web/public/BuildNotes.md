@@ -31,6 +31,8 @@ The scans are the fix; the finding is the interesting part. **103 findings local
 
 **One thing worth revisiting, and it is a posture decision rather than a bug:** the Kumo vault snapshot *is committed* — `apps/api/src/snapshots/kumo-passwords.json` carries the vault's ciphertext, because the snapshot poller captures that table like any other. Encryption is what makes it survivable; the honest fix is to stop capturing that table into a snapshot that lives in git, which is a product decision with a migration behind it (the file is in history). Flagged, allowed with a reason, and not forgotten.
 
+**Verified — and this is the first time the workflow has ever concluded successfully.** Run [37819681866](https://github.com/C7-Intelligence/C7NTAX/actions/runs/37819681866) on `938879d`: **all four jobs pass** — Route guards and typechecks, Dependency baseline, Secret scan, Config and image scan. Before this arc, **164 runs had failed and none had succeeded**, so none of these four checks had ever gated anything: the guard was wrong about seven routes, the API typecheck was measuring a missing Prisma client, gitleaks needed a licence it could not have, and trivy's pinned release could not resolve its own installer.
+
 ---
 
 ## 2026.10.8.035 — The two CI fixes CI then told me were not fixed
