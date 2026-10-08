@@ -5,8 +5,11 @@ import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import {
   Ticket, Clock, DollarSign, AlertTriangle, TrendingUp, Users, Columns3, Building2, FolderKanban,
-  Monitor, BookOpen, Target, Cloud, GripVertical, Eye, EyeOff, RotateCcw, Save, SlidersHorizontal, ArrowUp, ArrowDown, Bell,
+  Monitor, BookOpen, Target, Cloud, GripVertical, Eye, EyeOff, RotateCcw, Save, SlidersHorizontal, ArrowUp, ArrowDown, ArrowRight, Bell,
 } from "lucide-react";
+import { timeAgo } from "../lib/format";
+import { ticketStatusBadge, ticketStatusLabel } from "../lib/ticketStatus";
+import { EmptyState } from "../components/ui";
 
 /**
  * The dashboard is assembled from widgets the signed-in user arranged (PLAN-015 Phase B #4).
@@ -179,20 +182,64 @@ export function DashboardPage() {  const { user } = useAuth();
         // void under them, and the list scrolls inside whatever height the row gives it — a widget
         // whose height is its content would drag the whole row's height with it.
         <div className="card flex h-full min-h-0 flex-col">
-          <h3 className="text-sm font-semibold text-white mb-2">Recent tickets</h3>
-          {recent.length === 0
-            ? <p className="text-xs text-gray-500">Nothing updated recently.</p>
-            : (
-              <div className="-mr-1 min-h-0 flex-1 overflow-y-auto pr-1">
-                {recent.map((t: any) => (
-                  <Link key={t.id} to={`/tickets/${t.id}`} className="flex items-center gap-2 py-1.5 text-sm hover:text-cyber-400 transition-colors">
-                    <span className="font-mono text-xs text-gray-500">{t.ticketNumber}</span>
-                    <span className="text-gray-300 truncate flex-1">{t.title}</span>
-                    <span className="text-xs text-gray-600">{t.status}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <h3 className="text-sm font-semibold text-white">Recent tickets</h3>
+            <Link to="/tickets" className="text-[11px] text-cyber-400 hover:text-cyber-300 inline-flex items-center gap-1">
+              All tickets <ArrowRight size={11} />
+            </Link>
+          </div>
+          {recent.length === 0 ? (
+            <EmptyState
+              icon={<Ticket size={22} />}
+              title="Nothing updated recently"
+              description="Tickets appear here as soon as a client raises one, or somebody works on one."
+            />
+          ) : (
+            <div className="-mx-2 min-h-0 flex-1 overflow-y-auto">
+              <table className="w-full table-fixed text-sm">
+                <thead className="sticky top-0 z-10 bg-surface">
+                  <tr className="text-left text-[11px] uppercase tracking-wide text-gray-500">
+                    <th className="w-[9rem] px-2 py-1.5 font-medium">Ticket</th>
+                    <th className="px-2 py-1.5 font-medium">Subject</th>
+                    <th className="hidden w-[13rem] px-2 py-1.5 font-medium md:table-cell">Client</th>
+                    <th className="hidden w-[7.5rem] px-2 py-1.5 font-medium sm:table-cell">Updated</th>
+                    <th className="w-[9.5rem] px-2 py-1.5 font-medium text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border">
+                  {recent.map((t: any) => (
+                    <tr key={t.id} className="relative group transition-colors hover:bg-surface-lighter">
+                      <td className="px-2 py-2 align-middle">
+                        <span className="font-mono text-[11px] text-gray-500 group-hover:text-gray-400">{t.ticketNumber}</span>
+                      </td>
+                      <td className="px-2 py-2 align-middle">
+                        <Link
+                          to={`/tickets/${t.id}`}
+                          title={t.title}
+                          className="block truncate text-gray-200 group-hover:text-cyber-300 transition-colors after:absolute after:inset-0 after:content-['']"
+                        >
+                          {t.title}
+                        </Link>
+                      </td>
+                      <td className="hidden px-2 py-2 align-middle md:table-cell">
+                        <span className="block truncate text-xs text-gray-500" title={t.company?.name ?? ""}>
+                          {t.company?.name ?? "—"}
+                        </span>
+                      </td>
+                      <td className="hidden px-2 py-2 align-middle sm:table-cell">
+                        <span className="text-xs text-gray-500" title={t.updatedAt ? new Date(t.updatedAt).toLocaleString() : ""}>
+                          {timeAgo(t.updatedAt)}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2 align-middle text-right">
+                        <span className={`badge text-[11px] ${ticketStatusBadge(t.status)}`}>{ticketStatusLabel(t.status)}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       );
     }

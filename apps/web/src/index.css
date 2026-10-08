@@ -40,6 +40,17 @@ html {
   --alert-amber: #f59e0b;
   --alert-green: #22c55e;
 
+  /* Ticket status labels. Each needs a shade that is legible on this theme's surface, which is why
+     they are tokens rather than Tailwind palette shades — the light theme fixes the same names to
+     much darker values. See `.badge-status` for how the tint follows. */
+  --status-new: #38bdf8;
+  --status-open: #60a5fa;
+  --status-progress: #fbbf24;
+  --status-waiting-client: #c084fc;
+  --status-waiting-vendor: #a5b4fc;
+  --status-resolved: #4ade80;
+  --status-closed: #9ca3af;
+
   --text-primary: #ffffff;
   --text-secondary: #d1d5db;
   --text-tertiary: #9ca3af;
@@ -83,6 +94,14 @@ html[data-theme="light"] {
   --alert-amber: #d97706;
   --alert-green: #16a34a;
 
+  --status-new: #075985;
+  --status-open: #1e40af;
+  --status-progress: #92400e;
+  --status-waiting-client: #6b21a8;
+  --status-waiting-vendor: #3730a3;
+  --status-resolved: #166534;
+  --status-closed: #374151;
+
   --text-primary: #1a1a1a;
   --text-secondary: #363636;
   --text-tertiary: #525252;
@@ -123,6 +142,20 @@ html[data-theme="light"] {
   .badge {
     @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
   }
+  /*
+   * Ticket status badges. The label colour is a theme token, so it is legible on both themes, and
+   * the background is a tint of that same colour — which is the only way to get a tint out of these
+   * colours at all: they are declared as bare `var()` values, so an opacity modifier on one of them
+   * (`bg-cyber-600/20`) emits no rule and the badge comes out with no background.
+   */
+  .badge-status { background-color: color-mix(in srgb, currentColor 18%, transparent); }
+  .badge-status-new { color: var(--status-new); }
+  .badge-status-open { color: var(--status-open); }
+  .badge-status-in_progress { color: var(--status-progress); }
+  .badge-status-waiting_on_client { color: var(--status-waiting-client); }
+  .badge-status-waiting_on_vendor { color: var(--status-waiting-vendor); }
+  .badge-status-resolved { color: var(--status-resolved); }
+  .badge-status-closed { color: var(--status-closed); }
 }
 
 .service-alert-banner {

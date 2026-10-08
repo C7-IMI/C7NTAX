@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.045 | Last Updated: 2026-10-07
+## Version: 2026.10.7.046 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,20 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.046 — The dashboard's recent tickets read like the rest of the product
+
+The card listed eight tickets as one line of raw data each — a ticket number, a title and `in_progress` — with nothing to say which client it belonged to or when it last moved. It is now a table in the product's own language, with the two columns that were missing.
+
+- **[New]** **A client column and a last-updated column.** Each row now says whose ticket it is and how long ago it last moved — "21m ago", "5h ago" — with the exact timestamp on hover. Both columns drop out on a narrow window before anything is cramped.
+- **[Update]** **A column header, so the card explains itself**: Ticket, Subject, Client, Updated, Status.
+- **[Fix]** **Statuses are written and coloured like statuses, not like database values.** `in_progress` was being printed raw; it now reads **In Progress** in a tinted badge that follows the product's badge language, and the same language is used in the customer portal's own ticket list and in the portal preview — one shared helper, so a status cannot be "In Progress" in one place and `in_progress` in another.
+- **[Fix]** **The badge tints are visible in both themes, at last.** The status colours are theme tokens (`--status-*`) with their tint derived from the label colour, because the badge pattern used elsewhere — `bg-cyber-600/20 text-cyber-400` — relies on an opacity modifier over a colour declared as a bare `var()`, which emits no rule at all: those badges have no background, and the ones that do use a fixed palette shade are unreadable on the light theme (measured: 1.3:1). The new badges measure 5.3–6.4:1 in the light theme and 5.7–9.2:1 in the dark one.
+- **[Update]** **The rest of the row is the product's, too:** monospace ticket numbers, the subject truncated with the full text on hover, a row that highlights as a whole and opens the ticket wherever it is clicked, dividers in the theme's own border colour, a **sticky header** so the columns stay named while the list scrolls, an **All tickets** link in the card's title, and an empty state that says what the card is for rather than "Nothing updated recently."
+
+Verified in a browser at desktop width, in both themes: **21 checks** — the five columns are present and hold a ticket number, a subject, a client, a relative time and a readable status; no raw status value is left anywhere in the card; the dividers are the theme's border rather than Tailwind's default; clicking the far end of a row still opens that ticket; and the badges are filled and legible on both themes. The same badge was re-checked inside the customer portal preview — **9 checks**, 5.3:1 or better in both themes.
 
 ---
 

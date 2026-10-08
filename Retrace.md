@@ -4594,7 +4594,6 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.
 
 ---
-
 ### Prompt 243 — Per-customer portal access, and a portal you can look at before the customer does
 **Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~3 h
 **BuildNotes IDs:** 2026.10.7.045 — Each customer gets the portal access they need, and you can see it before they do
@@ -4633,3 +4632,39 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The per-client board is stored as a plain id, validated on write** against the active boards. A board deleted afterwards falls back to the oldest active one with a warning in the log rather than a broken ticket.
 - **The design-token trap (an opacity modifier on a bare `var()` theme colour emits no rule) is still in ~106 places.** Both new dialogs avoid it, including one `bg-surface-lighter/40` that was removed during this work.
 - **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.
+
+---
+
+### Prompt 244 — The dashboard's recent tickets, and the invisible badge
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~1 h
+**BuildNotes IDs:** 2026.10.7.046 — The dashboard's recent tickets read like the rest of the product
+
+> Make the recent tickets card on Dashboard look prettier to more fit inline with the app theme. It looks like it's just displaying raw data. Add a last updated column and a client column.
+
+**What I did**
+- **Read the card for what it actually was.** Three things on one line per ticket: a monospace number, a truncated title and the literal `status` column value — `in_progress`, `new` — with the status floating at the far right of a 1258px card and no indication of who the ticket belonged to or when it had last moved. "Raw data" was a fair description: it was the ticket row, printed.
+- **Made it a table in the product's own language.** Column header (Ticket, Subject, Client, Updated, Status), monospace ticket numbers, the subject truncated with the full text on hover, the row highlighting as a whole and opening the ticket wherever it is clicked, dividers in the theme's border colour, a **sticky header** so the columns stay named while the list scrolls, an **All tickets** link beside the title, and an empty state that says what the card is for instead of "Nothing updated recently."
+- **Added the two columns that were asked for**, and made them earn their place: **Client** from the ticket's company (hidden below `md`) and **Updated** as a relative time — "21m ago", "5h ago" — using the helper the Kumo screens and Service Alerts already use, with the exact timestamp on hover and the column hidden below `sm` before anything is cramped.
+- **Wrote the status as a status.** `lib/ticketStatus.ts` — the labels and colours in one place, so the dashboard, the portal's own ticket list and the portal preview cannot drift into "In Progress" and `in_progress` on different screens. The portal's list had its own copy of the colours and the preview its own `statusTone`; both now use the shared one.
+- **The browser check then found the interesting bug.** Measuring the badge rather than trusting it showed the background was `rgba(0, 0, 0, 0)`: `bg-cyber-600/20` — the badge pattern used all over the product — emits **no rule at all**, because `cyber`, `navy`, `surface` and `gray` are declared in the Tailwind config as bare `var()` values. Somebody's status badge has been invisible in that combination for as long as it has existed.
+- **Fixed that where it belongs, in the theme.** The status colours are now `--status-*` tokens defined in both themes, with the tint derived from the label colour: `.badge-status { background-color: color-mix(in srgb, currentColor 18%, transparent); }`. `color-mix` was already used in `index.css` for the focus ring, so it is the product's own currency; and taking the tint from the label means the two can never disagree.
+- **Measured instead of eyeballed, and got it wrong twice first.** The dark theme was legible but the light theme came out at 1.3:1 (a 300/400-shade label on a pale tint of itself — which is what every palette badge in the product does in light mode). The first replacement set still left amber at 3.9:1, so the light theme's tokens moved to 800-shades. Final: **5.3–6.4:1 light, 5.7–9.2:1 dark**.
+- **Checked that the harness was telling the truth.** The first contrast run reported values that made no sense until I stopped parsing `color-mix(...)` by hand and let the browser composite the tint onto a canvas and read the pixel back. Worth remembering: hand-parsing a computed colour is how you get a confident wrong number.
+- **Cleaned up after earlier work.** The residue check found two `Portal Probe …` clients and their contacts left behind by the probe run that crashed before its cleanup during the previous prompt — removed.
+
+**Decisions worth remembering**
+- **A status is a product decision, not a field.** The card was printing an enum; every other list in the product prints a label, and now one helper decides what that label is and what colour it wears.
+- **The theme's own colours cannot be tinted.** A colour declared as `var(--x)` in the Tailwind config takes no opacity modifier — `bg-cyber-600/20` is not a subtle tint, it is nothing at all. That one fact is behind the invisible badge, the transparent avatar tints in `lib/format.ts`, and the `divide-surface-border/60` dividers fixed in Service Alerts.
+- **When a colour has to work in two themes, it belongs in the theme.** The lesson from the SSO and portal work repeated itself: measure the rendered style rather than assume a class did something, and put the value where both themes can reach it.
+- **`currentColor` is the cheap way to keep a tint honest.** The background is derived from the label, so a theme change moves both together and there is no second value to keep in step.
+- **Relative time beats a timestamp in a glanceable card** — and the timestamp is still there, in the tooltip, for the person who needs the exact moment.
+
+**Notes for next time**
+- **The same invisible-tint pattern is still all over the product** (~106 occurrences across ~36 files, including `bg-<palette>-600/20` badges that go unreadable in the light theme). This change fixed the status badges and left the rest; the general fix is alpha-capable theme colours, or moving the rest onto `currentColor` tints like this one.
+- **`ticketStatusBadge` returns colour classes; the caller still adds `badge`.** A single component would be tidier if a third screen needs it.
+- **`--status-*` is a new token family to keep in mind** when a new ticket status is added: it needs a label, a class and a value in both theme blocks, and the fallback is the muted "closed" colour rather than a crash.
+- **The dashboard card is still capped at eight tickets** with no "more" affordance inside it; the All tickets link is the way out.
+- **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.
+
+---
+

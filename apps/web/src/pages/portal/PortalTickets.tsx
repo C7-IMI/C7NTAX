@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, Plus, RefreshCw, Send } from "lucide-react";
 import portalApi, { portalErrorMessage } from "../../portalApi";
 import { ON_ACCENT_COLOUR } from "../../lib/colourTokens";
+import { ticketStatusBadge } from "../../lib/ticketStatus";
 import { portalAccent, usePortalAuth } from "./PortalApp";
 
 interface PortalTicket {
@@ -15,16 +16,6 @@ interface PortalTicket {
   createdAt: string;
   updatedAt: string;
 }
-
-const STATUS_CLASSES: Record<string, string> = {
-  new: "bg-cyber-600/20 text-cyber-400",
-  open: "bg-blue-600/20 text-blue-400",
-  in_progress: "bg-amber-600/20 text-amber-400",
-  waiting_on_client: "bg-purple-600/20 text-purple-400",
-  waiting_on_vendor: "bg-indigo-600/20 text-indigo-400",
-  resolved: "bg-green-600/20 text-green-400",
-  closed: "bg-gray-600/20 text-gray-400",
-};
 
 export function PortalTickets() {
   const { me, refresh, policy } = usePortalAuth();
@@ -87,7 +78,7 @@ export function PortalTickets() {
           {visible.map(t => (
             <Link key={t.id} to={`/portal/tickets/${t.id}`} className="block px-4 py-3 hover:bg-surface-lighter/40">
               <div className="flex items-center gap-2">
-                <span className={`badge text-xs ${STATUS_CLASSES[t.status] || "bg-gray-600/20 text-gray-400"}`}>{t.statusLabel}</span>
+                <span className={`badge text-xs ${ticketStatusBadge(t.status)}`}>{t.statusLabel}</span>
                 <span className="text-xs text-gray-500">{t.ticketNumber}</span>
                 {t.priority === "high" && <span className="badge text-xs bg-red-600/20 text-red-400 flex items-center gap-1"><AlertTriangle size={10} /> High</span>}
                 <span className="ml-auto text-xs text-gray-500">updated {new Date(t.updatedAt).toLocaleDateString()}</span>

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import api from "../api";
 import { DEFAULT_ACCENT_COLOUR, HEX_COLOUR_PATTERN, ON_ACCENT_COLOUR } from "../lib/colourTokens";
+import { ticketStatusBadge, ticketStatusLabel } from "../lib/ticketStatus";
 import { Chip } from "../pages/Configuration";
 
 type Visibility = "contact" | "company";
@@ -62,11 +63,6 @@ const SOURCE_LABEL: Record<Source, string> = {
   instance: "the deployment",
   default: "the default",
 };
-
-const statusTone = (status: string): "good" | "info" | "warn" | "muted" =>
-  status === "resolved" || status === "closed" ? "good"
-    : status === "waiting_on_client" ? "warn"
-      : status === "new" ? "info" : "muted";
 
 type Step = "sign-in" | "tickets" | "detail" | "new";
 
@@ -321,7 +317,7 @@ export function PortalPreviewDialog({ clientId, onClose }: { clientId: string; o
                                   <div className="flex items-center gap-2">
                                     <span className="font-mono text-[11px] text-gray-500">{ticket.ticketNumber}</span>
                                     <span className="text-sm text-gray-200 truncate flex-1">{ticket.title}</span>
-                                    <Chip tone={statusTone(ticket.status)}>{ticket.statusLabel}</Chip>
+                                    <span className={`badge text-[11px] ${ticketStatusBadge(ticket.status)}`}>{ticketStatusLabel(ticket.status)}</span>
                                   </div>
                                   <p className="text-[11px] text-gray-600 mt-0.5">
                                     Updated {new Date(ticket.updatedAt).toLocaleString()}
@@ -365,7 +361,7 @@ export function PortalPreviewDialog({ clientId, onClose }: { clientId: string; o
                               <div>
                                 <div className="flex items-center gap-2">
                                   <span className="font-mono text-[11px] text-gray-500">{detail.ticketNumber}</span>
-                                  <Chip tone={statusTone(detail.status)}>{detail.statusLabel}</Chip>
+                                  <span className={`badge text-[11px] ${ticketStatusBadge(detail.status)}`}>{ticketStatusLabel(detail.status)}</span>
                                 </div>
                                 <h4 className="text-sm font-semibold text-white mt-1">{detail.title}</h4>
                                 {detail.assignedToName && (
