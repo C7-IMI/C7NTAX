@@ -418,11 +418,11 @@ export function ServiceAlertsPage() {
                     View source <ExternalLink size={12} />
                   </a>
                 )}
-                {statusOf(a.service.id) && (
-                  <div className="mt-2 pt-2 border-t border-surface-border/60">
+                {statusOf(a.service.id)?.sources.length ? (
+                  <div className="mt-2 pt-2 border-t border-surface-border">
                     <SourceChips status={statusOf(a.service.id)} />
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           ))}

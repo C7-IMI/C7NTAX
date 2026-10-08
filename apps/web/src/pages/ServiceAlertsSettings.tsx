@@ -218,30 +218,30 @@ export function ServiceAlertsSettingsPage() {
           </span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 text-sm">
-          <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
+          <div className="bg-surface-light rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Last check</p>
             <p className="text-white font-medium">{monitor?.lastCheckAt ? new Date(monitor.lastCheckAt).toLocaleString() : "Not run yet"}</p>
           </div>
-          <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
+          <div className="bg-surface-light rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Services polled</p>
             <p className="text-white font-medium">{monitor?.checkedServices ?? 0}</p>
           </div>
-          <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
+          <div className="bg-surface-light rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Alerts created (last run)</p>
             <p className="text-white font-medium">{monitor?.created ?? 0}</p>
           </div>
-          <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
+          <div className="bg-surface-light rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Alerts refreshed (last run)</p>
             <p className="text-white font-medium">{monitor?.updated ?? 0}</p>
           </div>
-          <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
+          <div className="bg-surface-light rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Auto-resolved (last run)</p>
             <p className="text-white font-medium">
               {monitor?.resolved ?? 0}
               {(monitor?.staleResolved ?? 0) > 0 && <span className="text-gray-500 font-normal"> ({monitor?.staleResolved} stale)</span>}
             </p>
           </div>
-          <div className="bg-surface-lighter/50 rounded-lg p-3 border border-surface-border">
+          <div className="bg-surface-light rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Active alerts</p>
             <p className={`font-medium ${activeAlerts > 0 ? "text-red-400" : "text-emerald-400"}`}>{activeAlerts}</p>
           </div>
@@ -314,7 +314,7 @@ export function ServiceAlertsSettingsPage() {
               </thead>
               <tbody>
                 {services.map(s => (
-                  <tr key={s.id} className={`border-b border-surface-border/60 ${s.enabled ? "" : "opacity-50"}`}>
+                  <tr key={s.id} className={`border-b border-surface-border ${s.enabled ? "" : "opacity-50"}`}>
                     <td className="px-5 py-3">
                       <p className="text-white font-medium">{s.name}</p>
                       {s.description && <p className="text-xs text-gray-500 truncate max-w-[260px]">{s.description}</p>}

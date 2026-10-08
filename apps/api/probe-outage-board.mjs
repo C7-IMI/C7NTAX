@@ -60,7 +60,12 @@ function startStub() {
         ? [{ id: "1900000000000000001", text: `${mode.serviceName} is down again, nothing loads`, created_at: new Date().toISOString() }]
         : mode.kind === "restored"
           ? [{ id: "1900000000000000002", text: `${mode.serviceName} outage resolved, back to normal`, created_at: new Date().toISOString() }]
-          : [];
+          // A complaint about something else entirely: the recent-search endpoint is free to answer
+          // with posts that only share the words of the query, and a base URL pointed somewhere it
+          // should not be answers with anything at all.
+          : mode.kind === "foreign"
+            ? [{ id: "1900000000000000003", text: "SomeOtherProduct is down again, nothing loads", created_at: new Date().toISOString() }]
+            : [];
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ data, meta: { result_count: data.length } }));
     };
@@ -77,20 +82,31 @@ async function main() {
   const stub = await startStub();
   const stamp = Date.now().toString(36);
   const serviceName = `ProbeSocial ${stamp}`;
+  let serviceId = null;
 
-  const admin = await signIn("persona.admin@c7ntax.local");
-  check(admin.status === 200, `administrator signed in (${admin.status})`);
-  if (admin.status !== 200) { stub.server.close(); await prisma.$disconnect(); process.exit(1); }
+  try {
+    const admin = await signIn("persona.admin@c7ntax.local");
+    check(admin.status === 200, `administrator signed in (${admin.status})`);
+    if (admin.status !== 200) return;
 
-  // A probe service with no other source at all: whatever is observed about it came from X, which
-  // is what makes the severity assertions below mean something.
-  const created = await call("POST", "/api/service-alerts/services", {
-    token: admin.token,
-    body: { name: serviceName, category: "other", description: "probe", monitorEnabled: true, enabled: true },
-  });
-  check(created.status === 201, `a probe service with only a social source was created (${created.status})`);
-  const serviceId = created.data?.id;
-  await prisma.serviceAlert.deleteMany({ where: { serviceId } });
+    // A probe service with no other source at all: whatever is observed about it came from X, which
+    // is what makes the severity assertions below mean something.
+    const created = await call("POST", "/api/service-alerts/services", {
+      token: admin.token,
+      body: { name: serviceName, category: "other", description: "probe", monitorEnabled: true, enabled: true },
+    });
+    check(created.status === 201, `a probe service with only a social source was created (${created.status})`);
+    serviceId = created.data?.id;
+    await prisma.serviceAlert.deleteMany({ where: { serviceId } });
+
+    console.log("\na post that does not name the service is not evidence about it");
+    stub.setMode({ kind: "foreign" });
+    const foreign = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    const foreignSource = ((foreign.data?.sourceStatus?.[serviceId]?.sources) || []).find(s => s.source === "social");
+    check(foreignSource?.verdict === "clear", `a complaint about another product reads as clear for this service (${foreignSource?.verdict})`);
+    check(/name/i.test(foreignSource?.detail || ""), `and the detail says this service was not named (${foreignSource?.detail})`);
+    const raisedFromForeign = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
+    check(!raisedFromForeign, "and no notice was raised from it");
 
   console.log("\na configured social source is read, and a complaint is only ever a notice");
   stub.setMode({ kind: "complaint", serviceName });

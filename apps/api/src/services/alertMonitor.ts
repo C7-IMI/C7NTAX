@@ -319,9 +319,11 @@ async function observeDownDetector(service: { name: string; downDetectorUrl: str
  *
  * This is the weakest source in the set and is treated as such: it reads the recent-search endpoint
  * for the service's own name, and a complaint is recorded as an **informational** observation, never
- * as proof of an outage — social chatter earns a notice on the board, not a red banner. Nothing is
- * fetched at all unless a bearer token is configured, so a deployment that has not set one does not
- * silently look like it is watching a source it cannot read.
+ * as proof of an outage — social chatter earns a notice on the board, not a red banner. A post must
+ * also name the service itself before it counts for anything, so a post about something else cannot
+ * raise a notice here. Nothing is fetched at all unless a bearer token is configured, so a
+ * deployment that has not set one does not silently look like it is watching a source it cannot
+ * read.
  */
 async function observeSocial(service: { name: string }): Promise<SourceObservation | null> {
   if (!configFlag("monitoring", "socialSource")) return null;
@@ -350,7 +352,13 @@ async function observeSocial(service: { name: string }): Promise<SourceObservati
     const tweets = payload?.data ?? [];
     const now = Date.now();
     const recent = tweets.filter((t) => !t.created_at || now - Date.parse(t.created_at) <= SOCIAL_WINDOW_MS);
-    const complaining = recent.find((t) => classify(t.text) === "outage" && !RESTORED_PATTERNS.some((r) => r.test(t.text)));
+    // The query asks for the name, but the search can answer with posts that merely share its words —
+    // and a base URL pointed somewhere it should not be answers with anything at all. A post that
+    // never names the service is not evidence about it, so it can neither raise nor retire a notice;
+    // without this, one stranger's post raises notices on every service on the board.
+    const named = recent.filter((t) => t.text.toLowerCase().includes(service.name.toLowerCase()));
+    const read = `${recent.length} recent post${recent.length === 1 ? "" : "s"} read, ${named.length} naming ${service.name}`;
+    const complaining = named.find((t) => classify(t.text) === "outage" && !RESTORED_PATTERNS.some((r) => r.test(t.text)));
     if (complaining) {
       const when = complaining.created_at ? new Date(complaining.created_at).toISOString().slice(0, 16).replace("T", " ") + "Z" : "undated";
       return {
@@ -360,17 +368,19 @@ async function observeSocial(service: { name: string }): Promise<SourceObservati
         title: `Social reports about ${service.name} on X`,
         body: complaining.text.slice(0, 300),
         link: `https://x.com/i/web/status/${complaining.id}`,
-        detail: `a post ${when} mentions a problem (${recent.length} recent post${recent.length === 1 ? "" : "s"} read)`,
+        detail: `a post ${when} names ${service.name} and reports a problem (${read})`,
       };
     }
-    const resolving = recent.find((t) => classify(t.text) === "restored");
+    const resolving = named.find((t) => classify(t.text) === "restored");
     if (resolving) {
-      return { source: "social", verdict: "restored", detail: "a recent post says it is resolved" };
+      return { source: "social", verdict: "restored", detail: `a recent post naming ${service.name} says it is resolved` };
     }
     return {
       source: "social",
       verdict: "clear",
-      detail: `${recent.length} recent post${recent.length === 1 ? "" : "s"}, none reporting a problem`,
+      detail: recent.length
+        ? `${read}, none reporting a problem`
+        : `no recent post names ${service.name}`,
     };
   } catch (e: any) {
     return { source: "social", verdict: "unknown", detail: `X unreachable (${e?.message || e?.name || "error"})` };
