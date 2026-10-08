@@ -200,6 +200,16 @@ model Company {
   /// Logo shown on the portal, absolute URL or a path under the API's `/uploads`.
   portalLogoUrl   String?
 
+  // Portal policy for this client. A null on any of these means "use the instance's own
+  // setting" — so a deployment configures the portal once and only the clients that differ
+  // carry values of their own. See `services/portalPolicy.ts`.
+  /// `contact` (their own tickets) or `company` (every ticket at this client).
+  portalVisibility String?
+  portalAllowTicketCreation Boolean?
+  portalAllowReplies Boolean?
+  /// Where this client's portal-raised tickets land. Null uses the instance's board.
+  portalBoardId   String?
+
   /// How far this client has been billed by a bill-through batch (PLAN-015 Phase A #3).
   billThroughDate DateTime?
 
@@ -236,6 +246,14 @@ model Contact {
   notes       String?
   isPrimary   Boolean  @default(false)
   isActive    Boolean  @default(true)
+
+  // Portal overrides for this person, against their client's policy: the office manager who
+  // sees every ticket at the client where their colleagues see only their own, and the
+  // contractor who has no portal at all. Null follows the client.
+  /// False refuses the portal to this contact; true or null follows the client.
+  portalAccess Boolean?
+  /// `contact` or `company`. Null follows the client's own setting.
+  portalVisibility String?
 
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
