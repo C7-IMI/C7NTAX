@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.050 | Last Updated: 2026-10-08
+## Version: 2026.10.8.053 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,91 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.051 — A navigation pane that does not grow with the feature list
+
+The left pane was one scroll region holding sixty-odd destinations, and it was going to keep
+getting longer. It is now a **rail of nine domains** grouped by the job you are doing, and the
+chosen domain's destinations **fly out over the content** instead of holding a column open. Both
+panes are drawn from the same navigation tree, so nothing was dropped, renamed or moved in the
+data — a destination cannot go missing because of which pane you are looking at, only because the
+pane has not been told where it belongs.
+
+- **[New]** **A rail of domains, derived from the tree rather than written out beside it.**
+  Today, Service desk, Clients, Delivery, Revenue, Insight, Kumo and Platform, then **Service
+  alerts** on a row of its own at the end, with Assistant, Help, My settings and Console as
+  utilities underneath. Each domain is a *list of destinations*; the labels, routes, icons and
+  permissions are read back from the navigation tree, so a new section cannot be described twice
+  and drift. Anything the pane has not been told about appears under **Other** rather than
+  vanishing — the pane can be incomplete, but it cannot silently hide a page.
+- **[New]** **The destinations fly out over the page.** Clicking a domain opens its panel to the
+  right of the rail, above the content and taking no width from it; clicking the same row again,
+  clicking away, pressing **Esc** or choosing a destination closes it. The rail is 200px — 56px
+  *narrower* than the 256px tree it replaces — so every page gained width rather than losing it.
+  (An earlier shape with the list in a permanent second column was built, measured and discarded:
+  at 1280px it pushed the header from 91px to 139px and the page title to four lines.)
+- **[New]** **Order follows what you open.** The rows of a domain you actually use come first,
+  weighted by recency, recorded per browser; rows you have not opened are folded under
+  **Everything else** with a count, and nothing anywhere is hidden. A first run folds nothing at
+  all, so the first impression is never worse than the tree it replaced. An A–Z toggle is there
+  for anybody who navigates by position and wants the list to sit still.
+- **[New]** **The filter searches the whole application, not just the open panel.** Typing in it
+  shows every match with the section that owns it, which answers the question the tree made you
+  answer by memory: *which part of the product is this in?*
+- **[New]** **Keyboard:** `1`–`9` open a domain, `→` opens the one you are on, `/` focuses the
+  filter, `Esc` closes the panel (the filter first, then the panel).
+- **[Update]** **Favourites are the same list.** The pinned rows at the top of the panel are the
+  account's existing favourites — the same ones the classic tree shows, stored against your
+  account — so the two panes do not disagree about what you pinned.
+- **[Update]** **It is a setting, and a personal switch, and a build flag.** Administrative:
+  Administration → Configuration → Workspace → **Navigation pane**. Personal: **My Account →
+  Appearance → Interface**. Deployment-wide off: `VITE_UI_NAV=false`. See
+  [NAV-PANE-ROLLBACK.md](NAV-PANE-ROLLBACK.md) and Help → *The Navigation Pane*, which also gained
+  the configuration-reference rows and the FAQ answer this raises.
+
+## 2026.10.8.052 — Header descriptions that fit
+
+The one-line summary beside each page title was written for a column twice as wide as the one it
+has, so on 31 of 67 pages it ran to three lines and on the worst to four. It was measured rather
+than guessed: at 1280px the title block is **308px** — the header toolbar beside it is a fixed
+644px — which is why the longest, *Services*, wrapped to four lines. All **67** descriptions were
+measured, the **31** that ran past two lines were rewritten, and all 67 now fit in two.
+
+- **[Fix]** **The worst offenders, in place.** *Services* went from "The connectors — directory,
+  security, accounting, documentation, an RMM, a SIEM — what each has brought in, and whether it
+  is healthy." (138 characters) to "What each connector brought in, and whether it is healthy."
+  (56). The header on that page is now 91px instead of 139px, and shorter again on every other
+  page that had grown to three lines.
+- **[Update]** **Each was rewritten, not truncated.** Detail that had no business in a header
+  moved out ("aggregate outage monitoring for Microsoft 365, Azure, AWS, GitHub, ISPs" became
+  "outage monitoring for the services you watch"), and the specifics that make a description
+  worth reading were kept. No description is now a restatement of its own title.
+- **[Fix]** **A code comment still quoted the old wording** of the dashboard's description as its
+  example; it now quotes what the file says.
+
+## 2026.10.8.053 — Modern interface by default, and a switch to go back
+
+Everyone now gets the rail pane unless the instance says otherwise, and anyone can make that
+choice for themselves without an administrator — **My Account → Appearance → Interface** switches
+between **Modern** and **Classic** where you are standing, with no reload.
+
+- **[New]** **The switch, in the account menu beside theme and density.** It is the same
+  `c7_ui_nav` flag the rollback notes name rather than a second mechanism, so the documented
+  override and the visible control cannot drift apart — and it works in either direction, letting
+  somebody keep the tree on an instance that has adopted the rail, or try the rail on one that
+  has not.
+- **[Fix]** **The switch would have hidden itself from the person who needed it.** It is shown
+  whenever the *build* offers the modern pane — a new `UI_NAV_AVAILABLE` in `lib/uiFlags.ts` —
+  because the flag it was first gated on reports the browser's own choice, so it was false for
+  exactly the person who had switched to Classic: the one control that could take them back was
+  the one that disappeared.
+- **[Update]** **Modern is the default for all users.** The setting ships as `modern`, and only an
+  explicit *Single tree (classic)* — instance-wide, or personal — reverts. A browser that has
+  never expressed a preference gets the rail.
+- **[Update]** **Help, and the rollback guide, say how to switch back.** NAV-PANE-ROLLBACK.md now
+  names the menu switch as the friendly form of the browser flag, and the navigation walkthrough's
+  "Going back to the classic tree" table gained it as the first row. A stale sentence there also
+  promised that the panel follows the pointer along the rail; it follows a *click* now, and says so.
 
 ## 2026.10.8.050 — Show All shows *your* activity, on a page of its own
 

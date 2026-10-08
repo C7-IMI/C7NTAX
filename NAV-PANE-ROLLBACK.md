@@ -17,8 +17,19 @@ Three switches, narrowest first:
 | # | Switch | Scope | How |
 |---|---|---|---|
 | 1 | **System setting** | everyone | Administration → Configuration → Workspace → **Navigation pane** → *Single tree (classic)*. Stored in `app_settings` under `appearance.navigationStyle`. |
-| 2 | **Browser flag** | one browser | `localStorage.setItem("c7_ui_nav", "0"); location.reload()` — and `"1"` forces modern on an instance that is set to classic. |
+| 2 | **Browser flag** | one browser | The **My Account → Appearance → Interface** switch, or `localStorage.setItem("c7_ui_nav", "0")` — and `"1"` forces modern on an instance that is set to classic. |
 | 3 | **Build flag** | a deployment | `VITE_UI_NAV=false` in `apps/web/.env.local`, then restart the web server. Beats the setting. |
+
+Switch 2 has a face, and everyone is offered it: **My Account → Appearance →
+Interface** flips the pane in place, with no reload, for the person using it. That
+control is shown whenever the *build* has the modern pane — not whenever the
+modern pane is active — so somebody who has already chosen classic can still
+choose their way back. It writes the same `c7_ui_nav` flag the row above names, so
+the menu and this table cannot drift apart.
+
+The default for everyone is **modern**: the system setting ships as `modern`, and
+it only becomes classic if an administrator sets it to *Single tree (classic)* or
+somebody chooses that for their own browser.
 
 Nothing else changes when the pane changes: the routes, the permissions, the
 icons and the pages are the tree's, not the pane's. Switching is therefore safe in

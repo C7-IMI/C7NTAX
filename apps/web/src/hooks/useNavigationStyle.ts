@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import api from "../api";
-import { UI_NAV_MODERN, navModernOverride } from "../lib/uiFlags";
+import { UI_NAV_MODERN, navModernOverride, setUiNavModern } from "../lib/uiFlags";
 
 /**
  * Which navigation pane to draw, and whether the Assistant belongs in the rail.
@@ -34,6 +34,15 @@ const DEFAULT_SETTING: NavigationSettings = { style: "modern", assistantInRail: 
 let cached: NavigationSettings | null = null;
 let inflight: Promise<NavigationSettings> | null = null;
 const subscribers = new Set<(value: NavigationSettings) => void>();
+
+/**
+ * Panes waiting to hear that *this browser* changed its mind.
+ *
+ * The override is in localStorage, so writing it re-renders nothing by itself: without this the
+ * switch in the account menu would look broken until the next navigation. The setting is not
+ * re-read from the API for it — nothing about the instance changed.
+ */
+const overrideSubscribers = new Set<() => void>();
 
 /** Reads `appearance` out of a stored app_settings value. */
 export function parseNavigationSettings(value: unknown): NavigationSettings {
@@ -86,21 +95,45 @@ export function refreshNavigationSettings(): void {
 
 export function useNavigationSettings(): NavigationSettings {
   const [setting, setSetting] = useState<NavigationSettings>(() => cached ?? DEFAULT_SETTING);
+  const [, bumpOverride] = useReducer((n: number) => n + 1, 0);
 
   useEffect(() => {
-    if (cached !== null) { setSetting(cached); return; }
-
     let active = true;
     const onChange = (value: NavigationSettings) => { if (active) setSetting(value); };
-    subscribers.add(onChange);
+    const onOverrideChange = () => { if (active) bumpOverride(); };
 
-    inflight ??= api.get(`/system/config/${APP_SETTINGS_CONFIG_KEY}`)
-      .then((r) => parseNavigationSettings(r.data?.value))
-      .catch(() => DEFAULT_SETTING);
-    inflight.then((value) => { cached ??= value; onChange(cached); });
+    overrideSubscribers.add(onOverrideChange);
 
-    return () => { subscribers.delete(onChange); };
+    if (cached !== null) {
+      setSetting(cached);
+    } else {
+      subscribers.add(onChange);
+
+      inflight ??= api.get(`/system/config/${APP_SETTINGS_CONFIG_KEY}`)
+        .then((r) => parseNavigationSettings(r.data?.value))
+        .catch(() => DEFAULT_SETTING);
+      inflight.then((value) => { cached ??= value; onChange(cached); });
+    }
+
+    return () => {
+      active = false;
+      subscribers.delete(onChange);
+      overrideSubscribers.delete(onOverrideChange);
+    };
   }, []);
 
   return applyLocalOverride(setting);
+}
+
+/**
+ * Switches this browser to the named pane, from the My Account menu.
+ *
+ * It writes the same `c7_ui_nav` flag the console instructions use, so the switch and the documented
+ * override are one mechanism rather than two that can disagree, and it works in either direction —
+ * a person can choose the modern pane on an instance that has not adopted it, or keep the classic one
+ * on an instance that has. A deployment-wide `VITE_UI_NAV=false` is not a preference and still wins.
+ */
+export function setNavigationPreference(style: NavStyle): void {
+  setUiNavModern(style === "modern");
+  overrideSubscribers.forEach((notify) => notify());
 }

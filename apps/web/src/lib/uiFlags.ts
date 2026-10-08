@@ -19,7 +19,9 @@
  *
  * The navigation pane is likewise a system setting (Administration → Configuration
  * → Workspace → "Navigation pane", `appearance.navigationStyle`), and the
- * `c7_ui_nav` flag overrides it for one browser in either direction; see
+ * `c7_ui_nav` flag overrides it for one browser in either direction. Everyone can
+ * set that override for themselves from the header's **My Account → Appearance →
+ * Interface** switch, which is the same flag this file names; see
  * NAV-PANE-ROLLBACK.md.
  *
  * Deployment-wide rollback: set VITE_UI_P1=false / VITE_UI_P2=false (e.g. in
@@ -38,6 +40,11 @@ const UI_CONTEXT_MENUS_STORAGE_KEY: FlagStorageKey = "c7_ui_context_menus";
 const UI_CONSOLE_STORAGE_KEY: FlagStorageKey = "c7_ui_console";
 const UI_NAV_STORAGE_KEY: FlagStorageKey = "c7_ui_nav";
 
+function readBuildFlag(envName: string): boolean {
+  const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  return env?.[envName] !== "false";
+}
+
 function readFlag(key: FlagStorageKey, envName: string): boolean {
   try {
     const override = localStorage.getItem(key);
@@ -46,8 +53,7 @@ function readFlag(key: FlagStorageKey, envName: string): boolean {
   } catch {
     /* localStorage unavailable — fall through to the build default */
   }
-  const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
-  return env?.[envName] !== "false";
+  return readBuildFlag(envName);
 }
 
 function writeFlag(key: FlagStorageKey, enabled: boolean): void {
@@ -108,6 +114,17 @@ export const UI_CONSOLE = readFlag(UI_CONSOLE_STORAGE_KEY, "VITE_UI_CONSOLE");
  * whatever the setting says. See NAV-PANE-ROLLBACK.md.
  */
 export const UI_NAV_MODERN = readFlag(UI_NAV_STORAGE_KEY, "VITE_UI_NAV");
+
+/**
+ * Whether this *build* has the modern pane at all, ignoring what the browser asked for.
+ *
+ * A control that offers the modern pane has to stay reachable to the people who have switched away
+ * from it, and `UI_NAV_MODERN` cannot answer that question: it reports the browser's `c7_ui_nav`
+ * override, so it is false for exactly the person who chose the classic pane and would hide the one
+ * control that could take them back. Only a `VITE_UI_NAV=false` deployment — a rollback, not a
+ * preference — takes the choice away, and that is what this reports.
+ */
+export const UI_NAV_AVAILABLE = readBuildFlag("VITE_UI_NAV");
 
 /**
  * The browser's own answer, or `null` when it has never expressed one.

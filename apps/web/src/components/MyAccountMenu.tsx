@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AlignJustify, HelpCircle, LogOut, Moon, Settings2, Shield, Sparkles, Sun, UserCircle,
+  AlignJustify, HelpCircle, LayoutPanelLeft, ListTree, LogOut, Moon, Settings2, Shield, Sparkles, Sun, UserCircle,
 } from "lucide-react";
 import { useAppVersion } from "../hooks/useAppVersion";
 import { useAuth } from "../hooks/useAuth";
 import { useClientIp } from "../hooks/useClientIp";
+import { setNavigationPreference, useNavigationSettings } from "../hooks/useNavigationStyle";
 import { useTheme } from "../hooks/useTheme";
-import { UI_P1, UI_PALETTE } from "../lib/uiFlags";
+import { UI_NAV_AVAILABLE, UI_P1, UI_PALETTE } from "../lib/uiFlags";
 import { getDensity, setDensity, type Density } from "../lib/density";
 import { getPalette, setPalette, type PaletteMode } from "../lib/palette";
 import { PaletteSchemeList } from "./PaletteSchemeList";
@@ -49,6 +50,7 @@ function initials(user: MenuUser | null): string {
 export function MyAccountMenu() {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { style: navStyle } = useNavigationSettings();
   const clientIp = useClientIp();
   const appVersion = useAppVersion();
   const navigate = useNavigate();
@@ -193,6 +195,25 @@ export function MyAccountMenu() {
                 </button>
               </div>
             </div>
+
+            {/* The navigation pane. The instance's default is modern and an administrator changes that
+                for everybody (Administration → Configuration → Workspace); this is the one place a
+                person can disagree with it for themselves, without needing one. It re-renders the pane
+                in place rather than reloading, and it is the same `c7_ui_nav` flag the rollback
+                instructions name, so the two cannot drift apart. */}
+            {UI_NAV_AVAILABLE && (
+              <div className="px-2 pb-1.5">
+                <p className="px-0.5 pb-1 text-[10px] text-gray-500">Interface</p>
+                <div className="flex items-center gap-1 rounded-md bg-surface-light p-0.5">
+                  <button className={chipClass(navStyle === "modern")} onClick={() => setNavigationPreference("modern")} aria-pressed={navStyle === "modern"}>
+                    <span className="flex items-center justify-center gap-1.5"><LayoutPanelLeft size={12} /> Modern</span>
+                  </button>
+                  <button className={chipClass(navStyle === "classic")} onClick={() => setNavigationPreference("classic")} aria-pressed={navStyle === "classic"}>
+                    <span className="flex items-center justify-center gap-1.5"><ListTree size={12} /> Classic</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {UI_PALETTE && (
               <>

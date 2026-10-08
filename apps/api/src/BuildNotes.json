@@ -1,5 +1,82 @@
 [
   {
+    "version": "2026.10.8.051",
+    "date": "2026-10-08",
+    "title": "A navigation pane that does not grow with the feature list",
+    "changes": [
+      {
+        "text": "**A rail of domains, derived from the tree rather than written out beside it.**",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The destinations fly out over the page.** Clicking a domain opens its panel to the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Order follows what you open.** The rows of a domain you actually use come first,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The filter searches the whole application, not just the open panel.** Typing in it",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Keyboard:** `1`–`9` open a domain, `→` opens the one you are on, `/` focuses the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Favourites are the same list.** The pinned rows at the top of the panel are the",
+        "type": "Update"
+      },
+      {
+        "text": "**It is a setting, and a personal switch, and a build flag.** Administrative:",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.8.052",
+    "date": "2026-10-08",
+    "title": "Header descriptions that fit",
+    "changes": [
+      {
+        "text": "**The worst offenders, in place.** *Services* went from \"The connectors — directory,",
+        "type": "Fix"
+      },
+      {
+        "text": "**Each was rewritten, not truncated.** Detail that had no business in a header",
+        "type": "Update"
+      },
+      {
+        "text": "**A code comment still quoted the old wording** of the dashboard's description as its",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.8.053",
+    "date": "2026-10-08",
+    "title": "Modern interface by default, and a switch to go back",
+    "changes": [
+      {
+        "text": "**The switch, in the account menu beside theme and density.** It is the same",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The switch would have hidden itself from the person who needed it.** It is shown",
+        "type": "Fix"
+      },
+      {
+        "text": "**Modern is the default for all users.** The setting ships as `modern`, and only an",
+        "type": "Update"
+      },
+      {
+        "text": "**Help, and the rollback guide, say how to switch back.** NAV-PANE-ROLLBACK.md now",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.050",
     "date": "2026-10-08",
     "title": "Show All shows *your* activity, on a page of its own",

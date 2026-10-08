@@ -6407,3 +6407,103 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **Keep a simulation out of the repository.** Three files in the session workspace, no repo diff, and `git status` clean is verifiable proof that "do not make any changes" was honoured — which matters more than the convenience of putting the demo next to the code.
 
 **Open questions for the operator** (in the reasoning tab, not answered by me): is Pipeline sales or delivery; is Kumo a domain or an object reached from a client; what the demotion threshold should be; whether the four duplicated labels get renamed rather than papered over; and whether the Assistant stays a utility or becomes a place work starts.
+
+### Prompt 291 — Build the modern navigation pane, with a way back
+
+**Timestamp:** 2026-10-08 17:00 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes ID:** **2026.10.8.051**
+
+**Prompt**
+
+> Pipeline is sales
+>
+> Kumo is a domain i guess. I'm not sure what that means. Kumo is essentially it's own mini app within C7NTAX. Like an embedded ITGlue
+>
+> rename the labels if that makes the most sense. You can decide that.
+>
+> an the Assistan be both? If not, I think for now it should remain a utility, but put the code in place to switch it. Maybe even make it a toggle setting in the configuration.
+>
+> I like the mockup. Build it. Make sure it can easily be reverted. Or Perhaps a configuration option somehwere in the settings that switches from modern interface back to the original classic interface.
+
+**What I did**
+- **Used the application's own reversibility convention instead of inventing one.** I read `lib/uiFlags.ts` (per-browser `c7_ui_*` flags plus `VITE_UI_*` build flags), `hooks/useContextMenusEnabled.ts` (a system setting from `app_settings` with a browser override), `packages/shared/src/appConfiguration.ts` (the declarative settings registry the configuration hub renders) and the README's list of `<AREA>-ROLLBACK.md` files. The pane follows all three layers rather than sitting outside them.
+- **The new pane is derived from the tree, not a second copy of it.** `lib/navModel.ts` declares each domain as a *list of node ids*; labels, routes, icons and permissions are read back from `NAV_TREE`. A destination the pane has not been told about lands in an "Other" rail row rather than disappearing — so the pane can be incomplete, but it cannot silently hide a page. That integrity property is the thing that makes a regrouping safe to ship.
+- **The four answers, in the code.** Pipeline is *Revenue* (the commercial domain); Kumo stays a domain, with its eight rows; five duplicate labels were disambiguated for the rail only (Kumo's Dashboard → Overview, Service Boards → Service board settings, Service Alerts → Alert settings, Help's Configuration → Configuration reference, Billing's Reports → Billing reports) while the header and breadcrumbs keep the real names; and the Assistant stays a utility at the foot with the code in place to move it into the rail — `appearance.assistantInRail`, default off, surfaced by `useNavigationSettings`.
+- **Service alerts got its own last spine row** with the live count on it, as instructed, rather than being buried under Platform. It carries the monitors and the webhook endpoints as well, since a section that reports the state of the instance is worth keeping visible.
+- **Frecency, and one rule that took two attempts.** Usage is per browser (`c7_nav_use`, on navigation, bounded); score is frequency damped by recency; rows fold under a counted "Everything else" once a domain is long enough. Nothing is folded until something in that domain has been opened, so a first run is never worse than the tree.
+- **Docs and guards.** `NAV-PANE-ROLLBACK.md` (new, and added to the README list), a `navigation` Help walkthrough (27 walkthroughs), its Index row, Configuration-reference rows and two FAQ answers; `check-help-links` 87/27, `guard:config` 46 reads, `guard:routes` 433/382, lint and build 6/6.
+
+**Bugs found by looking rather than by reading**
+- **The alert badge leaked to Platform's settings row.** Platform renders the settings hub, which contains the Service Alerts *settings* row — so the count appeared twice, on two different rail rows, for one set of alerts. The badge is now attached to `service-alerts` only.
+- **The rail opened on "Today" whatever the route was.** Two effects disagreed: one followed `location.pathname`, another validated the stored selection on mount. The validation effect was removed and validity is now decided at render time, which is the only place it cannot lag the route.
+- **A first run folded five rows with no usage at all**, contradicting the rule written in the docs. Fixing it exposed a second flaw — a hub's children floated above their parent and the parent got folded — so `orderRows` was rewritten to rank *parent-plus-children units*. Both were invisible in the code and obvious in the rendered pane.
+
+**Notes for next time**
+- **A pane redesign has to be measured, not admired.** At 1366px the two-column shape cost the page 56px, took the header from 91px to 139px and turned the page title into four lines — because the header toolbar is a fixed ~644px and the sidebar is the only part that can move. The screenshot that prompted the next prompt is the direct consequence.
+- **`noUncheckedIndexedAccess` is on in this package.** Record and array indexing yields `| undefined`, and `.filter(Boolean)` does not narrow it; the type-correct filter is `.filter((x): x is T => !!x)`.
+
+### Prompt 292 — The submenu cramps the page, so it flies out
+
+**Timestamp:** 2026-10-08 17:15 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes ID:** **2026.10.8.051** — the same change, and the same version.
+
+**Prompt**
+
+> One of two things needs to happen. Either the submenu needs to be a flyout/popout that overlays on top of the main window pane, or the rest of the application pages need to be redesigned. Right now witht he submenu always vibisle the main pane get crunched together too much. It looks too cramped.
+
+**What I did**
+- **Took the flyout, and said why.** The alternative in the prompt was redesigning every application page to lay out in a narrower column — a change an order of magnitude larger, touching every screen, to preserve a pane that does not need a column at all. The column became a panel that overlays the content and costs it nothing.
+- **`NavPaneModern.tsx` rewritten: the rail is permanent, the destination list is `absolute left-full` over the page** (252px, `z-40`, its own scroll region). It closes on a pathname change, a document `mousedown` outside the pane, `Esc`, the ✕, or clicking the open rail row again. It uses a document listener rather than a full-screen click catcher, so it does not swallow a click aimed at the page underneath.
+- **The `<nav>` had to lose `overflow-hidden`**, which would have clipped the panel away, and the aside dropped to **200px** — narrower than the classic 256px tree — so every page gained width instead of losing it. Measured at 1280px: aside 200, main **1080** (classic is 1024), header 91px, and `mainWidthUnchanged` when the panel opens.
+- **Removed the hover switch I had just added.** Moving the pointer along the rail switched the panel, which made the following click ambiguous — the row you clicked was already open, so the click read as "close" and the pane appeared to fight the pointer. One gesture, one meaning: the rail follows *clicks*. Verified across the whole interaction matrix afterwards (open, switch, toggle closed, navigate and close, outside-click, `Esc`, number keys).
+- **Documentation kept in step**: the rollback guide and the Help walkthrough now say panel/flyout rather than column.
+
+**A pre-existing bug I found and deliberately did not fix**
+- **The collapse toggle's tooltip is one state behind.** After expanding, the aside is back to 256px but the button still reads "Expand sidebar". Cause: `GlobalTooltip` moves a `title` into `dataset.kunTitle` and removes the attribute while the tooltip is up; when the click swaps the button's icon, the removed node fires a leave, and `hide()` writes the **stale pre-click** label back over the one React just rendered. It affects any control whose label changes while hovered, it predates this work, and it belongs to the tooltip rather than the pane — so it was reported rather than patched here.
+
+### Prompt 293 — Header descriptions that fit
+
+**Timestamp:** 2026-10-08 17:20 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes ID:** **2026.10.8.052**
+
+**Prompt**
+
+> After you finish the nav pane changes, audit the header descriptions and shorten/summarize any that wrap more than two lines. Preferably only a single line
+
+**What I did**
+- **Measured the budget before touching a word.** At 1280px the header's title block is **308px** — the toolbar beside it is a fixed 644px of a 1024px main area — and `<h1>` has `text-overflow: ellipsis` without `white-space: nowrap`, so the description wraps rather than truncating.
+- **Swept every route and counted real lines.** Not by eye: `h1.clientHeight / 24`, which is exact here because the block's own strut fixes every line box at 24px. Two measurement mistakes were caught on the way — counting `Range.getClientRects()` tops reports *fragments*, not lines, and inflates the count by one whenever the title and the description share a line; and the first sweep's numbers had to be reconciled against a real navigation before they could be trusted.
+- **31 of the 67 routes ran to three lines or four** (the worst, `/c7nc/services`, to four). **31 descriptions were rewritten**; all 67 are now two lines or fewer, and the header on the worst page went from **139px to 91px**.
+- **Rewritten, not truncated.** Detail that does not belong in a header moved out — "Aggregate outage monitoring for Microsoft 365, Azure, AWS, GitHub, ISPs, and other configured services" became "Outage monitoring for the services you watch" — and no description now restates its own title.
+- **A stale comment was quoting the old wording** of the dashboard description as its example of the parent-path bug; it now quotes what the file actually says.
+
+**Worth knowing**
+- **Nothing fits a single line at 1280px, and that is arithmetic rather than effort.** The title alone takes roughly half of the 308px, leaving about 30 characters — less than most of these sentences can say anything in. Two lines is the achievable target at this width; one line arrives from roughly 1440px up. If one line at 1280px is the real requirement, the header toolbar is what has to give, not the prose.
+
+### Prompt 294 — An Interface switch, and modern by default
+
+**Timestamp:** 2026-10-08 17:25 | **Status:** Complete | **Duration:** ~15 min
+
+**BuildNotes ID:** **2026.10.8.053**
+
+**Prompt**
+
+> After you're done Add a toggle to switch from the Modern to Classic interface in the My Account Menu.
+>
+> Also set the modern interface as the default for all users
+
+**What I did**
+- **Put the switch where the other personalisation lives** — My Account → Appearance → **Interface** — beside Dark/Light, the colour scheme and density, and shaped like them. It is personal and per browser, exactly as those are, rather than a second administrative setting that could contradict the first.
+- **It writes the flag the rollback notes already name.** The switch calls `setUiNavModern`, the same `c7_ui_nav` the documented override uses, so the control and the documentation cannot drift apart. It works in either direction: keep the tree on an instance that has adopted the rail, or try the rail on one that has not.
+- **Made the override reactive.** `useNavigationStyle` gained an override subscriber set and the hook a `useReducer` bump, because writing localStorage re-renders nothing by itself — without it the switch looked broken until the next navigation. The instance setting is not refetched for it; nothing about the instance changed.
+- **Modern is the default for everyone, and already was** — the declared default in `appConfiguration.ts` is `modern`, and `parseNavigationSettings` only reverts on an explicit `"classic"` — so nobody's choice is overwritten and no browser flag needed clearing.
+- **Docs**: `NAV-PANE-ROLLBACK.md` gained the switch as the friendly form of switch 2 plus a statement of the default; the navigation walkthrough's "Going back to the classic tree" table gained it as the first row; the Configuration reference and the FAQ now point at it. A stale Help sentence promising that the panel follows the pointer along the rail was corrected to the click it actually follows.
+
+**The bug this work created and then found**
+- **The switch hid itself from the person who needed it.** Gating it on `UI_NAV_MODERN` looked right and was the opposite: that flag reports *the browser's* answer, so it is false for exactly the person who chose Classic — the one control that could take them back was the one that vanished. It is now gated on a new `UI_NAV_AVAILABLE`, which reads the build flag alone. Only `VITE_UI_NAV=false` — a rollback, not a preference — takes the choice away.
+
+**Notes for next time**
+- **Judge a click handler only after a clean load.** In the first attempt the switch changed the flag but re-rendered nothing, and the console showed `createRoot()` called on a container that already had a root plus a `removeChild` failure: editing `lib/uiFlags.ts` had made HMR re-run `main.tsx`, leaving the page in a corrupted state where clicks went nowhere. The same test on a fresh load passed on the first try. A hot-reloaded page is not evidence.
