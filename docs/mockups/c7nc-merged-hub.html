@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<!--
+  MOCKUP ONLY — nothing in the application has been changed.
+
+  Shows the merge requested in Prompt 268: CloudConnect (Administration → CloudConnect, one page of
+  five tabs) folded into C7NC (today a two-item group: Outlook Add-in, FlexPoint Payment Solutions),
+  with C7NC as the surviving name and a proper landing page, subsections and tab-style pages.
+
+  Two things this mockup is arguing, in the order they matter:
+
+  1. **FlexPoint is already split in two, and the merge fixes it.** The connection is configured in
+     CloudConnect; the same service's options, customers and invoices live at C7NC → FlexPoint, and
+     that page's first button is a link back to CloudConnect. One service, one page, four tabs.
+  2. **A hub answers the question you arrived with.** "Is anything broken?" is a different question
+     from "which connectors exist", and today both are tabs of the same 79 KB page.
+
+  The markup reuses the application's own classes and the compiled stylesheet from
+  apps/web + src/index.css, so what is drawn here is what the app would draw — the nav items, the
+  cards, the chips and the tab strip are the real ones, not an impression of them. The screens are
+  switched with the buttons under the title; nothing else on this page is interactive.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>Mockup — C7NC, with CloudConnect merged in</title>
+<style>*,:before,:after,::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:#3b82f680;--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }*,:before,:after{box-sizing:border-box;border:0 solid #e5e7eb}:before,:after{--tw-content:""}html,:host{-webkit-text-size-adjust:100%;tab-size:4;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent;font-family:Inter,system-ui,-apple-system,sans-serif;line-height:1.5}body{line-height:inherit;margin:0}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-feature-settings:normal;font-variation-settings:normal;font-family:JetBrains Mono,ui-monospace,monospace;font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-feature-settings:inherit;font-variation-settings:inherit;font-family:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:#0000;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dl,dd,h1,h2,h3,h4,h5,h6,hr,figure,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}ol,ul,menu{margin:0;padding:0;list-style:none}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder{opacity:1;color:color-mix(in srgb, var(--text-tertiary) calc(1 * 100%), transparent)}textarea::-moz-placeholder{opacity:1;color:color-mix(in srgb, var(--text-tertiary) calc(1 * 100%), transparent)}input::placeholder,textarea::placeholder{opacity:1;color:color-mix(in srgb, var(--text-tertiary) calc(1 * 100%), transparent)}button,[role=button]{cursor:pointer}:disabled{cursor:default}img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}*,:before,:after{box-sizing:border-box;margin:0;padding:0}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{background:var(--navy-950);min-height:100dvh;color:var(--text-secondary);line-height:1.6}:focus-visible{outline:2px solid var(--cyber-400);outline-offset:2px}.container{width:100%}@media (width>=640px){.container{max-width:640px}}@media (width>=768px){.container{max-width:768px}}@media (width>=1024px){.container{max-width:1024px}}@media (width>=1280px){.container{max-width:1280px}}@media (width>=1536px){.container{max-width:1536px}}.btn-primary{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--cyber-600) calc(var(--tw-bg-opacity,1) * 100%), transparent);border-radius:.625rem;padding:.5rem 1rem;font-weight:500;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-duration:.15s;transition-timing-function:cubic-bezier(.4,0,.2,1)}.btn-primary:hover{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.btn-primary:disabled{cursor:not-allowed;opacity:.5}.btn-primary{color:var(--btn-primary-fg,var(--text-primary))}.btn-secondary{--tw-border-opacity:1;border-width:1px;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-border-opacity,1) * 100%), transparent);--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface-lighter) calc(var(--tw-bg-opacity,1) * 100%), transparent);--tw-text-opacity:1;color:color-mix(in srgb, var(--text-primary) calc(var(--tw-text-opacity,1) * 100%), transparent);border-radius:.625rem;padding:.5rem 1rem;font-weight:500;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-duration:.15s;transition-timing-function:cubic-bezier(.4,0,.2,1)}.btn-secondary:hover{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.btn-danger{--tw-text-opacity:1;color:rgb(248 113 113/var(--tw-text-opacity,1));background-color:#dc262633;border-width:1px;border-color:#dc26264d;border-radius:.625rem;padding:.5rem 1rem;font-weight:500;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-duration:.15s;transition-timing-function:cubic-bezier(.4,0,.2,1)}html[data-theme=light] :is(.text-red-200,.text-red-300,.btn-danger,.text-red-400\/80,.text-red-500,.hover\:text-red-200:hover,.hover\:text-red-300:hover,.hover\:text-red-400:hover){color:#991b1b}.btn-danger:hover{background-color:#dc26264d}.input-field{--tw-border-opacity:1;border-width:1px;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-border-opacity,1) * 100%), transparent);--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface) calc(var(--tw-bg-opacity,1) * 100%), transparent);--tw-text-opacity:1;width:100%;color:color-mix(in srgb, var(--text-primary) calc(var(--tw-text-opacity,1) * 100%), transparent);border-radius:.625rem;padding:.5rem .75rem;font-size:.875rem;line-height:1.25rem}.input-field::placeholder{--tw-placeholder-opacity:1;color:color-mix(in srgb, var(--text-muted) calc(var(--tw-placeholder-opacity,1) * 100%), transparent)}.input-field{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-duration:.15s;transition-timing-function:cubic-bezier(.4,0,.2,1)}.input-field:focus{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-border-opacity,1) * 100%), transparent);outline-offset:2px;box-shadow:0 0 0 1px color-mix(in srgb, var(--cyber-500) 30%, transparent);outline:2px solid #0000}.\!card,.card{--tw-border-opacity:1;border-width:1px;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-border-opacity,1) * 100%), transparent);--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface) calc(var(--tw-bg-opacity,1) * 100%), transparent);border-radius:.75rem;padding:1.25rem}.badge{border-radius:9999px;align-items:center;padding:.125rem .5rem;font-size:.75rem;font-weight:500;line-height:1rem;display:inline-flex}.badge-count{color:#fff;background-color:#dc2626;border-radius:9999px;justify-content:center;align-items:center;font-weight:700;display:inline-flex}.badge-status{background-color:color-mix(in srgb, currentColor 18%, transparent)}.badge-status-new{color:var(--status-new)}.badge-status-open{color:var(--status-open)}.badge-status-in_progress{color:var(--status-progress)}.badge-status-waiting_on_client{color:var(--status-waiting-client)}.badge-status-waiting_on_vendor{color:var(--status-waiting-vendor)}.badge-status-resolved{color:var(--status-resolved)}.badge-status-closed{color:var(--status-closed)}.sr-only{clip:rect(0, 0, 0, 0);white-space:nowrap;border-width:0;width:1px;height:1px;margin:-1px;padding:0;position:absolute;overflow:hidden}.pointer-events-none{pointer-events:none}.\!visible{visibility:visible!important}.visible{visibility:visible}.invisible{visibility:hidden}.collapse{visibility:collapse}.static{position:static}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0}.inset-y-0{top:0;bottom:0}.-right-0\.5{right:-.125rem}.-top-0\.5{top:-.125rem}.-top-1\.5{top:-.375rem}.-top-2{top:-.5rem}.-top-4{top:-1rem}.bottom-0{bottom:0}.left-0{left:0}.left-2\.5{left:.625rem}.left-3{left:.75rem}.left-5{left:1.25rem}.left-6{left:1.5rem}.left-\[18px\]{left:18px}.left-full{left:100%}.right-0{right:0}.right-2{right:.5rem}.right-4{right:1rem}.right-full{right:100%}.top-0{top:0}.top-1{top:.25rem}.top-1\/2{top:50%}.top-20{top:5rem}.top-\[-6px\]{top:-6px}.top-full{top:100%}.z-10{z-index:10}.z-20{z-index:20}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.z-\[100\]{z-index:100}.z-\[200\]{z-index:200}.z-\[60\]{z-index:60}.z-\[61\]{z-index:61}.z-\[62\]{z-index:62}.col-span-1{grid-column:span 1/span 1}.col-span-2{grid-column:span 2/span 2}.col-span-3{grid-column:span 3/span 3}.col-span-4{grid-column:span 4/span 4}.col-span-5{grid-column:span 5/span 5}.col-span-full{grid-column:1/-1}.-mx-1\.5{margin-left:-.375rem;margin-right:-.375rem}.-mx-2{margin-left:-.5rem;margin-right:-.5rem}.-mx-5{margin-left:-1.25rem;margin-right:-1.25rem}.mx-1{margin-left:.25rem;margin-right:.25rem}.mx-4{margin-left:1rem;margin-right:1rem}.mx-auto{margin-left:auto;margin-right:auto}.my-1{margin-top:.25rem;margin-bottom:.25rem}.my-3{margin-top:.75rem;margin-bottom:.75rem}.my-8{margin-top:2rem;margin-bottom:2rem}.-mb-px{margin-bottom:-1px}.-mt-0\.5{margin-top:-.125rem}.-mt-1{margin-top:-.25rem}.-mt-3{margin-top:-.75rem}.mb-0\.5{margin-bottom:.125rem}.mb-1{margin-bottom:.25rem}.mb-1\.5{margin-bottom:.375rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.ml-0\.5{margin-left:.125rem}.ml-1{margin-left:.25rem}.ml-1\.5{margin-left:.375rem}.ml-2{margin-left:.5rem}.ml-7{margin-left:1.75rem}.ml-auto{margin-left:auto}.mr-0\.5{margin-right:.125rem}.mr-1{margin-right:.25rem}.mr-1\.5{margin-right:.375rem}.mr-2{margin-right:.5rem}.mr-6{margin-right:1.5rem}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.mt-1\.5{margin-top:.375rem}.mt-2{margin-top:.5rem}.mt-2\.5{margin-top:.625rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.mt-auto{margin-top:auto}.mt-px{margin-top:1px}.line-clamp-1{-webkit-line-clamp:1;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.line-clamp-2{-webkit-line-clamp:2;-webkit-box-orient:vertical;display:-webkit-box;overflow:hidden}.block{display:block}.inline-block{display:inline-block}.inline{display:inline}.flex{display:flex}.inline-flex{display:inline-flex}.table{display:table}.grid{display:grid}.contents{display:contents}.hidden{display:none}.aspect-square{aspect-ratio:1}.h-1{height:.25rem}.h-1\.5{height:.375rem}.h-10{height:2.5rem}.h-12{height:3rem}.h-14{height:3.5rem}.h-16{height:4rem}.h-2{height:.5rem}.h-2\.5{height:.625rem}.h-20{height:5rem}.h-24{height:6rem}.h-3{height:.75rem}.h-3\.5{height:.875rem}.h-36{height:9rem}.h-4{height:1rem}.h-48{height:12rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-7{height:1.75rem}.h-8{height:2rem}.h-9{height:2.25rem}.h-\[14px\]{height:14px}.h-\[18px\]{height:18px}.h-\[calc\(100vh-9rem\)\]{height:calc(100vh - 9rem)}.h-full{height:100%}.h-screen{height:100vh}.max-h-32{max-height:8rem}.max-h-40{max-height:10rem}.max-h-48{max-height:12rem}.max-h-56{max-height:14rem}.max-h-60{max-height:15rem}.max-h-64{max-height:16rem}.max-h-72{max-height:18rem}.max-h-80{max-height:20rem}.max-h-\[52vh\]{max-height:52vh}.max-h-\[60vh\]{max-height:60vh}.max-h-\[70vh\]{max-height:70vh}.max-h-\[80vh\]{max-height:80vh}.max-h-\[85vh\]{max-height:85vh}.max-h-\[88vh\]{max-height:88vh}.max-h-\[90vh\]{max-height:90vh}.max-h-\[92vh\]{max-height:92vh}.max-h-\[calc\(100vh-120px\)\]{max-height:calc(100vh - 120px)}.min-h-0{min-height:0}.min-h-\[26rem\]{min-height:26rem}.min-h-\[560px\]{min-height:560px}.min-h-\[6\.5rem\]{min-height:6.5rem}.min-h-screen{min-height:100vh}.w-0\.5{width:.125rem}.w-1\.5{width:.375rem}.w-10{width:2.5rem}.w-11{width:2.75rem}.w-12{width:3rem}.w-14{width:3.5rem}.w-16{width:4rem}.w-2{width:.5rem}.w-2\.5{width:.625rem}.w-20{width:5rem}.w-24{width:6rem}.w-28{width:7rem}.w-3{width:.75rem}.w-3\.5{width:.875rem}.w-32{width:8rem}.w-36{width:9rem}.w-4{width:1rem}.w-40{width:10rem}.w-44{width:11rem}.w-48{width:12rem}.w-52{width:13rem}.w-56{width:14rem}.w-6{width:1.5rem}.w-64{width:16rem}.w-7{width:1.75rem}.w-8{width:2rem}.w-80{width:20rem}.w-9{width:2.25rem}.w-\[13rem\]{width:13rem}.w-\[16rem\]{width:16rem}.w-\[6\.5rem\]{width:6.5rem}.w-\[7\.5rem\]{width:7.5rem}.w-\[9\.5rem\]{width:9.5rem}.w-\[9rem\]{width:9rem}.w-auto{width:auto}.w-full{width:100%}.w-max{width:max-content}.w-px{width:1px}.min-w-0{min-width:0}.min-w-\[12rem\]{min-width:12rem}.min-w-\[14px\]{min-width:14px}.min-w-\[15rem\]{min-width:15rem}.min-w-\[16rem\]{min-width:16rem}.min-w-\[180px\]{min-width:180px}.min-w-\[18px\]{min-width:18px}.min-w-\[200px\]{min-width:200px}.min-w-\[240px\]{min-width:240px}.min-w-\[26px\]{min-width:26px}.min-w-\[46rem\]{min-width:46rem}.min-w-\[62rem\]{min-width:62rem}.min-w-\[8rem\]{min-width:8rem}.max-w-2xl{max-width:42rem}.max-w-3xl{max-width:48rem}.max-w-4xl{max-width:56rem}.max-w-5xl{max-width:64rem}.max-w-6xl{max-width:72rem}.max-w-\[10rem\]{max-width:10rem}.max-w-\[14rem\]{max-width:14rem}.max-w-\[16rem\]{max-width:16rem}.max-w-\[18rem\]{max-width:18rem}.max-w-\[200px\]{max-width:200px}.max-w-\[20rem\]{max-width:20rem}.max-w-\[22rem\]{max-width:22rem}.max-w-\[260px\]{max-width:260px}.max-w-\[320px\]{max-width:320px}.max-w-\[45\%\]{max-width:45%}.max-w-\[9rem\]{max-width:9rem}.max-w-full{max-width:100%}.max-w-lg{max-width:32rem}.max-w-md{max-width:28rem}.max-w-none{max-width:none}.max-w-sm{max-width:24rem}.max-w-xl{max-width:36rem}.max-w-xs{max-width:20rem}.flex-1{flex:1}.shrink-0{flex-shrink:0}.grow{flex-grow:1}.table-fixed{table-layout:fixed}.border-collapse{border-collapse:collapse}.-translate-x-full{--tw-translate-x:-100%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-translate-y-1\/2{--tw-translate-y:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-x-0{--tw-translate-x:0px;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-x-1{--tw-translate-x:.25rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-x-6{--tw-translate-x:1.5rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-rotate-90{--tw-rotate:-90deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.rotate-180{--tw-rotate:180deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.rotate-45{--tw-rotate:45deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.transform{transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes fadeIn{0%{opacity:0}to{opacity:1}}.animate-fade-in{animation:.2s ease-out fadeIn}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:2s cubic-bezier(.4,0,.6,1) infinite pulse}@keyframes slideUp{0%{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.animate-slide-up{animation:.2s ease-out slideUp}@keyframes spin{to{transform:rotate(360deg)}}.animate-spin{animation:1s linear infinite spin}.cursor-col-resize{cursor:col-resize}.cursor-default{cursor:default}.cursor-grab{cursor:grab}.cursor-move{cursor:move}.cursor-not-allowed{cursor:not-allowed}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;user-select:none}.select-all{-webkit-user-select:all;user-select:all}.resize-y{resize:vertical}.resize{resize:both}.scroll-mt-6{scroll-margin-top:1.5rem}.list-inside{list-style-position:inside}.list-decimal{list-style-type:decimal}.list-disc{list-style-type:disc}.appearance-none{appearance:none}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-cols-7{grid-template-columns:repeat(7,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.place-items-center{place-items:center}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-center{align-items:center}.items-baseline{align-items:baseline}.justify-end{justify-content:flex-end}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.justify-around{justify-content:space-around}.gap-0{gap:0}.gap-0\.5{gap:.125rem}.gap-1{gap:.25rem}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-2\.5{gap:.625rem}.gap-3{gap:.75rem}.gap-3\.5{gap:.875rem}.gap-4{gap:1rem}.gap-5{gap:1.25rem}.gap-6{gap:1.5rem}.gap-x-1{-moz-column-gap:.25rem;column-gap:.25rem}.gap-x-3{-moz-column-gap:.75rem;column-gap:.75rem}.gap-x-4{-moz-column-gap:1rem;column-gap:1rem}.gap-x-6{-moz-column-gap:1.5rem;column-gap:1.5rem}.gap-x-8{-moz-column-gap:2rem;column-gap:2rem}.gap-y-0\.5{row-gap:.125rem}.gap-y-1{row-gap:.25rem}.gap-y-2{row-gap:.5rem}.gap-y-3{row-gap:.75rem}.space-y-0\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.125rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.125rem * var(--tw-space-y-reverse))}.space-y-1>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.25rem * var(--tw-space-y-reverse))}.space-y-1\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.375rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.375rem * var(--tw-space-y-reverse))}.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem * var(--tw-space-y-reverse))}.space-y-2\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.625rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.625rem * var(--tw-space-y-reverse))}.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem * var(--tw-space-y-reverse))}.space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem * var(--tw-space-y-reverse))}.space-y-6>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.space-y-8>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2rem * var(--tw-space-y-reverse))}.divide-y>:not([hidden])~:not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px * var(--tw-divide-y-reverse))}.divide-surface-border>:not([hidden])~:not([hidden]){--tw-divide-opacity:1;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-divide-opacity,1) * 100%), transparent)}.divide-surface-border\/50>:not([hidden])~:not([hidden]){border-color:color-mix(in srgb, var(--surface-border) calc(.5 * 100%), transparent)}.divide-surface-border\/60>:not([hidden])~:not([hidden]){border-color:color-mix(in srgb, var(--surface-border) calc(.6 * 100%), transparent)}.self-start{align-self:flex-start}.self-end{align-self:flex-end}.self-center{align-self:center}.overflow-auto{overflow:auto}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.whitespace-nowrap{white-space:nowrap}.whitespace-pre-wrap{white-space:pre-wrap}.break-all{word-break:break-all}.rounded{border-radius:.25rem}.rounded-\[4px\]{border-radius:4px}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.625rem}.rounded-md{border-radius:.375rem}.rounded-sm{border-radius:.125rem}.rounded-xl{border-radius:.75rem}.rounded-b{border-bottom-right-radius:.25rem;border-bottom-left-radius:.25rem}.rounded-l-lg{border-top-left-radius:.625rem;border-bottom-left-radius:.625rem}.rounded-r-lg{border-top-right-radius:.625rem;border-bottom-right-radius:.625rem}.rounded-t{border-top-left-radius:.25rem;border-top-right-radius:.25rem}.rounded-t-lg{border-top-left-radius:.625rem;border-top-right-radius:.625rem}.border{border-width:1px}.border-0{border-width:0}.border-2{border-width:2px}.border-b{border-bottom-width:1px}.border-b-0{border-bottom-width:0}.border-b-2{border-bottom-width:2px}.border-l{border-left-width:1px}.border-l-2{border-left-width:2px}.border-l-4{border-left-width:4px}.border-r{border-right-width:1px}.border-t{border-top-width:1px}.border-dashed{border-style:dashed}.border-alert-red\/40{border-color:color-mix(in srgb, var(--alert-red) calc(.4 * 100%), transparent)}.border-amber-500{--tw-border-opacity:1;border-color:rgb(245 158 11/var(--tw-border-opacity,1))}.border-amber-500\/20{border-color:#f59e0b33}.border-amber-500\/30{border-color:#f59e0b4d}.border-amber-500\/40{border-color:#f59e0b66}.border-amber-500\/60{border-color:#f59e0b99}.border-amber-600\/30{border-color:#d977064d}.border-amber-600\/40{border-color:#d9770666}.border-black\/5{border-color:#0000000d}.border-blue-500\/20{border-color:#3b82f633}.border-cyber-400{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-border-opacity,1) * 100%), transparent)}.border-cyber-500{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-border-opacity,1) * 100%), transparent)}.border-cyber-500\/10{border-color:color-mix(in srgb, var(--cyber-500) calc(.1 * 100%), transparent)}.border-cyber-500\/20{border-color:color-mix(in srgb, var(--cyber-500) calc(.2 * 100%), transparent)}.border-cyber-500\/30{border-color:color-mix(in srgb, var(--cyber-500) calc(.3 * 100%), transparent)}.border-cyber-500\/40{border-color:color-mix(in srgb, var(--cyber-500) calc(.4 * 100%), transparent)}.border-cyber-500\/50{border-color:color-mix(in srgb, var(--cyber-500) calc(.5 * 100%), transparent)}.border-cyber-500\/60{border-color:color-mix(in srgb, var(--cyber-500) calc(.6 * 100%), transparent)}.border-cyber-600\/30{border-color:color-mix(in srgb, var(--cyber-600) calc(.3 * 100%), transparent)}.border-cyber-600\/40{border-color:color-mix(in srgb, var(--cyber-600) calc(.4 * 100%), transparent)}.border-cyber-600\/60{border-color:color-mix(in srgb, var(--cyber-600) calc(.6 * 100%), transparent)}.border-emerald-500\/20{border-color:#10b98133}.border-emerald-500\/30{border-color:#10b9814d}.border-gray-500\/20{border-color:color-mix(in srgb, var(--text-muted) calc(.2 * 100%), transparent)}.border-gray-600{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--text-muted-alt) calc(var(--tw-border-opacity,1) * 100%), transparent)}.border-gray-600\/30{border-color:color-mix(in srgb, var(--text-muted-alt) calc(.3 * 100%), transparent)}.border-gray-700{--tw-border-opacity:1;border-color:rgb(55 65 81/var(--tw-border-opacity,1))}.border-gray-800{--tw-border-opacity:1;border-color:rgb(31 41 55/var(--tw-border-opacity,1))}.border-green-500\/20{border-color:#22c55e33}.border-green-500\/30{border-color:#22c55e4d}.border-green-600\/30{border-color:#16a34a4d}.border-green-900\/40{border-color:#14532d66}.border-orange-600{--tw-border-opacity:1;border-color:rgb(234 88 12/var(--tw-border-opacity,1))}.border-purple-500\/20{border-color:#a855f733}.border-red-400\/60{border-color:#f8717199}.border-red-500\/20{border-color:#ef444433}.border-red-500\/30{border-color:#ef44444d}.border-red-500\/60{border-color:#ef444499}.border-red-600\/20{border-color:#dc262633}.border-red-600\/30{border-color:#dc26264d}.border-red-600\/40{border-color:#dc262666}.border-red-900\/40{border-color:#7f1d1d66}.border-surface{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--surface) calc(var(--tw-border-opacity,1) * 100%), transparent)}.border-surface-border{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-border-opacity,1) * 100%), transparent)}.border-surface-border\/30{border-color:color-mix(in srgb, var(--surface-border) calc(.3 * 100%), transparent)}.border-surface-border\/40{border-color:color-mix(in srgb, var(--surface-border) calc(.4 * 100%), transparent)}.border-surface-border\/50{border-color:color-mix(in srgb, var(--surface-border) calc(.5 * 100%), transparent)}.border-surface-border\/60{border-color:color-mix(in srgb, var(--surface-border) calc(.6 * 100%), transparent)}.border-surface-lighter{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--surface-lighter) calc(var(--tw-border-opacity,1) * 100%), transparent)}.border-surface-lighter\/60{border-color:color-mix(in srgb, var(--surface-lighter) calc(.6 * 100%), transparent)}.border-transparent{border-color:#0000}.border-white{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--text-primary) calc(var(--tw-border-opacity,1) * 100%), transparent)}.\!border-l-amber-500{--tw-border-opacity:1!important;border-left-color:rgb(245 158 11/var(--tw-border-opacity,1))!important}.\!border-l-cyber-500{--tw-border-opacity:1!important;border-left-color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-border-opacity,1) * 100%), transparent)!important}.\!border-l-red-500{--tw-border-opacity:1!important;border-left-color:rgb(239 68 68/var(--tw-border-opacity,1))!important}.border-l-amber-500{--tw-border-opacity:1;border-left-color:rgb(245 158 11/var(--tw-border-opacity,1))}.border-l-cyber-400{--tw-border-opacity:1;border-left-color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-border-opacity,1) * 100%), transparent)}.border-l-cyber-500{--tw-border-opacity:1;border-left-color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-border-opacity,1) * 100%), transparent)}.border-l-red-500{--tw-border-opacity:1;border-left-color:rgb(239 68 68/var(--tw-border-opacity,1))}.border-t-transparent{border-top-color:#0000}.\!bg-red-600{--tw-bg-opacity:1!important;background-color:rgb(220 38 38/var(--tw-bg-opacity,1))!important}.bg-amber-300{--tw-bg-opacity:1;background-color:rgb(252 211 77/var(--tw-bg-opacity,1))}.bg-amber-400{--tw-bg-opacity:1;background-color:rgb(251 191 36/var(--tw-bg-opacity,1))}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11/var(--tw-bg-opacity,1))}.bg-amber-500\/10{background-color:#f59e0b1a}.bg-amber-500\/15{background-color:#f59e0b26}.bg-amber-500\/20{background-color:#f59e0b33}.bg-amber-500\/30{background-color:#f59e0b4d}.bg-amber-500\/5{background-color:#f59e0b0d}.bg-amber-600\/10{background-color:#d977061a}.bg-amber-600\/15{background-color:#d9770626}.bg-amber-600\/20{background-color:#d9770633}.bg-amber-900\/20{background-color:#78350f33}.bg-black\/30{background-color:#0000004d}.bg-black\/40{background-color:#0006}.bg-black\/50{background-color:#00000080}.bg-black\/60{background-color:#0009}.bg-blue-600\/10{background-color:#2563eb1a}.bg-blue-600\/15{background-color:#2563eb26}.bg-blue-600\/20{background-color:#2563eb33}.bg-cyan-500{--tw-bg-opacity:1;background-color:rgb(6 182 212/var(--tw-bg-opacity,1))}.bg-cyber-400{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-cyber-500{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-cyber-500\/30{background-color:color-mix(in srgb, var(--cyber-500) calc(.3 * 100%), transparent)}.bg-cyber-500\/5{background-color:color-mix(in srgb, var(--cyber-500) calc(.05 * 100%), transparent)}.bg-cyber-600{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--cyber-600) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-cyber-600\/10{background-color:color-mix(in srgb, var(--cyber-600) calc(.1 * 100%), transparent)}.bg-cyber-600\/15{background-color:color-mix(in srgb, var(--cyber-600) calc(.15 * 100%), transparent)}.bg-cyber-600\/20{background-color:color-mix(in srgb, var(--cyber-600) calc(.2 * 100%), transparent)}.bg-cyber-600\/25{background-color:color-mix(in srgb, var(--cyber-600) calc(.25 * 100%), transparent)}.bg-cyber-600\/30{background-color:color-mix(in srgb, var(--cyber-600) calc(.3 * 100%), transparent)}.bg-cyber-600\/5{background-color:color-mix(in srgb, var(--cyber-600) calc(.05 * 100%), transparent)}.bg-cyber-600\/70{background-color:color-mix(in srgb, var(--cyber-600) calc(.7 * 100%), transparent)}.bg-emerald-500{--tw-bg-opacity:1;background-color:rgb(16 185 129/var(--tw-bg-opacity,1))}.bg-emerald-500\/10{background-color:#10b9811a}.bg-emerald-500\/15{background-color:#10b98126}.bg-emerald-500\/20{background-color:#10b98133}.bg-emerald-600\/10{background-color:#0596691a}.bg-emerald-600\/15{background-color:#05966926}.bg-gray-500{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--text-muted) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-gray-600{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--text-muted-alt) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-gray-600\/10{background-color:color-mix(in srgb, var(--text-muted-alt) calc(.1 * 100%), transparent)}.bg-gray-600\/20{background-color:color-mix(in srgb, var(--text-muted-alt) calc(.2 * 100%), transparent)}.bg-gray-600\/60{background-color:color-mix(in srgb, var(--text-muted-alt) calc(.6 * 100%), transparent)}.bg-gray-700{--tw-bg-opacity:1;background-color:rgb(55 65 81/var(--tw-bg-opacity,1))}.bg-green-400{--tw-bg-opacity:1;background-color:rgb(74 222 128/var(--tw-bg-opacity,1))}.bg-green-500{--tw-bg-opacity:1;background-color:rgb(34 197 94/var(--tw-bg-opacity,1))}.bg-green-600\/10{background-color:#16a34a1a}.bg-green-600\/15{background-color:#16a34a26}.bg-green-600\/20{background-color:#16a34a33}.bg-green-900\/10{background-color:#14532d1a}.bg-green-900\/20{background-color:#14532d33}.bg-navy-600\/40{background-color:color-mix(in srgb, var(--navy-600) calc(.4 * 100%), transparent)}.bg-navy-800{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--navy-800) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-navy-800\/60{background-color:color-mix(in srgb, var(--navy-800) calc(.6 * 100%), transparent)}.bg-navy-800\/95{background-color:color-mix(in srgb, var(--navy-800) calc(.95 * 100%), transparent)}.bg-navy-900{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--navy-900) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-navy-950{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--navy-950) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-orange-500{--tw-bg-opacity:1;background-color:rgb(249 115 22/var(--tw-bg-opacity,1))}.bg-orange-600\/10{background-color:#ea580c1a}.bg-orange-600\/20{background-color:#ea580c33}.bg-pink-600\/20{background-color:#db277733}.bg-purple-600\/10{background-color:#9333ea1a}.bg-purple-600\/15{background-color:#9333ea26}.bg-purple-600\/20{background-color:#9333ea33}.bg-red-400{--tw-bg-opacity:1;background-color:rgb(248 113 113/var(--tw-bg-opacity,1))}.bg-red-500{--tw-bg-opacity:1;background-color:rgb(239 68 68/var(--tw-bg-opacity,1))}.bg-red-500\/10{background-color:#ef44441a}.bg-red-600{--tw-bg-opacity:1;background-color:rgb(220 38 38/var(--tw-bg-opacity,1))}.bg-red-600\/10{background-color:#dc26261a}.bg-red-600\/15{background-color:#dc262626}.bg-red-600\/20{background-color:#dc262633}.bg-red-600\/5{background-color:#dc26260d}.bg-red-900\/10{background-color:#7f1d1d1a}.bg-red-900\/20{background-color:#7f1d1d33}.bg-red-950\/30{background-color:#450a0a4d}.bg-sky-600\/10{background-color:#0284c71a}.bg-slate-600\/20{background-color:#47556933}.bg-slate-700\/80{background-color:#334155cc}.bg-surface{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-surface-border{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-surface-border\/70{background-color:color-mix(in srgb, var(--surface-border) calc(.7 * 100%), transparent)}.bg-surface-light{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface-light) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-surface-lighter{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface-lighter) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-surface-lighter\/30{background-color:color-mix(in srgb, var(--surface-lighter) calc(.3 * 100%), transparent)}.bg-surface-lighter\/40{background-color:color-mix(in srgb, var(--surface-lighter) calc(.4 * 100%), transparent)}.bg-surface-lighter\/50{background-color:color-mix(in srgb, var(--surface-lighter) calc(.5 * 100%), transparent)}.bg-surface-lighter\/60{background-color:color-mix(in srgb, var(--surface-lighter) calc(.6 * 100%), transparent)}.bg-surface\/30{background-color:color-mix(in srgb, var(--surface) calc(.3 * 100%), transparent)}.bg-surface\/50{background-color:color-mix(in srgb, var(--surface) calc(.5 * 100%), transparent)}.bg-transparent{background-color:#0000}.bg-white{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--text-primary) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.bg-yellow-600\/10{background-color:#ca8a041a}.bg-yellow-600\/20{background-color:#ca8a0433}.stroke-amber-400{stroke:#fbbf24}.stroke-cyber-400{stroke:color-mix(in srgb, var(--cyber-400) calc(1 * 100%), transparent)}.stroke-red-400{stroke:#f87171}.stroke-surface-lighter{stroke:color-mix(in srgb, var(--surface-lighter) calc(1 * 100%), transparent)}.object-contain{-o-object-fit:contain;object-fit:contain}.\!p-0{padding:0!important}.p-0{padding:0}.p-0\.5{padding:.125rem}.p-1{padding:.25rem}.p-1\.5{padding:.375rem}.p-10{padding:2.5rem}.p-2{padding:.5rem}.p-2\.5{padding:.625rem}.p-3{padding:.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.\!py-3{padding-top:.75rem!important;padding-bottom:.75rem!important}.\!py-4{padding-top:1rem!important;padding-bottom:1rem!important}.px-0\.5{padding-left:.125rem;padding-right:.125rem}.px-1{padding-left:.25rem;padding-right:.25rem}.px-1\.5{padding-left:.375rem;padding-right:.375rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-3\.5{padding-left:.875rem;padding-right:.875rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-10{padding-top:2.5rem;padding-bottom:2.5rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-16{padding-top:4rem;padding-bottom:4rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-20{padding-top:5rem;padding-bottom:5rem}.py-24{padding-top:6rem;padding-bottom:6rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.py-\[7px\]{padding-top:7px;padding-bottom:7px}.py-px{padding-top:1px;padding-bottom:1px}.pb-0{padding-bottom:0}.pb-0\.5{padding-bottom:.125rem}.pb-1{padding-bottom:.25rem}.pb-1\.5{padding-bottom:.375rem}.pb-2{padding-bottom:.5rem}.pb-2\.5{padding-bottom:.625rem}.pb-3{padding-bottom:.75rem}.pb-8{padding-bottom:2rem}.pl-14{padding-left:3.5rem}.pl-16{padding-left:4rem}.pl-2{padding-left:.5rem}.pl-4{padding-left:1rem}.pl-8{padding-left:2rem}.pl-9{padding-left:2.25rem}.pr-1{padding-right:.25rem}.pr-1\.5{padding-right:.375rem}.pr-16{padding-right:4rem}.pr-3{padding-right:.75rem}.pr-8{padding-right:2rem}.pt-0{padding-top:0}.pt-0\.5{padding-top:.125rem}.pt-1{padding-top:.25rem}.pt-1\.5{padding-top:.375rem}.pt-2{padding-top:.5rem}.pt-3{padding-top:.75rem}.pt-4{padding-top:1rem}.pt-8{padding-top:2rem}.pt-\[12vh\]{padding-top:12vh}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.align-top{vertical-align:top}.align-middle{vertical-align:middle}.font-mono{font-family:JetBrains Mono,ui-monospace,monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-\[8px\]{font-size:8px}.text-\[9px\]{font-size:9px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-normal{font-weight:400}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.lowercase{text-transform:lowercase}.capitalize{text-transform:capitalize}.normal-case{text-transform:none}.italic{font-style:italic}.tabular-nums{--tw-numeric-spacing:tabular-nums;font-variant-numeric:var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction)}.leading-none{line-height:1}.leading-relaxed{line-height:1.625}.leading-snug{line-height:1.375}.leading-tight{line-height:1.25}.tracking-\[0\.02em\]{letter-spacing:.02em}.tracking-\[0\.06em\]{letter-spacing:.06em}.tracking-\[0\.3em\]{letter-spacing:.3em}.tracking-normal{letter-spacing:0}.tracking-tight{letter-spacing:-.025em}.tracking-wide{letter-spacing:.025em}.tracking-wider{letter-spacing:.05em}.tracking-widest{letter-spacing:.1em}.text-alert-red{--tw-text-opacity:1;color:color-mix(in srgb, var(--alert-red) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-amber-200{--tw-text-opacity:1;color:rgb(253 230 138/var(--tw-text-opacity,1))}.text-amber-200\/80{color:#fde68acc}.text-amber-300{--tw-text-opacity:1;color:rgb(252 211 77/var(--tw-text-opacity,1))}.text-amber-300\/80{color:#fcd34dcc}.text-amber-300\/90{color:#fcd34de6}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36/var(--tw-text-opacity,1))}.text-amber-500{--tw-text-opacity:1;color:rgb(245 158 11/var(--tw-text-opacity,1))}.text-blue-300{--tw-text-opacity:1;color:rgb(147 197 253/var(--tw-text-opacity,1))}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250/var(--tw-text-opacity,1))}.text-cyan-400{--tw-text-opacity:1;color:rgb(34 211 238/var(--tw-text-opacity,1))}.text-cyber-200{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-200) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-cyber-300{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-300) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-cyber-400{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-cyber-500{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183/var(--tw-text-opacity,1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153/var(--tw-text-opacity,1))}.text-gray-100{--tw-text-opacity:1;color:rgb(243 244 246/var(--tw-text-opacity,1))}.text-gray-200{--tw-text-opacity:1;color:rgb(229 231 235/var(--tw-text-opacity,1))}.text-gray-300{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-secondary) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-gray-400{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-tertiary) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-gray-500{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-muted) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-gray-600{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-muted-alt) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-gray-700{--tw-text-opacity:1;color:rgb(55 65 81/var(--tw-text-opacity,1))}.text-gray-800{--tw-text-opacity:1;color:rgb(31 41 55/var(--tw-text-opacity,1))}.text-green-300{--tw-text-opacity:1;color:rgb(134 239 172/var(--tw-text-opacity,1))}.text-green-400{--tw-text-opacity:1;color:rgb(74 222 128/var(--tw-text-opacity,1))}.text-green-500{--tw-text-opacity:1;color:rgb(34 197 94/var(--tw-text-opacity,1))}.text-orange-400{--tw-text-opacity:1;color:rgb(251 146 60/var(--tw-text-opacity,1))}.text-pink-400{--tw-text-opacity:1;color:rgb(244 114 182/var(--tw-text-opacity,1))}.text-purple-300{--tw-text-opacity:1;color:rgb(216 180 254/var(--tw-text-opacity,1))}.text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252/var(--tw-text-opacity,1))}.text-red-300{--tw-text-opacity:1;color:rgb(252 165 165/var(--tw-text-opacity,1))}.text-red-400{--tw-text-opacity:1;color:rgb(248 113 113/var(--tw-text-opacity,1))}.text-red-400\/80{color:#f87171cc}.text-red-500{--tw-text-opacity:1;color:rgb(239 68 68/var(--tw-text-opacity,1))}.text-rose-400{--tw-text-opacity:1;color:rgb(251 113 133/var(--tw-text-opacity,1))}.text-sky-400{--tw-text-opacity:1;color:rgb(56 189 248/var(--tw-text-opacity,1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240/var(--tw-text-opacity,1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225/var(--tw-text-opacity,1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184/var(--tw-text-opacity,1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139/var(--tw-text-opacity,1))}.text-white{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-primary) calc(var(--tw-text-opacity,1) * 100%), transparent)}.text-yellow-400{--tw-text-opacity:1;color:rgb(250 204 21/var(--tw-text-opacity,1))}.underline{text-decoration-line:underline}.line-through{text-decoration-line:line-through}.underline-offset-2{text-underline-offset:2px}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.placeholder-gray-500::placeholder{--tw-placeholder-opacity:1;color:color-mix(in srgb, var(--text-muted) calc(var(--tw-placeholder-opacity,1) * 100%), transparent)}.accent-cyber-500{accent-color:color-mix(in srgb, var(--cyber-500) calc(1 * 100%), transparent)}.opacity-0{opacity:0}.opacity-100{opacity:1}.opacity-40{opacity:.4}.opacity-50{opacity:.5}.opacity-60{opacity:.6}.opacity-70{opacity:.7}.shadow-2xl{--tw-shadow:0 25px 50px -12px #00000040;--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000), var(--tw-ring-shadow,0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px #0000001a, 0 4px 6px -4px #0000001a;--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000), var(--tw-ring-shadow,0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px #0000001a, 0 8px 10px -6px #0000001a;--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000), var(--tw-ring-shadow,0 0 #0000), var(--tw-shadow)}.outline-none{outline-offset:2px;outline:2px solid #0000}.outline{outline-style:solid}.ring{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow,0 0 #0000)}.ring-1{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow,0 0 #0000)}.ring-4{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(4px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow,0 0 #0000)}.ring-navy-950{--tw-ring-opacity:1;--tw-ring-color:color-mix(in srgb, var(--navy-950) calc(var(--tw-ring-opacity,1) * 100%), transparent)}.ring-orange-500\/40{--tw-ring-color:#f9731666}.blur{--tw-blur:blur(8px);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.\!filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)!important}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-sm{--tw-backdrop-blur:blur(4px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter,backdrop-filter;transition-duration:.15s;transition-timing-function:cubic-bezier(.4,0,.2,1)}.transition-all{transition-property:all;transition-duration:.15s;transition-timing-function:cubic-bezier(.4,0,.2,1)}.transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-duration:.15s;transition-timing-function:cubic-bezier(.4,0,.2,1)}.transition-opacity{transition-property:opacity;transition-duration:.15s;transition-timing-function:cubic-bezier(.4,0,.2,1)}.transition-transform{transition-property:transform;transition-duration:.15s;transition-timing-function:cubic-bezier(.4,0,.2,1)}.duration-150{transition-duration:.15s}.duration-200{transition-duration:.2s}.ease-in-out{transition-timing-function:cubic-bezier(.4,0,.2,1)}html{--navy-50:#e8edf5;--navy-100:#c5d1e5;--navy-200:#9eb3d3;--navy-300:#7895c1;--navy-400:#5b7db3;--navy-500:#3e64a5;--navy-600:#365796;--navy-700:#2b4783;--navy-800:#223771;--navy-900:#142454;--navy-950:#0a1628;--cyber-50:#e0f7fe;--cyber-100:#b3edfc;--cyber-200:#80e2fa;--cyber-300:#4dd6f8;--cyber-400:#26cbf6;--cyber-500:#00c0f4;--cyber-600:#00aae0;--cyber-700:#0090c4;--cyber-800:#0077a9;--cyber-900:#00507d;--brand-crimson:#c00000;--surface:#0f1a2e;--surface-light:#162238;--surface-lighter:#1e2d48;--surface-border:#2a3a5c;--alert-red:#ef4444;--alert-amber:#f59e0b;--alert-green:#22c55e;--status-new:#38bdf8;--status-open:#60a5fa;--status-progress:#fbbf24;--status-waiting-client:#c084fc;--status-waiting-vendor:#a5b4fc;--status-resolved:#4ade80;--status-closed:#9ca3af;--text-primary:#fff;--text-secondary:#d1d5db;--text-tertiary:#9ca3af;--text-muted:#8b93a1;--text-muted-alt:#7c8598}html[data-theme=light]{--navy-50:#f5f5f5;--navy-100:#ebebeb;--navy-200:#d9d9d9;--navy-300:#b3b3b3;--navy-400:gray;--navy-500:#5c5c5c;--navy-600:#424242;--navy-700:#2b2b2b;--navy-800:#1a1a1a;--navy-900:#0d0d0d;--navy-950:#fff;--cyber-50:#f0f9ff;--cyber-100:#e0f2fe;--cyber-200:#bae6fd;--cyber-300:#075985;--cyber-400:#0369a1;--cyber-500:#0ea5e9;--cyber-600:#0284c7;--cyber-700:#0369a1;--cyber-800:#075985;--cyber-900:#0c4a6e;--surface:#fff;--surface-light:#f7f7f7;--surface-lighter:#f0f0f0;--surface-border:#b8b8b8;--alert-red:#dc2626;--alert-amber:#d97706;--alert-green:#16a34a;--status-new:#075985;--status-open:#1e40af;--status-progress:#92400e;--status-waiting-client:#6b21a8;--status-waiting-vendor:#3730a3;--status-resolved:#166534;--status-closed:#374151;--text-primary:#1a1a1a;--text-secondary:#363636;--text-tertiary:#525252;--text-muted:#595959;--text-muted-alt:#666}html[data-theme=light] :is(.text-amber-200,.text-amber-200\/80,.text-amber-300,.text-amber-300\/80,.text-amber-300\/90,.text-amber-400,.text-amber-500,.hover\:text-amber-300:hover){color:#92400e}html[data-theme=light] .text-yellow-400{color:#854d0e}html[data-theme=light] .text-orange-400{color:#9a3412}html[data-theme=light] :is(.text-red-200,.text-red-300,.text-red-400,.text-red-400\/80,.text-red-500,.hover\:text-red-200:hover,.hover\:text-red-300:hover,.hover\:text-red-400:hover),html[data-theme=light] .group:hover .group-hover\:text-red-300{color:#991b1b}html[data-theme=light] :is(.text-rose-300,.text-rose-400,.hover\:text-rose-300:hover,.hover\:text-rose-400:hover){color:#9f1239}html[data-theme=light] .text-pink-400{color:#9d174d}html[data-theme=light] :is(.text-green-300,.text-green-400,.text-green-500,.hover\:text-green-300:hover){color:#166534}html[data-theme=light] :is(.text-emerald-300,.text-emerald-400){color:#065f46}html[data-theme=light] .text-cyan-400{color:#155e75}html[data-theme=light] .text-sky-400{color:#075985}html[data-theme=light] :is(.text-blue-300,.text-blue-400,.hover\:text-blue-300:hover){color:#1e40af}html[data-theme=light] :is(.text-purple-300,.text-purple-400){color:#6b21a8}html[data-theme=light] :is(.text-gray-100,.text-gray-200,.text-slate-200,.hover\:text-gray-200:hover){color:var(--text-tertiary)}html[data-theme=light] :is(.text-cyber-200,.hover\:text-cyber-200:hover){color:var(--cyber-800)}html[data-theme=light] .bg-cyber-600\/5{background-color:color-mix(in srgb, var(--cyber-600) 4%, transparent)}html[data-theme=light] .bg-cyber-600\/10{background-color:color-mix(in srgb, var(--cyber-600) 8%, transparent)}html[data-theme=light] .bg-cyber-600\/15{background-color:color-mix(in srgb, var(--cyber-600) 11%, transparent)}html[data-theme=light] .bg-cyber-600\/20{background-color:color-mix(in srgb, var(--cyber-600) 13%, transparent)}html[data-theme=light] .bg-cyber-600\/25,html[data-theme=light] .bg-cyber-600\/30{background-color:color-mix(in srgb, var(--cyber-600) 15%, transparent)}html[data-theme=light] .bg-cyber-500\/20{background-color:color-mix(in srgb, var(--cyber-500) 13%, transparent)}html[data-theme=light] .bg-cyber-500\/30{background-color:color-mix(in srgb, var(--cyber-500) 15%, transparent)}.service-alert-banner{background-color:#dc262626;border-bottom-color:#ef444466}.service-alert-banner__icon{color:#f87171}.service-alert-banner__message{color:#fee2e2}.service-alert-banner__details{color:#fecaca}.service-alert-banner__dismiss{color:#fca5a5}.service-alert-banner__dismiss:hover{color:#fff}html[data-theme=light] .service-alert-banner{background-color:#fee2e2;border-bottom-color:#dc2626}html[data-theme=light] .service-alert-banner__icon{color:#b91c1c}html[data-theme=light] .service-alert-banner__message{color:#7f1d1d}html[data-theme=light] .service-alert-banner__details,html[data-theme=light] .service-alert-banner__dismiss{color:#991b1b}html[data-theme=light] .service-alert-banner__dismiss:hover{color:#7f1d1d}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#2a3a5c;border-radius:3px}::-webkit-scrollbar-thumb:hover{background:#3a4a6c}html[data-theme=light] ::-webkit-scrollbar-thumb{background:#d4d4d4}html[data-theme=light] ::-webkit-scrollbar-thumb:hover{background:#a8a8a8}@media (prefers-reduced-motion:reduce){*,:before,:after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}.skeleton{background:linear-gradient(90deg,#1e293b 25%,#334155 50%,#1e293b 75%) 0 0/200% 100%;border-radius:6px;animation:1.4s infinite skeleton-shimmer}@keyframes skeleton-shimmer{0%{background-position:200% 0}to{background-position:-200% 0}}@media (prefers-reduced-motion:reduce){.skeleton{animation:none}}.ticket-print-only{display:none}@media print{@page{margin:16mm}body{color:#111!important;background:#fff!important}body *{visibility:hidden!important}.ticket-print-only,.ticket-print-only *{visibility:visible!important}.ticket-print-only{width:100%;padding:0;font:12pt/1.5 Georgia,serif;position:absolute;inset:0;color:#111!important;background:#fff!important;display:block!important}.ticket-print-only h1{margin-bottom:4pt;font-size:20pt}.ticket-print-only h2{margin-bottom:8pt;font-size:16pt}.ticket-print-only h3{margin:16pt 0 6pt;font-size:13pt}.ticket-print-only dl{grid-template-columns:1fr 1fr;gap:6pt 18pt;margin:14pt 0;display:grid}.ticket-print-only dl div{gap:6pt;display:flex}.ticket-print-only dt{font-weight:700}.ticket-print-only dd{margin:0}.ticket-print-activity{-moz-column-break-inside:avoid;break-inside:avoid;border-top:1px solid #ccc;padding:6pt 0}.ticket-print-activity p{white-space:pre-wrap;margin:3pt 0}.ticket-print-activity small{color:#555}}html{--nav-accent:#00c0f429}html[data-theme=light]{--nav-accent:#0ea5e91f}[data-ui-p1=true] .nav-item{border-radius:.5rem;position:relative}[data-ui-p1=true] .nav-item--active{background-image:linear-gradient(90deg, var(--nav-accent), transparent 65%)}[data-ui-p1=true] .nav-item--active:before{content:"";background:var(--cyber-500);border-radius:9999px;width:3px;position:absolute;top:6px;bottom:6px;left:2px}html[data-density=compact] main,html[data-density=compact] .card{padding:.75rem}html[data-density=compact] .input-field,html[data-density=compact] table td,html[data-density=compact] table th{padding-top:.375rem;padding-bottom:.375rem}html{--card-shadow:0 1px 2px #00000059, 0 12px 32px -22px #000000bf;--card-shadow-hover:0 2px 4px #00000059, 0 18px 40px -24px #000000d9;--card-hover-border:#00c0f473}html[data-theme=light]{--card-shadow:0 1px 2px #0000000f, 0 10px 28px -22px #0000004d;--card-shadow-hover:0 2px 4px #00000014, 0 16px 36px -24px #00000059;--card-hover-border:#0ea5e973}[data-ui-p2=true] .card{box-shadow:var(--card-shadow);transition:box-shadow .15s ease-out,border-color .15s ease-out,transform .15s ease-out}[data-ui-p2=true] a.card:hover,[data-ui-p2=true] button.card:hover,[data-ui-p2=true] .card--interactive:hover{box-shadow:var(--card-shadow-hover);border-color:var(--card-hover-border);transform:translateY(-1px)}[data-ui-p2=true]{font-feature-settings:"cv11", "ss01"}[data-ui-p2=true] h1,[data-ui-p2=true] h2,[data-ui-p2=true] h3{text-wrap:balance}[data-ui-p2=true] .page-title{letter-spacing:-.02em;font-size:1.375rem;line-height:1.75rem}[data-ui-p2=true] table,[data-ui-p2=true] .tabular-nums{font-variant-numeric:tabular-nums}[data-ui-p2=true] table thead th{z-index:2;background:var(--surface-light);position:sticky;top:0}[data-ui-p2=true] table tbody tr{transition:background-color .15s ease-out}[data-ui-p2=true] table tbody tr:hover{background:var(--surface-light)}[data-ui-p2=true] main>*{max-width:1600px;margin-inline:auto}html:not([data-theme=light])[data-palette-dark=crimson]{--navy-50:#ececef;--navy-100:#cfcfd5;--navy-200:#a8a8b1;--navy-300:#82828d;--navy-400:#63636e;--navy-500:#4a4a54;--navy-600:#3a3a43;--navy-700:#2e2e36;--navy-800:#212127;--navy-900:#141417;--navy-950:#0a0a0b;--surface:#0d0d0f;--surface-light:#131316;--surface-lighter:#1a1a1f;--surface-border:#2a2a31;--cyber-50:#fff1f1;--cyber-100:#ffdada;--cyber-200:#ffb3b3;--cyber-300:#ff8080;--cyber-400:#ff5c5c;--cyber-500:#d62020;--cyber-600:#c00000;--cyber-700:#a30000;--cyber-800:#8a0000;--cyber-900:#6b0000;--text-primary:#f7f7f8;--text-secondary:#d2d2d8;--text-tertiary:#9a9aa4;--text-muted:#8e8e99;--text-muted-alt:#83838e;--btn-primary-fg:#fff;--nav-accent:#c0000038;--card-hover-border:#ff5c5c73}html:not([data-theme=light])[data-palette-dark=rose]{--navy-50:#f3eff2;--navy-100:#dbd3d8;--navy-200:#bdb0b8;--navy-300:#998a94;--navy-400:#786973;--navy-500:#5d5159;--navy-600:#4c4249;--navy-700:#3e363c;--navy-800:#2c262b;--navy-900:#1c171b;--navy-950:#0b0a0c;--surface:#0f0d11;--surface-light:#16131a;--surface-lighter:#1e1a22;--surface-border:#332b38;--cyber-50:#fff5f9;--cyber-100:#ffe4ee;--cyber-200:#ffc2d8;--cyber-300:#ffa8c4;--cyber-400:#ee5483;--cyber-500:#d62020;--cyber-600:#c00000;--cyber-700:#a30000;--cyber-800:#8a0000;--cyber-900:#6b0000;--text-primary:#faf7f8;--text-secondary:#d8d2d6;--text-tertiary:#a49aa2;--text-muted:#998f97;--text-muted-alt:#8d848b;--btn-primary-fg:#fff;--nav-accent:#ee54832e;--card-hover-border:#ee548373}html:not([data-theme=light])[data-palette-dark=maroon]{--navy-50:#f2eaea;--navy-100:#ddd0d0;--navy-200:#bfabac;--navy-300:#9d8385;--navy-400:#7c6264;--navy-500:#614b4d;--navy-600:#503d3f;--navy-700:#413133;--navy-800:#2f2325;--navy-900:#201618;--navy-950:#120c0d;--surface:#170f10;--surface-light:#1e1415;--surface-lighter:#271a1c;--surface-border:#3d2628;--cyber-50:#fff1f1;--cyber-100:#ffdada;--cyber-200:#ffb3b3;--cyber-300:#ff8080;--cyber-400:#ff5c5c;--cyber-500:#d62020;--cyber-600:#c00000;--cyber-700:#a30000;--cyber-800:#8a0000;--cyber-900:#6b0000;--text-primary:#faf6f6;--text-secondary:#d9cfcf;--text-tertiary:#a89293;--text-muted:#9d8a8b;--text-muted-alt:#928081;--btn-primary-fg:#fff;--nav-accent:#c000003d;--card-hover-border:#ff5c5c73}html:not([data-theme=light])[data-palette-dark=oled]{--navy-50:#e9e9ed;--navy-100:#cbcbd1;--navy-200:#a0a0a9;--navy-300:#75757f;--navy-400:#4e4e56;--navy-500:#2e2e33;--navy-600:#232327;--navy-700:#1a1a1d;--navy-800:#131315;--navy-900:#0b0b0c;--navy-950:#000;--surface:#050506;--surface-light:#0c0c0e;--surface-lighter:#131316;--surface-border:#232329;--cyber-50:#fff1f1;--cyber-100:#ffdada;--cyber-200:#ffb3b3;--cyber-300:#ff8080;--cyber-400:#ff5c5c;--cyber-500:#d62020;--cyber-600:#c00000;--cyber-700:#a30000;--cyber-800:#8a0000;--cyber-900:#6b0000;--text-primary:#e9e9ec;--text-secondary:#b8b8bf;--text-tertiary:#8c8c95;--text-muted:#81818a;--text-muted-alt:#77777f;--btn-primary-fg:#fff;--nav-accent:#c0000042;--card-hover-border:#ff5c5c73}html:not([data-theme=light])[data-palette-dark=plum]{--navy-50:#f3ecf1;--navy-100:#e0d2dc;--navy-200:#c4aebc;--navy-300:#a3869b;--navy-400:#82657a;--navy-500:#664e5f;--navy-600:#55404f;--navy-700:#453341;--navy-800:#32242f;--navy-900:#221820;--navy-950:#130d12;--surface:#180f16;--surface-light:#1f141c;--surface-lighter:#281a24;--surface-border:#3f2739;--cyber-50:#fdf2f8;--cyber-100:#fce7f3;--cyber-200:#fbcfe8;--cyber-300:#e879b8;--cyber-400:#d558a0;--cyber-500:#b3457f;--cyber-600:#801550;--cyber-700:#6b1243;--cyber-800:#560e36;--cyber-900:#400a28;--text-primary:#faf6f9;--text-secondary:#d9cfd6;--text-tertiary:#a894a0;--text-muted:#9d8a96;--text-muted-alt:#92808c;--btn-primary-fg:#fff;--nav-accent:#d558a02e;--card-hover-border:#d558a073}html[data-theme=light][data-palette-light=brand]{--navy-50:#f7f7f8;--navy-100:#ededef;--navy-200:#d9d9dd;--navy-300:#a8a8b1;--navy-400:#73737d;--navy-500:#55555e;--navy-600:#3f3f47;--navy-700:#2c2c33;--navy-800:#1a1a1f;--navy-900:#0d0d10;--navy-950:#fff;--surface:#fff;--surface-light:#fafafa;--surface-lighter:#f4f4f5;--surface-border:#cfcfd4;--cyber-50:#fff5f5;--cyber-100:#ffe3e3;--cyber-200:#ffc9c9;--cyber-300:#b30000;--cyber-400:#c00000;--cyber-500:#a30000;--cyber-600:#c00000;--cyber-700:#a30000;--cyber-800:#8a0000;--cyber-900:#6b0000;--alert-red:#a30000;--alert-amber:#b45309;--alert-green:#15803d;--text-primary:#0d0d10;--text-secondary:#2c2c33;--text-tertiary:#4a4a52;--text-muted:#5a5a62;--text-muted-alt:#525259;--btn-primary-fg:#fff;--nav-accent:#c000001a;--card-hover-border:#c0000059}html[data-theme=light][data-palette-light=rosetint]{--navy-50:#fdf5f7;--navy-100:#f9e7ec;--navy-200:#f0cfd9;--navy-300:#cf9cae;--navy-400:#a6647c;--navy-500:#82505f;--navy-600:#653e4a;--navy-700:#4b2e37;--navy-800:#331f26;--navy-900:#1d1215;--navy-950:#fff;--surface:#fff;--surface-light:#fdf6f8;--surface-lighter:#faeef2;--surface-border:#e6ccd4;--cyber-50:#fff5f5;--cyber-100:#ffe3e3;--cyber-200:#ffc9c9;--cyber-300:#b30000;--cyber-400:#c00000;--cyber-500:#a30000;--cyber-600:#c00000;--cyber-700:#a30000;--cyber-800:#8a0000;--cyber-900:#6b0000;--alert-red:#a30000;--alert-amber:#b45309;--alert-green:#15803d;--text-primary:#1a1114;--text-secondary:#43323a;--text-tertiary:#5d4750;--text-muted:#6b545d;--text-muted-alt:#634d55;--btn-primary-fg:#fff;--nav-accent:#c000001f;--card-hover-border:#c0000059}html[data-theme=light][data-palette-light=contrast]{--navy-50:#f4f4f5;--navy-100:#e4e4e7;--navy-200:#d4d4d8;--navy-300:#a1a1aa;--navy-400:#71717a;--navy-500:#52525b;--navy-600:#3f3f46;--navy-700:#27272a;--navy-800:#18181b;--navy-900:#09090b;--navy-950:#fff;--surface:#fff;--surface-light:#f4f4f5;--surface-lighter:#e4e4e7;--surface-border:#6b6b73;--cyber-50:#fff5f5;--cyber-100:#ffe3e3;--cyber-200:#ffc9c9;--cyber-300:#a30000;--cyber-400:#a30000;--cyber-500:#8a0000;--cyber-600:#a30000;--cyber-700:#8a0000;--cyber-800:#6b0000;--cyber-900:#520000;--alert-red:#a30000;--alert-amber:#b45309;--alert-green:#15803d;--text-primary:#09090b;--text-secondary:#23232a;--text-tertiary:#3a3a42;--text-muted:#4d4d55;--text-muted-alt:#3a3a42;--btn-primary-fg:#fff;--nav-accent:#a300001f;--card-hover-border:#a3000073}.scheme-swatch{background-image:linear-gradient(135deg, var(--scheme-bg) 0 58%, var(--scheme-accent) 58% 100%)}.scheme-swatch--crimson{--scheme-bg:#0d0d0f;--scheme-accent:#c00000}.scheme-swatch--rose{--scheme-bg:#0f0d11;--scheme-accent:#ee5483}.scheme-swatch--maroon{--scheme-bg:#170f10;--scheme-accent:#662428}.scheme-swatch--plum{--scheme-bg:#180f16;--scheme-accent:#801550}.scheme-swatch--oled{--scheme-bg:#000;--scheme-accent:#c00000}.scheme-swatch--brand{--scheme-bg:#fff;--scheme-accent:#c00000}.scheme-swatch--rosetint{--scheme-bg:#fdf6f8;--scheme-accent:#c00000}.scheme-swatch--contrast{--scheme-bg:#fff;--scheme-accent:#a30000}.c7-wordmark{aspect-ratio:327/78;height:1.25rem;display:inline-block;position:relative}.c7-wordmark>span{position:absolute;inset:0;-webkit-mask-position:50%;mask-position:50%;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}.c7-wordmark__letters{background-color:currentColor;-webkit-mask-image:url(/brand/wordmark-mask.png);mask-image:url(/brand/wordmark-mask.png)}.c7-wordmark__seven{background-color:var(--brand-crimson);-webkit-mask-image:url(/brand/wordmark-7-mask.png);mask-image:url(/brand/wordmark-7-mask.png)}.file\:mr-4::file-selector-button{margin-right:1rem}.file\:rounded-lg::file-selector-button{border-radius:.625rem}.file\:border-0::file-selector-button{border-width:0}.file\:bg-cyber-600\/20::file-selector-button{background-color:color-mix(in srgb, var(--cyber-600) calc(.2 * 100%), transparent)}.file\:px-4::file-selector-button{padding-left:1rem;padding-right:1rem}.file\:py-2::file-selector-button{padding-top:.5rem;padding-bottom:.5rem}.file\:text-sm::file-selector-button{font-size:.875rem;line-height:1.25rem}.file\:font-medium::file-selector-button{font-weight:500}.file\:text-cyber-400::file-selector-button{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-text-opacity,1) * 100%), transparent)}.placeholder\:text-gray-600::placeholder{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-muted-alt) calc(var(--tw-text-opacity,1) * 100%), transparent)}.after\:absolute:after{content:var(--tw-content);position:absolute}.after\:inset-0:after{content:var(--tw-content);inset:0}.after\:content-\[\'\'\]:after{--tw-content:"";content:var(--tw-content)}.first\:pt-0:first-child{padding-top:0}.last\:border-0:last-child{border-width:0}.last\:border-b-0:last-child{border-bottom-width:0}.last\:pb-0:last-child{padding-bottom:0}.empty\:before\:pointer-events-none:empty:before{content:var(--tw-content);pointer-events:none}.empty\:before\:text-gray-600:empty:before{content:var(--tw-content);--tw-text-opacity:1;color:color-mix(in srgb, var(--text-muted-alt) calc(var(--tw-text-opacity,1) * 100%), transparent)}.empty\:before\:content-\[attr\(data-placeholder\)\]:empty:before{--tw-content:attr(data-placeholder);content:var(--tw-content)}.focus-within\:opacity-100:focus-within{opacity:1}.hover\:border-alert-red\/60:hover{border-color:color-mix(in srgb, var(--alert-red) calc(.6 * 100%), transparent)}.hover\:border-cyber-400:hover{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-border-opacity,1) * 100%), transparent)}.hover\:border-cyber-500:hover{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-border-opacity,1) * 100%), transparent)}.hover\:border-cyber-500\/30:hover{border-color:color-mix(in srgb, var(--cyber-500) calc(.3 * 100%), transparent)}.hover\:border-cyber-500\/40:hover{border-color:color-mix(in srgb, var(--cyber-500) calc(.4 * 100%), transparent)}.hover\:border-cyber-500\/50:hover{border-color:color-mix(in srgb, var(--cyber-500) calc(.5 * 100%), transparent)}.hover\:border-cyber-600\/30:hover{border-color:color-mix(in srgb, var(--cyber-600) calc(.3 * 100%), transparent)}.hover\:border-cyber-600\/50:hover{border-color:color-mix(in srgb, var(--cyber-600) calc(.5 * 100%), transparent)}.hover\:border-gray-600:hover{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--text-muted-alt) calc(var(--tw-border-opacity,1) * 100%), transparent)}.hover\:border-orange-500:hover{--tw-border-opacity:1;border-color:rgb(249 115 22/var(--tw-border-opacity,1))}.hover\:border-red-500\/40:hover{border-color:#ef444466}.hover\:border-surface-border:hover{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-border-opacity,1) * 100%), transparent)}.hover\:\!bg-red-500:hover{--tw-bg-opacity:1!important;background-color:rgb(239 68 68/var(--tw-bg-opacity,1))!important}.hover\:bg-amber-600\/20:hover{background-color:#d9770633}.hover\:bg-cyber-400:hover{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.hover\:bg-cyber-500:hover{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.hover\:bg-cyber-500\/30:hover{background-color:color-mix(in srgb, var(--cyber-500) calc(.3 * 100%), transparent)}.hover\:bg-cyber-600\/10:hover{background-color:color-mix(in srgb, var(--cyber-600) calc(.1 * 100%), transparent)}.hover\:bg-cyber-600\/15:hover{background-color:color-mix(in srgb, var(--cyber-600) calc(.15 * 100%), transparent)}.hover\:bg-cyber-600\/20:hover{background-color:color-mix(in srgb, var(--cyber-600) calc(.2 * 100%), transparent)}.hover\:bg-cyber-600\/25:hover{background-color:color-mix(in srgb, var(--cyber-600) calc(.25 * 100%), transparent)}.hover\:bg-cyber-600\/30:hover{background-color:color-mix(in srgb, var(--cyber-600) calc(.3 * 100%), transparent)}.hover\:bg-cyber-600\/50:hover{background-color:color-mix(in srgb, var(--cyber-600) calc(.5 * 100%), transparent)}.hover\:bg-green-400:hover{--tw-bg-opacity:1;background-color:rgb(74 222 128/var(--tw-bg-opacity,1))}.hover\:bg-green-600\/20:hover{background-color:#16a34a33}.hover\:bg-red-500:hover{--tw-bg-opacity:1;background-color:rgb(239 68 68/var(--tw-bg-opacity,1))}.hover\:bg-red-600\/10:hover{background-color:#dc26261a}.hover\:bg-red-600\/20:hover{background-color:#dc262633}.hover\:bg-red-600\/30:hover{background-color:#dc26264d}.hover\:bg-red-700:hover{--tw-bg-opacity:1;background-color:rgb(185 28 28/var(--tw-bg-opacity,1))}.hover\:bg-slate-600\/80:hover{background-color:#475569cc}.hover\:bg-surface:hover{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.hover\:bg-surface-light\/50:hover{background-color:color-mix(in srgb, var(--surface-light) calc(.5 * 100%), transparent)}.hover\:bg-surface-lighter:hover{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface-lighter) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.hover\:bg-surface-lighter\/30:hover{background-color:color-mix(in srgb, var(--surface-lighter) calc(.3 * 100%), transparent)}.hover\:bg-surface-lighter\/40:hover{background-color:color-mix(in srgb, var(--surface-lighter) calc(.4 * 100%), transparent)}.hover\:bg-surface-lighter\/50:hover{background-color:color-mix(in srgb, var(--surface-lighter) calc(.5 * 100%), transparent)}.hover\:text-amber-300:hover{--tw-text-opacity:1;color:rgb(252 211 77/var(--tw-text-opacity,1))}.hover\:text-blue-300:hover{--tw-text-opacity:1;color:rgb(147 197 253/var(--tw-text-opacity,1))}.hover\:text-cyber-200:hover{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-200) calc(var(--tw-text-opacity,1) * 100%), transparent)}.hover\:text-cyber-300:hover{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-300) calc(var(--tw-text-opacity,1) * 100%), transparent)}.hover\:text-cyber-400:hover{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-text-opacity,1) * 100%), transparent)}.hover\:text-gray-200:hover{--tw-text-opacity:1;color:rgb(229 231 235/var(--tw-text-opacity,1))}.hover\:text-gray-300:hover{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-secondary) calc(var(--tw-text-opacity,1) * 100%), transparent)}.hover\:text-gray-400:hover{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-tertiary) calc(var(--tw-text-opacity,1) * 100%), transparent)}.hover\:text-green-300:hover{--tw-text-opacity:1;color:rgb(134 239 172/var(--tw-text-opacity,1))}.hover\:text-red-200:hover{--tw-text-opacity:1;color:rgb(254 202 202/var(--tw-text-opacity,1))}.hover\:text-red-300:hover{--tw-text-opacity:1;color:rgb(252 165 165/var(--tw-text-opacity,1))}.hover\:text-red-400:hover{--tw-text-opacity:1;color:rgb(248 113 113/var(--tw-text-opacity,1))}.hover\:text-rose-300:hover{--tw-text-opacity:1;color:rgb(253 164 175/var(--tw-text-opacity,1))}.hover\:text-rose-400:hover{--tw-text-opacity:1;color:rgb(251 113 133/var(--tw-text-opacity,1))}.hover\:text-white:hover{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-primary) calc(var(--tw-text-opacity,1) * 100%), transparent)}.hover\:underline:hover{text-decoration-line:underline}.hover\:ring-1:hover{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow,0 0 #0000)}.hover\:ring-cyber-500\/30:hover{--tw-ring-color:color-mix(in srgb, var(--cyber-500) calc(.3 * 100%), transparent)}.hover\:file\:bg-cyber-600\/30::file-selector-button:hover{background-color:color-mix(in srgb, var(--cyber-600) calc(.3 * 100%), transparent)}.focus\:border-cyber-500\/50:focus{border-color:color-mix(in srgb, var(--cyber-500) calc(.5 * 100%), transparent)}.focus\:border-surface-border:focus{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-border-opacity,1) * 100%), transparent)}.focus\:bg-surface-light\/50:focus{background-color:color-mix(in srgb, var(--surface-light) calc(.5 * 100%), transparent)}.focus\:bg-surface-lighter:focus{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface-lighter) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.focus\:bg-surface-lighter\/30:focus{background-color:color-mix(in srgb, var(--surface-lighter) calc(.3 * 100%), transparent)}.focus\:bg-surface-lighter\/40:focus{background-color:color-mix(in srgb, var(--surface-lighter) calc(.4 * 100%), transparent)}.focus\:outline-none:focus{outline-offset:2px;outline:2px solid #0000}.focus\:ring-1:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow,0 0 #0000)}.focus\:ring-cyber-500:focus{--tw-ring-opacity:1;--tw-ring-color:color-mix(in srgb, var(--cyber-500) calc(var(--tw-ring-opacity,1) * 100%), transparent)}.focus\:ring-red-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(239 68 68/var(--tw-ring-opacity,1))}.active\:cursor-grabbing:active{cursor:grabbing}.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}.disabled\:opacity-25:disabled{opacity:.25}.disabled\:opacity-30:disabled{opacity:.3}.disabled\:opacity-35:disabled{opacity:.35}.disabled\:opacity-40:disabled{opacity:.4}.disabled\:opacity-50:disabled{opacity:.5}.group:hover .group-hover\:bg-cyber-500\/50{background-color:color-mix(in srgb, var(--cyber-500) calc(.5 * 100%), transparent)}.group:hover .group-hover\:bg-cyber-600\/20{background-color:color-mix(in srgb, var(--cyber-600) calc(.2 * 100%), transparent)}.group:hover .group-hover\:text-cyber-300{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-300) calc(var(--tw-text-opacity,1) * 100%), transparent)}.group:hover .group-hover\:text-cyber-400{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-text-opacity,1) * 100%), transparent)}.group:hover .group-hover\:text-gray-400{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-tertiary) calc(var(--tw-text-opacity,1) * 100%), transparent)}.group:hover .group-hover\:text-red-300{--tw-text-opacity:1;color:rgb(252 165 165/var(--tw-text-opacity,1))}.group\/badge:hover .group-hover\/badge\:underline{text-decoration-line:underline}.group\/drag:hover .group-hover\/drag\:opacity-100,.group:hover .group-hover\:opacity-100{opacity:1}.group:hover .group-hover\:opacity-80{opacity:.8}.group:hover .group-hover\:ring-2{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow,0 0 #0000)}.group:hover .group-hover\:ring-cyber-500\/40{--tw-ring-color:color-mix(in srgb, var(--cyber-500) calc(.4 * 100%), transparent)}@media (width>=640px){.sm\:col-span-1{grid-column:span 1/span 1}.sm\:col-span-2{grid-column:span 2/span 2}.sm\:block{display:block}.sm\:flex{display:flex}.sm\:table-cell{display:table-cell}.sm\:hidden{display:none}.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.sm\:grid-cols-7{grid-template-columns:repeat(7,minmax(0,1fr))}.sm\:grid-cols-\[1fr_180px\]{grid-template-columns:1fr 180px}.sm\:flex-row{flex-direction:row}.sm\:items-start{align-items:flex-start}.sm\:items-center{align-items:center}.sm\:justify-between{justify-content:space-between}}@media (width>=768px){.md\:col-span-1{grid-column:span 1/span 1}.md\:col-span-2{grid-column:span 2/span 2}.md\:col-span-3{grid-column:span 3/span 3}.md\:col-span-4{grid-column:span 4/span 4}.md\:table-cell{display:table-cell}.md\:grid{display:grid}.md\:grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.md\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.md\:grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}}@media (width>=1024px){.lg\:relative{position:relative}.lg\:sticky{position:sticky}.lg\:top-4{top:1rem}.lg\:col-span-1{grid-column:span 1/span 1}.lg\:col-span-2{grid-column:span 2/span 2}.lg\:col-span-3{grid-column:span 3/span 3}.lg\:col-span-6{grid-column:span 6/span 6}.lg\:block{display:block}.lg\:inline{display:inline}.lg\:flex{display:flex}.lg\:table-cell{display:table-cell}.lg\:grid{display:grid}.lg\:hidden{display:none}.lg\:w-56{width:14rem}.lg\:translate-x-0{--tw-translate-x:0px;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.lg\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.lg\:grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}.lg\:grid-cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}.lg\:grid-cols-\[13rem_minmax\(0\,1fr\)\]{grid-template-columns:13rem minmax(0,1fr)}.lg\:grid-cols-\[1fr_18rem\]{grid-template-columns:1fr 18rem}.lg\:grid-cols-\[1fr_20rem\]{grid-template-columns:1fr 20rem}.lg\:flex-row{flex-direction:row}.lg\:items-start{align-items:flex-start}.lg\:gap-4{gap:1rem}.lg\:p-6{padding:1.5rem}.lg\:px-6{padding-left:1.5rem;padding-right:1.5rem}}@media (width>=1280px){.xl\:table-cell{display:table-cell}.xl\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.xl\:grid-cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}}@media (width>=1536px){.\32 xl\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}}.\[\&\:\:-webkit-calendar-picker-indicator\]\:opacity-0::-webkit-calendar-picker-indicator{opacity:0}.hover\:\[\&\:\:-webkit-calendar-picker-indicator\]\:opacity-60::-webkit-calendar-picker-indicator:hover{opacity:.6}.\[\&_a\]\:text-cyber-400 a{--tw-text-opacity:1;color:color-mix(in srgb, var(--cyber-400) calc(var(--tw-text-opacity,1) * 100%), transparent)}.\[\&_a\]\:underline a{text-decoration-line:underline}.\[\&_blockquote\]\:border-l-2 blockquote{border-left-width:2px}.\[\&_blockquote\]\:border-surface-border blockquote{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-border-opacity,1) * 100%), transparent)}.\[\&_blockquote\]\:pl-3 blockquote{padding-left:.75rem}.\[\&_blockquote\]\:text-gray-400 blockquote{--tw-text-opacity:1;color:color-mix(in srgb, var(--text-tertiary) calc(var(--tw-text-opacity,1) * 100%), transparent)}.\[\&_img\]\:my-1 img{margin-top:.25rem;margin-bottom:.25rem}.\[\&_img\]\:max-w-full img{max-width:100%}.\[\&_img\]\:rounded img{border-radius:.25rem}.\[\&_img\]\:align-middle img{vertical-align:middle}.\[\&_ol\]\:list-decimal ol{list-style-type:decimal}.\[\&_ol\]\:pl-5 ol{padding-left:1.25rem}.\[\&_pre\]\:rounded pre{border-radius:.25rem}.\[\&_pre\]\:bg-surface-lighter pre{--tw-bg-opacity:1;background-color:color-mix(in srgb, var(--surface-lighter) calc(var(--tw-bg-opacity,1) * 100%), transparent)}.\[\&_pre\]\:p-2 pre{padding:.5rem}.\[\&_table\]\:w-full table{width:100%}.\[\&_td\]\:border td{border-width:1px}.\[\&_td\]\:border-surface-border td{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-border-opacity,1) * 100%), transparent)}.\[\&_td\]\:p-1\.5 td{padding:.375rem}.\[\&_th\]\:border th{border-width:1px}.\[\&_th\]\:border-surface-border th{--tw-border-opacity:1;border-color:color-mix(in srgb, var(--surface-border) calc(var(--tw-border-opacity,1) * 100%), transparent)}.\[\&_th\]\:p-1\.5 th{padding:.375rem}.\[\&_ul\]\:list-disc ul{list-style-type:disc}.\[\&_ul\]\:pl-5 ul{padding-left:1.25rem}
+</style>
+<style>
+  /* ---- Mockup-only scaffolding. Everything else is the application's own stylesheet. ---- */
+  body { margin: 0; font-family: Inter, system-ui, -apple-system, sans-serif; }
+  .mock-frame { max-width: 1600px; margin: 0 auto; padding: 24px; }
+  .mock-tag {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: #fecaca; background: rgb(220 38 38 / .18); border: 1px dashed rgb(239 68 68 / .5);
+  }
+  .mock-tag--plan {
+    color: #bfdbfe; background: rgb(37 99 235 / .16); border-color: rgb(96 165 250 / .5);
+  }
+  /* The app frame: a real nav pane beside a real content column, so the mid-gray surfaces the app
+     actually uses are what an eye judges the design on. */
+  .app-frame { display: flex; gap: 0; border: 1px solid var(--surface-border); border-radius: 12px; overflow: hidden; background: var(--navy-950); }
+  .app-nav { width: 268px; flex: 0 0 268px; border-right: 1px solid var(--surface-border); padding: 8px; background: var(--surface); }
+  .app-main { flex: 1; min-width: 0; padding: 20px 24px 32px; }
+  .mock-switch { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mock-switch button[aria-selected="true"] { background-color: var(--cyber-600); color: var(--text-primary); border-color: transparent; }
+  .mock-table { width: 100%; border-collapse: collapse; }
+  .mock-table th, .mock-table td { text-align: left; padding: 7px 10px 7px 0; font-size: 12px; vertical-align: top; }
+  .mock-table th { color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--surface-border); }
+  .mock-table td { color: var(--text-secondary); border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 50%, transparent); }
+  .mock-table td.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; color: var(--text-primary); }
+  .mock-table td.now { color: #fca5a5; }
+  .mock-table td.next { color: #86efac; }
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center; padding: 6px; border-radius: 6px;
+    color: var(--text-muted); background: transparent; border: 0;
+  }
+  .icon-btn:hover { color: var(--text-primary); background: var(--surface-lighter); }
+  .mock-note { border-left: 2px solid var(--cyber-500); padding-left: 12px; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 9999px; padding: 1px 8px; font-size: 11px; font-weight: 500; }
+  .view[hidden] { display: none; }
+  .tile { border-radius: 10px; border: 1px solid var(--surface-border); background: var(--surface); padding: 12px; }
+  svg.i { width: 16px; height: 16px; stroke-width: 1.8; }
+  svg.i-lg { width: 18px; height: 18px; stroke-width: 1.8; }
+</style>
+</head>
+<body class="bg-navy-950 text-gray-300">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.34 9.5A4.25 4.25 0 0 0 7 19z"/></symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M7 8h10v3a5 5 0 0 1-5 5 5 5 0 0 1-5-5zM12 16v6"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 13h.01M15 13h.01M9 17h6"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m11 12 9-9M17 6l3 3"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M7.5 7.5a6 6 0 0 0 0 9M16.5 16.5a6 6 0 0 0 0-9M4.5 4.5a10 10 0 0 0 0 15M19.5 19.5a10 10 0 0 0 0-15"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></symbol>
+  <symbol id="i-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+  <symbol id="i-scroll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h11a3 3 0 0 1 3 3v11H8a3 3 0 0 1-3-3zM9 9h6M9 13h6"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9M7.5 6.5a7 7 0 1 0 9 0"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7v9H4z"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v3a3 3 0 0 0 0 6v3H4v-3a3 3 0 0 0 0-6z"/></symbol>
+  <symbol id="i-build" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h6l2 2h10v10H3z"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></symbol>
+  <symbol id="i-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M16 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4M4 20h16M8 16v-5M12 16V7M16 16v-3"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.4-3.2 7.6-8 9-4.8-1.4-8-4.6-8-9V6z"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.3.9-4.5 4.3 1.1 6.2L12 17.1 6.4 20l1.1-6.2L3 9.5l6.3-.9z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+</defs></svg>
+
+<div class="mock-frame space-y-5">
+
+  <!-- ══ Header ════════════════════════════════════════════════════════════════════════════════ -->
+  <header class="space-y-3">
+    <div class="flex items-center gap-3 flex-wrap">
+      <span class="mock-tag">Mockup — nothing changed</span>
+      <span class="mock-tag mock-tag--plan">Proposed</span>
+      <span class="text-[11px] text-gray-500">
+        today <span class="text-gray-400">Administration → CloudConnect</span> and <span class="text-gray-400">C7NC → Outlook Add-in / FlexPoint</span>
+        &nbsp;→&nbsp; proposed <span class="text-gray-300">C7NC → Overview · Services · AI models · Email · Companion apps</span>
+      </span>
+    </div>
+    <h1 class="text-lg font-semibold text-white">C7NC — one section for everything that connects</h1>
+    <p class="text-sm text-gray-400 max-w-4xl">
+      Everything that connects C7NTAX to something else is already here; it is filed under three different
+      ideas of what it is. <span class="text-gray-300">CloudConnect</span> is a 79&nbsp;KB page of five tabs sitting
+      under <span class="text-gray-300">Administration</span>, which is where settings live — but a connector is not a
+      setting, it is a relationship. <span class="text-gray-300">C7NC</span> is a two-item group for companion
+      clients, and one of its two items is a payment service whose connection is configured in the other section,
+      which is why that page's first button is a link back to CloudConnect. This mockup folds them into one
+      top-level section, <span class="text-gray-300">C7NC</span>, with a landing page that answers "is anything
+      broken?" before "which connectors exist", and a page of tabs per subject.
+    </p>
+
+    <div class="flex flex-wrap gap-2">
+      <button class="btn-secondary text-xs" data-go="overview" aria-selected="true">1 · Overview (landing)</button>
+      <button class="btn-secondary text-xs" data-go="services" aria-selected="false">2 · Services</button>
+      <button class="btn-secondary text-xs" data-go="detail" aria-selected="false">3 · Service detail — FlexPoint</button>
+      <button class="btn-secondary text-xs" data-go="ai" aria-selected="false">4 · AI models</button>
+      <button class="btn-secondary text-xs" data-go="email" aria-selected="false">5 · Email</button>
+      <button class="btn-secondary text-xs" data-go="apps" aria-selected="false">6 · Companion apps</button>
+      <button class="btn-secondary text-xs" data-go="map" aria-selected="false">7 · Navigation, routes &amp; rename</button>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-3">
+      <div class="tile">
+        <p class="text-[11px] uppercase tracking-wider text-gray-500">Today</p>
+        <p class="text-xs text-gray-400 mt-1 leading-relaxed">
+          Five tabs of one page behind one permission: <span class="text-gray-300">Connected · Add a connector ·
+          Configuration · AI models · Email connectors</span>. Reached from Administration, named after the thing
+          it is not (a cloud).
+        </p>
+      </div>
+      <div class="tile">
+        <p class="text-[11px] uppercase tracking-wider text-gray-500">Proposed</p>
+        <p class="text-xs text-gray-400 mt-1 leading-relaxed">
+          A hub, then four subjects with tabs of their own — and each subject shows only what the person opening
+          it can actually use. <span class="text-gray-300">CloudConnect</span> retires as a name.
+        </p>
+      </div>
+      <div class="tile">
+        <p class="text-[11px] uppercase tracking-wider text-gray-500">Nothing else moves</p>
+        <p class="text-xs text-gray-400 mt-1 leading-relaxed">
+          The connectors, the wizards, the sync logs, the M365 panel, the add-in installer and every API endpoint
+          stay exactly as they are. This is a front door and a filing system, not a rewrite.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ The app frame ═════════════════════════════════════════════════════════════════════════ -->
+  <div class="app-frame">
+    <aside class="app-nav">
+      <div class="mb-1">
+        <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400">
+          <svg class="i-lg text-amber-400"><use href="#i-star"/></svg><span class="flex-1 text-left truncate">Favorites</span>
+          <span class="text-[10px] text-gray-500">2</span><svg class="i text-gray-500"><use href="#i-chev"/></svg>
+        </button>
+      </div>
+      <div class="border-l border-surface-border ml-7 mb-1">
+        <button class="nav-item w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-400" style="padding-left:24px">
+          <svg class="i"><use href="#i-ticket"/></svg><span class="flex-1 text-left truncate">Tickets</span></button>
+        <button class="nav-item w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-400" style="padding-left:24px">
+          <svg class="i text-cyber-400"><use href="#i-phone"/></svg><span class="flex-1 text-left truncate">C7NC</span></button>
+      </div>
+
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-home"/></svg><span class="flex-1 text-left">Home</span></button>
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-ticket"/></svg><span class="flex-1 text-left">Tickets</span></button>
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-build"/></svg><span class="flex-1 text-left">Clients</span></button>
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-monitor"/></svg><span class="flex-1 text-left">Assets</span></button>
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-folder"/></svg><span class="flex-1 text-left">Projects</span></button>
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-db"/></svg><span class="flex-1 text-left">Kumo</span></button>
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-dollar"/></svg><span class="flex-1 text-left">Billing</span></button>
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-chart"/></svg><span class="flex-1 text-left">Reporting</span></button>
+
+      <!-- The proposed section. Expanded, because this is the one nobody has seen yet. -->
+      <button class="nav-item nav-item--active w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium bg-surface-lighter text-white">
+        <svg class="i-lg text-cyber-400"><use href="#i-phone"/></svg>
+        <span class="flex-1 text-left">C7NC</span>
+        <span class="text-[10px] text-amber-300">2</span>
+        <svg class="i"><use href="#i-chev"/></svg>
+      </button>
+      <div class="border-l border-surface-border ml-7">
+        <button class="nav-item w-full flex items-center gap-2 px-3 py-2 text-sm bg-surface-lighter text-white" style="padding-left:24px">
+          <svg class="i text-cyber-400"><use href="#i-cloud"/></svg><span class="flex-1 text-left truncate">Overview</span></button>
+        <button class="nav-item w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-400" style="padding-left:24px">
+          <svg class="i text-cyber-400"><use href="#i-plug"/></svg><span class="flex-1 text-left truncate">Services</span>
+          <span class="text-[10px] text-gray-500">6</span></button>
+        <button class="nav-item w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-400" style="padding-left:24px">
+          <svg class="i text-cyber-400"><use href="#i-bot"/></svg><span class="flex-1 text-left truncate">AI models</span>
+          <span class="text-[10px] text-gray-500">1</span></button>
+        <button class="nav-item w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-400" style="padding-left:24px">
+          <svg class="i text-cyber-400"><use href="#i-mail"/></svg><span class="flex-1 text-left truncate">Email</span>
+          <span class="text-[10px] text-gray-500">2</span></button>
+        <button class="nav-item w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-400" style="padding-left:24px">
+          <svg class="i text-cyber-400"><use href="#i-phone"/></svg><span class="flex-1 text-left truncate">Companion apps</span></button>
+      </div>
+
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-shield"/></svg><span class="flex-1 text-left">Administration</span><svg class="i"><use href="#i-chev"/></svg></button>
+      <button class="nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400"><svg class="i-lg"><use href="#i-help"/></svg><span class="flex-1 text-left">Help</span><svg class="i"><use href="#i-chev"/></svg></button>
+
+      <div class="border-t border-surface-border mt-3 p-3 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-cyber-600/30 text-cyber-400 flex items-center justify-center text-sm font-bold">SS</div>
+        <div class="flex-1 min-w-0"><p class="text-sm font-medium text-white truncate">Stephen Simmons</p>
+        <p class="text-xs text-gray-500 truncate">stephen@cyber7group.com</p></div>
+      </div>
+    </aside>
+
+    <main class="app-main space-y-6 animate-fade-in">
+
+      <!-- ── 1. Overview ─────────────────────────────────────────────────────────────────────── -->
+      <section class="view" id="view-overview">
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+              <svg class="i-lg text-cyber-400"><use href="#i-phone"/></svg> C7NC
+            </h2>
+            <p class="text-sm text-gray-400 mt-0.5">
+              6 services · 1 model · 2 mailboxes · 1 companion app — <span class="text-amber-300">2 things need attention</span>
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn-secondary text-sm">Connection log</button>
+            <button class="btn-primary text-sm flex items-center gap-2"><svg class="i"><use href="#i-plus"/></svg> Connect a service</button>
+          </div>
+        </div>
+
+        <!-- The question people arrive with. It goes first, and it is a sentence, not a number. -->
+        <div class="card space-y-3 border-l-2 border-l-amber-500">
+          <p class="text-sm text-white flex items-center gap-2"><svg class="i text-amber-400"><use href="#i-alert"/></svg> Needs attention</p>
+          <div class="space-y-2">
+            <div class="flex items-start justify-between gap-3 flex-wrap">
+              <div class="min-w-0">
+                <p class="text-sm text-gray-200"><span class="text-white">Microsoft 365</span> — last sync failed 2 hours ago</p>
+                <p class="text-xs text-gray-500 mt-0.5">The app registration's refresh token expired. Re-consent with the wizard, or paste a new secret.</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button class="btn-secondary text-xs">Open</button>
+                <button class="btn-secondary text-xs">Walk me through it</button>
+              </div>
+            </div>
+            <div class="flex items-start justify-between gap-3 flex-wrap border-t border-surface-border pt-2">
+              <div class="min-w-0">
+                <p class="text-sm text-gray-200"><span class="text-white">Proofpoint</span> — credentials incomplete</p>
+                <p class="text-xs text-gray-500 mt-0.5">Two of the three fields the API needs are filled in. Nothing is synced until all three are.</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button class="btn-secondary text-xs">Open</button>
+                <button class="btn-secondary text-xs">Walk me through it</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- The four subjects. A grid of cards, not a list of links: each one can say how it is doing. -->
+        <div class="grid md:grid-cols-2 gap-3">
+          <a class="card hover:border-cyber-500/30 transition-colors" href="#">
+            <div class="flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-plug"/></svg></div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="text-white font-medium text-sm">Services</p>
+                  <span class="text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">6 connected</span>
+                  <span class="text-[11px] rounded-full bg-amber-500/10 px-1.5 py-0.5 text-amber-300">2 need attention</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                  The 16 connectors — Microsoft 365, Pax8, Proofpoint, FlexPoint, QuickBooks, IT Glue, an RMM, a SIEM —
+                  and what each one has brought in. <span class="text-gray-600">10 available to add.</span>
+                </p>
+                <p class="text-xs text-cyber-400 mt-2 flex items-center gap-1">Open Services <svg class="i"><use href="#i-arrow"/></svg></p>
+              </div>
+            </div>
+          </a>
+
+          <a class="card hover:border-cyber-500/30 transition-colors" href="#">
+            <div class="flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-bot"/></svg></div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="text-white font-medium text-sm">AI models</p>
+                  <span class="text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">1 connected</span>
+                  <span class="pill bg-emerald-600/10 text-emerald-300"><svg class="i" style="width:11px;height:11px"><use href="#i-check"/></svg> Verified</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                  Claude, GPT, Gemini, DeepSeek, Grok and any OpenAI-compatible endpoint — plus the Assistant and,
+                  from PLAN-026, what each model may do on its own.
+                </p>
+                <p class="text-xs text-cyber-400 mt-2 flex items-center gap-1">Open AI models <svg class="i"><use href="#i-arrow"/></svg></p>
+              </div>
+            </div>
+          </a>
+
+          <a class="card hover:border-cyber-500/30 transition-colors" href="#">
+            <div class="flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-mail"/></svg></div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="text-white font-medium text-sm">Email</p>
+                  <span class="text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">2 mailboxes</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                  The monitored mailboxes that turn email into tickets, how they are polled, and what they filed today.
+                </p>
+                <p class="text-xs text-cyber-400 mt-2 flex items-center gap-1">Open Email <svg class="i"><use href="#i-arrow"/></svg></p>
+              </div>
+            </div>
+          </a>
+
+          <a class="card hover:border-cyber-500/30 transition-colors" href="#">
+            <div class="flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-phone"/></svg></div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <p class="text-white font-medium text-sm">Companion apps</p>
+                  <span class="text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">1 installed</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                  Things a person installs on their own machine: the Outlook add-in, the desktop client, their versions
+                  and how they are deployed.
+                </p>
+                <p class="text-xs text-cyber-400 mt-2 flex items-center gap-1">Open Companion apps <svg class="i"><use href="#i-arrow"/></svg></p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Signposts, not moves. Said out loud so nobody wonders why they are not cards. -->
+        <div class="card space-y-2">
+          <p class="text-[11px] uppercase tracking-wider text-gray-500">Also about connecting — kept where they are</p>
+          <div class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            <a class="text-cyber-400 hover:text-cyber-300 flex items-center gap-2" href="#"><svg class="i"><use href="#i-key"/></svg> API Access — the keys other systems use</a>
+            <a class="text-cyber-400 hover:text-cyber-300 flex items-center gap-2" href="#"><svg class="i"><use href="#i-radio"/></svg> Alert webhooks — what we post out</a>
+            <a class="text-cyber-400 hover:text-cyber-300 flex items-center gap-2" href="#"><svg class="i"><use href="#i-sparkle"/></svg> MCP server — planned, PLAN-025</a>
+          </div>
+          <p class="text-xs text-gray-500 leading-relaxed mock-note">
+            They are links rather than cards because they are administration with their own permissions
+            (<span class="text-gray-400">UserManage</span>, <span class="text-gray-400">ServiceAlertManage</span>), and moving a
+            screen without moving its permission is how a hub ends up half empty for the people who need it most.
+          </p>
+        </div>
+      </section>
+
+      <!-- ── 2. Services ─────────────────────────────────────────────────────────────────────── -->
+      <section class="view" id="view-services" hidden>
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p class="text-[11px] text-gray-500">C7NC <span class="text-gray-600">/</span> Services</p>
+            <h2 class="text-lg font-semibold text-white mt-0.5">Services</h2>
+            <p class="text-sm text-gray-400 mt-0.5">6 connections configured · 2 need attention · 10 available</p>
+          </div>
+          <button class="btn-primary text-sm flex items-center gap-2"><svg class="i"><use href="#i-plus"/></svg> Connect a service</button>
+        </div>
+
+        <div class="flex flex-wrap gap-1 border-b border-surface-border">
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-cyber-500 text-white bg-surface-lighter">Connected <span class="ml-2 text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">6</span></button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Available <span class="ml-2 text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">10</span></button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Needs attention <span class="ml-2 text-[11px] rounded-full bg-amber-500/10 px-1.5 py-0.5 text-amber-300">2</span></button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Activity</button>
+        </div>
+
+        <div class="space-y-2">
+          <!-- Rows keep the anatomy they have today: identity, health, freshness, then the same six actions. -->
+          <div class="card flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-cloud"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-white font-medium text-sm truncate">Microsoft 365</p>
+              <p class="text-xs text-gray-500 truncate">Directory, mail and licences · <span class="text-red-300">last sync failed 2h ago</span></p>
+            </div>
+            <span class="pill bg-red-600/10 text-red-300">Not answering</span>
+            <div class="flex items-center gap-0.5">
+              <button class="icon-btn" title="Test connection"><svg class="i"><use href="#i-check"/></svg></button>
+              <button class="icon-btn" title="Sync"><svg class="i"><use href="#i-refresh"/></svg></button>
+              <button class="icon-btn" title="Configure this connection"><svg class="i"><use href="#i-cog"/></svg></button>
+              <button class="icon-btn" title="Sync logs"><svg class="i"><use href="#i-scroll"/></svg></button>
+              <button class="icon-btn" title="Disable"><svg class="i"><use href="#i-power"/></svg></button>
+            </div>
+            <button class="btn-secondary text-xs shrink-0">Open</button>
+          </div>
+
+          <div class="card flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-card"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-white font-medium text-sm truncate">FlexPoint Payment Solutions</p>
+              <p class="text-xs text-gray-500 truncate">Billing and accounts receivable · synced 26 min ago · 412 records</p>
+            </div>
+            <span class="pill bg-emerald-600/10 text-emerald-300"><svg class="i" style="width:11px;height:11px"><use href="#i-check"/></svg> Verified</span>
+            <div class="flex items-center gap-0.5">
+              <button class="icon-btn" title="Test connection"><svg class="i"><use href="#i-check"/></svg></button>
+              <button class="icon-btn" title="Sync"><svg class="i"><use href="#i-refresh"/></svg></button>
+              <button class="icon-btn" title="Configure this connection"><svg class="i"><use href="#i-cog"/></svg></button>
+              <button class="icon-btn" title="Sync logs"><svg class="i"><use href="#i-scroll"/></svg></button>
+              <button class="icon-btn" title="Disable"><svg class="i"><use href="#i-power"/></svg></button>
+            </div>
+            <button class="btn-secondary text-xs shrink-0">Open</button>
+          </div>
+
+          <div class="card flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-shield"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-white font-medium text-sm truncate">Proofpoint</p>
+              <p class="text-xs text-gray-500 truncate">Email security · <span class="text-amber-300">credentials incomplete</span></p>
+            </div>
+            <span class="pill bg-amber-600/10 text-amber-300">Incomplete</span>
+            <div class="flex items-center gap-0.5">
+              <button class="icon-btn" title="Test connection"><svg class="i"><use href="#i-check"/></svg></button>
+              <button class="icon-btn" title="Sync"><svg class="i"><use href="#i-refresh"/></svg></button>
+              <button class="icon-btn" title="Configure this connection"><svg class="i"><use href="#i-cog"/></svg></button>
+              <button class="icon-btn" title="Walk through setting up Proofpoint"><svg class="i"><use href="#i-sparkle"/></svg></button>
+            </div>
+            <button class="btn-secondary text-xs shrink-0">Finish setup</button>
+          </div>
+
+          <div class="card flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-dollar"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-white font-medium text-sm truncate">QuickBooks Online</p>
+              <p class="text-xs text-gray-500 truncate">Accounting · synced 3 hours ago · 118 records</p>
+            </div>
+            <span class="pill bg-emerald-600/10 text-emerald-300"><svg class="i" style="width:11px;height:11px"><use href="#i-check"/></svg> Verified</span>
+            <div class="flex items-center gap-0.5">
+              <button class="icon-btn" title="Test connection"><svg class="i"><use href="#i-check"/></svg></button>
+              <button class="icon-btn" title="Sync"><svg class="i"><use href="#i-refresh"/></svg></button>
+              <button class="icon-btn" title="Configure this connection"><svg class="i"><use href="#i-cog"/></svg></button>
+            </div>
+            <button class="btn-secondary text-xs shrink-0">Open</button>
+          </div>
+
+          <div class="card flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-db"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-white font-medium text-sm truncate">IT Glue</p>
+              <p class="text-xs text-gray-500 truncate">Documentation · synced yesterday · 1,204 records</p>
+            </div>
+            <span class="pill bg-emerald-600/10 text-emerald-300"><svg class="i" style="width:11px;height:11px"><use href="#i-check"/></svg> Verified</span>
+            <div class="flex items-center gap-0.5">
+              <button class="icon-btn" title="Test connection"><svg class="i"><use href="#i-check"/></svg></button>
+              <button class="icon-btn" title="Sync"><svg class="i"><use href="#i-refresh"/></svg></button>
+              <button class="icon-btn" title="Configure this connection"><svg class="i"><use href="#i-cog"/></svg></button>
+            </div>
+            <button class="btn-secondary text-xs shrink-0">Open</button>
+          </div>
+
+          <div class="card flex items-center gap-3 opacity-70">
+            <div class="p-2 rounded-lg bg-surface-lighter"><svg class="i-lg text-gray-500"><use href="#i-radio"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-gray-300 font-medium text-sm truncate">SentinelOne</p>
+              <p class="text-xs text-gray-500 truncate">Endpoint security · switched off 4 days ago</p>
+            </div>
+            <span class="pill bg-surface-lighter text-gray-400">Off</span>
+            <div class="flex items-center gap-0.5">
+              <button class="icon-btn" title="Enable"><svg class="i"><use href="#i-power"/></svg></button>
+              <button class="icon-btn" title="Configure this connection"><svg class="i"><use href="#i-cog"/></svg></button>
+            </div>
+            <button class="btn-secondary text-xs shrink-0">Open</button>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-500 leading-relaxed mock-note">
+          The rows, their statuses and their six icon actions are unchanged from the Connected tab today — including the
+          test-connection icon and the tooltips, which keep the wording the tooltip audit settled on. What is new is
+          <span class="text-gray-400">Open</span>: every service now has a page of its own
+          (<span class="text-gray-400">/c7nc/services/&lt;kind&gt;</span>) instead of a modal and a
+          <span class="text-gray-400">Configuration</span> tab that had to guess which connection you meant.
+        </p>
+      </section>
+
+      <!-- ── 3. Service detail ───────────────────────────────────────────────────────────────── -->
+      <section class="view" id="view-detail" hidden>
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p class="text-[11px] text-gray-500">
+              C7NC <span class="text-gray-600">/</span> <a class="hover:text-gray-300" href="#">Services</a>
+              <span class="text-gray-600">/</span> FlexPoint
+            </p>
+            <h2 class="text-lg font-semibold text-white mt-0.5 flex items-center gap-2">
+              <svg class="i-lg text-cyber-400"><use href="#i-card"/></svg> FlexPoint Payment Solutions
+              <span class="text-[11px] font-normal rounded-md px-2 py-1 bg-emerald-600/10 text-emerald-300">connected</span>
+            </h2>
+            <p class="text-sm text-gray-400 mt-0.5">Billing and accounts receivable from FlexPoint's merchant API — who owes what, and whether it has been paid.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn-secondary text-sm">Test connection</button>
+            <button class="btn-primary text-sm flex items-center gap-2"><svg class="i"><use href="#i-refresh"/></svg> Sync now</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-1 border-b border-surface-border">
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-cyber-500 text-white bg-surface-lighter">Overview</button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Configuration</button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Ledger</button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Invoices</button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Activity</button>
+        </div>
+
+        <div class="card space-y-4">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="min-w-0">
+              <p class="text-sm text-white">FlexPoint merchant account</p>
+              <p class="text-xs text-gray-500 font-mono truncate">https://api.flexpoint.com/v1 · merchant API secret is set</p>
+            </div>
+            <div class="text-xs text-gray-500 text-right">
+              <p>Last sync 26 minutes ago · 412 records</p>
+              <p>Pushed 7 invoices to FlexPoint in the last 30 days</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 border-t border-surface-border pt-3">
+            <div><p class="text-[11px] uppercase tracking-wider text-gray-500">Linked clients</p><p class="text-sm text-white font-medium tabular-nums">36</p><p class="text-[11px] text-gray-600">of 41 FlexPoint customers</p></div>
+            <div><p class="text-[11px] uppercase tracking-wider text-gray-500">Open balance</p><p class="text-sm text-white font-medium tabular-nums">$84,120</p><p class="text-[11px] text-gray-600">across linked clients</p></div>
+            <div><p class="text-[11px] uppercase tracking-wider text-gray-500">Overdue</p><p class="text-sm text-white font-medium tabular-nums">$9,410</p><p class="text-[11px] text-gray-600">past its due date</p></div>
+            <div><p class="text-[11px] uppercase tracking-wider text-gray-500">Received</p><p class="text-sm text-white font-medium tabular-nums">$212,660</p><p class="text-[11px] text-gray-600">recorded by FlexPoint</p></div>
+            <div><p class="text-[11px] uppercase tracking-wider text-gray-500">Deposits</p><p class="text-sm text-white font-medium tabular-nums">$186,300</p><p class="text-[11px] text-gray-600">settled to the bank</p></div>
+          </div>
+        </div>
+
+        <div class="card space-y-4">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <h3 class="text-sm font-semibold text-white">What FlexPoint does here</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Every switch below changes what a sync does. Nothing that writes to FlexPoint or to the ledger is on unless it is switched on.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] text-amber-300">Unsaved changes</span>
+              <button class="btn-secondary text-sm">Discard</button>
+              <button class="btn-primary text-sm">Save options</button>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">What to pull in</p>
+            <div class="flex items-start gap-3">
+              <button role="switch" aria-checked="true" aria-label="Pull customers" class="relative inline-flex h-6 w-11 shrink-0 rounded-full bg-cyber-600 transition-colors"><span class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform translate-x-5"></span></button>
+              <div><p class="text-sm text-gray-200">Pull customers and map them to clients</p><p class="text-xs text-gray-500">36 of 41 matched by name and billing email. Unmatched ones are listed rather than guessed at.</p></div>
+            </div>
+            <div class="flex items-start gap-3">
+              <button role="switch" aria-checked="true" aria-label="Pull invoices" class="relative inline-flex h-6 w-11 shrink-0 rounded-full bg-cyber-600 transition-colors"><span class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform translate-x-5"></span></button>
+              <div><p class="text-sm text-gray-200">Pull invoices and payments</p><p class="text-xs text-gray-500">Read-only against FlexPoint; the ledger here is a mirror, and every figure on the Ledger tab says so.</p></div>
+            </div>
+          </div>
+          <div class="space-y-3 border-t border-surface-border pt-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">What to push out</p>
+            <div class="flex items-start gap-3">
+              <button role="switch" aria-checked="false" aria-label="Push approved batches" class="relative inline-flex h-6 w-11 shrink-0 rounded-full bg-surface-lighter transition-colors"><span class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform"></span></button>
+              <div><p class="text-sm text-gray-200">Push approved bill-through batches</p><p class="text-xs text-gray-500">Off. Switching it on means an approved batch lands in FlexPoint without anybody leaving the application — the one switch here that spends money.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-400 leading-relaxed mock-note">
+          <span class="text-white">This page is the argument for the merge.</span> Today the connection is configured in
+          CloudConnect, this service's options, customers and invoices live at
+          <span class="text-gray-300">C7NC → FlexPoint Payment Solutions</span>, and that page's first button links back to
+          CloudConnect. After the merge there is one page for one service: <span class="text-gray-300">Overview ·
+          Configuration · Ledger · Invoices · Activity</span> — and the Configuration tab is the same options panel, unmoved.
+        </p>
+      </section>
+
+      <!-- ── 4. AI models ────────────────────────────────────────────────────────────────────── -->
+      <section class="view" id="view-ai" hidden>
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p class="text-[11px] text-gray-500">C7NC <span class="text-gray-600">/</span> AI models</p>
+            <h2 class="text-lg font-semibold text-white mt-0.5">AI models</h2>
+            <p class="text-sm text-gray-400 mt-0.5">1 model connected and in use · 10 providers available</p>
+          </div>
+          <button class="btn-primary text-sm flex items-center gap-2"><svg class="i"><use href="#i-plus"/></svg> Connect a model</button>
+        </div>
+
+        <div class="flex flex-wrap gap-1 border-b border-surface-border">
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-cyber-500 text-white bg-surface-lighter">Connected <span class="ml-2 text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">1</span></button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Available <span class="ml-2 text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">10</span></button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Assistant</button>
+        </div>
+
+        <div class="card space-y-4">
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-sparkle"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <p class="text-white font-medium text-sm">Anthropic (Claude)</p>
+                <span class="pill bg-emerald-600/10 text-emerald-300"><svg class="i" style="width:11px;height:11px"><use href="#i-check"/></svg> Verified 12 minutes ago</span>
+                <span class="pill bg-cyber-600/20 text-cyber-300">The application's model</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">claude-sonnet-4.5 · 8 models visible to this key · may perform app functions: <span class="text-gray-400">on</span></p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn-secondary text-xs">Test</button>
+              <button class="btn-secondary text-xs">Models</button>
+              <button class="btn-secondary text-xs">Agent access</button>
+            </div>
+          </div>
+          <div class="border-t border-surface-border pt-3 grid md:grid-cols-3 gap-3">
+            <div><p class="text-[11px] uppercase tracking-wider text-gray-500">Agent access</p><p class="text-sm text-white">Ask</p><p class="text-[11px] text-gray-600">Writes become proposals a person approves. PLAN-026 adds "act".</p></div>
+            <div><p class="text-[11px] uppercase tracking-wider text-gray-500">Used by</p><p class="text-sm text-white">Knowledge drafting, Assistant</p><p class="text-[11px] text-gray-600">Last call 4 minutes ago</p></div>
+            <div><p class="text-[11px] uppercase tracking-wider text-gray-500">Spend this month</p><p class="text-sm text-white tabular-nums">$18.40</p><p class="text-[11px] text-gray-600">Estimated from tokens</p></div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="card"><div class="flex items-start gap-3">
+            <div class="p-2 rounded-lg bg-surface-lighter"><svg class="i-lg text-cyber-400"><use href="#i-sparkle"/></svg></div>
+            <div class="min-w-0"><p class="text-white font-medium text-sm">OpenAI (GPT)</p><p class="text-xs text-gray-500 mt-0.5">An API key from platform.openai.com</p>
+            <div class="flex gap-2 mt-3"><button class="btn-primary text-xs">Walk me through it</button><button class="btn-secondary text-xs">Fill the form</button></div></div></div></div>
+          <div class="card"><div class="flex items-start gap-3">
+            <div class="p-2 rounded-lg bg-surface-lighter"><svg class="i-lg text-cyber-400"><use href="#i-sparkle"/></svg></div>
+            <div class="min-w-0"><p class="text-white font-medium text-sm">DeepSeek</p><p class="text-xs text-gray-500 mt-0.5">An API key from platform.deepseek.com</p>
+            <div class="flex gap-2 mt-3"><button class="btn-primary text-xs">Walk me through it</button><button class="btn-secondary text-xs">Fill the form</button></div></div></div></div>
+          <div class="card"><div class="flex items-start gap-3">
+            <div class="p-2 rounded-lg bg-surface-lighter"><svg class="i-lg text-cyber-400"><use href="#i-sparkle"/></svg></div>
+            <div class="min-w-0"><p class="text-white font-medium text-sm">xAI (Grok)</p><p class="text-xs text-gray-500 mt-0.5">An API key from console.x.ai</p>
+            <div class="flex gap-2 mt-3"><button class="btn-primary text-xs">Walk me through it</button><button class="btn-secondary text-xs">Fill the form</button></div></div></div></div>
+        </div>
+
+        <div class="card flex items-start gap-3">
+          <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-bot"/></svg></div>
+          <div class="min-w-0 flex-1">
+            <p class="text-white font-medium text-sm">The Assistant</p>
+            <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+              The console where a model answers questions about real data and calls the application's own functions,
+              under the permissions of the person asking. Twelve functions today; PLAN-026 widens that to the whole
+              application, one confirmation at a time.
+            </p>
+            <p class="text-xs text-cyber-400 mt-2 flex items-center gap-1">Open the Assistant <svg class="i"><use href="#i-arrow"/></svg></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 5. Email ────────────────────────────────────────────────────────────────────────── -->
+      <section class="view" id="view-email" hidden>
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p class="text-[11px] text-gray-500">C7NC <span class="text-gray-600">/</span> Email</p>
+            <h2 class="text-lg font-semibold text-white mt-0.5">Email</h2>
+            <p class="text-sm text-gray-400 mt-0.5">2 mailboxes watched · 41 tickets filed today · next poll in 90 seconds</p>
+          </div>
+          <button class="btn-primary text-sm flex items-center gap-2"><svg class="i"><use href="#i-plus"/></svg> Watch a mailbox</button>
+        </div>
+
+        <div class="flex flex-wrap gap-1 border-b border-surface-border">
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-cyber-500 text-white bg-surface-lighter">Mailboxes <span class="ml-2 text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">2</span></button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Routing</button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Activity</button>
+        </div>
+
+        <div class="space-y-2">
+          <div class="card flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-mail"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-white font-medium text-sm truncate">support@cyber7group.com</p>
+              <p class="text-xs text-gray-500 truncate">Microsoft 365 via Graph · board MSP Service Desk · 38 tickets today · last poll 30s ago</p>
+            </div>
+            <span class="pill bg-emerald-600/10 text-emerald-300"><svg class="i" style="width:11px;height:11px"><use href="#i-check"/></svg> Healthy</span>
+            <button class="btn-secondary text-xs shrink-0">Configure</button>
+          </div>
+          <div class="card flex items-center gap-3">
+            <div class="p-2 rounded-lg bg-cyber-600/10"><svg class="i-lg text-cyber-400"><use href="#i-mail"/></svg></div>
+            <div class="min-w-0 flex-1">
+              <p class="text-white font-medium text-sm truncate">noc@cyber7group.com</p>
+              <p class="text-xs text-gray-500 truncate">IMAP · board NOC · 3 tickets today · last poll 42s ago</p>
+            </div>
+            <span class="pill bg-emerald-600/10 text-emerald-300"><svg class="i" style="width:11px;height:11px"><use href="#i-check"/></svg> Healthy</span>
+            <button class="btn-secondary text-xs shrink-0">Configure</button>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-500 leading-relaxed mock-note">
+          Today this is a tab of the CloudConnect page called <span class="text-gray-300">Email connectors</span>. It earns its
+          own subsection because the question is different in kind — not "what is connected" but "what is coming in, and where
+          is it going" — and because the people who look after mailboxes are often not the people who own connectors.
+        </p>
+      </section>
+
+      <!-- ── 6. Companion apps ───────────────────────────────────────────────────────────────── -->
+      <section class="view" id="view-apps" hidden>
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p class="text-[11px] text-gray-500">C7NC <span class="text-gray-600">/</span> Companion apps</p>
+            <h2 class="text-lg font-semibold text-white mt-0.5">Companion apps</h2>
+            <p class="text-sm text-gray-400 mt-0.5">Things a person installs on their own machine — no permission needed to download, deployment facts gated by the API</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-1 border-b border-surface-border">
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-cyber-500 text-white bg-surface-lighter">Outlook add-in</button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Desktop client</button>
+          <button class="relative px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px border-transparent text-gray-400">Versions</button>
+        </div>
+
+        <div class="card space-y-3">
+          <h3 class="text-white font-medium">Install for Outlook</h3>
+          <p class="text-xs text-gray-500">Turns the email you are reading into a C7NTAX ticket, with the thread and the client already resolved.</p>
+          <div class="grid md:grid-cols-3 gap-3">
+            <div class="tile"><p class="text-white text-sm font-medium">Windows installer</p><p class="text-xs text-gray-500 mt-1">Registers the add-in for the signed-in user. No administrator rights.</p><button class="btn-primary text-xs mt-3">Download</button></div>
+            <div class="tile"><p class="text-white text-sm font-medium">Manual sideload</p><p class="text-xs text-gray-500 mt-1">The manifest, generated for this origin, for anybody who prefers to do it by hand.</p><button class="btn-secondary text-xs mt-3">Download manifest</button></div>
+            <div class="tile"><p class="text-white text-sm font-medium">Centralized deployment</p><p class="text-xs text-gray-500 mt-1">For a tenant administrator who wants it for everyone at once.</p><button class="btn-secondary text-xs mt-3">Read the steps</button></div>
+          </div>
+        </div>
+
+        <div class="card space-y-3">
+          <h3 class="text-white text-sm font-medium">Installer versions</h3>
+          <table class="mock-table">
+            <thead><tr><th>Version</th><th>Built</th><th>For</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">1.4.0</td><td>2026-10-08</td><td>this origin</td><td>Board selector, multi-select, per-message results</td></tr>
+              <tr><td class="mono">1.3.2</td><td>2026-10-06</td><td>this origin</td><td>Manifest generated for the requesting origin</td></tr>
+              <tr><td class="mono">1.2.0</td><td>2026-09-28</td><td>staging</td><td>Superseded</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card flex items-start gap-3">
+          <div class="p-2 rounded-lg bg-surface-lighter"><svg class="i-lg text-gray-500"><use href="#i-monitor"/></svg></div>
+          <div class="min-w-0">
+            <p class="text-white font-medium text-sm">Desktop client — Windows build available</p>
+            <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+              The Electron shell with the app inside it. macOS and Linux are planned rather than promised (PLAN-005);
+              the page says so rather than offering a download that does not exist.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 7. Navigation, routes and rename ────────────────────────────────────────────────── -->
+      <section class="view" id="view-map" hidden>
+        <div>
+          <p class="text-[11px] text-gray-500">Design notes</p>
+          <h2 class="text-lg font-semibold text-white mt-0.5">Navigation, routes and the rename</h2>
+          <p class="text-sm text-gray-400 mt-0.5">What moves, what stays, what keeps working, and what is deliberately left alone.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-3">
+          <div class="card">
+            <p class="text-[11px] uppercase tracking-wider text-red-300">Today</p>
+            <pre class="text-xs text-gray-400 mt-2 leading-relaxed" style="font-family:'JetBrains Mono',monospace">Administration
+  ├─ Configuration
+  ├─ …
+  ├─ CloudConnect          /cloudconnect      IntegrationManage
+  ├─ API Access
+  └─ What's New
+
+C7NC                       (no page of its own)
+  ├─ Outlook Add-in        /c7nc/outlook-addin
+  └─ FlexPoint Payment…    /c7nc/flexpoint    IntegrationManage</pre>
+          </div>
+          <div class="card">
+            <p class="text-[11px] uppercase tracking-wider text-emerald-300">Proposed</p>
+            <pre class="text-xs text-gray-300 mt-2 leading-relaxed" style="font-family:'JetBrains Mono',monospace">C7NC                       /c7nc                 (no permission)
+  ├─ Overview              /c7nc                  IntegrationView
+  ├─ Services              /c7nc/services         IntegrationView
+  │    └─ (service page)   /c7nc/services/:kind   + IntegrationManage to change
+  ├─ AI models             /c7nc/models           InferenceView
+  ├─ Email                 /c7nc/email            IntegrationView
+  └─ Companion apps        /c7nc/apps             (none — a download)
+       └─ Outlook add-in   /c7nc/apps/outlook-addin
+       └─ Versions         /c7nc/apps/versions</pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="text-[11px] uppercase tracking-wider text-gray-500">Routes — every old address keeps working</p>
+          <table class="mock-table">
+            <thead><tr><th>Old</th><th>New</th><th>How it behaves</th><th>Permission</th></tr></thead>
+            <tbody>
+              <tr><td class="mono now">/cloudconnect</td><td class="mono next">/c7nc/services</td><td>Redirect. Bookmarks, Help links and the open browser tab land on Services, with the query preserved (<span class="mono">?tab=ai</span> → <span class="mono">/c7nc/models</span>)</td><td class="mono">IntegrationView</td></tr>
+              <tr><td class="mono now">/c7nc</td><td class="mono next">/c7nc</td><td>Was an unmapped section route; becomes the hub</td><td>none</td></tr>
+              <tr><td class="mono now">/c7nc/flexpoint</td><td class="mono next">/c7nc/services/flexpoint</td><td>Redirect</td><td class="mono">IntegrationView</td></tr>
+              <tr><td class="mono now">/c7nc/outlook-addin</td><td class="mono next">/c7nc/apps/outlook-addin</td><td>Redirect</td><td>none</td></tr>
+              <tr><td class="mono now">/section/c7nc</td><td class="mono next">/c7nc</td><td>Redirect — the nav's section landing for a group</td><td>none</td></tr>
+              <tr><td class="mono now">/api/cloudconnect/*</td><td class="mono next">/api/c7nc/*</td><td><span class="text-gray-300">Both answer.</span> The old path stays as a documented alias so integrations and probes do not break</td><td>unchanged</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-3">
+          <div class="card">
+            <p class="text-[11px] uppercase tracking-wider text-gray-500">The name — renamed in</p>
+            <ul class="text-xs text-gray-400 mt-2 space-y-1.5 leading-relaxed">
+              <li>· <span class="text-gray-300">apps/web/src</span> — nav label, descriptions, page titles, empty states</li>
+              <li>· <span class="text-gray-300">apps/api/src</span> — the route file, log prefixes, user-facing error strings</li>
+              <li>· <span class="text-gray-300">docs/API.md</span>, <span class="text-gray-300">docs/openapi.yaml</span> (regenerated), <span class="text-gray-300">docs/api-operations.json</span></li>
+              <li>· <span class="text-gray-300">HelpDoc.tsx</span> — 33 references, including the configuration walkthrough</li>
+              <li>· probes and the two guard scripts that name the page</li>
+            </ul>
+          </div>
+          <div class="card">
+            <p class="text-[11px] uppercase tracking-wider text-gray-500">The name — deliberately <span class="text-gray-300">not</span> rewritten</p>
+            <ul class="text-xs text-gray-400 mt-2 space-y-1.5 leading-relaxed">
+              <li>· <span class="text-gray-300">BuildNotes.md</span>, <span class="text-gray-300">Retrace.md</span>, <span class="text-gray-300">PlanDocs/</span> — history is what happened, and rewriting it would make every past entry wrong</li>
+              <li>· <span class="text-gray-300">apps/api/src/snapshots/</span> — captured audit-log text from a running instance</li>
+              <li>· the <span class="mono">/api/cloudconnect</span> alias itself, which must keep its old spelling to be an alias</li>
+              <li>· database rows — the audit log already records the page under its old name, and there is nothing to fix in history</li>
+            </ul>
+            <p class="text-xs text-gray-500 mt-3 leading-relaxed mock-note">
+              A grep proves it either way: no occurrence of <span class="mono">CloudConnect</span> in
+              <span class="mono">apps/web/src</span> or <span class="mono">apps/api/src</span> outside the alias, and a probe that
+              the alias still answers.
+            </p>
+          </div>
+        </div>
+
+        <div class="card space-y-3">
+          <p class="text-[11px] uppercase tracking-wider text-gray-500">The design choices, in the order they matter</p>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div><p class="text-sm text-white">1 · A hub, not a list</p><p class="text-xs text-gray-500 mt-1 leading-relaxed">"Is anything broken?" is answered before "which connectors exist", because that is the question people arrive with. Status first, catalogue second.</p></div>
+            <div><p class="text-sm text-white">2 · One name</p><p class="text-xs text-gray-500 mt-1 leading-relaxed">C7NC survives; CloudConnect retires. Two names for one place is how a product ends up with a page nobody can describe.</p></div>
+            <div><p class="text-sm text-white">3 · A subsection is a question</p><p class="text-xs text-gray-500 mt-1 leading-relaxed">Services, Email, Models, Apps — four different questions. Tabs inside a subject are facets of one question (Connected / Available / Attention), not four more subjects.</p></div>
+            <div><p class="text-sm text-white">4 · Show only what you can open</p><p class="text-xs text-gray-500 mt-1 leading-relaxed">The hub lists the subsections your permissions allow, so nobody clicks into a 403. The API already works this way; the nav did not.</p></div>
+            <div><p class="text-sm text-white">5 · A service gets a page</p><p class="text-xs text-gray-500 mt-1 leading-relaxed">FlexPoint's connection, options, ledger and invoices are one service; four tabs of one page is the honest shape. It also removes the link back to where the connection is configured.</p></div>
+            <div><p class="text-sm text-white">6 · Signposts, not moves</p><p class="text-xs text-gray-500 mt-1 leading-relaxed">API Access and Alert webhooks stay in Administration and are linked from the hub. Moving a screen without moving its permission makes a hub half empty.</p></div>
+            <div><p class="text-sm text-white">7 · Redirects, not breakage</p><p class="text-xs text-gray-500 mt-1 leading-relaxed">Every old address answers, including the API alias. Nothing that was bookmarked, linked from Help, or called by an integration stops working.</p></div>
+            <div><p class="text-sm text-white">8 · No new permissions</p><p class="text-xs text-gray-500 mt-1 leading-relaxed">IntegrationView for reading, IntegrationManage for changing, InferenceView for models — exactly what the API already enforces. The nav stops asking for more than the page needs.</p></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="text-xs text-gray-600 leading-relaxed">
+    Mockup only — the application has not been changed. The stylesheet inlined above is the app's own compiled
+    CSS (apps/web), so every class here draws what the product already draws. The plan behind this picture is
+    <span class="text-gray-400">PlanDocs/PLAN-027</span>.
+  </footer>
+</div>
+
+<script>
+  // Screen switching only — no application behaviour is modelled.
+  const buttons = [...document.querySelectorAll('.mock-switch button, [data-go]')];
+  function show(id) {
+    document.querySelectorAll('.view').forEach(view => { view.hidden = view.id !== 'view-' + id; });
+    buttons.forEach(button => button.setAttribute('aria-selected', String(button.dataset.go === id)));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  buttons.forEach(button => button.addEventListener('click', () => show(button.dataset.go)));
+  show('overview');
+</script>
+</body>
+</html>
