@@ -8,7 +8,12 @@ import { TicketStatus, TicketPriority } from "@C7NTAX/shared";
 export async function onTicketStatusChange(
   ticketId: string,
   newStatus: TicketStatus,
-  oldStatus: TicketStatus | null
+  /**
+   * The status the ticket had. A `string` rather than `TicketStatus`, because that is what the
+   * column holds — the vocabulary is the enum's, the type is not, and widening here is more honest
+   * than casting at the one call site. It is only ever compared against one member below.
+   */
+  oldStatus: string | null
 ): Promise<void> {
   if (newStatus === TicketStatus.WaitingOnClient) {
     await prisma.ticket.update({

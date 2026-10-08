@@ -5861,3 +5861,38 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The 47 that remain are not one shape** — `req.params`/`req.query` narrowing, regex-match indexing in the changelog reader (`'m' is possibly 'undefined'`), two Prisma JSON fields typed `Record<string, unknown>`, and `roles.ts`'s `SystemRole` argument. Read a whole file before deciding the pattern; the first ten looked uniform and the rest did not.
 - **`packages/billing` builds to 54 errors on its own** and nothing calls it: repairing it belongs with the billing work, and `pnpm build` at the root cannot pass while its `tsc` build is in the graph. The container is unaffected — it builds only the web app and runs the API from source with `tsx`.
 - **The API typecheck in CI needed the generated client and the repository does not carry it** — `pnpm --filter @C7NTAX/api db:generate` is now a CI step; the same command is what a fresh clone needs before its first typecheck.
+
+
+---
+
+### Prompt 276 — Wave 1 of the type debt: 149 errors to zero, and the two defects inside them
+
+**Timestamp:** 2026-10-09 02:05 | **Status:** Complete (API typecheck clean; 15 probes green) | **Duration:** ~110 min
+
+**BuildNotes IDs:** **2026.10.8.034** — "Wave 1 of the type debt: the API typecheck is clean, and two real defects fell out of it"
+
+**Prompt**
+
+> Do it
+
+(wave 1 of the API type errors, after the CI plumbing in Prompt 275)
+
+**What I did**
+- **Looked at the errors before promising they were mechanical.** The first ten were uniform `req.params` narrowing; the rest were not — a Prisma create input on a model with a required field the route never supplies, a changelog reader indexing regex matches, two Prisma JSON columns typed `Record<string, unknown>`, an array index in a board metric, and a `SystemRole` comparison. Reading the whole set first is what turned "47 mechanical fixes" into "47 fixes, two of which are defects".
+- **Found the defect with teeth: `POST /api/system/calendar-sync` could never succeed.** `CalendarSyncConfig.accessToken` was required and the route has no way to receive a token, so Prisma refused every call. Made optional — which is what the route always meant — and noted that dev seeding had been hiding it with a `sample-placeholder-token`.
+- **Made the guarantee instead of asserting it.** `routeParam(req, name)` returns a string or throws a 400 naming the parameter. That converts ~25 sites from "compiler can't help" to "missing means 400", which is *better* behaviour than the `undefined` that would have reached Prisma. I deliberately did not use `!` or `as string`: same green typecheck, opposite direction for the next person.
+- **Collapsed a six-times-repeated assertion while I was in there.** The `/:id/sync` handler resolved `req.params.id` six times, four of them with `!`, because every branch needed it — one `const integrationId = routeParam(req, "id")` at the top removed the assertions and the repetition together.
+- **Refused to fix the two TOTP sites with a cast, because they were real.** `decrypt(ciphertext, iv, authTag)` with three possibly-undefined values from a stored secret: a record missing a part would have decrypted garbage. Both now 400 with what is actually wrong.
+- **Widened a parameter instead of casting at its call site.** `onTicketStatusChange(oldStatus)` wanted `TicketStatus | null`, but the value comes from a `String` column and is only ever compared to one member — so the parameter became `string | null` and the call site stayed honest.
+
+**Decisions worth remembering**
+- **A type error count is a queue, not a category.** 47 sounds uniform; it contained two product defects, one dead-code dependency, and a lot of narrowing. Estimate from a sample only if you have read the sample.
+- **Fix the shape, not the site.** The choice between `!`, `as`, and a helper appeared at ~25 sites. Picking the helper made each one shorter *and* gave missing-parameter behaviour; picking the cast would have made each one shorter and the next one worse.
+- **Attribute a probe failure before believing it.** `probe-expenses` failed 8 assertions and `probe-kb-autogen` 2 — and both probes' own headers say which environment they need. Turning the flags on and getting 27/27 and 42/42 is the difference between "my change broke the accounting push" and "the stub was refused by the egress policy".
+- **`prisma generate` fails while the API runs, and the failure is a locked DLL, not a bad schema.** It has now cost time twice; the sequence that works is: stop the API, `db generate`, `db push`, start the API.
+
+**Notes for next time**
+- **The root `pnpm build` cannot pass while `packages/billing`'s `tsc` build is in the graph** — 54 errors of its own, against fields the schema does not have, and nothing calls it. The container is unaffected (it builds only the web app and runs the API from source with `tsx`). Repairing or removing that package is a decision, not a fix.
+- **OneDrive locked `node_modules` again** on the first API restart (`EBUSY` on `semver/ranges/gtr.js`), and the watcher recovered on its own — the second launch then hit `EADDRINUSE` because the first had already come back. Check the port before concluding a start failed.
+- **The auto-sync job swept 15 of the 18 wave-1 files into its own commit** (`4b8a5e8`) while I was still working, so the written commit carries the last three files and the records. Read `git show --stat HEAD` before assuming what a commit contains.
+- **The probes need flags that only their headers know**: `EGRESS_ALLOW_PRIVATE=true`, `KB_AUTOGEN_ENABLED=true`, `BILLING_FROM_TICKETS_ENABLED` unset, `TIME_RULES_ENABLED=false` for the companion time probe. Starting the API with them makes the whole suite green rather than mostly green.

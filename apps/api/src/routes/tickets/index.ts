@@ -5,6 +5,7 @@ import { prisma } from "../../index";
 import { authenticate, requirePermission, type AuthRequest } from "../../middleware/auth";
 import { Permission, TicketStatus } from "@C7NTAX/shared";
 import { AppError } from "../../middleware/errorHandler";
+import { routeParam } from "../../middleware/routeParams";
 import { onTicketStatusChange, extractPriority } from "./automations";
 import { draftArticleOnResolution } from "../../services/kbAutogen";
 import { generateTicketNumber } from "../../services/ticketNumber";
@@ -315,7 +316,7 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
     if (changedFields.length > 0) {
       await prisma.ticketComment.create({
         data: {
-          ticketId: req.params.id,
+          ticketId: routeParam(req, "id"),
           body: changedFields.join("\n"),
           authorId: req.user!.userId,
           isInternal: true,
@@ -324,7 +325,7 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
     }
 
     if (updates.status && updates.status !== oldStatus) {
-      await onTicketStatusChange(req.params.id, updates.status as TicketStatus, oldStatus);
+      await onTicketStatusChange(routeParam(req, "id"), updates.status as TicketStatus, oldStatus);
       // A solved ticket is the raw material for a knowledge base article. It is drafted in the
       // background: a draft is a nice-to-have and must not hold up the status change.
       if (updates.status === TicketStatus.Resolved || updates.status === TicketStatus.Closed) {
@@ -335,7 +336,7 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
     // Add comment if provided
     if (req.body.note) {
       await prisma.ticketComment.create({
-        data: { ticketId: req.params.id, body: req.body.note, authorId: req.user!.userId, isInternal: req.body.noteInternal || false },
+        data: { ticketId: routeParam(req, "id"), body: req.body.note, authorId: req.user!.userId, isInternal: req.body.noteInternal || false },
       });
     }
 
@@ -396,7 +397,7 @@ ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async
     const exists = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { id: true } });
     if (!exists) throw new AppError("That ticket does not exist", 404);
     const note = await prisma.ticketComment.create({
-      data: { ticketId: req.params.id, body: content, authorId: req.user!.userId, isInternal: isInternal || false },
+      data: { ticketId: routeParam(req, "id"), body: content, authorId: req.user!.userId, isInternal: isInternal || false },
     });
     if (!note.isInternal) {
       const recipients = await resolveRecipients(req.body?.recipients, {
@@ -617,7 +618,7 @@ ticketsRouter.post("/:id/time", requirePermission(Permission.TicketEdit), async 
     const primary = computed?.segments[0];
     const entry = await prisma.timeEntry.create({
       data: {
-        ticketId: req.params.id,
+        ticketId: routeParam(req, "id"),
         userId: typeof userId === "string" && userId ? userId : req.user!.userId,
         minutes: primary?.minutes ?? computed?.minutes ?? mins,
         date: primary?.date ?? parseWorkDate(date),

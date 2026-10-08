@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.033 | Last Updated: 2026-10-08
+## Version: 2026.10.8.034 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,23 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.034 — Wave 1 of the type debt: the API typecheck is clean, and two real defects fell out of it
+
+**149 errors → 0.** Every one was in code that serves a request, and fixing them was not mechanical: two of them were defects the compiler was right about, and one of those meant a route could never work.
+
+- **[Fix]** **`POST /api/system/calendar-sync` could never succeed.** The route creates a `CalendarSyncConfig` row from a provider and two sync flags, and the schema required **`accessToken`** — a token the route has no way to receive, so every call failed at Prisma with a required-field error. The column is now optional, because that is what the route always meant: the row records *which* calendar to sync, and the token arrives with an OAuth consent that does not exist yet. Dev seeding had been papering over it with `accessToken: "sample-placeholder-token"`. (`db push` applied, client regenerated.)
+- **[New]** **`routeParam(req, name)`** ([middleware/routeParams.ts](../apps/api/src/middleware/routeParams.ts)) — a path parameter that is *guaranteed* to be a string, or a 400 naming it. `req.params.id` is always present at run time (Express only reaches a matched route) but its type is `string | undefined` under `noUncheckedIndexedAccess`, and every one of those reached Prisma as a maybe-undefined value in a required column. A cast would have removed the same errors and left the compiler blind at the next call site; this makes the guarantee real, and turns "the id is missing" into a 400 instead of a write with `undefined` in it.
+- **[Fix]** **A half-written TOTP enrolment is now refused instead of decrypted with holes.** `kumo password totp verify` and the code display both destructured `[ciphertext, iv, authTag]` from a stored secret and passed the pieces straight to `decrypt()`; a record with a missing part (which the type system knew about) would have decrypted `undefined`. Both now 400 with a sentence that says what is wrong with the record.
+- **[Fix]** **The audit trail's `entity` can no longer be empty.** `extractEntity` returned `parts[0]` from a split path — `undefined` by type, `""` in practice — and that value becomes the filterable `entity` column of every audit row.
+- **[Update]** **The rest, honestly grouped:** 13 in `system.ts` (a Prisma create input, a config key resolved three different ways, and a changelog reader indexing regex matches — a header that does not yield both groups is now skipped rather than recorded half-read); 8 in `cloudconnect.ts`, where one handler resolved its own id **six times with non-null assertions** and now resolves it once; 5 in `tickets/index.ts`; and one or two each across `projects`, `boards` (an array index), `surveys`, `billing`, `chat`, `contracts`, `crm`, `inventory`, `kb`, `roles` (a `SystemRole` comparison the compiler was right about), and two Prisma JSON columns in the inference service, cast at the boundary the way `routes/inference.ts` already does.
+- **[Fix]** **`onTicketStatusChange`'s `oldStatus` is a `string` again** — it is read from a column that holds the enum's vocabulary but not the enum's type, and the function only ever compares it to one member. Widening the parameter is more honest than the cast that was being asked for at the only call site.
+
+**Verification (the part that matters after 47 call sites):** API `tsc` **0 errors**; **15 probes** run against the live API — `probe-connector-setup` 388/388, `probe-products` 82/82, `probe-billing-generate` 45/45, `probe-kb-autogen` 42/42, `probe-m365-inactivity` 36/36, `probe-kumo-audit` 34/34, `probe-cloudconnect-status` 34/34, `probe-board-layout` 33/33, `probe-expenses` 27/27, `probe-scoping` 26/26, `probe-time-rules` 24/24. Three of them (`expenses`, `kb-autogen`, `billing-generate`) failed on the first run and pass with the flags **their own headers document** (`EGRESS_ALLOW_PRIVATE=true`, `KB_AUTOGEN_ENABLED=true`) — which is how the failures were attributed to the environment rather than to the change.
+
+**Still open, and its own decision:** `packages/billing` — 54 errors of its own, written against fields the schema does not have, called by nothing.
 
 ---
 

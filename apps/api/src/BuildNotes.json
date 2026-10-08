@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.034",
+    "date": "2026-10-08",
+    "title": "Wave 1 of the type debt: the API typecheck is clean, and two real defects fell out of it",
+    "changes": [
+      {
+        "text": "**`POST /api/system/calendar-sync` could never succeed.** The route creates a `CalendarSyncConfig` row from a provider and two sync flags, and the schema required **`accessToken`** — a token the route has no way to receive, so every call failed at Prisma with a required-field error. The column is now optional, because that is what the route always meant: the row records *which* calendar to sync, and the token arrives with an OAuth consent that does not exist yet. Dev seeding had been papering over it with `accessToken: \"sample-placeholder-token\"`. (`db push` applied, client regenerated.)",
+        "type": "Fix"
+      },
+      {
+        "text": "**`routeParam(req, name)`** ([middleware/routeParams.ts](../apps/api/src/middleware/routeParams.ts)) — a path parameter that is *guaranteed* to be a string, or a 400 naming it. `req.params.id` is always present at run time (Express only reaches a matched route) but its type is `string | undefined` under `noUncheckedIndexedAccess`, and every one of those reached Prisma as a maybe-undefined value in a required column. A cast would have removed the same errors and left the compiler blind at the next call site; this makes the guarantee real, and turns \"the id is missing\" into a 400 instead of a write with `undefined` in it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A half-written TOTP enrolment is now refused instead of decrypted with holes.** `kumo password totp verify` and the code display both destructured `[ciphertext, iv, authTag]` from a stored secret and passed the pieces straight to `decrypt()`; a record with a missing part (which the type system knew about) would have decrypted `undefined`. Both now 400 with a sentence that says what is wrong with the record.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The audit trail's `entity` can no longer be empty.** `extractEntity` returned `parts[0]` from a split path — `undefined` by type, `\"\"` in practice — and that value becomes the filterable `entity` column of every audit row.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The rest, honestly grouped:** 13 in `system.ts` (a Prisma create input, a config key resolved three different ways, and a changelog reader indexing regex matches — a header that does not yield both groups is now skipped rather than recorded half-read); 8 in `cloudconnect.ts`, where one handler resolved its own id **six times with non-null assertions** and now resolves it once; 5 in `tickets/index.ts`; and one or two each across `projects`, `boards` (an array index), `surveys`, `billing`, `chat`, `contracts`, `crm`, `inventory`, `kb`, `roles` (a `SystemRole` comparison the compiler was right about), and two Prisma JSON columns in the inference service, cast at the boundary the way `routes/inference.ts` already does.",
+        "type": "Update"
+      },
+      {
+        "text": "**`onTicketStatusChange`'s `oldStatus` is a `string` again** — it is read from a column that holds the enum's vocabulary but not the enum's type, and the function only ever compares it to one member. Widening the parameter is more honest than the cast that was being asked for at the only call site.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.033",
     "date": "2026-10-08",
     "title": "The Security Gate's other three failures, and a typecheck that now measures the code",

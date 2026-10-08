@@ -238,5 +238,22 @@
     "sortOrder": 20,
     "createdAt": "2026-08-14T05:55:14.948Z",
     "updatedAt": "2026-10-06T19:17:36.374Z"
+  },
+  {
+    "id": "99905f47-68fe-4aec-a3b0-a0eb0281ced5",
+    "name": "ProbeSocial muzthwux",
+    "category": "other",
+    "description": "probe",
+    "statusPageUrl": null,
+    "downDetectorUrl": null,
+    "rssUrl": null,
+    "monitorKind": "vendor",
+    "monitorUrl": null,
+    "monitorConfig": null,
+    "monitorEnabled": true,
+    "enabled": true,
+    "sortOrder": 0,
+    "createdAt": "2026-10-08T17:35:41.200Z",
+    "updatedAt": "2026-10-08T17:35:41.200Z"
   }
 ]

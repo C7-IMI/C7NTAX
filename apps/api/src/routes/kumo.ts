@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission, passwordStrengthLevel } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { routeParam } from "../middleware/routeParams";
 import { encrypt, decrypt, secureClear } from "../services/kumoCrypto";
 import { recordKumoAudit, kumoAuditTrail, changedFields } from "../services/kumoAudit";
 import speakeasy from "speakeasy";
@@ -474,6 +475,7 @@ kumoRouter.get("/passwords/:id/totp", requirePermission(Permission.KumoPasswords
     if (!pw || !pw.totpSecret || !pw.totpEnabled) return res.json({ enabled: false });
     const parts = pw.totpSecret.split(":");
     const [ciphertext, iv, authTag] = parts.length === 3 ? parts : [pw.totpSecret, pw.iv, pw.authTag];
+    if (!ciphertext || !iv || !authTag) throw new AppError("This password's two-factor secret is incomplete", 400);
     const secret = decrypt(ciphertext, iv, authTag);
     const token = speakeasy.totp({ secret, encoding: "base32" });
     const remaining = 30 - Math.floor(Date.now() / 1000) % 30;

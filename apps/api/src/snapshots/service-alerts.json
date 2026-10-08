@@ -602,6 +602,20 @@
     "updatedAt": "2026-08-20T06:09:49.658Z"
   },
   {
+    "id": "fd6d9bc3-3b91-4ff4-811d-3fa3dcf2d24d",
+    "serviceId": "f735b229-0f0c-4ea2-b68e-bb048d1ca1c4",
+    "title": "Possible service degradation reported for Gemini (DownDetector)",
+    "description": "DownDetector is reporting problems for Gemini.",
+    "severity": "degraded",
+    "status": "active",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/googlegemini/",
+    "detectedAt": "2026-10-08T16:37:12.210Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-08T16:37:12.212Z",
+    "updatedAt": "2026-10-08T16:37:12.212Z"
+  },
+  {
     "id": "8347b71f-f271-49e2-b2af-f335eb5841f8",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Workspace Agents Degraded and Responses Impacted",
