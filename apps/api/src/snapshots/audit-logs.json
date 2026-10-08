@@ -204727,5 +204727,780 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-08T00:00:33.692Z"
+  },
+  {
+    "id": "48e7bc0b-2f8f-4b69-8045-2d5397df4b71",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:03:49.134Z"
+  },
+  {
+    "id": "4ec9d7d4-2291-45b0-b321-ac764b88234f",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:06:55.845Z"
+  },
+  {
+    "id": "d38dec60-5b83-456b-9461-449ffa5ddf89",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:09:38.565Z"
+  },
+  {
+    "id": "b29334e0-ae83-4505-82cb-6e781f5a322a",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:12:32.787Z"
+  },
+  {
+    "id": "2d5edf7a-e7d1-4f79-a106-434641a7b0df",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "users",
+    "changes": {
+      "role": "technician",
+      "email": "sessionprobe1791418508365@probe.local",
+      "lastName": "Probe",
+      "password": "***",
+      "firstName": "Session",
+      "requireChange": false,
+      "credentialMode": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:08.740Z"
+  },
+  {
+    "id": "eb61c377-04bd-4bc7-9c80-56fcb44354c0",
+    "action": "users:create",
+    "entity": "users",
+    "entityId": "2d8c7fd1-8887-4f88-a68f-9b0f676741f8",
+    "changes": {
+      "requireChange": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:09.430Z"
+  },
+  {
+    "id": "c1226ac0-aa6f-459b-a249-0842b4d4fbca",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "nobody.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:17.110Z"
+  },
+  {
+    "id": "c78af972-7ce8-487b-ba5b-cf3c3b70718c",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:17.323Z"
+  },
+  {
+    "id": "66da4e56-d8c3-45b2-bd56-ed1be9f7df93",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.carol.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:17.334Z"
+  },
+  {
+    "id": "08549d62-ae5c-474e-92fe-445d6b73b460",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:17.748Z"
+  },
+  {
+    "id": "a3657ce2-dcc5-4a73-82fc-0055f42bdde5",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:17.760Z"
+  },
+  {
+    "id": "ca6d8519-ca2b-451e-a7a5-bf775faa2fc2",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:17.769Z"
+  },
+  {
+    "id": "c5b36c6c-4774-487b-92eb-e784b71a1004",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "345104",
+      "email": "portal.alice.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:18.038Z"
+  },
+  {
+    "id": "cf527be5-f602-492f-b7c2-d6d7aefb18eb",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:18.121Z"
+  },
+  {
+    "id": "cf6ff9bd-36f3-4ffb-b019-2b37b80d5681",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:18.491Z"
+  },
+  {
+    "id": "bc2af4f9-fb1a-4742-8ed7-db1f87f07e41",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Bearer without CSRF",
+      "description": "Should be accepted"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:19.133Z"
+  },
+  {
+    "id": "633756c9-3bc9-4cc8-9f7c-db2a690fedb1",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Cookie write",
+      "description": "Accepted with both halves"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:19.304Z"
+  },
+  {
+    "id": "c1a7a9a0-7cc6-4c9a-9578-8c4bbd093951",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Portal-raised ticket",
+      "priority": "high",
+      "description": "The printer is on fire"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:19.331Z"
+  },
+  {
+    "id": "71ff599c-a639-4fe1-b05f-969ee08817ac",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "ca765135-b27e-4778-a91f-aceebe0454f6",
+    "changes": {
+      "body": "Any update on this?"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:19.348Z"
+  },
+  {
+    "id": "1f86d947-518e-4e34-9a68-5414326054f5",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "dffe8383-a159-4b4a-b035-a4a860f1b77f",
+    "changes": {
+      "body": "This is not fixed"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:19.366Z"
+  },
+  {
+    "id": "de4efd09-e896-497d-b7e8-ee57e5e1c36a",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:19.405Z"
+  },
+  {
+    "id": "729d84c3-59a1-430b-b949-1ab02603a407",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "486050",
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:20.359Z"
+  },
+  {
+    "id": "5fe19561-3987-47ef-adbf-833ee20bb59a",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:20.426Z"
+  },
+  {
+    "id": "d89e3eb7-8aa7-4b16-8bb2-9c01a9ae9625",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "530701",
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:21.639Z"
+  },
+  {
+    "id": "54d5ff7f-3778-4f7e-8ef9-32ade2e2b000",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:21.654Z"
+  },
+  {
+    "id": "50ee5123-5c24-4337-950a-6992f78a41ab",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "040240",
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:21.772Z"
+  },
+  {
+    "id": "f623cdfa-9d0e-46ab-9fcc-ea9a05470dda",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:21.864Z"
+  },
+  {
+    "id": "f1e2bc4e-1199-4362-ba60-b95b624ed728",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "262025",
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:22.581Z"
+  },
+  {
+    "id": "b0940fb4-c338-4c69-a516-25b35fa5cd4b",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:22.629Z"
+  },
+  {
+    "id": "7876a94b-25f4-483d-9ed8-41605d285439",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "670329",
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:24.095Z"
+  },
+  {
+    "id": "94f7b5b7-7f16-4962-aa9b-bd585a6de5a6",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:24.105Z"
+  },
+  {
+    "id": "d2d988f9-822e-48bd-8ef4-44662739479d",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "070477",
+      "email": "portal.bob.1791418516434@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:24.336Z"
+  },
+  {
+    "id": "f3b3ed39-7eb1-4610-b59d-c3cbd82eafcf",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "logout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:24.405Z"
+  },
+  {
+    "id": "f9addfe7-0e47-4179-b308-7278f43c1f12",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muysc667 — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-08T00:15:28.750Z",
+          "internetMessageId": "<addin-probe-muysc667@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:28.839Z"
+  },
+  {
+    "id": "aa8dbceb-2fb1-4dae-b0d8-9d26ecac6181",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "preview",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muysc667 — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "internetMessageId": "<addin-review-muysc667@probe.invalid>"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:28.872Z"
+  },
+  {
+    "id": "59920f07-d2ab-41bb-aec0-e3b12aee7596",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muysc667 — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "priority": "High",
+          "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+          "contactName": "Reviewed Contact",
+          "internetMessageId": "<addin-review-muysc667@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:29.595Z"
+  },
+  {
+    "id": "6fca933d-7aa7-4bc4-9166-277621459efe",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.397Z"
+  },
+  {
+    "id": "0614b4e1-6d3f-4f2f-9811-c7260f6410bd",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "enabled",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.421Z"
+  },
+  {
+    "id": "203bf7bb-437f-46e1-9da0-f2797678ebe1",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "value": 20
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.596Z"
+  },
+  {
+    "id": "884f4b9d-ecfe-4a1a-ab3d-7c30456c07c2",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "codeExpiryMinutes",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.612Z"
+  },
+  {
+    "id": "798da5a4-a7ef-419f-bff7-14b1c29b1dfb",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 5
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.645Z"
+  },
+  {
+    "id": "5cbaf6ee-141e-43b9-acd4-94e63b73ba01",
+    "action": "company:update",
+    "entity": "company",
+    "entityId": "2acbcd76-2e87-4197-a055-14493546c999",
+    "changes": {
+      "portalLogoUrl": "/uploads/logo.png",
+      "portalAccentColor": "#123456"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:24.449Z"
+  },
+  {
+    "id": "630d5a59-6fca-419b-a77b-e4fd566fa29b",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muysc667 — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muysc667@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:28.845Z"
+  },
+  {
+    "id": "4669dd5c-861a-455b-b9b1-70ce37f12851",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muysc667 A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muysc667@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muysc667 B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muysc667@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muysc667 — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muysc667@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:28.863Z"
+  },
+  {
+    "id": "eea3be0f-18c7-4746-98de-f7a38c3cf5c5",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "bundled",
+      "emails": [
+        {
+          "from": "parent@umbrellacorp.net",
+          "subject": "Addin probe muysc667 — parent message",
+          "bodyText": "This one becomes the ticket.",
+          "internetMessageId": "<addin-parent-muysc667@probe.invalid>"
+        },
+        {
+          "from": "child.a@umbrellacorp.net",
+          "subject": "Addin probe muysc667 — context one",
+          "bodyText": "Context one.",
+          "internetMessageId": "<addin-child-a-muysc667@probe.invalid>"
+        },
+        {
+          "from": "child.b@umbrellacorp.net",
+          "subject": "Addin probe muysc667 — context two",
+          "bodyText": "Context two.",
+          "internetMessageId": "<addin-child-b-muysc667@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "parentMessageId": "<addin-parent-muysc667@probe.invalid>"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:29.665Z"
+  },
+  {
+    "id": "382bdf60-a1bb-4aed-9113-dee8f471d3ef",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "never",
+      "lastBoardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "rememberBoard": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:29.683Z"
+  },
+  {
+    "id": "fb3b87ea-67d6-487b-8ab2-2d3140538714",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "banana",
+      "preview": "sometimes"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:29.700Z"
+  },
+  {
+    "id": "474f578f-a11c-47e5-9962-920b9cf393cd",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "ask",
+      "preview": "ask",
+      "lastBoardId": null,
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:29.705Z"
+  },
+  {
+    "id": "d303e641-8f31-45b4-bf31-ff1fdf7afd27",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "value": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.554Z"
+  },
+  {
+    "id": "19d1edc6-db11-41cb-8550-95b6e19e5a34",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "defaultBoardId",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.575Z"
+  },
+  {
+    "id": "cec0dd70-9b61-42e1-99e6-fbd96a28b299",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "sessionTimeout",
+    "changes": {
+      "value": 45
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.629Z"
+  },
+  {
+    "id": "b2345fef-59d7-47f6-9105-b00f91eddd93",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.677Z"
+  },
+  {
+    "id": "b8f5838b-ca62-46de-907d-7fbb334e76ce",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.695Z"
+  },
+  {
+    "id": "bf94f580-0c69-4bcf-a29f-8741f0b6206c",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.760Z"
+  },
+  {
+    "id": "23be305f-6a87-4a0c-8b48-2275161ccebb",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "value": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.789Z"
+  },
+  {
+    "id": "065f0862-b618-4dd3-91a7-41a6348abbf8",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "outlookAddin",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:15:30.800Z"
   }
 ]
