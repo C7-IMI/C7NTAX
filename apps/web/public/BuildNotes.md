@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.038 | Last Updated: 2026-10-08
+## Version: 2026.10.8.039 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,19 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.039 — The console as a page, and a URL worth sending to somebody
+
+`/console` is the same console, with a URL that carries the command. `?c=ticket+list+--status+new` opens with that command already run — which is how a command becomes something a colleague can click, and how a run can be linked from a ticket or a runbook.
+
+- **[New]** **`/console`** — `ConsoleDialog`'s body is now **`ConsolePanel`**, and the popup and the page are two frames around one component. That is what keeps their keys, grammar, completion and output identical: the difference between them is a border and a height. The popup gains **"Open as page"**; the page gains a **"Copy link"** button and a browsable catalogue panel, so the page says what it can do without anyone typing anything.
+- **[Update]** **The URL tracks the last line run, not every keystroke** — a link is a command, not a transcript — and it is written with `replaceState` so a session does not fill the back button. The deep-linked command runs **once**, guarded by a ref rather than by state: React's development double-invoke would otherwise run a *write* twice the day writes exist, and a console whose shareable link fires twice is a console nobody should trust with one.
+- **[Fix]** **`Esc` on the page no longer closes the console.** The popup and the page share one key handler, so `Esc` had to become "dismiss what is dismissible": on the page there is nothing to dismiss beyond the menu and the search, and closing the page would have taken the scrollback with it.
+- **[Fix]** **The empty state's example was wrong.** It read `ticket list --status open --limit 10`, and `open` is not a ticket status in this application — the enum's values are `new`, `in_progress`, … So the first command a new user copies returned an empty table. It now says `--status new`, which is what the completion offers and what returns rows.
+
+**Verification:** web `tsc` clean. Live: `/console?c=system+version` loaded with the command already run and its result on screen (the build `2026.10.8.038` it reports is the previous entry, which is correct while this one is being written), the URL read `/console?c=system+version` after the run, Copy link was enabled, the catalogue panel listed 85 commands, and the popup was re-checked for regression — it opens, the input takes focus, "Open as page" is present, and `Esc` closes it.
 
 ---
 

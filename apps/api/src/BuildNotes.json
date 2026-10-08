@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.8.039",
+    "date": "2026-10-08",
+    "title": "The console as a page, and a URL worth sending to somebody",
+    "changes": [
+      {
+        "text": "**`/console`** — `ConsoleDialog`'s body is now **`ConsolePanel`**, and the popup and the page are two frames around one component. That is what keeps their keys, grammar, completion and output identical: the difference between them is a border and a height. The popup gains **\"Open as page\"**; the page gains a **\"Copy link\"** button and a browsable catalogue panel, so the page says what it can do without anyone typing anything.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The URL tracks the last line run, not every keystroke** — a link is a command, not a transcript — and it is written with `replaceState` so a session does not fill the back button. The deep-linked command runs **once**, guarded by a ref rather than by state: React's development double-invoke would otherwise run a *write* twice the day writes exist, and a console whose shareable link fires twice is a console nobody should trust with one.",
+        "type": "Update"
+      },
+      {
+        "text": "**`Esc` on the page no longer closes the console.** The popup and the page share one key handler, so `Esc` had to become \"dismiss what is dismissible\": on the page there is nothing to dismiss beyond the menu and the search, and closing the page would have taken the scrollback with it.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The empty state's example was wrong.** It read `ticket list --status open --limit 10`, and `open` is not a ticket status in this application — the enum's values are `new`, `in_progress`, … So the first command a new user copies returned an empty table. It now says `--status new`, which is what the completion offers and what returns rows.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.038",
     "date": "2026-10-08",
     "title": "The console: PLAN-028 phases 0 and 1, and the header icon finally does something",

@@ -35,6 +35,7 @@ import { AuditLogsSection, ServiceBoardsSection } from "./pages/Administration";
 import { ConfigurationHub, ConfigurationSectionPage } from "./pages/Configuration";
 import { CustomerPortalSettingsPage } from "./pages/CustomerPortalSettings";
 import { ChangelogPage } from "./pages/Changelog";
+import { ConsolePage } from "./pages/ConsolePage";
 import { CalendarPage } from "./pages/Calendar";
 import { PTOPage } from "./pages/PTO";
 import { FinanceDashboardPage } from "./pages/FinanceDashboard";
@@ -119,6 +120,8 @@ function ProtectedRoutes() {
         <Route path="/admin/webhooks" element={<WebhooksPage />} />
         <Route path="/admin/sso" element={<SingleSignOnPage />} />
         <Route path="/ai-actions" element={<AiActionsPage />} />
+        {/* The console as a page: the same component as the popup, plus a URL worth sharing. */}
+        <Route path="/console" element={<ConsolePage />} />
         <Route path="/assistant" element={<AssistantPage />} />
         <Route path="/admin/service-alerts" element={<ServiceAlertsSettingsPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
