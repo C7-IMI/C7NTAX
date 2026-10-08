@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.034 | Last Updated: 2026-10-08
+## Version: 2026.10.8.035 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,16 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.035 — The two CI fixes CI then told me were not fixed
+
+The Security Gate ran against 2026.10.8.033's plumbing and produced two failures of its own — both mine, both fixable, and both now verified against the real release artifacts rather than assumed.
+
+- **[Fix]** **The gitleaks step's checksum check could not find the file it had just downloaded.** `sha256sum -c` verifies the name **inside the checksums file**, and I had saved the tarball as `gitleaks.tar.gz` — so the verification failed on its own download. The step now keeps the release filename, works in `$RUNNER_TEMP`, and extracts the whole tarball. Verified locally against the actual release: the checksums file names `gitleaks_8.30.1_linux_x64.tar.gz`, the tarball holds `gitleaks` at its root, and the SHA-256 of the downloaded asset matches the published hash exactly.
+- **[Fix]** **`aquasecurity/trivy-action@v0.28.0` cannot run at all, even with its `v`.** Adding the `v` (2026.10.8.033) resolved the action — and CI then reported the next layer: that release pins **`aquasecurity/setup-trivy@v0.2.1`, a tag that no longer exists** (the remaining ones are `v0.2.6`, `v0.3.0`, `v0.3.1`), so the action could never install its own scanner. Bumped to **`v0.36.0`**, which is the "deliberate bump of its own" the earlier entry said a bump should be — now required rather than optional, because the old release is unreachable rather than merely old. The job may still be red after this, and that would be the *right* red: severity CRITICAL,HIGH with `exit-code 1`, reporting real findings instead of failing to start.
+- **[Update]** **What the same run confirms about the other two jobs:** "Route guards and typechecks" got past the guard, past the missing Prisma client (now generated), and failed only on the 47 API type errors that wave 1 then fixed — so that job should be green from 2026.10.8.034 onward. The dependency baseline and the secret scan are the remaining unknowns.
 
 ---
 
