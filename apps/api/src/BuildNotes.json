@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.023",
+    "date": "2026-10-08",
+    "title": "PLAN-025: an MCP server for C7NTAX (plan only, nothing built)",
+    "changes": [
+      {
+        "text": "**`PlanDocs/PLAN-025-C7NTAX-MCP-Server.md`** — §1 why (with the four questions a technician actually asks and the functions that answer them), §2 the evidence table of what already exists and where, §3 the surface (tools mapped one-to-one onto the registry, resources, three prompts), §4 the protocol, §5 authorization, §6 write semantics, §7 security, §8 where it lives, §9 the eight decisions to freeze, §10 five phases with acceptance criteria and a probe each, §11 costs, §12 verification, §13 what would make it wrong, §14 related work.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**It takes over PLAN-011 phase 9 and answers PLAN-013 #7.** PLAN-011's header and the registry now record the split: the risk-classified action layer half **shipped** with the assistant (2026.10.8.020), and its MCP half is PLAN-025, which depends on that action layer and the API-key model rather than on PLAN-011's Bedrock/RAG phases — so nothing schedules the same server twice.",
+        "type": "Update"
+      },
+      {
+        "text": "**Two findings worth having written down.** *First*, the current MCP revision (`2026-07-28`) is **stateless** — the `initialize` handshake is gone, `server/discover` is mandatory, Streamable HTTP is POST-only, and the clients our users actually have are a mix of eras, so dual-era support is a requirement rather than a nicety. The specification was rewritten twice in the twelve months to 2026-10-08 and Claude still follows an *older* authorization revision than the current one, so §4 is stamped as a snapshot to re-verify before phase 2. *Second*, **phase 3 is the expensive half**: hosted assistants want OAuth 2.1 with RFC 9728 metadata and resource indicators, and C7NTAX issues API keys rather than OAuth grants today. §5 therefore recommends keys-as-bearer-tokens for phases 1–2 (≈4 days, which works with the local and static-credential clients) and OAuth only when a hosted client is genuinely wanted (≈5 days, schedulable separately).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The safety design is stated as a rule, not an intention:** reads execute, writes only ever become proposals, the risk tier is set server-side, and there is deliberately **no `approve` tool** — a model that can approve its own proposal has outsourced the review to the thing being reviewed. §7 names prompt injection through our own ticket bodies as the live risk it is, and reuses the existing egress policy for the OAuth and client-metadata fetches the specification tells servers to be careful with.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`PlanDocs/README.md`** — PLAN-025 added to the wave table's unscheduled rows and the registry, with the dependency note (phases 3+ want PLAN-016's public origin; phases 0–2 do not). PLAN-024 was missing from the registry and is now recorded as built (2026.10.8.016), and PLAN-023 as filed-not-built.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.022",
     "date": "2026-10-08",
     "title": "Walk me through it: the setup plans became steps you can follow",
