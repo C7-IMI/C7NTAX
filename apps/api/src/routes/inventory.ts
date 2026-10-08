@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { companyWhere, canAccessCompany } from "../middleware/companyScope";
+import { routeParam } from "../middleware/routeParams";
 
 export const inventoryRouter = Router();
 inventoryRouter.use(authenticate);
@@ -114,7 +115,7 @@ inventoryRouter.post("/assets/:id/checkout", requirePermission(Permission.AssetE
     if (asset.status === "assigned") throw new AppError("Asset already assigned", 400);
 
     await prisma.assetAssignment.create({
-      data: { assetId: req.params.id, assignedToId: assignedToId || null, ticketId: ticketId || null, notes },
+      data: { assetId: routeParam(req, "id"), assignedToId: assignedToId || null, ticketId: ticketId || null, notes },
     });
     await prisma.asset.update({
       where: { id: req.params.id },

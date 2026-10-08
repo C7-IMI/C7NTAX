@@ -244,8 +244,8 @@ kumoRouter.patch("/assets/:id", requirePermission(Permission.KumoAssetEdit), asy
         else if (["select", "multi_select", "json"].includes(field.fieldType)) fv.valueJson = val;
         else fv.valueText = String(val);
         await prisma.kumoAssetFieldValue.upsert({
-          where: { assetId_fieldId: { assetId: req.params.id, fieldId: field.id } },
-          create: { assetId: req.params.id, fieldId: field.id, ...fv },
+          where: { assetId_fieldId: { assetId: routeParam(req, "id"), fieldId: field.id } },
+          create: { assetId: routeParam(req, "id"), fieldId: field.id, ...fv },
           update: fv,
         });
       }
@@ -456,6 +456,8 @@ kumoRouter.post("/passwords/:id/totp/verify", requirePermission(Permission.KumoP
     if (!pw || !pw.totpSecret) throw new AppError("TOTP not configured", 400);
     const parts = pw.totpSecret.split(":");
     const [ciphertext, iv, authTag] = parts.length === 3 ? parts : [pw.totpSecret, pw.iv, pw.authTag];
+    // A record half-written by an earlier enrolment is refused rather than decrypted with holes.
+    if (!ciphertext || !iv || !authTag) throw new AppError("This password's two-factor secret is incomplete", 400);
     const secret = decrypt(ciphertext, iv, authTag);
     const valid = speakeasy.totp.verify({ secret, encoding: "base32", token: code, window: 1 });
     if (!valid) throw new AppError("Invalid code", 400);

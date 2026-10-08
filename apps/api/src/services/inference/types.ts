@@ -1,4 +1,5 @@
 import { prisma } from "../../index";
+import { Prisma } from "@prisma/client";
 import crypto from "crypto";
 
 export interface SuggestionResult {
@@ -63,7 +64,9 @@ export async function setCache(
     data: {
       ticketId, providerId, requestType,
       requestHash: cacheHash(ticketId, requestType),
-      response: response as unknown as Record<string, unknown>,
+      // A JSON column takes a JSON value, and a typed object is not one yet — the cast is the
+      // boundary, the same one `routes/inference.ts` already crosses for provider config.
+      response: response as unknown as Prisma.InputJsonValue,
       tokensUsed, latencyMs,
       costEstimate: (tokensUsed / 1000) * 0.002, // rough estimate
       expiresAt: new Date(Date.now() + 7 * 24 * 3600_000),

@@ -5,6 +5,7 @@ import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { draftArticleFromTicket, autogenEnabled } from "../services/kbAutogen";
 import { isUnscoped } from "../middleware/companyScope";
+import { routeParam } from "../middleware/routeParams";
 export const kbRouter = Router(); kbRouter.use(authenticate);
 
 // ── AI-drafted articles (PLAN-015 Phase B #11) ────────────────────────
@@ -119,8 +120,8 @@ kbRouter.patch("/:id", requirePermission(Permission.KBEdit), async (req: AuthReq
   try { const { content, title, status, visibility, tags } = req.body;
     const updates: Record<string, unknown> = {};
     if (title) updates.title = title; if (status) updates.status = status; if (visibility) updates.visibility = visibility; if (tags) updates.tags = tags;
-    if (content) { updates.content = content; const latest = await prisma.kBArticleVersion.findFirst({ where: { articleId: req.params.id }, orderBy: { version: "desc" } });
-      await prisma.kBArticleVersion.create({ data: { articleId: req.params.id, version: (latest?.version || 0) + 1, content, changeNote: req.body.changeNote || null, authorId: req.user!.userId } }); }
+    if (content) { updates.content = content; const articleId = routeParam(req, "id"); const latest = await prisma.kBArticleVersion.findFirst({ where: { articleId }, orderBy: { version: "desc" } });
+      await prisma.kBArticleVersion.create({ data: { articleId, version: (latest?.version || 0) + 1, content, changeNote: req.body.changeNote || null, authorId: req.user!.userId } }); }
     res.json(await prisma.knowledgeBaseArticle.update({ where: { id: req.params.id }, data: updates })); }
   catch (e) { next(e); }
 });

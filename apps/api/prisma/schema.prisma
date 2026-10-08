@@ -1513,7 +1513,10 @@ model CalendarSyncConfig {
   id                   String   @id @default(uuid())
   userId               String
   provider             String
-  accessToken          String
+  /// Optional because the row is created when a user says *which* calendar to sync; the token
+  /// arrives with the OAuth consent, which does not exist yet. Required here until now, which is
+  /// why POST /api/system/calendar-sync could never succeed.
+  accessToken          String?
   refreshToken         String?
   tokenExpiry          DateTime?
   calendarId           String?

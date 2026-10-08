@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { routeParam } from "../middleware/routeParams";
 
 export const crmRouter = Router();
 crmRouter.use(authenticate);
@@ -57,7 +58,7 @@ crmRouter.post("/opportunities/:id/activities", requirePermission(Permission.Tic
   try {
     const { type, subject, body, scheduledAt } = req.body;
     if (!type || !subject) throw new AppError("type and subject required");
-    const activity = await prisma.salesActivity.create({ data: { opportunityId: req.params.id, type, subject, body: body || "", userId: req.user!.userId, scheduledAt: scheduledAt ? new Date(scheduledAt) : null } });
+    const activity = await prisma.salesActivity.create({ data: { opportunityId: routeParam(req, "id"), type, subject, body: body || "", userId: req.user!.userId, scheduledAt: scheduledAt ? new Date(scheduledAt) : null } });
     res.status(201).json(activity);
   } catch (e) { next(e); }
 });

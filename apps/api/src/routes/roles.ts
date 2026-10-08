@@ -58,7 +58,9 @@ rolesRouter.patch("/:id", requirePermission(Permission.RoleManage), async (req: 
       if (req.body[key] !== undefined) data[key] = req.body[key];
     }
     if (Object.keys(data).length === 0) throw new AppError("No fields to update", 400);
-    if (data.systemRole && !Object.values(SystemRole).includes(data.systemRole as string)) {
+    // The value is `unknown` off the request body, so the check is what narrows it — and the
+    // comparison is against the enum's own values rather than a cast to a role type.
+    if (typeof data.systemRole === "string" && !(Object.values(SystemRole) as string[]).includes(data.systemRole)) {
       throw new AppError(`Invalid systemRole: ${data.systemRole}`, 400);
     }
     const role = await prisma.role.update({

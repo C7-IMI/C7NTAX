@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
 import { notifyUser } from "../ws";
+import { routeParam } from "../middleware/routeParams";
 export const chatRouter = Router(); chatRouter.use(authenticate);
 
 chatRouter.get("/sessions", requirePermission(Permission.ChatView), async (req: AuthRequest, res, next) => {
@@ -28,8 +29,9 @@ chatRouter.get("/sessions/:id/messages", requirePermission(Permission.ChatView),
 });
 
 chatRouter.post("/sessions/:id/messages", requirePermission(Permission.ChatView), async (req: AuthRequest, res, next) => {
-  try { const msg = await prisma.chatMessage.create({ data: { sessionId: req.params.id, senderType: "technician", senderId: req.user!.userId, content: req.body.content } });
-    const session = await prisma.chatSession.findUnique({ where: { id: req.params.id }, select: { userId: true } });
+  try { const sessionId = routeParam(req, "id");
+    const msg = await prisma.chatMessage.create({ data: { sessionId, senderType: "technician", senderId: req.user!.userId, content: req.body.content } });
+    const session = await prisma.chatSession.findUnique({ where: { id: sessionId }, select: { userId: true } });
     if (session?.userId) notifyUser(session.userId, { type: "chat_message", payload: { sessionId: req.params.id, message: msg } });
     res.status(201).json(msg); }
   catch (e) { next(e); }

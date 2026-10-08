@@ -61,13 +61,14 @@ boardsRouter.get("/metrics", requirePermission(Permission.BoardView), async (req
 
       // Active client name
       let mostActiveClient: { id: string; name: string; count: number } | null = null;
-      if (activeClient.length > 0) {
+      const topClient = activeClient[0];
+      if (topClient) {
         const company = await prisma.company.findUnique({
-          where: { id: activeClient[0].companyId },
+          where: { id: topClient.companyId },
           select: { id: true, name: true },
         });
         if (company) {
-          mostActiveClient = { ...company, count: activeClient[0]._count.id };
+          mostActiveClient = { ...company, count: topClient._count.id };
         }
       }
 

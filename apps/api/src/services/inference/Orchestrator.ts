@@ -1,4 +1,5 @@
 import { prisma } from "../../index";
+import { Prisma } from "@prisma/client";
 import { findSimilarTickets } from "./SearchEngine";
 import { detectPatterns } from "./PatternDetector";
 import { llmSuggestSolutions } from "./LlmProvider";
@@ -118,7 +119,7 @@ export class InferenceEngine {
           severity: p.severity,
           entityType: "ticket",
           entityIds: p.affectedTicketIds,
-          metrics: p.metrics as Record<string, unknown>,
+          metrics: p.metrics as unknown as Prisma.InputJsonValue,
         },
       });
     }

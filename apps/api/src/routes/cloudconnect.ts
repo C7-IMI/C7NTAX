@@ -6,6 +6,7 @@ import { Permission } from "@C7NTAX/shared";
 import { IntegrationHub } from "@C7NTAX/integrations";
 import type { IntegrationConfig } from "@C7NTAX/integrations";
 import { AppError } from "../middleware/errorHandler";
+import { routeParam } from "../middleware/routeParams";
 import { liveStatusEnabled, noteManualVerification, verifyDueIntegrations } from "../services/integrationHealth";
 import { CONNECTOR_SETUP } from "../services/connectorSetup";
 import { syncFlexpoint } from "../services/flexpoint";
@@ -31,7 +32,8 @@ async function loadConfig(id: string): Promise<IntegrationConfig> {
     settings: row.settings as Record<string, unknown>,
     status: row.status as IntegrationConfig["status"],
     errorMessage: row.errorMessage ?? undefined,
-    lastSyncAt: row.lastSyncAt ?? undefined,
+    // The hub's type says `Date | null` — "never synced" is a value, not an absence.
+    lastSyncAt: row.lastSyncAt ?? null,
   };
   hub.register(config);
   return config;
@@ -599,7 +601,7 @@ cloudConnectRouter.get("/", requirePermission(Permission.IntegrationView), async
         settings: row.settings as Record<string, unknown>,
         status: row.status as IntegrationConfig["status"],
         errorMessage: row.errorMessage ?? undefined,
-        lastSyncAt: row.lastSyncAt ?? undefined,
+        lastSyncAt: row.lastSyncAt ?? null,
       });
     }
     res.json({ data: rows.map(row => toPublicIntegration(row, canManage)) });
@@ -755,7 +757,8 @@ cloudConnectRouter.post("/:id/test", requirePermission(Permission.IntegrationVie
 // ── Sync integration ──────────────────────────────────────────────────────
 cloudConnectRouter.post("/:id/sync", requirePermission(Permission.IntegrationView), async (req: AuthRequest, res, next) => {
   try {
-    const config = await loadConfig(req.params.id!);
+    const integrationId = routeParam(req, "id");
+    const config = await loadConfig(integrationId);
     const adapter = hub.getAdapter(config.kind);
     if (!adapter) throw new AppError(`Unknown integration kind: ${config.kind}`, 400);
 
@@ -767,19 +770,19 @@ cloudConnectRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
      * again here. The summary it returns is a superset of this route's own shape.
      */
     if (config.kind === "flexpoint") {
-      res.json(await syncFlexpoint(req.params.id!));
+      res.json(await syncFlexpoint(integrationId));
       return;
     }
 
     // Create sync log
     const log = await prisma.syncLog.create({
-      data: { integrationId: req.params.id, status: "running", entityType: "all", startedAt: new Date() },
+      data: { integrationId, status: "running", entityType: "all", startedAt: new Date() },
     });
 
     const result = await adapter.sync(config);
 
     // Persist credentials (may have been updated with new tokens)
-    await persistCredentials(req.params.id!, config.credentials as Record<string, string>);
+    await persistCredentials(integrationId, config.credentials as Record<string, string>);
 
     let recordsCreated = 0;
     let recordsUpdated = 0;
@@ -796,7 +799,7 @@ cloudConnectRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
           const azureId = u.id as string;
           const existing = await prisma.m365User.findUnique({ where: { azureObjectId: azureId } });
           const userData = {
-            integrationId: req.params.id,
+            integrationId,
             azureObjectId: azureId,
             userPrincipalName: (u.userPrincipalName as string) || "",
             displayName: (u.displayName as string) || "",
@@ -848,7 +851,7 @@ cloudConnectRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
           const azureId = g.id as string;
           const existing = await prisma.m365Group.findUnique({ where: { azureObjectId: azureId } });
           const data = {
-            integrationId: req.params.id,
+            integrationId,
             azureObjectId: azureId,
             displayName: (g.displayName as string) || "",
             description: (g.description as string) || null,
@@ -874,11 +877,11 @@ cloudConnectRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
         for (const s of subs) {
           const skuId = s.skuId as string;
           const existing = await prisma.m365Subscription.findFirst({
-            where: { integrationId: req.params.id, skuId },
+            where: { integrationId, skuId },
           });
           const prepaid = (s.prepaidUnits || {}) as Record<string, number>;
           const data = {
-            integrationId: req.params.id,
+            integrationId,
             skuId,
             skuPartNumber: (s.skuPartNumber as string) || "",
             displayName: `${(s.skuPartNumber as string) || ""} (${skuId})`,
@@ -920,13 +923,13 @@ cloudConnectRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
           await prisma.syncedEntity.upsert({
             where: {
               integrationId_entityType_externalId: {
-                integrationId: req.params.id,
+                integrationId,
                 entityType: key,
                 externalId: String(externalId),
               },
             },
             create: {
-              integrationId: req.params.id,
+              integrationId,
               entityKind: config.kind,
               entityType: key,
               externalId: String(externalId),
@@ -960,7 +963,7 @@ cloudConnectRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
 
     // Update integration status
     await prisma.integration.update({
-      where: { id: req.params.id },
+      where: { id: integrationId },
       data: { lastSyncAt: new Date(), status: result.success ? "connected" : "error", errorMessage: result.errors.length > 0 ? result.errors.join("; ") : null },
     });
 

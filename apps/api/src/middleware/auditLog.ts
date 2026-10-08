@@ -26,7 +26,7 @@ function extractEntity(path: string): string {
   // /api/kumo/passwords/abc123 → kumo_passwords
   // /api/users → users
   const parts = path.replace("/api/", "").split("/");
-  const base = parts[0]; // e.g. "tickets", "kumo", "users"
+  const base = parts[0] ?? "unknown"; // e.g. "tickets", "kumo", "users"
   if (parts.length >= 2 && base === "kumo") return `kumo_${parts[1]}`; // kumo_passwords
   if (parts.length >= 2 && base === "clients") return parts[1] === "contacts" ? "contact" : "company";
   if (parts.length >= 2 && base === "system" && parts[1] === "config") return "system_config";

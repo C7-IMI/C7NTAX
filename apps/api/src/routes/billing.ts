@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { canAccessCompany, companyWhere } from "../middleware/companyScope";
 import { Permission, InvoiceStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { routeParam } from "../middleware/routeParams";
 import { AGREEMENT_TYPES } from "../services/timeRules";
 import { pushExpense } from "../services/accountingSync";
 import { approveBatch, createBatch, invoiceBatchEnabled, previewBatch, rejectBatch } from "../services/billingBatch";
@@ -387,7 +388,7 @@ billingRouter.post("/invoices/:id/record-payment", requirePermission(Permission.
       data: { status: newStatus, paidAt: newStatus === InvoiceStatus.Paid ? new Date() : undefined },
     });
     await prisma.payment.create({
-      data: { invoiceId: req.params.id, amount, method: req.body.method || "other", reference: req.body.reference || "", processedAt: new Date() },
+      data: { invoiceId: routeParam(req, "id"), amount, method: req.body.method || "other", reference: req.body.reference || "", processedAt: new Date() },
     });
     res.json(updated);
   } catch (e) { next(e); }

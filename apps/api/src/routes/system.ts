@@ -121,7 +121,18 @@ systemRouter.get("/calendar-sync", requirePermission(Permission.SystemConfig), a
 });
 
 systemRouter.post("/calendar-sync", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
-  try { res.status(201).json(await prisma.calendarSyncConfig.create({ data: { userId: req.user!.userId, provider: req.body.provider, syncScheduleEntries: req.body.syncScheduleEntries ?? true, syncPto: req.body.syncPto ?? true } })); }
+  try {
+    const provider = String(req.body?.provider ?? "").trim();
+    if (!provider) { res.status(400).json({ error: "A calendar provider is required" }); return; }
+    res.status(201).json(await prisma.calendarSyncConfig.create({
+      data: {
+        userId: req.user!.userId,
+        provider,
+        syncScheduleEntries: req.body.syncScheduleEntries ?? true,
+        syncPto: req.body.syncPto ?? true,
+      },
+    }));
+  }
   catch (e) { next(e); }
 });
 
@@ -196,10 +207,11 @@ systemRouter.get("/config/:key", async (req: AuthRequest, res, next) => {
 
 systemRouter.patch("/config/:key", async (req: AuthRequest, res, next) => {
   try {
-    assertConfigAccess(req.user, String(req.params.key), "write");
+    const key = String(req.params.key ?? "");
+    assertConfigAccess(req.user, key, "write");
     const config = await prisma.systemConfig.upsert({
-      where: { key: req.params.key },
-      create: { key: req.params.key, value: JSON.stringify(req.body.value) },
+      where: { key },
+      create: { key, value: JSON.stringify(req.body.value) },
       update: { value: JSON.stringify(req.body.value) },
     });
     res.json({ key: config.key, value: JSON.parse(config.value as string) });
@@ -418,10 +430,14 @@ function parseBuildNotes(mdPath: string): VersionEntry[] {
 
   for (let i = 0; i < matches.length; i++) {
     const m = matches[i];
-    const version = m[1];
-    const title = m[2].trim();
+    // A header the pattern matched but that did not yield both groups is skipped rather than
+    // recorded with a hole in it — the reader is rendering released notes, and a half-read
+    // version is worse than a missing one.
+    const version = m?.[1];
+    const title = m?.[2]?.trim();
+    if (!m || !version || !title) continue;
     const headerEnd = (m.index ?? 0) + m[0].length;
-    const nextHeaderStart = i + 1 < matches.length ? matches[i + 1].index! : raw.length;
+    const nextHeaderStart = i + 1 < matches.length ? matches[i + 1]?.index ?? raw.length : raw.length;
 
     // Extract lines between this header and the next
     const body = raw.slice(headerEnd, nextHeaderStart);
@@ -432,15 +448,17 @@ function parseBuildNotes(mdPath: string): VersionEntry[] {
     let bm: RegExpExecArray | null;
     while ((bm = bulletRe.exec(body)) !== null) {
       const typeLabel = bm[1];
-      const text = bm[2].trim();
+      const text = bm[2]?.trim();
+      if (!typeLabel || !text) continue;
       const type = typeLabel === "New" ? "new" : typeLabel === "Update" ? "update" : "fix";
       changes.push({ text, type });
     }
 
     if (changes.length > 0 || title) {
       // Derive date from version: YYYY.M.D.BBB → YYYY-MM-DD
-      const parts = version.split(".");
-      const date = `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}`;
+      const [year, month, day] = version.split(".");
+      if (!year || !month || !day) continue;
+      const date = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
       versions.push({ version, date, title, changes });
     }
   }

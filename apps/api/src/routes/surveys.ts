@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { routeParam } from "../middleware/routeParams";
 export const surveysRouter = Router(); surveysRouter.use(authenticate);
 
 surveysRouter.get("/", requirePermission(Permission.SurveyView), async (_req: AuthRequest, res, next) => {
@@ -49,7 +50,7 @@ surveysRouter.get("/:id", requirePermission(Permission.SurveyView), async (req: 
 });
 
 surveysRouter.post("/:id/questions", requirePermission(Permission.SurveyManage), async (req: AuthRequest, res, next) => {
-  try { const q = await prisma.surveyQuestion.create({ data: { surveyId: req.params.id, text: req.body.text, type: req.body.type || "rating", required: req.body.required ?? true, sortOrder: req.body.sortOrder || 0, choices: req.body.choices || [] } }); res.status(201).json(q); }
+  try { const q = await prisma.surveyQuestion.create({ data: { surveyId: routeParam(req, "id"), text: req.body.text, type: req.body.type || "rating", required: req.body.required ?? true, sortOrder: req.body.sortOrder || 0, choices: req.body.choices || [] } }); res.status(201).json(q); }
   catch (e) { next(e); }
 });
 
@@ -57,7 +58,7 @@ surveysRouter.post("/:id/responses", requirePermission(Permission.SurveyView), a
   try {
     const { ticketId, answers, npsScore } = req.body;
     const resp = await prisma.surveyResponse.create({
-      data: { surveyId: req.params.id, ticketId: ticketId || null, companyId: req.user!.companyId, userId: req.user!.userId, npsScore: npsScore || null },
+      data: { surveyId: routeParam(req, "id"), ticketId: ticketId || null, companyId: req.user!.companyId, userId: req.user!.userId, npsScore: npsScore || null },
     });
     const submitted: { questionId: string; value: string }[] = answers || [];
     if (submitted.length) {

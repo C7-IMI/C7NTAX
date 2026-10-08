@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
+import { routeParam } from "../middleware/routeParams";
 
 export const contractsRouter = Router();
 contractsRouter.use(authenticate);
@@ -53,7 +54,7 @@ contractsRouter.get("/:id/milestones", requirePermission(Permission.BillingView)
 
 contractsRouter.post("/:id/milestones", requirePermission(Permission.BillingManage), async (req: AuthRequest, res, next) => {
   try {
-    const m = await prisma.contractMilestone.create({ data: { contractId: req.params.id, name: req.body.name, description: req.body.description || null, dueDate: new Date(req.body.dueDate), amount: req.body.amount || null } });
+    const m = await prisma.contractMilestone.create({ data: { contractId: routeParam(req, "id"), name: req.body.name, description: req.body.description || null, dueDate: new Date(req.body.dueDate), amount: req.body.amount || null } });
     res.status(201).json(m);
   } catch (e) { next(e); }
 });

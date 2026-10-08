@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { companyWhere, canAccessCompany } from "../middleware/companyScope";
+import { routeParam } from "../middleware/routeParams";
 
 export const projectsRouter = Router();
 projectsRouter.use(authenticate);
@@ -65,8 +66,8 @@ projectsRouter.get("/:id", requirePermission(Permission.TicketView), async (req:
 // Phases
 projectsRouter.post("/:id/phases", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    await projectForWrite(req, req.params.id, undefined);
-    const phase = await prisma.projectPhase.create({ data: { projectId: req.params.id, name: req.body.name, description: req.body.description || "", sortOrder: req.body.sortOrder || 0 } });
+    await projectForWrite(req, routeParam(req, "id"), undefined);
+    const phase = await prisma.projectPhase.create({ data: { projectId: routeParam(req, "id"), name: req.body.name, description: req.body.description || "", sortOrder: req.body.sortOrder || 0 } });
     res.status(201).json(phase);
   } catch (e) { next(e); }
 });
@@ -74,8 +75,8 @@ projectsRouter.post("/:id/phases", requirePermission(Permission.TicketEdit), asy
 // Tasks
 projectsRouter.post("/:projectId/phases/:phaseId/tasks", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    await projectForWrite(req, req.params.projectId, undefined);
-    const task = await prisma.projectTask.create({ data: { phaseId: req.params.phaseId, name: req.body.name, description: req.body.description || "", sortOrder: req.body.sortOrder || 0, estimatedHours: req.body.estimatedHours || null, assignedToId: req.body.assignedToId || null } });
+    await projectForWrite(req, routeParam(req, "projectId"), undefined);
+    const task = await prisma.projectTask.create({ data: { phaseId: routeParam(req, "phaseId"), name: req.body.name, description: req.body.description || "", sortOrder: req.body.sortOrder || 0, estimatedHours: req.body.estimatedHours || null, assignedToId: req.body.assignedToId || null } });
     res.status(201).json(task);
   } catch (e) { next(e); }
 });
@@ -95,7 +96,7 @@ projectsRouter.patch("/:projectId/tasks/:taskId", requirePermission(Permission.T
 // Dependencies
 projectsRouter.post("/tasks/:taskId/dependencies", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    const dep = await prisma.projectTaskDependency.create({ data: { taskId: req.params.taskId, dependsOnId: req.body.dependsOnId, type: req.body.type || "finish_to_start", lagMinutes: req.body.lagMinutes || 0 } });
+    const dep = await prisma.projectTaskDependency.create({ data: { taskId: routeParam(req, "taskId"), dependsOnId: req.body.dependsOnId, type: req.body.type || "finish_to_start", lagMinutes: req.body.lagMinutes || 0 } });
     res.status(201).json(dep);
   } catch (e) { next(e); }
 });
