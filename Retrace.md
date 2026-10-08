@@ -5906,3 +5906,16 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 **Notes for next time**
 - **A CI failure message names the layer above the real one.** "Unable to resolve action trivy-action@0.28.0" became "Unable to resolve setup-trivy@v0.2.1" once the first was fixed. Expect to fix a broken action twice, and read the second message rather than the first.
 - **Verify a shell step against the artifact, not the documentation.** The checksums file's format and the tarball's member list were both assumptions; both were wrong or unverified until downloaded. It cost two minutes and saved another red push.
+
+
+**Continued** (same request) — the secret scan's first-ever run, and what it found. BuildNotes **2026.10.8.036**.
+
+- **The scan worked, and CI reported the layer under the one I had fixed** — 144 `generic-api-key` matches. That is the outcome a working scanner is supposed to have on a repository nothing has ever scanned, and it is the reason the gate had to be made operational before its verdict could mean anything.
+- **Read every finding before allowing anything.** Downloaded the real gitleaks binary, ran it against this clone, and grouped the 103 local findings by file: 61 bcrypt hashes in the users snapshot, 26 ids in the Kumo access log, ciphertext fields in the vault snapshot, connector *field labels* in `cloudconnect.ts`, `clientSecret: "xxx"` in the seed fixtures, a route string and a `$ref` in the two documents, and Microsoft's **public** Graph client id in the setup script. **No live credential.** Each of those was read at the line, not inferred from the rule name.
+- **Chose the instrument deliberately, and changed my mind once.** The first attempt allowlisted one path and did not reduce the count at all — which sent me to look at *where* the findings actually were rather than assuming the path was wrong. That is how the four extra files surfaced, and it is why the config is content-scoped where the text is the reason and path-scoped only where the whole file is fixtures.
+- **Proved it in both directions locally rather than pushing and waiting**: 103 findings and exit 1 without the config, **no leaks and exit 0** with it, 718 commits scanned either way.
+
+**Notes for next time**
+- **A "leaks found" count is not a verdict.** 144 became "no live credential" only after reading the matched text; the same number could have meant something else entirely, and the difference is a person looking at each line.
+- **When an allowlist does not reduce the count, the diagnosis is usually that the findings are somewhere else** — not that the syntax is wrong. The `.*` control test (which *did* empty the report) is what separated those two possibilities in one run.
+- **The vault snapshot is the one finding with a real question behind it:** `apps/api/src/snapshots/kumo-passwords.json` is tracked, so the vault's ciphertext is in git and in 718 commits of history. Encryption makes it survivable, and the fix — stop capturing that table, or purge it — is the operator's call.

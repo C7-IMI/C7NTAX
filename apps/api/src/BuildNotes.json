@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.8.036",
+    "date": "2026-10-08",
+    "title": "The first secret scan this repository has ever had, and what it found (no live credential, 144 false positives)",
+    "changes": [
+      {
+        "text": "**`.gitleaks.toml`** — a reasoned allowlist, and the reasons were read before they were written. `.gitleaksignore` fingerprints were rejected as the instrument because the CI scan covers commits a local scan does not, so per-file reasons are what stay true across history.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**What the 144 were, verified rather than assumed:**",
+        "type": "Update"
+      },
+      {
+        "text": "**Scoped as narrowly as the scanner permits** — content matches (`regexes`) where the matched text *is* the reason, paths only where the whole file is fixtures. A future real secret in `docs/openapi.yaml` still fails the build, because the two documents are allowed by content rather than by path.",
+        "type": "Update"
+      },
+      {
+        "text": "**The gitleaks step works** after the filename/checksum correction in 2026.10.8.035: **verified locally in both directions** — `gitleaks detect` against 718 commits reports **103 leaks, exit 1** with no config, and **no leaks, exit 0** with this one.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.035",
     "date": "2026-10-08",
     "title": "The two CI fixes CI then told me were not fixed",

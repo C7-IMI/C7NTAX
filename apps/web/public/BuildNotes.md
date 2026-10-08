@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.035 | Last Updated: 2026-10-08
+## Version: 2026.10.8.036 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,25 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.036 — The first secret scan this repository has ever had, and what it found (no live credential, 144 false positives)
+
+The scans are the fix; the finding is the interesting part. **103 findings locally, 144 in CI, every one a `generic-api-key` false positive** — and they are now accepted **with reasons** rather than suppressed by a blanket rule, in a `.gitleaks.toml` scoped as tightly as the scanner allows.
+
+- **[New]** **`.gitleaks.toml`** — a reasoned allowlist, and the reasons were read before they were written. `.gitleaksignore` fingerprints were rejected as the instrument because the CI scan covers commits a local scan does not, so per-file reasons are what stay true across history.
+- **[Update]** **What the 144 were, verified rather than assumed:**
+  - **The fixture snapshots** — `users.json` is **bcrypt password hashes**, the Kumo access log is ids and timestamps, and the vault snapshot is `encryptedPassword`/`iv`/`authTag`, i.e. **AES-GCM ciphertext** that is worthless without the deployment's key (which is not in the repository).
+  - **`cloudconnect.ts`** — the connector *field labels*: `secret: "Proofpoint API secret from your admin console"`. Help text telling an administrator where to find a value.
+  - **`seed-full.ts`** — sample fixtures: `clientSecret: "xxx"`, `realmId: "1234567890"`.
+  - **The two documents** — a route string (`GET /api/nav/favorites`) and a JSON `$ref` (`#/components/responses/BadRequest`); the generic rule matches both.
+  - **`O365/New-C7NTAXMailboxApp.ps1`** — `14d82eec-204b-4c2f-b7e8-296a70dab67e`, which is **Microsoft's public Graph command-line client id**.
+  - **No live credential was found.** That is the conclusion of reading each one, and it is the sentence a secret scan should produce once rather than a green tick that means nothing.
+- **[Update]** **Scoped as narrowly as the scanner permits** — content matches (`regexes`) where the matched text *is* the reason, paths only where the whole file is fixtures. A future real secret in `docs/openapi.yaml` still fails the build, because the two documents are allowed by content rather than by path.
+- **[Fix]** **The gitleaks step works** after the filename/checksum correction in 2026.10.8.035: **verified locally in both directions** — `gitleaks detect` against 718 commits reports **103 leaks, exit 1** with no config, and **no leaks, exit 0** with this one.
+
+**One thing worth revisiting, and it is a posture decision rather than a bug:** the Kumo vault snapshot *is committed* — `apps/api/src/snapshots/kumo-passwords.json` carries the vault's ciphertext, because the snapshot poller captures that table like any other. Encryption is what makes it survivable; the honest fix is to stop capturing that table into a snapshot that lives in git, which is a product decision with a migration behind it (the file is in history). Flagged, allowed with a reason, and not forgotten.
 
 ---
 

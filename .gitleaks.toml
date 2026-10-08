@@ -1,0 +1,47 @@
+# gitleaks configuration.
+#
+# The first working run of this scan (2026-10-09: 164 Security Gate runs had failed before it, so
+# nothing had ever scanned this repository) reported 144 `generic-api-key` matches. Every one that
+# is allowed here was read first:
+#
+#   · `apps/api/src/snapshots/*`  — the fixture snapshots. `users.json` is bcrypt password hashes,
+#     the Kumo access log is ids and timestamps, and the vault snapshot is `encryptedPassword` /
+#     `iv` / `authTag` — AES-GCM ciphertext, useless without the deployment's key, which is not in
+#     the repository.
+#   · `cloudconnect.ts` — the connector *field labels*, e.g.
+#     `secret: "Proofpoint API secret from your admin console"`. Help text, not values.
+#   · `seed-full.ts` — sample fixtures: `clientSecret: "xxx"`, `realmId: "1234567890"`.
+#   · the two documents — a route string (`GET /api/nav/favorites`) and a JSON `$ref`
+#     (`#/components/responses/BadRequest`). `generic-api-key` matches both.
+#   · `O365/New-C7NTAXMailboxApp.ps1` — `14d82eec-204b-4c2f-b7e8-296a70dab67e`, which is Microsoft's
+#     *public* Graph command-line client id, not a secret.
+#
+# **No live credential was found.** These are accepted findings with reasons, in the same spirit as
+# `security/audit-baseline.json` for dependencies — scoped as narrowly as the scanner allows:
+# content matches where the text itself is the reason, paths only where the whole file is fixtures.
+# The one thing worth revisiting is the vault snapshot: committing it is a posture decision of its
+# own, tracked here because the snapshot poller captures that table like any other.
+title = "C7NTAX"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Snapshot fixtures and the encrypted Kumo vault: bcrypt hashes, ids and ciphertext, no plaintext credentials"
+paths = ['''apps/api/src/snapshots/.*''']
+
+[[allowlists]]
+description = "Connector credential labels — help text telling an administrator where to find a value"
+paths = ['''apps/api/src/routes/cloudconnect\.ts''']
+
+[[allowlists]]
+description = "Sample seed fixtures, including clientSecret \"xxx\""
+paths = ['''apps/api/src/seed-full\.ts''']
+
+[[allowlists]]
+description = "A route string and a JSON $ref, which the generic rule reads as keys"
+regexes = ['''GET /api/nav/favorites''', '''#/components/responses/BadRequest''']
+
+[[allowlists]]
+description = "Microsoft's public Graph command-line client id, quoted in the setup script"
+regexes = ['''14d82eec-204b-4c2f-b7e8-296a70dab67e''']
