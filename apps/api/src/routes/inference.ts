@@ -4,6 +4,9 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { AI_PROVIDER_SPECS, AI_RUNTIME_FIELDS, Permission, aiProviderSpec } from "@C7NTAX/shared";
 import { inferenceEngine, type InferenceOutput } from "../services/inference";
 import { listProviderModels, testProvider, type ProviderRecord } from "../services/inference";
+import { activeProviderRecord, providerRecordOf } from "../services/inference/LlmProvider";
+import { MAX_STEPS, runAssistant, stepsSummary } from "../services/ai/assistant";
+import { assistantToolCatalogue, assistantTools, assistantToolsFor } from "../services/ai/registry";
 import { AppError } from "../middleware/errorHandler";
 import { EgressError, assertSafeUrlLiteral } from "../services/egress";
 import { prisma } from "../index";
@@ -347,6 +350,104 @@ inferenceRouter.post("/providers/:id/deactivate", requirePermission(Permission.I
       data: { isActive: false, isDefault: false },
     });
     res.json({ success: true, provider: toSafeProvider(updated) });
+  } catch (e) { next(e); }
+});
+
+/**
+ * The assistant: a prompt, answered with the application's own functions.
+ *
+ * Gated on `inference:view` because it is a read of the same data the screens read — under the
+ * caller's own permissions, which the function registry enforces one call at a time. The model is
+ * the caller's configured connection, and it may only call functions if somebody ticked that
+ * connection's *May perform app functions* permission.
+ */
+inferenceRouter.post("/assist", requirePermission(Permission.InferenceView), async (req: AuthRequest, res, next) => {
+  try {
+    const prompt = typeof req.body?.prompt === "string" ? req.body.prompt.trim() : "";
+    if (!prompt) throw new AppError("A prompt is required", 400);
+    if (prompt.length > 4000) throw new AppError("That prompt is too long — keep it under 4000 characters", 400);
+
+    const provider = req.body?.providerId
+      ? await prisma.aiProviderConfig.findUnique({ where: { id: String(req.body.providerId) } })
+      : await activeProviderRecord();
+    if (!provider) {
+      throw new AppError("No model is connected. Connect one in CloudConnect → AI models and make it the model the application uses.", 409);
+    }
+    if (provider.provider === "local") {
+      throw new AppError("The local keyword engine cannot answer a prompt. Connect a model in CloudConnect → AI models.", 409);
+    }
+
+    const config = (provider.config as Record<string, unknown>) ?? {};
+    const caller = { userId: req.user!.userId, permissions: req.user!.permissions ?? [] };
+
+    const result = await runAssistant({
+      prompt,
+      record: providerRecordOf(provider),
+      caller,
+      db: prisma,
+      tools: assistantTools,
+      allowAppFunctions: config.appFunctions === true,
+      context: typeof req.body?.context === "string" && req.body.context.trim()
+        ? `Context supplied by the screen the question was asked from:\n${req.body.context.slice(0, 2000)}`
+        : undefined,
+    });
+
+    /*
+     * Who asked the model what, and which functions ran, belongs in the trail. Read functions can
+     * only ever return what the caller may already see, so the audit records the shape of the answer
+     * (which functions, how many, how many were refused) rather than copying client data into a log
+     * table with weaker rules. The prompt itself is kept because reviewing what people ask the model
+     * is the whole point of the entry.
+     */
+    try {
+      await prisma.auditLog.create({
+        data: {
+          action: "ai_assist",
+          entity: "ai_provider",
+          entityId: provider.id,
+          changes: {
+            prompt: prompt.slice(0, 500),
+            model: `${provider.provider}/${provider.model}`,
+            appFunctions: config.appFunctions === true,
+            functions: stepsSummary(result.steps),
+            steps: result.steps.length,
+            tokensUsed: result.tokensUsed,
+            stoppedBecause: result.stoppedBecause,
+          } as never,
+          userId: caller.userId,
+          ipAddress: req.ip || req.socket?.remoteAddress || null,
+        },
+      });
+    } catch { /* the answer was given either way; an audit write must not fail it */ }
+
+    res.json({
+      answer: result.answer,
+      steps: result.steps,
+      provider: result.provider,
+      model: result.model,
+      tokensUsed: result.tokensUsed,
+      modelCalls: result.modelCalls,
+      stoppedBecause: result.stoppedBecause,
+      detail: result.detail ?? null,
+      functionsOffered: config.appFunctions === true,
+    });
+  } catch (e) { next(e); }
+});
+
+// ── What the assistant can do, for the screen that prompts it ──
+inferenceRouter.get("/tools", requirePermission(Permission.InferenceView), async (req: AuthRequest, res, next) => {
+  try {
+    const permissions = req.user!.permissions ?? [];
+    res.json({
+      tools: assistantToolsFor({ userId: req.user!.userId, permissions }).map(tool => ({
+        name: tool.name,
+        kind: tool.kind,
+        permission: tool.permission,
+        description: tool.description,
+      })),
+      all: assistantToolCatalogue(),
+      maxSteps: MAX_STEPS,
+    });
   } catch (e) { next(e); }
 });
 

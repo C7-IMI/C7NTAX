@@ -1,5 +1,48 @@
 [
   {
+    "version": "2026.10.8.020",
+    "date": "2026-10-08",
+    "title": "The Assistant: a model that can look things up, under your permissions",
+    "changes": [
+      {
+        "text": "**Assistant** in the navigation (`/assistant`, `inference:view`): one prompt box, one answer, and a collapsible trace of the application's own functions that produced it. ⌘/Ctrl + Enter sends; the page says which model is answering and what it is permitted to do *before* the prompt, not after.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Ten app functions**, and the split between them is the design. **Reads** run immediately, under the caller's own session and gated on the same permission as the equivalent screen — find and inspect clients, search and open tickets, service status, connection health, the knowledge base, assets. **Proposals** do not write: `propose_ticket_note` and `propose_ticket` raise the risk-classified `AiAction` the AI Actions screen already reviews, so nothing changes until a person approves it. A model that can create a ticket directly is a model that can create a hundred while somebody reads the answer.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The permission is the session's, not the model's.** The functions offered are filtered by the caller's permissions, and each call is checked again when it happens — models do ask for functions they were never given, and a prompt can suggest one. A refusal says which permission was missing, and the model is told, so it says it could not look rather than inventing an answer.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Three limits, all load-bearing.** A fixed ceiling of six rounds of function calls (the answer says when it stopped early); a failed or refused function is returned to the model *as text* rather than thrown, so a question never ends in a 500 because one lookup was not allowed; and a database error inside a function becomes a failed step the model can see, not a crash.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`POST /api/inference/assist` and `GET /api/inference/tools`**, with `409` when no model is connected (naming where to connect one), `400` for an empty or oversized prompt, and `inference:view` as the gate because it is a read of the same data the screens read.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Every prompt is audited** — `ai_assist`, with the prompt, the model, whether functions were permitted, which functions ran and how the run ended. The functions' *results* are not recorded: copying client data into a log table would be a second copy of it under weaker rules.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`apps/api/probe-ai-assistant.mts` — 61 checks** with a scripted model against the real database: a function that does not exist and a function that exists but is not the caller's are refused differently; a caller with no permissions is offered nothing; the loop stops at its ceiling; a vendor that fails and a database that goes away are both reported and survived; switching app functions off offers the model nothing; and — the assertion that matters most — **a proposed note leaves the ticket with exactly as many notes as it had**, with the proposal pending for approval.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`apps/api/probe-ai-assistant-api.mts` — 32 checks** over HTTP: the gates (anonymous, and a persona without `inference:view`), the refusals (empty, oversized, nothing connected), the vendor's own failure carried through as a 200 with a failed outcome rather than a 500 — and the audit entry, which the probe then removes so it leaves no facts in the trail that nobody asked for.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Docs**: `openapi.yaml` regenerated (426 operations), `docs/API.md` §10 gained the assistant and the function contract, and Help has a walkthrough for it (how it runs as you, why nothing is changed by asking, and how to read the receipt).",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.019",
     "date": "2026-10-08",
     "title": "A model can be connected: eleven providers, in CloudConnect",

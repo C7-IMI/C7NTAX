@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.019 | Last Updated: 2026-10-08
+## Version: 2026.10.8.020 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,22 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.020 — The Assistant: a model that can look things up, under your permissions
+
+A connected model could answer from what it was told and nothing else. Now it can *use* the application: ask it what is going on with a client and it finds the client, reads their tickets, checks the service picture and answers — and underneath the answer is the receipt: every function it called, what it was asked, whether it was allowed, and how long it took.
+
+- **[New]** **Assistant** in the navigation (`/assistant`, `inference:view`): one prompt box, one answer, and a collapsible trace of the application's own functions that produced it. ⌘/Ctrl + Enter sends; the page says which model is answering and what it is permitted to do *before* the prompt, not after.
+- **[New]** **Ten app functions**, and the split between them is the design. **Reads** run immediately, under the caller's own session and gated on the same permission as the equivalent screen — find and inspect clients, search and open tickets, service status, connection health, the knowledge base, assets. **Proposals** do not write: `propose_ticket_note` and `propose_ticket` raise the risk-classified `AiAction` the AI Actions screen already reviews, so nothing changes until a person approves it. A model that can create a ticket directly is a model that can create a hundred while somebody reads the answer.
+- **[New]** **The permission is the session's, not the model's.** The functions offered are filtered by the caller's permissions, and each call is checked again when it happens — models do ask for functions they were never given, and a prompt can suggest one. A refusal says which permission was missing, and the model is told, so it says it could not look rather than inventing an answer.
+- **[New]** **Three limits, all load-bearing.** A fixed ceiling of six rounds of function calls (the answer says when it stopped early); a failed or refused function is returned to the model *as text* rather than thrown, so a question never ends in a 500 because one lookup was not allowed; and a database error inside a function becomes a failed step the model can see, not a crash.
+- **[New]** **`POST /api/inference/assist` and `GET /api/inference/tools`**, with `409` when no model is connected (naming where to connect one), `400` for an empty or oversized prompt, and `inference:view` as the gate because it is a read of the same data the screens read.
+- **[New]** **Every prompt is audited** — `ai_assist`, with the prompt, the model, whether functions were permitted, which functions ran and how the run ended. The functions' *results* are not recorded: copying client data into a log table would be a second copy of it under weaker rules.
+- **[New]** **`apps/api/probe-ai-assistant.mts` — 61 checks** with a scripted model against the real database: a function that does not exist and a function that exists but is not the caller's are refused differently; a caller with no permissions is offered nothing; the loop stops at its ceiling; a vendor that fails and a database that goes away are both reported and survived; switching app functions off offers the model nothing; and — the assertion that matters most — **a proposed note leaves the ticket with exactly as many notes as it had**, with the proposal pending for approval.
+- **[New]** **`apps/api/probe-ai-assistant-api.mts` — 32 checks** over HTTP: the gates (anonymous, and a persona without `inference:view`), the refusals (empty, oversized, nothing connected), the vendor's own failure carried through as a 200 with a failed outcome rather than a 500 — and the audit entry, which the probe then removes so it leaves no facts in the trail that nobody asked for.
+- **[Update]** **Docs**: `openapi.yaml` regenerated (426 operations), `docs/API.md` §10 gained the assistant and the function contract, and Help has a walkthrough for it (how it runs as you, why nothing is changed by asking, and how to read the receipt).
 
 ---
 

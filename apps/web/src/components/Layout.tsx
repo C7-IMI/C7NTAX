@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
-  AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio,
+  AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio, Bot,
   MonitorSmartphone, Mail, KeyRound,
   Star, StarOff, Link2, AppWindow, SquareArrowOutUpRight, ChevronsUpDown, ChevronsDownUp, ChevronUp,
   type LucideIcon,
@@ -87,6 +87,7 @@ export const NAV_TREE: NavNode[] = [
     ],
   },
   { id: "kb", to: "/kb", icon: BookOpen, label: "Knowledge Base", permission: Permission.KBView },
+  { id: "assistant", to: "/assistant", icon: Bot, label: "Assistant", permission: Permission.InferenceView },
   {
     id: "kumo", icon: Database, label: "Kumo", permission: Permission.KumoView, children: [
       { id: "kumo-dashboard", to: "/kumo", icon: LayoutDashboard, label: "Dashboard" },
@@ -276,6 +277,7 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/service-alerts/monitors": "Website, SSL-expiry and DNS checks on targets you name: a failure raises a Service Alert.",
   "/quotes": "Quote a piece of work from the product catalog and track it to acceptance.",
   "/ai-actions": "Risk-classified AI proposals awaiting review, and the record of what was approved.",
+  "/assistant": "Ask the connected model a question, and see which of the application's own functions it used to answer.",
   "/admin/boards": "Manage service boards, SLA policies, email connectors, and automations.",
   "/admin/system": "This instance's operational state, its deployment facts, and a signpost to every setting.",
   "/admin/logs": "View cumulative audit trail and track all changes across the system.",

@@ -544,6 +544,30 @@ than presented as fact, because a key scoped to one project cannot see every mod
 `inference:manage` connects, tests, edits, activates and removes. The whole module is gated
 together, so a persona without `inference:view` gets 403 rather than a partial view.
 
+### Asking it something
+
+```bash
+POST /api/inference/assist
+{ "prompt": "What is going on with Contoso this week?", "context": "optional text from the screen you asked from" }
+# → { answer, steps, provider, model, tokensUsed, modelCalls, stoppedBecause, functionsOffered }
+```
+
+`GET /api/inference/tools` returns the functions the caller may be offered, plus the whole catalogue
+and the step ceiling. The run is a loop: the model may call functions, is given their results, and
+answers when it is done — up to a fixed number of rounds, after which the answer says it stopped.
+
+- **The functions run as the caller**, each gated on the permission its screen is gated on, so a key
+  or a session can never see through the assistant what it could not open directly.
+- **Reads run; writes propose.** A function that would change data raises the same risk-classified
+  `AiAction` that `/api/ai-actions` reviews. Nothing is written until a person approves it.
+- **`steps` is the receipt**: each function's name, its arguments, whether it ran, its own one-line
+  summary and how long it took. A refused call appears there rather than silently disappearing.
+- **The connection must permit it.** `config.appFunctions` on the provider decides whether functions
+  are offered at all; `409` means no model is connected, and the message says where to connect one.
+- **Every prompt is audited** (`ai_assist`, with the prompt, the model, which functions ran and how
+  the run ended) — the functions' *results* are not, because copying client data into a log table
+  would be a second copy of it under weaker rules.
+
 ## 11. Outbound webhooks — C7NTAX telling you
 
 The reverse direction exists too: register an endpoint and C7NTAX will POST to it when a monitored

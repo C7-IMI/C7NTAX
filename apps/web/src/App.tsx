@@ -58,7 +58,7 @@ import { MonitorsPage } from "./pages/Monitors";
 import { WebhooksPage } from "./pages/Webhooks";
 import { SingleSignOnPage } from "./pages/SingleSignOn";
 import { AiActionsPage } from "./pages/AiActions";
-import { HelpPage } from "./pages/Help";
+import { AssistantPage } from "./pages/Assistant";import { HelpPage } from "./pages/Help";
 import { HelpGettingStarted, HelpFaq, HelpConfiguration, HelpIndex, HelpWalkthrough } from "./pages/HelpDoc";
 import { UI_KUMO_ORGS } from "./lib/uiFlags";
 import { ChecklistsPage } from "./pages/Checklists";
@@ -119,6 +119,7 @@ function ProtectedRoutes() {
         <Route path="/admin/webhooks" element={<WebhooksPage />} />
         <Route path="/admin/sso" element={<SingleSignOnPage />} />
         <Route path="/ai-actions" element={<AiActionsPage />} />
+        <Route path="/assistant" element={<AssistantPage />} />
         <Route path="/admin/service-alerts" element={<ServiceAlertsSettingsPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />
         <Route path="/projects" element={<ProjectsPage />} />

@@ -59,7 +59,7 @@ tags:
   - name: "Flexpoint"
     description: "7 operations"
   - name: "Inference"
-    description: "13 operations"
+    description: "15 operations"
   - name: "Inventory"
     description: "8 operations"
   - name: "Knowledge base"
@@ -3065,6 +3065,20 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/inference/assist":
+    post:
+      tags: ["Inference"]
+      operationId: "postInferenceassist"
+      summary: "Create or act on inference/assist"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["inference:view"]
+      x-source: "inference.ts · inferenceRouter.post"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
   "/api/inference/patterns":
     get:
       tags: ["Inference"]
@@ -3269,6 +3283,20 @@ paths:
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["inference:view"]
       x-source: "inference.ts · inferenceRouter.post"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/inference/tools":
+    get:
+      tags: ["Inference"]
+      operationId: "getInferencetools"
+      summary: "Read inference/tools"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["inference:view"]
+      x-source: "inference.ts · inferenceRouter.get"
       responses:
         "200": { description: "OK" }
         "400": { $ref: "#/components/responses/BadRequest" }
@@ -7155,5 +7183,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 59 of 424 operations carry a curated summary from docs/api-operations.json;
+# 59 of 426 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

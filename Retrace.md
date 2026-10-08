@@ -5377,3 +5377,41 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **`AiProviderConfig.config` is a Json column and takes `Prisma.InputJsonValue`**: a built `Record<string, unknown>` needs the cast, and the config bag must be *merged* rather than replaced or an edit wipes the last test result the operator is looking at.
 - **Part two of this prompt is the assistant** — the tool-calling loop, the app-function registry, and the screen that prompts it. The seam is in place: three dialects, tool-call parsing, and the per-connection permission.
 
+
+---
+
+### Prompt 264 (part two) — The Assistant: a model that performs app functions
+
+**Timestamp:** 2026-10-08 13:35 | **Status:** Complete | **Duration:** ~55 min
+
+**BuildNotes IDs:** **2026.10.8.020** — "The Assistant: a model that can look things up, under your permissions"
+
+**Prompt**
+
+> I want you add/enable connectors for code auth configurations for Claude, Deepseek, Grok, OpenAI, etc. We want to be able to connect a model to the application to have it perform app functions via prompt. This would live in CloudConnect.
+
+**What I did**
+- **Built the function registry as the feature, not a garnish on it.** Ten functions, and the split is the whole design: eight **reads** (clients, client overview, ticket search, ticket detail, service status, connection health, knowledge base, assets) that run immediately under the caller's own session, and two **proposals** (`propose_ticket_note`, `propose_ticket`) that raise the existing risk-classified `AiAction` instead of writing. The alternative — a model with a `create_ticket` function — is a model that can create a hundred tickets while somebody reads the answer.
+- **Made the permission the session's.** Each function declares the permission its screen requires; the offered list is filtered by the caller's permissions, and every call is checked again at execution, because models do ask for functions they were never given. A refusal names the missing permission, and the model is told in the tool result, so it says it could not look rather than making something up.
+- **Wrote the loop with three limits.** A ceiling of six rounds (the answer says when it stopped early), failures returned to the model as text rather than thrown — a refused lookup must not turn a harmless question into a 500 — and a database error inside a function recorded as a failed step.
+- **Passed the database client in instead of importing it.** `tools.ts` takes a `PrismaClient` rather than importing `prisma` from the API's entry point, because importing that module starts a server and four workers as a side effect. It cost a small signature change and bought a probe that exercises the real functions against the real database with a scripted model — the strongest verification available without a vendor key.
+- **Made the refusal message tell the truth about *which* refusal.** Initially the assistant only knew the caller's filtered slice, so "not permitted" and "no such function" produced the same sentence. The loop now receives the whole registry and offers a filtered view of it, so a trace says either "not permitted: needs servicealert:view" or "no function is called delete_everything" — one is a security fact, the other is a model inventing things.
+- **Built the screen around the receipt.** The Assistant page (`/assistant`, in the nav for anyone with `inference:view`) puts the model and its permissions above the prompt, and under the answer shows every function that ran — name, arguments, allowed or refused, duration — because that list is the difference between an answer you can check and one you cannot. The empty state points at CloudConnect; a vendor failure is shown with the vendor's own words and where to test the connection, not as a red toast.
+- **Audited the prompt, not the data.** `ai_assist` records the prompt, the model, whether functions were permitted, which functions ran and how the run ended — deliberately not what they returned, because an audit table full of client data is a second copy of it with weaker rules.
+- **Verified against a scripted model and against the live route.** `probe-ai-assistant.mts` (61 checks, real database, scripted model): the two kinds of refusal, a caller with no permissions offered nothing, the step ceiling, a throwing database, app functions switched off, and the assertion that matters most — a proposed note leaves the ticket with exactly as many notes as before, with the proposal pending. `probe-ai-assistant-api.mts` (32 checks): the gates, the 400s, the 409 with no model connected, a real DeepSeek call with a probe key coming back as a 200 with the vendor's 401 rather than a 500, and the audit entry it then removes.
+- **Verified in the browser**: the nav entry, the status card naming DeepSeek and the six-round ceiling, the function list (10 functions, 2 of them proposals), and a real prompt rendering "The model did not answer" with the vendor's `401 — Authentication Fails` and the way to fix it.
+
+**Decisions worth remembering**
+- **Reads execute, writes propose.** This is the line that makes the feature safe enough to ship: the worst a compromised or confused model can do is propose something a person has to approve, and the proposal carries its own audit trail.
+- **The model is never the authority on what the caller may see.** It is told what it may call; it is *checked* when it calls. Those are different mechanisms and both exist.
+- **A trace is part of the answer.** Without the receipt, a confident paragraph about a client is unverifiable; with it, every fact has a function behind it or it does not belong in the answer.
+- **The prompt is auditable, the results are not.** Logging what people ask the model is the point; logging what the model read is a copy of the data with weaker rules.
+- **Off by default, per connection.** `May perform app functions` is a permission on the connection, so a model can be connected and answering questions without being able to touch anything.
+
+**Notes for next time**
+- **The answer path with a real vendor is still unverified end to end** — there is no API key for any provider in this environment, so the live checks prove everything up to the vendor's door (request shape, auth header, the vendor's own 401) and the scripted probe proves the loop. One real key would close that gap; the DeepSeek probe already confirms the address and header reach the vendor.
+- **`prisma` cannot be imported from a probe**: `services/inference/LlmProvider.ts` and the routes import it from `../index`, which starts the API. The assistant's services avoid that on purpose; keep it that way for anything a probe needs to import.
+- **User names are `firstName` + `lastName`**, and a stale-looking Prisma type error usually means one bad `select` field turning the whole result into its scalar shape — fix the field, not the ten follow-on errors.
+- **The probe cleanup removed 17 stale `Persona probe provider` rows** that `probe-permissions.mjs` leaves behind (all `provider: "local"`, inactive, never callable). If that probe is ever tidied up, it should delete what it creates.
+- **The sandbox has no vendor keys**, so the AI models tab and the Assistant both show their refusal paths in this environment by design — which is why the copy for those states is written as a sentence with a way forward rather than an error.
+

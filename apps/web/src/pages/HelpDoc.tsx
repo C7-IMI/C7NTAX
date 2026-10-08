@@ -323,6 +323,8 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
       { kind: "h", text: "AI" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
+        ["The Assistant: prompting the model, and what it may look up", "/help/walkthroughs/assistant"],
+        ["Connecting a model (Claude, GPT, Gemini, DeepSeek, Grok, local)", "/help/walkthroughs/cloudconnect"],
         ["AI Actions (risk-classified)", "/help/walkthroughs/ai-actions"],
         ["Drafting a knowledge base article from a ticket", "/help/walkthroughs/knowledge-base"],
       ] },
@@ -574,6 +576,33 @@ export const HELP_SECTIONS: HelpSection[] = [
     ],
     related: [
       { label: "Service Alerts", to: "/help/walkthroughs/service-alerts" },
+      { label: "Help Index", to: "/help/index" },
+    ],
+  },
+  {
+    id: "assistant", group: "walkthroughs",
+    path: "/help/walkthroughs/assistant",
+    title: "The Assistant",
+    description: "Ask the connected model a question, and see which of the application's own functions it used to answer it.",
+    blocks: [
+      { kind: "p", text: "The Assistant answers questions about what is in C7NTAX — a client's week, the tickets behind a complaint, which service is having an incident, what the knowledge base already says about a problem. The model does not know any of that by itself: it looks it up through this application's own functions, which is why the answer can be checked." },
+      { kind: "h", text: "It runs as you" },
+      { kind: "p", text: "Every function runs under your session and needs the same permission its screen does, so a question can never return something you could not have opened yourself. If the assistant is asked for something you may not see, the function is refused and the refusal is shown in the trace — the model is told, so it says so rather than guessing. The connection itself has a switch, **May perform app functions**: with it off, the model answers only from what you type." },
+      { kind: "h", text: "Nothing is changed by asking" },
+      { kind: "p", text: "Functions that would change data are **proposals**. Ask for a note to be added and the assistant raises a risk-classified proposal under **AI Actions** — nothing is written until a person approves it, and the note on the ticket has not changed in the meantime. Reads run immediately; writes wait for a decision, always." },
+      { kind: "h", text: "The receipt under the answer" },
+      { kind: "steps", items: [
+        "Connect a model in CloudConnect → AI models, and make it the model the application uses.",
+        "Open Assistant and ask a question. ⌘/Ctrl + Enter sends it.",
+        "Read the answer, then read **What it looked up**: each function it called, what it was asked, whether it was allowed, and how long it took.",
+        "Open a function's row to see the exact arguments. A refused or failed call is shown because it tells you what the answer could not have known.",
+        "Anything proposed is waiting under AI Actions. Nothing has been changed by asking.",
+      ] },
+      { kind: "note", text: "The question, the model, and the functions that ran are written to the audit trail — not what they returned, because copying client data into a log table would be a second copy of it under weaker rules. Prompts leave your network for whichever vendor the connection names, which is why the connection says so: it is the model vendor's terms, not this application's, that apply to what you type. A question is answered in at most a fixed number of rounds of looking things up, and the answer says so when it hits that ceiling." },
+    ],
+    related: [
+      { label: "CloudConnect integrations", to: "/help/walkthroughs/cloudconnect" },
+      { label: "AI Actions (risk-classified)", to: "/help/walkthroughs/ai-actions" },
       { label: "Help Index", to: "/help/index" },
     ],
   },
