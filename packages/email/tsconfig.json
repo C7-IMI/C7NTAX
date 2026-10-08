@@ -1,8 +1,20 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "outDir": "./dist"
+    /*
+     * No `rootDir`, and that is the fix rather than an omission.
+     *
+     * The root config maps `@C7NTAX/*` to the sibling packages' **source**, so typechecking this package
+     * pulls `packages/shared/src/**` into the program — and a `rootDir` of `./src` then makes every one of
+     * those files an error (`TS6059: File … is not under 'rootDir'`). 149 of them, at one point.
+     *
+     * The two ways out were to point the sibling import at its built declarations, which would make `lint`
+     * depend on `build` having run first, or to let the compiler work out the common root itself. The API
+     * already does the latter and lints clean, so this is the same shape as the rest of the repository
+     * rather than a second convention: the resolution is against source everywhere, and nothing here reads
+     * `dist` — `main` and `types` both name `./src/index.ts`.
+     */
   },
   "include": ["src"]
 }
