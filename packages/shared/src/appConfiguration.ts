@@ -102,6 +102,8 @@ export interface ConfigRequirementSpec {
    */
   providedBy?: "oidcProvider";
   detail: string;
+  /** Where to go to satisfy it, when there is a screen that can. */
+  link?: { label: string; to: string };
   /** Only relevant while the named boolean field in this section is on. */
   whenField?: string;
 }
@@ -233,6 +235,7 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         whenField: "sso",
         detail:
           "Single sign-on needs an issuer URL and a client id. Configure them at Administration → Single Sign-On, or supply SSO_ISSUER and SSO_CLIENT_ID to the deployment.",
+        link: { label: "Open Single Sign-On", to: "/admin/sso" },
       },
     ],
     fields: [

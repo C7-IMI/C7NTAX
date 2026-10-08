@@ -63,6 +63,10 @@ export interface RenderedRequirement {
   env: string[];
   missing: string[];
   met: boolean;
+  /** How it is satisfied: by the deployment's environment, or by something configured in the app. */
+  satisfiedBy?: "environment" | "application" | null;
+  /** A screen that can satisfy it, when one exists. */
+  link?: { label: string; to: string } | null;
   whenField: string | null;
   applies: boolean;
 }
@@ -132,14 +136,24 @@ export function RequirementBanner({ requirement }: { requirement: RenderedRequir
   const ok = requirement.met;
   return (
     <div className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm ${
-      ok ? "border-surface-border bg-surface-lighter/40 text-gray-400" : "border-amber-500/30 bg-amber-500/5 text-amber-200"
+      ok ? "border-surface-border bg-surface-light text-gray-400" : "border-amber-500/30 bg-amber-500/5 text-amber-200"
     }`}>
       {ok ? <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-400" /> : <AlertTriangle size={16} className="mt-0.5 shrink-0" />}
       <div className="min-w-0">
-        <p className="font-medium">{requirement.label}{ok ? " — provided" : " — not provided"}</p>
+        <p className="font-medium">
+          {requirement.label}
+          {ok
+            ? requirement.satisfiedBy === "application" ? " — provided by this application's configuration" : " — provided"
+            : " — not provided"}
+        </p>
         <p className="text-xs mt-0.5 text-gray-400">{requirement.detail}</p>
         {!ok && requirement.missing.length > 0 && (
           <p className="text-xs mt-1 font-mono text-amber-300/90">{requirement.missing.join(", ")}</p>
+        )}
+        {requirement.link && (
+          <Link to={requirement.link.to} className="inline-flex items-center gap-1 text-xs mt-1.5 text-cyber-400 hover:text-cyber-300">
+            {requirement.link.label} <ChevronRight size={12} />
+          </Link>
         )}
       </div>
     </div>

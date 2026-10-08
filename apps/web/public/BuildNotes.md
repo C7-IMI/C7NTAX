@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.042 | Last Updated: 2026-10-07
+## Version: 2026.10.7.043 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,22 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.043 — Single sign-on is configured in the application, not only in the environment
+
+**Single sign-on (OIDC)** was a switch in Sessions & Security with nothing behind it: the provider lived in environment variables only, `SSO_ENABLED` was read straight from the process, and the `SsoConfig` rows the API exposed were storage nothing consulted. Turning the switch on in the UI changed nothing, and there was nowhere to put an issuer, a client id or the redirect URI to register at the provider. There is now a screen for it, and the handshake obeys it.
+
+- **[New]** **Administration → Single Sign-On.** One screen for the provider — the issuer URL, the client id and the write-only client secret, the scopes, the redirect URI to register at the provider (with a copy button) — and for who may sign in: the email domains to accept, whether an unknown identity gets an account on first sign-in, whether that account may be used straight away, and the role it starts with. **Check the provider** reads the issuer's discovery document and lists the endpoints it publishes, so nothing else has to be typed by hand; **Check the saved provider** re-reads it and counts the signing keys it publishes — the step a handshake fails on last, rather than first.
+- **[New]** **The configuration is stored in the application, and wins over the deployment's environment.** `SSO_ISSUER`, `SSO_CLIENT_ID`, `SSO_CLIENT_SECRET` and `SSO_REDIRECT_URI` still work, so a deployment configured the old way behaves exactly as it did; a provider saved on this screen takes precedence, so a deployment configured both ways is predictable rather than a coin toss. The client secret is never handed back to a browser — only whether one is saved.
+- **[Update]** **Who may sign in is enforced, not merely stored.** Only addresses in the configured domains are accepted, whatever the provider vouches for; an unknown identity is created only when that is allowed, and an address nobody has vouched for is refused with what to do about it. A provisioned account stays inactive unless it is allowed to be used straight away. **An administrator role is never handed to an identity this deployment has never seen** — not automatically, and not as the role a new account is created with: such a configuration is ignored and the account waits at the least privilege for an administrator to look at it.
+- **[Update]** **The switch and the provider are two separate questions, answered separately.** Sessions & Security owns *whether* sign-in is offered and the Single Sign-On screen writes that same stored setting — so the two can never disagree — while the screen reports whether the provider is *complete*, and says which of the two is missing rather than a single "off".
+- **[Fix]** **The requirement banner on Sessions & Security is no longer wrong.** It claimed the requirement could only be met by the deployment's environment and offered no way to meet it. It now reports whether the requirement is satisfied by the environment or by this application's own configuration, and links straight to the screen that can satisfy it.
+- **[Fix]** **The redirect URI is no longer judged as an outbound request.** It is where the provider sends the browser back — the server never fetches it — but it was validated against the egress address policy, which refused the application's own default on any development deployment (`http://localhost:3010/api/auth/sso/oidc/callback`), leaving the field unsaveable. Only its shape is checked now; the issuer, which *is* fetched, keeps the full policy.
+- **[Update]** **Help follows:** a new **Single Sign-On (OIDC)** walkthrough covers registering the application at the provider, each field, who may sign in, what a first sign-in does step by step, and a troubleshooting table of the failures you actually meet; the identity walkthrough's SSO steps no longer tell you to ask the deployment to set environment variables, and the `SSO_ENABLED` row in the configuration reference points at the screen.
+
+Verified by `apps/api/probe-sso-oidc.mjs` — a stub identity provider on loopback (discovery, authorization, token and JWKS endpoints, signing a real RS256 ID token) driving the handshake end to end: 50/50 checks, including that the stored provider beats the environment, that the secret is never returned, that an administrator role is refused by the route and ignored by provisioning, that domains are enforced case-insensitively, that provisioning off refuses an unknown identity without leaving an account behind, and that switching sign-in off stops the handshake being started. The screen itself was driven in a browser: 11/11 checks, and the saved provider row and toggle were removed afterwards.
 
 ---
 

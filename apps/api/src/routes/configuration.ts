@@ -131,7 +131,7 @@ configurationRouter.get(
       const choices = await dynamicChoices();
       const visible = CONFIG_SECTIONS.filter(section => has(req, Permission.SystemConfig) || has(req, section.readPermission));
 
-      const sections = visible.map(section => ({
+      const sections = await Promise.all(visible.map(async section => ({
         id: section.id,
         label: section.label,
         summary: section.summary,
@@ -156,13 +156,14 @@ configurationRouter.get(
             missing: met ? [] : missing,
             met,
             satisfiedBy: missing.length === 0 ? "environment" : providedOk ? "application" : null,
+            link: requirement.link ?? null,
             whenField: requirement.whenField ?? null,
             // A requirement is only worth reporting while the feature that needs it is on.
             applies: requirement.whenField ? configValue(section.id, requirement.whenField) === true : true,
           };
         })),
         fields: section.fields.map(field => renderField(section, field, choices, req)),
-      }));
+      })));
 
       res.json({ loaded: settingsLoaded(), sections });
     } catch (e) { next(e); }

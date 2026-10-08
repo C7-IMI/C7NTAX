@@ -54,6 +54,7 @@ import { ServiceAlertsSettingsPage } from "./pages/ServiceAlertsSettings";
 import { QuotesPage } from "./pages/Quotes";
 import { MonitorsPage } from "./pages/Monitors";
 import { WebhooksPage } from "./pages/Webhooks";
+import { SingleSignOnPage } from "./pages/SingleSignOn";
 import { AiActionsPage } from "./pages/AiActions";
 import { HelpPage } from "./pages/Help";
 import { HelpGettingStarted, HelpFaq, HelpConfiguration, HelpIndex, HelpWalkthrough } from "./pages/HelpDoc";
@@ -114,6 +115,7 @@ function ProtectedRoutes() {
         <Route path="/service-alerts" element={<ServiceAlertsPage />} />
         <Route path="/service-alerts/monitors" element={<MonitorsPage />} />
         <Route path="/admin/webhooks" element={<WebhooksPage />} />
+        <Route path="/admin/sso" element={<SingleSignOnPage />} />
         <Route path="/ai-actions" element={<AiActionsPage />} />
         <Route path="/admin/service-alerts" element={<ServiceAlertsSettingsPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />

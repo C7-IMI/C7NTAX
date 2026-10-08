@@ -8,7 +8,7 @@ import {
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
   AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio,
-  MonitorSmartphone, Mail,
+  MonitorSmartphone, Mail, KeyRound,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
@@ -42,6 +42,7 @@ export const NAV_TREE: NavNode[] = [
   {
     id: "administration", icon: Shield, label: "Administration", children: [
       { id: "admin-configuration", to: "/admin/configuration", icon: Settings, label: "Configuration", permission: Permission.SystemConfig },
+      { id: "admin-sso", to: "/admin/sso", icon: KeyRound, label: "Single Sign-On", permission: Permission.SecurityManage },
       { id: "admin-portal", to: "/admin/portal", icon: Globe, label: "Customer Portal", permission: Permission.ClientView },
       { id: "admin-boards", to: "/admin/boards", icon: Columns3, label: "Service Boards", permission: Permission.BoardManage },
       { id: "admin-service-alerts", to: "/admin/service-alerts", icon: AlertTriangle, label: "Service Alerts", permission: Permission.ServiceAlertManage },
@@ -208,6 +209,7 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/admin/configuration": "Every setting the application reads, where its value comes from, and what changing it affects.",
   "/admin/portal": "Whether customers have a portal, what it lets them see and do, and which clients may use it.",
   "/admin/webhooks": "Outbound endpoints that receive alert events, with their delivery log.",
+  "/admin/sso": "Sign in through your identity provider, and who is allowed to do so.",
   "/service-alerts/monitors": "Website, SSL-expiry and DNS checks on targets you name: a failure raises a Service Alert.",
   "/quotes": "Quote a piece of work from the product catalog and track it to acceptance.",
   "/ai-actions": "Risk-classified AI proposals awaiting review, and the record of what was approved.",

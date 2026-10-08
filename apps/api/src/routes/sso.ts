@@ -44,6 +44,24 @@ async function roleChoices() {
   }));
 }
 
+/**
+ * The redirect URI is where the browser is sent back to, and is never fetched by the server, so
+ * the egress address policy does not apply to it — refusing `http://localhost:3010/...` would make
+ * the default this application generates unsaveable on any development deployment. Only its shape
+ * is checked.
+ */
+function assertRedirectUri(value: string): void {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new AppError(`"${value}" is not a valid URL`, 400);
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new AppError(`A redirect URI must be http or https (got ${url.protocol.replace(":", "")})`, 400);
+  }
+}
+
 async function fetchDiscovery(issuer: string): Promise<DiscoveryDocument> {
   let base: string;
   try {
@@ -119,11 +137,14 @@ ssoRouter.put("/oidc", MANAGE, async (req: AuthRequest, res, next) => {
     }
 
     const redirectUri = typeof body.redirectUri === "string" && body.redirectUri.trim() ? body.redirectUri.trim() : defaultRedirectUri();
-    try { assertSafeUrlLiteral(redirectUri); }
-    catch (e) { throw new AppError(e instanceof EgressError ? e.message : "The redirect URI is not usable", 400); }
+    assertRedirectUri(redirectUri);
 
-    const domains = Array.isArray(body.domains)
-      ? [...new Set(body.domains.map((d: unknown) => String(d).trim().replace(/^@/, "").toLowerCase()).filter(Boolean))]
+    const domains: string[] = Array.isArray(body.domains)
+      ? [...new Set<string>(
+          (body.domains as unknown[])
+            .map((d) => String(d).trim().replace(/^@/, "").toLowerCase())
+            .filter(Boolean),
+        )]
       : [];
     const malformed = domains.find((d) => !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(d));
     if (malformed) throw new AppError(`"${malformed}" does not look like a domain`, 400);

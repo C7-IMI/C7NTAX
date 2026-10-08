@@ -50,8 +50,9 @@ async function jwksKey(issuer: string, kid: string): Promise<string> {
 }
 
 async function verifyIdToken(idToken: string, issuer: string, clientId: string): Promise<{ sub: string; email?: string; name?: string; preferred_username?: string; aud?: string | string[] }> {
-  const header = JSON.parse(Buffer.from(idToken.split(".")[0], "base64url" as BufferEncoding).toString());
-  const key = await jwksKey(issuer, header.kid);
+  const [encodedHeader = ""] = idToken.split(".");
+  const header = JSON.parse(Buffer.from(encodedHeader, "base64url" as BufferEncoding).toString()) as { kid?: string };
+  const key = await jwksKey(issuer, header.kid ?? "");
   const payload = (jwt.verify as any)(idToken, key, { algorithms: ["RS256"], issuer }) as { sub: string; email?: string; name?: string; preferred_username?: string; aud?: string | string[] };
   if (Array.isArray(payload.aud) ? !payload.aud.includes(clientId) : payload.aud !== clientId) throw new Error("Invalid audience");
   return payload;
@@ -132,13 +133,20 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
       // administrator. The role comes from the configuration, and an administrator decides whether
       // it may be used straight away — a privileged role never activates itself, whatever the
       // configuration says, because that would be a way to mint an admin from the login page.
-      const role = (settings.defaultRoleId ? await prisma.role.findUnique({ where: { id: settings.defaultRoleId } }) : null)
+      // A privileged role is not even handed to an account the deployment has never seen: a
+      // configuration naming one is ignored here, and the account waits at the least privilege for
+      // an administrator to review it and set the role deliberately.
+      const privileged = (role: { systemRole: string } | null) =>
+        role?.systemRole === "admin" || role?.systemRole === "super_admin";
+      const configured = settings.defaultRoleId
+        ? await prisma.role.findUnique({ where: { id: settings.defaultRoleId } })
+        : null;
+      const role = (privileged(configured) ? null : configured)
         ?? await prisma.role.findFirst({ where: { systemRole: "read_only" } })
         ?? await prisma.role.findFirst({ where: { systemRole: "client_user" } })
         ?? await prisma.role.findFirst({ where: { systemRole: "technician" } });
       if (!role) return res.status(500).json({ error: "No role available for a new SSO user" });
-      const privileged = role.systemRole === "admin" || role.systemRole === "super_admin";
-      const activate = settings.autoActivate && !privileged;
+      const activate = settings.autoActivate && !privileged(role);
       const created = await prisma.user.create({
         data: {
           email,
@@ -157,10 +165,10 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
       console.log(`[SSO] Provisioned ${email} on first sign-in as ${role.name}.`);
       user = await prisma.user.findUnique({ where: { id: created.id }, include: { role: true } });
     }
+    if (!user) return res.status(500).json({ error: "User provisioning failed" });
     if (!user.isActive) {
       return res.status(403).json({ error: "Your account is inactive — ask an administrator to enable it" });
     }
-    if (!user) return res.status(500).json({ error: "User provisioning failed" });
     const token = signToken({ id: user.id, email: user.email, role: (user.role?.systemRole ?? "read_only") as SystemRole, tokenVersion: user.tokenVersion });
     // The token itself must not travel in a URL (browser history, proxy logs, morgan), so
     // the redirect carries a single-use code that the sign-in page swaps for the token in
