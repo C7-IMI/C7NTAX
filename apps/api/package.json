@@ -32,7 +32,6 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@C7NTAX/billing": "workspace:*",
     "@C7NTAX/email": "workspace:*",
     "@C7NTAX/integrations": "workspace:*",
     "@C7NTAX/shared": "workspace:*",

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.045 | Last Updated: 2026-10-08
+## Version: 2026.10.8.046 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,43 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.046 — The dead billing package is gone, and both gates pass for the first time
+
+`pnpm lint` failed on `@C7NTAX/email` and `@C7NTAX/billing` with `TS6059 — File … is not under 'rootDir'`, one
+error per file of `@C7NTAX/shared`. Fixing that turned out to be the easy half: underneath it, one of the two
+packages had never worked at all.
+
+- **[Fix]** **The `rootDir` shape, in both packages.** The root config resolves `@C7NTAX/*` to the sibling
+  packages' **source**, so typechecking `email` or `billing` pulls `packages/shared/src/**` into the program —
+  and a `rootDir` of `./src` then makes every one of those files an error. The API already had the answer
+  (no `rootDir`), so both packages now match it rather than introducing a second convention.
+- **[Fix]** **`packages/billing` was dead code, and it is removed.** With the config error gone, the package
+  reported **27 real type errors** — `ServiceAgreement.services`, `Invoice.number`, `taxTotal`, `clientName`,
+  `EmailService.sendInvoiceEmail` — every one a name the schema or the email service no longer has. Nothing in
+  the repository imported it: no file anywhere referenced `@C7NTAX/billing`, and it was listed as a dependency
+  of `apps/api` where it was never used. It was also the **sole reason `pnpm build` failed**, so the build task
+  has been broken for as long as it has existed in this shape. The 361 lines across `BillingEngine.ts`,
+  `InvoicePdf.ts` and `index.ts` are in git if the decision is ever reversed.
+- **[Update]** The unused dependency is gone from `apps/api`, the `@C7NTAX/billing` path mapping from the root
+  `tsconfig.json`, and the lockfile no longer carries the package or its 124 transitive dependencies (pdfkit,
+  handlebars and their trees). Nothing imports those either — checked before removing them.
+- **[Update]** The API's own invoicing, billing and batch-billing routes are untouched: they are where the
+  capability actually lives, they are covered by the billing probes, and they never depended on this package.
+
+**Verification:** `pnpm lint` — **6 of 6 tasks successful** (it was 3 of 7, with both packages failing).
+`pnpm build` — **6 of 6 successful** (it was failing on `@C7NTAX/billing#build` with 3 of 6 done).
+`GET /api/health` answers `{"status":"ok","version":"1.0.0"}` and the web app returns 200 after the 124
+packages were pruned, so nothing was depending on them transitively.
+
+**Found and reported, not changed:** `apps/api` has the same source-resolution shape as the two packages
+fixed here, so its build emits a mirrored tree (`apps/api/dist/apps/api/src/index.js`) while its
+`"start": "node dist/index.js"` names a file that build does not produce. Nothing in the repository runs
+`start` — production runs `src` through tsx — so it is latent rather than live, and correcting it is a
+decision about how production starts (a real emit with project references, or a `start` that names what is
+produced) rather than a lint fix.
 
 ---
 

@@ -20,7 +20,6 @@
       "@C7NTAX/shared": ["./packages/shared/src"],
       "@C7NTAX/shared/*": ["./packages/shared/src/*"],
       "@C7NTAX/email": ["./packages/email/src"],
-      "@C7NTAX/billing": ["./packages/billing/src"],
       "@C7NTAX/integrations": ["./packages/integrations/src"]
     }
   },

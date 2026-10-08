@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.8.046",
+    "date": "2026-10-08",
+    "title": "The dead billing package is gone, and both gates pass for the first time",
+    "changes": [
+      {
+        "text": "**The `rootDir` shape, in both packages.** The root config resolves `@C7NTAX/*` to the sibling",
+        "type": "Fix"
+      },
+      {
+        "text": "**`packages/billing` was dead code, and it is removed.** With the config error gone, the package",
+        "type": "Fix"
+      },
+      {
+        "text": "The unused dependency is gone from `apps/api`, the `@C7NTAX/billing` path mapping from the root",
+        "type": "Update"
+      },
+      {
+        "text": "The API's own invoicing, billing and batch-billing routes are untouched: they are where the",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.045",
     "date": "2026-10-08",
     "title": "The console's output reads like a record, and the pop-up can be sized",
