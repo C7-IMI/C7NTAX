@@ -12,5 +12,73 @@
     "lastSyncedAt": "2026-08-19T16:15:29.037Z",
     "createdAt": "2026-08-19T16:15:29.037Z",
     "updatedAt": "2026-08-19T16:15:29.037Z"
+  },
+  {
+    "id": "d26ba70e-2fc4-470f-8efb-c1d5d2aafe9a",
+    "integrationId": "34947c13-9511-455a-9c6a-8c24061724df",
+    "entityKind": "flexpoint",
+    "entityType": "customers",
+    "externalId": "1001",
+    "displayName": "Northwind Traders",
+    "data": {
+      "id": "1001",
+      "zip": "75201",
+      "city": "Dallas",
+      "name": "Northwind Traders",
+      "email": "ap@northwind.test",
+      "state": "TX",
+      "customerId": 1001,
+      "displayName": "Northwind Traders",
+      "externalUri": "3dfccd58-22a5-43ed-bf2c-6575f6852ad4"
+    },
+    "linkedContactId": null,
+    "linkedCompanyId": "3dfccd58-22a5-43ed-bf2c-6575f6852ad4",
+    "lastSyncedAt": "2026-10-08T07:15:34.282Z",
+    "createdAt": "2026-10-08T07:15:34.259Z",
+    "updatedAt": "2026-10-08T07:15:34.284Z"
+  },
+  {
+    "id": "8a465601-f050-4356-910e-0b54b84416e6",
+    "integrationId": "34947c13-9511-455a-9c6a-8c24061724df",
+    "entityKind": "flexpoint",
+    "entityType": "customers",
+    "externalId": "1002",
+    "displayName": "Contoso Ltd",
+    "data": {
+      "id": "1002",
+      "zip": "98101",
+      "city": "Seattle",
+      "name": "Contoso Ltd",
+      "email": "billing@contoso.test",
+      "state": "WA",
+      "customerId": 1002,
+      "displayName": "Contoso Ltd",
+      "externalUri": null
+    },
+    "linkedContactId": null,
+    "linkedCompanyId": null,
+    "lastSyncedAt": "2026-10-08T07:15:34.283Z",
+    "createdAt": "2026-10-08T07:15:34.261Z",
+    "updatedAt": "2026-10-08T07:15:34.285Z"
+  },
+  {
+    "id": "6e81ae00-ed19-487c-bd18-158917c42814",
+    "integrationId": "34947c13-9511-455a-9c6a-8c24061724df",
+    "entityKind": "flexpoint",
+    "entityType": "deposits",
+    "externalId": "5001",
+    "displayName": "2026-10-05",
+    "data": {
+      "id": "5001",
+      "amount": 1250.5,
+      "datePaid": "2026-10-05",
+      "payoutId": 5001,
+      "displayName": "2026-10-05"
+    },
+    "linkedContactId": null,
+    "linkedCompanyId": null,
+    "lastSyncedAt": "2026-10-08T07:15:34.285Z",
+    "createdAt": "2026-10-08T07:15:34.263Z",
+    "updatedAt": "2026-10-08T07:15:34.287Z"
   }
 ]

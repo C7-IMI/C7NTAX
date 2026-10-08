@@ -3,7 +3,14 @@ export type { IntegrationConfig, SyncResult, IntegrationKind } from "./types";
 export type { IIntegrationAdapter } from "./IAdapter";
 
 // Re-export individual adapters for direct use or extension
-export { FlexpointAdapter } from "./adapters/FlexpointAdapter";
+export { FlexpointAdapter, FLEXPOINT_RESOURCES } from "./adapters/FlexpointAdapter";
+export type {
+  FlexpointRecord,
+  FlexpointInvoiceInput,
+  FlexpointInvoiceLine,
+  FlexpointInvoiceStatus,
+  FlexpointResourceKey,
+} from "./adapters/FlexpointAdapter";
 export { QuickBooksAdapter } from "./adapters/QuickBooksAdapter";
 export { Pax8Adapter } from "./adapters/Pax8Adapter";
 export { AvananAdapter } from "./adapters/AvananAdapter";

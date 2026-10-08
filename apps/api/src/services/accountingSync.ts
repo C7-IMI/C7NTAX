@@ -14,6 +14,7 @@
 import { prisma } from "../index";
 import { safeFetch, assertSafeUrlLiteral } from "./egress";
 import { logger } from "./logger";
+import { pushInvoiceToFlexpoint, readOptions } from "./flexpoint";
 
 /** Providers that can receive billing records. */
 const ACCOUNTING_KINDS = ["quickbooks", "flexpoint"] as const;
@@ -127,6 +128,9 @@ export async function pushInvoice(invoice: {
   total: number;
   lineItems?: { description: string; quantity: number; unitPrice: number; total: number }[];
 }): Promise<PushResult> {
+  const viaApi = await pushInvoiceViaFlexpointApi(invoice.id);
+  if (viaApi) return viaApi;
+
   const company = await prisma.company.findUnique({ where: { id: invoice.companyId }, select: { name: true } });
   return postToAccounting("invoicePushUrl", {
     reference: invoice.id,
@@ -141,8 +145,30 @@ export async function pushInvoice(invoice: {
   }, "invoice");
 }
 
-/** Whatever the integration was configured with, as request headers. */
-function authHeaders(settings: Record<string, unknown>): Record<string, string> {
+/**
+ * The push through FlexPoint's own merchant API.
+ *
+ * Returns null when FlexPoint is not the accounting target, or when pushing is switched off for
+ * it, so every other provider — and a FlexPoint connection that has not been allowed to write —
+ * still goes down the configured-URL path below. When it does run it creates the invoice in
+ * FlexPoint with its line items and keeps the id, which is what later lets a settled payment be
+ * recorded against the local invoice.
+ */
+async function pushInvoiceViaFlexpointApi(invoiceId: string): Promise<PushResult | null> {
+  const integration = await accountingIntegration();
+  if (!integration || integration.kind !== "flexpoint") return null;
+  if (!readOptions(integration.settings).pushInvoices) return null;
+
+  const outcome = await pushInvoiceToFlexpoint(invoiceId);
+  return {
+    pushed: outcome.pushed,
+    reason: outcome.reason,
+    externalId: outcome.flexpointInvoiceId,
+    externalSystem: "flexpoint",
+  };
+}
+
+/** Whatever the integration was configured with, as request headers. */function authHeaders(settings: Record<string, unknown>): Record<string, string> {
   const headers: Record<string, string> = {};
   if (typeof settings.expensePushToken === "string" && settings.expensePushToken) {
     headers.authorization = `Bearer ${settings.expensePushToken}`;

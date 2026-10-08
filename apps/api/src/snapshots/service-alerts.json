@@ -504,6 +504,20 @@
     "updatedAt": "2026-10-07T21:49:27.042Z"
   },
   {
+    "id": "fe70399f-b63c-45d6-b86a-728b8e9ba3d5",
+    "serviceId": "dd78254f-41ec-4b2e-a4d5-45c213ee4e64",
+    "title": "DeepSeek 网页/API 性能下降（DeepSeek Web/API Degraded Performance）",
+    "description": "Auto-resolved: DeepSeek 网页/API 性能下降（DeepSeek Web/API Degraded Performance）\n\n&lt;p&gt;&lt;strong&gt;Status:&lt;/strong&gt; investigating&lt;/p&gt;&lt;p&gt;正在排查问题，以定位原因。&#xA;&#xA;The issue is being investigated to identify the cause.&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Affected components:&lt;/strong&gt; DeepSeek V4.1 Flash API服务(API Service), 对话服务(Chatservice)&lt;/p&gt;",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://status.deepseek.com/incidents/7086651324287",
+    "detectedAt": "2026-10-08T07:08:53.411Z",
+    "resolvedAt": "2026-10-08T07:13:33.157Z",
+    "createdAt": "2026-10-08T07:08:53.413Z",
+    "updatedAt": "2026-10-08T07:13:33.158Z"
+  },
+  {
     "id": "59f1cbb1-7683-4ffe-9f95-29ca677e4609",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Partially Degraded Service",

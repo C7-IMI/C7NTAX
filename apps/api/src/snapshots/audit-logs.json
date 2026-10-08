@@ -210846,5 +210846,472 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T06:51:39.745Z"
+  },
+  {
+    "id": "b0263283-c7f5-497c-b32d-52bcb09b5594",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (verification)",
+      "settings": {
+        "syncDeposits": false,
+        "syncInvoices": false,
+        "syncCustomers": true
+      },
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:03:36.939Z"
+  },
+  {
+    "id": "83de5712-bf92-4d3a-a2a9-412a3f8a03a2",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "8bc4266b-3f3b-4807-942c-a5f8fd338491",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:03:37.167Z"
+  },
+  {
+    "id": "1af02afd-b95d-400f-9f7d-21ede9de4826",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "8bc4266b-3f3b-4807-942c-a5f8fd338491",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:03:37.250Z"
+  },
+  {
+    "id": "9c9c1dfb-01b5-497c-8180-dc0460db502e",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "8bc4266b-3f3b-4807-942c-a5f8fd338491",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:03:37.262Z"
+  },
+  {
+    "id": "dd6ff067-7511-4736-a920-f2595c8c057d",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (verification)",
+      "settings": {
+        "syncDeposits": false,
+        "syncInvoices": false,
+        "syncCustomers": true
+      },
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:04:05.776Z"
+  },
+  {
+    "id": "fb9454d4-22ce-436a-87d9-f166e9da4fda",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "52d1f711-3096-42d2-a070-14aa727818ef",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:04:06.044Z"
+  },
+  {
+    "id": "f2f0ef20-f7b8-429d-a281-51cf26120fad",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "52d1f711-3096-42d2-a070-14aa727818ef",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:04:06.134Z"
+  },
+  {
+    "id": "a705ae36-18f2-43f7-93f2-19491f0cbe5f",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "52d1f711-3096-42d2-a070-14aa727818ef",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:04:06.142Z"
+  },
+  {
+    "id": "68a220ed-42a2-4af3-a56b-2057d997476a",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (dialog check)",
+      "settings": {
+        "pageSize": 50,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true
+      },
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:04:27.854Z"
+  },
+  {
+    "id": "3da1fc69-8ff4-4253-82c9-7644956d2536",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (dialog check)",
+      "settings": {
+        "pageSize": 50,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true
+      },
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:04:43.398Z"
+  },
+  {
+    "id": "5dd7c529-bd0d-41fe-96af-e4a5b5d77f76",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "7fb70529-dad4-411f-88d5-99ab95b60b20",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:04:48.012Z"
+  },
+  {
+    "id": "4188d706-e72b-4239-af6b-6f2416537317",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "fcc7c263-115c-43e2-b6f8-270c88d83695",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:04:48.016Z"
+  },
+  {
+    "id": "459eb37f-c8f1-4338-a01b-55ffa44a1bf6",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (dialog check)",
+      "settings": {
+        "pageSize": 50,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true
+      },
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:05:06.900Z"
+  },
+  {
+    "id": "bad398c7-499f-4c06-9082-d3edbca60370",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "36cd7412-5ad1-4ed9-9fbb-9a1bf90b2d87",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:05:11.500Z"
+  },
+  {
+    "id": "3c7927ad-ce41-4955-83a3-01a5395fdd51",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (verification)",
+      "settings": {
+        "syncDeposits": false,
+        "syncInvoices": false,
+        "syncCustomers": true
+      },
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:00.150Z"
+  },
+  {
+    "id": "f45fee53-f80d-4317-92a3-bbd92bd23e3f",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "5eb05595-6b83-4251-b840-c076ebf49222",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:00.558Z"
+  },
+  {
+    "id": "12565dc1-027c-4fac-b6a5-9ff43af8afc4",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "5eb05595-6b83-4251-b840-c076ebf49222",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:00.636Z"
+  },
+  {
+    "id": "4aa5d7d1-b2c4-46b1-a0da-520f8b3d08f2",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "5eb05595-6b83-4251-b840-c076ebf49222",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:00.649Z"
+  },
+  {
+    "id": "d9a6313b-838c-49f4-9ee1-4a0fff233c52",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (verification)",
+      "settings": {
+        "syncDeposits": false,
+        "syncInvoices": false,
+        "syncCustomers": true
+      },
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:12.679Z"
+  },
+  {
+    "id": "976b1a80-f2ea-4b53-974e-0517a771db55",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "530e39ec-9748-4d70-b5fa-3f1562920296",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:12.926Z"
+  },
+  {
+    "id": "e0150ae2-eec2-472b-99eb-247fa9517af0",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "530e39ec-9748-4d70-b5fa-3f1562920296",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:13.020Z"
+  },
+  {
+    "id": "4ef7a627-40e8-41f9-afd9-e673ac97ba8f",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "530e39ec-9748-4d70-b5fa-3f1562920296",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:13.046Z"
+  },
+  {
+    "id": "5c39c956-ede7-41cb-9713-cb616c22bb14",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (verification)",
+      "settings": {
+        "syncDeposits": false,
+        "syncInvoices": false,
+        "syncCustomers": true
+      },
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:44.892Z"
+  },
+  {
+    "id": "e5e697d8-b5ca-4b2a-8e41-1f4d599ddbd7",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "d0265a75-94b5-4bbd-b7b9-1dcd5d5e1033",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:45.200Z"
+  },
+  {
+    "id": "90ba1666-1029-4e37-bacd-43a1af6716b5",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "d0265a75-94b5-4bbd-b7b9-1dcd5d5e1033",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:45.301Z"
+  },
+  {
+    "id": "67d25308-fce5-4f6e-8612-00ea8eab285b",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "d0265a75-94b5-4bbd-b7b9-1dcd5d5e1033",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:08:45.315Z"
+  },
+  {
+    "id": "dc3672cc-9260-4524-893e-c80bca14282f",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Northwind Traders",
+      "email": "ap@northwind.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:34.188Z"
+  },
+  {
+    "id": "6476f8b8-b283-41bc-8816-c56076dc67df",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (stub verification)",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:34.192Z"
+  },
+  {
+    "id": "a48cacc7-6561-4d82-beba-632b0051a29f",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 100,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Posted",
+        "pushInvoices": true,
+        "syncInvoices": true,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": false
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:34.211Z"
+  },
+  {
+    "id": "92ac1784-5217-48fd-89e0-812f5da7380e",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:34.276Z"
+  },
+  {
+    "id": "7bd4de53-9557-47a4-acf2-b14f0164e507",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:34.295Z"
+  },
+  {
+    "id": "d5bd6842-04c8-4964-850d-d3d438877d0b",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "3dfccd58-22a5-43ed-bf2c-6575f6852ad4",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:34.327Z"
+  },
+  {
+    "id": "dadc8408-a895-46d4-a53e-93f52707a24a",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "34947c13-9511-455a-9c6a-8c24061724df",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:34.349Z"
   }
 ]

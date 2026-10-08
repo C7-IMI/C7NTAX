@@ -6,6 +6,7 @@ import { IntegrationHub } from "@C7NTAX/integrations";
 import type { IntegrationConfig } from "@C7NTAX/integrations";
 import { AppError } from "../middleware/errorHandler";
 import { liveStatusEnabled, noteManualVerification, verifyDueIntegrations } from "../services/integrationHealth";
+import { syncFlexpoint } from "../services/flexpoint";
 import { inactivityReport, offboardUser } from "../services/m365Inactivity";
 
 export const cloudConnectRouter = Router();
@@ -416,6 +417,18 @@ cloudConnectRouter.post("/:id/sync", requirePermission(Permission.IntegrationVie
     const config = await loadConfig(req.params.id!);
     const adapter = hub.getAdapter(config.kind);
     if (!adapter) throw new AppError(`Unknown integration kind: ${config.kind}`, 400);
+
+    /*
+     * FlexPoint has a service of its own (services/flexpoint.ts) that goes further than the generic
+     * path below: it links synced customers to clients, and can record the settled payments of
+     * invoices this application pushed. Persisting the same records in two places would be the way
+     * those two screens start disagreeing, so the route hands the work over rather than doing it
+     * again here. The summary it returns is a superset of this route's own shape.
+     */
+    if (config.kind === "flexpoint") {
+      res.json(await syncFlexpoint(req.params.id!));
+      return;
+    }
 
     // Create sync log
     const log = await prisma.syncLog.create({

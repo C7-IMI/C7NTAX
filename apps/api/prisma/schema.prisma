@@ -631,6 +631,12 @@ model Invoice {
   lastFollowUpAt   DateTime?
   nextFollowUpAt   DateTime?
 
+  /// Set when this invoice was pushed to FlexPoint's merchant API (PLAN-023 follow-on work).
+  /// It is what makes the push idempotent and what lets a settled FlexPoint payment be recorded
+  /// against this invoice without a second guess at which invoice it belongs to.
+  flexpointInvoiceId String?
+  flexpointPushedAt  DateTime?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
