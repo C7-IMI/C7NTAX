@@ -204,7 +204,7 @@ export const AI_PROVIDER_SPECS: AiProviderSpec[] = [
     chatPath: "/messages",
     modelsPath: "/models",
     credentials: [
-      keyField("console.anthropic.com → API keys. Claude keys start with sk-ant- and are shown once. The required anthropic-version header is added by C7NTAX; you do not have to send it."),
+      keyField("platform.claude.com → Settings → API keys. Claude keys start with sk-ant- and are shown once. The required anthropic-version header is added by C7NTAX; you do not have to send it."),
     ],
     shortlist: ["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5", "claude-fable-5-1"],
     defaultModel: "claude-sonnet-5-5",

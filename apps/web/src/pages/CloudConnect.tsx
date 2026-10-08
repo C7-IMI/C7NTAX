@@ -6,11 +6,12 @@ import { useAuth } from "../hooks/useAuth";
 import {
   Plus, Plug, RefreshCw, Trash2, Key, Settings,
   ShieldCheck, Globe, Server, Cloud, CreditCard, FileText, Database,
-  PlugZap, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users, Info, ExternalLink,
+  PlugZap, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users, Info, ExternalLink, Bot,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { EmailConnectorsPanel } from "../components/EmailConnectorsPanel";
+import { AiModelsPanel } from "../components/AiModelsPanel";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { DataSourceNote } from "../components/DataSourceNote";
@@ -189,6 +190,10 @@ export function CloudConnectPage() {
   const [liveStatus, setLiveStatus] = useState<Record<string, LiveStatusRow>>({});
   const [inactivity, setInactivity] = useState<InactivityReport | null>(null);
   const [showInactive, setShowInactive] = useState(false);
+  const [modelStatus, setModelStatus] = useState<{
+    connected: boolean; providerLabel: string | null; model: string | null; name: string | null;
+    appFunctions: boolean; counts: { total: number; active: number };
+  } | null>(null);
 
   /** The add-connection flow, so the page can be scrolled to it when it opens. */
   const addFlowRef = useRef<HTMLDivElement>(null);
@@ -201,7 +206,7 @@ export function CloudConnectPage() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [intRes, typeRes, statusRes, inactivityRes] = await Promise.all([
+      const [intRes, typeRes, statusRes, inactivityRes, modelRes] = await Promise.all([
         api.get("/cloudconnect"),
         api.get("/cloudconnect/types"),
         // Live health is verified server-side on a throttle, so this poll is cheap however
@@ -209,12 +214,16 @@ export function CloudConnectPage() {
         api.get("/cloudconnect/status").catch(() => null),
         // Only useful once an M365 tenant is connected; a refusal just hides the panel.
         api.get("/cloudconnect/m365/inactivity").catch(() => null),
+        // Which model the application is using. A role without inference:view is refused, and the
+        // summary simply does not appear — the connections below are the point of this screen.
+        api.get("/inference/status").catch(() => null),
       ]);
       setIntegrations(intRes.data?.data || []);
       setTypes(typeRes.data?.types || []);
       const rows: LiveStatusRow[] = statusRes?.data?.data || [];
       setLiveStatus(Object.fromEntries(rows.map(r => [r.id, r])));
       setInactivity(inactivityRes?.data?.clients ? inactivityRes.data : null);
+      setModelStatus(modelRes?.data ?? null);
     } catch { /* silent — avoid toast storms on poll */ }
     finally { setLoading(false); }
   }, []);
@@ -457,7 +466,7 @@ export function CloudConnectPage() {
    *   · Configuration  — credentials, settings, sync history and synced records for one connection.
    *   · Email          — the mailbox connectors, which are their own thing with their own runtime.
    */
-  type Tab = "connected" | "add" | "configure" | "email";
+  type Tab = "connected" | "add" | "configure" | "email" | "ai";
   const [tab, setTab] = useState<Tab>("connected");
   const [configuring, setConfiguring] = useState<string | null>(null);
   const [configCredentials, setConfigCredentials] = useState<Record<string, string>>({});
@@ -525,6 +534,7 @@ export function CloudConnectPage() {
     { id: "connected", label: "Connected", count: integrations.length },
     { id: "add", label: "Add a connector" },
     { id: "configure", label: "Configuration" },
+    { id: "ai", label: "AI models", count: modelStatus?.counts?.total },
     { id: "email", label: "Email connectors" },
   ];
 
@@ -579,6 +589,22 @@ export function CloudConnectPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {/* The one catalogue entry that is not a data connector: a model is called when
+                      somebody asks it something, and it is configured on its own tab. */}
+                  <button onClick={() => { setShowAdd(false); setSelectedType(null); setTab("ai"); }}
+                    className="card hover:border-cyber-500/30 transition-colors text-left p-4 cursor-pointer group border-cyber-500/20">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-cyber-600/10 group-hover:bg-cyber-600/20 transition-colors">
+                        <Bot size={18} className="text-cyber-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white font-medium text-sm truncate">AI models</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          Claude, GPT, Gemini, DeepSeek, Grok and any OpenAI-compatible endpoint
+                        </p>
+                      </div>
+                    </div>
+                  </button>
                   {types.map(t => {
                     const Icon = IconFor(t.kind);
                     return (
@@ -699,6 +725,8 @@ export function CloudConnectPage() {
 
       {/* Email connectors (IMAP → tickets) — their own runtime, their own tab. */}
       {tab === "email" ? <EmailConnectorsPanel /> : null}
+
+      {tab === "ai" ? <AiModelsPanel /> : null}
 
       {/* ═══ Configuration ═══ */}
       {tab === "configure" ? (
@@ -956,6 +984,24 @@ export function CloudConnectPage() {
       {/* ═══ Connected ═══ */}
       {tab === "connected" ? (
         <>
+      {/* The model is part of "what is connected", and the summary screen is where somebody looks
+          to find out. One line, and a way through to the tab that configures it. */}
+      <div className="card flex items-start gap-3">
+        <div className={`p-2 rounded-lg ${modelStatus?.connected ? "bg-emerald-600/10" : "bg-surface-lighter"}`}>
+          <Bot size={18} className={modelStatus?.connected ? "text-emerald-400" : "text-gray-500"} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-white">AI model</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {modelStatus?.connected
+              ? `${modelStatus.providerLabel ?? ""}${modelStatus.model ? ` · ${modelStatus.model}` : ""} — ${modelStatus.name ?? "connected"}${modelStatus.appFunctions ? ", allowed to call application functions" : ""}.`
+              : "No model connected: ticket suggestions use keyword search over resolved tickets, and nothing can answer a prompt."}
+          </p>
+        </div>
+        <button onClick={() => setTab("ai")} className="btn-secondary text-xs shrink-0">
+          {modelStatus?.connected ? "Manage models" : "Connect a model"}
+        </button>
+      </div>
       {/* Integration List */}
       {(
         loading ? <PageSkeleton /> :

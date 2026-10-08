@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.018 | Last Updated: 2026-10-08
+## Version: 2026.10.8.019 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,24 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.019 — A model can be connected: eleven providers, in CloudConnect
+
+The application could already use a model — ticket suggestions, knowledge-base drafts — but only if you had hand-built a provider row through an API that knew about five providers, two of which were hard-coded branches in the request builder. Now a model is a **connection**: CloudConnect → **AI models** offers Claude, GPT, Gemini, DeepSeek, Grok, Mistral, OpenRouter, Groq, Azure OpenAI, a local Ollama server, and any endpoint that speaks the OpenAI API, and connecting one is the whole setup.
+
+- **[New]** **CloudConnect → AI models.** A tab of its own, because a model connection is not a data connector: nothing is read on a schedule, and the credentials are the entire configuration. Each provider's dialog asks only for what that vendor needs, says where the key comes from, links to that vendor's own API reference, and explains what the connection will and will not do with your data.
+- **[New]** **One catalogue, shared.** The provider catalogue lives in `@C7NTAX/shared` and drives both sides: the fields the dialog asks for, the addresses, the authentication styles, the request and reply shapes. A field the dialog offers is a field the engine reads, and adding a vendor is a catalogue entry rather than a branch — which is what the old code got wrong, twice, for two vendors.
+- **[Update]** **Three dialects instead of two.** OpenAI-style chat completions, Anthropic's Messages API (content blocks, `tool_use`/`tool_result`, a required version header) and Gemini's `generateContent` (model in the address, `contents`/`parts`, `functionCall`/`functionResponse`) — and all three now speak tool calling, which is the seam the assistant needs. Authentication follows the vendor: `Authorization: Bearer`, `x-api-key`, `api-key` or `x-goog-api-key`, with the connection able to override it for a gateway.
+- **[Fix]** **The stored address is a base URL, and always was meant to be.** The seeded OpenAI connection held `https://api.openai.com/v1`, and the old code posted *to that address* — a call that fails at the vendor with nothing that names the cause. Addresses are now resolved as base + chat path, leaving an address alone when it already contains the path, tolerating a trailing slash, and filling in Azure's resource/deployment/api-version template.
+- **[New]** **Test connection now asks the vendor, and remembers the answer.** It reads the model list (one GET, which proves the key and reports how many models it can see) and falls back to the smallest possible completion for providers that cannot be listed. Failures carry the vendor's own words — `401 — Incorrect API key provided`, not "something went wrong" — and the result is stored on the connection, so the screen and the assistant's errors do not have to repeat the call to know it.
+- **[New]** **The model list is the vendor's, and says so.** `GET /inference/providers/{id}/models` returns `{ models, source, detail, shortlist }`: `provider` when the vendor answered, `cached` for the last answer, and `shortlist`/`unavailable` when it could not be asked. The names this build knows are labelled as suggestions rather than presented as fact — model names age faster than anything else in this catalogue.
+- **[New]** **Use this model for the application**, one power button: it sets *active* and *default* together, because a connection that can be tested and never called is a state nobody asks for, and it refuses a connection that has no key. `GET /inference/status` is what screens read to say which model is in use.
+- **[New]** **`May perform app functions`, per connection and off by default.** The permission that lets a model call this application's own functions when you ask it something — read functions run as the person asking, and anything that would change data is proposed for approval rather than done.
+- **[New]** **`apps/api/probe-ai-providers.mts` — 143 checks**, with every vendor stubbed: that each provider's key travels in the header its documentation names, that addresses are assembled the way each vendor documents them (including the ones that are easy to get wrong — Groq's `/openai/v1`, Gemini's model-in-the-path, Azure's three parts, a base that must not be doubled), that the three request dialects and their tool-call shapes are right, that replies from all three are read into one shape, and that a refused key, a missing address, a missing model and a loopback endpoint are each refused with a reason instead of a stack trace.
+- **[New]** **`apps/api/probe-ai-providers-api.mjs` — 55 checks** over HTTP: the catalogue carries what the dialog renders, an unknown provider is a 400 that names the real ones, an address the egress policy refuses is not stored, a connection with no key cannot be made the application's model, a test stores what the vendor said, only one model is ever the default, and the whole surface is gated on `inference:view`/`inference:manage`. Its run against a deliberately invalid key came back with DeepSeek's own `401 — Authentication Fails`, which is the endpoint confirming itself.
+- **[Update]** **Docs**: `openapi.yaml` regenerated (424 operations) and `docs/API.md` gained **§10 Models — connecting one, and what it may do**, with the later sections renumbered and their cross-references updated. The CloudConnect walkthrough in Help describes the five tabs and the new one.
 
 ---
 

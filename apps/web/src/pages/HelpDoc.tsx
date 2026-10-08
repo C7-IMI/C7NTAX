@@ -764,8 +764,8 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: "CloudConnect Integrations",
     description: "Connect third-party services, test connections, and fix credentials inline.",
     blocks: [
-      { kind: "h", text: "The four tabs" },
-      { kind: "p", text: "CloudConnect answers two different questions, so it is split in two. **Connected** is the summary: what is configured, whether each connection is healthy, and where its data comes from. **Add a connector** is the catalogue — the types this instance can connect to. **Configuration** is the workbench: pick a connection on the left, and its credentials, options, sync history and the records it has brought in appear on the right. **Email connectors** holds the mailbox connectors, which are configured differently from the API connectors." },
+      { kind: "h", text: "The five tabs" },
+      { kind: "p", text: "CloudConnect answers several different questions, so it is split up. **Connected** is the summary: what is configured, whether each connection is healthy, where its data comes from, and which AI model the application is using. **Add a connector** is the catalogue — the types this instance can connect to. **Configuration** is the workbench: pick a connection on the left, and its credentials, options, sync history and the records it has brought in appear on the right. **AI models** is where a model is connected so the application can use one. **Email connectors** holds the mailbox connectors, which are configured differently from the API connectors." },
       { kind: "h", text: "Add a connector" },
       { kind: "steps", items: [
         "Open CloudConnect and choose Add a connector.",
@@ -783,6 +783,18 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "note", text: "With live status on, the server re-verifies connections on a throttle and reports what it last observed — so a chip means \"last verified at\", not \"the last time somebody saved the form\". Switch it off and only the stored status is returned, with no calls made at all." },
       { kind: "h", text: "Configuration" },
       { kind: "p", text: "The Configuration tab has a connection list on the left and three panels on the right: **Credentials** (the same fields the catalogue describes, pre-filled), **Options** (only the settings that connector actually honours), and **Records brought in** with the connection's sync history. Saving stores the configuration but tests nothing — press Test connection afterwards, which is said on the tab because it is the mistake people make. A Microsoft 365 connection also carries that tenant's **account panel**: the age bands, the accounts and their last sign-in, the offboarding action, and a link to the cross-client report under Reporting." },
+      { kind: "h", text: "AI models" },
+      { kind: "p", text: "**AI models** connects a model provider — Claude, GPT, Gemini, DeepSeek, Grok, Mistral, a local Ollama server, or anything that speaks the OpenAI API — so the application can use one: ticket suggestions come from it instead of keyword search, and it is the model the assistant answers with. Each provider's dialog asks only for what that vendor needs, says where to create the key, and links to that vendor's own API documentation." },
+      { kind: "steps", items: [
+        "Open CloudConnect → AI models and pick a provider.",
+        "Paste the API key. Only providers whose address cannot be guessed (Azure, a local server, a gateway) also ask for one.",
+        "Choose the model. The suggested names are a starting point — save, then use the model list on the row to read the names the vendor is serving today.",
+        "Press Test connection: it asks the vendor, and shows what the vendor answered. The result is remembered on the connection.",
+        "Press the power button to make it the model the application uses. Both flags move together, so a connection cannot be half-used.",
+        "Tick May perform app functions if you want the model to be able to call this application's own functions when you ask it something.",
+      ] },
+      { kind: "note", text: "Keys stay on the server and are never returned to a browser: the field is write-only, and a connection only ever says whether it holds one. Prompts leave your network for whichever vendor you connect, so anything the model is asked to read is sent to them — a local model is the only option that keeps it in-house. A connection cannot be made the application's model until it has a key, testing happens on every new connection, and the address a self-hosted endpoint is given is used exactly as entered, which is why a wrong address looks like a wrong key." },
+
       { kind: "h", text: "Where the data came from" },
       { kind: "p", text: "Anything read from a connector rather than entered in C7NTAX carries a small **source note** naming the system it came from — on a connection's heading, beside an integration panel's heading, and under the records list. A FlexPoint invoice and a C7NTAX-native invoice look alike otherwise, and \"who owns this number\" is the first question anybody asks." },
       { kind: "h", text: "QuickBooks Online" },
