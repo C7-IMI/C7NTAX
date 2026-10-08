@@ -4,13 +4,25 @@ import { createPortal } from "react-dom";
 /**
  * Global hover tooltips for every interactive control.
  *
- * One mounted instance listens (via event delegation on `document`) for
- * pointer/focus events on all buttons, links, inputs, selects and textareas
- * across the app, resolves a label for the control, and shows a single styled
- * tooltip. Individual elements can override the label with a `data-tooltip`
- * attribute (or `data-tooltip="off"` to opt out). Existing `title` attributes
- * are reused but temporarily removed while the custom tooltip is open so the
- * native browser tooltip never double-shows.
+ * One mounted instance listens (via event delegation on `document`) for pointer/focus events on all
+ * buttons, links, inputs, selects and textareas across the app, resolves a label for the control, and
+ * shows a single styled tooltip. Individual elements can override the label with a `data-tooltip`
+ * attribute (or `data-tooltip="off"` to opt out). Existing `title` attributes are reused but
+ * temporarily removed while the custom tooltip is open so the native browser tooltip never double-shows.
+ *
+ * A label is resolved in this order, and the order is the whole point:
+ *
+ *   1. `data-tooltip`, `aria-label`, `aria-labelledby`, `title` — somebody said what this is.
+ *   2. a form control's own `<label>`, placeholder, name or type.
+ *   3. the control's **own text** — a link with the word "Single Sign-On" in it says that.
+ *   4. only for a control with no text at all, the icon: its meaning if the icon has one
+ *      ("Copy", "Delete", "Show"), otherwise the surrounding context, otherwise nothing.
+ *
+ * Step 3 used to come after step 4, so a navigation link reading "Single Sign-On" was announced as
+ * "Keyround" — the name of the glyph, which is not a label anybody wants. A control that carries no
+ * text is labelled from `ICON_ACTIONS`, and an icon whose name says nothing about what the control
+ * does (a key, a shield, a gear) is never allowed to answer: a generic name is worse than no tooltip,
+ * so the context is tried and then the tooltip is simply not shown.
  */
 
 const INTERACTIVE =
@@ -20,79 +32,178 @@ const SHOW_DELAY_MS = 450;
 const GAP = 8;
 const MAX_LABEL = 96;
 
-/** Friendly names for lucide icon classes; falls back to humanized words. */
-const ICON_LABELS: Record<string, string> = {
+/**
+ * Labels for icons that mean one thing wherever they appear. The value describes what the control
+ * *does*, not what the glyph is called — which is the difference between "Add" and "Plus".
+ */
+const ICON_ACTIONS: Record<string, string> = {
+  // ── Editing and file actions ──
   x: "Close",
   check: "Confirm",
   checkcircle: "Done",
+  checkcircle2: "Done",
   xcircle: "Error",
   alerttriangle: "Warning",
-  chevronup: "Show less",
-  chevrondown: "More options",
-  chevronleft: "Back",
-  chevronright: "Next",
-  arrowup: "Up",
-  arrowdown: "Down",
-  arrowright: "Next",
-  arrowleft: "Back",
-  arrowupdown: "Sort",
-  gripvertical: "Drag to reorder",
-  morehorizontal: "More",
+  circlealert: "Warning",
+  info: "Information",
   trash2: "Delete",
   edit3: "Edit",
-  columns3: "Choose columns",
-  square: "Select",
-  checksquare: "Deselect",
-  refreshcw: "Refresh",
-  rotatecw: "Refresh",
-  loader2: "Loading",
-  settings2: "Settings",
-  building2: "Company",
-  building: "Company",
-  folderkanban: "Boards",
+  pencil: "Edit",
+  copy: "Copy",
+  download: "Download",
+  upload: "Upload",
+  save: "Save",
+  plus: "Add",
+  minus: "Remove",
+  search: "Search",
+  send: "Send",
+  filter: "Filter",
+  eraser: "Clear",
+  undo2: "Undo",
+  redo2: "Redo",
+  printer: "Print",
+  paperclip: "Attach a file",
+  // ── Navigation and layout ──
+  menu: "Menu",
+  morehorizontal: "More actions",
+  gripvertical: "Drag to reorder",
+  panelleftclose: "Collapse the sidebar",
+  panelleftopen: "Expand the sidebar",
+  arrowupdown: "Sort",
+  chevronsupdown: "Sort",
   layoutdashboard: "Dashboard",
-  userplus: "Add user",
-  userminus: "Remove user",
+  home: "Home",
+  folderkanban: "Boards",
+  ticket: "Tickets",
   users: "Users",
-  mapin: "Location",
+  userplus: "Add a user",
+  userminus: "Remove a user",
+  building2: "Companies",
+  building: "Companies",
   bookopen: "Documentation",
   helpcircle: "Help",
-  lightbulb: "Hint",
-  testtube: "Test",
-  trendingup: "Trending",
-  clipboardlist: "Checklist",
-  listordered: "Ordered list",
-  dollar: "Billing",
-  dollarsign: "Billing",
-  creditcard: "Payment",
-  shoppingcart: "Purchase order",
-  truck: "Procurement",
-  package: "Packages",
-  receipt: "Invoice",
-  filetext: "File",
-  paperclip: "Attach",
-  link2: "Link",
-  externallink: "Open link",
+  history: "History",
+  // ── Data, state and time ──
+  refreshcw: "Refresh",
+  rotatecw: "Refresh",
+  rotateccw: "Refresh",
+  loader2: "Loading",
+  clock: "Time",
+  timer: "Timer",
+  calendar: "Calendar",
+  calendardays: "Calendar",
+  bell: "Notifications",
   eye: "Show",
   eyeoff: "Hide",
-  star: "Favorite",
-  sun: "Light mode",
-  moon: "Dark mode",
-  target: "Goals",
-  zap: "Quick",
-  sparkles: "AI",
-  play: "Run",
-  power: "Power",
-  wifi: "Wi-Fi",
+  mail: "Email",
+  mailcheck: "Email verified",
+  phone: "Phone",
+  phonecall: "Call",
+  message: "Message",
+  messagesquare: "Message",
   qrcode: "QR code",
-  harddrive: "Hard drive",
+  // ── Billing and commerce ──
+  dollarsign: "Billing",
+  dollar: "Billing",
+  receipt: "Invoice",
+  creditcard: "Payment",
+  wallet: "Wallet",
+  shoppingcart: "Purchase order",
+  truck: "Procurement",
+  boxes: "Packages",
+  package: "Package",
+  // ── Reporting ──
+  barchart3: "Reports",
+  piechart: "Reports",
+  activity: "Activity",
+  trendingup: "Trending up",
+  trendingdown: "Trending down",
+  // ── Infrastructure ──
+  server: "Server",
+  database: "Database",
+  cloud: "Cloud",
   cpu: "CPU",
-  thumbsup: "Approve",
-  badge: "Badge",
+  harddrive: "Storage",
+  memorystick: "Memory",
+  network: "Network",
+  wifi: "Wi-Fi",
+  wifioff: "Wi-Fi off",
   globe: "Website",
-  ticket: "Tickets",
-  wrench: "Actions",
+  monitor: "Monitor",
+  laptop: "Laptop",
+  smartphone: "Mobile device",
+  smartphone2: "Mobile device",
+  camera: "Camera",
+  image: "Image",
+  video: "Video",
+  // ── Editing text (rich-text toolbar) ──
+  bold: "Bold",
+  italic: "Italic",
+  underline: "Underline",
+  strikethrough: "Strikethrough",
+  quote: "Quote",
+  alignjustify: "Justify",
+  removeformatting: "Clear formatting",
+  list: "Bulleted list",
+  listordered: "Numbered list",
+  clipboardlist: "Checklist",
+  listchecks: "Checklist",
+  clipboardcheck: "Checklist",
+  clipboardpaste: "Paste",
+  link2: "Link",
+  unlink: "Remove the link",
+  externallink: "Open in a new tab",
+  appwindow: "Open in a new window",
+  // ── Records and details ──
+  filetext: "File",
+  filecode2: "Code file",
+  folder: "Folder",
+  folderopen: "Open the folder",
+  foldertree: "Folders",
+  mapin: "Location",
+  testtube: "Test",
+  lightbulb: "Hint",
+  stickynote: "Note",
+  // ── Favourites ──
+  star: "Favourite",
+  staroff: "Remove from favourites",
+  pin: "Pin",
+  pinoff: "Unpin",
 };
+
+/**
+ * Icons whose own name says nothing about the control: a key, a shield, a gear. They appear with
+ * several meanings across the app — a key is Single Sign-On in the navigation, a password collection
+ * in Kumo and a licence in the product catalogue — so the glyph is never allowed to answer for them.
+ * The tooltip falls back to the surrounding context, and if there is none, to no tooltip at all.
+ */
+const ICON_IS_AMBIGUOUS = new Set([
+  "keyround", "key", "lock", "unlock", "shield", "shieldcheck", "shieldalert", "shieldhalf",
+  "settings", "settings2", "slidershorizontal", "wrench", "cog",
+  "power", "zap", "sparkles", "wand2", "target", "flag", "tag", "badge",
+  "circle", "circledot", "square", "checksquare", "squarecheckbig", "squarecheckbox",
+  "layers", "boxes3", "loader", "play", "pause", "repeat", "shuffle",
+  "gitbranch", "gitpullrequestarrow", "plug", "plugzap", "cable", "radio", "radiotower",
+  "router", "scanline", "projector", "presentation", "bot", "workflow", "login", "logintab",
+]);
+
+/** Where a link or button has no text of its own, the nearest of these usually names it. */
+const CONTEXT_SELECTORS = [
+  "[data-tooltip-context]",
+  "th",
+  "h1", "h2", "h3", "h4",
+  "legend",
+  "figcaption",
+  "nav",
+  "section",
+  "form",
+  "li",
+  "tr",
+  "[role='row']",
+  "header",
+  "article",
+  "aside",
+];
 
 function humanize(word: string): string {
   const normalized = word
@@ -104,13 +215,73 @@ function humanize(word: string): string {
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
-function iconLabel(el: Element): string | null {
+/** The icon on a control, as its lucide name — `keyround`, `trash2`, … */
+function iconKey(el: Element): string | null {
   const svg = el.querySelector('svg[class*="lucide-"], svg.lucide');
   if (!svg) return null;
   const match = (svg.getAttribute("class") || "").match(/lucide-([a-z0-9-]+)/i);
   if (!match || !match[1]) return null;
-  const key = match[1].toLowerCase().replace(/-/g, "");
-  return ICON_LABELS[key] ?? humanize(key);
+  return match[1].toLowerCase().replace(/-/g, "");
+}
+
+/**
+ * The text of the nearest enclosing thing that names what this control belongs to, for a control that
+ * has no text of its own. Only a short, single-run label is used — a whole table row is context, not
+ * a name, and announcing it would be worse than saying nothing.
+ */
+function contextLabel(el: Element): string | null {
+  for (const selector of CONTEXT_SELECTORS) {
+    const container = el.closest(selector);
+    if (!container) continue;
+    const heading = container.querySelector("h1, h2, h3, h4, legend, [role='heading']");
+    const text = (heading?.textContent || container.textContent || "").replace(/\s+/g, " ").trim();
+    if (!text) continue;
+    // Two or three words is a name ("Single Sign-On", "Kumo passwords"); a sentence is not.
+    if (text.length <= 48 && text.split(" ").length <= 5) return text;
+  }
+  return null;
+}
+
+/** An icon whose meaning is the same everywhere: the label describes the action it performs. */
+function iconActionLabel(el: HTMLElement): string | null {
+  const key = iconKey(el);
+  if (!key) return null;
+
+  // A chevron or a plus/minus on something that opens and closes says so, in the direction it will go.
+  const expanded = el.getAttribute("aria-expanded");
+  if (expanded !== null && /chevron|caret|plu|minu|triangle/.test(key)) {
+    return expanded === "true" ? "Collapse" : "Expand";
+  }
+
+  if (ICON_IS_AMBIGUOUS.has(key)) return null;
+  if (ICON_ACTIONS[key]) return ICON_ACTIONS[key];
+
+  // Not in the table and not known to be ambiguous: the icon's own words, if they read as a label.
+  // A glyph name describing the drawing ("chevrons down up", "columns 3") is not a label, so those
+  // are refused rather than shown — no tooltip beats a wrong one.
+  if (/\d/.test(key)) return null;
+  const words = humanize(key);
+  if (words.length > 24 || words.split(" ").length > 2) return null;
+  return words;
+}
+
+/** A composed label for a control with no text: its icon's action, or what it sits next to. */
+function iconLabel(el: HTMLElement): string | null {
+  return iconActionLabel(el) ?? inheritedLabel(el) ?? contextLabel(el);
+}
+
+/**
+ * A name belonging to something wrapping this control. Icon-only buttons are frequently tucked inside
+ * a wrapper that already names them (`title` on a collapsed rail row, an `aria-label` on a toolbar
+ * group), and inheriting that is far better than describing the glyph.
+ */
+function inheritedLabel(el: HTMLElement): string | null {
+  let parent = el.parentElement;
+  for (let depth = 0; parent && depth < 3; depth++, parent = parent.parentElement) {
+    const label = parent.getAttribute("aria-label")?.trim() || parent.getAttribute("title")?.trim();
+    if (label && label.length <= MAX_LABEL) return label;
+  }
+  return null;
 }
 
 function humanizeName(name: string): string {
@@ -123,6 +294,17 @@ function resolveLabel(el: HTMLElement): string | null {
 
   const aria = el.getAttribute("aria-label")?.trim();
   if (aria) return aria;
+
+  // A control may name itself through another element instead of duplicating the words into an
+  // attribute — the sprite/`aria-labelledby` pattern, which is what the icon-only rail uses.
+  const labelledBy = el.getAttribute("aria-labelledby");
+  if (labelledBy) {
+    const parts = labelledBy
+      .split(/\s+/)
+      .map(id => document.getElementById(id)?.textContent?.trim() || "")
+      .filter(Boolean);
+    if (parts.length) return parts.join(" ");
+  }
 
   const title = el.dataset.kunTitle?.trim() || el.getAttribute("title")?.trim();
   if (title) return title;
@@ -147,13 +329,13 @@ function resolveLabel(el: HTMLElement): string | null {
     return el.matches("select") ? "Select" : "Input";
   }
 
-  const icon = iconLabel(el);
-  if (icon) return icon;
-
+  // The control's own words. A link that reads "Single Sign-On" is labelled "Single Sign-On" — this
+  // used to be asked *after* the icon, which is how a key glyph came to announce itself as "Keyround".
   const text = (el.textContent || "").replace(/\s+/g, " ").trim();
-  if (text && text.length <= MAX_LABEL) return text;
-  if (text) return `${text.slice(0, MAX_LABEL)}…`;
-  return null;
+  if (text) return text.length <= MAX_LABEL ? text : `${text.slice(0, MAX_LABEL)}…`;
+
+  // Nothing to read: an icon-only control is named by what its icon does, or by what it sits beside.
+  return iconLabel(el);
 }
 
 interface Tip {

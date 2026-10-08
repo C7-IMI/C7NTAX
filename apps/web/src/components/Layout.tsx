@@ -838,7 +838,8 @@ export function Layout({ children }: { children: ReactNode }) {
       </button>
     );
 
-    // In collapsed mode, top-level items are just icon buttons
+    // In collapsed mode, top-level items are just icon buttons — the tooltip is what says which one,
+    // so the label has to be on the control itself rather than on the wrapper it sits in.
     if (collapsed && isTopLevel) {
       return (
         <div key={node.id} className="relative flex justify-center" title={node.label}>
@@ -846,6 +847,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <button
               onClick={() => navigate(`/section/${node.id}`)}
               onContextMenu={(e) => openNodeMenu(e, node, options)}
+              aria-label={node.label}
               className={`relative p-2.5 rounded-lg transition-colors ${
                 active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
@@ -860,6 +862,7 @@ export function Layout({ children }: { children: ReactNode }) {
               to={linkTo}
               onClick={() => setMobileOpen(false)}
               onContextMenu={(e) => openNodeMenu(e, node, options)}
+              aria-label={node.label}
               className={`relative p-2.5 rounded-lg transition-colors ${
                 active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
