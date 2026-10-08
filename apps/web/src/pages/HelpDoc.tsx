@@ -1081,7 +1081,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: "navigation", group: "walkthroughs",
     path: "/help/walkthroughs/navigation",
     title: "The Navigation Pane",
-    description: "The rail of sections, the destinations beside it, what adapts by itself, and how to go back to the single tree.",
+    description: "The rail of sections, the destinations beside it, favourites, what adapts by itself, and how to go back to the single tree.",
     blocks: [
       { kind: "p", text: "The left pane exists to answer two questions: **what is in this application**, and **where am I**. It has two shapes and the same contents — every page, route and permission is identical in both, so changing the pane never changes what a page does." },
       { kind: "table", headers: ["", "Rail and sections (default)", "Single tree (classic)"], rows: [
@@ -1091,8 +1091,9 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Choose it", "The default.", "Administration → Configuration → Workspace → **Navigation pane** → *Single tree (classic)* for everyone, or **My Account → Appearance → Interface** for just you."],
       ] },
       { kind: "h", text: "The rail" },
-      { kind: "p", text: "Each row in the rail is a **domain** — a group of destinations that belong to the same job rather than to the same part of the database. **Clicking one opens its destinations; clicking it again closes them.** Clicking a different row moves the panel to that domain — one gesture, one meaning, so browsing several domains is quick — and while the panel is closed the rail costs a click and nothing else. The row for the page you are on stays highlighted, so the rail still answers *where am I* without opening anything." },
-      { kind: "table", headers: ["Domain", "What is in it"], rows: [
+      { kind: "p", text: "The first row is **Favorites** — everything you have pinned, in your own order — and below it each row is a **domain**: a group of destinations that belong to the same job rather than to the same part of the database. **Clicking one opens its destinations; clicking it again closes them.** Clicking a different row moves the panel to that domain — one gesture, one meaning, so browsing several domains is quick — and while the panel is closed the rail costs a click and nothing else. The row for the page you are on stays highlighted, so the rail still answers *where am I* without opening anything." },
+      { kind: "table", headers: ["Rail row", "What is in it"], rows: [
+        ["**Favorites**", "What you have pinned, at length and in your order — see below. Always the first row, whether or not anything is pinned, because a row you only find after you have pinned something is a row nobody finds."],
         ["**Today**", "Home, the dashboard, and your own activity."],
         ["**Service desk**", "Tickets, the boards they sit on, and the knowledge base you answer from."],
         ["**Clients**", "The client list, contacts, asset inventory, procurement, and the customer portal's settings."],
@@ -1115,15 +1116,22 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "table", headers: ["Control", "What it does"], rows: [
         ["The filter at the top of the panel", "Narrows the **whole application** to what matches, showing where each hit lives — which is how you find something when you cannot remember which section owns it."],
         ["The order toggle beside the filter", "Switches between **ordered by what you open** and **A–Z**. A–Z is there for anybody who navigates by position and wants the list to sit still."],
-        ["Right-clicking a row", "Its own menu, including pin and unpin."],
+        ["Right-clicking a row", "Its own menu, including pin and unpin. Every row in the rail has one too, so a whole section can be pinned as well as a page."],
       ] },
+      { kind: "h", text: "Favorites" },
+      { kind: "p", text: "Favorites is the one part of the rail that is yours rather than the application's. **Right-click anything and choose *Pin to Favorites*** — a section on the rail, or a page inside one — and it appears in the **Favorites** row at the top, in the order you put it in and nothing else's. **Remove from Favorites**, **Move up** and **Move down** are in the same menu, so the list is arranged where you are looking at it." },
+      { kind: "table", headers: ["What you pinned", "What the row does"], rows: [
+        ["A page", "Goes there. The line on the right names the section it lives in when that says something the label does not, because labels repeat across the application — there is more than one *Dashboard*, so it is worth knowing which one you pinned."],
+        ["A whole section", "Opens that section's destinations, which is what clicking the section on the rail does — a section is a place with contents rather than a page. A section that holds exactly one page goes straight there instead, because a list of one is not a list."],
+      ] },
+      { kind: "note", text: "**It is the same Favorites list as the classic pane's.** One list, stored against your account, so pinning in one pane shows up in the other and follows you to another machine. Pinned rows also appear at the top of their own section's panel, so the pages you use are where you already are as well as where you keep them." },
       { kind: "h", text: "Keyboard" },
       { kind: "p", text: "These work while the pane has focus, so they never compete with the application's own shortcuts:" },
       { kind: "table", headers: ["Key", "What it does"], rows: [
-        ["<span>1</span>–<span>9</span>", "Open that domain."],
-        ["<span>→</span>", "Open the domain you are on."],
+        ["<span>1</span>–<span>9</span>", "Open that rail row, counting from the top — so **1** is Favorites, **2** is Today, and so on."],
+        ["<span>→</span>", "Open the domain you are on. Favorites is not a domain, so this never opens it."],
         ["<span>/</span>", "Focus the filter, while the panel is open. **Esc** clears it."],
-        ["<span>↑</span> <span>↓</span>", "Move along the rail."],
+        ["<span>Tab</span>", "Move along the rail. The rows are ordinary buttons, so the browser's own focus order applies and nothing here traps the keyboard."],
         ["<span>Esc</span>", "Close the panel — the filter first, then the panel itself."],
       ] },
       { kind: "h", text: "Going back to the classic tree" },

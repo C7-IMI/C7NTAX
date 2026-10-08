@@ -63,6 +63,13 @@ const EXTRA_NODES: Record<string, { to: string; label: string; icon: LucideIcon 
 };
 
 /**
+ * The favourites section's own id. Nothing navigates to it — it is the pane's list of pinned nodes —
+ * but both panes and the context menus have to agree on what it is called, so it lives with the
+ * model rather than inside the pane that happens to draw it first.
+ */
+export const FAVORITES_NODE_ID = "favorites";
+
+/**
  * Rows renamed for the pane, with the reason. Every one of them is either the second use of the same
  * words in the tree or a label that only works when you already know where you are.
  */

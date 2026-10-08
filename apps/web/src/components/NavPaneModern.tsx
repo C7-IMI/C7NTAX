@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Compass, Pin, Rows3 } from "lucide-react";
+import { ChevronDown, Compass, Pin, Rows3, Star, type LucideIcon } from "lucide-react";
 import type { NavNode } from "./Layout";
+import { KumoWordmark } from "./KumoWordmark";
 import {
-  FOLD_THRESHOLD, NAV_STORAGE_KEYS, buildNavPane, orderRows, readNavUsage, recordNavUse,
+  FAVORITES_NODE_ID, FOLD_THRESHOLD, NAV_STORAGE_KEYS, buildNavPane, orderRows, readNavUsage, recordNavUse,
   type NavDestination, type NavDomain, type RowOrder, type UseRecord,
 } from "../lib/navModel";
 
@@ -39,6 +40,42 @@ import {
  * permissions, the same icons. Nothing about a page changes when this pane is switched on, which is
  * what makes switching it off safe.
  */
+/**
+ * The rail domain that carries a brand rather than a label. Kumo is the documentation application
+ * inside this one (and may be shipped on its own), so it is drawn with its logotype; see
+ * `KumoWordmark`.
+ */
+const KUMO_DOMAIN_ID = "kumo";
+
+/**
+ * The rail row that opens the pins.
+ *
+ * It is addressed like a domain — a row on the rail that opens a panel over the content — but it is
+ * not one, and it is deliberately *not* `FAVORITES_NODE_ID`: that id means "the favourites list" to
+ * the context menus, while this one means "the panel is open". Conflating them would make the panel
+ * appear whenever a menu asked about the list.
+ */
+const FAVORITES_RAIL_ID = "__favorites";
+
+/** The node the menus are handed for the favourites header, so they offer the favourites-wide
+ *  actions ("Remove all favorites") and nothing section-specific. */
+const FAVORITES_SECTION_NODE: NavNode = { id: FAVORITES_NODE_ID, label: "Favorites", icon: Star };
+
+/** One pinned thing, resolved to something the pane can draw. */
+interface FavoriteRow {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  /** Where the row goes, or null when it opens a section's panel instead. */
+  to: string | null;
+  /** Set instead of `to`: the domain whose panel this row opens. */
+  openSection: string | null;
+  /** The section a pinned destination lives in — the label alone rarely places it. */
+  hint: string | null;
+  /** The tree node behind the pin, which is what the context menu acts on. */
+  node: NavNode;
+}
+
 export function NavPaneModern({
   tree,
   favorites,
@@ -52,7 +89,7 @@ export function NavPaneModern({
   alertCount: number;
   collapsed: boolean;
   assistantInRail: boolean;
-  onNodeContextMenu?: (event: React.MouseEvent, node: NavNode) => void;
+  onNodeContextMenu?: (event: React.MouseEvent, node: NavNode, options?: { favorite?: boolean }) => void;
 }) {
   const { pathname } = useLocation();
   const paneRef = useRef<HTMLDivElement>(null);
@@ -103,6 +140,55 @@ export function NavPaneModern({
   );
   const allItems = useMemo(() => everything.flatMap((domain) => domain.items), [everything]);
 
+  const domainById = useMemo(
+    () => new Map(everything.map((domain) => [domain.id, domain] as const)),
+    [everything],
+  );
+
+  /**
+   * The pins, in the order the reader put them, resolved to rows.
+   *
+   * Three things can be pinned, so there are three shapes here. A **destination** is a page and gets a
+   * link. A **domain** is a rail row and has no page of its own, so its pinned copy opens that
+   * domain's panel — or goes straight to the destination, when the domain holds only one (pinning
+   * "Console" should not open a list of one). A **hub node** the tree nests under another section
+   * carries whatever the tree says. A pin this account can no longer see is dropped rather than drawn
+   * as a dead row.
+   */
+  const favoriteRows = useMemo(() => {
+    const itemById = new Map(allItems.map((item) => [item.id, item]));
+    const rows: FavoriteRow[] = [];
+    for (const id of favorites) {
+      const node = nodeById.get(id);
+      if (!node) continue;
+
+      const item = itemById.get(id);
+      if (item) {
+        const owner = everything.find((domain) => domain.items.some((entry) => entry.id === id)) ?? null;
+        // The section only earns its place when it says something the label does not: pinning the
+        // Assistant would otherwise read "Assistant Assistant".
+        const hint = owner && owner.label !== item.label ? owner.label : null;
+        rows.push({ id, label: item.label, icon: item.icon, to: item.to, openSection: null, hint, node });
+        continue;
+      }
+
+      const domain = domainById.get(id);
+      if (domain) {
+        const only = domain.items.length === 1 ? domain.items[0] : null;
+        rows.push({
+          id, label: domain.label, icon: domain.icon,
+          to: only?.to ?? null,
+          openSection: only ? null : domain.id,
+          hint: null, node,
+        });
+        continue;
+      }
+
+      if (node.to) rows.push({ id, label: node.label, icon: node.icon, to: node.to, openSection: null, hint: null, node });
+    }
+    return rows;
+  }, [favorites, nodeById, allItems, everything, domainById]);
+
   /** Longest matching route wins, so `/billing/dashboard` does not also light up `/billing`. */
   const activeItem = useMemo(
     () =>
@@ -143,6 +229,7 @@ export function NavPaneModern({
   }, [foldedOpen]);
 
   const openDomain = openId ? everything.find((domain) => domain.id === openId) ?? null : null;
+  const showFavorites = openId === FAVORITES_RAIL_ID;
 
   const toggleDomain = useCallback((domain: NavDomain) => {
     setOpenId((current) => (current === domain.id ? null : domain.id));
@@ -195,7 +282,7 @@ export function NavPaneModern({
         key={item.id}
         to={item.to}
         onClick={() => openItem(item)}
-        onContextMenu={node && onNodeContextMenu ? (e) => onNodeContextMenu(e, node) : undefined}
+        onContextMenu={node && onNodeContextMenu ? (e) => onNodeContextMenu(e, node, { favorite: favorites.includes(item.id) }) : undefined}
         title={`${item.label} — ${item.to}`}
         aria-current={isActive ? "page" : undefined}
         className={`nav-item flex items-center gap-2.5 py-2 text-sm transition-colors ${
@@ -239,12 +326,15 @@ export function NavPaneModern({
   const railItem = (domain: NavDomain) => {
     const isActive = domain.id === activeId;
     const isOpen = domain.id === openId;
+    const isKumo = domain.id === KUMO_DOMAIN_ID;
     const badge = domain.items.reduce((n, item) => n + badgeFor(item.id), 0);
+    const node = nodeById.get(domain.id);
     return (
       <button
         key={domain.id}
         type="button"
         onClick={() => toggleDomain(domain)}
+        onContextMenu={node && onNodeContextMenu ? (e) => onNodeContextMenu(e, node, { favorite: favorites.includes(domain.id) }) : undefined}
         aria-expanded={isOpen}
         aria-current={isActive ? "true" : undefined}
         title={`${domain.label} — ${domain.what}`}
@@ -257,14 +347,54 @@ export function NavPaneModern({
               : "text-gray-400 hover:text-white hover:bg-surface-lighter"
         }`}
       >
-        <domain.icon size={18} className={`shrink-0 ${badge > 0 ? "text-alert-red" : ""}`} />
-        {!collapsed && <span className="min-w-0 flex-1 truncate text-left">{domain.label}</span>}
+        {isKumo && !collapsed ? (
+          /* Kumo is branded rather than labelled — the logotype replaces its icon *and* its
+             name, which is the point of branding it. Collapsed, the rail has room for one
+             glyph and not for a wordmark, so it keeps the icon like every other row. */
+          <KumoWordmark height={21} className="shrink-0" />
+        ) : (
+          <domain.icon size={18} className={`shrink-0 ${badge > 0 ? "text-alert-red" : ""}`} />
+        )}
+        {!collapsed && !isKumo && <span className="min-w-0 flex-1 truncate text-left">{domain.label}</span>}
         {!collapsed && badge > 0 && (
           <span
             className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]"
             title={`${badge} active service alert${badge === 1 ? "" : "s"}`}
           >{badge}</span>
         )}
+      </button>
+    );
+  };
+
+  /**
+   * The rail row that opens the pins, above the domains.
+   *
+   * It is a row like the others and it is always there, pinned or not: a section you can only reach
+   * once you have pinned something is a section nobody finds, so with nothing pinned it opens onto
+   * the one line that says how to pin. It never takes the active tint, because it is not a place you
+   * are — the domain that holds the page you are on already has that.
+   */
+  const favoritesRailItem = () => {
+    const isOpen = showFavorites;
+    const count = favoriteRows.length;
+    return (
+      <button
+        key={FAVORITES_RAIL_ID}
+        type="button"
+        onClick={() => { setOpenId(isOpen ? null : FAVORITES_RAIL_ID); setFilter(""); }}
+        onContextMenu={(e) => onNodeContextMenu?.(e, FAVORITES_SECTION_NODE)}
+        aria-expanded={isOpen}
+        data-nav-domain={FAVORITES_RAIL_ID}
+        title={count ? "Favorites — right-click a section to pin or unpin it" : "Favorites — right-click a section to pin it here"}
+        className={`nav-item w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+          isOpen ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+        }`}
+      >
+        <Star size={18} className={`shrink-0 ${count ? "text-amber-400" : ""}`} />
+        {!collapsed && <span className="min-w-0 flex-1 truncate text-left">Favorites</span>}
+        {collapsed
+          ? count > 0 && <span className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]">{count}</span>
+          : count > 0 && <span className="shrink-0 text-[10px] text-gray-500">{count}</span>}
       </button>
     );
   };
@@ -279,11 +409,20 @@ export function NavPaneModern({
       return;
     }
     if (/^[1-9]$/.test(event.key) && !typing) {
-      const target = railDomains[Number(event.key) - 1];
+      // Numbered as the rail reads, so 1 is the row at the top — the pins.
+      const index = Number(event.key) - 1;
+      if (index === 0) {
+        event.preventDefault();
+        setOpenId(FAVORITES_RAIL_ID);
+        setFilter("");
+        return;
+      }
+      const target = railDomains[index - 1];
       if (target) { event.preventDefault(); setOpenId(target.id); setFilter(""); }
       return;
     }
     if (event.key === "ArrowRight" && !typing) {
+      // The domain you are on. The pins are not somewhere you *are*, so this never opens them.
       const current = openId
         ? everything.find((domain) => domain.id === openId)
         : railDomains.find((domain) => domain.id === activeId);
@@ -300,6 +439,7 @@ export function NavPaneModern({
         aria-label="Sections"
       >
         <div className={collapsed ? "flex flex-col items-center gap-0.5" : "flex flex-col gap-0.5"}>
+          {favoritesRailItem()}
           {railDomains.map(railItem)}
         </div>
 
@@ -308,6 +448,82 @@ export function NavPaneModern({
           {model.utilities.map(railItem)}
         </div>
       </div>
+
+      {/* ── The pins, over the content ─────────────────────────────────────────────────────── */}
+      {showFavorites && (
+        <div
+          className="absolute left-full top-0 h-full w-[252px] z-40 flex flex-col bg-surface border-l border-r border-surface-border shadow-2xl"
+          data-nav-flyout={FAVORITES_RAIL_ID}
+          role="group"
+          aria-label="Favorites"
+        >
+          <div className="px-3 pt-3 pb-2 border-b border-surface-border shrink-0">
+            <div className="flex items-start gap-2">
+              <Star size={15} className={`mt-0.5 shrink-0 ${favoriteRows.length ? "text-amber-400" : "text-gray-600"}`} />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm font-semibold text-white truncate">Favorites</h2>
+                <p className="mt-0.5 text-[11px] leading-snug text-gray-500">
+                  {favoriteRows.length === 0
+                    ? "Nothing pinned yet."
+                    : `${favoriteRows.length} pinned, in your own order. Right-click one to unpin it or move it.`}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpenId(null)}
+                title="Close (Esc)"
+                aria-label="Close"
+                className="shrink-0 -mt-0.5 p-1 rounded text-gray-600 hover:text-white hover:bg-surface-lighter"
+              >
+                <ChevronDown size={14} className="rotate-90" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto py-1.5">
+            {favoriteRows.length === 0 ? (
+              <p className="px-3 py-1.5 text-xs leading-relaxed text-gray-600">
+                Right-click a section on the rail, or a destination inside one, and choose
+                “Pin to Favorites”. Pinned sections stay here with the pages you pinned from them.
+              </p>
+            ) : (
+              favoriteRows.map((entry) =>
+                entry.to ? (
+                  <Link
+                    key={entry.id}
+                    to={entry.to}
+                    onClick={() => setOpenId(null)}
+                    onContextMenu={(e) => onNodeContextMenu?.(e, entry.node, { favorite: true })}
+                    title={entry.hint ? `${entry.label} — ${entry.hint}` : entry.label}
+                    className={`nav-item flex items-center gap-2.5 py-2 text-sm transition-colors px-3 ${
+                      activeItem?.id === entry.id
+                        ? "nav-item--active bg-surface-lighter text-white"
+                        : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+                    }`}
+                  >
+                    <entry.icon size={16} className="shrink-0" />
+                    <span className={`min-w-0 flex-1 truncate ${entry.hint ? "" : "font-medium"}`}>{entry.label}</span>
+                    {entry.hint && <span className="shrink-0 text-[10px] text-gray-600">{entry.hint}</span>}
+                  </Link>
+                ) : (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    onClick={() => { setOpenId(entry.openSection); setFilter(""); }}
+                    onContextMenu={(e) => onNodeContextMenu?.(e, entry.node, { favorite: true })}
+                    title={`${entry.label} — open its destinations`}
+                    className="nav-item w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium transition-colors text-gray-400 hover:text-white hover:bg-surface-lighter"
+                  >
+                    <entry.icon size={16} className="shrink-0" />
+                    <span className="min-w-0 flex-1 truncate text-left">{entry.label}</span>
+                    <ChevronDown size={13} className="shrink-0 -rotate-90 text-gray-600" />
+                  </button>
+                ),
+              )
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Destination list, over the content ─────────────────────────────────────────────── */}
       {openDomain && (
@@ -319,11 +535,22 @@ export function NavPaneModern({
         >
           <div className="px-3 pt-3 pb-2 border-b border-surface-border shrink-0">
             <div className="flex items-start gap-2">
-              <openDomain.icon size={15} className="mt-0.5 shrink-0 text-cyber-400" />
-              <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-semibold text-white truncate">{openDomain.label}</h2>
-                <p className="mt-0.5 text-[11px] leading-snug text-gray-500">{openDomain.what}</p>
-              </div>
+              {openDomain.id === KUMO_DOMAIN_ID ? (
+                /* The mark carries the name, so the heading holds the image and the line under
+                   it still says what Kumo is. */
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold text-white"><KumoWordmark height={18} /></h2>
+                  <p className="mt-1 text-[11px] leading-snug text-gray-500">{openDomain.what}</p>
+                </div>
+              ) : (
+                <>
+                  <openDomain.icon size={15} className="mt-0.5 shrink-0 text-cyber-400" />
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-sm font-semibold text-white truncate">{openDomain.label}</h2>
+                    <p className="mt-0.5 text-[11px] leading-snug text-gray-500">{openDomain.what}</p>
+                  </div>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => setOpenId(null)}

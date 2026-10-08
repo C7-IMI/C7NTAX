@@ -8,6 +8,7 @@ import { AppFooter } from "./AppFooter";
 import { ConsoleDialog } from "./ConsoleDialog";
 import { RecentActivityMenu } from "./RecentActivityMenu";
 import { NavPaneModern } from "./NavPaneModern";
+import { FAVORITES_NODE_ID } from "../lib/navModel";
 import { useNavigationSettings } from "../hooks/useNavigationStyle";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
@@ -208,7 +209,12 @@ function loadSidebarWidth(): number {
  * The Favorites section's own id. It is not part of NAV_TREE — nothing navigates to it — but it
  * shares the nav's expanded-state set, so one key covers both the tree and this section.
  */
-export const FAVORITES_NODE_ID = "favorites";
+/**
+ * Named here rather than defined: the modern pane's rail opens the same list, so the id lives in the
+ * model both panes read. Re-exported because this is where the rest of the pane's code — and anybody
+ * extending it — expects to find it.
+ */
+export { FAVORITES_NODE_ID };
 
 function loadFavorites(): string[] {
   try {
@@ -650,11 +656,19 @@ export function Layout({ children }: { children: ReactNode }) {
   });
 
   /**
+   * What a right-click can be about. `favorite` adds the order controls, because a pinned copy is the
+   * one place its position is the reader's to choose. `rail` drops the three entries that only
+   * describe a tree: the modern pane's rail has nothing to expand, so offering it would be offering
+   * an action that changes nothing you can see.
+   */
+  type NodeMenuOptions = { favorite?: boolean; rail?: boolean };
+
+  /**
    * The menu a section offers. Everything in it is about the section that was right-clicked: one
    * with no page of its own gets no open or copy entries, and a pinned copy gets the order
    * controls that a section in the tree does not need.
    */
-  const nodeMenuEntries = (node: NavNode, options: { favorite?: boolean } = {}): MenuEntry[] => {
+  const nodeMenuEntries = (node: NavNode, options: NodeMenuOptions = {}): MenuEntry[] => {
     const entries: MenuEntry[] = [];
     // A section with no page of its own still has somewhere to go — its landing page, which is
     // where clicking its header lands — so the open and copy entries are never missing.
@@ -683,7 +697,7 @@ export function Layout({ children }: { children: ReactNode }) {
         { label: "Move down", icon: ChevronDown, disabled: index === -1 || index === favorites.length - 1, onSelect: () => moveFavorite(node.id, 1) },
       );
     }
-    if (node.children?.length) {
+    if (node.children?.length && !options.rail) {
       const key = expandKeyFor(node, options);
       const open = expanded.has(key);
       entries.push("separator", {
@@ -692,11 +706,13 @@ export function Layout({ children }: { children: ReactNode }) {
         onSelect: () => toggle(key),
       });
     }
-    entries.push(
-      "separator",
-      { label: "Expand all", icon: ChevronsUpDown, onSelect: expandAllSections },
-      { label: "Collapse all", icon: ChevronsDownUp, onSelect: collapseAllSections },
-    );
+    if (!options.rail) {
+      entries.push(
+        "separator",
+        { label: "Expand all", icon: ChevronsUpDown, onSelect: expandAllSections },
+        { label: "Collapse all", icon: ChevronsDownUp, onSelect: collapseAllSections },
+      );
+    }
     return entries;
   };
 
@@ -710,7 +726,7 @@ export function Layout({ children }: { children: ReactNode }) {
     { label: collapsed ? "Expand the sidebar" : "Collapse the sidebar", icon: collapsed ? PanelLeftOpen : PanelLeftClose, onSelect: toggleCollapsed },
   ];
 
-  const openNodeMenu = (event: React.MouseEvent, node: NavNode, options: { favorite?: boolean } = {}) => {
+  const openNodeMenu = (event: React.MouseEvent, node: NavNode, options: NodeMenuOptions = {}) => {
     navMenu.open(event, nodeMenuEntries(node, options), nodeMenuHeader(node));
   };
 
@@ -1072,7 +1088,7 @@ export function Layout({ children }: { children: ReactNode }) {
               alertCount={alertCount}
               collapsed={collapsed}
               assistantInRail={navigation.assistantInRail}
-              onNodeContextMenu={openNodeMenu}
+              onNodeContextMenu={(event, node, options) => openNodeMenu(event, node, { ...options, rail: true })}
             />
           ) : (
           <>

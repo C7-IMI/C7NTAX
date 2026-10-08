@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.053 | Last Updated: 2026-10-08
+## Version: 2026.10.8.055 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,104 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.055 — Favorites on the rail, and a right-click that can pin anything
+
+The modern pane had pins but no place to keep them: a pinned section showed up nowhere, and a pinned
+page only appeared inside its own section. There is now a **Favorites** row at the top of the rail —
+always there, whether or not anything is pinned — and every row in both panes answers a right-click.
+
+- **[New]** **Favorites is the first row on the rail, and it never moves.** It opens a panel listing
+  everything you have pinned, in your order rather than the pane's: a page row goes there and names the
+  section it lives in when that says something the label does not (labels repeat — there is more than
+  one *Dashboard*), and a pinned *section* opens that section's destinations, which is what clicking it
+  on the rail does. A section holding exactly one page goes straight to it, because a list of one is
+  not a list.
+- **[New]** **Right-click any row, in either pane, and pin it.** A section on the rail, or a page
+  inside one: *Pin to Favorites*, *Remove from Favorites*, *Move up*, *Move down*, and *Remove all
+  favorites* from the Favorites header — the same menu the classic tree offers, from the same builder,
+  so the two panes cannot drift apart. A pinned row's own menu carries the order controls, because a
+  pinned copy is the one place its position is yours to choose.
+- **[Update]** **The rail's menus leave out the three entries that only describe a tree.** *Expand this
+  section*, *Expand all* and *Collapse all* are dropped where there is nothing to expand: a rail row
+  opens a panel, it does not unfold, so offering to expand it would be offering an action that changes
+  nothing you can see. The classic pane's menus are untouched.
+- **[Update]** **One list, two panes.** Favorites is the account's existing list, so pinning in the
+  modern pane appears in the classic pane's Favorites section and in the pinned group at the top of
+  the row's own section — and it still follows you to another machine, as it did before.
+- **[Update]** **The number keys count the rail as it reads**, so `1` is Favorites, `2` is Today, and
+  the rest follow. `→` still opens the domain you are on and never opens the pins, which are not
+  somewhere you are.
+- **[Fix]** **A Help row promised arrow keys the pane never had.** The keyboard table listed `↑` `↓`
+  as moving along the rail; nothing implemented it, so it now names **Tab**, which is what actually
+  moves through the rows and has always worked. The walkthrough also gained a *Favorites* section and
+  a row in the rail table.
+
+## 2026.10.8.054 — Kumo carries its own logotype
+
+Kumo is an application inside this one — and may yet be shipped on its own — so it is now branded
+rather than labelled: the wordmark with the spider over the M replaces both its icon and its name on
+the rail, and heads its own panel.
+
+- **[New]** **The logotype, keyed out of the Kumo brand sheet into two alpha masks.** The same method
+  the C7NTAX wordmark uses, and for the same reason: there is no background plate behind it, the
+  letters paint with the inherited `color` — so the mark is black on a light scheme, white on a dark
+  one, and dims with the row it sits in — and the spider is overprinted at Kumo's own red. **One asset
+  covers light and dark mode and every colour scheme**, rather than a pair of flat images that would
+  have to be swapped by theme.
+- **[New]** **The spider is intact.** Its coverage is read from its redness, which does not depend on
+  what it sits against, so the legs and the soft edges where it crosses the M survive the extraction;
+  the letters mask carries the M *minus* what the spider covers, and the two layers composite back to
+  the original artwork. Verified against the source at both scales.
+- **[Update]** **`--kumo-red` is Kumo's own constant**, sampled from the artwork (`#e3222b`) and
+  deliberately not the C7NTAX crimson used by the 7: Kumo is a product inside this one rather than a
+  part of it, so its colour travels with the mark — which is what a spin-out would need.
+- **[Update]** **Collapsed, the rail keeps the icon.** A 64px rail has room for one glyph and not for a
+  wordmark, and a shrunken wordmark is a smudge; the branded row returns as soon as the rail does.
+
+## 2026.10.8.053 — Modern interface by default, and a switch to go back
+
+Everyone now gets the rail pane unless the instance says otherwise, and anyone can make that
+choice for themselves without an administrator — **My Account → Appearance → Interface** switches
+between **Modern** and **Classic** where you are standing, with no reload.
+
+- **[New]** **The switch, in the account menu beside theme and density.** It is the same
+  `c7_ui_nav` flag the rollback notes name rather than a second mechanism, so the documented
+  override and the visible control cannot drift apart — and it works in either direction, letting
+  somebody keep the tree on an instance that has adopted the rail, or try the rail on one that
+  has not.
+- **[Fix]** **The switch would have hidden itself from the person who needed it.** It is shown
+  whenever the *build* offers the modern pane — a new `UI_NAV_AVAILABLE` in `lib/uiFlags.ts` —
+  because the flag it was first gated on reports the browser's own choice, so it was false for
+  exactly the person who had switched to Classic: the one control that could take them back was
+  the one that disappeared.
+- **[Update]** **Modern is the default for all users.** The setting ships as `modern`, and only an
+  explicit *Single tree (classic)* — instance-wide, or personal — reverts. A browser that has
+  never expressed a preference gets the rail.
+- **[Update]** **Help, and the rollback guide, say how to switch back.** NAV-PANE-ROLLBACK.md now
+  names the menu switch as the friendly form of the browser flag, and the navigation walkthrough's
+  "Going back to the classic tree" table gained it as the first row. A stale sentence there also
+  promised that the panel follows the pointer along the rail; it follows a *click* now, and says so.
+
+## 2026.10.8.052 — Header descriptions that fit
+
+The one-line summary beside each page title was written for a column twice as wide as the one it
+has, so on 31 of 67 pages it ran to three lines and on the worst to four. It was measured rather
+than guessed: at 1280px the title block is **308px** — the header toolbar beside it is a fixed
+644px — which is why the longest, *Services*, wrapped to four lines. All **67** descriptions were
+measured, the **31** that ran past two lines were rewritten, and all 67 now fit in two.
+
+- **[Fix]** **The worst offenders, in place.** *Services* went from "The connectors — directory,
+  security, accounting, documentation, an RMM, a SIEM — what each has brought in, and whether it
+  is healthy." (138 characters) to "What each connector brought in, and whether it is healthy."
+  (56). The header on that page is now 91px instead of 139px, and shorter again on every other
+  page that had grown to three lines.
+- **[Update]** **Each was rewritten, not truncated.** Detail that had no business in a header
+  moved out ("aggregate outage monitoring for Microsoft 365, Azure, AWS, GitHub, ISPs" became
+  "outage monitoring for the services you watch"), and the specifics that make a description
+  worth reading were kept. No description is now a restatement of its own title.
+- **[Fix]** **A code comment still quoted the old wording** of the dashboard's description as its
+  example; it now quotes what the file says.
 
 ## 2026.10.8.051 — A navigation pane that does not grow with the feature list
 
@@ -54,50 +152,6 @@ pane has not been told where it belongs.
   Appearance → Interface**. Deployment-wide off: `VITE_UI_NAV=false`. See
   [NAV-PANE-ROLLBACK.md](NAV-PANE-ROLLBACK.md) and Help → *The Navigation Pane*, which also gained
   the configuration-reference rows and the FAQ answer this raises.
-
-## 2026.10.8.052 — Header descriptions that fit
-
-The one-line summary beside each page title was written for a column twice as wide as the one it
-has, so on 31 of 67 pages it ran to three lines and on the worst to four. It was measured rather
-than guessed: at 1280px the title block is **308px** — the header toolbar beside it is a fixed
-644px — which is why the longest, *Services*, wrapped to four lines. All **67** descriptions were
-measured, the **31** that ran past two lines were rewritten, and all 67 now fit in two.
-
-- **[Fix]** **The worst offenders, in place.** *Services* went from "The connectors — directory,
-  security, accounting, documentation, an RMM, a SIEM — what each has brought in, and whether it
-  is healthy." (138 characters) to "What each connector brought in, and whether it is healthy."
-  (56). The header on that page is now 91px instead of 139px, and shorter again on every other
-  page that had grown to three lines.
-- **[Update]** **Each was rewritten, not truncated.** Detail that had no business in a header
-  moved out ("aggregate outage monitoring for Microsoft 365, Azure, AWS, GitHub, ISPs" became
-  "outage monitoring for the services you watch"), and the specifics that make a description
-  worth reading were kept. No description is now a restatement of its own title.
-- **[Fix]** **A code comment still quoted the old wording** of the dashboard's description as its
-  example; it now quotes what the file says.
-
-## 2026.10.8.053 — Modern interface by default, and a switch to go back
-
-Everyone now gets the rail pane unless the instance says otherwise, and anyone can make that
-choice for themselves without an administrator — **My Account → Appearance → Interface** switches
-between **Modern** and **Classic** where you are standing, with no reload.
-
-- **[New]** **The switch, in the account menu beside theme and density.** It is the same
-  `c7_ui_nav` flag the rollback notes name rather than a second mechanism, so the documented
-  override and the visible control cannot drift apart — and it works in either direction, letting
-  somebody keep the tree on an instance that has adopted the rail, or try the rail on one that
-  has not.
-- **[Fix]** **The switch would have hidden itself from the person who needed it.** It is shown
-  whenever the *build* offers the modern pane — a new `UI_NAV_AVAILABLE` in `lib/uiFlags.ts` —
-  because the flag it was first gated on reports the browser's own choice, so it was false for
-  exactly the person who had switched to Classic: the one control that could take them back was
-  the one that disappeared.
-- **[Update]** **Modern is the default for all users.** The setting ships as `modern`, and only an
-  explicit *Single tree (classic)* — instance-wide, or personal — reverts. A browser that has
-  never expressed a preference gets the rail.
-- **[Update]** **Help, and the rollback guide, say how to switch back.** NAV-PANE-ROLLBACK.md now
-  names the menu switch as the friendly form of the browser flag, and the navigation walkthrough's
-  "Going back to the classic tree" table gained it as the first row. A stale sentence there also
-  promised that the panel follows the pointer along the rail; it follows a *click* now, and says so.
 
 ## 2026.10.8.050 — Show All shows *your* activity, on a page of its own
 

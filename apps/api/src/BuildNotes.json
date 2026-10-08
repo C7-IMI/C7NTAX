@@ -1,5 +1,101 @@
 [
   {
+    "version": "2026.10.8.055",
+    "date": "2026-10-08",
+    "title": "Favorites on the rail, and a right-click that can pin anything",
+    "changes": [
+      {
+        "text": "**Favorites is the first row on the rail, and it never moves.** It opens a panel listing",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Right-click any row, in either pane, and pin it.** A section on the rail, or a page",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The rail's menus leave out the three entries that only describe a tree.** *Expand this",
+        "type": "Update"
+      },
+      {
+        "text": "**One list, two panes.** Favorites is the account's existing list, so pinning in the",
+        "type": "Update"
+      },
+      {
+        "text": "**The number keys count the rail as it reads**, so `1` is Favorites, `2` is Today, and",
+        "type": "Update"
+      },
+      {
+        "text": "**A Help row promised arrow keys the pane never had.** The keyboard table listed `↑` `↓`",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.8.054",
+    "date": "2026-10-08",
+    "title": "Kumo carries its own logotype",
+    "changes": [
+      {
+        "text": "**The logotype, keyed out of the Kumo brand sheet into two alpha masks.** The same method",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The spider is intact.** Its coverage is read from its redness, which does not depend on",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`--kumo-red` is Kumo's own constant**, sampled from the artwork (`#e3222b`) and",
+        "type": "Update"
+      },
+      {
+        "text": "**Collapsed, the rail keeps the icon.** A 64px rail has room for one glyph and not for a",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.8.053",
+    "date": "2026-10-08",
+    "title": "Modern interface by default, and a switch to go back",
+    "changes": [
+      {
+        "text": "**The switch, in the account menu beside theme and density.** It is the same",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The switch would have hidden itself from the person who needed it.** It is shown",
+        "type": "Fix"
+      },
+      {
+        "text": "**Modern is the default for all users.** The setting ships as `modern`, and only an",
+        "type": "Update"
+      },
+      {
+        "text": "**Help, and the rollback guide, say how to switch back.** NAV-PANE-ROLLBACK.md now",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.8.052",
+    "date": "2026-10-08",
+    "title": "Header descriptions that fit",
+    "changes": [
+      {
+        "text": "**The worst offenders, in place.** *Services* went from \"The connectors — directory,",
+        "type": "Fix"
+      },
+      {
+        "text": "**Each was rewritten, not truncated.** Detail that had no business in a header",
+        "type": "Update"
+      },
+      {
+        "text": "**A code comment still quoted the old wording** of the dashboard's description as its",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.051",
     "date": "2026-10-08",
     "title": "A navigation pane that does not grow with the feature list",
@@ -30,48 +126,6 @@
       },
       {
         "text": "**It is a setting, and a personal switch, and a build flag.** Administrative:",
-        "type": "Update"
-      }
-    ]
-  },
-  {
-    "version": "2026.10.8.052",
-    "date": "2026-10-08",
-    "title": "Header descriptions that fit",
-    "changes": [
-      {
-        "text": "**The worst offenders, in place.** *Services* went from \"The connectors — directory,",
-        "type": "Fix"
-      },
-      {
-        "text": "**Each was rewritten, not truncated.** Detail that had no business in a header",
-        "type": "Update"
-      },
-      {
-        "text": "**A code comment still quoted the old wording** of the dashboard's description as its",
-        "type": "Fix"
-      }
-    ]
-  },
-  {
-    "version": "2026.10.8.053",
-    "date": "2026-10-08",
-    "title": "Modern interface by default, and a switch to go back",
-    "changes": [
-      {
-        "text": "**The switch, in the account menu beside theme and density.** It is the same",
-        "type": "New Feature"
-      },
-      {
-        "text": "**The switch would have hidden itself from the person who needed it.** It is shown",
-        "type": "Fix"
-      },
-      {
-        "text": "**Modern is the default for all users.** The setting ships as `modern`, and only an",
-        "type": "Update"
-      },
-      {
-        "text": "**Help, and the rollback guide, say how to switch back.** NAV-PANE-ROLLBACK.md now",
         "type": "Update"
       }
     ]

@@ -6507,3 +6507,59 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 
 **Notes for next time**
 - **Judge a click handler only after a clean load.** In the first attempt the switch changed the flag but re-rendered nothing, and the console showed `createRoot()` called on a container that already had a root plus a `removeChild` failure: editing `lib/uiFlags.ts` had made HMR re-run `main.tsx`, leaving the page in a corrupted state where clicks went nowhere. The same test on a fresh load passed on the first try. A hot-reloaded page is not evidence.
+
+### Prompt 295 — Kumo gets its own logotype
+
+**Timestamp:** 2026-10-08 17:35 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes ID:** **2026.10.8.054**
+
+**Prompt**
+
+> Can you extract the Kumo Logos from the second pasted image and then replace the Kumo and icon with the image?
+>
+> I want Kumo to standout in the menu as a type of branding for it being a mini app that is embedded in C7NTAX.
+>
+> We may eventually spin it off into it's own separate, unique application outside of C7NTAX.
+>
+> I want the logo with the spider to remain intact. Make sure to account for light and dark mode
+
+**What I did**
+- **Read the brand convention before touching the image.** `components/Wordmark.tsx` already draws the C7NTAX logotype from two alpha masks painted by CSS (`.c7-wordmark` — letters with `currentColor`, the 7 overprinted with `--brand-crimson`). Kumo follows it exactly rather than inventing a parallel scheme, which is what turns "account for light and dark mode" from a pair of images and a theme check into one asset and no JavaScript at all.
+- **Measured the sheet before deciding how to cut it.** It is 1117×482 with two plates of the same mark: white letters on a near-black plate (ink box 261,110–855,244 — 595×135, aspect 4.41) and black letters on a white one.
+- **The decisive measurement: the spider is one flat colour.** Its most common pixel is exactly `(227, 34, 43)` in *both* plates, so the artwork is two layers by construction and can be keyed rather than approximated. A gradient would have forced the honest answer — two flat images per theme.
+- **Keyed it with channel arithmetic instead of a magic-wand threshold.** The spider's coverage is its redness, `(R − max(G,B)) / 184`, which does not depend on what it is sitting on: that is what makes it work over the black plate, over the white plate, and where the spider crosses the M. The letters layer is the plate-normalised luminance *discounted by the spider's coverage*, `n × (1 − a_spider)`, which reproduces the true ink coverage at the spider's soft edge rather than over-brightening it (at a half-covered pixel over the M it computes 0.47 against a true 0.5). A deadband of 6 on the redness keeps compression noise in the plate from becoming a red haze.
+- **Checked the result against the source rather than trusting the maths.** Compositing the two masks over a dark and a light surface and comparing with an untouched crop at 2× gives the same picture, spider and legs included — which is the point of the exercise, since the brief was that the spider stays intact.
+- **Wired it in at the two places the name is the label:** the rail row (replacing *both* the icon and the word "Kumo", which is what makes it branding rather than a decoration) and the header of Kumo's panel, where the `<h2>` now holds the mark and the accessible name comes from its `aria-label` — so screen readers still hear "Kumo" and the description line still says what Kumo is.
+- **`--kumo-red`, not `--brand-crimson`.** The spider's red (`#e3222b`) is Kumo's, sampled from the artwork, and deliberately not the C7NTAX crimson the 7 uses: Kumo is a product inside this one and may be shipped on its own, so its colour travels with the mark.
+- **Verified live in both modes:** dark gives letters `color(srgb 0.969 …)` (near-white) with the spider `rgb(227, 34, 43)`; light gives `color(srgb 0.102 …)` (near-black) with the same spider. Row height moved 36px → 37px, so the rail does not jump.
+
+**Notes for next time**
+- **Extract from the largest plate, and pick the plate whose background you can measure.** The letters' alpha comes from how far a pixel is from *its own* plate, so a plate colour sampled at a corner is part of the algorithm, not a detail.
+- **A collapsed rail is a constraint, not a second design.** At 64px there is room for one glyph, so Kumo keeps its icon there; a wordmark scaled to fit would be a smudge, and inventing a spider-only monogram would be a different mark rather than the one that was asked to stay intact.
+
+### Prompt 296 — Favorites on the rail, and a right-click that can pin anything
+
+**Timestamp:** 2026-10-08 18:05 | **Status:** Complete | **Duration:** ~45 min
+
+**BuildNotes ID:** **2026.10.8.055**
+
+**Prompt**
+
+> After you are done, in the modern nav pane I still need a favorites section along with a right click context menu that allows me to pin menu or submenu items to the favorites. Same methodology at the classic menu.
+
+**What I did**
+- **Read what already existed before adding anything**, because the prompt described two things and one of them was already there. Pins were account-stored (`GET`/`PUT /nav/favorites` with a localStorage mirror) and the classic pane had the full treatment — a Favorites section at the top of the tree, drag-reorder, and a context menu with pin/unpin and move up/down. The modern pane already received `favorites` and `onNodeContextMenu`, and rows inside a section's panel already opened the menu. What did not exist was somewhere to *see* the pins (a pinned section appeared nowhere; a pinned page only inside its own section) and any menu at all on the rail.
+- **The Favorites row, first on the rail and always there.** It opens a panel holding everything pinned, in the reader's order rather than the pane's. It is drawn whether or not anything is pinned, because a section you can only reach after you have pinned something is a section nobody finds — with nothing pinned it opens onto the one line that says how to pin. It never takes the active tint: it is not a place you are, and the domain holding your current page already has that.
+- **Three kinds of pin, resolved rather than assumed.** A *page* is a link and carries the name of the section it lives in, because labels repeat ("there is more than one Dashboard"). A pinned *section* has no page of its own, so its row opens that section's panel — which is what clicking it on the rail does — and a section holding exactly one page goes straight there instead, since a list of one is not a list. A hub node keeps whatever route the tree gives it, and a pin this account can no longer see is dropped rather than drawn as a dead row.
+- **Right-click on every row in both panes**, through the one menu builder the classic pane already used: Open, open in a new tab, open in a new window, copy link, pin/unpin, and — for a pinned row — move up and move down. "Remove all favorites" stays on the Favorites header, reached from the rail row's own menu.
+- **Dropped the tree-only entries where there is no tree.** *Expand this section*, *Expand all* and *Collapse all* are suppressed for the modern pane by a `rail` flag on the shared builder: a rail row opens a panel and does not unfold, so an Expand entry would be an action that changes nothing you can see. The classic pane passes no flag and is unchanged — verified by right-clicking a section there afterwards and finding all three entries still present.
+- **One definition of the favourites id.** It moved into `lib/navModel.ts`, which both panes already import, because `NavPaneModern` importing it from `Layout` would have made the two modules circular.
+- **Verified live, then put the account back.** Pinning a section and a page from the rail and from a panel (toasts, count 1→2→3, unchanged storage shape), the panel's rows and their section hints, a pinned row's menu carrying move up/down, *Move down* actually reordering the stored list, the classic pane showing the same three pins in the same order, *Remove from Favorites*, and the Favorites header menu offering exactly "Remove all favorites". The account's pins were returned to the single one it started with.
+
+**Two false starts worth recording**
+- **I briefly defined the favourites id twice.** The first pass replaced Layout's `export const FAVORITES_NODE_ID = "favorites"` with the same line plus an aliased re-export of the new one — two definitions of one id, which is exactly the kind of duplication that drifts. It now imports and re-exports, and the constant lives in one place.
+- **A test that read the menu 500ms after switching panes reported the classic menu as empty**, and the tempting conclusion was that I had broken it. Re-running it found all the tree entries intact. A wait is not a result, and "the thing I just changed must be the cause" is the most expensive assumption in a long session.
+
+**Notes for next time**
+- **The right question was "what is actually missing", not "what did the prompt describe".** Half of this request already worked; rebuilding the half that worked would have been invisible work, and adding only the half that did not is what closed it.

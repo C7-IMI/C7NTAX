@@ -31,6 +31,11 @@ html {
   /* Brand constant — used by the logo, never by a colour scheme. */
   --brand-crimson: #c00000;
 
+  /* Kumo's own brand red, from its logotype. Kumo is a product inside this one
+     rather than a part of it, so it keeps its colour whatever scheme is active —
+     and it travels with the mark if Kumo is ever shipped on its own. */
+  --kumo-red: #e3222b;
+
   --surface: #0f1a2e;
   --surface-light: #162238;
   --surface-lighter: #1e2d48;
@@ -601,4 +606,56 @@ html[data-theme="light"][data-palette-light="contrast"] {
   background-color: var(--brand-crimson);
   -webkit-mask-image: url("/brand/wordmark-7-mask.png");
   mask-image: url("/brand/wordmark-7-mask.png");
+}
+
+/* ── Kumo wordmark ───────────────────────────────────────────────────────────
+   Kumo is its own product inside this one — the documentation app — so it
+   carries its own logotype rather than a line in the navigation: the letters
+   plus the spider that sits over the M. Keyed out of the Kumo brand sheet into
+   two alpha masks by the same method as the C7NTAX mark above, which is what
+   makes it work in both modes without a second pair of images: the letters are
+   painted with the element's `color` (black on a light scheme, white on a dark
+   one) and the spider is overprinted in Kumo's own red, which no colour scheme
+   touches — exactly as the crimson 7 is.
+
+   The spider overlaps the M in the artwork, so the letters mask carries the M
+   *minus* what the spider covers and the layers composite back to the original:
+   the red is on top, and the soft edge where a leg crosses a stroke keeps the
+   stroke's ink behind it.
+
+   Geometry comes from the masks: 595 x 135 at native resolution, which includes
+   the spider's legs reaching above the cap height. Set a height and the width
+   follows. */
+.kumo-wordmark {
+  display: inline-block;
+  position: relative;
+  aspect-ratio: 595 / 135;
+  height: 1.375rem;
+}
+
+.kumo-wordmark > span {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* Letters: painted with the inherited text colour, so they follow the scheme
+   and the navigation row's own state (dimmer when the section is not the one
+   you are in, full brightness when it is). */
+.kumo-wordmark__letters {
+  background-color: currentColor;
+  -webkit-mask-image: url("/brand/kumo-wordmark-mask.png");
+  mask-image: url("/brand/kumo-wordmark-mask.png");
+}
+
+/* The spider, at Kumo's brand red whatever the scheme does to --text-* */
+.kumo-wordmark__spider {
+  background-color: var(--kumo-red);
+  -webkit-mask-image: url("/brand/kumo-spider-mask.png");
+  mask-image: url("/brand/kumo-spider-mask.png");
 }
