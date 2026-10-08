@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.8.032",
+    "date": "2026-10-08",
+    "title": "`guard:routes` was wrong about seven routes that had a guard, and now it is green",
+    "changes": [
+      {
+        "text": "**A named permission middleware is now recognised, provably.** The name must be declared in the same file, assigned an expression containing `requirePermission(`, used as a whole argument, and **not reassigned anywhere** — a `let` that is reassigned is not a guarantee and still fails. Names that cannot be resolved are not proof: the four `sso.ts` routes are now correctly reported as guarded, and a fake middleware name is still a violation.",
+        "type": "Fix"
+      },
+      {
+        "text": "**`nav.ts`'s three `/favorites` routes carry a documented exemption.** They are the signed-in user's own pins — no id in the path, every row keyed to the caller, the list normalised rather than trusted — which is exactly the `dashboard.ts` decision already in the list, so it gets the same treatment: an exemption with a reason, not a permission that would let one person read another's pins. The guard had been reporting them since the file was written; nothing was actually unguarded, nobody had written the reason down.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The summary line names the constants it resolved** — `436 routes, 386 carry a permission (4 through a named constant: MANAGE)` — so a resolution is visible in the output rather than silently widening the check.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.031",
     "date": "2026-10-08",
     "title": "The address you are connecting from, on the sign-in screen and in My Account",

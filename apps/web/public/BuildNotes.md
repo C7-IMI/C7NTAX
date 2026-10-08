@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.031 | Last Updated: 2026-10-08
+## Version: 2026.10.8.032 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,26 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.032 — `guard:routes` was wrong about seven routes that had a guard, and now it is green
+
+The route-guard lint read each route's middleware for an inline `requirePermission(...)`. A file that guards a family of routes with one line — `const MANAGE = requirePermission(Permission.SecurityManage)` — states the same protection once, and the check could not see it, so it reported guarded routes as unguarded. Fixed by **resolving the name to its declaration**, never by trusting it.
+
+- **[Fix]** **A named permission middleware is now recognised, provably.** The name must be declared in the same file, assigned an expression containing `requirePermission(`, used as a whole argument, and **not reassigned anywhere** — a `let` that is reassigned is not a guarantee and still fails. Names that cannot be resolved are not proof: the four `sso.ts` routes are now correctly reported as guarded, and a fake middleware name is still a violation.
+- **[Fix]** **`nav.ts`'s three `/favorites` routes carry a documented exemption.** They are the signed-in user's own pins — no id in the path, every row keyed to the caller, the list normalised rather than trusted — which is exactly the `dashboard.ts` decision already in the list, so it gets the same treatment: an exemption with a reason, not a permission that would let one person read another's pins. The guard had been reporting them since the file was written; nothing was actually unguarded, nobody had written the reason down.
+- **[Update]** **The summary line names the constants it resolved** — `436 routes, 386 carry a permission (4 through a named constant: MANAGE)` — so a resolution is visible in the output rather than silently widening the check.
+
+**Verification:** `pnpm guard:routes` → **436 routes, 0 violations, exit 0** (was exit 1 with seven). The detection was proved in both directions with a temporary four-case probe — auth with no permission **fails**, a middleware that is not a permission **fails**, a name declared as `requirePermission(...)` **passes**, and a name declared as a permission but reassigned **fails** — then the probe file was removed and the tree re-checked green.
+
+**Found while verifying, and not fixed here — the Security Gate has never passed.** All **164** runs of `.github/workflows/security.yml` have failed (`0` successful, `0` cancelled); the guard's seven false/undocumented violations were only the *first* step to fail, which is why nobody has seen what is behind it:
+
+| Job | Why it fails | Owner |
+|---|---|---|
+| Route guards and typechecks | *This* fix. The next step, **Typecheck the API**, has **149 pre-existing TypeScript errors** (72 strict-null, 37 type mismatches, 18 missing properties — `auditLog.ts`, `billing.ts`, `boards.ts`, `chat.ts`, `cloudconnect.ts`, …) that CI has never reached | code — needs a decision about the strictness baseline |
+| Secret scan | `gitleaks-action` requires a licence for an **organisation** repo; the `GITLEAKS_LICENSE` secret does not exist | yours — a licence and a secret |
+| Config and image scan | The workflow pins `aquasecurity/trivy-action@0.28.0`, but the action's tags are `v0.28.0` (and up to `v0.36.0`) — the missing `v` means the action cannot be resolved at all | one character, offered |
 
 ---
 

@@ -5798,3 +5798,34 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **An expired session is the normal state at the start of a long session**, and it is also convenient: the sign-in screen is the one surface you cannot reach while signed in, so the idle timeout is the cheapest moment to verify it. The account menu needed a fresh sign-in afterwards.
 - **`docs/openapi.yaml` is generated and guarded**: adding a route means running `node scripts/generate-openapi.mjs` and then `node scripts/check-api-docs.mjs`, and the guard reports an unattributed difference as a failure rather than as a diff.
 - **The route-guard script's blanket exemption for `auth.ts`** is why a new unauthenticated route there needs no exemption entry — worth knowing before adding an unauthenticated route anywhere else, where it would.
+
+
+---
+
+### Prompt 274 — guard:routes was wrong about seven guarded routes, and the Security Gate has never been green
+
+**Timestamp:** 2026-10-09 00:20 | **Status:** Complete (guard green; three CI findings reported) | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.8.032** — "`guard:routes` was wrong about seven routes that had a guard, and now it is green"
+
+**Prompt**
+
+> Fix this: — `npm run guard:routes` fails on four sso.ts routes … It's a **guard false positive, not a security hole** … I left it alone; say the word and I'll teach the guard to follow named permission constants.
+
+**What I did**
+- **Taught the guard to resolve a name instead of trusting it.** `permissionNames(source)` collects names declared in the same file whose initialiser contains `requirePermission(`, drops any that are **reassigned** anywhere in the file (a `let` is not a guarantee), and the per-route check accepts a name only when it appears as a whole argument. Resolution is the entire point: a check that accepts a middleware name because it looks like one would be worse than the false positive it replaced, since this is the check that notices a router with no guard at all.
+- **Proved both directions rather than only the one I was fixing.** A temporary probe file put four cases in front of the real script: auth with no permission (must fail), a middleware that is not a permission (must fail), a name declared as `requirePermission(…)` (must pass), and a name declared as a permission but reassigned (must fail). All four behaved; the probe was deleted and the tree re-checked.
+- **Ran the guard and read all of its output, not the last six lines.** Doing so surfaced a second failure that had been there all along and that I had previously cut off with `Select-Object -Last 6`: three `nav.ts` `/favorites` routes. They are the signed-in user's own pins — the `dashboard.ts` decision, whose exemption was already in the list — so they got the same treatment: a reason, not a permission that would let one person read another's favourites. **Seven violations, not four; the guard is now exit 0.**
+- **Followed the trail into CI, which is the part worth knowing.** `security.yml` runs the guard, so the failure was a *build* failure and not only a local one — and pulling the failing run's log confirmed it: the job dies on exactly those seven lines. The other two failing jobs turned out to be infrastructure, so I checked the workflow's history: **164 runs, 164 failures, 0 successes.** The Security Gate has never passed.
+
+**Decisions worth remembering**
+- **A guard that fails needs its *output* read, not its tail.** I reported "four routes" earlier because I truncated to the last six lines; the guard was reporting seven. Truncating a lint's output to the interesting part is how a second finding survives three sessions.
+- **A false positive is not harmless if it hides a step.** The typecheck behind it has **149 pre-existing errors** in the API and has never run in CI — the guard failed first, every time, for 164 runs. Fixing the guard is what makes that visible; it does not make the job green.
+- **The fix belongs in the checker, not in the checked.** `sso.ts` is right: a permission stated once, by name, is better than the same permission restated fifteen times, and reshaping the routes to suit a regex would have made the code worse to satisfy the tool.
+- **Two of the three CI failures are the user's to make**: gitleaks needs a licence secret for an organisation repo, and the trivy pin needs its `v` (`aquasecurity/trivy-action@0.28.0` → `@v0.28.0`; the tags are `v0.28.0` … `v0.36.0`, so the action cannot resolve at all). Fixing either is a decision about scanner behaviour, so both were reported with the exact change rather than applied unasked.
+
+**Notes for next time**
+- **`nav.ts` was never unguarded** — it was undocumented. When the guard reports a route the file's own comment says is deliberately open, the missing thing is usually an exemption with a reason, and the existing list is where the precedent lives.
+- **The exemption list is the guard's memory.** `dashboard.ts` and `nav.ts` are the same decision ("the caller's own row, no id in the path"); worth checking it before writing a permission for something personal.
+- **Check the workflow that runs a guard before calling a failure local.** `grep -n "guard:" .github/workflows/*.yml` was one command and it changed the size of the finding.
+- **The probe-file pattern works well for a checker**: put the cases in the tree it scans, run it, read the output, delete the file. It tests the real script against real files rather than a reimplementation of it.
