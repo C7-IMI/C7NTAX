@@ -119,6 +119,11 @@ async function main() {
   await call("POST", "/api/service-alerts/refresh", { token: admin.token });
   const afterOne = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
   check(!!afterOne, "one clear poll does not retire it (anti-flap)");
+  // Pin the alert's age before the second poll. The rule under test is about age, and a poll sweeps
+  // every configured service — so on a slow network the first assertion's own sweep can age the
+  // alert past the floor and the second poll would legitimately retire it. Re-pinning keeps the
+  // assertion about the rule rather than about how long the internet took.
+  await prisma.serviceAlert.updateMany({ where: { serviceId, status: "active" }, data: { detectedAt: new Date() } });
   await call("POST", "/api/service-alerts/refresh", { token: admin.token });
   // The second clear poll is still inside the minimum age, so the alert is held: that floor is what
   // stops an incident being raised and retired by the same pair of polls.
