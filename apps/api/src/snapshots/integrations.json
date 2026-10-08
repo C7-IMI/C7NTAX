@@ -36,22 +36,6 @@
     "updatedAt": "2026-08-12T06:04:15.134Z"
   },
   {
-    "id": "66283324-8256-4c76-a588-dbfcdfaba736",
-    "kind": "autotask",
-    "name": "AutoTask PSA Production",
-    "enabled": false,
-    "status": "disconnected",
-    "credentials": {
-      "username": "apiuser@company.com",
-      "integrationCode": "ABCDEF123456"
-    },
-    "settings": {},
-    "lastSyncAt": null,
-    "errorMessage": null,
-    "createdAt": "2026-08-12T06:04:15.135Z",
-    "updatedAt": "2026-08-12T06:04:15.135Z"
-  },
-  {
     "id": "6b919672-78a4-41ba-bca6-5d70638d80b8",
     "kind": "connectwise",
     "name": "ConnectWise Manage",
@@ -86,5 +70,21 @@
     "errorMessage": null,
     "createdAt": "2026-08-12T06:04:15.136Z",
     "updatedAt": "2026-08-12T06:04:15.136Z"
+  },
+  {
+    "id": "66283324-8256-4c76-a588-dbfcdfaba736",
+    "kind": "autotask",
+    "name": "AutoTask PSA Production",
+    "enabled": false,
+    "status": "error",
+    "credentials": {
+      "username": "apiuser@company.com",
+      "integrationCode": "ABCDEF123456"
+    },
+    "settings": {},
+    "lastSyncAt": null,
+    "errorMessage": "Missing: Password",
+    "createdAt": "2026-08-12T06:04:15.135Z",
+    "updatedAt": "2026-10-08T09:05:13.270Z"
   }
 ]

@@ -213984,5 +213984,149 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T08:03:21.681Z"
+  },
+  {
+    "id": "b50898bf-73f3-42c7-be14-19ae81645b80",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live secrets muz9vz7d",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:45.656Z"
+  },
+  {
+    "id": "0d583083-d684-4a8c-ae6a-b0222bcfa029",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "1aab219a-b258-40d1-9611-962b46dbd1a1",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:45.661Z"
+  },
+  {
+    "id": "cdeaf42b-74ef-41a3-b398-572f9da0c7c3",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live incomplete muz9vz7d",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:45.681Z"
+  },
+  {
+    "id": "8cbef1e7-d8df-4490-928c-43ca00b5d494",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "9f22d04e-1949-4b73-b199-87a5c07f8455",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:45.686Z"
+  },
+  {
+    "id": "69883350-1e1c-42bb-af01-5835bb68db43",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live complete muz9vz7d",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:45.700Z"
+  },
+  {
+    "id": "78312e55-a27c-4956-a52d-1c09f606c644",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "c7c0a48b-52c2-4d82-ac3e-838630a81d9f",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:45.706Z"
+  },
+  {
+    "id": "82b5af2d-f2d7-42e6-a881-e514afcc58d2",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "c7c0a48b-52c2-4d82-ac3e-838630a81d9f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:46.948Z"
+  },
+  {
+    "id": "58ba6c14-2290-412a-b4ec-58f6a0c7b05f",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "quickbooks",
+      "name": "Probe live disabled muz9vz7d",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:46.957Z"
+  },
+  {
+    "id": "62095ef9-43a7-4c85-80a3-ca6d7bdbe717",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "410a053a-a4bb-4c22-bdc6-fe4e1d0833ac",
+    "changes": {
+      "enabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:46.961Z"
+  },
+  {
+    "id": "6ff40741-04a3-4852-bb49-3c655267c49b",
+    "action": "cloudconnect:update",
+    "entity": "cloudconnect",
+    "entityId": "410a053a-a4bb-4c22-bdc6-fe4e1d0833ac",
+    "changes": {
+      "enabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T08:26:46.965Z"
+  },
+  {
+    "id": "7b7b3f5a-d6fc-4e19-ad81-6a0f8f40b72a",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "66283324-8256-4c76-a588-dbfcdfaba736",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T09:05:13.274Z"
   }
 ]

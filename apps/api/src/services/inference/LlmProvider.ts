@@ -1,41 +1,93 @@
 import { prisma } from "../../index";
-import { EgressError, safeFetch } from "../egress";
 import type { SuggestionResult } from "./types";
 import { configText } from "../appSettings";
+import { chatWithProvider, type ProviderRecord } from "./vendors";
 
 /**
  * LLM-based inference provider.
- * Sends ticket data to configured AI provider (OpenAI, Anthropic, Azure, custom).
- * Falls back to local keyword search when no LLM provider is active.
+ *
+ * Sends ticket data to whichever model is connected, and falls back to the local keyword search when
+ * none is. The vendor side — addresses, headers, request shape, reply parsing, tool calling — lives
+ * in ./vendors, driven by the provider catalogue, so this file is about the ticket-suggestion prompt
+ * rather than about who answers it.
  */
+
+/**
+ * The provider the application should use: the active default, most recently configured first.
+ *
+ * Several providers can carry the default flag (the fixtures do), so the most recently updated one
+ * wins — whoever just configured a model expects that model to answer.
+ */
+export async function activeProviderRecord() {
+  return prisma.aiProviderConfig.findFirst({
+    where: { isActive: true, isDefault: true },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
+type StoredProvider = {
+  provider: string;
+  apiKey: string | null;
+  apiEndpoint: string | null;
+  model: string;
+  maxTokens: number;
+  temperature: number;
+  topP: number;
+  config?: unknown;
+};
+
+/**
+ * A stored provider in the shape the transport wants, with the cheap-model override applied.
+ *
+ * TOKEN-SAVE-08: INFERENCE_MODEL routes AI calls to a cheaper model without editing stored settings.
+ */
+export function providerRecordOf(provider: StoredProvider): ProviderRecord {
+  return {
+    provider: provider.provider,
+    apiKey: provider.apiKey,
+    apiEndpoint: provider.apiEndpoint,
+    model: process.env.INFERENCE_MODEL || provider.model,
+    maxTokens: provider.maxTokens,
+    temperature: provider.temperature,
+    topP: provider.topP,
+    config: provider.config,
+  };
+}
+
 export async function llmSuggestSolutions(
   ticketId: string,
   title: string,
   description: string,
   providerId?: string
 ): Promise<{ suggestions: SuggestionResult[]; summary: string; tokensUsed: number }> {
-  // Find the active provider
   const provider = providerId
     ? await prisma.aiProviderConfig.findUnique({ where: { id: providerId } })
-    : await prisma.aiProviderConfig.findFirst({ where: { isActive: true, isDefault: true } });
+    : await activeProviderRecord();
 
   if (!provider || provider.provider === "local") {
     // Local mode: return empty — suggestions come from SearchEngine
     return { suggestions: [], summary: "", tokensUsed: 0 };
   }
 
-  try {
-    const prompt = buildPrompt(title, description);
-    const result = await callProvider(provider, prompt);
-    return { ...result, tokensUsed: result.tokensUsed || 0 };
-  } catch (err) {
-    console.error(`[LLM] Provider ${provider.provider} failed:`, err);
+  const prompt = buildPrompt(title, description);
+  // A provider that is unreachable, not permitted by the egress policy, or simply out of quota must
+  // not break the ticket screen: the keyword layer has already answered, so this stays silent and
+  // logs what the vendor said.
+  const result = await chatWithProvider(providerRecordOf(provider), {
+    messages: [{ role: "user", content: prompt }],
+    json: true,
+  });
+  if (!result.ok || !result.data) {
+    console.error(`[LLM] ${provider.provider} failed: ${result.detail}`);
     return { suggestions: [], summary: "", tokensUsed: 0 };
   }
+
+  const parsed = parseSuggestions(result.data.text);
+  return { ...parsed, tokensUsed: result.data.tokensUsed || estimateTokens(result.data.text) };
 }
 
 // TOKEN-SAVE-08: memoized static prompt prefix (no rebuild per call) +
-// excerpt cap for long ticket descriptions + env override for cheap models
+// excerpt cap for long ticket descriptions
 const PROMPT_PREFIX = `You are a technical support assistant for an MSP (Managed Service Provider). Analyze this ticket and respond with:
 
 TICKET:
@@ -58,99 +110,36 @@ function buildPrompt(title: string, description: string): string {
   return `${PROMPT_PREFIX}Title: ${title}\nDescription: ${desc}${PROMPT_SUFFIX}`;
 }
 
-async function callProvider(
-  provider: { provider: string; apiEndpoint: string | null; apiKey: string | null; model: string; maxTokens: number; temperature: number; topP: number },
-  prompt: string
-): Promise<{ suggestions: SuggestionResult[]; summary: string; tokensUsed: number }> {
-  const endpoint = provider.apiEndpoint || getDefaultEndpoint(provider.provider);
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+/** Models answer with fenced code more often than the documentation suggests. */
+export function stripCodeFences(text: string): string {
+  return text.replace(/```(?:json)?\n?|```/g, "").trim();
+}
 
-  if (provider.provider === "openai" || provider.provider === "custom") {
-    headers["Authorization"] = `Bearer ${provider.apiKey}`;
-  } else if (provider.provider === "anthropic") {
-    headers["x-api-key"] = provider.apiKey!;
-    headers["anthropic-version"] = "2023-06-01";
-  } else if (provider.provider === "azure_openai") {
-    headers["api-key"] = provider.apiKey!;
-  }
-
-  // TOKEN-SAVE-08: INFERENCE_MODEL env override routes AI calls to a cheaper model
-  const effectiveProvider = { ...provider, model: process.env.INFERENCE_MODEL || provider.model };
-  const body = buildRequestBody(effectiveProvider, prompt);
-  const start = Date.now();
-  // Every provider endpoint is validated and fetched through the egress policy: an admin
-  // can point this at an internal address, and the stored API key travels with the call.
-  // A blocked endpoint behaves like an unreachable one: log and let the keyword layer answer.
-  let res: Response;
+function parseSuggestions(content: string): { suggestions: SuggestionResult[]; summary: string } {
+  const cleaned = stripCodeFences(content);
   try {
-    res = await safeFetch(endpoint, { purpose: "inference", method: "POST", headers, body: JSON.stringify(body) });
-  } catch (e) {
-    const detail = e instanceof EgressError ? e.message : (e as Error).message;
-    console.error(`[LLM] endpoint ${endpoint} blocked or unreachable: ${detail}`);
-    return { suggestions: [], summary: "", tokensUsed: 0 };
-  }
-  const json = (await res.json()) as Record<string, unknown>;
-  const latencyMs = Date.now() - start;
-
-  if (!res.ok) {
-    console.error(`[LLM] HTTP ${res.status}: ${JSON.stringify(json).slice(0, 200)}`);
-    return { suggestions: [], summary: "", tokensUsed: 0 };
-  }
-
-  // Parse response based on provider format
-  const parsed = parseResponse(provider.provider, json);
-  return { ...parsed, tokensUsed: estimateTokens(provider.provider, json) };
-}
-
-function getDefaultEndpoint(provider: string): string {
-  switch (provider) {
-    case "openai": return "https://api.openai.com/v1/chat/completions";
-    case "anthropic": return "https://api.anthropic.com/v1/messages";
-    case "azure_openai": return ""; // must be configured
-    default: return "";
-  }
-}
-
-function buildRequestBody(provider: { provider: string; model: string; maxTokens: number; temperature: number; topP: number }, prompt: string): unknown {
-  if (provider.provider === "anthropic") {
-    return { model: provider.model, max_tokens: provider.maxTokens, temperature: provider.temperature, messages: [{ role: "user", content: prompt }] };
-  }
-  // OpenAI / Azure / custom format
-  return { model: provider.model, max_tokens: provider.maxTokens, temperature: provider.temperature, top_p: provider.topP, messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" } };
-}
-
-function parseResponse(provider: string, json: Record<string, unknown>): { suggestions: SuggestionResult[]; summary: string } {
-  try {
-    let content = "";
-    if (provider === "anthropic") {
-      content = ((json as { content?: Array<{ text: string }> }).content?.[0]?.text) || "";
-    } else {
-      content = ((json as { choices?: Array<{ message: { content: string } }> }).choices?.[0]?.message?.content) || "";
-    }
-    // Strip markdown code fences
-    content = content.replace(/```json\n?|```/g, "").trim();
-    const parsed = JSON.parse(content) as { summary?: string; suggestions?: Array<{ approach: string; steps: string[]; estimatedTime: string; confidence: number }> };
+    const parsed = JSON.parse(cleaned) as { summary?: string; suggestions?: Array<{ approach: string; steps: string[]; estimatedTime: string; confidence: number }> };
     return {
       summary: parsed.summary || "",
       suggestions: (parsed.suggestions || []).map(s => ({
-        ticketId: "", ticketNumber: "", title: s.approach, relevanceScore: s.confidence / 100, resolution: s.steps?.join("\n") || "", matchReason: `AI confidence: ${s.confidence}% — estimated ${s.estimatedTime}`, resolvedAt: null,
+        ticketId: "", ticketNumber: "", title: s.approach, relevanceScore: s.confidence / 100,
+        resolution: s.steps?.join("\n") || "", matchReason: `AI confidence: ${s.confidence}% — estimated ${s.estimatedTime}`, resolvedAt: null,
       })),
     };
   } catch {
-    return { suggestions: [], summary: String((json as { choices?: Array<{ message: { content: string } }> }).choices?.[0]?.message?.content || "").slice(0, 500) };
+    // Not JSON: the raw words are still worth showing as a summary rather than discarding the call.
+    return { suggestions: [], summary: cleaned.slice(0, 500) };
   }
 }
 
-function estimateTokens(_provider: string, json: Record<string, unknown>): number {
-  const usage = json.usage as { total_tokens?: number } | undefined;
-  if (usage?.total_tokens) return usage.total_tokens;
+function estimateTokens(text: string): number {
+  if (!text) return 0;
   // Rough estimate: 1 token ≈ 0.75 words
-  const text = ((json as { choices?: Array<{ message: { content: string } }> }).choices?.[0]?.message?.content) || "";
   return Math.ceil(text.split(/\s+/).length / 0.75);
 }
 
 /**
- * A plain JSON completion against the configured provider, for callers that need their own prompt
+ * A plain JSON completion against the configured model, for callers that need their own prompt
  * rather than a solution suggestion (PLAN-015 Phase B #11 drafts KB articles this way).
  *
  * It returns `null` instead of throwing when there is no provider, the endpoint is blocked, or the
@@ -161,41 +150,30 @@ export async function llmJsonCompletion<T = Record<string, unknown>>(
   prompt: string,
   options: { model?: string; maxTokens?: number; temperature?: number } = {},
 ): Promise<{ data: T; tokensUsed: number } | null> {
-  // Several providers can carry the default flag, so the most recently updated one wins: whoever
-  // just configured a model expects it to be the one that answers.
-  const provider = await prisma.aiProviderConfig.findFirst({ where: { isActive: true, isDefault: true }, orderBy: { updatedAt: "desc" } });
+  const provider = await activeProviderRecord();
   if (!provider || provider.provider === "local") return null;
 
-  const endpoint = provider.apiEndpoint || getDefaultEndpoint(provider.provider);
-  if (!endpoint) return null;
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (provider.provider === "openai" || provider.provider === "custom") headers["Authorization"] = `Bearer ${provider.apiKey}`;
-  else if (provider.provider === "anthropic") { headers["x-api-key"] = provider.apiKey!; headers["anthropic-version"] = "2023-06-01"; }
-  else if (provider.provider === "azure_openai") headers["api-key"] = provider.apiKey!;
-
   const model = options.model || configText("knowledge", "draftModel") || process.env.INFERENCE_MODEL || provider.model;
-  const body = buildRequestBody(
-    { provider: provider.provider, model, maxTokens: options.maxTokens ?? provider.maxTokens, temperature: options.temperature ?? provider.temperature, topP: provider.topP },
-    prompt,
+  const result = await chatWithProvider(
+    { ...providerRecordOf(provider), model },
+    {
+      messages: [{ role: "user", content: prompt }],
+      json: true,
+      maxTokens: options.maxTokens ?? provider.maxTokens,
+      temperature: options.temperature ?? provider.temperature,
+    },
   );
+  if (!result.ok || !result.data) {
+    console.error(`[LLM] JSON completion failed: ${result.detail}`);
+    return null;
+  }
 
+  const content = stripCodeFences(result.data.text);
+  if (!content) return null;
   try {
-    const res = await safeFetch(endpoint, { purpose: "inference", method: "POST", headers, body: JSON.stringify(body) });
-    const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-    if (!res.ok) {
-      console.error(`[LLM] JSON completion HTTP ${res.status}: ${JSON.stringify(json).slice(0, 200)}`);
-      return null;
-    }
-    let content = provider.provider === "anthropic"
-      ? ((json as { content?: Array<{ text: string }> }).content?.[0]?.text) || ""
-      : ((json as { choices?: Array<{ message: { content: string } }> }).choices?.[0]?.message?.content) || "";
-    content = content.replace(/```json\n?|```/g, "").trim();
-    if (!content) return null;
-    const data = JSON.parse(content) as T;
-    return { data, tokensUsed: estimateTokens(provider.provider, json) };
-  } catch (e) {
-    const detail = e instanceof EgressError ? e.message : (e as Error).message;
-    console.error(`[LLM] JSON completion failed: ${detail}`);
+    return { data: JSON.parse(content) as T, tokensUsed: result.data.tokensUsed };
+  } catch {
+    console.error("[LLM] JSON completion returned something that is not JSON");
     return null;
   }
 }
