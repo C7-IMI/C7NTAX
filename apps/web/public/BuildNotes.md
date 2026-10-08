@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.014 | Last Updated: 2026-10-08
+## Version: 2026.10.8.015 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,18 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.015 — Recently Resolved says when an incident started, and links to the advisory behind it
+
+The Recently Resolved card on Service Alerts listed what had cleared and when it resolved, and stopped there. It now shows when each incident was **first reported** too, and every incident title links to the advisory — the vendor's own page explaining what the outage was.
+
+- **[New]** **A first-reported column**, next to the resolved time, with the exact local timestamp on hover. "Resolved 14h ago" says when it ended; how long it lasted is the other half of the question, and it was not on the page.
+- **[New]** **Each incident title is a link** to the page that explains it — the vendor's advisory for that incident (Statuspage/RSS source URL), falling back to the service's status page when an alert has no link of its own, in which case the hover says "status page" rather than "advisory", because they are not the same thing. Links open in a new tab.
+- **[Update]** **The card is a small table now** — Incident, First reported, Resolved — with the heading row hidden on narrow screens and the time columns tightened, so the columns line up instead of being ragged right-aligned text.
+- **[Update]** **The hover on a title carries the whole title and the destination**, because the row clips the title to one line: *"DeepSeek 网页/API 性能下降 … — open the advisory on status.deepseek.com"*. That is the same convention as the rest of the app after 2026.10.8.014 — a clipped name is what a tooltip is for.
+- **[Update]** **Help** — the Service Alerts walkthrough describes the card, its two timestamps and the advisory link.
 
 ---
 
@@ -26,6 +38,10 @@ Every control in the app explains itself on hover through one delegated tooltip.
 - **[Fix]** **A paragraph is not a tooltip.** A control whose own words run past a short name is silent, unless the page has cut that text off with an ellipsis — in which case the full text is revealed, which is what a tooltip is for. Previously the eight configuration cards each offered a 166-character description on hover.
 - **[New]** **`scripts/audit-tooltips.mjs`** — the audit that found this, kept so it can be repeated. It reads the tooltip tables out of the component (so it cannot drift from them), takes a dump of every icon-only control the running app renders, and prints what each one would be labelled: **554 controls across 20 routes**, now with no control labelled by an icon's own name.
 - **[Update]** **Help** — Getting Started gained a "What hovering tells you" section describing the convention, so the behaviour is documented rather than folklore.
+
+---
+
+## 2026.10.8.013 — The connectors were audited against the vendors' own APIs, and CloudConnect now shows what is connected
 
 Fifteen connectors were checked against their vendors' published documentation. Six could never have worked, several would have connected and then quietly returned nothing, and the ones that did work asked for credentials the vendor does not use. The findings are fixed, the form now describes every field it asks for, and anything read from a connector says so.
 

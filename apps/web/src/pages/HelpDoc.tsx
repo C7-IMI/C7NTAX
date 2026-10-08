@@ -532,6 +532,8 @@ export const HELP_SECTIONS: HelpSection[] = [
         "Read a row's last observation to see what was actually fetched, not just that it failed.",
         "Use the service's own status page link when a feed and a vendor disagree.",
       ] },
+      { kind: "h", text: "Recently Resolved" },
+      { kind: "p", text: "The first thing on the page is what **just cleared**, because that is what somebody coming back to an outage wants to see. Each row shows the service and the incident, **when it was first reported** and when it resolved, and the incident title is a link to the vendor's advisory — the page that explains what the outage actually was. A hover names the destination before you click it." },
       { kind: "h", text: "Alert lifecycle" },
       { kind: "p", text: "A problem opens an active alert (severity outage, degraded, or a mere notice). Auto-resolution requires two consecutive all-clear polls **and** a minimum alert age, so a single transient fetch gap cannot flap an alert open and shut. Manual alerts are never auto-resolved by monitor checks." },
       { kind: "h", text: "Social reports" },

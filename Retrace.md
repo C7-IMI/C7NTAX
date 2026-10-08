@@ -5194,3 +5194,34 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **Playwright's `hover` scrolls the element into view**, and the tooltip hides itself on scroll; a `null` right after a hover is usually that, not a resolution failure. Verify with a synthetic `pointerover`, or read the element's own attributes.
 - **The sidebar's collapsed state persists** across probes in `localStorage`, so a probe that expects nav links by name must expand it first.
 - **`innerText` respects `text-transform: uppercase`** — section headings read as capitals, so tooltip comparisons stay case-insensitive.
+
+---
+
+### Prompt 260 — Recently Resolved: first reported, and a link to the advisory
+
+**Timestamp:** 2026-10-08 09:55 | **Status:** Complete | **Duration:** ~30 min
+
+**BuildNotes IDs:** **2026.10.8.015** — "Recently Resolved says when an incident started, and links to the advisory behind it"
+
+**Prompt**
+
+> Add a first reported column to the recently resolved card. Also the items should provide a link to the related advisory that explains what the outage was about.
+
+**What I did**
+- **Checked the data before touching the UI.** `ServiceAlert` already carries `detectedAt`, `resolvedAt` and `sourceUrl` (filled from the feed item's link by the monitor), and the resolved list endpoint returns whole rows with the service attached — so both halves of the request were a presentation change, with no API work and no migration.
+- **Added the First reported column** beside the resolved time. "Resolved 14h ago" says when an incident ended; the question it leaves open is how long it lasted, which is exactly what a first-reported time answers. Both columns show a relative time with the exact local timestamp on hover, which is the same split the rest of the product uses.
+- **Made each incident title a link to the advisory** — the vendor's own incident page (`sourceUrl`), falling back to the service's status page when an alert has no link of its own. The two are not the same thing, so the hover says which one it is going to open ("open the advisory on status.deepseek.com" versus "open the status page on …") rather than calling both an advisory. Links open in a new tab.
+- **Reworked the card into a small table** — Incident, First reported, Resolved — instead of a flex row with right-aligned text. The heading row hides below `sm` and the time columns tighten there, and the columns now line up exactly (verified by comparing the header and row cell offsets, not by eye).
+- **Gave the link a hover that carries the whole title and the destination**, because the row clips the title to one line: *"DeepSeek 网页/API 性能下降 … — open the advisory on status.deepseek.com"*. That follows the convention established in 2026.10.8.014 — a name the page has cut off is what a tooltip is for — and it is set through `data-tooltip` so the tooltip states the intent rather than repeating the visible words.
+- **Verified in the running app**: the card renders Incident / First reported / Resolved; all eight rows link out, all to the vendor's own incident pages (status.deepseek.com, status.openai.com, www.githubstatus.com, status.claude.com), all opening in a new tab; the first-reported values parse to real timestamps; the hover reads as intended; and the header and row columns sit at identical offsets (301 / 752 / 892 px).
+- **Updated Help** — the Service Alerts walkthrough now describes the card, both timestamps and the advisory link.
+
+**Decisions worth remembering**
+- **A status page is not an advisory.** Where an alert has no link of its own the fallback still opens something useful, but the wording changes with it: saying "advisory" when the link goes to a service's front page is the sort of small lie that costs trust in a status page.
+- **Two timestamps belong side by side.** A resolved time alone invites "how long was that down?" every single time, and the answer is one column away now.
+- **A clipped title is a tooltip's job.** The row keeps to one line for a scannable list, and the tooltip carries the full title *plus* where the link goes, so hovering answers both questions at once.
+
+**Notes for next time**
+- **`edits` that use a heading as the anchor are dangerous.** Adding the 2026.10.8.014 entry replaced the 2026.10.8.013 *heading* instead of inserting above it, so 013 and 014 briefly shared one entry — caught here when the entry count went up by two entries at once (226 → 228 versions parsed). When inserting a BuildNotes entry, anchor on the whole preceding entry's last line and re-add the following heading in the replacement, then confirm the heading order with a quick `^## 2026\.` listing.
+- **The `resolved` list needs no pagination work**: it is capped at eight in the UI and ordered by `resolvedAt desc` in the API, which is the right shape for "what just cleared".
+- **`timeAgo` is local to ServiceAlerts.tsx** and lives beside `absolute()` and `hostOf()` now; there is no shared date formatter to reach for on this page.

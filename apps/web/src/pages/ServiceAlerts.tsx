@@ -71,6 +71,22 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+/** The date and time behind a relative "2h ago", for the tooltip that a timestamp deserves. */
+function absolute(iso: string | null): string {
+  return iso ? new Date(iso).toLocaleString() : "";
+}
+
+/** The host of an advisory link, so the tooltip can say where it goes before it is opened. */
+function hostOf(url: string | null): string | null {
+  if (!url) return null;
+  try { return new URL(url).host.replace(/^www\./, ""); } catch { return null; }
+}
+
+/** The page that explains an incident: its own source, or the vendor's status page behind it. */
+function advisoryUrl(a: ServiceAlertItem): string | null {
+  return a.sourceUrl || a.service.statusPageUrl || null;
+}
+
 const SOURCE_LABELS: Record<string, string> = {
   rss: "RSS Feed",
   statuspage: "Status Page",
@@ -426,22 +442,61 @@ export function ServiceAlertsPage() {
       )}
 
       {/* Recently resolved — above the cards, because what just cleared is the more useful thing to
-          see first when you open this page. */}
+          see first when you open this page. Each row links to the advisory behind it: "GitHub had an
+          incident" is only useful next to the page that says what the incident was. */}
       {resolved.length > 0 && (
         <section className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Recently Resolved</h3>
-          <div className="card divide-y divide-surface-border !p-0">
-            {resolved.slice(0, 8).map((a) => (
-              <div key={a.id} className="flex items-center gap-3 px-5 py-3">
-                <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-300 truncate">
-                    <span className="text-white font-medium">{a.service.name}</span> — {a.title}
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 shrink-0">{a.resolvedAt ? `resolved ${timeAgo(a.resolvedAt)}` : "resolved"}</span>
-              </div>
-            ))}
+          <div className="card !p-0 overflow-hidden">
+            <div className="hidden sm:grid grid-cols-[minmax(0,1fr)_8rem_8rem] items-center gap-3 px-5 py-2 border-b border-surface-border text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              <span>Incident</span>
+              <span>First reported</span>
+              <span className="text-right">Resolved</span>
+            </div>
+            <div className="divide-y divide-surface-border">
+              {resolved.slice(0, 8).map((a) => {
+                const url = advisoryUrl(a);
+                const host = hostOf(url);
+                // An incident's own link goes to the advisory; a service status page is a fair place to
+                // look when there is none, but it is not the same thing and the tooltip says so.
+                const own = Boolean(a.sourceUrl);
+                const target = own ? "the advisory" : "the status page";
+                return (
+                  <div key={a.id} className="grid grid-cols-[minmax(0,1fr)_4.75rem_4.75rem] sm:grid-cols-[minmax(0,1fr)_8rem_8rem] items-center gap-3 px-5 py-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <p className="text-sm text-gray-300 truncate">
+                        <span className="text-white font-medium">{a.service.name}</span> —{" "}
+                        {url ? (
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hover:text-cyber-300 hover:underline"
+                            aria-label={`${a.service.name}: ${a.title} — open ${target}${host ? ` on ${host}` : ""}`}
+                            // The title is clipped to one line on the card, so the tooltip carries it in
+                            // full and says where the link goes: both halves of "what is this, and what
+                            // happens if I click it".
+                            data-tooltip={`${a.title} — open ${target}${host ? ` on ${host}` : ""}`}
+                          >
+                            {a.title}
+                            <ExternalLink size={11} className="inline-block ml-1 align-[-1px]" />
+                          </a>
+                        ) : (
+                          a.title
+                        )}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-500" title={absolute(a.detectedAt) || undefined}>
+                      {a.detectedAt ? timeAgo(a.detectedAt) : "—"}
+                    </span>
+                    <span className="text-xs text-gray-500 text-right" title={absolute(a.resolvedAt) || undefined}>
+                      {a.resolvedAt ? timeAgo(a.resolvedAt) : "resolved"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
       )}
