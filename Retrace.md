@@ -5225,3 +5225,45 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **`edits` that use a heading as the anchor are dangerous.** Adding the 2026.10.8.014 entry replaced the 2026.10.8.013 *heading* instead of inserting above it, so 013 and 014 briefly shared one entry — caught here when the entry count went up by two entries at once (226 → 228 versions parsed). When inserting a BuildNotes entry, anchor on the whole preceding entry's last line and re-add the following heading in the replacement, then confirm the heading order with a quick `^## 2026\.` listing.
 - **The `resolved` list needs no pagination work**: it is capped at eight in the UI and ordered by `resolvedAt desc` in the API, which is the right shape for "what just cleared".
 - **`timeAgo` is local to ServiceAlerts.tsx** and lives beside `absolute()` and `hostOf()` now; there is no shared date formatter to reach for on this page.
+
+---
+
+### Prompt 261 — Board selection as tabs on the Tickets screen
+
+**Timestamp:** 2026-10-08 10:30 | **Status:** Complete | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.8.016** — "Boards are tabs on the Tickets screen, with the board in view named underneath"
+
+**Prompt**
+
+> Do a mockup of the ticket screen that converts the board selection dropdown into a tab style layout, so that you can display the tickets per board by clicking different tabs. When a tab is clicked there should be a clear header/notation as to what board you are viewing. The tabs should be clearly visible and easy to identify, similar to the customer portal tabs you did earlier. Go ahead and make the changes, but make sure this can easily be reverted
+
+**What I did**
+- **Read the existing controls before inventing any.** The product already has one tab component (`components/ui/Tabs.tsx`) and it is the one the customer portal settings screen uses — the tabs the request was asking me to match — so the strip is that component rather than new markup with a look-alike style. It also meant the "clearly visible and easy to identify" requirement was already solved: bordered group, primary fill on the chosen tab, counts as pills, arrow keys, `tablist`/`tab` roles.
+- **Put the board where the page is about the board**: a full-width tab strip under the heading, one tab per board with its ticket count plus **All Boards**, and a notation band directly beneath it — "Viewing **MSP Service Desk** · MSP · General IT support · 34 tickets on this board", or "Viewing **All boards** — 113 tickets across 4 boards".
+- **Found the counts already in the payload.** `GET /boards` returns `_count.tickets`, and because `Ticket.boardId` is required the sum is the true total (33 + 23 + 34 + 23 = 113, which the live screen confirms). So the tabs have real counts with **no API change, no schema change and no migration**.
+- **Kept the state exactly where it was.** The board was always the `?boardId=` URL parameter; the tabs write the same parameter and read their selection back from it, so deep links select the correct tab, a reload keeps you in the board, and every existing link keeps working. The component owns no state of its own.
+- **Removed the two now-duplicate signals**: the subtitle no longer says "Filtered by board", and the board is no longer repeated as a chip in the active-filters row (that row is about filters again).
+- **Fixed what the live screen exposed.** At 420 px the tab labels wrapped and made the strip 76 px tall; the shared component now keeps labels on one line (`shrink-0 whitespace-nowrap`) and the strip scrolls horizontally instead — 38 px tall, no page-level horizontal scroll, and the customer portal's tabs verified unchanged afterwards.
+- **Built the whole thing to be thrown away in one line, and then proved it.** `const BOARD_TABS = true` in `Tickets.tsx` selects between the tabs and the original dropdown, whose markup is still in the other branch. I flipped it to `false` in the running app and confirmed the strip and band disappear and the dropdown (All Boards + 4 boards) comes back, then flipped it back and confirmed the tabs return. `PlanDocs/PLAN-024-Tickets-Board-Tabs.md` records the rationale, the measurements, and both costs — when taken and to revert.
+- **Recorded the measurements** rather than describing the screen: tab labels and counts, the arithmetic, the URL set on click, that every visible row's board column matched after selecting a board, deep-link behaviour, active-versus-idle tab styling, and narrow-viewport geometry.
+
+**Decisions worth remembering**
+- **Reuse the component that already defines the style.** "Similar to the customer portal tabs" is a solved problem in this codebase; the way to be similar is to be the same component. It also means an improvement to tab behaviour (the nowrap fix) lands everywhere instead of being re-implemented per screen.
+- **A filter that becomes navigation should move up the page.** The board is not one filter among many — it is the axis the screen is organised around — which is why it is above the toolbar and its filters rather than inside them.
+- **The notation band is not decoration.** A tab strip becomes a row of buttons when nothing states the current selection in words, so the band names the board, its code, its description and its count.
+- **Revertibility is a design constraint, not an apology.** The switch and the preserved dropdown make "try this and put it back" a one-line change, and the plan doc records the exact steps so the decision does not depend on remembering this conversation.
+- **Verify a revert drill for real.** Reading the branch and believing it would work is exactly the class of assumption that costs an hour later; flipping the switch in the browser took two minutes.
+
+**Notes for next time**
+- **BuildNotes headings are anchors to be careful with.** Adding an entry by replacing the *previous heading* silently merged two entries once; the replacement now re-adds the following heading, and `^## 2026\.` is listed afterwards to confirm the order (229 versions parsed, 016 → 015 → 014 → 013).
+- **Counts in tabs are cheap when the list endpoint already aggregates them** — check the response before planning an API change.
+- **`cyber-*` are CSS variables in `tailwind.config.js`**, so opacity modifiers on them (`bg-cyber-500/10`) emit nothing; the band and strip use `surface` tokens and the brand colour for text and a left accent bar instead.
+- **The strip is width-honest**: `overflow-x-auto` on the wrapper, `shrink-0 whitespace-nowrap` on the tabs, verified at 420 px and 1440 px.
+
+**Follow-up — the strip moved under the search box.** The first cut put the tabs directly under the
+page heading, above the toolbar. The user asked for them under the search box instead, which is the
+better reading order for this screen: the toolbar belongs to the screen, and the search box and the
+board tabs both belong to the *list*, with search first. Verified afterwards in the running app by
+geometry — heading 160, toolbar 226, search 282, **tabs 336**, band 392, table 455 px — and by
+clicking a tab again to confirm the URL, the band and the row scoping were unaffected by the move.

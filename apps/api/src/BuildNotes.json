@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.8.016",
+    "date": "2026-10-08",
+    "title": "Boards are tabs on the Tickets screen, with the board in view named underneath",
+    "changes": [
+      {
+        "text": "**Board tabs** below the search box and above the list — one tab per board with its ticket count, plus **All Boards** — using the same tab component as the customer portal and configuration screens, so it is the tab style the product already has: a bordered group, the chosen tab on the primary fill, counts as pills, arrow-key navigation, and a proper `tablist` role for assistive technology. The strip scrolls sideways rather than squashing when a workspace has more boards than fit.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The notation band** underneath says what you are looking at: \"Viewing **MSP Service Desk** · MSP · General IT support · 34 tickets on this board\", or \"Viewing **All boards** — 113 tickets across 4 boards\". The count is exact because every ticket belongs to a board (`Ticket.boardId` is required), so All Boards is the sum of the tabs rather than an estimate.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The tab counts come from data the API already returned** (`_count.tickets` on `GET /boards`) — no endpoint, schema or migration change.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The board is still the URL.** Selecting a tab sets `?boardId=…` exactly as the dropdown did, so deep links select the right tab, a reload keeps you there, and every existing link into a board keeps working. The tab strip reads its selection from the URL rather than holding its own state.",
+        "type": "Update"
+      },
+      {
+        "text": "**Two things stopped being said twice**: the page subtitle no longer reads \"Filtered by board\" (the band says it properly), and the board no longer appears as a chip in the active-filters row, which is now only about filters.",
+        "type": "Update"
+      },
+      {
+        "text": "**`Tabs` no longer lets a tab label wrap** — a two-line tab made the strip taller than the content beside it at narrow widths. Labels stay on one line and the strip scrolls instead.",
+        "type": "Update"
+      },
+      {
+        "text": "**Help** — Getting Started describes the board tabs and the band; the Tickets entry in the navigation table names them.",
+        "type": "Update"
+      },
+      {
+        "text": "**Built to be undone in one line.** `BOARD_TABS` in `apps/web/src/pages/Tickets.tsx` chooses between the tabs and the dropdown; setting it to `false` restores the previous screen exactly, with the dropdown markup still in the other branch. `PlanDocs/PLAN-024-Tickets-Board-Tabs.md` records the design, the measurements and both costs (when taken, and to revert), and the switch was flipped off and back on to prove the revert works.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.015",
     "date": "2026-10-08",
     "title": "Recently Resolved says when an incident started, and links to the advisory behind it",

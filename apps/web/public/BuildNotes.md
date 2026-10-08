@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.015 | Last Updated: 2026-10-08
+## Version: 2026.10.8.016 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,21 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.016 — Boards are tabs on the Tickets screen, with the board in view named underneath
+
+Choosing a board meant opening a dropdown. A dropdown shows nothing until it is opened: not how many boards exist, not what else is available, and not where you are without reading a small grey word. On a screen whose whole job is "the tickets for a board", the board was the least visible control on the page. It is now a tab strip with a **band naming the board on screen**.
+
+- **[New]** **Board tabs** below the search box and above the list — one tab per board with its ticket count, plus **All Boards** — using the same tab component as the customer portal and configuration screens, so it is the tab style the product already has: a bordered group, the chosen tab on the primary fill, counts as pills, arrow-key navigation, and a proper `tablist` role for assistive technology. The strip scrolls sideways rather than squashing when a workspace has more boards than fit.
+- **[New]** **The notation band** underneath says what you are looking at: "Viewing **MSP Service Desk** · MSP · General IT support · 34 tickets on this board", or "Viewing **All boards** — 113 tickets across 4 boards". The count is exact because every ticket belongs to a board (`Ticket.boardId` is required), so All Boards is the sum of the tabs rather than an estimate.
+- **[New]** **The tab counts come from data the API already returned** (`_count.tickets` on `GET /boards`) — no endpoint, schema or migration change.
+- **[Update]** **The board is still the URL.** Selecting a tab sets `?boardId=…` exactly as the dropdown did, so deep links select the right tab, a reload keeps you there, and every existing link into a board keeps working. The tab strip reads its selection from the URL rather than holding its own state.
+- **[Update]** **Two things stopped being said twice**: the page subtitle no longer reads "Filtered by board" (the band says it properly), and the board no longer appears as a chip in the active-filters row, which is now only about filters.
+- **[Update]** **`Tabs` no longer lets a tab label wrap** — a two-line tab made the strip taller than the content beside it at narrow widths. Labels stay on one line and the strip scrolls instead.
+- **[Update]** **Help** — Getting Started describes the board tabs and the band; the Tickets entry in the navigation table names them.
+- **[New]** **Built to be undone in one line.** `BOARD_TABS` in `apps/web/src/pages/Tickets.tsx` chooses between the tabs and the dropdown; setting it to `false` restores the previous screen exactly, with the dropdown markup still in the other branch. `PlanDocs/PLAN-024-Tickets-Board-Tabs.md` records the design, the measurements and both costs (when taken, and to revert), and the switch was flipped off and back on to prove the revert works.
 
 ---
 

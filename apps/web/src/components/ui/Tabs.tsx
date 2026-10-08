@@ -78,7 +78,7 @@ export function Tabs<Id extends string>({
             aria-selected={selected}
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(item.id)}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors ${
+            className={`inline-flex items-center gap-2 shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm transition-colors ${
               selected ? "tab-active font-semibold" : "font-medium text-gray-300 hover:bg-surface-border/70 hover:text-white"
             }`}
           >

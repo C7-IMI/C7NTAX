@@ -10,6 +10,7 @@ import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, C
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
+import { TicketBoardTabs } from "../components/TicketBoardTabs";
 import { RichTextEditor, toAttachmentDraft, EMAIL_PROFILE, type EmailAttachmentDraft } from "../components/richText";
 import { RecipientField, recipientFromContact, offOrgRecipients, offOrgSummary, type Recipient, type RecipientSuggestion } from "../components/RecipientField";
 import { ProductPicker } from "../components/ProductPicker";
@@ -182,10 +183,18 @@ function DeleteTicketDialog({ target, busy, onCancel, onConfirm }: {
   );
 }
 
+/**
+ * Board tabs instead of the board dropdown (see `components/TicketBoardTabs.tsx`).
+ *
+ * Set this to `false` to put the original dropdown back — that is the entire revert, and the
+ * dropdown markup is still here in the other branch. Delete this constant and the branch it guards
+ * once the choice is settled, along with the component file.
+ */
+const BOARD_TABS = true;
+
 export function TicketsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const boardId = searchParams.get("boardId") || "";
-  const statusParam = searchParams.get("status") || "";
+  const boardId = searchParams.get("boardId") || "";  const statusParam = searchParams.get("status") || "";
   const priorityParam = searchParams.get("priority") || "";
   const assignedParam = searchParams.get("assignedToId") || "";
   const dateFromParam = searchParams.get("dateFrom") || "";
@@ -203,7 +212,7 @@ export function TicketsPage() {
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState({ title:"", description:"", priority:"medium", boardId:"", companyId:"", contactId:"", contactName:"", contactEmail:"", startTime:"", endTime:"", status:"new" });
   const [sort, setSort] = useState<SortState | null>(null);
-  const [boards, setBoards] = useState<Array<{id:string;name:string}>>([]);
+  const [boards, setBoards] = useState<Array<{id:string;name:string;ticketCode?:string|null;description?:string|null;_count?:{tickets?:number}|null}>>([]);
   const [companies, setCompanies] = useState<Array<{id:string;name:string}>>([]);
   const [contacts, setContacts] = useState<Array<{id:string;firstName:string;lastName:string;email:string}>>([]);
   const [newTicketContacts, setNewTicketContacts] = useState<Recipient[]>([]);
@@ -628,21 +637,23 @@ export function TicketsPage() {
         <p className="text-sm text-gray-400">
           {companyParam && !searchParams.get("new")
             ? `Showing ${scopedClientName ?? "one client"}'s tickets`
-            : boardId ? `Filtered by board` : "Manage service tickets"}
+            : boardId && !BOARD_TABS ? `Filtered by board` : "Manage service tickets"}
         </p>
       </div>
 
       {/* Toolbar: board selector + Create on the left, Filter + Choose Columns on the right */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <select
-            className="input-field text-sm py-1.5"
-            value={boardId}
-            onChange={e=>{setSearchParams(e.target.value?{boardId:e.target.value}:{});}}
-          >
-            <option value="">All Boards</option>
-            {boards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
+          {!BOARD_TABS && (
+            <select
+              className="input-field text-sm py-1.5"
+              value={boardId}
+              onChange={e=>{setSearchParams(e.target.value?{boardId:e.target.value}:{});}}
+            >
+              <option value="">All Boards</option>
+              {boards.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          )}
           <button onClick={openNew} className="btn-primary flex items-center gap-2"><Plus size={16}/>Create</button>
         </div>
         <div className="flex items-center gap-2">
@@ -785,6 +796,17 @@ export function TicketsPage() {
         />
       </div>
 
+      {/* The boards as tabs, with the band underneath naming the one being viewed. Under the search
+          box rather than above the toolbar: the tabs choose the list, and the list's own controls
+          read in the order somebody uses them — search, then narrow, then choose the board. */}
+      {BOARD_TABS && (
+        <TicketBoardTabs
+          boards={boards}
+          boardId={boardId}
+          onSelect={id => setSearchParams(id ? { boardId: id } : {})}
+        />
+      )}
+
       {/* ── Active filters ── What is narrowing this list, and a way out of each one. */}
       {(() => {
         const drop = (key: string) => () => {
@@ -799,7 +821,7 @@ export function TicketsPage() {
           chips.push({ key: "status", label: `Status: ${named?.label ?? statusParam.replace(/,/g, ", ").replace(/_/g, " ")}`, clear: drop("status") });
         }
         if (priorityParam) chips.push({ key: "priority", label: `Priority: ${priorityParam}`, clear: drop("priority") });
-        if (boardId) chips.push({ key: "boardId", label: `Board: ${boards.find(b => b.id === boardId)?.name ?? "selected"}`, clear: drop("boardId") });
+        if (boardId && !BOARD_TABS) chips.push({ key: "boardId", label: `Board: ${boards.find(b => b.id === boardId)?.name ?? "selected"}`, clear: drop("boardId") });
         if (companyParam && !searchParams.get("new")) chips.push({ key: "companyId", label: `Client: ${companies.find(c => c.id === companyParam)?.name ?? "selected"}`, clear: drop("companyId") });
         if (assignedParam) {
           const assigned = users.find(u => u.id === assignedParam);

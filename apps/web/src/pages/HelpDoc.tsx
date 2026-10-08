@@ -55,7 +55,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "h", text: "The core ticket workflow" },
       { kind: "p", text: "C7NTAX is built around the ticket lifecycle: create → triage → work → resolve → invoice." },
       { kind: "steps", items: [
-        "Open Tickets and select New Ticket (or press T to open the list first).",
+        "Open Tickets and select New Ticket (or press T to open the list first). The list is organised by **board tabs** across the top — one tab per board with its ticket count, plus **All Boards** — and the band underneath names the board you are viewing and how many tickets are on it.",
         "Pick the client, board, category, and priority. Priority is deduced automatically if you leave it unset.",
         "Add time entries as you work, and file any out-of-pocket cost on the ticket's **Expenses** tab — billable time and approved expenses flow into invoices.",
         "Resolve the ticket when work is complete. A resolved ticket can be drafted into a knowledge base article so the fix does not leave with you.",
@@ -65,7 +65,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "table", headers: ["Area", "Holds"], rows: [
         ["Home & Dashboard", "The workspace home and the dashboard you arrange yourself"],
         ["Service Alerts", "Vendor status feeds, your own uptime checks, and the outage board"],
-        ["Tickets", "Every ticket, with saved columns, filters and batch actions"],
+        ["Tickets", "Every ticket, organised by board tab, with saved columns, filters and batch actions"],
         ["Service Boards", "Board layouts, SLA policies and email connectors"],
         ["Pipeline", "Opportunities and deals"],
         ["Clients", "Client records, contacts, and each client's portal access"],
