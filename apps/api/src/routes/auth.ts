@@ -434,6 +434,23 @@ authRouter.get("/session", async (req, res) => {
 });
 
 /**
+ * The address the server sees this connection arriving from.
+ *
+ * Deliberately unauthenticated: the sign-in screen shows it *before* a session exists, which is the
+ * moment it is worth anything — a VPN, a proxy or a client's site is the usual reason a sign-in
+ * behaves oddly, and the first question is "which address am I arriving as?".
+ *
+ * It answers with the same value the session row and the audit trail record (`req.ip`, falling back
+ * to the socket), so what a person reads on screen matches what the trail says about them. While
+ * `trust proxy` is unset that value is the socket's, i.e. the address that actually reached us — the
+ * truthful answer, and the one a reverse proxy must be configured around rather than papered over.
+ * Nothing here is instance data: the caller is being handed their own address back.
+ */
+authRouter.get("/client-ip", (req, res) => {
+  res.json({ ip: req.ip || req.socket.remoteAddress || null });
+});
+
+/**
  * "Stay logged in" (PLAN-001 §3.3). Extending is just activity, so the sliding window does
  * the work; the endpoint exists so the modal can be explicit and get the new deadline back.
  */

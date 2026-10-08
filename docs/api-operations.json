@@ -21,6 +21,10 @@
     "summary": "The signed-in identity, with its permissions",
     "description": "The cheapest way for a client to confirm a credential works and to learn the permissions it holds."
   },
+  "GET /api/auth/client-ip": {
+    "summary": "The address this connection is arriving from",
+    "description": "Unauthenticated, because the sign-in screen asks before a session exists and this is the first fact worth having when a sign-in behaves oddly from a VPN, a proxy or a client's network. Answers with the same value the session record and the audit trail carry — `req.ip`, which is the socket address while `trust proxy` is unset — so the screen and the trail agree. Behind a reverse proxy that address is the proxy's until `trust proxy` is configured. Nothing here is instance data: the caller is being handed their own address back."
+  },
   "POST /api/auth/mfa/verify": {
     "summary": "Exchange an MFA challenge for a session token",
     "description": "The second half of MFA sign-in: the mfaToken from POST /api/auth/login plus a TOTP code."

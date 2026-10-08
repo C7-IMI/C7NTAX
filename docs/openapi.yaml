@@ -25,7 +25,7 @@ tags:
   - name: "Alerts"
     description: "6 operations"
   - name: "Auth"
-    description: "12 operations"
+    description: "13 operations"
   - name: "Auth Sso"
     description: "4 operations"
   - name: "Auth Webauthn"
@@ -452,6 +452,22 @@ paths:
       x-required-permissions: []
       x-permission-note: "Reachable before a session exists."
       x-source: "auth.ts · authRouter.post"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/auth/client-ip":
+    get:
+      tags: ["Auth"]
+      operationId: "getAuthclientIp"
+      summary: "The address this connection is arriving from"
+      description: "Unauthenticated, because the sign-in screen asks before a session exists and this is the first fact worth having when a sign-in behaves oddly from a VPN, a proxy or a client's network. Answers with the same value the session record and the audit trail carry — `req.ip`, which is the socket address while `trust proxy` is unset — so the screen and the trail agree. Behind a reverse proxy that address is the proxy's until `trust proxy` is configured. Nothing here is instance data: the caller is being handed their own address back."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: []
+      x-permission-note: "Reachable before a session exists."
+      x-source: "auth.ts · authRouter.get"
       responses:
         "200": { description: "OK" }
         "400": { $ref: "#/components/responses/BadRequest" }
@@ -7183,5 +7199,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 59 of 426 operations carry a curated summary from docs/api-operations.json;
+# 60 of 427 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

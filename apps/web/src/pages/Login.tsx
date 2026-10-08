@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useClientIp } from "../hooks/useClientIp";
 import { usePasskey } from "../hooks/usePasskey";
 import { ServiceHealthPanel } from "../components/ServiceHealthPanel";
 import { BrandMark } from "../components/BrandMark";
@@ -19,6 +20,7 @@ export function LoginPage() {
   const [mfaCode, setMfaCode] = useState("");
   const [ssoEnabled, setSsoEnabled] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const clientIp = useClientIp();
 
   // A session that ended server-side lands here with a reason so the sign-in page can say why.
   useEffect(() => {
@@ -185,6 +187,16 @@ export function LoginPage() {
         {/* Service health status */}
         <div className="mt-4 pt-4 border-t border-surface-border/50">
           <ServiceHealthPanel />
+          {/* The address the API sees this connection coming from — the one fact that explains a
+              sign-in that behaves oddly from a VPN, a proxy or a client's network. */}
+          {clientIp && (
+            <p
+              className="text-[11px] text-gray-500 text-center mt-3"
+              title="The address this connection is arriving from"
+            >
+              Connecting from <span className="text-gray-400 font-mono">{clientIp}</span>
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -67,9 +67,15 @@ curl -s https://psa.example.com/api/auth/login \
 
 A response with `"mfaRequired": true` means no token was issued: send the returned `mfaToken` and the
 six-digit code to `POST /api/auth/mfa/verify` (e-mail codes use `POST /api/auth/mfa/verify-email`).
-`POST /api/auth/me` describes the caller, `POST /api/auth/session/extend` pushes the expiry out, and
+`GET /api/auth/me` describes the caller, `POST /api/auth/session/extend` pushes the expiry out, and
 `POST /api/auth/logout` ends it. A session token is tied to the account's password and session
 version: changing the password invalidates tokens issued before it.
+
+`GET /api/auth/client-ip` answers with the address the server sees the connection arriving from. It is
+unauthenticated on purpose — it is what the sign-in screen shows, and the same value the session record
+and the audit trail carry, so a support conversation about "sign-in fails from the office but works from
+home" can compare the two. While `trust proxy` is unset it is the socket address, which behind a reverse
+proxy is the proxy's own until that is configured.
 
 Signing in is rate limited hard (see §5), and a wrong password repeatedly will lock the account. For
 anything unattended, use an API key.

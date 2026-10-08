@@ -4,6 +4,7 @@ import {
   AlignJustify, HelpCircle, LogOut, Moon, Settings2, Shield, Sparkles, Sun, UserCircle,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { useClientIp } from "../hooks/useClientIp";
 import { useTheme } from "../hooks/useTheme";
 import { UI_P1, UI_PALETTE } from "../lib/uiFlags";
 import { getDensity, setDensity, type Density } from "../lib/density";
@@ -47,6 +48,7 @@ function initials(user: MenuUser | null): string {
 export function MyAccountMenu() {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const clientIp = useClientIp();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [scheme, setScheme] = useState(() => getPalette(theme as PaletteMode));
@@ -124,6 +126,11 @@ export function MyAccountMenu() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-white truncate">{displayName(user as MenuUser | null)}</p>
               <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
+              {clientIp && (
+                <p className="text-[10px] text-gray-600 truncate" title="The address this connection is arriving from">
+                  Connecting from <span className="font-mono">{clientIp}</span>
+                </p>
+              )}
             </div>
             {label && <span className="badge bg-surface-lighter text-gray-300 text-[10px] capitalize shrink-0">{label}</span>}
           </div>
