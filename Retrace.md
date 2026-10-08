@@ -4565,6 +4565,7 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 ---
 
+
 ### Prompt 242 — The dashboard's Recent tickets card, and the row it was dragging out of shape
 **Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~1 h
 **BuildNotes IDs:** 2026.10.7.044 — The dashboard's Recent tickets card stops dragging its row out of shape
@@ -4591,9 +4592,11 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The customise screen shows the size the user picked, and the page draws exactly that** — which is why the fix is a changed default plus full-height cards rather than a rule that widens the card into whatever space is left. A card drawn wider than its own S/M/L would be a small lie in the editor.
 - **A hand-written `fetch` from inside the page cannot PUT or DELETE the layout.** Both came back `CSRF_FAILED`, because the axios interceptor is what adds the CSRF header. Driving layout changes from `tsx` outside the browser works and is the easier route next time.
 - **A stale saved layout survives a verification run unless the reset actually happens.** The DELETE was refused with that same CSRF error, so the half-width arrangement stayed in the database until it was cleared directly; check `userDashboardConfig.count()` after any layout experiment.
+- **Cleanup that runs after the assertions is cleanup that does not run.** The probe-portal run that crashed during the portal work left two clients and their contacts behind, and they were still there two prompts later; the residue check at the end of this prompt is what found them.
 - **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.
 
 ---
+
 ### Prompt 243 — Per-customer portal access, and a portal you can look at before the customer does
 **Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~3 h
 **BuildNotes IDs:** 2026.10.7.045 — Each customer gets the portal access they need, and you can see it before they do
@@ -4668,3 +4671,27 @@ Read the API surface before writing any entry, so nothing is offered that does n
 
 ---
 
+### Prompt 245 — The Portal card says where the portal is
+**Timestamp:** 2026-10-08 | **Status:** ✅ Completed | **Duration:** ~40 m
+**BuildNotes IDs:** 2026.10.8.001 — The Portal card says where the portal is
+
+> In the Customer portal configuration, display a link to the portal URL in the Portal card.
+
+**What I did**
+- **Put the address in the card that already answered the question.** The Portal card said **Live** or **Off** and nothing else, so the one screen that decides whether customers have a portal was also the one place the address was missing. It now shows the address under the status, with a copy button beside it.
+- **Took the address from the deployment, not the browser.** The API reports `portalUrl` built from `WEB_ORIGIN` — the same origin single sign-on hands back to, and the one customers are actually given — so the link reads the same whoever opens the screen. A deployment that has not set one falls back to the request's own origin, so the card is never empty.
+- **Kept the off state honest.** With the portal switched off the address is still useful (it is what will be live) but following it 404s, so it is rendered as plain text rather than a link, with a line saying every portal route answers 404 until it is switched on.
+- **Removed the duplicate.** The older "Open the portal" link sat beside the board card; two links to the same route is one too many, and the Portal card is where the address belongs.
+- **Verified both states in a browser.** Live: the card shows the address the API reports, the link carries it and opens in a new tab, it is the only link to the portal on the page, and the copy button hands over exactly that address (checked with a clipboard spy rather than by reading the real clipboard). Switched off: the address is present, not a link, and the card says why — **10 checks live, 8 off.**
+- **Updated Help**, since the walkthrough's first steps are where somebody looks for "what do I tell the customer": the Portal card's address and copy button are now one of them.
+
+**Decisions worth remembering**
+- **Where a link lives matters more than that it exists.** The link was already on the page in the wrong place; moving it into the card that owns the status is the whole change, and the duplicate had to go with it.
+- **A link that 404s is worse than no link.** The off state shows the address — people need to know what it will be — but as text, with the reason.
+- **Derive the address from the deployment's configured origin.** Reading `window.location.origin` would have looked right on every developer's machine and been wrong for any customer whose portal is on a different hostname from the admin's.
+
+**Notes for next time**
+- **There is still no configured "public portal address" setting.** `WEB_ORIGIN` is the deployment's single web origin, so an instance that serves the portal on a different hostname from the admin app cannot express it; a portal-specific override in the Portal section is the natural next step if that comes up.
+- **The copy button is the second in the product** (the SSO screen has one for the redirect URI). A shared `CopyButton` is now worth having.
+- **`WEB_ORIGIN` already drives the SSO redirect URI default**, so the two must stay in step if it is ever made configurable — both read `process.env.WEB_ORIGIN`.
+- **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.

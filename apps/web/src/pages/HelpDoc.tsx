@@ -1004,6 +1004,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "h", text: "Turn the portal on" },
       { kind: "steps", items: [
         "Open **Administration → Customer Portal** and switch on **Customer portal enabled**.",
+        "The **Portal** card at the top of that screen shows the address to give your customers, with a copy button beside it — it is the deployment's own web address, so it is the same link whoever is looking at the screen.",
         "Outbound email must be configured, because sign-in is an emailed code — the screen reports whether a relay answers.",
         "Choose the board portal-raised tickets land on. Unset means the oldest active service board.",
       ] },

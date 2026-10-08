@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.046 | Last Updated: 2026-10-07
+## Version: 2026.10.8.001 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,18 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.001 — The Portal card says where the portal is
+
+The screen that decides whether customers have a portal never told you the address to give them.
+
+- **[New]** **The Portal card on Administration → Customer Portal now carries the portal's address**, with a copy button beside it so it can go into a welcome mail or a document. While the portal is live the address is a link that opens it in a new tab; while it is off the address is still shown — as plain text, with a line saying every portal route answers 404 until it is switched on.
+- **[Update]** **The address is the deployment's own web origin** rather than whatever the administrator happens to be browsing from, so the same link is shown wherever the screen is read — the same origin single sign-on hands back to. A deployment that has not set one falls back to the browser's own origin.
+- **[Update]** **One place for the address.** The older "Open the portal" link beside the board card is gone: the Portal card is where the address belongs, and two links to the same route is one too many.
+
+Verified in a browser in both states — **10 checks live, 8 with the portal switched off** — including that the link carries the address the API reports, opens in a new tab, is the only link to the portal on the page, and that the copy button hands over exactly that address.
 
 ---
 

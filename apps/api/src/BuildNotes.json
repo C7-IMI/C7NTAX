@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.8.001",
+    "date": "2026-10-08",
+    "title": "The Portal card says where the portal is",
+    "changes": [
+      {
+        "text": "**The Portal card on Administration → Customer Portal now carries the portal's address**, with a copy button beside it so it can go into a welcome mail or a document. While the portal is live the address is a link that opens it in a new tab; while it is off the address is still shown — as plain text, with a line saying every portal route answers 404 until it is switched on.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The address is the deployment's own web origin** rather than whatever the administrator happens to be browsing from, so the same link is shown wherever the screen is read — the same origin single sign-on hands back to. A deployment that has not set one falls back to the browser's own origin.",
+        "type": "Update"
+      },
+      {
+        "text": "**One place for the address.** The older \"Open the portal\" link beside the board card is gone: the Portal card is where the address belongs, and two links to the same route is one too many.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.046",
     "date": "2026-10-07",
     "title": "The dashboard's recent tickets read like the rest of the product",

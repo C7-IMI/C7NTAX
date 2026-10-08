@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ExternalLink, Eye, Globe, Search, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
+import { Copy, ExternalLink, Eye, Globe, Search, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
 import api from "../api";
 import { DEFAULT_ACCENT_COLOUR, HEX_COLOUR_PATTERN, ON_ACCENT_COLOUR } from "../lib/colourTokens";
 import { PageHeader } from "../components/ui";
@@ -81,6 +81,8 @@ interface PortalSessionRow {
 
 interface PortalOverview {
   enabled: boolean;
+  /** Where a customer is told to go: the deployment's own web origin, not the admin's. */
+  portalUrl: string;
   board: { id: string; name: string } | null;
   boards: Array<{ id: string; name: string }>;
   instancePolicy: PortalInstancePolicy;
@@ -165,6 +167,16 @@ export function CustomerPortalSettingsPage() {
     setAccessClient(prev => (prev ? fresh.clients.find(c => c.id === prev.id) ?? prev : prev));
   }, [loadOverview]);
 
+  /** The address a customer is given, so it can be dropped into a welcome mail or a document. */
+  const copyPortalUrl = useCallback(async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Portal address copied");
+    } catch {
+      toast.error("Copy failed — select the address and copy it by hand");
+    }
+  }, []);
+
   const saveField = useCallback(async (field: RenderedField, value: boolean | number | string) => {
     setBusy(true);
     try {
@@ -243,13 +255,47 @@ export function CustomerPortalSettingsPage() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="card flex items-center gap-3">
+        <div className="card flex items-start gap-3">
           <div className={`p-2 rounded-lg ${overview?.enabled ? "bg-emerald-500/10" : "bg-surface-lighter"}`}>
             <Globe size={17} className={overview?.enabled ? "text-emerald-400" : "text-gray-500"} />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-gray-500">Portal</p>
             <p className="text-sm font-medium text-white">{overview?.enabled ? "Live" : "Off"}</p>
+            {/* The address customers are given: the deployment's own web origin, so it is the same
+                link on any machine, and the button beside it copies it for a mail or a document. */}
+            <div className="flex items-center gap-1.5 mt-1 min-w-0">
+              {overview?.enabled ? (
+                <a
+                  href={overview.portalUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Open the customer portal"
+                  className="text-xs text-cyber-400 hover:text-cyber-300 inline-flex items-center gap-1 min-w-0"
+                >
+                  <span className="truncate">{overview.portalUrl}</span>
+                  <ExternalLink size={11} className="shrink-0" />
+                </a>
+              ) : (
+                <span className="text-xs text-gray-500 truncate" title={overview?.portalUrl ?? ""}>
+                  {overview?.portalUrl ?? "/portal"}
+                </span>
+              )}
+              {overview?.portalUrl && (
+                <button
+                  type="button"
+                  onClick={() => void copyPortalUrl(overview.portalUrl)}
+                  aria-label="Copy the portal address"
+                  title="Copy the portal address"
+                  className="text-gray-500 hover:text-gray-300 shrink-0"
+                >
+                  <Copy size={11} />
+                </button>
+              )}
+            </div>
+            {!overview?.enabled && (
+              <p className="text-[11px] text-gray-600 mt-0.5">Every portal route answers 404 until it is switched on.</p>
+            )}
           </div>
         </div>
         <div className="card flex items-center gap-3">
@@ -306,16 +352,6 @@ export function CustomerPortalSettingsPage() {
               Tickets raised in the portal are created by the portal's own system user, so they never
               appear to come from a member of staff.
             </p>
-            {overview?.enabled && (
-              <a
-                href="/portal"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-cyber-300 hover:text-cyber-200 mt-1"
-              >
-                Open the portal <ExternalLink size={12} />
-              </a>
-            )}
           </div>
           <div className="card space-y-1.5">
             <h3 className="text-sm font-semibold text-white">Sign-ins completed</h3>

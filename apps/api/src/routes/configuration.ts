@@ -224,8 +224,14 @@ configurationRouter.get("/portal/overview", requirePermission(Permission.ClientV
     const boardNames = new Map(boards.map(b => [b.id, b.name]));
     const instance = instancePortalPolicy();
 
+    // Where a customer is told to go. The deployment's own web origin is the answer that matters —
+    // it is the address customers are given, and the same one SSO hands back to — with the browser's
+    // own origin as the fallback for a deployment that has not set one.
+    const webOrigin = (process.env.WEB_ORIGIN || (typeof req.headers.origin === "string" ? req.headers.origin : "")).replace(/\/$/, "");
+
     res.json({
       enabled: portalEnabled(),
+      portalUrl: webOrigin ? `${webOrigin}/portal` : "/portal",
       board,
       boards: boards.map(b => ({ id: b.id, name: b.name })),
       // What the deployment itself would give a customer, so each client's row can be read against it.
