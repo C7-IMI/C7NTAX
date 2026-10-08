@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.039 | Last Updated: 2026-10-07
+## Version: 2026.10.7.040 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,19 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.040 — Service Alerts: a post has to name the service before it can raise a notice
+
+A social sweep pointed at the wrong X endpoint put **149 notices** on the board across nearly every service — Microsoft 365, Verizon, Gemini and Claude among them — every one of them quoting the same post about something else entirely. The monitor now refuses a post that never names the service, and the fabricated alerts are gone.
+
+- **[Fix]** **A social post must name the service to count for it.** The observer searched X for the service's own name and accepted whatever came back, so a post about one product raised notices on every other service on the board — and, because a base URL can be pointed somewhere it should not be, the whole board once quoted a single unrelated post. A post that never names the service can now neither raise a notice nor retire one, and the observation's detail says how many of the posts read actually named it. The source still raises a notice when a post does name the service, which is the whole point of keeping it.
+- **[Fix]** **The 149 fabricated notices and the five probe services that produced them are removed.** They were test residue twice over: a registration that died part-way left the services behind, and while they existed the sweep recorded a notice against every service it polled. The genuine alert on the board — a vendor status page reporting a degraded service — is untouched, and the seed snapshots were recaptured so a reseed cannot restore the rest.
+- **[Fix]** **An alert card no longer carries an empty Sources block.** When a service's last poll read nothing at all, the active alert showed the divider and "No monitored sources configured" underneath it — contradicting the source chip on the same card, which names where the alert actually came from. The block now appears only when there is a source to list; the board's Sources column still says when nothing is watching a service, which is the point of that column.
+- **[Fix]** **The divider above it was drawn in Tailwind's default grey, not the theme's border.** `border-surface-border/60` emits no rule at all — the colour is a bare `var()`, so there is nothing to put the alpha into — and the element falls back to the preflight border, a light `#e5e7eb` hairline on a dark card. Measured in the browser rather than reasoned about: the same fault, from the same cause, as the one fixed on the installer-versions card earlier today. The Service Alerts settings page had seven more of them — six panels whose `bg-surface-lighter/50` computed to fully transparent, and a table row divider in the same default grey.
+- **[Update]** **The outage-board probe cleans up after itself even when it fails, and its cleanup assertion now runs in the `finally`.** The five residue services existed because the cleanup ran *after* the assertions: one thrown error and the service stayed on the board for good. The new phase covers the naming rule — a post about another product must read as clear for this service and raise nothing — so the rule cannot be relaxed without a red probe.
+- **[Update]** **Help states the naming rule** where it describes the social source, in the walkthrough and in the companion FAQ answer about whether chatter can raise an outage.
 
 ---
 
