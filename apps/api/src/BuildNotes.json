@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.8.008",
+    "date": "2026-10-08",
+    "title": "The tab strips look like something you press",
+    "changes": [
+      {
+        "text": "**The tab strips are bigger and unmistakable.** The chosen tab now sits on the accent's solid fill with the scheme's own label colour — the same fill as a primary button, so it cannot be mistaken for text and stays legible on every colour scheme and on both themes. The strip itself is a bordered group, the labels are `text-sm` (14px) instead of 12px, and every tab is a 38px-tall target rather than a 30px one.",
+        "type": "Update"
+      },
+      {
+        "text": "**The unchosen tabs look pressable** — a hover fill, brighter labels, and the counts drawn as pills instead of loose numbers beside the label.",
+        "type": "Update"
+      },
+      {
+        "text": "**The strips are keyboard-navigable.** Left/Right move the choice, Home/End jump to the ends, and focus follows the selection. Only the chosen tab carries a tab stop, so Tab still leaves the group instead of walking through every tab in it — which is what a `tablist` is expected to do.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A plan document was filed for the next step on the settings screens** — `PlanDocs/PLAN-023`, with a self-measuring mockup (`docs/mockups/portal-settings-why-toggle.html`) showing what folding each setting's explanation behind a \"Why\" control would look like. Nothing was built: the mockup measures **2,621 px → 695 px** on the Portal settings tab, and the decision is deliberately left open.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.007",
     "date": "2026-10-08",
     "title": "The Customer Portal screen is three tabs, not one long page",

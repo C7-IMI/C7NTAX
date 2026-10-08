@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.007 | Last Updated: 2026-10-08
+## Version: 2026.10.8.008 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,19 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.008 — The tab strips look like something you press
+
+The tabs added yesterday were the size of a caption: small grey labels, a faint tint on the chosen one. At a glance they read as headings rather than as a control, so the screen's own navigation was easy to miss.
+
+- **[Update]** **The tab strips are bigger and unmistakable.** The chosen tab now sits on the accent's solid fill with the scheme's own label colour — the same fill as a primary button, so it cannot be mistaken for text and stays legible on every colour scheme and on both themes. The strip itself is a bordered group, the labels are `text-sm` (14px) instead of 12px, and every tab is a 38px-tall target rather than a 30px one.
+- **[Update]** **The unchosen tabs look pressable** — a hover fill, brighter labels, and the counts drawn as pills instead of loose numbers beside the label.
+- **[New]** **The strips are keyboard-navigable.** Left/Right move the choice, Home/End jump to the ends, and focus follows the selection. Only the chosen tab carries a tab stop, so Tab still leaves the group instead of walking through every tab in it — which is what a `tablist` is expected to do.
+- **[Update]** **A plan document was filed for the next step on the settings screens** — `PlanDocs/PLAN-023`, with a self-measuring mockup (`docs/mockups/portal-settings-why-toggle.html`) showing what folding each setting's explanation behind a "Why" control would look like. Nothing was built: the mockup measures **2,621 px → 695 px** on the Portal settings tab, and the decision is deliberately left open.
+
+Verified in a browser with **22 checks plus 7 on the chosen tab's count**: the strip is 518 × 48 px with 38 px tabs, the chosen label reads **6.48:1** and the unchosen labels **11.52:1** in the dark theme (**10.58:1** on the light theme), a count on the chosen tab is **10.39:1**, clicking a tab still selects it and writes `?tab=` into the address, ArrowRight moves the choice and the address to `?tab=sessions` with focus following it, only one tab is in the tab order, every tab is the same height, and at 390 px wide the strip wraps to two rows inside the viewport rather than overflowing. Service Alerts' Live / Outage Board switch takes the same control unchanged.
 
 ---
 

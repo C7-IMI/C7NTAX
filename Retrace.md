@@ -4912,3 +4912,38 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **No BuildNotes entry was written and no version was consumed** — the version sequence still stands at 2026.10.8.007 and the next project change takes 2026.10.8.008.
 - **If the "Why" toggle is approved**, the work is confined to `pages/Configuration.tsx`'s `FieldCard` (an `aria-expanded` button beside the label, `detail`/`affects`/`default` inside it), so every settings screen gets it at once — the portal page, Configuration and System Settings all render through that one card.
 - **The tab strip and this toggle are complements, not alternatives**: the tabs answer "which of these three things am I looking at", the toggle answers "how much of this one am I reading".
+
+---
+
+### Prompt 253 — A plan document for the "Why" toggle, and tab strips that look like controls
+
+**Timestamp:** 2026-10-08 01:52 | **Status:** Complete | **Duration:** ~40 min
+
+**BuildNotes IDs:** **2026.10.8.008** — "The tab strips look like something you press"
+
+**Prompt**
+
+> Just add that to a new plan doc for now. I'll decide later.
+>
+> The tabs need to be bigger/more pronounced so you can easily identify that they can be clicked/navigated
+
+**What I did**
+- **Filed the mockup as a plan rather than a feature.** `PlanDocs/PLAN-023-Setting-Explanation-Why-Toggle.md` records the idea end to end: the measurement that motivated it (2,621 px scaled to the sixteen Portal settings fields), the proposal, the three shapes of the control in the mockup, the six decisions still open, and the work items in dependency order. It sits in the `—` rows of the PlanDocs registry because it is deliberately not scheduled; the registry header now says when it was added.
+- **Put the mockup in the repository** (`docs/mockups/portal-settings-why-toggle.html`) beside the two mockups already there, so the plan does not depend on a session folder to be readable. It is self-contained — the app's own compiled stylesheet is inlined — and it measures itself when opened.
+- **Found the trap while writing §3, before any code exists.** The "Default when nothing is saved: …" line and the "Use the deployment's value" reset button share one row in `FieldCard`, so a naive fold would hide a button behind a disclosure and make an overridden field look like an un-overridden one. The plan names it and the verification section checks it.
+- **Made the tab strips pressable.** The chosen tab now takes the primary button's fill — the accent at 600 with the scheme's own label colour, through `--btn-primary-fg`, the token that exists for exactly this — instead of a tint of the accent. The strip is a bordered group with `p-1`, the labels are `text-sm` rather than `text-xs`, the tabs are 38 px tall rather than 30, the counts are pills rather than numbers sitting in the text, and the unchosen tabs take a hover fill so they respond before they are clicked. All of it in the one shared `components/ui/Tabs`, so Service Alerts gets it too.
+- **Made the strips navigable, which is what "navigated" asked for.** Arrow keys move the choice (Left/Right, with Home/End to the ends), focus follows it, and only the chosen tab carries a tab stop — the roving-tabindex pattern a `tablist` is supposed to have and previously did not.
+- **Used `items-stretch` rather than `items-center`** so the tabs without a count are the same height as the tabs with one; without it the buttons measured 36 px beside 38 px neighbours.
+- **Verified in a browser, 22 checks**, plus 7 more on the chosen tab's count: strip 518 × 48 px, tabs 38 px, chosen label **6.48:1** (dark and light), unchosen **11.52:1** / **10.58:1**, a count on the chosen tab **10.39:1**, click writes `?tab=access`, ArrowRight moves selection *and* address to `?tab=sessions` with focus following, one tab stop only, every tab the same height, and at 390 px the strip wraps to two rows inside the viewport rather than overflowing the page. `scripts/check-help-links.mjs` green; web typecheck clean.
+
+**Decisions worth remembering**
+- **A disclosure gets a plan and a mockup, not a commit.** The user asked to decide later, so the artifact is a document with numbers in it — the decision is theirs, and the document is the thing that makes it decidable rather than a matter of taste.
+- **A faint tint of the accent is not a selection.** `bg-cyber-600/20 text-cyber-300` measures acceptably (the label is legible) but reads as decoration: at 20% on a near-black surface the tint is barely darker than the group it sits in. A control's chosen state has to be the loudest thing about it, which is why it now borrows the primary button's fill and the token that keeps its label legible in every scheme.
+- **Contrast by token, not by guess.** The tab uses `--btn-primary-fg` rather than `text-white` so the eight colour schemes keep their own answer to "is the label dark or light on this accent" — the same reason `.btn-primary` does.
+- **Arrow keys are part of "navigable".** The prompt's word was "clicked/navigated"; a `tablist` without arrow keys and a roving tab stop is a tab list only in the accessibility tree.
+- **One component meant one change.** Because `Tabs` is shared, Service Alerts' Live / Outage Board switch improved with no edit to that file — the dividend of extracting it two prompts ago.
+
+**Notes for next time**
+- **The pill regex artefact is worth remembering.** In a JS template literal, `\d` collapses to `d`, so a probe that measures contrast silently reads `NaN` and reports a failed check that is not a failure. Write `\\d` inside a template-literal probe, and check the raw strings before believing an assertion.
+- **Reach for `items-stretch` on a pill group whose children differ in content height** — a count in one tab is enough to make the tabs uneven.
+- **If the "Why" toggle is approved**, PLAN-023 §6 is the order to do it in, and `FieldCard` is the only file that has to change.

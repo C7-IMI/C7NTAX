@@ -167,6 +167,17 @@ html[data-theme="light"] {
   .badge-status-waiting_on_vendor { color: var(--status-waiting-vendor); }
   .badge-status-resolved { color: var(--status-resolved); }
   .badge-status-closed { color: var(--status-closed); }
+  /*
+   * The chosen tab of a segmented control. It takes the primary button's fill — the accent at 600
+   * with the scheme's label colour — because a tint of the accent (the usual way a segmented
+   * control marks its selection) reads as decoration: on a near-black surface a crimson tint at /20
+   * is barely darker than the group it sits in. The chosen tab has to be the one thing on the
+   * screen that cannot be mistaken for a label.
+   */
+  .tab-active {
+    @apply bg-cyber-600 shadow-sm;
+    color: var(--btn-primary-fg, var(--text-primary));
+  }
 }
 
 /* ── Light theme: the shades that do not move with the theme ──────────────────
