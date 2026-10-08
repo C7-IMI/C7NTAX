@@ -13,12 +13,12 @@
  * a logo together is to look at them together.
  */
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Copy, ExternalLink, Eye, Globe, Search, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
 import api from "../api";
 import { DEFAULT_ACCENT_COLOUR, HEX_COLOUR_PATTERN, ON_ACCENT_COLOUR } from "../lib/colourTokens";
-import { PageHeader } from "../components/ui";
+import { PageHeader, Tabs } from "../components/ui";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PortalAccessDialog } from "../components/PortalAccessDialog";
 import { PortalPreviewDialog } from "../components/PortalPreviewDialog";
@@ -146,6 +146,7 @@ function PortalPreview({ name, accent, logo, welcome, support }: {
 
 export function CustomerPortalSettingsPage() {
   const { section, sections, loaded, loading, error, save, clear } = useConfigurationSection("portal");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [overview, setOverview] = useState<PortalOverview | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
@@ -153,6 +154,25 @@ export function CustomerPortalSettingsPage() {
   const [savingClient, setSavingClient] = useState<string | null>(null);
   const [accessClient, setAccessClient] = useState<PortalClient | null>(null);
   const [previewClient, setPreviewClient] = useState<string | null>(null);
+
+  /**
+   * The three parts of this screen are pages in their own right — settings, who may use the portal,
+   * and who has — so they sit behind a tab strip rather than one under the other, and the choice is
+   * in the URL so a tab can be linked to and survives a reload.
+   */
+  const portalTabs = [
+    { id: "settings", label: "Portal settings" },
+    { id: "access", label: "Client access", count: overview?.clients.length },
+    { id: "sessions", label: "Recent portal sessions", count: overview?.sessions.length },
+  ] as const;
+  type PortalTab = (typeof portalTabs)[number]["id"];
+  const requestedTab = searchParams.get("tab");
+  const tab: PortalTab = requestedTab === "access" || requestedTab === "sessions" ? requestedTab : "settings";
+  const setTab = useCallback((next: PortalTab) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  }, [setSearchParams]);
 
   const loadOverview = useCallback(async (): Promise<PortalOverview | null> => {
     try {
@@ -334,6 +354,15 @@ export function CustomerPortalSettingsPage() {
         <RequirementBanner key={requirement.label} requirement={requirement} />
       ))}
 
+      <Tabs
+        items={portalTabs}
+        value={tab}
+        onChange={setTab}
+        label="Customer portal sections"
+      />
+
+      {tab === "settings" && (
+      <>
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div className="space-y-6 min-w-0">
           <div className="card">
@@ -379,6 +408,15 @@ export function CustomerPortalSettingsPage() {
         </div>
       </div>
 
+      <p className="text-xs text-gray-500">
+        Changes are saved as soon as a control is released. Branding takes effect on the portal's next
+        page load; sign-in limits apply from the next code that is issued.
+      </p>
+      </>
+      )}
+
+      {tab === "access" && (
+      <>
       {/* ── Per-client access ── */}
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -508,6 +546,11 @@ export function CustomerPortalSettingsPage() {
         )}
       </div>
 
+      </>
+      )}
+
+      {tab === "sessions" && (
+      <>
       {/* ── Recent activity ── */}
       <div className="card">
         <h3 className="text-sm font-semibold text-white mb-1">Recent portal sessions</h3>
@@ -552,11 +595,8 @@ export function CustomerPortalSettingsPage() {
           </div>
         )}
       </div>
-
-      <p className="text-xs text-gray-500">
-        Changes are saved as soon as a control is released. Branding takes effect on the portal's next
-        page load; sign-in limits apply from the next code that is issued.
-      </p>
+      </>
+      )}
 
       {accessClient && overview && (
         <PortalAccessDialog

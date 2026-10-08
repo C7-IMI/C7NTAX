@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.006 | Last Updated: 2026-10-08
+## Version: 2026.10.8.007 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,19 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.007 — The Customer Portal screen is three tabs, not one long page
+
+Settings, who may use the portal, and who has were stacked one under the other, so answering "who has access?" meant scrolling past every setting on the way.
+
+- **[Update]** **Portal settings, Client access and Recent portal sessions are now tabs** on Administration → Customer Portal. Only the chosen one is drawn, so the long list of settings is no longer in the way of the client table, or the table in the way of the sign-in history.
+- **[Update]** **The tab is in the address** (`/admin/portal?tab=access`), so a tab can be linked to in a handover or a ticket, and reopening the page comes back to where you were rather than to the first tab.
+- **[New]** **The tabs carry counts** — how many clients are listed and how many sessions there are — so the tab strip answers "is there anything in there?" without being clicked.
+- **[Update]** **The tab strip is one component now** (`components/ui/Tabs`), used here and by Service Alerts' Live / Outage Board switch, instead of each screen writing its own. It is a `tablist` in the accessibility tree rather than a row of buttons, so a screen reader says which tab is chosen.
+
+Verified in a browser with **20 checks**: the screen opens on its settings with neither table rendered at all, each tab brings its own card and writes itself into the address, a `?tab=access` link lands on the client table after a reload, the settings tab carries its sixteen fields and the client tab none of them, and Service Alerts still switches between its two views through the same control. Help updated where it called these cards sections of one page.
 
 ---
 

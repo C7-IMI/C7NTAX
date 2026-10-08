@@ -4847,3 +4847,35 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The probe for both stores is `probe-dashboard.mjs`**, whose header now says so. A pins change should be added there rather than to a new file.
 - **The auto-sync swept the code into its own commits** (`b39a1ea`) while this was being verified, leaving the records to commit by hand — the fourth prompt in a row where that has happened.
 - **The order is stored as the account has it, and the client reorders by sending the whole list** — no per-item endpoint, which is what makes a drag and a Move up the same request.
+
+---
+
+### Prompt 251 — The Customer Portal screen is three tabs
+**Timestamp:** 2026-10-08 | **Status:** ✅ Completed | **Duration:** ~1 h
+**BuildNotes IDs:** 2026.10.8.007 — The Customer Portal screen is three tabs, not one long page
+
+> For the Customer Portal subsection in administration:
+>
+> The Portal Settings, Client Access, and Recent Portal Sessions cards should be in a tabbed style layout, so that I don't have to scroll endlessly to see the different sections.
+
+**What I did**
+- **Put the three sections behind a tab strip** — Portal settings, Client access, Recent portal sessions — and render only the chosen one, so the sixteen setting fields are not between you and the client table. The stats row, the requirement banners and the tab strip stay at the top, because those are the answers you want before choosing anything.
+- **Kept the tab in the address** (`?tab=access`), so a tab can be linked to and reopening the page returns to it. `useSearchParams` with `replace: true`, so switching tabs does not fill up the browser's back history with them.
+- **Put counts on the tabs** — the number of clients listed, and of sessions held — so the strip answers "is anything in there?" before you click.
+- **Extracted the control instead of writing a second one.** Service Alerts already had a segmented switch (Live / Outage Board) written inline; rather than copy that markup into the portal page, `components/ui/Tabs` now serves both. It is a `tablist` with `aria-selected` rather than a row of buttons, and it hands the chosen id back to the page instead of holding state, which is what lets one page keep its tab in the URL and the other keep it in component state.
+- **Moved the note about how saving works into the settings tab**, where it applies, rather than leaving it under the sessions table it has nothing to do with.
+- **Followed it into Help**: the walkthrough described the Client access *table* and called the sessions a section of the same screen, which the tabs made untrue. There is now a line saying the screen is three tabs and that the chosen one is in the address.
+- **Verified in a browser with 20 checks**: the screen opens on its settings with neither table in the DOM at all, each tab brings its own card and writes the address, a `?tab=access` deep link lands on the client table after a reload, the settings tab carries its sixteen fields and the client tab none of them, and Service Alerts still switches views through the same control.
+
+**Decisions worth remembering**
+- **A tab is for things you look at one at a time**, and these three are: settings are edited, the client table is scanned, the sessions are read. Stacking them meant the table's position depended on how much help text the settings happened to carry — which is exactly the complaint.
+- **Only the chosen tab is rendered, not merely hidden.** That is what removes the scrolling, and it also means the client table's own data work is not done while you are reading settings.
+- **The tab id in the URL is the whole of the state.** No extra store, no localStorage: a link carries the tab, which is what makes "look at the Client access tab" a thing you can say to a colleague.
+- **One component, two pages, one look.** The alternative — a second inline copy — was already on the list of things to tidy (the `CopyButton` is the other), and doing it here cost less than the duplication would have.
+- **Moving the help text is part of moving the screen.** A walkthrough that says "the Client access table on the same screen" ages badly the moment the table is behind a tab.
+
+**Notes for next time**
+- **The other settings screens may want the same treatment.** Configuration (the registry hub) and System Settings are long in the same way; the component is now there to be used.
+- **The settings tab is still the tallest of the three** — sixteen fields with their explanations — so a page that tabbed its sections can still be a long page. If that becomes the complaint, the next move is collapsing each field's `detail` text behind a "why" toggle, not more tabs.
+- **`Tabs` takes `readonly` items and returns the id**, so a page with tabs in the URL and a page with tabs in state use it identically. If a third pattern appears (tabs that change a filter), it should still be the page holding the value.
+- **The auto-sync swept most of this into its own commits again**; the records were committed by hand afterwards.

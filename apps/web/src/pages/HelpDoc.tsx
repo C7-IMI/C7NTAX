@@ -189,7 +189,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "table", headers: ["Area", "What it governs"], rows: [
         ["Workspace", "The instance's name, the default landing page, and the interface options that apply to everyone"],
         ["Sessions & Security", "Idle timeout, the session ceiling, and which sign-in methods this deployment offers"],
-        ["Customer Portal", "The customer-facing sign-in, what a customer may see and do, and how it looks — and, on the Client access table, what each customer is given individually"],
+        ["Customer Portal", "The customer-facing sign-in, what a customer may see and do, and how it looks — and, on the Client access tab, what each customer is given individually"],
         ["Service Alerts & Monitoring", "Uptime monitors, outbound alert webhooks, the social source and the poll interval"],
         ["Knowledge Base & AI", "Drafting articles from resolved tickets, the drafting model, and AI action proposals"],
         ["CloudConnect & Email", "Connector verification, the mail connectors, Graph delivery and M365 offboarding"],
@@ -1014,6 +1014,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: "Customer Portal",
     description: "Give each customer the access they need, and see exactly what they will see before they do.",
     blocks: [
+      { kind: "p", text: "The screen is split into three tabs — **Portal settings**, **Client access** and **Recent portal sessions** — so the long list of settings is not in the way of the client table, or the table in the way of the sign-in history. The tab you are on is in the address (`?tab=access`), so a link can point at one of them and reopening the page comes back to the same one." },
       { kind: "h", text: "Turn the portal on" },
       { kind: "steps", items: [
         "Open **Administration → Customer Portal** and switch on **Customer portal enabled**.",
@@ -1025,7 +1026,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "warn", text: "Off is genuinely off: every portal route answers 404, so a deployment that has not switched it on does not advertise a customer sign-in page at all." },
       { kind: "h", text: "Grant a client access" },
       { kind: "steps", items: [
-        "Either switch **Portal access** on in the **Client access** table on the same screen, or open the client under Clients and use its own Portal access toggle — the client record stays authoritative.",
+        "Either switch **Portal access** on in the **Client access** tab on the same screen, or open the client under Clients and use its own Portal access toggle — the client record stays authoritative.",
         "That client's contacts can now use the portal. A contact of a client without it cannot, whatever email address they use.",
         "Optionally give one client its own accent colour or logo; both override the instance defaults.",
       ] },
@@ -1046,7 +1047,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
       { kind: "h", text: "Give one customer a different level of access" },
       { kind: "steps", items: [
-        "Open **Administration → Customer Portal** and find the client in the **Client access** table. The **What they see** column shows what that customer currently gets, and whether it is the deployment's answer or their own.",
+        "Open **Administration → Customer Portal** and find the client in the **Client access** tab. The **What they see** column shows what that customer currently gets, and whether it is the deployment's answer or their own.",
         "Select **Portal access** to open the client's policy. Every control offers the deployment's answer first, so leaving one alone means it keeps following the deployment if that is later changed.",
         "**Which tickets they see** — their own, or every ticket at that client. This is the setting that matters most: it decides the list and the ticket detail together, and a narrower scope is applied on the server, not in the page.",
         "**Raising tickets** and **Replying to tickets** can each be allowed or refused for that client alone — the client who should go through the phone, and the one who should not.",
@@ -1085,7 +1086,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
       { kind: "h", text: "Why they can only see their own" },
       { kind: "p", text: "The restriction is applied on the server from the signed-in contact's company, after anything the request asked for — so it cannot be widened by a URL, a query parameter or a crafted request. A ticket that is not theirs answers **404 rather than 403**, because whether a ticket exists is itself information a customer should not be given." },
-      { kind: "p", text: "**Recent portal sessions** on the same screen lists the last 25 sign-ins with the customer, their client, when they started, when they were last active and which are still live — which is how you answer \"is anyone actually using this?\"" },
+      { kind: "p", text: "**Recent portal sessions**, on its own tab, lists the last 25 sign-ins with the customer, their client, when they started, when they were last active and which are still live — which is how you answer \"is anyone actually using this?\"" },
     ],
     related: [
       { label: "Configuration", to: "/help/configuration" },

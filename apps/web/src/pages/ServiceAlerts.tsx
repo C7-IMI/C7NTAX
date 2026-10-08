@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 import toast from "react-hot-toast";
+import { Tabs } from "../components/ui";
 import {
   AlertTriangle, WifiOff, Activity, CheckCircle2, RefreshCw, ExternalLink,
   Globe, TrendingDown, Info, ShieldCheck, CircleDot, Radio,
@@ -207,17 +208,12 @@ export function ServiceAlertsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-surface-lighter">
-            {([["live", "Live"], ["board", "Outage Board"]] as const).map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setTab(value)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${tab === value ? "bg-cyber-600/20 text-cyber-300" : "text-gray-400 hover:text-white"}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            items={[{ id: "live", label: "Live" }, { id: "board", label: "Outage Board" }] as const}
+            value={tab}
+            onChange={setTab}
+            label="Service Alerts view"
+          />
           <button
             className="btn-secondary text-sm flex items-center gap-1.5"
             onClick={() => { setRefreshing(true); void load(true); }}
