@@ -5157,3 +5157,40 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **`FLEXPOINT_RESOURCES` reads its switches by name** (`cfg.settings?.[key]`), so a property-access scan cannot see them — the catalogue probe falls back to literal-name matching for that connector.
 - **Not every connector has a definition for "all records".** Proofpoint is read in hourly slices (a two-day window is 48 requests per endpoint), and AutoTask, Scoro, HaloPSA, IT Glue and the rest all page rather than return everything, so a first sync of a large tenant is paced by design.
 - **The API workspace does not typecheck cleanly** (122 pre-existing errors, none introduced here) — it runs under `tsx`, so `tsc --noEmit` is a reference rather than a gate; the integrations package does typecheck cleanly and should stay that way.
+
+---
+
+### Prompt 259 — Auditing every hover tooltip so it names the control, not the icon
+
+**Timestamp:** 2026-10-08 09:20 | **Status:** Complete | **Duration:** ~55 min
+
+**BuildNotes IDs:** **2026.10.8.014** — "Hover tooltips name the thing, not the icon"
+
+**Prompt**
+
+> Audit the hover tooltips throughout the app and make sure they are labeled properly. For instance, in the screenshot if I hover over the key it should say Single Sign-On, not Keyround. Generic names should either be fixed to what they are related to, or removed
+
+**What I did**
+- **Found the cause before changing anything.** `GlobalTooltip` (one delegated instance for the whole app) resolved a label in the order `data-tooltip` → `aria-label` → `title` → **icon** → text. The icon was consulted *before* the control's own words, and the icon path fell back to the glyph's own name — so the navigation link containing the words "Single Sign-On" was announced as "Keyround". Not one wrong label: the same ordering mistake on every labelled control in the product.
+- **Put the control's own words first**, then worked out what to do with the controls that genuinely have none. Added `aria-labelledby` support and inheritance from a labelling wrapper (`title`/`aria-label` on a parent, up to three levels) — which is how the collapsed icon rail names itself.
+- **Audited the icon table against the 206 lucide icons the app actually imports.** Rewrote it as action words (Add, Edit, Delete, Copy, Download, Refresh, Show, Hide, Sign out, …), deleted the vague entries ("Quick" for a lightning bolt, "Power", "Badge", "More options" for a chevron, "Actions" for a wrench, "Trending"), and refused the glyph names that describe the drawing rather than the control.
+- **Introduced the rule the request asked for: an icon whose picture says nothing useful is never allowed to answer.** A key, a shield, a gear, a chevron, a tick box and a play triangle mean different things in different places — a key is Single Sign-On in the navigation, a password collection in Kumo and a licence in the product catalogue — so those are labelled from context, and where context is unknown the tooltip is **removed rather than wrong**. A chevron on a disclosure control still says Expand/Collapse, from `aria-expanded`.
+- **Stopped labelling tick boxes "Checkbox"** (label wrapping it, or nothing), and stopped echoing a paragraph: a control whose own words run past a short name is silent unless the page has clipped it, in which case the full text is shown — the eight configuration cards each used to offer a 166-character description on hover.
+- **Labelled the controls that could not be inferred** at the source: the calendar's month arrows and its month button, a ticket row's selector ("Select ticket INF-1901", "Select all tickets"), the sidebar collapse/expand button, and both mobile menu buttons.
+- **Built the audit as a script and kept it** (`scripts/audit-tooltips.mjs`): it reads the tooltip tables out of the component so it cannot drift from them, then reports what the running app would label every icon-only control. **554 controls across 20 routes** — now zero labelled by an icon's own name; before the fix the same sweep produced "Keyround", "Chevronleft", "Checkbox".
+- **Verified by hovering the real app**, not by reading the diff: the Single Sign-On nav item reads "Single Sign-On" expanded and in the collapsed rail; API Access reads "API Access"; a calendar arrow reads "Next month"; a ticket selector reads "Select ticket EXP-…"; a permission tick box reads its own label ("Include revoked"); a configuration card shows nothing; a deliberately clipped name shows in full; and an icon-only action button still says "Sync".
+- **Documented the convention** in Help → Getting Started under "What hovering tells you", and recorded the change in BuildNotes 2026.10.8.014.
+
+**Decisions worth remembering**
+- **A generic label is worse than no label.** "Keyround" is not a bad description of the control, it is a description of the drawing, and a user cannot act on it. Everywhere the answer was uncertain the tooltip was removed instead — the audit counts those as decisions, not omissions.
+- **Text before icon is the invariant.** An icon is decoration or a hint; the words next to it are the name. Any future label source goes *before* the icon, never after it.
+- **The icon table can only ever cover icons with one meaning.** It is deliberately not a mapping from glyph to feature, because the same glyph has several features — that is what context and, failing that, silence are for.
+- **Long text is not a tooltip.** Repetition of visible words is noise; the exception (clipped text) is exactly the case a tooltip exists for, so it is tested with a deliberately narrowed control.
+- **Audit with the running application, not the source.** The bug was invisible in the component — the ordering read as intentional — and only appeared when a real control was hovered in a real browser.
+
+**Notes for next time**
+- **`scripts/audit-tooltips.mjs` needs a dump**, which the browser tool produces: evaluate a collector over the routes that walks `button, a, input, select, textarea, [role=button], [role=link]`, keeps the ones with no text of their own, and records the lucide class plus `aria-label`/`title`/wrapper label. The script's header states the shape.
+- **The resolver skips disabled controls**, so hovering a busy "Save the provider" button shows nothing by design — a `null` from a probe is not automatically a bug.
+- **Playwright's `hover` scrolls the element into view**, and the tooltip hides itself on scroll; a `null` right after a hover is usually that, not a resolution failure. Verify with a synthetic `pointerover`, or read the element's own attributes.
+- **The sidebar's collapsed state persists** across probes in `localStorage`, so a probe that expects nav links by name must expand it first.
+- **`innerText` respects `text-transform: uppercase`** — section headings read as capitals, so tooltip comparisons stay case-insensitive.

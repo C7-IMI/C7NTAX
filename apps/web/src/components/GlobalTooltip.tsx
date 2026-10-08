@@ -31,6 +31,8 @@ const INTERACTIVE =
 const SHOW_DELAY_MS = 450;
 const GAP = 8;
 const MAX_LABEL = 96;
+/** Above this, a control's own words are a sentence rather than a name. */
+const SHORT_LABEL_MAX = 48;
 
 /**
  * Labels for icons that mean one thing wherever they appear. The value describes what the control
@@ -182,6 +184,9 @@ const ICON_IS_AMBIGUOUS = new Set([
   "settings", "settings2", "slidershorizontal", "wrench", "cog",
   "power", "zap", "sparkles", "wand2", "target", "flag", "tag", "badge",
   "circle", "circledot", "square", "checksquare", "squarecheckbig", "squarecheckbox",
+  // A direction glyph means "previous month" in a calendar, "previous page" in a table and "collapse"
+  // in a tree. It is labelled by the control that uses it, or by `aria-expanded`, or not at all.
+  "chevronleft", "chevronright", "chevronup", "chevrondown",
   "layers", "boxes3", "loader", "play", "pause", "repeat", "shuffle",
   "gitbranch", "gitpullrequestarrow", "plug", "plugzap", "cable", "radio", "radiotower",
   "router", "scanline", "projector", "presentation", "bot", "workflow", "login", "logintab",
@@ -323,6 +328,9 @@ function resolveLabel(el: HTMLElement): string | null {
     const ph = el.getAttribute("placeholder")?.trim();
     if (ph) return ph;
     const name = el.getAttribute("name");
+    // A tick box or a radio button means whatever it sits beside — "Checkbox" is not a label, so an
+    // unlabelled one is left alone rather than announced as its control type.
+    if (el.matches('input[type="checkbox"], input[type="radio"]')) return name ? humanizeName(name) : null;
     if (name) return humanizeName(name);
     const type = el.getAttribute("type");
     if (type && type !== "hidden") return humanizeName(type);
@@ -332,10 +340,23 @@ function resolveLabel(el: HTMLElement): string | null {
   // The control's own words. A link that reads "Single Sign-On" is labelled "Single Sign-On" — this
   // used to be asked *after* the icon, which is how a key glyph came to announce itself as "Keyround".
   const text = (el.textContent || "").replace(/\s+/g, " ").trim();
-  if (text) return text.length <= MAX_LABEL ? text : `${text.slice(0, MAX_LABEL)}…`;
+  if (text) {
+    if (text.length <= SHORT_LABEL_MAX) return text;
+    // Longer than that it is a sentence, and repeating a card's own paragraph back at whoever hovers
+    // it is noise. It is worth showing only when the page cuts it off — an ellipsised name is exactly
+    // what a tooltip is for.
+    if (!isClipped(el)) return null;
+    return text.length <= MAX_LABEL ? text : `${text.slice(0, MAX_LABEL)}…`;
+  }
 
   // Nothing to read: an icon-only control is named by what its icon does, or by what it sits beside.
   return iconLabel(el);
+}
+
+/** Whether the control's text is wider than the space it has been given. */
+function isClipped(el: HTMLElement): boolean {
+  if (el.scrollWidth > el.clientWidth + 1) return true;
+  return [...el.querySelectorAll("*")].some(child => child.scrollWidth > child.clientWidth + 1);
 }
 
 interface Tip {

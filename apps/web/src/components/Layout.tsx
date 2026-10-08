@@ -983,7 +983,7 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
             </button>
-            <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setMobileOpen(false)}>
+            <button className="lg:hidden text-gray-400 hover:text-white p-1" onClick={() => setMobileOpen(false)} aria-label="Close the navigation">
               <X size={20} />
             </button>
           </div>
@@ -1088,7 +1088,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <header className="border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50 py-3">
           <div className="flex flex-col gap-0.5 min-w-0 flex-1 mr-6">
             <div className="flex items-center gap-3">
-              <button className="lg:hidden text-gray-400 hover:text-white p-1 shrink-0" onClick={() => setMobileOpen(true)}>
+              <button className="lg:hidden text-gray-400 hover:text-white p-1 shrink-0" onClick={() => setMobileOpen(true)} aria-label="Open the navigation">
                 <Menu size={20} />
               </button>
               <h1 className="text-base font-semibold text-white truncate">

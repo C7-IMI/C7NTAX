@@ -1,9 +1,41 @@
 [
   {
-    "version": "2026.10.8.013",
+    "version": "2026.10.8.014",
     "date": "2026-10-08",
-    "title": "The connectors were audited against the vendors' own APIs, and CloudConnect now shows what is connected",
+    "title": "Hover tooltips name the thing, not the icon",
     "changes": [
+      {
+        "text": "**The control's own words now come first**, before any icon. A link that says *Single Sign-On* is labelled *Single Sign-On*, whether the sidebar is expanded or collapsed into its icon rail. This was the reported case, and it was the same ordering mistake on every labelled control in the product.",
+        "type": "Fix"
+      },
+      {
+        "text": "**An icon is never allowed to answer for itself when its picture says nothing useful.** A key, a shield, a gear, a chevron, a tick box and a play triangle mean different things in different places — a key is Single Sign-On in the navigation, a password collection in Kumo and a licence in the product catalogue — so those icons no longer speak: the tooltip comes from the feature the control belongs to (its surrounding heading, section or labelled wrapper), and if even that is unknown, **no tooltip appears rather than a wrong one**.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A tick box is no longer announced as \"Checkbox\".** It takes its wording from the label it sits in or with, and an unlabelled one stays silent.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The action table was rewritten and audited against every icon the app ships** (206 of them). Vague entries are gone — \"Quick\" for a lightning bolt, \"Power\", \"Badge\", \"More options\" for a chevron, \"Actions\" for a wrench, \"Trending\" — and the genuinely single-meaning ones are now action words: **Add** rather than \"Plus\", **Edit**, **Delete**, **Copy**, **Download**, **Refresh**, **Show**, **Hide**, **Sign out**, **Open in a new tab**. A glyph name that describes the drawing rather than the control (\"Chevrons down up\", \"Columns 3\") is refused.",
+        "type": "Update"
+      },
+      {
+        "text": "**Controls that could not be inferred now name themselves**: the calendar's month arrows (*Previous month* / *Next month*, and the month button is *Go to this month*), a ticket row's selector (*Select ticket INF-1901*, *Select all tickets*), the sidebar's collapse/expand button and both mobile menu buttons.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A paragraph is not a tooltip.** A control whose own words run past a short name is silent, unless the page has cut that text off with an ellipsis — in which case the full text is revealed, which is what a tooltip is for. Previously the eight configuration cards each offered a 166-character description on hover.",
+        "type": "Fix"
+      },
+      {
+        "text": "**`scripts/audit-tooltips.mjs`** — the audit that found this, kept so it can be repeated. It reads the tooltip tables out of the component (so it cannot drift from them), takes a dump of every icon-only control the running app renders, and prints what each one would be labelled: **554 controls across 20 routes**, now with no control labelled by an icon's own name.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Help** — Getting Started gained a \"What hovering tells you\" section describing the convention, so the behaviour is documented rather than folklore.",
+        "type": "Update"
+      },
       {
         "text": "**Connectors that would have connected and then returned nothing.** *Pax8* now mints a token at `/v1/token` with `audience` in a JSON body and reads companies at `/v1/companies` (`/v1/identity` and `/v1/customers` are not endpoints). *QuickBooks* exchanges its **refresh token** at the Intuit OAuth host with Basic client-id:secret, because an access token lasts one hour and a connection holding only one works once. *IT Glue* stops sending the unsupported `include=organization` (a 400 on every call), pages with `page[size]`/`page[number]`, and reads documents through `/organizations/{id}/relationships/documents` since there is no top-level document list. *SentinelOne* takes the tenant's own console URL instead of a shared `usea1` host, authenticates with `ApiToken`, pages by `pagination.nextCursor`, and validates against `/system/info`. *Proofpoint* uses HTTP Basic rather than headers the SIEM API does not read, reads each endpoint's **named** array (`messagesBlocked`, `messagesDelivered`, `clicksPermitted`, `clicksBlocked`, `issues`), and takes multi-day history in hourly slices because `sinceSeconds` is capped at 3600. *Microsoft 365* no longer sends `$top` to `/subscribedSkus` (which rejects it), caps `signInActivity` reads at `$top=500`, and has dropped a refresh-token grant that the client-credentials flow cannot use. *HaloPSA* sends the `scope` its token request requires, authenticates hosted tenants at `auth.<domain>/token?tenant=…` (falling back to the tenant's own `/auth/token`), pages with `pageinate`/`page_size`/`page_no`, and no longer reads `/software`, which is not a resource.",
         "type": "Fix"

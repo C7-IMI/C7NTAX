@@ -875,7 +875,7 @@ export function TicketsPage() {
       <div className="card overflow-hidden p-0">
         {loading ? <TableSkeleton /> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
-            <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white">{paged.length > 0 && paged.every((t: any) => selectedIds.has(t.id)) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>
+            <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white" aria-label={paged.length > 0 && paged.every((t: any) => selectedIds.has(t.id)) ? "Deselect all tickets" : "Select all tickets"}>{paged.length > 0 && paged.every((t: any) => selectedIds.has(t.id)) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>
             <th className="px-4 py-3 w-10"></th>
             {visibleColumns.map((colId) => {
               const def = TICKET_COLUMNS.find((c) => c.id === colId);
@@ -900,7 +900,7 @@ export function TicketsPage() {
               onContextMenu={(e) => menu.open(e, ticketMenuEntries(t), ticketMenuHeader(t))}
               onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, ticketMenuEntries(t), ticketMenuHeader(t))}
               className={`border-b border-surface-border/50 hover:bg-surface-light/50 focus:outline-none focus:bg-surface-lighter/40 ${selectedIds.has(t.id) ? "bg-cyber-600/10" : ""}`}>
-              <td className="px-4 py-3"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white">{selectedIds.has(t.id) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></td>
+              <td className="px-4 py-3"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white" aria-label={selectedIds.has(t.id) ? `Deselect ticket ${t.ticketNumber ?? ""}`.trim() : `Select ticket ${t.ticketNumber ?? ""}`.trim()}>{selectedIds.has(t.id) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></td>
               <td className="px-4 py-3">
                 <TicketActionMenu ticketId={t.id} currentStatus={t.status} currentPriority={t.priority} onAction={ticketAction} />
               </td>

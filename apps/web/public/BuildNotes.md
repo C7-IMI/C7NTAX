@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.013 | Last Updated: 2026-10-08
+## Version: 2026.10.8.014 | Last Updated: 2026-10-08
 
 ---
 
@@ -14,7 +14,18 @@
 
 ---
 
-## 2026.10.8.013 — The connectors were audited against the vendors' own APIs, and CloudConnect now shows what is connected
+## 2026.10.8.014 — Hover tooltips name the thing, not the icon
+
+Every control in the app explains itself on hover through one delegated tooltip. It resolved a label by looking at the control's **icon first** and its own words second, so a navigation link reading "Single Sign-On" was announced as **"Keyround"** — the name of the glyph. Where there was no text at all it invented one from the icon's name, which is how table checkboxes came to be labelled "Checkbox" and calendar chevrons "Chevronleft".
+
+- **[Fix]** **The control's own words now come first**, before any icon. A link that says *Single Sign-On* is labelled *Single Sign-On*, whether the sidebar is expanded or collapsed into its icon rail. This was the reported case, and it was the same ordering mistake on every labelled control in the product.
+- **[Fix]** **An icon is never allowed to answer for itself when its picture says nothing useful.** A key, a shield, a gear, a chevron, a tick box and a play triangle mean different things in different places — a key is Single Sign-On in the navigation, a password collection in Kumo and a licence in the product catalogue — so those icons no longer speak: the tooltip comes from the feature the control belongs to (its surrounding heading, section or labelled wrapper), and if even that is unknown, **no tooltip appears rather than a wrong one**.
+- **[Fix]** **A tick box is no longer announced as "Checkbox".** It takes its wording from the label it sits in or with, and an unlabelled one stays silent.
+- **[Update]** **The action table was rewritten and audited against every icon the app ships** (206 of them). Vague entries are gone — "Quick" for a lightning bolt, "Power", "Badge", "More options" for a chevron, "Actions" for a wrench, "Trending" — and the genuinely single-meaning ones are now action words: **Add** rather than "Plus", **Edit**, **Delete**, **Copy**, **Download**, **Refresh**, **Show**, **Hide**, **Sign out**, **Open in a new tab**. A glyph name that describes the drawing rather than the control ("Chevrons down up", "Columns 3") is refused.
+- **[New]** **Controls that could not be inferred now name themselves**: the calendar's month arrows (*Previous month* / *Next month*, and the month button is *Go to this month*), a ticket row's selector (*Select ticket INF-1901*, *Select all tickets*), the sidebar's collapse/expand button and both mobile menu buttons.
+- **[Fix]** **A paragraph is not a tooltip.** A control whose own words run past a short name is silent, unless the page has cut that text off with an ellipsis — in which case the full text is revealed, which is what a tooltip is for. Previously the eight configuration cards each offered a 166-character description on hover.
+- **[New]** **`scripts/audit-tooltips.mjs`** — the audit that found this, kept so it can be repeated. It reads the tooltip tables out of the component (so it cannot drift from them), takes a dump of every icon-only control the running app renders, and prints what each one would be labelled: **554 controls across 20 routes**, now with no control labelled by an icon's own name.
+- **[Update]** **Help** — Getting Started gained a "What hovering tells you" section describing the convention, so the behaviour is documented rather than folklore.
 
 Fifteen connectors were checked against their vendors' published documentation. Six could never have worked, several would have connected and then quietly returned nothing, and the ones that did work asked for credentials the vendor does not use. The findings are fixed, the form now describes every field it asks for, and anything read from a connector says so.
 

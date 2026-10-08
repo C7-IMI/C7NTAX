@@ -167,13 +167,13 @@ export function CalendarPage() {
         <div style={{ width: scaledW || undefined, height: scaledH || undefined }}>
         <div ref={innerRef} className="max-w-3xl" style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}>
         <div className="flex items-center justify-between mb-2">
-          <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-surface-lighter text-gray-400 hover:text-white transition-colors">
+          <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-surface-lighter text-gray-400 hover:text-white transition-colors" aria-label="Previous month">
             <ChevronLeft size={16} />
           </button>
-          <button onClick={() => { setViewDate(new Date()); setSelectedDate(null); }} className="text-sm font-semibold text-white hover:text-cyber-400 transition-colors">
+          <button onClick={() => { setViewDate(new Date()); setSelectedDate(null); }} className="text-sm font-semibold text-white hover:text-cyber-400 transition-colors" aria-label="Go to this month" title="Go to this month">
             {MONTHS[month]} {year}
           </button>
-          <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-surface-lighter text-gray-400 hover:text-white transition-colors">
+          <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-surface-lighter text-gray-400 hover:text-white transition-colors" aria-label="Next month">
             <ChevronRight size={16} />
           </button>
         </div>

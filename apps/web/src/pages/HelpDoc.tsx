@@ -78,6 +78,8 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Administration", "Settings, boards, service alerts, the product catalog, audit logs, integrations and What's New"],
       ] },
       { kind: "note", text: "The navigation only offers what your role is allowed to open, so a missing area is a permission rather than a fault — ask an administrator to check your role." },
+      { kind: "h", text: "What hovering tells you" },
+      { kind: "p", text: "Every button, link and field explains itself on hover. The label is taken from the control itself wherever it can be: its own words first, then an accessible label, then a `title`, and only for a control that shows nothing but an icon does the icon answer — and then only with the action it performs (\"Refresh\", \"Delete\", \"Sign out\"). An icon whose picture does not name an action (a key, a shield, a gear, a chevron) never speaks for itself, because \"Keyround\" tells you nothing useful: the control is labelled by the feature it belongs to instead, and where even that is unknown, no tooltip appears rather than a wrong one. A long paragraph on a card is not repeated as a tooltip either — but a name the page has cut off with an ellipsis is shown in full." },
       { kind: "h", text: "Team & boards setup" },
       { kind: "p", text: "Administrators configure service boards, SLA policies, and team permissions under Administration → Service Boards." },
       { kind: "steps", items: [
