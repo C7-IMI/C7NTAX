@@ -11,6 +11,8 @@ import {
 import type { ReactNode } from "react";
 import { EmailConnectorsPanel } from "../components/EmailConnectorsPanel";
 import { PageSkeleton } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
+import { DataSourceNote } from "../components/DataSourceNote";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -70,7 +72,7 @@ interface IntegrationType {
 }
 
 const KIND_LABELS: Record<string, string> = {
-  flexpoint: "FlexPoint (billing & AR)", quickbooks: "QuickBooks Online", pax8: "Pax8",
+  flexpoint: "FlexPoint Payment Solutions", quickbooks: "QuickBooks Online", pax8: "Pax8",
   avanan: "Avanan", proofpoint: "Proofpoint", sentinelone: "SentinelOne",
   itglue: "ITGlue", microsoft365: "Microsoft 365", azure: "Azure", aws: "AWS",
   connectwise: "ConnectWise PSA", halopsa: "HaloPSA",
@@ -440,34 +442,129 @@ export function CloudConnectPage() {
         : (selectedType.requiredCredentials || []).map(key => ({ key })))
     : [];
 
+  // ── Tabs ──────────────────────────────────────────────────────────
+  /*
+   * The page used to be one long scroll: the add-flow, the email connectors panel, a Microsoft 365
+   * report and then the connected integrations, in that order. Which meant the answer to "what is
+   * connected, and is it working?" was below four screens of things that are not.
+   *
+   * So: the first tab is the answer, and everything that changes a connection lives on another one.
+   *   · Connected      — what is connected, its state, and the actions that do not change it
+   *                      (test, sync, explore). The Microsoft 365 report belongs here because it is
+   *                      about the tenant, not about the connection.
+   *   · Add a connector— browse the types and configure a new one.
+   *   · Configuration  — credentials, settings, sync history and synced records for one connection.
+   *   · Email          — the mailbox connectors, which are their own thing with their own runtime.
+   */
+  type Tab = "connected" | "add" | "configure" | "email";
+  const [tab, setTab] = useState<Tab>("connected");
+  const [configuring, setConfiguring] = useState<string | null>(null);
+  const [configCredentials, setConfigCredentials] = useState<Record<string, string>>({});
+  const [configSettings, setConfigSettings] = useState<Record<string, any>>({});
+  const [configEntities, setConfigEntities] = useState<Array<{ entityType: string; total: number }>>([]);
+  const [savingConfig, setSavingConfig] = useState(false);
+
+  const connected = integrations.filter(int => int.status === "connected" || int.lastSyncAt || int.enabled);
+  const attention = integrations.filter(int => !int.enabled || int.status === "error" || (liveStatus[int.id]?.health?.state === "degraded" || liveStatus[int.id]?.health?.state === "unconfigured"));
+
+  /** Open one connection's configuration, with its stored credentials copied into the form. */
+  const openConfiguration = useCallback((int: Integration) => {
+    setConfiguring(int.id);
+    setConfigCredentials({ ...(int.credentials ?? {}) });
+    setConfigSettings({ ...(int.settings ?? {}) });
+    setConfigEntities([]);
+    api.get(`/cloudconnect/${int.id}/synced-entities`)
+      .then(r => setConfigEntities(r.data?.data ?? []))
+      .catch(() => { /* nothing synced yet, or the role may not read it */ });
+    api.get(`/cloudconnect/${int.id}/sync-logs`)
+      .then(r => setSyncLogs(r.data?.data ?? r.data ?? []))
+      .catch(() => setSyncLogs([]));
+    setTab("configure");
+  }, []);
+
+  const saveConfiguration = async () => {
+    if (!configuring) return;
+    setSavingConfig(true);
+    try {
+      await api.patch(`/cloudconnect/${configuring}`, { credentials: configCredentials, settings: configSettings });
+      toast.success("Configuration saved — press Test to verify it");
+      await fetchAll();
+      void handleTest(configuring);
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error?.message || "Could not save the configuration", { duration: 9000 });
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const configuringRow = integrations.find(int => int.id === configuring) ?? null;
+
+  /**
+   * The credential fields a kind should be asked for.
+   *
+   * A connector that describes its own fields gets its own labels and its own sentence about where
+   * each value comes from; one that does not falls back to the derived label. Nothing is invented
+   * here — this is the same metadata the add-flow uses, so a connection configured after the fact is
+   * asked for exactly what it was asked for when it was created.
+   */
+  const credentialFieldsFor = (kind: string): CredentialField[] => {
+    const type = types.find(t => t.kind === kind);
+    if (type?.credentialFields?.length) return type.credentialFields;
+    if (type?.requiredCredentials?.length) return type.requiredCredentials.map(key => ({ key }));
+    const current = integrations.find(int => int.kind === kind)?.credentials;
+    return current ? Object.keys(current).map(key => ({ key })) : [];
+  };
+
+  /** The options a kind exposes, with the defaults its type declares. */
+  const settingsFor = (kind: string) => types.find(t => t.kind === kind)?.settings ?? [];
+
   // ── Render ────────────────────────────────────────────────────────
 
+  const TABS: Array<{ id: Tab; label: string; count?: number }> = [
+    { id: "connected", label: "Connected", count: integrations.length },
+    { id: "add", label: "Add a connector" },
+    { id: "configure", label: "Configuration" },
+    { id: "email", label: "Email connectors" },
+  ];
+
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fade-in max-w-5xl">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-lg font-semibold text-white">CloudConnect</h2>
           <p className="text-sm text-gray-400 mt-0.5">
-            Connect third-party services{types.length > 0 ? ` — ${types.length} connectors available` : ""}
+            {integrations.length === 0
+              ? `Connect third-party services${types.length > 0 ? ` — ${types.length} connectors available` : ""}`
+              : `${integrations.length} connection${integrations.length === 1 ? "" : "s"} configured${attention.length ? ` · ${attention.length} need${attention.length === 1 ? "s" : ""} attention` : " · all in good standing"}`}
           </p>
         </div>
-        {!showAdd && (
-          <button onClick={() => { setSelectedType(null); setShowAdd(true); }} className="btn-primary flex items-center gap-2">
-            <Plus size={16} /> Add Connection
+        {tab !== "add" ? (
+          <button onClick={() => { setSelectedType(null); setShowAdd(true); setTab("add"); }} className="btn-primary flex items-center gap-2">
+            <Plus size={16} /> Add a connector
           </button>
-        )}
+        ) : null}
       </div>
 
-      {/*
-        Adding a connection takes the page over: the type grid, or the form once a type is chosen,
-        is the first thing under the header, and the two lists this page normally shows (the email
-        connectors and the configured integrations) step aside until the flow is finished or
-        cancelled. It used to render after the email connectors panel, which is a full form — so the
-        grid opened a hundred pixels below the fold and pressing the button looked like it had done
-        nothing at all.
-      */}
-      {showAdd && (
-        <div ref={addFlowRef} className="scroll-mt-4">
+      {/* The tabs themselves. Pronounced, because the whole page is behind them. */}
+      <div className="flex flex-wrap gap-1 border-b border-surface-border">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            onClick={() => { setTab(t.id); if (t.id !== "add") setShowAdd(false); }}
+            className={`relative px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border-b-2 -mb-px ${
+              tab === t.id
+                ? "border-cyber-500 text-white bg-surface-lighter"
+                : "border-transparent text-gray-400 hover:text-white hover:bg-surface-lighter"
+            }`}
+          >
+            {t.label}
+            {t.count ? <span className="ml-2 text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">{t.count}</span> : null}
+          </button>
+        ))}
+      </div>
+
+      {tab === "add" ? (
+      <div ref={addFlowRef} className="scroll-mt-4">
           {/* Type Selection Grid */}
           {!selectedType && (
             <div className="space-y-4">
@@ -597,14 +694,186 @@ export function CloudConnectPage() {
             </div>
           )}
         </div>
-      )}
+      ) : null}
 
-      {/* Email connectors (IMAP → tickets) — hidden while a connection is being added, because the
-          flow is the page until it is finished. */}
-      {!showAdd && <EmailConnectorsPanel />}
+      {/* Email connectors (IMAP → tickets) — their own runtime, their own tab. */}
+      {tab === "email" ? <EmailConnectorsPanel /> : null}
 
+      {/* ═══ Configuration ═══ */}
+      {tab === "configure" ? (
+        <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+          <div className="card !p-0 overflow-hidden h-fit">
+            <p className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-500 border-b border-surface-border">
+              Connections
+            </p>
+            {integrations.length === 0 ? (
+              <p className="px-4 py-4 text-xs text-gray-500">Nothing configured yet.</p>
+            ) : (
+              <div className="divide-y divide-surface-border">
+                {integrations.map(int => (
+                  <button
+                    key={int.id}
+                    onClick={() => openConfiguration(int)}
+                    className={`w-full text-left px-4 py-3 transition-colors ${configuring === int.id ? "bg-surface-lighter" : "hover:bg-surface-lighter/50"}`}
+                  >
+                    <p className="text-sm text-white truncate">{int.name}</p>
+                    <p className="text-[11px] text-gray-500 truncate">{KIND_LABELS[int.kind] || int.kind}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {!configuringRow ? (
+            <div className="card">
+              <EmptyState
+                icon={<Settings size={26} />}
+                title="Pick a connection to configure"
+                description="Credentials, options, sync history and the records a connector has brought in. Testing and syncing live on the Connected tab, where the state is."
+              />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="card space-y-4">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-white flex items-center gap-2 flex-wrap">
+                      {configuringRow.name}
+                      <DataSourceNote source={configuringRow.kind} tone="inline" />
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {KIND_LABELS[configuringRow.kind] || configuringRow.kind}
+                      {configuringRow.lastSyncAt ? ` · last sync ${new Date(configuringRow.lastSyncAt).toLocaleString()}` : " · never synced"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => void handleTest(configuringRow.id)} className="btn-secondary text-xs">Test connection</button>
+                    <button onClick={() => void handleSync(configuringRow.id)} className="btn-secondary text-xs">Sync now</button>
+                  </div>
+                </div>
+
+                {credentialFieldsFor(configuringRow.kind).length > 0 && (
+                  <div className="space-y-3 border-t border-surface-border pt-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex items-center gap-2"><Key size={12} /> Credentials</h4>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {credentialFieldsFor(configuringRow.kind).map(f => (
+                        <div key={f.key}>
+                          <label className="block text-xs text-gray-400 mb-1">{f.label || formatCredLabel(f.key)}</label>
+                          <input
+                            className="input-field"
+                            type={f.type || (isSecretCred(f.key) ? "password" : "text")}
+                            placeholder={f.placeholder}
+                            autoComplete="off"
+                            value={configCredentials[f.key] ?? ""}
+                            onChange={e => setConfigCredentials(p => ({ ...p, [f.key]: e.target.value }))}
+                          />
+                          {f.hint && <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{f.hint}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {settingsFor(configuringRow.kind).length > 0 && (
+                  <div className="space-y-3 border-t border-surface-border pt-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex items-center gap-2"><Settings size={12} /> Options</h4>
+                    {settingsFor(configuringRow.kind).map(s => (
+                      <div key={s.key}>
+                        {s.type === "boolean" ? (
+                          <label className="flex items-start gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="rounded mt-0.5"
+                              checked={configSettings[s.key] ?? s.default !== false}
+                              onChange={e => setConfigSettings(p => ({ ...p, [s.key]: e.target.checked }))}
+                            />
+                            <span>
+                              <span className="text-sm text-gray-300">{s.label}</span>
+                              {s.hint && <span className="block text-[11px] text-gray-500 mt-0.5 leading-relaxed">{s.hint}</span>}
+                            </span>
+                          </label>
+                        ) : (
+                          <>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">{s.label}</label>
+                            {s.type === "select" && s.options ? (
+                              <select
+                                className="input-field"
+                                value={configSettings[s.key] ?? s.default ?? ""}
+                                onChange={e => setConfigSettings(p => ({ ...p, [s.key]: e.target.value }))}
+                              >
+                                {s.options.map(o => <option key={o} value={o}>{o}</option>)}
+                              </select>
+                            ) : (
+                              <input
+                                className="input-field"
+                                type={s.type === "number" ? "number" : "text"}
+                                value={configSettings[s.key] ?? s.default ?? ""}
+                                onChange={e => setConfigSettings(p => ({ ...p, [s.key]: s.type === "number" ? Number(e.target.value) : e.target.value }))}
+                              />
+                            )}
+                            {s.hint && <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{s.hint}</p>}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 border-t border-surface-border pt-4">
+                  <button onClick={() => void saveConfiguration()} disabled={savingConfig} className="btn-primary text-sm">
+                    {savingConfig ? "Saving…" : "Save configuration"}
+                  </button>
+                  <span className="text-xs text-gray-500">Saving does not test anything — press Test connection afterwards.</span>
+                </div>
+              </div>
+
+              <div className="card space-y-3">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Recent sync history</h4>
+                {syncLogs.length === 0 ? (
+                  <p className="text-xs text-gray-500">No sync has run for this connection yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {syncLogs.slice(0, 8).map(log => (
+                      <div key={log.id} className="flex items-center justify-between text-xs rounded-lg bg-surface px-3 py-2">
+                        <span className="flex items-center gap-2">
+                          <span className={`px-1.5 py-0.5 rounded ${log.status === "success" ? "bg-green-600/20 text-green-400" : log.status === "failed" ? "bg-red-600/20 text-red-400" : "bg-yellow-600/20 text-yellow-400"}`}>{log.status}</span>
+                          <span className="text-gray-400">{log.entityType}</span>
+                        </span>
+                        <span className="text-gray-500">{log.recordsProcessed} processed · {new Date(log.startedAt).toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="card space-y-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Records brought in</h4>
+                {configEntities.length === 0 ? (
+                  <p className="text-xs text-gray-500">
+                    Nothing stored yet. A sync stores what the connector reads as records it can be read back from —
+                    the entity types depend on the connector.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {configEntities.map(entity => (
+                      <span key={entity.entityType} className="rounded-lg border border-surface-border bg-surface-lighter px-2.5 py-1 text-xs text-gray-300">
+                        {entity.entityType} <span className="text-gray-500">{entity.total}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <DataSourceNote source={configuringRow.kind} detail="every record here was read from the vendor, not entered in C7NTAX" />
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* ═══ Connected ═══ */}
+      {tab === "connected" ? (
+        <>
       {/* Microsoft 365 inactivity (PLAN-015 Phase B #12) — only shown once a tenant has synced */}
-      {!showAdd && inactivity && inactivity.clients.length > 0 && (
+      {inactivity && inactivity.clients.length > 0 && (
         <div className="card space-y-3">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
@@ -663,9 +932,22 @@ export function CloudConnectPage() {
       )}
 
       {/* Integration List */}
-      {!showAdd && (
+      {(
         loading ? <PageSkeleton /> :
-        integrations.length === 0 ? <div className="card text-center py-8 text-gray-500">No connections configured.</div> :
+        integrations.length === 0 ? (
+          <div className="card">
+            <EmptyState
+              icon={<Plug size={26} />}
+              title="Nothing is connected yet"
+              description="CloudConnect reads from the systems you already run — a PSA, an accounting system, an email security platform, Microsoft 365 — and brings what it finds into C7NTAX, so a client's invoice, their licences and their mailboxes are visible where the work happens."
+              action={
+                <button onClick={() => { setSelectedType(null); setShowAdd(true); setTab("add"); }} className="btn-primary text-sm">
+                  <Plus size={14} className="inline mr-1.5" />Add a connector
+                </button>
+              }
+            />
+          </div>
+        ) :
         <div className="space-y-3">
           {integrations.map((int: any) => {
             const IconComp = IconFor(int.kind);
@@ -700,6 +982,7 @@ export function CloudConnectPage() {
                         {isConnected && <span className="text-[10px] text-cyber-500">click to explore →</span>}
                       </div>
                       <p className="text-xs text-gray-500">{KIND_LABELS[int.kind] || int.kind}</p>
+                      <DataSourceNote source={int.kind} className="mt-1" detail={int.lastSyncAt ? `read ${new Date(int.lastSyncAt).toLocaleDateString()}` : "not read yet"} />
                       {health && (
                         <button
                           onClick={e => {
@@ -739,6 +1022,9 @@ export function CloudConnectPage() {
                     </button>
                     <button onClick={() => handleSync(int.id)} className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-surface-lighter transition-colors" title="Sync">
                       <RefreshCw size={14} />
+                    </button>
+                    <button onClick={() => openConfiguration(int)} className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-surface-lighter transition-colors" title="Configure this connection">
+                      <Settings size={14} />
                     </button>
                     <button onClick={() => fetchLogs(int.id)} className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-surface-lighter transition-colors" title="Sync Logs">
                       <FileText size={14} />
@@ -807,6 +1093,8 @@ export function CloudConnectPage() {
           })}
         </div>
       )}
+        </>
+      ) : null}
 
       {/* ═══ Integration Action Panel ═══ */}
       {actionPanel && (

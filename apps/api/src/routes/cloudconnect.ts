@@ -183,7 +183,7 @@ cloudConnectRouter.get("/types", requirePermission(Permission.IntegrationView), 
        */
       {
         kind: "flexpoint",
-        name: "FlexPoint",
+        name: "FlexPoint Payment Solutions",
         description: "Billing and accounts-receivable automation for MSPs — customers, invoices and settled deposits, through FlexPoint's merchant API.",
         requiredCredentials: ["apiSecret"],
         credentialFields: [

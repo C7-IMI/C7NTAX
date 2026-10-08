@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import { CreditCard, ExternalLink } from "lucide-react";
+import { DataSourceNote } from "./DataSourceNote";
 
 interface ClientAr {
   linked: boolean;
@@ -57,11 +58,12 @@ export function FlexpointClientCard({ companyId }: { companyId: string }) {
         <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 rounded-lg bg-cyber-600/10"><CreditCard size={16} className="text-cyber-400" /></div>
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-              FlexPoint — accounts receivable
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2 flex-wrap">
+              FlexPoint Payment Solutions — accounts receivable
+              <DataSourceNote source="flexpoint" tone="inline" />
             </h3>
             <p className="text-xs text-gray-500 truncate">
-              Customer {ar.customerName} · #{ar.customerId} · read from FlexPoint's merchant API
+              Customer {ar.customerName} · #{ar.customerId}
             </p>
           </div>
         </div>
@@ -130,6 +132,7 @@ export function FlexpointClientCard({ companyId }: { companyId: string }) {
               {payment.reference && <span className="text-gray-600 font-mono"> · {payment.reference}</span>}
             </p>
           ))}
+          <DataSourceNote source="flexpoint" detail="settled payments come back from FlexPoint, not entered here" />
         </div>
       )}
     </div>

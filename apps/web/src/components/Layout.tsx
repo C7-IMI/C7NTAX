@@ -131,7 +131,7 @@ export const NAV_TREE: NavNode[] = [
       // the clients that install against this one — not an internal setting. Unlike the add-in it
       // carries a permission, because everything on its page besides the reading is a write to a
       // financial system.
-      { id: "c7nc-flexpoint", to: "/c7nc/flexpoint", icon: CreditCard, label: "FlexPoint", permission: Permission.IntegrationManage },
+      { id: "c7nc-flexpoint", to: "/c7nc/flexpoint", icon: CreditCard, label: "FlexPoint Payment Solutions", permission: Permission.IntegrationManage },
     ],
   },
   {

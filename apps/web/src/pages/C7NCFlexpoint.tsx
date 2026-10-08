@@ -23,6 +23,7 @@ import {
   AlertTriangle, CheckCircle2, CreditCard, Link2, Loader2, RefreshCw, Send, Unlink, Wallet, XCircle,
 } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
+import { DataSourceNote } from "../components/DataSourceNote";
 
 interface FlexpointOptions {
   syncCustomers: boolean;
@@ -199,7 +200,8 @@ export function C7NCFlexpointPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <CreditCard size={18} className="text-cyber-400" /> FlexPoint
+            <CreditCard size={18} className="text-cyber-400" /> FlexPoint Payment Solutions
+            <DataSourceNote source="flexpoint" tone="inline" />
           </h2>
           <p className="text-sm text-gray-400 mt-0.5">
             Billing and accounts receivable from FlexPoint's merchant API — who owes what, and whether it has been paid.
