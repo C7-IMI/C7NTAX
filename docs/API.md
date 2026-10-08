@@ -647,6 +647,11 @@ produced the event. **Answer `2xx` as soon as you have stored the body** — do 
 * **`GET /api/system/version`** names the release this deployment is running (`version`, `date`,
   `title` — the newest What's New entry). Cheap enough to call per session, and worth recording
   alongside anything you file, because a report against one build is not a report against another.
+* **`GET /api/console/catalog`** is the application's own command catalogue, filtered to what *your*
+  credential may run — one command per operation it names, with the route and the permission in each
+  descriptor. It is the same list the in-app console and the `c7ntax` CLI parse from, served rather
+  than duplicated so the three cannot drift (PLAN-028 §6). Nothing in it executes anything: a command
+  is a name for a route, and the route authorizes the request.
 * **`GET /api/system` / `GET /api/system/configs`** describe the deployment (version, feature flags,
   non-secret configuration). Reserved keys are withheld even from administrators, on purpose.
 * **`GET /api/system/audit-logs`** (`user:manage` or `system:config`) is where to look when a change

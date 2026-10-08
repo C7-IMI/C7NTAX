@@ -34,6 +34,7 @@
     "guard:routes": "node scripts/check-route-guards.mjs",
   "guard:api-docs": "node scripts/check-api-docs.mjs",
     "guard:config": "tsx scripts/check-config-reads.mts",
+    "guard:console": "tsx scripts/check-console-catalog.mts",
     "guard:plugin": "tsx scripts/plugin-metadata.mts check",
     "plugin:bump": "tsx scripts/plugin-metadata.mts bump",
     "installer:build": "pwsh -NoProfile -File installer/outlook-addin/build.ps1",

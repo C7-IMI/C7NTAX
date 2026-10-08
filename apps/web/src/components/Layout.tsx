@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useActivityMonitor } from "../hooks/useActivityMonitor";
 import { SessionTimeoutWarning } from "./SessionTimeoutWarning";
 import { AppFooter } from "./AppFooter";
+import { ConsoleDialog } from "./ConsoleDialog";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
@@ -20,6 +21,7 @@ import { KumoTrail } from "./KumoTrail";
 import { useTheme } from "../hooks/useTheme";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
+import { useConsoleEnabled } from "../hooks/useConsoleEnabled";
 import { Permission } from "@C7NTAX/shared";
 import { CommandPalette, type PaletteItem } from "./CommandPalette";
 import { MyAccountMenu } from "./MyAccountMenu";
@@ -383,6 +385,8 @@ export function Layout({ children }: { children: ReactNode }) {
   const [sidebarWidth, setSidebarWidth] = useState<number>(loadSidebarWidth);
   const [resizing, setResizing] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [consoleOpen, setConsoleOpen] = useState(false);
+  const consoleEnabled = useConsoleEnabled();
   const [density, setDensityState] = useState<Density>(getDensity);
   const sidebarRef = useRef<HTMLElement>(null);
 
@@ -445,6 +449,19 @@ export function Layout({ children }: { children: ReactNode }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  // ── ⌘. / Ctrl-. toggles the console (PLAN-028 §10) ──
+  useEffect(() => {
+    if (!consoleEnabled) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === ".") {
+        e.preventDefault();
+        setConsoleOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [consoleEnabled]);
 
   // ── Drag-and-drop nav order ────────────────────────────────────
   // Saved order is reconciled with NAV_TREE on load: unknown ids are dropped
@@ -1114,16 +1131,21 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           {/* Header toolbar */}
           <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
-            {/* Console — the command surface for C7NTAX. Present as a placeholder so the layout is
-                final; it is deliberately inert until the console itself exists (PLAN-028). */}
-            <button
-              type="button"
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors"
-              title="Console (coming soon)"
-              aria-label="Console (coming soon)"
-            >
-              <Terminal size={16} />
-            </button>
+            {/* Console — the command surface for C7NTAX (PLAN-028). The panel is a popup dialog;
+                the icon and the panel both disappear when the console is switched off
+                (Workspace → Command console, or CONSOLE_ENABLED=false). */}
+            {consoleEnabled && (
+              <button
+                type="button"
+                onClick={() => setConsoleOpen(true)}
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors"
+                title="Console (Ctrl/⌘ .)"
+                aria-label="Console"
+                data-testid="console-button"
+              >
+                <Terminal size={16} />
+              </button>
+            )}
             <button
               onClick={() => { if (UI_P1) setPaletteOpen(true); }}
               className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"
@@ -1190,6 +1212,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </footer>
       </div>
       {UI_P1 && <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={paletteItems} />}
+      {consoleEnabled && <ConsoleDialog open={consoleOpen} onClose={() => setConsoleOpen(false)} />}
       <SessionTimeoutWarning
         visible={showWarning}
         secondsRemaining={secondsRemaining}

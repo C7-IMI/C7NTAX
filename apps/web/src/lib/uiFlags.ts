@@ -19,7 +19,7 @@
  * apps/web/.env.local) and restart the web server; or run
  * scripts/rollback-ui-p1.ps1 -Part P1|P2|All.
  */
-type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2" | "c7_ui_palette" | "c7_ui_kumo_orgs" | "c7_ui_kumo_types" | "c7_ui_kumo_crumbs" | "c7_ui_context_menus";
+type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2" | "c7_ui_palette" | "c7_ui_kumo_orgs" | "c7_ui_kumo_types" | "c7_ui_kumo_crumbs" | "c7_ui_context_menus" | "c7_ui_console";
 
 const UI_P1_STORAGE_KEY: FlagStorageKey = "c7_ui_p1";
 const UI_P2_STORAGE_KEY: FlagStorageKey = "c7_ui_p2";
@@ -28,6 +28,7 @@ const UI_KUMO_ORGS_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_orgs";
 const UI_KUMO_TYPES_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_types";
 const UI_KUMO_BREADCRUMBS_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_crumbs";
 const UI_CONTEXT_MENUS_STORAGE_KEY: FlagStorageKey = "c7_ui_context_menus";
+const UI_CONSOLE_STORAGE_KEY: FlagStorageKey = "c7_ui_console";
 
 function readFlag(key: FlagStorageKey, envName: string): boolean {
   try {
@@ -80,6 +81,15 @@ export const UI_KUMO_BREADCRUMBS = readFlag(UI_KUMO_BREADCRUMBS_STORAGE_KEY, "VI
  */
 export const UI_CONTEXT_MENUS = readFlag(UI_CONTEXT_MENUS_STORAGE_KEY, "VITE_UI_CONTEXT_MENUS");
 
+/**
+ * The command console — the header icon and the panel behind it (default: on).
+ * Off hides the icon and the panel entirely; the console adds no route of its own
+ * to the write surface, so nothing else changes. The deployment-wide switch is
+ * Workspace → Command console (`CONSOLE_ENABLED`), which also stops the API
+ * serving the catalogue; this flag is the per-browser override.
+ */
+export const UI_CONSOLE = readFlag(UI_CONSOLE_STORAGE_KEY, "VITE_UI_CONSOLE");
+
 export function setUiP1(enabled: boolean): void {
   writeFlag(UI_P1_STORAGE_KEY, enabled);
 }
@@ -108,8 +118,12 @@ export function setUiContextMenus(enabled: boolean): void {
   writeFlag(UI_CONTEXT_MENUS_STORAGE_KEY, enabled);
 }
 
+export function setUiConsole(enabled: boolean): void {
+  writeFlag(UI_CONSOLE_STORAGE_KEY, enabled);
+}
+
 export {
   UI_P1_STORAGE_KEY, UI_P2_STORAGE_KEY, UI_PALETTE_STORAGE_KEY,
   UI_KUMO_ORGS_STORAGE_KEY, UI_KUMO_TYPES_STORAGE_KEY, UI_KUMO_BREADCRUMBS_STORAGE_KEY,
-  UI_CONTEXT_MENUS_STORAGE_KEY,
+  UI_CONTEXT_MENUS_STORAGE_KEY, UI_CONSOLE_STORAGE_KEY,
 };

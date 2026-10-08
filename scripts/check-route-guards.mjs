@@ -55,6 +55,11 @@ const EXEMPTIONS = [
     reason: "the customer portal signs in a Contact with an emailed one-time code and its own cookie; a Contact is not a staff User and holds no permissions, so every route carries `requirePortalSession`/`requirePortalWrite` and scopes reads to the contact's own tickets",
   },
   { file: "tenants.ts", match: /.*/, reason: "multi-tenant stubs — PLAN-003 is deferred by decision" },
+  {
+    file: "console.ts",
+    match: /.*/,
+    reason: "the console's catalogue is the caller's own view of what they may run: there is no id in the path, every command is filtered by the caller's permissions at call time, and each command's effect is authorized by the route it names — see PLAN-028 §6",
+  },
 ];
 
 const files = [];

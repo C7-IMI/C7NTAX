@@ -223,6 +223,20 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         affects: ["Tickets", "Service Boards", "Every section with a themed context menu"],
       },
       {
+        id: "console",
+        label: "Command console",
+        summary: "The console in the header toolbar, and the command catalogue behind it.",
+        detail:
+          "When off, the header icon is hidden and the console's catalogue endpoint answers 404. The console adds no route of its own to the write surface, so switching it off leaves every existing screen, route and permission exactly as it was. Read commands are available now; write commands arrive with PLAN-026's action manifest.",
+        type: "boolean",
+        source: "setting",
+        env: "CONSOLE_ENABLED",
+        envMatch: "not-false",
+        default: true,
+        store: { key: CONFIG_STORE_KEYS.appSettings, path: "general.console" },
+        affects: ["Header toolbar", "Console", "c7ntax CLI"],
+      },
+      {
         id: "defaultLandingPage",
         label: "Default landing page",
         summary: "Where a sign-in lands when the person has not chosen a page of their own.",

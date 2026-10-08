@@ -97,10 +97,11 @@ export function tokenize(line: string): TokenizeResult {
 }
 
 /**
- * Split a line into statements on `;`, ignoring separators inside quotes.
+ * Split a line into statements on `;` and on newlines, ignoring either inside quotes.
  *
- * Blank lines and line-leading `#` comments become nothing, so a block of commands with its own
- * headings in it can be pasted whole.
+ * Newlines matter because a command file (and a paste of several lines) is input too: `#` comments and
+ * blank lines then mean what §5 says they mean, and a script is a list of statements rather than one
+ * very long line.
  */
 export function splitStatements(line: string): string[] {
   const statements: string[] = [];
@@ -124,6 +125,12 @@ export function splitStatements(line: string): string[] {
       current = "";
       continue;
     }
+    if (ch === "\n") {
+      statements.push(current);
+      current = "";
+      continue;
+    }
+    if (ch === "\r") continue;
     current += ch;
   }
   statements.push(current);

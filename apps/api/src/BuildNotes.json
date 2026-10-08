@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.8.038",
+    "date": "2026-10-08",
+    "title": "The console: PLAN-028 phases 0 and 1, and the header icon finally does something",
+    "changes": [
+      {
+        "text": "**`packages/shared/src/console/`** — one grammar for every front end: `grammar.ts` (tokens, quoting, `;`, statement splitting, the word under the cursor), `catalogue.ts` (**85 read commands** across 15 groups, each naming its route and its permission), `parse.ts` (typed refusals with §9's exit codes), `completion.ts` (candidates by position, the longest common prefix, history prediction) and `execute.ts` (request building, `me` resolution, and subject resolution that **refuses an ambiguous match rather than picking one**).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The console popup** — the header icon left of Search, now live (`Ctrl/⌘ .`), opening a themed dialog: `Tab`/`Shift+Tab` cycle candidates through their common prefix, `Ctrl+Space` opens the menu with a description per candidate, `→` accepts inline history prediction, `↑`/`↓` walk history, `Ctrl+R` searches it, `F1`/`?` help without losing the line, `Ctrl+L` clears, `Ctrl+C` abandons, `Esc` dismisses the menu before the panel. Output is a real table with column headings, or the raw body with `--json`, or identifiers with `--quiet`; `--verbose` prints the method, path, permission and elapsed time — **the line that teaches the API**.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /api/console/catalog` and `/catalog/:name`** — the same catalogue, **filtered by the caller's own permissions at call time**, so the CLI to come is not a second list and `help` answers \"what can *I* run\" on both front ends. 404 when the console is off, and a command the caller cannot run is 404 rather than 403, matching the record lookups.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`guard:console`** — every command's path must resolve to a real route, its permission must be the permission **that route checks** (read from the generated specification), and every flag it offers must be a parameter that route actually reads. This is the check that stops the console becoming a weaker authorization layer than the API beside it. It runs in the Security Gate, and it found three real faults while being written.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A flag the route would ignore is now impossible to type.** The universal flags are two kinds: `--json`/`--quiet`/`--verbose` belong to the console and always apply, while `--limit`/`--offset` are *route* parameters and are offered only by a command whose route reads them. Without that split, `board list --limit 5` would have been accepted and silently ignored.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Writes are refused with §7's message, not half-built.** `ticket create …` answers *\"not available in the console yet — write commands arrive with PLAN-026's action manifest\"*, exit 5, because a hand-written write command is exactly the second authorization list that section refuses. Reads land now; writes land behind the manifest.",
+        "type": "Update"
+      },
+      {
+        "text": "**`CONSOLE_ENABLED` (Workspace → Command console) turns the whole feature off** — the icon, the panel and the API's catalogue — and `c7_ui_console` is the per-browser override. Every existing screen, route and permission is untouched either way, which is the rollback PLAN-028 promised.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.037",
     "date": "2026-10-08",
     "title": "The copyright notice, and a build that says which build it is",

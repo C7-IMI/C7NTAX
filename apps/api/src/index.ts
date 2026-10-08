@@ -51,6 +51,7 @@ import { reportsRouter } from "./routes/reports";
 import { ssoRouter } from "./routes/sso";
 import { systemRouter } from "./routes/system";
 import { configurationRouter } from "./routes/configuration";
+import { consoleRouter } from "./routes/console";
 import { configFlag } from "./services/appSettings";
 import { mountAddinRoutes } from "./routes/addin";
 import { bulkRouter } from "./routes/bulk";
@@ -223,6 +224,9 @@ app.use("/api/nav", navRouter);
 app.use("/api/ai-actions", aiActionsRouter);
 app.use("/api/alert-webhooks", alertWebhooksRouter);
 app.use("/api/configuration", configurationRouter);
+// PLAN-028: the console's catalogue. The console itself parses in the front end and runs the real
+// route as the caller, so this is the only surface it adds to the API — see routes/console.ts.
+app.use("/api/console", consoleRouter);
 
 // PLAN-012: the Outlook add-in's taskpane, its generated manifest and its Windows installer.
 mountAddinRoutes(app);

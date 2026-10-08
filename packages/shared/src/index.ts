@@ -12,6 +12,7 @@ export * from "./reportLayout";
 export * from "./reportChart";
 export * from "./appConfiguration";
 export * from "./addinPlugin";
+export * from "./console";
 
 // Resolve star-export collisions: the hand-written interfaces in types.ts are
 // canonical for entity names (schemas.ts derives same-named zod types).

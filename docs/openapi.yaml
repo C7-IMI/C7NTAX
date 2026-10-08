@@ -48,6 +48,8 @@ tags:
     description: "15 operations"
   - name: "Configuration"
     description: "9 operations"
+  - name: "Console"
+    description: "2 operations"
   - name: "Contracts"
     description: "5 operations"
   - name: "Dashboard"
@@ -2522,6 +2524,43 @@ paths:
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["client:view"]
       x-source: "configuration.ts · configurationRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/console/catalog":
+    get:
+      tags: ["Console"]
+      operationId: "getConsolecatalog"
+      summary: "The console commands this credential may run"
+      description: "The command catalogue, grouped the way `help` prints it and filtered by the caller's own permissions at call time, so a client is told what *it* can run rather than shipped a list it will be refused. Every command names the route it runs and the permission that route checks; the console itself has no permission, and authorizes nothing — it builds the same request the screen builds and lets the route decide (PLAN-028 §6). Reads only: the write commands arrive with PLAN-026's action manifest. `counts.total` is reported beside `counts.available` so a caller can see what its account is missing without being told what it contains. Answers 404 when the console is switched off for the deployment."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: []
+      x-permission-note: "No permission is required beyond being signed in."
+      x-source: "console.ts · consoleRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/console/catalog/{name}":
+    get:
+      tags: ["Console"]
+      operationId: "getConsolecatalogbyName"
+      summary: "One console command, with its flags and its route"
+      description: "A single descriptor, for `c7ntax help <command>` and for tooling. The name is the command as typed (`ticket show`), so it is URL-encoded; `+` is accepted for the space. A command the caller's credential may not run is 404, not 403: the catalogue is filtered rather than guarded, and not being offered a command is indistinguishable from it not existing — which is the same rule the record lookups follow."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: []
+      x-permission-note: "No permission is required beyond being signed in."
+      x-source: "console.ts · consoleRouter.get"
+      parameters:
+        - name: "name"
+          in: path
+          required: true
+          schema: { type: "string" }
       responses:
         "200": { description: "OK" }
         "400": { $ref: "#/components/responses/BadRequest" }
@@ -7215,5 +7254,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 61 of 428 operations carry a curated summary from docs/api-operations.json;
+# 63 of 430 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

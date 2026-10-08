@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.037 | Last Updated: 2026-10-08
+## Version: 2026.10.8.038 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,22 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.038 — The console: PLAN-028 phases 0 and 1, and the header icon finally does something
+
+The placeholder has been inert since 2026.10.8.029. It now opens a console that **runs real commands against the real API as the caller** — `ticket list --status new --limit 10`, `client show acme`, `report run ticket-volume` — with PowerShell-grade completion, and with **no new permission, no execution endpoint and no schema change**: a command is a name for a route, and the route authorizes the request.
+
+- **[New]** **`packages/shared/src/console/`** — one grammar for every front end: `grammar.ts` (tokens, quoting, `;`, statement splitting, the word under the cursor), `catalogue.ts` (**85 read commands** across 15 groups, each naming its route and its permission), `parse.ts` (typed refusals with §9's exit codes), `completion.ts` (candidates by position, the longest common prefix, history prediction) and `execute.ts` (request building, `me` resolution, and subject resolution that **refuses an ambiguous match rather than picking one**).
+- **[New]** **The console popup** — the header icon left of Search, now live (`Ctrl/⌘ .`), opening a themed dialog: `Tab`/`Shift+Tab` cycle candidates through their common prefix, `Ctrl+Space` opens the menu with a description per candidate, `→` accepts inline history prediction, `↑`/`↓` walk history, `Ctrl+R` searches it, `F1`/`?` help without losing the line, `Ctrl+L` clears, `Ctrl+C` abandons, `Esc` dismisses the menu before the panel. Output is a real table with column headings, or the raw body with `--json`, or identifiers with `--quiet`; `--verbose` prints the method, path, permission and elapsed time — **the line that teaches the API**.
+- **[New]** **`GET /api/console/catalog` and `/catalog/:name`** — the same catalogue, **filtered by the caller's own permissions at call time**, so the CLI to come is not a second list and `help` answers "what can *I* run" on both front ends. 404 when the console is off, and a command the caller cannot run is 404 rather than 403, matching the record lookups.
+- **[New]** **`guard:console`** — every command's path must resolve to a real route, its permission must be the permission **that route checks** (read from the generated specification), and every flag it offers must be a parameter that route actually reads. This is the check that stops the console becoming a weaker authorization layer than the API beside it. It runs in the Security Gate, and it found three real faults while being written.
+- **[Fix]** **A flag the route would ignore is now impossible to type.** The universal flags are two kinds: `--json`/`--quiet`/`--verbose` belong to the console and always apply, while `--limit`/`--offset` are *route* parameters and are offered only by a command whose route reads them. Without that split, `board list --limit 5` would have been accepted and silently ignored.
+- **[Update]** **Writes are refused with §7's message, not half-built.** `ticket create …` answers *"not available in the console yet — write commands arrive with PLAN-026's action manifest"*, exit 5, because a hand-written write command is exactly the second authorization list that section refuses. Reads land now; writes land behind the manifest.
+- **[Update]** **`CONSOLE_ENABLED` (Workspace → Command console) turns the whole feature off** — the icon, the panel and the API's catalogue — and `c7_ui_console` is the per-browser override. Every existing screen, route and permission is untouched either way, which is the rollback PLAN-028 promised.
+
+**Verification:** `probe-console-grammar` (new, `apps/api`) **55 passed / 0 failed** — the shape of a command line, quoting, `;`, comments, prefix resolution, the typed refusals (unknown / policy / usage / not-found), permission refusal, aliases, every completion position, and **ambiguity refusing instead of choosing**. `probe-console-catalog` (new) **18 passed / 0 failed** against the running API: the catalogue is served, filtered, described, fetchable by name, and a command it advertises runs. `guard:console` green (85 commands, 45 nouns, 15 groups, every path/permission/flag verified). `guard:routes` 439 routes / 0 violations; `guard:api-docs` 430 operations / 63 curated; `guard:config` 46 reads all declared; API and web `tsc` clean. Live in the browser: the dialog's border is the theme's (2px `cyber-600/50`, 12px radius), `help` prints the grouped catalogue, `ticket list` renders a table with the verbose line, `client show acme` resolved and named the record it chose, `ticket show <number>` resolved through the search route, every error path returned its §9 code, and with `c7_ui_console=0` the icon and panel disappear and the rest of the application is unchanged.
 
 ---
 

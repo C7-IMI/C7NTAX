@@ -2,6 +2,7 @@ name: Security Gate
 
 # PLAN-018 Phase 3: the checks that must fail a build rather than be remembered.
 #   · route guards  — every authenticated API route carries a permission (P0-2)
+#   · console       — every console command names a real route, its permission, and flags it reads
 #   · typechecks    — API and web compile
 #   · dependencies  — no new production or high-severity advisory (Phase 1/3)
 #   · secrets       — gitleaks over the working tree and history
@@ -33,6 +34,12 @@ jobs:
 
       - name: Every authenticated route carries a permission
         run: pnpm guard:routes
+
+      # The console's catalogue is an authorization list by another name, so it is checked the same
+      # way: every command's path must resolve to a real route, its permission must be the permission
+      # that route checks, and every flag it offers must be a parameter that route reads (PLAN-028 §7).
+      - name: The console's catalogue still describes real routes
+        run: pnpm guard:console
 
       # The generated Prisma client is not in the repository — it is produced from the schema, and
       # nothing in this job used to produce it. Without it every model type is `any`, which the next
