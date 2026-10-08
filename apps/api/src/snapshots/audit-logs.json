@@ -213907,6 +213907,18 @@
     "createdAt": "2026-10-08T08:00:20.956Z"
   },
   {
+    "id": "dd4fc792-9cab-41a3-ac4f-106efa7490d5",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "d41bf7b7-425e-491b-af72-e7486c95065b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:27:13.826Z"
+  },
+  {
     "id": "632cadcf-a8d7-4761-8921-b3e67b7b9a57",
     "action": "oauth_app.imported",
     "entity": "oauth_app",
@@ -214128,5 +214140,297 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T09:05:13.274Z"
+  },
+  {
+    "id": "9089b9c8-25e0-4b66-a2a8-3fa9919e94db",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "Probe model 1791451096610",
+      "model": "deepseek-v4-pro",
+      "apiKey": "***",
+      "provider": "deepseek",
+      "credentials": "***",
+      "appFunctions": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:16.623Z"
+  },
+  {
+    "id": "6a58c2e3-6ef3-490e-a246-feaded7ff895",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "d1ecc59f-eb37-44e1-9fc5-fe5ff13e88cf",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:17.148Z"
+  },
+  {
+    "id": "7c9905b4-9c68-4958-8982-f44aae0862f4",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "Probe keyless 1791451097499",
+      "model": "gpt-6-luna",
+      "provider": "openai"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:17.506Z"
+  },
+  {
+    "id": "e286c5bf-f84c-4203-aa91-9ae82bf4e4a9",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "d1ecc59f-eb37-44e1-9fc5-fe5ff13e88cf",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:17.517Z"
+  },
+  {
+    "id": "1dc2e823-b034-44e0-9531-ca3174be01df",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "d1ecc59f-eb37-44e1-9fc5-fe5ff13e88cf",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:17.531Z"
+  },
+  {
+    "id": "8def62d7-4d3d-4b7a-9469-793134b93de2",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "d1ecc59f-eb37-44e1-9fc5-fe5ff13e88cf",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:17.777Z"
+  },
+  {
+    "id": "2ba77fa0-3824-4485-9530-8f6f3c4af3cc",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "5e077451-74b2-4772-a6f7-5d0d70c77d20",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:17.781Z"
+  },
+  {
+    "id": "a174644a-e462-4374-b762-272446eaca61",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "Probe model 1791451106932",
+      "model": "deepseek-v4-pro",
+      "apiKey": "***",
+      "provider": "deepseek",
+      "credentials": "***",
+      "appFunctions": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:26.940Z"
+  },
+  {
+    "id": "13100538-48e2-49ab-9175-b63686a0884d",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "ae0cea54-1eca-49b7-b70e-f4045f696048",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:27.405Z"
+  },
+  {
+    "id": "07360e53-0022-4137-acbd-151864f688cb",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "Probe keyless 1791451107774",
+      "model": "gpt-6-luna",
+      "provider": "openai"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:27.781Z"
+  },
+  {
+    "id": "5c7cca84-c1ad-4f37-b437-01f2ac2c8b9d",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "ae0cea54-1eca-49b7-b70e-f4045f696048",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:27.791Z"
+  },
+  {
+    "id": "b46bf663-4b72-4f81-ad1e-01e939d9a618",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "ae0cea54-1eca-49b7-b70e-f4045f696048",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:27.807Z"
+  },
+  {
+    "id": "c7ab8573-325f-456a-9c69-d0c663a363c8",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "ae0cea54-1eca-49b7-b70e-f4045f696048",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:28.059Z"
+  },
+  {
+    "id": "21115c9b-e4e7-449f-a38a-c5e1444450c0",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "5ad991cf-aa8c-4d20-bf45-a31f396e06e1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:18:28.065Z"
+  },
+  {
+    "id": "833fe15d-78df-4fff-80e0-75c959e2cbeb",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "Probe assistant 1791451633814",
+      "model": "deepseek-v4-pro",
+      "apiKey": "***",
+      "provider": "deepseek",
+      "appFunctions": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:27:13.821Z"
+  },
+  {
+    "id": "7c2d3cc6-2625-4e37-80cb-f04b9b1a15dd",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "assist",
+    "changes": {
+      "prompt": "How many clients do we have?"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:27:14.389Z"
+  },
+  {
+    "id": "4fb94c91-b402-4b6e-9822-e7d8902c4f6b",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "d41bf7b7-425e-491b-af72-e7486c95065b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:27:14.449Z"
+  },
+  {
+    "id": "b88d1e7f-04d3-47cc-90e2-cb34199e1c51",
+    "action": "inference:delete",
+    "entity": "inference",
+    "entityId": "d41bf7b7-425e-491b-af72-e7486c95065b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:27:14.453Z"
+  },
+  {
+    "id": "b7240046-1c2d-4610-ae1f-ac2edeb2f951",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "providers",
+    "changes": {
+      "name": "UI probe model (remove me)",
+      "model": "deepseek-v4-pro",
+      "apiKey": "***",
+      "provider": "deepseek",
+      "appFunctions": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:28:59.531Z"
+  },
+  {
+    "id": "23f90909-46f3-4da4-9496-b12c90b670bb",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "02a61792-488d-456c-87da-a111516301ac",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T09:28:59.538Z"
+  },
+  {
+    "id": "aa3e49c4-f483-481b-b77b-5d5190223cb0",
+    "action": "ai_assist",
+    "entity": "ai_provider",
+    "entityId": "02a61792-488d-456c-87da-a111516301ac",
+    "changes": {
+      "model": "deepseek/deepseek-v4-pro",
+      "steps": 0,
+      "prompt": "Which managed services have an open incident right now?",
+      "functions": "no application functions were called",
+      "tokensUsed": 0,
+      "appFunctions": true,
+      "stoppedBecause": "failed"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T09:29:38.988Z"
+  },
+  {
+    "id": "415b6858-9f98-4f55-b066-24cb9c51ea4b",
+    "action": "inference:create",
+    "entity": "inference",
+    "entityId": "assist",
+    "changes": {
+      "prompt": "Which managed services have an open incident right now?"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T09:29:38.991Z"
   }
 ]
