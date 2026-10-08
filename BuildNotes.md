@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.030 | Last Updated: 2026-10-08
+## Version: 2026.10.8.031 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,24 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.031 — The address you are connecting from, on the sign-in screen and in My Account
+
+Two places now answer a question that previously required reading a log: **which address am I arriving as?** It is on the sign-in screen and under the identity block in the account menu, in the same small type as the line above it.
+
+- **[New]** **`GET /api/auth/client-ip`** — the address the server sees this connection arriving from, unauthenticated on purpose because the sign-in screen asks before a session exists. It answers with the same value the session record and the audit trail carry, so what a person reads on screen matches what the trail says about them, and a support conversation about "sign-in fails from the office but works from home" can compare the two. Nothing here is instance data: the caller is handed their own address back.
+- **[New]** **"Connecting from …" on the sign-in screen**, under the service-status panel at 11px, in the monospace the rest of the app uses for addresses. The sign-in screen is where the value earns its place: a VPN, a proxy or a client's network is the usual reason a sign-in behaves oddly, and this is the first fact worth having.
+- **[New]** **"Connecting from …" in My Account**, on its own line below the identity block — a fact about the connection rather than about the person, so it is not stacked into the name and email. Same 11px as the email line above it, `title` explains what the value is.
+- **[New]** **`useClientIp()`** — one request per page load shared by both surfaces, cached at module level so the menu and the sign-in screen cannot ask twice, and a failure is silence rather than an error: the line simply does not render.
+- **[Update]** **The API's own documents** follow: `docs/openapi.yaml` regenerated from the routes (427 operations), a curated description added to `docs/api-operations.json`, and `docs/API.md` §2.1 records the endpoint and what it returns — including that behind a reverse proxy the address is the proxy's until `trust proxy` is configured.
+
+**Verification (live):** the endpoint answers and it is genuinely the caller — `::ffff:127.0.0.1` when called directly over IPv4 and `::1` through the Vite proxy, which is how we know it is reading the connection and not a constant. Signed in: the account menu's rows are brand → identity → **Connecting from ::1** → profile rows, with the line *outside* the identity block, 11px against the email's 11px. Signed out: the sign-in screen shows the same line at 11px (against 14px body text). Web `tsc` clean; API `tsc` at its 149-error pre-existing baseline; `guard:api-docs` and `check-help-links` pass.
+
+**On this machine you will see `::1`** — the browser, the dev server and the API are all on one host, so loopback is the honest answer. From a tunnel or another machine it reports where the request actually came from.
+
+**Found, not fixed (pre-existing):** `npm run guard:routes` fails on four `sso.ts` routes (`GET`/`PUT /oidc`, `POST /oidc/discover`, `POST /oidc/test`). They *are* permission-checked — `const MANAGE = requirePermission(Permission.SecurityManage)` — but the guard's pattern only recognises `requirePermission(` written inline, so it cannot see a named middleware constant. Not a security hole; a guard false positive, introduced with the SSO work and unrelated to this change.
 
 ---
 

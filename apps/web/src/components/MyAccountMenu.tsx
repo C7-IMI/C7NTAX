@@ -126,14 +126,20 @@ export function MyAccountMenu() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-white truncate">{displayName(user as MenuUser | null)}</p>
               <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
-              {clientIp && (
-                <p className="text-[10px] text-gray-600 truncate" title="The address this connection is arriving from">
-                  Connecting from <span className="font-mono">{clientIp}</span>
-                </p>
-              )}
             </div>
             {label && <span className="badge bg-surface-lighter text-gray-300 text-[10px] capitalize shrink-0">{label}</span>}
           </div>
+
+          {/* The address this connection arrives from: a fact about the connection rather than about the
+              person, so it sits on its own line under the identity block. */}
+          {clientIp && (
+            <p
+              className="px-3 py-2 text-[11px] text-gray-500 border-b border-surface-border truncate"
+              title="The address this connection is arriving from"
+            >
+              Connecting from <span className="font-mono text-gray-400">{clientIp}</span>
+            </p>
+          )}
 
           {/* Account */}
           <div className="p-1.5">

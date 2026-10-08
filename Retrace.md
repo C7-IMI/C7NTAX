@@ -5760,3 +5760,41 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The dev servers are still running from this session's shells** (`shellId 4726` the API, `webdev` the web app on :3010) and will stop when the session ends.
 - **The session had expired in the shared browser** before I could reproduce anything — the app had been idle past its timeout. Signing back in is the first step of any live verification in a long session, and the login page's own status panel saying "All systems ready" is the quickest confirmation that the API and database are up.
 - **The Add button on this screen is called "Connect a service"** (and "Add a connector" in the empty state), not "Add Connection" — worth knowing before scripting a click against the label.
+
+
+---
+
+### Prompt 273 — The address you are connecting from, on the sign-in screen and in My Account
+
+**Timestamp:** 2026-10-08 23:15 | **Status:** Complete (built, walked live on both surfaces) | **Duration:** ~75 min
+
+**BuildNotes IDs:** **2026.10.8.031** — "The address you are connecting from, on the sign-in screen and in My Account"
+
+**Prompt**
+
+> Add the logged in IP to the login screen and the underneath the username in the my account menu. It should show my IP address that I am connecting from. Make it a smaller font.
+
+**Prompt** (continuing the same request)
+
+> Move it down to a separate line below the username. Same size font
+
+**What I did**
+- **Asked the server rather than the machine.** A browser cannot know the address it appears as, so the value has to come from the API — and adding it as `GET /api/auth/client-ip` (unauthenticated, because the sign-in screen needs it *before* a session exists) rather than a third-party "what is my IP" service keeps the request inside the product and keeps the answer honest.
+- **Made it the same address the trail records.** The route answers `req.ip || req.socket.remoteAddress`, which is exactly what `middleware/sessionAuth.ts` writes into the session row and what `middleware/auditLog.ts` writes into every audit entry — so the number on the sign-in screen and the number in the audit log are the same number, which is the entire point of showing it. A display-only tidy-up of `::ffff:` prefixes was considered and rejected for the same reason.
+- **Proved it reads the connection, not a constant**: called directly over IPv4 the endpoint says `::ffff:127.0.0.1`, and through the Vite proxy it says `::1`. Two different answers for two different paths.
+- **One value, one request, two surfaces.** `useClientIp()` caches the promise at module level, so the sign-in screen and the account menu share one call per page load, and a failure is silence — the line does not render — because a diagnostic convenience should never produce an error a person has to read.
+- **Followed the placement instruction literally the second time.** The first version put the line inside the identity column, under the email. "Move it down to a separate line below the username, same size font" became: its own row under the identity block (a fact about the connection, not about the person), at **11px** — the same size as the email line above it, where the first version had made it 10px.
+- **Updated the API's own documents, because the project asks for it**: `docs/openapi.yaml` regenerated from the routes, a curated description added to `docs/api-operations.json`, and §2.1 of `docs/API.md` extended to describe the endpoint and what it returns.
+- **Verified from the DOM on both surfaces**, including the thing that is easy to get wrong: that the line is now *outside* the identity block (`insideIdentityBlock: false`, `isOwnRow: true`) and that its computed font size equals the email's, rather than only that it renders.
+
+**Decisions worth remembering**
+- **The truthful answer is the useful one, and here that means `::1`.** On a single-host dev box the browser, the dev server and the API are all local, so loopback is correct and it *changes* when you connect from somewhere else — which is also how the feature proves it works. Making dev prettier by mapping loopback to `localhost` would have made the screen disagree with the audit trail for the sake of looking nicer.
+- **`trust proxy` is the deployment switch this feature inherits.** Behind the planned ingress, `req.ip` is the gateway's address until that is configured — which is true of the audit trail too, and is why the caveat is written into the route comment, the curated API description and the API doc rather than left to be discovered.
+- **A guard that fails is not automatically a finding.** `npm run guard:routes` fails on four `sso.ts` routes, and the failure is the guard's: they are checked by a named constant (`const MANAGE = requirePermission(Permission.SecurityManage)`) that its pattern cannot see. Worth reporting, not worth "fixing" by widening a route's middleware because a lint complained — and not mine to change in this task either way.
+- **Same value, same place, one phrase.** "Connecting from …" is the wording on both surfaces, so there is one phrase to learn for one concept.
+
+**Notes for next time**
+- **Dev shows `::1` and that is correct** — the honest answer on a one-host machine. Anything else on this workstation (a tunnel, a phone on the LAN) will show that address instead.
+- **An expired session is the normal state at the start of a long session**, and it is also convenient: the sign-in screen is the one surface you cannot reach while signed in, so the idle timeout is the cheapest moment to verify it. The account menu needed a fresh sign-in afterwards.
+- **`docs/openapi.yaml` is generated and guarded**: adding a route means running `node scripts/generate-openapi.mjs` and then `node scripts/check-api-docs.mjs`, and the guard reports an unattributed difference as a failure rather than as a diff.
+- **The route-guard script's blanket exemption for `auth.ts`** is why a new unauthenticated route there needs no exemption entry — worth knowing before adding an unauthenticated route anywhere else, where it would.

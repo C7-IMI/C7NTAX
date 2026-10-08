@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.031",
+    "date": "2026-10-08",
+    "title": "The address you are connecting from, on the sign-in screen and in My Account",
+    "changes": [
+      {
+        "text": "**`GET /api/auth/client-ip`** — the address the server sees this connection arriving from, unauthenticated on purpose because the sign-in screen asks before a session exists. It answers with the same value the session record and the audit trail carry, so what a person reads on screen matches what the trail says about them, and a support conversation about \"sign-in fails from the office but works from home\" can compare the two. Nothing here is instance data: the caller is handed their own address back.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"Connecting from …\" on the sign-in screen**, under the service-status panel at 11px, in the monospace the rest of the app uses for addresses. The sign-in screen is where the value earns its place: a VPN, a proxy or a client's network is the usual reason a sign-in behaves oddly, and this is the first fact worth having.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"Connecting from …\" in My Account**, on its own line below the identity block — a fact about the connection rather than about the person, so it is not stacked into the name and email. Same 11px as the email line above it, `title` explains what the value is.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`useClientIp()`** — one request per page load shared by both surfaces, cached at module level so the menu and the sign-in screen cannot ask twice, and a failure is silence rather than an error: the line simply does not render.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The API's own documents** follow: `docs/openapi.yaml` regenerated from the routes (427 operations), a curated description added to `docs/api-operations.json`, and `docs/API.md` §2.1 records the endpoint and what it returns — including that behind a reverse proxy the address is the proxy's until `trust proxy` is configured.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.030",
     "date": "2026-10-08",
     "title": "The Cancel button on \"Select Service Type\" now leaves the flow",
