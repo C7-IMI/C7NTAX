@@ -518,6 +518,20 @@
     "updatedAt": "2026-10-08T07:13:33.158Z"
   },
   {
+    "id": "bcf6b0f2-6ee7-40d2-a151-1bc3d54fa75e",
+    "serviceId": "10630569-8873-4b00-9137-a346046c2b5f",
+    "title": "Possible service degradation reported for Verizon (DownDetector)",
+    "description": "DownDetector is reporting problems for Verizon.",
+    "severity": "degraded",
+    "status": "active",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/verizon/",
+    "detectedAt": "2026-10-08T07:53:14.916Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-08T07:53:14.918Z",
+    "updatedAt": "2026-10-08T07:53:14.918Z"
+  },
+  {
     "id": "59f1cbb1-7683-4ffe-9f95-29ca677e4609",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Partially Degraded Service",

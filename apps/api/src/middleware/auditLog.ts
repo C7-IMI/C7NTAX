@@ -15,6 +15,10 @@ const SKIP_PREFIXES = [
   "/api/kumo/recently-viewed",
   "/api/system/poller",
   "/api/system/snapshot-poller",
+  // The OAuth-app routes audit themselves, and they have to: `POST /import` carries a client secret
+  // inside a JSON *string*, which the key-name check below cannot see, and `POST /:id/deploy` returns
+  // one. The route writes a row naming the tenant, the client id and the expiry instead.
+  "/api/oauth-app",
 ];
 
 function extractEntity(path: string): string {
@@ -36,6 +40,8 @@ const SECRET_KEY_PARTS = ["password", "secret", "apikey", "privatekey", "authtag
 const SECRET_KEY_EXACT = new Set([
   "iv", "token", "accesstoken", "refreshtoken", "idtoken", "bearertoken", "authtoken",
   "authorization", "signingkey", "encryptionkey", "webhooktoken", "sessiontoken",
+  // A whole credential set, under a name that says nothing about what is inside it.
+  "scriptjson",
 ]);
 
 function isSecretKey(key: string): boolean {

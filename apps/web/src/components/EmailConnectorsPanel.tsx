@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Mail, Plus, RefreshCw, Trash2, Power, ShieldCheck, Info, AlertTriangle, Link2, Unlink } from "lucide-react";
+import { Mail, Plus, RefreshCw, Trash2, Power, ShieldCheck, Info, AlertTriangle, Link2, Unlink, Wand2 } from "lucide-react";
+import { OAuthAppWizard, type WizardValues } from "./OAuthAppWizard";
 
 interface Connector {
   id: string;
@@ -92,7 +93,32 @@ export function EmailConnectorsPanel() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [form, setForm] = useState({ ...emptyForm });
   const [busy, setBusy] = useState<string | null>(null);
+  const [wizard, setWizard] = useState(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
   const handledRedirect = useRef(false);
+
+  /**
+   * What the wizard produces, into the form.
+   *
+   * This is the whole point of the wizard: the tenant, client id, secret and mailbox are the four
+   * values that used to be copied out of a console, and one of them (the secret) cannot be read again
+   * after it is created. The flow it implies decides the auth mode too — a delegated deployment has no
+   * secret and would be rejected by the app-only branch.
+   */
+  const applyFromWizard = (values: WizardValues, meta: { mode: "AppOnly" | "Delegated" | "Both"; displayName: string }) => {
+    setForm((f) => ({
+      ...f,
+      transport: "graph",
+      graphAuth: meta.mode === "Delegated" || !values.clientSecret ? "delegated" : "clientSecret",
+      tenantId: values.tenantId || f.tenantId,
+      clientId: values.clientId || f.clientId,
+      clientSecret: values.clientSecret,
+      mailbox: values.mailbox || f.mailbox,
+    }));
+    // The form is below the connector list, and a filled-in form nobody scrolls to reads as nothing
+    // having happened.
+    window.setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+  };
 
   const load = () => {
     api.get("/email-connectors").then((r) => setConnectors(r.data.data || [])).catch(() => {});
@@ -322,7 +348,7 @@ export function EmailConnectorsPanel() {
         </div>
       ))}
 
-      <form onSubmit={create} className="border-t border-surface-border pt-3 space-y-3">
+      <form ref={formRef} onSubmit={create} className="border-t border-surface-border pt-3 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => setTransport("graph")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${form.transport === "graph" ? "bg-cyber-600/20 border-cyber-500/50 text-white" : "bg-surface-lighter border-surface-border text-gray-400 hover:text-white"}`}>
@@ -354,23 +380,52 @@ export function EmailConnectorsPanel() {
         {form.transport === "graph" && form.graphAuth === "clientSecret" && (
           <div className="flex items-start gap-2 rounded-lg border border-cyber-500/20 bg-cyber-500/5 p-3">
             <ShieldCheck size={14} className="text-cyber-400 mt-0.5 shrink-0" />
-            <p className="text-xs text-gray-300">
-              Microsoft has disabled Basic authentication for Exchange Online in every tenant, so a mailbox on Microsoft 365 can only be read with an
-              OAuth app. In Entra, register an app, grant it the <strong>application</strong> permission <strong>Mail.ReadWrite</strong> with admin consent
-              (write is needed to mark messages processed), and scope its access to this one mailbox with Exchange Online RBAC for Applications. Then paste the
-              tenant, client id and secret here.
-            </p>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-300">
+                Microsoft has disabled Basic authentication for Exchange Online in every tenant, so a mailbox on Microsoft 365 can only be read with an
+                OAuth app. It needs the <strong>application</strong> permission <strong>Mail.ReadWrite</strong> with admin consent (write is needed to mark
+                messages processed), and its access scoped to this one mailbox with Exchange Online RBAC for Applications.
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <button
+                  type="button"
+                  className="btn-primary text-xs inline-flex items-center gap-1.5"
+                  onClick={() => setWizard(true)}
+                  title="Create or reuse the Entra app, consent to it, and fill this form"
+                >
+                  <Wand2 size={13} /> Deploy OAuth app
+                </button>
+                <span className="text-[11px] text-gray-500">
+                  Walk through it — or paste the four values below if the app already exists.
+                </span>
+              </div>
+            </div>
           </div>
         )}
         {form.transport === "graph" && form.graphAuth === "delegated" && (
           <div className="flex items-start gap-2 rounded-lg border border-cyber-500/20 bg-cyber-500/5 p-3">
             <Link2 size={14} className="text-cyber-400 mt-0.5 shrink-0" />
-            <p className="text-xs text-gray-300">
-              In Entra, register an app and add the <strong>delegated</strong> permissions <strong>Mail.ReadWrite</strong> and <strong>User.Read</strong> plus
-              <strong> offline_access</strong> (a Web platform redirect URI is created for you when you press Connect). Save the tenant and client id here, then
-              press the link button on the connector to sign in — the mailbox it reads is the account that signs in, so no shared-mailbox scoping is needed.
-              The client secret is optional; leave it empty for a public client using PKCE.
-            </p>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-300">
+                The delegated flow reads the mailbox of whoever signs in, using the <strong>delegated</strong> permissions{" "}
+                <strong>Mail.ReadWrite</strong> and <strong>User.Read</strong> plus <strong>offline_access</strong>. A Web platform redirect URI is
+                created for you when you press Connect. Save the tenant and client id here, then press the link button on the connector to sign in —
+                the client secret is optional (leave it empty for a public client using PKCE).
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <button
+                  type="button"
+                  className="btn-primary text-xs inline-flex items-center gap-1.5"
+                  onClick={() => setWizard(true)}
+                  title="Create or reuse the Entra app, add the redirect URI and consent, and fill this form"
+                >
+                  <Wand2 size={13} /> Deploy OAuth app
+                </button>
+                <span className="text-[11px] text-gray-500">
+                  Sets the redirect URI on the app for you — <span className="font-mono">/api/email-connectors/oauth/callback</span>.
+                </span>
+              </div>
+            </div>
           </div>
         )}
         {form.transport === "ews" && (
@@ -459,6 +514,16 @@ export function EmailConnectorsPanel() {
           </button>
         </div>
       </form>
+
+      {wizard ? (
+        <OAuthAppWizard
+          onClose={() => setWizard(false)}
+          initialMode={form.graphAuth}
+          defaultTenant={form.tenantId}
+          defaultMailbox={form.mailbox}
+          onComplete={applyFromWizard}
+        />
+      ) : null}
     </div>
   );
 }

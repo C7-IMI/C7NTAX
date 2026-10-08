@@ -179,7 +179,8 @@ async function loadRow(id: string) {
 // request belongs to the connector we started the flow for.
 const oauthStateKey = (id: string) => `email_connector:${id}:oauth`;
 
-function oauthRedirectUri(req: AuthRequest): string {
+/** The exact redirect URI this instance must have on the registration for the delegated flow. */
+export function oauthRedirectUri(req: AuthRequest): string {
   if (process.env.EMAIL_OAUTH_REDIRECT_URI) return process.env.EMAIL_OAUTH_REDIRECT_URI;
   const base = process.env.API_PUBLIC_URL || `${req.protocol}://${req.get("host")}`;
   return `${base.replace(/\/+$/, "")}/api/email-connectors/oauth/callback`;
