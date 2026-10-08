@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
@@ -7,6 +7,7 @@ import {
   Plus, Plug, RefreshCw, Trash2, Key, Settings,
   ShieldCheck, Globe, Server, Cloud, CreditCard, FileText, Database,
   PlugZap, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users, Info, ExternalLink, Bot, Wand2,
+  Mail, MonitorSmartphone, ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -16,6 +17,8 @@ import { ConnectorSetupWizard, type ConnectorSetup } from "../components/Connect
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { DataSourceNote } from "../components/DataSourceNote";
+import { Tabs } from "../components/ui/Tabs";
+import { OutlookAddInPage } from "./OutlookAddIn";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -170,7 +173,19 @@ function isSecretCred(cred: string): boolean {
 
 // ── Main Component ──────────────────────────────────────────────────
 
-export function CloudConnectPage() {
+/**
+ * C7NC — everything that connects C7NTAX to something else.
+ *
+ * One section, five tabs: the overview answers "is anything broken?" before the catalogue answers
+ * "what could we connect?", Services carries the connectors (and the configure view, which is a mode
+ * of Services rather than a place), and models, mailboxes and installable clients each get their own
+ * tab because each is a different question.
+ *
+ * The tab lives in the URL (`/c7nc/services` and friends), so every tab can be linked to, survives a
+ * reload, and comes back from the back button. The connector machinery below is unchanged — this is a
+ * front door and a filing system, not a rewrite.
+ */
+export function C7NCPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [types, setTypes] = useState<IntegrationType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -464,20 +479,57 @@ export function CloudConnectPage() {
 
   // ── Tabs ──────────────────────────────────────────────────────────
   /*
-   * The page used to be one long scroll: the add-flow, the email connectors panel, a Microsoft 365
-   * report and then the connected integrations, in that order. Which meant the answer to "what is
-   * connected, and is it working?" was below four screens of things that are not.
+   * C7NC is a section, not a page: five tabs, each one of which is a different question.
    *
-   * So: the first tab is the answer, and everything that changes a connection lives on another one.
-   *   · Connected      — what is connected, its state, and the actions that do not change it
-   *                      (test, sync, explore). The Microsoft 365 report belongs here because it is
-   *                      about the tenant, not about the connection.
-   *   · Add a connector— browse the types and configure a new one.
-   *   · Configuration  — credentials, settings, sync history and synced records for one connection.
-   *   · Email          — the mailbox connectors, which are their own thing with their own runtime.
+   *   · Overview       — is anything broken? What needs attention, and the fix for each.
+   *   · Services       — what is connected, what could be, and the actions on a connection
+   *                      (test, sync, configure, logs, explore). Adding one starts here too, which is
+   *                      why "Add a connector" is a mode of this tab rather than a tab of its own.
+   *   · AI models      — which model answers, and what it may do.
+   *   · Email          — the mailbox connectors: what is coming in, and where it is going.
+   *   · Companion apps — what a person installs on their own machine (the Outlook add-in).
+   *
+   * "configure" and "add" are views *within* Services rather than tabs of their own: opening one
+   * keeps Services lit in the strip, because that is where the reader still is.
    */
-  type Tab = "connected" | "add" | "configure" | "email" | "ai";
-  const [tab, setTab] = useState<Tab>("connected");
+  type Tab = "overview" | "services" | "configure" | "add" | "models" | "email" | "apps";
+  type Section = "overview" | "services" | "models" | "email" | "apps";
+
+  /** The tab a URL path belongs to. `/c7nc` and anything unrecognised land on the overview. */
+  const sectionForPath = (pathname: string): Section => {
+    const rest = pathname.replace(/^\/c7nc\/?/, "").replace(/\/+$/, "");
+    if (rest === "services") return "services";
+    if (rest === "models") return "models";
+    if (rest === "email") return "email";
+    if (rest === "apps" || rest === "outlook-addin") return "apps";
+    return "overview";
+  };
+
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<Tab>(() => sectionForPath(window.location.pathname));
+
+  /*
+   * The URL is the tab's home, so a link, a reload and the back button all work. A path change sets
+   * the tab; a tab click changes the path. The configure and add views are not addressable, so a
+   * navigation away from them clears them rather than leaving the reader on a page the URL denies.
+   */
+  useEffect(() => {
+    const next = sectionForPath(location.pathname);
+    setTab(current => {
+      if (next === "overview") return "overview";
+      if (current === "configure" || current === "add") return current;
+      return next;
+    });
+  }, [location.pathname]);
+
+  const goToSection = (section: Section) => {
+    setSelectedType(null);
+    setShowAdd(false);
+    setWizardType(null);
+    setTab(section);
+    navigate(section === "overview" ? "/c7nc" : `/c7nc/${section}`);
+  };
   const [configuring, setConfiguring] = useState<string | null>(null);
   const [configCredentials, setConfigCredentials] = useState<Record<string, string>>({});
   const [configSettings, setConfigSettings] = useState<Record<string, any>>({});
@@ -486,6 +538,27 @@ export function CloudConnectPage() {
 
   const connected = integrations.filter(int => int.status === "connected" || int.lastSyncAt || int.enabled);
   const attention = integrations.filter(int => !int.enabled || int.status === "error" || (liveStatus[int.id]?.health?.state === "degraded" || liveStatus[int.id]?.health?.state === "unconfigured"));
+
+  /**
+   * Why a connection is on the "needs attention" list, in the words a person would use.
+   *
+   * The list is an invitation to act, so the reason has to be readable at a glance; the detail
+   * underneath (the vendor's own error, or the last sync's) says what to do about it.
+   */
+  const attentionReason = (int: Integration): string => {
+    if (!int.enabled) return "switched off";
+    if (int.status === "error") return "the last sync failed";
+    const state = liveStatus[int.id]?.health?.state;
+    if (state === "degraded") return "not answering";
+    if (state === "unconfigured") return "credentials incomplete";
+    return "needs a look";
+  };
+
+  /** Walk somebody through finishing a connection that already exists, from wherever they are. */
+  const openWizardFor = (int: Integration) => {
+    setWizardType(types.find(t => t.kind === int.kind) ?? null);
+    setWizardExisting(int);
+  };
 
   /** Open one connection's configuration, with its stored credentials copied into the form. */
   const openConfiguration = useCallback((int: Integration) => {
@@ -540,49 +613,169 @@ export function CloudConnectPage() {
 
   // ── Render ────────────────────────────────────────────────────────
 
-  const TABS: Array<{ id: Tab; label: string; count?: number }> = [
-    { id: "connected", label: "Connected", count: integrations.length },
-    { id: "add", label: "Add a connector" },
-    { id: "configure", label: "Configuration" },
-    { id: "ai", label: "AI models", count: modelStatus?.counts?.total },
-    { id: "email", label: "Email connectors" },
+  /*
+   * One sentence about the whole section, because that is what an operator repeats to somebody else
+   * and because four bare counters do not say whether anything is wrong. It is the same arithmetic
+   * the tabs carry, said out loud.
+   */
+  const hubSentence = (() => {
+    const parts: string[] = [];
+    parts.push(`${integrations.length} service${integrations.length === 1 ? "" : "s"}`);
+    if (modelStatus?.connected) parts.push(`1 model${modelStatus.counts?.total && modelStatus.counts.total > 1 ? ` + ${modelStatus.counts.total - 1} more` : ""}`);
+    else parts.push("no model");
+    const installed = 1; // The Outlook add-in is the companion app this deployment serves today.
+    parts.push(`${installed} companion app${installed === 1 ? "" : "s"}`);
+    const tail = attention.length ? ` — ${attention.length} need${attention.length === 1 ? "s" : ""} attention` : integrations.length ? " — all in good standing" : " — nothing connected yet";
+    return parts.join(" · ") + tail;
+  })();
+
+  /** The five tabs of the section, with the counts that let somebody find the problem unopened. */
+  const TABS: Array<{ id: Section; label: string; count?: number }> = [
+    { id: "overview", label: "Overview", count: attention.length || undefined },
+    { id: "services", label: "Services", count: integrations.length || undefined },
+    { id: "models", label: "AI models", count: modelStatus?.connected ? modelStatus.counts?.active ?? 1 : undefined },
+    { id: "email", label: "Email" },
+    { id: "apps", label: "Companion apps" },
+  ];
+
+  /*
+   * The strip shows which *section* you are in, not which view: opening one connection's
+   * configuration keeps Services lit, because that is where the reader still is.
+   */
+  const section: Section = tab === "configure" || tab === "add" ? "services" : tab;
+
+  /** The hub's four doors, each with the one line that says what is behind it. */
+  const SUBSECTIONS: Array<{ id: Section; icon: LucideIcon; label: string; blurb: string }> = [
+    { id: "services", icon: Plug, label: "Services", blurb: `The ${types.length || 16} connectors — directory, security, accounting, documentation, an RMM, a SIEM — and what each has brought in.` },
+    { id: "models", icon: Bot, label: "AI models", blurb: "Which model answers questions, which one the application uses, and what it is allowed to do." },
+    { id: "email", icon: Mail, label: "Email", blurb: "The monitored mailboxes that turn email into tickets, and where what they collect is filed." },
+    { id: "apps", icon: MonitorSmartphone, label: "Companion apps", blurb: "Things a person installs on their own machine — the Outlook add-in, and its installer versions." },
   ];
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-lg font-semibold text-white">CloudConnect</h2>
-          <p className="text-sm text-gray-400 mt-0.5">
-            {integrations.length === 0
-              ? `Connect third-party services${types.length > 0 ? ` — ${types.length} connectors available` : ""}`
-              : `${integrations.length} connection${integrations.length === 1 ? "" : "s"} configured${attention.length ? ` · ${attention.length} need${attention.length === 1 ? "s" : ""} attention` : " · all in good standing"}`}
-          </p>
+          <h2 className="text-lg font-semibold text-white">C7NC</h2>
+          <p className="text-sm text-gray-400 mt-0.5">{hubSentence}</p>
         </div>
         {tab !== "add" ? (
           <button onClick={() => { setSelectedType(null); setShowAdd(true); setTab("add"); }} className="btn-primary flex items-center gap-2">
-            <Plus size={16} /> Add a connector
+            <Plus size={16} /> Connect a service
           </button>
         ) : null}
       </div>
 
-      {/* The tabs themselves. Pronounced, because the whole page is behind them. */}
-      <div className="flex flex-wrap gap-1 border-b border-surface-border">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => { setTab(t.id); if (t.id !== "add") setShowAdd(false); }}
-            className={`relative px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border-b-2 -mb-px ${
-              tab === t.id
-                ? "border-cyber-500 text-white bg-surface-lighter"
-                : "border-transparent text-gray-400 hover:text-white hover:bg-surface-lighter"
-            }`}
-          >
-            {t.label}
-            {t.count ? <span className="ml-2 text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">{t.count}</span> : null}
-          </button>
-        ))}
-      </div>
+      {/* The tabs themselves — the product's shared strip: bordered group, the chosen tab on the
+          primary fill, counts as pills, arrow keys. */}
+      <Tabs items={TABS} value={section} onChange={goToSection} label="C7NC sections" />
+
+      {/* ═══ Overview — the question people arrive with ═══
+          Everything here is a door: the summary says whether there is a problem, the attention
+          block says what to do about it, and the four cards lead to the pages that own the detail.
+          Nothing on this tab changes a connection. */}
+      {tab === "overview" ? (
+        <div className="space-y-6">
+          {attention.length > 0 && (
+            <div className="card space-y-3 border-l-2 border-l-amber-500">
+              <p className="text-sm text-white flex items-center gap-2">
+                <AlertTriangle size={15} className="text-amber-400" /> Needs attention
+              </p>
+              <div className="space-y-3">
+                {attention.map((integration, index) => (
+                  <div key={integration.id} className={`flex items-start justify-between gap-3 flex-wrap ${index > 0 ? "border-t border-surface-border pt-3" : ""}`}>
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-200">
+                        <span className="text-white">{integration.name}</span> — {attentionReason(integration)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                        {liveStatus[integration.id]?.health?.detail
+                          || (integration.lastSyncAt
+                            ? `Last successful sync ${new Date(integration.lastSyncAt).toLocaleString()}. Open it for the sync log, or walk through the credentials again.`
+                            : "Nothing has synced yet. Open it for the sync log, or walk through the credentials again.")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => { setSelectedType(null); setShowAdd(false); openConfiguration(integration); }} className="btn-secondary text-xs">Open</button>
+                      <button onClick={() => openWizardFor(integration)} className="btn-secondary text-xs">Walk me through it</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {SUBSECTIONS.map(sub => {
+              /*
+               * The count is what is *in use*, not what is configured: a provider row that exists
+               * but is not the application's model is not a number anybody needs in a summary, and
+               * showing it makes the tab disagree with the sentence above it.
+               */
+              const count = sub.id === "services" ? integrations.length
+                : sub.id === "models" ? (modelStatus?.connected ? modelStatus.counts?.active ?? 1 : undefined)
+                : sub.id === "email" ? undefined
+                : 1;
+              return (
+                <button key={sub.id} onClick={() => goToSection(sub.id)} className="card hover:border-cyber-500/30 transition-colors text-left">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-cyber-600/10">
+                      <sub.icon size={18} className="text-cyber-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-white font-medium text-sm">{sub.label}</p>
+                        {count ? (
+                          <span className="text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">
+                            {sub.id === "models" ? `${count} connected` : `${count} ${sub.id === "services" ? "connected" : "installed"}`}
+                          </span>
+                        ) : null}
+                        {sub.id === "services" && attention.length ? (
+                          <span className="text-[11px] rounded-full bg-amber-500/10 px-1.5 py-0.5 text-amber-300">
+                            {attention.length} need{attention.length === 1 ? "s" : ""} attention
+                          </span>
+                        ) : null}
+                        {sub.id === "models" && modelStatus?.connected ? (
+                          <span className="text-[11px] rounded-full bg-emerald-600/10 px-1.5 py-0.5 text-emerald-300">Verified</span>
+                        ) : null}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{sub.blurb}</p>
+                      <p className="text-xs text-cyber-400 mt-2 flex items-center gap-1">
+                        Open {sub.label} <ArrowRight size={12} />
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/*
+            The three things that belong to "connecting" but not to this section, said out loud
+            rather than quietly missing: each is administration with its own permission, and moving
+            a screen without moving its permission is how a hub ends up half empty.
+          */}
+          <div className="card space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Also about connecting — kept where they are</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+              <Link to="/admin/api" className="text-cyber-400 hover:text-cyber-300 flex items-center gap-2">
+                <Key size={14} /> API Access — the keys other systems use
+              </Link>
+              <Link to="/admin/webhooks" className="text-cyber-400 hover:text-cyber-300 flex items-center gap-2">
+                <ExternalLink size={14} /> Alert webhooks — what we post out
+              </Link>
+              <Link to="/help/walkthroughs/cloudconnect" className="text-cyber-400 hover:text-cyber-300 flex items-center gap-2">
+                <Info size={14} /> Help — connecting a service, step by step
+              </Link>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed border-l-2 border-cyber-500 pl-3">
+              They are links rather than tabs because they are administration with their own
+              permissions (<span className="text-gray-400">UserManage</span>, <span className="text-gray-400">ServiceAlertManage</span>),
+              and because a door that opens on a refusal is worse than no door.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {tab === "add" ? (
       <div ref={addFlowRef} className="scroll-mt-4">
@@ -601,7 +794,7 @@ export function CloudConnectPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {/* The one catalogue entry that is not a data connector: a model is called when
                       somebody asks it something, and it is configured on its own tab. */}
-                  <button onClick={() => { setShowAdd(false); setSelectedType(null); setTab("ai"); }}
+                  <button onClick={() => { setShowAdd(false); setSelectedType(null); setTab("models"); }}
                     className="card hover:border-cyber-500/30 transition-colors text-left p-4 cursor-pointer group border-cyber-500/20">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-cyber-600/10 group-hover:bg-cyber-600/20 transition-colors">
@@ -751,7 +944,16 @@ export function CloudConnectPage() {
       {/* Email connectors (IMAP → tickets) — their own runtime, their own tab. */}
       {tab === "email" ? <EmailConnectorsPanel /> : null}
 
-      {tab === "ai" ? <AiModelsPanel /> : null}
+      {tab === "models" ? <AiModelsPanel /> : null}
+
+      {/* Companion apps. The add-in installer keeps its own page — Help, the nav and the
+          installer's download links all point at it — and it renders here, unchanged, inside the
+          tab. Nothing about installing it lives in this file. */}
+      {tab === "apps" ? (
+        <div className="space-y-6">
+          <OutlookAddInPage />
+        </div>
+      ) : null}
 
       {/* ═══ Configuration ═══ */}
       {tab === "configure" ? (
@@ -1013,8 +1215,8 @@ export function CloudConnectPage() {
         </div>
       ) : null}
 
-      {/* ═══ Connected ═══ */}
-      {tab === "connected" ? (
+      {/* ═══ Services ═══ */}
+      {tab === "services" ? (
         <>
       {/* The model is part of "what is connected", and the summary screen is where somebody looks
           to find out. One line, and a way through to the tab that configures it. */}
@@ -1030,7 +1232,7 @@ export function CloudConnectPage() {
               : "No model connected: ticket suggestions use keyword search over resolved tickets, and nothing can answer a prompt."}
           </p>
         </div>
-        <button onClick={() => setTab("ai")} className="btn-secondary text-xs shrink-0">
+        <button onClick={() => goToSection("models")} className="btn-secondary text-xs shrink-0">
           {modelStatus?.connected ? "Manage models" : "Connect a model"}
         </button>
       </div>
@@ -1042,7 +1244,7 @@ export function CloudConnectPage() {
             <EmptyState
               icon={<Plug size={26} />}
               title="Nothing is connected yet"
-              description="CloudConnect reads from the systems you already run — a PSA, an accounting system, an email security platform, Microsoft 365 — and brings what it finds into C7NTAX, so a client's invoice, their licences and their mailboxes are visible where the work happens."
+              description="C7NC reads from the systems you already run — a PSA, an accounting system, an email security platform, Microsoft 365 — and brings what it finds into C7NTAX, so a client's invoice, their licences and their mailboxes are visible where the work happens."
               action={
                 <button onClick={() => { setSelectedType(null); setShowAdd(true); setTab("add"); }} className="btn-primary text-sm">
                   <Plus size={14} className="inline mr-1.5" />Add a connector

@@ -9,7 +9,7 @@ import { ModelSetupWizard, type ModelSetupType } from "./ModelSetupWizard";
  *
  * Deliberately not a connector row: a data connector reads somebody else's records on a schedule,
  * whereas a model connection is called at the moment somebody asks it something, and its credentials
- * are its whole configuration. So it lives in the same place as the other connections (CloudConnect),
+ * are its whole configuration. So it lives in the same place as the other connections (C7NC),
  * behind its own tab, backed by the provider catalogue the API serves — the same catalogue the
  * request builder reads, which is why the dialog cannot offer a field the engine does not use.
  */

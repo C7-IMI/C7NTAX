@@ -492,7 +492,7 @@ function StandardReportsTab() {
   const navigate = useNavigate();
 
   /**
-   * A report can be opened from a link — the inactive-accounts report is reached from CloudConnect —
+   * A report can be opened from a link — the inactive-accounts report is reached from C7NC —
    * and the client and options come with it, so a saved link opens the exact report somebody meant
    * rather than the list it lives in.
    */

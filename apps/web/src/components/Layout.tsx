@@ -5,11 +5,11 @@ import { useAuth } from "../hooks/useAuth";
 import { useActivityMonitor } from "../hooks/useActivityMonitor";
 import { SessionTimeoutWarning } from "./SessionTimeoutWarning";
 import {
-  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
+  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
   AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio, Bot,
-  MonitorSmartphone, Mail, KeyRound,
+  MonitorSmartphone, Mail, KeyRound, Plug,
   Star, StarOff, Link2, AppWindow, SquareArrowOutUpRight, ChevronsUpDown, ChevronsDownUp, ChevronUp,
   type LucideIcon,
 } from "lucide-react";
@@ -55,7 +55,6 @@ export const NAV_TREE: NavNode[] = [
       { id: "admin-products", to: "/admin/products", icon: Package, label: "Product Catalog", permission: Permission.ProductView },
       { id: "admin-system", to: "/admin/system", icon: Wrench, label: "System Settings", permission: Permission.SystemConfig },
       { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs", permission: Permission.SystemConfig },
-      { id: "admin-cloudconnect", to: "/cloudconnect", icon: Cloud, label: "CloudConnect", permission: Permission.IntegrationManage },
       { id: "admin-api", to: "/admin/api", icon: KeyRound, label: "API Access", permission: Permission.UserManage },
       { id: "admin-ai-actions", to: "/ai-actions", icon: Sparkles, label: "AI Actions", permission: Permission.SystemConfig },
       { id: "admin-changelog", to: "/admin/changelog", icon: Sparkles, label: "What's New" },
@@ -121,18 +120,25 @@ export const NAV_TREE: NavNode[] = [
     ],
   },
   {
-    // C7NC — the C7NTAX companion clients. A parent section rather than a page under
-    // Administration because these are things a *user* installs on their own machine, not
-    // settings an administrator changes, and a technician should not have to find them behind
-    // a settings screen. Deliberately carries no permission: the download is offered to anyone
-    // who can sign in, and the deployment facts behind it are gated by the API.
+    // C7NC — everything that connects C7NTAX to something else: the services, the model that
+    // answers, the mailboxes that file tickets, and the apps a person installs. A parent section
+    // rather than a page under Administration, because a connector is a relationship rather than a
+    // setting, and because the companion apps were always here. The children mirror the section's
+    // own tabs, so the nav and the tab strip never disagree about where you are.
     id: "c7nc", icon: MonitorSmartphone, label: "C7NC", children: [
-      { id: "c7nc-outlook", to: "/c7nc/outlook-addin", icon: Mail, label: "Outlook Add-in" },
-      // FlexPoint lives here because it is a service the business already runs, configured beside
-      // the clients that install against this one — not an internal setting. Unlike the add-in it
-      // carries a permission, because everything on its page besides the reading is a write to a
-      // financial system.
+      { id: "c7nc-overview", to: "/c7nc", icon: LayoutDashboard, label: "Overview", permission: Permission.IntegrationView },
+      // Reading a connection needs IntegrationView — the permission every read endpoint already
+      // requires — and changing one needs IntegrationManage. The nav used to ask for the stronger
+      // of the two for the whole page, which kept the connection health out of reach of the people
+      // who watch it.
+      { id: "c7nc-services", to: "/c7nc/services", icon: Plug, label: "Services", permission: Permission.IntegrationView },
+      { id: "c7nc-models", to: "/c7nc/models", icon: Bot, label: "AI models", permission: Permission.InferenceView },
+      { id: "c7nc-email", to: "/c7nc/email", icon: Mail, label: "Email", permission: Permission.IntegrationView },
+      // FlexPoint lives here because it is a service the business already runs, listed beside the
+      // others that connect to this one. Unlike the connectors it carries a permission, because
+      // everything on its page besides the reading is a write to a financial system.
       { id: "c7nc-flexpoint", to: "/c7nc/flexpoint", icon: CreditCard, label: "FlexPoint Payment Solutions", permission: Permission.IntegrationManage },
+      { id: "c7nc-apps", to: "/c7nc/apps", icon: MonitorSmartphone, label: "Companion apps" },
     ],
   },
   {
@@ -282,7 +288,14 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/admin/system": "This instance's operational state, its deployment facts, and a signpost to every setting.",
   "/admin/logs": "View cumulative audit trail and track all changes across the system.",
   "/admin/changelog": "Release history and feature changelog for C7NTAX.",
-  "/cloudconnect": "Connect third-party services with 16 available connector types.",
+  "/c7nc": "C7NC — everything that connects C7NTAX to something else: the services, the model that answers, the mailboxes, and the apps a person installs.",
+  "/c7nc/services": "The connectors — directory, security, accounting, documentation, an RMM, a SIEM — what each has brought in, and whether it is healthy.",
+  "/c7nc/models": "Which model answers questions, which one the application uses, and what it is allowed to do.",
+  "/c7nc/email": "The monitored mailboxes that turn email into tickets, and where what they collect is filed.",
+  "/c7nc/flexpoint": "Billing and accounts receivable from FlexPoint's merchant API — who owes what, and whether it has been paid.",
+  "/c7nc/apps": "C7NTAX companion apps — the add-ins and clients that put C7NTAX inside the tools you already work in.",
+  "/c7nc/outlook-addin": "Install the Outlook add-in, which turns the email you are reading into a C7NTAX ticket.",
+  "/section/c7nc": "C7NC — everything that connects C7NTAX to something else.",
   "/admin/api": "Issue the API keys other systems use, and set where their alerts are filed.",
   "/clients": "Browse, search, and manage all client companies and accounts.",
   "/clients/contacts": "Manage contacts across all client organizations.",
@@ -314,13 +327,10 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/reports/custom": "Saved reports built on the reporting engine, with their schedules.",
   "/reports/custom/:id/design": "The banded report designer: bands, fields, expressions, totals and a page preview.",
   "/reports/analytics": "Advanced analytics with visual charts and trend data.",
-  "/c7nc": "C7NTAX companion clients — the add-ins and apps that put C7NTAX inside the tools you already work in.",
-  "/c7nc/outlook-addin": "Install the Outlook add-in, which turns the email you are reading into a C7NTAX ticket.",
-  "/section/c7nc": "C7NTAX companion clients — the add-ins and apps that put C7NTAX inside the tools you already work in.",
   "/help": "Documentation home — guided setup, FAQ, configuration reference, and a cross-linked index.",
   "/help/getting-started": "First login, the core ticket workflow, and team & boards setup.",
   "/help/faq": "Answers to common questions about tickets, billing, integrations, and Kumo.",
-  "/help/configuration": "Reference for service boards, uptime monitors, CloudConnect connectors, and identity settings.",
+  "/help/configuration": "Reference for service boards, uptime monitors, C7NC connectors, and identity settings.",
   "/help/index": "Index of every help topic mapped to its product area.",
   "/settings": "Configure your landing page, personal preferences, and account settings.",
   "/settings/ai": "Manage AI inference providers and model configurations.",

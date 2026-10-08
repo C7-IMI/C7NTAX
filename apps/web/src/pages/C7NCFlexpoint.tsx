@@ -12,7 +12,7 @@
  *     and where the payment FlexPoint records against it comes back as a payment here.
  *
  * Everything that writes is off until it is switched on, and each switch says what it will do.
- * The connection itself — the merchant API secret and the base URL — lives in CloudConnect, because
+ * The connection itself — the merchant API secret and the base URL — lives in C7NC → Services, because
  * that is where every connector's credentials live; the page links there rather than repeating it.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -208,7 +208,7 @@ export function C7NCFlexpointPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/cloudconnect" className="btn-secondary text-sm">Connection settings</Link>
+          <Link to="/c7nc/services" className="btn-secondary text-sm">Connection settings</Link>
           <button onClick={syncNow} disabled={busy === "sync" || !connection.configured} className="btn-primary text-sm flex items-center gap-2">
             {busy === "sync" ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />} Sync now
           </button>
@@ -220,7 +220,7 @@ export function C7NCFlexpointPage() {
         <div className="card space-y-3 border-l-2 border-l-amber-500">
           <p className="text-sm text-white flex items-center gap-2"><AlertTriangle size={15} className="text-amber-400" /> No FlexPoint connection yet</p>
           <p className="text-xs text-gray-400 leading-relaxed">
-            Add one in <Link to="/cloudconnect" className="text-cyber-400 hover:text-cyber-300">CloudConnect</Link> — choose
+            Add one in <Link to="/c7nc/services" className="text-cyber-400 hover:text-cyber-300">C7NC → Services</Link> — choose
             <span className="text-gray-300"> FlexPoint</span> in the connector list and paste the merchant API secret from
             FlexPoint's own <span className="text-gray-300">Settings → WebAPI</span>. It is the only credential: FlexPoint's API
             has no account or tenant id, because the secret is what identifies the merchant. Once the connection exists, its
@@ -252,7 +252,7 @@ export function C7NCFlexpointPage() {
           )}
           {!connection.enabled && (
             <p className="text-xs text-amber-300 bg-amber-500/5 border border-amber-500/20 rounded-lg p-2.5 leading-relaxed">
-              This connection is switched <strong>off</strong> in CloudConnect. Syncing and pushing from this page still work; what an
+              This connection is switched <strong>off</strong> in C7NC. Syncing and pushing from this page still work; what an
               off connection does not do is take part in the automatic accounting push when a bill-through batch is approved.
             </p>
           )}

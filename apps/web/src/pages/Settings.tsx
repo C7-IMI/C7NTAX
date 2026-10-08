@@ -17,18 +17,25 @@ const LANDING_OPTIONS = [
   { path: "/kb", label: "Knowledge Base", icon: BookOpen },
   { path: "/clients", label: "Clients", icon: Building2 },
   { path: "/billing", label: "Billing", icon: DollarSign },
-  { path: "/cloudconnect", label: "CloudConnect", icon: Cloud },
+  { path: "/c7nc", label: "C7NC", icon: Cloud },
   { path: "/users", label: "Users", icon: Users },
 ];
 
 export function SettingsPage() {
   const { user, landingPage, setLandingPage, permissions } = useAuth();
-  const [selectedPath, setSelectedPath] = useState(landingPage.path);
+  /*
+   * A landing page is stored as a path, and one of the stored paths moved when CloudConnect became
+   * C7NC. The old value is mapped here rather than left to fall through: somebody who chose that
+   * page should see it still chosen, not silently reset to the Dashboard.
+   */
+  const LANDING_ALIASES: Record<string, string> = { "/cloudconnect": "/c7nc" };
+  const landingFor = (path: string) => LANDING_ALIASES[path] ?? path;
+  const [selectedPath, setSelectedPath] = useState(() => landingFor(landingPage.path));
   const [sessionTimeout, setSessionTimeout] = useState(30);
   const [savingTimeout, setSavingTimeout] = useState(false);
   const canConfigureSystem = (permissions ?? []).includes(Permission.SystemConfig);
 
-  useEffect(() => { setSelectedPath(landingPage.path); }, [landingPage.path]);
+  useEffect(() => { setSelectedPath(landingFor(landingPage.path)); }, [landingPage.path]);
 
   // Deep links such as /settings#security come from the My Account menu; the
   // browser can't scroll to the anchor before React has rendered it.

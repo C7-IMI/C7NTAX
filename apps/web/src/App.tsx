@@ -11,7 +11,7 @@ import { ClientsPage } from "./pages/Clients";
 import { ClientDetailPage } from "./pages/ClientDetail";
 import { ContactsPage } from "./pages/Contacts";
 import { BillingPage } from "./pages/Billing";
-import { CloudConnectPage } from "./pages/CloudConnect";
+import { C7NCPage } from "./pages/C7NC";
 import { ApiAccessPage } from "./pages/ApiAccess";
 import { UsersPage } from "./pages/Users";
 import { RolesPage } from "./pages/Roles";
@@ -144,7 +144,19 @@ function ProtectedRoutes() {
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/reports/custom" element={<CustomReportsPage />} />
         <Route path="/reports/custom/:id/design" element={<ReportDesignerPage />} />
-        <Route path="/cloudconnect" element={<CloudConnectPage />} />
+        {/*
+          C7NC — one section for everything that connects C7NTAX to something else. The tab is the
+          path, so every tab can be linked to, survives a reload and comes back from the back button.
+          `/cloudconnect` is the pre-merge address and redirects rather than 404s: bookmarks, Help
+          links and whatever anybody has open in a tab keep working.
+        */}
+        <Route path="/c7nc" element={<C7NCPage />} />
+        <Route path="/c7nc/services" element={<C7NCPage />} />
+        <Route path="/c7nc/models" element={<C7NCPage />} />
+        <Route path="/c7nc/email" element={<C7NCPage />} />
+        <Route path="/c7nc/apps" element={<C7NCPage />} />
+        <Route path="/cloudconnect" element={<Navigate to="/c7nc/services" replace />} />
+        <Route path="/section/c7nc" element={<Navigate to="/c7nc" replace />} />
         <Route path="/admin/api" element={<ApiAccessPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/roles" element={<RolesPage />} />

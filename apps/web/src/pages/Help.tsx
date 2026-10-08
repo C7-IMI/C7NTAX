@@ -65,7 +65,7 @@ export function HelpPage() {
             { label: "Business Reviews", to: "/reports/reviews" },
             { label: "Design a Report", to: "/reports/custom" },
             { label: "Service Boards", to: "/boards" },
-            { label: "CloudConnect", to: "/cloudconnect" },
+            { label: "C7NC", to: "/c7nc" },
             { label: "Kumo", to: "/kumo" },
             { label: "Billing", to: "/billing" },
             { label: "What's New", to: "/admin/changelog" },

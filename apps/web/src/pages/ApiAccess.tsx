@@ -1,7 +1,7 @@
 /**
  * Administration → API access.
  *
- * The other side of CloudConnect. CloudConnect is where this instance reads *from* other systems;
+ * The other side of C7NC. C7NC is where this instance reads *from* other systems;
  * this page is where another system is given a credential to talk *to* this one — an API key — and
  * where the two settings that decide what happens to what it sends are kept.
  *

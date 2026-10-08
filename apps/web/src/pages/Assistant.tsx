@@ -151,7 +151,7 @@ export function AssistantPage() {
           >
             <RefreshCw size={14} />
           </button>
-          <Link to="/cloudconnect" className="btn-secondary text-xs flex items-center gap-1.5">
+          <Link to="/c7nc/models" className="btn-secondary text-xs flex items-center gap-1.5">
             <Plug size={13} /> AI models
           </Link>
         </div>
@@ -168,7 +168,7 @@ export function AssistantPage() {
               <>
                 <p className="text-sm font-medium text-white">No model is connected</p>
                 <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
-                  Connect one in <Link to="/cloudconnect" className="text-cyber-400 hover:text-cyber-300">CloudConnect → AI models</Link> and make it
+                  Connect one in <Link to="/c7nc/models" className="text-cyber-400 hover:text-cyber-300">C7NC → AI models</Link> and make it
                   the model the application uses. The key stays on the server.
                 </p>
               </>
@@ -249,7 +249,7 @@ export function AssistantPage() {
             <div>
               <p className="text-sm text-white">{failure}</p>
               <p className="text-xs text-gray-400 mt-1">
-                Check the connection in <Link to="/cloudconnect" className="text-cyber-400 hover:text-cyber-300">CloudConnect → AI models</Link> — Test
+                Check the connection in <Link to="/c7nc/models" className="text-cyber-400 hover:text-cyber-300">C7NC → AI models</Link> — Test
                 connection asks the vendor whether the key works and shows what it said.
               </p>
             </div>

@@ -324,7 +324,7 @@ export function SystemSettingsPage() {
           Secrets are never returned to the browser, so this screen can confirm that a variable is
           set but never show its value. Which integrations are live is under{" "}
           <Link to="/admin/configuration/integrations" className="text-cyber-300 hover:text-cyber-200">
-            CloudConnect &amp; Email
+            C7NC &amp; Email
           </Link>.
         </p>
       </div>

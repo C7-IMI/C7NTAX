@@ -158,7 +158,7 @@ export const LANDING_PAGES: ReadonlyArray<{ path: string; label: string }> = [
   { path: "/kb", label: "Knowledge Base" },
   { path: "/clients", label: "Clients" },
   { path: "/billing", label: "Billing" },
-  { path: "/cloudconnect", label: "CloudConnect" },
+  { path: "/c7nc", label: "C7NC" },
   { path: "/users", label: "Users" },
 ];
 
@@ -730,10 +730,10 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
     ],
   },
 
-  // ── CloudConnect & Email ─────────────────────────────────────────
+  // ── C7NC: connections & email ────────────────────────────────────
   {
     id: "integrations",
-    label: "CloudConnect & Email",
+    label: "C7NC & Email",
     summary: "Server-side status verification, verification throttling, the email connectors, and M365 offboarding.",
     icon: "Cloud",
     readPermission: Permission.IntegrationManage,
@@ -763,7 +763,7 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         env: "CLOUDCONNECT_LIVE_STATUS_ENABLED",
         envMatch: "not-false",
         default: true,
-        affects: ["CloudConnect", "Integration health"],
+        affects: ["C7NC", "Integration health"],
       },
       {
         id: "verifyIntervalSec",
@@ -777,7 +777,7 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         min: 30,
         max: 3600,
         unit: "seconds",
-        affects: ["CloudConnect", "Integration health"],
+        affects: ["C7NC", "Integration health"],
       },
       {
         id: "emailConnectors",

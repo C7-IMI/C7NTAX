@@ -35,7 +35,7 @@ const QUICK_LINKS = [
   { to: "/kb", icon: BookOpen, label: "Knowledge Base", desc: "Articles and documentation" },
   { to: "/clients", icon: Building2, label: "Clients", desc: "Company accounts and contacts" },
   { to: "/billing", icon: DollarSign, label: "Billing", desc: "Invoices and agreements" },
-  { to: "/cloudconnect", icon: Cloud, label: "CloudConnect", desc: "Third-party service connections" },
+  { to: "/c7nc", icon: Cloud, label: "C7NC", desc: "Services, models, mailboxes and companion apps" },
 ];
 
 /** S = one sixth of the row, M = half, L = the whole row. */

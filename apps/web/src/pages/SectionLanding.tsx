@@ -71,8 +71,15 @@ export const SECTION_DESCRIPTIONS: Record<string, Record<string, string>> = {
     "admin-service-alerts": "Configure monitored services, RSS feeds, and the outage alerting mechanism",
     "admin-system": "System-level configuration including database, backups, and integrations",
     "admin-logs": "View audit trail and track all changes across the system",
-    "admin-cloudconnect": "Connect third-party services with 16 available connector types",
     "admin-changelog": "Release history and feature changelog for C7NTAX",
+  },
+  c7nc: {
+    "c7nc-overview": "Whether anything needs attention, and the fix for it",
+    "c7nc-services": "The connectors, what each has brought in, and whether it is healthy",
+    "c7nc-models": "Which model answers questions, and what it is allowed to do",
+    "c7nc-email": "The monitored mailboxes that turn email into tickets",
+    "c7nc-flexpoint": "Billing and accounts receivable from FlexPoint's merchant API",
+    "c7nc-apps": "The add-ins and clients a person installs on their own machine",
   },
   clients: {
     "clients-list": "Browse, search, and manage all client companies and accounts",
@@ -103,9 +110,6 @@ export const SECTION_DESCRIPTIONS: Record<string, Record<string, string>> = {
     "reports-dashboard": "KPI dashboards with real-time ticket and SLA metrics",
     "reports-standard": "Pre-built reports: ticket volume, SLA, revenue, technician utilization",
     "reports-analytics": "Advanced analytics with visual charts and trend data",
-  },
-  c7nc: {
-    "c7nc-outlook": "Install the add-in that turns the email you are reading into a C7NTAX ticket",
   },
   kumo: {
     "kumo-dashboard": "IT documentation overview with recently viewed items",
