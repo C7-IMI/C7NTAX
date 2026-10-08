@@ -210375,6 +210375,144 @@
     "createdAt": "2026-10-08T06:29:52.548Z"
   },
   {
+    "id": "a044c9e9-fe35-4c37-bba3-2acb6834b35b",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "kb",
+        "boards"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:30:44.632Z"
+  },
+  {
+    "id": "454f334e-0cb3-4ee8-b3c0-266c7eebfc76",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "clients"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T06:30:50.756Z"
+  },
+  {
+    "id": "54a4de5d-e006-4046-8cea-4054e8385c68",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:31:03.624Z"
+  },
+  {
+    "id": "8affa932-ee2f-4f52-987c-efd8057d44b4",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "clients"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:31:04.828Z"
+  },
+  {
+    "id": "d7c8e042-111f-401b-8928-3b7c2699d893",
+    "action": "nav:delete",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T06:31:07.525Z"
+  },
+  {
+    "id": "c9b0debc-3b33-4959-9c4e-68c7ddbbb59a",
+    "action": "nav:delete",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T06:31:26.816Z"
+  },
+  {
+    "id": "257fd438-4489-4768-9619-6ade9a69aef3",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:32:06.193Z"
+  },
+  {
+    "id": "d4b98944-d24b-4dde-9de6-5a830f36ee38",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "clients"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:32:07.373Z"
+  },
+  {
+    "id": "f27425d1-0635-4f53-9956-f2b61bd660cc",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "clients",
+        "tickets"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:32:08.887Z"
+  },
+  {
+    "id": "3f3fb0c9-dc79-46a8-896e-4c5fb71f6444",
+    "action": "nav:delete",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T06:32:10.107Z"
+  },
+  {
     "id": "79730f64-28cc-464c-b902-3b2cfab955f0",
     "action": "nav:update",
     "entity": "nav",
@@ -210521,5 +210659,120 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T06:30:35.462Z"
+  },
+  {
+    "id": "cb373097-34e0-43fe-9002-1cb324caafd7",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": []
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:30:42.993Z"
+  },
+  {
+    "id": "abadaca2-fa81-47db-81d8-1dbf0034c343",
+    "action": "nav:delete",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T06:30:44.203Z"
+  },
+  {
+    "id": "8f88d116-44ab-4480-a803-d6fc56bb0b10",
+    "action": "nav:delete",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T06:30:57.300Z"
+  },
+  {
+    "id": "37ad904f-186f-4a5c-bbcc-391d17552830",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:31:37.944Z"
+  },
+  {
+    "id": "dbae72e9-38c3-48a4-9a24-f337fa185d5a",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": []
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:31:45.479Z"
+  },
+  {
+    "id": "bd039f03-7baa-4b0e-ba82-982787a58c25",
+    "action": "nav:delete",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T06:31:46.714Z"
+  },
+  {
+    "id": "59d92862-cc29-47bc-9d1b-400b956ba15a",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "kb",
+        "boards"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:31:47.118Z"
+  },
+  {
+    "id": "f8eb6e58-f1cb-4863-9724-89dfd6ac7201",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "clients"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T06:31:53.289Z"
+  },
+  {
+    "id": "996d08b3-1cb1-4386-969b-bcb353a62102",
+    "action": "nav:delete",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T06:31:59.864Z"
   }
 ]

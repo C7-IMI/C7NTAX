@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-10-08T06:30:42.323Z",
-  "totalRecords": 7573,
+  "capturedAt": "2026-10-08T06:32:17.288Z",
+  "totalRecords": 7592,
   "tables": {
     "role": 6,
     "user": 17,
@@ -37,7 +37,7 @@
     "kumoLink": 3,
     "kumoDomain": 5,
     "kumoCertificate": 5,
-    "auditLog": 4209,
+    "auditLog": 4228,
     "kumoFile": 2,
     "kumoTemplateField": 107,
     "kumoAssetFieldValue": 1020,
