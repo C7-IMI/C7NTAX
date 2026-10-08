@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.037 | Last Updated: 2026-10-07
+## Version: 2026.10.7.038 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,17 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.038 — A mockup of the installer versions card, split between the current release and the history behind it
+
+The current installer and every older version kept for rollback were one flat list, so the release people actually want sat at the top of a pile of superseded ones. This is the design for separating them — drawn with the application's own colours, sizes and wording, and covering every state the card can be in. **No application code has changed**; this is for review before it is built.
+
+- **[New]** **A mockup of the installer versions card on C7NC → Outlook Add-in, with the current release in its own card.** *Latest Release* sits above the newest installer, *Previous Versions* above the ones kept for rollback, and the card keeps its own **Installer versions** title and its `plugin 26.10.7036` fact. `docs/mockups/installer-versions-card.html` is self-contained — no build, no network, nothing wired up — and renders the real release/size/date line and the real closing note rather than approximations of them.
+- **[New]** **The two group labels are a deliberate step below the card's title.** 11px semibold uppercase with `0.06em` tracking in the tertiary grey: the size goes down and the weight, capitals and tracking take over the job of reading as a header. At the title's 14px a label competes with it; at 10px or below it reads as metadata. The number is written into the mockup as a spec so it can be argued with.
+- **[New]** **Each group is one card with a hairline between its rows, instead of a bordered box per row.** The rows keep their padding, chips and download links, but stop being individually boxed, so they read as members of a group. The latest group is left un-tinted: the *Newest* chip and the label above it already say which release is current. The mockup shows and rejects the tinted alternative.
+- **[Update]** **Two decisions the regrouping creates are raised rather than decided quietly.** With a *Previous Versions* label over the old rows, the *Earlier* chip on each row says the same thing twice; and the card is currently hidden unless there are two or more versions, so a fresh deployment offers no installer download here at all — which one *Latest Release* group no longer justifies. The mockup recommends on both and shows the single-version state, since that one changes behaviour and not just layout.
 
 ---
 

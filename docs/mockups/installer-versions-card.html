@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>C7NTAX — Installer versions card (mockup)</title>
+<!--
+  Mockup only: the Installer Versions card on C7NC → Outlook Add-in, regrouped so the current
+  release is its own card and the older ones sit together underneath.
+
+  Colours, spacing and wording are the application's own (apps/web/src/index.css + tailwind.config.js
+  tokens, and the markup in apps/web/src/pages/OutlookAddIn.tsx), so what is reviewed here is what
+  would ship. Nothing here is wired to anything; no API is called.
+-->
+<style>
+  :root {
+    --surface: #0f1a2e;
+    --surface-light: #162238;
+    --surface-lighter: #1e2d48;
+    --surface-border: #2a3a5c;
+    --cyber-300: #7ddcf9;
+    --cyber-400: #26cbf6;
+    --cyber-600: #00aae0;
+    --text-primary: #ffffff;
+    --text-secondary: #d1d5db;
+    --text-tertiary: #9ca3af;
+    --text-muted: #8b93a1;
+    --page: #0a1220;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font: 14px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    padding: 28px;
+    min-height: 100vh;
+  }
+
+  /* ── The stage: what the page would look like ───────────────────────────── */
+  .stage { flex: 1 1 auto; min-width: 0; max-width: 900px; }
+  .stage > h1 { font-size: 18px; margin: 0 0 4px; }
+  .stage > p.lede { color: var(--text-tertiary); font-size: 13px; margin: 0 0 18px; }
+
+  /* The app's `.card`: bg-surface border border-surface-border rounded-xl p-5 */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .card-head .left { display: flex; align-items: center; gap: 8px; }
+  /* The main title: `text-white text-sm font-medium` */
+  .card-head h3 { font-size: 14px; font-weight: 500; margin: 0; color: var(--text-primary); }
+  .card-head .right { font-size: 12px; color: var(--text-muted); }
+
+  /* NEW — the group label. Smaller than the 14px main title, still a header: uppercase,
+     letter-spaced and semibold do the work that size does not. */
+  .group-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin: 0 0 8px;
+  }
+  .group-title.first { margin-top: 0; }
+  .group-title + .group-card { margin-bottom: 16px; }
+  .group-title .count { color: var(--text-muted); font-weight: 500; letter-spacing: 0.02em; text-transform: none; }
+
+  /* NEW — the group card. One border for the group instead of one per row, so the rows read as
+     members of it rather than as separate things that happen to be adjacent. */
+  .group-card {
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface-lighter) 40%, transparent);
+    overflow: hidden;
+  }
+  /* Optional variant, shown in the notes: the latest group tinted brand-cyan. */
+  .group-card.accent { border-color: color-mix(in srgb, var(--cyber-600) 40%, transparent); background: color-mix(in srgb, var(--cyber-600) 6%, transparent); }
+
+  /* The row itself. Before the change it carried its own border (`rounded-md border px-3 py-2`). */
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 12px; }
+  .row.bordered { border: 1px solid var(--surface-border); border-radius: 6px; }
+  .group-card .row + .row { border-top: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); }
+
+  .plugin { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .meta { font-size: 12px; color: var(--text-muted); }
+  .download { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--cyber-400); text-decoration: none; }
+  .download:hover { text-decoration: underline; }
+
+  .frame { display: flex; flex-direction: column; gap: 8px; }
+  .rows { display: flex; flex-direction: column; gap: 8px; }
+
+  /* Chips — the app's `Chip` component, verbatim. */
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; border: 1px solid transparent; }
+  .chip-muted { background: var(--surface-lighter); color: var(--text-tertiary); border-color: var(--surface-border); }
+  .chip-good { background: rgb(16 185 129 / 0.1); color: #6ee7b7; border-color: rgb(16 185 129 / 0.3); }
+  .chip-warn { background: rgb(245 158 11 / 0.1); color: #fcd34d; border-color: rgb(245 158 11 / 0.3); }
+  .chip-info { background: color-mix(in srgb, var(--cyber-600) 10%, transparent); color: var(--cyber-300); border-color: color-mix(in srgb, var(--cyber-600) 30%, transparent); }
+
+  .stale { display: flex; gap: 12px; margin-bottom: 12px; border: 1px solid rgb(245 158 11 / 0.3); background: rgb(245 158 11 / 0.05); border-radius: 6px; padding: 12px; }
+  .stale .mark { color: #fcd34d; flex: 0 0 auto; }
+  .stale p { margin: 0; font-size: 12px; color: var(--text-secondary); }
+  .stale code { display: block; margin-top: 4px; color: var(--text-tertiary); font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  .footnote { font-size: 12px; color: var(--text-muted); margin: 16px 0 0; }
+
+  /* ── The rail: what changed, and why ───────────────────────────────────── */
+  .rail { flex: 0 0 352px; position: sticky; top: 28px; display: flex; flex-direction: column; gap: 16px; }
+  .rail h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin: 0 0 8px; }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg button {
+    flex: 1 1 auto; padding: 7px 10px; font: inherit; font-size: 12px; border-radius: 8px; cursor: pointer;
+    background: transparent; color: var(--text-secondary); border: 1px solid var(--surface-border);
+  }
+  .seg button[aria-pressed="true"] { background: color-mix(in srgb, var(--cyber-600) 15%, transparent); color: var(--cyber-300); border-color: color-mix(in srgb, var(--cyber-600) 30%, transparent); }
+  .seg button:hover { border-color: var(--cyber-600); }
+  .rail .panel { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px; padding: 14px; }
+  .rail p, .rail li { font-size: 12.5px; color: var(--text-secondary); }
+  .rail p { margin: 0 0 8px; }
+  .rail p:last-child { margin-bottom: 0; }
+  .rail ul { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .rail strong { color: var(--text-primary); }
+  .rail .hint { color: var(--text-muted); font-size: 12px; }
+  .spec { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--cyber-300); background: color-mix(in srgb, var(--surface-lighter) 60%, transparent); border: 1px solid var(--surface-border); border-radius: 6px; padding: 8px; display: block; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+  <main class="stage">
+    <h1>C7NC → Outlook Add-in — the Installer Versions card</h1>
+    <p class="lede">
+      Grouping the current release away from the history. The main title stays; the two groups get
+      their own labels and their own card. Colours, spacing, chips and wording are the application's own.
+    </p>
+    <div id="stage"></div>
+  </main>
+
+  <aside class="rail">
+    <div>
+      <h2>Show</h2>
+      <div class="seg" id="mode">
+        <button data-mode="before" type="button">Before</button>
+        <button data-mode="after" aria-pressed="true" type="button">After</button>
+      </div>
+    </div>
+
+    <div>
+      <h2>State</h2>
+      <div class="seg" id="states">
+        <button data-state="history" aria-pressed="true" type="button">Latest + 2 previous</button>
+        <button data-state="only" type="button">One version only</button>
+        <button data-state="stale" type="button">Installer behind the plugin</button>
+      </div>
+      <p class="hint" id="state-hint" style="margin-top:8px"></p>
+    </div>
+
+    <div class="panel">
+      <h2>The two labels</h2>
+      <p>
+        Smaller than the card's own title, still unmistakably a header — the size goes down, the
+        weight, capitals and letter-spacing go up:
+      </p>
+      <code class="spec">font-size: 11px      /* title is 14px */
+font-weight: 600
+letter-spacing: .06em
+text-transform: uppercase
+color: var(--text-tertiary)</code>
+      <p style="margin-top:8px">
+        11px is a deliberate step below the 14px title: at the same size the label competes with it,
+        and at 10px or below it reads as metadata. Capitals plus tracking give it the authority the
+        size gives up.
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>What changes, what does not</h2>
+      <ul>
+        <li><strong>Changes:</strong> the two group labels, and one card per group.</li>
+        <li><strong>Does not change:</strong> the main title and its <em>plugin 26.10.7036</em> fact, every chip, the release/size/date line, the <em>Download</em> link, the stale-installer banner and the closing note.</li>
+        <li><strong>One border per group</strong> rather than one per row, so the rows read as members of a group instead of as unrelated rows that happen to sit next to each other. Rows are separated by a hairline divider.</li>
+        <li>The grouping is quiet on purpose: no new colour on the latest release, because the <em>Newest</em> chip and the label already say it. A tinted variant is noted below.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>Decisions this raises</h2>
+      <ul>
+        <li>
+          <strong>"Earlier" on every row is now redundant</strong> — the group says it. Dropping it
+          removes three chips that all say the same thing; keeping it costs nothing. Recommended:
+          keep <em>Latest Release</em>'s <em>Newest</em> chip, drop <em>Earlier</em>.
+          <span class="hint">The mockup keeps it, so the change under review is only the grouping.</span>
+        </li>
+        <li>
+          <strong>One version only:</strong> today the whole card is hidden unless there are two or
+          more versions, so a freshly deployed instance offers no installer download on this page at
+          all. With a <em>Latest Release</em> group that no longer needs a history beside it, the card
+          could show for a single version too.
+          <span class="hint">Shown in the second state; it is a behaviour change, not a layout one.</span>
+        </li>
+        <li>
+          <strong>A tinted latest card</strong> (<span class="hint">border and 6% cyan wash</span>) is
+          the heavier alternative if the grouping still reads as one list. Not the recommendation:
+          the card already sits under a label and carries the <em>Newest</em> chip.
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+<script>
+  /* The real versions, as the API reports them today (C7NC → Outlook Add-in). */
+  const VERSIONS = [
+    { plugin: "26.10.7036", product: "2026.10.7.036", size: "32 KB", built: "10/7/2026, 5:45:05 PM", matches: true },
+    { plugin: "26.10.7034", product: "2026.10.7.034", size: "32 KB", built: "10/7/2026, 5:20:44 PM", matches: false },
+    { plugin: "26.10.7033", product: "2026.10.7.033", size: "32 KB", built: "10/7/2026, 5:10:26 PM", matches: false },
+  ];
+
+  const STATES = {
+    history: { hint: "The everyday case: a current release and two older ones kept for rollback." },
+    only: { hint: "A fresh deployment with one release. Today the card is hidden entirely in this state." },
+    stale: { hint: "The newest installer was built before the add-in's current files — the banner sits above the groups." },
+  };
+
+  let mode = "after";
+  let state = "history";
+
+  const chip = (tone, text) => `<span class="chip chip-${tone}">${text}</span>`;
+
+  /** One version row. `bordered` is the before-state, where the row owns its border. */
+  const row = (v, index, bordered) => `
+    <div class="row${bordered ? " bordered" : ""}">
+      <span class="plugin">Plugin ${v.plugin}</span>
+      ${index === 0 ? chip("good", "Newest") : chip("muted", "Earlier")}
+      ${v.matches ? "" : chip("warn", "Older plugin files")}
+      <span class="meta">release ${v.product} &middot; ${v.size} &middot; ${v.built}</span>
+      <a class="download" href="#" onclick="return false">Download</a>
+    </div>`;
+
+  const head = () => `
+    <div class="card-head">
+      <div class="left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyber-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto">
+          <path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l4 2" />
+        </svg>
+        <h3>Installer versions</h3>
+      </div>
+      <span class="right">plugin ${VERSIONS[0].plugin}</span>
+    </div>`;
+
+  const staleBanner = () => `
+    <div class="stale">
+      <span class="mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          <path d="M12 9v4" /><path d="M12 17h.01" />
+        </svg>
+      </span>
+      <p>
+        The newest installer was built before the add-in's current files, so it registers a slightly
+        older plugin. Rebuild it to catch up:
+        <code>pnpm plugin:bump &amp;&amp; pnpm installer:build</code>
+      </p>
+    </div>`;
+
+  const footnote = () => `
+    <p class="footnote">
+      Every version is kept so a mailbox can be rolled back. Installing an earlier one replaces the
+      current install; restart Outlook afterwards. The plugin version is what Office reports, and it
+      changes only when the add-in's own files change.
+    </p>`;
+
+  function render() {
+    const list = state === "only" ? VERSIONS.slice(0, 1) : VERSIONS;
+    const latest = list[0];
+    const previous = list.slice(1);
+    const showStale = state === "stale";
+
+    const before = `
+      <div class="card">
+        ${head()}
+        ${showStale ? staleBanner() : ""}
+        <div class="rows">
+          ${list.map((v, i) => row(v, i, true)).join("")}
+        </div>
+        ${footnote()}
+      </div>`;
+
+    const after = `
+      <div class="card">
+        ${head()}
+        ${showStale ? staleBanner() : ""}
+        <p class="group-title first">Latest Release</p>
+        <div class="group-card">${row(latest, 0, false)}</div>
+        ${previous.length ? `
+          <p class="group-title">Previous Versions <span class="count">${previous.length} kept</span></p>
+          <div class="group-card">${previous.map((v, i) => row(v, i + 1, false)).join("")}</div>
+        ` : ""}
+        ${footnote()}
+      </div>`;
+
+    document.getElementById("stage").innerHTML = mode === "before" ? before : after;
+  }
+
+  document.querySelectorAll("#mode button").forEach((b) => b.addEventListener("click", () => {
+    mode = b.dataset.mode;
+    document.querySelectorAll("#mode button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    render();
+  }));
+
+  document.querySelectorAll("#states button").forEach((b) => b.addEventListener("click", () => {
+    state = b.dataset.state;
+    document.querySelectorAll("#states button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    document.getElementById("state-hint").textContent = STATES[state].hint;
+    render();
+  }));
+
+  document.getElementById("state-hint").textContent = STATES[state].hint;
+  render();
+</script>
+</body>
+</html>

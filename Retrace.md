@@ -4379,3 +4379,37 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **Listed, not fixed, with reasons in `PLAN-018` Appendix C:** report colour values reaching an HTML sink unescaped (CSP-dependent, below the reporting bar, belongs with the reporting work); integrations storing credentials in cleartext where `email-connectors` encrypts them (schema change); the remaining company-scoped modules (procurement, contracts, checklists, surveys, CRM opportunities) which need their own assertions to be trustworthy; and the two major upgrades that would clear the last fixable advisories.
 - **`pnpm install --lockfile-only` is the cheap way to prove an override edit is inert**: it re-resolved the whole workspace and produced a byte-identical `pnpm-lock.yaml`.
 - **Watch for the 15-minute auto-sync**; it commits work before the intended commit message exists.
+
+---
+
+### Prompt 236 — The Installer Versions card split into a current release and its history (mockup)
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~25 min
+**BuildNotes IDs:** 2026.10.7.038 - A mockup of the installer versions card, split between the current release and the history behind it
+
+> I want to separate the latest release from the older versions. Inside the Installer Versions card, the latest release should have it's own card with a title above it labeled Latest Release.
+>
+> The older versions can be grouped together in a card underneath it with a title labeled Previous Versions.
+>
+> Keep the main title Installer Versions.
+>
+> Make the font size of the Latest Release and Older Versions labels smaller, but still clearly defined as a header.
+>
+> Do a mockup first. Don't make any changes yet
+
+**What I did**
+- **Measured the card before drawing it.** The obvious way to build this mockup is from the screenshot; that reliably gets the greys wrong and invents spacing. The five values that matter were read out of the application instead — `--surface #0f1a2e`, `--surface-border #2a3a5c`, `--cyber-400 #26cbf6`, the 14px `text-sm font-medium` main title, and the `Chip` tones — along with the real markup in `OutlookAddIn.tsx`, so the mockup reuses the live stale banner sentence, the real release/size/date line and the real closing note word for word. What is being reviewed is what would ship, at the size it would ship at.
+- **Sized the two labels below the card's own title rather than beside it.** 11px, semibold, uppercase, `0.06em` tracking, in the tertiary grey — the size goes down and the weight, capitals and tracking take over the job of reading as a header. At the title's 14px the label competes with it; at 10px or below it reads as metadata. The mockup carries that as a spec block so the number is arguable rather than implied.
+- **Gave each group one border instead of one per row.** The rows keep their padding and their chips but stop being individually boxed and are separated by a hairline divider, so they read as members of a group. Boxing a bordered row inside a bordered group card would have shown the seam the grouping exists to remove. The latest group is left un-tinted on purpose: the *Newest* chip and the label above it already say which one is current, and a third signal is noise — the tinted alternative is shown and rejected in the notes.
+- **Verified every state the card can be in, not just the one in the screenshot.** The page was rendered in headless Edge and the DOM asserts 3 rows / 2 group cards / both labels, and then all six combinations of before-after and three states were driven programmatically: the everyday case (latest + 2 previous), a single version, and the stale-installer banner. The single-version case is where the grouping changes behaviour, and it is flagged rather than smuggled in.
+- **Raised the two questions the regrouping creates instead of deciding them quietly.** With a *Previous Versions* label over the old rows, the *Earlier* chip on each of them says the same thing twice; and because the card is currently hidden unless there are two or more versions, a fresh deployment offers no installer download on this page at all — which the *Latest Release* group no longer justifies. Both are called out in the mockup with a recommendation, and both are behaviour decisions rather than layout ones.
+
+**Decisions worth remembering**
+- **Take the tokens from the source, not from the screenshot.** A mockup that is 95% right wastes a review round on colours and spacing instead of on the decision.
+- **The card's own title stays.** The request was to group inside it, not to re-title it, so `Installer versions` and its `plugin 26.10.7036` fact are untouched — including the `versions.length > 1` gate, which the mockup deliberately leaves as-is while flagging what it now costs.
+- **One border per group, hairline between rows.** Nesting bordered rows inside a bordered card is the most common way this grouping looks worse than the flat list.
+- **Show the edge states in the mockup itself, not in the covering note.** The single-version state is the one that changes behaviour, and it is a click away in the same file.
+
+**Notes for next time**
+- **Nothing in `apps/web` was touched** and no API was called; the deliverable is `docs/mockups/installer-versions-card.html` (self-contained, no build, no network).
+- **The integrated browser is still disconnected** ("No client was connected"), so the mockup was verified by rendering it in headless Edge and asserting the DOM rather than by clicking it — the same substitution the previous prompt had to make. Screenshots can be produced with `msedge --headless=new --screenshot`.
+- **Implementation is blocked on approval by the request itself.** When it lands it is a small change to the one card in `OutlookAddIn.tsx`, plus the two open questions above.
