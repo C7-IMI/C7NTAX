@@ -126,6 +126,11 @@ export const NAV_TREE: NavNode[] = [
     // who can sign in, and the deployment facts behind it are gated by the API.
     id: "c7nc", icon: MonitorSmartphone, label: "C7NC", children: [
       { id: "c7nc-outlook", to: "/c7nc/outlook-addin", icon: Mail, label: "Outlook Add-in" },
+      // FlexPoint lives here because it is a service the business already runs, configured beside
+      // the clients that install against this one — not an internal setting. Unlike the add-in it
+      // carries a permission, because everything on its page besides the reading is a write to a
+      // financial system.
+      { id: "c7nc-flexpoint", to: "/c7nc/flexpoint", icon: CreditCard, label: "FlexPoint", permission: Permission.IntegrationManage },
     ],
   },
   {

@@ -4991,3 +4991,43 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The other fifteen connectors still hold guessed hosts and endpoints.** FlexPoint is now the only one written against a first-party document; the same one-fetch check would be worth doing across the rest.
 - **`integrationHealth` never calls an adapter** — it judges "incomplete" from the credential list alone and "verified" from the last manual test — so a wrong name in that map is silent until someone reads the pill.
 - **Two probe-side artefacts to fix if they are ever touched:** `probe-expenses.mjs` seeds a `flexpoint` row to test the *push* path (unrelated to this adapter), and the harness lesson repeats — in a JS template literal `\n` and `\d` collapse, so escape them as `\\n` and `\\d` inside probe strings.
+
+---
+
+### Prompt 255 — Making FlexPoint useful: the application side, and a configuration section in C7NC
+
+**Timestamp:** 2026-10-08 03:05 | **Status:** Complete | **Duration:** ~95 min
+
+**BuildNotes IDs:** **2026.10.8.010** — "FlexPoint is used, not just read"
+
+**Prompt**
+
+> Great, now create the logic/code in the application to interface with the flexpoint connector and build out the functionality in the application where appropriate to make use of it. Create a Flexpoint configuration subsection in C7NC that will let me configure the available options based on the API integration.
+
+**What I did**
+- **Read the write half of FlexPoint's API before designing anything.** The connector could only read; the application needed to write. Their OpenAPI document gave the exact shapes: `PostCustomerRequest` requires `email` **and** `name`, `PutCustomerRequest` requires `name` on every update, `PostInvoiceRequest` requires `customerId` and a status from the `Draft/Posted/Paid/Processing/Void` enum, `PostInvoiceItemRequest` requires `partNum` on each line, and `additionalProperties: false` means an unknown property is a rejected request. Every payload follows that, which is why optional keys are omitted rather than sent empty.
+- **Built the service that decides what the application does** (`apps/api/src/services/flexpoint.ts`): where records are stored, how a customer becomes a client, that a settled invoice becomes a payment, and that an invoice can be issued through the API. The adapter speaks HTTP; this is everything on top of it.
+- **Ten options, each honoured**, with a note on which ones are off by default and why: pulling customers/invoices/deposits and the page size; the matching rule (reference, then a unique exact name, or name only); creating clients for unmatched customers; writing the client id back into FlexPoint; recording settled payments; and allowing invoices to be pushed, at a chosen status. Everything that writes to FlexPoint or to the ledger starts **off**, and the page says so rather than leaving it to be worked out.
+- **Turned the data into something used rather than stored**: a linked client's open balance and overdue amount on the page and on the client's own record; customers matched automatically on every sync (a name that matches two clients is left alone rather than guessed at); the client id written into the customer's `externalUri` so the link survives a rename on either side; a settled FlexPoint invoice recorded against the local invoice it was pushed as, as a `Payment` with method `flexpoint` and reference `flexpoint:<invoiceId>` — the reference is what stops a second sync recording it twice — and the invoice marked paid, or partial when only part has been received.
+- **Made invoices issuable through FlexPoint**, with the accounting push of a bill-through batch using the API when the connection is allowed to write, instead of posting to a configured URL.
+- **Found and fixed a real bug on the way in.** The generic sync persistence derived each record's key from `item.id || item.Id || item.externalId || String(Math.random())`. FlexPoint's ids are `customerId`, `invoiceId` and `payoutId`, so every sync stored a **fresh duplicate row with a random key** — invisible while nothing read those rows, fatal for linking. The adapter now normalises `id` and `displayName` for every record it returns.
+- **Found a second one in the page's own testing, and fixed it**: after a successful write-back the stored copy still held the old external reference, so a linked client showed as having no reference until the next sync. The write-back is the new truth, so the stored row now follows it.
+- **Put the page where the user asked** — C7NC → FlexPoint — with a note in the nav explaining why it lives there and why, unlike the add-in, it carries a permission: everything on the page beyond the reading is a write to a financial system.
+- **Added two columns to Invoice** (`flexpointInvoiceId`, `flexpointPushedAt`) with a hand-written migration, and a Help walkthrough registered in the Index.
+- **Verified in two harnesses against a stub merchant API** — a stub, because the real one needs a merchant account and a live secret: the service **32 checks** end to end, and the page **28 checks** in a browser.
+
+**Decisions worth remembering**
+- **A connector that only reads is half a connector.** The previous step proved C7NTAX could authenticate against FlexPoint; this step is where the product actually gains something — a client's receivable, and an invoice that can be issued without leaving the PSA.
+- **The writes that cost money start off.** Creating clients, recording payments and pushing invoices are all off by default, each with a sentence saying what turning it on will do. An option that writes to the ledger should be a decision, not a default.
+- **One screen where a financial write begins.** The client record shows receivables read-only and links to the page that manages them, rather than offering a second place to press a button that moves money.
+- **A stub is the only honest way to test this.** Every claim about paths, headers, payload shape, paging and error handling is asserted against a server that implements the spec's contract — including the parts that refuse (a page size past 200, a status FlexPoint does not have, pushing switched off).
+- **The duplicate-row bug was invisible until something read the data.** Nothing consumed `SyncedEntity` before, so a random id per sync cost nothing and broke everything the moment records had to be found again. Worth remembering as a class: a store nobody reads is a store nobody has tested.
+- **State that follows a write has to be updated locally too.** The write-back returned the customer it had just changed; not storing that left the page disagreeing with FlexPoint for one sync cycle.
+- **The page is gated exactly as CloudConnect is** (`IntegrationManage`), and the harness asserts that invariant rather than an assumption about which role has it — the technician persona turned out to hold that permission, which is the application's existing decision, not something to change here.
+
+**Notes for next time**
+- **Two writes are still not built**: a FlexPoint customer that has no local client is only *offered* (creating one is an option, off by default), and nothing pulls FlexPoint's invoices into C7NTAX's own invoice table — deliberately, because issuing an invoice here and reading one there are different things and merging them would corrupt the numbering and the revenue reports.
+- **Deposits cannot be reconciled per client.** FlexPoint's `GetDepositResponse` carries only `payoutId`, `amount` and `datePaid` — no customer — so they are reported as a merchant total and the page says so instead of implying otherwise.
+- **`accountingSync` now branches**: a FlexPoint connection that is enabled *and* allowed to push takes the API path; every other provider, and a FlexPoint connection with pushing off, still uses the configured URL. The expense push is untouched — FlexPoint's API has no expense resource.
+- **The stub harnesses are worth keeping in mind as a pattern** for the other fifteen connectors: a hundred lines of `http.createServer` implementing the vendor's contract is a better test than reading the adapter, and it caught three harness assumptions of mine that were wrong rather than three product bugs.
+- **`recordsProcessed` counts what the API returned, not what was created** — the sync summary now carries `recordsCreated` and `recordsUpdated` as well, so the CloudConnect toast keeps meaning what it meant.

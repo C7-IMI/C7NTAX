@@ -439,6 +439,15 @@ async function companyByExternalUri(externalUri: unknown): Promise<string | null
 }
 
 /**
+ * The write-back is the new truth about that customer, so the stored copy is brought into step with
+ * it rather than left holding the reference the sync read a moment before the write. Without this
+ * the page showed a linked client as having no reference until the next sync.
+ */
+async function rememberExternalUri(entityId: string, data: Record<string, unknown>, companyId: string): Promise<void> {
+  await prisma.syncedEntity.update({ where: { id: entityId }, data: { data: { ...data, externalUri: companyId } as never } });
+}
+
+/**
  * Links one customer to a client and records it on the synced row. The customer's own
  * `externalUri` is written back when the option allows it, so the link survives a rename.
  */
@@ -461,6 +470,7 @@ export async function linkCustomer(companyId: string, customerId: string, option
       // FlexPoint requires `name` on every customer update, so it is sent with the reference.
       await adapter.updateCustomer(cfg, String(customerId), { name: String(customer.name || company.name), externalUri: companyId });
       wroteExternalUri = true;
+      await rememberExternalUri(customerRow.id, customer, companyId);
     } catch {
       // The link stands without it: the write-back is a convenience, not the source of truth.
       wroteExternalUri = false;
@@ -577,7 +587,10 @@ export async function syncFlexpoint(integrationId?: string): Promise<FlexpointSy
         how = null;
         linked.created++;
         if (options.writeBackExternalUri) {
-          try { await adapter.updateCustomer(cfg, String(customerRow.externalId), { name: created.name, externalUri: created.id }); } catch { /* the link stands without it */ }
+          try {
+            await adapter.updateCustomer(cfg, String(customerRow.externalId), { name: created.name, externalUri: created.id });
+            await rememberExternalUri(customerRow.id, customer, created.id);
+          } catch { /* the link stands without it */ }
         }
       }
 
@@ -587,7 +600,10 @@ export async function syncFlexpoint(integrationId?: string): Promise<FlexpointSy
         else if (how === "name") {
           linked.byName++;
           if (options.writeBackExternalUri) {
-            try { await adapter.updateCustomer(cfg, String(customerRow.externalId), { name: String(customer.name ?? companyId), externalUri: companyId }); } catch { /* ignore */ }
+            try {
+              await adapter.updateCustomer(cfg, String(customerRow.externalId), { name: String(customer.name ?? companyId), externalUri: companyId });
+              await rememberExternalUri(customerRow.id, customer, companyId);
+            } catch { /* ignore */ }
           }
         }
       }
@@ -601,6 +617,12 @@ export async function syncFlexpoint(integrationId?: string): Promise<FlexpointSy
       if (byName && customerRow.linkedCompanyId !== byName) {
         await prisma.syncedEntity.update({ where: { id: customerRow.id }, data: { linkedCompanyId: byName } });
         linked.byName++;
+        if (options.writeBackExternalUri) {
+          try {
+            await adapter.updateCustomer(cfg, String(customerRow.externalId), { name: String(customer.name ?? byName), externalUri: byName });
+            await rememberExternalUri(customerRow.id, customer, byName);
+          } catch { /* ignore */ }
+        }
       }
     }
   }

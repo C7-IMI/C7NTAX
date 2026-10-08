@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.009 | Last Updated: 2026-10-08
+## Version: 2026.10.8.010 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,24 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.010 — FlexPoint is used, not just read
+
+The connector could read FlexPoint; nothing in the application did anything with what it read. It does now: a client's receivable comes from FlexPoint, and an invoice can be issued through it — with a page in C7NC to configure all of it.
+
+- **[New]** **C7NC → FlexPoint** — a configuration section for the connector. It shows where the connection points and how it is doing, every figure that matters (linked clients, open balance, overdue, received, deposits), the options below, the clients table, and the invoices list.
+- **[New]** **Ten options, each of which changes what happens** — what to pull (customers, invoices, deposits, page size), how a FlexPoint customer becomes a client (by external reference, by a unique exact name, or both), whether to create clients for unmatched customers, whether to write the client id back into FlexPoint, whether to record settled payments against pushed invoices, and whether invoices may be pushed at all. **Everything that writes to FlexPoint or to the ledger is off until it is switched on**, and the page says so.
+- **[New]** **A client's receivable, from FlexPoint** — customers are matched to clients on every sync, by the reference written into FlexPoint first and then by a name only one client carries (a name that matches two clients is left alone rather than guessed at). The clients table shows each linked client's open balance and overdue amount; the client's own record shows the same, read-only, on its Invoices tab.
+- **[New]** **Invoices can be issued through FlexPoint** — an invoice is created with its customer, its lines, its due date and this application's invoice id as the external reference, at the status you choose (`Draft` by default, because nothing should be issued to a customer by accident). Pressing Push again updates the same FlexPoint invoice rather than creating a second one. A client with no FlexPoint customer gets one, created from its name and billing email; a client with no email is refused with that reason, because FlexPoint requires one.
+- **[New]** **The payment comes back** — with that switch on, a FlexPoint invoice that has been settled is recorded against the local invoice it was pushed as: a payment (method `flexpoint`, reference `flexpoint:<invoiceId>`) and a status of **paid**, or **partial** when only part has been received. Recorded once — the reference is what stops a second sync adding it twice.
+- **[New]** **Approving a bill-through batch uses it too.** When the accounting connection is FlexPoint and pushing is allowed, the batch push creates the invoice through the merchant API instead of posting to a configured URL. With pushing off, the batch is still issued and says why the push did not happen.
+- **[Fix]** **The generic sync persistence invented an id for records that do not carry one called `id`.** FlexPoint's are `customerId`, `invoiceId` and `payoutId`, so every sync stored a fresh duplicate row with a random key. The adapter now normalises each record's `id` and `displayName`, which is also what the linking and payment work above depends on.
+- **[Update]** **Two columns on Invoice** — `flexpointInvoiceId` and `flexpointPushedAt`, with a migration. The id is what makes the push idempotent and what lets a settled payment find its invoice.
+- **[Update]** **Help has a FlexPoint walkthrough** — connecting it, running a sync, linking customers, pushing an invoice and taking the payment back — listed in the Index with the other integrations.
+
+Verified in two harnesses. The service, **32 checks** end to end against a stub merchant API: options saved and bad values refused (a page size past FlexPoint's 200, a status FlexPoint does not have), a sync that pulls and stores, links by name and writes the client id back with the name FlexPoint requires on an update, links by reference on the next run, lists the unmatched customer, pushes an invoice with the right customer, status from the options, the local id as its reference and `partNum` on every line, records the settled payment once and not twice, reports the client's receivable and its payments, unlinks again, and refuses to write at all when pushing is switched off. The page, **28 checks** in a browser: the nav entry, the connection card, the five figures, the grouped options with their explanations, an unsaved change that saves and reaches the API, a sync that links the matching customer while leaving the unmatched one waiting, linking that customer from the page with the reference written back, pushing disabled while the option is off and enabled when it is on, a pushed invoice reported on its row, the client record's own receivable card, and the API gating writes on the manage permission while the page is offered to exactly the roles CloudConnect is.
 
 ---
 

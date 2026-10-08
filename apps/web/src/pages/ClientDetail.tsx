@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Save, X, ChevronLeft, Building2, Users, FileText, DollarSign, Ticket, ClipboardList, Clock, Mail, Phone, Globe, MapPin, Badge, Briefcase } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
+import { FlexpointClientCard } from "../components/FlexpointClientCard";
 
 const TYPE_OPTIONS = ["Client", "Prospect", "Vendor", "Partner"];
 const INDUSTRY_OPTIONS = ["", "Technology", "Healthcare", "Finance", "Manufacturing", "Legal", "Education", "Government", "Non-Profit", "Retail", "Construction"];
@@ -255,7 +256,10 @@ export function ClientDetailPage() {
 
       {/* Invoices Tab */}
       {tab === "invoices" && (
-        <div className="card overflow-hidden p-0">
+        <div className="space-y-4">
+          {/* What FlexPoint says this client owes — hidden entirely when there is nothing to say. */}
+          <FlexpointClientCard companyId={id!} />
+          <div className="card overflow-hidden p-0">
           <table className="w-full text-sm">
             <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400"><SortableHeader field="invoiceNumber" label="#" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><SortableHeader field="issueDate" label="Date" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3">Due</th><th className="px-4 py-3">Amount</th><th className="px-4 py-3 hidden sm:table-cell">Status</th></tr></thead>
             <tbody>
@@ -270,6 +274,7 @@ export function ClientDetailPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
