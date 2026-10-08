@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.021",
+    "date": "2026-10-08",
+    "title": "Every connection can be walked through: setup plans for sixteen integrations and eleven models",
+    "changes": [
+      {
+        "text": "**Sixteen connector plans** covering what it takes to get each one running, in the order it has to happen: an Entra app registration with admin consent and the sign-in permission's licence requirement (Microsoft 365), the ConnectWise client-id request form that takes days and rejects every call until it exists, Halo's API application and its hosted-versus-on-premise token host, AutoTask's API user and the zone that fails like a wrong password, Kantata's short-lived token, the IT Glue rate limit that makes its first full sync a multi-run affair, Azure's service principal plus a role assignment, AWS's read-only starting policy, and an SSO plan that says plainly it is authentication and that the real test is a sign-in.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Eleven model-provider plans**: where the key is created, whether the account needs credit before the key works (DeepSeek, OpenRouter), what a workspace or team scopes (Anthropic, xAI, Mistral), Google's move from API keys to authorization keys, Groq's per-model tool support and its `/openai/v1` path, Azure's four-part address, the local server that has to be reachable from the server rather than from your desk, and the generic endpoint where C7NTAX deliberately guesses nothing.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The plans are data, not screens.** A plan names the credential keys it collects and the probe holds it to the form beside it, so a plan cannot describe a field the dialog does not have, ask for one twice, or omit a required one. The same plan will drive the wizard's steps, the \"what do I need before I start?\" answer, and the coverage probe.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`apps/api/probe-connector-setup.mjs` — 388 checks**: every connector and every provider has a plan; every plan names fields that exist and no field twice; every required credential is collected; prerequisites, overviews, first-sync notes and follow-ups are sentences rather than labels; every link is a real https address; connectors with settings explain them; and — because a plan can be technically complete and still wrong — that the claims match the connectors: SSO says there is nothing to sync, QuickBooks names the refresh token rather than the access token, M365 says it never writes to the tenant, AWS starts you on a read-only policy, and the local-model plan warns about reaching a server on somebody's desk.",
+        "type": "New Feature"
+      },
+      {
+        "text": "The probe found three plans that were thin the first time it ran — Pax8 and Proofpoint had a single prerequisite each, and a Groq step was a fragment — which is the point of holding content to a standard instead of reading it.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.020",
     "date": "2026-10-08",
     "title": "The Assistant: a model that can look things up, under your permissions",

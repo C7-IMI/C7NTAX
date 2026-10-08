@@ -7,6 +7,7 @@ import { IntegrationHub } from "@C7NTAX/integrations";
 import type { IntegrationConfig } from "@C7NTAX/integrations";
 import { AppError } from "../middleware/errorHandler";
 import { liveStatusEnabled, noteManualVerification, verifyDueIntegrations } from "../services/integrationHealth";
+import { CONNECTOR_SETUP } from "../services/connectorSetup";
 import { syncFlexpoint } from "../services/flexpoint";
 import { inactivityReport, offboardUser } from "../services/m365Inactivity";
 
@@ -549,6 +550,8 @@ function connectorTypes() {
     guidance: spec.guidance,
     docsUrl: spec.docs.url,
     docsLabel: spec.docs.label,
+    // How to get it running, in the order it has to happen — what the setup wizard walks through.
+    setup: CONNECTOR_SETUP[spec.kind] ?? null,
     settings: (spec.settings ?? []).map(s => ({
       key: s.key,
       label: s.label,

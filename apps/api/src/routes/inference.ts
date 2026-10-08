@@ -75,6 +75,7 @@ function providerTypes() {
       docs: spec.docs,
       guidance: spec.guidance,
       toolCalling: spec.toolCalling,
+      setup: spec.setup,
     })),
   };
 }

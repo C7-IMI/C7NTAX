@@ -5415,3 +5415,34 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The probe cleanup removed 17 stale `Persona probe provider` rows** that `probe-permissions.mjs` leaves behind (all `provider: "local"`, inactive, never callable). If that probe is ever tidied up, it should delete what it creates.
 - **The sandbox has no vendor keys**, so the AI models tab and the Assistant both show their refusal paths in this environment by design — which is why the copy for those states is written as a sentence with a way forward rather than an error.
 
+
+---
+
+### Prompt 265 (part one) — Setup plans: what it actually takes to get each connection running
+
+**Timestamp:** 2026-10-08 14:20 | **Status:** Complete | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.8.021** — "Every connection can be walked through: setup plans for sixteen integrations and eleven models"
+
+**Prompt**
+
+> Add intuitive Wizards/buttons to all of the connectors/configurations in CloudConnect that will walk me through getting them all properly configured and running. Use the same methodology and styling as you did for the OAuth App deploy wizard.
+
+**What I did**
+- **Understood what the OAuth wizard actually does before copying it.** Its value is not the modal: it is that it walks a sequence whose *order* matters, puts the four values it produces into the form rather than into a console buffer, and ends by proving the thing works. So the connectors needed the same thing first — a written account of what has to exist before the first field is typed — and only then a screen.
+- **Wrote a setup plan for each of the sixteen connectors** (`apps/api/src/services/connectorSetup.ts`): overview (what it reads, whether it writes, what it will not do), prerequisites with links to the vendor's own page, credential groups in the order to collect them, a settings note where the connector has settings, what the first sync brings and how long it takes, and what is worth checking afterwards.
+- **Wrote a plan for each of the eleven model providers inside the shared catalogue**, so a provider's facts, its credential fields and its setup steps stay in one object: where the key is created, whether the account needs credit first, what a workspace or team scopes, and what to do the moment it is saved.
+- **Made the plans data rather than screen code**, with field keys as references into the credential specs. That is what makes the coverage probe possible, and what will let the wizard render any connector without a per-connector component.
+- **Served both**: `setup` travels with `/cloudconnect/types` and `/inference/provider-types`, so the wizard needs no second fetch and cannot disagree with the form.
+- **Wrote the probe first and let it find the gaps**: 388 checks, and it found three real ones — Pax8 and Proofpoint had a single prerequisite each, and a Groq step was a fragment rather than a sentence. All three are fixed. It also asserts the claims *match* the connectors (SSO says there is nothing to sync, QuickBooks names the refresh token, M365 never writes to the tenant, AWS starts read-only), because a plan that is complete and wrong is worse than a short one.
+
+**Decisions worth remembering**
+- **The prerequisite is the feature.** Every connector here fails first in the vendor's product, not in this form: the ConnectWise client id takes days to be issued, IT Glue rate-limits a first full sync, Google is replacing the key type, Azure needs a role assignment before any credential works. A wizard that starts at the first field skips exactly the part people get stuck on.
+- **Plans name fields, they do not repeat them.** Labels and hints already live in the credential spec and are shown by the form; the plan says *why this group, in this order, from this screen*. Two copies of a hint is two places to be wrong.
+- **Hold content to a standard with a probe.** I would not have found a one-sentence prerequisite by proofreading; the probe found three.
+
+**Notes for next time**
+- **The API's typecheck has ~149 pre-existing errors** (Prisma strictness around optional ids and Date nullability in `cloudconnect.ts` and friends); none are on the lines this change touches, and the filter is the way to read it.
+- **OneDrive locks files under `node_modules` mid-sync**, which shows up as `EBUSY` or `ERR_INVALID_PACKAGE_CONFIG` when starting the API. Wait and retry rather than debugging it.
+- **Part two of this prompt is the wizard itself**: one generic component, launched from the catalogue, the Configuration pane and the AI models panel.
+

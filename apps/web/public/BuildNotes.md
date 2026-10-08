@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.020 | Last Updated: 2026-10-08
+## Version: 2026.10.8.021 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,18 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.021 — Every connection can be walked through: setup plans for sixteen integrations and eleven models
+
+The connector catalogue told you which fields to fill in and what each one meant, which is enough to fill a form and not enough to finish the job: every one of these integrations needs something to exist in the vendor's own product first — an API member, a registered application, a service principal with the right role, a token minted in the right screen — and the order matters, because a missing prerequisite arrives as a rejected credential rather than as a missing one. Each connector and each model provider now carries a **setup plan**: what it is for, what has to exist first, which credentials come from where, what the first sync brings, and what to check afterwards.
+
+- **[New]** **Sixteen connector plans** covering what it takes to get each one running, in the order it has to happen: an Entra app registration with admin consent and the sign-in permission's licence requirement (Microsoft 365), the ConnectWise client-id request form that takes days and rejects every call until it exists, Halo's API application and its hosted-versus-on-premise token host, AutoTask's API user and the zone that fails like a wrong password, Kantata's short-lived token, the IT Glue rate limit that makes its first full sync a multi-run affair, Azure's service principal plus a role assignment, AWS's read-only starting policy, and an SSO plan that says plainly it is authentication and that the real test is a sign-in.
+- **[New]** **Eleven model-provider plans**: where the key is created, whether the account needs credit before the key works (DeepSeek, OpenRouter), what a workspace or team scopes (Anthropic, xAI, Mistral), Google's move from API keys to authorization keys, Groq's per-model tool support and its `/openai/v1` path, Azure's four-part address, the local server that has to be reachable from the server rather than from your desk, and the generic endpoint where C7NTAX deliberately guesses nothing.
+- **[New]** **The plans are data, not screens.** A plan names the credential keys it collects and the probe holds it to the form beside it, so a plan cannot describe a field the dialog does not have, ask for one twice, or omit a required one. The same plan will drive the wizard's steps, the "what do I need before I start?" answer, and the coverage probe.
+- **[New]** **`apps/api/probe-connector-setup.mjs` — 388 checks**: every connector and every provider has a plan; every plan names fields that exist and no field twice; every required credential is collected; prerequisites, overviews, first-sync notes and follow-ups are sentences rather than labels; every link is a real https address; connectors with settings explain them; and — because a plan can be technically complete and still wrong — that the claims match the connectors: SSO says there is nothing to sync, QuickBooks names the refresh token rather than the access token, M365 says it never writes to the tenant, AWS starts you on a read-only policy, and the local-model plan warns about reaching a server on somebody's desk.
+- **[Update]** The probe found three plans that were thin the first time it ran — Pax8 and Proofpoint had a single prerequisite each, and a Groq step was a fragment — which is the point of holding content to a standard instead of reading it.
 
 ---
 
