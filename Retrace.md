@@ -6703,3 +6703,34 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 **What I did**
 - **Put the wordmark at the top of the menu, with the version beside it** — where the classic interface has always had it, and where it doubles as the answer to "which build am I on" without a separate trip to What's New. The mark uses the same brand rules as the rail: it is the logotype, not a redrawn one, so the mockup and the application agree about what the brand looks like.
 - **Checked the application rather than assuming**, and it already satisfies the request: the menu renders the mask-based `KumoWordmark`/`Wordmark` artwork and prints `v2026.10.8.056` from the live changelog. That is why this prompt records no BuildNotes entry — nothing in the repository needed changing, and saying so is more useful than inventing a version for it.
+
+---
+
+### Prompt 303 — Finish the redesign for every page
+
+**Timestamp:** 2026-10-08 19:55 | **Status:** Complete | **Duration:** ~95 min
+
+**BuildNotes IDs:** **2026.10.8.058** — *The redesigned header, on every page*.
+
+**Prompt**
+
+> finish the redesign for every page in the app (rest of the mockup)
+
+**What I did**
+- **Found the one change that reaches every page, instead of writing forty page designs.** Every page in the application draws the same two things: a header of its own (`h2` + description + actions) and the bar the shell puts above it. Redesigning both of those *in place* converts the whole product; writing a bespoke layout for each page converts one page at a time and guarantees that the fortieth does not match the first.
+- **Made the conversion safe before making it, which is the part that mattered.** `PageHeader` now has two shapes: the redesigned one row, and — for `variant="section"` — **the exact markup the page had before**, down to the `h2` classes and the absence of a margin on the subtitle. A page's classic rendering is therefore byte-identical after being converted, and "the classic interface is exactly as it was" stops being a promise and becomes something the component enforces. That is what allowed a 40-file change to be verified by two measurements rather than by reading forty diffs.
+- **Converted 40 pages with a codemod, reviewed rather than trusted.** The shape being replaced is exact and unambiguous (`<div><h2 className="text-lg font-semibold text-white">…</h2><p className="text-sm text-gray-400…">…</p></div>`), so a script did the mechanical part and printed what it would change. It ran dry first, and the dry run is the only reason the batch that shipped is correct — see below.
+- **Handled the headers a pattern cannot own**: the ones that name their subject with an icon (`Assistant`, `What's New`, `Finance Dashboard`) via a new `icon` prop, and the ones with no description at all (`Projects`, `Quotes` when it had none). The record headers — a ticket, a Kumo organization, an asset — were deliberately left alone: their pills, states and actions are not something a title and a description can express.
+- **Brought the three design-system holdouts in.** Uptime Monitors, Quotes and AI Actions were built with inline colours instead of the shared classes, which is why they were the only screens that ignored the colour scheme and the light theme. They now use `card`, `table`, `input-field`, `btn-primary` and the theme's greys. Their prose was left intact — including the long explanation on Monitors, which is some of the best writing in the product and is now readable in light mode for the first time.
+- **Measured the result rather than describing it.** Twelve routes swept in the redesigned interface: every header 16px, every shell bar **47px**, no console errors. The same routes in the classic interface: headers 18px and the shell bar **91px**, both unchanged. The saving is **44px on every screen**, and the compact header saves roughly another 20px on the pages that had two lines of heading.
+- **Wrote the reasoning into the documentation**, including the part that is a trade-off rather than a win: the shell bar no longer carries the breadcrumb trail. At 1280px the header toolbar takes 644px of a 1080px row, leaving about 364px; the trail needs 272px of it and the description about 500px, so one of them fits. The description is the one that is not available anywhere else on the screen — the rail already shows which section is lit, and a record carries its own trail — so the trail is what goes, and `INTERFACE-ROLLBACK.md` says so plainly rather than leaving it to be discovered.
+
+**Two codemod bugs, both caught by refusing to trust the first run**
+- **It turned `{clients.length} clients` into `subtitle="{clients.length} clients"`** — a JSX expression is not a string, and mixed text-and-expression subtitles are the common case, not the edge case. Only a subtitle that is plain text or a *single complete* expression becomes an attribute now; everything else goes in as `subtitle={<>{…}</>}`, which keeps `{a} · {b} pages` intact.
+- **It inserted the new import inside a multi-line import statement** (`import {\n Boxes, Plus, …`), which produced two files that would not parse. "After the last line beginning with `import`" is not "after the last import" — the insertion point now tracks whether the statement has been closed with a semicolon. `tsc` caught it in seconds, but only because the check was run before the change was believed.
+- **The first version of the one-row header overflowed.** It kept `shrink-0` on the breadcrumb, so the description was squeezed to **0px wide** and the trail spilled out under the toolbar buttons. The measurement that proved the fix is the same one that found it: the row's right edge at 588px, with every child inside it.
+
+**Notes for next time**
+- **Convert the shared thing, not the instances.** Two components and one wiring change reached 40 pages and stayed consistent; the alternative was 40 chances to be subtle. When a redesign looks like it touches everything, look for the component that everything already goes through.
+- **Make "unchanged" a property of the code, not a promise in a commit message.** `variant="section"` rendering the old markup is why this batch could be verified with two measurements, and it is the reason the remaining pages can be converted later by anyone without re-deriving the rule.
+- **Run the codemod dry, read the diff, then apply.** Both bugs would have shipped as 40 broken files, and both were visible in the dry run's output before anything was written.

@@ -4,6 +4,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Save, X, Monitor, ChevronLeft, Clock, User, FileText, MapPin, DollarSign, Wifi, HardDrive, Package } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 const TYPE_COLORS: Record<string, string> = { hardware: "bg-blue-600/20 text-blue-400", software: "bg-purple-600/20 text-purple-400", license: "bg-amber-600/20 text-amber-400", server: "bg-cyber-600/20 text-cyber-400", laptop: "bg-green-600/20 text-green-400", mobile: "bg-pink-600/20 text-pink-400", network: "bg-orange-600/20 text-orange-400", other: "bg-gray-600/20 text-gray-400" };
 const STATUS_COLORS: Record<string, string> = { available: "bg-green-600/20 text-green-400", assigned: "bg-cyber-600/20 text-cyber-400", maintenance: "bg-amber-600/20 text-amber-400", retired: "bg-gray-600/20 text-gray-400", lost: "bg-red-600/20 text-red-400" };
@@ -78,10 +79,7 @@ export function AssetDetailPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-cyber-600/10"><Monitor size={20} className="text-cyber-400" /></div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">{editing ? "Edit Asset" : asset.name}</h2>
-            <p className="text-sm text-gray-400">{asset.assetTag}</p>
-          </div>
+          <PageHeader variant="section" title={editing ? "Edit Asset" : asset.name} subtitle={asset.assetTag} />
         </div>
         <div className="flex items-center gap-2">
           {editing ? (

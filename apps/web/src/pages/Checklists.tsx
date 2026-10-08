@@ -12,6 +12,7 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { kumoTrail, useBreadcrumbTrail, kumoClientTrail } from "../components/Breadcrumbs";
 import { currentView, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
+import { PageHeader } from "../components/ui";
 
 interface ChecklistRow {
   id: string;
@@ -266,14 +267,9 @@ export function ChecklistsPage() {
       <ContextMenu state={menu.menuState} onClose={menu.close} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Checklists</h2>
-          <p className="text-sm text-gray-400">
-            {tab === "checklists"
+        <PageHeader variant="section" title="Checklists" subtitle={tab === "checklists"
               ? `${visible.length} of ${checklists.length} checklists${companyId ? ` · ${clients.find((c) => c.id === companyId)?.name || ""}` : ""}`
-              : `${visibleTasks.length} task${visibleTasks.length === 1 ? "" : "s"} assigned to you`}
-          </p>
-        </div>
+              : `${visibleTasks.length} task${visibleTasks.length === 1 ? "" : "s"} assigned to you`} />
         <div className="flex items-center gap-2">
           {companyId && (
             <button onClick={() => setSearchParams({})} className="btn-secondary text-sm flex items-center gap-1" title="Show every client">

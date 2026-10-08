@@ -5,6 +5,7 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { Plus, ShoppingCart, Truck, CheckCircle, X, Building } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ProductPicker } from "../components/ProductPicker";
+import { PageHeader } from "../components/ui";
 
 interface PO{id:string;poNumber:string;vendorId:string;status:string;total:number;expectedAt?:string;createdAt:string;vendor?:{name:string};}
 interface POItem{description:string;quantity:number;unitPrice:number;productId?:string|null;sku?:string|null;}
@@ -35,7 +36,7 @@ export function ProcurementPage(){
 
   return(<div className="space-y-4 animate-fade-in">
     <div className="flex items-center justify-between flex-wrap gap-3">
-      <div><h2 className="text-lg font-semibold text-white">Procurement</h2><p className="text-sm text-gray-400">{pos.length} purchase orders</p></div>
+      <PageHeader variant="section" title="Procurement" subtitle={<>{pos.length} purchase orders</>} />
       <button onClick={()=>setShowNew(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16}/>New PO</button>
     </div>
 

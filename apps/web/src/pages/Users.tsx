@@ -16,6 +16,7 @@ import { NewUserDialog, type RoleOption, type ClientOption, isAdministrativeRole
 import { ResetPasswordDialog } from "../components/users/ResetPasswordDialog";
 import { useAuth } from "../hooks/useAuth";
 import { timezoneOptions } from "../lib/timezones";
+import { PageHeader } from "../components/ui";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-600/20 text-green-400",
@@ -371,10 +372,7 @@ export function UsersPage() {
       <MenuConfirmDialog state={menuConfirm} busy={menuConfirmBusy} onCancel={() => setMenuConfirm(null)} onConfirm={runMenuConfirm} />
       {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Manage Users</h2>
-          <p className="text-sm text-gray-400">{users.length} users</p>
-        </div>
+        <PageHeader variant="section" title="Manage Users" subtitle={<>{users.length} users</>} />
         <div className="relative">
           <button
             onClick={() => setUserDropdown(!userDropdown)}

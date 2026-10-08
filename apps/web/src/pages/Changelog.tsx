@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Calendar, Sparkles, Zap, RefreshCw, Bug, Search, X } from "lucide-react";
 import api from "../api";
+import { PageHeader } from "../components/ui";
 
 interface ChangeItem {
   text: string;
@@ -118,12 +119,12 @@ export function ChangelogPage() {
 
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl">
-      <div>
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Sparkles size={20} className="text-cyber-400" /> What's New
-        </h2>
-        <p className="text-sm text-gray-400 mt-0.5">Release history and feature changelog for C7NTAX</p>
-      </div>
+      <PageHeader
+        variant="section"
+        icon={<Sparkles size={20} className="text-cyber-400" />}
+        title="What's New"
+        subtitle="Release history and feature changelog for C7NTAX"
+      />
 
       {/* Search */}
       <div className="relative max-w-sm">

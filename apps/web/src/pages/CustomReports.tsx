@@ -15,6 +15,7 @@ import { layoutReport, type ReportTemplateDocument } from "@C7NTAX/shared";
 import { measureTextMm } from "../lib/reportMeasure";
 import { exportTemplateCsv, exportTemplateExcel, exportTemplatePdf, printTemplateReport } from "../lib/reportOutput";
 import { LaidOutPageView } from "../components/reports/designer/PageRenderer";
+import { PageHeader } from "../components/ui";
 
 interface Schedule { id: string; frequency: string; timeOfDay: string; recipients: string[]; format: string; isActive: boolean; lastSentAt: string | null }
 interface SavedReport {
@@ -115,12 +116,7 @@ function TemplateReportView({ report, payload, onClose }: { report: SavedReport;
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h2 className="text-lg font-semibold text-white">{report.name}</h2>
-          <p className="text-sm text-gray-400">
-            {report.description ?? "Designed report"} · {laid.pages.length} page{laid.pages.length === 1 ? "" : "s"} · {laid.rowCount} row{laid.rowCount === 1 ? "" : "s"}
-          </p>
-        </div>
+        <PageHeader variant="section" title={report.name} subtitle={<>{report.description ?? "Designed report"} · {laid.pages.length} page{laid.pages.length === 1 ? "" : "s"} · {laid.rowCount} row{laid.rowCount === 1 ? "" : "s"}</>} />
         <div className="flex items-center gap-2 flex-wrap">
           <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => navigate(`/reports/custom/${report.id}/design`)}>
             <LayoutTemplate size={14} /> Design
@@ -305,10 +301,7 @@ export function CustomReportsPage() {
     return (
       <div className="space-y-4 animate-fade-in">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <h2 className="text-lg font-semibold text-white">{viewing.name}</h2>
-            <p className="text-sm text-gray-400">{viewing.description ?? "Saved report"}</p>
-          </div>
+          <PageHeader variant="section" title={viewing.name} subtitle={viewing.description ?? "Saved report"} />
           <div className="flex items-center gap-2 flex-wrap">
             <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => printReport(doc)}><Printer size={14} /> Print</button>
             <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => exportPdf(doc)}><Download size={14} /> PDF</button>
@@ -325,10 +318,7 @@ export function CustomReportsPage() {
   return (
     <div className="space-y-5 animate-fade-in">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Custom Reports</h2>
-          <p className="text-sm text-gray-400">Saved reports built on the reporting engine</p>
-        </div>
+        <PageHeader variant="section" title="Custom Reports" subtitle="Saved reports built on the reporting engine" />
         <div className="flex items-center gap-2">
           <button className="btn-secondary text-sm flex items-center gap-2" onClick={load}><RefreshCw size={14} /> Refresh</button>
           <button className="btn-secondary text-sm flex items-center gap-2" onClick={() => setDesigning(true)}><LayoutTemplate size={14} /> New designed report</button>

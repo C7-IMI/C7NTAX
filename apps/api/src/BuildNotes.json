@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.058",
+    "date": "2026-10-08",
+    "title": "The redesigned header, on every page",
+    "changes": [
+      {
+        "text": "**`PageHeader` draws two shapes, and a page does not have to know which.** The",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Every standard page now draws its header the redesigned way** — 40 files,",
+        "type": "Update"
+      },
+      {
+        "text": "**The bar above every page is one line instead of three.** Measured at",
+        "type": "Update"
+      },
+      {
+        "text": "**Three pages that had never adopted the design system now use it.** Uptime",
+        "type": "Update"
+      },
+      {
+        "text": "**Help's *The Interface* walkthrough** gained the two header rows, a *Which",
+        "type": "Update"
+      },
+      {
+        "text": "**The redesigned header no longer overflows into the toolbar.** The first",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.057",
     "date": "2026-10-08",
     "title": "The redesigned ticket screens, with the classic layout one click away",

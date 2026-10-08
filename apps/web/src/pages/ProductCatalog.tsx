@@ -13,6 +13,7 @@ import {
   Boxes, Plus, Search, Package, Cpu, KeyRound, RefreshCw, Wrench, Layers, AlertTriangle,
   Pencil, Copy, Trash2, Power, PackagePlus, PackageMinus, Download, RotateCw, Eraser, Filter, X,
 } from "lucide-react";
+import { PageHeader } from "../components/ui";
 
 /**
  * Administration → Product Catalog.
@@ -299,10 +300,7 @@ export function ProductCatalogPage() {
       <ContextMenu state={menu.menuState} onClose={menu.close} />
 
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Product Catalog</h2>
-          <p className="text-sm text-gray-400">Everything you sell or reorder — hardware, software, licences, subscriptions and services</p>
-        </div>
+        <PageHeader variant="section" title="Product Catalog" subtitle="Everything you sell or reorder — hardware, software, licences, subscriptions and services" />
         {canCreate && <button onClick={openCreate} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Add Product</button>}
       </div>
 

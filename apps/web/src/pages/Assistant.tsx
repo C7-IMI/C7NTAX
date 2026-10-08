@@ -6,6 +6,7 @@ import {
   Bot, Send, Loader2, Sparkles, AlertTriangle, ChevronDown, ChevronRight, Plug,
   ArrowUpRight, Info, RefreshCw, ShieldCheck, Wrench,
 } from "lucide-react";
+import { PageHeader } from "../components/ui";
 
 /**
  * The Assistant: ask the model something, and let it use this application's own functions to answer.
@@ -134,14 +135,12 @@ export function AssistantPage() {
   return (
     <div className="space-y-5 animate-fade-in max-w-4xl">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Bot size={18} className="text-cyber-400" /> Assistant
-          </h2>
-          <p className="text-sm text-gray-400 mt-0.5">
-            Ask a question about what is in C7NTAX. The model can look things up itself, under your permissions.
-          </p>
-        </div>
+        <PageHeader
+          variant="section"
+          icon={<Bot size={18} className="text-cyber-400" />}
+          title="Assistant"
+          subtitle="Ask a question about what is in C7NTAX. The model can look things up itself, under your permissions."
+        />
         <div className="flex items-center gap-2">
           <button
             onClick={() => void load()}

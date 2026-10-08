@@ -9,6 +9,7 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 interface Organization {
   id: string;
@@ -204,12 +205,7 @@ export function KumoOrganizationsPage() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Organizations</h2>
-          <p className="text-sm text-gray-400">
-            {loading ? "Loading…" : `${rows.length} of ${total} organizations`} • Kumo documentation coverage
-          </p>
-        </div>
+        <PageHeader variant="section" title="Organizations" subtitle={<>{loading ? "Loading…" : `${rows.length} of ${total} organizations`} • Kumo documentation coverage</>} />
         <Link to="/clients" className="btn-secondary text-sm flex items-center gap-2">
           <ExternalLink size={14} /> Client records
         </Link>

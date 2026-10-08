@@ -10,6 +10,7 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 export function KumoPasswordsPage() {
   const [passwords, setPasswords] = useState<any[]>([]);
@@ -308,7 +309,7 @@ export function KumoPasswordsPage() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h2 className="text-lg font-semibold text-white">Password Vault</h2><p className="text-sm text-gray-400">{filtered.length} passwords</p></div>
+        <PageHeader variant="section" title="Password Vault" subtitle={<>{filtered.length} passwords</>} />
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Add Password</button>
       </div>
 

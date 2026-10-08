@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import api from "../api";
 import { Shield, Monitor, FileText, Link2, Server, Database, Clock, Key, BookOpen, Globe, ShieldCheck, Building2 } from "lucide-react";
 import { UI_KUMO_ORGS } from "../lib/uiFlags";
+import { PageHeader } from "../components/ui";
 
 interface RecentItem {
   id: string;
@@ -42,10 +43,7 @@ export function KumoDashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h2 className="text-lg font-semibold text-white">Kumo — IT Documentation</h2>
-        <p className="text-sm text-gray-400 mt-0.5">Assets, passwords, configurations, and SOPs in one place.</p>
-      </div>
+      <PageHeader variant="section" title="Kumo — IT Documentation" subtitle="Assets, passwords, configurations, and SOPs in one place." />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card icon={Monitor} title="Flexible Assets" description={`${stats.assets} assets • Dynamic templates & custom fields`} to="/kumo/assets" color="cyber" />

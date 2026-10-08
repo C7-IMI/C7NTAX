@@ -8,6 +8,7 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 export function KumoConfigsPage() {
   const [configs, setConfigs] = useState<any[]>([]);
@@ -156,7 +157,7 @@ export function KumoConfigsPage() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h2 className="text-lg font-semibold text-white">Configurations</h2><p className="text-sm text-gray-400">{filtered.length} servers</p></div>
+        <PageHeader variant="section" title="Configurations" subtitle={<>{filtered.length} servers</>} />
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Server</button>
       </div>
       <div className="flex gap-2 flex-wrap">

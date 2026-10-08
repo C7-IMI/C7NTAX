@@ -9,6 +9,7 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 interface KumoAsset {
   id: string; name: string; templateId: string; status: string; companyId: string | null;
@@ -172,10 +173,7 @@ export function KumoAssetsPage() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Kumo Assets</h2>
-          <p className="text-sm text-gray-400">{filtered.length} assets</p>
-        </div>
+        <PageHeader variant="section" title="Kumo Assets" subtitle={<>{filtered.length} assets</>} />
         <button onClick={() => startCreate()} className="btn-primary flex items-center gap-2 text-sm">
           <Plus size={16} /> New Asset
         </button>

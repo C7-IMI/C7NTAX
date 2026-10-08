@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useCalendarScale } from "../hooks/useCalendarScale";
 import { Calendar, Clock, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -89,7 +90,7 @@ export function PTOPage() {
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div><h2 className="text-lg font-semibold text-white">Time Off</h2><p className="text-sm text-gray-400">{requests.length} requests</p></div>
+        <PageHeader variant="section" title="Time Off" subtitle={<>{requests.length} requests</>} />
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Request Time Off</button>
       </div>
 

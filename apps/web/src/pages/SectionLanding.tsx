@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { PageHeader } from "../components/ui";
 
 interface SubSection {
   id: string;
@@ -23,12 +24,7 @@ interface SectionLandingProps {
 export function SectionLanding({ sectionId, sectionLabel, subSections, descriptions }: SectionLandingProps) {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
-      <div>
-        <h2 className="text-lg font-semibold text-white">{sectionLabel}</h2>
-        <p className="text-sm text-gray-400 mt-0.5">
-          {subSections.length} subsection{subSections.length !== 1 ? "s" : ""} — select one to get started
-        </p>
-      </div>
+      <PageHeader variant="section" title={sectionLabel} subtitle={<>{subSections.length} subsection{subSections.length !== 1 ? "s" : ""} — select one to get started</>} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {subSections.map((sub) => {

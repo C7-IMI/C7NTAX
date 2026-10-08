@@ -3,6 +3,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Zap, Trash2, Check, X, Cpu, TestTube } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 interface Provider { id: string; name: string; provider: string; model: string; isActive: boolean; isDefault: boolean; hasApiKey: boolean; temperature: number; maxTokens: number; }
 
@@ -52,10 +53,7 @@ export function InferenceSettingsPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">AI Inference Configuration</h2>
-          <p className="text-sm text-gray-400 mt-0.5">Configure AI providers for ticket analysis and solution suggestions</p>
-        </div>
+        <PageHeader variant="section" title="AI Inference Configuration" subtitle="Configure AI providers for ticket analysis and solution suggestions" />
         <button onClick={() => setShowForm(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Provider</button>
       </div>
 

@@ -400,6 +400,8 @@ export function Layout({ children }: { children: ReactNode }) {
    */
   const navigation = useNavigationSettings();
   const modernNav = navigation.style === "modern";
+  // The redesigned screens compact the chrome that every page shares, which is the header here.
+  const redesign = navigation.interfaceStyle === "redesign";
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -1181,7 +1183,23 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50 py-3">
+        <header className={`border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50 ${redesign ? "py-2" : "py-3"}`}>
+          {/* Redesigned, the header is one row — where you are, what the section is for, and the
+              trail back — rather than a title row with the breadcrumb on a line of its own beneath
+              it. That is about 24px of chrome above every page in the application. */}
+          {/* Redesigned, the header is one row: the section's name and what it is for. The trail is
+              not repeated here — the rail is already showing where you are, and the pages that have
+              a place to go back to carry their own breadcrumb — because the width a crumb needs is
+              the width the description needs, and at 1280px the toolbar leaves room for one of them. */}
+          {redesign ? (
+            <div className="flex items-center gap-x-2.5 min-w-0 flex-1 mr-6">
+              <button className="lg:hidden text-gray-400 hover:text-white p-1 shrink-0" onClick={() => setMobileOpen(true)} aria-label="Open the navigation">
+                <Menu size={20} />
+              </button>
+              <h1 className="text-sm font-semibold text-white shrink-0">{getPageTitle(NAV_TREE, location.pathname)}</h1>
+              {(() => { const desc = getSectionDescription(location.pathname); return desc ? <span className="text-xs text-gray-500 truncate min-w-0">— {desc}</span> : null; })()}
+            </div>
+          ) : (
           <div className="flex flex-col gap-0.5 min-w-0 flex-1 mr-6">
             <div className="flex items-center gap-3">
               <button className="lg:hidden text-gray-400 hover:text-white p-1 shrink-0" onClick={() => setMobileOpen(true)} aria-label="Open the navigation">
@@ -1194,6 +1212,7 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
             <Breadcrumbs segments={buildBreadcrumbs(NAV_TREE, location.pathname)} />
           </div>
+          )}
           {/* Header toolbar */}
           <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
             {/* Console — the command surface for C7NTAX (PLAN-028). A labelled `SquareTerminal`: the bare

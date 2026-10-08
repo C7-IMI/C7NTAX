@@ -8,6 +8,7 @@ import { PageSkeleton } from "../components/ui/Skeleton";
 import { FlexpointClientCard } from "../components/FlexpointClientCard";
 import { Permission } from "@C7NTAX/shared";
 import { useAuth } from "../hooks/useAuth";
+import { PageHeader } from "../components/ui";
 
 const TYPE_OPTIONS = ["Client", "Prospect", "Vendor", "Partner"];
 const INDUSTRY_OPTIONS = ["", "Technology", "Healthcare", "Finance", "Manufacturing", "Legal", "Education", "Government", "Non-Profit", "Retail", "Construction"];
@@ -67,10 +68,7 @@ export function ClientDetailPage() {
       <div className="flex items-center justify-between" data-hl="client-details">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-cyber-600/10"><Building2 size={20} className="text-cyber-400" /></div>
-          <div>
-            <h2 className="text-lg font-semibold text-white">{client.name}</h2>
-            <p className="text-sm text-gray-400">{client.companyType} {client.industry ? `· ${client.industry}` : ""}</p>
-          </div>
+          <PageHeader variant="section" title={client.name} subtitle={<>{client.companyType} {client.industry ? `· ${client.industry}` : ""}</>} />
         </div>
         {tab === "summary" && (
           editing ? (

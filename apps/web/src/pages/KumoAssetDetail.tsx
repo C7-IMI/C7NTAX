@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react";
 import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { KumoAssetDialog } from "../components/KumoAssetDialog";
 import { PageSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 export function KumoAssetDetailPage() {
   const { id } = useParams();
@@ -43,12 +44,7 @@ export function KumoAssetDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">{asset.name}</h2>
-          <p className="text-sm text-gray-400">
-            {[asset.template?.name, client?.name, asset.status].filter(Boolean).join(" · ")}
-          </p>
-        </div>
+        <PageHeader variant="section" title={asset.name} subtitle={[asset.template?.name, client?.name, asset.status].filter(Boolean).join(" · ")} />
         <button onClick={() => setEditing(true)} className="btn-primary text-sm flex items-center gap-1.5">
           <Pencil size={13} /> Edit
         </button>

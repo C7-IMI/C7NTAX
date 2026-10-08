@@ -4,6 +4,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import { RefreshCw, Clock, AlertTriangle, Users, TrendingUp, Inbox, Pause, MessageSquare, Calendar, GripVertical, Pin, PinOff, ArrowUp, ArrowDown, Save, RotateCcw, SlidersHorizontal, type LucideIcon } from "lucide-react";
+import { PageHeader } from "../components/ui";
 
 interface BoardMetrics {
   boardId: string; boardName: string; boardDescription: string | null;
@@ -128,13 +129,8 @@ export function BoardsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Service Boards</h2>
-          <p className="text-sm text-gray-400">
-            {boards.length} board{boards.length !== 1 ? "s" : ""}
-            {lastUpdated && <span className="text-gray-600 ml-2">· updated {lastUpdated.toLocaleTimeString()}</span>}
-          </p>
-        </div>
+        <PageHeader variant="section" title="Service Boards" subtitle={<>{boards.length} board{boards.length !== 1 ? "s" : ""}
+            {lastUpdated && <span className="text-gray-600 ml-2">· updated {lastUpdated.toLocaleTimeString()}</span>}</>} />
         <div className="flex items-center gap-2">
           <button onClick={fetchMetrics} className="btn-secondary text-sm flex items-center gap-1.5" title="Refresh metrics">
             <RefreshCw size={14} /> Refresh

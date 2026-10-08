@@ -9,6 +9,7 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 
 interface DomainRow {
@@ -197,13 +198,8 @@ export function KumoDomainsPage() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Domains &amp; Certificates</h2>
-          <p className="text-sm text-gray-400">
-            {loading ? "Loading…" : `${visible.length} tracked`}
-            {expiredCount > 0 && <span className="text-red-400"> • {expiredCount} expired</span>}
-          </p>
-        </div>
+        <PageHeader variant="section" title="Domains &amp; Certificates" subtitle={<>{loading ? "Loading…" : `${visible.length} tracked`}
+            {expiredCount > 0 && <span className="text-red-400"> • {expiredCount} expired</span>}</>} />
         <div className="flex flex-wrap items-center gap-2">
           {companyId && (
             <button onClick={clearCompany} className="btn-secondary text-xs py-1 flex items-center gap-1.5" title="Clear the client filter">

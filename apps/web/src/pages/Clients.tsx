@@ -8,6 +8,7 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown, ExternalLink, AppWindow, SquareArrowOutUpRight, Copy, Download, RotateCw, Eraser, Ticket, Cloud, KeyRound, Server } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 const TYPE_COLORS: Record<string, string> = {
   Client: "bg-cyber-600/20 text-cyber-400", Prospect: "bg-amber-600/20 text-amber-400",
@@ -136,7 +137,7 @@ export function ClientsPage() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h2 className="text-lg font-semibold text-white">Clients</h2><p className="text-sm text-gray-400">{clients.length} clients</p></div>
+        <PageHeader variant="section" title="Clients" subtitle={<>{clients.length} clients</>} />
         <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Client</button>
       </div>
 

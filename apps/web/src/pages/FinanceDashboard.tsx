@@ -4,6 +4,7 @@ import { apiErrorMessage } from "../lib/apiError";
 import { DollarSign, TrendingUp, Clock, AlertTriangle, Receipt, CreditCard } from "lucide-react";
 import toast from "react-hot-toast";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 export function FinanceDashboardPage() {
   const [data, setData] = useState<any>(null);
@@ -20,10 +21,12 @@ export function FinanceDashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2"><TrendingUp size={20} className="text-cyber-400" /> Finance Dashboard</h2>
-        <p className="text-sm text-gray-400 mt-0.5">Billing overview and financial health</p>
-      </div>
+      <PageHeader
+        variant="section"
+        icon={<TrendingUp size={20} className="text-cyber-400" />}
+        title="Finance Dashboard"
+        subtitle="Billing overview and financial health"
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Receipt} label="Total Invoiced" value={`$${data.totalInvoiced.toLocaleString()}`} color="cyber" />

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { timeAgo } from "../lib/format";
 import { ticketStatusBadge, ticketStatusLabel } from "../lib/ticketStatus";
-import { EmptyState } from "../components/ui";
+import { PageHeader, EmptyState } from "../components/ui";
 
 /**
  * The dashboard is assembled from widgets the signed-in user arranged (PLAN-015 Phase B #4).
@@ -269,13 +269,8 @@ export function DashboardPage() {  const { user } = useAuth();
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Dashboard</h2>
-          <p className="text-sm text-gray-400 mt-0.5">
-            Overview of your service operations
-            {hiddenCount > 0 && <span className="text-gray-600"> · {hiddenCount} widget{hiddenCount === 1 ? "" : "s"} hidden</span>}
-          </p>
-        </div>
+        <PageHeader variant="section" title="Dashboard" subtitle={<>Overview of your service operations
+            {hiddenCount > 0 && <span className="text-gray-600"> · {hiddenCount} widget{hiddenCount === 1 ? "" : "s"} hidden</span>}</>} />
         <div className="flex items-center gap-2">
           {!editing && loaded && catalogue.length > 0 && (
             <button onClick={openEditor} className="btn-secondary text-xs flex items-center gap-1.5"><SlidersHorizontal size={13} /> Customise</button>

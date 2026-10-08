@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import { ProductPicker } from "../components/ProductPicker";
+import { PageHeader } from "../components/ui";
 
 type Quote = { id: string; quoteNumber: string; title: string; status: string; total: number; company: { id: string; name: string } | null };
 type Client = { id: string; name: string };
@@ -43,15 +44,15 @@ export function QuotesPage() {
   };
 
   return (
-    <div style={{ padding: 24, color: "#cbd5e1" }}>
-      <h1 style={{ color: "#e2e8f0", fontSize: 22 }}>Quotes</h1>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}>
-        <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{ padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />
-        <select value={companyId} onChange={e => setCompanyId(e.target.value)} style={{ padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }}>
+    <div className="space-y-4 animate-fade-in">
+      <PageHeader variant="section" title="Quotes" />
+      <div className="flex flex-wrap items-center gap-2">
+        <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="input-field w-auto" />
+        <select value={companyId} onChange={e => setCompanyId(e.target.value)} className="input-field w-auto">
           <option value="">Select client…</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <div style={{ width: 280 }}>
+        <div className="w-[280px]">
           <ProductPicker
             value={description}
             onValueChange={text => { setDescription(text); setProductId(null); setProductSku(null); }}
@@ -61,30 +62,34 @@ export function QuotesPage() {
             placeholder="Line description or catalog item"
           />
         </div>
-        <input placeholder="Qty" value={quantity} onChange={e => setQuantity(e.target.value)} style={{ width: 70, padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />
-        <input placeholder="Rate" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} style={{ width: 90, padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />
-        <button onClick={create} style={{ padding: "8px 16px", background: "#2563eb", border: "none", color: "#fff", borderRadius: 6, cursor: "pointer" }}>Create quote</button>
+        <input placeholder="Qty" value={quantity} onChange={e => setQuantity(e.target.value)} className="input-field w-20" />
+        <input placeholder="Rate" value={unitPrice} onChange={e => setUnitPrice(e.target.value)} className="input-field w-24" />
+        <button onClick={create} className="btn-primary text-sm">Create quote</button>
       </div>
-      {message && <p style={{ color: "#93c5fd" }}>{message}</p>}
-      {loading ? <p>Loading…</p> : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead><tr style={{ textAlign: "left", color: "#94a3b8" }}>
-            <th>Number</th><th>Title</th><th>Client</th><th>Total</th><th>Status</th><th></th>
-          </tr></thead>
-          <tbody>
-            {quotes.map(q => (
-              <tr key={q.id} style={{ borderTop: "1px solid #1e293b" }}>
-                <td>{q.quoteNumber}</td>
-                <td>{q.title}</td>
-                <td>{q.company?.name || "—"}</td>
-                <td>${q.total.toFixed(2)}</td>
-                <td>{q.status}</td>
-                <td>{q.status !== "converted" && <button onClick={() => convert(q.id)} style={{ padding: "4px 10px", background: "#0ea5e9", border: "none", color: "#fff", borderRadius: 6, cursor: "pointer" }}>Convert to invoice</button>}</td>
+      {message && <p className="text-sm text-cyber-300">{message}</p>}
+      {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
+        <div className="card p-0 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-left text-xs uppercase text-gray-500">
+              <tr>
+                <th className="px-3 py-2 font-medium">Number</th><th className="px-3 py-2 font-medium">Title</th><th className="px-3 py-2 font-medium">Client</th><th className="px-3 py-2 font-medium">Total</th><th className="px-3 py-2 font-medium">Status</th><th className="px-3 py-2" />
               </tr>
-            ))}
-            {quotes.length === 0 && <tr><td colSpan={6} style={{ padding: 16, color: "#64748b" }}>No quotes yet.</td></tr>}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-surface-border">
+              {quotes.map(q => (
+                <tr key={q.id}>
+                  <td className="px-3 py-2 font-mono text-xs text-gray-400">{q.quoteNumber}</td>
+                  <td className="px-3 py-2 text-gray-200">{q.title}</td>
+                  <td className="px-3 py-2 text-gray-400">{q.company?.name || "—"}</td>
+                  <td className="px-3 py-2 text-gray-200">${q.total.toFixed(2)}</td>
+                  <td className="px-3 py-2 text-gray-400">{q.status}</td>
+                  <td className="px-3 py-2">{q.status !== "converted" && <button onClick={() => convert(q.id)} className="btn-secondary text-xs">Convert to invoice</button>}</td>
+                </tr>
+              ))}
+              {quotes.length === 0 && <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-500">No quotes yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

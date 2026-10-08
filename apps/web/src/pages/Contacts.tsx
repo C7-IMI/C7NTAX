@@ -8,6 +8,7 @@ import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock, Plus, Ticket, Users, ExternalLink, UserCheck, UserX, Copy, Download, RotateCw, Eraser } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 interface Contact {
   id: string; firstName: string; lastName: string; email: string;
@@ -202,7 +203,7 @@ export function ContactsPage() {
       onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
-      <div className="flex items-center justify-between"><div><h2 className="text-lg font-semibold text-white">Contacts</h2><p className="text-sm text-gray-400">{filtered.length} contacts</p></div><button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Contact</button></div>
+      <div className="flex items-center justify-between"><PageHeader variant="section" title="Contacts" subtitle={<>{filtered.length} contacts</>} /><button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Contact</button></div>
 
       <div className="flex gap-2 flex-wrap">
         <div className="relative flex-1 min-w-[200px]"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input ref={searchRef} className="input-field pl-9" placeholder="Search contacts..." value={search} onChange={e => setSearch(e.target.value)} /></div>

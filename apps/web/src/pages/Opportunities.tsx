@@ -3,6 +3,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, Target, TrendingUp, DollarSign, ChevronRight, ArrowRight, Building2 } from "lucide-react";
+import { PageHeader } from "../components/ui";
 
 const STAGES: Record<string,string>={prospect:"bg-blue-600/20 text-blue-400",qualified:"bg-cyber-600/20 text-cyber-400",proposal:"bg-amber-600/20 text-amber-400",negotiation:"bg-purple-600/20 text-purple-400",won:"bg-green-600/20 text-green-400",lost:"bg-red-600/20 text-red-400"};
 const STAGE_ORDER=["prospect","qualified","proposal","negotiation","won","lost"];
@@ -29,7 +30,7 @@ export function OpportunitiesPage(){
 
   return(<div className="space-y-4 animate-fade-in">
     <div className="flex items-center justify-between flex-wrap gap-3">
-      <div><h2 className="text-lg font-semibold text-white">Sales Pipeline</h2><p className="text-sm text-gray-400">{opps.length} deals · ${totalValue.toLocaleString()} pipeline · ${totalWon.toLocaleString()} won · ${Math.round(weightedValue).toLocaleString()} weighted</p></div>
+      <PageHeader variant="section" title="Sales Pipeline" subtitle={<>{opps.length} deals · ${totalValue.toLocaleString()} pipeline · ${totalWon.toLocaleString()} won · ${Math.round(weightedValue).toLocaleString()} weighted</>} />
       <div className="flex items-center gap-2">
         <div className="flex bg-surface rounded-lg border border-surface-border"><button onClick={()=>setView("kanban")} className={`px-3 py-1.5 text-xs font-medium rounded-l-lg ${view==="kanban"?"bg-cyber-600/20 text-cyber-400":"text-gray-400"}`}>Kanban</button><button onClick={()=>setView("table")} className={`px-3 py-1.5 text-xs font-medium rounded-r-lg ${view==="table"?"bg-cyber-600/20 text-cyber-400":"text-gray-400"}`}>Table</button></div>
         <button onClick={()=>setShowNew(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16}/>New Deal</button>

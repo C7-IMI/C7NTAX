@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 import toast from "react-hot-toast";
-import { Tabs } from "../components/ui";
+import { PageHeader, Tabs } from "../components/ui";
 import {
   AlertTriangle, WifiOff, Activity, CheckCircle2, RefreshCw, ExternalLink,
   Globe, TrendingDown, Info, ShieldCheck, CircleDot, Radio,
@@ -217,12 +217,7 @@ export function ServiceAlertsPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Service Alerts</h2>
-          <p className="text-sm text-gray-400">
-            Live status of critical cloud, SaaS, and ISP services, resolved from their vendor feeds, status-page APIs, DownDetector, and uptime monitors.
-          </p>
-        </div>
+        <PageHeader variant="section" title="Service Alerts" subtitle="Live status of critical cloud, SaaS, and ISP services, resolved from their vendor feeds, status-page APIs, DownDetector, and uptime monitors." />
         <div className="flex items-center gap-2">
           <Tabs
             items={[{ id: "live", label: "Live" }, { id: "board", label: "Outage Board" }] as const}

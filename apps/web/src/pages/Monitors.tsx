@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
+import { PageHeader } from "../components/ui";
 
 type MonitorService = { id: string; name: string; monitorKind: string; monitorUrl: string | null; monitorConfig: { expectStatus?: number; sslWarnDays?: number } | null; enabled: boolean };
 
@@ -30,97 +31,104 @@ export function MonitorsPage() {
   };
 
   return (
-    <div style={{ padding: 24, color: "#cbd5e1" }}>
-      <h1 style={{ color: "#e2e8f0", fontSize: 22 }}>Uptime Monitors (website / SSL / DNS)</h1>
+    <div className="space-y-4 animate-fade-in">
+      <PageHeader variant="section" title="Uptime Monitors (website / SSL / DNS)" />
 
       {/*
         What the page is for, before the controls. Each kind is described by the failure it catches
         rather than by what it fetches, because that is the part nobody can guess from the dropdown.
       */}
-      <div style={{ maxWidth: 820, margin: "10px 0 4px", lineHeight: 1.6 }}>
-        <p style={{ margin: "0 0 10px" }}>
+      <div className="max-w-3xl space-y-2.5 text-sm text-gray-400 leading-relaxed">
+        <p>
           A monitor watches one target on the same poll as Service Alerts — every five minutes by default — and
           reports what it finds as one of that service's sources. It therefore behaves like any other source: the
           service appears on the Service Alerts board, a failure opens an active alert, two consecutive clean polls
           retire it, and it notifies through whatever the Alerting Mechanism is already set to.
         </p>
-        <ul style={{ margin: "0 0 12px", paddingLeft: 20 }}>
-          <li style={{ marginBottom: 5 }}>
-            <strong style={{ color: "#e2e8f0" }}>Website</strong> — fetches the address and compares the status code
+        <ul className="list-disc pl-5 space-y-1.5">
+          <li>
+            <strong className="text-gray-200">Website</strong> — fetches the address and compares the status code
             with the one you expect, 200 unless you say otherwise. Anything else is an outage: a 500, a redirect you
             did not allow for, or a target that never answers.
           </li>
-          <li style={{ marginBottom: 5 }}>
-            <strong style={{ color: "#e2e8f0" }}>SSL expiry</strong> — reads the certificate the host presents. It
+          <li>
+            <strong className="text-gray-200">SSL expiry</strong> — reads the certificate the host presents. It
             raises a notice the chosen number of days before the expiry date, 30 unless you say otherwise, so the
             renewal can be booked, and an outage once the certificate has actually expired.
           </li>
           <li>
-            <strong style={{ color: "#e2e8f0" }}>DNS</strong> — resolves the hostname. If the name stops resolving
+            <strong className="text-gray-200">DNS</strong> — resolves the hostname. If the name stops resolving
             that is an outage, and it is usually the reason a site is down for everyone except the person testing it.
           </li>
         </ul>
-        <p style={{ margin: "0 0 8px" }}>
-          <strong style={{ color: "#e2e8f0" }}>Example.</strong> A client portal at{" "}
-          <code style={{ color: "#93c5fd" }}>portal.client.com</code> goes dark in three ways, so it takes three
+        <p>
+          <strong className="text-gray-200">Example.</strong> A client portal at{" "}
+          <code className="text-cyber-300">portal.client.com</code> goes dark in three ways, so it takes three
           monitors:
         </p>
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
-          <thead>
-            <tr style={{ textAlign: "left", color: "#94a3b8" }}>
-              <th style={{ padding: "4px 12px 4px 0" }}>Name</th>
-              <th style={{ padding: "4px 12px 4px 0" }}>Kind</th>
-              <th style={{ padding: "4px 12px 4px 0" }}>Target</th>
-              <th style={{ padding: "4px 0" }}>What it catches</th>
+        <table className="w-full text-left text-sm">
+          <thead className="text-xs uppercase text-gray-500">
+            <tr>
+              <th className="py-1.5 pr-3 font-medium">Name</th>
+              <th className="py-1.5 pr-3 font-medium">Kind</th>
+              <th className="py-1.5 pr-3 font-medium">Target</th>
+              <th className="py-1.5 font-medium">What it catches</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-surface-border">
             {[
               ["Client portal", "Website", "https://portal.client.com", "the portal answering with an error page"],
               ["Portal certificate", "SSL expiry", "https://portal.client.com", "a certificate that expires over a weekend"],
               ["Portal mail", "DNS", "https://mail.client.com", "mail stopping because the name no longer resolves"],
             ].map(([exampleName, exampleKind, exampleTarget, catches]) => (
-              <tr key={exampleName} style={{ borderTop: "1px solid #1e293b" }}>
-                <td style={{ padding: "6px 12px 6px 0", color: "#cbd5e1" }}>{exampleName}</td>
-                <td style={{ padding: "6px 12px 6px 0", color: "#94a3b8" }}>{exampleKind}</td>
-                <td style={{ padding: "6px 12px 6px 0", color: "#e2e8f0" }}>{exampleTarget}</td>
-                <td style={{ padding: "6px 0", color: "#94a3b8" }}>{catches}</td>
+              <tr key={exampleName}>
+                <td className="py-1.5 pr-3 text-gray-300">{exampleName}</td>
+                <td className="py-1.5 pr-3 text-gray-500">{exampleKind}</td>
+                <td className="py-1.5 pr-3 text-gray-200">{exampleTarget}</td>
+                <td className="py-1.5 text-gray-500">{catches}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p style={{ margin: 0, fontSize: 13, color: "#94a3b8" }}>
-          Nothing is checked until <strong style={{ color: "#cbd5e1" }}>Uptime monitors</strong> is switched on under
+        <p className="text-xs text-gray-500">
+          Nothing is checked until <strong className="text-gray-300">Uptime monitors</strong> is switched on under
           Administration → Configuration → Service Alerts &amp; Monitoring. Targets have to be reachable from the
           internet — a private or link-local address is refused, with the reason written on the alert. The certificate
           and DNS checks use the host in the address, so a path on the end is ignored. Full walkthrough in{" "}
-          <Link to="/help/walkthroughs/uptime-monitors" style={{ color: "#93c5fd" }}>Help → Uptime Monitors</Link>.
+          <Link to="/help/walkthroughs/uptime-monitors" className="text-cyber-300 hover:text-cyber-200">Help → Uptime Monitors</Link>.
         </p>
       </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}>
-        <input placeholder="Name" value={name} onChange={e => setName(e.target.value)} style={{ padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />
-        <select value={kind} onChange={e => setKind(e.target.value)} style={{ padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }}>
+      <div className="flex flex-wrap items-center gap-2">
+        <input placeholder="Name" value={name} onChange={e => setName(e.target.value)} className="input-field w-auto" />
+        <select value={kind} onChange={e => setKind(e.target.value)} className="input-field w-auto">
           <option value="website">Website</option>
           <option value="ssl">SSL expiry</option>
           <option value="dns">DNS</option>
         </select>
-        <input placeholder="https://target" value={url} onChange={e => setUrl(e.target.value)} style={{ minWidth: 240, padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />
-        {kind === "website" && <input placeholder="Expect status" value={expectStatus} onChange={e => setExpectStatus(e.target.value)} style={{ width: 110, padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />}
-        {kind === "ssl" && <input placeholder="Warn days" value={sslWarnDays} onChange={e => setSslWarnDays(e.target.value)} style={{ width: 100, padding: 8, background: "#0f172a", border: "1px solid #334155", color: "#e2e8f0", borderRadius: 6 }} />}
-        <button onClick={create} style={{ padding: "8px 16px", background: "#2563eb", border: "none", color: "#fff", borderRadius: 6, cursor: "pointer" }}>Add monitor</button>
+        <input placeholder="https://target" value={url} onChange={e => setUrl(e.target.value)} className="input-field w-auto min-w-[240px]" />
+        {kind === "website" && <input placeholder="Expect status" value={expectStatus} onChange={e => setExpectStatus(e.target.value)} className="input-field w-28" />}
+        {kind === "ssl" && <input placeholder="Warn days" value={sslWarnDays} onChange={e => setSslWarnDays(e.target.value)} className="input-field w-28" />}
+        <button onClick={create} className="btn-primary text-sm">Add monitor</button>
       </div>
-      {message && <p style={{ color: "#93c5fd" }}>{message}</p>}
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead><tr style={{ textAlign: "left", color: "#94a3b8" }}><th>Name</th><th>Kind</th><th>Target</th><th>Enabled</th></tr></thead>
-        <tbody>
-          {services.map(s => (
-            <tr key={s.id} style={{ borderTop: "1px solid #1e293b" }}>
-              <td>{s.name}</td><td>{s.monitorKind}</td><td>{s.monitorUrl}</td><td>{s.enabled ? "yes" : "no"}</td>
-            </tr>
-          ))}
-          {services.length === 0 && <tr><td colSpan={4} style={{ padding: 16, color: "#64748b" }}>No uptime monitors yet.</td></tr>}
-        </tbody>
-      </table>
+      {message && <p className="text-sm text-cyber-300">{message}</p>}
+      <div className="card p-0 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-left text-xs uppercase text-gray-500">
+            <tr><th className="px-3 py-2 font-medium">Name</th><th className="px-3 py-2 font-medium">Kind</th><th className="px-3 py-2 font-medium">Target</th><th className="px-3 py-2 font-medium">Enabled</th></tr>
+          </thead>
+          <tbody className="divide-y divide-surface-border">
+            {services.map(s => (
+              <tr key={s.id}>
+                <td className="px-3 py-2 text-gray-200">{s.name}</td>
+                <td className="px-3 py-2 text-gray-400">{s.monitorKind}</td>
+                <td className="px-3 py-2 text-gray-400">{s.monitorUrl}</td>
+                <td className="px-3 py-2 text-gray-400">{s.enabled ? "yes" : "no"}</td>
+              </tr>
+            ))}
+            {services.length === 0 && <tr><td colSpan={4} className="px-3 py-8 text-center text-gray-500">No uptime monitors yet.</td></tr>}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

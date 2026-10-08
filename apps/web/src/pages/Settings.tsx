@@ -6,6 +6,7 @@ import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, U
 import api from "../api";
 import toast from "react-hot-toast";
 import { Permission, LANDING_PAGES, resolveLandingPagePath } from "@C7NTAX/shared";
+import { PageHeader } from "../components/ui";
 
 const LANDING_OPTIONS = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -84,7 +85,7 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
-      <div><h2 className="text-lg font-semibold text-white">Settings</h2><p className="text-sm text-gray-400 mt-0.5">Account and system configuration</p></div>
+      <PageHeader variant="section" title="Settings" subtitle="Account and system configuration" />
 
       <div className="card scroll-mt-6" id="profile">
         <h3 className="font-semibold text-white mb-4">Profile</h3>

@@ -3,6 +3,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, FolderKanban, Calendar, DollarSign, CheckCircle, Clock } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 interface Project{id:string;name:string;description?:string;companyId?:string;status:string;priority:string;startDate?:string;endDate?:string;budget:number;budgetSpent?:number;}
 
@@ -21,7 +22,7 @@ export function ProjectsPage(){
 
   return(<div className="space-y-4 animate-fade-in">
     <div className="flex items-center justify-between flex-wrap gap-3">
-      <div><h2 className="text-lg font-semibold text-white">Projects</h2><p className="text-sm text-gray-400">{projects.length} projects</p></div>
+      <PageHeader variant="section" title="Projects" subtitle={<>{projects.length} projects</>} />
       <button onClick={()=>setShowNew(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16}/>New Project</button>
     </div>
 

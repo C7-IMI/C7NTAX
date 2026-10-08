@@ -47,9 +47,35 @@ one.
 
 | Screen | Redesigned form |
 |---|---|
+| **Every standard page** | A one-row header — the page's name, its description and its actions on one line — drawn by `PageHeader`, so it is the same shape everywhere. |
+| **The bar above every page** | One line instead of three, in `Layout.tsx`: the section's name and description, with the trail dropped from it. |
 | **Tickets** (list) | Title and toolbar on one row, so the list begins higher up. |
-| **Ticket detail** | Five grouped tabs with sub-tabs, a compact single-row header, no fixed width. |
-| Everything else | Classic, while the rest of the redesign lands. |
+| **Ticket detail** | Five grouped tabs with sub-tabs, a compact single-row header. |
+| Sign-in, two-factor setup, Help, the console and the report designer | Their own layout, deliberately: they are not pages, and a compact header is not what they are for. |
+
+### How a page adopts it
+
+A page draws its header with `<PageHeader variant="section" … />` instead of an `h2`
+and a `p` of its own. The component renders **the markup the page had before** in the
+classic interface — the same `h2` classes, the same `p`, with or without the icon its
+heading used to carry — and the compact row in the redesigned one. That is what makes
+the conversion safe: it changes the redesigned screens and leaves the classic ones
+byte-identical.
+
+Two things to know when converting another page:
+
+- **`variant="section"` is not cosmetic.** `variant="page"` (the default) renders an
+  `h1` at `text-xl`, which is the header a page had *if* it already used this
+  component. A page that hand-rolled `<h2 className="text-lg …">` must pass
+  `variant="section"` or its classic layout changes.
+- **The classic branch adds no margin to the subtitle.** A page whose `<p>` carried
+  `mt-0.5` therefore lands 2px tighter in the classic interface — the one difference
+  this conversion makes there, and the reason the remainder is a mechanical change
+  rather than a silent one.
+
+A screen that has a *record* header rather than a page header — a ticket, a Kumo
+organization — keeps its own: those headers carry pills, states and actions that a
+title and a description cannot express.
 
 A screen opts in by calling `useRedesign()` and choosing its shape from the result.
 It must keep its classic shape working, under the same condition, so the switch is
@@ -97,22 +123,47 @@ never a one-way door.
 | `apps/web/src/hooks/useNavigationStyle.ts` | Resolves the three switches into `interfaceStyle`, and exports `useRedesign()` for screens. |
 | `packages/shared/src/appConfiguration.ts` | The `interfaceStyle` field in the Workspace section. |
 | `apps/web/src/components/MyAccountMenu.tsx` | The **Interface** switch in Appearance. |
+| `apps/web/src/components/ui/PageHeader.tsx` | The one-row page header, and the classic markup it still draws. |
+| `apps/web/src/components/Layout.tsx` | The bar above every page, one line in the redesign and three in classic. |
 | `apps/web/src/pages/Tickets.tsx` | `TICKET_TAB_GROUPS`, and both shapes of the list and the detail. |
+| `apps/web/src/pages/*` (40 files) | Each page's header, converted to `PageHeader variant="section"`. |
+
+## What the compact header costs
+
+Two things are deliberately not in the redesigned bar above the page:
+
+- **The breadcrumb trail.** At 1280px the header toolbar takes 644px of the 1080px
+  row, leaving about 364px; a trail needs 272px of that and a description about 500px.
+  One of them fits. The description is the one that is not available anywhere else on
+  the screen — the rail already shows which section is lit, and a record carries its
+  own trail — so the trail is what goes.
+- **A full description on a narrow window.** With the trail out of the way the
+  description sits beside the title and truncates when the window is short. At 1600px
+  and above it reads in full. The classic interface keeps both, on three lines.
+
+Nothing is hidden that is not reachable: the trail is on the pages that navigate
+backwards, and the section's description is in the Help and under
+Administration → Configuration.
 
 ## Reverting the change in code
 
 Reversing it is subtraction; nothing else depends on it.
 
-1. `Tickets.tsx` — delete the `redesign` branches, the `TicketTabGroup` type and
+1. `PageHeader.tsx` — delete the `useRedesign()` call, the `variant` and `icon` props'
+   redesigned branch, and this file's reference to it; the classic branches are what
+   the pages rendered before, so the 40 converted pages can stay as they are.
+2. `Layout.tsx` — delete the `redesign` branch of the header (restore the single
+   three-line block) and the `const redesign = …` line.
+3. `Tickets.tsx` — delete the `redesign` branches, the `TicketTabGroup` type and
    `TICKET_TAB_GROUPS`, and restore `className="space-y-6 animate-fade-in max-w-4xl"`
    on the detail root and the two-row header.
-2. Delete `useRedesign()` from `useNavigationStyle.ts`, and this file.
-3. `uiFlags.ts` — remove `UI_REDESIGN`, `UI_REDESIGN_AVAILABLE`, `redesignOverride`,
+4. Delete `useRedesign()` from `useNavigationStyle.ts`, and this file.
+5. `uiFlags.ts` — remove `UI_REDESIGN`, `UI_REDESIGN_AVAILABLE`, `redesignOverride`,
    `setUiRedesign` and `c7_ui_redesign` from `FlagStorageKey`.
-4. `appConfiguration.ts` — remove the `interfaceStyle` field from the Workspace section.
-5. `MyAccountMenu.tsx` — remove the **Interface** chip row, and the
+6. `appConfiguration.ts` — remove the `interfaceStyle` field from the Workspace section.
+7. `MyAccountMenu.tsx` — remove the **Interface** chip row, and the
    `interfaceStyle`/`setInterfacePreference`/`UI_REDESIGN_AVAILABLE` uses.
-6. `HelpDoc.tsx` — remove the *Interface* walkthrough, its Index row, and the two FAQ
+8. `HelpDoc.tsx` — remove the *Interface* walkthrough, its Index row, and the FAQ
    answers that mention the switch.
 
 The browser flag it leaves behind is ignored once the code is gone and can be cleared

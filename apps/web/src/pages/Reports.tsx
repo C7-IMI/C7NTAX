@@ -13,6 +13,7 @@ import { downloadCsv } from "../lib/csv";
 import { ReportBody, exportCsv, exportExcel, exportPdf, money, number, printReport, sectionsToTables, type Section } from "../components/reports/reportKit";
 import { REPORT_BY_ID, REPORT_TYPE_OPTIONS, REVIEW_REPORTS, STANDARD_REPORTS, type StandardReport } from "../components/reports/standardReports";
 import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog";
+import { PageHeader } from "../components/ui";
 
 const TABS: Array<{ id: string; label: string; icon: LucideIcon; to: string }> = [
   { id: "dashboard", label: "Dashboards", icon: BarChart3, to: "/reports" },
@@ -81,10 +82,7 @@ export function ReportsPage({ tab: initialTab, period }: { tab?: string; period?
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Reporting</h2>
-          <p className="text-sm text-gray-400">Dashboards, reports and analytics — every figure computed from the same source</p>
-        </div>
+        <PageHeader variant="section" title="Reporting" subtitle="Dashboards, reports and analytics — every figure computed from the same source" />
         <div className="flex items-center gap-2">
           <Link to="/reports/custom" className="btn-secondary text-sm flex items-center gap-2"><Filter size={14} /> Custom Reports</Link>
           <Link to="/reports/reviews" className="btn-primary text-sm flex items-center gap-2"><Presentation size={14} /> Business Reviews</Link>

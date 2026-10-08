@@ -7,6 +7,7 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 interface RoleRow {
   id: string; name: string; systemRole: string; permissions: string[];
@@ -235,10 +236,7 @@ export function RolesPage() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Manage Roles</h2>
-          <p className="text-sm text-gray-400">{roles.length} roles</p>
-        </div>
+        <PageHeader variant="section" title="Manage Roles" subtitle={<>{roles.length} roles</>} />
         <div className="relative">
           <button
             onClick={() => setCreateDropdown(!createDropdown)}

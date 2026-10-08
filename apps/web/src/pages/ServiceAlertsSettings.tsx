@@ -6,6 +6,7 @@ import {
   AlertTriangle, Plus, Pencil, Trash2, RefreshCw, Globe, Rss, TrendingDown,
   Power, EyeOff, Activity, TerminalSquare,
 } from "lucide-react";
+import { PageHeader } from "../components/ui";
 
 const VERDICT_DOT: Record<string, string> = {
   clear: "bg-emerald-500",
@@ -198,10 +199,7 @@ export function ServiceAlertsSettingsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Service Alerts — Administration</h2>
-          <p className="text-sm text-gray-400">Configure monitored services, RSS/status feeds, and the outage alerting mechanism.</p>
-        </div>
+        <PageHeader variant="section" title="Service Alerts — Administration" subtitle="Configure monitored services, RSS/status feeds, and the outage alerting mechanism." />
         <button onClick={runCheck} disabled={refreshing} className="btn-primary text-sm flex items-center gap-1.5">
           <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
           {refreshing ? "Checking…" : "Run Monitor Check Now"}

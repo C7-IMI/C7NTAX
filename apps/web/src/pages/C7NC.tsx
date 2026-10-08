@@ -19,6 +19,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { DataSourceNote } from "../components/DataSourceNote";
 import { Tabs } from "../components/ui/Tabs";
 import { OutlookAddInPage } from "./OutlookAddIn";
+import { PageHeader } from "../components/ui";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -655,10 +656,7 @@ export function C7NCPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-lg font-semibold text-white">C7NC</h2>
-          <p className="text-sm text-gray-400 mt-0.5">{hubSentence}</p>
-        </div>
+        <PageHeader variant="section" title="C7NC" subtitle={hubSentence} />
         {tab !== "add" ? (
           <button onClick={() => { setSelectedType(null); setShowAdd(true); setTab("add"); }} className="btn-primary flex items-center gap-2">
             <Plus size={16} /> Connect a service

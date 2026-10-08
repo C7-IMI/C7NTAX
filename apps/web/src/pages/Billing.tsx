@@ -15,6 +15,7 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 // Types
 interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; sourceTickets?: Array<{ id: string; ticketNumber: string }>; }
@@ -66,10 +67,7 @@ export function BillingPage({ tab: initialTab }: { tab?: string }) {
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Billing</h2>
-          <p className="text-sm text-gray-400">Invoicing, agreements, payments, and time tracking</p>
-        </div>
+        <PageHeader variant="section" title="Billing" subtitle="Invoicing, agreements, payments, and time tracking" />
       </div>
 
       {/* Tab Navigation */}

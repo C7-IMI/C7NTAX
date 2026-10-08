@@ -8,6 +8,7 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 export function KumoDocumentsPage() {
   const [folders, setFolders] = useState<any[]>([]);
@@ -210,12 +211,7 @@ export function KumoDocumentsPage() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Kumo Documents</h2>
-          <p className="text-sm text-gray-400">
-            {docFilter || companyParam ? `${visibleDocuments.length} of ${documents.length} documents` : `${documents.length} documents`}
-          </p>
-        </div>
+        <PageHeader variant="section" title="Kumo Documents" subtitle={docFilter || companyParam ? `${visibleDocuments.length} of ${documents.length} documents` : `${documents.length} documents`} />
         <div className="flex gap-2">
           {companyParam && (
             <button onClick={clearCompanyFilter} className="btn-secondary text-sm flex items-center gap-1" title="Show every client's documents">

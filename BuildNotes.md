@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.057 | Last Updated: 2026-10-08
+## Version: 2026.10.8.058 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,55 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.058 — The redesigned header, on every page
+
+2026.10.8.057 converted the two screens the brief named. This converts the rest: the header
+every page draws, the bar above every page, and the three pages that had never adopted the
+design system at all. The classic interface is unchanged — that is the constraint the whole
+conversion was built around, and it is why the shared header component reproduces the exact
+markup a page had before rather than something better.
+
+- **[New]** **`PageHeader` draws two shapes, and a page does not have to know which.** The
+  same component renders **one row** — the page's name, its description and its actions on
+  one line — in the redesigned interface, and the markup the page had before in the classic
+  one: the same `h2` classes, the same `p`, and an `icon` prop for the headings that named
+  their subject with a glyph. `variant="section"` is what a page passes when it used to
+  hand-roll an `h2`; `variant="page"` is the `h1` shape the eleven pages already using this
+  component had. Converting a page is therefore a change to the redesigned screens and
+  *not* to the classic ones, which is what made it safe to do forty of them.
+- **[Update]** **Every standard page now draws its header the redesigned way** — 40 files,
+  including Clients, Contacts, Assets, Boards, Billing, Quotes, Reports, Custom Reports,
+  the product catalog, Users, Roles, Kumo, Service Alerts, Uptime Monitors, the
+  configuration hub, Assistant, AI Actions and What's New. Two kinds of surface
+  deliberately keep their own layout, because a compact header is not what they are for:
+  sign-in, two-factor setup and Help, and the console and the report designer, which are
+  full-bleed tools rather than pages. A *record* header — a ticket, a Kumo organization —
+  keeps its own too: those carry pills, states and actions a title and a description cannot
+  express.
+- **[Update]** **The bar above every page is one line instead of three.** Measured at
+  1280px: **91px → 47px, on every screen in the application** — 44px of content that no
+  longer has to be scrolled to. The trail is not repeated in it: at that width the header
+  toolbar takes 644px of a 1080px row, a trail needs 272px of the 364px left and a
+  description about 500px, and of the two the description is the one that is not available
+  anywhere else on the screen. The rail already shows which section is lit, and a record
+  carries its own trail — so the trail is what goes, and the reasoning is written down
+  rather than left to whoever notices next.
+- **[Update]** **Three pages that had never adopted the design system now use it.** Uptime
+  Monitors, Quotes and AI Actions were built with inline colours (`#0f172a`, `#cbd5e1`)
+  rather than the shared classes, which is why they were the only screens that ignored the
+  colour scheme and the light theme. They now use `card`, `table`, `input-field`,
+  `btn-primary` and the theme's greys, so they follow the palette like everything else.
+- **[Update]** **Help's *The Interface* walkthrough** gained the two header rows, a *Which
+  pages* section that names what is converted and what is deliberately not, and two new
+  answers — where the breadcrumb in the top bar went, and how much the chrome now costs.
+  [INTERFACE-ROLLBACK.md](INTERFACE-ROLLBACK.md) documents the conversion rule, the two
+  things to know before converting another page, what the compact header costs, and the
+  code-level revert.
+- **[Fix]** **The redesigned header no longer overflows into the toolbar.** The first
+  attempt at one row let the breadcrumb keep its width while the description was squeezed
+  to zero and the row spilled under the buttons. It is one row that fits, verified on
+  twelve pages, with the description truncating rather than colliding.
 
 ## 2026.10.8.057 — The redesigned ticket screens, with the classic layout one click away
 

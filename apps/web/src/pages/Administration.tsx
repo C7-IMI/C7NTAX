@@ -136,7 +136,7 @@ export function AuditLogsSection() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
-      <div><h2 className="text-lg font-semibold text-white">Audit Logs</h2><p className="text-sm text-gray-400 mt-0.5">Every change across the entire application — creation, updates, deletions, settings, and permissions</p></div>
+      <PageHeader variant="section" title="Audit Logs" subtitle="Every change across the entire application — creation, updates, deletions, settings, and permissions" />
       {loading ? <TableSkeleton /> : logs.length === 0 ? <div className="card text-center py-8 text-gray-500">No audit log entries yet</div> : (
         <div className="space-y-3">
           {logs.map(day => (

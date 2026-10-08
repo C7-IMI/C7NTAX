@@ -3,6 +3,7 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, BookOpen, Search, Eye, ThumbsUp, Sparkles, Check, Trash2, ExternalLink } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PageHeader } from "../components/ui";
 
 interface Article{id:string;title:string;slug:string;excerpt?:string;content?:string;status:string;visibility:string;tags:string[];viewCount:number;helpfulCount:number;updatedAt:string;aiGenerated?:boolean;sourceTicketId?:string|null;reviewNote?:string|null;}
 
@@ -39,7 +40,7 @@ export function KnowledgeBasePage(){
 
   return(<div className="space-y-4 animate-fade-in">
     <div className="flex items-center justify-between flex-wrap gap-3">
-      <div><h2 className="text-lg font-semibold text-white">Knowledge Base</h2><p className="text-sm text-gray-400">{articles.length} articles</p></div>
+      <PageHeader variant="section" title="Knowledge Base" subtitle={<>{articles.length} articles</>} />
       <button onClick={()=>setShowNew(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16}/>New Article</button>
     </div>
 
