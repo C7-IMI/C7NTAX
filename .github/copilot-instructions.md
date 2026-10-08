@@ -6,6 +6,15 @@
 - Include the corresponding BuildNotes version in each Retrace entry for a project change. For prompts with no project change, log the prompt in Retrace and state that no BuildNotes entry applies.
 - Before finishing a task, verify the new BuildNotes entry appears at the top, the generated fallbacks match it, and the prompt has been recorded in Retrace.
 
+# The API Document Is Part Of The Change
+
+The API has a generated specification (`docs/openapi.yaml`) and a written guide (`docs/API.md`), and both are part of the change that alters the API rather than a follow-up to it.
+
+- Whenever a **route, its permission, its auth, or its request/response shape** changes, run `node scripts/generate-openapi.mjs`, then `node scripts/check-api-docs.mjs`. A new or changed operation that deserves prose a parser cannot invent (a summary, an example, a note about behaviour) gets its entry updated in `docs/api-operations.json`, keyed by `METHOD /path`.
+- `node scripts/check-api-docs.mjs` (also `pnpm guard:api-docs`) fails when the document is behind the routes, when it documents an operation that no longer exists, and when a curated entry names a route that has been renamed or removed. Run it after any route change, alongside `check-route-guards.mjs`.
+- The guide carries the maintenance rule in its §13 and is the place to explain a new capability to whoever is connecting an external system to this one — the RMM, SIEM and event-gateway recipes, the API-key model, the webhook signature. If a change alters how an integrator authenticates, pages, is rate limited or receives events, this file changes in the same commit.
+- API keys and the event gateway are user-facing surfaces too: `Administration → API access` (`apps/web/src/pages/ApiAccess.tsx`) and the `api-access` Help walkthrough must stay true to the API at the same time.
+
 # In-App Help Is Part Of The Change
 
 The product ships its own documentation at `/help` (`apps/web/src/pages/HelpDoc.tsx`). It is written by hand, so it drifts unless updating it is treated as part of the change rather than as a follow-up.

@@ -12,6 +12,7 @@ import { ClientDetailPage } from "./pages/ClientDetail";
 import { ContactsPage } from "./pages/Contacts";
 import { BillingPage } from "./pages/Billing";
 import { CloudConnectPage } from "./pages/CloudConnect";
+import { ApiAccessPage } from "./pages/ApiAccess";
 import { UsersPage } from "./pages/Users";
 import { RolesPage } from "./pages/Roles";
 import { KumoDashboardPage } from "./pages/Kumo";
@@ -143,6 +144,7 @@ function ProtectedRoutes() {
         <Route path="/reports/custom" element={<CustomReportsPage />} />
         <Route path="/reports/custom/:id/design" element={<ReportDesignerPage />} />
         <Route path="/cloudconnect" element={<CloudConnectPage />} />
+        <Route path="/admin/api" element={<ApiAccessPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/roles" element={<RolesPage />} />
         <Route path="/kumo" element={<KumoDashboardPage />} />

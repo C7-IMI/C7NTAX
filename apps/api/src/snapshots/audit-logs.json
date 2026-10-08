@@ -212640,5 +212640,232 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T07:30:04.250Z"
+  },
+  {
+    "id": "0c752193-830e-4a6c-b060-3b3fb53fcd8e",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "api-keys",
+    "changes": {
+      "name": "RMM verification",
+      "sourceKind": "rmm",
+      "description": "probe",
+      "permissions": [
+        "ticket:create",
+        "ticket:view"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:53.844Z"
+  },
+  {
+    "id": "ec113a78-0881-42e0-88ff-fb607e264520",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "device": "RP-SRV-01",
+        "freePercent": 6
+      },
+      "kind": "alert",
+      "title": "Disk 0 on RP-SRV-01 is 94% full",
+      "client": {
+        "name": "Acme Corporation"
+      },
+      "source": "rmm",
+      "severity": "high",
+      "externalId": "rmm-verification-1",
+      "description": "Free space below the 10% threshold."
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:53.903Z"
+  },
+  {
+    "id": "78a01af8-b59d-4e70-989b-eb0d99f08536",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "device": "RP-SRV-01",
+        "freePercent": 6
+      },
+      "kind": "alert",
+      "title": "Disk 0 on RP-SRV-01 is 94% full",
+      "client": {
+        "name": "Acme Corporation"
+      },
+      "source": "rmm",
+      "severity": "high",
+      "externalId": "rmm-verification-1",
+      "description": "Free space below the 10% threshold."
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:53.954Z"
+  },
+  {
+    "id": "1e5fca90-1c12-4b26-b841-1bced8308032",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "risk": 92,
+        "rule": "impossible-travel"
+      },
+      "kind": "detection",
+      "title": "Impossible travel for j.smith@acme.test",
+      "client": {
+        "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
+      },
+      "source": "splunk",
+      "severity": "critical",
+      "externalId": "siem-verification-1",
+      "occurredAt": "2026-10-08T07:30:53.972Z"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:53.990Z"
+  },
+  {
+    "id": "fa032da2-aaf1-48c4-8692-e6e3a8a39aa7",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "title": "Technician key event",
+      "client": {
+        "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
+      },
+      "source": "rmm",
+      "externalId": "tech-1"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:54.055Z"
+  },
+  {
+    "id": "9376f229-18c9-4d93-9284-3a6e34b6cc82",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "0e9b1b13-2bff-4e78-9a25-cf19deecc016",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:54.066Z"
+  },
+  {
+    "id": "fcc1cc8b-814d-43cf-af61-0bbcca3372ed",
+    "action": "api-keys:delete",
+    "entity": "api-keys",
+    "entityId": "0e9b1b13-2bff-4e78-9a25-cf19deecc016",
+    "changes": {
+      "reason": "probe finished"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:54.082Z"
+  },
+  {
+    "id": "a53ebd22-fa9f-4fee-98a3-18e9a1555b49",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "device": "RP-SRV-01",
+        "freePercent": 6
+      },
+      "kind": "recovery",
+      "title": "Disk space recovered on RP-SRV-01",
+      "client": {
+        "name": "Acme Corporation"
+      },
+      "source": "rmm",
+      "severity": "info",
+      "externalId": "rmm-verification-1",
+      "description": "Free space below the 10% threshold."
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:53.966Z"
+  },
+  {
+    "id": "7930964b-6e66-498c-a090-1a8e5891e01c",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "api-keys",
+    "changes": {
+      "name": "SIEM verification",
+      "sourceKind": "siem",
+      "permissions": [
+        "ticket:create"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:53.974Z"
+  },
+  {
+    "id": "2dacc43f-4587-4195-841c-db3852b040a7",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "api-keys",
+    "changes": {
+      "name": "Technician-owned verification",
+      "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+      "permissions": [
+        "ticket:create",
+        "user:manage",
+        "billing:manage"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:54.045Z"
+  },
+  {
+    "id": "830ac0bb-e817-412b-8150-d3e3f22180eb",
+    "action": "api_key.created",
+    "entity": "api_key",
+    "entityId": "0ab9cee4-0fb0-4d0a-b693-9d0becf3008f",
+    "changes": {
+      "name": "PROBE api access — RMM tenant",
+      "expiresAt": null,
+      "sourceKind": "rmm",
+      "permissions": [
+        "ticket:create",
+        "ticket:view",
+        "servicealert:view"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:45:11.419Z"
+  },
+  {
+    "id": "d3fd4fc6-bf85-4f1a-ae62-e819c7a02f93",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "api-keys",
+    "changes": {
+      "name": "PROBE api access — RMM tenant",
+      "expiresAt": null,
+      "sourceKind": "rmm",
+      "permissions": [
+        "ticket:create",
+        "ticket:view",
+        "servicealert:view"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:45:11.424Z"
   }
 ]
