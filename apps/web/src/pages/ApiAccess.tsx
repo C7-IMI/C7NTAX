@@ -91,7 +91,7 @@ const PRESETS: { key: string; label: string; why: string; scopes: string[] }[] =
 const SOURCE_LABELS: Record<string, string> = {
   rmm: "RMM",
   siem: "SIEM",
-  flexpoint: "FlexPoint",
+  flexpoint: "FlexPoint Payment Solutions",
   quickbooks: "QuickBooks",
   monitoring: "Monitoring",
   scheduler: "Scheduler",

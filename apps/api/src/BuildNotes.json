@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.8.013",
+    "date": "2026-10-08",
+    "title": "The connectors were audited against the vendors' own APIs, and CloudConnect now shows what is connected",
+    "changes": [
+      {
+        "text": "**Connectors that would have connected and then returned nothing.** *Pax8* now mints a token at `/v1/token` with `audience` in a JSON body and reads companies at `/v1/companies` (`/v1/identity` and `/v1/customers` are not endpoints). *QuickBooks* exchanges its **refresh token** at the Intuit OAuth host with Basic client-id:secret, because an access token lasts one hour and a connection holding only one works once. *IT Glue* stops sending the unsupported `include=organization` (a 400 on every call), pages with `page[size]`/`page[number]`, and reads documents through `/organizations/{id}/relationships/documents` since there is no top-level document list. *SentinelOne* takes the tenant's own console URL instead of a shared `usea1` host, authenticates with `ApiToken`, pages by `pagination.nextCursor`, and validates against `/system/info`. *Proofpoint* uses HTTP Basic rather than headers the SIEM API does not read, reads each endpoint's **named** array (`messagesBlocked`, `messagesDelivered`, `clicksPermitted`, `clicksBlocked`, `issues`), and takes multi-day history in hourly slices because `sinceSeconds` is capped at 3600. *Microsoft 365* no longer sends `$top` to `/subscribedSkus` (which rejects it), caps `signInActivity` reads at `$top=500`, and has dropped a refresh-token grant that the client-credentials flow cannot use. *HaloPSA* sends the `scope` its token request requires, authenticates hosted tenants at `auth.<domain>/token?tenant=…` (falling back to the tenant's own `/auth/token`), pages with `pageinate`/`page_size`/`page_no`, and no longer reads `/software`, which is not a resource.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Every connector now describes itself.** `GET /api/cloudconnect/types` serves a catalogue (`CONNECTOR_CATALOGUE` in `apps/api/src/routes/cloudconnect.ts`) in which all 16 kinds carry labelled credential fields with a hint saying where the value comes from in the vendor's own product, the options that connector actually honours with a hint for each, a guidance note about what tends to go wrong, and a link to the vendor's API documentation. Required credentials are derived from the catalogue rather than kept in a second list beside it — the two had drifted, which is how the form came to ask for an API key where the vendor wanted an application id and secret.",
+        "type": "Update"
+      },
+      {
+        "text": "**Options that did nothing have been removed, and options that were missing have been added.** Microsoft 365's advertised \"sync interval\" was read by nothing in the product, so it is gone and the guidance says syncing happens when you press Sync; its user, group and licence switches now gate real reads, and a **groups** switch was added. ConnectWise honours a page size, and each connector gained the paging and lookback settings its adapter reads, from AutoTask's `MaxRecords` to SentinelOne's history window.",
+        "type": "Update"
+      },
+      {
+        "text": "**Synced records were being duplicated on every sync.** Any record without an `id` was stored under a freshly invented random one, so each sync inserted the whole set again as new rows. Identity is now the vendor's id where there is one, and a hash of the payload where there is not — stable across syncs — and the sync response reports how many records needed a derived id.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Connector data says where it came from.** A source note (`DataSourceNote`) names the system on a connection's heading, on any panel showing data an integration brought in, and under a connection's records list: \"Data from FlexPoint Payment Solutions · every record here was read from the vendor, not entered in C7NTAX\". A FlexPoint invoice and a C7NTAX-native invoice look alike otherwise, and who owns a number is the first question anybody asks.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**CloudConnect is split four ways** — **Connected** (what is configured, whether it is healthy, and where its data comes from), **Add a connector** (the catalogue), **Configuration** (pick a connection, then edit its credentials, options, sync history and the records it brought in) and **Email connectors**. It previously opened on a grid of every connector type, healthy or not, and the per-connection work was behind dialogs.",
+        "type": "Update"
+      },
+      {
+        "text": "**The FlexPoint connector is now FlexPoint Payment Solutions** everywhere it is named — the navigation, the connector type, the API-access labels and the page heading.",
+        "type": "Update"
+      },
+      {
+        "text": "**Two verification harnesses.** `apps/api/probe-connector-catalogue.mjs` (47 checks) holds the catalogue to the vendors' authentication and to what the adapters actually read — a setting nothing reads fails the probe. `apps/api/probe-connector-adapters.mts` (91 checks) runs all fourteen adapters against a stub of each vendor and asserts the request that would have been sent: the host, the scheme, the paging, the headers and the unwrapping.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.012",
     "date": "2026-10-08",
     "title": "The Microsoft 365 OAuth app is deployed from the connector",

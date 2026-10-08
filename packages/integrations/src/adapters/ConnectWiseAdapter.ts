@@ -30,20 +30,22 @@ export class ConnectWiseAdapter implements IIntegrationAdapter {
   private async fetchAll(
     cfg: IntegrationConfig,
     path: string,
-    pageSize: number = 200
+    pageSize?: number
   ): Promise<unknown[]> {
+    const size = pageSize ?? Math.min(Math.max(Number(cfg.settings?.pageSize ?? 200) || 200, 1), 1000);
+    const maxPages = Math.min(Number(cfg.settings?.maxPages ?? 20) || 20, 200);
     const items: unknown[] = [];
     let page = 1;
-    while (true) {
+    while (page <= maxPages) {
       const res = await fetch(
-        `${this.baseUrl(cfg)}${path}?pageSize=${pageSize}&page=${page}`,
+        `${this.baseUrl(cfg)}${path}?pageSize=${size}&page=${page}`,
         { headers: this.authHeaders(cfg) }
       );
       if (!res.ok) throw new Error(`ConnectWise ${path}: HTTP ${res.status}`);
       const data = (await res.json()) as any;
       const list = Array.isArray(data) ? data : data?.value || data?.items || [];
       items.push(...list);
-      if (list.length < pageSize) break;
+      if (list.length < size) break;
       page++;
     }
     return items;

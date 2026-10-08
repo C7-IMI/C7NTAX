@@ -5112,3 +5112,48 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **`isFallbackPublicClient` only when there is no secret**: forgot it and the delegated code exchange is rejected; set it on an app-only registration and Entra allows a public client that should not exist.
 - **A second secret on every reused run** is honest but untidy — the natural follow-up is to offer removing the previous secret, which needs the `keyId` the deployment already records.
 - **The stub pattern is worth reusing for the other connectors**: an HTTP server implementing the vendor's contract, asserting the *call* as well as the answer, caught a wrong permission id and two UI bugs that reading the code had not.
+
+---
+
+### Prompt 258 — Auditing every connector against its vendor's API, and making CloudConnect say what is connected
+
+**Timestamp:** 2026-10-08 08:45 | **Status:** Complete | **Duration:** ~200 min
+
+**BuildNotes IDs:** **2026.10.8.013** — "The connectors were audited against the vendors' own APIs, and CloudConnect now shows what is connected"
+
+**Prompt**
+
+> Audit and configure these connector options based on their respective API docs to make sure they will actually work. extend the application and/or API so that the functionality wiithin C7NTAX will work.
+>
+> Display a note stating that where it is pulled from whenever a feature or function is using the connector. For instance, if an invice is being pulled in from Flexpoint, then there should be a small note that says the data comes from Flexpoint.
+>
+> Rename the Flexpoint Connector to Flexpoint Payment Solutions
+>
+> Redesign the CloudConnect page to be more intuitive. THe initial page should realistically only display active connectors, like a summary screen. Put the configurations in a seperate tab, if that makes sense. I'll let you decide how to present it in a logical and intuitive way that's easy to understand.
+
+**What I did**
+- **Audited all sixteen connectors against the vendors' published documentation before changing anything** — four research passes (PSA, billing, security, cloud) reading the official references, and where a vendor's docs are login-gated or a compiled SPA (ConnectWise, HaloPSA) saying so rather than guessing. The result was stark: six could never have worked, several would have connected and then returned nothing, and the working ones asked for credentials their vendor does not use.
+- **Rebuilt the six that could not work.** Azure (a pasted access token where ARM tokens last an hour) and AWS (an `Authorization` header with no signature — and 403 treated as success) were done in the previous session; this one finished Scoro, Kantata, Harmony Email and AutoTask. Scoro now posts the documented `{module}/list` body with the key, company account and paging; Kantata uses `api.mavenlink.com/api/v1` with `.json` paths and resolves the `{key,id}` reference maps; Harmony Email signs an application id and secret at `POST /v1.0/auth` for a JWT in `x-av-token` on the region's host; AutoTask resolves its zone from the documented `zoneInformation` call, asks for `Companies`, and follows `pageDetails.nextPageUrl`.
+- **Fixed the ones that would have connected and then quietly failed**: Pax8 (token endpoint and `audience`, and companies rather than customers), QuickBooks (refresh-token exchange at the Intuit OAuth host with Basic auth), IT Glue (no `include=organization`, `page[size]` paging, documents through their organisation), SentinelOne (the tenant's own console, `ApiToken`, cursor paging), Proofpoint (Basic auth, the named response arrays, hourly slices under the 3600-second ceiling), Microsoft 365 (`$top` not sent to `/subscribedSkus`, `$top=500` for `signInActivity`, the impossible refresh-token grant removed) and HaloPSA (a `scope` on the token request, the hosted auth host, `pageinate`/`page_size`/`page_no`, `/software` dropped).
+- **Wrote the catalogue as documentation rather than a form.** All 16 kinds now carry labelled credential fields whose hints say where the value lives in the vendor's product, the options that connector actually honours with a hint each, a guidance note, and a link to the API reference. Required credentials are *derived* from the catalogue — the old separate map had drifted, and that drift is exactly how the form came to ask for an API key where a vendor wanted an application id and secret.
+- **Deleted an option that did nothing and added the ones that were missing.** Microsoft 365 advertised a "sync interval" that no code in the product reads; it is gone, the guidance says syncing happens when you press Sync, and its user/group/licence switches now gate real reads (a groups switch was added). The other connectors gained the paging and history settings their adapters actually read.
+- **Fixed duplicated synced records.** Any record with no `id` was stored under `String(Math.random())`, so every sync appended the whole set again as new rows. Identity is now the vendor's id, or a hash of the payload when there is none, and the sync response reports how many records needed a derived id.
+- **Added source attribution** (`DataSourceNote` + `CONNECTOR_NAMES`): a connection's heading, any panel showing integrated data, and the records list all say which system the data came from, in the same voice — "Data from FlexPoint Payment Solutions · every record here was read from the vendor, not entered in C7NTAX".
+- **Redesigned CloudConnect into four tabs** — Connected (the summary: what is configured, its health, its source), Add a connector (the catalogue), Configuration (pick a connection, edit its credentials, options, sync history and records) and Email connectors. The page used to open on a grid of every type including the healthy ones, with per-connection work behind dialogs.
+- **Renamed FlexPoint to FlexPoint Payment Solutions** in the navigation, the connector type, the API-access labels and the page heading.
+- **Verified with two new harnesses, both kept**: `probe-connector-catalogue.mjs` (47 checks — the catalogue against the vendors' authentication and against what the adapters read, so an advertised setting nothing reads fails) and `probe-connector-adapters.mts` (91 checks — all fourteen adapters against a stub of each vendor, asserting the request that would have been sent). Plus the existing `probe-cloudconnect-status.mjs` (34) and the browser, where the Configuration tab was driven to confirm labelled fields with hints and the source notes.
+
+**Decisions worth remembering**
+- **The audit went first, and it changed the shape of the work.** Reading the vendor documentation before touching an adapter turned "make the connectors nicer" into "six of these cannot work", which is a different and more valuable job — and it is not something a code review can find, because the code looked plausible.
+- **A setting nothing reads is worse than no setting.** The Microsoft 365 sync interval had been advertised for as long as the catalogue existed. Removed, and the probe now fails if a future setting is not read somewhere.
+- **Derive the required credentials; never keep a second list.** Two lists that must agree eventually will not, and the failure mode is a form that demands something the vendor ignores while omitting what it needs.
+- **Identity must come from the vendor.** A random external id is not a fallback, it is a decision to duplicate every row on every sync. Hashing the payload is the honest fallback, and reporting the count makes it visible.
+- **ConnectWise and HaloPSA could not be confirmed officially** — ConnectWise's developer pages are login-gated and Halo's documentation is a compiled SPA. Both are noted as such in the guidance rather than presented as verified, and ConnectWise's own live servers were used as evidence for how the codebase is parsed.
+- **The four-tab split follows the two questions people actually ask**: "is it working?" and "change something about it". A single grid answered neither.
+
+**Notes for next time**
+- **A stub per vendor is cheap and catches what reading cannot.** `probe-connector-adapters.mts` patches `globalThis.fetch`, so an adapter can be run against a route table and its request inspected — this is how the `$top` on `subscribedSkus`, the missing `scope`, and the AutoTask zone all became assertions.
+- **Token-minting connectors exchange during validation**, so a recorder that is cleared before the sync will miss the exchange; assert on the validation calls, or the test passes for the wrong reason.
+- **`FLEXPOINT_RESOURCES` reads its switches by name** (`cfg.settings?.[key]`), so a property-access scan cannot see them — the catalogue probe falls back to literal-name matching for that connector.
+- **Not every connector has a definition for "all records".** Proofpoint is read in hourly slices (a two-day window is 48 requests per endpoint), and AutoTask, Scoro, HaloPSA, IT Glue and the rest all page rather than return everything, so a first sync of a large tenant is paced by design.
+- **The API workspace does not typecheck cleanly** (122 pre-existing errors, none introduced here) — it runs under `tsx`, so `tsc --noEmit` is a reference rather than a gate; the integrations package does typecheck cleanly and should stay that way.

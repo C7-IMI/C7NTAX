@@ -43,12 +43,9 @@ export class Microsoft365Adapter implements IIntegrationAdapter {
       }
     }
 
-    // If a refresh token is available, use it
-    if (cfg.credentials.refreshToken) {
-      return this.refreshAccessToken(cfg);
-    }
-
-    // Otherwise obtain a new app-only token via client credentials
+    // Obtain a new app-only token via client credentials. A stored refresh token is deliberately
+    // not used here: this connector authenticates as an application, and Microsoft does not issue
+    // refresh tokens for the client-credentials grant, so a "refresh" could only ever have failed.
     const { tenantId, clientId, clientSecret } = cfg.credentials;
     if (!tenantId || !clientId || !clientSecret) {
       throw new Error("Missing tenantId, clientId, or clientSecret");
@@ -79,50 +76,13 @@ export class Microsoft365Adapter implements IIntegrationAdapter {
       refresh_token?: string;
     };
 
-    // Update credentials in-place for reuse
+    // Cached in place for reuse within this process. The client-credentials grant never returns a
+    // refresh token — there is no user to refresh — so the only way to renew is to ask for another
+    // token, which the next call does once this one expires.
     cfg.credentials.accessToken = data.access_token;
     cfg.credentials.expiresAt = new Date(
       Date.now() + data.expires_in * 1000
     ).toISOString();
-    if (data.refresh_token) {
-      cfg.credentials.refreshToken = data.refresh_token;
-    }
-
-    return data.access_token;
-  }
-
-  private async refreshAccessToken(cfg: IntegrationConfig): Promise<string> {
-    const { tenantId, clientId, clientSecret, refreshToken } = cfg.credentials;
-    const res = await fetch(
-      `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type: "refresh_token",
-          client_id: clientId as string,
-          client_secret: clientSecret as string,
-          refresh_token: refreshToken as string,
-          scope: "https://graph.microsoft.com/.default",
-        }),
-      }
-    );
-
-    if (!res.ok) throw new Error(`Token refresh failed: ${res.status}`);
-
-    const data = (await res.json()) as {
-      access_token: string;
-      expires_in: number;
-      refresh_token?: string;
-    };
-
-    cfg.credentials.accessToken = data.access_token;
-    cfg.credentials.expiresAt = new Date(
-      Date.now() + data.expires_in * 1000
-    ).toISOString();
-    if (data.refresh_token) {
-      cfg.credentials.refreshToken = data.refresh_token;
-    }
 
     return data.access_token;
   }
@@ -134,11 +94,15 @@ export class Microsoft365Adapter implements IIntegrationAdapter {
     token: string,
     path: string,
     select?: string,
-    top: number = 999
+    top: number | null = 999
   ): Promise<unknown[]> {
     const results: unknown[] = [];
-    let url = this.graphUrl(`${path}?$top=${top}`);
-    if (select) url += `&$select=${select}`;
+    const params = new URLSearchParams();
+    // `$top` is omitted entirely for collections that do not accept it: `/subscribedSkus` rejects
+    // it, so appending it unconditionally broke every licence sync with a 400.
+    if (top != null) params.set("$top", String(top));
+    if (select) params.set("$select", select);
+    let url = this.graphUrl(`${path}${params.toString() ? `?${params.toString()}` : ""}`);
 
     while (url) {
       const res = await fetch(url, {
@@ -191,9 +155,14 @@ export class Microsoft365Adapter implements IIntegrationAdapter {
 
     try {
       const token = await this.getAccessToken(cfg);
+      // The switches the connector offers. Each one gates a real read rather than being recorded and
+      // ignored: a toggle that does nothing is worse than no toggle, because it is trusted.
+      const wantUsers = cfg.settings?.syncUsers !== false;
+      const wantGroups = cfg.settings?.syncGroups !== false;
+      const wantLicenses = cfg.settings?.syncLicenses !== false;
 
       // ── Sync Users ──
-      try {
+      if (wantUsers) try {
         const userSelect =
           "id,userPrincipalName,displayName,givenName,surname,mail,jobTitle,department,officeLocation,mobilePhone,businessPhones,usageLocation,accountEnabled";
         const users = (await this.fetchAll(
@@ -210,7 +179,8 @@ export class Microsoft365Adapter implements IIntegrationAdapter {
         // AuditLog.Read.All, so asking for it in the main select would break the whole user sync
         // on a tenant that cannot answer. A refusal here is reported and the sync continues.
         try {
-          const activity = (await this.fetchAll(token, "/users", "id,signInActivity")) as Array<Record<string, unknown>>;
+          // `$top` is capped at 500 for `signInActivity`; anything larger is rejected.
+          const activity = (await this.fetchAll(token, "/users", "id,signInActivity", 500)) as Array<Record<string, unknown>>;
           const byId = new Map(activity.map(a => [String(a.id), a.signInActivity as { lastSignInDateTime?: string } | undefined]));
           let withData = 0;
           for (const user of users) {
@@ -227,7 +197,7 @@ export class Microsoft365Adapter implements IIntegrationAdapter {
       }
 
       // ── Sync Groups ──
-      try {
+      if (wantGroups) try {
         const groups = (await this.fetchAll(
           token,
           "/groups",
@@ -241,10 +211,13 @@ export class Microsoft365Adapter implements IIntegrationAdapter {
       }
 
       // ── Sync Subscriptions (Licenses) ──
-      try {
+      if (wantLicenses) try {
+        // `/subscribedSkus` takes neither `$top` nor `$select`, so neither is sent.
         const subs = (await this.fetchAll(
           token,
-          "/subscribedSkus"
+          "/subscribedSkus",
+          undefined,
+          null
         )) as Array<Record<string, unknown>>;
 
         result.recordsProcessed += subs.length;
@@ -263,9 +236,9 @@ export class Microsoft365Adapter implements IIntegrationAdapter {
   }
 
   async disconnect(_cfg: IntegrationConfig): Promise<void> {
-    // Clear stored tokens
+    // Drop the cached app-only token. There is no refresh token to drop: the client-credentials
+    // grant never issues one.
     delete _cfg.credentials.accessToken;
-    delete _cfg.credentials.refreshToken;
     delete _cfg.credentials.expiresAt;
   }
 }

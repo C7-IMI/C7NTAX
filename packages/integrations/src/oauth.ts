@@ -24,6 +24,8 @@ export interface ClientCredentialsInput {
   /** Most vendors want a scope; a few (Pax8) want an audience instead. */
   scope?: string;
   extra?: Record<string, string>;
+  /** Auth0-style vendors (Pax8) insist on a JSON body; the OAuth default is form-encoded. */
+  format?: "form" | "json";
   /** Overrides the cache key when two connections share a client id but differ in, say, tenant. */
   cacheKey?: string;
 }
@@ -45,18 +47,20 @@ export async function clientCredentialsToken(input: ClientCredentialsInput): Pro
   const cached = cache.get(key);
   if (cached && cached.expiresAt > Date.now() + RENEW_MARGIN_MS) return cached.token;
 
-  const body = new URLSearchParams({
+  const payload: Record<string, string> = {
     grant_type: "client_credentials",
     client_id: input.clientId,
     client_secret: input.clientSecret,
     ...(input.scope ? { scope: input.scope } : {}),
     ...(input.extra ?? {}),
-  });
+  };
 
   const res = await fetch(input.tokenUrl, {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
-    body,
+    headers: input.format === "json"
+      ? { "content-type": "application/json", accept: "application/json" }
+      : { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+    body: input.format === "json" ? JSON.stringify(payload) : new URLSearchParams(payload).toString(),
   });
 
   const text = await res.text().catch(() => "");
