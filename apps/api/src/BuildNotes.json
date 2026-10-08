@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.8.002",
+    "date": "2026-10-08",
+    "title": "Recently Resolved moved above the service cards",
+    "changes": [
+      {
+        "text": "**On Service Alerts, Recently Resolved now sits above Monitored Services.** The page now reads: the counts, then Active Alerts (while anything is wrong), then the list of what has just cleared, then the monitored services and their feeds. Before, the resolved list sat under the services, so on a busier deployment it was the one section you had to scroll for.",
+        "type": "Update"
+      },
+      {
+        "text": "**The section itself is unchanged** — same heading, same eight most recent incidents, same relative timestamps. This is a move, not a redraw.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.001",
     "date": "2026-10-08",
     "title": "The Portal card says where the portal is",

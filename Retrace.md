@@ -4695,3 +4695,27 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The copy button is the second in the product** (the SSO screen has one for the redirect URI). A shared `CopyButton` is now worth having.
 - **`WEB_ORIGIN` already drives the SSO redirect URI default**, so the two must stay in step if it is ever made configurable — both read `process.env.WEB_ORIGIN`.
 - **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.
+
+---
+
+### Prompt 246 — Recently Resolved moved above the service cards
+**Timestamp:** 2026-10-08 | **Status:** ✅ Completed | **Duration:** ~35 m
+**BuildNotes IDs:** 2026.10.8.002 — Recently Resolved moved above the service cards
+
+> On the service alerts page, move the Recently Resolved section above Monitored Services
+
+**What I did**
+- **Moved the section, changed nothing inside it.** On `pages/ServiceAlerts.tsx` the `Recently resolved` block — heading, the eight most recent incidents, their relative timestamps — now renders immediately before the `Service cards` section, so the page runs: counts, Active Alerts while anything is wrong, Recently Resolved, then the monitored services. The block was cut from its old position (below the services, where it was the last thing on the page) and pasted above the cards; apart from a two-line comment explaining the order, the JSX is byte-for-byte the same.
+- **Verified in a browser rather than by reading the JSX.** Drove headless Edge over the DevTools protocol to `/service-alerts` as an administrator: the three section headings now come out as **active alerts → recently resolved → monitored services** both by bounding-box `top` and by `compareDocumentPosition`, the resolved section renders its eight incidents under the active ones, and the active alerts are still first. **6/6 checks.**
+- **Confirmed the file itself was sound after the move.** The block was removed and re-inserted in two separate edits, so `npx tsc --noEmit` on `apps/web` was run to prove the JSX closed correctly: **0 errors.**
+
+**Decisions worth remembering**
+- **Most useful first, not most recent first.** The page is opened to answer "is anything broken, and did it just clear?" — Active Alerts answers the first half, so the list of what has just cleared belongs directly beneath it rather than below a wall of service cards.
+- **A move is not a redesign.** The section keeps its heading, its eight-item cap and its relative times; only its position changed, which keeps the change reviewable and the diff honest (21 insertions, 19 deletions, one file).
+- **Conditional sections change the layout of the page you are verifying.** Both Active Alerts and Recently Resolved only render when they have content, so the check asserts on where the sections *are* rather than assuming all three exist — and the deployment happened to have one active alert and 135 resolved incidents, which is the interesting case.
+
+**Notes for next time**
+- **Help needed no change.** The Service Alerts walkthrough describes the nav indicator and the outage board, not the order of the sections on the page, so nothing there was made untrue by this move.
+- **`innerText` applies `text-transform`.** The section headings carry `uppercase`, so the harness's first run matched nothing against `"Recently Resolved"` and reported four failures that were the test's fault, not the page's. Compare heading text case-insensitively.
+- **This file has been a trap before.** During the previous prompt an edit to this page was applied with an over-wide `old_str` and removed the file's closing tags; the recovery was `git checkout --` and re-applying two narrow edits. Narrow edits, then typecheck.
+- **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.

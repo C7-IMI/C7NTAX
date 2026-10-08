@@ -429,6 +429,27 @@ export function ServiceAlertsPage() {
         </section>
       )}
 
+      {/* Recently resolved — above the cards, because what just cleared is the more useful thing to
+          see first when you open this page. */}
+      {resolved.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Recently Resolved</h3>
+          <div className="card divide-y divide-surface-border !p-0">
+            {resolved.slice(0, 8).map((a) => (
+              <div key={a.id} className="flex items-center gap-3 px-5 py-3">
+                <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-300 truncate">
+                    <span className="text-white font-medium">{a.service.name}</span> — {a.title}
+                  </p>
+                </div>
+                <span className="text-xs text-gray-500 shrink-0">{a.resolvedAt ? `resolved ${timeAgo(a.resolvedAt)}` : "resolved"}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Service cards */}
       <section className="space-y-3">
         <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Monitored Services</h3>
@@ -500,25 +521,6 @@ export function ServiceAlertsPage() {
         </div>
       </section>
 
-      {/* Recently resolved */}
-      {resolved.length > 0 && (
-        <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Recently Resolved</h3>
-          <div className="card divide-y divide-surface-border !p-0">
-            {resolved.slice(0, 8).map((a) => (
-              <div key={a.id} className="flex items-center gap-3 px-5 py-3">
-                <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-300 truncate">
-                    <span className="text-white font-medium">{a.service.name}</span> — {a.title}
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 shrink-0">{a.resolvedAt ? `resolved ${timeAgo(a.resolvedAt)}` : "resolved"}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
       </>
       )}
     </div>

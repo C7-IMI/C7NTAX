@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.001 | Last Updated: 2026-10-08
+## Version: 2026.10.8.002 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,17 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.002 — Recently Resolved moved above the service cards
+
+What just cleared is the reason to open the page, and it was the last thing on it.
+
+- **[Update]** **On Service Alerts, Recently Resolved now sits above Monitored Services.** The page now reads: the counts, then Active Alerts (while anything is wrong), then the list of what has just cleared, then the monitored services and their feeds. Before, the resolved list sat under the services, so on a busier deployment it was the one section you had to scroll for.
+- **[Update]** **The section itself is unchanged** — same heading, same eight most recent incidents, same relative timestamps. This is a move, not a redraw.
+
+Verified in a browser: the rendered headings run Active Alerts → Recently Resolved → Monitored Services both vertically and in the document, with eight resolved incidents listed below the active ones and nothing else on the page disturbed.
 
 ---
 
