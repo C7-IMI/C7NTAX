@@ -5,9 +5,12 @@
 > **Requested:** "merge CloudConnect into C7NC. The CloudConnect name and references would be renamed
 > C7NC. Do a mockup of what that would look like with proper landing pages, subsections, tab style
 > pages, etc." — and: mockup only, no changes yet.
-> **Built:** the mockup, [`docs/mockups/c7nc-merged-hub.html`](../docs/mockups/c7nc-merged-hub.html) —
-> seven screens, drawn with the application's own compiled stylesheet, opened and checked in a browser
-> (§8). **No application code has been changed.**
+> **Built so far (BuildNotes 2026.10.8.026):** the mockup
+> ([`docs/mockups/c7nc-merged-hub.html`](../docs/mockups/c7nc-merged-hub.html), seven screens drawn with
+> the application's own stylesheet, §8); **Phases 0–5** — the section `/c7nc` with its five tabs and a
+> route per tab, the hub, Services (with add and configure as modes), AI models, Email and Companion
+> apps; the nav reorganised and its permission corrected; the redirects; and the visible half of the
+> rename. **Left:** the service-detail page, the `/api/c7nc` alias, the non-UI rename and the guard (§9).
 > **Decided (recommended):** C7NC survives as the name and CloudConnect retires; a hub landing page that
 > answers "is anything broken?" before "which connectors exist"; four subsections — **Services, AI models,
 > Email, Companion apps** — each a tab-style page; a service gets a page of its own, which is what finally
@@ -249,6 +252,12 @@ every tab that can carry one.
 ## 9. Phases
 
 Each phase is a commit with a probe, and each is independently revertible.
+
+> **Built so far (2026.10.8.026): Phases 0–5** — phases 0–2 were done in one pass because the section,
+> its hub and Services are the same component, and phase 5's Companion apps arrived with it. **Phases 6
+> and 7 are outstanding**: the non-UI half of the rename (with its guard) and deleting the last of the
+> old page. The service-detail page in Phase 2 is the one piece of a built phase still owed — the
+> FlexPoint rows currently lead to `/c7nc/flexpoint`, which is now inside the same section.
 
 **Phase 0 — routes, redirects, nav (≈½ day).** Add `/c7nc` and the four subsection paths; redirect
 `/cloudconnect`, `/c7nc/flexpoint`, `/c7nc/outlook-addin`, `/section/c7nc`; move the nav entry out of

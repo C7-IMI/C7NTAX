@@ -1,5 +1,48 @@
 [
   {
+    "version": "2026.10.8.026",
+    "date": "2026-10-08",
+    "title": "C7NC: CloudConnect merged in, as a section of five tabs (and the mockup's spacing fixed)",
+    "changes": [
+      {
+        "text": "**`/c7nc` — a section of five tabs, and the tab is the address.** *Overview · Services · AI models · Email · Companion apps*, drawn with the product's own pronounced tab strip (`components/ui/Tabs` — the one the customer portal and ticket boards use) with counts as pills and arrow-key navigation. Each tab has its own route (`/c7nc/services`, `/c7nc/models`, `/c7nc/email`, `/c7nc/apps`), so every one can be linked to, survives a reload and comes back from the back button. The page was renamed `CloudConnect.tsx` → `pages/C7NC.tsx` and its export to `C7NCPage`.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The Overview hub.** A sentence instead of four counters — *\"5 services · no model · 1 companion app — 5 need attention\"* — then a **needs-attention block that names the reason in words** (\"switched off\", \"the last sync failed\", \"not responding\", \"credentials incomplete\") with **Open** and **Walk me through it** beside each one, then four subsection cards that carry their own live counts, then three signposts (API Access, alert webhooks, the connecting walkthrough) with the reason they are links rather than tabs. It is empty of actions by design: every button on it is a door into the page that owns the work.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Services keeps everything it had.** The connected rows, their statuses, health tooltips, the test/sync/configure/logs/enable/delete actions, the Microsoft 365 inactivity panel and the whole add-a-connector flow are unmoved — adding a connection is now a *mode of Services* rather than a tab of its own, reached from **Connect a service**, and one connection's configuration is a mode of Services too (the section tab stays lit, because that is where the reader still is).",
+        "type": "Update"
+      },
+      {
+        "text": "**AI models and Email become their own tabs** (`AiModelsPanel`, `EmailConnectorsPanel` — both unchanged), and **Companion apps** hosts the Outlook add-in page as-is, so the installer, its versions table and its download routes are not duplicated.",
+        "type": "Update"
+      },
+      {
+        "text": "**The navigation was reorganised around it.** CloudConnect is removed from Administration (which keeps API Access, webhooks and everything else), and C7NC is a six-child group: *Overview, Services, AI models, Email, FlexPoint Payment Solutions, Companion apps*. Clicking the group opens it and lands on the hub.",
+        "type": "Update"
+      },
+      {
+        "text": "**The nav no longer asks for more permission than the page needs.** CloudConnect's entry required `IntegrationManage` while **eleven of the fifteen** of its endpoints read at `IntegrationView` — so a technician who may watch connection health and press **Test** and **Sync** could not reach the page at all. The section's children are now gated on what each actually needs (`IntegrationView` to look, `IntegrationManage` to change, `InferenceView` for models), which matches what the API has been enforcing all along.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The rename, done where it is visible.** Every user-facing string says C7NC: the nav label and descriptions, the page, the dashboard card, the Help index, the connecting walkthrough (retitled, with its anchor and path kept), the AI model links on the Assistant page, the FlexPoint page's link back, and the `C7NC & Email` configuration section.",
+        "type": "Update"
+      },
+      {
+        "text": "**`/cloudconnect` redirects rather than 404ing**, and so does `/section/c7nc` — bookmarks, Help links and whatever anybody had open keep working. A stored landing page of `/cloudconnect` is mapped to `/c7nc` in Settings rather than silently falling back to the Dashboard. The **API path stays `/api/cloudconnect`** and the **`CLOUDCONNECT_LIVE_STATUS_ENABLED` configuration key keeps its name**: renaming either breaks integrations, probes and deployments for no functional gain, and PLAN-027 §7 records that decision.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The mockup's card spacing.** The complaint was exact — the overview's blocks were stacked with no vertical rhythm at all, because the section element carried no `space-y` and the signpost row used a `gap-x-5` class the app's stylesheet does not contain. Fixed with classes the product actually ships: **24 px between blocks, 16 px between cards, 12 px inside them**, and the three switch knobs now use the app's own toggle markup. Measured in the browser rather than eyeballed (the gap between every pair of blocks, both grid axes, card padding and row spacing), and every one of the mockup's 148 classes was checked against the inlined stylesheet — **zero unresolved**, which is what let a missing spacing class show up as a visual bug rather than as nothing at all.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.025",
     "date": "2026-10-08",
     "title": "PLAN-027: CloudConnect merged into C7NC, with a mockup you can click through",

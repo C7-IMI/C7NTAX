@@ -5587,3 +5587,39 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The auto-sync job swallowed the first half of this work** (the doc, the mockup and part of the registry entry landed in `cb1909f auto-sync: 2026-10-08 05:00:47`). It is the standing hazard of working in fifteen-minute windows here: check `git log --oneline -3` before assuming a tree state.
 - **The browser page the operator has open is `localhost:3010/cloudconnect`** — after Phase 0 it will land on Services through the redirect, which is the first place to look when the redirect table is tested by hand.
 
+---
+
+### Prompt 269 — Building it: C7NC as a section of five tabs (and the mockup's spacing)
+
+**Timestamp:** 2026-10-08 18:40 | **Status:** Complete (built and walked live) | **Duration:** ~50 min
+
+**BuildNotes IDs:** **2026.10.8.026** — "C7NC: CloudConnect merged in, as a section of five tabs (and the mockup's spacing fixed)"
+
+**Prompt**
+
+> Approved. build the mockup for the C7NC merge. But use the tabbed style layout
+
+> make sure the card spacing is corrected. It's bunched together in the mockup
+
+**What I did**
+- **Read "build the mockup" as "build it, in the tabbed style"** — the plan was approved and the mockup existed, so the deliverable became the section itself, with the tab strip as the primary navigation rather than the hub's cards. The five tabs are the section; every tab has its own route; the URL owns the selection, so a tab can be linked to, survives a reload and comes back from the back button. `CloudConnect.tsx` became `pages/C7NC.tsx` (`C7NCPage`).
+- **Made the connector machinery a mode rather than a rewrite.** The connected rows, the catalogue, the add flow, the fix dialogs and the Microsoft 365 panel are all untouched; "add a connector" and "configure one connection" are now *views inside Services* rather than tabs, which is why the strip stays on Services while you are in them. That is the whole reason this was a ~300-line change to a 79 KB page instead of a rewrite.
+- **Built the hub the mockup argued for** — a sentence instead of counters, a needs-attention block that names the reason in words with **Open** and **Walk me through it** beside each line, four subsection cards with live counts, and three signposts with the reason they are links and not tabs. Nothing on it changes a connection.
+- **Fixed the permission mismatch while moving it.** The old nav entry wanted `IntegrationManage` for a page whose reads only need `IntegrationView` — eleven of its fifteen endpoints — so the people who watch connection health could not open it. The children are now gated on what each needs.
+- **Kept every door that already existed.** `/cloudconnect` and `/section/c7nc` redirect; the Help walkthrough keeps its anchor and path with a new title; the API path stays `/api/cloudconnect`; `CLOUDCONNECT_LIVE_STATUS_ENABLED` keeps its name. A stored landing page of `/cloudconnect` is mapped to `/c7nc` rather than silently reset.
+- **Then took the spacing complaint literally, and measured it.** The mockup's overview had **no vertical rhythm at all** — its section element carried no `space-y`, and the signpost row used `gap-x-5`, a class the app's compiled stylesheet does not contain (an artefact of drawing the mockup with the real CSS: only the utilities the product actually uses exist). Fixed with classes that do exist — 24 px between blocks, 16 px between cards, 12 px inside, and the app's own switch markup — then **verified by measurement in the browser**, not by eye: every pair of top-level blocks, both grid axes, the card padding, the inner stack gaps and the signpost gaps, on all seven screens. I also wrote the class-checker that found the missing ones: all **148** classes in the mockup's markup now resolve against the inlined stylesheet.
+
+**Decisions worth remembering**
+- **A tab is a question, and the URL is its home.** Five tabs on the section, and the section's own tab strip *is* the nav for the page — the nav children point at the same five routes, so the two can never disagree about where you are.
+- **Modes belong inside a tab, not beside it.** "Add a connector" and "configure this connection" were tabs before and are views now; both start from a button on the page that owns them, and the strip keeps showing Services while they are open because that is where the reader still is.
+- **A count has to mean one thing.** The AI models tab showed the number of provider *rows* while the sentence above it said "no model" — inconsistent in the same viewport. Both now count what is **in use**.
+- **Drawing a mockup with the product's own stylesheet is a feature and a trap.** It makes the picture truthful and it silently drops any class the product has never used — which is exactly how a spacing bug appears as "it's bunched together" rather than as a missing rule. The checker script is the fix, and it is worth re-running whenever the mockup changes.
+- **Leave the seeds alone.** `admin@C7NTAX.com` / `admin` from `seed-full.ts` is the development way in, and the bypass account is exempt from expiry — which is what made the live walkthrough possible without touching a fixture.
+
+**Notes for next time**
+- **What the merge still owes:** the **service-detail page** (`/c7nc/services/:kind`, with FlexPoint's *Ledger* and *Invoices* as tabs of the service rather than a page of their own), the **`/api/c7nc` mount with the old path as a documented alias**, the non-UI half of the rename (`apps/api/src` strings, `docs/API.md`, `openapi.yaml`, `api-operations.json`, the probes), and the **guard** that fails the build when `CloudConnect` reappears in `apps/**`. PLAN-027 §9 has them in order.
+- **The nav does not auto-expand the group you are in** — that is pre-existing behaviour for every section, and the hub is the group's landing page, so clicking the group both opens it and shows you the summary. If that ever becomes a complaint, it is one effect in `Layout.tsx`, not a section change.
+- **`window.location.pathname` seeds the tab state** and a `useEffect` keeps it in step; a route that is not one of the five falls back to Overview, which is why an unknown `/c7nc/...` path is a hub rather than a blank page.
+- **The redirects are load-bearing for a while**: Help, the FlexPoint page, the Assistant page and possibly somebody's bookmark all still point at `/cloudconnect`. They are tested by walking them, not by grep.
+- **Mockup regeneration recipe:** the stylesheet is inlined, so after a class change re-read `apps/web/dist/assets/index-*.css`, replace the `/*__APP_CSS__*/` placeholder, and re-run the class checker.
+
