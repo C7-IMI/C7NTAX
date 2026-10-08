@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.8.006",
+    "date": "2026-10-08",
+    "title": "Favorites follow the account",
+    "changes": [
+      {
+        "text": "**Pinned sections travel with the person.** Favorites is stored per user (`UserNavConfig`, one row per account, cleaned the way the dashboard's layout is), so signing in anywhere brings the same pins, in the same order, including the order you last dragged them into.",
+        "type": "Update"
+      },
+      {
+        "text": "**The browser is only a cache.** localStorage still holds the last list it saw, so the navigation draws the pins it already knows before the API answers rather than flickering; the account's list replaces it a moment later.",
+        "type": "Update"
+      },
+      {
+        "text": "**Anything pinned before this change is handed over once.** A browser whose list the account has never seen offers its pins up on the next load instead of losing them — and only while the account has nothing saved, so an account that already has pins always wins.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A slow first read cannot undo a pin made while it was in flight.** Once you touch your pins, the answer to that first read is ignored.",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.005",
     "date": "2026-10-08",
     "title": "Favorites at the top of the navigation, and a menu on every section",

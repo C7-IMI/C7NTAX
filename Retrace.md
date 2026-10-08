@@ -4818,3 +4818,32 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **In the collapsed sidebar a section is a button, not a link**, so a check that counts links under Favorites finds only the pinned leaves. Count rows, not anchors.
 - **`text-amber-400/80` is not on the light theme's remap list** (which covers `-300`, `-400`, `-500` and a few alpha variants), so the pin mark uses plain `text-amber-400` and inherits the light theme's darker amber. A new pale shade in a new component has to be added to that block, or it lands pale on the light theme.
 - **The pane's menu currently offers no way to reset the section order**; if that is wanted, it belongs beside Expand all in the same menu.
+
+---
+
+### Prompt 250 — Favorites follow the account
+**Timestamp:** 2026-10-08 | **Status:** ✅ Completed | **Duration:** ~50 m
+**BuildNotes IDs:** 2026.10.8.006 — Favorites follow the account
+
+> Yes, add that follow-up.
+
+(Following on from Prompt 249: pinned navigation sections were per browser, and would be better per account so they follow the person between machines.)
+
+**What I did**
+- **Mirrored the store that already existed for the dashboard.** A new `UserNavConfig` model, one row per user with a JSON list and a `userId` unique key, plus a hand-written migration applied with `prisma migrate deploy` and `prisma generate`. The route (`/api/nav/favorites`, GET/PUT/DELETE) works on the caller's own row — no id in the path can point at somebody else's pins — so being signed in is the whole of the gate.
+- **Cleaned rather than trusted, with one deliberate difference from the dashboard.** A widget id is validated against a server-side catalogue; a section id is checked for *shape* only (a slug, deduped, capped at 40, non-lists refused), because the navigation tree is drawn by the client and the server has no catalogue to check it against. So a pin for a section that has been renamed is **kept** and simply not drawn — which is what lets the pin return when the section does, instead of being deleted by a server that cannot see the tree.
+- **Kept localStorage, as a cache rather than the record.** The navigation draws the list it already has before the API answers — no flicker on every page load — and the account's list replaces it. A pin made while that first read is still in flight is protected: once the person touches their pins, the answer to the in-flight read is ignored rather than allowed to erase the change.
+- **Migrated the pins people already had.** A browser whose list the account has never seen offers it up once (`personalised: false`), so nothing pinned in the last hour is lost, and an account that already has pins always wins over a stale cache.
+- **Tested both layers.** The per-user preference probe gained a section on pins (cleaning, order, cap, non-list refused, unknown-but-plausible ids kept, per-account isolation, unauthenticated refused) — **47/47**. A browser harness then drove two "machines": pin on one, open a browser with an empty cache, and the pin is there; unpin and it goes everywhere; a pre-existing local list is adopted once but never over an account that has its own; and a `Move up` is stored on the account — **21/21**.
+
+**Decisions worth remembering**
+- **The tree belongs to the client, so the server validates shape, not names.** The alternative — moving the navigation catalogue into `packages/shared` so the server could validate ids — would mean the icon set and permission enum travelling with it, for a check that reconciliation on the client already does safely: an id it cannot draw is not drawn.
+- **A cache, not a second source of truth.** Reading from localStorage first and letting the account overwrite it is what keeps the navigation from flickering, and the "touched" guard is what keeps the cache from becoming a liar when a write races a read.
+- **Adoption, not migration.** Nothing had to be moved in the database: the first load after this change offers the browser's list up if the account has none. It is the same code path a second machine takes, so it was verified by the same checks.
+- **The dashboard was the template for a reason** — same shape of table, same route verbs, same reset. Two per-user stores that behave alike are easier to reason about than two that each do it their own way.
+
+**Notes for next time**
+- **`UserNavConfig` is the second per-user preference table**; if a third appears, a shared "one row of preferences per user" store may be worth it rather than a table per feature.
+- **The probe for both stores is `probe-dashboard.mjs`**, whose header now says so. A pins change should be added there rather than to a new file.
+- **The auto-sync swept the code into its own commits** (`b39a1ea`) while this was being verified, leaving the records to commit by hand — the fourth prompt in a row where that has happened.
+- **The order is stored as the account has it, and the client reorders by sending the whole list** — no per-item endpoint, which is what makes a drag and a Move up the same request.

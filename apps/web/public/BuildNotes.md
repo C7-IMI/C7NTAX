@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.005 | Last Updated: 2026-10-08
+## Version: 2026.10.8.006 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,19 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.006 — Favorites follow the account
+
+Pins were per browser, so a section pinned on a desktop was missing on a laptop. They live in the account now — the same way the dashboard's own arrangement does.
+
+- **[Update]** **Pinned sections travel with the person.** Favorites is stored per user (`UserNavConfig`, one row per account, cleaned the way the dashboard's layout is), so signing in anywhere brings the same pins, in the same order, including the order you last dragged them into.
+- **[Update]** **The browser is only a cache.** localStorage still holds the last list it saw, so the navigation draws the pins it already knows before the API answers rather than flickering; the account's list replaces it a moment later.
+- **[New]** **Anything pinned before this change is handed over once.** A browser whose list the account has never seen offers its pins up on the next load instead of losing them — and only while the account has nothing saved, so an account that already has pins always wins.
+- **[New]** **A slow first read cannot undo a pin made while it was in flight.** Once you touch your pins, the answer to that first read is ignored.
+
+Verified by probe and in a browser: **47/47** on the per-user preference suite (16 new checks — the list is cleaned to ids shaped like section ids, duplicates collapse, the list is capped at 40, a non-list is refused, another account sees nothing of it, and an unauthenticated read is refused) and **21/21** in a browser driving two "machines": a pin made in one appears in a fresh one with an empty cache, unpinning removes it everywhere, a browser's pre-existing pins are adopted once and not over an account that already has some, and a reorder is stored on the account.
 
 ---
 
