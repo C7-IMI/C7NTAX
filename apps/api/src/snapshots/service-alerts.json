@@ -577,15 +577,15 @@
     "id": "83305d57-2e88-4fc1-bfdd-fed00a27d90f",
     "serviceId": "3320870d-6bde-436c-87fa-0639f240085a",
     "title": "Social reports about ProbeSocial muyvyy4i on X",
-    "description": "ProbeSocial muyvyy4i is down again, nothing loads",
+    "description": "Auto-resolved: undefined\n\nProbeSocial muyvyy4i is down again, nothing loads",
     "severity": "informational",
-    "status": "active",
+    "status": "resolved",
     "source": "social",
     "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
     "detectedAt": "2026-10-08T02:12:04.790Z",
-    "resolvedAt": null,
+    "resolvedAt": "2026-10-08T02:17:40.673Z",
     "createdAt": "2026-10-08T02:12:04.792Z",
-    "updatedAt": "2026-10-08T02:12:04.792Z"
+    "updatedAt": "2026-10-08T02:17:40.674Z"
   },
   {
     "id": "8347b71f-f271-49e2-b2af-f335eb5841f8",
@@ -754,6 +754,20 @@
     "resolvedAt": "2026-08-20T17:39:58.447Z",
     "createdAt": "2026-08-20T17:29:54.545Z",
     "updatedAt": "2026-08-20T17:39:58.448Z"
+  },
+  {
+    "id": "9adf66f3-6b42-4488-b8c4-6a6dbc4e48ea",
+    "serviceId": "3320870d-6bde-436c-87fa-0639f240085a",
+    "title": "Social reports about ProbeSocial muyvyy4i on X",
+    "description": "ProbeSocial muyvyy4i is down again, nothing loads",
+    "severity": "informational",
+    "status": "active",
+    "source": "social",
+    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
+    "detectedAt": "2026-10-08T02:20:45.777Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-08T02:20:45.778Z",
+    "updatedAt": "2026-10-08T02:20:45.778Z"
   },
   {
     "id": "c06c6cd9-c00f-428f-9298-c283ca0cad05",
