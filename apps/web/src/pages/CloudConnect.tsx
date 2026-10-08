@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import {
   Plus, Plug, RefreshCw, Trash2, Key, Settings,
   ShieldCheck, Globe, Server, Cloud, CreditCard, FileText, Database,
-  Wifi, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users, Info, ExternalLink,
+  PlugZap, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users, Info, ExternalLink,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -748,7 +748,7 @@ export function CloudConnectPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => void handleTest(configuringRow.id)} className="btn-secondary text-xs">Test connection</button>
+                    <button onClick={() => void handleTest(configuringRow.id)} className="btn-secondary text-xs flex items-center gap-1.5"><PlugZap size={12} /> Test connection</button>
                     <button onClick={() => void handleSync(configuringRow.id)} className="btn-secondary text-xs">Sync now</button>
                   </div>
                 </div>
@@ -1036,14 +1036,19 @@ export function CloudConnectPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
+                    {/*
+                      The icon is the *action*, and it does not change: a plug with a bolt reads as "test this
+                      connection". It used to be a Wi-Fi glyph that turned into a green tick or a red warning,
+                      which made a button look like a status light — and in this row the green tick already
+                      means "enabled" on the toggle beside it. The result of a test is carried by the colour
+                      here and, properly, by the health chip above, which says when it was last checked.
+                    */}
                     <button onClick={() => handleTest(int.id)} className={`p-1.5 rounded-md transition-colors ${
                       tr?.status === "testing" ? "text-yellow-400 bg-yellow-600/10" :
                       tr?.status === "pass" ? "text-green-400 bg-green-600/10" :
                       tr?.status === "fail" ? "text-red-400 bg-red-600/10" : "text-gray-500 hover:text-white hover:bg-surface-lighter"}`}
-                      title="Test Connection">
-                      {tr?.status === "testing" ? <Loader2 size={14} className="animate-spin" /> :
-                       tr?.status === "pass" ? <CheckCircle size={14} /> :
-                       tr?.status === "fail" ? <AlertTriangle size={14} /> : <Wifi size={14} />}
+                      title={tr?.status === "pass" ? "Test connection — last test passed" : tr?.status === "fail" ? "Test connection — last test failed" : "Test connection"}>
+                      {tr?.status === "testing" ? <Loader2 size={14} className="animate-spin" /> : <PlugZap size={14} />}
                     </button>
                     <button onClick={() => handleSync(int.id)} className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-surface-lighter transition-colors" title="Sync">
                       <RefreshCw size={14} />
@@ -1283,9 +1288,7 @@ export function CloudConnectPage() {
                             "bg-cyber-600/20 text-cyber-400 hover:bg-cyber-600/30"
                           }`}
                         >
-                          {ft?.status === "testing" ? <Loader2 size={12} className="animate-spin" /> :
-                           ft?.status === "pass" ? <CheckCircle size={12} /> :
-                           ft?.status === "fail" ? <XCircle size={12} /> : <Wifi size={12} />}
+                          {ft?.status === "testing" ? <Loader2 size={12} className="animate-spin" /> : <PlugZap size={12} />}
                           {ft?.status === "testing" ? "Testing..." :
                            ft?.status === "pass" ? "Pass" :
                            ft?.status === "fail" ? "Fail" : "Test"}

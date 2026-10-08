@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.017 | Last Updated: 2026-10-08
+## Version: 2026.10.8.018 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,19 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.018 — Test connection looks like a test, not a signal
+
+The button that tests a connection was drawn with a Wi-Fi glyph, on every surface it appears. A Wi-Fi arc is the universal picture of *you are connected*: on a quiet grey button it reads as a status light, so an action looked like an indicator. That is the wrong way round — somebody glancing at a card would see a signal and assume the connection was healthy without ever reading the health chip beside it, which is the only thing that actually knows.
+
+- **[Fix]** **The action no longer claims an outcome.** The card's test button used to change glyph with the state — tick for passed, warning for failed, Wi-Fi for untested — so one button meant three things, two of which duplicated the status chip next to it (and a green tick on the button then competed with the green tick that means *Enabled* in the same row). It is now one glyph in every state: **`PlugZap`**, a plug meeting a bolt, which says "exercise this connection now" and nothing more.
+- **[Update]** **The same glyph everywhere it is offered**, so "test this connection" looks identical wherever you meet it: the Connected card's action row, the Configuration pane's **Test connection** button (which previously had no icon at all), and the per-field **Test** buttons inside the Fix Connection Errors dialog.
+- **[Fix]** **Email connectors gets it too.** The mailbox panel's icon-only test button carried a refresh arrow, which is what its **Poll now** neighbour means. It now uses the same plug glyph, so the icon-only row reads: start/stop, test, poll, delete.
+- **[Update]** **Result reporting is unchanged and still explicit** — the tooltip reads *Test connection*, *Test connection — last test passed* or *Test connection — last test failed*, the button tints with the outcome, and the health chip stays the single place that states whether the connector is healthy. Colour and text carry the result; the picture carries the action.
+- **[Update]** **Help** — the CloudConnect walkthrough's "Test & fix inline" section states the convention in one line: the button is the action, the chip is the status.
+- **[Fix]** **Verification:** live browser check on all four surfaces — Connected card row, Configuration pane, fix dialog (reached from a genuinely failing AutoTask connection, its per-field `Test` button showing `plug-zap`), and the Email connectors rows (both `plug-zap`, matched by `title="Test connection"`); a failed test left the glyph unchanged while the tint went red and the tooltip changed to "last test failed"; **zero `lucide-wifi` icons remain on the CloudConnect screen**; web typecheck clean.
 
 ---
 

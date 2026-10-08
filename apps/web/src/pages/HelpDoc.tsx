@@ -778,6 +778,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         "Select Test connection — the result appears for that connection.",
         "Fix failing fields in the dialog and re-test without leaving the page.",
         "Connection status chips refresh live so broken integrations are visible immediately.",
+        "The Test connection button keeps the same glyph whether the last test passed or failed — the button is the action, the chip beside it is the status. Read the chip, not the picture on the button.",
       ] },
       { kind: "note", text: "With live status on, the server re-verifies connections on a throttle and reports what it last observed — so a chip means \"last verified at\", not \"the last time somebody saved the form\". Switch it off and only the stored status is returned, with no calls made at all." },
       { kind: "h", text: "Configuration" },

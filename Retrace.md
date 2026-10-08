@@ -5302,3 +5302,38 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **`/api/reports/data/options` now returns `tenants`** (the connected Microsoft 365 and Azure AD SSO integrations) so a tenant filter can be a select; the filter hides itself when there are none rather than offering a list of nothing.
 - **BuildNotes heading anchors bit me again** — inserting 2026.10.8.017 replaced the 2026.10.8.016 heading, exactly as happened with 014/013. It is repaired, and the entry count is the check that catches it (230 versions parsed, 017 → 016 → 015 in order). Anchoring on the preceding entry's last line + re-adding the following heading is the safe pattern.
 - **`cyber-*` remain CSS variables**, so the new markup uses `surface` tokens and `text-cyber-*` rather than alpha modifiers on the brand colour.
+
+---
+
+### Prompt 263 — Test connection looks like a test, not a signal
+
+**Timestamp:** 2026-10-08 11:55 | **Status:** Complete | **Duration:** ~25 min
+
+**BuildNotes IDs:** **2026.10.8.018** — "Test connection looks like a test, not a signal"
+
+**Prompt**
+
+> I think the Test Connection should be something different. It's confusing because it makes it look like it's showing whether the connection is active/live or not. Change it to something that looks more like a test connection icon.
+
+**What I did**
+- **Agreed with the reading and fixed the cause, not just the glyph.** The button was drawn with a **Wi-Fi** arc, and a Wi-Fi arc is the universal picture of *you are connected*. On a quiet grey button it reads as a status light — so an action looked like an indicator, and somebody glancing at a card would see the signal and assume the connection was healthy instead of reading the **health chip** beside it, which is the only thing that actually knows. The fix is one glyph for the action, everywhere it is offered: **`PlugZap`** (a plug meeting a bolt) — "exercise this connection now", with no claim about the outcome.
+- **Made the icon stable, which was the other half of the problem.** The card's test button used to change glyph with state — `Wifi` untested, `CheckCircle` passed, `AlertTriangle` failed — so one button meant three things and two of them duplicated the status chip next to it. A green tick on the *button* then also competed with the green tick that means **Enabled** in the same action row. It now stays `PlugZap` through idle, testing, pass and fail; the spinner covers the in-flight moment.
+- **Carried the result in colour and words instead**, and kept the words explicit: the tooltip reads *Test connection*, *Test connection — last test passed* or *Test connection — last test failed*, and the button still tints by outcome. Colour and text answer "did it work"; the picture answers "what does this button do"; the chip remains the single place that states whether the connector is healthy.
+- **Applied it to every surface the action appears on**, so "test this connection" looks identical wherever it is met: the Connected card's action row, the Configuration pane's **Test connection** button (which previously had no icon at all — the earlier probe returning `configTest: null` was simply no connection selected in the pane, not a missing button), and the per-field **Test** buttons inside the **Fix Connection Errors** dialog.
+- **Fixed the same confusion in the mailbox panel.** `EmailConnectorsPanel`'s icon-only test button used `RefreshCw`, which is what its **Poll now** neighbour means — two different actions drawn with the same kind of arrow. It now uses the same plug glyph, so the icon-only row reads consistently: start/stop watching, test, poll now, delete.
+- **Left `InferenceSettings.tsx` alone** — it already uses `TestTube`, a genuine test glyph, and never had the Wi-Fi problem. Not every "test" in the app needed touching; the ones that were wrong did.
+- **Said the convention out loud in Help**, in the CloudConnect walkthrough's "Test & fix inline" section: the button keeps the same glyph whether the last test passed or failed, the button is the action and the chip is the status.
+- **Verified on all four surfaces in the running app, and forced a real failure to do it.** Card action row: `Test connection` → `plug-zap`; after clicking it on a stub connector the glyph was **still** `plug-zap` while the tint went red (`rgb(248,113,113)`) and the tooltip changed to "last test failed". Configuration pane: **Test connection** → `plug-zap`. Fix dialog: opened from an AutoTask connection that genuinely fails ("Password is missing") and its per-field **Test** button is `plug-zap` with zero Wi-Fi icons in the dialog. Email connectors: both rows' icon-only buttons are `plug-zap` (matched by `title="Test connection"`). A count over the whole CloudConnect screen found **zero `lucide-wifi` icons** remaining. `tsc --noEmit` in `apps/web` clean.
+
+**Decisions worth remembering**
+- **An icon that can mean either "do this" or "this is true" is a bug waiting for a glance.** A Wi-Fi arc on a button is that ambiguity in one glyph; the rule from here is that a control's icon names the action and the *chip* names the state, and the two must not be the same picture.
+- **Do not morph an action button into its own result.** The old tick/warning states were a kind gesture that cost more than it gave: it made the button a second status display, duplicated the chip right beside it, and collided with the tick that means Enabled.
+- **The fix is a convention, not one screenshot.** Four surfaces shared the bad icon and two of them were different wrong icons (`Wifi`, `RefreshCw`, none) for the same action — worth sweeping rather than patching the one the user could see.
+- **The tooltip wording already carried the result, so colour alone would have been too quiet.** Keeping "last test failed" in the tooltip is what makes the stable icon safe.
+
+**Notes for next time**
+- **Icon-only buttons resolve their tooltip from `title`/`aria-label`, not text** — a DOM query filtering on `textContent.trim() === "Test connection"` finds nothing in `EmailConnectorsPanel`; match the attribute instead.
+- **The fix dialog's per-field test buttons only exist for connections that hold credentials and are actually failing.** DummyConnect legitimately shows "Nothing to edit for this connection", and a healthy-but-unverified connection shows no Fix chip at all — to inspect that surface, click **Test connection** on a credential-bearing connection until the row goes red, then click the *Connection Failed — Click to fix* banner.
+- **An open modal silently swallows later clicks** ("intercepts pointer events") and reads as a locator timeout, not as a blocked click — close it with its X button via `evaluate` before clicking behind it.
+- **BuildNotes insertion went cleanly this time** by prepending the new heading above the previous one and re-adding that heading in the same edit: 231 versions parsed, 018 → 017 → 016 in order.
+

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Mail, Plus, RefreshCw, Trash2, Power, ShieldCheck, Info, AlertTriangle, Link2, Unlink, Wand2 } from "lucide-react";
+import { Mail, Plus, PlugZap, Trash2, Power, ShieldCheck, Info, AlertTriangle, Link2, Unlink, Wand2 } from "lucide-react";
 import { OAuthAppWizard, type WizardValues } from "./OAuthAppWizard";
 
 interface Connector {
@@ -324,7 +324,7 @@ export function EmailConnectorsPanel() {
               )}
               <button title={c.enabled ? "Stop watching" : "Start watching"} onClick={() => toggle(c)} disabled={busy === c.id}
                 className={`p-1.5 rounded ${c.enabled ? "bg-green-600/20 text-green-400" : "bg-gray-700 text-gray-400"}`}><Power size={14} /></button>
-              <button title="Test connection" onClick={() => test(c)} disabled={busy === c.id} className="p-1.5 rounded bg-gray-700 text-gray-300 hover:text-white"><RefreshCw size={14} /></button>
+              <button title="Test connection" onClick={() => test(c)} disabled={busy === c.id} className="p-1.5 rounded bg-gray-700 text-gray-300 hover:text-white"><PlugZap size={14} /></button>
               <button title="Poll now" onClick={() => poll(c)} disabled={busy === c.id || !c.enabled} className="p-1.5 rounded bg-gray-700 text-gray-300 hover:text-white"><Mail size={14} /></button>
               <button title="Delete" onClick={() => remove(c)} disabled={busy === c.id} className="p-1.5 rounded bg-gray-700 text-red-400 hover:text-red-300"><Trash2 size={14} /></button>
             </div>
