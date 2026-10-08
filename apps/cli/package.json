@@ -1,0 +1,21 @@
+{
+  "name": "@C7NTAX/cli",
+  "version": "1.0.0",
+  "private": true,
+  "description": "c7ntax — the C7NTAX command line. One grammar with the in-app console, authenticated with an API key.",
+  "type": "module",
+  "bin": {
+    "c7ntax": "./src/index.ts"
+  },
+  "scripts": {
+    "cli": "tsx src/index.ts",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@C7NTAX/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.0"
+  }
+}

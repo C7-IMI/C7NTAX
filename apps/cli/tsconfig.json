@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    /*
+     * The CLI runs from source with `tsx`, exactly as the API does in its container, so there is no
+     * `outDir` and no `build` script: adding one would put a second compile of `packages/shared` into the
+     * root build graph for no benefit today. Packaging a compiled binary is a distribution decision
+     * (PLAN-028 §11), not a typing one.
+     */
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", ".turbo"]
+}
