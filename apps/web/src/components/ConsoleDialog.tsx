@@ -58,6 +58,13 @@ type ConsoleEntryBody =
       rows: Record<string, unknown>[];
       footer?: string;
     }
+  /*
+   * One thing, rather than a list of them: the fields the command declares, and every other field the
+   * route returned folded behind a disclosure. Two lists rather than one because the difference matters to
+   * a reader — "the route said nothing about this" and "this is empty" are different answers, and the
+   * second is what makes a record look unreadable.
+   */
+  | { kind: "record"; fields: RecordField[]; extras: RecordField[] }
   | { kind: "raw"; body: unknown; footer?: string };
 
 type ConsoleEntry = ConsoleEntryBody & { id: number };
@@ -65,6 +72,14 @@ type ConsoleEntry = ConsoleEntryBody & { id: number };
 const HISTORY_KEY_PREFIX = "c7_console_history";
 const ALIAS_KEY_PREFIX = "c7_console_alias";
 const HISTORY_LIMIT = 200;
+/** The popup's size, remembered per browser; `null` means the default size. */
+const SIZE_KEY = "c7_console_size";
+const MIN_WIDTH = 460;
+const MIN_HEIGHT = 240;
+const RESIZE_STEP = 24;
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), Math.max(min, max));
 
 /** Column headers and dot-paths for a command that did not declare its own — enough to read a row. */
 function autoColumns(
@@ -85,6 +100,110 @@ function autoColumns(
       path: key,
     }));
 }
+
+/** A field of a record, ready to draw: its label, its value, and the tone to draw it in. */
+type RecordField = {
+  label: string;
+  text: string;
+  /** The value verbatim, for the tooltip when the printed form is a re-wording of it. */
+  title?: string;
+  tone: "text" | "number" | "date" | "bool" | "empty" | "count";
+};
+
+/** Reads a dotted path out of a body — `valueAt` for the printed form, this for the value itself. */
+function rawAt(source: unknown, path: string): unknown {
+  return path.split(".").reduce<unknown>(
+    (acc, key) =>
+      acc && typeof acc === "object"
+        ? (acc as Record<string, unknown>)[key]
+        : undefined,
+    source,
+  );
+}
+
+/**
+ * `portalAllowTicketCreation` → `Portal allow ticket creation`.
+ *
+ * The names are the API's, and they are right where they are: a client is a `Company` because that is
+ * what the table calls it. What changes here is only what a reader sees — two words the model spells in
+ * one have to be opened out again, or the output reads as a column dump rather than a record.
+ */
+function humaniseKey(key: string): string {
+  const words = key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .split(/\s+/);
+  return words
+    .map((word, index) => {
+      const lower = word.toLowerCase();
+      if (lower === "id") return "ID";
+      if (lower === "url" || lower === "uri") return "URL";
+      if (lower === "ip") return "IP";
+      if (lower === "sku") return "SKU";
+      return index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : lower;
+    })
+    .join(" ");
+}
+
+/** A declared table header (`ACCOUNT MANAGER`) as a record label (`Account manager`). */
+function humaniseHeader(header: string): string {
+  const words = header.trim().split(/\s+/);
+  return words
+    .map((word, index) => {
+      const lower = word.toLowerCase();
+      if (lower === "id") return "ID";
+      if (lower === "url") return "URL";
+      return index === 0 ? lower.charAt(0).toUpperCase() + lower.slice(1) : lower;
+    })
+    .join(" ");
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
+
+/**
+ * The printed form of one value.
+ *
+ * Three rewrites, all of them presentation: a timestamp is printed the way the rest of the application
+ * prints one (with the raw value in the tooltip, because a console should not be the only place a value
+ * cannot be read exactly), a boolean is answered rather than spelled, and nothing is printed where there
+ * is nothing — `—` says *unset* in one character instead of leaving a label followed by blank space.
+ */
+function presentValue(value: unknown): Omit<RecordField, "label"> {
+  if (value === null || value === undefined || value === "") {
+    return { text: "—", tone: "empty" };
+  }
+  if (typeof value === "boolean") {
+    return { text: value ? "Yes" : "No", tone: "bool" };
+  }
+  if (typeof value === "number") {
+    return { text: value.toLocaleString(), title: String(value), tone: "number" };
+  }
+  if (Array.isArray(value)) {
+    return { text: `${value.length} item${value.length === 1 ? "" : "s"}`, tone: "count" };
+  }
+  if (typeof value === "object") {
+    const keys = Object.keys(value as Record<string, unknown>).length;
+    return { text: `${keys} field${keys === 1 ? "" : "s"}`, tone: "count" };
+  }
+  const text = String(value);
+  if (ISO_DATE.test(text)) {
+    const when = new Date(text);
+    if (!Number.isNaN(when.getTime())) {
+      return { text: when.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }), title: text, tone: "date" };
+    }
+  }
+  return { text, tone: "text" };
+}
+
+const FIELD_CLASS: Record<RecordField["tone"], string> = {
+  text: "text-gray-200",
+  number: "text-gray-200 tabular-nums",
+  date: "text-gray-300",
+  bool: "text-gray-300",
+  empty: "text-gray-600",
+  count: "text-gray-500",
+};
 
 function readStorage<T>(key: string, fallback: T): T {
   try {
@@ -158,6 +277,130 @@ export function ConsolePanel({
     () => permittedCommands(permissions),
     [permissions],
   );
+
+  /*
+   * The popup's size, once the operator has set one.
+   *
+   * Remembered in this browser rather than on the account: it is a preference about a window — the same
+   * kind of decision as a window position — and storing it server-side would turn a local convenience into
+   * a record that has to be administered. `null` means "the size it opens at by default", which is what
+   * double-clicking the grip gives back.
+   */
+  const [size, setSize] = useState<{ width: number; height: number } | null>(() =>
+    readStorage<{ width: number; height: number } | null>(SIZE_KEY, null),
+  );
+  const sizeRef = useRef(size);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<{
+    axis: "x" | "y" | "both";
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  /** The viewport is the ceiling: a panel taller than the window cannot be dragged smaller again. */
+  const limits = () => ({
+    maxWidth: window.innerWidth - 32,
+    maxHeight: Math.round(window.innerHeight * 0.92) - 24,
+  });
+
+  const applySize = (next: { width: number; height: number }) => {
+    sizeRef.current = next;
+    setSize(next);
+  };
+
+  const onResizeStart =
+    (axis: "x" | "y" | "both") => (event: React.PointerEvent<HTMLDivElement>) => {
+      const rect = panelRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      event.preventDefault();
+      dragRef.current = {
+        axis,
+        x: event.clientX,
+        y: event.clientY,
+        width: rect.width,
+        height: rect.height,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    };
+
+  const onResizeMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const { maxWidth, maxHeight } = limits();
+    applySize({
+      width:
+        drag.axis === "y"
+          ? drag.width
+          : clamp(drag.width + (event.clientX - drag.x), MIN_WIDTH, maxWidth),
+      height:
+        drag.axis === "x"
+          ? drag.height
+          : clamp(drag.height + (event.clientY - drag.y), MIN_HEIGHT, maxHeight),
+    });
+  };
+
+  const onResizeEnd = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (sizeRef.current) writeStorage(SIZE_KEY, sizeRef.current);
+  };
+
+  /**
+   * Arrow keys, because a console is a keyboard surface and a mouse should not be the only way to make the
+   * output fit. Shift takes a bigger step; the size is written on each press rather than on a blur, since
+   * there is no "end of resize" to hang it on.
+   */
+  const onResizeKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const step = event.shiftKey ? RESIZE_STEP * 4 : RESIZE_STEP;
+    let { width, height } = sizeRef.current ?? {
+      width: rect.width,
+      height: rect.height,
+    };
+    if (event.key === "ArrowRight") width += step;
+    else if (event.key === "ArrowLeft") width -= step;
+    else if (event.key === "ArrowDown") height += step;
+    else if (event.key === "ArrowUp") height -= step;
+    else return;
+    event.preventDefault();
+    const { maxWidth, maxHeight } = limits();
+    applySize({
+      width: clamp(width, MIN_WIDTH, maxWidth),
+      height: clamp(height, MIN_HEIGHT, maxHeight),
+    });
+    writeStorage(SIZE_KEY, sizeRef.current);
+  };
+
+  const resetSize = () => {
+    sizeRef.current = null;
+    setSize(null);
+    try {
+      localStorage.removeItem(SIZE_KEY);
+    } catch {
+      /* nothing to undo */
+    }
+  };
+
+  /*
+   * How wide the panel actually is, which is no longer the same question as how wide the window is: the
+   * popup can now be dragged wider or narrower than its default, so a record's two-column layout has to
+   * follow the panel rather than the viewport. A container query would say this in CSS — it needs a plugin
+   * this project does not carry — so the width is measured instead.
+   */
+  const [panelWidth, setPanelWidth] = useState(0);
+  useEffect(() => {
+    const element = panelRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => {
+      setPanelWidth(entries[0]?.contentRect.width ?? 0);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   const [line, setLine] = useState("");
   const [entries, setEntries] = useState<ConsoleEntry[]>([]);
@@ -431,17 +674,37 @@ export function ConsolePanel({
       }
 
       if (isList && rows.length > 0) {
-        const columns = command.columns ?? autoColumns(rows);
+        const declaredColumns = command.columns ?? autoColumns(rows);
+        /*
+         * A column that holds nothing in any row is not shown.
+         *
+         * `client list` declares a short name, a status and a type that a company row does not carry, so
+         * every row printed three em dashes: the table was 75% punctuation. The data is untouched and the
+         * count is named in the footer, because quietly printing less than the command promises is the one
+         * thing worse than printing em dashes.
+         */
+        const columns = declaredColumns.filter((column) =>
+          rows.some((row) => valueAt(row, column.path) !== ""),
+        );
+        const hidden = declaredColumns.length - columns.length;
+        const shown = columns.length > 0 ? columns : declaredColumns;
         if (invocation.flags.quiet) {
-          const key = columns[0]?.path ?? "id";
+          const key = shown[0]?.path ?? "id";
           push({ kind: "out", lines: rows.map((row) => valueAt(row, key)) });
           return;
         }
         push({
           kind: "table",
-          columns,
+          columns: shown,
           rows,
-          footer: `${rows.length} row${rows.length === 1 ? "" : "s"}`,
+          footer: [
+            `${rows.length} row${rows.length === 1 ? "" : "s"}`,
+            hidden > 0
+              ? `${hidden} column${hidden === 1 ? "" : "s"} empty in every row, hidden`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
         });
         return;
       }
@@ -451,15 +714,45 @@ export function ConsolePanel({
         return;
       }
 
-      // A single record: one field per line, which is what a console should print for one thing.
+      /*
+       * A single record — and what it prints is what it *holds*, labelled, not every column the row happens
+       * to carry. `client show` returns fifty-odd fields of which a dozen hold anything, so the old
+       * one-field-per-line dump was mostly a name followed by nothing: the screenshot that asked for this
+       * showed seventeen lines and two values.
+       *
+       * The command's own fields come first, in the order the command says they read, and then whatever
+       * else the route sent that has a value — because the declared names are the console's, not the
+       * table's, and a `type` the record spells `companyType` must not read as empty. Nothing is dropped:
+       * the empty fields and the nested objects are counted and listed one click down, because "we hid it"
+       * and "it is empty" are different answers and a console should not pretend otherwise.
+       */
       const record = body as Record<string, unknown>;
-      const lines = Object.entries(record)
-        .filter(([, value]) => value === null || typeof value !== "object")
-        .map(
-          ([key, value]) =>
-            `  ${key.padEnd(18)} ${value === null ? "" : String(value)}`,
-        );
-      push({ kind: "out", lines: ["", ...lines] });
+      const taken = new Set<string>();
+      const fields: RecordField[] = [];
+      const extras: RecordField[] = [];
+
+      const place = (label: string, path: string) => {
+        if (taken.has(path)) return;
+        taken.add(path);
+        const field: RecordField = { label, ...presentValue(rawAt(record, path)) };
+        (field.tone === "empty" ? extras : fields).push(field);
+      };
+
+      (command.columns ?? []).forEach((column) =>
+        place(humaniseHeader(column.header), column.path),
+      );
+      Object.keys(record).forEach((key) => {
+        const value = record[key];
+        if (Array.isArray(value) || (value !== null && typeof value === "object")) {
+          if (taken.has(key)) return;
+          taken.add(key);
+          extras.push({ label: humaniseKey(key), ...presentValue(value) });
+          return;
+        }
+        place(humaniseKey(key), key);
+      });
+
+      push({ kind: "record", fields, extras });
     },
     [push],
   );
@@ -981,13 +1274,33 @@ export function ConsolePanel({
   }, [computeCompletions, line, permitted.length]);
 
   const isDialog = variant === "dialog";
+  /** A size the operator chose, which is what turns the fixed default width into a resizeable one. */
+  const sized = isDialog && size !== null;
 
   return (
     <div
+      ref={panelRef}
       className={
         isDialog
-          ? "w-full max-w-4xl flex flex-col rounded-xl bg-surface shadow-2xl overflow-hidden border-2 border-cyber-600/50 ring-1 ring-cyber-600/20"
+          ? `relative w-full flex flex-col rounded-xl bg-surface shadow-2xl overflow-hidden border-2 border-cyber-600/50 ring-1 ring-cyber-600/20 ${
+              sized ? "" : "max-w-4xl"
+            }`
           : "w-full h-full flex flex-col rounded-xl bg-surface overflow-hidden border border-cyber-600/40"
+      }
+      /*
+       * The viewport caps the explicit size as well as the drag: a window narrowed after the popup was
+       * widened has to bring the popup back with it, or the panel ends up wider than the screen with no
+       * handle left to grab.
+       */
+      style={
+        sized
+          ? {
+              width: size.width,
+              height: size.height,
+              maxWidth: "calc(100vw - 2rem)",
+              maxHeight: "calc(92vh - 1.5rem)",
+            }
+          : undefined
       }
       onMouseDown={(event) => event.stopPropagation()}
       {...(isDialog ? { role: "dialog", "aria-modal": true } : {})}
@@ -1019,7 +1332,7 @@ export function ConsolePanel({
       <div
         ref={scrollRef}
         className={`flex-1 overflow-y-auto px-3.5 py-2 font-mono text-[12.5px] leading-relaxed ${
-          isDialog ? "min-h-[18rem] max-h-[52vh]" : "min-h-0"
+          isDialog ? (sized ? "min-h-0" : "min-h-[18rem] max-h-[52vh]") : "min-h-0"
         }`}
       >
         {entries.length === 0 && (
@@ -1094,13 +1407,18 @@ export function ConsolePanel({
                     </thead>
                     <tbody>
                       {entry.rows.map((row, index) => (
-                        <tr key={index} className="text-gray-300 align-top">
+                        <tr
+                          key={index}
+                          className="text-gray-300 align-top odd:bg-surface-light/30"
+                        >
                           {entry.columns.map((column) => (
                             <td
                               key={column.path}
                               className="py-0.5 pr-4 whitespace-nowrap"
                             >
-                              {valueAt(row, column.path)}
+                              {valueAt(row, column.path) || (
+                                <span className="text-gray-600">—</span>
+                              )}
                             </td>
                           ))}
                         </tr>
@@ -1111,6 +1429,17 @@ export function ConsolePanel({
                 {entry.footer ? (
                   <div className="text-gray-500 pt-0.5">{entry.footer}</div>
                 ) : null}
+              </div>
+            );
+          }
+          if (entry.kind === "record") {
+            return (
+              <div key={entry.id} className="my-1.5">
+                <RecordCard
+                  fields={entry.fields}
+                  extras={entry.extras}
+                  twoColumns={panelWidth >= 1080}
+                />
               </div>
             );
           }
@@ -1231,6 +1560,120 @@ export function ConsolePanel({
           </div>
         )}
       </div>
+
+      {/*
+       * Three handles, one axis each, so a drag says which direction it means rather than guessing from the
+       * diagonal. They sit inside the border so the rounded corner still reads as a corner, and the edges
+       * are thin because the output underneath is what the eye should be on until the pointer arrives.
+       */}
+      {isDialog && (
+        <>
+          <div
+            role="separator"
+            aria-label="Resize the console wider"
+            title="Drag to resize"
+            onPointerDown={onResizeStart("x")}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeEnd}
+            onPointerCancel={onResizeEnd}
+            className="absolute inset-y-0 right-0 w-1.5 cursor-ew-resize hover:bg-cyber-600/40 transition-colors"
+          />
+          <div
+            role="separator"
+            aria-label="Resize the console taller"
+            title="Drag to resize"
+            onPointerDown={onResizeStart("y")}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeEnd}
+            onPointerCancel={onResizeEnd}
+            className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize hover:bg-cyber-600/40 transition-colors"
+          />
+          <div
+            role="separator"
+            aria-label="Resize the console"
+            tabIndex={0}
+            data-testid="console-resize"
+            title="Drag to resize · double-click for the default size · arrow keys to nudge"
+            onPointerDown={onResizeStart("both")}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeEnd}
+            onPointerCancel={onResizeEnd}
+            onKeyDown={onResizeKey}
+            onDoubleClick={resetSize}
+            className="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize text-cyber-600/70 hover:text-cyber-400 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyber-500 rounded-tl"
+          >
+            <svg viewBox="0 0 16 16" className="h-full w-full" aria-hidden>
+              <path
+                d="M15 5 L5 15 M15 10 L10 15"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                fill="none"
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * One record, drawn as a record: label and value in aligned columns, empty fields folded away.
+ *
+ * Read it beside `kubectl describe` rather than beside a table. A table answers "which of these", and a
+ * record answers "what is this" — so the labels are spelled the way a person says them, the values are
+ * printed the way the rest of the application prints them, and the fields that hold nothing are counted
+ * rather than listed. Nothing is reformatted that a reader might need verbatim: the raw value is in the
+ * tooltip, and `--json` still prints the route's own body.
+ */
+function RecordCard({
+  fields,
+  extras,
+  twoColumns,
+}: {
+  fields: RecordField[];
+  extras: RecordField[];
+  /** Two columns once the panel is wide enough to earn them; the label column is fixed width. */
+  twoColumns: boolean;
+}) {
+  const blank = extras.filter((field) => field.tone === "empty").length;
+  const columns = `grid gap-x-8 gap-y-0.5 ${twoColumns ? "grid-cols-2" : "grid-cols-1"}`;
+  const row = (field: RecordField) => (
+    <div key={field.label} className="flex items-baseline gap-3 min-w-0">
+      <dt
+        className="shrink-0 w-40 truncate text-gray-500"
+        title={field.label}
+      >
+        {field.label}
+      </dt>
+      <dd
+        className={`min-w-0 break-words ${FIELD_CLASS[field.tone]}`}
+        title={field.title}
+      >
+        {field.text}
+      </dd>
+    </div>
+  );
+
+  return (
+    <div className="rounded-lg border border-surface-border bg-surface-light/40 overflow-hidden">
+      {fields.length > 0 ? (
+        <dl className={`${columns} px-3 py-2`}>{fields.map(row)}</dl>
+      ) : (
+        <p className="px-3 py-2 text-gray-500">
+          The route returned no values for this record.
+        </p>
+      )}
+      {extras.length > 0 && (
+        <details className="border-t border-surface-border/70">
+          <summary className="px-3 py-1.5 text-[11px] text-gray-500 hover:text-gray-300 cursor-pointer select-none">
+            {extras.length} other field{extras.length === 1 ? "" : "s"}
+            {blank ? `, ${blank} of them empty` : ""}
+          </summary>
+          <dl className={`${columns} px-3 pb-2`}>{extras.map(row)}</dl>
+        </details>
+      )}
     </div>
   );
 }

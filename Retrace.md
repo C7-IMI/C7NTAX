@@ -6192,3 +6192,29 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **`__dirname` in this repo is `apps/api/src` when a script runs under tsx from the api workspace**, and
   the two conventions in play — `cwd: __dirname` for sibling scripts, a root-relative `scripts/` for the
   changelog — need different answers. The names make that visible; the arithmetic did not.
+
+---
+
+### Prompt 284 — The console's output, and a pop-up that resizes
+
+**Timestamp:** 2026-10-08 15:08 | **Status:** Complete (record presentation, table polish, resizeable pop-up — verified live) | **Duration:** ~50 min
+
+**BuildNotes IDs:** **2026.10.8.045** — "The console's output reads like a record, and the pop-up can be sized"
+
+**Prompt**
+
+> The console pop-up should be resizeable. The output from a command should be presented in a more readable and easier to understand format. Just a presentation issue, not the output itself.
+
+**What I did**
+- **Read the screenshot as the specification, and found the real problem in it.** The image was `client show` mid-scroll: seventeen lines of field name, most of them followed by nothing, with the four values that existed somewhere in the middle. The console printed *one field per line in the order the database returned them* — which is not a format, it is a dump. The fix is a reading order: what the command declares first, then everything else that holds a value, and the empty ones counted rather than listed.
+- **Made the record a record.** Labels are the words a person says (`portalAllowTicketCreation` → *Portal allow ticket creation*, `id` → *ID*), timestamps print the way every other screen prints them with the raw value in the tooltip, booleans are answered, numbers are grouped, and an absent value is `—` rather than a label followed by blank space. Empty fields and nested objects are one click down, counted — *"34 other fields, 29 of them empty"* — because hiding them silently and listing them all are both wrong, and the count is what says which there is nothing to see.
+- **Hid a column that holds nothing in any row, and said so in the footer.** `client list` printed three em dashes per row; the footer now reads *"5 rows · 3 columns empty in every row, hidden"*, so printing less than the command promises is admitted rather than assumed.
+- **Followed that em dash to its source, which was not presentation at all.** The console described the client noun with `shortName`, `status` and `type`; a `Company` row carries `clientId`, `companyType` and `isActive`. So the descriptor was naming fields the route does not return — in the columns *and* in the subject lookup, so `client show Acme` had been resolving through fields that were never there. Corrected at the source: `client list` now shows NAME / CLIENT ID / TYPE / ACTIVE / PHONE / CITY, and the resolution echo reads `→ client Acme Corporation · Client · yes`.
+- **Made the pop-up resizeable the way a window is, and keyboard-first.** Right edge, bottom edge and corner, each its own axis so a drag says what it means; the size is remembered in the browser (a window preference, not an account setting), a double-click on the corner restores the default, and the corner takes arrow keys because a console is a keyboard surface. The viewport is the ceiling, so a drag cannot put the handle out of reach, and a window narrowed afterwards brings the panel back with it.
+- **Measured the panel rather than the window.** The record card goes two-column past 1080px, which a viewport breakpoint cannot answer once the panel can be dragged wider than its default — a Tailwind container query would need a plugin this project does not carry, so a `ResizeObserver` says it instead.
+
+**Notes for next time**
+- **A dump and a format are different things, and the giveaway is the order.** The old renderer iterated the response object, so the reading order was the database's column order — the one order a reader has no reason to expect. A record should be ordered by the command's own declaration, and the first thing to check when output "looks wrong" is who decided the sequence.
+- **The empty-column fix is a safety net, not the fix.** The em dashes were a *descriptor* bug — the console asking for fields the route never returned — and hiding the column only made the symptom tidier. Worth remembering the direction of repair: find why the value is missing before deciding how to print it missing.
+- **`guard:console` verifies that every path, permission and flag exists against the routes; it does not verify that a declared column exists in a response.** That is the gap this walked through: three wrong paths in one noun, and only a human eye on a real result found them. A check would need a sample of each command's response — a bigger piece of work than this change, and the obvious next one.
+- **A resize handle is a good reason to notice what else is fixed by a container's size.** The panel's two-column threshold and its height caps were both written against the viewport and are both now against the panel, which is the general shape of the mistake: anything that measures the window stops being true the moment a thing inside it can be resized.

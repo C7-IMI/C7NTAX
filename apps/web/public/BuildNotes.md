@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.044 | Last Updated: 2026-10-08
+## Version: 2026.10.8.045 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,50 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.045 — The console's output reads like a record, and the pop-up can be sized
+
+The console printed a single record as one field per line, in the order the database happened to return
+them: `client show Acme` was seventeen lines of field name followed by nothing, with the four values that
+existed buried in the middle. The operator's screenshot said it better than a sentence can. The pop-up was
+also a fixed size — 896px wide, however long the output was.
+
+- **[Update]** **A record is drawn as a record.** The fields the command declares come first, in the
+  command's own order, spelled the way a person says them — `portalAllowTicketCreation` is *Portal allow
+  ticket creation*, and `id`/`url` keep their capitals. Timestamps read as dates (with the raw value in the
+  tooltip), booleans are answered rather than spelled, numbers are grouped, and a value that is not there
+  prints as `—` instead of as nothing at all.
+- **[New]** **The fields that hold nothing are folded away, not deleted.** Everything else the route sent
+  sits one click down under **“n other fields, m of them empty”** — nested objects and arrays included, as
+  counts. *We hid it* and *it is empty* are different answers, so the counting line says which one it is;
+  `--json` is still there for the route's own body, verbatim.
+- **[Update]** **A table hides a column that holds nothing in any row**, and the footer says how many were
+  left out (`4 rows · 1 column empty in every row, hidden`). Rows are tinted on the odd line and empty
+  cells print `—`, so a wide table can be read across.
+- **[Fix]** **The client noun described fields a client does not have.** `client list` asked for
+  `shortName`, `status` and `type`; a `Company` row carries `clientId`, `companyType` and `isActive`, so
+  the table printed three em dashes in every row and `client show` reported a record as almost empty. The
+  columns, and the subject lookup that matched on the same three names, now name the real ones — which is
+  why `client list` shows six useful columns and `client show` resolves `Acme` with `→ client Acme
+  Corporation · Client · yes`.
+- **[New]** **The pop-up is resizeable.** Drag its right edge, its bottom edge or the bottom-right corner;
+  the size is remembered per browser (a window preference, not a record to administer), a **double-click**
+  on the corner restores the default, and the corner takes **arrow keys** (held **Shift** for bigger
+  steps) because a console is a keyboard surface. The panel is capped by the viewport, so dragging cannot
+  put the handle out of reach.
+- **[Update]** **A wide panel earns two columns.** The record card splits in two once the panel passes
+  1080px, measured with a `ResizeObserver` on the panel rather than a viewport breakpoint — the whole point
+  of resizing is that the panel is no longer the window.
+
+**Verification:** web and shared `tsc` clean; `guard:console` green (85 commands, every path and permission
+still verified); `check-help-links` green. Live in the browser: `client show Acme` reads as a 17-field card
+with *34 other fields, 29 of them empty* beneath it; `client list --limit 5` shows NAME / CLIENT ID / TYPE /
+ACTIVE / PHONE / CITY with no hidden columns; the pop-up was dragged from 896×508 to 1148×709, came back at
+1148×709 after a reload, moved 48px with two arrow presses, and returned to 896px on a double-click — with
+the stored size removed. The `/console` page renders the same card and offers no handles, because it is a
+page rather than a window.
 
 ---
 

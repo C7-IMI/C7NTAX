@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.045",
+    "date": "2026-10-08",
+    "title": "The console's output reads like a record, and the pop-up can be sized",
+    "changes": [
+      {
+        "text": "**A record is drawn as a record.** The fields the command declares come first, in the",
+        "type": "Update"
+      },
+      {
+        "text": "**The fields that hold nothing are folded away, not deleted.** Everything else the route sent",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A table hides a column that holds nothing in any row**, and the footer says how many were",
+        "type": "Update"
+      },
+      {
+        "text": "**The client noun described fields a client does not have.** `client list` asked for",
+        "type": "Fix"
+      },
+      {
+        "text": "**The pop-up is resizeable.** Drag its right edge, its bottom edge or the bottom-right corner;",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A wide panel earns two columns.** The record card splits in two once the panel passes",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.044",
     "date": "2026-10-08",
     "title": "The probe residue is gone, and three tools that were quietly doing nothing now work",

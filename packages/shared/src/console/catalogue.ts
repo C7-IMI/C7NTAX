@@ -478,8 +478,12 @@ export const CONSOLE_COMMANDS: readonly ConsoleCommandSpec[] = [
       { name: "sort", help: "Field to sort by.", type: "string" },
     ],
     columns: [
-      { header: "NAME", path: "name" }, { header: "SHORT", path: "shortName" },
-      { header: "STATUS", path: "status" }, { header: "TYPE", path: "type" },
+      // The Company row's own names. The console used to ask for `shortName`, `status` and `type`, none of
+      // which a client carries — `client list` printed three em dashes in every row, and `client show`
+      // reported a record as mostly empty.
+      { header: "NAME", path: "name" }, { header: "CLIENT ID", path: "clientId" },
+      { header: "TYPE", path: "companyType" }, { header: "ACTIVE", path: "isActive" },
+      { header: "PHONE", path: "phone" }, { header: "CITY", path: "city" },
     ],
   },
   {
@@ -488,16 +492,18 @@ export const CONSOLE_COMMANDS: readonly ConsoleCommandSpec[] = [
     verb: "show",
     group: "clients",
     permission: Permission.ClientView,
-    description: "One client, by name, short name or id.",
+    description: "One client, by name, client number or id.",
     path: "/clients/{subject}",
     subject: {
       label: "CLIENT", required: true,
-      lookup: { path: "/clients", searchParam: "search", match: ["name", "shortName", "id"], display: ["name", "shortName", "status"] },
+      lookup: { path: "/clients", searchParam: "search", match: ["name", "legalName", "clientId", "id"], display: ["name", "companyType", "isActive"] },
     },
     columns: [
-      { header: "NAME", path: "name" }, { header: "SHORT", path: "shortName" },
-      { header: "STATUS", path: "status" }, { header: "TYPE", path: "type" },
+      { header: "NAME", path: "name" }, { header: "CLIENT ID", path: "clientId" },
+      { header: "TYPE", path: "companyType" }, { header: "SERVICE LEVEL", path: "serviceLevel" },
+      { header: "ACTIVE", path: "isActive" },
       { header: "PHONE", path: "phone" }, { header: "WEBSITE", path: "website" },
+      { header: "EMAIL", path: "email" }, { header: "CITY", path: "city" },
     ],
   },
   {
