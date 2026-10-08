@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.044",
+    "date": "2026-10-08",
+    "title": "The probe residue is gone, and three tools that were quietly doing nothing now work",
+    "changes": [
+      {
+        "text": "**`pnpm probes:sweep` and `pnpm probes:sweep:apply`** — the residue cleaner is now a script",
+        "type": "New Feature"
+      },
+      {
+        "text": "The cleaner learned the shapes it was missing, including the KB autogen probe's client and",
+        "type": "Update"
+      },
+      {
+        "text": "**`probe-permissions.mjs` never cleaned up at all.** Nine kinds of row × six personas, six",
+        "type": "Fix"
+      },
+      {
+        "text": "**`probe-kb-autogen.mjs` cleaned up only on its happy path.** Its own early exit — the one",
+        "type": "Fix"
+      },
+      {
+        "text": "**`verify-post-change.ts` had two steps that had never run, and said all checks passed anyway.**",
+        "type": "Fix"
+      },
+      {
+        "text": "The residue itself is removed: 21 clients, 9 tickets, 12 comments and 154 invalidated",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.043",
     "date": "2026-10-08",
     "title": "The console is a permission, and it can be switched off per person and per client",

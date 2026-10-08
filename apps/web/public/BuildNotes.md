@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.043 | Last Updated: 2026-10-08
+## Version: 2026.10.8.044 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,60 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.044 — The probe residue is gone, and three tools that were quietly doing nothing now work
+
+The dev database had accumulated 21 fake clients — sixteen **Persona probe client …**, four **Probe KB
+client …** and one **Expense Probe …** — carrying their tickets and comments, in a list that is supposed
+to be the customer list. Every one of them came from a verification probe doing what probes do (writing
+real rows through the real API) and then failing, crashing, or never cleaning up at all. The cleaner that
+removes them already existed; nothing ran it, and it did not know two of the three shapes. Fixing that
+turned up the same fault twice more: a probe whose cleanup sat below its own early exit, and a
+verification script with two steps that had never run while the line beneath them said everything was
+fine.
+
+- **[New]** **`pnpm probes:sweep` and `pnpm probes:sweep:apply`** — the residue cleaner is now a script
+  with a name, runnable from the root. A dry run by default, because a script that deletes clients should
+  say which ones first.
+- **[Update]** The cleaner learned the shapes it was missing, including the KB autogen probe's client and
+  tickets — matched through the client's own name and then the records hanging off it, not by the drafted
+  article's title, which is the model's, not ours.
+- **[Fix]** **`probe-permissions.mjs` never cleaned up at all.** Nine kinds of row × six personas, six
+  times a run: it is the source of every one of the sixteen **Persona probe client** rows, two per run.
+  Each row is now named with one stamp for the whole run, and a single `sweepCreated()` runs from a
+  `finally`, so a normal finish, a 500 and a thrown fetch all end the same way. The chat sessions it opens
+  are matched by persona and run window, because `ChatSession` has no title to match on.
+- **[Fix]** **`probe-kb-autogen.mjs` cleaned up only on its happy path.** Its own early exit — the one
+  that reports *“no article was drafted — is the API running with EGRESS_ALLOW_PRIVATE…”* — called
+  `process.exit()` two lines above the tidy-up, which is precisely how four failed runs left four clients
+  behind. The cleanup is now one idempotent `sweepProbe()`, called from the normal end, from that early
+  exit and from a `catch` on `main`.
+- **[Fix]** **`verify-post-change.ts` had two steps that had never run, and said all checks passed anyway.**
+  Both resolved their working directory one level short: `cwd: __dirname` is `apps/api/src`, so the
+  snapshot capture looked for `apps/api/src/src/snapshot-capture.ts`, and `resolve(__dirname, "..", "..")`
+  is `apps`, so the changelog generator looked for `apps/scripts/generate-buildnotes.mjs`. The two steps
+  exist to keep the snapshots and the What's New fallbacks true, and each printed a `✗` followed by
+  *“All checks passed”*. The paths are named once (`API_DIR`, `REPO_ROOT`) and a step that could not run is
+  now reported in the closing line instead of being folded into a sentence about health. The exit code is
+  deliberately unchanged: this script is also run beside a commit hook, and a fallback that could not be
+  regenerated is worth reporting without blocking the commit that regenerates it.
+- **[Update]** The residue itself is removed: 21 clients, 9 tickets, 12 comments and 154 invalidated
+  sessions. Five real clients remain (Acme Corporation, Globex Industries, Initech Solutions, Umbrella
+  Corp, Stark Enterprises). Users, products, connector services and the audit trail are untouched — the
+  audit rows a probe wrote are history, and history is not clutter.
+
+**Verification:** a second `pnpm probes:sweep` reports zero of every residue shape.
+`probe-permissions.mjs` runs its full matrix and ends with `cleaned up: 2 articles, 2 categories, 2 rules,
+2 surveys, 2 reports, 2 clients, 2 locales, 2 providers, 5 chatSessions, 6 sessions`.
+`probe-kb-autogen.mjs` was run and **failed on exactly the early-exit path that used to leak** — and left
+nothing behind, which is the test that matters. `pnpm --filter @C7NTAX/api verify` now completes all five
+steps, including the two that had never run. Live in the browser: the Clients list shows five rows and no
+probe names.
+
+Help and the API documentation need no change here: no route, permission, setting or screen moved. This is
+the removal of test residue and the repair of the two scripts that produced it.
 
 ---
 

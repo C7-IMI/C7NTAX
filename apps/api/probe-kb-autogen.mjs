@@ -47,6 +47,33 @@ async function call(method, path, { token, body } = {}) {
 const { PrismaClient } = await import("@prisma/client");
 const prisma = new PrismaClient();
 
+/**
+ * Everything this probe writes, removed by the stamp it wrote it under.
+ *
+ * Name-based and idempotent on purpose: it is called from the normal end, from the early exit below (which
+ * stops with the API's own explanation when the stub model cannot be reached) and from a `catch`, and a
+ * 500 or a thrown fetch on the way must not be the difference between a clean run and a client left in the
+ * list. The tidy-up used to be the last four lines of the happy path, which is how "Probe KB client …"
+ * rows survived four failed runs.
+ */
+async function sweepProbe() {
+  const ticketIds = (await prisma.ticket.findMany({ where: { ticketNumber: { startsWith: `KB-${STAMP}-` } }, select: { id: true } })).map(t => t.id);
+  const articleIds = (await prisma.knowledgeBaseArticle.findMany({
+    where: { OR: [{ sourceTicketId: { in: ticketIds } }, { title: { startsWith: "Outlook cannot connect" } }] },
+    select: { id: true },
+  })).map(a => a.id);
+  await prisma.kBArticleVersion.deleteMany({ where: { articleId: { in: articleIds } } });
+  await prisma.kBArticleTicket.deleteMany({ where: { articleId: { in: articleIds } } });
+  await prisma.knowledgeBaseArticle.deleteMany({ where: { id: { in: articleIds } } });
+  await prisma.ticketComment.deleteMany({ where: { ticketId: { in: ticketIds } } });
+  await prisma.ticket.deleteMany({ where: { id: { in: ticketIds } } });
+  const clients = await prisma.company.deleteMany({ where: { name: `Probe KB client ${STAMP}` } });
+  const providers = await prisma.aiProviderConfig.deleteMany({ where: { name: `Probe KB provider ${STAMP}` } });
+  const personaIds = (await prisma.user.findMany({ where: { email: { in: ["persona.admin@c7ntax.local", "persona.tech@c7ntax.local"] } }, select: { id: true } })).map(u => u.id);
+  await prisma.userSession.deleteMany({ where: { userId: { in: personaIds } } });
+  return { tickets: ticketIds.length, articles: articleIds.length, clients: clients.count, providers: providers.count };
+}
+
 /** A stand-in for the configured model endpoint, answering whatever the phase asks for. */
 function startStub() {
   const prompts = [];
@@ -128,6 +155,8 @@ async function main() {
     // call is refused by the egress policy and no article exists. Say that, rather than falling
     // through to a Prisma `where` with an undefined id, which buries the reason under a stack trace.
     check(false, `no article was drafted — is the API running with EGRESS_ALLOW_PRIVATE=true, KB_AUTOGEN_ENABLED=true and the stub provider on ${AI_PORT}? (${drafted.status})`);
+    await sweepProbe();
+    await prisma.$disconnect();
     console.log(`\n${pass} passed, ${fail} failed`);
     process.exit(1);
   }
@@ -214,23 +243,29 @@ async function main() {
   const anon = await call("GET", "/api/kb/drafts");
   check(anon.status === 401, `an unauthenticated read of the queue is refused (${anon.status})`);
 
-  // Clean up: probe tickets, client, articles, provider and the sessions it used.
-  const ticketIds = (await prisma.ticket.findMany({ where: { ticketNumber: { startsWith: `KB-${STAMP}-` } }, select: { id: true } })).map(t => t.id);
-  const articleIds = (await prisma.knowledgeBaseArticle.findMany({ where: { OR: [{ sourceTicketId: { in: ticketIds } }, { title: { startsWith: "Outlook cannot connect" } }] }, select: { id: true } })).map(a => a.id);
-  await prisma.kBArticleVersion.deleteMany({ where: { articleId: { in: articleIds } } });
-  await prisma.knowledgeBaseArticle.deleteMany({ where: { id: { in: articleIds } } });
-  await prisma.ticketComment.deleteMany({ where: { ticketId: { in: ticketIds } } });
-  await prisma.ticket.deleteMany({ where: { id: { in: ticketIds } } });
-  await prisma.company.deleteMany({ where: { id: client.id } });
-  await prisma.aiProviderConfig.deleteMany({ where: { id: provider.id } });
-  const personaIds = (await prisma.user.findMany({ where: { email: { in: ["persona.admin@c7ntax.local", "persona.tech@c7ntax.local"] } }, select: { id: true } })).map(u => u.id);
-  await prisma.userSession.deleteMany({ where: { userId: { in: personaIds } } });
-  const leftovers = await prisma.knowledgeBaseArticle.count({ where: { id: { in: articleIds } } });
-  check(leftovers === 0, `the probe cleaned up after itself (${leftovers} articles left)`);
+  // Clean up on the way out — the same sweep every exit path calls. The check is on what remains, not on
+  // what the sweep was handed: a sweep that found nothing to delete would otherwise look like a pass.
+  const removed = await sweepProbe();
+  const leftBehind =
+    await prisma.knowledgeBaseArticle.count({ where: { title: { startsWith: "Outlook cannot connect" } } })
+    + await prisma.company.count({ where: { name: `Probe KB client ${STAMP}` } })
+    + await prisma.ticket.count({ where: { ticketNumber: { startsWith: `KB-${STAMP}-` } } });
+  check(leftBehind === 0, `the probe cleaned up after itself (removed ${JSON.stringify(removed)}, ${leftBehind} left)`);
   await prisma.$disconnect();
 
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail === 0 ? 0 : 1);
 }
 
-void main();
+/**
+ * A failure inside `main` — a 500, a refused connection, a bad assumption — used to leave the probe's
+ * client and tickets in place, because the tidy-up was the last thing the happy path did. Sweeping here
+ * as well means the only way to leave residue is to kill the process, which `clean-probe-residue.ts` is
+ * for.
+ */
+main().catch(async (e) => {
+  console.error("probe failed:", e.message);
+  const removed = await sweepProbe().catch(() => null);
+  console.error(`cleaned up after the failure: ${JSON.stringify(removed)}`);
+  process.exit(1);
+});

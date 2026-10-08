@@ -279,12 +279,64 @@ async function main() {
     () => prisma.company.deleteMany({ where: { id: { in: portalProbeCompanyIds } } }),
   );
 
+  // The KB autogen probe files three tickets against a throwaway client, drafts an article from one of
+  // them with a stub model, and deletes all of it at the end of a *successful* run. An early exit — it
+  // stops with the API's own explanation when the stub provider is unreachable — skips that tidy-up, so
+  // the client and its tickets stay in the list. Matched by the client's name, and then by the records
+  // that hang off it rather than by title, because the drafted article's title is the model's.
+  const kbProbeCompanies = await prisma.company.findMany({ where: { name: { startsWith: "Probe KB client" } }, select: { id: true } });
+  const kbProbeCompanyIds = kbProbeCompanies.map(c => c.id);
+  const kbProbeTickets = await prisma.ticket.findMany({ where: { companyId: { in: kbProbeCompanyIds } }, select: { id: true } });
+  const kbProbeTicketIds = kbProbeTickets.map(t => t.id);
+  const kbProbeArticles = await prisma.knowledgeBaseArticle.findMany({ where: { sourceTicketId: { in: kbProbeTicketIds } }, select: { id: true } });
+  const kbProbeArticleIds = kbProbeArticles.map(a => a.id);
+  await remove(
+    "kb probe article versions",
+    () => prisma.kBArticleVersion.count({ where: { articleId: { in: kbProbeArticleIds } } }),
+    () => prisma.kBArticleVersion.deleteMany({ where: { articleId: { in: kbProbeArticleIds } } }),
+  );
+  await remove(
+    "kb probe article ticket links",
+    () => prisma.kBArticleTicket.count({ where: { articleId: { in: kbProbeArticleIds } } }),
+    () => prisma.kBArticleTicket.deleteMany({ where: { articleId: { in: kbProbeArticleIds } } }),
+  );
+  await remove(
+    "kb probe articles",
+    () => Promise.resolve(kbProbeArticleIds.length),
+    () => prisma.knowledgeBaseArticle.deleteMany({ where: { id: { in: kbProbeArticleIds } } }),
+  );
+  await remove(
+    "kb probe comments",
+    () => prisma.ticketComment.count({ where: { ticketId: { in: kbProbeTicketIds } } }),
+    () => prisma.ticketComment.deleteMany({ where: { ticketId: { in: kbProbeTicketIds } } }),
+  );
+  await remove(
+    "kb probe tickets",
+    () => Promise.resolve(kbProbeTicketIds.length),
+    () => prisma.ticket.deleteMany({ where: { id: { in: kbProbeTicketIds } } }),
+  );
+  await remove(
+    "kb probe providers",
+    () => prisma.aiProviderConfig.count({ where: { name: { startsWith: "Probe KB provider" } } }),
+    () => prisma.aiProviderConfig.deleteMany({ where: { name: { startsWith: "Probe KB provider" } } }),
+  );
+  await remove(
+    "kb probe clients",
+    () => Promise.resolve(kbProbeCompanyIds.length),
+    () => prisma.company.deleteMany({ where: { id: { in: kbProbeCompanyIds } } }),
+  );
+
   // The time-rules probe and the browser check leave one client, agreement and ticket each.
   const timeRuleCompanyWhere = { OR: [{ name: { startsWith: "TimeRules Probe" } }, { name: { startsWith: "TimeRules Off Probe" } }, { name: { startsWith: "Expense Probe" } }] };
   const timeRuleCompanies = await prisma.company.findMany({ where: timeRuleCompanyWhere, select: { id: true } });
   const timeRuleCompanyIds = timeRuleCompanies.map(c => c.id);
   const timeRuleTickets = await prisma.ticket.findMany({ where: { companyId: { in: timeRuleCompanyIds } }, select: { id: true } });
   const timeRuleTicketIds = timeRuleTickets.map(t => t.id);
+  await remove(
+    "time-rules probe comments",
+    () => prisma.ticketComment.count({ where: { ticketId: { in: timeRuleTicketIds } } }),
+    () => prisma.ticketComment.deleteMany({ where: { ticketId: { in: timeRuleTicketIds } } }),
+  );
   await remove(
     "time-rules probe time entries",
     () => prisma.timeEntry.count({ where: { ticketId: { in: timeRuleTicketIds } } }),

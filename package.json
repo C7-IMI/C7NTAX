@@ -39,6 +39,8 @@
     "plugin:bump": "tsx scripts/plugin-metadata.mts bump",
     "installer:build": "pwsh -NoProfile -File installer/outlook-addin/build.ps1",
     "guard:deps": "node scripts/audit-baseline.mjs",
+  "probes:sweep": "pnpm --filter @C7NTAX/api probes:sweep",
+  "probes:sweep:apply": "pnpm --filter @C7NTAX/api probes:sweep:apply",
     "deploy:preflight": "node scripts/azure/preflight.mjs",
     "deploy:preflight:full": "node scripts/azure/preflight.mjs --docker",
     "deploy:validate": "node scripts/azure/validate-bicep.mjs",

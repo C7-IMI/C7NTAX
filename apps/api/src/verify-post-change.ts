@@ -18,6 +18,19 @@ const API_PORT = 4000;
 const WEB_PORT = 3010;
 const BASE_URL = `http://localhost:${WEB_PORT}`;
 
+/**
+ * Where the commands below have to run from.
+ *
+ * Both of these used to be one level short of the directory they meant: `cwd: __dirname` is
+ * `apps/api/src`, so `npx tsx src/snapshot-capture.ts` looked for `apps/api/src/src/…`, and
+ * `resolve(__dirname, "..", "..")` is `apps`, so the changelog generator looked for
+ * `apps/scripts/generate-buildnotes.mjs`. Both steps failed on every run, printed a `✗`, and were
+ * followed by a summary claiming all checks had passed — so nobody noticed the two steps that exist to
+ * keep the snapshots and the What's New fallbacks true were doing nothing.
+ */
+const API_DIR = path.resolve(__dirname, "..");
+const REPO_ROOT = path.resolve(API_DIR, "..", "..");
+
 // Pages that must return 200
 const REQUIRED_PAGES = [
   "/", "/home", "/tickets", "/boards", "/opportunities", 
@@ -88,6 +101,8 @@ async function verifyData(): Promise<string[]> {
 
 async function main() {
   console.log("[Verify] Post-change verification starting...\n");
+  /** Steps that could not run — reported at the end rather than folded into "all checks passed". */
+  const skipped: string[] = [];
 
   // 1. Verify pages
   console.log("[Verify] Checking page health...");
@@ -108,7 +123,7 @@ async function main() {
     console.log("\n[Verify] Re-seeding from snapshots...");
     try {
       execSync("npx tsx src/seed-from-snapshots.ts", { 
-        cwd: __dirname, 
+        cwd: API_DIR, 
         stdio: "inherit",
         timeout: 30000 
       });
@@ -116,7 +131,7 @@ async function main() {
     } catch {
       console.log("  ✗ Snapshot re-seed failed, falling back to seed-full...");
       execSync("npx tsx src/seed-full.ts", { 
-        cwd: __dirname, 
+        cwd: API_DIR, 
         stdio: "inherit",
         timeout: 30000 
       });
@@ -130,12 +145,13 @@ async function main() {
   console.log("\n[Verify] Capturing current state to snapshots...");
   try {
     execSync("npx tsx src/snapshot-capture.ts", { 
-      cwd: __dirname, 
+      cwd: API_DIR, 
       stdio: "inherit",
       timeout: 30000 
     });
     console.log("  ✓ Snapshot capture complete");
   } catch (e) {
+    skipped.push("the snapshot capture");
     console.log(`  ✗ Snapshot capture failed: ${(e as Error).message}`);
   }
 
@@ -143,12 +159,13 @@ async function main() {
   console.log("\n[Verify] Regenerating What's New outputs...");
   try {
     execSync("node scripts/generate-buildnotes.mjs", {
-      cwd: path.resolve(__dirname, "..", ".."),
+      cwd: REPO_ROOT,
       stdio: "inherit",
       timeout: 15000
     });
     console.log("  ✓ What's New outputs regenerated");
   } catch (e) {
+    skipped.push("the What's New regeneration");
     console.log(`  ✗ What's New regeneration failed: ${(e as Error).message}`);
   }
 
@@ -160,7 +177,15 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("\n[Verify] ✓ All checks passed. Application is healthy.");
+  /*
+   * Worded to keep the two claims apart. The data checks passed; a step that could not run is named
+   * rather than swallowed by a sentence that reads as if everything did. The exit code is unchanged —
+   * this script is run by hand and beside a commit hook, and a fallback that could not be regenerated is
+   * worth reporting without blocking the commit that the hook itself will regenerate it on.
+   */
+  console.log(skipped.length === 0
+    ? "\n[Verify] ✓ All checks passed. Application is healthy."
+    : `\n[Verify] ✓ Data checks passed, but ${skipped.join(" and ")} did not run — see the ✗ lines above.`);
 }
 
 main().catch((e) => {

@@ -1,28 +1,5 @@
 [
   {
-    "id": "768aff20-4aec-493c-a384-9483db4d42ca",
-    "description": "Parking at the client site",
-    "amount": 24.5,
-    "category": "parking",
-    "companyId": "7b60134a-c6ca-4104-869c-922f6365b73f",
-    "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
-    "invoiceId": null,
-    "receiptUrl": null,
-    "expenseDate": "2026-10-08T07:24:15.559Z",
-    "createdById": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
-    "createdAt": "2026-10-08T07:24:15.561Z",
-    "updatedAt": "2026-10-08T07:24:15.605Z",
-    "vendor": "NCP",
-    "miles": null,
-    "status": "approved",
-    "approvedById": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
-    "approvedAt": "2026-10-08T07:24:15.603Z",
-    "decisionNote": "Reasonable",
-    "externalSystem": null,
-    "externalId": null,
-    "syncedAt": null
-  },
-  {
     "id": "d5d4cffc-4122-460c-99c0-654fd7a92048",
     "description": "Parking — client site",
     "amount": 12,

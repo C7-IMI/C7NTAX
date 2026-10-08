@@ -6127,3 +6127,68 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **Never walk a permission change on your own account.** `admin@C7NTAX.com` cannot change its own role or permissions — the API refuses with *"You cannot change your own role or permissions"* — so the walk needs a throwaway account created for it (role Technician, known password, deleted afterwards). The database was left exactly as found: account gone, client switch back to unset, no leftover `*.test` accounts.
 - **The ~15-minute auto-sync job swept most of this request into `797fd26` before the records existed.** Nothing was lost, but the BuildNotes entry had to be written for work already committed, which is the wrong order — worth checking `git log --oneline -3` before assuming what is uncommitted.
 - **The dev database has leftover probe companies** ("Persona probe client …", "Probe KB client …", a dozen of them) from earlier sessions' probes that did not clean up. They clutter the client list; a cleanup pass is owed, separately from this change.
+
+---
+
+### Prompt 283 — The probe residue in the dev database, and the two probes that were leaving it
+
+**Timestamp:** 2026-10-08 14:55 | **Status:** Complete (21 clients removed, the two leaking probes repaired, verified) | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.8.044** — "The probe residue is gone, and the probes stop leaving it"
+
+**Prompt**
+
+> Fix this:
+>
+> Flagged, not touched: leftover probe clients in the dev database from earlier probes.
+
+**What I did**
+- **Counted before deleting anything.** All 26 companies in the database, with their contact, ticket, user, invoice and agreement counts: 21 were probe residue and 5 were real (Acme Corporation, Globex Industries, Initech Solutions, Umbrella Corp, Stark Enterprises). Empty clients with a probe name and a timestamp are safe by inspection; the KB ones carried tickets, so the interesting question was what else hung off them — which is what the sweep is built from.
+- **Found that a cleaner already existed, and why it had not helped.** `clean-probe-residue.ts` sweeps most of the residue shapes already, but it is dry-run by default, nothing in the repository calls it, and it did not know the **Probe KB client** shape or the KB probe's tickets at all. A tool nobody runs is a tool that does not exist, so it is now `pnpm probes:sweep` / `pnpm probes:sweep:apply` — reachable from the root and named in the place scripts are looked for.
+- **Taught it the missing shape.** The KB probe's client and its tickets, matched through the client's own name and then the records that hang off it — not by the drafted article's title, which is invented by the model and would be the wrong thing to match a customer's article against.
+- **Repaired the two probes that were actually leaking.** They failed in different ways, and both are the same mistake in two dialects: **cleanup written as the last statement of the happy path.** `probe-permissions.mjs` never had any — nine kinds of row × six personas, six times over, which is the whole of the sixteen **Persona probe client** rows. `probe-kb-autogen.mjs` had it, and its own early exit — the one whose message tells the operator to check `EGRESS_ALLOW_PRIVATE` — called `process.exit()` two lines above it, which is exactly how four failed runs left four clients behind.
+- **Made each sweep one implementation, called from every exit path.** Names carry a stamp for the run, so the sweep finds rows the API created on somebody else's behalf rather than remembering ids it never received; the sweep is idempotent, so a `finally`, an early exit and a `catch` can all call it. The chat sessions are the exception to naming — `ChatSession` has no title — so they are matched by persona account and run window instead, which is precise for rows this run opened and useless for anyone else's.
+- **Kept the audit trail.** The audit rows of a probe's writes stay: they are history, they are not in the customer list, and deleting them would make the trail a document that can be tidied. The counts say so — 4,776 audit rows before the cleanup and 4,776 after.
+- **Tests worth naming.** `probe-permissions.mjs` was re-run end to end: full matrix, then `cleaned up: 2 articles, 2 categories, 2 rules, 2 surveys, 2 reports, 2 clients, 2 locales, 2 providers, 5 chatSessions, 6 sessions`, and the cleaner's next dry run reported zero in every category it used to find sixteen. `probe-kb-autogen.mjs` was re-run and **failed on exactly the early-exit path that used to leak** — the residue check afterwards was empty, which is the assertion the fix needed rather than a happy-path run that would have cleaned up anyway.
+
+**Decisions worth remembering**
+- **A probe is a guest in the data.** It writes through the real API on purpose — that is what makes its verdicts worth anything — so leaving the rows behind is not a side effect, it is damage to the list a customer sees. The convention is now explicit: one stamp per run, one idempotent sweep, called from every exit path.
+- **Dry run by default is part of the design, not caution.** The cleaner deletes clients. Its default has to be to describe what it would remove, and the version that removes has to be asked for by name.
+- **The cleaner is the backstop, and its limits should be stated.** A `finally` cannot run if the process is killed, so a sweep-able name is the durable half of the fix and the exit path is the convenient half. Both, or neither is reliable.
+- **Two probes fixed, three left alone deliberately.** `probe-time-rules.mjs`, `probe-time-rules-flag.mjs` and `probe-expenses.mjs` tidy up on every path they control — they use a non-fatal `check()`, so a failed assertion still reaches the cleanup — and only an exception between the write and the cleanup leaks. Their residue was one client each; converting a module-level body into a `try`/`finally` for that would be a bigger change than the risk warrants, so they keep their trailing cleanup and the cleaner covers the crash.
+
+**Notes for next time**
+- **The leak class has a signature worth recognizing on sight:** cleanup that lives after the last assertion, and an early `process.exit()` above it. Both are invisible in a passing run, which is why they survive review — the probe reports success and the client list quietly grows.
+- **`pnpm probes:sweep` is worth running before a snapshot capture**, because the snapshots under `apps/api/src/snapshots/` mirror the database: residue in the tables becomes residue in a committed file, and the pick-up diff for the cleanup here touched `companies.json`, `tickets.json`, `kb-articles.json` and a dozen deltas.
+- **The persona accounts make residue easy to spot and easy to group.** They all sign in as `persona.<role>@c7ntax.local`, so "started by a persona during this window" is a precise question for anything the API stores without a name.
+### Prompt 283 (continued) — the verification script had two steps that never ran
+
+**BuildNotes IDs:** **2026.10.8.044** (same entry — same finding, in a third place)
+
+While running `pnpm --filter @C7NTAX/api verify` as the last step of the residue fix, two of its five steps
+reported failure and the script nevertheless ended with *"All checks passed. Application is healthy."*
+
+- **Both failures were the same mistake: a working directory one level short of the one meant.**
+  `cwd: __dirname` is `apps/api/src`, so the snapshot capture invoked `npx tsx src/snapshot-capture.ts` and
+  looked for `apps/api/src/src/snapshot-capture.ts`; `resolve(__dirname, "..", "..")` is `apps`, so the
+  changelog generator looked for `apps/scripts/generate-buildnotes.mjs`. Neither had ever run — the
+  snapshot capture and the What's New regeneration are the two steps that keep the snapshot files and the
+  static fallbacks true, and both had been quietly doing nothing while printing a `✗` that nobody read
+  because the line after it said everything was fine.
+- **Named the directories once** (`API_DIR`, `REPO_ROOT`) and used them, so the next person does not have
+  to count `..` segments to work out where a command runs.
+- **Made the closing line honest without changing its teeth.** The two claims are now kept apart: the data
+  checks passed, and a step that could not run is named in the summary instead of being swallowed. The
+  exit code is deliberately unchanged, because this script is also run beside a commit hook — a fallback
+  that could not be regenerated is worth reporting, and not worth blocking the commit that the hook
+  regenerates it on.
+- **After the fix**, all five steps run: the capture writes its snapshots (`user: 17 records →
+  users.json`) and the What's New outputs regenerate.
+
+**Notes for next time**
+- **A silent failure followed by a green summary is the most expensive kind of bug in a verification
+  script**, because the script's whole output is the evidence. The pattern to look for is a `catch` that
+  logs and continues, sitting above an unconditional success line.
+- **`__dirname` in this repo is `apps/api/src` when a script runs under tsx from the api workspace**, and
+  the two conventions in play — `cwd: __dirname` for sibling scripts, a root-relative `scripts/` for the
+  changelog — need different answers. The names make that visible; the arithmetic did not.
