@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.8.047",
+    "date": "2026-10-08",
+    "title": "Basic and Advanced: two readings of one console result, and a switch between them",
+    "changes": [
+      {
+        "text": "**A Basic / Advanced switch in the console's header**, remembered for the browser. Basic is the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The mode is a rendering decision, so it is applied when a result is drawn.** An entry keeps",
+        "type": "Update"
+      },
+      {
+        "text": "**The table's footer follows the mode.** Basic still says how many columns it left out;",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.046",
     "date": "2026-10-08",
     "title": "The dead billing package is gone, and both gates pass for the first time",

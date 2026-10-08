@@ -66,7 +66,12 @@
 > them (`companyType` → *Company type*), timestamps as dates, booleans answered — with every other field
 > the route sent one click down under *"n other fields, m of them empty"*, because "we hid it" and "it is
 > empty" are different answers. A **list** hides a column that holds nothing in any row, and says how many
-> it left out. The descriptors themselves were wrong in one place and that is fixed at the source: the
+> it left out. **Basic and Advanced**, in the header, are the two readings of one result: basic is that
+> formatting, advanced is the console exactly as it printed before it learned any of it — the route's own
+> field names in the route's own order, every declared column whatever it holds, raw timestamps and
+> `true`/`false` — and the mode is applied when a result is *drawn* rather than when it is fetched, so
+> switching it redraws the scrollback and one result can be read both ways without running it twice. The
+> descriptors themselves were wrong in one place and that is fixed at the source: the
 > client noun asked for `shortName`, `status` and `type`, none of which a `Company` row carries, so
 > `client list` printed three em dashes per row and `client show` reported a record as mostly empty —
 > it now names `name`, `clientId`, `companyType`, `isActive` and friends. The pop-up resizes by its right

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.046 | Last Updated: 2026-10-08
+## Version: 2026.10.8.047 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,39 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.047 — Basic and Advanced: two readings of one console result, and a switch between them
+
+The presentation work made output readable by *interpreting* it — a record becomes labelled fields, a table
+loses the columns that hold nothing, timestamps become dates. That is the right default and it is also a
+layer between the route's answer and the reader, so the console now offers both: **Basic** for reading a
+result, **Advanced** for reading the route.
+
+- **[New]** **A Basic / Advanced switch in the console's header**, remembered for the browser. Basic is the
+  formatted reading. Advanced is the console exactly as it printed before any of it: the route's own field
+  names in the route's own order, one per line, every declared column whatever it holds, timestamps as the
+  ISO strings they arrived as, and `true`/`false` rather than a date and an answer. Neither loses anything
+  the other has.
+- **[Update]** **The mode is a rendering decision, so it is applied when a result is drawn.** An entry keeps
+  both what Basic needs (labelled fields, the visible columns) and what Advanced needs (the body, the
+  declared columns), and the switch reformats the **whole scrollback** — so one result can be read both ways
+  without running the command twice, which is the only way the two are genuinely comparable side by side.
+- **[Update]** **The table's footer follows the mode.** Basic still says how many columns it left out;
+  Advanced prints them, so it says the row count and nothing else. Rows are tinted only in Basic, and an
+  empty cell is `—` only in Basic — the em dash is a reading, and Advanced does not read.
+
+**Verification:** web `tsc` clean; `check-help-links` green. Live in the browser: `client show Globex` in
+Advanced prints the original padded dump (`  createdAt          2026-08-12T06:04:15.103Z`, empty fields listed
+in body order) and in Basic the labelled card, from the *same* entry; `ticket list --limit 3` in Advanced
+shows the ASSIGNEE column with blank cells and a bare `3 rows` footer, in Basic five columns and
+`3 rows · 1 column empty in every row, hidden`. Toggling back and forth reformats what is already on screen,
+the choice survives a reload, and `/console` carries the same switch.
+
+Help gained the switch in its output section, a new FAQ answer (*"I preferred the console's old output"*), an
+Index row and an amendment to the existing column answer; PLAN-028 records the two readings and why the mode
+is applied at draw time.
 
 ---
 

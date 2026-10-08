@@ -6246,3 +6246,30 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 **Notes for next time**
 - **The same shape remains in `apps/api`,** and it is now the only place it does: with no `rootDir` its build emits a mirror (`apps/api/dist/apps/api/src/index.js`, `dist/packages/…`) while `"start": "node dist/index.js"` names a file that build does not produce. Nothing in the repository runs `start` — production runs `src` through tsx — so it is latent. The two ways to settle it (a real emit with project references, or a `start` that names what is actually produced) are a decision about how production starts, and the honest thing was to report it rather than pick one quietly.
 - **`pnpm -r` style gates are worth running after touching a package boundary.** `pnpm lint` and `pnpm build` at the root are the only checks that see every workspace at once; the per-package runs I had been using would never have shown that billing was failing the build for everyone.
+
+---
+
+### Prompt 286 — Basic and Advanced output in the console
+
+**Timestamp:** 2026-10-08 15:29 | **Status:** Complete (switch, two renderings, verified live) | **Duration:** ~20 min
+
+**BuildNotes IDs:** **2026.10.8.047** — "Basic and Advanced: two readings of one console result, and a switch between them"
+
+**Prompt**
+
+> I want to add a Basic and Advanced tab/mode switch button/option to the console dialog. Basic mode will display the output in the newly updated formatting. Advanced mode will display the output in the original format it was presented prior to the presentation update.
+
+**What I did**
+- **Kept the previous format rather than re-describing it.** "Advanced" is a promise about a shape the console really had, so it is reproduced exactly: `Object.entries(body)` in the route's own order, one field per line padded to eighteen characters, `String(value)` for anything present, an empty column for anything absent, `true`/`false` and ISO timestamps rather than an answer and a date. The table's version of it prints every declared column, keeps empty cells empty, drops the row tinting and drops the footer's note about hidden columns — because Advanced *shows* them.
+- **Made the mode a property of the drawing, not of the command.** An entry now carries both what Basic needs and what Advanced needs — a record keeps its body alongside its labelled fields, a table keeps its declared columns alongside the visible ones — and the switch is read at render time. That is what lets it reformat the **whole scrollback** instead of only what you run next: one result, read both ways, without running it twice. It also keeps the mode out of the request path, so it cannot affect what a command does or what the API returns.
+- **A segmented pair, not a toggle.** Neither end is "off" — the question is which reading you want — so two labelled buttons with `aria-pressed` say it without needing a tooltip, and the title text on each explains what it does. Remembered per browser, beside the panel size, for the same reason: a preference about this screen.
+- **Ran the round trip before writing it up.** Advanced, then Basic, then Advanced again on the same scrollback, with the DOM inspected each time: the table's row class loses its `odd:` tint in Advanced (confirmed, because the screenshot's shading made me doubt it), the record flips between the dump and the two-column card, and the footer loses and regains its "columns empty in every row, hidden".
+
+**Decisions worth remembering**
+- **A formatted default should come with the unformatted one.** The presentation work interpreted the route's answer — labels, dates, answers, hidden empties — and interpretation is exactly what a person wants ninety-nine times in a hundred and exactly what they need to switch off the hundredth. Keeping the raw rendering one click away is what makes the formatting safe to have on by default.
+- **The raw mode had to be reproduced, not re-implemented.** It would have been easy to write "Advanced" as `JSON.stringify(body)` and call it raw; that is a *third* format, not the previous one, and anyone comparing it against what they remember would be misled about what changed.
+- **Rendering-time modes are cheap here and worth the entry size.** Two shapes in each entry (visible columns and declared columns; fields and body) is a small cost for the ability to compare readings of one result — and it means the switch belongs to the surface rather than to the command, which is where a reader will look for it.
+
+**Notes for next time**
+- **`readStorage` is doing a lot of work in this component** — history, aliases, panel size, and now the mode — and each one adds a key that outlives a refactor. If a fifth arrives, that is the moment to group them under one versioned object rather than adding a fifth key.
+- **The switch is absent from `help`,** which is deliberate: the console's own verbs describe commands, and a rendering preference is not a command. Worth remembering if the modes ever become scripts' concern, because then `context` should print it.

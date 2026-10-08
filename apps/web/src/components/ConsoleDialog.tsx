@@ -48,12 +48,27 @@ import { useAppVersion } from "../hooks/useAppVersion";
  * and the command's own `GET` is sent as the caller — so the permission that decides is the route's,
  * not this component's (§6). The only thing the console adds is the echo, the table and the history.
  */
+/*
+ * The two ways the console prints a result, switchable while the scrollback is on screen.
+ *
+ * `basic` is the formatted reading — a record as labelled fields, a table without columns that hold
+ * nothing — and `advanced` is the raw console it was before that: one field per line in the route's own
+ * order, every declared column whatever it contains. Neither loses anything the other has; they differ
+ * in whether the *presentation* is doing work for the reader or getting out of the way. The switch is a
+ * rendering decision and not a data one, which is why the entries below carry enough to be drawn either
+ * way and the mode is applied at draw time — flipping it reformats what is already on screen.
+ */
+type ConsoleMode = "basic" | "advanced";
+
 type ConsoleEntryBody =
   | { kind: "input"; text: string }
   | { kind: "out"; lines: string[]; tone?: "dim" | "normal" }
   | { kind: "error"; text: string; hint?: string; code?: number }
   | {
       kind: "table";
+      /** Every column the command declares — what `advanced` prints. */
+      declared: readonly { header: string; path: string }[];
+      /** The ones that hold something in at least one row — what `basic` prints. */
       columns: readonly { header: string; path: string }[];
       rows: Record<string, unknown>[];
       footer?: string;
@@ -62,9 +77,15 @@ type ConsoleEntryBody =
    * One thing, rather than a list of them: the fields the command declares, and every other field the
    * route returned folded behind a disclosure. Two lists rather than one because the difference matters to
    * a reader — "the route said nothing about this" and "this is empty" are different answers, and the
-   * second is what makes a record look unreadable.
+   * second is what makes a record look unreadable. The body is kept beside them because `advanced` prints
+   * the route's own fields in the route's own order, and that order is not recoverable from the two lists.
    */
-  | { kind: "record"; fields: RecordField[]; extras: RecordField[] }
+  | {
+      kind: "record";
+      fields: RecordField[];
+      extras: RecordField[];
+      body: Record<string, unknown>;
+    }
   | { kind: "raw"; body: unknown; footer?: string };
 
 type ConsoleEntry = ConsoleEntryBody & { id: number };
@@ -74,12 +95,34 @@ const ALIAS_KEY_PREFIX = "c7_console_alias";
 const HISTORY_LIMIT = 200;
 /** The popup's size, remembered per browser; `null` means the default size. */
 const SIZE_KEY = "c7_console_size";
+/** Which way output is printed, remembered per browser. */
+const MODE_KEY = "c7_console_mode";
 const MIN_WIDTH = 460;
 const MIN_HEIGHT = 240;
 const RESIZE_STEP = 24;
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), Math.max(min, max));
+
+/**
+ * A record as the console printed one before it learned to label them.
+ *
+ * Kept verbatim, because "advanced" is a promise about the old shape rather than a new idea: the fields in
+ * the order the route returned them, `String(value)` for anything that is there, and an empty column for
+ * anything that is not. Reproducing it from the body — rather than storing the lines — is what lets one
+ * result be read both ways.
+ */
+function advancedRecordLines(body: Record<string, unknown>): string[] {
+  return [
+    "",
+    ...Object.entries(body)
+      .filter(([, value]) => value === null || typeof value !== "object")
+      .map(
+        ([key, value]) =>
+          `  ${key.padEnd(18)} ${value === null ? "" : String(value)}`,
+      ),
+  ];
+}
 
 /** Column headers and dot-paths for a command that did not declare its own — enough to read a row. */
 function autoColumns(
@@ -289,6 +332,20 @@ export function ConsolePanel({
   const [size, setSize] = useState<{ width: number; height: number } | null>(() =>
     readStorage<{ width: number; height: number } | null>(SIZE_KEY, null),
   );
+  /*
+   * Which presentation the output is drawn in, remembered per browser for the same reason the size is.
+   * Held here rather than inside the renderer because it applies to the whole scrollback: switching it
+   * redraws everything already on screen, which is the only way to compare the two readings of one result
+   * without running it twice.
+   */
+  const [mode, setMode] = useState<ConsoleMode>(() =>
+    readStorage<ConsoleMode>(MODE_KEY, "basic"),
+  );
+  const showBasic = mode === "basic";
+  const chooseMode = (next: ConsoleMode) => {
+    setMode(next);
+    writeStorage(MODE_KEY, next);
+  };
   const sizeRef = useRef(size);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{
@@ -676,12 +733,12 @@ export function ConsolePanel({
       if (isList && rows.length > 0) {
         const declaredColumns = command.columns ?? autoColumns(rows);
         /*
-         * A column that holds nothing in any row is not shown.
+         * A column that holds nothing in any row is not shown in `basic`.
          *
-         * `client list` declares a short name, a status and a type that a company row does not carry, so
+         * `client list` declared a short name, a status and a type that a company row does not carry, so
          * every row printed three em dashes: the table was 75% punctuation. The data is untouched and the
          * count is named in the footer, because quietly printing less than the command promises is the one
-         * thing worse than printing em dashes.
+         * thing worse than printing em dashes — and `advanced` prints the lot.
          */
         const columns = declaredColumns.filter((column) =>
           rows.some((row) => valueAt(row, column.path) !== ""),
@@ -695,6 +752,7 @@ export function ConsolePanel({
         }
         push({
           kind: "table",
+          declared: declaredColumns,
           columns: shown,
           rows,
           footer: [
@@ -752,7 +810,7 @@ export function ConsolePanel({
         place(humaniseKey(key), key);
       });
 
-      push({ kind: "record", fields, extras });
+      push({ kind: "record", fields, extras, body: record });
     },
     [push],
   );
@@ -1313,6 +1371,38 @@ export function ConsolePanel({
         <span className="text-sm font-medium text-white">Console</span>
         <span className="text-[11px] text-gray-500 truncate">{hint}</span>
         <div className="ml-auto flex items-center gap-1 shrink-0">
+          {/*
+           * Basic or advanced. A segmented pair rather than a switch, because neither end is "off": the
+           * question is which reading you want of the same result, and the two labels say it without a
+           * tooltip. `aria-pressed` on each is what tells a screen reader which one is in force.
+           */}
+          <div
+            className="flex items-center rounded-md border border-surface-border overflow-hidden mr-1"
+            role="group"
+            aria-label="Output format"
+          >
+            {(["basic", "advanced"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={mode === option}
+                onClick={() => chooseMode(option)}
+                data-testid={`console-mode-${option}`}
+                title={
+                  option === "basic"
+                    ? "Labelled fields, and columns that hold nothing left out"
+                    : "The console's original output: every field and column, exactly as the route returned it"
+                }
+                className={`px-2 py-1 text-[11px] capitalize transition-colors ${
+                  mode === option
+                    ? "bg-cyber-600/25 text-cyber-200"
+                    : "text-gray-500 hover:text-gray-300 hover:bg-surface-lighter"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
           {headerAction}
           {onRequestClose && (
             <button
@@ -1389,13 +1479,14 @@ export function ConsolePanel({
             );
           }
           if (entry.kind === "table") {
+            const columns = showBasic ? entry.columns : entry.declared;
             return (
               <div key={entry.id} className="my-1">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="text-gray-500 border-b border-surface-border">
-                        {entry.columns.map((column) => (
+                        {columns.map((column) => (
                           <th
                             key={column.path}
                             className="py-0.5 pr-4 font-medium whitespace-nowrap"
@@ -1409,15 +1500,25 @@ export function ConsolePanel({
                       {entry.rows.map((row, index) => (
                         <tr
                           key={index}
-                          className="text-gray-300 align-top odd:bg-surface-light/30"
+                          className={`text-gray-300 align-top ${showBasic ? "odd:bg-surface-light/30" : ""}`}
                         >
-                          {entry.columns.map((column) => (
+                          {columns.map((column) => (
                             <td
                               key={column.path}
                               className="py-0.5 pr-4 whitespace-nowrap"
                             >
-                              {valueAt(row, column.path) || (
-                                <span className="text-gray-600">—</span>
+                              {/*
+                               * `advanced` prints what the cell holds and nothing more — an empty string
+                               * for a value that is not there, which is exactly what it did before, and is
+                               * the point of having it: no help, no interpretation, nothing between the
+                               * route's answer and the reader.
+                               */}
+                              {showBasic ? (
+                                valueAt(row, column.path) || (
+                                  <span className="text-gray-600">—</span>
+                                )
+                              ) : (
+                                valueAt(row, column.path)
                               )}
                             </td>
                           ))}
@@ -1427,12 +1528,26 @@ export function ConsolePanel({
                   </table>
                 </div>
                 {entry.footer ? (
-                  <div className="text-gray-500 pt-0.5">{entry.footer}</div>
+                  <div className="text-gray-500 pt-0.5">
+                    {showBasic
+                      ? entry.footer
+                      : `${entry.rows.length} row${entry.rows.length === 1 ? "" : "s"}`}
+                  </div>
                 ) : null}
               </div>
             );
           }
           if (entry.kind === "record") {
+            if (!showBasic) {
+              return (
+                <div
+                  key={entry.id}
+                  className="whitespace-pre-wrap break-words text-gray-300"
+                >
+                  {advancedRecordLines(entry.body).join("\n")}
+                </div>
+              );
+            }
             return (
               <div key={entry.id} className="my-1.5">
                 <RecordCard
