@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.8.028",
+    "date": "2026-10-08",
+    "title": "PLAN-026 Phase 0: an approved AI action is carried out (and the sentence that could not be typed)",
+    "changes": [
+      {
+        "text": "**The executor** (`apps/api/src/services/ai/apply.ts`). An approved action is applied by **calling the same route the screen calls, as the person who asked** — not by re-implementing the write beside it. The second implementation is the one that drifts: validation, company scoping, ticket numbering, automations, the customer-notification rules and the audit entry all live in the route. So the executor mints a 60-second single-use token for the requester and calls the API over loopback, which means the route's own `requirePermission` is still the authority and a payload the requester may not perform is refused by the route rather than by a check somebody remembered to add.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A payload kind with no handler is refused, never silently done.** `applyAiAction` returns `failed` with a sentence naming what it can carry out — the one failure that must never look like success. `critical` actions are never applied at all.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`decide` applies on approve.** Rejecting writes nothing; approving applies and records `executed` (or `failed` with the route's own words, verbatim). The status vocabulary gains `failed`, and `approved` is no longer a resting place: the tier decides *who may skip the click*, never *who may do it* (PLAN-026 §8) — and this is the click.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The record of what happened**: `AiAction` gains `actionName`, `mode`, `before` (the rows as they were, for undo), `result` (the created ticket's id and number), `errorMessage`, `appliedAt` and `appliedById` (additive; `db push` synced). The audit entry says \"Approved and applied — MSP-1001-1009\" or names the reason it could not.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`find_people` and `list_boards`**, and `propose_ticket` now carries a **contact and a board** through to the executor — which is what makes the operator's own sentence possible: *\"create a ticket for David Chen\"*. The probe caught the bug that would have broken it: a first name and a surname are two columns, so a single `contains` per column can never match a full name. Every word in the query must now appear in the name or the address, so a full name, a surname and an email all work — and an ambiguous name returns everyone who matches, with their client, and the instructions say to ask rather than choose.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A note for a ticket that does not exist is a 404, not a 500.** The foreign key used to fail the insert and the caller was told \"Internal server error\"; anything applying a proposal written earlier needs to be told which of the two things was wrong.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The AI Actions screen says what approving does** (\"Approving an action carries it out — through the same route the screen uses, as the person who raised it\"), shows what an applied action produced (\"Created ticket MSP-1001-1009\", or that a note was internal so nobody was emailed) and shows a failure with its reason.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.027",
     "date": "2026-10-08",
     "title": "The landing page that would have quietly reset, and the alias in one place",

@@ -149,20 +149,28 @@ const TOOLS: AssistantTool[] = [
      * instructions say to ask rather than choose.
      */
     name: "find_people",
-    description: "Find contacts (people) by name or email. Use this whenever a prompt names a person — 'create a ticket for David Chen' — because the ticket and note functions need the contact id it returns. If it returns more than one person, ask which one is meant rather than guessing.",
-    parameters: oneId("query", "Part of the person's name or their email address, e.g. 'David Chen'"),
+    description: "Find contacts (people) by name or email. Use this whenever a prompt names a person — 'create a ticket for David Chen' — because the ticket and note functions need the contact id it returns. A full name, a surname, or an email address all work. If it returns more than one person, ask which one is meant rather than guessing.",
+    parameters: oneId("query", "The person's name, or part of it, or their email address — e.g. 'David Chen', 'Chen' or 'dchen@acme.com'"),
     permission: Permission.ContactView,
     kind: "read",
     async run(args, _caller, db) {
       const query = str(args.query).trim();
       if (!query) return refuse("find_people", args, "No name or email was given.");
+      /*
+       * Every word has to appear in the person's name or address, which is what makes a full name work:
+       * a first name and a surname are two columns, so a single `contains` on each column can never
+       * match "David Chen" — the search would fail for the most natural way anybody types a name.
+       */
+      const words = query.split(/\s+/).filter(Boolean).slice(0, 4);
       const people = await db.contact.findMany({
         where: {
-          OR: [
-            { firstName: { contains: query, mode: "insensitive" } },
-            { lastName: { contains: query, mode: "insensitive" } },
-            { email: { contains: query, mode: "insensitive" } },
-          ],
+          AND: words.map(word => ({
+            OR: [
+              { firstName: { contains: word, mode: "insensitive" } },
+              { lastName: { contains: word, mode: "insensitive" } },
+              { email: { contains: word, mode: "insensitive" } },
+            ],
+          })),
         },
         select: { id: true, firstName: true, lastName: true, email: true, phone: true, title: true, companyId: true },
         orderBy: [{ lastName: "asc" }, { firstName: "asc" }],

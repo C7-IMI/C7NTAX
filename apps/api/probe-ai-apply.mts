@@ -63,6 +63,15 @@ async function propose({ kind, payload, tier = "low", title = "Probe proposal", 
 }
 
 const admin = await login();
+
+/*
+ * Clear debris from an earlier crashed run first. A probe that only cleans up on the happy path
+ * leaves rows behind the moment it fails, and then reports *those* as its own leftovers — which is
+ * how a probe stops being trustworthy.
+ */
+const stale = await db.aiAction.deleteMany({ where: { audit: { some: { detail: "probe" } } } });
+if (stale.count) console.log(`(removed ${stale.count} action(s) left by an earlier run)`);
+
 const ticket = await db.ticket.findFirst({
   select: { id: true, ticketNumber: true, title: true, companyId: true, _count: { select: { comments: true } } },
 });

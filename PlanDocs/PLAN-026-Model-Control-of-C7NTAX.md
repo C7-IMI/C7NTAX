@@ -9,7 +9,10 @@
 > **And bounded by the operator's own condition:** "The control will be within the context of the logged
 > in/connected user's permissions." That condition is §2.1, and it is the plan's load-bearing wall
 > rather than a caveat.
-> **Status:** 📝 plan only — no code in this document's name yet.
+> **Status:** 🚧 **Phase 0 built** (BuildNotes 2026.10.8.028) — the executor, the intent record, and
+> the two functions the operator's sentence needed. Approval now carries an action out through the
+> route the screen uses, as the person who raised it. Phases 1, 2, 4, 5, 6 and 7 are unbuilt; §9
+> lists them, and §6 describes what was built here.
 > **Decided (recommended):** an action manifest generated from the route table and enforced by a build
 > guard (§5); one executor that applies a payload through the same route the screen uses (§6); three
 > policy modes per model connection — **read only / ask / act** — with `ask` the default so nothing that

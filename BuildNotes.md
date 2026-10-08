@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.027 | Last Updated: 2026-10-08
+## Version: 2026.10.8.028 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,24 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.028 — PLAN-026 Phase 0: an approved AI action is carried out (and the sentence that could not be typed)
+
+PLAN-026, started where it said to start. **Approving an AI action now does the thing.** Until today `POST /api/ai-actions/:id/decide` set a status and stopped — the proposals the assistant raised were recorded, reviewed, approved and never carried out, so the AI Actions screen's own promise ("nothing is written until a person approves it") was true only because nothing was written at all.
+
+- **[New]** **The executor** (`apps/api/src/services/ai/apply.ts`). An approved action is applied by **calling the same route the screen calls, as the person who asked** — not by re-implementing the write beside it. The second implementation is the one that drifts: validation, company scoping, ticket numbering, automations, the customer-notification rules and the audit entry all live in the route. So the executor mints a 60-second single-use token for the requester and calls the API over loopback, which means the route's own `requirePermission` is still the authority and a payload the requester may not perform is refused by the route rather than by a check somebody remembered to add.
+- **[New]** **A payload kind with no handler is refused, never silently done.** `applyAiAction` returns `failed` with a sentence naming what it can carry out — the one failure that must never look like success. `critical` actions are never applied at all.
+- **[Fix]** **`decide` applies on approve.** Rejecting writes nothing; approving applies and records `executed` (or `failed` with the route's own words, verbatim). The status vocabulary gains `failed`, and `approved` is no longer a resting place: the tier decides *who may skip the click*, never *who may do it* (PLAN-026 §8) — and this is the click.
+- **[New]** **The record of what happened**: `AiAction` gains `actionName`, `mode`, `before` (the rows as they were, for undo), `result` (the created ticket's id and number), `errorMessage`, `appliedAt` and `appliedById` (additive; `db push` synced). The audit entry says "Approved and applied — MSP-1001-1009" or names the reason it could not.
+- **[New]** **`find_people` and `list_boards`**, and `propose_ticket` now carries a **contact and a board** through to the executor — which is what makes the operator's own sentence possible: *"create a ticket for David Chen"*. The probe caught the bug that would have broken it: a first name and a surname are two columns, so a single `contains` per column can never match a full name. Every word in the query must now appear in the name or the address, so a full name, a surname and an email all work — and an ambiguous name returns everyone who matches, with their client, and the instructions say to ask rather than choose.
+- **[Fix]** **A note for a ticket that does not exist is a 404, not a 500.** The foreign key used to fail the insert and the caller was told "Internal server error"; anything applying a proposal written earlier needs to be told which of the two things was wrong.
+- **[Update]** **The AI Actions screen says what approving does** ("Approving an action carries it out — through the same route the screen uses, as the person who raised it"), shows what an applied action produced ("Created ticket MSP-1001-1009", or that a note was internal so nobody was emailed) and shows a failure with its reason.
+
+**Verification:** `apps/api/probe-ai-apply.mts` — **49 checks, all passing**, against the real API and database: an approved internal note becomes a note (and the ticket gains exactly one), a client-visible one is recorded as having notified the customer, an approved ticket proposal creates a real ticket with a number, a board resolved rather than refused, the contact attached and `source: assistant`; `critical` cannot be approved and stays pending; an unknown payload kind fails with a sentence; a missing ticket fails with the route's own reason; replaying an approval is refused; a rejection writes nothing — and the last section walks the operator's sentence end to end (`find_people` → `propose_ticket` → approve → the ticket is attached to the person the prompt named). `probe-ai-assistant.mts` **61/61** and `probe-ai-provider` API **55/55** still pass (two expectations updated for the two new functions). Walked live in the browser: approving a real proposal on the AI Actions screen showed **"Applied: Created ticket MSP-1001-1009"** and the row went to `executed`; the ticket and the test action were removed afterwards. API types unchanged at their 149-error pre-existing baseline; web `tsc` clean.
+
+**What PLAN-026 still owes** (§9): the manifest and its build guard (Phase 1), the generic `list_actions` / `describe_action` / `perform_action` surface with the intent token (Phase 2), tiering the rest of the application (Phase 4), `act` mode with caps and undo (Phase 5), MCP parity (Phase 6) and docs (Phase 7).
 
 ---
 

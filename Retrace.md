@@ -5651,3 +5651,39 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The stale process also explains a confusing result**: the login response still reported `CloudConnect` as a label after the list had lost it, because the running server held the old module in memory.
 - **`apps/api/src/snapshots/*` churn belongs to the auto-sync job**, which has now swept in-progress work three times in this session (`cb1909f`, `bc674a7`, and part of `68fdc4b`). Check `git log --oneline -3` before assuming a tree state, and expect the code commit to land under an `auto-sync:` message rather than a written one.
 
+
+
+---
+
+### Prompt 270 — Building PLAN-026, Phase 0: the executor
+
+**Timestamp:** 2026-10-08 20:45 | **Status:** Complete (Phase 0 built and walked live) | **Duration:** ~150 min
+
+**BuildNotes IDs:** **2026.10.8.028** — "PLAN-026 Phase 0: an approved AI action is carried out (and the sentence that could not be typed)"
+
+**Prompt**
+
+> build plan 026 for the model control of C7NTAX
+
+**What I did**
+- **Read the plan's own Phase 0 and built exactly that**: PLAN-026 §9 puts the executor first, because an assistant that proposes work and a reviewer who approves it is theatre while approval applies nothing. Confirmed the state it described was still true before changing anything: `decide` set `status: approved` and no code anywhere read a payload.
+- **Built the executor as a re-entry, not a second implementation** (`apps/api/src/services/ai/apply.ts`). An approved action is applied by calling **the same route the screen calls, as the person who raised it** — a 60-second single-use token for that requester, over loopback. Everything that makes a write correct (validation, company scoping, ticket numbering, automations, the customer-notification rule, the audit entry) is the route's, and the route's `requirePermission` stays the authority, so a payload the requester may not perform is refused by the route rather than by a check somebody remembered to add. Re-implementing the write beside the route is the version that drifts; PLAN-026 §6 said so and building it made the reason obvious.
+- **Chose what a failure is.** `applyAiAction` never throws: a failed apply is a recorded state with the route's own words in `errorMessage`. A payload kind with no handler **fails** naming what it can carry out — the one outcome that must never look like success. `critical` is never applied at all, and approving one is refused.
+- **Extended the intent row instead of adding a table.** The `AiAction` row already *was* the pending intent and `status !== "pending"` already gave single use, so no token store was needed: `actionName`, `mode`, `before` (rows as they were, for undo), `result`, `errorMessage`, `appliedAt`, `appliedById`, and `failed` in the vocabulary.
+- **Made the operator's own sentence possible, and the probe found the bug.** Two functions were missing (`find_people`, `list_boards`) and `propose_ticket` could not carry a contact or a board. The first version of the person lookup matched the query as a single `contains` against each column — which can never match **"David Chen"**, because a first name and a surname are two columns. Caught by the probe, not by reading it; it now requires every word to appear in the name or the address, so a full name, a surname and an email all resolve, and an ambiguous name returns everyone with their client plus instructions to ask rather than choose.
+- **Walked it live, in the browser, on the real screen**: approving a proposal on `/ai-actions` produced **"Applied: Created ticket MSP-1001-1009"** and the row went to `executed`. Then removed the test ticket and the test action row.
+- **Wrote the probe that keeps it honest**: `probe-ai-apply.mts`, 49 checks, including the ones that would let a lie through — that the ticket gains **exactly** the approved notes, that a rejection writes nothing, that a replay of an approval is refused, and the whole sentence end to end.
+
+**Decisions worth remembering**
+- **Apply by re-entering the route as the caller.** This is the decision the rest of PLAN-026 rests on. It costs a loopback hop and it buys the guarantee the plan wanted: whatever the model may do, it may do the same way a person does it, and the person's permissions are not bypassed anywhere a route already enforces them.
+- **The human click is not a formality to be optimised away.** §8's tiers decide *who may skip the click*, never *who may do it* — so `decide` applying on approve is not a shortcut, it is the click. Nothing about tiering belongs in the executor.
+- **A failed apply must be legible.** Recording the route's own sentence means the reviewer reads why, in the words of the thing that refused — the alternative is an `errorMessage` that has to be translated and then decoded.
+- **`before` now, so undo is possible later.** It costs one column and it is the only way §5's undo can ever be built; a change you cannot read back is a change you cannot reverse.
+- **A missing ticket was a 500 and should have been a 404.** The foreign key failed the insert and the caller was told "Internal server error" — fine when a person was typing a note into a ticket they could see, wrong the moment anything applies a proposal written earlier.
+
+**Notes for next time**
+- **The dev API is now running from this session's async shell (`shellId 4726`)** — started by me because the running process held the old schema in memory, and it will **stop when this session ends**. Start `npm run dev` in `apps/api` again before working on the API.
+- **`prisma generate` could not replace the engine DLL** (`EPERM`, the running API holds it). It still wrote the TypeScript client, so the new fields type-check; re-run it when the API is stopped to clear the warning.
+- **The clean-up script printed a Node error before its own output** the first time — writing `.mts` and running it via `npx tsx` is the path through ESM resolution here, and a truncated first run is worth re-running rather than trusting.
+- **An ESM probe cannot import `@C7NTAX/shared` by package name**; `probe-ai-apply` is `.mts` under `tsx` for that reason, while the `.mjs` probes must stay clear of the shared package.
+- **The auto-sync job is still able to commit the tree** mid-task; check `git log --oneline -3` before assuming what is committed.
