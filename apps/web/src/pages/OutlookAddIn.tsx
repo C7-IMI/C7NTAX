@@ -107,6 +107,32 @@ function formatDate(iso: string): string {
   return Number.isNaN(date.getTime()) ? iso : date.toLocaleString();
 }
 
+/**
+ * One installer in the group it belongs to. The group draws the border, so the row carries no box
+ * of its own — only the divider the group puts between rows.
+ */
+function VersionRow({ version, newest }: { version: VersionFacts; newest?: boolean }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+      <span className="text-sm text-white font-medium">Plugin {version.pluginVersion}</span>
+      {newest ? <Chip tone="good">Newest</Chip> : <Chip tone="muted">Earlier</Chip>}
+      {version.matchesPlugin ? null : <Chip tone="warn">Older plugin files</Chip>}
+
+      <span className="text-xs text-gray-500">
+        release {version.productVersion} · {formatBytes(version.size)} · {formatDate(version.builtAt)}
+      </span>
+
+      <a
+        href={version.downloadPath}
+        download
+        className="ml-auto text-xs font-semibold text-cyber-400 hover:underline"
+      >
+        Download
+      </a>
+    </div>
+  );
+}
+
 /** One labelled fact. Two per line on a wide screen, one on a narrow one. */
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -150,8 +176,9 @@ export function OutlookAddInPage() {
   const shownSize = installer?.size ?? artifact?.size ?? 0;
   const shownVersion = installer?.productVersion ?? artifact?.productVersion ?? "";
   const pluginVersion = installer?.pluginVersion ?? artifact?.pluginVersion ?? "";
-  /** Every version on offer, from whichever source answered. */
+  /** Every version on offer, from whichever source answered. The newest leads. */
   const versions = installer?.versions ?? artifact?.versions ?? [];
+  const [latest, ...previous] = versions;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
@@ -288,8 +315,10 @@ pwsh -File ./build.ps1 -ApiUrl ${facts?.origin}`}
 
       {/* ── Installer versions ────────────────────────────────────────────────
           Kept downloadable because a plugin change can be the reason a mailbox misbehaves, and
-          the remedy is to install the version that worked rather than to wait for a fix. */}
-      {versions.length > 1 ? (
+          the remedy is to install the version that worked rather than to wait for a fix.
+          The release in use leads, and what it replaced is kept together beneath it: a flat list
+          puts the one installer people want at the top of a pile of the ones they do not. */}
+      {latest ? (
         <div className="card">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
@@ -312,30 +341,30 @@ pwsh -File ./build.ps1 -ApiUrl ${facts?.origin}`}
             </div>
           ) : null}
 
-          <div className="space-y-2">
-            {versions.map((version, index) => (
-              <div
-                key={version.fileName}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-surface-border px-3 py-2"
-              >
-                <span className="text-sm text-white font-medium">Plugin {version.pluginVersion}</span>
-                {index === 0 ? <Chip tone="good">Newest</Chip> : <Chip tone="muted">Earlier</Chip>}
-                {version.matchesPlugin ? null : <Chip tone="warn">Older plugin files</Chip>}
-
-                <span className="text-xs text-gray-500">
-                  release {version.productVersion} · {formatBytes(version.size)} · {formatDate(version.builtAt)}
-                </span>
-
-                <a
-                  href={version.downloadPath}
-                  download
-                  className="ml-auto text-xs font-semibold text-cyber-400 hover:underline"
-                >
-                  Download
-                </a>
-              </div>
-            ))}
+          {/* Group labels sit a step below the card's own title: the smaller size is carried by
+              capitals and weight, so they still read as headers rather than as metadata. */}
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-gray-400 mb-2">
+            Latest Release
+          </p>
+          <div className="rounded-lg border border-surface-border bg-surface-light divide-y divide-surface-border overflow-hidden">
+            <VersionRow version={latest} newest />
           </div>
+
+          {previous.length ? (
+            <>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-gray-400 mb-2 mt-4">
+                Previous Versions{" "}
+                <span className="font-medium normal-case tracking-[0.02em] text-gray-500">
+                  {previous.length} kept
+                </span>
+              </p>
+              <div className="rounded-lg border border-surface-border bg-surface-light divide-y divide-surface-border overflow-hidden">
+                {previous.map((version) => (
+                  <VersionRow key={version.fileName} version={version} />
+                ))}
+              </div>
+            </>
+          ) : null}
 
           <p className="text-xs text-gray-500 mt-3">
             Every version is kept so a mailbox can be rolled back. Installing an earlier one

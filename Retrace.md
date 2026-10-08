@@ -4413,3 +4413,28 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **Nothing in `apps/web` was touched** and no API was called; the deliverable is `docs/mockups/installer-versions-card.html` (self-contained, no build, no network).
 - **The integrated browser is still disconnected** ("No client was connected"), so the mockup was verified by rendering it in headless Edge and asserting the DOM rather than by clicking it — the same substitution the previous prompt had to make. Screenshots can be produced with `msedge --headless=new --screenshot`.
 - **Implementation is blocked on approval by the request itself.** When it lands it is a small change to the one card in `OutlookAddIn.tsx`, plus the two open questions above.
+---
+
+### Prompt 237 — The regrouped installer versions card, built
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~40 min
+**BuildNotes IDs:** 2026.10.7.039 - The installer versions card leads with the release in use, and keeps the rest beneath it
+
+> build it
+
+**What I did**
+- **Built the approved mockup in the card it was drawn from.** `VersionRow` carries a row's chips, meta and Download, and the two groups are `Latest Release` and `Previous Versions` with the card's own title and `plugin` fact untouched. Rows are destructured as `const [latest, ...previous] = versions` rather than indexed — with `noUncheckedIndexedAccess` this is the difference between a narrowing the type-checker believes and a `!` it does not.
+- **Took the one behaviour change the mockup flagged, and made the one it recommended against a no-op.** The card renders from `latest` rather than `versions.length > 1`, so a deployment with a single installer offers it instead of showing nothing at all; the marketing-free tint on the newest group was left out. The now-redundant *Earlier* chip was kept, because the mockup kept it — the change under review is the grouping, and that stays a one-line follow-up.
+- **Caught two classes that silently did nothing, by reading computed styles back out of the running app.** `bg-surface-lighter/40` computed to `rgba(0, 0, 0, 0)` and `divide-surface-border/60` to Tailwind's default `#e5e7eb` — a light-grey hairline in a dark theme. An opacity modifier on a theme colour defined as a bare `var()` emits **no rule**: there is nothing to interpolate the alpha into, so the element falls back to the preflight border colour and nobody sees an error. Replaced with the plain `bg-surface-light` and `divide-surface-border` tokens, then confirmed: panel `rgb(19, 19, 22)`, divider `rgb(42, 42, 49)`, both the theme's own values.
+- **Regressed the card against the live page rather than against the diff.** The integrated browser is still down, so I drove headless Edge over the DevTools protocol: signed in through `POST /api/auth/login`, navigated to `/c7nc/outlook-addin`, and asserted the DOM and its computed styles. Result: title 14px/500, labels 11px/600 uppercase 0.66px tracked, 2 group cards, 3 rows, 1 *Newest* / 2 *Earlier* / 2 *Older plugin files*, 3 Downloads with the first pointing at the 26.10.7036 MSI, dividers 0px on the group's first row and 1px on the second, footnote intact, stale banner correctly absent. `probe-outlook-addin` 63/63 — the contract the card reads is unchanged.
+- **Updated help where it describes the card**, in both places: the companion-clients FAQ answer on rolling back an add-in update, and the "Installer versions" section of the Outlook Add-in walkthrough. Both now name the two groups rather than describing one list.
+
+**Decisions worth remembering**
+- **The mockup was more accurate than the app's own idioms, and that is a warning.** The mockup used `color-mix`, which resolved; the Tailwind opacity modifiers it was *translating from* resolve to nothing. Copying the app's class names is not the same as copying the app's rendering.
+- **Read computed styles, not class strings.** `groupClasses` printed the class list and looked perfect; the element was transparent. One `getComputedStyle` per property caught what the class attribute could not.
+- **A template-literal label needs its space in the markup.** `Previous Versions{" "}<span>` — JSX strips the trailing whitespace at a line break, so the accessible text read "Previous Versions2 kept" while looking right on screen.
+- **Keep the `<p>` labels as `<p>`.** They read as headers and the grouping is visible to a screen reader without adding a heading that is not a section.
+
+**Notes for next time**
+- **Reported, not fixed: ~106 opacity modifiers on `bg-*`/`border-*`/`divide-*` surface tokens across 36 files**, where the modifier alone is the only colour source (e.g. `divide-surface-border/60` in `reportKit.tsx` and `PortalTickets.tsx`, `border-b border-surface-border/40` in table rows). They render Tailwind's default grey rather than the theme's border. The real fix is to make the palette tokens alpha-capable — channel triplets (`--surface-border: 42 58 92`) with `rgb(var(--surface-border) / <alpha-value>)` in the Tailwind config — which touches every palette and belongs in its own change with its own verification, not in a card regroup.
+- **Vite on this machine is bound to `::1` only**, so `http://127.0.0.1:3010` fails with `000` while `http://localhost:3010` returns 200. The API on 4000 is on IPv4. Worth knowing before blaming the dev server.
+- **The one-line follow-up left open:** drop the *Earlier* chip now that the group label says it.

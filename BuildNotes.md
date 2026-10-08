@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.038 | Last Updated: 2026-10-07
+## Version: 2026.10.7.039 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,19 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.039 — The installer versions card leads with the release in use, and keeps the rest beneath it
+
+The current installer and every version kept for rollback were one flat list, so the release people actually want sat at the top of a pile of the ones they do not. The card now leads with **Latest Release**, keeps what it replaced together under **Previous Versions**, and appears as soon as there is a single installer to download.
+
+- **[New]** **C7NC → Outlook Add-in groups the installer history.** *Latest Release* labels the newest installer in its own card, and *Previous Versions* labels the ones kept for rollback in a card below it, each with a count of how many are kept. The card keeps its own **Installer versions** title and its `plugin 26.10.7036` fact, and every row keeps its release, size, build date and **Download**.
+- **[New]** **The two group labels sit a step below the card's own title.** 11px semibold uppercase with `0.06em` tracking in the tertiary grey: the smaller size is carried by capitals and weight, so they still read as headers rather than as metadata. At the title's 14px a label competes with it; at 10px or below it reads as metadata.
+- **[Update]** **Each group is one card with a hairline between its rows, instead of a bordered box per row.** The rows keep their padding, chips and download links but stop being individually boxed, so they read as members of a group rather than as unrelated rows that happen to sit next to each other. The latest group is left un-tinted: the *Newest* chip and the label above it already say which release is current, and a third signal is noise.
+- **[Fix]** **A deployment with a single installer now offers it here.** The card was hidden unless two or more versions existed, so a fresh instance showed no installer download on this page at all — a wall that a *Latest Release* group no longer needs.
+- **[Fix]** **Two classes that silently emitted nothing were replaced while building the grouping.** `bg-surface-lighter/40` computed to `rgba(0, 0, 0, 0)` and `divide-surface-border/60` fell back to Tailwind's default `#e5e7eb` — a light-grey hairline in a dark theme — because an opacity modifier on a theme colour defined as a bare `var()` emits no rule at all. Measured by reading computed styles back from the running application, not assumed; the card now uses the plain `bg-surface-light` and `divide-surface-border` tokens, which resolve to the theme's own values. The same pattern still appears elsewhere in the app and is left alone here — it is a token-definition change across every palette, and it is written down rather than smuggled into this one.
+- **[Update]** **Help follows the change in both places it describes the card** — the companion-clients FAQ answer on rolling an add-in update back, and the "Installer versions" section of the Outlook Add-in walkthrough, which now name the two groups instead of describing one list.
 
 ---
 
