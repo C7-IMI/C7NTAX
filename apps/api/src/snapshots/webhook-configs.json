@@ -7,7 +7,7 @@
       "service_alert.raised",
       "service_alert.resolved"
     ],
-    "isActive": true,
+    "isActive": false,
     "retryCount": 3,
     "createdAt": "2026-10-06T20:15:46.064Z"
   },
@@ -19,7 +19,7 @@
       "ticket.created",
       "ticket.sla_breached"
     ],
-    "isActive": true,
+    "isActive": false,
     "retryCount": 3,
     "createdAt": "2026-10-06T20:15:46.064Z"
   }

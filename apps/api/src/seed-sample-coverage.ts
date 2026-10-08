@@ -374,9 +374,12 @@ async function main() {
   });
 
   await ensure("webhook configs", () => prisma.webhookConfig.count(), async () => {
+    // Parked, because the host is invented: an active sample endpoint would now be delivered to on
+    // every alert and fill a fresh delivery log with failures that nobody can act on. The sample
+    // deliveries below still show what a log row looks like.
     const rows = [
-      { name: "Service alert bridge", url: "https://hooks.example.com/c7ntax/alerts", secret: "sample-webhook-secret", events: ["service_alert.raised", "service_alert.resolved"], isActive: true },
-      { name: "Ticket escalations", url: "https://hooks.example.com/c7ntax/tickets", secret: "sample-webhook-secret-2", events: ["ticket.created", "ticket.sla_breached"], isActive: true },
+      { name: "Service alert bridge", url: "https://hooks.example.com/c7ntax/alerts", secret: "sample-webhook-secret", events: ["service_alert.raised", "service_alert.resolved"], isActive: false },
+      { name: "Ticket escalations", url: "https://hooks.example.com/c7ntax/tickets", secret: "sample-webhook-secret-2", events: ["ticket.created", "ticket.sla_breached"], isActive: false },
     ];
     await prisma.webhookConfig.createMany({ data: rows });
     return rows.length;

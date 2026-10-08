@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.041 | Last Updated: 2026-10-07
+## Version: 2026.10.7.042 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,21 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.042 — Alert Webhooks deliver for real, and the page explains every field
+
+The page registered endpoints and showed a delivery log, and nothing behind it ever sent anything: a registration stopped at the row, so an endpoint was never called and the log only ever held sample data — with a default subscription to `alert.opened` / `alert.resolved`, event names nothing in the application emits. The delivery half now exists, signed and retried, and the page describes every field, the wire contract and the log.
+
+- **[New]** **Alert events are delivered.** When an alert opens or closes — from the monitor, from a status page, or raised by hand — every active endpoint subscribed to that event receives one HTTPS POST. The body carries `event`, `sentAt`, and the service and alert in a `data` object: title, severity, status, source, source URL and the timestamps. Delivery is fire-and-forget, so a slow or dead endpoint can never hold up the poll that raised the alert.
+- **[New]** **Every delivery is signed.** `X-C7-Signature: sha256=<hmac>` is an HMAC-SHA256 of the exact request body, keyed with that endpoint's own secret, alongside `X-C7-Event` and `X-C7-Delivery` (the id of the row in the log). The secret is handed over once, when the endpoint is registered, and never listed again. Requests go through the same egress policy as every other outbound request, so a webhook URL pointed at a private or link-local address is refused — at registration and again before each delivery.
+- **[Fix]** **The event list was fiction.** A registration defaulted to `alert.opened` and `alert.resolved`, which nothing emitted, so even a correctly configured endpoint would have received nothing. The page now offers the two events the application actually produces — **Alert raised** and **Alert resolved** — from the same list the dispatcher reads, with a sentence explaining each, and a subscription to nothing is refused rather than silently dead.
+- **[New]** **Failures are retried and visible.** Up to the endpoint's own `retryCount` (1–5, default 3, a field the schema has always had and nothing used), with a widening gap — 1s, 5s, 15s, 30s — then recorded as failed. The pending row is written before the first attempt, so the log shows work in flight and a crash mid-delivery leaves a visible pending row rather than silence.
+- **[New]** **Send test** puts a `webhook.test` delivery in the log on demand, in one attempt, reporting the endpoint's own answer — so a receiver can be proved, and a broken one diagnosed, without waiting for an incident to happen. **Edit** changes a name, URL, subscription or retry count without losing the endpoint's history, and **Park** stops deliveries while keeping it.
+- **[Fix]** **The seeded sample endpoints are parked.** They point at `hooks.example.com`, which does not resolve; while they were active, every real alert produced a failed delivery, so a fresh install would open this page on a wall of failures nobody could act on. Their seeded delivery rows still show what a log row looks like.
+- **[Update]** **The page is rewritten in the design system** rather than hand-styled, and describes each field where it is used: what a name is for, what the URL must be, what each event means, what retries do, what every column of the log says, and the exact request that arrives — method, the three headers, the body, and a short receiver-side example of verifying the signature. The page is off the design-token legacy allowlist as a result.
+- **[Update]** **Help follows:** the Alert Webhooks walkthrough now covers registration, the wire contract, retries and the log; the companion FAQ answer no longer names events that do not exist; and the `ALERT_WEBHOOKS_ENABLED` row in the configuration reference describes what the switch actually governs.
 
 ---
 

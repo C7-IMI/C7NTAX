@@ -98,7 +98,7 @@ async function main() {
     const admin = await signIn("persona.admin@c7ntax.local");
     check(admin.status === 200, `administrator signed in (${admin.status})`);
     if (admin.status !== 200) return;
-    const token = admin.token;
+    const token = admin.data?.token;
 
     console.log("\nthe event catalogue is the one the dispatcher delivers");
     const listed = await call("GET", "/api/alert-webhooks", { token });
@@ -267,7 +267,7 @@ async function main() {
     const rowsAfter = await call("GET", "/api/alert-webhooks/deliveries", { token });
     check(!(rowsAfter.data?.data || []).some((d) => d.webhookId === hook.id), "and its deliveries are gone from the log");
   } finally {
-    for (const id of created.webhooks) await call("DELETE", `/api/alert-webhooks/${id}`, { token: (await signIn("persona.admin@c7ntax.local")).token });
+    for (const id of created.webhooks) await call("DELETE", `/api/alert-webhooks/${id}`, { token: (await signIn("persona.admin@c7ntax.local")).data?.token });
     await prisma.serviceAlert.deleteMany({ where: { serviceId: { in: created.services } } });
     await prisma.serviceAlertService.deleteMany({ where: { id: { in: created.services } } });
     const personaIds = (await prisma.user.findMany({ where: { email: "persona.admin@c7ntax.local" }, select: { id: true } })).map((u) => u.id);

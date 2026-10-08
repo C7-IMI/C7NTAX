@@ -27,7 +27,6 @@ const LEGACY_ALLOWLIST = new Set([
   "apps/web/src/pages/PTO.tsx",
   "apps/web/src/pages/Quotes.tsx",
   "apps/web/src/pages/Reports.tsx",
-  "apps/web/src/pages/Webhooks.tsx",
 ]);
 
 const HEX = /#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?\b/g;
