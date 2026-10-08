@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.024 | Last Updated: 2026-10-08
+## Version: 2026.10.8.025 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,20 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.025 — PLAN-027: CloudConnect merged into C7NC, with a mockup you can click through
+
+A mockup and a plan, no application changes. The request was to fold CloudConnect into C7NC, rename it, and show what proper landing pages, subsections and tab-style pages would look like.
+
+- **[New]** **`docs/mockups/c7nc-merged-hub.html` — seven screens, drawn with the application's own compiled stylesheet**, opened in a browser and checked (screens switch, no console errors, the tab strip computes to the shipped `Tabs` colours). Screens: the **Overview hub**, **Services**, a **service detail page (FlexPoint)**, **AI models**, **Email**, **Companion apps**, and a design-notes screen carrying the before/after nav tree, the full redirect table and the rename's two lists. It is drawn inside a real app frame — nav pane beside content — so the design is judged on the surfaces the product actually uses.
+- **[New]** **`PlanDocs/PLAN-027-Merging-CloudConnect-into-C7NC.md`** — §1 the three problems with evidence, §2 the architecture (a hub, four subsections, a page per service), §3 the hub's anatomy, §4 the rules that keep the shape (a subsection is a question, a tab is a facet of one, five tabs maximum), §5 where every existing tab and panel ends up, §6 permissions, §7 the rename, §8 the mockup, §9 eight phases with an acceptance test and a probe each, §10–13 costs, decisions, verification and scope.
+- **[Fix]** **The plan's real prize is FlexPoint, which is split in two today.** Its connection is configured in CloudConnect; its options, ledger and invoices live under C7NC → FlexPoint; and that page's first button links back to CloudConnect (the empty state even tells you to add the connection "in CloudConnect"). One service gets one page: *Overview · Configuration · Ledger · Invoices · Activity*.
+- **[Update]** **The front door asks a better question.** The hub leads with a sentence ("6 services · 1 model · 2 mailboxes · 1 companion app — 2 things need attention") and a *needs attention* block with the fix beside each problem, before the catalogue. It also fixes a quiet mismatch: the nav entry requires `IntegrationManage` while the API answers all eleven of the page's read endpoints with `IntegrationView`, so a technician who may watch connector health and press **Test** cannot reach the page at all. The merge shows the hub at `IntegrationView` — no new permissions anywhere.
+- **[Update]** **The rename is measured rather than guessed: 230 occurrences across 41 files** (web 99, docs 65, probes 31, api 25, shared 8, infra 2). Four things are deliberately **not** renamed, each with the failure it would cause: the **`/api/cloudconnect` path** (kept as a documented alias so integrations and probes keep working), **`CLOUDCONNECT_LIVE_STATUS_ENABLED`** (renaming an env key silently disables connector verification on any deployment whose `.env` was not updated), a **stored landing-page value of `/cloudconnect`** (`LANDING_PAGES` offers it as a saved preference, so the redirect must catch it and the picker must show the new label), and the **Help walkthrough anchor `/help/walkthroughs/cloudconnect`** (a published URL). History — BuildNotes, Retrace, PlanDocs, the captured audit-log snapshots — is not rewritten either. A guard script keeps the rename from decaying: no `CloudConnect` in `apps/**` or `packages/**` outside a two-entry allowlist.
+
+**Verification:** the mockup was opened and exercised in a browser — all seven screens switch, exactly one is visible at a time, seven view sections are present, and there are no page errors; computed styles confirm the nav, cards, chips, buttons and tab strip all resolve from the app's own stylesheet rather than from mockup-only CSS. The plan's claims were read from the code: `CloudConnect.tsx` (five tabs, line 543), `Layout.tsx` (the nav entry at line 58 and the C7NC group at 129), `C7NCFlexpoint.tsx` (the link back at 207–209), the fifteen endpoints in `routes/cloudconnect.ts` (eleven reads at `IntegrationView`, four writes at `IntegrationManage`), the route table in `App.tsx` (147, 173, 174), and the landing-page option in `appConfiguration.ts` line 161. BuildNotes 2026.10.8.025 prepended and regenerated into both fallbacks.
 
 ---
 
