@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.044 | Last Updated: 2026-10-07
+## Version: 2026.10.7.045 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,21 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.045 — Each customer gets the portal access they need, and you can see it before they do
+
+The portal's rules were one set for the whole deployment: the same ticket visibility, the same ability to raise and reply, for a one-mailbox small business and for a three-hundred-person client alike. They are now decided at three levels — the person, the client, the deployment — and the whole thing can be previewed as the customer before anybody sees it.
+
+- **[New]** **A policy per customer.** Ticket visibility (**their own tickets** or **every ticket at their client**), whether they may **raise** tickets, whether they may **reply**, and **which board** their portal tickets land on can each be set for one client, from **Client access → Portal access** on Administration → Customer Portal. Every control offers the deployment's own answer first, so a field only carries a value where somebody decided — and the row says so, with the level each answer came from.
+- **[New]** **An overrule per person.** Portal visitors are contacts, not user accounts, so there is no role to attach this to: each contact of a client can be **refused the portal altogether** (the contractor who should raise tickets by phone) or given a **different ticket visibility** from their colleagues (the office manager who runs the account and sees everything). Autotask, ConnectWise and Scoro all keep both of these on the client record with a per-contact overrule.
+- **[New]** **See the portal as the customer, before they do.** **Preview** opens the portal for a chosen client and contact: their **sign-in page** wearing the client's colour and logo, the **ticket list** their scope actually returns, one ticket's **public conversation**, and the **new-ticket form** — with the buttons that the policy would refuse simply not drawn. The **What decided this** panel names the level behind each answer and says how many tickets at the client the visibility in force is holding back.
+- **[New]** **The preview is the real thing, and changes nothing.** It runs the portal's own scoping query and the same public-notes-only rule rather than a second implementation, so it cannot flatter the configuration; and it creates no session, sends no code, and writes no ticket or note — a "reply" or a "raised ticket" inside it is marked *not saved*. Tickets shown are real and read-only.
+- **[Update]** **The policy is resolved per request** from the contact, then the client, then the deployment's Portal settings — so a change takes effect on the customer's next page load, and a client with nothing set follows the deployment including when the deployment changes later. Every portal route reads the one resolver: the ticket list, the ticket detail, the account summary, raising, replying and the per-client board.
+- **[Update]** **Help follows:** the Customer Portal walkthrough gains "Give one customer a different level of access", "Overrule one person" and "See it before the customer does"; the Customer Portal area's rows and the field descriptions in the configuration reference now say that a client — or a person — can be given a different answer.
+
+Verified by `apps/api/probe-portal.mjs` — **135 checks, 0 failures** — including that widening one client's visibility widens both of its customers and narrowing one person does not touch their colleague, that a client refused the form is refused with the reason while the deployment's own setting is untouched, that clearing an overrule hands the answer back, that a client's tickets land on the board set for that client, that the preview shows the scope in force and never an internal note, and that previewing creates no session, no code and no ticket. The screen was then driven in a browser — **26 checks, 0 failures** — through opening a row's policy, changing it, watching the source change with it, and stepping the preview from the sign-in page to a ticket's conversation.
 
 ---
 

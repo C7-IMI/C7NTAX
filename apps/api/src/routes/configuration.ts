@@ -30,6 +30,7 @@ import {
 } from "@C7NTAX/shared";
 import {
   clearConfigValue,
+  configText,
   configValue,
   environmentSupplied,
   fallbackValue,
@@ -40,6 +41,10 @@ import {
 } from "../services/appSettings";
 import { resolvePortalBoardId } from "../services/portalBoard";
 import { portalEnabled } from "../services/portalAuth";
+import {
+  asVisibility, clientPortalOverrides, instancePortalPolicy, resolvePortalPolicy, resolvePolicyFrom,
+} from "../services/portalPolicy";
+import { listPortalTickets, loadPortalTicket } from "../services/portalTickets";
 import { oidcConfigured } from "../services/ssoSettings";
 
 export const configurationRouter = Router();
@@ -174,22 +179,29 @@ configurationRouter.get(
 
 /**
  * The parts of the portal's configuration that are not a single value: which clients may use it,
- * which board its tickets land on, and who has actually signed in.
+ * what each of them is allowed to see and do, which board its tickets land on, and who has
+ * actually signed in.
+ *
+ * Each client's row carries both halves of its policy — what the client itself was set to
+ * (`overrides`, where null means "inherit") and what actually applies (`policy`), with the level
+ * each answer came from — because the useful question is not "what is the setting" but "what will
+ * this customer get, and because of what".
  */
 configurationRouter.get("/portal/overview", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
   try {
-    const [clients, eligible, sessions, signIns, boardId] = await Promise.all([
+    const [clients, eligible, sessions, signIns, boardId, boards] = await Promise.all([
       prisma.company.findMany({
         where: { isActive: true },
         orderBy: { name: "asc" },
         select: {
           id: true, name: true, portalEnabled: true, portalAccentColor: true, portalLogoUrl: true,
+          portalVisibility: true, portalAllowTicketCreation: true, portalAllowReplies: true, portalBoardId: true,
           _count: { select: { contacts: true, tickets: true } },
         },
       }),
       prisma.contact.groupBy({
         by: ["companyId"],
-        where: { isActive: true, email: { not: "" } },
+        where: { isActive: true, email: { not: "" }, NOT: { portalAccess: false } },
         _count: { _all: true },
       }),
       prisma.portalSession.findMany({
@@ -202,28 +214,55 @@ configurationRouter.get("/portal/overview", requirePermission(Permission.ClientV
       }),
       prisma.portalLoginCode.count({ where: { consumedAt: { not: null } } }),
       resolvePortalBoardId().catch(() => null),
+      prisma.serviceBoard.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     ]);
 
     const board = boardId
       ? await prisma.serviceBoard.findUnique({ where: { id: boardId }, select: { id: true, name: true } })
       : null;
     const eligibleByCompany = new Map(eligible.map(row => [row.companyId, row._count._all]));
+    const boardNames = new Map(boards.map(b => [b.id, b.name]));
+    const instance = instancePortalPolicy();
 
     res.json({
       enabled: portalEnabled(),
       board,
+      boards: boards.map(b => ({ id: b.id, name: b.name })),
+      // What the deployment itself would give a customer, so each client's row can be read against it.
+      instancePolicy: { ...instance, boardName: instance.boardId ? boardNames.get(instance.boardId) ?? null : null },
       signIns,
       canEdit: has(req, Permission.SystemConfig),
-      clients: clients.map(client => ({
-        id: client.id,
-        name: client.name,
-        portalEnabled: client.portalEnabled,
-        accentColor: client.portalAccentColor,
-        logoUrl: client.portalLogoUrl,
-        contacts: client._count.contacts,
-        eligibleContacts: eligibleByCompany.get(client.id) ?? 0,
-        tickets: client._count.tickets,
-      })),
+      clients: clients.map(client => {
+        const policy = resolvePolicyFrom({
+          client: {
+            visibility: asVisibility(client.portalVisibility),
+            allowTicketCreation: client.portalAllowTicketCreation,
+            allowReplies: client.portalAllowReplies,
+            boardId: client.portalBoardId,
+          },
+          contact: null,
+        });
+        return {
+          id: client.id,
+          name: client.name,
+          portalEnabled: client.portalEnabled,
+          accentColor: client.portalAccentColor,
+          logoUrl: client.portalLogoUrl,
+          contacts: client._count.contacts,
+          eligibleContacts: eligibleByCompany.get(client.id) ?? 0,
+          tickets: client._count.tickets,
+          overrides: {
+            visibility: asVisibility(client.portalVisibility),
+            allowTicketCreation: client.portalAllowTicketCreation,
+            allowReplies: client.portalAllowReplies,
+            boardId: client.portalBoardId,
+          },
+          policy: {
+            ...policy,
+            boardName: policy.boardId ? boardNames.get(policy.boardId) ?? null : null,
+          },
+        };
+      }),
       sessions: sessions.map(s => ({
         id: s.id,
         contactName: `${s.contact.firstName} ${s.contact.lastName}`.trim(),
@@ -240,10 +279,43 @@ configurationRouter.get("/portal/overview", requirePermission(Permission.ClientV
   } catch (e) { next(e); }
 });
 
+/** The values a client's portal policy may be set to; `null` everywhere means "inherit". */
+function readPolicyBody(body: Record<string, unknown>) {
+  const data: {
+    portalVisibility?: string | null;
+    portalAllowTicketCreation?: boolean | null;
+    portalAllowReplies?: boolean | null;
+    portalBoardId?: string | null;
+  } = {};
+
+  if ("visibility" in body) {
+    if (body.visibility === null || body.visibility === "" || body.visibility === "inherit") data.portalVisibility = null;
+    else {
+      const value = asVisibility(body.visibility);
+      if (!value) throw new AppError("Ticket visibility must be \"contact\" (their own tickets) or \"company\" (every ticket at the client)");
+      data.portalVisibility = value;
+    }
+  }
+  if ("allowTicketCreation" in body) {
+    if (body.allowTicketCreation === null || body.allowTicketCreation === "inherit") data.portalAllowTicketCreation = null;
+    else if (typeof body.allowTicketCreation === "boolean") data.portalAllowTicketCreation = body.allowTicketCreation;
+    else throw new AppError("Raising tickets must be true, false or null to inherit");
+  }
+  if ("allowReplies" in body) {
+    if (body.allowReplies === null || body.allowReplies === "inherit") data.portalAllowReplies = null;
+    else if (typeof body.allowReplies === "boolean") data.portalAllowReplies = body.allowReplies;
+    else throw new AppError("Replying must be true, false or null to inherit");
+  }
+  if ("boardId" in body) {
+    if (body.boardId === null || body.boardId === "" || body.boardId === "inherit") data.portalBoardId = null;
+    else data.portalBoardId = String(body.boardId).trim();
+  }
+  return data;
+}
+
 /**
- * The per-client half of the portal configuration: who may sign in, and the branding that
- * overrides the instance defaults. Kept beside the settings rather than inside them, because it
- * is a fact about a client and not about the deployment.
+ * One client's portal policy. A field set here applies to every contact of that client who has not
+ * been overruled individually; clearing it hands the answer back to the instance's own setting.
  */
 configurationRouter.patch("/portal/clients/:companyId", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
   try {
@@ -251,7 +323,11 @@ configurationRouter.patch("/portal/clients/:companyId", requirePermission(Permis
     const company = await prisma.company.findUnique({ where: { id: companyId }, select: { id: true } });
     if (!company) throw new AppError("Client not found", 404);
 
-    const data: { portalEnabled?: boolean; portalAccentColor?: string | null; portalLogoUrl?: string | null } = {};
+    const data: {
+      portalEnabled?: boolean; portalAccentColor?: string | null; portalLogoUrl?: string | null;
+      portalVisibility?: string | null; portalAllowTicketCreation?: boolean | null;
+      portalAllowReplies?: boolean | null; portalBoardId?: string | null;
+    } = {};
     if (typeof req.body?.portalEnabled === "boolean") data.portalEnabled = req.body.portalEnabled;
 
     if ("accentColor" in (req.body ?? {})) {
@@ -276,8 +352,204 @@ configurationRouter.patch("/portal/clients/:companyId", requirePermission(Permis
       }
     }
 
+    Object.assign(data, readPolicyBody(req.body ?? {}));
+
+    // A board that does not exist would silently fall back at ticket time, so it is refused here
+    // where somebody can see why.
+    const boardId = data.portalBoardId;
+    if (boardId) {
+      const board = await prisma.serviceBoard.findUnique({ where: { id: boardId }, select: { id: true, isActive: true } });
+      if (!board) throw new AppError("That service board does not exist");
+      if (!board.isActive) throw new AppError("That service board is not active — pick one that is");
+    }
+
     if (Object.keys(data).length === 0) throw new AppError("Nothing to change");
     await prisma.company.update({ where: { id: companyId }, data });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+/**
+ * The contacts of one client, with their own overrules. A contact is a person, not a role: the
+ * office manager who runs the account needs to see every ticket at the client, and the person who
+ * only ever raises the occasional printer fault does not — and neither of them is a `User`.
+ */
+configurationRouter.get("/portal/clients/:companyId/contacts", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
+  try {
+    const companyId = String(req.params.companyId);
+    const company = await prisma.company.findUnique({ where: { id: companyId }, select: { id: true } });
+    if (!company) throw new AppError("Client not found", 404);
+
+    const contacts = await prisma.contact.findMany({
+      where: { companyId },
+      orderBy: [{ isPrimary: "desc" }, { firstName: "asc" }],
+      select: {
+        id: true, firstName: true, lastName: true, email: true, isActive: true, isPrimary: true, title: true,
+        portalAccess: true, portalVisibility: true,
+        _count: { select: { portalSessions: true } },
+      },
+    });
+    const clientPolicy = resolvePolicyFrom({
+      client: await clientPortalOverrides(companyId),
+      contact: null,
+    });
+
+    res.json({
+      clientPolicy,
+      contacts: contacts.map(contact => ({
+        id: contact.id,
+        name: `${contact.firstName} ${contact.lastName}`.trim(),
+        email: contact.email,
+        title: contact.title,
+        isActive: contact.isActive,
+        isPrimary: contact.isPrimary,
+        signIns: contact._count.portalSessions,
+        overrides: { access: contact.portalAccess, visibility: asVisibility(contact.portalVisibility) },
+        // What this person gets, which is the client's policy unless they are overruled.
+        effective: resolvePolicyFrom({
+          client: null,
+          contact: { access: contact.portalAccess, visibility: asVisibility(contact.portalVisibility) },
+        }).visibility,
+        // Whether they may use the portal at all: the client's switch, and their own.
+        allowed: contact.portalAccess !== false && contact.isActive,
+      })),
+      canEdit: has(req, Permission.SystemConfig),
+    });
+  } catch (e) { next(e); }
+});
+
+/**
+ * What one customer would see, without becoming one.
+ *
+ * The preview answers with the same policy resolution, the same scoping query and the same
+ * public-notes-only rule the portal itself uses — so an administrator looking at this is looking at
+ * the real thing rather than at a drawing of it. It changes nothing: no portal session, no customer
+ * identity, no code, and every action in the preview is simulated in the browser.
+ */
+configurationRouter.get("/portal/clients/:companyId/preview", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
+  try {
+    const companyId = String(req.params.companyId);
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: {
+        id: true, name: true, portalEnabled: true, portalAccentColor: true, portalLogoUrl: true,
+        portalVisibility: true, portalAllowTicketCreation: true, portalAllowReplies: true, portalBoardId: true,
+      },
+    });
+    if (!company) throw new AppError("Client not found", 404);
+
+    const contacts = await prisma.contact.findMany({
+      where: { companyId, isActive: true },
+      orderBy: [{ isPrimary: "desc" }, { firstName: "asc" }],
+      select: { id: true, firstName: true, lastName: true, email: true, isPrimary: true, portalAccess: true, portalVisibility: true },
+    });
+
+    // Whichever contact is being simulated: the one asked for, else the client's primary person,
+    // else the first person they have. Somebody with no portal access is still previewable — that
+    // is exactly the state an administrator wants to look at.
+    const requestedId = typeof req.query.contactId === "string" ? req.query.contactId : "";
+    const contact = contacts.find(c => c.id === requestedId) ?? contacts[0] ?? null;
+
+    const policy = await resolvePortalPolicy(companyId, contact?.id);
+    const scope = contact
+      ? { contactId: contact.id, companyId, visibility: policy.visibility }
+      : null;
+
+    const [tickets, board, clientTicketTotal] = await Promise.all([
+      scope ? listPortalTickets(scope, { limit: 25 }) : Promise.resolve({ data: [], total: 0 }),
+      policy.boardId
+        ? prisma.serviceBoard.findUnique({ where: { id: policy.boardId }, select: { id: true, name: true } })
+        : resolvePortalBoardId(companyId).then(id => prisma.serviceBoard.findUnique({ where: { id }, select: { id: true, name: true } })).catch(() => null),
+      prisma.ticket.count({ where: { companyId } }),
+    ]);
+
+    const instanceBranding = {
+      name: configText("workspace", "companyName") || "Customer portal",
+      accentColor: company.portalAccentColor || configText("portal", "accentColor") || null,
+      logoUrl: company.portalLogoUrl || configText("portal", "logoUrl") || null,
+    };
+
+    res.json({
+      client: { id: company.id, name: company.name, portalEnabled: company.portalEnabled },
+      branding: {
+        ...instanceBranding,
+        welcomeText: configText("portal", "welcomeText") || "",
+        supportEmail: configText("portal", "supportEmail") || "",
+      },
+      policy,
+      board,
+      contact: contact
+        ? {
+          id: contact.id,
+          name: `${contact.firstName} ${contact.lastName}`.trim(),
+          firstName: contact.firstName,
+          email: contact.email,
+          isPrimary: contact.isPrimary,
+          // Whether the portal would let this person in at all: the client's switch, their own, and
+          // the fact that sign-in needs an active contact.
+          allowed: company.portalEnabled && contact.portalAccess !== false,
+        }
+        : null,
+      contacts: contacts.map(c => ({
+        id: c.id,
+        name: `${c.firstName} ${c.lastName}`.trim(),
+        email: c.email,
+        isPrimary: c.isPrimary,
+        allowed: company.portalEnabled && c.portalAccess !== false,
+        visibility: c.portalVisibility === "contact" || c.portalVisibility === "company" ? c.portalVisibility : policy.visibility,
+      })),
+      tickets: tickets.data,
+      ticketTotal: tickets.total,
+      // Everything at the client, so the preview can say what the visibility setting is keeping back.
+      clientTicketTotal,
+    });
+  } catch (e) { next(e); }
+});
+
+/** One ticket as the portal would return it to that contact — including the 404 when it would not. */
+configurationRouter.get("/portal/clients/:companyId/preview/tickets/:ticketId", requirePermission(Permission.ClientView), async (req: AuthRequest, res, next) => {
+  try {
+    const companyId = String(req.params.companyId);
+    const contactId = typeof req.query.contactId === "string" ? req.query.contactId : "";
+    const contact = await prisma.contact.findFirst({
+      where: contactId ? { id: contactId, companyId } : { companyId, isActive: true },
+      orderBy: [{ isPrimary: "desc" }, { firstName: "asc" }],
+      select: { id: true, email: true },
+    });
+    if (!contact) throw new AppError("That client has no contact to preview", 404);
+
+    const policy = await resolvePortalPolicy(companyId, contact.id);
+    const scope = { contactId: contact.id, companyId, visibility: policy.visibility };
+    res.json(await loadPortalTicket(String(req.params.ticketId), scope, contact.email));
+  } catch (e) { next(e); }
+});
+
+/** One contact's overrules: no portal at all, or a different ticket visibility from their client. */
+configurationRouter.patch("/portal/contacts/:contactId", requirePermission(Permission.SystemConfig), async (req: AuthRequest, res, next) => {
+  try {
+    const contactId = String(req.params.contactId);
+    const contact = await prisma.contact.findUnique({ where: { id: contactId }, select: { id: true } });
+    if (!contact) throw new AppError("Contact not found", 404);
+
+    const data: { portalAccess?: boolean | null; portalVisibility?: string | null } = {};
+    if ("access" in (req.body ?? {})) {
+      const raw = req.body.access;
+      if (raw === null || raw === "inherit") data.portalAccess = null;
+      else if (typeof raw === "boolean") data.portalAccess = raw;
+      else throw new AppError("Portal access must be true, false or null to inherit");
+    }
+    if ("visibility" in (req.body ?? {})) {
+      const raw = req.body.visibility;
+      if (raw === null || raw === "" || raw === "inherit") data.portalVisibility = null;
+      else {
+        const value = asVisibility(raw);
+        if (!value) throw new AppError("Ticket visibility must be \"contact\" or \"company\"");
+        data.portalVisibility = value;
+      }
+    }
+    if (Object.keys(data).length === 0) throw new AppError("Nothing to change");
+
+    await prisma.contact.update({ where: { id: contactId }, data });
     res.json({ ok: true });
   } catch (e) { next(e); }
 });

@@ -15,11 +15,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ExternalLink, Globe, Search, ShieldCheck, Users } from "lucide-react";
+import { ExternalLink, Eye, Globe, Search, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
 import api from "../api";
 import { DEFAULT_ACCENT_COLOUR, HEX_COLOUR_PATTERN, ON_ACCENT_COLOUR } from "../lib/colourTokens";
 import { PageHeader } from "../components/ui";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { PortalAccessDialog } from "../components/PortalAccessDialog";
+import { PortalPreviewDialog } from "../components/PortalPreviewDialog";
 import {
   Chip,
   FieldCard,
@@ -37,6 +39,31 @@ interface PortalClient {
   contacts: number;
   eligibleContacts: number;
   tickets: number;
+  overrides: {
+    visibility: "contact" | "company" | null;
+    allowTicketCreation: boolean | null;
+    allowReplies: boolean | null;
+    boardId: string | null;
+  };
+  policy: {
+    visibility: "contact" | "company";
+    allowTicketCreation: boolean;
+    allowReplies: boolean;
+    boardId: string | null;
+    boardName: string | null;
+    sources: { visibility: PolicySource; allowTicketCreation: PolicySource; allowReplies: PolicySource; boardId: PolicySource };
+  };
+}
+
+type PolicySource = "contact" | "client" | "instance" | "default";
+
+interface PortalInstancePolicy {
+  visibility: "contact" | "company";
+  allowTicketCreation: boolean;
+  allowReplies: boolean;
+  boardId: string | null;
+  boardName: string | null;
+  sources: { visibility: PolicySource; allowTicketCreation: PolicySource; allowReplies: PolicySource; boardId: PolicySource };
 }
 
 interface PortalSessionRow {
@@ -55,11 +82,16 @@ interface PortalSessionRow {
 interface PortalOverview {
   enabled: boolean;
   board: { id: string; name: string } | null;
+  boards: Array<{ id: string; name: string }>;
+  instancePolicy: PortalInstancePolicy;
   signIns: number;
   canEdit: boolean;
   clients: PortalClient[];
   sessions: PortalSessionRow[];
 }
+
+const visibilityLabel = (value: "contact" | "company") =>
+  value === "company" ? "Every ticket at the client" : "Only their own tickets";
 
 /** The portal as a customer sees it, at the size a provider can judge it at. */
 function PortalPreview({ name, accent, logo, welcome, support }: {
@@ -104,19 +136,34 @@ export function CustomerPortalSettingsPage() {
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [savingClient, setSavingClient] = useState<string | null>(null);
+  const [accessClient, setAccessClient] = useState<PortalClient | null>(null);
+  const [previewClient, setPreviewClient] = useState<string | null>(null);
 
-  const loadOverview = useCallback(async () => {
+  const loadOverview = useCallback(async (): Promise<PortalOverview | null> => {
     try {
       const res = await api.get("/configuration/portal/overview");
       setOverview(res.data);
+      return res.data as PortalOverview;
     } catch {
       setOverview(null);
+      return null;
     } finally {
       setOverviewLoading(false);
     }
   }, []);
 
   useEffect(() => { void loadOverview(); }, [loadOverview]);
+
+  /**
+   * The dialog holds the client it was opened with, so after a change it has to be handed the fresh
+   * row — otherwise the screen keeps reporting where the *old* answer came from while the policy
+   * behind it has already moved.
+   */
+  const reloadAccessClient = useCallback(async () => {
+    const fresh = await loadOverview();
+    if (!fresh) return;
+    setAccessClient(prev => (prev ? fresh.clients.find(c => c.id === prev.id) ?? prev : prev));
+  }, [loadOverview]);
 
   const saveField = useCallback(async (field: RenderedField, value: boolean | number | string) => {
     setBusy(true);
@@ -304,15 +351,17 @@ export function CustomerPortalSettingsPage() {
           <p className="text-sm text-gray-500 py-6 text-center">No clients match that filter.</p>
         ) : (
           <div className="overflow-x-auto -mx-5 px-5">
-            <table className="w-full text-sm min-w-[52rem]">
+            <table className="w-full text-sm min-w-[62rem]">
               <thead>
                 <tr className="text-left text-xs text-gray-500 border-b border-surface-border">
                   <th className="py-2 font-medium">Client</th>
                   <th className="py-2 font-medium">Portal access</th>
+                  <th className="py-2 font-medium">What they see</th>
                   <th className="py-2 font-medium">Contacts</th>
                   <th className="py-2 font-medium">Accent</th>
                   <th className="py-2 font-medium">Logo</th>
                   <th className="py-2 font-medium">Tickets</th>
+                  <th className="py-2 font-medium" />
                 </tr>
               </thead>
               <tbody>
@@ -333,6 +382,16 @@ export function CustomerPortalSettingsPage() {
                           {client.portalEnabled ? "Enabled" : "Off"}
                         </span>
                       </label>
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <div className="space-y-1">
+                        <p className="text-xs text-gray-300">{visibilityLabel(client.policy.visibility)}</p>
+                        <div className="flex flex-wrap items-center gap-1">
+                          {!client.policy.allowTicketCreation && <Chip tone="warn">no new tickets</Chip>}
+                          {!client.policy.allowReplies && <Chip tone="warn">no replies</Chip>}
+                          {client.policy.sources.visibility === "client" && <Chip tone="info">set for this client</Chip>}
+                        </div>
+                      </div>
                     </td>
                     <td className="py-2.5 pr-3 text-gray-400 text-xs">
                       {client.eligibleContacts} of {client.contacts} usable
@@ -371,6 +430,24 @@ export function CustomerPortalSettingsPage() {
                       />
                     </td>
                     <td className="py-2.5 text-gray-400 text-xs">{client.tickets}</td>
+                    <td className="py-2.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          className="btn-secondary text-xs inline-flex items-center gap-1.5 whitespace-nowrap"
+                          onClick={() => setPreviewClient(client.id)}
+                        >
+                          <Eye size={12} /> Preview
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-secondary text-xs inline-flex items-center gap-1.5 whitespace-nowrap"
+                          onClick={() => setAccessClient(client)}
+                        >
+                          <SlidersHorizontal size={12} /> Portal access
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -428,6 +505,22 @@ export function CustomerPortalSettingsPage() {
         Changes are saved as soon as a control is released. Branding takes effect on the portal's next
         page load; sign-in limits apply from the next code that is issued.
       </p>
+
+      {accessClient && overview && (
+        <PortalAccessDialog
+          client={accessClient}
+          boards={overview.boards}
+          instancePolicy={overview.instancePolicy}
+          canEdit={overview.canEdit}
+          onPreview={() => setPreviewClient(accessClient.id)}
+          onClose={() => setAccessClient(null)}
+          onSaved={reloadAccessClient}
+        />
+      )}
+
+      {previewClient && (
+        <PortalPreviewDialog clientId={previewClient} onClose={() => setPreviewClient(null)} />
+      )}
     </div>
   );
 }

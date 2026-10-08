@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.7.045",
+    "date": "2026-10-07",
+    "title": "Each customer gets the portal access they need, and you can see it before they do",
+    "changes": [
+      {
+        "text": "**A policy per customer.** Ticket visibility (**their own tickets** or **every ticket at their client**), whether they may **raise** tickets, whether they may **reply**, and **which board** their portal tickets land on can each be set for one client, from **Client access → Portal access** on Administration → Customer Portal. Every control offers the deployment's own answer first, so a field only carries a value where somebody decided — and the row says so, with the level each answer came from.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**An overrule per person.** Portal visitors are contacts, not user accounts, so there is no role to attach this to: each contact of a client can be **refused the portal altogether** (the contractor who should raise tickets by phone) or given a **different ticket visibility** from their colleagues (the office manager who runs the account and sees everything). Autotask, ConnectWise and Scoro all keep both of these on the client record with a per-contact overrule.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**See the portal as the customer, before they do.** **Preview** opens the portal for a chosen client and contact: their **sign-in page** wearing the client's colour and logo, the **ticket list** their scope actually returns, one ticket's **public conversation**, and the **new-ticket form** — with the buttons that the policy would refuse simply not drawn. The **What decided this** panel names the level behind each answer and says how many tickets at the client the visibility in force is holding back.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The preview is the real thing, and changes nothing.** It runs the portal's own scoping query and the same public-notes-only rule rather than a second implementation, so it cannot flatter the configuration; and it creates no session, sends no code, and writes no ticket or note — a \"reply\" or a \"raised ticket\" inside it is marked *not saved*. Tickets shown are real and read-only.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The policy is resolved per request** from the contact, then the client, then the deployment's Portal settings — so a change takes effect on the customer's next page load, and a client with nothing set follows the deployment including when the deployment changes later. Every portal route reads the one resolver: the ticket list, the ticket detail, the account summary, raising, replying and the per-client board.",
+        "type": "Update"
+      },
+      {
+        "text": "**Help follows:** the Customer Portal walkthrough gains \"Give one customer a different level of access\", \"Overrule one person\" and \"See it before the customer does\"; the Customer Portal area's rows and the field descriptions in the configuration reference now say that a client — or a person — can be given a different answer.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.044",
     "date": "2026-10-07",
     "title": "The dashboard's Recent tickets card stops dragging its row out of shape",

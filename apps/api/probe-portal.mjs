@@ -71,6 +71,21 @@ function crack(hash) {
   return null;
 }
 
+/** A fresh portal session for a contact, standing in for a customer signing in again. */
+async function portalSessionFor(contact) {
+  // The code throttle is per contact per window; backdate the earlier rows so a section that
+  // needs its own session does not trip the mail rate limit.
+  await prisma.portalLoginCode.updateMany({
+    where: { contactId: contact.id },
+    data: { createdAt: new Date(Date.now() - 20 * 60 * 1000) },
+  });
+  await call("POST", "/api/portal/auth/request", { body: { email: contact.email } });
+  const row = await latestCode(contact.id);
+  if (!row) return null;
+  const verified = await call("POST", "/api/portal/auth/verify", { body: { email: contact.email, code: crack(row.codeHash) } });
+  return verified.status === 200 ? { token: verified.data.token, csrf: verified.data.csrfToken } : null;
+}
+
 async function main() {
   const stamp = Date.now()
   // A client number nothing else is using, so the probe can run repeatedly without colliding.
@@ -341,10 +356,139 @@ async function main() {
   check(goodBranding.status === 200 && goodBranding.data?.portalAccentColor === "#123456", `a valid colour is stored (${goodBranding.data?.portalAccentColor})`);
   check(goodBranding.data?.portalLogoUrl === "/uploads/logo.png", `and so is a relative logo path (${goodBranding.data?.portalLogoUrl})`);
 
+  console.log("\neach customer can be given its own portal policy");
+  const overview = await call("GET", "/api/configuration/portal/overview", { token: staffToken });
+  check(overview.status === 200 && !!overview.data.instancePolicy, `the overview reports the deployment's own policy (${overview.status})`);
+  const probeRow = (overview.data.clients || []).find(c => c.id === client.id);
+  check(!!probeRow && probeRow.overrides.visibility === null, "a client with nothing set carries no overrides");
+  check(["instance", "default"].includes(probeRow?.policy?.sources?.visibility), `and inherits its policy (${probeRow?.policy?.sources?.visibility})`);
+  check(Array.isArray(overview.data.boards) && overview.data.boards.length > 0, "the boards a client's tickets can be routed to are offered");
+
+  const widen = await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { visibility: "company" } });
+  check(widen.status === 200, `one client's visibility can be widened (${widen.status})`);
+  const widened = await call("GET", "/api/configuration/portal/overview", { token: staffToken });
+  const widenedRow = (widened.data.clients || []).find(c => c.id === client.id);
+  check(widenedRow?.policy?.visibility === "company" && widenedRow?.policy?.sources?.visibility === "client",
+    `the overview reports it as this client's own setting (${widenedRow?.policy?.sources?.visibility})`);
+
+  const aliceSession = await portalSessionFor(alice);
+  const bobSession = await portalSessionFor(bob);
+  check(!!aliceSession?.token && !!bobSession?.token, "two customers of the same client can sign in");
+  const aliceSees = await call("GET", "/api/portal/tickets", { token: aliceSession.token });
+  const bobSees = await call("GET", "/api/portal/tickets", { token: bobSession.token });
+  check(aliceSees.data.data.some(t => t.ticketNumber === `PRT-${stamp}-2`), "the widened client's customer now sees their colleague's ticket");
+  check(bobSees.data.data.some(t => t.ticketNumber === `PRT-${stamp}-1`), "and so does the colleague — it is the client's setting, not one person's");
+  const aliceMe = await call("GET", "/api/portal/me", { token: aliceSession.token });
+  check(aliceMe.data?.portal?.visibility === "company", `and the account travels with that policy (${aliceMe.data?.portal?.visibility})`);
+
+  const narrow = await call("PATCH", `/api/configuration/portal/contacts/${alice.id}`, { token: staffToken, body: { visibility: "contact" } });
+  check(narrow.status === 200, `one person can be overruled against their client (${narrow.status})`);
+  const aliceNarrowed = await call("GET", "/api/portal/tickets", { token: aliceSession.token });
+  check(!aliceNarrowed.data.data.some(t => t.ticketNumber === `PRT-${stamp}-2`), "their ticket list narrows back to their own");
+  const bobWide = await call("GET", "/api/portal/tickets", { token: bobSession.token });
+  check(bobWide.data.data.some(t => t.ticketNumber === `PRT-${stamp}-1`), "while their colleague is unaffected");
+  const contacts = await call("GET", `/api/configuration/portal/clients/${client.id}/contacts`, { token: staffToken });
+  const aliceRow = (contacts.data.contacts || []).find(c => c.id === alice.id);
+  check(aliceRow?.effective === "contact" && aliceRow?.effective !== contacts.data.clientPolicy.visibility,
+    "the screen can show one person differing from their client");
+  await call("PATCH", `/api/configuration/portal/contacts/${alice.id}`, { token: staffToken, body: { visibility: null } });
+
+  console.log("\na customer can be narrowed without touching the deployment or the other customers");
+  await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { visibility: null, allowTicketCreation: false } });
+  const refusedRaise = await call("POST", "/api/portal/tickets", { token: aliceSession.token, csrf: aliceSession.csrf, body: { title: "Should be refused", description: "Probe" } });
+  check(refusedRaise.status === 403, `a client that may not raise tickets is refused (${refusedRaise.status})`);
+  check(/not enabled/i.test(refusedRaise.data?.error?.message || refusedRaise.data?.error || ""), "with the reason, not a generic refusal");
+  const meWhileLimited = await call("GET", "/api/portal/me", { token: aliceSession.token });
+  check(meWhileLimited.data?.portal?.allowTicketCreation === false, "and the portal is told, so the form is not drawn");
+  await call("PATCH", `/api/configuration/portal/contacts/${bob.id}`, { token: staffToken, body: { access: false } });
+  const refusedSignIn = await portalSessionFor(bob);
+  check(refusedSignIn === null, "a contact refused the portal cannot get a session");
+  const refusedOnExisting = await call("GET", "/api/portal/me", { token: bobSession.token });
+  check(refusedOnExisting.status === 401, `and a session they already held stops working (${refusedOnExisting.status})`);
+  await call("PATCH", `/api/configuration/portal/contacts/${bob.id}`, { token: staffToken, body: { access: null } });
+
+  await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { allowTicketCreation: null, allowReplies: false } });
+  const refusedReply = await call("POST", `/api/portal/tickets/${aliceTicket.id}/reply`, { token: aliceSession.token, csrf: aliceSession.csrf, body: { body: "Should be refused" } });
+  check(refusedReply.status === 403, `a client that may not reply is refused (${refusedReply.status})`);
+  await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { allowReplies: null } });
+  const allowedReply = await call("POST", `/api/portal/tickets/${aliceTicket.id}/reply`, { token: aliceSession.token, csrf: aliceSession.csrf, body: { body: "Allowed again" } });
+  check(allowedReply.status === 201, `clearing the overrule hands the answer back to the deployment (${allowedReply.status})`);
+
+  const secondBoard = await prisma.serviceBoard.create({ data: { name: `Portal Probe Board ${stamp}` }, select: { id: true } });
+  await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { boardId: secondBoard.id } });
+  const routed = await call("POST", "/api/portal/tickets", { token: aliceSession.token, csrf: aliceSession.csrf, body: { title: "Routed ticket", description: "Probe" } });
+  check(routed.status === 201, `a ticket can be raised again once the overrule is cleared (${routed.status})`);
+  const routedRow = await prisma.ticket.findUnique({ where: { id: routed.data.id }, select: { boardId: true } });
+  check(routedRow?.boardId === secondBoard.id, "and it lands on the board configured for that client");
+  await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { boardId: null } });
+
+  console.log("\nthe per-customer policy is validated where it is set");
+  const badVisibility = await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { visibility: "everything" } });
+  check(badVisibility.status === 400, `a visibility that is not a visibility is refused (${badVisibility.status})`);
+  const badBoard = await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { boardId: "00000000-0000-0000-0000-000000000000" } });
+  check(badBoard.status === 400, `a board that does not exist is refused rather than falling back silently (${badBoard.status})`);
+  const unknownClient = await call("PATCH", "/api/configuration/portal/clients/00000000-0000-0000-0000-000000000000", { token: staffToken, body: { visibility: "company" } });
+  check(unknownClient.status === 404, `a client that does not exist is refused (${unknownClient.status})`);
+  const unknownContact = await call("PATCH", "/api/configuration/portal/contacts/00000000-0000-0000-0000-000000000000", { token: staffToken, body: { access: false } });
+  check(unknownContact.status === 404, `and so is a contact that does not exist (${unknownContact.status})`);
+  const techToken = await staffSignIn("persona.tech@c7ntax.local");
+  const techWrite = await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: techToken, body: { visibility: "company" } });
+  check(techWrite.status === 403, `writing a customer's policy needs the configuration permission (${techWrite.status})`);
+  const anonymous = await call("GET", `/api/configuration/portal/clients/${client.id}/contacts`, {});
+  check(anonymous.status === 401, `reading a customer's people needs a session (${anonymous.status})`);
+
+  console.log("\nthe preview shows what the customer would see, and changes nothing");
+  const countBefore = {
+    sessions: await prisma.portalSession.count({ where: { contact: { companyId: client.id } } }),
+    codes: await prisma.portalLoginCode.count({ where: { contact: { companyId: client.id } } }),
+    tickets: await prisma.ticket.count({ where: { companyId: client.id } }),
+  };
+
+  const preview = await call("GET", `/api/configuration/portal/clients/${client.id}/preview`, { token: staffToken });
+  check(preview.status === 200 && !!preview.data?.policy, `a customer's portal can be previewed (${preview.status})`);
+  check(preview.data?.contact?.email === alice.email, `it starts as the client's first contact (${preview.data?.contact?.email})`);
+  check(preview.data?.branding?.name?.length > 0 && preview.data?.branding?.accentColor === "#123456",
+    `wearing the branding a customer would see (${preview.data?.branding?.accentColor})`);
+  check(preview.data?.tickets?.every(t => t.ticketNumber !== `PRT-${stamp}-2`), "and the list is the scope in force, not the client's whole history");
+  check(preview.data?.clientTicketTotal > preview.data?.ticketTotal, `while saying how much that scope is holding back (${preview.data?.ticketTotal} of ${preview.data?.clientTicketTotal})`);
+
+  const previewDetail = await call("GET", `/api/configuration/portal/clients/${client.id}/preview/tickets/${aliceTicket.id}?contactId=${alice.id}`, { token: staffToken });
+  check(previewDetail.status === 200, `a ticket in scope opens (${previewDetail.status})`);
+  check(previewDetail.data?.comments?.some(c => c.body === "Visible answer"), "with the public conversation");
+  check(previewDetail.data?.comments?.every(c => !/INTERNAL/.test(c.body)), "and never an internal note");
+  const previewForeign = await call("GET", `/api/configuration/portal/clients/${client.id}/preview/tickets/${bobTicket.id}?contactId=${alice.id}`, { token: staffToken });
+  check(previewForeign.status === 404, `a colleague's ticket is not previewable as them either (${previewForeign.status})`);
+
+  await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { visibility: "company" } });
+  const widenedPreview = await call("GET", `/api/configuration/portal/clients/${client.id}/preview?contactId=${alice.id}`, { token: staffToken });
+  check(widenedPreview.data?.tickets?.some(t => t.ticketNumber === `PRT-${stamp}-2`), "widening the client widens what the preview shows");
+  check(widenedPreview.data?.policy?.sources?.visibility === "client", "and it says which level decided that");
+  const nowInScope = await call("GET", `/api/configuration/portal/clients/${client.id}/preview/tickets/${bobTicket.id}?contactId=${alice.id}`, { token: staffToken });
+  check(nowInScope.status === 200, `and the colleague's ticket opens (${nowInScope.status})`);
+  await call("PATCH", `/api/configuration/portal/clients/${client.id}`, { token: staffToken, body: { visibility: null } });
+
+  await call("PATCH", `/api/configuration/portal/contacts/${bob.id}`, { token: staffToken, body: { access: false } });
+  const refusedPreview = await call("GET", `/api/configuration/portal/clients/${client.id}/preview?contactId=${bob.id}`, { token: staffToken });
+  check(refusedPreview.data?.contact?.allowed === false, "a person refused the portal can be previewed as refused, not hidden");
+  await call("PATCH", `/api/configuration/portal/contacts/${bob.id}`, { token: staffToken, body: { access: null } });
+
+  const countAfter = {
+    sessions: await prisma.portalSession.count({ where: { contact: { companyId: client.id } } }),
+    codes: await prisma.portalLoginCode.count({ where: { contact: { companyId: client.id } } }),
+    tickets: await prisma.ticket.count({ where: { companyId: client.id } }),
+  };
+  check(JSON.stringify(countBefore) === JSON.stringify(countAfter), "previewing created no session, sent no code and raised no ticket");
+
+  const previewUnknown = await call("GET", "/api/configuration/portal/clients/00000000-0000-0000-0000-000000000000/preview", { token: staffToken });
+  check(previewUnknown.status === 404, `previewing a client that does not exist is refused (${previewUnknown.status})`);
+  const previewAnonymous = await call("GET", `/api/configuration/portal/clients/${client.id}/preview`, {});
+  check(previewAnonymous.status === 401, `and previewing needs a staff session (${previewAnonymous.status})`);
+
   await prisma.portalLoginCode.deleteMany({ where: { contactId: { in: [alice.id, bob.id, outsider.id] } } });
   await prisma.portalSession.deleteMany({ where: { contactId: { in: [alice.id, bob.id, outsider.id] } } });
   await prisma.ticketComment.deleteMany({ where: { ticket: { companyId: { in: [client.id, closedClient.id] } } } });
   await prisma.ticket.deleteMany({ where: { companyId: { in: [client.id, closedClient.id] } } });
+  await prisma.serviceBoard.deleteMany({ where: { id: secondBoard.id } });
   await prisma.contact.deleteMany({ where: { id: { in: [alice.id, bob.id, outsider.id] } } });
   await prisma.company.deleteMany({ where: { id: { in: [client.id, closedClient.id] } } });
   await prisma.userSession.deleteMany({ where: { userId: adminUser.id } });

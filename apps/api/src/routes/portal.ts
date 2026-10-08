@@ -34,6 +34,8 @@ import {
   type PortalContact,
 } from "../services/portalAuth";
 import { configFlag, configText } from "../services/appSettings";
+import { resolvePortalPolicy, type PortalPolicy } from "../services/portalPolicy";
+import { listPortalTickets, loadPortalTicket, portalTicketWhere, type PortalScope } from "../services/portalTickets";
 import { resolvePortalBoardId } from "../services/portalBoard";
 
 export const portalRouter = Router();
@@ -41,11 +43,6 @@ const emailService = new EmailService();
 
 /** The portal's own actor: tickets raised from the portal are not raised by a staff member. */
 const PORTAL_ACTOR_EMAIL = "portal@c7ntax.local";
-
-const STATUS_LABELS: Record<string, string> = {
-  new: "New", open: "Open", in_progress: "In Progress", waiting_on_client: "Waiting on You",
-  waiting_on_vendor: "Waiting on Vendor", resolved: "Resolved", closed: "Closed",
-};
 
 /** Every portal route is behind the flag; the router is mounted unconditionally. */
 portalRouter.use((_req: Request, res: Response, next: NextFunction) => {
@@ -97,63 +94,15 @@ async function resolvePortalActor(): Promise<{ id: string }> {
   });
 }
 
-/**
- * "Mine" for the portal. Contact scope — the default — is a ticket this contact raised, is the
- * contact on, or was added to as an additional contact. Company membership alone is deliberately
- * not enough: a client with three hundred employees should not have each of them reading the
- * others' tickets. A provider serving one-mailbox small businesses can open it up to the whole
- * client with the `portal.visibility` setting, knowing that is the trade it makes.
- */
-function ticketWhereForContact(contactId: string, companyId?: string) {
-  return {
-    OR: [
-      { contactId },
-      { additionalContacts: { some: { contactId } } },
-      ...(configText("portal", "visibility") === "company" && companyId ? [{ companyId }] : []),
-    ],
-  };
+/** The policy in force for whoever is asking, resolved from contact → client → instance. */
+async function policyFor(principal: { contactId: string; companyId: string }): Promise<PortalPolicy> {
+  return resolvePortalPolicy(principal.companyId, principal.contactId);
 }
 
-/** The same scope as a value, so the ticket-detail path can reuse it. */
-function portalScope(principal: { contactId: string; companyId: string }) {
-  return ticketWhereForContact(principal.contactId, principal.companyId);
-}
-
-async function loadPortalTicket(ticketId: string, principal: { contactId: string; companyId: string }) {
-  const ticket = await prisma.ticket.findFirst({
-    where: { id: ticketId, ...portalScope(principal) },
-    select: {
-      id: true, ticketNumber: true, title: true, description: true, status: true, priority: true,
-      createdAt: true, updatedAt: true, resolvedAt: true, closedAt: true,
-      dueDate: true,
-      assignedTo: { select: { firstName: true, lastName: true } },
-      company: { select: { id: true, name: true } },
-      // Internal notes are filtered here, in the query, so no caller can forget to.
-      comments: {
-        where: { isInternal: false },
-        orderBy: { createdAt: "asc" },
-        select: { id: true, body: true, createdAt: true, fromEmail: true, author: { select: { firstName: true, lastName: true } } },
-      },
-    },
-  });
-  if (!ticket) throw new AppError("Ticket not found", 404);
-  return ticket;
-}
-
-function portalTicketSummary(ticket: {
-  id: string; ticketNumber: string; title: string; status: string; priority: string;
-  createdAt: Date; updatedAt: Date;
-}) {
-  return {
-    id: ticket.id,
-    ticketNumber: ticket.ticketNumber,
-    title: ticket.title,
-    status: ticket.status,
-    statusLabel: STATUS_LABELS[ticket.status] ?? ticket.status,
-    priority: ticket.priority,
-    createdAt: ticket.createdAt,
-    updatedAt: ticket.updatedAt,
-  };
+/** The ticket scope for a principal, under the policy that applies to them right now. */
+async function portalScope(principal: { contactId: string; companyId: string }): Promise<PortalScope> {
+  const policy = await policyFor(principal);
+  return { contactId: principal.contactId, companyId: principal.companyId, visibility: policy.visibility };
 }
 
 /** The branding the portal is allowed to know about, and nothing else from the client record. */
@@ -267,21 +216,23 @@ portalRouter.get("/me", requirePortalSession, async (req: Request, res: Response
       },
     });
     if (!contact) throw new AppError("Ticket not found", 404);
+    const policy = await policyFor(principal);
+    const scope: PortalScope = { contactId: principal.contactId, companyId: principal.companyId, visibility: policy.visibility };
     const open = await prisma.ticket.count({
-      where: { ...portalScope(principal), status: { notIn: ["resolved", "closed"] } },
+      where: { ...portalTicketWhere(scope), status: { notIn: ["resolved", "closed"] } },
     });
     res.json({
       contact: { firstName: contact.firstName, lastName: contact.lastName, email: contact.email, phone: contact.phone },
       company: portalCompanySummary(contact.company),
       openTickets: open,
       // The portal's own rules travel with the identity, so a button that would be refused is
-      // never drawn in the first place.
+      // never drawn in the first place — and they are this customer's rules, not the deployment's.
       portal: {
         welcomeText: configText("portal", "welcomeText") || "",
         supportEmail: configText("portal", "supportEmail") || "",
-        allowTicketCreation: configFlag("portal", "allowTicketCreation"),
-        allowReplies: configFlag("portal", "allowReplies"),
-        visibility: configText("portal", "visibility") || "contact",
+        allowTicketCreation: policy.allowTicketCreation,
+        allowReplies: policy.allowReplies,
+        visibility: policy.visibility,
       },
     });
   } catch (e) { next(e); }
@@ -294,55 +245,24 @@ portalRouter.get("/tickets", requirePortalSession, async (req: Request, res: Res
     const principal = req.portalContact!;
     const status = typeof req.query.status === "string" ? req.query.status : "";
     const limit = Math.min(Number(req.query.limit) || 50, 100);
-    const where = {
-      ...portalScope(principal),
-      ...(status ? { status } : {}),
-    };
-    const [tickets, total] = await Promise.all([
-      prisma.ticket.findMany({
-        where,
-        orderBy: { updatedAt: "desc" },
-        take: limit,
-        select: {
-          id: true, ticketNumber: true, title: true, status: true, priority: true,
-          createdAt: true, updatedAt: true,
-        },
-      }),
-      prisma.ticket.count({ where }),
-    ]);
-    res.json({ data: tickets.map(portalTicketSummary), total });
+    res.json(await listPortalTickets(await portalScope(principal), { status, limit }));
   } catch (e) { next(e); }
 });
 
 portalRouter.get("/tickets/:id", requirePortalSession, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const principal = req.portalContact!;
-    const ticket = await loadPortalTicket(String(req.params.id), principal);
-    res.json({
-      ...portalTicketSummary(ticket),
-      description: ticket.description,
-      company: { name: ticket.company.name },
-      assignedToName: ticket.assignedTo ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}`.trim() : null,
-      resolvedAt: ticket.resolvedAt,
-      closedAt: ticket.closedAt,
-      comments: ticket.comments.map(c => ({
-        id: c.id,
-        // A comment the customer wrote is theirs; anything else is the provider's answer.
-        fromCustomer: !!c.fromEmail && c.fromEmail.toLowerCase() === principal.email.toLowerCase(),
-        body: c.body,
-        createdAt: c.createdAt,
-        authorName: `${c.author.firstName} ${c.author.lastName}`.trim(),
-      })),
-    });
+    res.json(await loadPortalTicket(String(req.params.id), await portalScope(principal), principal.email));
   } catch (e) { next(e); }
 });
 
 portalRouter.post("/tickets", requirePortalWrite, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const principal = req.portalContact!;
+    const policy = await policyFor(principal);
     // A client that must go through the phone can have the form taken away; the refusal is
     // here as well as in the UI because a hidden button is not a permission.
-    if (!configFlag("portal", "allowTicketCreation")) {
+    if (!policy.allowTicketCreation) {
       throw new AppError("Your provider has not enabled raising tickets through the portal — please contact them directly", 403);
     }
     const title = String(req.body?.title ?? "").trim();
@@ -352,7 +272,7 @@ portalRouter.post("/tickets", requirePortalWrite, async (req: Request, res: Resp
     if (title.length > 200) throw new AppError("Keep the summary under 200 characters");
     if (!description) throw new AppError("Please describe what you need help with");
 
-    const [boardId, actor] = await Promise.all([resolvePortalBoardId(), resolvePortalActor()]);
+    const [boardId, actor] = await Promise.all([resolvePortalBoardId(principal.companyId), resolvePortalActor()]);
 
     const created = await (async () => {
       for (let attempt = 0; ; attempt++) {
@@ -402,7 +322,8 @@ portalRouter.post("/tickets", requirePortalWrite, async (req: Request, res: Resp
 portalRouter.post("/tickets/:id/reply", requirePortalWrite, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const principal = req.portalContact!;
-    if (!configFlag("portal", "allowReplies")) {
+    const policy = await policyFor(principal);
+    if (!policy.allowReplies) {
       throw new AppError("Replying through the portal is not enabled — please contact your provider directly", 403);
     }
     const body = String(req.body?.body ?? "").trim();
@@ -410,7 +331,7 @@ portalRouter.post("/tickets/:id/reply", requirePortalWrite, async (req: Request,
     if (body.length > 20000) throw new AppError("That message is too long");
 
     const ticket = await prisma.ticket.findFirst({
-      where: { id: String(req.params.id), ...portalScope(principal) },
+      where: { id: String(req.params.id), ...portalTicketWhere(await portalScope(principal)) },
       select: { id: true, status: true },
     });
     if (!ticket) throw new AppError("Ticket not found", 404);

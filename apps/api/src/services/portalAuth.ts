@@ -80,10 +80,14 @@ export async function portalEligibleContact(email: string) {
       lastName: true,
       email: true,
       companyId: true,
+      // A contact can be refused the portal on their own account — the contractor who should raise
+      // tickets by phone — without switching the whole client off.
+      portalAccess: true,
       company: { select: { id: true, name: true, isActive: true, portalEnabled: true, portalAccentColor: true, portalLogoUrl: true } },
     },
   });
-  if (!contact || !contact.company?.isActive || !contact.company.portalEnabled) return null;
+  if (!contact || contact.portalAccess === false) return null;
+  if (!contact.company?.isActive || !contact.company.portalEnabled) return null;
   return contact;
 }
 
@@ -226,13 +230,15 @@ export async function resolvePortalSession(req: Request): Promise<PortalPrincipa
       contact: {
         select: {
           id: true, email: true, firstName: true, lastName: true, isActive: true, companyId: true,
+          portalAccess: true,
           company: { select: { isActive: true, portalEnabled: true } },
         },
       },
     },
   });
   if (!session || session.invalidatedAt || session.expiresAt.getTime() < Date.now()) return null;
-  if (!session.contact.isActive || !session.contact.company.isActive || !session.contact.company.portalEnabled) return null;
+  if (!session.contact.isActive || session.contact.portalAccess === false) return null;
+  if (!session.contact.company.isActive || !session.contact.company.portalEnabled) return null;
 
   // Sliding activity, but never past the absolute expiry the session was created with.
   await prisma.portalSession.update({ where: { id: session.id }, data: { lastActivityAt: new Date() } });

@@ -186,7 +186,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "table", headers: ["Area", "What it governs"], rows: [
         ["Workspace", "The instance's name, the default landing page, and the interface options that apply to everyone"],
         ["Sessions & Security", "Idle timeout, the session ceiling, and which sign-in methods this deployment offers"],
-        ["Customer Portal", "The customer-facing sign-in, what a customer may see and do, and how it looks"],
+        ["Customer Portal", "The customer-facing sign-in, what a customer may see and do, and how it looks — and, on the Client access table, what each customer is given individually"],
         ["Service Alerts & Monitoring", "Uptime monitors, outbound alert webhooks, the social source and the poll interval"],
         ["Knowledge Base & AI", "Drafting articles from resolved tickets, the drafting model, and AI action proposals"],
         ["CloudConnect & Email", "Connector verification, the mail connectors, Graph delivery and M365 offboarding"],
@@ -999,7 +999,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: "customer-portal", group: "walkthroughs",
     path: "/help/walkthroughs/customer-portal",
     title: "Customer Portal",
-    description: "Let a client's contacts raise and follow their own tickets, and see nothing else.",
+    description: "Give each customer the access they need, and see exactly what they will see before they do.",
     blocks: [
       { kind: "h", text: "Turn the portal on" },
       { kind: "steps", items: [
@@ -1015,10 +1015,12 @@ export const HELP_SECTIONS: HelpSection[] = [
         "Optionally give one client its own accent colour or logo; both override the instance defaults.",
       ] },
       { kind: "h", text: "Portal policy" },
+      { kind: "p", text: "These settings are the deployment's answer, and apply to every customer that has not been given an answer of its own. Three levels decide them, each one overruling the last: **the person**, **the client**, then **the deployment**. A level only counts where somebody actually set something, so most clients carry no values at all and follow the deployment." },
       { kind: "table", headers: ["Setting", "What it decides"], rows: [
         ["Ticket visibility", "**Only their own tickets** (default) or **every ticket at their client**. The default is deliberately narrow: a client with three hundred employees should not have each of them reading the others' tickets."],
         ["Customers may raise tickets", "Whether the new-ticket form is offered and accepted"],
         ["Customers may reply", "Whether a customer can add a public note. Internal notes never cross into the portal either way."],
+        ["Board for portal-raised tickets", "Where a ticket raised in the portal lands. Unset means the oldest active service board."],
         ["Sign-in code lifetime", "How long an emailed code stays usable"],
         ["Sign-in attempts per code", "Wrong guesses allowed before the code is burned"],
         ["Codes per customer per window", "The ceiling that stops the portal being used as a mail relay"],
@@ -1026,6 +1028,32 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Signed-in devices per customer", "How many browsers one customer may hold at once; the oldest is retired first"],
         ["Accent colour, logo, welcome message, support address", "How the portal looks, and where a customer who cannot sign in is pointed"],
       ] },
+      { kind: "h", text: "Give one customer a different level of access" },
+      { kind: "steps", items: [
+        "Open **Administration → Customer Portal** and find the client in the **Client access** table. The **What they see** column shows what that customer currently gets, and whether it is the deployment's answer or their own.",
+        "Select **Portal access** to open the client's policy. Every control offers the deployment's answer first, so leaving one alone means it keeps following the deployment if that is later changed.",
+        "**Which tickets they see** — their own, or every ticket at that client. This is the setting that matters most: it decides the list and the ticket detail together, and a narrower scope is applied on the server, not in the page.",
+        "**Raising tickets** and **Replying to tickets** can each be allowed or refused for that client alone — the client who should go through the phone, and the one who should not.",
+        "**Where their tickets land** routes only that client's portal tickets to another board, which is how a client whose work belongs to a different queue is handled.",
+        "Each change saves as it is made and the row updates to show the new answer and where it now comes from.",
+      ] },
+      { kind: "h", text: "Overrule one person" },
+      { kind: "p", text: "Portal visitors are **contacts, not user accounts**, so there is no role to attach this to: what a customer sees is decided by the policy above, and by a per-person overrule for the people who differ from their colleagues." },
+      { kind: "steps", items: [
+        "The **People at this client** list in the same dialog names each contact with what they currently get.",
+        "**May use the portal** — *Follows the client*, *Allowed*, or *No portal*. The contractor or former employee who should not have a login, without switching the whole client off.",
+        "**Which tickets they see** — the office manager who runs the account can be given the client's whole ticket list while their colleagues see only their own.",
+      ] },
+      { kind: "h", text: "See it before the customer does" },
+      { kind: "p", text: "**Preview** in the Client access table — or **Preview what they see** in the policy dialog — opens the portal as that customer, with nothing switched on behind it." },
+      { kind: "steps", items: [
+        "Choose which contact to be: the list says what each of them would get, including the people with no portal access at all.",
+        "**Sign-in page** is what their first visit looks like, wearing the client's colour and logo when they have them. The button is simulated — no code is sent — and pressing it carries on into the portal.",
+        "**The portal** is the ticket list the portal's own scoping query returns for that person, filtered by status. The buttons that are not there are not there because the policy in force would refuse them.",
+        "Open a ticket to see its public conversation. Internal notes never appear, and a ticket outside their scope answers exactly as it would to them: as if it did not exist.",
+        "**What decided this** names the level behind each answer — this person, this client, the deployment, or the default — and how many tickets at the client the current visibility is holding back.",
+      ] },
+      { kind: "note", text: "The preview changes nothing: no session is created, no sign-in code is sent, and a \"reply\" or a \"new ticket\" inside it is marked as not saved and never written. Tickets shown in it are real, and read-only." },
       { kind: "h", text: "How a customer signs in" },
       { kind: "steps", items: [
         "A customer visits `/portal` and enters their email address.",
