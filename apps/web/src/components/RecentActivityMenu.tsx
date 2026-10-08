@@ -189,7 +189,7 @@ export function RecentActivityMenu() {
             onClick={() => setOpen(false)}
             className="block px-3 py-2 border-t border-surface-border text-[11px] text-gray-500 hover:text-white hover:bg-surface-lighter transition-colors"
           >
-            Full audit trail
+            Show All
           </Link>
         </div>
       )}

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.041 | Last Updated: 2026-10-08
+## Version: 2026.10.8.042 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,22 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.042 — The Recent menu's footer says "Show All"
+
+The link at the foot of the Recent activity menu read **Full audit trail**, which named the destination — an
+administrator's screen with an audience and a vocabulary of its own — where the menu is about *this*
+person's last five activities. **"Show All"** says what the click does from where the reader is standing,
+which is the question the menu exists to answer.
+
+- **[Update]** **Same destination, plainer words.** The link still opens `/admin/logs`; only the label
+  changed. Nothing about what the page shows, who may open it or what it is called there has moved.
+
+**Verification:** web `tsc` clean. Live in the browser: the menu's footer reads `Show All`, its `href` is
+still `/admin/logs`, the five activities above it are unchanged, and the string `Full audit trail` no
+longer appears anywhere in the menu.
 
 ---
 

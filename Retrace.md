@@ -6067,3 +6067,24 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The API's `POST /api/api-keys` returns the secret as `key`, not `secret`.** The first probe run created a live key and died before its cleanup, so the orphan had to be revoked by hand — which is the argument for the probe checking the response shape *before* it issues anything it might not clean up.
 - **The CommonJS/ESM split is the trap in this repo.** `probes` under `tsx` cannot import the shared barrel in ESM mode (two separate rounds lost to it now); matching the API's module mode is the fix, and it is worth remembering before writing a third Node entry point.
 - **Prepending to `BuildNotes.md` ate the previous entry's heading again**, the third time. The `---` above an entry is part of the *next* edit's match, so the heading has to be re-added in the replacement. Grepping `^## 2026` afterwards is what catches it; it now has to become the habit rather than the recovery.
+
+---
+
+### Prompt 281 — The Recent menu's footer says "Show All"
+
+**Timestamp:** 2026-10-08 14:12 | **Status:** Complete (label changed, destination unchanged, verified live) | **Duration:** ~5 min
+
+**BuildNotes IDs:** **2026.10.8.042** — "The Recent menu's footer says \"Show All\""
+
+**Prompt**
+
+> Rename full audit trail to Show More or Show All
+
+**What I did**
+- **Changed the label, and nothing else.** The link still opens `/admin/logs`; one string moved. The page, its name there, its audience and its permissions are untouched.
+- **Read the two options as a question about what the link promises, and picked "Show All".** "Show More" implies more rows arriving *here* — pagination on the list you are looking at — while "Show All" is honest about leaving the menu for the full trail. The menu shows five activities and the link is the way to the complete set, so "Show All" is the one that describes the click rather than the count.
+- **Reworded because of who the reader is.** "Full audit trail" named the destination in an auditor's vocabulary; the menu is about *this person's* last five changes, so the footer should answer from where they are standing. The destination keeps its own name — it is still the audit trail — and that distinction is the thing worth keeping straight: it is a link's wording that changed, not a screen's identity.
+
+**Notes for next time**
+- **The heading-eating mistake happened a fourth time, and this time it was caught before committing** rather than after: the `---` that separates entries belongs to the *next* entry's match, so re-adding the heading in the replacement text is part of the edit and not a follow-up. The grep for `^## 2026` is now the check, not the recovery.
+- **A five-minute change still gets the full record** — version, Retrace entry, regenerated fallbacks, live verification — because the alternative is a set of records with gaps that cannot be reconstructed, and the cost of the ceremony here is a handful of minutes against a 254-entry history that has to stay readable.

@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.10.8.042",
+    "date": "2026-10-08",
+    "title": "The Recent menu's footer says \"Show All\"",
+    "changes": [
+      {
+        "text": "**Same destination, plainer words.** The link still opens `/admin/logs`; only the label",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.041",
     "date": "2026-10-08",
     "title": "`c7ntax`: the console, in a terminal, on an API key",
