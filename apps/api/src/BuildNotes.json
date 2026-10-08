@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.040",
+    "date": "2026-10-08",
+    "title": "The Recent menu now means *activity*: what you changed, where, and straight to it",
+    "changes": [
+      {
+        "text": "**Changes come from the audit trail, which was being written all along.** `GET /api/system/audit-logs?mine=true&limit=n` narrows the existing read to the caller's own rows — a *narrower* read than the route already served, so no new endpoint and no new permission. `nav` and `dashboard` rows are filtered out of the menu: real changes, kept in the trail, but \"you moved a sidebar item\" is not a place anyone wants to be taken back to.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A creation now names the thing it created.** `POST /api/clients` stored the literal string `clients` as its audit row's entity id — there is no `:id` in that path — so nothing could link to the client that was just made. The audit middleware now captures the response body, and every creating route answers with the row it made, so `clients:create` rows carry the new client's id and the menu links straight to it. This is the audit trail's own quality improving, not just the menu's.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Location first, then the action** — \"Clients / Created new — Northwind Traders\", \"Administration → Configuration → Workspace / Changed setting — Command console\". The location uses the **navigation's own words** (written down in one table, checked against the sidebar), because a menu that invents its own names for the same places is a second map of the application.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Arriving points at the exact region.** A link carries `?hl=<target>`; the shell finds that region, scrolls it into view and flashes it with the brand ring for 2.6s, then removes the parameter so a reload does not re-flash stale news. Wired on three destinations that matter: a ticket's **Activity** card, a client's summary header, and **every control on the configuration screen** (each field is marked `data-hl=\"field:<id>\"`, so a settings change lands on the switch you flipped). Anything else falls back to the page heading rather than doing nothing.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The dwell exception, as specified.** `useDwellActivity` records a page only after it has been the current route for **two minutes without navigating away**, and a visit is stored in this browser rather than sent to the server — a dwell is a fact about the session, not an audit record, and the trail should not fill with the act of looking at things.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The list refreshes itself after a write.** A response interceptor re-reads the tail shortly after any successful non-`GET`, so a change appears in the menu without a reload — one place in `api.ts` rather than 200 call sites, and concurrent writes collapse into a single re-read. Signing out clears the cache, so one person's activity is never visible at the next person's first paint.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.039",
     "date": "2026-10-08",
     "title": "The console as a page, and a URL worth sending to somebody",

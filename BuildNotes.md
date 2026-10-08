@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.039 | Last Updated: 2026-10-08
+## Version: 2026.10.8.040 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,23 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.040 — The Recent menu now means *activity*: what you changed, where, and straight to it
+
+The Recent button in the header was a placeholder with no handler. It is now the answer to "where was I?" — the last five things you **changed**, each naming the place and the action, each linking to the record it touched and **flashing the exact region** when you arrive. A page you merely passed through is not activity; a page that held you for two minutes is.
+
+- **[New]** **Changes come from the audit trail, which was being written all along.** `GET /api/system/audit-logs?mine=true&limit=n` narrows the existing read to the caller's own rows — a *narrower* read than the route already served, so no new endpoint and no new permission. `nav` and `dashboard` rows are filtered out of the menu: real changes, kept in the trail, but "you moved a sidebar item" is not a place anyone wants to be taken back to.
+- **[Fix]** **A creation now names the thing it created.** `POST /api/clients` stored the literal string `clients` as its audit row's entity id — there is no `:id` in that path — so nothing could link to the client that was just made. The audit middleware now captures the response body, and every creating route answers with the row it made, so `clients:create` rows carry the new client's id and the menu links straight to it. This is the audit trail's own quality improving, not just the menu's.
+- **[New]** **Location first, then the action** — "Clients / Created new — Northwind Traders", "Administration → Configuration → Workspace / Changed setting — Command console". The location uses the **navigation's own words** (written down in one table, checked against the sidebar), because a menu that invents its own names for the same places is a second map of the application.
+- **[New]** **Arriving points at the exact region.** A link carries `?hl=<target>`; the shell finds that region, scrolls it into view and flashes it with the brand ring for 2.6s, then removes the parameter so a reload does not re-flash stale news. Wired on three destinations that matter: a ticket's **Activity** card, a client's summary header, and **every control on the configuration screen** (each field is marked `data-hl="field:<id>"`, so a settings change lands on the switch you flipped). Anything else falls back to the page heading rather than doing nothing.
+- **[New]** **The dwell exception, as specified.** `useDwellActivity` records a page only after it has been the current route for **two minutes without navigating away**, and a visit is stored in this browser rather than sent to the server — a dwell is a fact about the session, not an audit record, and the trail should not fill with the act of looking at things.
+- **[Update]** **The list refreshes itself after a write.** A response interceptor re-reads the tail shortly after any successful non-`GET`, so a change appears in the menu without a reload — one place in `api.ts` rather than 200 call sites, and concurrent writes collapse into a single re-read. Signing out clears the cache, so one person's activity is never visible at the next person's first paint.
+
+**Verification:** `probe-audit-mine` (new) **13 passed / 0 failed** — `mine=true` is served, capped, newest-first, and **every returned row names the caller** (the assertion that matters: "mine" answering with a colleague's rows would be a privacy defect, not a display bug), while the unfiltered read still contains other people's; and a created client's audit row **names the created record rather than the collection**. API and web `tsc` clean; `guard:routes` 439/0; `guard:api-docs` 430/63 (curated description extended for the two new parameters); `guard:console` green; help links clean. Live in the browser: the menu showed `Administration → Configuration → Workspace / Changed setting — Command console`, `Clients / Created new — Probe Audit Client …` and `Tickets / Created — Outlook keeps crashing`; clicking the first navigated to `/admin/configuration/workspace`, **flashed `field:console`** (measured: ring at 4px in the theme's crimson, region positioned in view at 355 of 797px), and left the URL clean; the same was confirmed for a ticket's Activity on a full page load.
+
+**Two failures found by verifying rather than reading.** The flash first fell back to the page heading, because a single check one frame after mount runs before a page has loaded its contents from the API — the hook now keeps looking for the precise target for up to three seconds. Then it failed on a *full page load* while working on a click: React's development double-invoke re-runs the effect, and by then this effect's own URL cleanup had removed the instruction, so the second run did nothing. The instruction is now held in a ref that survives the re-run. Both symptoms were silent — a tidy URL and no flash — which is why the check was made by loading the page as well as by clicking to it.
 
 ---
 

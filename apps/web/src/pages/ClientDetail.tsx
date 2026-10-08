@@ -50,7 +50,7 @@ export function ClientDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <div className="flex items-center gap-2 text-sm"><Link to="/clients" className="text-gray-500 hover:text-white flex items-center gap-1"><ChevronLeft size={14} /> Clients</Link></div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" data-hl="client-details">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-cyber-600/10"><Building2 size={20} className="text-cyber-400" /></div>
           <div>

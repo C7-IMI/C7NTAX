@@ -260,7 +260,7 @@ export function FieldCard({ field, onSave, onClear, busy }: {
   })();
 
   return (
-    <div className="border-b border-surface-border last:border-b-0 py-4 first:pt-0 last:pb-0">
+    <div className="border-b border-surface-border last:border-b-0 py-4 first:pt-0 last:pb-0" data-hl={`field:${field.id}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

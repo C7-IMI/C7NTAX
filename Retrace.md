@@ -5999,3 +5999,39 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The extraction was the whole job.** `ConsoleDialog`'s body became `ConsolePanel`, so the popup and the page are two frames around one component — the difference between them is a border and a height, and nothing about running a command. Three things fell out of doing it: `Esc` had to become "dismiss what is dismissible" (on the page, closing would have taken the scrollback with it), the deep-linked command has to run **once** (guarded by a ref, because React's development double-invoke would run a *write* twice the day writes exist), and the URL tracks the last line run rather than every keystroke, because a link should be a command and not a transcript.
 - **Fixed the empty state's example while I was in the file.** It said `--status open`, and `open` is not a ticket status here — so the first command a new user copies returned an empty table. It says `--status new` now, which is what completion offers.
 - **A dropped heading is a record nobody reads.** Replacing the `---` + heading above the previous entry consumed that entry's own `## 2026.10.8.038` line and silently moved 038's body under 039. Caught by grepping the headings rather than by trusting the edit, and the entries are ordered again. When prepending to a file whose entries start with `---`, match on the *text* of the previous entry, never on the separator.
+
+---
+
+### Prompt 279 — The Recent menu: activity, not browsing, and a link to the exact place
+
+**Timestamp:** 2026-10-08 13:36 | **Status:** Complete (menu live, both arrival paths verified, 13/13 probe) | **Duration:** ~95 min
+
+**BuildNotes IDs:** **2026.10.8.040** — "The Recent menu now means *activity*: what you changed, where, and straight to it"
+
+**Prompt**
+
+> The recent button on the header should bring up a menu of recent activity of the logged in user. The activity should be changes made (ticket update, client creation, settings change, etc), not just sections/pages viewed. The exception would be when browsing/viewing a page, if the user doesn't navigate away from it for longer than two minutes, it should be logged as a recent activity. Each item should provide a link directly to that activity in the app. Perhaps try to implement a flashing indicator/highlight of the exact location or scrolling directly to it once it's been navigated to, so that the user can immediately find their place again. Show the last 5 activities in the menu
+
+…then, on seeing the first version:
+
+> Be a bit more descriptive on the recent activities menu. Instead of Client created, it should say something like the app location, then the action: Client List / Created new (client name/action performed)
+
+**What I did**
+- **Measured the audit trail before designing against it**, and it changed the design twice. `entityId` is `req.params.id` **or the last path segment**, so a creation stored the literal string `clients` — which is why "each item links directly to that activity" could not be delivered for a created record at all. Rather than fake it with a search link, I fixed the *source*: the audit middleware now captures the response body, and every creating route answers with the row it made, so the row carries the new record's id. The audit trail got better; the menu got its links.
+- **Split the two sources honestly rather than pretending they are one.** Changes come from the trail (server truth, with the actor); the two-minute dwell comes from the browser, because a dwell is a fact about a session and not something the audit trail should fill up with. The tradeoff — a visit does not follow you to another machine — is written down in the module rather than discovered later.
+- **Read the real entity vocabulary and mapped it, rather than guessing.** The survey found route-shaped entities (`tickets`, `company`, `clients`, `cloudconnect`, `system_config`, `kumo_passwords`, …), which is why the location table is written against what the trail actually contains; and it found that `configuration` writes record the **field id** (`console`, `outlookAddin`), which is what makes the settings case point at the exact switch instead of at a section.
+- **Excluded `nav` and `dashboard` with the reason stated.** They are real changes and the trail keeps them, but "you moved a sidebar item" is not a place to go back to and would crowd out the five entries. A filter with no reason in the code is a filter somebody will "fix" later.
+- **Made deletions link to the section, not the record.** The first live run showed `Client deleted → /clients/<id>` — a link to a page for a row that had just been deleted. The absence is visible in the section, and that is where somebody goes to confirm it happened.
+- **Reworded to location-then-action on the prompt's second pass.** The first version said "Client created — Northwind Traders", which answers "what?" before "where?". Now it is `Clients` / `Created new — Northwind Traders`, with the location in the navigation's own words (a written-down table, checked against the sidebar) — the question the menu is opened to answer is "where was I?", so that line goes first.
+
+**Decisions worth remembering**
+- **One interceptor beats 200 call sites.** The refresh after a write lives in `api.ts`, so a screen added tomorrow gets it by existing, and concurrent writes collapse into a single re-read.
+- **"Mine" that answers with somebody else's rows is a privacy defect, not a display bug.** The probe asserts *every* returned row names the caller — not merely that rows came back — which is the difference between testing the feature and testing the claim.
+- **The highlight is the feature, so it must not be best-effort.** A link that navigates correctly and points at nothing is worse than no link: it costs a click and teaches the wrong thing about the feature. Both failures below were exactly that shape.
+- **A response body is the only place a creation's id exists.** Worth remembering beyond this feature: any audit, notification or webhook that wants to name a created record has to look there, because the request does not contain it.
+
+**Notes for next time**
+- **Two silent failures, both found only by timing the browser rather than reading the code.** The flash first fell back to the page heading, because one check a frame after mount runs before a page has loaded its contents from the API; the hook now keeps looking for the precise target for up to three seconds. Then it worked on a *click* and failed on a **full page load**: React's development double-invoke re-runs the effect, and by then this effect's own URL cleanup had removed the instruction from the address bar, so the second run found nothing to do. The instruction now lives in a ref that survives the re-run. **Test an arriving link by loading the page as well as by clicking to it** — the two paths exercise different code.
+- **Cleaning the URL is a side effect that can cancel the very work it was tidying.** Depending on `location.search` while rewriting `location.search` cost a debugging round; reading the instruction from `window.location.search` and keying the effect on the path removed the loop.
+- **A `---`-separated log needs its headings matched by text.** This is the second time an entry's heading was consumed by prepending above it with the separator in the match; grepping the headings afterwards is what caught it both times.
+- **The switch I toggled to test the settings path had to be put back.** It was (verified: `console → true`, `[checked]` in the DOM), because a verification that leaves a deployment changed is not a verification.

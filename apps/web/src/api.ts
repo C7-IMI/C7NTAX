@@ -44,7 +44,21 @@ api.interceptors.request.use((config) => {
 // degrade, and a toast per denied panel would be noise.
 let lastDeniedAt = 0;
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    /*
+     * A write that succeeded is a change worth showing in the header's Recent menu, and this is the
+     * one place every write in the application passes through — so the menu does not have to be wired
+     * into 200 call sites, and a screen added tomorrow gets the behaviour by existing. The audit row
+     * is written when the response finishes on the server, which is why the re-read is deferred.
+     */
+    const method = String(res.config?.method || "get").toLowerCase();
+    if (method !== "get" && method !== "head" && method !== "options") {
+      void import("./hooks/useRecentActivity").then((module) =>
+        module.refreshRecentActivity(),
+      );
+    }
+    return res;
+  },
   (err) => {
     const status = err.response?.status;
     const method = String(err.config?.method || "get").toLowerCase();
@@ -53,10 +67,19 @@ api.interceptors.response.use(
 
     if (status === 403 && method !== "get") {
       if (code === "CSRF_FAILED") {
-        toast.error("That action could not be verified — reload the page and try again");
-      } else if (code !== "PASSWORD_CHANGE_REQUIRED" && Date.now() - lastDeniedAt > 3000) {
+        toast.error(
+          "That action could not be verified — reload the page and try again",
+        );
+      } else if (
+        code !== "PASSWORD_CHANGE_REQUIRED" &&
+        Date.now() - lastDeniedAt > 3000
+      ) {
         lastDeniedAt = Date.now();
-        toast.error(typeof body === "string" ? body : body?.message || "Your role does not allow that");
+        toast.error(
+          typeof body === "string"
+            ? body
+            : body?.message || "Your role does not allow that",
+        );
       }
     }
 
@@ -75,7 +98,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(err);
-  }
+  },
 );
 
 export default api;

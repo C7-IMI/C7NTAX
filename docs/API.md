@@ -656,6 +656,10 @@ produced the event. **Answer `2xx` as soon as you have stored the body** — do 
   non-secret configuration). Reserved keys are withheld even from administrators, on purpose.
 * **`GET /api/system/audit-logs`** (`user:manage` or `system:config`) is where to look when a change
   arrived and nobody admits to making it — API-key issuance and revocation are recorded there.
+  `?mine=true` narrows it to your own activity, and `?limit=` caps the page; the header's Recent
+  activity menu is a client of the same route rather than a second endpoint. Each row names the entity
+  it touched, and `entityId` is the record's id where the route had one — for a creation, the id of the
+  row the route returned.
 
 Permissions are named `resource:action` (`ticket:create`, `client:view`, `billing:manage`,
 `user:manage`, `system:config`, `servicealert:manage`). A scope that names a permission nobody holds is

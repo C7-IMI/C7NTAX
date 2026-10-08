@@ -6227,7 +6227,7 @@ paths:
       tags: ["System"]
       operationId: "getSystemauditLogs"
       summary: "The audit trail"
-      description: "Actions with their actor, entity and timestamp. This is the join an SIEM wants: correlate a detection with the change someone made after it."
+      description: "Actions with their actor, entity and timestamp. This is the join an SIEM wants: correlate a detection with the change someone made after it.\n\nTwo optional filters, both of which only narrow the result. `mine=true` limits the rows to the caller's own — narrower than the unfiltered read this route has always served, and what the header's Recent activity menu asks for, so a caller is never shown a colleague's activity under the word \"mine\". `limit` caps the page (default 500, maximum 500): the audit screen wants hundreds of rows and a menu wants five.\n\n`entityId` is the record the action touched where the route had one. For a creation that is the id of the row the route returned, so a created record can be linked to; for a route with no id in its path it is the last path segment, which for a collection is the collection's name (`clients`) and for an action is the action (`generate`) — so a client reading this should treat a non-id `entityId` as \"the operation or the collection\", not as a record."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: []
       x-permission-note: "No permission is required beyond being signed in."

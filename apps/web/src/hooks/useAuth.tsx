@@ -1,14 +1,31 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from "react";
 import api, { setAuthToken } from "../api";
 import { sessionCookieAvailable } from "../lib/session";
 import { ROLE_PERMISSIONS, type SystemRole } from "@C7NTAX/shared";
+import { clearRecentActivityCache } from "./useRecentActivity";
 
 interface User {
   id: string;
   email: string;
   firstName?: string | null;
   lastName?: string | null;
-  role?: string | { id?: string; name?: string; systemRole?: string; permissions?: string[] };
+  role?:
+    | string
+    | {
+        id?: string;
+        name?: string;
+        systemRole?: string;
+        permissions?: string[];
+      };
   /** Individual permission overrides on top of the role. */
   permissions?: string[];
   companyId?: string;
@@ -20,7 +37,10 @@ interface User {
   updatedAt?: string;
 }
 
-interface LandingPage { path: string; label: string; }
+interface LandingPage {
+  path: string;
+  label: string;
+}
 
 /** What the idle-timeout warning needs, straight from the API (PLAN-001 §3.2). */
 export interface SessionInfo {
@@ -37,8 +57,19 @@ interface AuthState {
   session: SessionInfo;
   /** Effective permissions (role + overrides), for hiding controls the API will refuse. */
   permissions: string[];
-  login: (email: string, password: string) => Promise<{ mfaRequired?: boolean; mfaToken?: string; landingPage?: LandingPage; mustChangePassword?: boolean }>;
-  loginMfa: (mfaToken: string, code: string) => Promise<LandingPage | undefined>;
+  login: (
+    email: string,
+    password: string,
+  ) => Promise<{
+    mfaRequired?: boolean;
+    mfaToken?: string;
+    landingPage?: LandingPage;
+    mustChangePassword?: boolean;
+  }>;
+  loginMfa: (
+    mfaToken: string,
+    code: string,
+  ) => Promise<LandingPage | undefined>;
   /** Finish a sign-in that produced a token elsewhere, and load the profile. */
   completeSignIn: (token: string) => Promise<User>;
   /** Swap in the token issued by a password change and clear the pending flag. */
@@ -55,19 +86,27 @@ const DEFAULT_SESSION: SessionInfo = { cookieMode: false, timeoutMinutes: 30 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setTokenState] = useState<string | null>(() => localStorage.getItem("c7_token"));
+  const [token, setTokenState] = useState<string | null>(() =>
+    localStorage.getItem("c7_token"),
+  );
   const [loading, setLoading] = useState(true);
-  const [landingPage, setLandingPage] = useState<LandingPage>({ path: "/", label: "Dashboard" });
+  const [landingPage, setLandingPage] = useState<LandingPage>({
+    path: "/",
+    label: "Dashboard",
+  });
   const [session, setSession] = useState<SessionInfo>(DEFAULT_SESSION);
   const cookieModeRef = useRef(false);
 
   /** Keep the tab's token in memory; only persist it when the cookie cannot be used. */
-  const adoptToken = useCallback((nextToken: string | null, persist: boolean) => {
-    setAuthToken(nextToken);
-    setTokenState(nextToken);
-    if (nextToken && persist) localStorage.setItem("c7_token", nextToken);
-    if (!persist) localStorage.removeItem("c7_token");
-  }, []);
+  const adoptToken = useCallback(
+    (nextToken: string | null, persist: boolean) => {
+      setAuthToken(nextToken);
+      setTokenState(nextToken);
+      if (nextToken && persist) localStorage.setItem("c7_token", nextToken);
+      if (!persist) localStorage.removeItem("c7_token");
+    },
+    [],
+  );
 
   const clearCredentials = useCallback(() => {
     adoptToken(null, false);
@@ -84,22 +123,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     const stored = localStorage.getItem("c7_token");
 
-    const fromCookie = () => api.get("/auth/session")
-      .then((res) => {
-        if (cancelled) return;
-        cookieModeRef.current = true;
-        setAuthToken(null);
-        localStorage.removeItem("c7_token");
-        setTokenState(null);
-        setUser(res.data.user);
-        setSession({ cookieMode: true, timeoutMinutes: res.data.timeoutMinutes ?? 30 });
-      })
-      .catch(() => { if (!cancelled) setUser(null); });
+    const fromCookie = () =>
+      api
+        .get("/auth/session")
+        .then((res) => {
+          if (cancelled) return;
+          cookieModeRef.current = true;
+          setAuthToken(null);
+          localStorage.removeItem("c7_token");
+          setTokenState(null);
+          setUser(res.data.user);
+          setSession({
+            cookieMode: true,
+            timeoutMinutes: res.data.timeoutMinutes ?? 30,
+          });
+        })
+        .catch(() => {
+          if (!cancelled) setUser(null);
+        });
 
     const fromToken = (value: string) => {
       setAuthToken(value);
-      return api.get("/users/me")
-        .then((res) => { if (!cancelled) setUser(res.data); })
+      return api
+        .get("/users/me")
+        .then((res) => {
+          if (!cancelled) setUser(res.data);
+        })
         .catch(() => {
           if (!cancelled) {
             adoptToken(null, false);
@@ -108,83 +157,131 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     // A stale bypass flag left in storage would suppress the 401 redirect.
-    if (localStorage.getItem("c7_bypass") === "1") localStorage.removeItem("c7_bypass");
+    if (localStorage.getItem("c7_bypass") === "1")
+      localStorage.removeItem("c7_bypass");
 
     const run = stored ? fromToken(stored).then(() => undefined) : fromCookie();
-    run.finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    run.finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [adoptToken]);
 
   /** After a sign-in, decide which credential this client will live on. */
-  const settleCredentials = useCallback(async (issuedToken: string) => {
-    setAuthToken(issuedToken);
-    const cookieWorks = await sessionCookieAvailable();
-    cookieModeRef.current = cookieWorks;
-    adoptToken(issuedToken, !cookieWorks);
-    if (cookieWorks) {
-      const res = await api.get("/auth/session").catch(() => null);
-      setSession({ cookieMode: true, timeoutMinutes: res?.data?.timeoutMinutes ?? 30 });
-    } else {
-      setSession({ cookieMode: false, timeoutMinutes: 30 });
-    }
-  }, [adoptToken]);
+  const settleCredentials = useCallback(
+    async (issuedToken: string) => {
+      setAuthToken(issuedToken);
+      const cookieWorks = await sessionCookieAvailable();
+      cookieModeRef.current = cookieWorks;
+      adoptToken(issuedToken, !cookieWorks);
+      if (cookieWorks) {
+        const res = await api.get("/auth/session").catch(() => null);
+        setSession({
+          cookieMode: true,
+          timeoutMinutes: res?.data?.timeoutMinutes ?? 30,
+        });
+      } else {
+        setSession({ cookieMode: false, timeoutMinutes: 30 });
+      }
+    },
+    [adoptToken],
+  );
 
-  const login = useCallback(async (loginId: string, password: string) => {
-    // Detect email vs username: if contains '@', send as email, else as username
-    const body = loginId.includes("@") ? { email: loginId, password } : { username: loginId, password };
-    const res = await api.post("/auth/login", body);
-    if (res.data.mfaRequired) {
-      return { mfaRequired: true as const, mfaToken: res.data.mfaToken as string };
-    }
-    await settleCredentials(res.data.token);
-    setUser({ ...res.data.user, mustChangePassword: !!res.data.mustChangePassword });
-    if (res.data.landingPage) {
-      setLandingPage(res.data.landingPage);
-      localStorage.setItem("c7_landing", JSON.stringify(res.data.landingPage));
-    }
-    return { landingPage: res.data.landingPage || landingPage, mustChangePassword: !!res.data.mustChangePassword };
-  }, [landingPage, settleCredentials]);
+  const login = useCallback(
+    async (loginId: string, password: string) => {
+      // Detect email vs username: if contains '@', send as email, else as username
+      const body = loginId.includes("@")
+        ? { email: loginId, password }
+        : { username: loginId, password };
+      const res = await api.post("/auth/login", body);
+      if (res.data.mfaRequired) {
+        return {
+          mfaRequired: true as const,
+          mfaToken: res.data.mfaToken as string,
+        };
+      }
+      await settleCredentials(res.data.token);
+      setUser({
+        ...res.data.user,
+        mustChangePassword: !!res.data.mustChangePassword,
+      });
+      if (res.data.landingPage) {
+        setLandingPage(res.data.landingPage);
+        localStorage.setItem(
+          "c7_landing",
+          JSON.stringify(res.data.landingPage),
+        );
+      }
+      return {
+        landingPage: res.data.landingPage || landingPage,
+        mustChangePassword: !!res.data.mustChangePassword,
+      };
+    },
+    [landingPage, settleCredentials],
+  );
 
-  const loginMfa = useCallback(async (mfaToken: string, code: string) => {
-    const res = await api.post("/auth/mfa/verify", { mfaToken, code });
-    await settleCredentials(res.data.token);
-    setUser({ ...res.data.user, mustChangePassword: !!res.data.mustChangePassword });
-    if (res.data.landingPage) {
-      setLandingPage(res.data.landingPage);
-      localStorage.setItem("c7_landing", JSON.stringify(res.data.landingPage));
-    }
-    return res.data.landingPage as LandingPage | undefined;
-  }, [settleCredentials]);
+  const loginMfa = useCallback(
+    async (mfaToken: string, code: string) => {
+      const res = await api.post("/auth/mfa/verify", { mfaToken, code });
+      await settleCredentials(res.data.token);
+      setUser({
+        ...res.data.user,
+        mustChangePassword: !!res.data.mustChangePassword,
+      });
+      if (res.data.landingPage) {
+        setLandingPage(res.data.landingPage);
+        localStorage.setItem(
+          "c7_landing",
+          JSON.stringify(res.data.landingPage),
+        );
+      }
+      return res.data.landingPage as LandingPage | undefined;
+    },
+    [settleCredentials],
+  );
 
   /** Adopt a token produced outside the password form (SSO redirect, passkey). */
-  const completeSignIn = useCallback(async (nextToken: string) => {
-    await settleCredentials(nextToken);
-    const res = await api.get("/users/me");
-    setUser(res.data);
-    setLoading(false);
-    return res.data as User;
-  }, [settleCredentials]);
+  const completeSignIn = useCallback(
+    async (nextToken: string) => {
+      await settleCredentials(nextToken);
+      const res = await api.get("/users/me");
+      setUser(res.data);
+      setLoading(false);
+      return res.data as User;
+    },
+    [settleCredentials],
+  );
 
-  const markPasswordChanged = useCallback((nextToken: string) => {
-    adoptToken(nextToken, !cookieModeRef.current);
-    setUser(u => (u ? { ...u, mustChangePassword: false } : u));
-  }, [adoptToken]);
+  const markPasswordChanged = useCallback(
+    (nextToken: string) => {
+      adoptToken(nextToken, !cookieModeRef.current);
+      setUser((u) => (u ? { ...u, mustChangePassword: false } : u));
+    },
+    [adoptToken],
+  );
 
   // The API enforces permissions; this mirror is only so the UI can hide controls
   // it knows will be refused (role and permission editing, for instance).
   const permissions = useMemo(() => {
     const role = user?.role;
     const systemRole = typeof role === "string" ? role : role?.systemRole;
-    const rolePerms: string[] = typeof role === "object" && role?.permissions?.length
-      ? role.permissions
-      : (ROLE_PERMISSIONS[systemRole as SystemRole] ?? []);
+    const rolePerms: string[] =
+      typeof role === "object" && role?.permissions?.length
+        ? role.permissions
+        : (ROLE_PERMISSIONS[systemRole as SystemRole] ?? []);
     return [...new Set([...rolePerms, ...(user?.permissions ?? [])])];
   }, [user]);
 
   const logout = useCallback(() => {
     // End it server-side first: a cookie the browser keeps would otherwise stay valid.
-    void api.post("/auth/logout").catch(() => { /* signing out locally still works */ });
+    void api.post("/auth/logout").catch(() => {
+      /* signing out locally still works */
+    });
     clearCredentials();
+    // One person's recent activity must not be visible at the next person's first paint.
+    clearRecentActivityCache();
     // Force navigation to login — avoids race conditions with React batched state
     window.location.replace("/login");
   }, [clearCredentials]);
@@ -200,7 +297,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, landingPage, session, permissions, login, loginMfa, completeSignIn, markPasswordChanged, logout, extendSession, setLandingPage }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        landingPage,
+        session,
+        permissions,
+        login,
+        loginMfa,
+        completeSignIn,
+        markPasswordChanged,
+        logout,
+        extendSession,
+        setLandingPage,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

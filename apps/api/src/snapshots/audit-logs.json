@@ -192658,6 +192658,31 @@
     "createdAt": "2026-10-07T23:35:37.356Z"
   },
   {
+    "id": "d3169239-67ab-4e2d-a7c8-847ffc260df6",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "8dea0789-5d79-4d02-9555-e70a61997077",
+    "changes": {
+      "name": "Probe Audit Client 1791485331406",
+      "companyType": "MSP"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T18:48:51.416Z"
+  },
+  {
+    "id": "af754891-49ed-4770-b4df-4b8161132f90",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "8dea0789-5d79-4d02-9555-e70a61997077",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T18:48:52.347Z"
+  },
+  {
     "id": "ff8fc223-667e-49d0-bdcb-2269b95d45c5",
     "action": "portal:create",
     "entity": "portal",
@@ -198542,6 +198567,18 @@
     "createdAt": "2026-10-07T23:36:10.342Z"
   },
   {
+    "id": "5ff5ea54-7a11-4ccd-8305-d176c6df27aa",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "console",
+    "changes": {
+      "value": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T18:49:55.977Z"
+  },
+  {
     "id": "ac83dfcd-1695-4e5d-a030-435d0c567cf0",
     "action": "reports:create",
     "entity": "reports",
@@ -200180,6 +200217,18 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T23:36:10.805Z"
+  },
+  {
+    "id": "8e1665e7-37ce-4645-820d-6b324a2639e0",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "console",
+    "changes": {
+      "value": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T18:51:35.338Z"
   },
   {
     "id": "3a42fd20-b7a0-45b6-90df-f00906d3ec12",

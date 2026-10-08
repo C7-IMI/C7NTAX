@@ -6,6 +6,7 @@ import { useActivityMonitor } from "../hooks/useActivityMonitor";
 import { SessionTimeoutWarning } from "./SessionTimeoutWarning";
 import { AppFooter } from "./AppFooter";
 import { ConsoleDialog } from "./ConsoleDialog";
+import { RecentActivityMenu } from "./RecentActivityMenu";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
@@ -22,6 +23,8 @@ import { useTheme } from "../hooks/useTheme";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
 import { useConsoleEnabled } from "../hooks/useConsoleEnabled";
+import { useDwellActivity } from "../hooks/useRecentActivity";
+import { useArrivalHighlight } from "../hooks/useArrivalHighlight";
 import { Permission } from "@C7NTAX/shared";
 import { CommandPalette, type PaletteItem } from "./CommandPalette";
 import { MyAccountMenu } from "./MyAccountMenu";
@@ -387,6 +390,10 @@ export function Layout({ children }: { children: ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const consoleEnabled = useConsoleEnabled();
+  // A page that holds someone's attention for two minutes is an activity; a page passed through is not.
+  useDwellActivity();
+  // And arriving from the Recent menu lands on the region the link meant, rather than the page top.
+  useArrivalHighlight();
   const [density, setDensityState] = useState<Density>(getDensity);
   const sidebarRef = useRef<HTMLElement>(null);
 
@@ -1155,10 +1162,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <span>Search</span>
               {UI_P1 && <kbd className="hidden lg:inline text-[10px] text-gray-500 border border-surface-border rounded px-1">⌘K</kbd>}
             </button>
-            <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="Recent Items">
-              <Clock size={14} />
-              <span>Recent</span>
-            </button>
+            <RecentActivityMenu />
             <button className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5" title="AI Assistant">
               <Sparkles size={14} />
               <span>AI</span>
