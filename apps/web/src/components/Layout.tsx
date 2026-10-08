@@ -208,7 +208,7 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/admin/configuration": "Every setting the application reads, where its value comes from, and what changing it affects.",
   "/admin/portal": "Whether customers have a portal, what it lets them see and do, and which clients may use it.",
   "/admin/webhooks": "Outbound endpoints that receive alert events, with their delivery log.",
-  "/service-alerts/monitors": "Website, SSL and DNS checks with their own schedules, history and status.",
+  "/service-alerts/monitors": "Website, SSL-expiry and DNS checks on targets you name: a failure raises a Service Alert.",
   "/quotes": "Quote a piece of work from the product catalog and track it to acceptance.",
   "/ai-actions": "Risk-classified AI proposals awaiting review, and the record of what was approved.",
   "/admin/boards": "Manage service boards, SLA policies, email connectors, and automations.",

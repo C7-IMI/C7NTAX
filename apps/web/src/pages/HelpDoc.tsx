@@ -461,6 +461,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
       { kind: "h", text: "Behavior" },
       { kind: "p", text: "Checks run on the 5-minute monitor tick. Failures open an active alert; alerts auto-resolve after two consecutive successful polls (anti-flap streak), mirroring the vendor feed rules." },
+      { kind: "note", text: "Targets must be reachable from the internet. The checks go through the same egress policy as every other outbound request, so a private or link-local address is refused and the refusal is written on the alert — with the reason, rather than as a silent pass. The SSL and DNS checks read the host in the address, so a path on the end of the URL is ignored." },
       { kind: "note", text: "Manual alerts are never auto-resolved by monitor checks." },
     ],
     related: [

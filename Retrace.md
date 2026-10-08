@@ -4467,3 +4467,28 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The white/rose left border on an informational card is the theme, not a severity mistake**: the active palette maps `cyber` to red, so `!border-l-cyber-500` reads as red. Check the palette before calling a colour wrong.
 - **Auto-sync swept this work into two of its own commits** (`ee45e14`, `2d80b92`) while it was in progress, message and all. Nothing was lost, but the record for this prompt lives here rather than in the commit log.
 - **This host has no internet egress**, so a monitor sweep takes ~4 minutes and `probe-outage-board` needs ~50. It is worth knowing before concluding a refresh has hung.
+---
+
+### Prompt 239 — The Uptime Monitors page explains itself
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~35 min
+**BuildNotes IDs:** 2026.10.7.041 - The Uptime Monitors page explains what its three checks do, and why you would add one
+
+> Write a better description of what this is for on the page. Explain what the Uptime monitors do and howan example of usage would look like. Please it in the page under the Uptime Monitors header
+
+**What I did**
+- **Wrote the description from the monitor's own code rather than from the form.** `observeMonitor` is the spec: a website check compares the status code against `expectStatus` (200) and calls anything else an outage; an SSL check reads the certificate's `valid_to`, raises an **informational** notice within `sslWarnDays` (30) and an **outage** once it has expired; a DNS check resolves the hostname and calls a failure an outage. Each kind is described by the failure it catches, because that is the part nobody can infer from a dropdown that says "Website / SSL expiry / DNS".
+- **Made the example the same shape as the form.** Three rows using the page's own columns — name, kind, target — so the example reads as something you could type in: a website check for the portal answering with an error page, an SSL check for the certificate that expires over a weekend, a DNS check for mail stopping when the name stops resolving. A client portal going dark in three ways is the argument for the page existing.
+- **Checked the example against the code before writing it, which caught a wrong one.** The DNS branch calls `new URL(monitorUrl)` and resolves `u.hostname`, so a bare `mail.client.com` throws and reports a bogus outage — the target has to be a URL even for a DNS check. The example uses `https://mail.client.com` and the copy says the host is what is read, so the path is ignored.
+- **Added the two things that otherwise make the page look broken to a first-time user**: nothing runs until **Uptime monitors** is switched on in Configuration, and targets must be reachable from the internet because the checks go through the same egress policy as everything else — a private or link-local address is refused, and the refusal lands on the alert with its reason rather than passing silently.
+- **Fixed the page's one-line description in the header, which was false.** `Layout.tsx` advertised "their own schedules, history and status"; the checks run on the shared five-minute Service Alerts tick, and this page shows neither history nor status. Now: "Website, SSL-expiry and DNS checks on targets you name: a failure raises a Service Alert."
+- **Propagated the constraint to Help**, which had never stated it: the uptime-monitors walkthrough gains a note on the egress policy and on the path being ignored.
+
+**Decisions worth remembering**
+- **Match the page's idiom, not the design system, when the page predates the design system.** `Monitors.tsx` is inline-styled with raw hex and is on the lint's legacy allowlist; writing the new block in Tailwind tokens would have made the explanation look like it belonged to a different application. Same palette, same `style={{ }}` shape, and the token lint still passes with exactly its five known offenders.
+- **A short description on a page is still a claim.** "Their own schedules, history and status" was three claims and none of them held. The new line says one thing the page can keep.
+- **The example is documentation that has to run.** A worked example that would fail if typed in is worse than no example, which is why the DNS target is a URL.
+
+**Notes for next time**
+- **Worth fixing, not fixed here: the DNS check resolves only A records.** `dns.resolve4` on an IPv6-only hostname rejects, so a monitor on such a target reports an outage that is not real. Out of scope for a copy change, and it needs an assertion of its own.
+- **The page is otherwise thin**: no edit, no delete, no last-checked column, no history, despite being one of the few places in the app where a person configures something that will page them. The copy now explains it; the page itself is still the plainest screen in the product.
+- **Two headings say much the same thing** — the layout's page title and the page's own `<h1>`. Pre-existing, left alone.

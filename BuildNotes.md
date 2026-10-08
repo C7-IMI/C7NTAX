@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.040 | Last Updated: 2026-10-07
+## Version: 2026.10.7.041 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,17 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.041 — The Uptime Monitors page explains what its three checks do, and why you would add one
+
+The page offered a name field, a dropdown and a table, and no way to tell what any of the three kinds actually watches or what would happen if it failed. It now says so, with a worked example of the three monitors a client portal needs.
+
+- **[New]** **The page describes itself under its own title.** A paragraph on what a monitor is — one target, watched on the same poll as Service Alerts, reporting as one of that service's sources, so it raises an alert, clears one, and notifies through the Alerting Mechanism already configured. Then one line per kind, written as the failure each one catches rather than what it fetches: **Website** compares the status code with the one you expect, **SSL expiry** warns a chosen number of days before the date and reports the outage once it has passed, **DNS** reports an outage when the name stops resolving.
+- **[New]** **A worked example, in the same columns as the form.** For a client portal at `portal.client.com`: a website check for the portal answering with an error page, an SSL check for the certificate that expires over a weekend, and a DNS check for mail stopping because the name no longer resolves — the three ways one service goes dark, each typed exactly as it would be into the fields above.
+- **[Fix]** **The page's one-line description in the header was not true.** It advertised "their own schedules, history and status": the checks run on the shared five-minute Service Alerts tick, and this page shows neither history nor status. It now reads "Website, SSL-expiry and DNS checks on targets you name: a failure raises a Service Alert."
+- **[Update]** **The Help walkthrough gains the constraint the page now states** — checks go through the same egress policy as every other outbound request, so a target has to be reachable from the internet and a private or link-local address is refused with the reason written on the alert; and the SSL and DNS checks read the host in the address, so a path on the end is ignored.
 
 ---
 
