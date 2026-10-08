@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 import { randomInt, timingSafeEqual } from "node:crypto";
 import { prisma } from "../index";
 import { authenticate, signToken, signMfaToken, JWT_SECRET, computePermissions, type AuthRequest } from "../middleware/auth";
-import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword, LANDING_PAGES } from "@C7NTAX/shared";
+import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword, LANDING_PAGES, resolveLandingPagePath } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
 import { rateLimiter, isLoopback } from "../middleware/rateLimiter";
@@ -74,19 +74,24 @@ function codesMatch(a: string, b: string): boolean {
  * the user record because it is not a fact about the deployment — before this existed the
  * personal screen wrote the instance-wide key, so one person's preference silently became
  * everyone's.
+ *
+ * `resolveLandingPagePath` applies the aliases for pages that have been renamed, which is what stops
+ * a stored `/cloudconnect` from quietly falling back to the Dashboard now that the page is `/c7nc`.
  */
 async function resolveLandingPage(user: { landingPage?: string | null }): Promise<{ path: string; label: string }> {
-  if (user.landingPage) {
-    const chosen = LANDING_PAGES.find(p => p.path === user.landingPage);
+  const stored = resolveLandingPagePath(user.landingPage);
+  if (stored) {
+    const chosen = LANDING_PAGES.find(p => p.path === stored);
     if (chosen) return { path: chosen.path, label: chosen.label };
   }
   const config = await prisma.systemConfig.findUnique({ where: { key: "default_landing_page" } });
   if (config) {
     try {
       const parsed = JSON.parse(config.value as string) as { path?: string; label?: string };
-      if (parsed?.path) {
-        const chosen = LANDING_PAGES.find(p => p.path === parsed.path);
-        return { path: parsed.path, label: parsed.label || chosen?.label || parsed.path };
+      const configured = resolveLandingPagePath(parsed?.path);
+      if (configured) {
+        const chosen = LANDING_PAGES.find(p => p.path === configured);
+        return { path: configured, label: chosen?.label || parsed.label || configured };
       }
     } catch { /* an unreadable default is not worth failing a sign-in over */ }
   }
@@ -379,7 +384,10 @@ authRouter.get("/me", authenticate, async (req: AuthRequest, res, next) => {
 authRouter.patch("/me/landing-page", authenticate, async (req: AuthRequest, res, next) => {
   try {
     const path = String(req.body?.path ?? "").trim();
-    const allowed = LANDING_PAGES.find(p => p.path === path);
+    // A client that still offers the pre-merge path is not wrong, only old: `resolveLandingPagePath`
+    // maps it rather than refusing it, so an open tab keeps working across the rename.
+    const resolved = resolveLandingPagePath(path);
+    const allowed = resolved ? LANDING_PAGES.find(p => p.path === resolved) : undefined;
     if (!allowed) { res.status(400).json({ error: "That page is not one of the available landing pages" }); return; }
 
     // Choosing the dashboard clears the override rather than storing one, so a later change to

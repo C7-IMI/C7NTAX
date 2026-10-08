@@ -5,7 +5,7 @@ import { PasskeyManager } from "../components/PasskeyManager";
 import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Target, FolderKanban, Monitor, BookOpen } from "lucide-react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Permission } from "@C7NTAX/shared";
+import { Permission, LANDING_PAGES, resolveLandingPagePath } from "@C7NTAX/shared";
 
 const LANDING_OPTIONS = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -25,11 +25,10 @@ export function SettingsPage() {
   const { user, landingPage, setLandingPage, permissions } = useAuth();
   /*
    * A landing page is stored as a path, and one of the stored paths moved when CloudConnect became
-   * C7NC. The old value is mapped here rather than left to fall through: somebody who chose that
-   * page should see it still chosen, not silently reset to the Dashboard.
+   * C7NC. The shared resolver applies the alias so somebody who chose that page sees it still
+   * chosen, rather than being silently reset to the Dashboard.
    */
-  const LANDING_ALIASES: Record<string, string> = { "/cloudconnect": "/c7nc" };
-  const landingFor = (path: string) => LANDING_ALIASES[path] ?? path;
+  const landingFor = (path: string) => resolveLandingPagePath(path) ?? "/";
   const [selectedPath, setSelectedPath] = useState(() => landingFor(landingPage.path));
   const [sessionTimeout, setSessionTimeout] = useState(30);
   const [savingTimeout, setSavingTimeout] = useState(false);

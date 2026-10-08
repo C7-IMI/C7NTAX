@@ -162,6 +162,32 @@ export const LANDING_PAGES: ReadonlyArray<{ path: string; label: string }> = [
   { path: "/users", label: "Users" },
 ];
 
+/**
+ * Pages that have moved, so a preference saved before the move still lands where it meant.
+ *
+ * A landing page is stored as a *path*, and paths are validated against `LANDING_PAGES` — so a page
+ * that is renamed silently drops the preference and sends somebody to the Dashboard instead of the
+ * page they chose. `/cloudconnect` became `/c7nc` when CloudConnect merged into C7NC (PLAN-027), and
+ * this mapping lives here rather than in the two callers that need it (the API that resolves a
+ * stored value and the screen that shows which one is chosen), so they cannot disagree.
+ */
+export const LANDING_PAGE_ALIASES: Readonly<Record<string, string>> = {
+  "/cloudconnect": "/c7nc",
+};
+
+/**
+ * The current path for a stored landing page, or null when it names a page that no longer exists.
+ *
+ * Callers use this instead of comparing against the list themselves: it applies the aliases first,
+ * so a value written before a rename resolves to the page that replaced it.
+ */
+export function resolveLandingPagePath(stored: string | null | undefined): string | null {
+  const raw = (stored ?? "").trim();
+  if (!raw) return null;
+  const path = LANDING_PAGE_ALIASES[raw] ?? raw;
+  return LANDING_PAGES.some(page => page.path === path) ? path : null;
+}
+
 export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
   // ── Workspace ────────────────────────────────────────────────────
   {

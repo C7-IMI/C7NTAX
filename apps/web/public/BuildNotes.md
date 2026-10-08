@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.026 | Last Updated: 2026-10-08
+## Version: 2026.10.8.027 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,17 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.027 — The landing page that would have quietly reset, and the alias in one place
+
+The rename in 2026.10.8.026 left one hole, and finding it needed the code rather than the plan: a landing page is stored as a **path** and validated against `LANDING_PAGES` on the way out, so once `/cloudconnect` stopped being in that list, **anybody who had chosen it would have been dropped onto the Dashboard at their next sign-in** — no message, no clue, exactly the outcome PLAN-027's D7 said to avoid.
+
+- **[Fix]** **The alias lives in one place now, and both sides use it.** `packages/shared` gains `LANDING_PAGE_ALIASES` and **`resolveLandingPagePath()`** — the stored path, mapped through the aliases, or `null` when it names a page that no longer exists. The API's `resolveLandingPage` uses it for a person's preference *and* for the instance default, and `PATCH /api/auth/me/landing-page` accepts a pre-merge path instead of refusing it (an open tab is old, not wrong). The Settings screen uses the same function rather than its own copy of the map, so the two cannot disagree.
+- **[Fix]** **The mapping is asserted rather than assumed: 11 checks**, all passing — the pre-merge path resolves to `/c7nc`, the new path resolves to itself, ordinary paths and the Dashboard still resolve, a path that no longer exists is refused (rather than silently becoming the Dashboard *inside* the resolver), empty/null/whitespace values are handled, every offered page resolves to itself, and the list no longer offers the retired path.
+
+**Verification:** the assertions above; `tsc` clean on the web app and on the touched API files. The running dev API is started as `tsx src/index.ts` **without watch**, so this change — like the rest of the API-side work today — takes effect at its next restart; the web half is live through Vite.
 
 ---
 

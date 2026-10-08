@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.8.027",
+    "date": "2026-10-08",
+    "title": "The landing page that would have quietly reset, and the alias in one place",
+    "changes": [
+      {
+        "text": "**The alias lives in one place now, and both sides use it.** `packages/shared` gains `LANDING_PAGE_ALIASES` and **`resolveLandingPagePath()`** — the stored path, mapped through the aliases, or `null` when it names a page that no longer exists. The API's `resolveLandingPage` uses it for a person's preference *and* for the instance default, and `PATCH /api/auth/me/landing-page` accepts a pre-merge path instead of refusing it (an open tab is old, not wrong). The Settings screen uses the same function rather than its own copy of the map, so the two cannot disagree.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The mapping is asserted rather than assumed: 11 checks**, all passing — the pre-merge path resolves to `/c7nc`, the new path resolves to itself, ordinary paths and the Dashboard still resolve, a path that no longer exists is refused (rather than silently becoming the Dashboard *inside* the resolver), empty/null/whitespace values are handled, every offered page resolves to itself, and the list no longer offers the retired path.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.026",
     "date": "2026-10-08",
     "title": "C7NC: CloudConnect merged in, as a section of five tabs (and the mockup's spacing fixed)",

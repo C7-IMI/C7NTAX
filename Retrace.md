@@ -5623,3 +5623,31 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The redirects are load-bearing for a while**: Help, the FlexPoint page, the Assistant page and possibly somebody's bookmark all still point at `/cloudconnect`. They are tested by walking them, not by grep.
 - **Mockup regeneration recipe:** the stylesheet is inlined, so after a class change re-read `apps/web/dist/assets/index-*.css`, replace the `/*__APP_CSS__*/` placeholder, and re-run the class checker.
 
+---
+
+### Prompt 269 (part two) — The landing page that would have quietly reset
+
+**Timestamp:** 2026-10-08 19:15 | **Status:** Complete | **Duration:** ~20 min
+
+**BuildNotes IDs:** **2026.10.8.027** — "The landing page that would have quietly reset, and the alias in one place"
+
+**Prompt** (continuing the same request)
+
+> make sure the card spacing is corrected. It's bunched together in the mockup
+
+**What I did**
+- **Went looking for the rest of the rename's damage rather than the part the mockup shows.** The Settings screen already mapped a stored `/cloudconnect` to `/c7nc`, which looked like the job done — but a landing page is resolved **server-side** on the way out and validated against `LANDING_PAGES`, and I had just removed `/cloudconnect` from that list. So the preference would have failed validation and fallen through to the instance default or the Dashboard: nobody told, nothing obviously broken, and the exact failure PLAN-027's D7 named.
+- **Fixed it where it is decided, and removed the duplicate I had created.** The mapping now lives in `packages/shared` as `LANDING_PAGE_ALIASES` + `resolveLandingPagePath()`, used by the API's `resolveLandingPage` (for the person's preference *and* the instance default, which had the same hole) and by the saving endpoint, which now accepts a pre-merge path instead of refusing it. The Settings screen calls the shared function rather than keeping its own copy, so the two cannot drift.
+- **Asserted it instead of reasoning about it: 11 checks, all passing** — the pre-merge path maps, the new path resolves to itself, ordinary pages and the Dashboard still resolve, a page that no longer exists is refused, empty/null/whitespace are handled, every offered page round-trips, and the list no longer offers the retired path.
+- **Cleaned up after the verification**: the test write of `/cloudconnect` on the admin account was restored to `/c7nc`, and both temporary scripts were deleted.
+
+**Decisions worth remembering**
+- **A rename's real cost is in the *stored values*, not the strings.** The grep found 230 occurrences of a name; the thing that would have hurt a user was one row in the database holding a path. §7 of the plan listed four such cases and this was one of them — worth writing down because the next rename will have its own.
+- **One mapping, two callers, or they drift.** I had put the alias in the web page because that is where I saw the problem; the API needed it more. A shared resolver is the only version of this that stays correct.
+- **A resolver should refuse unknown paths, not guess.** Returning `null` for a path that no longer exists keeps the *decision* about the fallback with the caller (preference → instance default → Dashboard), which is what makes the feature testable at all.
+
+**Notes for next time**
+- **The dev API runs `tsx src/index.ts` without `--watch`**, so API-side edits are not live until it is restarted; the web half hot-reloads. Worth knowing before concluding that a change did not work — I nearly did.
+- **The stale process also explains a confusing result**: the login response still reported `CloudConnect` as a label after the list had lost it, because the running server held the old module in memory.
+- **`apps/api/src/snapshots/*` churn belongs to the auto-sync job**, which has now swept in-progress work three times in this session (`cb1909f`, `bc674a7`, and part of `68fdc4b`). Check `git log --oneline -3` before assuming a tree state, and expect the code commit to land under an `auto-sync:` message rather than a written one.
+
