@@ -238,22 +238,5 @@
     "sortOrder": 20,
     "createdAt": "2026-08-14T05:55:14.948Z",
     "updatedAt": "2026-10-06T19:17:36.374Z"
-  },
-  {
-    "id": "3320870d-6bde-436c-87fa-0639f240085a",
-    "name": "ProbeSocial muyvyy4i",
-    "category": "other",
-    "description": "probe",
-    "statusPageUrl": null,
-    "downDetectorUrl": null,
-    "rssUrl": null,
-    "monitorKind": "vendor",
-    "monitorUrl": null,
-    "monitorConfig": null,
-    "monitorEnabled": true,
-    "enabled": true,
-    "sortOrder": 0,
-    "createdAt": "2026-10-08T01:57:09.060Z",
-    "updatedAt": "2026-10-08T01:57:09.060Z"
   }
 ]
