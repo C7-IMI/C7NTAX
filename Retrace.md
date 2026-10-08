@@ -4879,3 +4879,36 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **The settings tab is still the tallest of the three** — sixteen fields with their explanations — so a page that tabbed its sections can still be a long page. If that becomes the complaint, the next move is collapsing each field's `detail` text behind a "why" toggle, not more tabs.
 - **`Tabs` takes `readonly` items and returns the id**, so a page with tabs in the URL and a page with tabs in state use it identically. If a third pattern appears (tabs that change a filter), it should still be the page holding the value.
 - **The auto-sync swept most of this into its own commits again**; the records were committed by hand afterwards.
+
+---
+
+### Prompt 252 — Mocking up the "Why" toggle for setting explanations
+
+**Timestamp:** 2026-10-08 01:44 | **Status:** Complete (mockup only — no application change) | **Duration:** ~35 min
+
+**BuildNotes IDs:** None — nothing in the application changed, so no BuildNotes entry applies to this prompt.
+
+**Prompt**
+
+> Do a mockup of what this would look like so I can see it, but don't make any changes yet:
+>
+> One thing I left deliberately: the settings tab is still the tallest of the three (16 fields with their explanations). If that becomes the complaint, the next move is collapsing each field's `detail` behind a "why" toggle rather than adding more tabs.
+
+**What I did**
+- **Built a standalone, read-only mockup of the "Why" idea** — the Portal settings tab drawn twice: as it is today, and with each field's explanation folded behind a small `Why` control beside the label. It lives outside the repository, in this session's files folder, at `mockup-portal-settings-why-toggle.html`, so nothing in the app was touched.
+- **Used the real thing as the source, not an impression of it.** The field labels, one-line summaries, explanations, "Changes:" lines and defaults were extracted from `packages/shared/src/appConfiguration.ts`, and the markup is the same `FieldCard`, `Chip` and `Switch` structure from `pages/Configuration.tsx`. The page loads the application's own compiled stylesheet (Tailwind, built from `apps/web/src/index.css`), so what is on screen is the app's typography and palette, not an approximation of it.
+- **Made the mockup measure itself** rather than assert a saving. The table at the bottom measures the rendered height of the fields in each state in the browser, then scales the five drawn fields to the sixteen the real tab has.
+- **Measured, 5 fields drawn → 16 fields scaled:** today **819 px → 2,621 px**; proposed, as it opens **217 px → 695 px**; proposed with "Show every explanation" switched on **553 px → 1,770 px**. So the folded version is roughly a quarter of the length, and even the fully-expanded reading is about a third shorter than today, because the "Changes:" and default lines are merged into one.
+- **Put three choices in front of you inside the mockup**: "Why" as a word rather than an ⓘ icon; one "Show every explanation" switch for the whole card so the screen can still be read like documentation; and the default/`Changes:` lines folding away with the explanation.
+- **Made the point that nothing is hidden**: the control is a real `button` with `aria-expanded`, not a hover-only reveal, so screen readers and the API keep everything.
+
+**Decisions worth remembering**
+- **A mockup is only worth looking at if it is made of the real parts.** Rebuilding the card by hand would have invited a decision about a design that could not be built the same way; using the app's own stylesheet and markup means the numbers on the page are the numbers a real change would produce.
+- **The measurement belongs in the page, not in a claim.** "It will be shorter" is arguable; "819 px becomes 217 px, and 2,621 becomes 695" is not. The table re-measures on demand, so it cannot silently drift from what is drawn.
+- **The mockup argues for a fallback, not just a change.** Any collapsing design has to answer "what if I want to read all of it?" — hence the single "Show every explanation" switch rather than sixteen open states to manage.
+- **Session artifacts stay out of the repository.** This is a decision aid, not a feature; it sits in the session files folder and is referenced here, so it can be looked at without appearing in `git status`.
+
+**Notes for next time**
+- **No BuildNotes entry was written and no version was consumed** — the version sequence still stands at 2026.10.8.007 and the next project change takes 2026.10.8.008.
+- **If the "Why" toggle is approved**, the work is confined to `pages/Configuration.tsx`'s `FieldCard` (an `aria-expanded` button beside the label, `detail`/`affects`/`default` inside it), so every settings screen gets it at once — the portal page, Configuration and System Settings all render through that one card.
+- **The tab strip and this toggle are complements, not alternatives**: the tabs answer "which of these three things am I looking at", the toggle answers "how much of this one am I reading".
