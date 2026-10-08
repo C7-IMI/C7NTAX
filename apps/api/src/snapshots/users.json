@@ -703,7 +703,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-08T10:30:37.279Z",
+    "lastLoginAt": "2026-10-08T10:33:40.215Z",
     "emailVerified": true,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -723,6 +723,6 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-10-08T10:30:37.280Z"
+    "updatedAt": "2026-10-08T10:33:40.216Z"
   }
 ]

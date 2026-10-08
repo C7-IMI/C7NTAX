@@ -215630,5 +215630,652 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-08T10:30:37.410Z"
+  },
+  {
+    "id": "e617c95d-7367-4ed0-b430-7fb5a05c5242",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "changes": {
+      "content": "Probe note 1791455458034 — approved from the AI actions screen.",
+      "isInternal": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.082Z"
+  },
+  {
+    "id": "56053ea1-18bb-4b48-905a-b47e0a9845ed",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "b3bf82ec-ae32-4d8e-bc6c-80778e64a186",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.095Z"
+  },
+  {
+    "id": "92631b1f-7ea5-4f6a-a9e1-a2730e2bfab6",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "changes": {
+      "content": "Probe client note 1791455458095.",
+      "isInternal": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.272Z"
+  },
+  {
+    "id": "af8c5901-c782-477e-8e59-c4d6d9b9260b",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "b5ba4f32-913a-4c67-96f2-5fcf30676e99",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.282Z"
+  },
+  {
+    "id": "54a4fa93-d6a3-4713-87d1-e37575f68f7e",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Probe ticket 1791455458284",
+      "source": "assistant",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "high",
+      "companyId": "55d8c5ea-2a77-4b2f-a300-2843748e0808",
+      "contactId": "0a8cf133-4379-40c4-a3a2-bf49a4b1ea4e",
+      "description": "Raised by probe-ai-apply."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.312Z"
+  },
+  {
+    "id": "761f42ee-7885-4046-b987-1c99f42b174c",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "8253b121-d069-461d-9400-2deca8565359",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.317Z"
+  },
+  {
+    "id": "f7331e75-9686-4ae4-be97-90b510c947cc",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "b587cec2-8047-4d42-834a-b44a063a4850",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.338Z"
+  },
+  {
+    "id": "d9f1bc56-b979-4dc5-89c6-c025a3c406f3",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "a692ef56-6055-4563-9648-d0ddacfc28fa",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.361Z"
+  },
+  {
+    "id": "451a8836-d36e-440d-a0f4-f073c02025f3",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "c14d166e-acb2-4c5b-ad9b-beaec4a33651",
+    "changes": {
+      "decision": "reject"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.376Z"
+  },
+  {
+    "id": "a780766d-4665-4c01-bce3-7eaafa3f7167",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Outlook keeps crashing",
+      "source": "assistant",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "high",
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "contactId": "0a8cf133-4379-40c4-a3a2-bf49a4b1ea4e",
+      "description": "Reported from a prompt: Outlook closes when opening a shared calendar."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.400Z"
+  },
+  {
+    "id": "618395f8-64a3-4e85-9e9b-c63fec5ff6e9",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "49e45ce1-65d9-4f22-85e1-da1d30c47e37",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:30:58.405Z"
+  },
+  {
+    "id": "a9cf30ab-8c20-4aaf-b0b7-e31181df7ab7",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "changes": {
+      "content": "Probe note 1791455470875 — approved from the AI actions screen.",
+      "isInternal": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:10.891Z"
+  },
+  {
+    "id": "f8e1b1ba-b0c2-4429-ab1a-c498ffabdcf8",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "3ea0c013-11e0-491c-9126-4374a43d9fd4",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:10.895Z"
+  },
+  {
+    "id": "4771baf6-af00-49c5-8fdb-d35220816c41",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "changes": {
+      "content": "Probe client note 1791455470898.",
+      "isInternal": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:10.918Z"
+  },
+  {
+    "id": "6478cc1d-3ea8-4387-864f-d36b9f7e9542",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "f97e41a0-d346-40f1-b965-9876bb9025e1",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:10.922Z"
+  },
+  {
+    "id": "336d2caf-3302-4c1d-a008-b4899dff16c3",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Probe ticket 1791455470926",
+      "source": "assistant",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "high",
+      "companyId": "55d8c5ea-2a77-4b2f-a300-2843748e0808",
+      "contactId": "0a8cf133-4379-40c4-a3a2-bf49a4b1ea4e",
+      "description": "Raised by probe-ai-apply."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:10.939Z"
+  },
+  {
+    "id": "09fd0a83-21ae-4ee3-a267-bcaa49621949",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "f06c5ce3-6eb6-4f8f-a059-21c6d443bfd9",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:10.943Z"
+  },
+  {
+    "id": "6693a597-6a72-45d5-876f-573df85e1c50",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "5298acb2-2288-493e-a8f8-243813fc3a8f",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:10.960Z"
+  },
+  {
+    "id": "c2ad5c15-fb77-480b-84d9-ce7ef2d806c6",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "9b2a2cda-025a-4b37-8f9e-813aca5043b5",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:10.977Z"
+  },
+  {
+    "id": "b0551069-9ab5-4cb0-a129-d7bafe3718bc",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "db2446e9-ca9f-4814-ab7d-f3e4815087d0",
+    "changes": {
+      "decision": "reject"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:10.989Z"
+  },
+  {
+    "id": "6f1de5d8-0f36-42dc-a7df-1e0084fa1e1d",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Outlook keeps crashing",
+      "source": "assistant",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "high",
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "contactId": "0a8cf133-4379-40c4-a3a2-bf49a4b1ea4e",
+      "description": "Reported from a prompt: Outlook closes when opening a shared calendar."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:11.011Z"
+  },
+  {
+    "id": "cf5d6130-74e7-4b21-a881-1fff2af4763d",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "a434243d-60a7-4f22-b758-e4929887e03d",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:31:11.015Z"
+  },
+  {
+    "id": "33c55d90-b27b-4f5e-b470-4046b08708d3",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "ai-actions",
+    "changes": {
+      "title": "Create ticket for Acme Corporation: UI check",
+      "payload": {
+        "kind": "create_ticket",
+        "title": "UI check — approving applies it",
+        "priority": "medium",
+        "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+        "description": "Created by the AI Actions screen, approved by a person."
+      },
+      "summary": "Raised from the UI verification of the executor.",
+      "riskTier": "medium",
+      "entityType": "ticket"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T10:31:54.375Z"
+  },
+  {
+    "id": "56a1fe61-a8ef-4303-8ace-5de699619832",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "tickets",
+    "changes": {
+      "title": "UI check — approving applies it",
+      "source": "assistant",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "medium",
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "description": "Created by the AI Actions screen, approved by a person."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:32:10.374Z"
+  },
+  {
+    "id": "abe15970-504b-465e-8c08-d51439fc6736",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "b8da15f6-09f6-42fe-809b-69ea9de8e975",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T10:32:10.384Z"
+  },
+  {
+    "id": "77391ce1-3b29-4f05-b863-8989fe3a25f2",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "66c0d081-247e-4923-ba01-a49acd9d7985",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T10:32:20.436Z"
+  },
+  {
+    "id": "276c180f-d6db-4cc3-8496-93aa29689645",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "changes": {
+      "content": "Probe note 1791455615496 — approved from the AI actions screen.",
+      "isInternal": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.516Z"
+  },
+  {
+    "id": "3ecb52d7-7bcf-4ecf-89f6-71a1894f2cb2",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "63485440-98bd-4c53-8438-2c618ba3480b",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.520Z"
+  },
+  {
+    "id": "951d05be-8cce-4952-ac82-fdb272081450",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "changes": {
+      "content": "Probe client note 1791455615521.",
+      "isInternal": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.670Z"
+  },
+  {
+    "id": "fa60f12f-c1c5-4642-ad3b-f55be5a85e38",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "9759e486-7f98-47ad-86ce-1823dd05ea96",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.422Z"
+  },
+  {
+    "id": "47c7c614-3ce1-4b38-a633-bea097891006",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Probe ticket 1791455620424",
+      "source": "assistant",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "high",
+      "companyId": "55d8c5ea-2a77-4b2f-a300-2843748e0808",
+      "contactId": "0a8cf133-4379-40c4-a3a2-bf49a4b1ea4e",
+      "description": "Raised by probe-ai-apply."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.440Z"
+  },
+  {
+    "id": "dc061378-967e-494f-b6f5-9389b804f485",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "a18dfd82-4562-4303-8d04-56f9a4b7e74d",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.443Z"
+  },
+  {
+    "id": "35d18023-59f7-4000-be94-e340090da3ba",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "57758d88-3ce4-4548-8a0c-68290a79e359",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.461Z"
+  },
+  {
+    "id": "5c8232bc-5301-4d99-9450-04490cc7c88e",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "81816974-673e-49c9-ad7f-3659329b71e0",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.476Z"
+  },
+  {
+    "id": "97a1c51f-d7a4-4319-9178-b85162482e09",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "ba9e376e-e5d3-40ce-b732-e3d0aac2e434",
+    "changes": {
+      "decision": "reject"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.488Z"
+  },
+  {
+    "id": "b6a9ca49-5a14-4b9e-a659-b19ea2b0def0",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Outlook keeps crashing",
+      "source": "assistant",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "high",
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "contactId": "0a8cf133-4379-40c4-a3a2-bf49a4b1ea4e",
+      "description": "Reported from a prompt: Outlook closes when opening a shared calendar."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.508Z"
+  },
+  {
+    "id": "0682e848-2238-4da9-a542-160f491c8c70",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "f7c2bf35-a8fc-4b89-9540-be330d206566",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.511Z"
+  },
+  {
+    "id": "1cc3ff2f-0db0-49a2-9a82-f8bcc6ca59e8",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "cf7060ba-7c8b-4600-8a5d-2d5a7c4610de",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.674Z"
+  },
+  {
+    "id": "0d516fb1-5867-4c22-afe3-48d73b87f060",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Probe ticket 1791455615677",
+      "source": "assistant",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "high",
+      "companyId": "55d8c5ea-2a77-4b2f-a300-2843748e0808",
+      "contactId": "0a8cf133-4379-40c4-a3a2-bf49a4b1ea4e",
+      "description": "Raised by probe-ai-apply."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.690Z"
+  },
+  {
+    "id": "51107e66-78da-4757-8d6c-bc051eab5248",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "2a23633a-d6a5-4101-badf-ba9a8bd8aa19",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.693Z"
+  },
+  {
+    "id": "1027c840-7f25-4d8d-bed9-7b83f33a378b",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "484f441a-3e19-4028-97aa-8952d9aacdf3",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.715Z"
+  },
+  {
+    "id": "cdfb3a15-cc0b-4c28-a7e5-1b4772457eeb",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "b31a10db-dd1d-401e-b7e1-49efd56a59c7",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.734Z"
+  },
+  {
+    "id": "8b59c4ab-5946-4f62-97dc-99b2a0c7c3c2",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "d83663fd-39de-4f22-b87d-a238f8b1a9f5",
+    "changes": {
+      "decision": "reject"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.747Z"
+  },
+  {
+    "id": "b74613ac-d9c5-4f34-8525-48a64ee30ffd",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Outlook keeps crashing",
+      "source": "assistant",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "high",
+      "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+      "contactId": "0a8cf133-4379-40c4-a3a2-bf49a4b1ea4e",
+      "description": "Reported from a prompt: Outlook closes when opening a shared calendar."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.768Z"
+  },
+  {
+    "id": "30b65d4d-3f6c-4ceb-b1f3-7ff7a60d8d4e",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "dd8962e1-ca7b-4571-8334-5b18537ccc92",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:35.772Z"
+  },
+  {
+    "id": "e8ae7495-445b-47d7-abf0-e75faa50432c",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "changes": {
+      "content": "Probe note 1791455620374 — approved from the AI actions screen.",
+      "isInternal": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.392Z"
+  },
+  {
+    "id": "e421f5fe-7982-4ee9-8197-37d76aad0f53",
+    "action": "ai-actions:create",
+    "entity": "ai-actions",
+    "entityId": "65bc8e75-d6c1-4c54-b934-68595d62a77f",
+    "changes": {
+      "decision": "approve"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.397Z"
+  },
+  {
+    "id": "8ef62804-0713-4926-8b02-17733d86d0c8",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "changes": {
+      "content": "Probe client note 1791455620398.",
+      "isInternal": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T10:33:40.418Z"
   }
 ]
