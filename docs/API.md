@@ -384,6 +384,33 @@ GET  /api/cloudconnect/{id}/sync-logs   # what each sync did
 GET  /api/cloudconnect/{id}/synced-entities
 ```
 
+### Reporting on what a connector brought in
+
+Connector data is reportable, not just visible. The read endpoints under `/api/reports/data/…`
+answer the same `from`, `to`, `clientId` and `boardId` filters and add their own where the question
+has them:
+
+```bash
+GET /api/reports/data/m365-inactive-accounts
+    ?inactiveDays=90&includeDisabled=true&includeUnknown=true&tenantId={integrationId}&clientId={companyId}
+# → accounts, byClient, byTenant, coverage, totals, notes
+```
+
+`inactiveDays` is the threshold (1–730, default 90); `includeDisabled` and `includeUnknown` decide
+whether accounts already switched off, and accounts with no sign-in activity recorded, are listed —
+an unknown sign-in is **never** counted as dormant, and the payload's `notes` says when sign-in
+activity could not be read at all. Requires `report:view` **and** `integration:view`, because it
+names individual accounts across tenants. The same endpoint backs the **Inactive Microsoft 365
+Accounts** standard report, so the screen, the print-out and the CSV are one implementation.
+
+### Microsoft 365 account hygiene
+
+The Microsoft 365 sync brings in each tenant's users with their sign-in activity where Azure will
+report it. That data has two uses and they live in different places on purpose: the **accounts of one
+tenant** are shown with the tenant, on its connection under CloudConnect → Configuration (with the
+offboarding action beside them), and the **question across every client and tenant** is the standard
+report above, where it can be filtered to one client, printed and exported.
+
 ### FlexPoint (accounting)
 
 FlexPoint is integrated natively rather than as a generic push, because its API is stable enough to

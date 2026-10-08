@@ -5267,3 +5267,38 @@ better reading order for this screen: the toolbar belongs to the screen, and the
 board tabs both belong to the *list*, with search first. Verified afterwards in the running app by
 geometry — heading 160, toolbar 226, search 282, **tabs 336**, band 392, table 455 px — and by
 clicking a tab again to confirm the URL, the band and the row scoping were unaffected by the move.
+
+---
+
+### Prompt 262 — Moving the inactive-accounts card, and making it a report that runs per client
+
+**Timestamp:** 2026-10-08 11:20 | **Status:** Complete | **Duration:** ~90 min
+
+**BuildNotes IDs:** **2026.10.8.017** — "The Microsoft 365 accounts card moved, and became a report you can run per client"
+
+**Prompt**
+
+> Move the Microsoft 365 inactive accounts card somewhere else. It's purpose will be to pull all inactive accounts from connected tenants so that a report can be run against it per client. I'm not sure where exactly it would belong, so I'll let you decide where to move it that makes the most sense, unless you think it should stay there. EIther way, I need to be able to create reports from it. The reports should be robust and options should include all inactive or per client, etc.
+
+**What I did**
+- **Decided the card was in the wrong place for two reasons, and split it rather than moving it whole.** It sat on CloudConnect → **Connected**, the screen that answers "what is connected, and is it healthy" — and account hygiene is not health. Worse, it could only ever describe *one workspace's* accounts, while the question it exists to answer ("whose seats are idle?") is about every client at once. So the two halves went to the two places that answer them: the **accounts of one tenant** stay with that tenant, on its connection under CloudConnect → **Configuration** (age bands, account list, last sign-in, the **Offboard** action), and the **cross-client question** became a standard report.
+- **Made it a first-class standard report** rather than an ad-hoc screen: `Inactive Microsoft 365 Accounts` in Reporting → Standard Reports, which means it inherits the framework — filters, print, PDF/Excel/CSV export, and the same sections on screen and in the file.
+- **Gave it the options the question actually has**, which is what "robust" meant here: **Inactive after** (1–730 days, default 90) instead of a fixed 90-day band; **Client** (all, or one for a review with them); **Tenant** (one connected tenant or all); **Disabled accounts** in or out, so the list can be "what still needs a decision"; **Unknown sign-in** in or out.
+- **Extended the report framework rather than special-casing this report.** `StandardReport` gained an `options` array that the shared filter bar renders (number, boolean, tenant select) and that travels with the filters into the run, the print and the export — including the export dialog, where an export can be run at a different threshold than the screen. A deep link (`?report=m365-inactive-accounts`, optionally with a client) opens the report directly, which is how the CloudConnect panel links to it.
+- **Kept the honesty rule and made it structural.** An account with no sign-in activity is **unknown, never dormant** — counted in its own column, excludable, and when nothing can be read at all the payload carries a note saying it needs Entra ID P1 and `AuditLog.Read.All`. Disabled accounts are their own state too: an account already switched off has been dealt with, and calling it "inactive" would mix it in with the ones that still need a decision.
+- **Gated it like the data it exposes**: `report:view` **and** `integration:view`, because it names individual accounts across tenants. Documented in the generated spec (regenerated: 419 operations, and a curated summary added), in `docs/API.md`, and in Help.
+- **Wrote a probe rather than eyeballing it** (`apps/api/probe-m365-inactivity-report.mjs`, **29 checks**): the options change the answer; thresholds clamp (0 → 1, 9999 → 730); the totals equal the rows and every by-client column; every account is in exactly one state; **no account is ever called inactive without a sign-in date**; client and tenant filters really scope (checked across 25 clients); the endpoint refuses an anonymous read (401) and a persona without `integration:view` (403).
+- **Verified in the running app**: the report card is listed; the deep link opens it; the filter bar shows Client, Inactive after, Disabled accounts, Unknown sign-in and Tenant; changing the threshold re-runs it ("Inactive after 90 days" → "30 days"); unticking unknown drops those accounts out of the rows and shows the "widen it" message rather than an empty table with no explanation; CloudConnect's Connected tab no longer has the card; and the Microsoft 365 connection's Configuration pane shows **Microsoft 365 accounts** with its "Inactive accounts report" link.
+
+**Decisions worth remembering**
+- **"Where does this belong?" is often a sign the thing was two things.** The card was a per-tenant action and a cross-client report sharing one panel; both halves are now where they are useful, and neither screens hides the other's job.
+- **A report's options belong in the report framework, not in the report.** Adding `options` to `StandardReport` cost a small amount of plumbing and means the next report with questions of its own has somewhere to put them — and that the screen, the print-out and the export cannot disagree.
+- **The unknown state is the whole safety property.** Twenty dormant accounts is twenty licences; twenty *unknown* accounts is a permission that has not been granted, and a report that conflates them would have somebody disabling live accounts on the strength of it. It is tested explicitly as its own assertion.
+- **Disabled is a state, not an inactivity.** Keeping it separate is what lets the report answer "what still needs a decision" rather than "everything that is not busy".
+- **A deep link beats a cross-reference.** "See Reporting → Standard Reports → Inactive Microsoft 365 Accounts" is a scavenger hunt; `?report=m365-inactive-accounts` is a click, and the client travels with it.
+
+**Notes for next time**
+- **`standardReport()` now passes the query through** as a third argument, so a report can read its own options without leaving the shared wrapper — the alternative was hand-rolling the route and losing the permission and period handling.
+- **`/api/reports/data/options` now returns `tenants`** (the connected Microsoft 365 and Azure AD SSO integrations) so a tenant filter can be a select; the filter hides itself when there are none rather than offering a list of nothing.
+- **BuildNotes heading anchors bit me again** — inserting 2026.10.8.017 replaced the 2026.10.8.016 heading, exactly as happened with 014/013. It is repaired, and the entry count is the check that catches it (230 versions parsed, 017 → 016 → 015 in order). Anchoring on the preceding entry's last line + re-adding the following heading is the safe pattern.
+- **`cyber-*` remain CSS variables**, so the new markup uses `surface` tokens and `text-cyber-*` rather than alpha modifiers on the brand colour.

@@ -1,5 +1,48 @@
 [
   {
+    "version": "2026.10.8.017",
+    "date": "2026-10-08",
+    "title": "The Microsoft 365 accounts card moved, and became a report you can run per client",
+    "changes": [
+      {
+        "text": "**Inactive Microsoft 365 Accounts is a standard report** (Reporting → Standard Reports), with the filters the question actually has:",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Sections a manager can read**: headline counts, a \"what this covers\" block (scope, tenants read, accounts synced, mapped and unmapped), a **by-client** table with the longest and average silence per client, a **by-tenant** table, and the account list itself — worst first, with last sign-in, state and job title. Print, PDF, Excel and CSV all apply the same options, and the export dialog lets them be changed at the moment of export.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**An account with no sign-in activity is never counted as dormant.** Reading sign-in needs Entra ID P1 and `AuditLog.Read.All`; without them the report says so in plain words, lists those accounts as **unknown** in their own column, and can exclude them entirely — a report that funds a licence cleanup by treating \"we do not know\" as \"nobody signs in\" is a report that gets live accounts disabled.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The panel moved to CloudConnect → Configuration**, on the Microsoft 365 connection it belongs to: the age bands, the accounts, their last sign-in and the **Offboard** action, with a link to the cross-client report. The Connected tab now only shows what is connected and whether it is healthy.",
+        "type": "Update"
+      },
+      {
+        "text": "**Report-specific options, generally.** The report framework's filter bar can now render a report's own controls (number, boolean and tenant select), and they travel with the filters into the run, the print and the export — so this report is not a special case, and the next one that has questions of its own has somewhere to put them.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`?report=<id>` opens a report directly** (and carries `clientId` with it), which is how the connection panel links to its report and how a saved link opens the exact report somebody meant.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`/api/reports/data/m365-inactive-accounts`** documents its own options in the payload (`optionsLabel`, `period`, `coverage`, `notes`) so a screen can never imply a threshold it did not use. Requires **`report:view` and `integration:view`** — it names individual accounts across tenants — and the generated spec, `docs/API.md` and a curated operation summary were updated with it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`apps/api/probe-m365-inactivity-report.mjs` — 29 checks**: the options change the answer and are clamped (0 → 1 day, 9999 → 730), the totals agree with the rows and with every by-client column, every account is in exactly one state, no account is ever called inactive without a sign-in date, the client and tenant filters really scope, and the endpoint refuses an anonymous read and a persona without `integration:view`.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Help** — the M365 walkthrough describes the report, its options and where the accounts panel now is; the reporting walkthrough names the tenth report and explains report-specific options; the CloudConnect walkthrough mentions the account panel.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.016",
     "date": "2026-10-08",
     "title": "Boards are tabs on the Tickets screen, with the board in view named underneath",

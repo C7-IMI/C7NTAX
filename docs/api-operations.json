@@ -1,5 +1,8 @@
 {
-  "_README": [
+  "GET /api/reports/data/m365-inactive-accounts": {
+    "summary": "Inactive Microsoft 365 accounts, by client and tenant",
+    "description": "Every account brought in by the Microsoft 365 sync that nobody signs in to, with the client it maps to and the tenant it came from. Options: inactiveDays (default 90, 1–730), includeDisabled and includeUnknown (both default true), tenantId for one connected tenant, plus clientId from the shared report filters. An account with no sign-in activity recorded is reported as unknown rather than inactive, and the payload says so in `notes` — reading it needs Entra ID P1 and AuditLog.Read.All on the app registration. Requires report:view and integration:view."
+  },  "_README": [
     "Curated operation documentation, keyed by `METHOD /path` exactly as the router declares it.",
     "scripts/generate-openapi.mjs merges these into docs/openapi.yaml; anything missing still appears",
     "with a summary derived from its path, so this file is where a description is made *better*, never",

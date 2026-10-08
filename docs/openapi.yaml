@@ -5275,7 +5275,8 @@ paths:
     get:
       tags: ["Reports"]
       operationId: "getReportsdatam365InactiveAccounts"
-      summary: "Read reports/data/m365-inactive-accounts"
+      summary: "Inactive Microsoft 365 accounts, by client and tenant"
+      description: "Every account brought in by the Microsoft 365 sync that nobody signs in to, with the client it maps to and the tenant it came from. Options: inactiveDays (default 90, 1–730), includeDisabled and includeUnknown (both default true), tenantId for one connected tenant, plus clientId from the shared report filters. An account with no sign-in activity recorded is reported as unknown rather than inactive, and the payload says so in `notes` — reading it needs Entra ID P1 and AuditLog.Read.All on the app registration. Requires report:view and integration:view."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["report:view"]
       x-source: "reports.ts · reportsRouter.get"
@@ -7069,5 +7070,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 58 of 419 operations carry a curated summary from docs/api-operations.json;
+# 59 of 419 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

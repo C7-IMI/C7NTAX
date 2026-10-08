@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.016 | Last Updated: 2026-10-08
+## Version: 2026.10.8.017 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,27 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.017 — The Microsoft 365 accounts card moved, and became a report you can run per client
+
+The inactive-accounts card sat on **CloudConnect → Connected**, the screen whose job is "what is connected, and is it healthy". It is not health: it is an action on the accounts of one tenant, and the question it was answering — whose seats are idle — is a reporting question about every client at once. It now lives where each half belongs: **the tenant's accounts with the tenant**, and **the report in Reporting**.
+
+- **[New]** **Inactive Microsoft 365 Accounts is a standard report** (Reporting → Standard Reports), with the filters the question actually has:
+  - **Inactive after** — your own threshold (1–730 days, default 90) instead of a fixed 90-day band.
+  - **Client** — every client at once, or one client for a review with them.
+  - **Tenant** — one connected tenant, or all of them.
+  - **Disabled accounts** — include or exclude the ones already switched off, so the list can be "what still needs a decision" rather than "the whole estate".
+  - **Unknown sign-in** — include or exclude accounts with no sign-in activity recorded.
+- **[New]** **Sections a manager can read**: headline counts, a "what this covers" block (scope, tenants read, accounts synced, mapped and unmapped), a **by-client** table with the longest and average silence per client, a **by-tenant** table, and the account list itself — worst first, with last sign-in, state and job title. Print, PDF, Excel and CSV all apply the same options, and the export dialog lets them be changed at the moment of export.
+- **[Fix]** **An account with no sign-in activity is never counted as dormant.** Reading sign-in needs Entra ID P1 and `AuditLog.Read.All`; without them the report says so in plain words, lists those accounts as **unknown** in their own column, and can exclude them entirely — a report that funds a licence cleanup by treating "we do not know" as "nobody signs in" is a report that gets live accounts disabled.
+- **[Update]** **The panel moved to CloudConnect → Configuration**, on the Microsoft 365 connection it belongs to: the age bands, the accounts, their last sign-in and the **Offboard** action, with a link to the cross-client report. The Connected tab now only shows what is connected and whether it is healthy.
+- **[New]** **Report-specific options, generally.** The report framework's filter bar can now render a report's own controls (number, boolean and tenant select), and they travel with the filters into the run, the print and the export — so this report is not a special case, and the next one that has questions of its own has somewhere to put them.
+- **[New]** **`?report=<id>` opens a report directly** (and carries `clientId` with it), which is how the connection panel links to its report and how a saved link opens the exact report somebody meant.
+- **[New]** **`/api/reports/data/m365-inactive-accounts`** documents its own options in the payload (`optionsLabel`, `period`, `coverage`, `notes`) so a screen can never imply a threshold it did not use. Requires **`report:view` and `integration:view`** — it names individual accounts across tenants — and the generated spec, `docs/API.md` and a curated operation summary were updated with it.
+- **[New]** **`apps/api/probe-m365-inactivity-report.mjs` — 29 checks**: the options change the answer and are clamped (0 → 1 day, 9999 → 730), the totals agree with the rows and with every by-client column, every account is in exactly one state, no account is ever called inactive without a sign-in date, the client and tenant filters really scope, and the endpoint refuses an anonymous read and a persona without `integration:view`.
+- **[Update]** **Help** — the M365 walkthrough describes the report, its options and where the accounts panel now is; the reporting walkthrough names the tenth report and explains report-specific options; the CloudConnect walkthrough mentions the account panel.
 
 ---
 
