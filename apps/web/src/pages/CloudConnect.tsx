@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
@@ -162,6 +162,9 @@ export function CloudConnectPage() {
   const [inactivity, setInactivity] = useState<InactivityReport | null>(null);
   const [showInactive, setShowInactive] = useState(false);
 
+  /** The add-connection flow, so the page can be scrolled to it when it opens. */
+  const addFlowRef = useRef<HTMLDivElement>(null);
+
   // ── Integration Action Panel state ──
   const [actionPanel, setActionPanel] = useState<{ open: boolean; integration: Integration } | null>(null);
   const [simulatedKind, setSimulatedKind] = useState<string>("microsoft365");
@@ -194,6 +197,15 @@ export function CloudConnectPage() {
     const interval = setInterval(fetchAll, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [fetchAll]);
+
+  /*
+   * Opening the flow scrolls to it. The Add Connection button sits in the header of a page whose
+   * usual content is long, and the flow opens at the top of the content — but a reader who had
+   * scrolled down to click it would otherwise be left looking at the same thing they were before.
+   */
+  useEffect(() => {
+    if (showAdd) addFlowRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [showAdd]);
 
   const openActionPanel = (integration: Integration) => {
     setActionPanel({ open: true, integration });
@@ -401,97 +413,125 @@ export function CloudConnectPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <div className="flex items-center justify-between">
-        <div><h2 className="text-lg font-semibold text-white">CloudConnect</h2><p className="text-sm text-gray-400 mt-0.5">Connect third-party services — 16 connectors available</p></div>
-        {!showAdd && <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Connection</button>}
+        <div>
+          <h2 className="text-lg font-semibold text-white">CloudConnect</h2>
+          <p className="text-sm text-gray-400 mt-0.5">
+            Connect third-party services{types.length > 0 ? ` — ${types.length} connectors available` : ""}
+          </p>
+        </div>
+        {!showAdd && (
+          <button onClick={() => { setSelectedType(null); setShowAdd(true); }} className="btn-primary flex items-center gap-2">
+            <Plus size={16} /> Add Connection
+          </button>
+        )}
       </div>
 
-      {/* Email connectors (IMAP → tickets) */}
-      <EmailConnectorsPanel />
+      {/*
+        Adding a connection takes the page over: the type grid, or the form once a type is chosen,
+        is the first thing under the header, and the two lists this page normally shows (the email
+        connectors and the configured integrations) step aside until the flow is finished or
+        cancelled. It used to render after the email connectors panel, which is a full form — so the
+        grid opened a hundred pixels below the fold and pressing the button looked like it had done
+        nothing at all.
+      */}
+      {showAdd && (
+        <div ref={addFlowRef} className="scroll-mt-4">
+          {/* Type Selection Grid */}
+          {!selectedType && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Select Service Type</h3>
+                <button onClick={() => setShowAdd(false)} className="text-sm text-gray-500 hover:text-white">Cancel</button>
+              </div>
+              {types.length === 0 ? (
+                <div className="card text-center py-8 text-gray-500">
+                  The connector list has not loaded. Reload the page, or check that your role may view integrations.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {types.map(t => {
+                    const Icon = IconFor(t.kind);
+                    return (
+                      <button key={t.kind} onClick={() => handleSelectType(t)}
+                        className="card hover:border-cyber-500/30 transition-colors text-left p-4 cursor-pointer group">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-cyber-600/10 group-hover:bg-cyber-600/20 transition-colors">
+                            <Icon size={18} className="text-cyber-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-white font-medium text-sm truncate">{t.name}</p>
+                            <p className="text-xs text-gray-500 truncate">{t.description?.slice(0, 60)}</p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
-      {/* Type Selection Grid */}
-      {showAdd && !selectedType && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Select Service Type</h3>
-            <button onClick={() => setShowAdd(false)} className="text-sm text-gray-500 hover:text-white">Cancel</button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {types.map(t => {
-              const Icon = IconFor(t.kind);
-              return (
-                <button key={t.kind} onClick={() => handleSelectType(t)}
-                  className="card hover:border-cyber-500/30 transition-colors text-left p-4 cursor-pointer group">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-cyber-600/10 group-hover:bg-cyber-600/20 transition-colors">
-                      <Icon size={18} className="text-cyber-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-white font-medium text-sm truncate">{t.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{t.description?.slice(0, 60)}</p>
-                    </div>
+          {/* Configuration Form */}
+          {selectedType && (
+            <div className="card space-y-5 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-white">Configure {selectedType.name}</h3>
+                <button onClick={() => { setShowAdd(false); setSelectedType(null); }} className="text-gray-500 hover:text-white">Cancel</button>
+              </div>
+              <p className="text-sm text-gray-400 -mt-3">{selectedType.description}</p>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Connection Name</label>
+                <input className="input-field" value={formName} onChange={e => setFormName(e.target.value)} />
+              </div>
+              {selectedType.requiredCredentials?.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"><Key size={13} /> Credentials</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {selectedType.requiredCredentials.map(c => (
+                      <div key={c}>
+                        <label className="text-xs text-gray-500 block mb-1">{formatCredLabel(c)}</label>
+                        <input className="input-field" type={isSecretCred(c) ? "password" : "text"}
+                          value={credForm[c] || ""} onChange={e => setCredForm(p => ({ ...p, [c]: e.target.value }))} />
+                      </div>
+                    ))}
                   </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Configuration Form */}
-      {showAdd && selectedType && (
-        <div className="card space-y-5 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Configure {selectedType.name}</h3>
-            <button onClick={() => { setShowAdd(false); setSelectedType(null); }} className="text-gray-500 hover:text-white">Cancel</button>
-          </div>
-          <p className="text-sm text-gray-400 -mt-3">{selectedType.description}</p>
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">Connection Name</label>
-            <input className="input-field" value={formName} onChange={e => setFormName(e.target.value)} />
-          </div>
-          {selectedType.requiredCredentials?.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2"><Key size={13} /> Credentials</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {selectedType.requiredCredentials.map(c => (
-                  <div key={c}>
-                    <label className="text-xs text-gray-500 block mb-1">{formatCredLabel(c)}</label>
-                    <input className="input-field" type={isSecretCred(c) ? "password" : "text"}
-                      value={credForm[c] || ""} onChange={e => setCredForm(p => ({ ...p, [c]: e.target.value }))} />
-                  </div>
+                </div>
+              )}
+              {selectedType.settings?.length && <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-gray-400 uppercase flex items-center gap-2"><Settings size={13} /> Settings</h4>
+                {selectedType.settings.map(s => (
+                  s.type === "boolean" ? (
+                    <label key={s.key} className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={settingsForm[s.key] !== false}
+                        onChange={e => setSettingsForm(p => ({ ...p, [s.key]: e.target.checked }))} className="rounded" />
+                      <span className="text-sm text-gray-300">{s.label}</span>
+                    </label>
+                  ) : s.type === "select" && s.options ? (
+                    <div key={s.key}><label className="text-xs text-gray-500 block mb-1">{s.label}</label>
+                      <select className="input-field" value={settingsForm[s.key] || ""}
+                        onChange={e => setSettingsForm(p => ({ ...p, [s.key]: e.target.value }))}>
+                        {s.options.map((o: string) => <option key={o} value={o}>{o}</option>)}
+                      </select></div>
+                  ) : (
+                    <div key={s.key}><label className="text-xs text-gray-500 block mb-1">{s.label}</label>
+                      <input className="input-field" type={s.type === "number" ? "number" : "text"}
+                        value={settingsForm[s.key] ?? ""}
+                        onChange={e => setSettingsForm(p => ({ ...p, [s.key]: s.type === "number" ? Number(e.target.value) : e.target.value }))} /></div>
+                  )
                 ))}
+              </div>}
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleCreate} className="btn-primary">Create Connection</button>
+                <button onClick={() => { setShowAdd(false); setSelectedType(null); }} className="btn-secondary">Cancel</button>
               </div>
             </div>
           )}
-          {selectedType.settings?.length && <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-gray-400 uppercase flex items-center gap-2"><Settings size={13} /> Settings</h4>
-            {selectedType.settings.map(s => (
-              s.type === "boolean" ? (
-                <label key={s.key} className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={settingsForm[s.key] !== false}
-                    onChange={e => setSettingsForm(p => ({ ...p, [s.key]: e.target.checked }))} className="rounded" />
-                  <span className="text-sm text-gray-300">{s.label}</span>
-                </label>
-              ) : s.type === "select" && s.options ? (
-                <div key={s.key}><label className="text-xs text-gray-500 block mb-1">{s.label}</label>
-                  <select className="input-field" value={settingsForm[s.key] || ""}
-                    onChange={e => setSettingsForm(p => ({ ...p, [s.key]: e.target.value }))}>
-                    {s.options.map((o: string) => <option key={o} value={o}>{o}</option>)}
-                  </select></div>
-              ) : (
-                <div key={s.key}><label className="text-xs text-gray-500 block mb-1">{s.label}</label>
-                  <input className="input-field" type={s.type === "number" ? "number" : "text"}
-                    value={settingsForm[s.key] ?? ""}
-                    onChange={e => setSettingsForm(p => ({ ...p, [s.key]: s.type === "number" ? Number(e.target.value) : e.target.value }))} /></div>
-              )
-            ))}
-          </div>}
-          <div className="flex gap-3 pt-2">
-            <button onClick={handleCreate} className="btn-primary">Create Connection</button>
-            <button onClick={() => { setShowAdd(false); setSelectedType(null); }} className="btn-secondary">Cancel</button>
-          </div>
         </div>
       )}
+
+      {/* Email connectors (IMAP → tickets) — hidden while a connection is being added, because the
+          flow is the page until it is finished. */}
+      {!showAdd && <EmailConnectorsPanel />}
 
       {/* Microsoft 365 inactivity (PLAN-015 Phase B #12) — only shown once a tenant has synced */}
       {!showAdd && inactivity && inactivity.clients.length > 0 && (

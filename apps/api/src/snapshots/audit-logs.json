@@ -210774,5 +210774,77 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-08T06:31:59.864Z"
+  },
+  {
+    "id": "505b59e7-09f2-4cd5-9637-15b6d24feb26",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:50:40.275Z"
+  },
+  {
+    "id": "28d9e58d-f9ba-4cf9-be6d-858d2e3ebe0f",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "admin-service-alerts"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:51:01.650Z"
+  },
+  {
+    "id": "781c3dda-c7be-4a90-8432-a956d0db81b5",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:51:11.823Z"
+  },
+  {
+    "id": "d909c62a-d9b8-4a93-b01a-9ef9d029b1c7",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "kumo"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:51:28.089Z"
+  },
+  {
+    "id": "64875c86-5964-40db-80ad-b2a9885f5a3e",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T06:51:39.745Z"
   }
 ]
