@@ -158,6 +158,64 @@ html[data-theme="light"] {
   .badge-status-closed { color: var(--status-closed); }
 }
 
+/* ── Light theme: the shades that do not move with the theme ──────────────────
+   A light palette darkens every colour the theme owns — `--text-*`, `--cyber-*`,
+   `--alert-*`, the status tokens — so a screen built from those reads on either
+   theme. The Tailwind palette is not part of that arrangement: `text-green-400`
+   is #4ade80 whatever the theme, which is 1.4:1 on a white surface and worse on a
+   tint of its own colour, and the light end of `gray`/`slate` behaves the same
+   way. The light theme therefore keeps the family and moves the shade: a label
+   written for a dark surface is read at the 800 shade of the same family, which
+   is the move the status tokens already make by hand. Pale shades only.
+
+   Hover variants are overridden with their own selectors, because a rule on
+   `.hover\:text-x` alone would apply the shade all of the time. */
+html[data-theme="light"] :is(
+  .text-amber-200, .text-amber-200\/80, .text-amber-300, .text-amber-300\/80, .text-amber-300\/90,
+  .text-amber-400, .text-amber-500, .hover\:text-amber-300:hover
+) { color: #92400e; }
+
+html[data-theme="light"] :is(
+  .text-yellow-400, .text-orange-400
+) { color: #854d0e; }
+html[data-theme="light"] :is(.text-orange-400) { color: #9a3412; }
+
+html[data-theme="light"] :is(
+  .text-red-200, .text-red-300, .text-red-400, .text-red-400\/80, .text-red-500,
+  .hover\:text-red-200:hover, .hover\:text-red-300:hover, .hover\:text-red-400:hover
+) { color: #991b1b; }
+html[data-theme="light"] .group:hover .group-hover\:text-red-300 { color: #991b1b; }
+
+html[data-theme="light"] :is(.text-rose-300, .text-rose-400, .hover\:text-rose-300:hover, .hover\:text-rose-400:hover) { color: #9f1239; }
+html[data-theme="light"] :is(.text-pink-400) { color: #9d174d; }
+html[data-theme="light"] :is(.text-green-300, .text-green-400, .text-green-500, .hover\:text-green-300:hover) { color: #166534; }
+html[data-theme="light"] :is(.text-emerald-300, .text-emerald-400) { color: #065f46; }
+html[data-theme="light"] :is(.text-cyan-400) { color: #155e75; }
+html[data-theme="light"] :is(.text-sky-400) { color: #075985; }
+html[data-theme="light"] :is(.text-blue-300, .text-blue-400, .hover\:text-blue-300:hover) { color: #1e40af; }
+html[data-theme="light"] :is(.text-purple-300, .text-purple-400) { color: #6b21a8; }
+
+/* `gray` and `slate` are only partly themed here (300–600 map to the text tokens),
+   so the lighter end of those scales is the one place text can come out white on white. */
+html[data-theme="light"] :is(.text-gray-100, .text-gray-200, .text-slate-200, .hover\:text-gray-200:hover) {
+  color: var(--text-tertiary);
+}
+
+/* The accent's own pale end, for the same reason: #ffc9c9 is not a label colour on white. */
+html[data-theme="light"] :is(.text-cyber-200, .hover\:text-cyber-200:hover) { color: var(--cyber-800); }
+
+/* The accent tints are lighter in the light theme. A crimson tint on white carries
+   far more weight than the same tint on a near-black surface — and at the authored
+   strength the crimson label on top of it measures 3.5:1 at /30 and 4.4:1 at /20. */
+html[data-theme="light"] .bg-cyber-600\/5 { background-color: color-mix(in srgb, var(--cyber-600) 4%, transparent); }
+html[data-theme="light"] .bg-cyber-600\/10 { background-color: color-mix(in srgb, var(--cyber-600) 8%, transparent); }
+html[data-theme="light"] .bg-cyber-600\/15 { background-color: color-mix(in srgb, var(--cyber-600) 11%, transparent); }
+html[data-theme="light"] .bg-cyber-600\/20 { background-color: color-mix(in srgb, var(--cyber-600) 13%, transparent); }
+html[data-theme="light"] .bg-cyber-600\/25 { background-color: color-mix(in srgb, var(--cyber-600) 15%, transparent); }
+html[data-theme="light"] .bg-cyber-600\/30 { background-color: color-mix(in srgb, var(--cyber-600) 15%, transparent); }
+html[data-theme="light"] .bg-cyber-500\/20 { background-color: color-mix(in srgb, var(--cyber-500) 13%, transparent); }
+html[data-theme="light"] .bg-cyber-500\/30 { background-color: color-mix(in srgb, var(--cyber-500) 15%, transparent); }
+
 .service-alert-banner {
   background-color: rgb(220 38 38 / 0.15);
   border-bottom-color: rgb(239 68 68 / 0.4);
