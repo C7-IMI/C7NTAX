@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.033",
+    "date": "2026-10-08",
+    "title": "The Security Gate's other three failures, and a typecheck that now measures the code",
+    "changes": [
+      {
+        "text": "**The API typecheck in CI was measuring a missing Prisma client, not the code.** The generated client is not in the repository and nothing in the job produced it, so every model type was `any` — which is what `TS2347 \"untyped function calls may not accept type arguments\"` and `TS7006 \"implicitly has an 'any' type\"` are the signature of. CI reported **378** errors where the same command locally reported **149**. The job now runs `pnpm --filter @C7NTAX/api db:generate` first, for the same reason the container generates against its copied schema.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The secret scan needed a licence that does not have to be bought.** `gitleaks-action@v2` requires a key for an organisation repository and the `GITLEAKS_LICENSE` secret does not exist, so the job could never pass. It now runs the **gitleaks CLI** — the scanner itself is MIT — pinned to 8.30.1 and verified against the release's published SHA-256 checksums, because a step whose job is to fail a build should not be able to change underneath us.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The config and image scan could not resolve its own action.** The workflow pinned `aquasecurity/trivy-action@0.28.0`, but the action's tags are `v0.28.0` … `v0.36.0`: without the `v` the action is not found, which is why this job has never run at all. Restored to the version the pin intended; bumping to a current release is a deliberate change of its own, since it can surface new findings.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The API typecheck is now about shipped code.** Two things were inflating it: **73 of the 149 were `src/seed-*.ts` and `verify-post-change.ts`** — entry points run by hand with `tsx`, never imported by the server — and **27 more came from one unused import**. The seeds are excluded from `apps/api/tsconfig.json` with the reason written down (they still fail loudly when run, which is where a seeding script is run), and `routes/billing.ts` no longer imports `BillingEngine`, which it never used.",
+        "type": "Update"
+      },
+      {
+        "text": "**What that leaves is 47 errors, all in `apps/api/src`**: `system.ts` 13, `cloudconnect.ts` 8, `tickets/index.ts` 5, `kumo.ts` 4, `projects.ts` 3, then one or two each across ten more files — and they are no longer a single shape. They are a mix of `req.params`/`req.query` narrowing, regex-match indexing in the changelog reader, two Prisma JSON fields typed as `Record<string, unknown>`, and one role string the compiler is right about. Burned down in waves, starting with the next commit.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.032",
     "date": "2026-10-08",
     "title": "`guard:routes` was wrong about seven routes that had a guard, and now it is green",

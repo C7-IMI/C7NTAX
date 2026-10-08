@@ -5829,3 +5829,35 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The exemption list is the guard's memory.** `dashboard.ts` and `nav.ts` are the same decision ("the caller's own row, no id in the path"); worth checking it before writing a permission for something personal.
 - **Check the workflow that runs a guard before calling a failure local.** `grep -n "guard:" .github/workflows/*.yml` was one command and it changed the size of the finding.
 - **The probe-file pattern works well for a checker**: put the cases in the tree it scans, run it, read the output, delete the file. It tests the real script against real files rather than a reimplementation of it.
+
+
+---
+
+### Prompt 275 — The Security Gate's other three jobs, and making the typecheck mean what it says
+
+**Timestamp:** 2026-10-09 01:10 | **Status:** Complete (CI plumbing fixed, 149 → 47 errors, wave 1 started) | **Duration:** ~55 min
+
+**BuildNotes IDs:** **2026.10.8.033** — "The Security Gate's other three failures, and a typecheck that now measures the code"
+
+**Prompt**
+
+> Do it
+
+(Answering the recommendation: the trivy `v`, `prisma generate` in CI plus the seed exclusion, then the errors in waves — and the gitleaks CLI instead of a licence.)
+
+**What I did**
+- **Fixed the three jobs behind the guard**, each for a reason the evidence gave rather than the symptom: the **missing Prisma client** in CI (the reason CI reported 378 errors where the same command locally reported 149 — `TS2347`/`TS7006` are the signature of every model type being `any`), the **licence wall** on `gitleaks-action` for an organisation repo (replaced with the MIT **gitleaks CLI**, pinned to 8.30.1 and checksum-verified, because a step whose job is to fail a build must not change underneath us), and the **`v`** missing from the trivy pin (the tags are `v0.28.0`…`v0.36.0`, so the action had never resolved at all).
+- **Made the typecheck about shipped code before touching a single error.** Two things were inflating it: **73 of the 149 were `src/seed-*.ts` plus `verify-post-change.ts`** (entry points run by hand with `tsx`, never imported by the server) — excluded with the reason written into `tsconfig.json` — and **27 came from one unused import**.
+- **Followed the 27 to their source, which is the finding of the day.** They were `packages/billing`: a package that has never compiled, written against a schema that does not exist (`Invoice.number`, `Invoice.clientId`, `ServiceAgreement.services`, `customFields`, `EmailService.sendInvoiceEmail`, and an `index.ts` re-exporting two types its engine file does not export). The only reference to it anywhere in the repository was the unused API import — so the API stopped importing it, and the errors went with it. Reported rather than deleted: whether that engine is wanted is a billing decision.
+- **Left the remaining 47 visible rather than absorbed.** After the three fixes the number is 47, all in `apps/api/src`, and the honest thing was to look at what they are before promising they are mechanical — which is where the next decision (helper versus per-site guards) comes from.
+
+**Decisions worth remembering**
+- **Fix the measurement before fixing the number.** I nearly started editing 149 errors; two of the three changes that made the number smaller had nothing to do with the errors (a missing generated client and a set of excluded dev scripts). A check that reports 378 where the same command reports 149 is not measuring the code, and every conclusion drawn from it — including "we need a baseline" — would have been wrong.
+- **An unused import is not free.** One line kept an entire package in the typecheck graph, and that package had never compiled. Worth grepping for the *use* before believing a dependency is load-bearing.
+- **A broken scanner is a silent gate.** The trivy pin had a typo-sized bug that made the job un-runnable; nobody noticed because the workflow was already red for another reason. A gate whose failure is indistinguishable from noise stops being a gate.
+- **Licences are a design constraint, not a detail.** The choice of *how* to run gitleaks decided whether the check could ever run at all for an organisation repository. Same scan, no key, checksum-verified.
+
+**Notes for next time**
+- **The 47 that remain are not one shape** — `req.params`/`req.query` narrowing, regex-match indexing in the changelog reader (`'m' is possibly 'undefined'`), two Prisma JSON fields typed `Record<string, unknown>`, and `roles.ts`'s `SystemRole` argument. Read a whole file before deciding the pattern; the first ten looked uniform and the rest did not.
+- **`packages/billing` builds to 54 errors on its own** and nothing calls it: repairing it belongs with the billing work, and `pnpm build` at the root cannot pass while its `tsc` build is in the graph. The container is unaffected — it builds only the web app and runs the API from source with `tsx`.
+- **The API typecheck in CI needed the generated client and the repository does not carry it** — `pnpm --filter @C7NTAX/api db:generate` is now a CI step; the same command is what a fresh clone needs before its first typecheck.

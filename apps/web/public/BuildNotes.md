@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.032 | Last Updated: 2026-10-08
+## Version: 2026.10.8.033 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,22 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.033 — The Security Gate's other three failures, and a typecheck that now measures the code
+
+The gate's route guard was fixed in 2026.10.8.032. The three failures behind it — the ones nobody had seen because the guard always failed first — are fixed here, and the API typecheck now counts **47 errors instead of 149**, every one of them in code that serves a request.
+
+- **[Fix]** **The API typecheck in CI was measuring a missing Prisma client, not the code.** The generated client is not in the repository and nothing in the job produced it, so every model type was `any` — which is what `TS2347 "untyped function calls may not accept type arguments"` and `TS7006 "implicitly has an 'any' type"` are the signature of. CI reported **378** errors where the same command locally reported **149**. The job now runs `pnpm --filter @C7NTAX/api db:generate` first, for the same reason the container generates against its copied schema.
+- **[Fix]** **The secret scan needed a licence that does not have to be bought.** `gitleaks-action@v2` requires a key for an organisation repository and the `GITLEAKS_LICENSE` secret does not exist, so the job could never pass. It now runs the **gitleaks CLI** — the scanner itself is MIT — pinned to 8.30.1 and verified against the release's published SHA-256 checksums, because a step whose job is to fail a build should not be able to change underneath us.
+- **[Fix]** **The config and image scan could not resolve its own action.** The workflow pinned `aquasecurity/trivy-action@0.28.0`, but the action's tags are `v0.28.0` … `v0.36.0`: without the `v` the action is not found, which is why this job has never run at all. Restored to the version the pin intended; bumping to a current release is a deliberate change of its own, since it can surface new findings.
+- **[Update]** **The API typecheck is now about shipped code.** Two things were inflating it: **73 of the 149 were `src/seed-*.ts` and `verify-post-change.ts`** — entry points run by hand with `tsx`, never imported by the server — and **27 more came from one unused import**. The seeds are excluded from `apps/api/tsconfig.json` with the reason written down (they still fail loudly when run, which is where a seeding script is run), and `routes/billing.ts` no longer imports `BillingEngine`, which it never used.
+- **[Update]** **What that leaves is 47 errors, all in `apps/api/src`**: `system.ts` 13, `cloudconnect.ts` 8, `tickets/index.ts` 5, `kumo.ts` 4, `projects.ts` 3, then one or two each across ten more files — and they are no longer a single shape. They are a mix of `req.params`/`req.query` narrowing, regex-match indexing in the changelog reader, two Prisma JSON fields typed as `Record<string, unknown>`, and one role string the compiler is right about. Burned down in waves, starting with the next commit.
+
+**Found, and its own decision: `packages/billing` has never compiled.** Its own typecheck reports **54 errors** and it is written against a schema that does not exist — `Invoice.number`, `Invoice.clientId`, `Invoice.taxTotal`, `ServiceAgreement.services`, `ServiceAgreement.customFields`, `EmailService.sendInvoiceEmail` — none of which are in the Prisma schema it is compiled against; its `index.ts` also re-exports two types the engine file does not export. Nothing in the application calls it: the only reference anywhere was the unused API import removed above. Repairing or removing it is a billing question, not a typecheck one, so it is reported rather than touched. (`pnpm build` at the root cannot pass while a `tsc` build for that package is in the graph; the container is unaffected because it builds only the web app.)
+
+**Verification:** `guard:routes` green (436 routes, 0 violations); `guard:api-docs` green; API typecheck **47 errors, all under `apps/api/src`, none in the shared or billing packages**; web `tsc` clean.
 
 ---
 

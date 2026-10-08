@@ -4,7 +4,6 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { canAccessCompany, companyWhere } from "../middleware/companyScope";
 import { Permission, InvoiceStatus } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
-import { BillingEngine } from "@C7NTAX/billing";
 import { AGREEMENT_TYPES } from "../services/timeRules";
 import { pushExpense } from "../services/accountingSync";
 import { approveBatch, createBatch, invoiceBatchEnabled, previewBatch, rejectBatch } from "../services/billingBatch";
