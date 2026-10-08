@@ -6340,3 +6340,35 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **Bisecting a parse error: trust the reported line last.** PowerShell reports where parsing finally failed, not where the string was broken, so the error line and the cause line were 31 apart. Cutting the file in half and re-parsing found it in three steps.
 - **The `edit` tool preserves UTF-8; `Get-Content`/`Set-Content` and `Out-File` do not.** Everything in this change was written with `edit`, and every file that had to be rewritten byte-for-byte (the seven BOM additions) went through `[System.IO.File]::ReadAllText/WriteAllText` with an explicit encoding on both ends.
 - **`git checkout -- <file>` is the escape hatch when an automated write goes wrong**, and it costs nothing when the working tree is otherwise clean — which is the argument for committing each verified change before starting the next.
+### Prompt 289 — Show All means *yours*: a My activity page, and what proving it uncovered
+
+**Timestamp:** 2026-10-08 16:29 | **Status:** Complete (new page, route, docs; verified live against the API) | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.8.050** — "Show All shows *your* activity, on a page of its own"
+
+**Prompt**
+
+> When selecting Show All, it should only display the activities of the logged in user, not the complete audit logs. Create a separate page if you need to in order to accomplish this.
+
+**What I did**
+- **Read what "Show All" actually pointed at.** `RecentActivityMenu` linked to `/admin/logs` — `AuditLogsSection`, whose own subtitle is "Every change across the entire application", and which the navigation only offers to somebody holding `system:config`. So the link was wrong twice over: it showed everyone's work under a heading that says "Where you were, and what you changed", and for most accounts it went to a page they cannot open.
+- **Built the page the menu should have opened.** `/activity` (`pages/MyActivity.tsx`) reads the audit trail for `?mine=true` only and merges the local visits, then groups by day — "Today", "Yesterday", then the weekday and date — with each entry at its own time and each one linking through `activityHref`, so clicking an entry still scrolls to and flashes the exact region rather than dumping you at the top of a page.
+- **Turned off the menu's dedupe for a history, and said why in the code.** `activitiesFromAudit` collapses a repeated change so five lines do not repeat themselves; on a page that is wrong, and demonstrably so — two deletions of two *different* clients both summarize as "Deleted" with no subject, so the collapse would have shown one deletion where there were two. It now takes `dedupe`, defaulting to the menu's behaviour.
+- **Kept the administrator's way through.** The page offers **System-wide audit trail** to anyone with `system:config` — the destination Show All used to jump to, now named for what it is and absent for everyone else.
+- **Named the pages the navigation cannot name.** The header falls back to `Dashboard` for any path the tree cannot place, so `/console`, `/settings`, `/mfa-setup` and the new `/activity` all introduced themselves as the Dashboard. `lib/pageTitles.ts` is one map read by the header *and* the breadcrumb trail — which matters twice, because the Recent menu's visit labels are built from the trail, so a page you stayed on recorded itself as "Dashboard".
+
+**The two things I found by looking rather than assuming**
+- **The trail gave every unclaimed page "Dashboard" as a parent.** The Dashboard node's route is `/`, and the trail's prefix test treated a bare `/` as a prefix of every path — so the one node whose `to` is the root quietly claimed every page that had no row of its own. Fixed by requiring an exact match for `/`; `/console` now reads `Home › Console`.
+- **`GET /api/system/audit-logs` answers any signed-in caller, unfiltered.** I had already written in the BuildNotes that "the menu needs no new permission" from the route's own comment — so before shipping a page that leans on `mine=true`, I checked whether the *filter* was a filter or a fence. It is a filter: signed in as `persona.tech@c7ntax.local` (technician, no `system:config`), `?mine=true&limit=200` returned **124 rows for 1 user**, and `?limit=200` returned **200 rows for 9 users**. The page is safe because it always sends `mine`; the *route* is not, for anyone who does not. I did **not** narrow it — the ticket activity tab is a legitimate caller of the unfiltered read, so the change decides what a technician may see of a ticket's history, which is the operator's call. It is written up as **PLAN-029 §6** with the measurement, the reason and three ways to fix it.
+
+**Decisions worth remembering**
+- **"Show All" was a label that promised the wrong scope.** The menu already said "your own"; the link is where that promise was broken. When a control's destination is a different scope than its list, the fix is usually a page, not a filter — a filter on somebody else's page would have left the permission problem in place.
+- **Dedupe is a property of the surface, not of the data.** Collapsing repeats is right for a five-line glance and wrong for a history, and the case that proves it is a summary with no distinguishing detail ("Deleted") rather than a clever one.
+- **A fallback that returns something plausible is worse than one that returns nothing.** `Dashboard` for an unknown path, and the root's blurb for an unknown section, both looked like answers. The map that names these pages is small; the reason it exists is that every other option was a lie the UI could tell without erroring.
+- **Check the fence before leaning on it.** The page is only correct because the API honours `mine`; confirming that took one fetch and turned a UI task into a recorded authorization finding.
+
+**Notes for next time**
+- **`edit` tool `old_str` must include the anchor you intend to keep.** Twice in one file I replaced a `## 2026…` heading with a new entry and dropped the heading of the entry below it — the second time it also cost the following entry's opening line, so the parser merged two releases into one. The throwaway check that catches it is three lines: list the headings, then print the first line after each one.
+- **Verify a generated file against its source, not by eye.** `nodes in source === versions in JSON`, no duplicate versions, no entry missing a title — that is what confirmed the repair was complete rather than plausible.
+- **The API is the authority on what a permission does.** Reading `systemRouter.use(authenticate)` told me the route was authentication-only; only a request from an account *without* `system:config` showed what that meant in rows.
+- **A dev server can die without failing anything you were watching.** Both dev shells exited mid-task; the browser checks I had already made stood, but the next check needed `pnpm --filter @C7NTAX/api dev` and a health poll first. Re-verify the endpoint before re-running a browser assertion, or you will debug the code for a stopped process.

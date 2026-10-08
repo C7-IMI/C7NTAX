@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.049 | Last Updated: 2026-10-08
+## Version: 2026.10.8.050 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,61 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.050 — Show All shows *your* activity, on a page of its own
+
+"Show All" in the header's Recent menu used to open **Administration → Audit Logs** — every change made by
+everybody in the instance, which is not what the list above it is, and which most accounts cannot open at
+all. It now opens **My activity** (`/activity`): the same list, at length, and only ever your own.
+
+- **[New]** **My activity (`/activity`) is your own history, not a filtered view of the audit trail.**
+  It reads the audit trail for *your* rows (`?mine=true`) and adds the pages you stayed on for two minutes,
+  which live in this browser. Grouped by day ("Today", "Yesterday", then the date), each entry at its own
+  time, and each one links to the exact place with the same arrival highlight the menu uses. Reachable by
+  anyone signed in — the page scopes itself to the caller, so there is no version of it that needs a
+  permission or shows somebody else's work.
+- **[New]** **Repeated changes are kept on the page where the menu folds them.** The five-entry menu
+  collapses two identical changes into one line because it has no room to repeat itself; a history is the
+  wrong place for that rule. Two deletions of two different clients summarize identically ("Deleted", no
+  subject) and would have looked like one, so `activitiesFromAudit` takes a `dedupe` option and the page
+  turns it off.
+- **[Update]** **Administrators keep the way through to the whole trail.** A person holding `system:config`
+  sees a **System-wide audit trail** button on the page — the same destination "Show All" used to go to,
+  now named for what it is and offered only to somebody who can open it. Everyone else never sees it.
+- **[Fix]** **Standalone pages were titled "Dashboard".** The header falls back to `Dashboard` for any path
+  the navigation tree cannot place, so `/console`, `/settings`, `/mfa-setup` and the new `/activity` all
+  announced themselves as the Dashboard. They now have names (`lib/pageTitles.ts`), read by both the header
+  and the breadcrumb trail — which is also where the Recent menu's visit labels come from, so a page you
+  stayed on reads "Console" rather than "Dashboard".
+- **[Fix]** **The breadcrumb trail put "Dashboard" under Home on every page with no nav row.** The Dashboard
+  node's own route is `/`, and the trail's prefix test treated a bare `/` as a prefix of every path in the
+  application — so the one node whose `to` is the root quietly claimed every unclaimed page. `/` now matches
+  only `/`.
+- **[Fix]** **The header blurb fell back to the Dashboard's.** A one-segment path with no description of its
+  own inherited the root's, so `/console` described itself as "key business metrics, open ticket volumes, and
+  technician workloads". The parent walk no longer treats the root as a parent, and `/console` has its own
+  line.
+- **[Docs]** A **Recent Activity & My Activity** walkthrough (`/help/walkthroughs/my-activity`) — what counts
+  as an activity, what the arrival highlight is for, and a side-by-side of My activity against the audit
+  trail (whose changes, who may open it, repeated changes, visits, how far back). Two FAQ answers, and the
+  Index row, in the same change.
+
+**Recorded, not fixed — an authorization gap found while proving this works.** `GET /api/system/audit-logs`
+carries no permission of its own: `mine=true` is an opt-in *filter*, so omitting it returns the instance's
+audit rows to any signed-in caller. Measured against the dev API on 2026-10-08 as
+`persona.tech@c7ntax.local` (a technician, no `system:config`): `?mine=true&limit=200` → 124 rows, **1**
+distinct user; `?limit=200` → 200 rows, **9** distinct users. Narrowing the route would break the ticket
+activity tab, which is the unfiltered read's legitimate caller, so it is written up as **PLAN-029 §6** with
+the three ways to fix it rather than changed in the same commit as a UI feature.
+
+**Verified:** `pnpm lint` 6/6 and `apps/web` builds; live in the dev app — the Recent menu's **Show All**
+resolves to `/activity` and clicking it lands there; the page reads 200 activities for the signed-in account
+(`admin@C7NTAX.com`) with day grouping, per-entry times and the truncation note; `/console` now reads
+"Console — Run commands against this instance…" with the trail `Home › Console` and `/tickets` is unchanged;
+the API returns exactly one `userId` for `mine=true` against nine for the unfiltered read; `check-help-links`
+green (26 walkthroughs); `pnpm probes:sweep` reports no residue.
 
 ---
 

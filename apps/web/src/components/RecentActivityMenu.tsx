@@ -1,30 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  BarChart3,
-  Bot,
-  Building2,
-  Clock,
-  FileText,
-  KeyRound,
-  LayoutGrid,
-  LifeBuoy,
-  Lock,
-  Package,
-  Plug,
-  Receipt,
-  Server,
-  Settings2,
-  Ticket,
-  Workflow,
-  type LucideIcon,
-} from "lucide-react";
+import { Clock } from "lucide-react";
 import { useRecentActivity } from "../hooks/useRecentActivity";
-import {
-  activityHref,
-  relativeTime,
-  type RecentIcon,
-} from "../lib/recentActivity";
+import { activityIcon } from "./activityIcons";
+import { activityHref, relativeTime } from "../lib/recentActivity";
 
 /**
  * The header's Recent menu: what this person changed, and where they were.
@@ -36,25 +15,10 @@ import {
  * reasons to click and a list that blurs them is a list nobody trusts.
  *
  * Five entries, because that is what fits before the menu becomes a page somebody has to read, and
- * because "where was I" is a question about the last few minutes rather than the last few weeks.
+ * because "where was I" is a question about the last few minutes rather than the last few weeks. "Show
+ * All" is that page — `/activity`, which is the same list at length and still only ever this person's,
+ * not the system-wide audit trail.
  */
-const ICONS: Record<RecentIcon, LucideIcon> = {
-  ticket: Ticket,
-  client: Building2,
-  billing: Receipt,
-  asset: Package,
-  kumo: Lock,
-  integration: Plug,
-  ai: Bot,
-  admin: KeyRound,
-  alert: LifeBuoy,
-  board: LayoutGrid,
-  kb: FileText,
-  report: BarChart3,
-  settings: Settings2,
-  page: Server,
-};
-
 export function RecentActivityMenu() {
   const { activities, refresh } = useRecentActivity(5);
   const [open, setOpen] = useState(false);
@@ -131,7 +95,7 @@ export function RecentActivityMenu() {
           ) : (
             <ul className="py-1">
               {activities.map((activity) => {
-                const Icon = ICONS[activity.icon] ?? Workflow;
+                const Icon = activityIcon(activity.icon);
                 return (
                   <li key={activity.id}>
                     <Link
@@ -184,10 +148,16 @@ export function RecentActivityMenu() {
             </ul>
           )}
 
+          {/*
+            Show All goes to `/activity` — this person's own history, which is what the list above is.
+            It used to open the audit trail in Administration, which is everybody's changes, and which
+            most people cannot open at all.
+          */}
           <Link
-            to="/admin/logs"
+            to="/activity"
             onClick={() => setOpen(false)}
             className="block px-3 py-2 border-t border-surface-border text-[11px] text-gray-500 hover:text-white hover:bg-surface-lighter transition-colors"
+            data-testid="recent-show-all"
           >
             Show All
           </Link>

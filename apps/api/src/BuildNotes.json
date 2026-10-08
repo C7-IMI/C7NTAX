@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.050",
+    "date": "2026-10-08",
+    "title": "Show All shows *your* activity, on a page of its own",
+    "changes": [
+      {
+        "text": "**My activity (`/activity`) is your own history, not a filtered view of the audit trail.**",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Repeated changes are kept on the page where the menu folds them.** The five-entry menu",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Administrators keep the way through to the whole trail.** A person holding `system:config`",
+        "type": "Update"
+      },
+      {
+        "text": "**Standalone pages were titled \"Dashboard\".** The header falls back to `Dashboard` for any path",
+        "type": "Fix"
+      },
+      {
+        "text": "**The breadcrumb trail put \"Dashboard\" under Home on every page with no nav row.** The Dashboard",
+        "type": "Fix"
+      },
+      {
+        "text": "**The header blurb fell back to the Dashboard's.** A one-segment path with no description of its",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.049",
     "date": "2026-10-08",
     "title": "One path to production: build on dev, promote to prod, and never a second build",

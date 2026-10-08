@@ -10,8 +10,10 @@
 > unbuilt phases live in their own plans; this file is only about work that already exists in the
 > repository in a state that needs a decision.
 
-**Priority order** — one to read first if nothing else: **§1 (secrets committed in the snapshot)**, because
-its remediation includes rotating credentials, and rotation is a clock the repository cannot reset.
+**Priority order** — the first two to read if nothing else: **§1 (secrets committed in the snapshot)**,
+because its remediation includes rotating credentials and rotation is a clock the repository cannot reset;
+then **§6 (`audit-logs` answers any signed-in caller, unfiltered)**, because it is the one open item that is
+an authorization gap rather than a deferred improvement.
 
 ---
 
@@ -145,7 +147,51 @@ find the remaining wrong descriptors — which is the point.
 
 ---
 
-## 6. How to use this document
+## 6. `GET /api/system/audit-logs` answers any signed-in caller, unfiltered
+
+**What it is.** The route carries no permission of its own — `systemRouter.use(authenticate)` is the only
+guard on it, and the route is declared without `requirePermission`. The `mine=true` filter is opt-in, so
+omitting it returns the last 500 audit rows for the whole instance: who changed what, with user ids, user
+names and redacted change summaries.
+
+**Evidence, measured 2026-10-08 against the dev API.** Signed in as `persona.tech@c7ntax.local` — a
+technician whose permissions are the twenty in the `technician` role and no `system:config`:
+
+```
+GET /api/system/audit-logs?mine=true&limit=200  -> 200, 124 rows, 1 distinct user (their own)
+GET /api/system/audit-logs?limit=200            -> 200, 200 rows, 9 distinct users
+```
+
+So the filtering that makes **My activity** safe (`/activity`, added in 2026.10.8.050) is done by the
+caller, not by the route. The route's own comment says as much: `mine` "is narrower than the unfiltered
+read the ticket view has always done, and it is the reason the menu needs no new endpoint and no new
+permission".
+
+**Why it was not fixed here.** It is an authorization change on a shared endpoint, and the unfiltered read
+has a legitimate caller: a ticket's activity tab reads `entity=ticket&entityId=<id>`. Making the route
+require `mine` or `system:config` would break that tab for every technician unless the ticket view is
+changed in the same commit — which changes what a technician can see of a ticket's history and is a
+decision for the operator, not a side effect of a UI change. It also sits in the `guard:routes` baseline
+(433 routes, 382 guarded), so the change needs that re-run and any deliberate exception recorded.
+
+**What doing it properly costs.** Three shapes, in the order I would try them:
+
+1. **Scope the unfiltered read to what the caller may see** — require `entity` + `entityId` together and
+   check the caller can read that record, so the ticket tab keeps working and a bare
+   `GET /audit-logs` becomes a 403 for anyone without `system:config`. ~30 lines in `routes/system.ts`,
+   plus an `apps/api` probe for the three cases (own rows, a permitted record, a bare unfiltered read).
+2. **Require `system:config` unless `mine=true`**, and move the ticket tab to a ticket-scoped audit route
+   that already exists or is added for it.
+3. Leave the route and accept that any signed-in account — including a client contact if the portal shares
+   this middleware — can read the instance's change history. This is the current state; it should be an
+   explicit decision rather than an oversight.
+
+**Related:** the same route is what makes a **client contact's** portal session interesting — worth
+confirming whether the portal's `authenticate` reaches `req.user.userId` before deciding between the three.
+
+---
+
+## 7. How to use this document
 
 Anything here that gets fixed should move into `BuildNotes.md` with its own version and leave a line in this
 file saying where it went — the same rule the plan documents follow elsewhere in `PlanDocs/`. Anything that

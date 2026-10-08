@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
+import { STANDALONE_PAGE_TITLES } from "../lib/pageTitles";
 
 export interface BreadcrumbSegment {
   label: string;
@@ -143,6 +144,14 @@ export function orgTrail(
  * because a section's own root ("/kumo") is a prefix of every one of its
  * children ("/kumo/passwords") and would otherwise claim every sub-page.
  * The first segment is always "Home" linking to /home.
+ *
+ * Two paths are handled outside the tree, because the tree cannot describe them:
+ *
+ * - **`/` is the Dashboard's own row and matches nothing else.** A bare `startsWith("/")` is true of
+ *   every path in the application, so before this the Dashboard node quietly claimed every page with no
+ *   row of its own — the header console, Settings, My activity — and each of them read "Home › Dashboard".
+ * - **A page with no row anywhere gets its name from `STANDALONE_PAGE_TITLES`**, so a visit recorded
+ *   against it (the Recent menu stores the trail's words) says "Console" rather than "Dashboard".
  */
 export function buildBreadcrumbs(
   navTree: Array<{ id: string; to?: string; label: string; icon?: unknown; children?: Array<{ id: string; to?: string; label: string }> }>,
@@ -155,7 +164,9 @@ export function buildBreadcrumbs(
 
   const path = pathname.replace(/\/+$/, "") || "/";
   const matches = (to?: string): boolean =>
-    !!to && (path === to || path.startsWith(to.endsWith("/") ? to : `${to}/`));
+    !!to &&
+    (path === to ||
+      (to !== "/" && path.startsWith(to.endsWith("/") ? to : `${to}/`)));
 
   let bestSection: (typeof navTree)[number] | null = null;
   let bestChild: { id: string; to?: string; label: string } | null = null;
@@ -179,7 +190,11 @@ export function buildBreadcrumbs(
     }
   }
 
-  if (!bestSection) return crumbs;
+  if (!bestSection) {
+    const standalone = STANDALONE_PAGE_TITLES[path];
+    if (standalone) crumbs.push({ label: standalone, to: path });
+    return crumbs;
+  }
 
   const sectionTo = bestSection.to;
   if (!bestChild && !sectionTo) return crumbs;

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
 import { KumoTrail } from "./KumoTrail";
+import { STANDALONE_PAGE_TITLES } from "../lib/pageTitles";
 import { useTheme } from "../hooks/useTheme";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
@@ -269,7 +270,7 @@ function getPageTitle(nodes: NavNode[], pathname: string): string {
     }
   };
   walk(nodes);
-  if (matches.length === 0) return "Dashboard";
+  if (matches.length === 0) return STANDALONE_PAGE_TITLES[pathname] ?? "Dashboard";
   return matches.reduce((a, b) => (b.to.length > a.to.length ? b : a)).label;
 }
 
@@ -342,6 +343,8 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/settings": "Configure your landing page, personal preferences, and account settings.",
   "/settings/ai": "Manage AI inference providers and model configurations.",
   "/mfa-setup": "Set up multi-factor authentication for your account.",
+  "/activity": "Your own changes, and the pages you stayed on.",
+  "/console": "Run commands against this instance — from the header, the /console page, or the c7ntax CLI.",
 };
 
 function getSectionDescription(pathname: string): string {
@@ -351,8 +354,11 @@ function getSectionDescription(pathname: string): string {
   const parts = pathname.split("/");
   while (parts.length > 1) {
     parts.pop();
-    const parent = parts.join("/") || "/";
-    if (SECTION_DESCRIPTIONS[parent]) return SECTION_DESCRIPTIONS[parent];
+    const parent = parts.join("/");
+    // An empty parent is the root of a one-segment path, not a section worth inheriting from: falling
+    // back to "/" here gave every top-level page the Dashboard's blurb (`/console` explained itself as
+    // "key business metrics, open ticket volumes, and technician workloads").
+    if (parent && SECTION_DESCRIPTIONS[parent]) return SECTION_DESCRIPTIONS[parent];
   }
   return "";
 }

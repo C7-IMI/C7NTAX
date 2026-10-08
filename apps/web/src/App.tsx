@@ -25,6 +25,7 @@ import { KumoOrganizationsPage } from "./pages/KumoOrganizations";
 import { KumoOrganizationDetailPage } from "./pages/KumoOrganizationDetail";
 import { KumoDomainsPage } from "./pages/KumoDomains";
 import { SettingsPage } from "./pages/Settings";
+import { MyActivityPage } from "./pages/MyActivity";
 import { MFASetupPage } from "./pages/MFASetup";
 import { OpportunitiesPage } from "./pages/Opportunities";
 import { ProjectsPage } from "./pages/Projects";
@@ -201,6 +202,10 @@ function ProtectedRoutes() {
         <Route path="/pto" element={<PTOPage />} />
         <Route path="/settings/ai" element={<InferenceSettingsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        {/* Where the header's Recent menu sends "Show All": this person's own activity, at length.
+            Reachable by anyone signed in — the page scopes itself to the caller, which is the whole
+            reason it is separate from the audit trail at /admin/logs. */}
+        <Route path="/activity" element={<MyActivityPage />} />
         <Route path="/mfa-setup" element={<MFASetupPage />} />
         {/* Section landing pages — shown when clicking parent section in collapsed sidebar */}
         <Route path="/section/:sectionId" element={<SectionLandingRoute />} />

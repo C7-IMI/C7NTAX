@@ -541,18 +541,25 @@ export function activityFromAudit(row: AuditRow): RecentActivity | null {
   };
 }
 
-/** Turn a tail of audit rows into activities, newest first, dropping chrome and duplicates. */
+/**
+ * Turn a tail of audit rows into activities, newest first, dropping chrome.
+ *
+ * `dedupe` collapses a repeated change — a ticket saved twice in a row is not two separate places to go
+ * back to — which is right for the five-entry menu and wrong for a history, where two deletions of two
+ * different clients summarize identically and would look like one.
+ */
 export function activitiesFromAudit(
   rows: readonly AuditRow[],
   limit = 5,
+  options: { dedupe?: boolean } = {},
 ): RecentActivity[] {
+  const dedupe = options.dedupe ?? true;
   const out: RecentActivity[] = [];
   for (const row of rows) {
     const activity = activityFromAudit(row);
     if (!activity) continue;
-    // Two rows for the same destination and the same action are one activity to a reader — a ticket
-    // saved twice in a row is not two separate places to go back to.
     if (
+      dedupe &&
       out.some(
         (existing) =>
           existing.to === activity.to &&
