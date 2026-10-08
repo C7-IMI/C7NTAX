@@ -21,11 +21,12 @@
       "schedule:view",
       "chat:view",
       "inference:view",
-      "product:view"
+      "product:view",
+      "console:use"
     ],
     "isDefault": false,
     "createdAt": "2026-10-08T04:05:18.316Z",
-    "updatedAt": "2026-10-08T04:05:18.316Z"
+    "updatedAt": "2026-10-08T19:26:03.542Z"
   },
   {
     "id": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
@@ -49,6 +50,30 @@
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.722Z",
     "updatedAt": "2026-10-07T10:34:29.639Z"
+  },
+  {
+    "id": "d077b89f-73e4-4f50-ab39-20c9f1f7964a",
+    "name": "Client Admin",
+    "systemRole": "client_admin",
+    "permissions": [
+      "ticket:view",
+      "ticket:create",
+      "ticket:edit",
+      "board:view",
+      "client:view",
+      "billing:view",
+      "servicealert:view",
+      "ticket:close",
+      "contact:view",
+      "project:view",
+      "asset:view",
+      "kb:view",
+      "schedule:view",
+      "report:view"
+    ],
+    "isDefault": false,
+    "createdAt": "2026-08-12T06:04:14.721Z",
+    "updatedAt": "2026-10-07T02:18:01.383Z"
   },
   {
     "id": "ead437af-8f98-4b1c-8716-9435830d4877",
@@ -162,35 +187,12 @@
       "product:create",
       "product:edit",
       "product:delete",
-      "product:manage"
+      "product:manage",
+      "console:use"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.718Z",
-    "updatedAt": "2026-10-07T10:34:29.640Z"
-  },
-  {
-    "id": "d077b89f-73e4-4f50-ab39-20c9f1f7964a",
-    "name": "Client Admin",
-    "systemRole": "client_admin",
-    "permissions": [
-      "ticket:view",
-      "ticket:create",
-      "ticket:edit",
-      "board:view",
-      "client:view",
-      "billing:view",
-      "servicealert:view",
-      "ticket:close",
-      "contact:view",
-      "project:view",
-      "asset:view",
-      "kb:view",
-      "schedule:view",
-      "report:view"
-    ],
-    "isDefault": false,
-    "createdAt": "2026-08-12T06:04:14.721Z",
-    "updatedAt": "2026-10-07T02:18:01.383Z"
+    "updatedAt": "2026-10-08T19:26:03.545Z"
   },
   {
     "id": "52f22c12-60e7-4489-a606-f82710131221",
@@ -304,11 +306,12 @@
       "product:create",
       "product:edit",
       "product:delete",
-      "product:manage"
+      "product:manage",
+      "console:use"
     ],
     "isDefault": true,
     "createdAt": "2026-08-12T06:04:14.720Z",
-    "updatedAt": "2026-10-07T10:34:29.635Z"
+    "updatedAt": "2026-10-08T19:26:03.546Z"
   },
   {
     "id": "f032badc-4d32-463c-973d-5cf0559f273a",
@@ -332,10 +335,11 @@
       "schedule:view",
       "chat:view",
       "inference:view",
-      "product:view"
+      "product:view",
+      "console:use"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.721Z",
-    "updatedAt": "2026-10-07T10:34:29.639Z"
+    "updatedAt": "2026-10-08T19:26:03.548Z"
   }
 ]

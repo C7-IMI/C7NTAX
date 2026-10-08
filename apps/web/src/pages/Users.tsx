@@ -29,7 +29,10 @@ interface UserFull {
   department?: string | null; timezone?: string | null; reportsToId?: string | null;
   reportsTo?: { id: string; firstName: string | null; lastName: string | null; email: string } | null;
   role: { id: string; name: string; systemRole: string; permissions: string[] };
+  /** Individual grants, added to the role. */
   permissions: string[];
+  /** Individual removals, subtracted from the role — the subtractive half of the editor. */
+  deniedPermissions?: string[];
   company?: { id: string; name: string } | null;
   companyId?: string | null;
   isActive: boolean; isLocked: boolean;
@@ -128,9 +131,14 @@ export function UsersPage() {
       const r = await api.get(`/users/${id}`);
       setSelected(r.data);
       setForm(r.data);
+      // The checkboxes show what this person *effectively* holds: the role's list, plus their grants,
+      // minus their removals. Saving the difference is what makes unchecking a role-granted permission
+      // mean something — before the removals list existed, unchecking one was silently ineffective,
+      // because the role went on granting it.
       const rolePerms = r.data.role?.permissions || [];
       const userOverrides = r.data.permissions || [];
-      setPermSet(new Set([...rolePerms, ...userOverrides]));
+      const denied = new Set<string>(r.data.deniedPermissions || []);
+      setPermSet(new Set([...rolePerms, ...userOverrides].filter(p => !denied.has(p))));
     } catch { /* ignore */ }
   };
 
@@ -139,7 +147,8 @@ export function UsersPage() {
     setForm(user);
     const rolePerms = user.role?.permissions || [];
     const userOverrides = user.permissions || [];
-    setPermSet(new Set([...rolePerms, ...userOverrides]));
+    const denied = new Set<string>(user.deniedPermissions || []);
+    setPermSet(new Set([...rolePerms, ...userOverrides].filter(p => !denied.has(p))));
     setEditing(false);
     setTab("profile");
     // The list projection leaves out placement (time zone, manager), so load the
@@ -190,7 +199,18 @@ export function UsersPage() {
       if (form.roleId) payload.roleId = form.roleId;
       else if (form.role?.systemRole) payload.role = form.role.systemRole;
       if (tab === "permissions") {
-        payload.permissions = [...permSet];
+        /*
+         * The checkboxes are the *effective* set, so the two lists are the difference between it and the
+         * role: what is checked but not granted by the role becomes an individual grant, and what the
+         * role grants but is unchecked becomes a removal. Sending the whole set as grants — which is what
+         * this did — could only ever add, so a permission an administrator unticked stayed in force and
+         * the interface quietly disagreed with the API.
+         */
+        const roleSet = new Set<string>(
+          selected.role?.permissions ?? ROLE_PERMISSIONS[selected.role?.systemRole as SystemRole] ?? [],
+        );
+        payload.permissions = [...permSet].filter((p) => !roleSet.has(p));
+        payload.deniedPermissions = [...roleSet].filter((p) => !permSet.has(p));
       }
       await api.patch(`/users/${selected.id}`, payload);
       toast.success("User updated");
@@ -714,6 +734,14 @@ export function UsersPage() {
                       </div>
                     );
                   })()}
+
+                  <p className="text-xs text-gray-500">
+                    Unchecking something the role grants withdraws it for this person and leaves the role alone —
+                    the box reflects what they actually hold, not only what is added on top. The{" "}
+                    <span className="text-gray-400">Console</span> category is the one that decides whether they
+                    see the console at all: without <code>console:use</code> the header icon is not drawn and the
+                    API refuses the commands.
+                  </p>
 
                   {PERMISSION_CATEGORIES.map(cat => (
                     <div key={cat.key} className="card py-3 px-4">

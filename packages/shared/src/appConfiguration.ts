@@ -227,14 +227,14 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         label: "Command console",
         summary: "The console in the header toolbar, and the command catalogue behind it.",
         detail:
-          "When off, the header icon is hidden and the console's catalogue endpoint answers 404. The console adds no route of its own to the write surface, so switching it off leaves every existing screen, route and permission exactly as it was. Read commands are available now; write commands arrive with PLAN-026's action manifest.",
+          "When off, the header icon is hidden and the console's catalogue endpoint answers 404. It can also be withheld from one person (the Console category in Users & Roles) or from one client (the Console card on the client's own record). The console adds no route of its own to the write surface, so switching it off leaves every existing screen, route and permission exactly as it was. Read commands are available now; write commands arrive with PLAN-026's action manifest.",
         type: "boolean",
         source: "setting",
         env: "CONSOLE_ENABLED",
         envMatch: "not-false",
         default: true,
         store: { key: CONFIG_STORE_KEYS.appSettings, path: "general.console" },
-        affects: ["Header toolbar", "Console", "c7ntax CLI"],
+        affects: ["Header toolbar", "Console", "c7ntax CLI", "Users & Roles", "Client records"],
       },
       {
         id: "defaultLandingPage",

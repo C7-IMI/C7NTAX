@@ -1,10 +1,10 @@
-/**
+﻿/**
  * The console's catalogue, served.
  *
- * PLAN-028 §6 rejects a general-purpose `POST /api/console` that takes a line and executes it, and the
+ * PLAN-028 Â§6 rejects a general-purpose `POST /api/console` that takes a line and executes it, and the
  * reason is worth repeating where the code is: an execute endpoint is a class of endpoint that grows
  * its own authorization logic. **The console parses in the front end and runs the real route as the
- * caller**, so this file is the only thing the console adds to the API — two reads, permission-filtered
+ * caller**, so this file is the only thing the console adds to the API â€” two reads, permission-filtered
  * at call time.
  *
  * They exist so the CLI is not a second catalogue (a binary that claims 250 commands and refuses 200 of
@@ -25,18 +25,22 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { configFlag } from "../services/appSettings";
 
 export const consoleRouter = Router();
+consoleRouter.use(authenticate);
 /*
  * `console:use` is required, and it is the reason the icon can be absent rather than disabled: a control
  * somebody may not use is not a control to show them greyed out, so the web decides whether to draw it
- * from the same permission this route enforces. The permission grants no operation of its own — every
- * command a caller receives still names a route that checks its own permission — so this is a gate on
- * the catalogue, not a widening of anything behind it.
+ * from the same permission these routes enforce. The permission grants no operation of its own â€” every
+ * command a caller receives still names a route that checks its own permission â€” so this is a gate on the
+ * catalogue, not a widening of anything behind it.
+ *
+ * It is declared on each route rather than once on the router, deliberately: the route-guard lint reads a
+ * route's middleware to prove it is guarded, and a check it cannot see is a check it cannot enforce. The
+ * guard exists to make someone state the permission at the route, so the statement goes at the route.
  */
-consoleRouter.use(authenticate, requirePermission(Permission.ConsoleUse));
 
 /**
- * The catalogue is switched off with the console itself (Workspace → Command console, or
- * `CONSOLE_ENABLED=false`), and answers 404 rather than 403 — the same decision the Outlook add-in
+ * The catalogue is switched off with the console itself (Workspace â†’ Command console, or
+ * `CONSOLE_ENABLED=false`), and answers 404 rather than 403 â€” the same decision the Outlook add-in
  * routes make: a feature that is not offered should not look like a permission problem.
  */
 function consoleDisabled(res: Response): boolean {
@@ -57,7 +61,7 @@ function callerPermissions(req: AuthRequest): string[] {
  * `counts.total` is deliberately reported beside `counts.available`: "42 of 78" tells a person what
  * their account is missing without telling them what it contains.
  */
-consoleRouter.get("/catalog", (req: AuthRequest, res) => {
+consoleRouter.get("/catalog", requirePermission(Permission.ConsoleUse), (req: AuthRequest, res) => {
   if (consoleDisabled(res)) return;
 
   const permitted = permittedCommands(callerPermissions(req));
@@ -73,14 +77,14 @@ consoleRouter.get("/catalog", (req: AuthRequest, res) => {
       .filter((group) => group.commands.length > 0),
     /** The console's own verbs: client-side, listed so help is complete on both front ends. */
     verbs: CONSOLE_OWN_VERBS,
-    /** The flags every command accepts (PLAN-028 §9). */
+    /** The flags every command accepts (PLAN-028 Â§9). */
     universalFlags: CONSOLE_UNIVERSAL_FLAGS,
     counts: { available: permitted.length, total: CONSOLE_COMMANDS.length },
   });
 });
 
-/** One command, with its flags, tier and — for the model and the CLI — the route it runs. */
-consoleRouter.get("/catalog/:name", (req: AuthRequest, res) => {
+/** One command, with its flags, tier and â€” for the model and the CLI â€” the route it runs. */
+consoleRouter.get("/catalog/:name", requirePermission(Permission.ConsoleUse), (req: AuthRequest, res) => {
   if (consoleDisabled(res)) return;
 
   // `ticket show` is typed with a space and named with one; a URL cannot carry it unescaped, so both

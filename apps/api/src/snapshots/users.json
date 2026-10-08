@@ -31,6 +31,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "f032badc-4d32-463c-973d-5cf0559f273a",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.912Z",
     "updatedAt": "2026-10-07T00:52:24.737Z"
@@ -67,6 +68,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "52f22c12-60e7-4489-a606-f82710131221",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.973Z",
     "updatedAt": "2026-10-07T00:52:24.743Z"
@@ -103,6 +105,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "f032badc-4d32-463c-973d-5cf0559f273a",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.851Z",
     "updatedAt": "2026-10-07T00:52:24.744Z"
@@ -139,6 +142,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "52f22c12-60e7-4489-a606-f82710131221",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:15.036Z",
     "updatedAt": "2026-10-07T00:52:24.745Z"
@@ -175,6 +179,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "d077b89f-73e4-4f50-ab39-20c9f1f7964a",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:15.099Z",
     "updatedAt": "2026-10-07T00:52:24.746Z"
@@ -211,6 +216,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "ead437af-8f98-4b1c-8716-9435830d4877",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-19T15:53:05.939Z",
     "updatedAt": "2026-10-07T00:52:24.747Z"
@@ -247,6 +253,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-10-07T02:14:32.828Z",
     "updatedAt": "2026-10-08T17:34:33.175Z"
@@ -387,6 +394,7 @@
       "kumo:link:view",
       "kumo:link:manage"
     ],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-19T15:53:41.030Z",
     "updatedAt": "2026-10-07T00:52:24.749Z"
@@ -423,6 +431,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "52f22c12-60e7-4489-a606-f82710131221",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-10-06T23:17:57.482Z",
     "updatedAt": "2026-10-07T00:53:19.360Z"
@@ -464,6 +473,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "52f22c12-60e7-4489-a606-f82710131221",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-10-07T02:14:32.822Z",
     "updatedAt": "2026-10-08T17:35:41.185Z"
@@ -500,6 +510,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "ead437af-8f98-4b1c-8716-9435830d4877",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-19T15:54:06.940Z",
     "updatedAt": "2026-10-07T01:20:55.129Z"
@@ -541,6 +552,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "f032badc-4d32-463c-973d-5cf0559f273a",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-10-07T02:14:32.824Z",
     "updatedAt": "2026-10-08T17:35:38.528Z"
@@ -577,6 +589,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "ead437af-8f98-4b1c-8716-9435830d4877",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-10-07T02:14:32.815Z",
     "updatedAt": "2026-10-08T17:34:27.081Z"
@@ -613,6 +626,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "d077b89f-73e4-4f50-ab39-20c9f1f7964a",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
     "createdAt": "2026-10-07T02:14:32.826Z",
     "updatedAt": "2026-10-08T17:35:36.658Z"
@@ -649,6 +663,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "f032badc-4d32-463c-973d-5cf0559f273a",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
     "createdAt": "2026-10-07T02:15:44.171Z",
     "updatedAt": "2026-10-08T17:35:36.948Z"
@@ -685,6 +700,7 @@
     "mfaEmailCodeExpires": null,
     "roleId": "52f22c12-60e7-4489-a606-f82710131221",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-10-07T09:20:20.411Z",
     "updatedAt": "2026-10-07T09:20:20.411Z"
@@ -703,7 +719,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-08T19:04:16.215Z",
+    "lastLoginAt": "2026-10-08T19:28:03.224Z",
     "emailVerified": true,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -721,8 +737,9 @@
     "mfaEmailCodeExpires": null,
     "roleId": "52f22c12-60e7-4489-a606-f82710131221",
     "permissions": [],
+    "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-10-08T19:04:16.217Z"
+    "updatedAt": "2026-10-08T19:28:03.225Z"
   }
 ]

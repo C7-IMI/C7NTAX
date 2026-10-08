@@ -67,6 +67,11 @@ model User {
   roleId          String
   role            Role              @relation(fields: [roleId], references: [id])
   permissions     String[]          @default([])  // individual overrides (additive to role)
+  /// Permissions removed from this person that their role grants. A **strict subtraction**: a value
+  /// here can only take a permission away, never add one, so it can narrow an account and cannot widen
+  /// one. It exists because the additive override above cannot express "everyone in this role except
+  /// them" — the console is the first permission where that question is routine rather than exotic.
+  deniedPermissions String[]        @default([])
   companyId       String?
   company         Company?          @relation(fields: [companyId], references: [id])
   sessions        Session[]
@@ -211,6 +216,14 @@ model Company {
   portalAllowReplies Boolean?
   /// Where this client's portal-raised tickets land. Null uses the instance's board.
   portalBoardId   String?
+
+  /// The console for this client's staff. **Null inherits** the instance's switch — the same
+  /// three-valued pattern the portal policy above uses, so a deployment that does not care about the
+  /// console never has to set this on a client, and `false` is a deliberate exception rather than the
+  /// default. Applied where permissions are computed (`effectivePermissions`), not in the interface, so
+  /// a client with the console off is answered the same way a person without the permission is: their
+  /// session does not carry `console:use`, and the icon is not drawn because there is nothing to draw.
+  consoleEnabled  Boolean?
 
   /// How far this client has been billed by a bill-through batch (PLAN-015 Phase A #3).
   billThroughDate DateTime?

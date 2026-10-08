@@ -114,6 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("c7_landing");
     localStorage.removeItem("c7_bypass");
     setUser(null);
+    // A stale permission list must not outlive the session it described: the next person to sign in on
+    // this browser would otherwise draw their interface from the previous one's answer.
+    setServerPermissions(null);
     setSession(DEFAULT_SESSION);
   }, [adoptToken]);
 
@@ -133,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem("c7_token");
           setTokenState(null);
           setUser(res.data.user);
+          setServerPermissions(Array.isArray(res.data.permissions) ? res.data.permissions : null);
           setSession({
             cookieMode: true,
             timeoutMinutes: res.data.timeoutMinutes ?? 30,
@@ -207,6 +211,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...res.data.user,
         mustChangePassword: !!res.data.mustChangePassword,
       });
+      // `settleCredentials` re-reads `/auth/session` for cookie clients, which sets these too; a token
+      // client (desktop shell, add-in) has only this response, so it is set here as well.
+      setServerPermissions(Array.isArray(res.data.permissions) ? res.data.permissions : null);
       if (res.data.landingPage) {
         setLandingPage(res.data.landingPage);
         localStorage.setItem(
@@ -230,6 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...res.data.user,
         mustChangePassword: !!res.data.mustChangePassword,
       });
+      setServerPermissions(Array.isArray(res.data.permissions) ? res.data.permissions : null);
       if (res.data.landingPage) {
         setLandingPage(res.data.landingPage);
         localStorage.setItem(
@@ -262,9 +270,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [adoptToken],
   );
 
+  /**
+   * The permissions the **server** says this session holds, or null when it has not said.
+   *
+   * Preferred over anything computed here, and the reason is a defect waiting to happen rather than a
+   * style preference: the effective set is role + individual grants − individual removals − whatever a
+   * client's own switch takes away, and only the server knows the last two. A client-side union of the
+   * role's list with the user's overrides silently *reinstates* a permission that was revoked, which is
+   * how a control the API refuses stays visible in the interface.
+   */
+  const [serverPermissions, setServerPermissions] = useState<string[] | null>(null);
+
   // The API enforces permissions; this mirror is only so the UI can hide controls
   // it knows will be refused (role and permission editing, for instance).
   const permissions = useMemo(() => {
+    if (serverPermissions) return serverPermissions;
+    // A session that has not told us what it holds is an older payload or a client that was offline when
+    // it loaded; the local union is what this did before, kept as the fallback rather than as the rule.
     const role = user?.role;
     const systemRole = typeof role === "string" ? role : role?.systemRole;
     const rolePerms: string[] =
@@ -272,7 +294,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? role.permissions
         : (ROLE_PERMISSIONS[systemRole as SystemRole] ?? []);
     return [...new Set([...rolePerms, ...(user?.permissions ?? [])])];
-  }, [user]);
+  }, [serverPermissions, user]);
 
   const logout = useCallback(() => {
     // End it server-side first: a cookie the browser keeps would otherwise stay valid.

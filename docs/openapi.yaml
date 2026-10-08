@@ -2537,8 +2537,7 @@ paths:
       summary: "The console commands this credential may run"
       description: "The command catalogue, grouped the way `help` prints it and filtered by the caller's own permissions at call time, so a client is told what *it* can run rather than shipped a list it will be refused. Every command names the route it runs and the permission that route checks; the console itself has no permission, and authorizes nothing — it builds the same request the screen builds and lets the route decide (PLAN-028 §6). Reads only: the write commands arrive with PLAN-026's action manifest. `counts.total` is reported beside `counts.available` so a caller can see what its account is missing without being told what it contains. Answers 404 when the console is switched off for the deployment."
       security: [{ "bearerAuth": [] }]
-      x-required-permissions: []
-      x-permission-note: "No permission is required beyond being signed in."
+      x-required-permissions: ["console:use"]
       x-source: "console.ts · consoleRouter.get"
       responses:
         "200": { description: "OK" }
@@ -2553,8 +2552,7 @@ paths:
       summary: "One console command, with its flags and its route"
       description: "A single descriptor, for `c7ntax help <command>` and for tooling. The name is the command as typed (`ticket show`), so it is URL-encoded; `+` is accepted for the space. A command the caller's credential may not run is 404, not 403: the catalogue is filtered rather than guarded, and not being offered a command is indistinguishable from it not existing — which is the same rule the record lookups follow."
       security: [{ "bearerAuth": [] }]
-      x-required-permissions: []
-      x-permission-note: "No permission is required beyond being signed in."
+      x-required-permissions: ["console:use"]
       x-source: "console.ts · consoleRouter.get"
       parameters:
         - name: "name"

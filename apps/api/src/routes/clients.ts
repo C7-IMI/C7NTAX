@@ -191,6 +191,22 @@ clientsRouter.patch("/:id", requirePermission(Permission.ClientEdit), async (req
     for (const key of allowed) {
       if (req.body[key] !== undefined) data[key] = req.body[key];
     }
+    /*
+     * The console is switched off for a client here, but only by somebody who may decide it: `ClientEdit`
+     * is enough to change a client's address, while this decides whether that client's whole staff gets a
+     * command surface — the same class of decision as the deployment's own switch, which requires
+     * `system:config`. A caller without it is not given a 403, because the rest of their request is
+     * perfectly valid; the field is simply not theirs to set, and the response says so rather than
+     * pretending it was applied.
+     */
+    let consoleRefused = false;
+    if (req.body.consoleEnabled !== undefined) {
+      if (req.user?.permissions?.includes(Permission.SystemConfig)) {
+        data.consoleEnabled = req.body.consoleEnabled === null ? null : Boolean(req.body.consoleEnabled);
+      } else {
+        consoleRefused = true;
+      }
+    }
     // Portal branding (PLAN-013 #3) reaches a page customers look at, so it is validated here
     // rather than trusted: a colour has to be a hex value and a logo has to be a real URL.
     if (req.body.portalAccentColor !== undefined) {
@@ -223,7 +239,11 @@ clientsRouter.patch("/:id", requirePermission(Permission.ClientEdit), async (req
       }
     }
     const company = await prisma.company.update({ where: { id: req.params.id }, data: data as any });
-    res.json(company);
+    res.json(
+      consoleRefused
+        ? { ...company, consoleRefused: "Changing this client's console access needs the system:config permission" }
+        : company,
+    );
   } catch (e) { next(e); }
 });
 

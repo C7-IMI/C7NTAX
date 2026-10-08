@@ -6,6 +6,8 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { Save, X, ChevronLeft, Building2, Users, FileText, DollarSign, Ticket, ClipboardList, Clock, Mail, Phone, Globe, MapPin, Badge, Briefcase } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { FlexpointClientCard } from "../components/FlexpointClientCard";
+import { Permission } from "@C7NTAX/shared";
+import { useAuth } from "../hooks/useAuth";
 
 const TYPE_OPTIONS = ["Client", "Prospect", "Vendor", "Partner"];
 const INDUSTRY_OPTIONS = ["", "Technology", "Healthcare", "Finance", "Manufacturing", "Legal", "Education", "Government", "Non-Profit", "Retail", "Construction"];
@@ -21,6 +23,13 @@ export function ClientDetailPage() {
   const [saving, setSaving] = useState(false);
   const [sort, setSort] = useState<SortState | null>(null);
   const navigate = useNavigate();
+  const { permissions } = useAuth();
+  /*
+   * Whether the console is available to this client's people is a deployment-level decision, so the API
+   * only accepts the field from somebody who holds `system:config`. The interface asks the same question
+   * rather than offering a switch that would be silently dropped on save.
+   */
+  const canSetConsole = permissions.includes(Permission.SystemConfig);
 
   const load = async () => {
     try { const r = await api.get(`/clients/${id}`); setClient(r.data); setForm(r.data); }
@@ -31,7 +40,12 @@ export function ClientDetailPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    try { await api.patch(`/clients/${id}`, form); toast.success("Saved"); setEditing(false); load(); }
+    try {
+      const payload: Record<string, unknown> = { ...form };
+      if (!canSetConsole) delete payload.consoleEnabled;
+      await api.patch(`/clients/${id}`, payload);
+      toast.success("Saved"); setEditing(false); load();
+    }
     catch { toast.error("Save failed"); }
     finally { setSaving(false); }
   };
@@ -157,6 +171,50 @@ export function ClientDetailPage() {
                 </div>
                 <p className="text-xs text-gray-600">
                   The API must also be running with <code>PORTAL_ENABLED=true</code>; until then the portal answers 404 to everybody.
+                </p>
+              </div>
+            </Card>
+            {/*
+              * Per client, alongside the per person switch in Users & Roles. A client whose own systems
+              * must never see the console is not the same decision as one technician being denied it, and
+              * this is the one the operator made in words: *"disable the console on a per user or per
+              * client basis"*. Disabled here means the permission is withheld from members of *this* client
+              * only; anyone outside it is unaffected.
+              */}
+            <Card title="Console">
+              <div className="space-y-3" data-hl="client-console">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-white">Command console</p>
+                    <p className="text-xs text-gray-500">
+                      The pop-up terminal in the header, and the <code>/console</code> page behind it. What each
+                      person may run comes from their own permissions — <code>console:use</code> in Users &amp; Roles.
+                    </p>
+                  </div>
+                  <span className={`badge ${client.consoleEnabled === false ? "bg-gray-600/20 text-gray-400" : "bg-green-600/20 text-green-400"}`}>
+                    {client.consoleEnabled === false ? "Disabled" : "Allowed"}
+                  </span>
+                </div>
+                {editing && canSetConsole && (
+                  <label className="flex items-start gap-2 text-sm text-gray-300">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={form.consoleEnabled === false}
+                      onChange={(e) => setForm((p: Record<string, unknown>) => ({ ...p, consoleEnabled: e.target.checked ? false : null }))}
+                    />
+                    <span>
+                      Disable the console for every member of this client
+                      <span className="block text-xs text-gray-500">Leave unchecked to let the workspace setting and each person's permission decide.</span>
+                    </span>
+                  </label>
+                )}
+                {editing && !canSetConsole && (
+                  <p className="text-xs text-gray-500">Changing this needs the <code>system:config</code> permission.</p>
+                )}
+                <p className="text-xs text-gray-600">
+                  The workspace-wide switch lives in Administration → Configuration → Workspace; while it is off
+                  the console answers 404 to everybody, whatever this says.
                 </p>
               </div>
             </Card>

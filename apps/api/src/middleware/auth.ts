@@ -117,9 +117,11 @@ async function sessionIdentity(userId: string, email: string): Promise<AuthUser 
         email: true,
         companyId: true,
         permissions: true,
+        deniedPermissions: true,
         tokenVersion: true,
         isActive: true,
         role: { select: { systemRole: true, permissions: true } },
+        company: { select: { consoleEnabled: true } },
       },
     });
     if (!row || row.isActive === false) return null;
@@ -128,11 +130,7 @@ async function sessionIdentity(userId: string, email: string): Promise<AuthUser 
       email: row.email || email,
       role: row.role.systemRole as SystemRole,
       companyId: row.companyId ?? null,
-      permissions: computePermissions(
-        row.role.systemRole as SystemRole,
-        (row.role.permissions || []) as string[],
-        (row.permissions || []) as string[],
-      ),
+      permissions: effectivePermissions(row),
       // Taken from the row, so the version check below compares like with like: the session
       // is the credential, and a password change invalidates sessions directly.
       tokenVersion: row.tokenVersion,
@@ -252,9 +250,11 @@ async function refreshSessionContext(user: AuthUser, apiKeyScopes?: string[]): P
       where: { id: user.userId },
       select: {
         permissions: true,
+        deniedPermissions: true,
         mustChangePassword: true,
         tokenVersion: true,
         role: { select: { systemRole: true, permissions: true } },
+        company: { select: { consoleEnabled: true } },
       },
     });
   } catch {
@@ -273,18 +273,21 @@ async function refreshSessionContext(user: AuthUser, apiKeyScopes?: string[]): P
       return { valid: false, mustChangePassword: state.mustChangePassword };
     }
 
-    const fresh = computePermissions(
-      dbUser.role.systemRole as SystemRole,
-      dbUser.role.permissions as string[],
-      dbUser.permissions as string[]
-    );
+    const fresh = effectivePermissions(dbUser);
     /*
      * A key holder gets the intersection, recomputed here rather than only at verification, so a
      * scope it may no longer use — because the owner's role changed, or the intersection simply
      * differs — takes effect on the next request instead of never.
      */
     const effective = apiKeyScopes ? fresh.filter(permission => apiKeyScopes.includes(permission)) : fresh;
-    // Always refresh if the DB has different permissions (not just more)
+    /*
+     * Always refresh if the DB has different permissions (not just more).
+     *
+     * This is what makes a *removal* immediate: denying a permission to one person, or switching the
+     * console off for a client, is picked up by the next request this session makes rather than at the
+     * next sign-in. The comparison is against the whole set in both directions for that reason — a
+     * check for "more to add" alone would let a revocation sit unnoticed until the session expired.
+     */
     const hasNew = effective.some(p => !user.permissions.includes(p));
     const hasLess = user.permissions.some(p => !effective.includes(p));
     if (hasNew || hasLess) {
@@ -356,4 +359,49 @@ export function computePermissions(roleSystemRole: SystemRole, rolePermissions: 
   const base = rolePermissions.length > 0 ? rolePermissions : (ROLE_PERMISSIONS[roleSystemRole] || []);
   const merged = new Set([...base, ...userOverrides]);
   return [...merged] as Permission[];
+}
+
+/** The shape `effectivePermissions` needs: a loaded user with its role, its client and its override lists. */export interface PermissionSubject {
+  role: { systemRole: string; permissions?: string[] | null };
+  /** Individual grants, added to the role. */
+  permissions?: string[] | null;
+  /** Individual removals, subtracted from the result. */
+  deniedPermissions?: string[] | null;
+  /** The client this person belongs to, when they belong to one. */
+  company?: { consoleEnabled?: boolean | null } | null;
+}
+
+/**
+ * The permissions a person actually holds — the one place the whole answer is assembled.
+ *
+ * Three layers, applied in this order, and the order is the argument:
+ *
+ * 1. **Role + individual grants.** Unchanged: what the role gives, plus anything added for this person.
+ * 2. **Individual removals** (`User.deniedPermissions`). A **strict subtraction** — it can only take
+ *    permissions away, never add them — which is what makes "everybody in this role except them"
+ *    expressible. An additive override cannot say that, and it is the question administrators ask first.
+ * 3. **The client's console switch** (`Company.consoleEnabled === false`). Applied here rather than in
+ *    the interface so that a client with the console off is indistinguishable, to every screen and every
+ *    route, from a person who was never granted it. See `ConsoleUse` for why the console is the one
+ *    permission treated this way.
+ *
+ * Everything that needs to know a caller's permissions goes through this, which is why a change to any
+ * of the three takes effect on the **next request** rather than at the next sign-in: the session
+ * refresh recomputes and compares (see `validateSession`).
+ */
+export function effectivePermissions(subject: PermissionSubject): Permission[] {
+  const granted = computePermissions(
+    subject.role.systemRole as SystemRole,
+    (subject.role.permissions || []) as string[],
+    (subject.permissions || []) as string[],
+  );
+
+  const denied = new Set<string>(subject.deniedPermissions ?? []);
+  let effective = granted.filter((permission) => !denied.has(permission));
+
+  if (subject.company?.consoleEnabled === false) {
+    effective = effective.filter((permission) => permission !== Permission.ConsoleUse);
+  }
+
+  return effective;
 }

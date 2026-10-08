@@ -83,7 +83,11 @@ usersRouter.get("/", requirePermission(Permission.UserManage), async (req: AuthR
           id: true, email: true, username: true, firstName: true, lastName: true, title: true,
           department: true, costRate: true,
           role: { select: { id: true, systemRole: true, name: true, permissions: true } },
-          permissions: true, isActive: true, isLocked: true, mfaEnabled: true, mustChangePassword: true,
+          permissions: true,
+          // Read out so the editor can show what has been taken away as well as what was added; without
+          // it, a screen that draws the grants alone would look like the removal had not been saved.
+          deniedPermissions: true,
+          isActive: true, isLocked: true, mfaEnabled: true, mustChangePassword: true,
           lastLoginAt: true, createdAt: true, company: { select: { id: true, name: true } },
         },
       }),
@@ -306,7 +310,9 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
 
     // Assigning roles or individual permissions is a privilege change, so it needs
     // RoleManage — and never on your own account, which is how escalation happens.
-    const touchesPermissions = req.body.role !== undefined || req.body.roleId !== undefined || req.body.permissions !== undefined;
+    const touchesPermissions =
+      req.body.role !== undefined || req.body.roleId !== undefined ||
+      req.body.permissions !== undefined || req.body.deniedPermissions !== undefined;
     if (touchesPermissions) {
       if (isSelf) throw new AppError("You cannot change your own role or permissions", 403);
       if (!canManageRoles) throw new AppError("Managing roles and permissions requires the role:manage permission", 403);
@@ -316,10 +322,32 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
     let passwordReset = false;
     const allowed = [
       "firstName", "lastName", "title", "phone", "mobile", "companyId", "isActive", "permissions",
-      "username", "department", "timezone", "reportsToId", "costRate",
+      "deniedPermissions", "username", "department", "timezone", "reportsToId", "costRate",
     ];
     for (const key of allowed) {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
+    /*
+     * A removal list that removed something needed to put it back would be a trap: an administrator who
+     * denied themselves `user:manage` could not undo it from the interface, and the recovery is a
+     * database edit. The escalation rules above already refuse self-edits, so this is the same boundary
+     * stated for the subtractive direction — and the message says what to do instead.
+     */
+    if (updates.deniedPermissions !== undefined) {
+      if (!Array.isArray(updates.deniedPermissions)) {
+        throw new AppError("deniedPermissions must be an array of permission names", 400);
+      }
+      const invalid = (updates.deniedPermissions as string[]).filter(
+        // Compared against the enum's **values**, not its keys: `"console:use" in Permission` is false for
+        // a string enum, because `in` looks at member names. That mistake rejected every valid permission.
+        (name) => !(Object.values(Permission) as string[]).includes(name),
+      );
+      if (invalid.length > 0) {
+        throw new AppError(`Not a permission: ${invalid.join(", ")}`, 400);
+      }
+      if (isSelf && (updates.deniedPermissions as string[]).includes(Permission.UserManage)) {
+        throw new AppError("You cannot remove user:manage from your own account — ask another administrator", 400);
+      }
     }
     // An internal cost rate is what the margin reports price labour with, so an empty box clears it
     // rather than storing zero — "not recorded" and "free" are different answers.
