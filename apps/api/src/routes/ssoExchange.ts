@@ -3,15 +3,22 @@ import { prisma } from "../index";
 import { signToken, JWT_SECRET } from "../middleware/auth";
 import { safeFetch } from "../services/egress";
 import { startSession } from "../services/signIn";
+import { domainAllowed, resolveOidcSettings, type OidcSettings } from "../services/ssoSettings";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { SystemRole } from "@C7NTAX/shared";
 
-// Backlog item 6 — SSO OIDC login path (env-gated; no new dependencies).
-// Supports Keycloak / Entra ID / Okta / Auth0 via standard OIDC discovery.
+// Backlog item 6 — SSO OIDC login path.
+// Supports Keycloak / Entra ID / Okta / Auth0 via standard OIDC discovery. The provider is
+// configured at Administration → Single Sign-On (stored), with the environment variables this
+// feature shipped with as the fallback; `services/ssoSettings.ts` reconciles the two.
 export const ssoExchangeRouter = Router();
 
-const enabled = () => process.env.SSO_ENABLED === "true" && !!process.env.SSO_ISSUER;
+/** The settings to hand a handshake, or null when sign-in is off or the provider is unfinished. */
+async function requireOidc(): Promise<OidcSettings | null> {
+  const settings = await resolveOidcSettings();
+  return settings.enabled ? settings : null;
+}
 
 /** Where the in-flight OIDC nonce lives between /oidc/start and /oidc/callback. */
 const SSO_STATE_KEY = "sso:oidc_state";
@@ -52,9 +59,10 @@ async function verifyIdToken(idToken: string, issuer: string, clientId: string):
 
 ssoExchangeRouter.get("/oidc/start", async (req, res, next) => {
   try {
-    if (!enabled()) return res.status(404).json({ error: "SSO disabled" });
-    const issuer = process.env.SSO_ISSUER!.replace(/\/$/, "");
-    const discovery = await safeFetch(`${issuer}/.well-known/openid-configuration`, { purpose: "sso" });
+    const settings = await requireOidc();
+    if (!settings) return res.status(404).json({ error: "SSO disabled" });
+    const discovery = await safeFetch(`${settings.issuer}/.well-known/openid-configuration`, { purpose: "sso" });
+    if (!discovery.ok) return res.status(502).json({ error: `The identity provider's discovery document answered HTTP ${discovery.status}` });
     const { authorization_endpoint } = (await discovery.json()) as { authorization_endpoint: string };
     const state = crypto.randomBytes(16).toString("hex");
     // Remember the nonce so the callback can prove it started this handshake.
@@ -65,9 +73,9 @@ ssoExchangeRouter.get("/oidc/start", async (req, res, next) => {
     });
     const params = new URLSearchParams({
       response_type: "code",
-      client_id: process.env.SSO_CLIENT_ID!,
-      redirect_uri: process.env.SSO_REDIRECT_URI || `${process.env.WEB_ORIGIN || "http://localhost:3010"}/api/auth/sso/oidc/callback`,
-      scope: "openid email profile",
+      client_id: settings.clientId,
+      redirect_uri: settings.redirectUri,
+      scope: settings.scopes,
       state,
     });
     res.redirect(`${authorization_endpoint}?${params.toString()}`);
@@ -76,7 +84,8 @@ ssoExchangeRouter.get("/oidc/start", async (req, res, next) => {
 
 ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
   try {
-    if (!enabled()) return res.status(404).json({ error: "SSO disabled" });
+    const settings = await requireOidc();
+    if (!settings) return res.status(404).json({ error: "SSO disabled" });
     const { code, state, error } = req.query as Record<string, string>;
     if (error || !code) return res.status(400).json({ error: error || "No authorization code" });
 
@@ -91,34 +100,45 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
     }
     await prisma.systemConfig.deleteMany({ where: { key: SSO_STATE_KEY } });
 
-    const issuer = process.env.SSO_ISSUER!.replace(/\/$/, "");
-    const discovery = await safeFetch(`${issuer}/.well-known/openid-configuration`, { purpose: "sso" });
+    const discovery = await safeFetch(`${settings.issuer}/.well-known/openid-configuration`, { purpose: "sso" });
     const { token_endpoint } = (await discovery.json()) as { token_endpoint: string };
     const tokenRes = await safeFetch(token_endpoint, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         grant_type: "authorization_code",
-        code, redirect_uri: process.env.SSO_REDIRECT_URI || `${process.env.WEB_ORIGIN || "http://localhost:3010"}/api/auth/sso/oidc/callback`,
-        client_id: process.env.SSO_CLIENT_ID!,
-        client_secret: process.env.SSO_CLIENT_SECRET || "",
+        code, redirect_uri: settings.redirectUri,
+        client_id: settings.clientId,
+        client_secret: settings.clientSecret,
       }),
     });
     if (!tokenRes.ok) return res.status(401).json({ error: "Token exchange failed" });
     const tokens = (await tokenRes.json()) as { id_token: string };
-    const claims = await verifyIdToken(tokens.id_token, issuer, process.env.SSO_CLIENT_ID!);
+    const claims = await verifyIdToken(tokens.id_token, settings.issuer, settings.clientId);
     const email = (claims.email || claims.preferred_username || "").toLowerCase();
     if (!email) return res.status(401).json({ error: "No email in ID token" });
 
+    // The provider vouches for the identity; the deployment decides which identities it will accept.
+    if (!domainAllowed(email, settings.domains)) {
+      return res.status(403).json({ error: `${email} is not in a domain this deployment accepts for single sign-on` });
+    }
+
     let user = await prisma.user.findUnique({ where: { email }, include: { role: true } });
     if (!user) {
-      // An identity the IdP vouches for but we have never seen is not automatically
-      // an administrator: it is created inactive and read-only, and an administrator
-      // decides what it may do.
-      const role = await prisma.role.findFirst({ where: { systemRole: "read_only" } })
+      if (!settings.jitProvisioning) {
+        return res.status(403).json({ error: "No account exists for that address — ask an administrator to create one" });
+      }
+      // An identity the IdP vouches for but we have never seen is not automatically an
+      // administrator. The role comes from the configuration, and an administrator decides whether
+      // it may be used straight away — a privileged role never activates itself, whatever the
+      // configuration says, because that would be a way to mint an admin from the login page.
+      const role = (settings.defaultRoleId ? await prisma.role.findUnique({ where: { id: settings.defaultRoleId } }) : null)
+        ?? await prisma.role.findFirst({ where: { systemRole: "read_only" } })
         ?? await prisma.role.findFirst({ where: { systemRole: "client_user" } })
         ?? await prisma.role.findFirst({ where: { systemRole: "technician" } });
       if (!role) return res.status(500).json({ error: "No role available for a new SSO user" });
+      const privileged = role.systemRole === "admin" || role.systemRole === "super_admin";
+      const activate = settings.autoActivate && !privileged;
       const created = await prisma.user.create({
         data: {
           email,
@@ -127,12 +147,15 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
           lastName: claims.name?.split(" ").slice(1).join(" ") || "",
           roleId: role.id,
           emailVerified: true,
-          isActive: false,
+          isActive: activate,
         },
       });
-      console.log(`[SSO] Created inactive read-only account for ${email} — an administrator must enable it and assign a role.`);
+      if (!activate) {
+        console.log(`[SSO] Created inactive account for ${email} as ${role.name} — an administrator must enable it.`);
+        return res.status(403).json({ error: "Your account was created but is not active yet — ask an administrator to enable it" });
+      }
+      console.log(`[SSO] Provisioned ${email} on first sign-in as ${role.name}.`);
       user = await prisma.user.findUnique({ where: { id: created.id }, include: { role: true } });
-      return res.status(403).json({ error: "Your account was created but is not active yet — ask an administrator to enable it" });
     }
     if (!user.isActive) {
       return res.status(403).json({ error: "Your account is inactive — ask an administrator to enable it" });
@@ -160,7 +183,7 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
  */
 ssoExchangeRouter.post("/exchange", async (req, res, next) => {
   try {
-    if (!enabled()) return res.status(404).json({ error: "SSO disabled" });
+    if (!(await requireOidc())) return res.status(404).json({ error: "SSO disabled" });
     const suppliedCode = typeof req.body?.code === "string" ? req.body.code : "";
     if (!suppliedCode) return res.status(400).json({ error: "No code supplied" });
     const stored = await prisma.systemConfig.findUnique({ where: { key: SSO_CODE_KEY } });
@@ -193,6 +216,7 @@ ssoExchangeRouter.post("/exchange", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-ssoExchangeRouter.get("/status", (_req, res) => {
-  res.json({ enabled: enabled(), provider: enabled() ? process.env.SSO_ISSUER : null });
+ssoExchangeRouter.get("/status", async (_req, res) => {
+  const settings = await resolveOidcSettings();
+  res.json({ enabled: settings.enabled, provider: settings.enabled ? settings.issuer : null, problem: settings.problem });
 });

@@ -40,6 +40,7 @@ import {
 } from "../services/appSettings";
 import { resolvePortalBoardId } from "../services/portalBoard";
 import { portalEnabled } from "../services/portalAuth";
+import { oidcConfigured } from "../services/ssoSettings";
 
 export const configurationRouter = Router();
 configurationRouter.use(authenticate);
@@ -139,22 +140,27 @@ configurationRouter.get(
         readPermission: section.readPermission,
         writePermission: section.writePermission,
         writable: has(req, section.writePermission),
-        requirements: (section.requirements ?? []).map(requirement => {
+        requirements: await Promise.all((section.requirements ?? []).map(async requirement => {
           const missing = (requirement.env ?? []).filter(name => {
             const value = process.env[name];
             return value === undefined || value === "";
           });
+          // A requirement can also be satisfied by something configured in the application rather
+          // than in the deployment: an identity provider saved on its own screen, for instance.
+          const providedOk = requirement.providedBy === "oidcProvider" ? await oidcConfigured() : false;
+          const met = missing.length === 0 || providedOk;
           return {
             label: requirement.label,
             detail: requirement.detail,
             env: requirement.env ?? [],
-            missing,
-            met: missing.length === 0,
+            missing: met ? [] : missing,
+            met,
+            satisfiedBy: missing.length === 0 ? "environment" : providedOk ? "application" : null,
             whenField: requirement.whenField ?? null,
             // A requirement is only worth reporting while the feature that needs it is on.
             applies: requirement.whenField ? configValue(section.id, requirement.whenField) === true : true,
           };
-        }),
+        })),
         fields: section.fields.map(field => renderField(section, field, choices, req)),
       }));
 

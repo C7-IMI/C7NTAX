@@ -94,6 +94,13 @@ export interface ConfigRequirementSpec {
   label: string;
   /** All of these environment variables are needed for the requirement to be met. */
   env?: string[];
+  /**
+   * A server-side check that can satisfy the requirement without any environment variable —
+   * `oidcProvider` is met by a provider configured on Administration → Single Sign-On. Naming the
+   * check rather than the value keeps the registry declarative: the API decides what "configured"
+   * means, and the screen only has to render the answer.
+   */
+  providedBy?: "oidcProvider";
   detail: string;
   /** Only relevant while the named boolean field in this section is on. */
   whenField?: string;
@@ -222,8 +229,10 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
       {
         label: "An identity provider (single sign-on)",
         env: ["SSO_ISSUER"],
+        providedBy: "oidcProvider",
         whenField: "sso",
-        detail: "Single sign-on needs the issuer URL the OIDC handshake starts from.",
+        detail:
+          "Single sign-on needs an issuer URL and a client id. Configure them at Administration → Single Sign-On, or supply SSO_ISSUER and SSO_CLIENT_ID to the deployment.",
       },
     ],
     fields: [
@@ -313,7 +322,7 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         label: "Single sign-on (OIDC)",
         summary: "Send sign-in to an identity provider instead of asking for a password.",
         detail:
-          "Additive: password sign-in keeps working as a fallback. The issuer URL is an environment value, so this can only be switched on where one exists.",
+          "Additive: password sign-in keeps working as a fallback. Configure the provider at Administration → Single Sign-On — the issuer, the client credentials and the redirect URI to register there — and this switch decides whether it is offered.",
         type: "boolean",
         source: "setting",
         env: "SSO_ENABLED",

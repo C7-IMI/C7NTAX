@@ -205620,6 +205620,22 @@
     "createdAt": "2026-10-08T00:29:05.782Z"
   },
   {
+    "id": "5d7c263c-9a19-4f66-aa40-85697527e62d",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "services",
+    "changes": {
+      "name": "ProbeWebhook muyzx7nn",
+      "enabled": true,
+      "category": "other",
+      "description": "probe",
+      "monitorEnabled": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:46.601Z"
+  },
+  {
     "id": "16ad0729-d426-4c6d-a275-1a02a41930ee",
     "action": "outlook-addin:create",
     "entity": "outlook-addin",
@@ -206063,5 +206079,308 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T03:36:39.287Z"
+  },
+  {
+    "id": "778fd5cc-0948-4bb4-9415-739978d7bbf6",
+    "action": "alert-webhooks:create",
+    "entity": "alert-webhooks",
+    "entityId": "alert-webhooks",
+    "changes": {
+      "url": "http://127.0.0.1:4125/ok",
+      "name": "Probe hook muyzx7nn",
+      "events": [
+        "service_alert.raised"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:46.594Z"
+  },
+  {
+    "id": "6b3fc5cd-67cc-49d6-97a0-1530495e79df",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "service-alerts",
+    "changes": {
+      "title": "ProbeWebhook muyzx7nn is down",
+      "severity": "outage",
+      "serviceId": "30fa0b44-69f8-42b6-9dae-1e05962007e7"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:46.607Z"
+  },
+  {
+    "id": "6da63535-635e-45d5-9f92-69099cfe11cc",
+    "action": "alert-webhooks:create",
+    "entity": "alert-webhooks",
+    "entityId": "alert-webhooks",
+    "changes": {
+      "url": "http://127.0.0.1:4125/quiet",
+      "name": "Probe hook resolved muyzx7nn",
+      "events": [
+        "service_alert.resolved"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:46.875Z"
+  },
+  {
+    "id": "845380d7-c656-48df-a4ba-c1ded7a29633",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "service-alerts",
+    "changes": {
+      "title": "ProbeWebhook muyzx7nn degraded",
+      "severity": "degraded",
+      "serviceId": "30fa0b44-69f8-42b6-9dae-1e05962007e7"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:46.885Z"
+  },
+  {
+    "id": "91ff4aa6-e39d-4796-b27f-16afdff000bb",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "d4b6243f-5ba6-4d97-b72f-2f5dde2f7ab9",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:47.150Z"
+  },
+  {
+    "id": "1e4e9c84-785d-47cb-a2c3-5d6dfa924221",
+    "action": "alert-webhooks:create",
+    "entity": "alert-webhooks",
+    "entityId": "alert-webhooks",
+    "changes": {
+      "url": "http://127.0.0.1:4125/broken",
+      "name": "Probe hook broken muyzx7nn",
+      "events": [
+        "service_alert.raised"
+      ],
+      "retryCount": 2
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:47.414Z"
+  },
+  {
+    "id": "894bcddd-cc2a-44b1-a57e-95caeb862988",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "service-alerts",
+    "changes": {
+      "title": "ProbeWebhook muyzx7nn again",
+      "severity": "degraded",
+      "serviceId": "30fa0b44-69f8-42b6-9dae-1e05962007e7"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:47.419Z"
+  },
+  {
+    "id": "693f72f7-17ae-43ae-8105-ee21b7c42988",
+    "action": "alert-webhooks:create",
+    "entity": "alert-webhooks",
+    "entityId": "f2813d86-d41e-47a9-a197-cc1bd128afd1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:48.509Z"
+  },
+  {
+    "id": "17672c88-c45e-49f6-b958-14517a40cef4",
+    "action": "alert-webhooks:create",
+    "entity": "alert-webhooks",
+    "entityId": "f2813d86-d41e-47a9-a197-cc1bd128afd1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:48.524Z"
+  },
+  {
+    "id": "3db8a9f3-9eb4-4ad3-927b-4b5f29704309",
+    "action": "alert-webhooks:update",
+    "entity": "alert-webhooks",
+    "entityId": "f2813d86-d41e-47a9-a197-cc1bd128afd1",
+    "changes": {
+      "isActive": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:48.531Z"
+  },
+  {
+    "id": "aeab9153-74cf-4ba7-942d-79dc3a57fea2",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "service-alerts",
+    "changes": {
+      "title": "ProbeWebhook muyzx7nn while parked",
+      "severity": "informational",
+      "serviceId": "30fa0b44-69f8-42b6-9dae-1e05962007e7"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:48.538Z"
+  },
+  {
+    "id": "c9c21e06-09ca-42d5-a5cf-767e14c666ec",
+    "action": "alert-webhooks:update",
+    "entity": "alert-webhooks",
+    "entityId": "f2813d86-d41e-47a9-a197-cc1bd128afd1",
+    "changes": {
+      "isActive": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:51.054Z"
+  },
+  {
+    "id": "996f2a08-5e75-494f-bbe9-bddcc8842d19",
+    "action": "alert-webhooks:update",
+    "entity": "alert-webhooks",
+    "entityId": "f2813d86-d41e-47a9-a197-cc1bd128afd1",
+    "changes": {
+      "url": "http://127.0.0.1:4125/moved",
+      "name": "Probe hook renamed muyzx7nn",
+      "events": [
+        "service_alert.resolved"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:51.058Z"
+  },
+  {
+    "id": "650b8214-2c63-48c9-bd31-1b966fe09b1e",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "service-alerts",
+    "changes": {
+      "title": "ProbeWebhook muyzx7nn moved",
+      "severity": "degraded",
+      "serviceId": "30fa0b44-69f8-42b6-9dae-1e05962007e7"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:51.065Z"
+  },
+  {
+    "id": "6e15e3ea-c42c-4c6c-983a-33eef66c195f",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "c91be7c2-0698-473a-b128-c61f2ca1bc2d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:51.070Z"
+  },
+  {
+    "id": "5ce8e5f1-a283-4a3c-8281-93394a87d0d3",
+    "action": "alert-webhooks:delete",
+    "entity": "alert-webhooks",
+    "entityId": "f2813d86-d41e-47a9-a197-cc1bd128afd1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:51.335Z"
+  },
+  {
+    "id": "e2c6246b-ab55-4511-9118-21c0d4c78605",
+    "action": "alert-webhooks:delete",
+    "entity": "alert-webhooks",
+    "entityId": "ad58046a-46a3-45f9-961a-f68a975f74c3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:51.586Z"
+  },
+  {
+    "id": "1f36570d-908f-450a-86d9-c63767660500",
+    "action": "alert-webhooks:delete",
+    "entity": "alert-webhooks",
+    "entityId": "08c5e5f8-972e-48fc-8468-e5fe2cfa3496",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T03:47:51.829Z"
+  },
+  {
+    "id": "7ff9819f-273d-4df5-9ec1-913d7381df9b",
+    "action": "alert-webhooks:create",
+    "entity": "alert-webhooks",
+    "entityId": "alert-webhooks",
+    "changes": {
+      "url": "http://127.0.0.1:4125/ui",
+      "name": "Probe UI endpoint",
+      "events": [
+        "service_alert.raised",
+        "service_alert.resolved"
+      ],
+      "retryCount": 2
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T03:49:49.648Z"
+  },
+  {
+    "id": "f6632872-2c3b-43a8-97ec-b4c41863c8f2",
+    "action": "alert-webhooks:create",
+    "entity": "alert-webhooks",
+    "entityId": "alert-webhooks",
+    "changes": {
+      "url": "http://127.0.0.1:4125/ui",
+      "name": "Probe UI endpoint",
+      "events": [
+        "service_alert.raised",
+        "service_alert.resolved"
+      ],
+      "retryCount": 2
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T03:50:13.431Z"
+  },
+  {
+    "id": "692627bd-7fae-40e7-9ba6-f102b0f88c25",
+    "action": "alert-webhooks:create",
+    "entity": "alert-webhooks",
+    "entityId": "cc1fb19d-3ecd-4a86-b375-5b45eb8b87c1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T03:50:15.949Z"
+  },
+  {
+    "id": "a01375b5-9a46-4aac-8483-f5cc251fb4ed",
+    "action": "alert-webhooks:delete",
+    "entity": "alert-webhooks",
+    "entityId": "cc1fb19d-3ecd-4a86-b375-5b45eb8b87c1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T03:50:17.822Z"
   }
 ]
