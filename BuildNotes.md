@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.047 | Last Updated: 2026-10-08
+## Version: 2026.10.8.048 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,50 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.048 — The leftovers: a dead router, a tracked build artifact, three leaky probes, and a register of what was left on purpose
+
+A sweep of everything the day's work had flagged and not finished, plus PLAN-029 — the register of what was
+deliberately left alone because finishing it would break something or because it is a decision rather than a
+task.
+
+- **[Fix]** **The duplicate `rolesRouter` in `users.ts` is gone.** The file carried a second, never-mounted
+  roles router whose own note said *"deleting it is a follow-up cleanup"*. Nothing imported it, the
+  permissions catalogue is served to the SPA straight from `@C7NTAX/shared` anyway, and the mounted
+  `routes/roles.ts` has served the same endpoints all along — `users.ts` lost 77 lines and one now-unused
+  import. `guard:routes` reports 433 routes with 382 guarded, down from 439/388, which is the six guarded
+  declarations that were unreachable.
+- **[Fix]** **`apps/web/tsconfig.tsbuildinfo` was tracked.** TypeScript's incremental-build cache is machine
+  state that changes on every compile, so every commit carried a diff of it and nobody could merge that file.
+  Untracked, and `*.tsbuildinfo` added to `.gitignore` so it cannot come back.
+- **[Fix]** **The three probes that cleaned up only on their happy path now clean up on every path.**
+  `probe-time-rules.mjs`, `probe-time-rules-flag.mjs` and `probe-expenses.mjs` each ended with their tidy-up
+  as the last statements of `main`, and `void main()` handed any exception straight to Node — which is how the
+  dev database collected a "TimeRules Probe …" and an "Expense Probe …" client in the first place. Each now
+  carries one run stamp in its client's name and one idempotent `sweep()`, called from the end of `main` and
+  from `catch`. **Verified by forcing the failure**: a throw inserted after the client is created printed
+  `probe failed: deliberate failure…` and left **zero** `TimeRules Probe` clients behind, which is the
+  assertion the fix needed rather than a happy-path run that would have cleaned up anyway.
+- **[Fix]** **PLAN-028's own text was stale.** Its header and §10 still described the header icon as an inert
+  `Terminal` glyph reading "Console (coming soon)"; the registry in `PlanDocs/README.md` still claimed the
+  console added **no new permission**, which stopped being true when `console:use` arrived. Both now say what
+  exists, and the registry carries a row for PLAN-029.
+- **[New]** **`PlanDocs/PLAN-029-Deferred-Work-and-Known-Risks.md`** — the register of what was found and left:
+  the **committed snapshot's secrets** (plaintext connector credentials in `integrations.json`, the vault's
+  ciphertext whose *development* key is a constant in the source, password hashes and MFA seeds in
+  `users.json` — deferred because redacting the capture without teaching `seed-from-snapshots.ts` to
+  substitute placeholders breaks the re-seed, and the real remediation is rotating what was exposed); the
+  **API's emitted tree versus its `start` script**; the **unmounted `tenants.ts`** router; the **gap in
+  `guard:console`** that let three wrong client column descriptors live until a screenshot found them; and
+  five smaller things, each with its reason and its cost.
+
+**Verification:** `pnpm lint` 6 of 6; API `tsc` clean; `guard:routes` and `check-help-links` green (the route
+count moved and nothing else did). The two time-rules probes and the expenses probe were run against the live
+API, and `pnpm probes:sweep` afterwards reports **no residue of any kind** — the check that this work exists
+to pass. The caught-failure test above was run with a temporary copy of the probe and both temp files were
+removed.
 
 ---
 

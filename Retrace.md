@@ -6273,3 +6273,34 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 **Notes for next time**
 - **`readStorage` is doing a lot of work in this component** — history, aliases, panel size, and now the mode — and each one adds a key that outlives a refactor. If a fifth arrives, that is the moment to group them under one versioned object rather than adding a fifth key.
 - **The switch is absent from `help`,** which is deliberate: the console's own verbs describe commands, and a rendering preference is not a command. Worth remembering if the modes ever become scripts' concern, because then `context` should print it.
+### Prompt 287 — Sweeping up the leftovers, and a register for the rest
+
+**Timestamp:** 2026-10-08 15:41 | **Status:** Complete (four fixes, one new plan doc, verified) | **Duration:** ~35 min
+
+**BuildNotes IDs:** **2026.10.8.048** — "The leftovers: a dead router, a tracked build artifact, three leaky probes, and a register of what was left on purpose"
+
+**Prompt**
+
+> Look back through the chat history and codebase and complete any items you have left over. Flagged, but not touched. Pending fixes, etc. The only items I don't want you to finish are things that will break the app. List them in a plan doc
+
+**What I did**
+- **Read the records rather than trusting memory.** Grepped this session's Retrace entries and the checkpoints for every "flagged", "owed", "left alone" and "notes for next time", then checked each one against the codebase — which is how the CI items from earlier in the day turned out to be *already done* (`security.yml` carries the trivy bump with its explanation and the `prisma generate` step), and how the still-open ones were separated from the ones that only looked open.
+- **Finished the four that were safe.**
+  - **The duplicate `rolesRouter`.** A second roles router in `users.ts` that nothing mounted, carrying its own note saying deletion was a follow-up. Verified first that the mounted `routes/roles.ts` serves the same endpoints and that the only route the dead copy added (`/permissions/catalog`) is redundant — the catalogue reaches the SPA from `@C7NTAX/shared` — then removed 77 lines and the import that only it used.
+  - **The tracked `tsconfig.tsbuildinfo`.** Machine state in version control; untracked and ignored.
+  - **The three probes.** Same fault as the two fixed earlier in the day: cleanup written as the last statement of the happy path, with `void main()` handing exceptions past it. One run stamp, one idempotent `sweep()`, called from the end of `main` and from `catch`.
+  - **Stale plan text.** PLAN-028's header and §10 still described an inert placeholder icon, and the registry still claimed the console added no permission.
+- **Wrote the register instead of guessing at the rest.** `PLAN-029` documents what was found and left, and for each one whether it is *deferred because it would break something* or *a decision the operator owns* — the snapshot's committed secrets, the API's emitted tree versus its `start` script, the unmounted `tenants` router, the `guard:console` gap, and five smaller items.
+- **Proved the probe fix rather than asserting it.** A happy-path run of a probe that now sweeps cleans up the same way the old inline code did, which proves nothing about the failure path — so I copied the probe, inserted a `throw` immediately after it creates its client, and ran it: the `catch` fired, the sweep ran, and the residue count was **zero**. That is the only test that distinguishes the new code from the old.
+
+**The one that got away, and what it cost**
+- **`Set-Content -Encoding utf8` corrupted the file I was editing,** because PowerShell 5.1 reads a UTF-8 file as ANSI: every em dash in `users.ts` became `â€”`, and the write added a BOM and CRLF endings. The diff caught it immediately (`git diff` showed a mojibake line), the file was restored with `git checkout`, and the deletion was redone through Node with `readFileSync(p, "utf8")`/`writeFileSync(p, …, "utf8")`, which round-trips bytes faithfully. The next attempt then failed its own safety check because the file uses CRLF and the check looked for `});` at the end of an LF-split line — which is the check doing its job: it refused to write rather than truncating a line.
+
+**Decisions worth remembering**
+- **A deferred item needs a reason, an owner and a cost, or it is just a note.** PLAN-029 is written so each entry says which of the three it is and what doing it properly would take; the one that matters most (the committed snapshot) leads the document, because its remediation includes *rotating* credentials and rotation has a clock.
+- **The best test of a cleanup fix is a deliberate failure.** Every probe here already had a happy path that cleaned up; the bug was never in that path. Inserting the throw took two minutes and is the difference between "the code looks right" and "the residue is zero when it fails".
+- **Verify a claim before inheriting it.** Two items on the list were already done, and one flagged item (the unmounted `tenants` router) is not mine to decide — reading took less time than acting would have.
+
+**Notes for next time**
+- **Never use `Get-Content`/`Set-Content` on a source file in this shell.** PowerShell 5.1's default encoding is ANSI, so the round trip mangles every non-ASCII character and adds a BOM. Use the `edit` tool, or Node with explicit UTF-8 on both ends. The same class of mistake (an editor that does not preserve encoding) is worth suspecting whenever a diff shows `â€` where a dash should be.
+- **`git restore` is the right first move when an automated edit goes wrong**, before trying to repair it by hand: the file was back to a known-good state in one command, and the intended change could then be redone with a correct tool.

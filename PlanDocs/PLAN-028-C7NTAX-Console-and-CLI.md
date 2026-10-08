@@ -1,8 +1,9 @@
 # PLAN-028 — The C7NTAX console and CLI: running commands against the application
 
 > **Sequence:** filed 2026-10-08, at the operator's request: *"We will be creating a console/shell that
-> commands can be run to control C7NTAX."* The header icon is already in place as a placeholder
-> (BuildNotes 2026.10.8.029) and is deliberately inert.
+> commands can be run to control C7NTAX."* The header icon went in place as a placeholder
+> (BuildNotes 2026.10.8.029) and is live as of 2026.10.8.038 — a labelled **Console** button with the
+> popup, the `/console` page, the `c7ntax` CLI and the command catalogue behind it.
 > **What it is:** a **command surface for the application** — a typed grammar (`ticket show 1001`) parsed
 > against the same action manifest PLAN-026 defines, executed through the same routes, under the same
 > permissions, with the same audit. Not a new capability and not a second authorization model: a
@@ -501,9 +502,11 @@ route refused", and it is why the route's own words are surfaced rather than tra
 
 ## 10. The in-app surface
 
-**The header icon is already there** — a `Terminal` glyph to the left of Search, `aria-label="Console
-(coming soon)"`, inert (BuildNotes 2026.10.8.029). Phase 1 makes it real; nothing else about the header
-changes.
+**The header icon is already there** — it was a `Terminal` glyph to the left of Search, inert
+(BuildNotes 2026.10.8.029). Phase 1 made it real, and it has since become an unlabelled glyph no longer: it
+is a labelled `SquareTerminal` reading **Console**, the same treatment as its neighbours, with the
+Basic/Advanced switch and the resize handles beside it. §10's drawer never shipped — the frame is a popup by
+the operator's instruction, and the status note at the top of this plan is where each deviation is recorded.
 
 **Two shapes of the same surface, because output can be long:**
 

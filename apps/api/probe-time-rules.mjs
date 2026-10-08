@@ -44,6 +44,37 @@ async function call(method, path, { token, body } = {}) {
 const { PrismaClient } = await import("@prisma/client");
 const prisma = new PrismaClient();
 
+/**
+ * One stamp for the run, carried in the client's name.
+ *
+ * A name is how the probe finds its rows again: the sweep below cannot hold ids for rows that only exist
+ * once `main` has started, and it has to work when `main` throws before it ever assigned them.
+ */
+const STAMP = Date.now();
+
+/**
+ * Everything this probe writes, removed by name — called from the end of `main` and from `catch`.
+ *
+ * The tidy-up used to be the last five statements of the happy path, so an exception anywhere above them
+ * (the API down, a check that throws, a `prisma` error) left a "TimeRules Probe …" client in the list with
+ * its ticket and agreement attached. Idempotent and name-based, so both paths can call it.
+ */
+async function sweep() {
+  const companies = await prisma.company.findMany({ where: { name: `TimeRules Probe ${STAMP}` }, select: { id: true } });
+  for (const company of companies) {
+    const tickets = await prisma.ticket.findMany({ where: { companyId: company.id }, select: { id: true } });
+    const ticketIds = tickets.map((t) => t.id);
+    await prisma.timeEntry.deleteMany({ where: { ticketId: { in: ticketIds } } });
+    await prisma.ticketComment.deleteMany({ where: { ticketId: { in: ticketIds } } });
+    await prisma.ticket.deleteMany({ where: { id: { in: ticketIds } } });
+    await prisma.serviceAgreement.deleteMany({ where: { companyId: company.id } });
+    await prisma.company.delete({ where: { id: company.id } });
+  }
+  const adminUser = await prisma.user.findFirst({ where: { email: "persona.admin@c7ntax.local" }, select: { id: true } });
+  if (adminUser) await prisma.userSession.deleteMany({ where: { userId: adminUser.id } });
+  return companies.length;
+}
+
 /** A local date at a given clock time, so the cut-off comparison is tested in server-local time. */
 const at = (daysAgo, hours, minutes = 0) => {
   const d = new Date();
@@ -56,7 +87,7 @@ async function main() {
   const admin = await signIn("persona.admin@c7ntax.local");
   check(admin.status === 200, `administrator signed in (${admin.status})`);
 
-  const company = await prisma.company.create({ data: { name: `TimeRules Probe ${Date.now()}`, companyType: "Client" } });
+  const company = await prisma.company.create({ data: { name: `TimeRules Probe ${STAMP}`, companyType: "Client" } });
   const board = await prisma.serviceBoard.findFirst({ select: { id: true } });
   const techUser = await prisma.user.findFirst({ where: { email: "persona.admin@c7ntax.local" }, select: { id: true } });
   const ticket = await prisma.ticket.create({
@@ -151,12 +182,7 @@ async function main() {
   check(bare.data?.billedMinutes === 90 && bare.data?.overtimeMinutes === 0, `90 minutes stays 90 (${bare.data?.billedMinutes})`);
 
   // Tidy up: the probe's client takes its agreement, ticket and entries with it.
-  await prisma.timeEntry.deleteMany({ where: { ticketId: ticket.id } });
-  await prisma.ticket.delete({ where: { id: ticket.id } }).catch(() => {});
-  await prisma.serviceAgreement.delete({ where: { id: agreement.id } }).catch(() => {});
-  await prisma.company.delete({ where: { id: company.id } }).catch(() => {});
-  const adminUser = await prisma.user.findFirst({ where: { email: "persona.admin@c7ntax.local" }, select: { id: true } });
-  await prisma.userSession.deleteMany({ where: { userId: adminUser.id } });
+  await sweep();
   console.log("  note  probe client, agreement, ticket and entries removed");
 
   await prisma.$disconnect();
@@ -164,4 +190,13 @@ async function main() {
   process.exit(fail === 0 ? 0 : 1);
 }
 
-void main();
+/*
+ * A failure is not a reason to leave the rows behind. The old `void main()` handed an exception straight to
+ * Node, so the tidy-up at the end of the happy path never ran and the residue was somebody else's problem —
+ * which is what `clean-probe-residue.ts` exists to sweep up after the fact.
+ */
+main().catch(async (error) => {
+  console.error("probe failed:", error.message);
+  await sweep().catch(() => undefined);
+  process.exit(1);
+});

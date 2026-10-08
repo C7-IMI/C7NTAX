@@ -25,6 +25,10 @@ new_models.prisma
 dist/
 dist-electron/
 
+# TypeScript's incremental-build cache. It was tracked — it is machine state that changes on every
+# compile, so it made every commit's diff noisy and could not be merged by anyone else.
+*.tsbuildinfo
+
 # local scratch: login test payload
 .login-body.json
 apps/api/data/ticket-attachments/

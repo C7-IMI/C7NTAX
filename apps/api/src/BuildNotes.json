@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.048",
+    "date": "2026-10-08",
+    "title": "The leftovers: a dead router, a tracked build artifact, three leaky probes, and a register of what was left on purpose",
+    "changes": [
+      {
+        "text": "**The duplicate `rolesRouter` in `users.ts` is gone.** The file carried a second, never-mounted",
+        "type": "Fix"
+      },
+      {
+        "text": "**`apps/web/tsconfig.tsbuildinfo` was tracked.** TypeScript's incremental-build cache is machine",
+        "type": "Fix"
+      },
+      {
+        "text": "**The three probes that cleaned up only on their happy path now clean up on every path.**",
+        "type": "Fix"
+      },
+      {
+        "text": "**PLAN-028's own text was stale.** Its header and §10 still described the header icon as an inert",
+        "type": "Fix"
+      },
+      {
+        "text": "**`PlanDocs/PLAN-029-Deferred-Work-and-Known-Risks.md`** — the register of what was found and left:",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.047",
     "date": "2026-10-08",
     "title": "Basic and Advanced: two readings of one console result, and a switch between them",

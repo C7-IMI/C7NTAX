@@ -21,6 +21,37 @@ const check = (ok, label) => {
 const { PrismaClient } = await import("@prisma/client");
 const prisma = new PrismaClient();
 
+/**
+ * One stamp for the run, carried in the client's name.
+ *
+ * A name is how the probe finds its rows again: the sweep below cannot hold ids for rows that only exist
+ * once `main` has started, and it has to work when `main` throws before it ever assigned them.
+ */
+const STAMP = Date.now();
+
+/**
+ * Everything this probe writes, removed by name — called from the end of `main` and from `catch`.
+ *
+ * The tidy-up used to be the last statements of the happy path, so an exception above them left a
+ * "TimeRules Off Probe …" client in the list with its ticket and agreement attached. Idempotent and
+ * name-based, so both paths can call it.
+ */
+async function sweep() {
+  const companies = await prisma.company.findMany({ where: { name: `TimeRules Off Probe ${STAMP}` }, select: { id: true } });
+  for (const company of companies) {
+    const tickets = await prisma.ticket.findMany({ where: { companyId: company.id }, select: { id: true } });
+    const ticketIds = tickets.map((t) => t.id);
+    await prisma.timeEntry.deleteMany({ where: { ticketId: { in: ticketIds } } });
+    await prisma.ticketComment.deleteMany({ where: { ticketId: { in: ticketIds } } });
+    await prisma.ticket.deleteMany({ where: { id: { in: ticketIds } } });
+    await prisma.serviceAgreement.deleteMany({ where: { companyId: company.id } });
+    await prisma.company.delete({ where: { id: company.id } });
+  }
+  const admin = await prisma.user.findFirst({ where: { email: "persona.admin@c7ntax.local" }, select: { id: true } });
+  if (admin) await prisma.userSession.deleteMany({ where: { userId: admin.id } });
+  return companies.length;
+}
+
 const at = (daysAgo, hours, minutes = 0) => {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
@@ -37,7 +68,7 @@ async function main() {
   const { token } = await login.json();
   check(login.status === 200 && !!token, `administrator signed in (${login.status})`);
 
-  const company = await prisma.company.create({ data: { name: `TimeRules Off Probe ${Date.now()}`, companyType: "Client" } });
+  const company = await prisma.company.create({ data: { name: `TimeRules Off Probe ${STAMP}`, companyType: "Client" } });
   const board = await prisma.serviceBoard.findFirst({ select: { id: true } });
   const adminUser = await prisma.user.findFirst({ where: { email: "persona.admin@c7ntax.local" }, select: { id: true } });
   const ticket = await prisma.ticket.create({
@@ -78,11 +109,7 @@ async function main() {
   const rows = await prisma.timeEntry.count({ where: { ticketId: ticket.id } });
   check(rows === 2, `two entries exist for two posts (${rows})`);
 
-  await prisma.timeEntry.deleteMany({ where: { ticketId: ticket.id } });
-  await prisma.ticket.delete({ where: { id: ticket.id } }).catch(() => {});
-  await prisma.serviceAgreement.delete({ where: { id: agreement.id } }).catch(() => {});
-  await prisma.company.delete({ where: { id: company.id } }).catch(() => {});
-  await prisma.userSession.deleteMany({ where: { userId: adminUser.id } });
+  await sweep();
   console.log("  note  probe client, agreement, ticket and entries removed");
 
   await prisma.$disconnect();
@@ -90,4 +117,12 @@ async function main() {
   process.exit(fail === 0 ? 0 : 1);
 }
 
-void main();
+/*
+ * A failure is not a reason to leave the rows behind: the old `void main()` handed an exception straight to
+ * Node, so the tidy-up at the end of the happy path never ran.
+ */
+main().catch(async (error) => {
+  console.error("probe failed:", error.message);
+  await sweep().catch(() => undefined);
+  process.exit(1);
+});

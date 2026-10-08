@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, computePermissions, type AuthRequest } from "../middleware/auth";
-import { Permission, ROLE_PERMISSIONS, SystemRole, PERMISSION_CATEGORIES, validatePassword } from "@C7NTAX/shared";
+import { Permission, ROLE_PERMISSIONS, SystemRole, validatePassword } from "@C7NTAX/shared";
 import bcrypt from "bcryptjs";
 import { randomInt } from "node:crypto";
 import { EmailService } from "@C7NTAX/email";
@@ -436,82 +436,5 @@ usersRouter.post("/:id/reset-mfa", requirePermission(Permission.SecurityManage),
       data: { mfaEnabled: false, mfaSecret: null, mfaBackupCodes: [] },
     });
     res.json({ message: "MFA reset" });
-  } catch (e) { next(e); }
-});
-
-// ═══════════════════════════════════════════════════════════════════════
-//  ROLES & PERMISSIONS
-// ═══════════════════════════════════════════════════════════════════════
-
-export const rolesRouter = Router();
-rolesRouter.use(authenticate);
-
-// ── List all roles ───────────────────────────────────────────────────
-rolesRouter.get("/", requirePermission(Permission.RoleManage), async (_req: AuthRequest, res, next) => {
-  try {
-    const roles = await prisma.role.findMany({
-      orderBy: { name: "asc" },
-      include: { _count: { select: { users: true } } },
-    });
-    res.json({ data: roles });
-  } catch (e) { next(e); }
-});
-
-// ── Roles ────────────────────────────────────────────────────────────
-// NOTE: this second roles router is NOT mounted — index.ts imports `rolesRouter` from
-// `./routes/roles`, and nothing imports this one, so every route below is unreachable
-// (the permissions catalogue it declares is also served to the SPA straight from
-// `@C7NTAX/shared`). Kept guarded while it exists; deleting it is a follow-up cleanup.
-rolesRouter.get("/permissions/catalog", requirePermission(Permission.RoleManage), async (_req: AuthRequest, res) => {
-  res.json({ data: PERMISSION_CATEGORIES });
-});
-
-// ── Get single role ──────────────────────────────────────────────────
-rolesRouter.get("/:id", requirePermission(Permission.RoleManage), async (req: AuthRequest, res, next) => {
-  try {
-    const role = await prisma.role.findUnique({
-      where: { id: req.params.id },
-      include: { users: { select: { id: true, firstName: true, lastName: true, email: true } } },
-    });
-    if (!role) throw new AppError("Role not found", 404);
-    res.json(role);
-  } catch (e) { next(e); }
-});
-
-// ── Create role ──────────────────────────────────────────────────────
-rolesRouter.post("/", requirePermission(Permission.RoleManage), async (req: AuthRequest, res, next) => {
-  try {
-    const { name, systemRole, permissions } = req.body;
-    if (!name || !systemRole) throw new AppError("name and systemRole are required", 400);
-    const existing = await prisma.role.findFirst({ where: { OR: [{ name }, { systemRole }] } });
-    if (existing) throw new AppError("A role with that name or systemRole already exists", 409);
-    const role = await prisma.role.create({
-      data: { name, systemRole, permissions: permissions || [] },
-    });
-    res.status(201).json(role);
-  } catch (e) { next(e); }
-});
-
-// ── Update role ──────────────────────────────────────────────────────
-rolesRouter.patch("/:id", requirePermission(Permission.RoleManage), async (req: AuthRequest, res, next) => {
-  try {
-    const updates: Record<string, unknown> = {};
-    if (req.body.name !== undefined) updates.name = req.body.name;
-    if (req.body.systemRole !== undefined) updates.systemRole = req.body.systemRole;
-    if (req.body.permissions !== undefined) updates.permissions = req.body.permissions;
-    if (req.body.isDefault !== undefined) updates.isDefault = req.body.isDefault;
-    if (Object.keys(updates).length === 0) throw new AppError("No fields to update", 400);
-    const role = await prisma.role.update({ where: { id: req.params.id }, data: updates as any });
-    res.json(role);
-  } catch (e) { next(e); }
-});
-
-// ── Delete role ──────────────────────────────────────────────────────
-rolesRouter.delete("/:id", requirePermission(Permission.RoleManage), async (req: AuthRequest, res, next) => {
-  try {
-    const userCount = await prisma.user.count({ where: { roleId: req.params.id } });
-    if (userCount > 0) throw new AppError(`Cannot delete role: ${userCount} users assigned`, 400);
-    await prisma.role.delete({ where: { id: req.params.id } });
-    res.json({ message: "Role deleted" });
   } catch (e) { next(e); }
 });
