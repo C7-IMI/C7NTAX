@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.002 | Last Updated: 2026-10-08
+## Version: 2026.10.8.003 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,19 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.003 — The portal can live at an address of its own
+
+Until now the portal's address was always this application's address, which meant a deployment that serves the portal on its own hostname had nowhere to say so.
+
+- **[New]** **Portal address, on Administration → Customer Portal.** Set it and that becomes the address customers are given: the one the Portal card shows and copies, the one the per-client "open the live portal" link follows, and the one the sign-in email quotes. Leave it blank — the usual case — and nothing changes: the address is worked out from the application's own address, exactly as before.
+- **[New]** **The Portal card now says where its address came from** — set on this screen, set by the deployment, or the application's own address — so a surprising link can be traced to the setting that caused it instead of being guessed at.
+- **[Update]** **`PORTAL_PUBLIC_URL` is the deployment's side of it.** A deployment that would rather configure it in the environment than on the screen sets that instead, and the screen says so; saving an address on the screen overrides it, as every other setting does.
+- **[Update]** **The sign-in email now says where to sign in**, which the code on its own did not. It was the one message a customer receives that never named the portal.
+
+Verified by probe and in a browser: **148/148** on the portal suite (13 new checks covering the setting's publication, that a saved address becomes the one customers are given, that a scheme is required, that changing it needs the configuration permission, and that clearing it restores the deployment's own), **15/15** in a browser driving the field and the card including the copy button and the per-client link, plus the environment layer checked against a restarted API, and **91/91** on the configuration suite.
 
 ---
 

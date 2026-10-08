@@ -4719,3 +4719,35 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **`innerText` applies `text-transform`.** The section headings carry `uppercase`, so the harness's first run matched nothing against `"Recently Resolved"` and reported four failures that were the test's fault, not the page's. Compare heading text case-insensitively.
 - **This file has been a trap before.** During the previous prompt an edit to this page was applied with an over-wide `old_str` and removed the file's closing tags; the recovery was `git checkout --` and re-applying two narrow edits. Narrow edits, then typecheck.
 - **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.
+
+---
+
+### Prompt 247 — The portal can be given an address of its own
+**Timestamp:** 2026-10-08 | **Status:** ✅ Completed | **Duration:** ~1 h 15 m
+**BuildNotes IDs:** 2026.10.8.003 — The portal can live at an address of its own
+
+> Fix this and enable the ability to configure/set it:
+>
+> One limitation worth knowing: there is no separate "public portal address" setting, so an instance that serves the portal on a *different* hostname from the admin app cannot express it yet — a portal-specific override is the natural next step if that comes up.
+
+**What I did**
+- **Found the shape the product already had.** Settings are declared once, in `CONFIG_SECTIONS` in `packages/shared/src/appConfiguration.ts`, and the Customer Portal screen renders whatever the registry publishes — so the setting is a field, not a new screen. `Portal address` (`publicUrl`, type `url`, env `PORTAL_PUBLIC_URL`) sits directly under the portal's on/off switch, and the existing generic renderer gives it the deployment/override chips and the "use the deployment's value" button for free.
+- **Put the precedence in one place.** `services/portalAddress.ts` answers with the address *and* which level decided it: what an administrator saved, then `PORTAL_PUBLIC_URL`, then the deployment's own `WEB_ORIGIN` plus `/portal`, then the origin the caller arrived on, then a bare `/portal`. Both the JSON and the card read that answer, so the two cannot disagree.
+- **Made the setting actually reach a customer.** The card was one place the address appeared; the sign-in email was the other, and it named no address at all — a customer was told a six-digit code and left to guess where to type it. It now quotes the same address.
+- **Fixed the same bug in the per-client dialog.** "Open the live portal" was a relative `/portal`, which on a split-hostname deployment opens the *staff* address. It now follows the configured one, handed down from the screen that already knows it.
+- **Wrote the tests at both levels.** The portal probe gained 13 checks (the field is published as a `url` field backed by `PORTAL_PUBLIC_URL`; nothing saved means the application's own address and the JSON says so; saving `https://portal.example.com/support/` becomes the address customers are given, with the trailing slash trimmed; an address with no scheme is refused with a message; changing it needs the configuration permission; clearing restores exactly what was there). A browser pass then drove the real field and card — **15/15**.
+- **Tested the environment layer honestly.** `configText` reads `PORTAL_PUBLIC_URL`, which a running process cannot acquire — so the API was restarted with it set and the overview checked over HTTP (`source: "environment"`, the env address), then restarted without it and checked again (`source: "deployment"`, `http://localhost:3010/portal`). The last two levels (`request`, `none`) need `WEB_ORIGIN` to be absent, which this machine's `.env` does not allow, so they stand as fallbacks rather than as tested paths.
+
+**Decisions worth remembering**
+- **A setting is worth having only if it changes something a customer sees.** The address was already displayed on the card; what was missing was the deployment that cannot be described by one origin at all. Naming the level in the card ("Set on this screen" / "This application's own address") is what turns a wrong link from a mystery into a setting to change.
+- **The value is the whole address, not just a hostname.** `/portal` is a path this product chose, and a deployment that proxies the portal under `https://support.example.com/portal` should be able to say exactly that. Trailing slashes are normalised away on read so a copy-paste from a browser does not produce a double slash.
+- **Env var, then screen — the product's usual order.** The field is `source: "setting"`, so the screen can override `PORTAL_PUBLIC_URL` and the chip says it is overriding it, exactly as `portal.enabled` does. Nothing had to be invented for the environment case.
+- **`url` was already the right type.** `coerceConfigValue` already insists on `http(s)://` or a leading `/`, so an address without a scheme is refused where it is typed rather than silently failing later in a customer's browser.
+- **Two relative `/portal` links were the same bug in staff clothing.** They pointed at whoever was looking at the screen rather than at the portal. Only the one in the per-client dialog was fixed, because the values were already in hand there; the one on the client record would need a fetch of its own.
+
+**Notes for next time**
+- **`ClientDetail`'s "Portal address" line still shows the relative `/portal`.** Correct on a single-hostname deployment, wrong on one that has set this new address; the fix belongs with a shared accessor rather than another fetch on that page.
+- **The customer-facing emails in `worker.ts` still point at staff routes** — `${WEB_ORIGIN}/tickets/:id` for a follow-up and `${WEB_ORIGIN}/billing?invoice=:id` for an invoice. Repointing them at the portal is a behaviour change (the portal has no invoice page), so it was left alone deliberately; it is the next natural user of `portalBaseUrl`.
+- **SSO keeps using `WEB_ORIGIN`**, deliberately: that redirect is the admin app's handshake, not the customers'. The two only have to agree where the portal is served from the same origin, which is the default.
+- **Probe harnesses that set a field by value must commit the way React listens.** Dispatching a `blur` event did nothing (React hears `focusout`); the write went through once `focusout` plus an Enter keydown were used. The first run's four failures were the harness, not the product.
+- **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.

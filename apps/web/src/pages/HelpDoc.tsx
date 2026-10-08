@@ -1004,7 +1004,8 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "h", text: "Turn the portal on" },
       { kind: "steps", items: [
         "Open **Administration → Customer Portal** and switch on **Customer portal enabled**.",
-        "The **Portal** card at the top of that screen shows the address to give your customers, with a copy button beside it — it is the deployment's own web address, so it is the same link whoever is looking at the screen.",
+        "The **Portal** card at the top of that screen shows the address to give your customers, with a copy button beside it, and says underneath where that address came from.",
+        "Unless you say otherwise it is this application's own web address, so it is the same link whoever is looking at the screen. If customers reach the portal on a hostname of its own, set **Portal address** in the settings below — for example `https://portal.example.com` — and that becomes the address the card shows, the copy button hands over, and the sign-in email quotes.",
         "Outbound email must be configured, because sign-in is an emailed code — the screen reports whether a relay answers.",
         "Choose the board portal-raised tickets land on. Unset means the oldest active service board.",
       ] },
@@ -1028,6 +1029,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Portal session lifetime", "How long a customer stays signed in before asking for a new code"],
         ["Signed-in devices per customer", "How many browsers one customer may hold at once; the oldest is retired first"],
         ["Accent colour, logo, welcome message, support address", "How the portal looks, and where a customer who cannot sign in is pointed"],
+        ["Portal address", "Where customers are told to go, for a deployment that serves the portal on a hostname of its own. Blank means this application's own address."],
       ] },
       { kind: "h", text: "Give one customer a different level of access" },
       { kind: "steps", items: [

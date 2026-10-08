@@ -81,8 +81,10 @@ interface PortalSessionRow {
 
 interface PortalOverview {
   enabled: boolean;
-  /** Where a customer is told to go: the deployment's own web origin, not the admin's. */
+  /** Where a customer is told to go: the address saved here, or the deployment's own origin. */
   portalUrl: string;
+  /** Which of those decided it, so the card can say so rather than leaving it a mystery. */
+  portalUrlSource: "setting" | "environment" | "deployment" | "request" | "none";
   board: { id: string; name: string } | null;
   boards: Array<{ id: string; name: string }>;
   instancePolicy: PortalInstancePolicy;
@@ -94,6 +96,17 @@ interface PortalOverview {
 
 const visibilityLabel = (value: "contact" | "company") =>
   value === "company" ? "Every ticket at the client" : "Only their own tickets";
+
+/** Why the address above is the address it is, so nobody has to guess where it came from. */
+const addressSourceLabel = (source?: PortalOverview["portalUrlSource"]) => {
+  switch (source) {
+    case "setting": return "Set on this screen, under Portal address.";
+    case "environment": return "Set by the deployment, as PORTAL_PUBLIC_URL.";
+    case "deployment": return "This application's own address. Set a different one under Portal address.";
+    case "request": return "Taken from the address you are browsing from.";
+    default: return "";
+  }
+};
 
 /** The portal as a customer sees it, at the size a provider can judge it at. */
 function PortalPreview({ name, accent, logo, welcome, support }: {
@@ -293,6 +306,9 @@ export function CustomerPortalSettingsPage() {
                 </button>
               )}
             </div>
+            {addressSourceLabel(overview?.portalUrlSource) && (
+              <p className="text-[11px] text-gray-600 mt-0.5">{addressSourceLabel(overview?.portalUrlSource)}</p>
+            )}
             {!overview?.enabled && (
               <p className="text-[11px] text-gray-600 mt-0.5">Every portal route answers 404 until it is switched on.</p>
             )}
@@ -551,6 +567,7 @@ export function CustomerPortalSettingsPage() {
           onPreview={() => setPreviewClient(accessClient.id)}
           onClose={() => setAccessClient(null)}
           onSaved={reloadAccessClient}
+          portalUrl={overview.portalUrl}
         />
       )}
 

@@ -112,7 +112,7 @@ function Choice<T extends string | boolean | null>({
 }
 
 export function PortalAccessDialog({
-  client, boards, instancePolicy, canEdit, onClose, onSaved, onPreview,
+  client, boards, instancePolicy, canEdit, onClose, onSaved, onPreview, portalUrl,
 }: {
   client: PortalAccessDialogClient;
   boards: Array<{ id: string; name: string }>;
@@ -121,6 +121,8 @@ export function PortalAccessDialog({
   onClose: () => void;
   onSaved: () => void | Promise<void>;
   onPreview?: () => void;
+  /** Where the portal actually is, when the screen that opened this dialog knows. */
+  portalUrl?: string;
 }) {
   const [contacts, setContacts] = useState<ContactRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -398,7 +400,7 @@ export function PortalAccessDialog({
               </button>
             )}
             <a
-              href="/portal"
+              href={portalUrl || "/portal"}
               target="_blank"
               rel="noreferrer"
               className="text-xs text-cyber-400 hover:text-cyber-300 inline-flex items-center gap-1.5"

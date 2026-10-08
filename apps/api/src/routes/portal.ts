@@ -37,6 +37,7 @@ import { configFlag, configText } from "../services/appSettings";
 import { resolvePortalPolicy, type PortalPolicy } from "../services/portalPolicy";
 import { listPortalTickets, loadPortalTicket, portalTicketWhere, type PortalScope } from "../services/portalTickets";
 import { resolvePortalBoardId } from "../services/portalBoard";
+import { portalAddress } from "../services/portalAddress";
 
 export const portalRouter = Router();
 const emailService = new EmailService();
@@ -137,12 +138,17 @@ portalRouter.post("/auth/request", async (req: Request, res: Response, next: Nex
       if (contact) {
         const code = await issueLoginCode(contact.id);
         if (code) {
+          // The address a customer is told to go to is the deployment's own, unless it was given
+          // one on the Customer Portal screen — the same answer the Portal card shows.
+          const address = portalAddress();
+          const where = address.source === "none" ? "" : ` Sign in at ${address.url}.`;
           try {
             await emailService.send({
               to: contact.email,
               subject: "Your C7NTAX portal sign-in code",
-              text: `Your sign-in code is ${code}. It expires in 10 minutes. If you did not ask for it, ignore this message.`,
+              text: `Your sign-in code is ${code}.${where} It expires in 10 minutes. If you did not ask for it, ignore this message.`,
               html: `<p>Your sign-in code is <strong style="font-size:18px;letter-spacing:2px">${code}</strong>.</p>
+                     ${address.source === "none" ? "" : `<p>Sign in at <a href="${address.url}">${address.url}</a>.</p>`}
                      <p>It expires in 10 minutes. If you did not ask for it, ignore this message.</p>`,
             });
           } catch (err) {

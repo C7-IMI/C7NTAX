@@ -40,6 +40,7 @@ import {
   writeConfigValue,
 } from "../services/appSettings";
 import { resolvePortalBoardId } from "../services/portalBoard";
+import { portalAddress } from "../services/portalAddress";
 import { portalEnabled } from "../services/portalAuth";
 import {
   asVisibility, clientPortalOverrides, instancePortalPolicy, resolvePortalPolicy, resolvePolicyFrom,
@@ -224,14 +225,15 @@ configurationRouter.get("/portal/overview", requirePermission(Permission.ClientV
     const boardNames = new Map(boards.map(b => [b.id, b.name]));
     const instance = instancePortalPolicy();
 
-    // Where a customer is told to go. The deployment's own web origin is the answer that matters —
-    // it is the address customers are given, and the same one SSO hands back to — with the browser's
-    // own origin as the fallback for a deployment that has not set one.
-    const webOrigin = (process.env.WEB_ORIGIN || (typeof req.headers.origin === "string" ? req.headers.origin : "")).replace(/\/$/, "");
+    // Where a customer is told to go: the address saved on this screen if there is one, since a
+    // deployment may serve the portal on a hostname of its own, and the deployment's own origin
+    // otherwise — see `services/portalAddress`.
+    const address = portalAddress(typeof req.headers.origin === "string" ? req.headers.origin : "");
 
     res.json({
       enabled: portalEnabled(),
-      portalUrl: webOrigin ? `${webOrigin}/portal` : "/portal",
+      portalUrl: address.url,
+      portalUrlSource: address.source,
       board,
       boards: boards.map(b => ({ id: b.id, name: b.name })),
       // What the deployment itself would give a customer, so each client's row can be read against it.

@@ -484,6 +484,39 @@ async function main() {
   const previewAnonymous = await call("GET", `/api/configuration/portal/clients/${client.id}/preview`, {});
   check(previewAnonymous.status === 401, `and previewing needs a staff session (${previewAnonymous.status})`);
 
+  console.log("\nwhere customers are told to go can be the portal's own address");
+  const registry = await call("GET", "/api/configuration", { token: staffToken });
+  const addressField = (registry.data?.sections ?? []).find(s => s.id === "portal")?.fields?.find(f => f.id === "publicUrl");
+  check(!!addressField, "the portal address is published as a setting");
+  check(addressField?.type === "url" && addressField?.env === "PORTAL_PUBLIC_URL",
+    `it is an address field backed by a deployment variable (${addressField?.type}, ${addressField?.env})`);
+
+  const addressBefore = await call("GET", "/api/configuration/portal/overview", { token: staffToken });
+  check(/\/portal$/.test(addressBefore.data?.portalUrl ?? ""),
+    `with nothing saved, customers are given this application's own address (${addressBefore.data?.portalUrl})`);
+  check(["deployment", "environment"].includes(addressBefore.data?.portalUrlSource),
+    `and the answer says so rather than leaving it a mystery (${addressBefore.data?.portalUrlSource})`);
+
+  const savedAddress = await call("PATCH", "/api/configuration/portal/publicUrl", { token: staffToken, body: { value: "https://portal.example.com/support/" } });
+  check(savedAddress.status === 200, `an address on a hostname of its own can be saved (${savedAddress.status})`);
+  const addressAfter = await call("GET", "/api/configuration/portal/overview", { token: staffToken });
+  check(addressAfter.data?.portalUrl === "https://portal.example.com/support",
+    `and becomes the address customers are given, without a trailing slash (${addressAfter.data?.portalUrl})`);
+  check(addressAfter.data?.portalUrlSource === "setting", "reported as set here, so the screen can say where it came from");
+
+  const bareAddress = await call("PATCH", "/api/configuration/portal/publicUrl", { token: staffToken, body: { value: "portal.example.com" } });
+  check(bareAddress.status === 400, `an address with no scheme is refused rather than half-working (${bareAddress.status})`);
+  check(/http/i.test(bareAddress.data?.error?.message ?? ""), `with a message that says what is wrong (${bareAddress.data?.error?.message})`);
+
+  const techAddress = await call("PATCH", "/api/configuration/portal/publicUrl", { token: techToken, body: { value: "https://portal.example.com" } });
+  check(techAddress.status === 403, `and changing it needs the configuration permission (${techAddress.status})`);
+
+  const clearedAddress = await call("DELETE", "/api/configuration/portal/publicUrl", { token: staffToken });
+  check(clearedAddress.status === 200, `clearing it falls back to the deployment's own address (${clearedAddress.status})`);
+  const addressRestored = await call("GET", "/api/configuration/portal/overview", { token: staffToken });
+  check(addressRestored.data?.portalUrl === addressBefore.data?.portalUrl, "to exactly the address that was there before");
+  check(addressRestored.data?.portalUrlSource === addressBefore.data?.portalUrlSource, "decided by the same level as before");
+
   await prisma.portalLoginCode.deleteMany({ where: { contactId: { in: [alice.id, bob.id, outsider.id] } } });
   await prisma.portalSession.deleteMany({ where: { contactId: { in: [alice.id, bob.id, outsider.id] } } });
   await prisma.ticketComment.deleteMany({ where: { ticket: { companyId: { in: [client.id, closedClient.id] } } } });

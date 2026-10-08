@@ -388,6 +388,18 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         affects: ["/portal", "Portal sign-in", "Clients → Portal access"],
       },
       {
+        id: "publicUrl",
+        label: "Portal address",
+        summary: "The address a customer is given for the portal.",
+        detail:
+          "Leave this blank when customers reach the portal at this application's own address — the usual case, and the address is then worked out for you. Set it when the portal is served from somewhere else, such as https://portal.example.com or https://support.example.com/portal, and that becomes the address shown on the Portal card, copied for a welcome mail, and quoted in the sign-in email. Include the https:// and any path the portal sits under.",
+        type: "url",
+        source: "setting",
+        env: "PORTAL_PUBLIC_URL",
+        default: "",
+        affects: ["Portal card", "Portal sign-in email"],
+      },
+      {
         id: "defaultBoardId",
         label: "Board for portal-raised tickets",
         summary: "Where a ticket created in the portal lands.",
