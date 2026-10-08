@@ -6088,3 +6088,42 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 **Notes for next time**
 - **The heading-eating mistake happened a fourth time, and this time it was caught before committing** rather than after: the `---` that separates entries belongs to the *next* entry's match, so re-adding the heading in the replacement text is part of the edit and not a follow-up. The grep for `^## 2026` is now the check, not the recovery.
 - **A five-minute change still gets the full record** — version, Retrace entry, regenerated fallbacks, live verification — because the alternative is a set of records with gaps that cannot be reconstructed, and the cost of the ceremony here is a handful of minutes against a 254-entry history that has to stay readable.
+
+---
+
+### Prompt 282 — The console becomes a permission, switchable per person and per client
+
+**Timestamp:** 2026-10-08 14:41 | **Status:** Complete (icon, permission, both switches, and the seam they exposed — verified live) | **Duration:** ~75 min
+
+**BuildNotes IDs:** **2026.10.8.043** — "The console is a permission, and it can be switched off per person and per client"
+
+**Prompt**
+
+> change the console icon to a different terminal style icon, so that it's easier to determine what it's for. Right now it's hard to notice. Also add configuration options and in Adminstration and permissions so that I can disable the console on a per user or per client basis. THe console icon shouldn't even be displayed, if they don't have permissions to it
+
+**What I did**
+- **Made the header control say what it is.** The bare `Terminal` prompt glyph became a labelled `SquareTerminal` reading **Console**, styled like Search and Recent beside it. The old one was hard to notice for a reason worth naming: five labelled neighbours and one unlabelled glyph, so the odd one out reads as decoration rather than a control.
+- **Gave the console a permission of its own — `console:use`.** Both catalogue routes now carry `requirePermission`, and the route-guard exemption the two open routes needed is gone (439 routes, 388 guarded, no exemptions). This amends PLAN-028's D4 and §19, which both said the console would add no permission; the status note, D4 and §19 now say why that was wrong.
+- **Made the per-person switch subtractive.** `User.deniedPermissions` withdraws what a role grants, which is the only way to express "everybody in this role except them"; the Users & Roles tab now sends the removals as well as the grants, so unchecking a role permission finally does something. A guard refuses denying `user:manage` to yourself — the one removal that can lock an administrator out of the screen they are standing on.
+- **Added the per-client switch.** `Company.consoleEnabled` on the client's own record, beside Customer Portal, needs `system:config`, and withholds `console:use` from that client's people only.
+- **Reduced four gates to one answer.** `effectivePermissions` in the auth middleware assembles role + grants − removals − the client's switch, and the catalogue routes, `GET /auth/session`, the sign-in responses and the header all read it. A hidden icon and a refused request are now the same answer rather than two implementations of one rule.
+- **Closed the URL hole the icon cannot close.** `/console` is reachable by link, and a pasted link outlives the permission that made it, so the page now explains which switch is closed instead of drawing an empty console.
+
+**The defect the walk found, which reading the code did not**
+- **A fresh sign-in briefly showed the console to somebody whose client had it switched off.** `login`, the MFA verify, the emailed-code verify and change-password each loaded the user with `include: { role: true }` and no `company`, so `effectivePermissions` had nothing to apply the client's switch *to* — and published a set more permissive than the truth. The browser corrected itself on the next reload, which is exactly how this kind of bug hides: one page load of a button that should not exist, and a reload that makes the report unreproducible. One shared `PERMISSION_SUBJECT_INCLUDE` now loads every subject the resolver is asked about, with the comment explaining that a missing relation is not an error the resolver can see.
+- **The correction was found by walking it, not by the probe** — the probe asked `/users/me`, which was already right, and only the browser path exercised the login response.
+
+**Decisions worth remembering**
+- **A surface permission is not the same as per-command permissions, and the operator's sentence is the distinction.** "The icon shouldn't even be displayed" cannot be answered command by command: a per-command answer arrives only after the surface is on screen. D4's original argument was sound about *authorization* and wrong about *whether to offer the surface at all*.
+- **Subtract, don't only add.** An additive override cannot express "everyone except them", which is the question administrators ask first. Removals are their own column rather than negative entries in the grants list, because "granted" and "withdrawn" are different facts and a single list would have to encode both.
+- **The client's switch is applied where permissions are computed, not re-checked in the interface.** That is what makes a client with the console off indistinguishable, to every screen and route, from a person who was never granted it.
+- **Don't offer a control somebody cannot use.** No greyed-out button, no disabled icon: the header renders it or does not, and the API's answer is the same either way.
+- **Adding a permission to the enum grants it to nobody.** The seeded `Role` rows carry their own permission arrays, so `ROLE_PERMISSIONS` only applies to an empty one — `seed-role-permissions.ts` exists for exactly this and updated 4 of 6 roles.
+
+**Notes for next time**
+- **`"x" in SomeEnum` is always false** — `in` checks member *names*, not values. Enum membership is `(Object.values(Permission) as string[]).includes(name)`.
+- **An `AuthUser` is not a `PermissionSubject`.** Its `role` is a role *name*, not the row, so handing one to `effectivePermissions` returned nothing and zeroed every session's permissions — a whole debugging round for a type that looked right at the call site.
+- **A probe must ask the question the client asks.** `probe-console-access` read `/auth/session` with a bearer token and got a 401, which its assertions read as "zero permissions" — a `!includes(...)` that passes for the wrong reason. It now carries the session cookie, and it asserts the first sign-in is retired by the second (one live session per account is the rule in `sessionAuth.ts`), because a stale cookie turns every later assertion into a false pass.
+- **Never walk a permission change on your own account.** `admin@C7NTAX.com` cannot change its own role or permissions — the API refuses with *"You cannot change your own role or permissions"* — so the walk needs a throwaway account created for it (role Technician, known password, deleted afterwards). The database was left exactly as found: account gone, client switch back to unset, no leftover `*.test` accounts.
+- **The ~15-minute auto-sync job swept most of this request into `797fd26` before the records existed.** Nothing was lost, but the BuildNotes entry had to be written for work already committed, which is the wrong order — worth checking `git log --oneline -3` before assuming what is uncommitted.
+- **The dev database has leftover probe companies** ("Persona probe client …", "Probe KB client …", a dozen of them) from earlier sessions' probes that did not clean up. They clutter the client list; a cleanup pass is owed, separately from this change.

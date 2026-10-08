@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Check, Link2 } from "lucide-react";
+import { Check, Link2, Lock } from "lucide-react";
 import {
   CONSOLE_OWN_VERBS,
   commandsByGroup,
@@ -8,6 +8,7 @@ import {
 } from "@C7NTAX/shared";
 import { ConsolePanel } from "../components/ConsoleDialog";
 import { useAuth } from "../hooks/useAuth";
+import { useConsoleEnabled } from "../hooks/useConsoleEnabled";
 
 /**
  * `/console` — the console as a page rather than a popup (PLAN-028 §10).
@@ -25,6 +26,7 @@ import { useAuth } from "../hooks/useAuth";
  */
 export function ConsolePage() {
   const { permissions } = useAuth();
+  const consoleEnabled = useConsoleEnabled();
   const [params, setParams] = useSearchParams();
   const [copied, setCopied] = useState(false);
 
@@ -64,6 +66,36 @@ export function ConsolePage() {
       setCopied(false);
     }
   }, [shareUrl]);
+
+  /*
+   * The page is reachable by URL, so hiding the header icon is not enough on its own: a pasted link
+   * outlives the permission that made it, and someone else's bookmark is the ordinary way a person
+   * arrives at a surface they may not use. The refusal is drawn instead of the panel rather than beside
+   * a disabled one — the same answer the API gives the catalogue.
+   *
+   * Placed below every hook on purpose: the deployment gate resolves asynchronously, so this branch can
+   * be entered after the first render, and a `return` above a hook would change the hook count mid-life.
+   */
+  if (!consoleEnabled) {
+    return (
+      <div className="card max-w-xl space-y-2" data-testid="console-unavailable">
+        <div className="flex items-center gap-2">
+          <Lock size={16} className="text-gray-500" />
+          <h1 className="text-sm font-semibold text-white">The console is not available to this account</h1>
+        </div>
+        <p className="text-xs text-gray-500">
+          The command console is offered to people whose role, or individual permissions, include{" "}
+          <span className="font-mono text-gray-400">console:use</span>. An administrator can grant it in
+          Administration → Users &amp; Roles, on the Console row of the Permissions tab; a client's own
+          record can also withhold it for everybody who belongs to that client.
+        </p>
+        <p className="text-xs text-gray-600">
+          If you arrived from a link, it was made while the console was open to you — it still works for
+          whoever holds the permission.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-11rem)] min-h-[24rem] flex flex-col gap-3">

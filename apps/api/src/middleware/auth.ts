@@ -372,6 +372,20 @@ export function computePermissions(roleSystemRole: SystemRole, rolePermissions: 
 }
 
 /**
+ * What a user row has to be loaded with before `effectivePermissions` can be asked about it.
+ *
+ * A subject that arrived without its `company` is not an error the resolver can see: the client's console
+ * switch is absent, so the permission it should have taken away is quietly still there. That is a *more
+ * permissive* set than the truth, which is the one direction a permission bug must never drift in — and it
+ * did, on the sign-in responses, until every caller shared this. Spread it rather than writing the two
+ * relations out again.
+ */
+export const PERMISSION_SUBJECT_INCLUDE = {
+  role: true,
+  company: { select: { consoleEnabled: true } },
+} as const;
+
+/**
  * The permissions a person actually holds — the one place the whole answer is assembled.
  *
  * Three layers, applied in this order, and the order is the argument:

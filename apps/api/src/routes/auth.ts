@@ -4,7 +4,7 @@ import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import { randomInt, timingSafeEqual } from "node:crypto";
 import { prisma } from "../index";
-import { authenticate, signToken, signMfaToken, JWT_SECRET, effectivePermissions, type AuthRequest } from "../middleware/auth";
+import { authenticate, signToken, signMfaToken, JWT_SECRET, effectivePermissions, PERMISSION_SUBJECT_INCLUDE, type AuthRequest } from "../middleware/auth";
 import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword, LANDING_PAGES, resolveLandingPagePath } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
 import { EmailService } from "@C7NTAX/email";
@@ -107,10 +107,11 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
       return;
     }
 
-    // Allow login by email OR username â€” include role relation
+    // Allow login by email OR username — include role relation. The company comes with the role because
+    // the effective set below cannot apply the client's console switch without it.
     const user = email
-      ? await prisma.user.findUnique({ where: { email }, include: { role: true } })
-      : await prisma.user.findUnique({ where: { username }, include: { role: true } });
+      ? await prisma.user.findUnique({ where: { email }, include: { ...PERMISSION_SUBJECT_INCLUDE } })
+      : await prisma.user.findUnique({ where: { username }, include: { ...PERMISSION_SUBJECT_INCLUDE } });
     if (!user || !user.isActive) {
       res.status(401).json({ error: "Invalid credentials" });
       return;
@@ -201,7 +202,7 @@ authRouter.post("/change-password", authenticate, credentialLimiter, async (req:
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { id: req.user!.userId }, include: { role: true } });
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId }, include: { ...PERMISSION_SUBJECT_INCLUDE } });
     if (!user) { res.status(404).json({ error: { message: "User not found" } }); return; }
 
     if (!(await bcrypt.compare(String(currentPassword), user.passwordHash))) {
@@ -288,7 +289,7 @@ authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
       payload = jwt.verify(mfaToken, JWT_SECRET) as { userId: string };
     } catch { res.status(401).json({ error: "MFA token expired" }); return; }
 
-    const user = await prisma.user.findUnique({ where: { id: payload.userId }, include: { role: true } });
+    const user = await prisma.user.findUnique({ where: { id: payload.userId }, include: { ...PERMISSION_SUBJECT_INCLUDE } });
     if (!user?.mfaSecret) { res.status(400).json({ error: "MFA not configured" }); return; }
 
     const verified = speakeasy.totp.verify({ secret: user.mfaSecret, encoding: "base32", token: code, window: 1 });
@@ -353,7 +354,7 @@ authRouter.post("/mfa/verify-email", credentialLimiter, async (req, res, next) =
     try { payload = jwt.verify(mfaToken, JWT_SECRET) as { userId: string }; }
     catch { res.status(401).json({ error: "MFA token expired" }); return; }
 
-    const user = await prisma.user.findUnique({ where: { id: payload.userId }, include: { role: true } });
+    const user = await prisma.user.findUnique({ where: { id: payload.userId }, include: { ...PERMISSION_SUBJECT_INCLUDE } });
     if (!user?.mfaEmailCode || !user.mfaEmailCodeExpires || user.mfaEmailCodeExpires < new Date()) {
       res.status(400).json({ error: "Code expired or not requested" }); return;
     }

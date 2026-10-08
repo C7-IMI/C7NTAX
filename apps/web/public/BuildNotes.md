@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.042 | Last Updated: 2026-10-08
+## Version: 2026.10.8.043 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,60 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.043 — The console is a permission, and it can be switched off per person and per client
+
+The console shipped as something the deployment offered and every signed-in person could see. The
+operator asked for the opposite, in one sentence that is the whole specification: *"add configuration
+options and in Administration and permissions so that I can disable the console on a per user or per
+client basis. The console icon shouldn't even be displayed, if they don't have permissions to it."*
+
+- **[New]** **`console:use` — the console's own permission**, in a permission category of its own.
+  Granted to Manager, Technician, Dispatcher and BillingManager; deliberately not to the client-facing
+  or read-only roles. Both catalogue routes carry `requirePermission(Permission.ConsoleUse)`, so the
+  route-guard exemption the two open routes needed is gone — 439 routes, 388 carrying a permission, no
+  documented exemptions.
+- **[New]** **Per person, subtractively.** `User.deniedPermissions` lets an administrator withdraw any
+  permission a role grants, which is what makes "everybody in this role except them" expressible; the
+  Users & Roles permission tab now sends both the grants *and* the removals, so unchecking a role
+  permission finally does something. A guard refuses denying `user:manage` to yourself.
+- **[New]** **Per client.** `Company.consoleEnabled` on the client's own record (a **Console** card
+  beside Customer Portal) withholds `console:use` from that client's people and nobody else's. It needs
+  `system:config` to change, and the card says so for anyone who may not.
+- **[Update]** **One resolver, four gates.** `effectivePermissions` in the auth middleware is now the
+  single answer to "what does this session hold": role + individual grants − individual removals −
+  anything a client's switch withholds. Both catalogue routes, `GET /auth/session`, the sign-in
+  responses and the header all read it, so a hidden icon and a refused request are the same answer.
+- **[Fix]** **The sign-in paths published a more permissive set than the truth.** `login`, the MFA
+  verify, the emailed-code verify and change-password computed the effective set from a user row loaded
+  without its `company`, so the client's switch could not be applied and a fresh sign-in briefly showed
+  the console to somebody the client had switched it off for (a reload corrected it, which is exactly how
+  a permission bug hides). One shared `PERMISSION_SUBJECT_INCLUDE` now loads every subject the resolver is
+  asked about.
+- **[Update]** **The header control says what it is.** The bare prompt glyph became a labelled
+  `SquareTerminal` reading **Console**, styled like Search and Recent beside it — the glyph read as
+  decoration next to five labelled neighbours. It is not rendered at all without the permission: a control
+  somebody may not use is not a control to show them greyed out.
+- **[Update]** **`/console` refuses instead of pretending.** Reached by URL without the permission — a
+  pasted link outlives the permission that made it — the page explains which of the three switches is
+  closed rather than drawing an empty console.
+- **[Update]** **Documented where it is decided.** Help gains a Command console reference with the three
+  switches, four FAQ answers (why the button is missing; what the permission does and does not widen; the
+  per-client switch; whether the console writes), six Index rows and a **Console & the Command Line**
+  walkthrough; `docs/API.md` §12 explains `deniedPermissions`, `consoleEnabled` and why `permissions` and
+  `user.permissions` are not the same list; PLAN-028's D4 and §19 are amended where they claimed the
+  console would add no permission.
+
+**Verification:** API and web `tsc` clean; `guard:console` green (85 commands); `guard:routes` 388 of 439
+routes guarded, 0 violations; `guard:api-docs` and `check-help-links` green (25 walkthroughs).
+`apps/api/probe-console-access.mts` **24/24** — the role's grant, an individual removal reaching the live
+session without a re-login, the client's switch, and the deployment switch answering 404. Live in the
+browser: as a technician the header showed **Console**; removing `console:use` through Users & Roles made
+the icon disappear on the next sign-in, and switching the client's console off did the same for that
+client's account only; `/console` showed the refusal. Every change was undone afterwards — the throwaway
+account deleted, the client's switch returned to unset.
 
 ---
 

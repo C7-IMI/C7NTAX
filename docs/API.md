@@ -669,6 +669,29 @@ Permissions are named `resource:action` (`ticket:create`, `client:view`, `billin
 refused at issuance; a call whose credential lacks the required permission is `403`, and the document
 carries `x-required-permissions` on every operation so you can tell before you try.
 
+### The permissions an operator can take away
+
+A credential's permissions are the *effective* set, which is **role + individual grants − individual
+removals − anything a client's own switch withholds**. It is published as the top-level `permissions`
+on `POST /api/auth/login` and `GET /api/auth/session`; `user.permissions` beside it means the
+individual *overrides* only, so reading the two as one list is how a revocation gets quietly undone.
+
+* **`User.deniedPermissions`** (`PATCH /api/users/:id`) is the subtraction. It is subtractive by
+  design — it can only take a permission away — which is what makes "everybody in this role except
+  them" expressible from a client.
+* **`Company.consoleEnabled`** (`PATCH /api/clients/:id`, `system:config`) withholds the console from
+  one client's people when `false`. `null` is the default and means no restriction; `true` behaves the
+  same as `null` and is accepted only so a client that sends booleans round-trips.
+* **`console:use`** is the permission both of the above act on, and the only one a client can withhold.
+  It gates the console surface as a whole — the catalogue routes, the header control and the `c7ntax`
+  CLI — rather than any one command; each command carries its own permission on top.
+
+Every one of these takes effect on the **next request**, not at the next sign-in: the session is
+re-resolved against the database each time, and a removal that no longer matches what the token was
+issued with replaces it. Nothing needs invalidating and nothing needs to expire for a revocation to
+hold — so a caller that caches `permissions` for longer than a request is the one thing that can make
+a revocation appear not to work.
+
 ---
 
 ## 13. What integration work looks like, end to end

@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.8.043",
+    "date": "2026-10-08",
+    "title": "The console is a permission, and it can be switched off per person and per client",
+    "changes": [
+      {
+        "text": "**`console:use` — the console's own permission**, in a permission category of its own.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Per person, subtractively.** `User.deniedPermissions` lets an administrator withdraw any",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Per client.** `Company.consoleEnabled` on the client's own record (a **Console** card",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One resolver, four gates.** `effectivePermissions` in the auth middleware is now the",
+        "type": "Update"
+      },
+      {
+        "text": "**The sign-in paths published a more permissive set than the truth.** `login`, the MFA",
+        "type": "Fix"
+      },
+      {
+        "text": "**The header control says what it is.** The bare prompt glyph became a labelled",
+        "type": "Update"
+      },
+      {
+        "text": "**`/console` refuses instead of pretending.** Reached by URL without the permission — a",
+        "type": "Update"
+      },
+      {
+        "text": "**Documented where it is decided.** Help gains a Command console reference with the three",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.042",
     "date": "2026-10-08",
     "title": "The Recent menu's footer says \"Show All\"",
