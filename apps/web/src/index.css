@@ -143,10 +143,21 @@ html[data-theme="light"] {
     @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
   }
   /*
+   * A count on a solid red fill, as on the nav's alert indicator. The label is white on both themes
+   * because the fill is red on both: `text-white` follows the theme's text colour, which would put
+   * near-black on the light theme's red at just under 4.5:1.
+   */
+  .badge-count {
+    @apply inline-flex items-center justify-center rounded-full font-bold;
+    background-color: #dc2626;
+    color: #ffffff;
+  }
+  /*
    * Ticket status badges. The label colour is a theme token, so it is legible on both themes, and
-   * the background is a tint of that same colour — which is the only way to get a tint out of these
-   * colours at all: they are declared as bare `var()` values, so an opacity modifier on one of them
-   * (`bg-cyber-600/20`) emits no rule and the badge comes out with no background.
+   * the background is a tint of that same colour. Tinting with `currentColor` is what keeps the two
+   * in step; a utility like `bg-cyber-600/20` works too (the config hands the alpha to the colour),
+   * but it would take the tint from a different shade than the label and the pair would only be
+   * right by coincidence.
    */
   .badge-status { background-color: color-mix(in srgb, currentColor 18%, transparent); }
   .badge-status-new { color: var(--status-new); }
@@ -175,9 +186,7 @@ html[data-theme="light"] :is(
   .text-amber-400, .text-amber-500, .hover\:text-amber-300:hover
 ) { color: #92400e; }
 
-html[data-theme="light"] :is(
-  .text-yellow-400, .text-orange-400
-) { color: #854d0e; }
+html[data-theme="light"] :is(.text-yellow-400) { color: #854d0e; }
 html[data-theme="light"] :is(.text-orange-400) { color: #9a3412; }
 
 html[data-theme="light"] :is(

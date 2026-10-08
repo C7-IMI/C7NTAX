@@ -564,7 +564,7 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={20} />
               {node.id === "service-alerts" && alertCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{alertCount}</span>
+                <span className="badge-count absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 text-[9px]">{alertCount}</span>
               )}
             </button>
           ) : (
@@ -577,7 +577,7 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={20} className={isAlerts ? "text-alert-red" : undefined} />
               {node.id === "service-alerts" && alertCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{alertCount}</span>
+                <span className="badge-count absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 text-[9px]">{alertCount}</span>
               )}
             </Link>
           )}
@@ -616,7 +616,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <node.icon size={18} />
               {!collapsed && <span className="flex-1 text-left truncate">{node.label}</span>}
               {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
-                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
+                <span className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
               )}
               {!collapsed && <ChevronDown size={14} className={`transition-transform shrink-0 ${isExpanded ? "" : "-rotate-90"}`} />}
             </button>
@@ -642,7 +642,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <node.icon size={18} className={isAlerts ? "text-alert-red" : undefined} />
               {!collapsed && (isAlerts ? <span className="text-alert-red">{node.label}</span> : node.label)}
               {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
-                <span className="shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
+                <span className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
               )}
               {active && !collapsed && <ChevronRight size={14} className="ml-auto" />}
             </Link>
