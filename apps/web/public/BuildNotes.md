@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.028 | Last Updated: 2026-10-08
+## Version: 2026.10.8.029 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,23 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.029 — A Console in the header, and the plan for what it will do (401 commands, PowerShell-grade completion)
+
+The Console's icon is in the header — **placed, labelled and deliberately inert**. No behaviour is wired to it; this buildnote is the plan for the behaviour, and the icon is there so the layout the plan describes is the layout you can already look at.
+
+- **[New]** **A Console control in the header toolbar, immediately left of Search** — a `Terminal` glyph, icon-only, no action attached. Its two labels are honest about that: `aria-label` and `title` both read **"Console (coming soon)"**, so the tooltip says what the control is and that it does nothing yet. (It once would have read "Terminal" — the glyph's own name — which is exactly the generic labelling an earlier pass through every tooltip in the application removed.)
+- **[New]** **`PlanDocs/PLAN-028-C7NTAX-Console-and-CLI.md`** — how a command line for C7NTAX is built: **one grammar in `packages/shared`, three front ends** (the in-app panel and `/console`, a standalone `c7ntax` CLI authenticating with an existing API key, and PLAN-025's MCP tools), where a command is a name for a route that already exists. Parsed where the person is, executed by re-entering the real route as the caller — so there is **no new permission, no new execution endpoint, no second authorization model, no schema change and no migration**, and the toggle is one config key.
+- **[New]** **The command catalogue: 401 commands in sixteen groups**, each with the permission it needs and its risk tier — console basics (14), session and identity (10), tickets (32), boards and work (28), clients and pipeline (24), projects and time off (18), billing (35), products and assets (21), Kumo (36), knowledge, chat and surveys (18), reports and analytics (29), alerts and monitoring (18), AI and actions (17), integrations (39), administration (43), system and data (19). **Derived from the actual route surface rather than invented**: re-measured for the plan with the guard script's own enumeration, the API is **437 route declarations across 48 files — 187 reads and 250 writes**, behind **108 permissions**.
+- **[New]** **Autocomplete, specified to PowerShell's standard** (§5.1, at the operator's request): `Tab` completes the word under the cursor and cycles (`Shift+Tab` walks back), `Ctrl+Space` opens a **menu with a one-line description per entry** (PSReadLine's menu-complete, including its tooltip), `→` accepts **inline prediction from your own history** with `Ctrl+→` taking a word and `F2` toggling inline/list view, and record-valued flags (`--client`, `--assignee`, `--board`, `--ticket`) complete from **the live API through a warm cache** — never a network call on a keystroke, with staleness labelled rather than hidden. All of it is one pure function, `complete.ts`, so the panel, the CLI and MCP share it; the CLI is its own completer (`c7ntax _complete`) so the three generated shell scripts cannot go stale.
+- **[New]** **What the plan refuses**, written down because a console normally grows all of it: no pipes, variables or `eval`; no impersonation; no `critical` commands (PLAN-026 §8 keeps them proposal-only); no secrets in history or in a script; no frequency-ranked or model-inferred suggestions; and credential changes (password, MFA, passkeys), the customer portal and per-device push stay out of the catalogue entirely.
+- **[New]** **Fifteen decisions (D1–D15)** and **seven phases** with the honest dependency stated first: the catalogue is a **projection of PLAN-026's manifest**, which is unbuilt, so **reads can land now and writes wait** rather than being hand-written into a second list that drifts.
+
+**Verification (the icon, live):** signed in at `/c7nc` and asserted against the DOM, not by eye — the toolbar's first child is the Console control, its glyph class is `lucide-terminal`, it sits 28×28 at x=835 immediately left of the Search control, and hovering it renders **"Console (coming soon)"** in the application's own tooltip. Nothing is wired: the button has no handler and no route. Web `tsc` clean; the plan doc is documentation, so no build artefact changes.
+
+**Not built, and said plainly:** the console itself does not exist yet. Phases 0–2 (the grammar, completion and a read-only console) are ~5 days, of which 2–3 days are work PLAN-026 owes independently.
 
 ---
 

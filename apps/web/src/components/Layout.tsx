@@ -11,6 +11,7 @@ import {
   AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio, Bot,
   MonitorSmartphone, Mail, KeyRound, Plug,
   Star, StarOff, Link2, AppWindow, SquareArrowOutUpRight, ChevronsUpDown, ChevronsDownUp, ChevronUp,
+  Terminal,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
@@ -1112,6 +1113,16 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           {/* Header toolbar */}
           <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
+            {/* Console — the command surface for C7NTAX. Present as a placeholder so the layout is
+                final; it is deliberately inert until the console itself exists (PLAN-028). */}
+            <button
+              type="button"
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors"
+              title="Console (coming soon)"
+              aria-label="Console (coming soon)"
+            >
+              <Terminal size={16} />
+            </button>
             <button
               onClick={() => { if (UI_P1) setPaletteOpen(true); }}
               className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"

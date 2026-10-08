@@ -5687,3 +5687,45 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The clean-up script printed a Node error before its own output** the first time — writing `.mts` and running it via `npx tsx` is the path through ESM resolution here, and a truncated first run is worth re-running rather than trusting.
 - **An ESM probe cannot import `@C7NTAX/shared` by package name**; `probe-ai-apply` is `.mts` under `tsx` for that reason, while the `.mjs` probes must stay clear of the shared package.
 - **The auto-sync job is still able to commit the tree** mid-task; check `git log --oneline -3` before assuming what is committed.
+
+
+---
+
+### Prompt 271 — A Console in the header, and the plan for what it will run
+
+**Timestamp:** 2026-10-08 21:40 | **Status:** Complete (icon placed and verified; plan authored) | **Duration:** ~85 min
+
+**BuildNotes IDs:** **2026.10.8.029** — "A Console in the header, and the plan for what it will do (401 commands, PowerShell-grade completion)"
+
+**Prompt**
+
+> Add an icon to the header row navigation for a Console to the left of Search. We will be creating a console/shell that commands can be run to control C7NTAX. Do not wire it up. We will do that later. Icon only for now.
+>
+> Create a plan doc for implementing a CLI/console interface to control the application along with an extensive list of suggested commands to be used in the application. Make sure the commands are grouped in a logical way in the doc.
+
+**Prompt** (continuing the same request)
+
+> the console/shell should have an autocomplete function, ala PowerShell. add that spec to the plan doc
+
+**What I did**
+- **Put the icon where it was asked for and nowhere else.** A `Terminal` glyph as the toolbar's first child, immediately left of Search, icon-only, **no handler and no route attached**. Two labels, both saying "Console (coming soon)" — because the alternative was the glyph's own name, and an earlier pass over every tooltip in this application removed exactly that kind of generic labelling (a key that said "Keyround").
+- **Measured before writing the catalogue rather than inventing one.** A script over `apps/api/src/routes/**` using the same enumeration `check-route-guards.mjs` uses: **437 route declarations across 48 files, 187 reads and 250 writes**, with the permission each route carries, plus **108 permissions** in `packages/shared/src/enums.ts`. That dump is the input to the catalogue and the prototype of the manifest script PLAN-026 Phase 1 still owes.
+- **Wrote PLAN-028** (1,180 lines): one grammar in `packages/shared`, three front ends (the in-app panel and `/console`, a `c7ntax` CLI on an existing API key, PLAN-025's MCP tools), parsed where the person is and executed by **re-entering the real route as the caller** — so no new permission, no execution endpoint, no schema change, no migration. It reuses PLAN-026's four tiers verbatim rather than inventing a second scale, and its §12 catalogue is a **projection of PLAN-026's manifest** rather than a second list.
+- **The catalogue is the deliverable the request named**: **401 commands across sixteen groups**, each with the permission and the tier, grouped the way an MSP's day runs (basics → session → tickets → boards → work → clients → billing → stock → documentation → knowledge → reporting → monitoring → AI → integrations → administration → diagnostics). §12.17 lists what is deliberately absent: credential routes, the customer portal, `critical` actions, pipes and variables, impersonation.
+- **Specified autocomplete to PowerShell's standard** when asked for it, as §5.1: four modes (`Tab` cycles the word under the cursor, `Ctrl+Space` opens a described menu, `→` accepts inline history prediction, `?` opens help without losing the line), candidates by position, values from the live API through a warm cache, and the rules that keep it liveable — never a network call on a keystroke, staleness labelled, permission-filtered, deterministically ordered, no secrets, never inferred by a model.
+- **Verified the icon against the DOM rather than by eye**, and this needed a dev server: the user's web process was gone (port 3010 refused while the API answered 200), so I started one, signed in, and asserted the rendered toolbar instead of describing it.
+
+**Decisions worth remembering**
+- **The plan's load-bearing dependency is another plan's unbuilt phase, and saying so is the useful part.** The console's catalogue is the manifest; building the console first would mean hand-writing 250 write commands, and the second list always drifts from the first. So: **reads can land now** (they cannot damage anything and they prove the grammar), **writes wait**. That is now the first thing a reader of PLAN-028 is told.
+- **Reads needed descriptors too, and PLAN-026 did not have them.** PLAN-026 §5 tiers *writes* because the model does not need reads as tools. A console does — `ticket list` and `report run` are the most-typed commands of all — so this plan adds `kind: "read"` descriptors generated the same way. An addition to that schema, not a change to it, and it is why Phase 0 here is worth doing before PLAN-026 Phase 1 exists.
+- **Tab has to complete, not move focus, and that is a deliberate break with web convention.** Every terminal user's fingers expect it; the fix for the surprise is one hint line in the panel, not obedience to browser behaviour.
+- **A completion engine is where a console turns unpleasant** — blocking on the network per keystroke, reordering candidates by frequency, predicting a colleague's commands. All three are written down as prohibitions (§5.1) rather than left to whoever implements it.
+- **The plan had a naming collision to resolve.** PLAN-026 §11 already proposes renaming the assistant page to "Console". Two things called Console in one product is a support ticket generator, so D11 takes the word for the command line and PLAN-026 §11 gets corrected when this lands.
+- **The honest closing section is worth the space.** "What would make this plan wrong" now includes *"if completion is dropped to save a day"* — because it is the item most likely to be deferred as polish, and it is the difference between a console people keep open and a worse API client.
+
+**Notes for next time**
+- **Both dev servers are now running from this session's shells** (`shellId 4726` the API, `webdev` the web app) and **will stop when the session ends**. The user's own web process was already down before I started one; their API was up. Start `pnpm dev` / `npm run dev` again after this session if the application looks dead.
+- **Port 3010 refusing while 4000 answers 200** is the signature of a stopped Vite server, not a stopped API — the login page meanwhile reports "3 services down" and blames the API and the database, so trust `Invoke-WebRequest` over the page's own diagnostics.
+- **The route/permission dump is worth keeping**: `files/routes-with-permissions.tsv` in this session (437 rows: file, method, path, permission) is the input PLAN-026 Phase 1's generator needs.
+- **Count the catalogue from the document, not from memory.** I wrote "~230 commands" in the registry before counting the tables; the real figure is **401** across sixteen groups, and the per-group breakdown is now in §12's preamble.
+- **`Select-String` counts lines, so count in the document's own range** — a `^\| \`` match over the whole file catches tables outside §12 and overstates the catalogue by 33 rows.
