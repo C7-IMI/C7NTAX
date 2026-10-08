@@ -14,6 +14,10 @@ changed* at the end). Each plan document carries the same decision in a
 `—` rows below). **Extended again 2026-10-08:** PLAN-024 filed and then built (2026.10.8.016), and
 **PLAN-025** filed — an MCP server for C7NTAX, which takes over PLAN-011's phase 9 and answers
 PLAN-013 #7. PLAN-025 is a plan for a capability, so it is not in the wave order.
+**Extended a third time 2026-10-08:** **PLAN-026** filed — model control of the whole application,
+within the prompting user's permissions. Its **Phase 0 is not optional**: approving an AI action
+currently applies nothing, so it closes a hole in what has already shipped. Also a capability, so it
+is not in the wave order either.
 
 ---
 
@@ -44,6 +48,7 @@ Legend: ✅ complete · 🟡 partial (in the codebase now) · ⬜ not started ·
 | — | **PLAN-020** | **Custom report designer (build / embed / buy)** | **overlay — advises on the Reporting designer** | ✅ **Built here — all six phases shipped (0–5 in 2026.10.7.026, phase 6 in 2026.10.7.027)** | Answers the question the Custom Reports landing page raises: **build a banded designer here on a JSON template document** — jsreport is **LGPL on the engine plus a commercial cap of 5 stored templates** and has **no banded WYSIWYG designer to adopt**, ReportBro is **AGPL or paid with a Python-only renderer**, and every other banded JS designer is commercial. §4 defines the document model, §5 costs the work honestly, §6 phases it with an exit condition each — and now records that every phase is in the product |
 | — | **PLAN-023** | **Setting explanations behind a "Why" control** | **filed — a UI taste decision, not scheduled** | 📝 mockup + measurements, **not built** | The follow-on to the tab work in 2026.10.8.007: Portal settings is still the tallest tab because each of its sixteen fields prints its reasoning, so folding `detail` / `Changes:` / `Default` behind a `Why` control is worth **75%** of the height — measured in the mockup ([`docs/mockups/portal-settings-why-toggle.html`](../docs/mockups/portal-settings-why-toggle.html)) at **2,621 px → 695 px** scaled to sixteen fields, **1,770 px** with everything expanded. §3 names the trap: "Use the deployment's value" shares a row with the `Default …` line and must not hide behind the fold. `FieldCard` serves every settings screen, so it is all-or-nothing |
 | — | **PLAN-025** | **C7NTAX as an MCP server** | **filed — a capability, not scheduled; phases 0–2 need nothing that is missing, phases 3+ want PLAN-016** | 📝 plan only, **nothing built** | The assistant's ten functions exposed to the AI clients technicians already use (Claude Desktop, VS Code/Copilot, Cursor, ChatGPT), behind the permission model that exists. Takes over **PLAN-011 phase 9** and answers **PLAN-013 #7**. §5 recommends API keys as bearer tokens first and OAuth 2.1 (RFC 9728 + resource indicators, CIMD over DCR) only when a hosted client is genuinely wanted; §6 keeps writes as proposals with **no approval tool**; §10 is five phases with a probe each (≈4 days for phases 0–2, ≈5 for the OAuth phase). §4 is a spec snapshot — **verified 2026-10-08 and to be re-verified before phase 2**, because the protocol was rewritten twice in twelve months and Claude follows an older authorization revision than the current one |
+| — | **PLAN-026** | **Model control of C7NTAX (within the prompting user's permissions)** | **filed — Phase 0 is a fix, the rest is a capability; no external gate** | 🟡 **Phase 0 outstanding** (approving an AI action applies nothing today), everything else **not built** | "Control all aspects, not just ticket creation", bounded by "within the context of the logged in/connected user's permissions". Two findings from the code decide its shape: `POST /api/ai-actions/:id/decide` sets a status and **applies nothing** (no executor exists anywhere), and the operator's sentence is not expressible because no tool resolves a person and ticket creation needs a board. So: a **manifest of all 233 staff-facing mutating routes** (250 minus `auth`/`portal`/`push`) with a permission, a tier, a preview and an inverse per action, enforced by `guard:actions`; one executor that **re-enters the real route as the caller**; three modes per connection — read only / **ask** (default) / act; tier decides **who may skip the click, never who may do it**; `high` always asks, `critical` is proposal-only. §2.1 is the load-bearing wall: authority is the session's, re-read per request, never the model's or the connection's |
 | — | **PLAN-019** | **Remaining work & go-live sequencing (advisory overlay)** | **overlay — orders the rows above** | 📋 **Recommendation only, nothing applied** | Not work of its own: it sequences what is left into three tiers, names the exit condition for each step, and lists the ten decisions with their owners. Written after the W0–W2/W5-1 programme completed (BuildNotes 2026.10.7.017–.022). §3.1 recommends production flag values, §3.4 recommends deploying **dev first and running the battery against it**, §6 recommends a single battery runner and a primary-surfaces click-through |
 | — | **PLAN-021** | **Application configuration — one registry, one screen, and the customer portal's section** | **overlay — replaces the settings surfaces that did not work** | ✅ **Built — BuildNotes 2026.10.7.029** | The measurement first: of the roughly thirty controls on System Settings, **exactly one was read by anything**, the session-timeout control on it wrote a key nothing read, and My Settings wrote two **instance-wide** keys as though they were personal. Every setting is now declared once in `packages/shared/src/appConfiguration.ts`, resolved *stored → environment → default* by `apps/api/src/services/appSettings.ts`, enforced by `apps/api/src/routes/configuration.ts` and **drawn from that same declaration**. Adds the Customer Portal section, a `/system/deployment` report of the facts only a deployment owns, and 78 probe assertions. §5 lists what was deliberately left unconfigurable — starting with the switches that decide whether authentication is enforced. **2026.10.7.030** moved the Outlook add-in switch to Client Apps & Notifications, made it govern the taskpane as well as the endpoint, and fixed a service-worker defect that cached a cross-origin 404 (§12) |
 
@@ -73,14 +78,20 @@ Legend: ✅ complete · 🟡 partial (in the codebase now) · ⬜ not started ·
   provides deduction, threading, dedup and ticket creation, so the add-in is
   mostly transport + identity + packaging.
 - **PLAN-011 phase 9 has split in two, and the first half is done.** The
-  risk-classified action layer shipped with the assistant (2026.10.8.020); the
-  MCP server is **PLAN-025**, which needs the action layer, the API-key model and
-  an authorization-server decision — *not* PLAN-011's Bedrock/RAG phases. When
-  PLAN-011 is picked up, phase 9 hands over to PLAN-025 rather than being built
-  twice, and PLAN-011's remaining phases stay behind the hosting work in W3.
+  risk-classified action layer shipped with the assistant (2026.10.8.020); what
+  remains of it is the **MCP server (PLAN-025)** and the **executor that makes an
+  approved action apply (PLAN-026 Phase 0)** — neither of which needs PLAN-011's
+  Bedrock/RAG phases. When PLAN-011 is picked up, phase 9 hands over to those two
+  rather than being built twice, and its remaining phases stay behind the hosting
+  work in W3.
 - **PLAN-025's phases 3+ want PLAN-016.** A remote MCP endpoint needs the
   deployment's public origin, TLS and WAF; phases 0–2 (a local stdio server and a
   read-only tool surface) do not, which is why the plan is costed in two halves.
+- **PLAN-026 is where PLAN-025's tool surface comes from, and it starts with a fix.**
+  Its Phase 0 makes an approved AI action actually apply — nothing does today — and
+  its manifest becomes the MCP tool list in PLAN-025 Phase 6. Neither blocks the
+  other's first phases; both share that one. **PLAN-011 phase 9's action layer** is
+  now PLAN-026 §6 plus the assistant that shipped.
 - **PLAN-005's auto-update** wants a release host, which arrives with PLAN-016.
 - **Schema changes and the boot pipeline:** PLAN-008 option 4 skips
   `prisma generate`/`db push` when `startup/.schema.sha256` is unchanged, so any
@@ -127,6 +138,7 @@ with the code, the code won and the line was corrected.
 | PLAN-023 | Setting explanations behind a "Why" control | `PLAN-023-Setting-Explanation-Why-Toggle.md` | authored in `PlanDocs/` | 2026-10-08 | 📝 **Filed, not built** — a UI taste decision with a measured mockup; see the `—` row in §1 |
 | PLAN-024 | Boards as tabs on the Tickets screen | `PLAN-024-Tickets-Board-Tabs.md` | authored in `PlanDocs/` | 2026-10-08 | ✅ **Built** (BuildNotes 2026.10.8.016): one tab per board with its count plus *All Boards*, a band naming the board in view, the URL still the source of selection, and the whole thing behind `BOARD_TABS` in `apps/web/src/pages/Tickets.tsx` so one line restores the dropdown |
 | PLAN-025 | C7NTAX as an MCP server | `PLAN-025-C7NTAX-MCP-Server.md` | authored in `PlanDocs/` | 2026-10-08 | 📝 **Plan only** — the assistant's function registry exposed over MCP to external AI clients. Takes over **PLAN-011 phase 9** and answers **PLAN-013 #7**; §9 lists the eight decisions to freeze (D1, authorization, is the gate) |
+| PLAN-026 | Model control of C7NTAX within the prompting user's permissions | `PLAN-026-Model-Control-of-C7NTAX.md` | authored in `PlanDocs/` | 2026-10-08 | 🟡 **Phase 0 outstanding, the rest plan-only** — an action manifest for all 233 staff-facing mutating routes, one executor that re-enters the real route as the caller, three policy modes per connection (`ask` default), tier = who may skip the click. Phase 0 fixes the fact that approving an AI action applies nothing today. Ten decisions to freeze in §12 |
 
 ---
 

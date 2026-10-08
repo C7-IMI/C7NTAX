@@ -204,6 +204,14 @@ Two consequences worth writing down before anyone builds it:
 
 This is the part of the design that should not be "paused for later".
 
+> **Related:** **PLAN-026** (filed 2026-10-08, after this plan) widens the same surface to the whole
+> application and introduces an **opt-in `act` mode** in which `low`/`medium` actions apply without a
+> click. When that lands, the tools exposed here come from PLAN-026's manifest, and the rule below
+> becomes narrower rather than void: **no tool approves somebody else's action** — a model may confirm
+> its own just-proposed action once, by a single-use token bound to the caller and the exact
+> arguments, which is what a client's own permission prompt is for. Nothing in this plan's MCP surface
+> executes `critical` actions, and `high` still requires a person's click.
+
 - **Reads execute. Writes propose.** `propose_ticket_note` and `propose_ticket` raise a risk-classified
   `AiAction` and return `{ proposalId, status: "pending", approveUrl }` as `structuredContent` with
   `isError: false` — because nothing went wrong; a proposal is the successful outcome.

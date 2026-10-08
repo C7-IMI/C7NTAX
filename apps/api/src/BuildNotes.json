@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.8.024",
+    "date": "2026-10-08",
+    "title": "PLAN-026: model control of the whole application — and the finding that nothing applies yet",
+    "changes": [
+      {
+        "text": "**`PlanDocs/PLAN-026-Model-Control-of-C7NTAX.md`** — §1 the honest starting point, §2 what \"all aspects\" means plus **§2.1 the boundary** (authority is the session's, never the model's), §3 what stays exactly as it is, §4 the shape, §5 the manifest and its build guard, §6 the executor, §7 the three policy modes, §8 what each risk tier now means, §9 confirmation and the operator's own sentence traced end to end, §10 safety when reads feed writes, §11 the surfaces, §12 ten decisions to freeze, §13 eight phases with acceptance criteria and a probe each, §14–17 costs, verification, related work and what would make it wrong.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Approving an AI action applies nothing, and nothing in the repository applies it.** `POST /api/ai-actions/:id/decide` sets a status — `\"executed\"` for low/medium, `\"approved\"` for high — and no code anywhere reads `payload.kind`, calls `generateTicketNumber` or writes the note. Both payloads the assistant raises (`ticket_note`, `create_ticket`) are recorded and never applied, so a proposal a person \"approves\" today changes nothing, and `docs/API.md` §10's \"nothing is written until a person approves it\" is true only because nothing is written at all. Making an approval real is the plan's **Phase 0**, and it is where the requested capability starts.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The operator's own sentence is not expressible yet, and the plan says why.** \"Create a ticket for David Chen\" needs a person lookup (no tool searches contacts — only companies), a board (`POST /api/tickets` refuses without `boardId`, and `propose_ticket` has no board argument), and a contact attached to the ticket (the route accepts `contactId`; the tool cannot pass it). Phase 3 covers the service desk end to end.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"All aspects\" is planned as a manifest, not as tools.** The API is 435 route declarations — **185 reads, 250 writes** — of which 17 are excluded by name with a reason (the model's own credentials in `auth.ts`, the Contact-facing `portal.ts`, and `push.ts`), leaving **233 staff-facing actions**. Each gets a descriptor: permission, tier, model-facing description, parameter schema, a human-readable preview and an inverse. Coverage is enforced by a new `guard:actions` check in the style of `guard:routes` — a mutating route with no descriptor, or one whose permission disagrees with the route's own, fails the build. 233 descriptors do not fit in a context window (~16k tokens of schema), so the ten curated functions stay first and three discovery tools (`list_actions`, `describe_action`, `perform_action`) cover the long tail — filtered by the caller's permissions, so a model cannot even see an operation the person cannot perform.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One executor, and it re-enters the real route as the caller.** Rather than extracting 233 write functions into services, the executor dispatches the actual route in-process with a 60-second single-use token for the caller's own identity, so scoping, validation, customer notifications, automations and audit are identical by construction — and the route's `requirePermission` remains the authority alongside the manifest's own check. It records `before`, the created entity and its number, and the inverse (or an explicit `irreversible`).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Tier now means \"who may skip the click\", never \"who may do it\".** Three modes per model connection — read only / **ask** (the default, which is exactly today's behaviour) / **act** — with `act` opt-in and a tier allowlist. `low` and `medium` may apply without a click in `act` mode; `high` (anything that emails a customer, money, or configuration) always asks; `critical` (users, roles, API keys, secrets, raw deletes) is proposal-only at every setting. Deletes are not offered — archive/soft-delete equivalents stand in — and a taint rule downgrades an action to a card when its identifying arguments came from tool output rather than the operator's prompt, which is the answer to prompt injection through a ticket body.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`PlanDocs/README.md`** — PLAN-026 registered in the wave rows and the registry with the dependency notes (Phase 0 is a fix; the manifest becomes PLAN-025's MCP tool surface). **PLAN-011's header** and **PLAN-025 §6** now record the split: PLAN-011 phase 9 is three pieces — the action layer (shipped 2026.10.8.020), the MCP server (PLAN-025) and the executor plus manifest (PLAN-026) — and PLAN-025's \"no approval tool\" rule is restated precisely for the world where `act` mode exists.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.023",
     "date": "2026-10-08",
     "title": "PLAN-025: an MCP server for C7NTAX (plan only, nothing built)",
