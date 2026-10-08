@@ -4562,3 +4562,33 @@ Read the API surface before writing any entry, so nothing is offered that does n
 - **`SingleSignOn.tsx` is the first screen to use the shared `Chip` from `Configuration.tsx`.** If a third screen wants it, move it into the design-system components rather than importing across pages.
 - **The design-token trap (an opacity modifier on a theme colour defined as a bare `var()` emits no rule) still exists in ~106 places.** This screen avoids it; the fix is alpha-capable palette tokens, and it is still not done.
 - **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.
+
+---
+
+### Prompt 242 — The dashboard's Recent tickets card, and the row it was dragging out of shape
+**Timestamp:** 2026-10-07 | **Status:** ✅ Completed | **Duration:** ~1 h
+**BuildNotes IDs:** 2026.10.7.044 — The dashboard's Recent tickets card stops dragging its row out of shape
+
+> Fix the layout on the Dashboard so that Recent Tickets card fits in more uniformly. Right now it throws the entire layout off. See screenshot
+
+**What I did**
+- **Measured the page instead of guessing at the screenshot.** Driving headless Edge at the same desktop width as the screenshot and reading the geometry gave the numbers behind "the layout looks off": the two counters in that row are **82px** tall, the Recent tickets card beside them is **326px**, and the row is therefore 326px tall — so the counters sat above **244px of empty space**. The card was placed at `span 3` of a six-column grid, which also left one whole column (206px) unused at the right of the row. Nothing was broken; the row was simply as tall as its tallest card, and the other cards did not fill it.
+- **Stopped a list from being able to decide a row's height.** The card is now `h-full` with the list in a scroll region that takes the height the row gives it (`min-h-0 flex-1 overflow-y-auto`), so an eight-row list can no longer stretch a row full of counters — while in a row of its own it shows all eight rows with nothing clipped (verified: `scrollHeight === clientHeight`).
+- **Made a card fill the row it is in.** The counter tiles and the alerts tile are `h-full` with their content vertically centred, so a row of cards reads as one band. A tile at its natural height looks exactly as it did before (the change only shows when something taller shares the row), and the centring was checked numerically rather than by eye.
+- **Took the list out of the counters' row in the standard layout.** `recent_tickets` now defaults to **L** (full width): eight counters fill the first row, the two that remain have the second row to themselves, and the list gets a band of its own at 1258px wide. Nobody's arrangement is altered — a saved layout keeps its own sizes, and the case where a user has arranged it at half width was checked separately.
+- **Left the widget model alone.** No new sizes, no packing rule that would draw a card wider than the size the user picked, and no change to the customise screen: the same S/M/L, one changed default, and cards that fill their row.
+- **Verified both arrangements rather than only the one in the screenshot.** Standard layout: four bands, every card in a row the same height (the ragged rows are gone), panel full width, eight ticket rows visible, counters centred. Hand-arranged layout with the panel at **M**: the two counters beside it measure **326px**, exactly the panel's height, so that row is a single band as well.
+- **Determined that Help needs no change.** The Workspace walkthrough describes the dashboard as a widget arrangement with S/M/L widths and how to reorder, hide and reset it; nothing it says became untrue, and no behaviour a reader has to know about changed — the layout is now what that description always implied.
+
+**Decisions worth remembering**
+- **"It throws the layout off" was two defects, not one.** A card taller than its row (leaving empty space under its neighbours) and a half-width card leaving a column unused. Fixing only the height, or only the width, would have left half the complaint standing.
+- **A grid row is as tall as its tallest card, and cards do not fill it.** `align-items: stretch` stretches the *wrapper*; the card inside stays at its content height. That is why the empty space appeared, and `h-full` on the card is the whole fix.
+- **`items-center` is the safe way to absorb a stretch.** Where the card is at its natural height, centring changes nothing visible; it only matters in the case the fix is about.
+- **The right fix for a list is not to shrink it.** Capping it with an internal scroll in the standard layout would have hidden rows for no benefit, because nothing shares its row there. The card scrolls only when it has to.
+- **A default size is a layout decision, not data.** Changing `defaultSize` for `recent_tickets` changes the standard arrangement and nothing else: a saved layout keeps whatever the user chose.
+
+**Notes for next time**
+- **The customise screen shows the size the user picked, and the page draws exactly that** — which is why the fix is a changed default plus full-height cards rather than a rule that widens the card into whatever space is left. A card drawn wider than its own S/M/L would be a small lie in the editor.
+- **A hand-written `fetch` from inside the page cannot PUT or DELETE the layout.** Both came back `CSRF_FAILED`, because the axios interceptor is what adds the CSRF header. Driving layout changes from `tsx` outside the browser works and is the easier route next time.
+- **A stale saved layout survives a verification run unless the reset actually happens.** The DELETE was refused with that same CSRF error, so the half-width arrangement stayed in the database until it was cleared directly; check `userDashboardConfig.count()` after any layout experiment.
+- **The 15-minute auto-sync will likely sweep part of this into its own commit** while the records are being written; check `git log` before assuming a change is uncommitted.

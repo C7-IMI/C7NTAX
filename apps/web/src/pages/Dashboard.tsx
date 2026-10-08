@@ -175,23 +175,30 @@ export function DashboardPage() {  const { user } = useAuth();
     }
     if (id === "recent_tickets") {
       return (
-        <div className="card">
+        // `h-full` so the card fills its grid cell rather than leaving the row's other cells with a
+        // void under them, and the list scrolls inside whatever height the row gives it — a widget
+        // whose height is its content would drag the whole row's height with it.
+        <div className="card flex h-full min-h-0 flex-col">
           <h3 className="text-sm font-semibold text-white mb-2">Recent tickets</h3>
           {recent.length === 0
             ? <p className="text-xs text-gray-500">Nothing updated recently.</p>
-            : recent.map((t: any) => (
-              <Link key={t.id} to={`/tickets/${t.id}`} className="flex items-center gap-2 py-1.5 text-sm hover:text-cyber-400 transition-colors">
-                <span className="font-mono text-xs text-gray-500">{t.ticketNumber}</span>
-                <span className="text-gray-300 truncate flex-1">{t.title}</span>
-                <span className="text-xs text-gray-600">{t.status}</span>
-              </Link>
-            ))}
+            : (
+              <div className="-mr-1 min-h-0 flex-1 overflow-y-auto pr-1">
+                {recent.map((t: any) => (
+                  <Link key={t.id} to={`/tickets/${t.id}`} className="flex items-center gap-2 py-1.5 text-sm hover:text-cyber-400 transition-colors">
+                    <span className="font-mono text-xs text-gray-500">{t.ticketNumber}</span>
+                    <span className="text-gray-300 truncate flex-1">{t.title}</span>
+                    <span className="text-xs text-gray-600">{t.status}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
         </div>
       );
     }
     if (id === "service_alerts") {
       return (
-        <Link to="/service-alerts" className={`card flex items-start gap-3 p-4 transition-colors ${stats.alerts > 0 ? "border-alert-red/40 hover:border-alert-red/60" : "hover:border-cyber-500/30"}`}>
+        <Link to="/service-alerts" className={`card flex h-full items-center gap-3 p-4 transition-colors ${stats.alerts > 0 ? "border-alert-red/40 hover:border-alert-red/60" : "hover:border-cyber-500/30"}`}>
           <div className="p-2 rounded-lg bg-red-600/10"><Bell size={18} className="text-alert-red" /></div>
           <div className="min-w-0"><p className="text-2xl font-bold text-white">{stats.alerts}</p><p className="text-xs text-gray-500 truncate">Active alerts</p></div>
         </Link>
@@ -200,7 +207,9 @@ export function DashboardPage() {  const { user } = useAuth();
     const card = cardFor(id);
     if (!card) return null;
     return (
-      <Link to={card.to} className="card flex items-start gap-3 p-4 hover:border-cyber-500/30 transition-colors cursor-pointer">
+      // A tile in a row with a taller widget fills that row's height, so a row of cards is one
+      // band rather than one card and some empty space.
+      <Link to={card.to} className="card flex h-full items-center gap-3 p-4 hover:border-cyber-500/30 transition-colors cursor-pointer">
         <div className={`p-2 rounded-lg ${card.bg}`}><card.icon size={18} className={card.color} /></div>
         <div className="min-w-0"><p className="text-2xl font-bold text-white">{card.value}</p><p className="text-xs text-gray-500 truncate">{card.label}</p></div>
       </Link>

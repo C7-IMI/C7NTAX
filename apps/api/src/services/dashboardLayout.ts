@@ -28,7 +28,10 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
   { id: "active_clients", label: "Active clients", description: "Client accounts on the books", defaultSize: 1, permission: "client:view" },
   { id: "service_alerts", label: "Active alerts", description: "Monitoring alerts currently firing", defaultSize: 1, permission: "servicealert:view" },
   { id: "my_time", label: "My time this week", description: "Hours you logged since Monday", defaultSize: 1, permission: "billing:view" },
-  { id: "recent_tickets", label: "Recent tickets", description: "The eight most recently updated tickets", defaultSize: 2, permission: "ticket:view" },
+  // Full width by default: at half width the list makes its row as tall as the list itself, which
+  // left the counters it shared that row with sitting above a pool of empty space. A user who wants
+  // it half width can still choose M.
+  { id: "recent_tickets", label: "Recent tickets", description: "The eight most recently updated tickets", defaultSize: 3, permission: "ticket:view" },
   { id: "quick_links", label: "Quick links", description: "Shortcuts into the areas you use", defaultSize: 3 },
 ];
 

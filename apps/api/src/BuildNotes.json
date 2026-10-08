@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.7.044",
+    "date": "2026-10-07",
+    "title": "The dashboard's Recent tickets card stops dragging its row out of shape",
+    "changes": [
+      {
+        "text": "**Recent tickets is a full-width panel in the standard layout.** At half width it made its row as tall as the list and left the counters beside it above a pool of empty space. Full width, it sits in a band of its own, and a hand-arranged layout that puts it at half width still works. Anyone who preferred it half width can set **M** in Customise.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A card in a row with a taller one now fills the row.** The counters are `h-full` with their number vertically centred, so a row of cards reads as one band rather than one card and some empty space — including for a layout somebody arranged by hand, where the counters now measure exactly the height of the list beside them.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The list scrolls inside the card instead of stretching it.** Its rows live in a scroll region that takes whatever height the row gives it, so the card can never again be the thing that decides how tall a row full of small cards is. In the standard arrangement all eight rows are visible and nothing is clipped.",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.7.043",
     "date": "2026-10-07",
     "title": "Single sign-on is configured in the application, not only in the environment",

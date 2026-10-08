@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.7.043 | Last Updated: 2026-10-07
+## Version: 2026.10.7.044 | Last Updated: 2026-10-07
 
 ---
 
@@ -11,6 +11,18 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.7.044 — The dashboard's Recent tickets card stops dragging its row out of shape
+
+The card was a list whose height was its content, placed at half width in a row with two small counters — so the row was as tall as eight tickets (326px), the counters sat at the top of it above 244px of empty space, and the row left a column unused at the right. The page now lays out in bands: every card fills the row it is in, and the list no longer shares a row with the counters in the standard arrangement.
+
+- **[Fix]** **Recent tickets is a full-width panel in the standard layout.** At half width it made its row as tall as the list and left the counters beside it above a pool of empty space. Full width, it sits in a band of its own, and a hand-arranged layout that puts it at half width still works. Anyone who preferred it half width can set **M** in Customise.
+- **[Fix]** **A card in a row with a taller one now fills the row.** The counters are `h-full` with their number vertically centred, so a row of cards reads as one band rather than one card and some empty space — including for a layout somebody arranged by hand, where the counters now measure exactly the height of the list beside them.
+- **[Fix]** **The list scrolls inside the card instead of stretching it.** Its rows live in a scroll region that takes whatever height the row gives it, so the card can never again be the thing that decides how tall a row full of small cards is. In the standard arrangement all eight rows are visible and nothing is clipped.
+
+Verified in a desktop-width browser: the standard layout renders four bands with every card in a row the same height (previously two rows were ragged — the worst being 82px beside 326px), the panel spans the full width, all eight ticket rows are visible with no clipping and the counter content is vertically centred; and with the panel arranged at half width by hand, the two counters beside it measure 326px — exactly the panel's height — so that row is one band too. `probe-dashboard.mjs` still passes 31/31, and the arranged layout used for the check was cleared afterwards.
 
 ---
 
