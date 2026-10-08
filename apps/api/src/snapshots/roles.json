@@ -1,5 +1,33 @@
 [
   {
+    "id": "047137db-2f54-47bb-ad29-fa5347e809e2",
+    "name": "Client Technician",
+    "systemRole": "technician",
+    "permissions": [
+      "ticket:view",
+      "ticket:create",
+      "ticket:edit",
+      "ticket:assign",
+      "ticket:close",
+      "board:view",
+      "client:view",
+      "integration:view",
+      "report:view",
+      "servicealert:view",
+      "contact:view",
+      "project:view",
+      "asset:view",
+      "kb:view",
+      "schedule:view",
+      "chat:view",
+      "inference:view",
+      "product:view"
+    ],
+    "isDefault": false,
+    "createdAt": "2026-10-08T04:05:18.316Z",
+    "updatedAt": "2026-10-08T04:05:18.316Z"
+  },
+  {
     "id": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
     "name": "Read Only",
     "systemRole": "read_only",

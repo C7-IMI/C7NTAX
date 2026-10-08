@@ -994,20 +994,6 @@
     "updatedAt": "2026-08-20T20:55:03.674Z"
   },
   {
-    "id": "0b1d5a3e-284a-4792-81a6-4e980fd0f3d1",
-    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
-    "title": "Some APAC users are seeing errors in ChatGPT Work, conversations, and GPTs.",
-    "description": "Status: Investigating We are investigating the issue for the listed services. Affected components GPTs (Degraded performance) ChatGPT Work (Degraded performance) Conversations (Degraded performance)",
-    "severity": "degraded",
-    "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://status.openai.com//incidents/01M4CR8GCAFC1RYQXZDXAZP2VT",
-    "detectedAt": "2026-10-08T03:22:24.514Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-08T03:22:24.516Z",
-    "updatedAt": "2026-10-08T03:47:47.631Z"
-  },
-  {
     "id": "dc9c78ac-cc36-4cdd-b68f-51bf6f6040b2",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Unable to create new ChatGPT Work threads in latest version of desktop app",
@@ -1020,6 +1006,20 @@
     "resolvedAt": "2026-10-07T11:54:21.120Z",
     "createdAt": "2026-10-07T05:36:00.297Z",
     "updatedAt": "2026-10-07T11:54:21.121Z"
+  },
+  {
+    "id": "0b1d5a3e-284a-4792-81a6-4e980fd0f3d1",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "Some APAC users are seeing errors in ChatGPT Work, conversations, and GPTs.",
+    "description": "Status: Investigating We are investigating the issue for the listed services. Affected components Conversations (Degraded performance) GPTs (Degraded performance) ChatGPT Work (Degraded performance)",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.openai.com//incidents/01M4CR8GCAFC1RYQXZDXAZP2VT",
+    "detectedAt": "2026-10-08T03:22:24.514Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-08T03:22:24.516Z",
+    "updatedAt": "2026-10-08T04:29:36.165Z"
   },
   {
     "id": "33101683-f967-4082-966e-eeb7c53ea981",

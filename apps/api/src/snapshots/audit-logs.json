@@ -146831,6 +146831,18 @@
     "createdAt": "2026-10-07T21:20:30.854Z"
   },
   {
+    "id": "f70e9318-62d6-4246-9b4b-9433ba812db5",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "logout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:08.894Z"
+  },
+  {
     "id": "0182b318-3a6d-4cc2-a4a7-d91518716516",
     "action": "reports:create",
     "entity": "reports",
@@ -206382,5 +206394,2637 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T03:50:17.822Z"
+  },
+  {
+    "id": "33b0401d-6e8b-4640-b111-cbcd16e9e26c",
+    "action": "roles:create",
+    "entity": "roles",
+    "entityId": "roles",
+    "changes": {
+      "name": "Client Technician",
+      "systemRole": "technician",
+      "permissions": [
+        "ticket:view",
+        "ticket:create",
+        "ticket:edit",
+        "ticket:assign",
+        "ticket:close",
+        "board:view",
+        "client:view",
+        "integration:view",
+        "report:view",
+        "servicealert:view",
+        "contact:view",
+        "project:view",
+        "asset:view",
+        "kb:view",
+        "schedule:view",
+        "chat:view",
+        "inference:view",
+        "product:view"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T04:05:18.321Z"
+  },
+  {
+    "id": "10228b0b-58c3-4c2c-9f27-0af48f67f7d6",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:25.064Z"
+  },
+  {
+    "id": "acd0d11c-f8ee-4afe-b8fd-19077b521ab8",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "discover",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:25.080Z"
+  },
+  {
+    "id": "dc4c18a5-7e04-4949-8b76-54718a527e20",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "test",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:25.095Z"
+  },
+  {
+    "id": "3f9c99f1-7192-4f47-bd81-a7ff80ed761b",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:25.150Z"
+  },
+  {
+    "id": "37280f4a-2d76-48f2-b6f2-6c8495182a32",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [
+        "probe-allowed.example"
+      ],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:25.209Z"
+  },
+  {
+    "id": "6f7525f2-f385-4556-8cee-6309245ba810",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:25.286Z"
+  },
+  {
+    "id": "f9947cae-d1b1-4bc9-8b4b-fd595db210d7",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:08:17.980Z"
+  },
+  {
+    "id": "ad16c2bd-4cb2-4863-b299-7953e01a1f1a",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [
+        "probe-allowed.example"
+      ],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:08:18.049Z"
+  },
+  {
+    "id": "75e9a308-083e-4e7e-be29-a24b4f1ccc87",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:08:18.135Z"
+  },
+  {
+    "id": "9da81bd9-7972-4dc0-a8f4-f65b1782d9a9",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": false,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:08:18.191Z"
+  },
+  {
+    "id": "60476a31-9ee8-4398-9a16-91d977c90864",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": false,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:25.340Z"
+  },
+  {
+    "id": "16330c83-cf27-45f2-8f61-94dd5841ef57",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:57.002Z"
+  },
+  {
+    "id": "33f15ac8-bd34-4ec1-b3a3-bc644e448bca",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "discover",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:57.015Z"
+  },
+  {
+    "id": "9711e47e-0917-483c-a596-3674d77719fc",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "test",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:57.030Z"
+  },
+  {
+    "id": "5398f23b-0219-4abd-9170-08fee804d2c7",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:57.085Z"
+  },
+  {
+    "id": "f8b903f9-cb5a-4345-a3e4-f894ffd0cf48",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [
+        "probe-allowed.example"
+      ],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:57.152Z"
+  },
+  {
+    "id": "c8cfa197-a75b-4236-a5f9-85b3b473d498",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:57.241Z"
+  },
+  {
+    "id": "115ebcf4-0d06-4633-b019-aac9141226b2",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": false,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:07:57.291Z"
+  },
+  {
+    "id": "2586b042-dc86-486b-89da-00aedbb137c6",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:08:17.898Z"
+  },
+  {
+    "id": "cd14c838-dd3c-499f-9e53-296b262505ba",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "discover",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:08:17.911Z"
+  },
+  {
+    "id": "11f10d66-c11b-41ea-bef0-a9f9a7be3e07",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "test",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:08:17.928Z"
+  },
+  {
+    "id": "27ff939d-6b21-4ebc-94ca-7c6346b555cc",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:13.395Z"
+  },
+  {
+    "id": "6e51d76d-6eb1-4e21-b723-2eace05eae5e",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "discover",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:13.416Z"
+  },
+  {
+    "id": "803906e6-df47-4eaf-a636-e9398b18d868",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "test",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:13.434Z"
+  },
+  {
+    "id": "15bfc006-ae03-49f6-8e25-e62d78eafc44",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:13.502Z"
+  },
+  {
+    "id": "bc38e327-3927-45c6-b2e6-78a8f23795e0",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [
+        "probe-allowed.example"
+      ],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:13.599Z"
+  },
+  {
+    "id": "d9dbbd13-7014-4c94-aef9-b26d8b1a37d6",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:13.684Z"
+  },
+  {
+    "id": "c02362eb-c787-480d-aa1e-6da7d5315f05",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": false,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:13.746Z"
+  },
+  {
+    "id": "45cdf38f-0b6c-44be-ba7b-2abd637ab966",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:24.378Z"
+  },
+  {
+    "id": "d9300729-db06-4618-93fb-320a3d009a44",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "discover",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:24.393Z"
+  },
+  {
+    "id": "5e7cb1e9-3551-4b35-a70b-80cffd47028a",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "test",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:24.406Z"
+  },
+  {
+    "id": "227bb25a-fa3d-4062-8bcd-0261e2f3205c",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "94ba98fc-866b-464e-8665-7ee4fb98cabb",
+    "changes": {
+      "body": "This is not fixed"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.614Z"
+  },
+  {
+    "id": "2c1ed380-777c-4dcf-8a74-d352497e48a5",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:24.465Z"
+  },
+  {
+    "id": "8bb97e5d-e6e0-4cd4-9cce-9768a5542cd5",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [
+        "probe-allowed.example"
+      ],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": true,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:24.553Z"
+  },
+  {
+    "id": "a773579e-7fc6-4558-a099-454923b322de",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": true,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:24.643Z"
+  },
+  {
+    "id": "3b2e7324-e96e-4a0d-aee1-2731443cdbd6",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "http://127.0.0.1:4131",
+      "scopes": "openid email profile",
+      "domains": [],
+      "enabled": false,
+      "clientId": "c7ntax-sso-probe",
+      "redirectUri": "http://127.0.0.1:4000/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:09:24.702Z"
+  },
+  {
+    "id": "4f410b83-8be2-4559-8b9d-b551d17e15a1",
+    "action": "sso:update",
+    "entity": "sso",
+    "entityId": "oidc",
+    "changes": {
+      "issuer": "https://login.example.invalid/realms/demo",
+      "scopes": "openid email profile",
+      "domains": [
+        "c7ntax.example"
+      ],
+      "enabled": true,
+      "clientId": "c7ntax-ui-check",
+      "redirectUri": "http://localhost:3010/api/auth/sso/oidc/callback",
+      "autoActivate": false,
+      "clientSecret": "***",
+      "defaultRoleId": null,
+      "jitProvisioning": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T04:11:09.660Z"
+  },
+  {
+    "id": "86da5fd0-e9c4-420f-b626-3f22da55f587",
+    "action": "sso:create",
+    "entity": "sso",
+    "entityId": "test",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T04:11:12.786Z"
+  },
+  {
+    "id": "95cd66a0-c468-44c3-a8b6-514dea6e9de1",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "all_tickets",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "resolved",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "overdue_invoices",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "active_clients",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "service_alerts",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "my_time",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:19:54.907Z"
+  },
+  {
+    "id": "b115cab4-dc93-4f75-b5f4-6e3a85a7700e",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.047Z"
+  },
+  {
+    "id": "5dae8c45-bbf2-4bdb-8419-14c1ff2e5ea5",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.050Z"
+  },
+  {
+    "id": "926277ca-12e5-41e5-9577-4f9145ccf074",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.054Z"
+  },
+  {
+    "id": "5bc0861d-554f-48f7-a7cd-823961c53f74",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.071Z"
+  },
+  {
+    "id": "448a74e8-cc4c-4803-bf2c-3baacec83af3",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "definitely_not_a_widget",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 99,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.079Z"
+  },
+  {
+    "id": "8881232b-dd8e-460b-b74b-e881602c7c77",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": false
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.099Z"
+  },
+  {
+    "id": "86e83a2a-473f-473b-bb6c-49fa6b5dae30",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.102Z"
+  },
+  {
+    "id": "82d9a0ba-de26-4c20-8451-c28f2911225c",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "recent_tickets",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.109Z"
+  },
+  {
+    "id": "87e526d9-775d-4c73-ae4a-8dc51976ded8",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.120Z"
+  },
+  {
+    "id": "83e7d5fc-3f87-492d-a24d-453d80b77065",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "today_revenue",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.127Z"
+  },
+  {
+    "id": "f259c744-3d38-44af-ac8a-938aadbeb1f0",
+    "action": "dashboard:delete",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:20:34.132Z"
+  },
+  {
+    "id": "b114fce2-0421-4724-a578-7c9100d98859",
+    "action": "dashboard:update",
+    "entity": "dashboard",
+    "entityId": "layout",
+    "changes": {
+      "widgets": [
+        {
+          "id": "open_tickets",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "waiting_on_client",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "all_tickets",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "resolved",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "overdue_invoices",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "active_clients",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "service_alerts",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "my_time",
+          "size": 1,
+          "visible": true
+        },
+        {
+          "id": "recent_tickets",
+          "size": 2,
+          "visible": true
+        },
+        {
+          "id": "quick_links",
+          "size": 3,
+          "visible": true
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:21:03.044Z"
+  },
+  {
+    "id": "e942a108-8188-4043-8cf7-ccdf43f60839",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "nobody.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:05.671Z"
+  },
+  {
+    "id": "d5d308db-9f01-4b7a-bdc4-503340129552",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:05.829Z"
+  },
+  {
+    "id": "4ffa8549-6f63-4b32-bbd4-3ecaf7b3d9ba",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.carol.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:05.837Z"
+  },
+  {
+    "id": "48bdfc9f-d1b7-438b-99d4-62f9bea19c83",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:05.935Z"
+  },
+  {
+    "id": "66ab7b1f-e29b-4973-9b1a-34965c1d0c94",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:05.942Z"
+  },
+  {
+    "id": "c3e97f71-abf5-44dd-a960-a9ce3e652b29",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:05.946Z"
+  },
+  {
+    "id": "d9ff7ac0-c5ce-4c52-ab60-a204ff5da1f5",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "755462",
+      "email": "portal.alice.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:06.532Z"
+  },
+  {
+    "id": "64abb5c0-9c9e-4890-8e9f-9f616ea97435",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:06.544Z"
+  },
+  {
+    "id": "726dd855-b7dc-4397-91dd-6736142212f9",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.122Z"
+  },
+  {
+    "id": "b4c9888a-1a5c-4ac1-8da8-46424772d800",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Bearer without CSRF",
+      "description": "Should be accepted"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.537Z"
+  },
+  {
+    "id": "a10a873e-f5b4-411e-badd-11ab7b852401",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Cookie write",
+      "description": "Accepted with both halves"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.555Z"
+  },
+  {
+    "id": "ceafc106-20e5-4f3c-bed4-a7f1f1ea3c0a",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Portal-raised ticket",
+      "priority": "high",
+      "description": "The printer is on fire"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.578Z"
+  },
+  {
+    "id": "1efcf193-d20d-47ff-9b93-8434ed43d45b",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "ab3eb1e3-1341-4a89-a076-88e9cf3690f7",
+    "changes": {
+      "body": "Any update on this?"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.597Z"
+  },
+  {
+    "id": "3efc8ccb-f988-4a60-8078-ecb4e98a1851",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.650Z"
+  },
+  {
+    "id": "47ec5a7c-1ee4-4d9d-a0bd-c2e2014d9c77",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "380859",
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.930Z"
+  },
+  {
+    "id": "c84f8774-2a95-45c8-b205-895840dd05fa",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.941Z"
+  },
+  {
+    "id": "fa379150-fd27-48f9-9830-0df21ed22095",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "006059",
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.951Z"
+  },
+  {
+    "id": "6c7f3c7e-6967-4b89-8376-a4f951cc5cd9",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:07.958Z"
+  },
+  {
+    "id": "fcea6736-f1f6-4a8c-8120-bd8e8d538ad8",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "102958",
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:08.042Z"
+  },
+  {
+    "id": "1c9274ca-a98f-4b2e-892c-170ce94dbb96",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:08.049Z"
+  },
+  {
+    "id": "fd7be5b4-7046-487d-867b-31b60339a9ec",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "084322",
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:08.113Z"
+  },
+  {
+    "id": "8f261525-512c-424f-af54-4776351b2404",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:08.120Z"
+  },
+  {
+    "id": "a5aec345-b956-42f7-b75a-c0a7af6ce019",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "310905",
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:08.357Z"
+  },
+  {
+    "id": "d123a7a7-e8cf-46c6-9043-76211b6180a4",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:08.364Z"
+  },
+  {
+    "id": "c39961ad-f846-484d-8890-b305a26b5736",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "684578",
+      "email": "portal.bob.1791434105304@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:08.873Z"
+  },
+  {
+    "id": "719f0460-5355-48f0-9f88-f1b70e4744de",
+    "action": "company:update",
+    "entity": "company",
+    "entityId": "0f1b2d5c-4fd5-48df-a183-32c48f821150",
+    "changes": {
+      "portalLogoUrl": "/uploads/logo.png",
+      "portalAccentColor": "#123456"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:35:08.918Z"
+  },
+  {
+    "id": "5985fcd1-54c8-41ef-8131-56bcd3d95c78",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "nobody.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:35.023Z"
+  },
+  {
+    "id": "cd5b9f5e-bf0a-4caa-81fc-39ec9620fa04",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:35.220Z"
+  },
+  {
+    "id": "9c38ce13-ee9d-48b3-bbf0-6fa626b89760",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.carol.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:35.226Z"
+  },
+  {
+    "id": "817992e5-b1ae-4735-952d-9ef726c2deb1",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:35.374Z"
+  },
+  {
+    "id": "dbcd4adf-d8e9-4392-b133-271919c51d05",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:35.381Z"
+  },
+  {
+    "id": "3bb715e1-e516-4199-8754-375f437b8650",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:35.385Z"
+  },
+  {
+    "id": "612a29d2-e30f-47d3-9881-a94df0df3fc9",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "766975",
+      "email": "portal.alice.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:35.982Z"
+  },
+  {
+    "id": "5b4cbf25-f33f-4244-b5c0-331023db5464",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:35.993Z"
+  },
+  {
+    "id": "be6ab5b5-0e21-4919-852c-1c2ef98348b0",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:36.345Z"
+  },
+  {
+    "id": "38152961-b353-490c-bcf8-1d94aca0d603",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Bearer without CSRF",
+      "description": "Should be accepted"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:36.514Z"
+  },
+  {
+    "id": "d4516ed0-88ab-448d-8e36-9bb1286a5810",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Cookie write",
+      "description": "Accepted with both halves"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:36.535Z"
+  },
+  {
+    "id": "61999fb8-35f3-4f6d-901f-72f30ebea5d0",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Portal-raised ticket",
+      "priority": "high",
+      "description": "The printer is on fire"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:36.555Z"
+  },
+  {
+    "id": "c3da5ab0-02c5-47a7-9e49-1615f6954af4",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "2b85584a-df76-4f9a-9722-f93696a86f89",
+    "changes": {
+      "body": "Any update on this?"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:36.575Z"
+  },
+  {
+    "id": "6b94f483-609b-4ead-b1cc-632d5f847781",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "c8f5b999-534d-4dd9-a33c-ba8328957605",
+    "changes": {
+      "body": "This is not fixed"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:36.590Z"
+  },
+  {
+    "id": "ea5af5c6-f3d1-4176-a932-e8524ea87001",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:36.623Z"
+  },
+  {
+    "id": "024b558f-b680-403f-a711-718ec956cb71",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "961200",
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:37.343Z"
+  },
+  {
+    "id": "4b055558-664f-41b4-9540-f6946f7de8bf",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:37.351Z"
+  },
+  {
+    "id": "c34bf3cf-95cf-40d3-86cb-66357865884d",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "495274",
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:37.758Z"
+  },
+  {
+    "id": "c6f66c1b-4ae1-464d-91b1-e14870e87695",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:37.768Z"
+  },
+  {
+    "id": "9e26d783-fc6c-4324-ac13-a0c6796ef56f",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "219325",
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:37.960Z"
+  },
+  {
+    "id": "4e5b0a2e-62b1-4827-9c72-705eb6539e55",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:37.971Z"
+  },
+  {
+    "id": "f5b459a8-3611-4764-8ec6-2aa902eb18a6",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "746740",
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:38.645Z"
+  },
+  {
+    "id": "fc7ec9c4-a97f-40ef-9791-1bc04d940e84",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:38.652Z"
+  },
+  {
+    "id": "614bca7e-a7aa-41c2-9195-02ca05940ac0",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "916991",
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:39.364Z"
+  },
+  {
+    "id": "4987fc65-1fd0-4bab-83f7-d887e7bb601a",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:39.373Z"
+  },
+  {
+    "id": "05b7c253-7448-4a71-a946-92b1145662b2",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "813267",
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:39.988Z"
+  },
+  {
+    "id": "5ed12ad8-88ce-42d2-a715-df84296a69eb",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "logout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.007Z"
+  },
+  {
+    "id": "880cdbaf-af63-4b61-8cc2-ee7ea499f52d",
+    "action": "company:update",
+    "entity": "company",
+    "entityId": "03739b96-34e1-4ca4-ad45-4459cd08eed5",
+    "changes": {
+      "portalLogoUrl": "/uploads/logo.png",
+      "portalAccentColor": "#123456"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.026Z"
+  },
+  {
+    "id": "8eea0f9c-beac-45e6-9663-bedc1f8d82ef",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "03739b96-34e1-4ca4-ad45-4459cd08eed5",
+    "changes": {
+      "visibility": "company"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.052Z"
+  },
+  {
+    "id": "95791989-7c24-4f8f-a199-e0719c79e0f0",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.078Z"
+  },
+  {
+    "id": "ac01d63a-c278-413d-996b-39d2c9acb9a7",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "735017",
+      "email": "portal.alice.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.652Z"
+  },
+  {
+    "id": "9cabffd3-d2f5-4efa-aaa1-053d4de74ad8",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.660Z"
+  },
+  {
+    "id": "371bc576-4fa1-485b-964f-983987b29d50",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "258599",
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.856Z"
+  },
+  {
+    "id": "aff6fc3c-7118-4ecc-b368-c1371b4cb245",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "ced080a6-1d73-4819-9cda-cb4f9fc0abb4",
+    "changes": {
+      "visibility": "contact"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.897Z"
+  },
+  {
+    "id": "410ac38a-d0ef-48cb-9a19-170f35f2ce77",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "ced080a6-1d73-4819-9cda-cb4f9fc0abb4",
+    "changes": {
+      "visibility": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.925Z"
+  },
+  {
+    "id": "a8bb8be2-4361-4893-b5dd-7646beaec392",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "03739b96-34e1-4ca4-ad45-4459cd08eed5",
+    "changes": {
+      "visibility": null,
+      "allowTicketCreation": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.932Z"
+  },
+  {
+    "id": "3ee303f7-8726-4e01-ae35-c3147ed7d32b",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "9a4aebd3-bb3b-476a-a575-259f401f14e6",
+    "changes": {
+      "access": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.950Z"
+  },
+  {
+    "id": "e234f2ae-ae31-4a1c-be37-64cfe68a928f",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434194655@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.953Z"
+  },
+  {
+    "id": "3c3d3376-c878-41d6-8d23-74f912540f29",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "9a4aebd3-bb3b-476a-a575-259f401f14e6",
+    "changes": {
+      "access": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.961Z"
+  },
+  {
+    "id": "8fd571db-85de-485d-8a4d-39d2911b959c",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "03739b96-34e1-4ca4-ad45-4459cd08eed5",
+    "changes": {
+      "allowReplies": false,
+      "allowTicketCreation": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.967Z"
+  },
+  {
+    "id": "a83ae815-a642-44ad-97dc-2a97d3b83fde",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "03739b96-34e1-4ca4-ad45-4459cd08eed5",
+    "changes": {
+      "allowReplies": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.978Z"
+  },
+  {
+    "id": "48288c32-d1f5-4f11-8fa7-f18073d395a7",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Routed ticket",
+      "description": "Probe"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:41.017Z"
+  },
+  {
+    "id": "73c48011-aafb-48a4-b3c7-ced482c08577",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "03739b96-34e1-4ca4-ad45-4459cd08eed5",
+    "changes": {
+      "boardId": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:41.023Z"
+  },
+  {
+    "id": "a9125f80-f8e4-4ed6-8712-adc4abafccc2",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "2b85584a-df76-4f9a-9722-f93696a86f89",
+    "changes": {
+      "body": "Allowed again"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:40.988Z"
+  },
+  {
+    "id": "69e02fa1-8bbb-4adc-bbbc-c5e494003df4",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "03739b96-34e1-4ca4-ad45-4459cd08eed5",
+    "changes": {
+      "boardId": "6f9220c7-b055-4f07-9393-d04ce84a6276"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:36:41.006Z"
+  },
+  {
+    "id": "feb7915d-18b4-41d3-91e7-4d032f3f6a38",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "nobody.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:06.125Z"
+  },
+  {
+    "id": "36968209-5377-450b-bcd7-c488220360da",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:06.252Z"
+  },
+  {
+    "id": "aa249cca-224f-40f4-9fa3-53505c48e910",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.carol.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:06.256Z"
+  },
+  {
+    "id": "4268073b-196f-4aa2-9d95-a57bce75301c",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:06.765Z"
+  },
+  {
+    "id": "64c4f7fe-c90c-4987-ab94-353d65e006ad",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:06.775Z"
+  },
+  {
+    "id": "060e1d5b-31ec-4c15-ba5d-74eb1b3965b6",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:06.779Z"
+  },
+  {
+    "id": "437be5a0-652f-41c6-85b1-c7218b91ebe3",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "575137",
+      "email": "portal.alice.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:07.239Z"
+  },
+  {
+    "id": "dcc9ede0-8054-4b19-a0a1-49fa9a05f9db",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:07.252Z"
+  },
+  {
+    "id": "3f294187-d061-4c26-a8ed-1538225bdfcc",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:07.480Z"
+  },
+  {
+    "id": "941c9e10-794f-440a-bc73-177126b627a2",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Bearer without CSRF",
+      "description": "Should be accepted"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:08.281Z"
+  },
+  {
+    "id": "d307f6b5-7b5b-4322-a75b-73fd81ed91fe",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Cookie write",
+      "description": "Accepted with both halves"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:08.305Z"
+  },
+  {
+    "id": "061c7aff-3f43-42f9-9a97-5aebff7a12c6",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Portal-raised ticket",
+      "priority": "high",
+      "description": "The printer is on fire"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:08.327Z"
+  },
+  {
+    "id": "94c1622d-4cdf-48cb-a7dd-33361470381a",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "8b3fd3b4-68be-4cb8-842e-f5f663cda6ca",
+    "changes": {
+      "body": "Any update on this?"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:08.347Z"
+  },
+  {
+    "id": "f5ead19c-2925-452a-985a-4e20cf6d4980",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "187301e9-dd8f-4d54-adef-f95c2fb46b1e",
+    "changes": {
+      "body": "This is not fixed"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:08.362Z"
+  },
+  {
+    "id": "836ff3ee-b2e3-4ffa-a328-82f79fe29f62",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:08.394Z"
+  },
+  {
+    "id": "d2b98f88-5770-4122-8754-6c98659808fe",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "632855",
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:08.869Z"
+  },
+  {
+    "id": "55cfd46c-7616-4d16-9e2c-317958188885",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:08.877Z"
+  },
+  {
+    "id": "eda44bb8-07d1-4441-ab29-27e26dc16f64",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "858723",
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:09.524Z"
+  },
+  {
+    "id": "00a89347-0398-48b0-93b9-36370715ef67",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:09.536Z"
+  },
+  {
+    "id": "2b5cb902-59ad-4e63-bc0a-9714fd7c17b0",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "037741",
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:09.566Z"
+  },
+  {
+    "id": "507af267-6f54-4f98-9c27-6b4a95956218",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:09.574Z"
+  },
+  {
+    "id": "d905a8a5-2da6-4bca-b151-a496b3a5a63b",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "682232",
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.098Z"
+  },
+  {
+    "id": "9c94414e-27e6-4f01-b9fc-f8d4344b77af",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.107Z"
+  },
+  {
+    "id": "bdb39d59-dd33-4f96-bff7-52d59092e5df",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "362384",
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.387Z"
+  },
+  {
+    "id": "4be4d60e-8f62-4439-958d-beab1fae6543",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.393Z"
+  },
+  {
+    "id": "cb64012f-5f53-48d2-9a52-63e2f8f4b00a",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "342132",
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.662Z"
+  },
+  {
+    "id": "fb026515-73c8-41cc-9b16-b4e7f566d1a6",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "logout",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.685Z"
+  },
+  {
+    "id": "be93ed79-b3c3-4b4f-a73a-129cee665404",
+    "action": "company:update",
+    "entity": "company",
+    "entityId": "039deec1-59ce-4a7f-bcae-f0163235c5c5",
+    "changes": {
+      "portalLogoUrl": "/uploads/logo.png",
+      "portalAccentColor": "#123456"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.705Z"
+  },
+  {
+    "id": "e2ab4cd1-804e-4bd7-b6b8-8e1b0d33523a",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "039deec1-59ce-4a7f-bcae-f0163235c5c5",
+    "changes": {
+      "visibility": "company"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.733Z"
+  },
+  {
+    "id": "66e50a71-2be4-4343-ba96-d3d7e259c5e7",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.alice.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.755Z"
+  },
+  {
+    "id": "c5d0b608-bbe3-44ef-a32d-b8f63ddf350a",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "075479",
+      "email": "portal.alice.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.819Z"
+  },
+  {
+    "id": "925c7e16-9d19-40c4-9847-2868f7eed679",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:10.826Z"
+  },
+  {
+    "id": "d1d4aebc-ef90-43f3-91fd-f2cd678252c7",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "verify",
+    "changes": {
+      "code": "289066",
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.045Z"
+  },
+  {
+    "id": "841d365a-67d5-4bd2-94ab-a61647375c6a",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "c7290028-0c72-4bd0-9211-529d3812a740",
+    "changes": {
+      "visibility": "contact"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.078Z"
+  },
+  {
+    "id": "f64a87b8-ebee-4d79-966d-0b3a64ced857",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "c7290028-0c72-4bd0-9211-529d3812a740",
+    "changes": {
+      "visibility": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.104Z"
+  },
+  {
+    "id": "ae1c98f7-e784-46e4-b850-18ac6dabe0df",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "039deec1-59ce-4a7f-bcae-f0163235c5c5",
+    "changes": {
+      "visibility": null,
+      "allowTicketCreation": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.109Z"
+  },
+  {
+    "id": "979f21bc-255a-4e6b-b7ef-c41b017ff738",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "0c283392-a1fa-4cbf-a842-855fbca88a67",
+    "changes": {
+      "access": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.127Z"
+  },
+  {
+    "id": "d837afae-e931-4130-bffa-726d62135045",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "portal.bob.1791434405757@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.131Z"
+  },
+  {
+    "id": "e49a25a2-e494-4ac2-be19-67cfd43193a0",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "0c283392-a1fa-4cbf-a842-855fbca88a67",
+    "changes": {
+      "access": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.141Z"
+  },
+  {
+    "id": "7e77e68d-e5d8-483f-b819-b4981203002c",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "039deec1-59ce-4a7f-bcae-f0163235c5c5",
+    "changes": {
+      "allowReplies": false,
+      "allowTicketCreation": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.146Z"
+  },
+  {
+    "id": "b9d1bc90-9daf-4a59-b11d-2ec1177062f5",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "tickets",
+    "changes": {
+      "title": "Routed ticket",
+      "description": "Probe"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.187Z"
+  },
+  {
+    "id": "4107ce0d-df4c-4471-a9de-1aeeab64812f",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "039deec1-59ce-4a7f-bcae-f0163235c5c5",
+    "changes": {
+      "boardId": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.194Z"
+  },
+  {
+    "id": "0a64f4a2-b16b-4cb9-86ca-79014e5af349",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "039deec1-59ce-4a7f-bcae-f0163235c5c5",
+    "changes": {
+      "visibility": "company"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.489Z"
+  },
+  {
+    "id": "76a0f5b5-f78e-413a-8b6c-bc6190496aab",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "039deec1-59ce-4a7f-bcae-f0163235c5c5",
+    "changes": {
+      "allowReplies": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.156Z"
+  },
+  {
+    "id": "d6f71cfd-8c48-4967-8f5c-f8ac7600cf7f",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "8b3fd3b4-68be-4cb8-842e-f5f663cda6ca",
+    "changes": {
+      "body": "Allowed again"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.169Z"
+  },
+  {
+    "id": "acb25425-10a1-4702-bf00-583a49401a27",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "039deec1-59ce-4a7f-bcae-f0163235c5c5",
+    "changes": {
+      "boardId": "1b014b77-6d2c-42da-910a-946e606cc5c8"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.176Z"
+  },
+  {
+    "id": "653ca726-7291-4310-bc9b-a5eb2b7b1c60",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "039deec1-59ce-4a7f-bcae-f0163235c5c5",
+    "changes": {
+      "visibility": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.511Z"
+  },
+  {
+    "id": "b16fb6e9-6f23-4ede-a5cb-5671d16bfbf6",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "0c283392-a1fa-4cbf-a842-855fbca88a67",
+    "changes": {
+      "access": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.516Z"
+  },
+  {
+    "id": "3a34b88c-e7fa-4d34-93e2-f01655b65907",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "0c283392-a1fa-4cbf-a842-855fbca88a67",
+    "changes": {
+      "access": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:40:11.529Z"
+  },
+  {
+    "id": "ce2c01a9-4c6e-4127-9800-ed47209dbd4d",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "portalEnabled": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T04:40:37.780Z"
+  },
+  {
+    "id": "c27dfe06-b1f3-4f16-b797-ddcd37bff7b9",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "visibility": "contact"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T04:40:41.934Z"
+  },
+  {
+    "id": "5b7a5c5f-28ac-41f5-948d-81333663b290",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "4542970a-cdfa-4489-9d2e-b2c705a35682",
+    "changes": {
+      "visibility": "company"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T04:40:43.746Z"
+  },
+  {
+    "id": "5dad5af7-c920-4d5d-8694-c70c05d04f8f",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "visibility": "contact"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T04:41:46.126Z"
+  },
+  {
+    "id": "798163d8-bbc7-4f1d-aa22-9c4369687d52",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "4542970a-cdfa-4489-9d2e-b2c705a35682",
+    "changes": {
+      "visibility": "company"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T04:41:47.948Z"
+  },
+  {
+    "id": "04c6ebff-d061-4a90-aa18-85718de26c7d",
+    "action": "portal:create",
+    "entity": "portal",
+    "entityId": "request",
+    "changes": {
+      "email": "someone@example.invalid"
+    },
+    "userId": "system",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T04:44:39.532Z"
   }
 ]

@@ -825,6 +825,17 @@
     "updatedAt": "2026-10-06T20:27:17.510Z"
   },
   {
+    "id": "2ff692d8-b675-4f53-8db3-c2a9b609aef5",
+    "body": "Should be accepted",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": "portal.alice.1791434105304@example.invalid",
+    "ticketId": "809be310-1c1b-4564-a280-83d0d1629baf",
+    "authorId": "2462cd70-64a1-4d45-90fc-cf334fee8f6d",
+    "createdAt": "2026-10-08T04:35:07.532Z",
+    "updatedAt": "2026-10-08T04:35:07.532Z"
+  },
+  {
     "id": "ea49a12d-fcc2-4b3e-8743-e76936e2ab51",
     "body": "Internal note: Picked this up and reproduced it on the test tenant. Investigating the policy that applies to the affected users.",
     "isInternal": true,
@@ -5137,6 +5148,28 @@
     "updatedAt": "2026-10-06T20:27:17.849Z"
   },
   {
+    "id": "db2febae-d764-46e8-8c70-1016b9fdc379",
+    "body": "Accepted with both halves",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": "portal.alice.1791434105304@example.invalid",
+    "ticketId": "7bcfb315-838a-4b70-80ad-7afb3f992014",
+    "authorId": "2462cd70-64a1-4d45-90fc-cf334fee8f6d",
+    "createdAt": "2026-10-08T04:35:07.552Z",
+    "updatedAt": "2026-10-08T04:35:07.552Z"
+  },
+  {
+    "id": "6fdd0c23-fdc5-4b52-ac2d-a40c4fdd5eac",
+    "body": "Any update on this?",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": "portal.alice.1791434105304@example.invalid",
+    "ticketId": "ab3eb1e3-1341-4a89-a076-88e9cf3690f7",
+    "authorId": "2462cd70-64a1-4d45-90fc-cf334fee8f6d",
+    "createdAt": "2026-10-08T04:35:07.593Z",
+    "updatedAt": "2026-10-08T04:35:07.593Z"
+  },
+  {
     "id": "9daa5b16-d670-45aa-8a34-a9d2bf1f575b",
     "body": "Status: New → In Progress",
     "isInternal": true,
@@ -5300,6 +5333,50 @@
     "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
     "createdAt": "2026-10-07T22:27:37.968Z",
     "updatedAt": "2026-10-07T22:27:37.968Z"
+  },
+  {
+    "id": "45478ece-3721-4278-8c7f-408ad752160a",
+    "body": "Visible answer",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "ab3eb1e3-1341-4a89-a076-88e9cf3690f7",
+    "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "createdAt": "2026-10-08T04:35:05.660Z",
+    "updatedAt": "2026-10-08T04:35:05.660Z"
+  },
+  {
+    "id": "f9318e58-9305-4649-95f4-4286ee7cf7f4",
+    "body": "INTERNAL: do not show",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "ab3eb1e3-1341-4a89-a076-88e9cf3690f7",
+    "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "createdAt": "2026-10-08T04:35:05.663Z",
+    "updatedAt": "2026-10-08T04:35:05.663Z"
+  },
+  {
+    "id": "44375511-42f0-4fc5-ac33-24af33d8c889",
+    "body": "The printer is on fire",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": "portal.alice.1791434105304@example.invalid",
+    "ticketId": "8e28a2ac-88e7-4eec-af63-8b65d04ec390",
+    "authorId": "2462cd70-64a1-4d45-90fc-cf334fee8f6d",
+    "createdAt": "2026-10-08T04:35:07.576Z",
+    "updatedAt": "2026-10-08T04:35:07.576Z"
+  },
+  {
+    "id": "c61043f6-1654-491d-9ff2-41ccbf2e3168",
+    "body": "This is not fixed",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": "portal.alice.1791434105304@example.invalid",
+    "ticketId": "94ba98fc-866b-464e-8665-7ee4fb98cabb",
+    "authorId": "2462cd70-64a1-4d45-90fc-cf334fee8f6d",
+    "createdAt": "2026-10-08T04:35:07.606Z",
+    "updatedAt": "2026-10-08T04:35:07.606Z"
   },
   {
     "id": "b25d747d-a3df-49e4-9c66-6123b2183c05",
