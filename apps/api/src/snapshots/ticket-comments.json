@@ -5333,5 +5333,93 @@
     "authorId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "createdAt": "2026-10-07T23:20:28.020Z",
     "updatedAt": "2026-10-07T23:20:28.020Z"
+  },
+  {
+    "id": "89c4d62b-181f-4f17-bbcb-5dc17d071b1f",
+    "body": "Probe note 1791455380840 — approved from the AI actions screen.",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-08T10:29:40.857Z",
+    "updatedAt": "2026-10-08T10:29:40.857Z"
+  },
+  {
+    "id": "47c3be3c-e93b-44a7-a556-7f36f8877050",
+    "body": "Probe client note 1791455380866.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-08T10:29:40.876Z",
+    "updatedAt": "2026-10-08T10:29:40.876Z"
+  },
+  {
+    "id": "701f9fb0-a0f1-4bc9-9a43-75abc93a0ed7",
+    "body": "Probe note 1791455385154 — approved from the AI actions screen.",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-08T10:29:45.171Z",
+    "updatedAt": "2026-10-08T10:29:45.171Z"
+  },
+  {
+    "id": "98028d3c-befb-42ab-8811-bc376a34e70e",
+    "body": "Probe client note 1791455385179.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-08T10:29:45.188Z",
+    "updatedAt": "2026-10-08T10:29:45.188Z"
+  },
+  {
+    "id": "b3119c49-aed6-4f09-b81b-ef9d65339b0c",
+    "body": "Probe note 1791455414451 — approved from the AI actions screen.",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-08T10:30:14.472Z",
+    "updatedAt": "2026-10-08T10:30:14.472Z"
+  },
+  {
+    "id": "734f43c4-7d07-43e5-987e-ca620ddc046a",
+    "body": "Probe client note 1791455414483.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-08T10:30:14.494Z",
+    "updatedAt": "2026-10-08T10:30:14.494Z"
+  },
+  {
+    "id": "94e030b8-9326-46e9-8b5f-b4d519bd7f09",
+    "body": "Probe note 1791455437326 — approved from the AI actions screen.",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-08T10:30:37.344Z",
+    "updatedAt": "2026-10-08T10:30:37.344Z"
+  },
+  {
+    "id": "e10b2d03-3530-4532-a36c-8f130c43fb7a",
+    "body": "Probe client note 1791455437352.",
+    "isInternal": false,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-08T10:30:37.363Z",
+    "updatedAt": "2026-10-08T10:30:37.363Z"
   }
 ]

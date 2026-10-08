@@ -139,6 +139,71 @@ const TOOLS: AssistantTool[] = [
     },
   },
   {
+    /*
+     * The tool that makes "create a ticket for David Chen" possible.
+     *
+     * Everything else here looks things up by id, and a prompt names a *person* — so without this the
+     * model has no way to turn a name into the contact a ticket needs, and it either gives up or
+     * invents an id. A name is also the one thing that is genuinely ambiguous: two clients can each
+     * have a David Chen, which is why this returns everyone who matches, with their client, and the
+     * instructions say to ask rather than choose.
+     */
+    name: "find_people",
+    description: "Find contacts (people) by name or email. Use this whenever a prompt names a person — 'create a ticket for David Chen' — because the ticket and note functions need the contact id it returns. If it returns more than one person, ask which one is meant rather than guessing.",
+    parameters: oneId("query", "Part of the person's name or their email address, e.g. 'David Chen'"),
+    permission: Permission.ContactView,
+    kind: "read",
+    async run(args, _caller, db) {
+      const query = str(args.query).trim();
+      if (!query) return refuse("find_people", args, "No name or email was given.");
+      const people = await db.contact.findMany({
+        where: {
+          OR: [
+            { firstName: { contains: query, mode: "insensitive" } },
+            { lastName: { contains: query, mode: "insensitive" } },
+            { email: { contains: query, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true, title: true, companyId: true },
+        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+        take: 8,
+      });
+      if (!people.length) {
+        return ok("find_people", args, `No contact matched "${query}".`, `No contact matches "${query}". Nobody by that name is on record — ask the person who prompted you whether a contact should be created, rather than creating a ticket against the wrong client.`);
+      }
+      // The client each person belongs to, so the answer can say which "David Chen" this is.
+      const clients = await db.company.findMany({
+        where: { id: { in: [...new Set(people.map(p => p.companyId))] } },
+        select: { id: true, name: true },
+      });
+      const clientOf = new Map(clients.map(c => [c.id, c.name]));
+      const content = people
+        .map(p => `${p.id} | ${person(p)} | ${clientOf.get(p.companyId) ?? "unknown client"} (${p.companyId}) | ${p.email ?? "no email"} | ${p.title ?? "no job title"}`)
+        .join("\n");
+      const ambiguity = people.length > 1
+        ? ` There is more than one match: ask which person is meant before proposing anything.`
+        : "";
+      return ok("find_people", args, `${people.length} contact${people.length === 1 ? "" : "s"} matched "${query}".`, `Contacts (id | name | client (client id) | email | job title):\n${content}${ambiguity}`);
+    },
+  },
+  {
+    name: "list_boards",
+    description: "List the service boards a ticket can be created on, with how many tickets each holds. Use it when a prompt names a board, or to choose a sensible one before proposing a ticket.",
+    parameters: NO_ARGS,
+    permission: Permission.TicketView,
+    kind: "read",
+    async run(args, _caller, db) {
+      const boards = await db.serviceBoard.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, description: true, _count: { select: { tickets: true } } },
+        orderBy: { name: "asc" },
+      });
+      if (!boards.length) return refuse("list_boards", args, "No service board exists, so a ticket cannot be filed anywhere.");
+      const content = boards.map(b => `${b.id} | ${b.name} | ${b._count.tickets} tickets | ${b.description ?? ""}`).join("\n");
+      return ok("list_boards", args, `${boards.length} board${boards.length === 1 ? "" : "s"}.`, `Boards (id | name | tickets | description):\n${content}`);
+    },
+  },
+  {
     name: "find_tickets",
     description: "Search tickets by words in the title, optionally narrowed to one client or one status. Returns the most recent matches, newest first.",
     parameters: {
@@ -387,47 +452,89 @@ const TOOLS: AssistantTool[] = [
   },
   {
     name: "propose_ticket",
-    description: "Propose a new ticket for a client. This does not create the ticket — it raises a proposal that a person reviews first. Always say in your answer that it is a proposal.",
+    description: "Propose a new ticket. Give the client when it is known, and the contact when the prompt named a person. This does not create the ticket — it raises a proposal that a person reviews and approves, and approving it is what creates the ticket. Always say in your answer that it is a proposal.",
     parameters: {
       type: "object",
       properties: {
-        clientId: { type: "string", description: "The client id from find_clients" },
+        clientId: { type: "string", description: "The client id from find_clients, or from find_people if the prompt only named a person" },
+        contactId: { type: "string", description: "The contact id from find_people, when the prompt named a person — the ticket is then attached to them" },
+        boardId: { type: "string", description: "The board id from list_boards. Optional: left out, the ticket is filed on the default board" },
         title: { type: "string", description: "The ticket title" },
         description: { type: "string", description: "What the problem is, with as much detail as is known" },
         priority: { type: "string", description: "low, medium, high or urgent (default medium)" },
       },
-      required: ["clientId", "title"],
+      required: ["title"],
       additionalProperties: false,
     },
     permission: Permission.TicketCreate,
     kind: "propose",
     async run(args, caller, db) {
       const clientId = str(args.clientId).trim();
+      const contactId = str(args.contactId).trim();
       const title = str(args.title).trim();
-      if (!clientId || !title) return refuse("propose_ticket", args, "A client and a title are both needed.");
-      const client = await db.company.findUnique({ where: { id: clientId }, select: { name: true } });
-      if (!client) return refuse("propose_ticket", args, `No client exists with id ${clientId}.`);
+      if (!title) return refuse("propose_ticket", args, "A title is needed.");
+
+      /*
+       * The client is required by the ticket, and a prompt often names only a person — so it comes
+       * from the contact when it was not given. That is the difference between "create a ticket for
+       * David Chen" working and the model having to ask a second question.
+       */
+      let clientId_ = clientId;
+      let contactName: string | null = null;
+      if (contactId) {
+        const contact = await db.contact.findUnique({
+          where: { id: contactId },
+          select: { firstName: true, lastName: true, companyId: true },
+        });
+        if (!contact) return refuse("propose_ticket", args, `No contact exists with id ${contactId}.`);
+        contactName = person(contact);
+        if (!clientId_) clientId_ = contact.companyId;
+      }
+      if (!clientId_) return refuse("propose_ticket", args, "A client is needed — call find_clients, or find_people if the prompt named a person.");
+
+      const client = await db.company.findUnique({ where: { id: clientId_ }, select: { name: true } });
+      if (!client) return refuse("propose_ticket", args, `No client exists with id ${clientId_}.`);
+
+      // A board named by name is resolved here rather than handed on, so a proposal cannot create a
+      // ticket on a board that does not exist.
+      let boardId = str(args.boardId).trim();
+      let boardName: string | null = null;
+      if (boardId) {
+        const board = await db.serviceBoard.findUnique({ where: { id: boardId }, select: { name: true, isActive: true } });
+        if (!board || !board.isActive) return refuse("propose_ticket", args, `There is no active board with id ${boardId} — call list_boards.`);
+        boardName = board.name;
+      }
+
       const priority = ["low", "medium", "high", "urgent"].includes(str(args.priority)) ? str(args.priority) : "medium";
       const action = await db.aiAction.create({
         data: {
           entityType: "ticket",
           entityId: null,
-          title: `Create ticket for ${client.name}: ${clipped(title, 120)}`,
+          title: `Create ticket for ${client.name}${contactName ? ` (${contactName})` : ""}: ${clipped(title, 120)}`,
           summary: clipped(str(args.description) || "No description given.", 400),
           // A new ticket is not a note: it lands in somebody's queue and starts a conversation with a
           // client, so it is proposed at a tier that needs a decision.
           riskTier: "medium",
-          payload: { kind: "create_ticket", companyId: clientId, title, description: str(args.description), priority },
+          payload: {
+            kind: "create_ticket",
+            companyId: clientId_,
+            contactId: contactId || undefined,
+            boardId: boardId || undefined,
+            title,
+            description: str(args.description),
+            priority,
+          },
           status: "pending",
           requestedById: caller.userId,
           audit: { create: { event: "proposed", userId: caller.userId, detail: "Raised by the assistant from a prompt" } },
         },
       });
+      const where = [`${client.name}`, contactName ? `for ${contactName}` : null, boardName ? `on ${boardName}` : null].filter(Boolean).join(" ");
       return ok(
         "propose_ticket",
         args,
-        `Proposed a ticket for ${client.name} — awaiting approval.`,
-        `Proposal ${action.id} was raised and is awaiting a person's approval. No ticket exists yet.`,
+        `Proposed a ticket for ${where} — awaiting approval.`,
+        `Proposal ${action.id} was raised and is awaiting a person's approval. Approving it creates the ticket; nothing exists yet.`,
       );
     },
   },

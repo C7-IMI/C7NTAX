@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import { AppError } from "../middleware/errorHandler";
 import { Permission } from "@C7NTAX/shared";
 import { configFlag } from "../services/appSettings";
+import { applyAiAction } from "../services/ai/apply";
 
 // Backlog item 5 — AI risk-classified actions (provider-agnostic; gated by AI_ACTIONS_ENABLED).
 // Critical actions are never executable; high actions require approval; low/medium execute on approval.
@@ -47,12 +48,47 @@ aiActionsRouter.post("/:id/decide", requirePermission(Permission.TicketEdit), as
     if (!action) throw new AppError("Action not found", 404);
     if (action.status !== "pending") throw new AppError("Action already decided");
     if (action.riskTier === "critical") throw new AppError("Critical actions are blocked and cannot be approved");
-    const status = decision === "approve" ? (action.riskTier === "high" ? "approved" : "executed") : "rejected";
+
+    if (decision === "reject") {
+      const rejected = await prisma.aiAction.update({
+        where: { id: action.id },
+        data: {
+          status: "rejected", decidedById: req.user!.userId, decidedAt: new Date(),
+          audit: { create: { event: "rejected", userId: req.user!.userId, detail: "Decision: reject" } },
+        },
+        include: { audit: { orderBy: { at: "desc" }, take: 5 } },
+      });
+      res.json(rejected);
+      return;
+    }
+
+    /*
+     * Approving *does* the thing. A person clicked, so the tier no longer gates anything: its job is
+     * to decide who may skip the click (PLAN-026 §8), and this is the click. The application happens
+     * through the executor, which calls the same route the screen calls, as the person who raised the
+     * action — so scoping, numbering, notifications and the audit entry are the route's.
+     */
+    const outcome = await applyAiAction({ db: prisma, action, actorId: req.user!.userId, mode: "ask" });
     const updated = await prisma.aiAction.update({
       where: { id: action.id },
       data: {
-        status, decidedById: req.user!.userId, decidedAt: new Date(),
-        audit: { create: { event: decision === "approve" ? (status === "executed" ? "executed" : "approved") : "rejected", userId: req.user!.userId, detail: `Decision: ${decision}` } },
+        status: outcome.status,
+        decidedById: req.user!.userId,
+        decidedAt: new Date(),
+        appliedById: outcome.ok ? req.user!.userId : null,
+        appliedAt: outcome.ok ? new Date() : null,
+        before: (outcome.before ?? undefined) as never,
+        result: (outcome.result ?? undefined) as never,
+        errorMessage: outcome.error ?? null,
+        audit: {
+          create: {
+            event: outcome.status,
+            userId: req.user!.userId,
+            detail: outcome.ok
+              ? `Approved and applied${outcome.result?.ticketNumber ? ` — ${outcome.result.ticketNumber}` : ""}`
+              : `Approved, but applying it failed: ${outcome.error ?? "unknown reason"}`,
+          },
+        },
       },
       include: { audit: { orderBy: { at: "desc" }, take: 5 } },
     });

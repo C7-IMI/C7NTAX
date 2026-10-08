@@ -2173,10 +2173,22 @@ model AiAction {
   summary       String
   riskTier      String          @default("low") // low, medium, high, critical
   payload       Json?
-  status        String          @default("pending") // pending, approved, executed, rejected, blocked
+  status        String          @default("pending") // pending, approved, executed, failed, rejected, blocked
   requestedById String?
   decidedById   String?
   decidedAt     DateTime?
+  /// The manifest action this came from, when it was raised by the generic surface (PLAN-026).
+  actionName    String?
+  /// ask = a person was asked; act = an allowed tier applied it without one.
+  mode          String          @default("ask")
+  /// The rows as they were, so a reversible action can be undone and a change can be read.
+  before        Json?
+  /// What the action actually produced: the new ticket's id and number, the note's id.
+  result        Json?
+  /// Why it failed, in the route's own words, when it did.
+  errorMessage  String?
+  appliedAt     DateTime?
+  appliedById   String?
   audit         AiActionAudit[]
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt

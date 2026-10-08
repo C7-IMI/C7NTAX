@@ -55,7 +55,7 @@ function scripted(replies: ScriptedReply[]) {
   return { transport, seen };
 }
 
-const allPermissions = ["ticket:view", "ticket:edit", "ticket:create", "client:view", "asset:view", "kb:view", "servicealert:view", "integration:view"];
+const allPermissions = ["ticket:view", "ticket:edit", "ticket:create", "client:view", "contact:view", "asset:view", "kb:view", "servicealert:view", "integration:view"];
 const callerWith = (permissions: string[]): AssistantCaller => ({ userId: "probe-user", permissions });
 
 const record = {
@@ -88,7 +88,7 @@ check(ASSISTANT_TOOLS.filter(t => t.kind === "propose").length <= 2, "the write 
 // ── 2. What a caller is offered, and what they may run ──────────────────────────────────────
 console.log("\nA caller is offered only what their permissions allow");
 const ticketOnly = toolsFor(callerWith(["ticket:view"]));
-eq(ticketOnly.map(t => t.name), ["find_tickets", "ticket_detail"], "a ticket-only caller sees the ticket reads and nothing else");
+eq(ticketOnly.map(t => t.name), ["list_boards", "find_tickets", "ticket_detail"], "a ticket-only caller sees the service-desk reads and nothing else");
 check(toolsFor(callerWith([])).length === 0, "a caller with no permissions is offered nothing");
 check(toolsFor(callerWith(allPermissions)).length === ASSISTANT_TOOLS.length, "a caller with every permission is offered everything");
 check(!toolsFor(callerWith(allPermissions), { allowProposals: false }).some(t => t.kind === "propose"), "proposals can be withheld entirely");

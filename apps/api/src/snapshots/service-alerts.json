@@ -560,6 +560,20 @@
     "updatedAt": "2026-10-07T18:26:00.767Z"
   },
   {
+    "id": "dd2deaef-fb69-4b4b-a284-ffeeeb2734c1",
+    "serviceId": "7e42c7cb-732a-42c5-847f-a3c125d482cb",
+    "title": "Active -Azure Data Factory – Pipeline/Activity Failures and Timeouts – UK South",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Azure (rss clear, statuspage unknown, downdetector unknown).\n\nWe are aware of an issue affecting Azure Data Factory in UK South, where a subset of customers may experience failures, delays, or timeouts when running pipelines and activities, managing integration runtimes, or performing authoring operations. Our engineers are actively investigating the cause and impact . Workaround: Customers are advised to cancel and retry affected pipeline or activity runs that fail, time out, or remain in progress longer than expected. Further updates will be provided as ",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "rss",
+    "sourceUrl": "https://azure.status.microsoft/en-us/status/",
+    "detectedAt": "2026-10-08T09:58:55.636Z",
+    "resolvedAt": "2026-10-08T10:19:08.728Z",
+    "createdAt": "2026-10-08T09:58:55.637Z",
+    "updatedAt": "2026-10-08T10:19:08.729Z"
+  },
+  {
     "id": "753697f6-7b02-465b-8894-f58d2a18ad39",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Incident with Grok Copilot AI Model Provider",

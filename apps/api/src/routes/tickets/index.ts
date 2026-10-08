@@ -387,6 +387,14 @@ ticketsRouter.post("/:id/notes", requirePermission(Permission.TicketEdit), async
   try {
     const { content, isInternal } = req.body;
     if (!content) throw new AppError("content required");
+    /*
+     * A note for a ticket that is not there is a 404, not a 500: the foreign key used to fail the
+     * insert and the caller was told "Internal server error". Anything asking for a note by id —
+     * including an AI action being applied from a proposal written earlier — needs to be told which
+     * of the two things was wrong.
+     */
+    const exists = await prisma.ticket.findUnique({ where: { id: req.params.id }, select: { id: true } });
+    if (!exists) throw new AppError("That ticket does not exist", 404);
     const note = await prisma.ticketComment.create({
       data: { ticketId: req.params.id, body: content, authorId: req.user!.userId, isInternal: isInternal || false },
     });
