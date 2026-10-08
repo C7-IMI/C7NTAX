@@ -211313,5 +211313,1332 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T07:15:34.349Z"
+  },
+  {
+    "id": "8545fc8d-e5e5-411f-84a2-4aa9c50f8d39",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Northwind Traders",
+      "email": "ap@northwind.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:55.992Z"
+  },
+  {
+    "id": "aeb6a92e-5413-417b-a28a-81d7ae1314c4",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (stub verification)",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:55.996Z"
+  },
+  {
+    "id": "8a42470b-b0e4-404c-a1a7-ae5d26ee3695",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 100,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Posted",
+        "pushInvoices": true,
+        "syncInvoices": true,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": false
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.014Z"
+  },
+  {
+    "id": "237a358d-f61b-4341-a020-2290ebf22eaa",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.067Z"
+  },
+  {
+    "id": "4026081f-4d6a-434c-b49b-c495d56a884e",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.083Z"
+  },
+  {
+    "id": "3e3fb5e4-d883-4719-a865-b89a1eb5ebb7",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "push",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.155Z"
+  },
+  {
+    "id": "bf0f9494-4897-4379-a37e-1b2e2ecac705",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "recordSettledPayments": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.166Z"
+  },
+  {
+    "id": "00fbb522-df78-472c-81e7-196875bf3945",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.191Z"
+  },
+  {
+    "id": "a02dc01c-9dc1-4feb-8b69-24ba66f4f815",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.215Z"
+  },
+  {
+    "id": "04b42e4a-edd1-4d32-9592-14e7c0120c76",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "link",
+    "changes": {
+      "companyId": "291b3b55-2f12-4954-a68e-f0a1a19c4115",
+      "customerId": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.230Z"
+  },
+  {
+    "id": "3f4ef4a4-17ee-4bba-a2e7-637d1c5ef979",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "pushInvoices": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.239Z"
+  },
+  {
+    "id": "fa2b3e9a-bfbe-4b60-92ea-6d3e457ddaf1",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "push",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.243Z"
+  },
+  {
+    "id": "f56de464-0f3a-4760-8c82-fd8a87efc9a3",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "291b3b55-2f12-4954-a68e-f0a1a19c4115",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.252Z"
+  },
+  {
+    "id": "fe36f047-fa6c-477f-84c5-fcb768dca662",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "a36313a3-21d3-4ed2-94ed-8e1d34b59913",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:15:56.263Z"
+  },
+  {
+    "id": "fc5c4b23-764a-4848-843b-17e0e245c228",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Northwind Traders",
+      "email": "northwind@client.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:19:39.561Z"
+  },
+  {
+    "id": "c272e736-8c3a-4262-8b5b-eda52c92ceca",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Contoso Ltd",
+      "email": "contoso@client.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:19:39.566Z"
+  },
+  {
+    "id": "58b8f91c-1a7f-4e2d-9c0b-52f044547c87",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (page verification)",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:19:39.613Z"
+  },
+  {
+    "id": "96164951-6dd5-4bbf-9e42-4cb15198527a",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": false,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": true
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:19:45.718Z"
+  },
+  {
+    "id": "dec47533-59f6-4535-958c-9ca16c336386",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": false,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": false
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:19:47.664Z"
+  },
+  {
+    "id": "f7d4b795-7f05-40b1-8ff0-fcda1d718255",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:19:49.198Z"
+  },
+  {
+    "id": "3ddd131a-a5c2-466c-bea5-5ae7bc66a5ac",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "c7634875-e381-4494-8880-c9402ae1ff95",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:19:51.795Z"
+  },
+  {
+    "id": "a4527c6b-04e3-41ce-ae08-2d2608b3d059",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "162a42c8-485e-4d74-b6dc-7383e4c4a934",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:19:51.812Z"
+  },
+  {
+    "id": "5f460af6-0133-41b4-a0a9-c5eecb1f98fb",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "30bf3a51-d6e2-471e-a04e-5e810f755b0d",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:19:51.816Z"
+  },
+  {
+    "id": "8dcea7b4-4502-42ce-8b91-62cc65b39e31",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Northwind Traders",
+      "email": "ap@northwind.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:05.205Z"
+  },
+  {
+    "id": "0154437c-d4de-439c-9b32-b0c344622df7",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (page verification)",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:05.250Z"
+  },
+  {
+    "id": "b1659845-b86d-4e65-b630-cd237504ef61",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": false,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": true
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:11.355Z"
+  },
+  {
+    "id": "ec60812d-d1ea-42f0-9b7b-e8cc6744e884",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": false,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": false
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:13.302Z"
+  },
+  {
+    "id": "7f5bf259-cfdd-4fb3-b440-9a3f264d6cfa",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:14.828Z"
+  },
+  {
+    "id": "58de6e0b-9b29-4dcc-928b-c1f6c9307df9",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Contoso Ltd",
+      "email": "billing@contoso.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:17.418Z"
+  },
+  {
+    "id": "8e7e9bcf-7a75-4985-9955-8c5edc4c97d3",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "f5d65bc9-5054-4d41-a90a-c22b27b6801f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:21.912Z"
+  },
+  {
+    "id": "0fbcfde1-4391-431d-96b7-ca43a8a4761e",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "9e875f18-45a1-4b97-b785-623fceb880bf",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:21.920Z"
+  },
+  {
+    "id": "a7196092-40e2-493a-b21d-a0d7b1a4add2",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "e3dc3ee0-eab8-4cc0-8513-8c8e1510b6c3",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:21.924Z"
+  },
+  {
+    "id": "19db5b4c-7b48-4aa9-8b7c-96cd20534276",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Northwind Traders",
+      "email": "ap@northwind.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:31.371Z"
+  },
+  {
+    "id": "090c9872-95ab-480e-8680-b32a7fdfccd4",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (page verification)",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:31.423Z"
+  },
+  {
+    "id": "c75a6fff-b7e7-4e19-92a3-7fbc9958f661",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": false,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": true
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:37.554Z"
+  },
+  {
+    "id": "fefa936b-b001-4e51-a9f5-624ced83c4fd",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": false,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": false
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:39.477Z"
+  },
+  {
+    "id": "56e3131f-a21b-411c-b421-dcd37b79d114",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "link",
+    "changes": {
+      "companyId": "6d93f316-199c-4d13-adbd-5582165d657e",
+      "customerId": "1002"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:48.070Z"
+  },
+  {
+    "id": "e1a080a4-acc2-401c-9a14-bc561f6cae1e",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "push",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:52.420Z"
+  },
+  {
+    "id": "3be35401-f92c-49e1-94fa-9430f26b3fed",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "4c57427b-7d48-4eb0-b21a-a9e7575b694f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:21:08.774Z"
+  },
+  {
+    "id": "f5820f1c-7b6d-43c5-b467-386aa807146c",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "6d93f316-199c-4d13-adbd-5582165d657e",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:21:08.779Z"
+  },
+  {
+    "id": "147a69f8-7fde-4a5a-9b13-13347214aa25",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:41.005Z"
+  },
+  {
+    "id": "b8524280-9c7c-4ebc-8edc-5f16672aa446",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Contoso Ltd",
+      "email": "billing@contoso.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:43.598Z"
+  },
+  {
+    "id": "ec48d16a-bfbf-4cfb-8305-11949d495e49",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": true,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": false
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:20:50.601Z"
+  },
+  {
+    "id": "8a77ce82-fdfd-4ef0-8f14-dca0e387b63f",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "36aee11a-73c7-4150-a866-0926a190e948",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:21:08.765Z"
+  },
+  {
+    "id": "a20c0408-28ef-4280-876e-1ceef1e22818",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Northwind Traders",
+      "email": "ap@northwind.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:10.830Z"
+  },
+  {
+    "id": "b9320430-7ca7-4388-a3c0-11a67f3b12e4",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (page verification)",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:10.877Z"
+  },
+  {
+    "id": "f24fa8bd-d772-4a70-adb0-004b65d10508",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": false,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": true
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:16.939Z"
+  },
+  {
+    "id": "ab57afbf-b1ca-456a-ae27-3787ff8705de",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": false,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": false
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:18.873Z"
+  },
+  {
+    "id": "66316a5a-490a-456f-8278-106c9361d914",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:20.420Z"
+  },
+  {
+    "id": "380800d7-c1d6-4e0c-bf0a-d69d74628801",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Contoso Ltd",
+      "email": "billing@contoso.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:22.995Z"
+  },
+  {
+    "id": "f9800a59-1a33-4f7f-a01d-6b6321380657",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "link",
+    "changes": {
+      "companyId": "bae33a83-0e1c-4f32-a11b-0a05beef1450",
+      "customerId": "1002"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:27.474Z"
+  },
+  {
+    "id": "113bba33-b91a-4ae9-a4eb-9e9982bd201c",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 50,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Draft",
+        "pushInvoices": true,
+        "syncDeposits": true,
+        "syncInvoices": true,
+        "syncCustomers": true,
+        "createMissingClients": false,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": false
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:30.009Z"
+  },
+  {
+    "id": "dcb5ba12-e400-457c-bbb9-90afa675c0ac",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "push",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:31.829Z"
+  },
+  {
+    "id": "97251a50-b175-4e4b-9eaf-15e2fbcf6548",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "e4362f7c-14ea-4024-b261-c635abb56e0a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:48.391Z"
+  },
+  {
+    "id": "64ff6517-8b6e-45e6-b55d-e0015f258e55",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "cde8a0e9-df6f-4c69-81e2-554fd9fc9858",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:48.400Z"
+  },
+  {
+    "id": "371e1ab1-c062-4545-9e74-3598d7b31e31",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "bae33a83-0e1c-4f32-a11b-0a05beef1450",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:48.404Z"
+  },
+  {
+    "id": "f80dd169-7910-4939-a294-4197ab4ffdf3",
+    "action": "clients:create",
+    "entity": "clients",
+    "entityId": "clients",
+    "changes": {
+      "name": "Northwind Traders",
+      "email": "ap@northwind.test"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.557Z"
+  },
+  {
+    "id": "62a96e19-a3f3-4957-8717-6d3679e3b364",
+    "action": "cloudconnect:create",
+    "entity": "cloudconnect",
+    "entityId": "cloudconnect",
+    "changes": {
+      "kind": "flexpoint",
+      "name": "FlexPoint (stub verification)",
+      "settings": {},
+      "credentials": "***"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.562Z"
+  },
+  {
+    "id": "97a4ae1e-2c4c-4683-8ddd-5011be8c3414",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "options": {
+        "pageSize": 100,
+        "matchRule": "externalUriOrName",
+        "pushStatus": "Posted",
+        "pushInvoices": true,
+        "syncInvoices": true,
+        "writeBackExternalUri": true,
+        "recordSettledPayments": false
+      }
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.576Z"
+  },
+  {
+    "id": "c4be4682-2232-462c-995e-5867f7813482",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.620Z"
+  },
+  {
+    "id": "c5342c19-a9e3-4f80-b010-682e5ed04184",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.639Z"
+  },
+  {
+    "id": "c09f3e06-2e8b-439b-8234-cc1eef58352c",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "push",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.695Z"
+  },
+  {
+    "id": "ed81af64-08ed-403a-8d20-96269742bc23",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "recordSettledPayments": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.706Z"
+  },
+  {
+    "id": "57539eb4-b0e4-4664-b407-204e45b6d906",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.730Z"
+  },
+  {
+    "id": "f53e3969-0532-4209-9682-485656cb0287",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "sync",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.754Z"
+  },
+  {
+    "id": "03d17aad-f8a9-49c6-8ae8-e7fae605cea1",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "link",
+    "changes": {
+      "companyId": "ada954d0-7303-4cd3-be65-f5d237661035",
+      "customerId": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.764Z"
+  },
+  {
+    "id": "8f716ad8-ac17-4bbb-b172-337a1d3674f6",
+    "action": "flexpoint:update",
+    "entity": "flexpoint",
+    "entityId": "options",
+    "changes": {
+      "pushInvoices": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.773Z"
+  },
+  {
+    "id": "ddff8aee-d232-47f4-9962-d2bb04d62199",
+    "action": "flexpoint:create",
+    "entity": "flexpoint",
+    "entityId": "push",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.778Z"
+  },
+  {
+    "id": "cd25dfed-ab1e-4c7d-9c66-847aabd8d1ba",
+    "action": "company:delete",
+    "entity": "company",
+    "entityId": "ada954d0-7303-4cd3-be65-f5d237661035",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.787Z"
+  },
+  {
+    "id": "d0797404-4d90-4748-ac36-6bad7815cd62",
+    "action": "cloudconnect:delete",
+    "entity": "cloudconnect",
+    "entityId": "e4571460-3803-4d62-8981-859f0006305a",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:22:53.798Z"
+  },
+  {
+    "id": "39cb2e27-ed4c-4899-96ff-70d96008e082",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "a17d4eb4-8265-429c-8c21-471dbc8718e7",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:23:55.831Z"
+  },
+  {
+    "id": "62ec18b1-ee31-4e92-8e50-af44e94d96d6",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "7111fa34-089b-4eca-be20-f39fd584f825",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:23:55.890Z"
+  },
+  {
+    "id": "228aa4ee-a075-4594-aa9b-27d3776418b4",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "a72a0491-04b2-4dab-b248-80cfaee7ba29",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:24:01.001Z"
+  },
+  {
+    "id": "270afec6-de87-4481-9e4d-e914dde8da38",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "6bae2121-9fb5-4598-a004-813df14031e2",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:24:01.050Z"
+  },
+  {
+    "id": "c8b79cca-193f-4055-b937-a891e3b12e6f",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "5c49b840-cc7c-44d7-83e6-3c25d4a310a0",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:24:15.563Z"
+  },
+  {
+    "id": "e686aa21-e88a-4a9b-bfaf-e434e4950a19",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "768aff20-4aec-493c-a384-9483db4d42ca",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:24:15.608Z"
+  },
+  {
+    "id": "8060b649-8104-4542-8aa4-665c06891c8d",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "6e096c3b-ce8f-4ac8-b4c0-85a91aa1952a",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:24:19.776Z"
+  },
+  {
+    "id": "e86028a2-9e51-4474-b6b0-79bf37ecc301",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "bcfe6868-29ed-4258-bd6a-2b085d814426",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:24:19.813Z"
+  },
+  {
+    "id": "8595b27c-da07-4296-8de6-7cc9310c6cdf",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "expenses",
+    "changes": {
+      "amount": 24.5,
+      "vendor": "NCP",
+      "category": "parking",
+      "ticketId": "fe8af35c-a427-41ea-9498-24313d85b092",
+      "description": "Parking at the client site"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:24:51.355Z"
+  },
+  {
+    "id": "a301e6d8-2b0a-40de-bc47-530e1e46ef44",
+    "action": "billing:create",
+    "entity": "billing",
+    "entityId": "d3ba0082-a846-4556-b2d1-b82898a3e5d0",
+    "changes": {
+      "note": "Reasonable"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:24:51.400Z"
+  },
+  {
+    "id": "870ec5b2-dbac-4f03-9471-64427a89c149",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "api-keys",
+    "changes": {
+      "name": "RMM verification",
+      "sourceKind": "rmm",
+      "description": "probe",
+      "permissions": [
+        "ticket:create",
+        "ticket:view"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.025Z"
+  },
+  {
+    "id": "7afb401d-16d2-4671-9e48-7e90f88a80ee",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "device": "RP-SRV-01",
+        "freePercent": 6
+      },
+      "kind": "alert",
+      "title": "Disk 0 on RP-SRV-01 is 94% full",
+      "client": {
+        "name": "Acme Corporation"
+      },
+      "source": "rmm",
+      "severity": "high",
+      "externalId": "rmm-verification-1",
+      "description": "Free space below the 10% threshold."
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.087Z"
+  },
+  {
+    "id": "dc5bd8a6-5a0c-4be3-91b8-37d524dea1b4",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "device": "RP-SRV-01",
+        "freePercent": 6
+      },
+      "kind": "alert",
+      "title": "Disk 0 on RP-SRV-01 is 94% full",
+      "client": {
+        "name": "Acme Corporation"
+      },
+      "source": "rmm",
+      "severity": "high",
+      "externalId": "rmm-verification-1",
+      "description": "Free space below the 10% threshold."
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.138Z"
+  },
+  {
+    "id": "b826f993-ee7d-49dc-9fbc-6ee4ba24c1e0",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "device": "RP-SRV-01",
+        "freePercent": 6
+      },
+      "kind": "recovery",
+      "title": "Disk space recovered on RP-SRV-01",
+      "client": {
+        "name": "Acme Corporation"
+      },
+      "source": "rmm",
+      "severity": "info",
+      "externalId": "rmm-verification-1",
+      "description": "Free space below the 10% threshold."
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.149Z"
+  },
+  {
+    "id": "ac9011a1-23af-41e1-947d-57c70496b1bd",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "api-keys",
+    "changes": {
+      "name": "SIEM verification",
+      "sourceKind": "siem",
+      "permissions": [
+        "ticket:create"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.156Z"
+  },
+  {
+    "id": "09a85f70-9363-40f9-9814-f493ccedea65",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "risk": 92,
+        "rule": "impossible-travel"
+      },
+      "kind": "detection",
+      "title": "Impossible travel for j.smith@acme.test",
+      "client": {
+        "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
+      },
+      "source": "splunk",
+      "severity": "critical",
+      "externalId": "siem-verification-1",
+      "occurredAt": "2026-10-08T07:30:04.155Z"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.165Z"
+  },
+  {
+    "id": "9e5b33b5-2cff-4539-ac66-60a1aa253aa5",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "api-keys",
+    "changes": {
+      "name": "Technician-owned verification",
+      "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+      "permissions": [
+        "ticket:create",
+        "user:manage",
+        "billing:manage"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.213Z"
+  },
+  {
+    "id": "65b83880-db19-4a02-a9a1-862acdab5b1e",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "title": "Technician key event",
+      "client": {
+        "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
+      },
+      "source": "rmm",
+      "externalId": "tech-1"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.226Z"
+  },
+  {
+    "id": "8f5485e6-657c-4cd9-bd16-f43bdb90f51e",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "813b1642-2d2f-49bf-8486-518969d60ca5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.236Z"
+  },
+  {
+    "id": "e958bdc4-bc0b-4be5-b0f8-a6aeded202ad",
+    "action": "api-keys:delete",
+    "entity": "api-keys",
+    "entityId": "813b1642-2d2f-49bf-8486-518969d60ca5",
+    "changes": {
+      "reason": "probe finished"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:30:04.250Z"
   }
 ]

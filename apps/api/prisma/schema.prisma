@@ -83,6 +83,7 @@ model User {
   dashboardConfig UserDashboardConfig?
   navConfig       UserNavConfig?
   outlookAddinTokens OutlookAddinToken[]
+  apiKeys         ApiKey[]          @relation("ApiKeyOwner")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
@@ -680,6 +681,69 @@ model Integration {
   errorMessage  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ─── Machine access ─────────────────────────────────────────────────
+
+/// A credential for a program rather than a person: an RMM, an SIEM, an accounting
+/// system, or anything else that cannot hold a cookie. The key acts as `userId` — the
+/// account whose identity it borrows — narrowed to `permissions`, so an integration can
+/// never do more than the person who issued it, and deactivating that account stops it.
+///
+/// Only the SHA-256 of the secret half is stored. `prefix` is the searchable half, which
+/// is why it exists in clear: it is what the presented key is looked up by, and what the
+/// audit trail and the key list can refer to without holding anything usable.
+model ApiKey {
+  id           String    @id @default(uuid())
+  name         String
+  prefix       String    @unique
+  hash         String
+  /// What the key is for, for the inventory: "rmm", "siem", "flexpoint", "other"…
+  sourceKind   String    @default("other")
+  description  String?
+  /// The identity the key acts as. Writes are attributed to this user.
+  userId       String
+  user         User      @relation("ApiKeyOwner", fields: [userId], references: [id], onDelete: Cascade)
+  /// The human who issued it, kept even if that account is later removed.
+  createdById  String?
+  createdByEmail String?
+  /// The scopes it may exercise, intersected with the owner's permissions at use time.
+  permissions  String[]  @default([])
+  requestCount Int       @default(0)
+  lastUsedAt   DateTime?
+  lastUsedIp   String?
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([revokedAt])
+}
+
+/// One event received from another system — an RMM alert, a SIEM detection, an accounting
+/// notification. It exists so the same alert arriving five times opens one ticket rather
+/// than five: `(source, externalId)` is unique, a repeat is attached to the ticket the
+/// first one opened, and a recovery event closes it.
+model EventRecord {
+  id          String   @id @default(uuid())
+  source      String
+  externalId  String
+  kind        String   @default("alert")
+  severity    String   @default("info")
+  title       String
+  payload     Json     @default("{}")
+  state       String   @default("open")     // open | recovered
+  occurrences Int      @default(1)
+  ticketId    String?
+  companyId   String?
+  apiKeyId    String?
+  receivedAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([source, externalId])
+  @@index([receivedAt])
+  @@index([ticketId])
 }
 
 // ─── Microsoft 365 Synced Data ─────────────────────────────────────

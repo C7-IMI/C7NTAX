@@ -34,6 +34,8 @@ import { clientsRouter } from "./routes/clients";
 import { billingRouter } from "./routes/billing";
 import { cloudConnectRouter } from "./routes/cloudconnect";
 import { flexpointRouter } from "./routes/flexpoint";
+import { apiKeysRouter } from "./routes/apiKeys";
+import { eventsRouter } from "./routes/events";
 import { crmRouter } from "./routes/crm";
 import { projectsRouter } from "./routes/projects";
 import { scheduleRouter } from "./routes/schedule";
@@ -185,6 +187,8 @@ app.use("/api/checklists", checklistsRouter);
 app.use("/api/billing", billingRouter);
 app.use("/api/cloudconnect", cloudConnectRouter);
 app.use("/api/flexpoint", flexpointRouter);
+app.use("/api/api-keys", apiKeysRouter);
+app.use("/api/events", eventsRouter);
 
 // New feature routes
 app.use("/api/crm", crmRouter);

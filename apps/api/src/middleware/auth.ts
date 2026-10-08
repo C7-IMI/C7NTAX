@@ -4,6 +4,7 @@ import type { SignOptions } from "jsonwebtoken";
 import { Permission, ROLE_PERMISSIONS, type SystemRole } from "@C7NTAX/shared";
 import { bypassTokenTtl, isBypassAccount } from "../services/testBypass";
 import { clearSessionCookies, csrfTokenValid, resolveSession, sessionAuthEnabled, sessionExpiredResponse, touchSession } from "./sessionAuth";
+import { looksLikeApiKey, verifyApiKey } from "../services/apiKeys";
 
 const JWT_SECRET = process.env.JWT_SECRET || "C7NTAX-dev-secret-change-in-prod";
 
@@ -19,6 +20,14 @@ export interface AuthUser {
 
 export interface AuthRequest extends Request {
   user?: AuthUser;
+  /** Set when the caller authenticated with an API key rather than a session (see services/apiKeys). */
+  apiKey?: {
+    id: string;
+    name: string;
+    prefix: string;
+    sourceKind: string;
+    scopes: string[];
+  };
 }
 
 /** Routes a signed-in user may still reach while they owe a password change. */
@@ -148,6 +157,50 @@ function authenticateByToken(req: AuthRequest, res: Response, next: NextFunction
     return;
   }
 
+  /*
+   * An API key is a credential for a program, and it arrives here rather than on a route of its
+   * own so that every existing route serves a machine without knowing about it: `req.user` is
+   * filled with the account the key acts as, its permissions narrowed to the key's scopes. Because
+   * the identity is a real user, `createdById` and the audit trail keep meaning something, and the
+   * tail of this function — the token-version check, the password-change gate — applies unchanged.
+   */
+  if (looksLikeApiKey(token)) {
+    verifyApiKey(token, req.ip || req.socket?.remoteAddress || undefined)
+      .then(result => {
+        if (!result) {
+          res.status(401).json({
+            error: { message: "That API key is not valid — it may be revoked, expired, or belong to a deactivated account", code: "API_KEY_INVALID" },
+          });
+          return;
+        }
+        const owner = result.owner;
+        const ownerPermissions = computePermissions(owner.role, owner.rolePermissions, owner.userPermissions);
+        // The intersection, not the union: a key can never exceed the account it acts as, and a
+        // role change is felt on the next request rather than when the key was issued.
+        const granted = ownerPermissions.filter(permission => result.key.permissions.includes(permission));
+        req.user = {
+          userId: owner.id,
+          email: owner.email,
+          role: owner.role,
+          companyId: owner.companyId,
+          permissions: granted,
+          tokenVersion: owner.tokenVersion,
+        };
+        req.apiKey = {
+          id: result.key.id,
+          name: result.key.name,
+          prefix: result.key.prefix,
+          sourceKind: result.key.sourceKind,
+          scopes: result.key.permissions,
+        };
+        completeAuthentication(req, res, next);
+      })
+      .catch(() => {
+        res.status(401).json({ error: { message: "That API key could not be verified", code: "API_KEY_INVALID" } });
+      });
+    return;
+  }
+
   try {
     const payload = jwt.verify(token, JWT_SECRET) as AuthUser;
     req.user = payload;
@@ -162,11 +215,15 @@ function authenticateByToken(req: AuthRequest, res: Response, next: NextFunction
 /**
  * Shared tail of both paths: confirm the identity against the database against a token
  * version, then enforce the password-change gate.
+ *
+ * `apiKeyScopes` is passed for a key holder, and it is what keeps a key inside its scopes: the
+ * permissions are refreshed from the database on every request, and without this the refresh would
+ * hand a narrow key the owner's full authority on its very first call.
  */
 function completeAuthentication(req: AuthRequest, res: Response, next: NextFunction): void {
   // Refresh permissions from DB to capture newly added Permission enum values,
   // and reject tokens that a password change or reset has retired.
-  refreshSessionContext(req.user!)
+  refreshSessionContext(req.user!, req.apiKey?.scopes)
     .then((state) => {
       if (!state.valid) {
         res.status(401).json({ error: "Your session has ended — please sign in again" });
@@ -187,7 +244,7 @@ function completeAuthentication(req: AuthRequest, res: Response, next: NextFunct
     });
 }
 
-async function refreshSessionContext(user: AuthUser): Promise<{ valid: boolean; mustChangePassword: boolean }> {
+async function refreshSessionContext(user: AuthUser, apiKeyScopes?: string[]): Promise<{ valid: boolean; mustChangePassword: boolean }> {
   let dbUser;
   try {
     const { prisma } = await import("../index");
@@ -221,11 +278,17 @@ async function refreshSessionContext(user: AuthUser): Promise<{ valid: boolean; 
       dbUser.role.permissions as string[],
       dbUser.permissions as string[]
     );
+    /*
+     * A key holder gets the intersection, recomputed here rather than only at verification, so a
+     * scope it may no longer use — because the owner's role changed, or the intersection simply
+     * differs — takes effect on the next request instead of never.
+     */
+    const effective = apiKeyScopes ? fresh.filter(permission => apiKeyScopes.includes(permission)) : fresh;
     // Always refresh if the DB has different permissions (not just more)
-    const hasNew = fresh.some(p => !user.permissions.includes(p));
-    const hasLess = user.permissions.some(p => !fresh.includes(p));
+    const hasNew = effective.some(p => !user.permissions.includes(p));
+    const hasLess = user.permissions.some(p => !effective.includes(p));
     if (hasNew || hasLess) {
-      user.permissions = fresh;
+      user.permissions = effective;
     }
 
     return { valid: true, mustChangePassword: state.mustChangePassword };
