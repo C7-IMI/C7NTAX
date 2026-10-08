@@ -104,7 +104,7 @@ async function main() {
     const foreign = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
     const foreignSource = ((foreign.data?.sourceStatus?.[serviceId]?.sources) || []).find(s => s.source === "social");
     check(foreignSource?.verdict === "clear", `a complaint about another product reads as clear for this service (${foreignSource?.verdict})`);
-    check(/name/i.test(foreignSource?.detail || ""), `and the detail says this service was not named (${foreignSource?.detail})`);
+    check(/0 naming/.test(foreignSource?.detail || ""), `and the detail reports that no post named it (${foreignSource?.detail})`);
     const raisedFromForeign = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
     check(!raisedFromForeign, "and no notice was raised from it");
 

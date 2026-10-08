@@ -490,34 +490,6 @@
     "updatedAt": "2026-10-06T22:01:27.045Z"
   },
   {
-    "id": "3ed02242-84bd-41ad-8b90-9a6aa34b7eaa",
-    "serviceId": "d32a1b1f-14f8-4d9a-b67d-f041f06eeb98",
-    "title": "Social reports about ProbeSocial muyujv83 on X",
-    "description": "Auto-resolved: no monitored source reports an active incident or degradation for ProbeSocial muyujv83 (social clear).\n\nProbeSocial muyujv83 is down again, nothing loads",
-    "severity": "informational",
-    "status": "resolved",
-    "source": "social",
-    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
-    "detectedAt": "2026-10-08T01:19:39.805Z",
-    "resolvedAt": "2026-10-08T01:29:39.814Z",
-    "createdAt": "2026-10-08T01:20:31.008Z",
-    "updatedAt": "2026-10-08T01:29:39.816Z"
-  },
-  {
-    "id": "8db6a3e7-ecf1-457d-b7d9-17e70847a3f1",
-    "serviceId": "d32a1b1f-14f8-4d9a-b67d-f041f06eeb98",
-    "title": "Social reports about ProbeSocial muyujv83 on X",
-    "description": "Auto-resolved: undefined\n\nProbeSocial muyujv83 is down again, nothing loads",
-    "severity": "informational",
-    "status": "resolved",
-    "source": "social",
-    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
-    "detectedAt": "2026-10-08T01:32:49.092Z",
-    "resolvedAt": "2026-10-08T01:38:24.364Z",
-    "createdAt": "2026-10-08T01:32:49.094Z",
-    "updatedAt": "2026-10-08T01:38:24.365Z"
-  },
-  {
     "id": "88d7eed1-9fa4-4360-ae78-69a9426544de",
     "serviceId": "a0d4486b-1f87-49b3-a6d0-e625dbd5cd65",
     "title": "Partially Degraded Service",
@@ -532,20 +504,6 @@
     "updatedAt": "2026-10-07T21:49:27.042Z"
   },
   {
-    "id": "b03af3b9-87e1-438a-a37b-1bb285c1131f",
-    "serviceId": "d32a1b1f-14f8-4d9a-b67d-f041f06eeb98",
-    "title": "Social reports about ProbeSocial muyujv83 on X",
-    "description": "ProbeSocial muyujv83 is down again, nothing loads",
-    "severity": "informational",
-    "status": "active",
-    "source": "social",
-    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
-    "detectedAt": "2026-10-08T01:41:31.463Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-08T01:41:31.464Z",
-    "updatedAt": "2026-10-08T01:41:31.464Z"
-  },
-  {
     "id": "59f1cbb1-7683-4ffe-9f95-29ca677e4609",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Partially Degraded Service",
@@ -558,6 +516,20 @@
     "resolvedAt": "2026-10-07T15:51:39.845Z",
     "createdAt": "2026-10-07T15:16:45.464Z",
     "updatedAt": "2026-10-07T15:51:39.846Z"
+  },
+  {
+    "id": "75b1f27c-3aa9-4ea2-ad93-e1cac8d2c159",
+    "serviceId": "3320870d-6bde-436c-87fa-0639f240085a",
+    "title": "Social reports about ProbeSocial muyvyy4i on X",
+    "description": "ProbeSocial muyvyy4i is down again, nothing loads",
+    "severity": "informational",
+    "status": "active",
+    "source": "social",
+    "sourceUrl": "https://x.com/i/web/status/1900000000000000001",
+    "detectedAt": "2026-10-08T02:00:16.295Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-08T02:00:16.297Z",
+    "updatedAt": "2026-10-08T02:00:16.297Z"
   },
   {
     "id": "e12f3273-bbf2-454e-8a30-11cee5df160b",
