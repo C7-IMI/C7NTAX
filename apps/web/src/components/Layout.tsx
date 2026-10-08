@@ -7,6 +7,8 @@ import { SessionTimeoutWarning } from "./SessionTimeoutWarning";
 import { AppFooter } from "./AppFooter";
 import { ConsoleDialog } from "./ConsoleDialog";
 import { RecentActivityMenu } from "./RecentActivityMenu";
+import { NavPaneModern } from "./NavPaneModern";
+import { useNavigationSettings } from "../hooks/useNavigationStyle";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
@@ -385,6 +387,13 @@ export function Layout({ children }: { children: ReactNode }) {
 
   // The navigation only offers what the API will actually serve for this role.
   const visibleTree = useMemo(() => filterNavByPermission(NAV_TREE, permissions), [permissions]);
+
+  /**
+   * Which navigation pane to draw. The instance's setting decides, this browser can disagree with it,
+   * and a build can turn the modern pane off outright — see `useNavigationStyle`.
+   */
+  const navigation = useNavigationSettings();
+  const modernNav = navigation.style === "modern";
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -767,6 +776,15 @@ export function Layout({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  /**
+   * The modern pane needs the sidebar open to show a domain's destinations, so choosing one while
+   * collapsed asks for the column rather than opening an empty rail row.
+   */
+  const expandSidebar = useCallback(() => {
+    setCollapsed(false);
+    localStorage.setItem("c7_sidebar_collapsed", "false");
+  }, []);
+
   // ── Resize handling ────────────────────────────────────────────
   const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -987,7 +1005,11 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const sidebarStyle = collapsed
     ? { width: "64px" }
-    : { width: `${sidebarWidth}px` };
+    : modernNav
+      // Fixed rather than draggable: the pane is a rail plus a column, and a width the user sets
+      // would fight the column it has to fit. Collapsing still gives the icon-only rail.
+      ? { width: "448px" }
+      : { width: `${sidebarWidth}px` };
 
   return (
     <BreadcrumbTrailProvider>

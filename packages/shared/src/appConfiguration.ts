@@ -237,6 +237,36 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         affects: ["Header toolbar", "Console", "c7ntax CLI", "Users & Roles", "Client records"],
       },
       {
+        id: "navigationStyle",
+        label: "Navigation pane",
+        summary: "The rail of sections with a column of destinations, or the single collapsible tree.",
+        detail:
+          "Modern draws a short rail of domains that does not grow as the feature list does, with the destinations inside the chosen domain beside it in their own scrolling column, ordered by what this person actually opens. Classic is the single tree: every section and every nested row in one list, exactly as it was before this setting existed. Switching back is immediate and changes nothing about the destinations themselves — both panes are generated from the same navigation, so no page, route or permission moves. A person can override this for their own browser with the c7_ui_nav flag, in either direction, which is what makes it safe to try before adopting.",
+        type: "select",
+        source: "setting",
+        env: "UI_NAV_STYLE",
+        default: "modern",
+        choices: [
+          { value: "modern", label: "Rail and sections (default)" },
+          { value: "classic", label: "Single tree (classic)" },
+        ],
+        store: { key: CONFIG_STORE_KEYS.appSettings, path: "appearance.navigationStyle" },
+        affects: ["Every screen", "The navigation pane", "Favourites", "Administration"],
+      },
+      {
+        id: "assistantInRail",
+        label: "Assistant in the navigation rail",
+        summary: "Whether the Assistant is a section in the rail or a utility at its foot.",
+        detail:
+          "Off, the Assistant sits with Help and My settings: somewhere you go for something rather than somewhere you work, which is where it belongs while its answers are about the screen you are already on. On, it joins the rail itself, for the case where people start their day in it. Only the modern pane has a rail, so this has no effect while the navigation pane is set to classic; the Assistant is always in the sidebar there.",
+        type: "boolean",
+        source: "setting",
+        env: "ASSISTANT_IN_RAIL",
+        default: false,
+        store: { key: CONFIG_STORE_KEYS.appSettings, path: "appearance.assistantInRail" },
+        affects: ["The navigation pane", "Assistant"],
+      },
+      {
         id: "defaultLandingPage",
         label: "Default landing page",
         summary: "Where a sign-in lands when the person has not chosen a page of their own.",
