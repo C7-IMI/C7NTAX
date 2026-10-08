@@ -358,8 +358,8 @@ export function useConfigurationSection(sectionId: string) {
       }
       // The navigation pane is the same shape of change but a bigger one: it is on screen while the
       // setting is being saved, so it has to redraw from the value the API now holds rather than
-      // from a guess about what was just written.
-      if (section.id === "workspace" && (field.id === "navigationStyle" || field.id === "assistantInRail")) {
+      // from a guess about what was just written. The interface layout is the same again.
+      if (section.id === "workspace" && (field.id === "navigationStyle" || field.id === "interfaceStyle" || field.id === "assistantInRail")) {
         refreshNavigationSettings();
       }
       await reload();
@@ -380,7 +380,7 @@ export function useConfigurationSection(sectionId: string) {
       if (section.id === "workspace" && field.id === "contextMenus") {
         primeContextMenusSetting(field.fallback !== false);
       }
-      if (section.id === "workspace" && (field.id === "navigationStyle" || field.id === "assistantInRail")) {
+      if (section.id === "workspace" && (field.id === "navigationStyle" || field.id === "interfaceStyle" || field.id === "assistantInRail")) {
         refreshNavigationSettings();
       }
       await reload();

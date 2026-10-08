@@ -237,6 +237,23 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         affects: ["Header toolbar", "Console", "c7ntax CLI", "Users & Roles", "Client records"],
       },
       {
+        id: "interfaceStyle",
+        label: "Interface",
+        summary: "The redesigned screens, or the classic ones this application had before them.",
+        detail:
+          "Redesign is the default: the reworked ticket screen (five grouped tabs, a context column, and less to scroll), and the plainer chrome around every other page while they are rebuilt in turn. Classic is the interface exactly as it was — same routes, same permissions, same data, same colour schemes — which is what makes this safe to try and safe to refuse. A person can override it for their own browser with the c7_ui_redesign flag, in either direction, and the navigation pane keeps its own separate setting: which screens and which nav are different questions.",
+        type: "select",
+        source: "setting",
+        env: "UI_INTERFACE_STYLE",
+        default: "redesign",
+        choices: [
+          { value: "redesign", label: "Redesign (default)" },
+          { value: "classic", label: "Classic" },
+        ],
+        store: { key: CONFIG_STORE_KEYS.appSettings, path: "appearance.interfaceStyle" },
+        affects: ["Every screen", "Tickets", "The header and page chrome"],
+      },
+      {
         id: "navigationStyle",
         label: "Navigation pane",
         summary: "The rail of sections with a column of destinations, or the single collapsible tree.",

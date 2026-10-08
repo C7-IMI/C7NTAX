@@ -6618,3 +6618,88 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **A simulation has to fail loudly.** Three of these five bugs produced *no* error, just a screen that quietly did not change; the fix that mattered most was making the failure visible, because the whole point of a click-through is that somebody will click it.
 - **One signature per renderer registry.** `(spec, state)` for all of them would have made the first bug impossible to write, and the parameter order was invisible in review because each renderer read fine on its own.
 - **Read the live system for the words.** Board names, client briefs and ticket titles came from the running instance in about four requests, and they are what make a simulation read like *this* product rather than like a diagram of one.
+
+---
+
+### Prompt 299 — Build the redesign, starting with the ticket screens
+
+**Timestamp:** 2026-10-08 19:15 | **Status:** Complete (the switch and the ticket screens; the remaining screens follow in later versions) | **Duration:** ~150 min
+
+**BuildNotes IDs:** **2026.10.8.057** — *The redesigned ticket screens, with the classic layout one click away*.
+
+**Prompt**
+
+> Build it. Same rules. the redesign will be default, but create an option/toggle to switch back to classic view. The theme options (color scheme) and current defaults should classic should carry over to the redesign.
+>
+> Kumo should use the same logo you previously extracted (Pasted Image), NOT the one from the mockup (Pasted Image 2).
+>
+> On the ticket detail screen, the pane should be resizeable Vertically. (Pasted Image 3) THe main screen is too small and I want to reduce scrolling as much as I can. Unless you can adjust the height/padding/margins of some things, in which case don't make them resizeable.
+
+**What I did**
+- **Built the switch before the screens, because the switch is what makes the screens safe.** A mockup can be thrown away; a change to the screen everyone works in cannot. **Redesign** is now the default for the whole deployment (`appearance.interfaceStyle`), with the same three-layer reversibility the navigation pane already established: the setting for everyone, a browser flag for one person in *either* direction, and `VITE_UI_REDESIGN` for a deployment that should not offer it at all. Colour scheme, light/dark and density deliberately sit outside the switch — they are the same in both layouts and travel across the change untouched, which is what the prompt asked for.
+- **Converted the ticket screens, the two the brief named**, and left every other screen rendering exactly as it did whichever way the switch is set. A half-converted screen is worse than a classic one, so the redesign lands one screen at a time and `useRedesign()` is the one hook a screen calls to opt in.
+- **Grouped the detail's twelve panels into five tabs** — Overview / Activity / Work / Files & Links / Finance — with the panels inside a tab as sub-tabs one click away rather than a second click deep. *Configurations* moved to *Finance* and *Products* to *Work*: the client's estate is a fact about the client, and four answers to "what has this used and cost" belong together. **`activeTab` still holds one of the twelve original panel ids** — the grouping decides what the strip shows, never what the page is — so the per-tab loading effect and all twelve `activeTab === "…"` guards are untouched. That was the constraint that made this safe in a 2,600-line file.
+- **Made the tab remember its sub-tab** (`tabByGroup`, per visit), so returning to *Work* after *Activity* lands on Time rather than on the first panel of the group.
+- **Took the spacing route on the scrolling, and measured it rather than asserting it.** The record header became one row (number, board, title, status, priority, Edit), the actions moved onto the same line as the tabs by ordering the wrapping flex row (`order-1` tabs at `flex-1`, `order-2` actions, `order-3` the sub-tab row at `w-full`, worth about 30px), the card's padding was tightened, and the whole toolbar was made **sticky** so the panels stay reachable without scrolling back to the top. Against classic on a 1280px window: a panel's content begins **~70px higher** on the ticket, and the ticket list begins **~90px higher** because its title and toolbar now share a row. The prompt offered a vertical drag handle as the fallback; spacing made it unnecessary, so it was not added.
+- **Corrected a claim I could not substantiate.** I had written that removing `max-w-4xl` from the detail unshackled it from two-thirds of the window. Measuring the element instead of the class showed `max-width: 1600px` — the **P2 content cap** (`[data-ui-p2="true"] main > * { max-width: 1600px }` in `index.css`) already overrides that utility, so the change was inert. The class removal stays as the *intention* (the redesigned detail adds no narrower measure of its own), the Help text no longer promises a width saving, and the rollback guide says plainly not to credit the redesign with one.
+- **Relabelled the pane's switch to *Navigation*** so the two controls can be told apart, and corrected the Help text and `NAV-PANE-ROLLBACK.md` that still named the old *Interface* label — documentation that points at a label that no longer exists is worse than no documentation.
+- **Wrote the documentation as part of the change**: `INTERFACE-ROLLBACK.md` (three switches, which screens are converted today, the six things that could surprise a reader, the code-level revert, and a diagnostic ladder) and its row in the README, the **Interface** field in the Configuration registry, the *The Interface* Help walkthrough with its Index row and Configuration reference, and three FAQ answers — a colleague's screens looking different, where Configurations and Products went, and how to stop scrolling.
+- **Fixed a real bug found while building the switch**: an administrator saving *Interface* would have seen nothing change, because only *Navigation pane* refreshed the settings after a save. The Configuration hub now redraws for `interfaceStyle` in both the save and the reset-to-deployment paths.
+- **Verified live in both modes, and on both sides of the setting.** The redesign renders by default with five groups and no classic strip; clicking *Classic* in My Account brings back all twelve tabs and the taller header; switching back restores the grouping *and* the sub-tab I had been on. Then the deployment-level path: saving *Interface = Classic* in the Configuration hub flipped the ticket detail to classic, and deleting the saved value returned it to the redesign — with `app_settings` left exactly as it was found. Colour scheme (Brand Crimson, dark) was byte-identical across every switch.
+- **Guards green**: `check-help-links` (87 routes, **28** walkthroughs — the new one is in the Index), `check-route-guards` (433 routes), `check-config-reads` (46 reads, all naming a declared field), `tsc --noEmit`, and the full `pnpm build`.
+
+**Mistakes and traps, for the next screen**
+- **`noUncheckedIndexedAccess` broke the obvious implementation twice.** `TICKET_TAB_GROUPS[0]` and `group.tabs[0]` are `T | undefined` under this repo's tsconfig, so the group lookup would not type-check. The fix is a type, not a `!`: the constant is typed `[TicketTabGroup, ...TicketTabGroup[]]` with `tabs: [string, ...string[]]`, which says what is actually true — there is always at least one group and each group holds at least one panel.
+- **A class in the markup is not a rule in the cascade.** The whole `max-w-4xl` finding above came from trusting the source over the computed style. Measure the element.
+- **Playwright's accessibility snapshot says `menu` for `role="menu"`.** My first three attempts to open the account menu failed because I searched for a `<menu>` element, and the failing `clickElement` had *also* left the menu dismissed — while `aria-expanded` on the button still read `true`. Drive these menus by `[role="menu"]` and do the whole open-click-verify sequence inside one `page.evaluate`.
+- **A stale API process can hide a setting.** The new field appeared and saved correctly, but I verified the *stored* value with a direct `GET /api/system/config/app_settings` before trusting the UI, which is what caught that the browser's own override — not the setting — was winning.
+
+---
+
+### Prompt 300 — Context, Dark and Comfortable leave the mockup's header
+
+**Timestamp:** 2026-10-08 19:30 | **Status:** Complete | **Duration:** ~20 min
+
+**BuildNotes IDs:** **none — the change is to the simulation in the session workspace, not to the repository.** The application's own header was not changed by this prompt.
+
+**Prompt**
+
+> I don't like Context, Dark and Comfortable being in the header. Move it back to a My Account Menu like the classic interface. You can apply modern design theories to the menu, though
+
+**What I did**
+- **Rebuilt the mockup's account menu as a real menu** rather than a row of chips: a brand header (wordmark and version), the identity block, then labelled sections — APPEARANCE (Dark / Light), DENSITY (Comfortable / Compact), LAYOUT (show the context column / hide it) — and a footer of links. The header behind it lost Context, Dark and Comfortable and is now Console, Search, Recent, Assistant, Help, My Account.
+- **Kept the reason the chips were there.** Nobody loses a control they had: density and the context column are still one click away, and the palette still changes the whole shell live, so the simulation still demonstrates both themes rather than only describing them.
+- **Found and fixed a crash in every utility flyout.** `renderFlyout` read `(domain || utility).rows`, and the `UTILITIES` entries have no `rows` array at all, so clicking Assistant, Help, My Settings or Console threw. Utilities now render a single "Opens" row, and all fourteen rail ids were driven to confirm each one renders.
+- **Esc and click-outside now close the account menu too**, alongside the existing overlay handling, because a menu that traps the pointer is the fastest way to make a simulation feel broken.
+
+---
+
+### Prompt 301 — Settings as well
+
+**Timestamp:** 2026-10-08 19:35 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes IDs:** **none — simulation only**, as above.
+
+**Prompt**
+
+> Settings as well
+
+**What I did**
+- **Moved Settings out of the mockup's header and into the account menu's footer**, beside What's New and Sign out, so the header is navigation and search only and everything that configures *you* lives behind your own name. The application's own header was deliberately left alone: it has had a Settings button in both interfaces since before this work, and changing it from the mockup's feedback would have been a change nobody asked for.
+- **Put the user-visible consequences in the same pass**: the menu's LAYOUT section is where the context column went, so Settings now opens a surface that actually exists in the simulation rather than a placeholder.
+
+---
+
+### Prompt 302 — The C7NTAX wordmark belongs in the account menu
+
+**Timestamp:** 2026-10-08 19:40 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes IDs:** **none — simulation only**, as above; the application's own account menu already carries the wordmark (prompt 294).
+
+**Prompt**
+
+> Make sure the C7NTAX logo is in the My Account Menu like in the classic interface
+
+**What I did**
+- **Put the wordmark at the top of the menu, with the version beside it** — where the classic interface has always had it, and where it doubles as the answer to "which build am I on" without a separate trip to What's New. The mark uses the same brand rules as the rail: it is the logotype, not a redrawn one, so the mockup and the application agree about what the brand looks like.
+- **Checked the application rather than assuming**, and it already satisfies the request: the menu renders the mask-based `KumoWordmark`/`Wordmark` artwork and prints `v2026.10.8.056` from the live changelog. That is why this prompt records no BuildNotes entry — nothing in the repository needed changing, and saying so is more useful than inventing a version for it.

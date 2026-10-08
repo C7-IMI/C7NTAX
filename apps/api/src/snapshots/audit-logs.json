@@ -200623,6 +200623,18 @@
     "createdAt": "2026-10-08T18:51:35.338Z"
   },
   {
+    "id": "8eb05d23-2d75-41ae-94d3-df5da4de4143",
+    "action": "configuration:update",
+    "entity": "configuration",
+    "entityId": "interfaceStyle",
+    "changes": {
+      "value": "classic"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T23:12:00.136Z"
+  },
+  {
     "id": "3a42fd20-b7a0-45b6-90df-f00906d3ec12",
     "action": "reports:create",
     "entity": "reports",
@@ -201037,6 +201049,18 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T19:02:36.256Z"
+  },
+  {
+    "id": "b42a1999-2006-453b-a48f-76a12b8b568d",
+    "action": "configuration:delete",
+    "entity": "configuration",
+    "entityId": "interfaceStyle",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T23:12:20.803Z"
   },
   {
     "id": "6cc54326-8d50-46f6-b79a-3d6f9e5e0403",

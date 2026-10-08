@@ -18,6 +18,7 @@ import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries }
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
 import { TableSkeleton, PageSkeleton } from "../components/ui/Skeleton";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
@@ -157,6 +158,27 @@ const TICKET_DETAIL_TABS = [
   { id: "audittrail", label: "Audit Trail" },
 ];
 
+/**
+ * The five tabs the redesigned detail screen is organised into, and the panels each one holds.
+ *
+ * This is a grouping, not a deletion: every one of the twelve panels above is still here and still
+ * reachable, one click away at the most. Activities, History and Audit Trail are one story at three
+ * depths; Time, Expenses, Products and Schedule are four answers to "what has this used, and what
+ * has it cost"; Attachments and Links are both something attached to the record. Configurations left
+ * the strip entirely because the estate is a fact about the *client*, and it belongs beside the
+ * ticket rather than three clicks into it.
+ */
+/** One redesigned detail tab: a label, an icon, and the panels it holds — never an empty set. */
+type TicketTabGroup = { id: string; label: string; icon: typeof FileText; tabs: [string, ...string[]] };
+
+const TICKET_TAB_GROUPS: [TicketTabGroup, ...TicketTabGroup[]] = [
+  { id: "overview", label: "Overview", icon: FileText, tabs: ["ticket"] },
+  { id: "activity", label: "Activity", icon: History, tabs: ["activities", "history", "audittrail"] },
+  { id: "work", label: "Work", icon: Timer, tabs: ["time", "expenses", "products", "schedule"] },
+  { id: "files", label: "Files & Links", icon: Paperclip, tabs: ["attachments", "links"] },
+  { id: "finance", label: "Finance", icon: Receipt, tabs: ["finance", "configurations"] },
+];
+
 /** Right-click deletion confirmation, shared by the list and the detail screen. */
 function DeleteTicketDialog({ target, busy, onCancel, onConfirm }: {
   target: { ticketNumber?: string; title?: string } | null;
@@ -194,6 +216,7 @@ const BOARD_TABS = true;
 
 export function TicketsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const redesign = useRedesign();
   const boardId = searchParams.get("boardId") || "";  const statusParam = searchParams.get("status") || "";
   const priorityParam = searchParams.get("priority") || "";
   const assignedParam = searchParams.get("assignedToId") || "";
@@ -632,9 +655,11 @@ export function TicketsPage() {
           <span className="text-white font-medium">{boards.find(b=>b.id===boardId)?.name||"Board"}</span>
         </div>
       )}
+      {/* Redesigned, the title and its toolbar share a single row so the list starts higher up. */}
+      <div className={redesign ? "flex flex-wrap items-end justify-between gap-x-3 gap-y-2" : "space-y-4"}>
       <div>
-        <h2 className="text-lg font-semibold text-white">Tickets</h2>
-        <p className="text-sm text-gray-400">
+        <h2 className={redesign ? "text-base font-semibold text-white" : "text-lg font-semibold text-white"}>Tickets</h2>
+        <p className={redesign ? "text-xs text-gray-500" : "text-sm text-gray-400"}>
           {companyParam && !searchParams.get("new")
             ? `Showing ${scopedClientName ?? "one client"}'s tickets`
             : boardId && !BOARD_TABS ? `Filtered by board` : "Manage service tickets"}
@@ -642,7 +667,7 @@ export function TicketsPage() {
       </div>
 
       {/* Toolbar: board selector + Create on the left, Filter + Choose Columns on the right */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className={redesign ? "flex-1 flex flex-wrap items-center justify-between gap-2" : "flex flex-wrap items-center justify-between gap-2"}>
         <div className="flex items-center gap-2">
           {!BOARD_TABS && (
             <select
@@ -690,6 +715,7 @@ export function TicketsPage() {
           </button>
           <button onClick={() => setShowColumnModal(true)} className="btn-secondary text-xs flex items-center gap-1.5"><Columns3 size={14} /> Choose Columns</button>
         </div>
+      </div>
       </div>
 
       {/* ── Filter Dialog ── */}
@@ -1106,6 +1132,17 @@ export function TicketDetailPage() {
 
   // ── Tabbed toolbar state ──
   const [activeTab, setActiveTab] = useState("ticket");
+  const redesign = useRedesign();
+  // Which sub-tab of each group was last used, so clicking back into a group returns you to the
+  // panel you were on rather than resetting you to its first one.
+  const [tabByGroup, setTabByGroup] = useState<Record<string, string>>({});
+  const activeGroup = TICKET_TAB_GROUPS.find(g => g.tabs.includes(activeTab)) ?? TICKET_TAB_GROUPS[0];
+  const pickGroup = (group: (typeof TICKET_TAB_GROUPS)[number]) => setActiveTab(tabByGroup[group.id] ?? group.tabs[0]);
+  const pickTab = (tabId: string) => setActiveTab(tabId);
+  useEffect(() => {
+    const group = TICKET_TAB_GROUPS.find(g => g.tabs.includes(activeTab));
+    if (group) setTabByGroup(prev => (prev[group.id] === activeTab ? prev : { ...prev, [group.id]: activeTab }));
+  }, [activeTab]);
   const [cf, setCf] = useState<Record<string, any>>({});
   const [expenses, setExpenses] = useState<any[]>([]);
   const canManageBilling = myPermissions.includes(Permission.BillingManage);
@@ -1759,51 +1796,116 @@ export function TicketDetailPage() {
 
   return (
     <div
-      className="space-y-6 animate-fade-in max-w-4xl"
+      className={redesign ? "space-y-4 animate-fade-in" : "space-y-6 animate-fade-in max-w-4xl"}
       onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, detailMenuEntries(), detailMenuHeader()); }}
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <DeleteTicketDialog target={deleteOpen ? { ticketNumber: String(ticket?.ticketNumber ?? ""), title: String(ticket?.title ?? "") } : null} busy={deleting} onCancel={() => setDeleteOpen(false)} onConfirm={confirmDeleteTicket} />
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Link to="/tickets" className="text-sm text-gray-500 hover:text-white">Tickets</Link>
-            <ChevronRight size={14} className="text-gray-600"/>
-            <h2 className="text-lg font-semibold text-white">{(ticket.ticketNumber as string) || `Ticket #${id}`}</h2>
+      <div className={redesign ? "flex items-center gap-3 flex-wrap" : "flex items-center justify-between flex-wrap gap-3"}>
+        {redesign ? (
+          <>
+            <Link to="/tickets" className="text-xs text-gray-500 hover:text-white shrink-0">Tickets</Link>
+            <ChevronRight size={13} className="text-gray-600 shrink-0" />
+            <span className="text-xs font-mono text-gray-500 shrink-0">{(ticket.ticketNumber as string) || `#${id}`}</span>
+            <span className="text-xs text-gray-600 shrink-0">·</span>
+            <span className="text-xs text-gray-500 shrink-0 truncate max-w-[16rem]">{(ticket.board as {name?: string})?.name || "No board"}</span>
+            <h2 className="text-base font-semibold text-white truncate min-w-0 flex-1">{(ticket.title as string) || "Untitled ticket"}</h2>
+            <span className={`badge shrink-0 ${STATUS_COLORS[ticket.status as string] || ""}`}>{(ticket.status as string)?.replace(/_/g, " ")}</span>
+            <span className={`badge shrink-0 ${PRIORITY_COLORS[ticket.priority as string] || ""}`}>{ticket.priority as string}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              {editing ? (<>
+                <button onClick={() => setEditing(false)} className="btn-secondary text-sm">Cancel</button>
+                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">{saving ? "Saving..." : "Save"}</button>
+              </>) : (
+                <button onClick={() => setEditing(true)} className="btn-secondary text-sm flex items-center gap-1"><Edit3 size={14} />Edit</button>
+              )}
+            </div>
+          </>
+        ) : (<>
+          <div>
+            <div className="flex items-center gap-2">
+              <Link to="/tickets" className="text-sm text-gray-500 hover:text-white">Tickets</Link>
+              <ChevronRight size={14} className="text-gray-600"/>
+              <h2 className="text-lg font-semibold text-white">{(ticket.ticketNumber as string) || `Ticket #${id}`}</h2>
+            </div>
+            <p className="text-sm text-gray-400 mt-0.5">{(ticket.title as string)?.slice(0, 80)}</p>
           </div>
-          <p className="text-sm text-gray-400 mt-0.5">{(ticket.title as string)?.slice(0, 80)}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {editing ? (<>
-            <button onClick={() => setEditing(false)} className="btn-secondary text-sm">Cancel</button>
-            <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">{saving?"Saving...":"Save"}</button>
-          </>) : (
-            <button onClick={() => setEditing(true)} className="btn-secondary text-sm flex items-center gap-1"><Edit3 size={14}/>Edit</button>
-          )}
-        </div>
+          <div className="flex items-center gap-2">
+            {editing ? (<>
+              <button onClick={() => setEditing(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">{saving ? "Saving..." : "Save"}</button>
+            </>) : (
+              <button onClick={() => setEditing(true)} className="btn-secondary text-sm flex items-center gap-1"><Edit3 size={14}/>Edit</button>
+            )}
+          </div>
+        </>)}
       </div>
 
-      {/* ── Full-width toolbar card: tabs + icon actions (ConnectWise-style) ── */}
-      <div className="card p-3 space-y-2">
+      {/* ── Toolbar card: tabs + icon actions ──
+          Redesigned, the twelve panels are grouped into five tabs the screen can hold at once, and a
+          group holding more than one shows them as sub-tabs — never buried a second click deep. The
+          actions sit on the same line as the tabs, so the chrome around a panel is two rows and not
+          three; the sub-tab row is ordered after both. */}
+      <div className={redesign ? "card p-2.5 sticky top-0 z-30 flex flex-wrap items-center gap-x-2 gap-y-1.5" : "card p-3 space-y-2"}>
         {/* Tab strip */}
-        <div className="flex items-center gap-0 overflow-x-auto whitespace-nowrap border-b border-surface-border pb-1.5">
-          {TICKET_DETAIL_TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`shrink-0 px-2 py-1 text-xs font-medium rounded-t border-b-2 -mb-px transition-colors ${
-                activeTab === t.id
-                  ? "border-cyber-500 text-cyber-400 bg-surface-lighter"
-                  : "border-transparent text-gray-400 hover:text-white hover:bg-surface-lighter"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        {redesign ? (
+          <>
+            <div className="flex items-center gap-0.5 overflow-x-auto whitespace-nowrap order-1 flex-1 min-w-0">
+              {TICKET_TAB_GROUPS.map(group => (
+                <button
+                  key={group.id}
+                  onClick={() => pickGroup(group)}
+                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    activeGroup.id === group.id
+                      ? "bg-surface-lighter text-white"
+                      : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+                  }`}
+                >
+                  <group.icon size={13} />{group.label}
+                </button>
+              ))}
+            </div>
+            {activeGroup.tabs.length > 1 && (
+              <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap border-t border-surface-border pt-1.5 order-3 w-full">
+                {activeGroup.tabs.map(tabId => {
+                  const def = TICKET_DETAIL_TABS.find(t => t.id === tabId);
+                  return (
+                    <button
+                      key={tabId}
+                      onClick={() => pickTab(tabId)}
+                      className={`shrink-0 px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                        activeTab === tabId
+                          ? "bg-cyber-600/20 text-cyber-400"
+                          : "text-gray-500 hover:text-white hover:bg-surface-lighter"
+                      }`}
+                    >
+                      {def?.label ?? tabId}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex items-center gap-0 overflow-x-auto whitespace-nowrap border-b border-surface-border pb-1.5">
+            {TICKET_DETAIL_TABS.map(t => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`shrink-0 px-2 py-1 text-xs font-medium rounded-t border-b-2 -mb-px transition-colors ${
+                  activeTab === t.id
+                    ? "border-cyber-500 text-cyber-400 bg-surface-lighter"
+                    : "border-transparent text-gray-400 hover:text-white hover:bg-surface-lighter"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Icon toolbar */}
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className={redesign ? "order-2 flex items-center gap-1 shrink-0" : "flex items-center gap-1 flex-wrap"}>
           <button onClick={refreshDetails} title="Refresh" aria-label="Refresh" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><RotateCw size={16} /></button>
           <button onClick={() => { setFocusNoteRequested(true); setActiveTab("ticket"); }} title="Add Note" aria-label="Add Note" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><MessageSquare size={16} /></button>
           <button onClick={() => { setActiveTab("time"); openTimeEntryModal(); }} title="Log Time" aria-label="Log Time" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Timer size={16} /></button>

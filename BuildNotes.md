@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.056 | Last Updated: 2026-10-08
+## Version: 2026.10.8.057 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,52 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.057 — The redesigned ticket screens, with the classic layout one click away
+
+The whole-application redesign has been mocked up and is now being built, one screen at a time. This
+is the first of those commits and the one that makes the rest possible: the ticket list and the ticket
+detail are redesigned, the **switch** that chooses between the two layouts exists, and every screen
+that has not been converted yet renders exactly as it always did while the switch is set either way.
+
+The default is **Redesign**. Nobody has to adopt it blind: the classic layout is a click away, in the
+same My Account menu the navigation pane already uses, and the two switches are independent — the rail
+can be paired with classic screens and the single tree with redesigned ones.
+
+- **[New]** **The ticket detail's twelve panels are grouped into five tabs** — Overview, Activity,
+  Work, Files & Links and Finance — with the panels inside a tab as **sub-tabs** one click away rather
+  than a second click deep. *Configurations* left the strip for *Finance* and *Products* for *Work*:
+  a client's estate is a fact about the client, and four different answers to "what has this used and
+  cost" belong together. Nothing was removed — every one of the twelve is still reachable, and
+  `activeTab` still holds a real panel id, so the per-tab loading and every panel guard are untouched.
+- **[New]** **A tab remembers which sub-tab you were on.** Come back to *Work* after *Activity* and you
+  are on Time, not on the first panel of the group. Nothing is persisted; a reload starts on Overview.
+- **[Update]** **Less chrome above the panel.** The record's header is one row — where it sits, what it
+  is called, status, priority, Edit — the actions sit on the same line as the tabs, and the whole card
+  is **pinned to the top of the window**, so the twelve panels stay one click away however far down the
+  panel you have scrolled. Measured on a 1280px window, a panel's content begins about **70px higher**
+  on a ticket, and the ticket list begins about **90px higher** because its title and toolbar now share
+  a row. Spacing was the fix for the scrolling the user reported; a vertical drag handle was the
+  fallback and was not needed.
+- **[New]** **The switch has three layers, narrowest first**, exactly as the navigation pane's does:
+  the **Interface** field in *Administration → Configuration → Workspace* for everyone,
+  **My Account → Appearance → Interface** for one browser in either direction, and `VITE_UI_REDESIGN`
+  for a deployment that should not offer the redesigned screens at all. The browser's choice is what
+  makes it safe to try: `localStorage.setItem("c7_ui_redesign", "0")` returns one browser to classic
+  and `"1"` takes it back. Colour scheme, light/dark and density belong to neither layout and carry
+  across the change untouched.
+- **[Update]** **Help gained *The Interface* walkthrough**, with its Index row and the Configuration
+  reference, and answers the two questions this will raise — a colleague's screens looking different,
+  and where the Configurations and Products tabs went. [INTERFACE-ROLLBACK.md](INTERFACE-ROLLBACK.md)
+  is the rollback guide, and is now listed with the others in the README.
+- **[Update]** **The pane's own switch is now labelled *Navigation*.** What the navigation redesign
+  called *Interface* in the My Account menu now reads **Navigation**, because *Interface* is the
+  screens' switch: two rows, two subjects, and no ambiguity about which one a reader is changing. The
+  Help text and [NAV-PANE-ROLLBACK.md](NAV-PANE-ROLLBACK.md) that named the old label were corrected
+  in the same change.
+- **[Fix]** **The Configuration hub redraws when the interface is changed.** Saving *Interface* — or
+  resetting it to the deployment's value — now refreshes the settings the same way *Navigation pane*
+  already did, so an administrator sees the change without reloading.
 
 ## 2026.10.8.056 — Kumo down to the foot of the rail, at the height of a row
 

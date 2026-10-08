@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.8.057",
+    "date": "2026-10-08",
+    "title": "The redesigned ticket screens, with the classic layout one click away",
+    "changes": [
+      {
+        "text": "**The ticket detail's twelve panels are grouped into five tabs** — Overview, Activity,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A tab remembers which sub-tab you were on.** Come back to *Work* after *Activity* and you",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Less chrome above the panel.** The record's header is one row — where it sits, what it",
+        "type": "Update"
+      },
+      {
+        "text": "**The switch has three layers, narrowest first**, exactly as the navigation pane's does:",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Help gained *The Interface* walkthrough**, with its Index row and the Configuration",
+        "type": "Update"
+      },
+      {
+        "text": "**The pane's own switch is now labelled *Navigation*.** What the navigation redesign",
+        "type": "Update"
+      },
+      {
+        "text": "**The Configuration hub redraws when the interface is changed.** Saving *Interface* — or",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.056",
     "date": "2026-10-08",
     "title": "Kumo down to the foot of the rail, at the height of a row",
