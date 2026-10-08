@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.8.022",
+    "date": "2026-10-08",
+    "title": "Walk me through it: the setup plans became steps you can follow",
+    "changes": [
+      {
+        "text": "**One connector wizard, no per-connector code.** It renders the setup plan the API already serves, so adding a connector adds a wizard: **What this is** (what it reads, whether it writes, what it will not do, what the first sync brings), **Prepare** (what has to exist in the vendor's product first, each with a link to the vendor's own page), **Credentials** (grouped by which screen they come from, in the order to collect them), **Settings** (only for connectors that have any), and **Test & finish**.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One model wizard**, for the same reason and with the same ending: what the provider is and what it does with your prompts, the vendor's own steps for creating a key, the fields that key needs, the model and the app-functions permission, and then a real call.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The last step proves it rather than saving it.** One button saves, calls the vendor, and reports what the vendor said — with field-level fixes where the API could attribute the failure to a credential, the vendor's own words where it could not, and a *Test again* that does not make you walk back through the form. Only after it answers does it offer to switch the connection on and run the first sync, and only then does it show what to check next.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The model wizard's ending is the useful part of a model connection:** it lists the models the key can actually see and lets you pick one from that list, then offers *Use this model for the application* — which is deliberately withheld while the test is failing, so a connection that cannot answer is never made the one the application and the assistant answer with.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The shell is shared**: the OAuth app wizard's overlay, step rail, error banner, footer, `Choice`, `Row`, `Label` and `Hint` are now one component (`components/wizard/WizardShell.tsx`), so every wizard is the same thing rather than a lookalike.",
+        "type": "Update"
+      },
+      {
+        "text": "**A wizard cannot make a connection unfinishable.** A credential the plan does not group — a newer field, or one only some deployments need — is still reachable under *Other fields this connector has*, which is the difference between a guided path and a trap.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A refusal on the test step reads as a diagnosis**, not a red box: field errors say which value the vendor rejected and what to put there, and the general case names the three things it usually is (a key copied incompletely, an account with no credit, an address that has the chat path in it).",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.021",
     "date": "2026-10-08",
     "title": "Every connection can be walked through: setup plans for sixteen integrations and eleven models",

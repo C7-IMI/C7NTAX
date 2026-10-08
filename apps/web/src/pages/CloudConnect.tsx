@@ -6,12 +6,13 @@ import { useAuth } from "../hooks/useAuth";
 import {
   Plus, Plug, RefreshCw, Trash2, Key, Settings,
   ShieldCheck, Globe, Server, Cloud, CreditCard, FileText, Database,
-  PlugZap, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users, Info, ExternalLink, Bot,
+  PlugZap, Monitor, AlertTriangle, CheckCircle, XCircle, Loader2, X, Users, Info, ExternalLink, Bot, Wand2,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { EmailConnectorsPanel } from "../components/EmailConnectorsPanel";
 import { AiModelsPanel } from "../components/AiModelsPanel";
+import { ConnectorSetupWizard, type ConnectorSetup } from "../components/ConnectorSetupWizard";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui/EmptyState";
 import { DataSourceNote } from "../components/DataSourceNote";
@@ -71,6 +72,12 @@ interface IntegrationType {
     /** What the setting actually does, printed under the control. */
     hint?: string;
   }>;
+  /**
+   * How to get this connector running, in the order it has to happen: what has to exist in the
+   * vendor's product first, which credential comes from which screen, what the first sync brings.
+   * Served with the catalogue so the setup wizard needs no second fetch.
+   */
+  setup: ConnectorSetup | null;
 }
 
 const KIND_LABELS: Record<string, string> = {
@@ -200,6 +207,9 @@ export function CloudConnectPage() {
 
   // ── Integration Action Panel state ──
   const [actionPanel, setActionPanel] = useState<{ open: boolean; integration: Integration } | null>(null);
+  // The setup wizard, for a connector being added or one that exists and needs finishing.
+  const [wizardType, setWizardType] = useState<IntegrationType | null>(null);
+  const [wizardExisting, setWizardExisting] = useState<Integration | null>(null);
   const [simulatedKind, setSimulatedKind] = useState<string>("microsoft365");
   const [mockUsers, setMockUsers] = useState<Array<{ id: string; name: string; email: string; selected: boolean }>>([]);
   const [mockLoaded, setMockLoaded] = useState(false);
@@ -608,18 +618,33 @@ export function CloudConnectPage() {
                   {types.map(t => {
                     const Icon = IconFor(t.kind);
                     return (
-                      <button key={t.kind} onClick={() => handleSelectType(t)}
-                        className="card hover:border-cyber-500/30 transition-colors text-left p-4 cursor-pointer group">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-cyber-600/10 group-hover:bg-cyber-600/20 transition-colors">
-                            <Icon size={18} className="text-cyber-400" />
+                      <div key={t.kind} className="card p-4 flex flex-col gap-3 hover:border-cyber-500/30 transition-colors">
+                        <button onClick={() => handleSelectType(t)} className="text-left cursor-pointer group">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-cyber-600/10 group-hover:bg-cyber-600/20 transition-colors">
+                              <Icon size={18} className="text-cyber-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-white font-medium text-sm truncate">{t.name}</p>
+                              <p className="text-xs text-gray-500 truncate">{t.description?.slice(0, 60)}</p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-white font-medium text-sm truncate">{t.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{t.description?.slice(0, 60)}</p>
-                          </div>
+                        </button>
+                        {/* Two ways in, and the wizard is the one that knows the order: sixteen of
+                            these fail in the vendor's product before they fail here. */}
+                        <div className="flex items-center gap-2 mt-auto">
+                          <button
+                            onClick={() => { setWizardType(t); setWizardExisting(null); }}
+                            className="btn-primary text-xs inline-flex items-center gap-1.5"
+                            title={`Walk through setting up ${t.name}`}
+                          >
+                            <Wand2 size={12} /> Walk me through it
+                          </button>
+                          <button onClick={() => handleSelectType(t)} className="btn-secondary text-xs" title="Just the credential fields">
+                            Fill the form
+                          </button>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -776,6 +801,13 @@ export function CloudConnectPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { const type = types.find(t => t.kind === configuringRow.kind) ?? null; setWizardType(type); setWizardExisting(configuringRow); }}
+                      className="btn-primary text-xs flex items-center gap-1.5"
+                      title="Walk through finishing this connection"
+                    >
+                      <Wand2 size={12} /> Finish with the wizard
+                    </button>
                     <button onClick={() => void handleTest(configuringRow.id)} className="btn-secondary text-xs flex items-center gap-1.5"><PlugZap size={12} /> Test connection</button>
                     <button onClick={() => void handleSync(configuringRow.id)} className="btn-secondary text-xs">Sync now</button>
                   </div>
@@ -1372,6 +1404,16 @@ export function CloudConnectPage() {
           </div>
         </div>
       )}
+
+      {/* The setup wizard, for a connector being added or one that exists and needs finishing. */}
+      {wizardType ? (
+        <ConnectorSetupWizard
+          type={wizardType}
+          existing={wizardExisting ?? undefined}
+          onClose={() => { setWizardType(null); setWizardExisting(null); }}
+          onDone={() => { void fetchAll(); setWizardExisting(null); }}
+        />
+      ) : null}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Bot, PlugZap, Plus, ShieldCheck, Info, Trash2, Power, PowerOff, Pencil, List, Star, AlertTriangle, ExternalLink, KeyRound, X } from "lucide-react";
+import { Bot, PlugZap, Plus, ShieldCheck, Info, Trash2, Power, PowerOff, Pencil, List, Star, AlertTriangle, ExternalLink, KeyRound, X, Wand2 } from "lucide-react";
+import { ModelSetupWizard, type ModelSetupType } from "./ModelSetupWizard";
 
 /**
  * AI models — the connections that let a model work inside C7NTAX.
@@ -126,6 +127,8 @@ export function AiModelsPanel() {
   const [editing, setEditing] = useState<AiProvider | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [modelsFor, setModelsFor] = useState<{ id: string; data: ModelListResponse } | null>(null);
+  /** The setup wizard: a provider being connected, or one that exists and needs finishing. */
+  const [wizard, setWizard] = useState<{ type: AiProviderType; existing?: AiProvider } | null>(null);
 
   // The dialog's fields, as strings: an empty field and an unset one are the same thing here.
   const [form, setForm] = useState<Record<string, string>>({});
@@ -447,6 +450,14 @@ export function AiModelsPanel() {
                         <Pencil size={14} />
                       </button>
                       <button
+                        onClick={() => { const type = typeOf[provider.provider]; if (type) setWizard({ type, existing: provider }); }}
+                        title="Finish setting this up, step by step"
+                        aria-label="Finish setting this up, step by step"
+                        className="btn-secondary p-2"
+                      >
+                        <Wand2 size={14} />
+                      </button>
+                      <button
                         onClick={() => void remove(provider)}
                         disabled={busy === provider.id}
                         title="Remove this connection"
@@ -509,25 +520,37 @@ export function AiModelsPanel() {
             {types.map(type => {
               const connectedHere = providers.filter(p => p.provider === type.id).length;
               return (
-                <button
-                  key={type.id}
-                  onClick={() => openConnect(type)}
-                  className="card hover:border-cyber-500/30 transition-colors text-left p-4 cursor-pointer group"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-cyber-600/10 group-hover:bg-cyber-600/20 transition-colors">
-                      <Bot size={18} className="text-cyber-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-white font-medium text-sm truncate">{type.label}</p>
-                        {connectedHere ? <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-600/10 text-emerald-300">connected</span> : null}
+                <div key={type.id} className="card p-4 flex flex-col gap-3 hover:border-cyber-500/30 transition-colors">
+                  <button onClick={() => openConnect(type)} className="text-left cursor-pointer group">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-cyber-600/10 group-hover:bg-cyber-600/20 transition-colors">
+                        <Bot size={18} className="text-cyber-400" />
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{type.summary}</p>
-                      <p className="text-[11px] text-gray-600 mt-1">{toolCallingLabel(type.toolCalling)}</p>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-white font-medium text-sm truncate">{type.label}</p>
+                          {connectedHere ? <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-600/10 text-emerald-300">connected</span> : null}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{type.summary}</p>
+                        <p className="text-[11px] text-gray-600 mt-1">{toolCallingLabel(type.toolCalling)}</p>
+                      </div>
                     </div>
+                  </button>
+                  {/* The wizard is the short path: where the key is created, what the account needs
+                      first, and a vendor test before anything depends on it. */}
+                  <div className="flex items-center gap-2 mt-auto">
+                    <button
+                      onClick={() => setWizard({ type })}
+                      className="btn-primary text-xs inline-flex items-center gap-1.5"
+                      title={`Walk through connecting ${type.label}`}
+                    >
+                      <Wand2 size={12} /> Walk me through it
+                    </button>
+                    <button onClick={() => openConnect(type)} className="btn-secondary text-xs" title="Just the fields">
+                      Fill the form
+                    </button>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -675,6 +698,16 @@ export function AiModelsPanel() {
           </div>
         </div>
       )}
+
+      {wizard ? (
+        <ModelSetupWizard
+          type={wizard.type as unknown as ModelSetupType}
+          runtimeFields={runtimeFields as unknown as Parameters<typeof ModelSetupWizard>[0]["runtimeFields"]}
+          existing={wizard.existing as unknown as Parameters<typeof ModelSetupWizard>[0]["existing"]}
+          onClose={() => setWizard(null)}
+          onDone={() => { void fetchAll(); }}
+        />
+      ) : null}
     </div>
   );
 }

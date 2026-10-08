@@ -5446,3 +5446,36 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **OneDrive locks files under `node_modules` mid-sync**, which shows up as `EBUSY` or `ERR_INVALID_PACKAGE_CONFIG` when starting the API. Wait and retry rather than debugging it.
 - **Part two of this prompt is the wizard itself**: one generic component, launched from the catalogue, the Configuration pane and the AI models panel.
 
+
+---
+
+### Prompt 265 (part two) — The wizards themselves: one component, every connection
+
+**Timestamp:** 2026-10-08 15:05 | **Status:** Complete | **Duration:** ~50 min
+
+**BuildNotes IDs:** **2026.10.8.022** — "Walk me through it: the setup plans became steps you can follow"
+
+**Prompt**
+
+> Add intuitive Wizards/buttons to all of the connectors/configurations in CloudConnect that will walk me through getting them all properly configured and running. Use the same methodology and styling as you did for the OAuth App deploy wizard.
+
+**What I did**
+- **Read the OAuth wizard as a methodology rather than a layout.** What it does that matters: it walks a sequence whose order matters, it fills the form from what the sequence produced rather than making somebody retype it, and it refuses to call the job done until the thing has answered. That last part is why both new wizards end on a real vendor call instead of on a Save button.
+- **Built one generic connector wizard** with no per-connector code at all: it renders `setup`, `credentialFields` and `settings` from the connector's own catalogue entry. Five steps where the connector has settings and four where it does not, and the last step saves, tests, reports the vendor's answer, offers switches-on-and-sync, and shows the plan's follow-ups.
+- **Built one model wizard** on the same frame: the vendor's own key-creation steps as numbered cards with links, then the fields those steps produce, then the model and the app-functions permission, then a save-and-test whose result is useful — it lists the models the key can see, lets you pick one from the list, and only then offers to make it the application's model.
+- **Extracted the shell rather than copying it.** `components/wizard/WizardShell.tsx` now holds the overlay, the card, the step rail, the error banner, the footer and the small helpers (`Choice`, `Row`, `Label`, `Hint`, `FactPanel`). "Same styling" is then a fact about the code rather than a promise about the screenshots — and the next wizard starts from the same frame.
+- **Gave every entry point its button**: the catalogue cards keep "Fill the form" and gain "Walk me through it" (they had to stop being a single `<button>`, since a button inside a button is not HTML); the Configuration pane gained "Finish with the wizard" for a connection that already exists; every connected model row gained a wizard action. The AI models panel's provider cards were restructured the same way.
+- **Closed the two traps a guided path can create.** A credential the plan does not mention is still reachable (under a disclosure in the credentials step), so a wizard can never leave a connection unfinishable that the plain form could have finished; and a failed test is rendered as a diagnosis — per-field fixes where the API could attribute the failure, and the three usual causes where it could not.
+- **Verified by walking it.** Catalogue: 16 wizard buttons and 16 form buttons. The Microsoft 365 wizard: rail, prerequisites with their vendor links, the "I have these" gate. The DeepSeek wizard: walked to the end, saved, tested against DeepSeek for real, and its `401 — Authentication Fails` rendered with *Back to the key* and *Test again* — with *Use this model for the application* correctly absent because the test had failed. The provider row that drill created was deleted afterwards, and the AI models tab is back to the one fixture row it had.
+
+**Decisions worth remembering**
+- **A wizard is a plan with buttons, not a form with steps.** The value is in the order — vendor prerequisite, then credential from the right screen, then a proof — and that order is the data, which is why adding a connector adds a wizard for free.
+- **End on proof.** Both wizards' last step is the only one that talks to the vendor, and it is not optional in the sense that matters: the *enable* and the *use this model* actions appear only after it passes.
+- **Never make the guided path narrower than the unguided one.** The disclosure for ungrouped fields exists because a wizard that hides a field is worse than no wizard: somebody would have to cancel and start again in the form.
+- **The failure state is a feature of the wizard, not an error path.** In this sandbox there are no vendor keys, so the refusal screen is what most people will see first — which is exactly why it names the three usual causes and offers to try again without losing the form.
+
+**Notes for next time**
+- **The wizard's own "Save and test" click path is verified for a model provider** (a real DeepSeek 401); the connector wizard shares the same code shape but its test step was verified through the API probe (388 checks) rather than clicked, because every connector here would need a real tenant credential to get past the vendor.
+- **`new URL(item.link).hostname`** is how the prerequisite and step cards show a domain instead of a raw URL; it assumes a well-formed absolute URL, which the setup probe asserts for every link in every plan.
+- **Two `<button>`s cannot nest**, which is what forced the catalogue cards to become a `div.card` with a title button and an action row — worth remembering before adding a third action to them.
+

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.021 | Last Updated: 2026-10-08
+## Version: 2026.10.8.022 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,21 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.022 — Walk me through it: the setup plans became steps you can follow
+
+Every connection in CloudConnect now offers a wizard — **Walk me through it** on all sixteen connector cards and all eleven model-provider cards, **Finish with the wizard** in the Configuration pane, and a wizard button on every connected model. The OAuth app deploy wizard's lesson was that a connection is finished when it has been *proved*, and that the steps before it are where people get stuck; this applies the same shape to everything else.
+
+- **[New]** **One connector wizard, no per-connector code.** It renders the setup plan the API already serves, so adding a connector adds a wizard: **What this is** (what it reads, whether it writes, what it will not do, what the first sync brings), **Prepare** (what has to exist in the vendor's product first, each with a link to the vendor's own page), **Credentials** (grouped by which screen they come from, in the order to collect them), **Settings** (only for connectors that have any), and **Test & finish**.
+- **[New]** **One model wizard**, for the same reason and with the same ending: what the provider is and what it does with your prompts, the vendor's own steps for creating a key, the fields that key needs, the model and the app-functions permission, and then a real call.
+- **[New]** **The last step proves it rather than saving it.** One button saves, calls the vendor, and reports what the vendor said — with field-level fixes where the API could attribute the failure to a credential, the vendor's own words where it could not, and a *Test again* that does not make you walk back through the form. Only after it answers does it offer to switch the connection on and run the first sync, and only then does it show what to check next.
+- **[New]** **The model wizard's ending is the useful part of a model connection:** it lists the models the key can actually see and lets you pick one from that list, then offers *Use this model for the application* — which is deliberately withheld while the test is failing, so a connection that cannot answer is never made the one the application and the assistant answer with.
+- **[Update]** **The shell is shared**: the OAuth app wizard's overlay, step rail, error banner, footer, `Choice`, `Row`, `Label` and `Hint` are now one component (`components/wizard/WizardShell.tsx`), so every wizard is the same thing rather than a lookalike.
+- **[Fix]** **A wizard cannot make a connection unfinishable.** A credential the plan does not group — a newer field, or one only some deployments need — is still reachable under *Other fields this connector has*, which is the difference between a guided path and a trap.
+- **[Fix]** **A refusal on the test step reads as a diagnosis**, not a red box: field errors say which value the vendor rejected and what to put there, and the general case names the three things it usually is (a key copied incompletely, an account with no credit, an address that has the chat path in it).
+- **Verified live:** the catalogue offers 16 wizards and 16 plain-form shortcuts; the Microsoft 365 wizard was walked through its rail and prerequisites; the DeepSeek wizard was walked to its end — saved, tested against the real vendor, and the vendor's own `401 — Authentication Fails` rendered with both recovery buttons and the *Use this model* action correctly withheld. The row that drill created was removed afterwards. Web typecheck clean; help links and the OpenAPI guard unaffected.
 
 ---
 
