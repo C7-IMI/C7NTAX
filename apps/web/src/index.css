@@ -278,6 +278,25 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; 
 @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 
+/*
+ * Arriving from a recent-activity link — the region the link meant, pointed at.
+ *
+ * The ring is static and the pulse is on top of it, which is deliberate: the reduced-motion rule above
+ * neutralises the animation, and the steady ring is what remains. The destination is the feature; the
+ * motion is only how it is noticed.
+ */
+.c7-arrival {
+  border-radius: 8px;
+  scroll-margin-top: 6rem;
+  background-color: color-mix(in srgb, var(--cyber-500) 10%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cyber-500) 70%, transparent);
+  animation: c7-arrival-pulse 1.2s ease-in-out 2;
+}
+@keyframes c7-arrival-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--cyber-500) 55%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--cyber-500) 85%, transparent); }
+}
+
 .ticket-print-only { display: none; }
 
 @media print {

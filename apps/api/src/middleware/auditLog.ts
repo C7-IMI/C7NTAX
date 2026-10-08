@@ -75,6 +75,22 @@ export async function auditMiddleware(
   const path = req.path;
   if (SKIP_PREFIXES.some(p => path.startsWith(p))) return next();
 
+  /*
+   * The response body is kept so a *creation* can name the thing it created.
+   *
+   * Without this, `entityId` for `POST /api/clients` is the literal string `clients` — there is no
+   * `:id` in the path, so the row identifies the collection rather than the record, and nothing can
+   * link to it afterwards. Every creating route answers with the row it made, so capturing the body
+   * is what turns "a client was created" into "this client was created" in the audit trail and in
+   * the recent-activity menu that reads it.
+   */
+  let responseBody: unknown;
+  const sendJson = res.json.bind(res);
+  res.json = (body: unknown) => {
+    responseBody = body;
+    return sendJson(body);
+  };
+
   res.on("finish", async () => {
     const status = res.statusCode;
     if (status < 200 || status >= 400) return; // only log successful operations
@@ -83,7 +99,11 @@ export async function auditMiddleware(
       const authReq = req as AuthRequest;
       const userId = authReq.user?.userId || "system";
       const entity = extractEntity(path);
-      const entityId = (req.params as Record<string, string>)?.id || 
+      // Prefer the path's own id, then the record the route just returned, then the last segment —
+      // which is a collection name or a verb (`generate`, `refresh`) for a route that has no id.
+      const created = (responseBody as { id?: unknown } | null)?.id;
+      const entityId = (req.params as Record<string, string>)?.id ||
+                       (typeof created === "string" ? created : undefined) ||
                        path.split("/").pop()?.replace(/\?.*$/, "") || "";
       const action = method === "POST" ? "create" :
                      method === "DELETE" ? "delete" : "update";

@@ -1976,8 +1976,8 @@ export function TicketDetailPage() {
             </div>
           </div>
 
-          {/* Activity */}
-          <div className="card space-y-3">
+          {/* Activity — the region a recent-activity link from a ticket change points at. */}
+          <div className="card space-y-3" data-hl="ticket-activity">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Activity</h3>
               <button onClick={openTimeEntryModal} className="btn-secondary text-xs flex items-center gap-1"><Timer size={12}/> Add Time Entry</button>

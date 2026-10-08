@@ -547,16 +547,33 @@ systemRouter.get("/version", (_req, res) => {
 });
 
 // ── Audit logs ──
+/**
+ * The audit trail. Two optional filters, both of which only ever *narrow* what this route returns:
+ *
+ * - `mine=true` limits the rows to the caller's own, which is what the header's Recent menu asks for.
+ *   It is narrower than the unfiltered read the ticket view has always done, and it is the reason the
+ *   menu needs no new endpoint and no new permission.
+ * - `limit` caps the page, because the menu wants five and the audit screen wants hundreds.
+ */
 systemRouter.get("/audit-logs", async (req: AuthRequest, res, next) => {
   try {
-    const { entity, entityId } = req.query as Record<string, string>;
+    const { entity, entityId, mine } = req.query as Record<string, string>;
     const where: Record<string, unknown> = {};
     if (entity) where.entity = entity;
     if (entityId) where.entityId = entityId;
+    if (mine === "true") {
+      const me = req.user?.userId;
+      // A caller the session middleware could not name gets an empty list rather than everybody's
+      // rows: "mine" that answers with someone else's activity is worse than no answer.
+      if (!me) { res.json({ data: [] }); return; }
+      where.userId = me;
+    }
+    const requested = Number(req.query.limit);
+    const take = Number.isFinite(requested) && requested > 0 ? Math.min(requested, 500) : 500;
     const logs = await prisma.auditLog.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 500,
+      take,
     });
     // Resolve user names for display
     const userIds = [...new Set(logs.map(l => l.userId).filter(Boolean))];
