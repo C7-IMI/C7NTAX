@@ -190940,6 +190940,18 @@
     "createdAt": "2026-10-07T23:14:44.455Z"
   },
   {
+    "id": "309d475f-ed8f-44e6-8629-944affb7561b",
+    "action": "service-alerts:create",
+    "entity": "service-alerts",
+    "entityId": "refresh",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T17:41:37.889Z"
+  },
+  {
     "id": "a8a65de9-4efb-418e-b990-e2cd9ed913b4",
     "action": "billing:create",
     "entity": "billing",
