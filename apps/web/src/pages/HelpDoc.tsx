@@ -137,7 +137,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "p", text: "Q: Where do I fix a broken integration? — A: CloudConnect shows live connection status; fix credentials inline and re-test without leaving the page. With live status on, a chip means \"last verified\", not \"last saved\"." },
       { kind: "p", text: "Q: Can outages open tickets automatically? — A: Alert webhooks deliver alert.opened / alert.resolved events; wire them to your ticket automation." },
       { kind: "p", text: "Q: A single poll failed — will the alert flap? — A: No. Auto-resolution needs two consecutive all-clear polls and a minimum alert age, so one transient fetch gap cannot open and close an alert." },
-      { kind: "p", text: "Q: Can social chatter raise an outage? — A: No. Chatter can only ever raise an informational notice, never an outage — it is a signal, not proof." },
+      { kind: "p", text: "Q: Can social chatter raise an outage? — A: No. Chatter can only ever raise an informational notice, never an outage — it is a signal, not proof. And a post has to name the service to count for it, so a post about something else cannot raise a notice or retire one." },
       { kind: "h", text: "Customer portal" },
       { kind: "p", text: "Q: How does a customer sign in? — A: They enter their email address at /portal and we email a six-digit code. It works once and expires in ten minutes, so there is no customer password to manage." },
       { kind: "p", text: "Q: A customer says the portal does not recognise them. — A: Their company needs **Portal access** switched on under Clients, and their email address must be one of that company's contacts." },
@@ -494,7 +494,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "h", text: "Alert lifecycle" },
       { kind: "p", text: "A problem opens an active alert (severity outage, degraded, or a mere notice). Auto-resolution requires two consecutive all-clear polls **and** a minimum alert age, so a single transient fetch gap cannot flap an alert open and shut. Manual alerts are never auto-resolved by monitor checks." },
       { kind: "h", text: "Social reports" },
-      { kind: "p", text: "When the social source is enabled and a token is configured, public chatter is read as a signal — and it can **only ever raise an informational notice**, never an outage. Chatter is not proof, and the product refuses to treat it as such; turning the source off leaves everything else unchanged." },
+      { kind: "p", text: "When the social source is enabled and a token is configured, public chatter is read as a signal — and it can **only ever raise an informational notice**, never an outage. A post also has to name the service to count for it: chatter about something else can neither raise a notice nor retire one. Chatter is not proof, and the product refuses to treat it as such; turning the source off leaves everything else unchanged." },
     ],
     related: [
       { label: "Uptime Monitors", to: "/help/walkthroughs/uptime-monitors" },

@@ -108,102 +108,108 @@ async function main() {
     const raisedFromForeign = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
     check(!raisedFromForeign, "and no notice was raised from it");
 
-  console.log("\na configured social source is read, and a complaint is only ever a notice");
-  stub.setMode({ kind: "complaint", serviceName });
-  const first = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  check(first.status === 200, `the monitor ran (${first.status})`);
-  const status = first.data?.sourceStatus?.[serviceId];
-  check(!!status, "the probe service reported its sources");
-  const socialSource = (status?.sources || []).find(s => s.source === "social");
-  check(!!socialSource, `the social source was read (${(status?.sources || []).map(s => s.source).join(", ")})`);
-  check(socialSource?.verdict === "problem", `the complaint was seen as a problem (${socialSource?.verdict})`);
-  check(socialSource?.detail && /recent post/.test(socialSource.detail), `with an honest detail line (${socialSource?.detail})`);
-  check(stub.received.some(r => /\/2\/tweets\/search\/recent/.test(r.url)), "the recent-search endpoint was called");
-  check(stub.received.every(r => r.auth === "Bearer probe-token"), `with the configured bearer token (${stub.received[0]?.auth})`);
-  check(stub.received.some(r => /is%3Aretweet/.test(r.url) && /lang%3Aen/.test(r.url)), "and a query that excludes retweets");
-  check(/%22ProbeSocial/.test(stub.received[0]?.url || "") || /%22ProbeSocial/.test(decodeURIComponent(stub.received[0]?.url || "")), "naming the service");
+    console.log("\na configured social source is read, and a complaint is only ever a notice");
+    stub.setMode({ kind: "complaint", serviceName });
+    const first = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    check(first.status === 200, `the monitor ran (${first.status})`);
+    const status = first.data?.sourceStatus?.[serviceId];
+    check(!!status, "the probe service reported its sources");
+    const socialSource = (status?.sources || []).find(s => s.source === "social");
+    check(!!socialSource, `the social source was read (${(status?.sources || []).map(s => s.source).join(", ")})`);
+    check(socialSource?.verdict === "problem", `the complaint was seen as a problem (${socialSource?.verdict})`);
+    check(socialSource?.detail && /recent post/.test(socialSource.detail), `with an honest detail line (${socialSource?.detail})`);
+    check(stub.received.some(r => /\/2\/tweets\/search\/recent/.test(r.url)), "the recent-search endpoint was called");
+    check(stub.received.every(r => r.auth === "Bearer probe-token"), `with the configured bearer token (${stub.received[0]?.auth})`);
+    check(stub.received.some(r => /is%3Aretweet/.test(r.url) && /lang%3Aen/.test(r.url)), "and a query that excludes retweets");
+    check(/%22ProbeSocial/.test(stub.received[0]?.url || "") || /%22ProbeSocial/.test(decodeURIComponent(stub.received[0]?.url || "")), "naming the service");
 
-  const alert = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
-  check(!!alert, "an alert was raised from the social report");
-  check(alert?.severity === "informational", `and it is a notice, never an outage (${alert?.severity})`);
-  check(alert?.source === "social", `attributed to the social source (${alert?.source})`);
-  check(!!alert?.sourceUrl && /x\.com/.test(alert.sourceUrl), `with a link back to the post (${alert?.sourceUrl})`);
-  check(/Social reports/.test(alert?.title || ""), `and a title that says where it came from (${alert?.title})`);
+    const alert = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
+    check(!!alert, "an alert was raised from the social report");
+    check(alert?.severity === "informational", `and it is a notice, never an outage (${alert?.severity})`);
+    check(alert?.source === "social", `attributed to the social source (${alert?.source})`);
+    check(!!alert?.sourceUrl && /x\.com/.test(alert.sourceUrl), `with a link back to the post (${alert?.sourceUrl})`);
+    check(/Social reports/.test(alert?.title || ""), `and a title that says where it came from (${alert?.title})`);
 
-  console.log("\nan all-clear needs two polls in a row, and never on the poll that raised it");
-  stub.setMode({ kind: "clear", serviceName });
-  await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  const afterOne = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
-  check(!!afterOne, "one clear poll does not retire it (anti-flap)");
-  // Pin the alert's age before the second poll. The rule under test is about age, and a poll sweeps
-  // every configured service — so on a slow network the first assertion's own sweep can age the
-  // alert past the floor and the second poll would legitimately retire it. Re-pinning keeps the
-  // assertion about the rule rather than about how long the internet took.
-  await prisma.serviceAlert.updateMany({ where: { serviceId, status: "active" }, data: { detectedAt: new Date() } });
-  await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  // The second clear poll is still inside the minimum age, so the alert is held: that floor is what
-  // stops an incident being raised and retired by the same pair of polls.
-  const young = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
-  check(!!young, "nor does the second, while the alert is younger than the poll interval");
-  await prisma.serviceAlert.updateMany({ where: { serviceId, status: "active" }, data: { detectedAt: new Date(Date.now() - 10 * 60 * 1000) } });
-  await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  const afterAge = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
-  check(!afterAge, "once it is old enough, two consecutive clears retire it");
+    console.log("\nan all-clear needs two polls in a row, and never on the poll that raised it");
+    stub.setMode({ kind: "clear", serviceName });
+    await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    const afterOne = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
+    check(!!afterOne, "one clear poll does not retire it (anti-flap)");
+    // Pin the alert's age before the second poll. The rule under test is about age, and a poll sweeps
+    // every configured service — so on a slow network the first assertion's own sweep can age the
+    // alert past the floor and the second poll would legitimately retire it. Re-pinning keeps the
+    // assertion about the rule rather than about how long the internet took.
+    await prisma.serviceAlert.updateMany({ where: { serviceId, status: "active" }, data: { detectedAt: new Date() } });
+    await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    // The second clear poll is still inside the minimum age, so the alert is held: that floor is what
+    // stops an incident being raised and retired by the same pair of polls.
+    const young = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
+    check(!!young, "nor does the second, while the alert is younger than the poll interval");
+    await prisma.serviceAlert.updateMany({ where: { serviceId, status: "active" }, data: { detectedAt: new Date(Date.now() - 10 * 60 * 1000) } });
+    await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    const afterAge = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
+    check(!afterAge, "once it is old enough, two consecutive clears retire it");
 
-  console.log("\na resolution posted publicly can retire it");
-  stub.setMode({ kind: "complaint", serviceName });
-  await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  const raised = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
-  check(!!raised, "the complaint raised a fresh notice");
-  // The anti-flap rule never resolves on the poll that created the alert, so give it one poll to age.
-  await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  stub.setMode({ kind: "restored", serviceName });
-  await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  const afterRestored = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
-  check(!afterRestored, "a post saying it is resolved retired the notice");
+    console.log("\na resolution posted publicly can retire it");
+    stub.setMode({ kind: "complaint", serviceName });
+    await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    const raised = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
+    check(!!raised, "the complaint raised a fresh notice");
+    // The anti-flap rule never resolves on the poll that created the alert, so give it one poll to age.
+    await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    stub.setMode({ kind: "restored", serviceName });
+    await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    const afterRestored = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
+    check(!afterRestored, "a post saying it is resolved retired the notice");
 
-  console.log("\ncredentials that stop working are unknown, and unknown never means all-clear");
-  stub.setMode({ kind: "complaint", serviceName });
-  await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  const live = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
-  check(!!live, "a notice is active before the credentials break");
-  stub.setMode({ kind: "unauthorised", serviceName });
-  const unauthorised = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  const unauthorisedSource = ((unauthorised.data?.sourceStatus?.[serviceId]?.sources) || []).find(s => s.source === "social");
-  check(unauthorisedSource?.verdict === "unknown", `a rejected token reads as unknown (${unauthorisedSource?.verdict})`);
-  check(/credential/i.test(unauthorisedSource?.detail || ""), `and says why (${unauthorisedSource?.detail})`);
-  const stillActive = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
-  check(!!stillActive, "the alert is kept — an unreadable source cannot resolve an incident");
+    console.log("\ncredentials that stop working are unknown, and unknown never means all-clear");
+    stub.setMode({ kind: "complaint", serviceName });
+    await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    const live = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
+    check(!!live, "a notice is active before the credentials break");
+    stub.setMode({ kind: "unauthorised", serviceName });
+    const unauthorised = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    const unauthorisedSource = ((unauthorised.data?.sourceStatus?.[serviceId]?.sources) || []).find(s => s.source === "social");
+    check(unauthorisedSource?.verdict === "unknown", `a rejected token reads as unknown (${unauthorisedSource?.verdict})`);
+    check(/credential/i.test(unauthorisedSource?.detail || ""), `and says why (${unauthorisedSource?.detail})`);
+    const stillActive = await prisma.serviceAlert.findFirst({ where: { serviceId, status: "active" } });
+    check(!!stillActive, "the alert is kept — an unreadable source cannot resolve an incident");
 
-  stub.setMode({ kind: "rate_limited", serviceName });
-  const limited = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  const limitedSource = ((limited.data?.sourceStatus?.[serviceId]?.sources) || []).find(s => s.source === "social");
-  check(limitedSource?.verdict === "unknown" && /rate limit/i.test(limitedSource?.detail || ""), `a rate limit is reported as such (${limitedSource?.detail})`);
+    stub.setMode({ kind: "rate_limited", serviceName });
+    const limited = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    const limitedSource = ((limited.data?.sourceStatus?.[serviceId]?.sources) || []).find(s => s.source === "social");
+    check(limitedSource?.verdict === "unknown" && /rate limit/i.test(limitedSource?.detail || ""), `a rate limit is reported as such (${limitedSource?.detail})`);
 
-  stub.setMode({ kind: "server_error", serviceName });
-  const broken = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
-  const brokenSource = ((broken.data?.sourceStatus?.[serviceId]?.sources) || []).find(s => s.source === "social");
-  check(brokenSource?.verdict === "unknown" && /HTTP 503/.test(brokenSource?.detail || ""), `an HTTP error is reported, not swallowed (${brokenSource?.detail})`);
-  check((broken.data?.errors || []).some(e => /ProbeSocial/.test(e) && /503/.test(e)), "and lands in the run's error list");
+    stub.setMode({ kind: "server_error", serviceName });
+    const broken = await call("POST", "/api/service-alerts/refresh", { token: admin.token });
+    const brokenSource = ((broken.data?.sourceStatus?.[serviceId]?.sources) || []).find(s => s.source === "social");
+    check(brokenSource?.verdict === "unknown" && /HTTP 503/.test(brokenSource?.detail || ""), `an HTTP error is reported, not swallowed (${brokenSource?.detail})`);
+    check((broken.data?.errors || []).some(e => /ProbeSocial/.test(e) && /503/.test(e)), "and lands in the run's error list");
 
-  console.log("\nthe board's data is on the endpoints the page already uses");
-  const services = await call("GET", "/api/service-alerts/services", { token: admin.token });
-  const probe = (services.data?.data || []).find(s => s.id === serviceId) || {};
-  check(services.status === 200, `the services endpoint answers (${services.status})`);
-  check(!!probe.sourceStatus?.sources?.some(s => s.source === "social"), "the probe service carries its social verdict for the board to render");
-  check(typeof probe.sourceStatus?.checkedAt === "string", "and when it was checked");
-  const resolvedList = await call("GET", "/api/service-alerts", { token: admin.token });
-  check(resolvedList.status === 200 && Array.isArray(resolvedList.data?.resolved), `resolved history is available for the board's last-incident column (${resolvedList.status})`);
+    console.log("\nthe board's data is on the endpoints the page already uses");
+    const services = await call("GET", "/api/service-alerts/services", { token: admin.token });
+    const probe = (services.data?.data || []).find(s => s.id === serviceId) || {};
+    check(services.status === 200, `the services endpoint answers (${services.status})`);
+    check(!!probe.sourceStatus?.sources?.some(s => s.source === "social"), "the probe service carries its social verdict for the board to render");
+    check(typeof probe.sourceStatus?.checkedAt === "string", "and when it was checked");
+    const resolvedList = await call("GET", "/api/service-alerts", { token: admin.token });
+    check(resolvedList.status === 200 && Array.isArray(resolvedList.data?.resolved), `resolved history is available for the board's last-incident column (${resolvedList.status})`);
 
-  await prisma.serviceAlert.deleteMany({ where: { serviceId } });
-  await prisma.serviceAlertService.deleteMany({ where: { id: serviceId } });
-  const personaIds = (await prisma.user.findMany({ where: { email: "persona.admin@c7ntax.local" }, select: { id: true } })).map(u => u.id);
-  await prisma.userSession.deleteMany({ where: { userId: { in: personaIds } } });
-  const leftovers = await prisma.serviceAlertService.count({ where: { name: { startsWith: "ProbeSocial" } } });
-  check(leftovers === 0, `the probe cleaned up after itself (${leftovers} services left)`);
-  stub.server.close();
-  await prisma.$disconnect();
+  } finally {
+    // Cleanup runs even when an assertion throws halfway. A probe that dies part-way leaves a
+    // service on the board, and a board carrying ProbeSocial services is the worse failure.
+    if (serviceId) {
+      await prisma.serviceAlert.deleteMany({ where: { serviceId } });
+      await prisma.serviceAlertService.deleteMany({ where: { id: serviceId } });
+    }
+    const personaIds = (await prisma.user.findMany({ where: { email: "persona.admin@c7ntax.local" }, select: { id: true } })).map(u => u.id);
+    await prisma.userSession.deleteMany({ where: { userId: { in: personaIds } } });
+    const leftovers = await prisma.serviceAlertService.count({ where: { name: { startsWith: "ProbeSocial" } } });
+    check(leftovers === 0, `the probe cleaned up after itself (${leftovers} services left)`);
+    stub.server.close();
+    await prisma.$disconnect();
+  }
 
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail === 0 ? 0 : 1);
