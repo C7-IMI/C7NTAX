@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import { useActivityMonitor } from "../hooks/useActivityMonitor";
 import { SessionTimeoutWarning } from "./SessionTimeoutWarning";
@@ -9,6 +10,7 @@ import {
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
   AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio,
   MonitorSmartphone, Mail, KeyRound,
+  Star, StarOff, Link2, AppWindow, SquareArrowOutUpRight, ChevronsUpDown, ChevronsDownUp, ChevronUp,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
@@ -21,6 +23,8 @@ import { CommandPalette, type PaletteItem } from "./CommandPalette";
 import { MyAccountMenu } from "./MyAccountMenu";
 import { UI_P1, UI_P2, UI_KUMO_ORGS, setUiP1, setUiP2 } from "../lib/uiFlags";
 import { getDensity, setDensity, type Density } from "../lib/density";
+import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "./ContextMenu";
+import { absoluteUrl, copyText, openInNewTab, openInNewWindow } from "../lib/menuActions";
 
 export type NavNode = {
   id: string;
@@ -158,7 +162,9 @@ function loadExpanded(): Set<string> {
     const saved = localStorage.getItem("c7_nav_expanded");
     if (saved) return new Set(JSON.parse(saved) as string[]);
   } catch {}
-  return new Set(["administration", "clients", "billing"]);
+  // Nothing saved yet: the sections that are open by default. Favorites is always open, so an
+  // empty one says what to do with it rather than hiding the feature behind a collapsed header.
+  return new Set(["administration", "clients", "billing", FAVORITES_NODE_ID]);
 }
 
 function loadCollapsed(): boolean {
@@ -174,6 +180,52 @@ function loadSidebarWidth(): number {
   } catch {}
   return 256;
 }
+
+/**
+ * The Favorites section's own id. It is not part of NAV_TREE — nothing navigates to it — but it
+ * shares the nav's expanded-state set, so one key covers both the tree and this section.
+ */
+export const FAVORITES_NODE_ID = "favorites";
+
+function loadFavorites(): string[] {
+  try {
+    const saved = localStorage.getItem("c7_nav_favorites");
+    if (saved) {
+      const parsed = JSON.parse(saved) as string[];
+      // A pinned id that no longer exists in the tree is dropped, so a renamed or removed section
+      // cannot leave a dead entry behind — the same reconciliation the saved nav order gets.
+      const known = new Set(walkNav(NAV_TREE).map(({ node }) => node.id));
+      return parsed.filter(id => known.has(id));
+    }
+  } catch {}
+  return [];
+}
+
+/** Pinning is a view of the navigation, so it is kept beside the other nav layout preferences. */
+function saveFavorites(ids: string[]): void {
+  try { localStorage.setItem("c7_nav_favorites", JSON.stringify(ids)); } catch {}
+}
+
+/** Every node in a tree, paired with the section it sits under. */
+function walkNav(nodes: NavNode[], parent: NavNode | null = null, depth = 0): { node: NavNode; parent: NavNode | null; depth: number }[] {
+  return nodes.flatMap(node => [{ node, parent, depth }, ...(node.children ? walkNav(node.children, node, depth + 1) : [])]);
+}
+
+/** The ids of every section that can be opened and closed — what "expand all" acts on. */
+export function collapsibleNavIds(nodes: NavNode[]): string[] {
+  return walkNav(nodes).filter(({ node }) => !!node.children?.length).map(({ node }) => node.id);
+}
+
+/**
+ * Open and closed state is per row rather than per section: a pinned copy starts closed and opens
+ * on its own, so pinning a large section does not pour its children into Favorites, and closing it
+ * there does not close the section you were reading in the tree.
+ */
+const expandKeyFor = (node: NavNode, options: { favorite?: boolean } = {}) =>
+  options.favorite ? `${FAVORITES_NODE_ID}:${node.id}` : node.id;
+
+/** To the menu code Favorites is a section like any other; nothing navigates to it. */
+const FAVORITES_SECTION: NavNode = { id: FAVORITES_NODE_ID, icon: Star, label: "Favorites" };
 
 function isNodeActive(node: NavNode, pathname: string): boolean {
   if (node.to && (pathname === node.to || (node.to !== "/" && pathname.startsWith(node.to)))) return true;
@@ -401,6 +453,161 @@ export function Layout({ children }: { children: ReactNode }) {
   });
   const [dragId, setDragId] = useState<string | null>(null);
 
+  // ── Favorites: any section, pinned and shown again at the top ──
+  // A pin is a view, not a move: the section keeps its place in the tree and a second copy of it
+  // is drawn under Favorites. The order is its own, rearranged by dragging just like the tree's,
+  // and kept in localStorage beside `c7_nav_order` so the two layouts behave the same way.
+  const [favorites, setFavorites] = useState<string[]>(loadFavorites);
+  const [favoriteDragId, setFavoriteDragId] = useState<string | null>(null);
+  const navMenu = useContextMenu();
+  const favoritesOpen = expanded.has(FAVORITES_NODE_ID);
+  const nodeById = useMemo(() => new Map(walkNav(visibleTree).map(({ node }) => [node.id, node])), [visibleTree]);
+  // A section the signed-in role cannot reach is not drawn, whatever is pinned — the pin survives,
+  // so it comes back if the permission does.
+  const pinnedNodes = useMemo(
+    () => favorites.map(id => nodeById.get(id)).filter((node): node is NavNode => !!node),
+    [favorites, nodeById],
+  );
+
+  const updateFavorites = useCallback((next: string[]) => {
+    saveFavorites(next);
+    setFavorites(next);
+  }, []);
+
+  const expandSection = useCallback((id: string) => {
+    setExpanded(prev => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev).add(id);
+      localStorage.setItem("c7_nav_expanded", JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  const pinNode = useCallback((id: string, label: string) => {
+    if (favorites.includes(id)) return;
+    updateFavorites([...favorites, id]);
+    // A pin nobody can see is not a pin: Favorites opens around it.
+    expandSection(FAVORITES_NODE_ID);
+    toast.success(`${label} pinned to Favorites`);
+  }, [favorites, updateFavorites, expandSection]);
+
+  const unpinNode = useCallback((id: string) => {
+    updateFavorites(favorites.filter(pinned => pinned !== id));
+  }, [favorites, updateFavorites]);
+
+  const clearFavorites = useCallback(() => {
+    updateFavorites([]);
+    toast.success("Favorites cleared");
+  }, [updateFavorites]);
+
+  /** Keyboard route for the order, for anyone who would rather not drag. */
+  const moveFavorite = useCallback((id: string, delta: number) => {
+    const next = [...favorites];
+    const from = next.indexOf(id);
+    const to = from + delta;
+    if (from === -1 || to < 0 || to >= next.length) return;
+    next.splice(from, 1);
+    next.splice(to, 0, id);
+    updateFavorites(next);
+  }, [favorites, updateFavorites]);
+
+  const handleFavoriteDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    const dragged = favoriteDragId;
+    setFavoriteDragId(null);
+    if (!dragged || dragged === targetId) return;
+    const next = [...favorites];
+    const from = next.indexOf(dragged);
+    const to = next.indexOf(targetId);
+    if (from === -1 || to === -1) return;
+    next.splice(from, 1);
+    next.splice(to, 0, dragged);
+    updateFavorites(next);
+  };
+
+  const expandAllSections = useCallback(() => {
+    const next = new Set<string>([FAVORITES_NODE_ID, ...collapsibleNavIds(visibleTree)]);
+    setExpanded(next);
+    localStorage.setItem("c7_nav_expanded", JSON.stringify([...next]));
+  }, [visibleTree]);
+
+  const collapseAllSections = useCallback(() => {
+    setExpanded(new Set());
+    localStorage.setItem("c7_nav_expanded", JSON.stringify([]));
+  }, []);
+
+  /** What the menu says it is about, so a right-click never leaves you guessing. */
+  const nodeMenuHeader = (node: NavNode) => ({
+    title: node.label,
+    subtitle: node.id === FAVORITES_NODE_ID
+      ? (pinnedNodes.length ? `${pinnedNodes.length} pinned section${pinnedNodes.length === 1 ? "" : "s"}` : "Nothing pinned yet")
+      : node.to,
+  });
+
+  /**
+   * The menu a section offers. Everything in it is about the section that was right-clicked: one
+   * with no page of its own gets no open or copy entries, and a pinned copy gets the order
+   * controls that a section in the tree does not need.
+   */
+  const nodeMenuEntries = (node: NavNode, options: { favorite?: boolean } = {}): MenuEntry[] => {
+    const entries: MenuEntry[] = [];
+    // A section with no page of its own still has somewhere to go — its landing page, which is
+    // where clicking its header lands — so the open and copy entries are never missing.
+    const openTo = node.to ?? (node.children?.length ? `/section/${node.id}` : "");
+    if (openTo) {
+      entries.push(
+        { label: "Open", icon: node.icon, onSelect: () => navigate(openTo) },
+        { label: "Open in new tab", icon: SquareArrowOutUpRight, onSelect: () => openInNewTab(openTo) },
+        { label: "Open in new window", icon: AppWindow, onSelect: () => openInNewWindow(openTo) },
+        { label: "Copy link", icon: Link2, onSelect: () => void copyText(absoluteUrl(openTo), "Link") },
+        "separator",
+      );
+    }
+    if (node.id === FAVORITES_NODE_ID) {
+      entries.push({ label: "Remove all favorites", icon: StarOff, disabled: favorites.length === 0, onSelect: clearFavorites });
+    } else {
+      entries.push(favorites.includes(node.id)
+        ? { label: "Remove from Favorites", icon: StarOff, onSelect: () => unpinNode(node.id) }
+        : { label: "Pin to Favorites", icon: Star, onSelect: () => pinNode(node.id, node.label) });
+    }
+    if (options.favorite) {
+      const index = favorites.indexOf(node.id);
+      entries.push(
+        "separator",
+        { label: "Move up", icon: ChevronUp, disabled: index <= 0, onSelect: () => moveFavorite(node.id, -1) },
+        { label: "Move down", icon: ChevronDown, disabled: index === -1 || index === favorites.length - 1, onSelect: () => moveFavorite(node.id, 1) },
+      );
+    }
+    if (node.children?.length) {
+      const open = expanded.has(node.id);
+      entries.push("separator", {
+        label: open ? "Collapse this section" : "Expand this section",
+        icon: open ? ChevronsDownUp : ChevronsUpDown,
+        onSelect: () => toggle(node.id),
+      });
+    }
+    entries.push(
+      "separator",
+      { label: "Expand all", icon: ChevronsUpDown, onSelect: expandAllSections },
+      { label: "Collapse all", icon: ChevronsDownUp, onSelect: collapseAllSections },
+    );
+    return entries;
+  };
+
+  /** Right-clicking the pane itself: the whole-navigation actions, nothing section-specific. */
+  const paneMenuEntries = (): MenuEntry[] => [
+    { label: "Expand all", icon: ChevronsUpDown, onSelect: expandAllSections },
+    { label: "Collapse all", icon: ChevronsDownUp, onSelect: collapseAllSections },
+    "separator",
+    { label: "Remove all favorites", icon: StarOff, disabled: favorites.length === 0, onSelect: clearFavorites },
+    "separator",
+    { label: collapsed ? "Expand the sidebar" : "Collapse the sidebar", icon: collapsed ? PanelLeftOpen : PanelLeftClose, onSelect: toggleCollapsed },
+  ];
+
+  const openNodeMenu = (event: React.MouseEvent, node: NavNode, options: { favorite?: boolean } = {}) => {
+    navMenu.open(event, nodeMenuEntries(node, options), nodeMenuHeader(node));
+  };
+
   // ── FI-060: Service Alerts banner + nav badge ──────────────────
   interface BannerAlert {
     id: string;
@@ -540,16 +747,43 @@ export function Layout({ children }: { children: ReactNode }) {
     });
   };
 
-  const renderNode = (node: NavNode, depth: number = 0) => {
+  const renderNode = (node: NavNode, depth: number = 0, options: { favorite?: boolean } = {}) => {
     const active = isNodeActive(node, location.pathname);
     const isExpanded = expanded.has(node.id);
     const hasChildren = !!node.children?.length;
     const linkTo = node.to || "#";
-    const isDragging = dragId === node.id;
     const isTopLevel = depth === 0;
+    // A pinned copy is draggable wherever it is drawn, because its order belongs to Favorites
+    // rather than to the tree — the tree only reorders its own top level.
+    const canDrag = options.favorite ? !collapsed : isTopLevel && !collapsed && node.id !== "home";
+    const isDragging = options.favorite ? favoriteDragId === node.id : dragId === node.id;
+    const dropTarget = (options.favorite ? favoriteDragId : dragId) && !isDragging && (options.favorite || isTopLevel);
     // Service Alerts reads as a live alert channel rather than a page, so its label and icon
     // carry the alert colour (matching its count badge) instead of the neutral nav grey.
     const isAlerts = node.id === "service-alerts";
+    const dragProps = canDrag
+      ? {
+          draggable: true,
+          onDragStart: (e: React.DragEvent) => {
+            if (options.favorite) setFavoriteDragId(node.id);
+            else handleDragStart(e, node.id);
+            e.dataTransfer.effectAllowed = "move";
+          },
+          onDragOver: handleDragOver,
+          onDrop: (e: React.DragEvent) => (options.favorite ? handleFavoriteDrop(e, node.id) : handleDrop(e, node.id)),
+          onDragEnd: () => (options.favorite ? setFavoriteDragId(null) : handleDragEnd()),
+        }
+      : {};
+    const grip = canDrag && (
+      <button
+        className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
+        onMouseDown={(e) => e.stopPropagation()}
+        title="Drag to reorder"
+        aria-label={`Reorder ${node.label}`}
+      >
+        <GripVertical size={12} />
+      </button>
+    );
 
     // In collapsed mode, top-level items are just icon buttons
     if (collapsed && isTopLevel) {
@@ -558,6 +792,7 @@ export function Layout({ children }: { children: ReactNode }) {
           {hasChildren ? (
             <button
               onClick={() => navigate(`/section/${node.id}`)}
+              onContextMenu={(e) => openNodeMenu(e, node, options)}
               className={`relative p-2.5 rounded-lg transition-colors ${
                 active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
@@ -571,6 +806,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <Link
               to={linkTo}
               onClick={() => setMobileOpen(false)}
+              onContextMenu={(e) => openNodeMenu(e, node, options)}
               className={`relative p-2.5 rounded-lg transition-colors ${
                 active ? "bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
@@ -589,25 +825,16 @@ export function Layout({ children }: { children: ReactNode }) {
     return (
       <div
         key={node.id}
-        draggable={isTopLevel && !collapsed && node.id !== "home"}
-        onDragStart={(e) => isTopLevel && !collapsed && node.id !== "home" && handleDragStart(e, node.id)}
-        onDragOver={handleDragOver}
-        onDrop={(e) => isTopLevel && !collapsed && node.id !== "home" && handleDrop(e, node.id)}
-        onDragEnd={handleDragEnd}
-        className={`rounded-lg transition-colors ${isDragging ? "opacity-50" : ""} ${dragId && dragId !== node.id && isTopLevel ? "border border-dashed border-cyber-500/30" : ""}`}
+        {...dragProps}
+        className={`rounded-lg transition-colors ${isDragging ? "opacity-50" : ""} ${dropTarget ? "border border-dashed border-cyber-500/30" : ""}`}
       >
         {hasChildren ? (
           <div className="flex items-center group/drag">
-            {isTopLevel && !collapsed && node.id !== "home" && (
-              <button
-                className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
-                onMouseDown={(e) => e.stopPropagation()}
-              >
-                <GripVertical size={12} />
-              </button>
-            )}
+            {grip}
             <button
               onClick={() => { toggle(node.id); navigate(`/section/${node.id}`); }}
+              onContextMenu={(e) => openNodeMenu(e, node, options)}
+              onKeyDown={(e) => navMenu.onKeyDown(e, e.currentTarget, nodeMenuEntries(node, options), nodeMenuHeader(node))}
               className={`nav-item flex-1 flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${
                 active ? "nav-item--active bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
@@ -615,6 +842,9 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={18} />
               {!collapsed && <span className="flex-1 text-left truncate">{node.label}</span>}
+              {!collapsed && favorites.includes(node.id) && !options.favorite && (
+                <Star size={12} className="shrink-0 text-amber-400/80" aria-label="Pinned to Favorites" />
+              )}
               {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
                 <span className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
               )}
@@ -623,17 +853,12 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         ) : (
           <div className="flex items-center group/drag">
-            {isTopLevel && !collapsed && node.id !== "home" && (
-              <button
-                className="shrink-0 text-gray-600 hover:text-gray-400 cursor-grab active:cursor-grabbing p-0.5 opacity-0 group-hover/drag:opacity-100 transition-opacity"
-                onMouseDown={(e) => e.stopPropagation()}
-              >
-                <GripVertical size={12} />
-              </button>
-            )}
+            {grip}
             <Link
               to={linkTo}
               onClick={() => setMobileOpen(false)}
+              onContextMenu={(e) => openNodeMenu(e, node, options)}
+              onKeyDown={(e) => navMenu.onKeyDown(e, e.currentTarget, nodeMenuEntries(node, options), nodeMenuHeader(node))}
               style={{ paddingLeft: `${12 + depth * 12}px` }}
               className={`nav-item flex-1 flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
                 active ? "nav-item--active bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
@@ -641,6 +866,9 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               <node.icon size={18} className={isAlerts ? "text-alert-red" : undefined} />
               {!collapsed && (isAlerts ? <span className="text-alert-red">{node.label}</span> : node.label)}
+              {!collapsed && favorites.includes(node.id) && !options.favorite && (
+                <Star size={12} className="shrink-0 text-amber-400/80" aria-label="Pinned to Favorites" />
+              )}
               {!collapsed && node.id === "service-alerts" && alertCount > 0 && (
                 <span className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]" title={`${alertCount} active service alert${alertCount === 1 ? "" : "s"}`}>{alertCount}</span>
               )}
@@ -706,11 +934,62 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Navigation */}
-        <nav className={`flex-1 py-3 overflow-y-auto ${collapsed ? "px-1.5" : "px-2"}`}>
+        <nav
+          className={`flex-1 py-3 overflow-y-auto ${collapsed ? "px-1.5" : "px-2"}`}
+          onContextMenu={(e) => {
+            // The pane's own menu: what applies to the navigation as a whole rather than to the
+            // section under the pointer (a section stops the event and opens its own).
+            if (isTextEntryTarget(e.target)) return;
+            navMenu.open(e, paneMenuEntries(), { title: "Navigation", subtitle: "Right-click a section for its own menu" });
+          }}
+        >
+          {/* ── Favorites ───────────────────────────────────────────────────────────
+              Pinned sections, drawn as copies: the section keeps its place in the tree below and
+              a second copy appears here, in its own order, at the top of the navigation. */}
+          <div className="mb-1" data-nav-section="favorites">
+            {collapsed ? (
+              <div className="flex flex-col items-center gap-1 pb-1" title="Favorites">
+                <Star size={16} className={pinnedNodes.length ? "text-amber-400" : "text-gray-600"} />
+                {pinnedNodes.map(n => renderNode(n, 0, { favorite: true }))}
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center group/drag">
+                  <button
+                    onClick={() => toggle(FAVORITES_NODE_ID)}
+                    onContextMenu={(e) => openNodeMenu(e, FAVORITES_SECTION)}
+                    onKeyDown={(e) => navMenu.onKeyDown(e, e.currentTarget, nodeMenuEntries(FAVORITES_SECTION), nodeMenuHeader(FAVORITES_SECTION))}
+                    aria-expanded={favoritesOpen}
+                    title={pinnedNodes.length ? "Favorites — right-click a section to pin or unpin it" : "Favorites — right-click a section to pin it here"}
+                    className={`nav-item w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors text-gray-400 hover:text-white hover:bg-surface-lighter`}
+                  >
+                    <Star size={18} className={pinnedNodes.length ? "text-amber-400" : undefined} />
+                    <span className="flex-1 text-left truncate">Favorites</span>
+                    {pinnedNodes.length > 0 && <span className="text-[10px] text-gray-500">{pinnedNodes.length}</span>}
+                    <ChevronDown size={14} className={`transition-transform shrink-0 ${favoritesOpen ? "" : "-rotate-90"}`} />
+                  </button>
+                </div>
+                {favoritesOpen && (
+                  <div className="border-l border-surface-border ml-7">
+                    {pinnedNodes.length === 0 ? (
+                      <p className="px-3 py-1.5 text-xs text-gray-600">
+                        Right-click a section and choose “Pin to Favorites”.
+                      </p>
+                    ) : (
+                      pinnedNodes.map(n => renderNode(n, 1, { favorite: true }))
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
           <div className={collapsed ? "flex flex-col items-center gap-1" : ""}>
             {orderedTree.map(n => renderNode(n))}
           </div>
         </nav>
+
+        <ContextMenu state={navMenu.menuState} onClose={navMenu.close} />
 
         {/* User footer */}
         <div className={`border-t border-surface-border ${collapsed ? "p-2" : "p-3"}`}>
