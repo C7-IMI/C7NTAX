@@ -7,7 +7,7 @@
  * happened in the vocabulary a script can branch on".
  */
 import { CONSOLE_EXIT, type ConsoleExitCode } from "@C7NTAX/shared";
-import { apiBase, type ResolvedProfile } from "./profile.ts";
+import { apiBase, type ResolvedProfile } from "./profile";
 
 export interface ApiFailure {
   ok: false;
@@ -95,6 +95,8 @@ export interface CommandDescriptor {
   subject?: { label: string; required?: boolean; values?: readonly string[] };
   flags: { name: string; help: string; type: string; values?: readonly string[] }[];
   columns?: readonly { header: string; path: string }[];
+  /** Where the rows live in the response, when the route does not answer with an array at the top. */
+  rows?: string;
 }
 
 export async function fetchCatalogue(profile: ResolvedProfile): Promise<ApiResult<Catalogue>> {

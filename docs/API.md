@@ -652,6 +652,9 @@ produced the event. **Answer `2xx` as soon as you have stored the body** — do 
   descriptor. It is the same list the in-app console and the `c7ntax` CLI parse from, served rather
   than duplicated so the three cannot drift (PLAN-028 §6). Nothing in it executes anything: a command
   is a name for a route, and the route authorizes the request.
+* **`c7ntax`** is a first-party client of this API rather than a separate surface: it authenticates with
+  an API key on the same header, sends the same `GET`s, and takes its command list from the endpoint
+  above. `c7ntax help` therefore answers "what may this key do?" with exactly what the API said.
 * **`GET /api/system` / `GET /api/system/configs`** describe the deployment (version, feature flags,
   non-secret configuration). Reserved keys are withheld even from administrators, on purpose.
 * **`GET /api/system/audit-logs`** (`user:manage` or `system:config`) is where to look when a change

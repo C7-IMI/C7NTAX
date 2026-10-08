@@ -6035,3 +6035,35 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **Cleaning the URL is a side effect that can cancel the very work it was tidying.** Depending on `location.search` while rewriting `location.search` cost a debugging round; reading the instruction from `window.location.search` and keying the effect on the path removed the loop.
 - **A `---`-separated log needs its headings matched by text.** This is the second time an entry's heading was consumed by prepending above it with the separator in the match; grepping the headings afterwards is what caught it both times.
 - **The switch I toggled to test the settings path had to be put back.** It was (verified: `console → true`, `[checked]` in the DOM), because a verification that leaves a deployment changed is not a verification.
+
+---
+
+### Prompt 280 — `c7ntax`: the CLI, completing the recommendation
+
+**Timestamp:** 2026-10-08 14:04 | **Status:** Complete (37/37 as a subprocess against the live API; reads only) | **Duration:** ~50 min
+
+**BuildNotes IDs:** **2026.10.8.041** — "`c7ntax`: the console, in a terminal, on an API key"
+
+**Prompt**
+
+> Complete this based on what you recommend: … phase 2 writes (behind PLAN-026's manifest), phase 3 the `c7ntax` CLI, the `/console` page with shareable URLs, and the assistant cross-links
+
+(the console page landed as 2026.10.8.039; this is the CLI, the second item of the same recommendation)
+
+**What I did**
+- **Packaged the CLI the way the API is packaged, on purpose.** The first attempt set `"type": "module"`, and `import { CONSOLE_EXIT } from "@C7NTAX/shared"` failed at runtime — `SyntaxError: The requested module does not provide an export named …` — because the API runs under tsx as **CommonJS** and the `export *` barrel resolves differently under ESM. Rather than adding an `exports` map to `packages/shared` (which the web app's bundling also depends on) or importing sub-paths, the CLI now matches the API: no `type` field, extensionless imports, no top-level `await`. One fewer difference between the two Node applications is worth more than the ESM-ness.
+- **Proved the grammar is shared rather than copied.** `_complete` answers from the same engine the popup's `Tab` uses, and the probe asserts the two front-ends' claims in the one way available to a subprocess: nouns, verbs, a narrowed partial, a flag's real enum values, and **nothing the key may not run**.
+- **Wrote the probe to attack the key it makes.** It issues a key scoped to three read permissions, so the refusal case is a real refusal by the API rather than a message the CLI invented — the CLI has no permission logic to invent one with. The key is revoked in a `finally`, and `HOME` points at a temp directory so the operator's real profile is never touched.
+- **Provoked all five failure exits**, because an exit code is a promise a script branches on: 1 unknown noun, 1 unknown flag, 3 unknown subject, 2 command outside the key's scopes, 5 a write.
+- **Found two defects by running it rather than reading it.** A command the key may not run reported itself as a *typo* with exit 1, because the served catalogue is filtered to the key and the command is simply absent from it; and the hint in that case read `user can:` **with nothing after the colon**, because it was built from an empty verb list. Fixed in two places with different jobs: `CONSOLE_COMMANDS` (the same list the server serves from) separates "exists but not for this key" from "no such command", and the shared parser gives an empty verb list its own sentence so both front ends stop printing a dangling colon.
+
+**Decisions worth remembering**
+- **A CLI that explains a refusal must not become one that enforces it.** The new message names the permission and says the route would refuse it too; the comment above it says plainly that nothing there may ever become an "is this allowed?" check. §6's rule — the console authorizes nothing — survives contact with a helpful error message only if somebody writes it down.
+- **The catalogue *is* the permission state, for a key.** There is no separate question to ask: what the API served is what the credential may run, which is why `help` needs no filtering of its own.
+- **Store the key, never the password.** A key is issued with scopes, attributed in the audit trail and revocable on its own; a password in a config file is a person's credential sitting in plaintext on a machine.
+
+**Notes for next time**
+- **`pnpm install` for a new workspace package reported `Packages: -68`** and rewrote `pnpm-lock.yaml`. Nothing broke (API, web and CLI all typecheck and the servers came back), but a new package in this repo re-resolves the tree, so the lockfile diff is part of the change rather than noise — and the Security Gate installs with `--frozen-lockfile`, so it has to be committed with it.
+- **The API's `POST /api/api-keys` returns the secret as `key`, not `secret`.** The first probe run created a live key and died before its cleanup, so the orphan had to be revoked by hand — which is the argument for the probe checking the response shape *before* it issues anything it might not clean up.
+- **The CommonJS/ESM split is the trap in this repo.** `probes` under `tsx` cannot import the shared barrel in ESM mode (two separate rounds lost to it now); matching the API's module mode is the fix, and it is worth remembering before writing a third Node entry point.
+- **Prepending to `BuildNotes.md` ate the previous entry's heading again**, the third time. The `---` above an entry is part of the *next* edit's match, so the heading has to be re-added in the replacement. Grepping `^## 2026` afterwards is what catches it; it now has to become the habit rather than the recovery.

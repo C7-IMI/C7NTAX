@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "description": "c7ntax — the C7NTAX command line. One grammar with the in-app console, authenticated with an API key.",
-  "type": "module",
   "bin": {
     "c7ntax": "./src/index.ts"
   },
@@ -15,7 +14,7 @@
     "@C7NTAX/shared": "workspace:*"
   },
   "devDependencies": {
-    "tsx": "^4.19.0",
+    "tsx": "^4.10.0",
     "typescript": "^5.4.0"
   }
 }

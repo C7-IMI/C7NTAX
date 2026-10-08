@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.040 | Last Updated: 2026-10-08
+## Version: 2026.10.8.041 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,21 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.041 — `c7ntax`: the console, in a terminal, on an API key
+
+`apps/cli` exists: a command line that authenticates with an API key and parses, completes and runs from **the same shared module as the in-app console**. That it works at all is the evidence that the grammar is genuinely shared rather than merely copied — `c7ntax _complete "ticket l"` and the popup's `Tab` answer from one engine.
+
+- **[New]** **`c7ntax login --server <url> --key c7k_…`** verifies the key against the API before storing it, and writes `~/.c7ntax/config.json` with the file's mode set explicitly to `0600` (`writeFileSync`'s mode is subject to the umask and ignored for an existing file). **No password is ever stored** — a password is a credential for a person, and this file belongs to a program: the key is issued in the application, scoped to what its owner holds, attributed to them in the audit trail, and revocable on its own. `C7NTAX_SERVER`/`C7NTAX_KEY` override the file, which is what makes it usable in CI.
+- **[New]** **`context`, `help [noun [verb]]`, `version`** — all generated from the served catalogue, so `help` answers "what may *this key* do" with exactly what the API said, and `help ticket list` prints the route, the permission and every flag the route reads.
+- **[New]** **`_complete <line>`** and **`completion bash|zsh|pwsh`** — the generated scripts call back into the CLI rather than embedding a list, so completions come from the live catalogue, filtered by the key's scopes, and cannot go stale. The PowerShell completer builds a `CompletionResult` per candidate, so the menu shows the same descriptions the in-app console shows.
+- **[New]** **Output that a person and a script can each read**: a right-aligned table sized to its content, `--json` for the raw route response, `--quiet` for identifiers one per line, and `--verbose` printing the method, path, permission and elapsed time to stderr so stdout stays pipeable. **Exit codes are the contract** — 1 usage, 2 refused, 3 not found, 5 policy, 6 the route failed — and every one is provoked by `probe-cli`.
+- **[Fix]** **A command a key may not run reported itself as a typo.** The served catalogue is filtered to the key, so `user list` was absent from it and the parser said "no such command", exit 1 — and the hint read `user can:` **with nothing after the colon**. Now `CONSOLE_COMMANDS` (the same list the server serves from) tells "it exists, but not for this key" apart from "that is not a command", and the empty-verb-list case has its own sentence. The CLI still authorizes nothing; this is a message, and the comment says so, because the one thing that must not be built here is a second permission check.
+- **[Update]** **Reads only.** The catalogue it parses from is the one the popup gets, so `ticket create` is refused by policy (exit 5) with the phase it arrives in — a hand-written write command in a CLI would be the second authorization list PLAN-028 §7 forbids.
+
+**Verification:** `probe-cli` (new, `apps/cli`) **37 passed / 0 failed**. It runs the CLI as a **subprocess** against the running API, with an API key it issues and **revokes itself** (a scratch `HOME`, so the operator's real profile is untouched): login rejects a value that is not a key and accepts a real one; `context` reports the server and the command count; `help` and `help <noun> <verb>` name the route and the permission; a read prints a table with headings and a row count; `--json` parses; `--quiet` prints identifiers only; `--verbose` names the route on stderr; a subject resolves through the list route; **all five failure exits are provoked** (unknown noun 1, unknown flag 1, unknown subject 3, a command outside the key's scopes 2, a write 5); `_complete` offers nouns, verbs, a narrowed partial verb, a flag's real enum values, and **nothing this key may not run**; three completion scripts generate; the environment overrides the file; and after `logout` the CLI is not signed in. Also re-run: `probe-console-grammar` 55/55 after the parser change, `probe-console-catalog` 18/18. API, web and CLI `tsc` all clean; `guard:routes` 439/0; `guard:api-docs` 430/63; `guard:console` green.
 
 ---
 

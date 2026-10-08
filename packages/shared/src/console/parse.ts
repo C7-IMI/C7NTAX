@@ -159,11 +159,23 @@ export function parseStatement(
         hint: "Write commands arrive with PLAN-026's action manifest; the console offers reads until then. Use the screen for now, or `help` for what you can run.",
       };
     }
+    const verbs = verbsFor(noun, catalogue);
+    // No verbs at all for this noun means it is not a noun *this caller* has, which is a different
+    // sentence from "that verb does not exist" — and it used to be neither, because the hint was built
+    // from the empty list and read `user can: ` with nothing after the colon.
+    if (verbs.length === 0) {
+      return {
+        ok: false,
+        code: CONSOLE_EXIT.usage,
+        message: `\`${noun}\` is not a noun you can use.`,
+        hint: "`help` lists every command you may run.",
+      };
+    }
     return {
       ok: false,
       code: CONSOLE_EXIT.usage,
       message: `\`${noun}\` has no verb \`${verbToken}\`.`,
-      hint: `${noun} can: ${verbsFor(noun, catalogue).map((v) => `${noun} ${v}`).join(", ")}`,
+      hint: `${noun} can: ${verbs.map((v) => `${noun} ${v}`).join(", ")}`,
     };
   }
 

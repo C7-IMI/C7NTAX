@@ -25,23 +25,22 @@
  *   c7ntax _complete "ticket l"          # used by the generated completion scripts
  */
 import {
+  CONSOLE_COMMANDS,
   CONSOLE_EXIT,
-  CONSOLE_OWN_VERBS,
   buildRequest,
   completionsAt,
   flagsFor,
   matchingCandidates,
   parseStatement,
-  permittedCommands,
   resolveSubject,
   rowsOf,
   valueAt,
   type ConsoleCommandSpec,
   type ConsoleExitCode,
-  type ConsoleToken,
 } from "@C7NTAX/shared";
-import { fetchCatalogue, apiFetch, type Catalogue, type CommandDescriptor } from "./client.ts";
-import { apiBase, clearProfile, looksLikeApiKey, profilePath, resolveProfile, writeProfile, type ResolvedProfile } from "./profile.ts";
+
+import { fetchCatalogue, apiFetch, type Catalogue, type CommandDescriptor } from "./client";
+import { apiBase, clearProfile, looksLikeApiKey, resolveProfile, writeProfile, type ResolvedProfile } from "./profile";
 
 // ── Output ─────────────────────────────────────────────────────────────
 const isTty = (): boolean => Boolean(process.stdout.isTTY);
@@ -261,7 +260,32 @@ async function run(line: string): Promise<void> {
 
   const commands = asCommands(catalogue.body);
   const parsed = parseStatement(line, commands);
-  if (!parsed.ok) fail(parsed.code, parsed.message, parsed.hint);
+  if (!parsed.ok) {
+    /*
+     * A rejection the *catalogue* caused is not the same as a typo, and saying "no such command" to somebody
+     * whose key is simply narrower than their account is the wrong answer.
+     *
+     * The served catalogue is filtered to this key, so a command the key may not run is absent from it and
+     * the parser reports it as unknown. `CONSOLE_COMMANDS` — the same list the server serves from — is
+     * compiled into the CLI, so "it exists, but not for this key" can be answered exactly, offline.
+     *
+     * **This is a message, not a gate.** The CLI still authorizes nothing: it does not run the command, and
+     * if it did, the route would refuse it. Nothing here may ever be turned into "is this allowed?" — that
+     * question belongs to the route (§6).
+     */
+    const [noun, verb] = line.trim().split(/\s+/);
+    const exists = CONSOLE_COMMANDS.some((command) => command.noun === noun?.toLowerCase() && command.verb === verb?.toLowerCase());
+    const available = commands.some((command) => command.noun === noun?.toLowerCase() && command.verb === verb?.toLowerCase());
+    if (exists && !available) {
+      const full = CONSOLE_COMMANDS.find((command) => command.noun === noun?.toLowerCase() && command.verb === verb?.toLowerCase());
+      fail(
+        CONSOLE_EXIT.refused,
+        `\`${noun} ${verb}\` needs \`${full?.permission}\`, which this key does not carry.`,
+        "The route would refuse it too. Issue a wider key under Administration → API Access, or run it in the application.",
+      );
+    }
+    fail(parsed.code, parsed.message, parsed.hint);
+  }
 
   if (parsed.kind === "own") {
     // `c7ntax help` and `c7ntax context` are the two own verbs that make sense with a stored profile;
@@ -434,4 +458,9 @@ async function main(argv: string[]): Promise<void> {
   }
 }
 
-await main(process.argv.slice(2));
+void main(process.argv.slice(2)).catch((error: unknown) => {
+  // An unexpected failure still exits through the vocabulary a script can branch on: exit 6 is "the API ran
+  // it and it failed", which is what a crash in the CLI amounts to from the outside.
+  process.stderr.write(`${red("error")} ${(error as Error)?.message ?? String(error)}\n`);
+  process.exit(CONSOLE_EXIT.failed);
+});

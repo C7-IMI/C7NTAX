@@ -200519,6 +200519,134 @@
     "createdAt": "2026-10-07T23:36:11.034Z"
   },
   {
+    "id": "9eb8dc94-94c6-4794-a920-2ef479dee79e",
+    "action": "api_key.created",
+    "entity": "api_key",
+    "entityId": "9fd68e6c-7576-4bda-a1ee-e09285dd8e32",
+    "changes": {
+      "name": "Probe CLI key 1791486125161",
+      "expiresAt": null,
+      "sourceKind": "other",
+      "permissions": [
+        "ticket:view",
+        "client:view",
+        "report:view"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:02:05.173Z"
+  },
+  {
+    "id": "37d75ab0-68bb-4769-b9f6-20cda04139a4",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "9fd68e6c-7576-4bda-a1ee-e09285dd8e32",
+    "changes": {
+      "name": "Probe CLI key 1791486125161",
+      "sourceKind": "other",
+      "description": "Issued by probe-cli, revoked by the same run",
+      "permissions": [
+        "ticket:view",
+        "client:view",
+        "report:view"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:02:05.181Z"
+  },
+  {
+    "id": "9c58bd0e-a163-4b44-9283-2f9d66b75a35",
+    "action": "api_key.revoked",
+    "entity": "api_key",
+    "entityId": "9fd68e6c-7576-4bda-a1ee-e09285dd8e32",
+    "changes": {
+      "name": "Probe CLI key 1791486125161",
+      "prefix": "c7k_56630abb66b67597",
+      "reason": "orphan from a probe run that failed before its cleanup"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:02:20.078Z"
+  },
+  {
+    "id": "da8de549-bf45-4629-b6bd-a874210f2a15",
+    "action": "api-keys:delete",
+    "entity": "api-keys",
+    "entityId": "9fd68e6c-7576-4bda-a1ee-e09285dd8e32",
+    "changes": {
+      "reason": "orphan from a probe run that failed before its cleanup"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:02:20.082Z"
+  },
+  {
+    "id": "0a18286a-0c97-4f6b-ac4c-9e6e7436c065",
+    "action": "api_key.created",
+    "entity": "api_key",
+    "entityId": "31608841-f789-4e6d-9664-d3a5848948ed",
+    "changes": {
+      "name": "Probe CLI key 1791486146772",
+      "expiresAt": null,
+      "sourceKind": "other",
+      "permissions": [
+        "ticket:view",
+        "client:view",
+        "report:view"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:02:26.785Z"
+  },
+  {
+    "id": "cd6b644b-1772-4e36-aac3-a306072a3dbf",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "31608841-f789-4e6d-9664-d3a5848948ed",
+    "changes": {
+      "name": "Probe CLI key 1791486146772",
+      "sourceKind": "other",
+      "description": "Issued by probe-cli, revoked by the same run",
+      "permissions": [
+        "ticket:view",
+        "client:view",
+        "report:view"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:02:26.788Z"
+  },
+  {
+    "id": "dc9b0898-3bdc-40e1-918e-5dfff0fa058d",
+    "action": "api_key.revoked",
+    "entity": "api_key",
+    "entityId": "31608841-f789-4e6d-9664-d3a5848948ed",
+    "changes": {
+      "name": "Probe CLI key 1791486146772",
+      "prefix": "c7k_6ef904fd20afdb8a",
+      "reason": "probe-cli finished"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:02:36.253Z"
+  },
+  {
+    "id": "f2938cc0-e186-4f5b-b273-c61c615d3211",
+    "action": "api-keys:delete",
+    "entity": "api-keys",
+    "entityId": "31608841-f789-4e6d-9664-d3a5848948ed",
+    "changes": {
+      "reason": "probe-cli finished"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:02:36.256Z"
+  },
+  {
     "id": "6cc54326-8d50-46f6-b79a-3d6f9e5e0403",
     "action": "reports:create",
     "entity": "reports",
@@ -201015,6 +201143,44 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-07T23:44:38.490Z"
+  },
+  {
+    "id": "e5193b85-3f9b-486a-b408-768a0df094e0",
+    "action": "api_key.created",
+    "entity": "api_key",
+    "entityId": "2287ac9d-8c85-4b6a-8699-9d7c7671df0e",
+    "changes": {
+      "name": "Probe CLI key 1791486193524",
+      "expiresAt": null,
+      "sourceKind": "other",
+      "permissions": [
+        "ticket:view",
+        "client:view",
+        "report:view"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:03:13.547Z"
+  },
+  {
+    "id": "b0be44b8-2684-4748-a7ff-4a0783b35219",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "2287ac9d-8c85-4b6a-8699-9d7c7671df0e",
+    "changes": {
+      "name": "Probe CLI key 1791486193524",
+      "sourceKind": "other",
+      "description": "Issued by probe-cli, revoked by the same run",
+      "permissions": [
+        "ticket:view",
+        "client:view",
+        "report:view"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:03:13.554Z"
   },
   {
     "id": "5260f9c7-9143-404a-a6a2-d21a66fae905",
@@ -205580,6 +205746,32 @@
     "createdAt": "2026-10-08T00:15:30.645Z"
   },
   {
+    "id": "054812ab-a447-42b6-9b56-ad73368ac5f0",
+    "action": "api_key.revoked",
+    "entity": "api_key",
+    "entityId": "2287ac9d-8c85-4b6a-8699-9d7c7671df0e",
+    "changes": {
+      "name": "Probe CLI key 1791486193524",
+      "prefix": "c7k_d783a9a00a3d16b7",
+      "reason": "probe-cli finished"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:03:22.590Z"
+  },
+  {
+    "id": "f1cc3a3e-50ea-4d44-9c86-4a2aa6f6e506",
+    "action": "api-keys:delete",
+    "entity": "api-keys",
+    "entityId": "2287ac9d-8c85-4b6a-8699-9d7c7671df0e",
+    "changes": {
+      "reason": "probe-cli finished"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:03:22.594Z"
+  },
+  {
     "id": "5cbaf6ee-141e-43b9-acd4-94e63b73ba01",
     "action": "company:update",
     "entity": "company",
@@ -206927,6 +207119,44 @@
     "createdAt": "2026-10-08T04:08:18.191Z"
   },
   {
+    "id": "5594f390-a54f-4b8a-bbd8-8024a5e38d77",
+    "action": "api_key.created",
+    "entity": "api_key",
+    "entityId": "0caeaffa-a916-4ca2-9fa3-1815bc2308a8",
+    "changes": {
+      "name": "Probe CLI key 1791486256225",
+      "expiresAt": null,
+      "sourceKind": "other",
+      "permissions": [
+        "ticket:view",
+        "client:view",
+        "report:view"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:04:16.234Z"
+  },
+  {
+    "id": "c299db4a-d71c-4657-af6b-d8a8c66f0c89",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "0caeaffa-a916-4ca2-9fa3-1815bc2308a8",
+    "changes": {
+      "name": "Probe CLI key 1791486256225",
+      "sourceKind": "other",
+      "description": "Issued by probe-cli, revoked by the same run",
+      "permissions": [
+        "ticket:view",
+        "client:view",
+        "report:view"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:04:16.238Z"
+  },
+  {
     "id": "60476a31-9ee8-4398-9a16-91d977c90864",
     "action": "sso:update",
     "entity": "sso",
@@ -207396,6 +207626,32 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-08T04:09:24.702Z"
+  },
+  {
+    "id": "13896322-c50e-4bc8-828c-f8763cd5df2d",
+    "action": "api_key.revoked",
+    "entity": "api_key",
+    "entityId": "0caeaffa-a916-4ca2-9fa3-1815bc2308a8",
+    "changes": {
+      "name": "Probe CLI key 1791486256225",
+      "prefix": "c7k_2a5fdf88bd3d1b40",
+      "reason": "probe-cli finished"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:04:25.660Z"
+  },
+  {
+    "id": "7594a675-c6be-4fd1-a92f-0825ae4b63d6",
+    "action": "api-keys:delete",
+    "entity": "api-keys",
+    "entityId": "0caeaffa-a916-4ca2-9fa3-1815bc2308a8",
+    "changes": {
+      "reason": "probe-cli finished"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T19:04:25.663Z"
   },
   {
     "id": "4f410b83-8be2-4559-8b9d-b551d17e15a1",
