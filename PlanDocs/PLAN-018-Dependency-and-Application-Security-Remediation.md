@@ -314,7 +314,33 @@ committed (only placeholders in the `.env` examples); session handling is HttpOn
 + double-submit CSRF with hashed tokens and `timingSafeEqual`; the test bypass refuses production and
 non-loopback; portal sign-in uses CSPRNG codes, hashed at rest, attempt-capped and scoped.
 
-### Listed, not fixed — needs a decision or a wider change
+### Verification used for this round
+
+Every probe in `apps/api` was run against a live API: **28 suites, ~1,200 assertions**. Several are
+variants that only make sense against a differently-configured process, and the audit's first lesson
+was to read their headers before reading their failures:
+
+| Probe | Needs | Result |
+|---|---|---|
+| `probe-billing-batch` | `INVOICE_BATCH_ENABLED`, `TIME_RULES_ENABLED`, `EGRESS_ALLOW_PRIVATE` | 36/36 |
+| `probe-expenses` | `EGRESS_ALLOW_PRIVATE` (its stub push is on loopback) | 27/27 — and its header now says so, which it did not |
+| `probe-kb-autogen` | `EGRESS_ALLOW_PRIVATE`, `KB_AUTOGEN_ENABLED`, a stub model on `PROBE_AI_PORT` | 42/42 — it now reports a missing precondition instead of crashing on an undefined id |
+| `probe-outage-board` | `EGRESS_ALLOW_PRIVATE`, `X_BEARER_TOKEN`, `X_API_BASE_URL` pointing at its stub | slow: it drives a full monitor poll across the 14 configured services, so it needs minutes, not seconds |
+| `probe-portal-off`, `probe-time-rules-flag`, `probe-billing-generate-flag` | the corresponding flag **off** | 10/10, 9/9, 6/6 |
+| `probe-report-designer` | `npx tsx` (it imports the shared TypeScript modules directly) | 349/349 |
+| everything else | a running API and the sample data | green, including `probe-configuration` 91, `probe-scoping` 26, `probe-outlook-addin` 63, `probe-cloudconnect-status` 34, `probe-reports-standard` 131, `probe-portal` 90, `probe-products` 82, `probe-permissions` (exit 0), `probe-session` 34, `probe-kumo-audit` 34, `probe-m365-inactivity` 36, `probe-dashboard` 31, `probe-generate` 45, `probe-board-layout` 33, `probe-egress` 21 |
+
+The web-to-API contract audit — every path the SPA requests, resolved against the route table
+through the router mounts — reported **332 calls, 0 broken**. `guard:routes` 393/347/0,
+`guard:config` 43 declared, `guard:plugin` 26.10.7036 matching its MSI, `guard:deps` 4 accepted
+advisories and 12 security floors in parity, help links 75/20/44. API typecheck 150 (the pre-existing
+baseline, no error in a changed file); web typecheck 0.
+
+**Not verified this round:** the per-page click-through of the SPA. The browser tooling disconnected
+part-way through, so the route sweep was replaced by the three deterministic checks above — stronger
+for links and endpoints, weaker for interaction (a button whose handler throws at runtime would not
+be caught). Re-run the sweep when the browser is available.
+
 
 | Item | Why it is not fixed yet |
 |---|---|
