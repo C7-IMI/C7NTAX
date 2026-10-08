@@ -99,7 +99,7 @@ tags:
   - name: "Surveys"
     description: "6 operations"
   - name: "System"
-    description: "27 operations"
+    description: "28 operations"
   - name: "Tickets"
     description: "18 operations"
   - name: "Users"
@@ -6575,6 +6575,22 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/system/version":
+    get:
+      tags: ["System"]
+      operationId: "getSystemversion"
+      summary: "The version the running build identifies as"
+      description: "The newest entry of the same notes `/changelog` returns, without the change history: for labelling the application itself — the account menu shows the build beside the logo — and for answering \"what is this deployment running?\" in one request. Parsed once and re-read only when BuildNotes.md changes, so the label costs nothing per page load. `version`, `date` and `title` are null on a build whose notes cannot be read, rather than a 404: an unknown version is a state a client can render, not an error worth logging."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: []
+      x-permission-note: "No permission is required beyond being signed in."
+      x-source: "system.ts · systemRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
   "/api/tickets":
     get:
       tags: ["Tickets"]
@@ -7199,5 +7215,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 60 of 427 operations carry a curated summary from docs/api-operations.json;
+# 61 of 428 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

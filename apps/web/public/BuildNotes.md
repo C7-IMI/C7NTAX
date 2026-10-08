@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.036 | Last Updated: 2026-10-08
+## Version: 2026.10.8.037 | Last Updated: 2026-10-08
 
 ---
 
@@ -10,7 +10,20 @@
 - **The date octets MUST be the actual current date when the entry is written** (derived, never typed). Use `node scripts/next-version.mjs` to compute the next version; the build number resets to `001` on a new day.
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
-- **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+- **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.037 — The copyright notice, and a build that says which build it is
+
+Two facts the application now states about itself instead of leaving to whoever was looking: who owns it, and which release is running. Both are **derived rather than typed** — the year from the clock, the version from the newest entry of this file — so neither can drift.
+
+- **[New]** **`© 2026 Cyber 7 Group, LLC`** — a footer in small type (11px) on the sign-in screen, on **every page of the staff application**, and in the customer portal (under the card before sign-in, and under its existing footer after). One `AppFooter` renders all of them: a notice that differed between surfaces would only raise the question of which one is correct, and the year is the current one because a notice frozen at the first release is wrong within a month. In the application shell it is **pinned to the bottom of the viewport rather than trailing the content** — a notice that needs a scroll to the end of a long page is absent from the page as the reader experiences it.
+- **[New]** **The version, at the right of the logo in the account menu** — `v2026.10.8.037`, with the release's title and date as its tooltip. It is the same value What's New shows, read from the same file, so the two cannot disagree about what is running.
+- **[New]** **`GET /api/system/version`** — the newest entry's `version`, `date` and `title` on their own, for a label that wants one string rather than 249 releases. A build whose notes cannot be read answers with `null`s rather than a 404: "unknown version" is a state a client renders, not an error worth logging on every page load. Documented in `docs/openapi.yaml` and in the curated operation list, and added to the route-guard exemption the changelog already holds — the same class of information, and not instance data.
+- **[Update]** **BuildNotes.md is now parsed once and re-read only when the file changes** (keyed on mtime and size, not a TTL, so a deploy is picked up on the next request instead of up to a TTL later). The What's New page always tolerated reading the whole file per request; a menu label could not, and a TTL would serve a stale version after a deploy.
+
+**Verification:** API and web `tsc` clean; `guard:routes` green (437 routes, 0 violations); `guard:api-docs` green (428 operations, 61 curated). Live: `GET /api/system/version` returns `2026.10.8.036` agreeing field-for-field with `changelog[0]`, and 401 without a token; the footer is present exactly once at 11px on `/login`, `/tickets`, `/settings` and `/portal`, and sits flush with the viewport bottom in the shell; the menu label measures 92×18 right-aligned in the brand row, its tooltip carrying the release title and date.
 
 ---
 

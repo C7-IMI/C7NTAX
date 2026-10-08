@@ -265,6 +265,10 @@
   "GET /api/system/changelog": {
     "summary": "What's New — the release notes as structured data"
   },
+  "GET /api/system/version": {
+    "summary": "The version the running build identifies as",
+    "description": "The newest entry of the same notes `/changelog` returns, without the change history: for labelling the application itself — the account menu shows the build beside the logo — and for answering \"what is this deployment running?\" in one request. Parsed once and re-read only when BuildNotes.md changes, so the label costs nothing per page load. `version`, `date` and `title` are null on a build whose notes cannot be read, rather than a 404: an unknown version is a state a client can render, not an error worth logging."
+  },
   "GET /api/system/audit-logs": {
     "summary": "The audit trail",
     "description": "Actions with their actor, entity and timestamp. This is the join an SIEM wants: correlate a detection with the change someone made after it."

@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import { useActivityMonitor } from "../hooks/useActivityMonitor";
 import { SessionTimeoutWarning } from "./SessionTimeoutWarning";
+import { AppFooter } from "./AppFooter";
 import {
   LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
@@ -1182,6 +1183,11 @@ export function Layout({ children }: { children: ReactNode }) {
           <KumoTrail segments={buildBreadcrumbs(NAV_TREE, location.pathname)} />
           {children}
         </main>
+        {/* Pinned rather than trailing the content: a notice that is only reachable by scrolling to
+            the end of a long page is absent from the page as the reader experiences it. */}
+        <footer className="shrink-0 border-t border-surface-border px-4 lg:px-6 py-2">
+          <AppFooter />
+        </footer>
       </div>
       {UI_P1 && <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={paletteItems} />}
       <SessionTimeoutWarning

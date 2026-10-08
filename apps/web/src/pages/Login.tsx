@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useClientIp } from "../hooks/useClientIp";
 import { usePasskey } from "../hooks/usePasskey";
 import { ServiceHealthPanel } from "../components/ServiceHealthPanel";
+import { AppFooter } from "../components/AppFooter";
 import { BrandMark } from "../components/BrandMark";
 import { Wordmark } from "../components/Wordmark";
 import api from "../api";
@@ -197,6 +198,7 @@ export function LoginPage() {
               Connecting from <span className="text-gray-400 font-mono">{clientIp}</span>
             </p>
           )}
+          <AppFooter className="text-center mt-4" />
         </div>
       </div>
     </div>

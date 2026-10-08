@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.8.037",
+    "date": "2026-10-08",
+    "title": "The copyright notice, and a build that says which build it is",
+    "changes": [
+      {
+        "text": "**`© 2026 Cyber 7 Group, LLC`** — a footer in small type (11px) on the sign-in screen, on **every page of the staff application**, and in the customer portal (under the card before sign-in, and under its existing footer after). One `AppFooter` renders all of them: a notice that differed between surfaces would only raise the question of which one is correct, and the year is the current one because a notice frozen at the first release is wrong within a month. In the application shell it is **pinned to the bottom of the viewport rather than trailing the content** — a notice that needs a scroll to the end of a long page is absent from the page as the reader experiences it.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The version, at the right of the logo in the account menu** — `v2026.10.8.037`, with the release's title and date as its tooltip. It is the same value What's New shows, read from the same file, so the two cannot disagree about what is running.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /api/system/version`** — the newest entry's `version`, `date` and `title` on their own, for a label that wants one string rather than 249 releases. A build whose notes cannot be read answers with `null`s rather than a 404: \"unknown version\" is a state a client renders, not an error worth logging on every page load. Documented in `docs/openapi.yaml` and in the curated operation list, and added to the route-guard exemption the changelog already holds — the same class of information, and not instance data.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**BuildNotes.md is now parsed once and re-read only when the file changes** (keyed on mtime and size, not a TTL, so a deploy is picked up on the next request instead of up to a TTL later). The What's New page always tolerated reading the whole file per request; a menu label could not, and a TTL would serve a stale version after a deploy.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.036",
     "date": "2026-10-08",
     "title": "The first secret scan this repository has ever had, and what it found (no live credential, 144 false positives)",

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Headset, MailCheck, ShieldCheck } from "lucide-react";
 import portalApi, { portalErrorMessage, setPortalToken } from "../../portalApi";
 import { ON_ACCENT_COLOUR } from "../../lib/colourTokens";
+import { AppFooter } from "../../components/AppFooter";
 import { usePortalAuth, portalAccent } from "./PortalApp";
 
 /**
@@ -54,7 +55,7 @@ export function PortalLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
       <div className="card w-full max-w-md space-y-4">
         <div className="flex items-center gap-3">
           {branding?.logoUrl
@@ -132,6 +133,7 @@ export function PortalLogin() {
           </form>
         )}
       </div>
+      <AppFooter className="mt-4 text-center" />
     </div>
   );
 }

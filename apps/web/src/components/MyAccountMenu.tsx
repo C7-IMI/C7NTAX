@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   AlignJustify, HelpCircle, LogOut, Moon, Settings2, Shield, Sparkles, Sun, UserCircle,
 } from "lucide-react";
+import { useAppVersion } from "../hooks/useAppVersion";
 import { useAuth } from "../hooks/useAuth";
 import { useClientIp } from "../hooks/useClientIp";
 import { useTheme } from "../hooks/useTheme";
@@ -49,6 +50,7 @@ export function MyAccountMenu() {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const clientIp = useClientIp();
+  const appVersion = useAppVersion();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [scheme, setScheme] = useState(() => getPalette(theme as PaletteMode));
@@ -113,9 +115,19 @@ export function MyAccountMenu() {
 
       {open && (
         <div role="menu" className="absolute right-0 mt-2 w-80 rounded-lg border border-surface-border bg-surface shadow-lg z-50 overflow-hidden">
-          {/* Brand */}
-          <div className="px-3 pt-3 pb-2.5 border-b border-surface-border text-white">
+          {/* Brand — the logo and the build it belongs to */}
+          <div className="px-3 pt-3 pb-2.5 border-b border-surface-border text-white flex items-center justify-between gap-2">
             <Wordmark height={26} />
+            {appVersion && (
+              <span
+                className="text-[11px] font-mono text-gray-500 shrink-0"
+                title={appVersion.title
+                  ? `${appVersion.title}${appVersion.date ? ` · ${appVersion.date}` : ""}`
+                  : `C7NTAX ${appVersion.version}`}
+              >
+                v{appVersion.version}
+              </span>
+            )}
           </div>
 
           {/* Identity */}

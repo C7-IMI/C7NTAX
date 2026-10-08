@@ -490,24 +490,60 @@ function findBuildNotes(): string | null {
   return null;
 }
 
-systemRouter.get("/changelog", (_req, res) => {
+/**
+ * Parse BuildNotes.md once and re-parse only when the file itself changes. `/changelog` asking for
+ * every release is fine; a menu label asking for one version string is not, and the notes are a few
+ * hundred KB of markdown. Keyed on mtime+size rather than a TTL so a deploy is picked up on the next
+ * request instead of up to a TTL later.
+ */
+let buildNotesCache: { key: string; versions: VersionEntry[] } | null = null;
+
+function loadBuildNotes(): VersionEntry[] {
+  const mdPath = findBuildNotes();
+  if (!mdPath) throw new Error("BuildNotes.md not found");
+  const stat = statSync(mdPath);
+  const key = `${stat.mtimeMs}:${stat.size}`;
+  if (buildNotesCache?.key === key) return buildNotesCache.versions;
+  const versions = parseBuildNotes(mdPath);
+  buildNotesCache = { key, versions };
+  return versions;
+}
+
+/** The notes bundled with the API, for when the source markdown is not on disk. */
+function buildNotesFromJson(): VersionEntry[] {
   try {
-    const mdPath = findBuildNotes();
-    if (mdPath) {
-      const data = parseBuildNotes(mdPath);
-      res.json(data);
-      return;
-    }
-    throw new Error("BuildNotes.md not found");
+    const data = require("../BuildNotes.json");
+    return Array.isArray(data) ? (data as VersionEntry[]) : [];
   } catch {
-    // Fallback to static JSON if MD not available
-    try {
-      const data = require("../BuildNotes.json");
-      res.json(data);
-    } catch {
-      res.json([]);
-    }
+    return [];
   }
+}
+
+function buildNotes(): VersionEntry[] {
+  try {
+    return loadBuildNotes();
+  } catch {
+    return buildNotesFromJson();
+  }
+}
+
+systemRouter.get("/changelog", (_req, res) => {
+  res.json(buildNotes());
+});
+
+/**
+ * The version the running build identifies as, for labelling the application itself (the account
+ * menu) without pulling the whole change history across.
+ */
+systemRouter.get("/version", (_req, res) => {
+  const newest = buildNotes()[0];
+  // A build whose notes cannot be read still answers, with nulls rather than a 404: "unknown
+  // version" is a state the UI can render, and the menu should not log a failed request for it.
+  res.json({
+    version: newest?.version ?? null,
+    date: newest?.date ?? null,
+    title: newest?.title ?? null,
+  });
 });
 
 // ── Audit logs ──

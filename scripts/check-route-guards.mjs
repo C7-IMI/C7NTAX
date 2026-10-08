@@ -45,8 +45,8 @@ const EXEMPTIONS = [
   { file: "users.ts", match: /GET \/me$/, reason: "a user reading their own record" },
   {
     file: "system.ts",
-    match: /(GET|PATCH) \/config\/:key$|GET \/changelog$|GET \/audit-logs$/,
-    reason: "self-service settings keys (guarded per key), What's New, and the audit trail the ticket view reads — see PLAN-018 Phase 0",
+    match: /(GET|PATCH) \/config\/:key$|GET \/changelog$|GET \/version$|GET \/audit-logs$/,
+    reason: "self-service settings keys (guarded per key), What's New, the running build's version label, and the audit trail the ticket view reads — see PLAN-018 Phase 0",
   },
   { file: "email-connectors.ts", match: /GET \/oauth\/callback$/, reason: "OAuth callback for the connector, validated with single-use state" },
   {

@@ -644,6 +644,9 @@ produced the event. **Answer `2xx` as soon as you have stored the body** — do 
 * **`GET /api/api-keys/permissions`** returns every permission name and source kind that exists — build
   a key's scopes from that rather than from a hard-coded list.
 * **`GET /api/health`** is the liveness check, unauthenticated.
+* **`GET /api/system/version`** names the release this deployment is running (`version`, `date`,
+  `title` — the newest What's New entry). Cheap enough to call per session, and worth recording
+  alongside anything you file, because a report against one build is not a report against another.
 * **`GET /api/system` / `GET /api/system/configs`** describe the deployment (version, feature flags,
   non-secret configuration). Reserved keys are withheld even from administrators, on purpose.
 * **`GET /api/system/audit-logs`** (`user:manage` or `system:config`) is where to look when a change

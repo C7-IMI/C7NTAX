@@ -5925,3 +5925,37 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **164 failures, and none of the four checks had ever gated anything.** The route guard was wrong about seven routes that *were* guarded (two of them undocumented rather than unguarded); the API typecheck was reporting 378 errors that were mostly a missing Prisma client; gitleaks required a licence an organisation repository cannot have without buying one; and trivy's pinned release could not resolve its own installer, so that job had never once run. Each of those was a gate that looked like a gate.
 - **The order turned out to matter more than the fixes.** Fixing the guard is what let the typecheck fail visibly; fixing the typecheck is what let the secret scan report; and only then was there anything to triage. A red gate that cannot go green hides every check behind it.
 - **The dev API is back on its default environment** (`EGRESS_ALLOW_PRIVATE`, `KB_AUTOGEN_ENABLED` unset) after the probes, and the gitleaks binary and reports used for the triage are deleted.
+
+---
+
+### Prompt 277 — The copyright notice, and a build that says which build it is
+
+**Timestamp:** 2026-10-08 13:06 | **Status:** Complete (footer on every surface, version live in the account menu) | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.8.037** — "The copyright notice, and a build that says which build it is"
+
+**Prompt**
+
+> Add copyright information to the login screen and bottom of every page in the application in a small footer style text. The copyrght owner will be Copyright Cyber 7 Group, LLC.
+>
+> Also display the application version number on the My Account Menu to the right of the C7NTAX logo at the top.
+
+**What I did**
+- **Asked where the "bottom of every page" actually is before writing a line.** `App.tsx` has three route trees: `/portal/*` (its own audience, rendered outside the staff auth provider), `/login`, and everything else through `ProtectedRoutes` → `<Layout>`. So "every page" is one place in the shell, two places outside it, and three surfaces to touch — not a footer per page.
+- **Pinned the notice instead of letting it trail the content.** Inside the shell it sits in a `shrink-0` bar **below** `<main className="overflow-y-auto">`, so it is on screen without scrolling; inside `main` it would have been at the end of the content, which for a long page means absent from the page as the reader experiences it. Verified numerically: the footer's bottom edge is flush with the viewport bottom (900 of 900) on three different pages.
+- **Set the version from the source of truth rather than a second copy.** BuiltNotes → `/system/version` → `useAppVersion()` → the menu label. What's New and the account menu now read the same newest entry, so they cannot disagree about what is running; the tooltip carries that entry's title and date.
+- **Refused to reuse `/changelog` for a menu label.** It parses ~250 releases of markdown per request — fine for the page that wants them, wasteful for one string on every page load. Added `GET /api/system/version` with the parse **cached on the file's mtime and size**, and `null`s rather than a 404 when the notes cannot be read: "unknown version" is a state a label renders, not an error worth logging.
+- **Verified the cache by changing the file rather than by reading the code.** The first call answered `2026.10.8.036`; after writing this release's BuildNotes entry and regenerating the fallbacks, the *same process* (pid 42784, untouched) answered `2026.10.8.037` — which is the mtime revalidation working, not a restart hiding it.
+- **Treated the new route as documentation, not just code:** regenerated `docs/openapi.yaml`, added a curated entry to `docs/api-operations.json`, a bullet to `docs/API.md` §12, and extended the route guard's `system.ts` exemption — with the reason written down, because a version label is the same class of information as What's New and not instance data.
+- **Left the portal out of the "staff app" answer on purpose, then put it in.** The customer portal already has its own footer with provider-facing text, so the copyright is a second line inside it, and under the card on the portal's pre-sign-in screen. One `AppFooter` component renders every one of them.
+
+**Decisions worth remembering**
+- **A copyright line belongs in one component, and the year belongs to the clock.** A notice that differs between surfaces raises the question of which one is correct, and a hard-coded year is wrong within a month in a continuously released product.
+- **The cheapest correct source beats a convenient existing one.** `/changelog` would have worked in one line of client code and cost a full markdown parse per page load. The endpoint that exists for the label is 12 lines and reads the file only when it changes.
+- **Answer with a value the client can render rather than an error it has to handle.** `null`s for an unreadable release are a deliberate shape, so the menu degrades to no label instead of a failed request on every load.
+- **The exemption list is documentation, so the reason goes in it.** The guard would have failed on the new route; the fix is the entry *and* the sentence saying why the route does not need a permission.
+
+**Notes for next time**
+- **The whole task was verified live in one pass** — `GET /api/system/version` agreeing field-for-field with `changelog[0]` and 401 without a token, the footer present exactly once at 11px on `/login`, `/tickets`, `/settings` and `/portal`, and the label measuring 92×18 right-aligned in the brand row (logo 1109–1218, label 1311–1403, no overlap).
+- **Probing the API with a script login kills the browser session.** It has now cost a re-login every time; log in through the page when the verification is a UI check, and script the API only when the session does not matter.
+- **`BuildNotes.md`'s own definition-of-done sentence went stale with this change** — it said What's New "parses this file on every request". Fixed in the same edit: a record that describes behaviour the code no longer has is a record nobody can trust.

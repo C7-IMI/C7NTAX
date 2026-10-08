@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, Link } from "react-router-dom";
 import { Headset, LogOut, Ticket as TicketIcon } from "lucide-react";
 import portalApi, { setPortalToken } from "../../portalApi";
 import { DEFAULT_ACCENT_COLOUR } from "../../lib/colourTokens";
+import { AppFooter } from "../../components/AppFooter";
 import { PortalLogin } from "./PortalLogin";
 import { PortalTickets } from "./PortalTickets";
 import { PortalTicketDetail } from "./PortalTicketDetail";
@@ -163,6 +164,7 @@ function PortalShell({ children }: { children: ReactNode }) {
       <footer className="max-w-4xl mx-auto px-4 pb-8 text-xs text-gray-600">
         Your provider is notified of everything you write here, and you will be emailed whenever the ticket changes.
         {policy?.supportEmail ? <> Need help signing in? <a href={`mailto:${policy.supportEmail}`} className="text-gray-400 hover:text-gray-300">{policy.supportEmail}</a></> : null}
+        <AppFooter className="mt-2" />
       </footer>
     </div>
   );
