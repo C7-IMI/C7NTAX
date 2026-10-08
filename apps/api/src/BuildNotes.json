@@ -1,5 +1,48 @@
 [
   {
+    "version": "2026.10.8.011",
+    "date": "2026-10-08",
+    "title": "The API is documented, and something other than a person can use it",
+    "changes": [
+      {
+        "text": "**The specification is generated, not written.** `scripts/generate-openapi.mjs` reads every `<router>.<method>(\"path\", requirePermission(…))` under `apps/api/src/routes/**`, joins it with the mount points in `index.ts` and the permission names in the shared enum, and writes `docs/openapi.yaml` — now **412 operations across 307 paths and 44 tags**, each carrying its required permissions as `x-required-permissions` and its source file as `x-source`. The prose a parser cannot invent (a summary, an example, a note about behaviour) lives in `docs/api-operations.json`, 52 entries keyed by `METHOD /path`.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**API keys — a credential for a program.** `ApiKey` with a prefix and a sha256 hash (the secret is never stored, and shown once), scopes, owner, expiry, revocation, usage counters and an audit row for every issuance, rotation and revocation. A key *acts as the account it belongs to*, narrowed to its scopes, and the account's permissions are re-read on every request, so removing a permission removes it from every key that account owns without touching the keys. Managed on **Administration → API access** (`/admin/api`) or through `GET/POST /api/api-keys`, `POST /api/api-keys/{id}/rotate`, `DELETE /api/api-keys/{id}`.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The event gateway** — one endpoint for anything that reports incidents (`POST /api/events`, plus `GET /api/events` and `GET /api/events/sources`). Idempotent by `(source, externalId)`: the first event opens a ticket, a repeat attaches to it as an internal note with an occurrence count, `kind: \"recovery\"` resolves it, and the whole payload is kept on the ticket because the reason a ticket exists is usually in the part nobody mapped. Severity becomes priority; the client is resolved by id or by a name exactly one client carries; the board comes from `boardId`, then the intake board, then the oldest board — and an event that names no client is refused rather than guessed at.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`docs/API.md`** — the guide: the two credentials with a worked key example, errors, rate limits (with the `X-RateLimit-*` headers and the 429 body), paging and filtering conventions, the event-gateway recipe with a field table and copy-ready examples for an RMM and a SIEM, the connectors and the accounting push, outbound webhooks with signature verification in JavaScript and Python, and how to enumerate the rest.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Administration → API access** — the base URL and the two calls a connection needs, the event intake board, and the key inventory: presets for an RMM, a SIEM and an accounting integration, the full permission catalogue filtered by resource, the secret shown once with a ready-to-run `curl` beside it, and rotate/revoke inline.",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The document described routes that answer nothing.** The generator attributed every route in a file to the first router it found, so `users.ts`'s second, unmounted `rolesRouter` was documented under `/api/roles` — six routes that do not exist — while the five that do were reported as duplicates of them. Routes are now attributed by the file a router is *imported from*, an unmounted router is named in the output instead of being documented, and the tickets surface (`routes/tickets/**`), which was missing from the document entirely, is in it.",
+        "type": "Fix"
+      },
+      {
+        "text": "**A key's scopes were widened on its first request.** `refreshSessionContext` replaced the scopes with the owner's full permission set, so a key issued for `ticket:create` and `ticket:view` would have gained everything its owner holds. It now intersects with the key's scopes on every request.",
+        "type": "Fix"
+      },
+      {
+        "text": "**Help gained an \"API Access & the Event Gateway\" walkthrough**, with index rows, a configuration reference for API access, and four FAQ entries (repeat alerts, an SIEM creating tickets, using the API from a script, and a leaked key) — the surface had none.",
+        "type": "Update"
+      },
+      {
+        "text": "**The rule is enforced.** `node scripts/check-api-docs.mjs` (`pnpm guard:api-docs`) fails when the document is behind the routes, when it documents an operation that no longer exists, or when a curated entry names a route that has been renamed — and it names the routes that moved rather than only that something did. The standing rule is in `.github/copilot-instructions.md` beside the Help rule.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.010",
     "date": "2026-10-08",
     "title": "FlexPoint is used, not just read",

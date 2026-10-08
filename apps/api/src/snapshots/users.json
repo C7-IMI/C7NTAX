@@ -554,7 +554,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-08T07:44:32.950Z",
+    "lastLoginAt": "2026-10-08T07:47:34.293Z",
     "emailVerified": false,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -579,7 +579,7 @@
     "permissions": [],
     "companyId": null,
     "createdAt": "2026-10-07T02:14:32.822Z",
-    "updatedAt": "2026-10-08T07:44:32.952Z"
+    "updatedAt": "2026-10-08T07:47:34.295Z"
   },
   {
     "id": "e6d524bb-3e0d-4f35-8be3-f6be1e86e7d5",

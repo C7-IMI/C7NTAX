@@ -212684,6 +212684,31 @@
     "createdAt": "2026-10-08T07:30:53.903Z"
   },
   {
+    "id": "e8d8ba27-3261-4f30-be8a-dfa4447cf0db",
+    "action": "api_key.rotated",
+    "entity": "api_key",
+    "entityId": "33db54dd-a23e-45ee-98c0-a9314d03a404",
+    "changes": {
+      "name": "PROBE api access 1791445645543",
+      "prefix": "b93a9f54a6fd4b29"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.977Z"
+  },
+  {
+    "id": "1943d5f1-36e3-4e99-8b71-61ecfa4d2132",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "33db54dd-a23e-45ee-98c0-a9314d03a404",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.979Z"
+  },
+  {
     "id": "78a01af8-b59d-4e70-989b-eb0d99f08536",
     "action": "events:create",
     "entity": "events",
@@ -212867,5 +212892,353 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T07:45:11.424Z"
+  },
+  {
+    "id": "37d66da9-d276-4c1f-b7fc-a739c2a786e5",
+    "action": "api_key.rotated",
+    "entity": "api_key",
+    "entityId": "0ab9cee4-0fb0-4d0a-b693-9d0becf3008f",
+    "changes": {
+      "name": "PROBE api access — RMM tenant",
+      "prefix": "4d734207160f6dd9"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:45:49.109Z"
+  },
+  {
+    "id": "6a7de9a4-478d-4292-a7ca-bd13afd9cd7b",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "0ab9cee4-0fb0-4d0a-b693-9d0becf3008f",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:45:49.111Z"
+  },
+  {
+    "id": "74a0f961-252f-4390-bbd4-5c2086c6e0cd",
+    "action": "api_key.revoked",
+    "entity": "api_key",
+    "entityId": "0ab9cee4-0fb0-4d0a-b693-9d0becf3008f",
+    "changes": {
+      "name": "PROBE api access — RMM tenant",
+      "prefix": "c7k_4d734207160f6dd9",
+      "reason": "probe cleanup"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:46:10.115Z"
+  },
+  {
+    "id": "14ab88d5-e83f-4076-a9ea-cc0824845a81",
+    "action": "api-keys:delete",
+    "entity": "api-keys",
+    "entityId": "0ab9cee4-0fb0-4d0a-b693-9d0becf3008f",
+    "changes": {
+      "reason": "probe cleanup"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:46:10.118Z"
+  },
+  {
+    "id": "6d1d6c02-f62f-425a-b3e5-c8cb460fd17a",
+    "action": "system_config:update",
+    "entity": "system_config",
+    "entityId": "eventIntakeBoardId",
+    "changes": {
+      "value": "81f12ded-6039-4c63-81b5-3d520ea1e854"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T07:46:39.737Z"
+  },
+  {
+    "id": "8331c742-7691-4ba3-b0aa-c5b5186fc97c",
+    "action": "api_key.created",
+    "entity": "api_key",
+    "entityId": "b1daef88-9b08-48d4-8287-e540d125c1c5",
+    "changes": {
+      "name": "PROBE api access 1791445618978",
+      "expiresAt": null,
+      "sourceKind": "rmm",
+      "permissions": [
+        "ticket:create",
+        "ticket:view"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:46:59.301Z"
+  },
+  {
+    "id": "13462e53-9108-4105-9c5f-cc6c176d5827",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "api-keys",
+    "changes": {
+      "name": "PROBE api access 1791445618978",
+      "sourceKind": "rmm",
+      "description": "end-to-end probe",
+      "permissions": [
+        "ticket:create",
+        "ticket:view"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:46:59.304Z"
+  },
+  {
+    "id": "69bb8f26-c7c9-42e9-9285-2846d7c0a527",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "check": "disk.c",
+        "device": "PROBE-01",
+        "freeGb": 1.2
+      },
+      "title": "PROBE api access — disk space low",
+      "client": {
+        "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
+      },
+      "source": "c7probe",
+      "severity": "high",
+      "externalId": "probe-apiaccess-1791445618978"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:46:59.348Z"
+  },
+  {
+    "id": "d10314b6-e67b-4d1f-b0ec-b744bc531fa3",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "title": "PROBE api access — still low",
+      "source": "c7probe",
+      "severity": "high",
+      "externalId": "probe-apiaccess-1791445618978"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:46:59.370Z"
+  },
+  {
+    "id": "e00cc410-26b9-4eff-a980-ae3dac92e242",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "kind": "recovery",
+      "title": "PROBE api access — recovered",
+      "source": "c7probe",
+      "externalId": "probe-apiaccess-1791445618978"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:46:59.384Z"
+  },
+  {
+    "id": "98f291b7-2cc6-42cc-83de-2a3a5d8cb46b",
+    "action": "api_key.rotated",
+    "entity": "api_key",
+    "entityId": "b1daef88-9b08-48d4-8287-e540d125c1c5",
+    "changes": {
+      "name": "PROBE api access 1791445618978",
+      "prefix": "cbe5eae94780c96e"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:46:59.414Z"
+  },
+  {
+    "id": "2379a8b5-6204-4885-899a-f70e2aea3751",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "b1daef88-9b08-48d4-8287-e540d125c1c5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:46:59.416Z"
+  },
+  {
+    "id": "2a313e8f-8128-4628-8d80-168736482cd0",
+    "action": "api_key.revoked",
+    "entity": "api_key",
+    "entityId": "b1daef88-9b08-48d4-8287-e540d125c1c5",
+    "changes": {
+      "name": "PROBE api access 1791445618978",
+      "prefix": "c7k_cbe5eae94780c96e",
+      "reason": "probe cleanup"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:46:59.428Z"
+  },
+  {
+    "id": "55493e97-8b05-491c-b3b2-e337139557b9",
+    "action": "api-keys:delete",
+    "entity": "api-keys",
+    "entityId": "b1daef88-9b08-48d4-8287-e540d125c1c5",
+    "changes": {
+      "reason": "probe cleanup"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:46:59.430Z"
+  },
+  {
+    "id": "0d526ec2-64b2-43b2-bb87-07fba1187670",
+    "action": "api_key.created",
+    "entity": "api_key",
+    "entityId": "33db54dd-a23e-45ee-98c0-a9314d03a404",
+    "changes": {
+      "name": "PROBE api access 1791445645543",
+      "expiresAt": null,
+      "sourceKind": "rmm",
+      "permissions": [
+        "ticket:create",
+        "ticket:view"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.832Z"
+  },
+  {
+    "id": "ce6ef613-341e-41d8-b51a-25e577b8d07f",
+    "action": "api-keys:create",
+    "entity": "api-keys",
+    "entityId": "api-keys",
+    "changes": {
+      "name": "PROBE api access 1791445645543",
+      "sourceKind": "rmm",
+      "description": "end-to-end probe",
+      "permissions": [
+        "ticket:create",
+        "ticket:view"
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.834Z"
+  },
+  {
+    "id": "8f55b7c6-9bc6-48e0-a1f2-9d3d74dfa287",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "data": {
+        "check": "disk.c",
+        "device": "PROBE-01",
+        "freeGb": 1.2
+      },
+      "title": "PROBE api access — disk space low",
+      "client": {
+        "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
+      },
+      "source": "c7probe",
+      "severity": "high",
+      "externalId": "probe-apiaccess-1791445645543"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.872Z"
+  },
+  {
+    "id": "ef6e66d9-936a-44c1-8aeb-2278ec0d578c",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "title": "PROBE api access — rmm source",
+      "client": {
+        "companyId": "964aab06-a1d2-4376-b63a-ea41205f6f2b"
+      },
+      "source": "rmm",
+      "severity": "low",
+      "externalId": "probe-apiaccess-1791445645543-rmm"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.890Z"
+  },
+  {
+    "id": "559023b1-96f6-454c-9379-613f50e2db48",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "title": "PROBE api access — still low",
+      "source": "c7probe",
+      "severity": "high",
+      "externalId": "probe-apiaccess-1791445645543"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.904Z"
+  },
+  {
+    "id": "e6cad28e-435d-40d5-aab7-c874c530e6d1",
+    "action": "events:create",
+    "entity": "events",
+    "entityId": "events",
+    "changes": {
+      "kind": "recovery",
+      "title": "PROBE api access — recovered",
+      "source": "c7probe",
+      "externalId": "probe-apiaccess-1791445645543"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.919Z"
+  },
+  {
+    "id": "ced0579c-6c05-4b6c-8c38-a2bab4a370c7",
+    "action": "api_key.revoked",
+    "entity": "api_key",
+    "entityId": "33db54dd-a23e-45ee-98c0-a9314d03a404",
+    "changes": {
+      "name": "PROBE api access 1791445645543",
+      "prefix": "c7k_b93a9f54a6fd4b29",
+      "reason": "probe cleanup"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.992Z"
+  },
+  {
+    "id": "20bbbb88-90a8-4608-ad1e-2e7c249eb3ed",
+    "action": "api-keys:delete",
+    "entity": "api-keys",
+    "entityId": "33db54dd-a23e-45ee-98c0-a9314d03a404",
+    "changes": {
+      "reason": "probe cleanup"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:25.993Z"
+  },
+  {
+    "id": "4b0e85c0-b201-44f4-9356-b3bf3664098b",
+    "action": "system_config:update",
+    "entity": "system_config",
+    "entityId": "eventIntakeBoardId",
+    "changes": {
+      "value": null
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T07:47:34.312Z"
   }
 ]
