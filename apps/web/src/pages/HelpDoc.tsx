@@ -48,7 +48,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "steps", items: [
         "Sign in and complete MFA if you have it.",
         "Open My Account (top right) to review your profile.",
-        "Browse the navigation pane once, so you know where things are.",
+        "Browse the navigation pane once, so you know where things are — right-clicking a section offers its own menu, including **Pin to Favorites**.",
         "Press **⌘K** (or Ctrl+K) and type a page name — the quickest way to reach anywhere.",
       ] },
       { kind: "tip", text: "Press T anywhere outside a text field to jump straight to Tickets." },
@@ -104,6 +104,9 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: "FAQ",
     description: "Answers to the most common questions about tickets, billing, integrations, and Kumo.",
     blocks: [
+      { kind: "h", text: "Navigation & workspace" },
+      { kind: "p", text: "Q: Can I keep the sections I use most at the top? — A: Yes. Right-click any section or subsection in the navigation and choose **Pin to Favorites**. It is a copy rather than a move — the section stays where it is, and a second copy of it appears under Favorites at the top of the pane, in an order you drag into place." },
+      { kind: "p", text: "Q: What else is in the navigation's right-click menu? — A: Whatever you right-clicked. A page offers Open, Open in new tab, Open in new window and Copy link; a section adds its own expand and collapse; a pinned copy adds Move up, Move down and Remove from Favorites; and right-clicking empty space gives Expand all, Collapse all and Remove all favorites." },
       { kind: "h", text: "Tickets" },
       { kind: "p", text: "Q: Why was a ticket's priority changed automatically? — A: The priority deduction engine adjusts priority from keywords and SLA rules; you can override it manually." },
       { kind: "p", text: "Q: Can I acknowledge or close many tickets at once? — A: Yes. Select the checkboxes on the left of the ticket list, then apply a batch action from the bulk bar." },
@@ -871,6 +874,16 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["⌘D / Ctrl+D", "Duplicate the selected report element"],
         ["Alt", "Hold while dragging a report element to place it on a quarter of a millimetre"],
       ] },
+      { kind: "h", text: "Favorites and the navigation's right-click menu" },
+      { kind: "p", text: "The navigation can keep the sections you use most at the top of the pane. Pinning is a **copy, not a move**: the section stays exactly where it is, and a second copy of it is drawn under **Favorites** — so nothing you already know about the navigation changes." },
+      { kind: "steps", items: [
+        "Right-click any section or subsection. The menu is about what you right-clicked: a page offers **Open**, **Open in new tab**, **Open in new window** and **Copy link**, and a section adds its own expand and collapse.",
+        "Choose **Pin to Favorites**. It appears at the top of the pane, and a small star marks it where it already lives, so a copy is visibly a copy.",
+        "Put the pinned copies in your own order: drag one by its handle, or right-click it and use **Move up** and **Move down**.",
+        "Right-click a pinned copy and choose **Remove from Favorites** to take it out. The section itself is untouched.",
+        "Right-click empty space in the pane for the whole-navigation actions: **Expand all**, **Collapse all** and **Remove all favorites**.",
+      ] },
+      { kind: "note", text: "Favorites follows the browser, like the section order and the sidebar width — another machine has its own. A section your role cannot open never appears there, even if it was pinned before your permissions changed, and a pinned section opens and closes on its own, so pinning a large area does not unfold it." },
       { kind: "h", text: "Batch actions" },
       { kind: "steps", items: [
         "Open Tickets and tick the checkboxes on the left of the rows.",

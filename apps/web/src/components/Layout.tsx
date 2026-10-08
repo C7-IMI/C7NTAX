@@ -526,10 +526,15 @@ export function Layout({ children }: { children: ReactNode }) {
   };
 
   const expandAllSections = useCallback(() => {
-    const next = new Set<string>([FAVORITES_NODE_ID, ...collapsibleNavIds(visibleTree)]);
+    const next = new Set<string>([
+      FAVORITES_NODE_ID,
+      ...collapsibleNavIds(visibleTree),
+      // Pinned copies keep their own open state, so they are opened by their own keys.
+      ...pinnedNodes.filter(node => node.children?.length).map(node => expandKeyFor(node, { favorite: true })),
+    ]);
     setExpanded(next);
     localStorage.setItem("c7_nav_expanded", JSON.stringify([...next]));
-  }, [visibleTree]);
+  }, [visibleTree, pinnedNodes]);
 
   const collapseAllSections = useCallback(() => {
     setExpanded(new Set());
@@ -579,11 +584,12 @@ export function Layout({ children }: { children: ReactNode }) {
       );
     }
     if (node.children?.length) {
-      const open = expanded.has(node.id);
+      const key = expandKeyFor(node, options);
+      const open = expanded.has(key);
       entries.push("separator", {
         label: open ? "Collapse this section" : "Expand this section",
         icon: open ? ChevronsDownUp : ChevronsUpDown,
-        onSelect: () => toggle(node.id),
+        onSelect: () => toggle(key),
       });
     }
     entries.push(
@@ -749,7 +755,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const renderNode = (node: NavNode, depth: number = 0, options: { favorite?: boolean } = {}) => {
     const active = isNodeActive(node, location.pathname);
-    const isExpanded = expanded.has(node.id);
+    const isExpanded = expanded.has(expandKeyFor(node, options));
     const hasChildren = !!node.children?.length;
     const linkTo = node.to || "#";
     const isTopLevel = depth === 0;
@@ -832,7 +838,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="flex items-center group/drag">
             {grip}
             <button
-              onClick={() => { toggle(node.id); navigate(`/section/${node.id}`); }}
+              onClick={() => { toggle(expandKeyFor(node, options)); navigate(`/section/${node.id}`); }}
               onContextMenu={(e) => openNodeMenu(e, node, options)}
               onKeyDown={(e) => navMenu.onKeyDown(e, e.currentTarget, nodeMenuEntries(node, options), nodeMenuHeader(node))}
               className={`nav-item flex-1 flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${
