@@ -205502,5 +205502,198 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-08T00:15:30.800Z"
+  },
+  {
+    "id": "e2b351e5-1ca2-4d9e-bd47-7419404146eb",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muystov8 — VPN will not connect",
+          "bodyText": "Re: Addin probe\n\nHi, the VPN client will not connect since this morning.\n\nOn Mon, someone wrote:\n> original message",
+          "fromName": "Addin Probe",
+          "receivedAt": "2026-10-08T00:29:05.462Z",
+          "internetMessageId": "<addin-probe-muystov8@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:29:05.480Z"
+  },
+  {
+    "id": "a394d5ea-1222-4182-8fcc-c92994fe1934",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muystov8 — VPN will not connect",
+          "bodyText": "same message again",
+          "internetMessageId": "<addin-probe-muystov8@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:29:05.488Z"
+  },
+  {
+    "id": "c6747493-3dcc-49b3-940d-d71ab18e4eed",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "one@umbrellacorp.net",
+          "subject": "Addin probe muystov8 A — printer offline",
+          "bodyText": "printer is offline",
+          "internetMessageId": "<addin-a-muystov8@probe.invalid>"
+        },
+        {
+          "from": "two@umbrellacorp.net",
+          "subject": "Addin probe muystov8 B — mailbox full",
+          "bodyText": "mailbox is full",
+          "internetMessageId": "<addin-b-muystov8@probe.invalid>"
+        },
+        {
+          "from": "someone@umbrellacorp.net",
+          "subject": "Addin probe muystov8 — VPN will not connect",
+          "bodyText": "duplicate",
+          "internetMessageId": "<addin-probe-muystov8@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:29:05.505Z"
+  },
+  {
+    "id": "9367052d-8a14-4b69-9f74-af3b7d80d9f6",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "preview",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muystov8 — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "internetMessageId": "<addin-review-muystov8@probe.invalid>"
+        }
+      ]
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:29:05.510Z"
+  },
+  {
+    "id": "1822f63f-5a65-499d-8c4c-06a425eebe07",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "emails": [
+        {
+          "from": "reviewer@umbrellacorp.net",
+          "subject": "Addin probe muystov8 — laptop will not boot",
+          "bodyText": "The laptop will not boot past the vendor logo.",
+          "priority": "High",
+          "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195",
+          "contactName": "Reviewed Contact",
+          "internetMessageId": "<addin-review-muystov8@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:29:05.782Z"
+  },
+  {
+    "id": "16ad0729-d426-4c6d-a275-1a02a41930ee",
+    "action": "outlook-addin:create",
+    "entity": "outlook-addin",
+    "entityId": "tickets",
+    "changes": {
+      "mode": "bundled",
+      "emails": [
+        {
+          "from": "parent@umbrellacorp.net",
+          "subject": "Addin probe muystov8 — parent message",
+          "bodyText": "This one becomes the ticket.",
+          "internetMessageId": "<addin-parent-muystov8@probe.invalid>"
+        },
+        {
+          "from": "child.a@umbrellacorp.net",
+          "subject": "Addin probe muystov8 — context one",
+          "bodyText": "Context one.",
+          "internetMessageId": "<addin-child-a-muystov8@probe.invalid>"
+        },
+        {
+          "from": "child.b@umbrellacorp.net",
+          "subject": "Addin probe muystov8 — context two",
+          "bodyText": "Context two.",
+          "internetMessageId": "<addin-child-b-muystov8@probe.invalid>"
+        }
+      ],
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "parentMessageId": "<addin-parent-muystov8@probe.invalid>"
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:29:05.800Z"
+  },
+  {
+    "id": "8fbe4ee1-499e-48c8-879a-39c3a3f3ff44",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "individual",
+      "preview": "never",
+      "lastBoardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "rememberBoard": false
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:29:05.811Z"
+  },
+  {
+    "id": "5f4a6ed4-2536-4afa-b624-79c1f068ee48",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "banana",
+      "preview": "sometimes"
+    },
+    "userId": "8f88abde-c20c-42cf-918c-6bcb2e0f4fb1",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:29:05.822Z"
+  },
+  {
+    "id": "28701f4b-5c77-4627-a5f4-8189131fe7fb",
+    "action": "outlook-addin:update",
+    "entity": "outlook-addin",
+    "entityId": "preferences",
+    "changes": {
+      "mode": "ask",
+      "preview": "ask",
+      "lastBoardId": null,
+      "rememberBoard": true
+    },
+    "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
+    "ipAddress": "::ffff:127.0.0.1",
+    "createdAt": "2026-10-08T00:29:05.826Z"
   }
 ]
