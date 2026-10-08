@@ -223,6 +223,14 @@ export enum Permission {
   KumoDocumentPublish = "kumo:doc:publish",
   KumoLinkView = "kumo:link:view",
   KumoLinkManage = "kumo:link:manage",
+  /**
+   * The console (PLAN-028). A **capability**, not a widening: every command it offers runs an existing
+   * route under the same permissions, so this grants no operation anybody could not already perform in
+   * the application. What it controls is *reach* — whether this person gets a command surface at all —
+   * which is why it is the one permission that decides whether a control is drawn rather than whether a
+   * request succeeds. Internal staff roles hold it; the client-facing and read-only roles do not.
+   */
+  ConsoleUse = "console:use",
 }
 
 /** Permission categories for UI grouping — order matters */
@@ -326,6 +334,16 @@ export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: P
     key: "admin", label: "Administration",
     permissions: [Permission.UserManage, Permission.RoleManage, Permission.SystemConfig],
   },
+  {
+    /*
+     * Its own category rather than a line under Administration: the console is a *working surface* an
+     * administrator decides who gets, not an administrative right. Grouping it here also means the
+     * permission pickers show it as one sentence — "may this person use the console?" — instead of
+     * hiding it among the settings permissions it has nothing to do with.
+     */
+    key: "console", label: "Console",
+    permissions: [Permission.ConsoleUse],
+  },
 ];
 
 /** Default role → permission mapping */
@@ -358,6 +376,8 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.PTOView, Permission.PTORequest, Permission.PTOApprove,
     Permission.InferenceView,
     Permission.UserManage,
+    // Staff get the console; see the note on `ConsoleUse` for why it is a capability and not a widening.
+    Permission.ConsoleUse,
   ],
   [SystemRole.Technician]: [
     // Deliberately no TicketViewAll: internal technicians already see every ticket
@@ -377,6 +397,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.ReportView,
     Permission.IntegrationView,
     Permission.InferenceView,
+    Permission.ConsoleUse,
   ],
   [SystemRole.Dispatcher]: [
     Permission.TicketViewAll, Permission.TicketView, Permission.TicketCreate,
@@ -389,6 +410,7 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.ScheduleView, Permission.ScheduleManage,
     Permission.ChatView,
     Permission.ReportView,
+    Permission.ConsoleUse,
   ],
   [SystemRole.BillingManager]: [
     Permission.BillingView, Permission.BillingManage,

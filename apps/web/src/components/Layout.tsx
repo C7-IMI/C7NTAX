@@ -14,7 +14,7 @@ import {
   AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio, Bot,
   MonitorSmartphone, Mail, KeyRound, Plug,
   Star, StarOff, Link2, AppWindow, SquareArrowOutUpRight, ChevronsUpDown, ChevronsDownUp, ChevronUp,
-  Terminal,
+  SquareTerminal,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
@@ -1138,19 +1138,22 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
           {/* Header toolbar */}
           <div className="hidden sm:flex items-center gap-1 shrink-0 ml-auto">
-            {/* Console — the command surface for C7NTAX (PLAN-028). The panel is a popup dialog;
-                the icon and the panel both disappear when the console is switched off
-                (Workspace → Command console, or CONSOLE_ENABLED=false). */}
+            {/* Console — the command surface for C7NTAX (PLAN-028). A labelled `SquareTerminal`: the bare
+                prompt glyph it used to carry read as an unlabelled decoration beside five labelled
+                neighbours, and a window-shaped terminal with the word under it says what it is. The icon
+                is not rendered at all without `console:use` — a control somebody may not use is not a
+                control to show them greyed out. */}
             {consoleEnabled && (
               <button
                 type="button"
                 onClick={() => setConsoleOpen(true)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors"
+                className="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-surface-lighter rounded-md transition-colors flex items-center gap-1.5"
                 title="Console (Ctrl/⌘ .)"
                 aria-label="Console"
                 data-testid="console-button"
               >
-                <Terminal size={16} />
+                <SquareTerminal size={15} />
+                <span>Console</span>
               </button>
             )}
             <button

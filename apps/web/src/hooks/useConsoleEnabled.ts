@@ -1,16 +1,28 @@
 import { useEffect, useState } from "react";
 import api from "../api";
+import { useAuth } from "./useAuth";
+import { Permission } from "@C7NTAX/shared";
 import { UI_CONSOLE } from "../lib/uiFlags";
 
 /**
- * The console is switched on and off from Workspace → Command console. The setting lives in the
- * shared `app_settings` row, so it applies to the whole deployment rather than to one browser, and the
- * API reads the same field (`CONSOLE_ENABLED` in the environment does the same job) to decide whether
- * to serve the command catalogue at all.
+ * May this person use the console?
  *
- * `c7_ui_console` (`UI_CONSOLE`) stays the per-browser kill switch, and a `VITE_UI_CONSOLE=false`
- * build removes the icon and the panel outright — the rollback PLAN-028 promises: nothing else in the
- * application changes when the console is off, because the console owns no other surface.
+ * Three gates, each answering a different question, and all three have to be open:
+ *
+ * 1. **`console:use`** — is this *person* allowed to? The permission, so it is granted per role and can be
+ *    added or removed for one individual in Users & Roles. The icon is not drawn without it: a control
+ *    somebody may not use is not a control to show them greyed out, and the API refuses the catalogue on
+ *    the same permission, so a hidden icon and a refused request are the same answer.
+ * 2. **The deployment switch** (Workspace → Command console, `CONSOLE_ENABLED`) — is it switched on
+ *    *here*? The API answers 404 when it is off, so the icon would open a panel that fails.
+ * 3. **`c7_ui_console`** (`VITE_UI_CONSOLE`) — the per-browser kill switch for someone whose account is
+ *    fine but who wants it gone, and the way a build can ship without it.
+ *
+ * A fourth gate exists on the server and not here: a **client** with the console turned off
+ * (`Company.consoleEnabled = false`) is answered by the API — the effective permission the session
+ * carries has `console:use` removed before `GET /users/me` returns it, so this hook sees a person who
+ * simply does not hold it. That keeps one rule in one place: the client's setting is applied where
+ * permissions are computed, not re-checked in the interface.
  */
 const APP_SETTINGS_CONFIG_KEY = "app_settings";
 
@@ -36,15 +48,17 @@ export function primeConsoleSetting(enabled: boolean): void {
 }
 
 /**
- * Resolves to the system setting, defaulting to on when it has never been set or the API cannot be
- * reached. The fallback never hides a working feature: a console that is unreachable will say so when
- * a command runs, which is a better failure than an icon that disappears.
+ * Resolves to whether the console should be offered, defaulting the *deployment* switch to on when it
+ * has never been set or the API cannot be reached. The permission is never defaulted: a session that
+ * cannot tell us what it holds is a session that does not get a command surface.
  */
 export function useConsoleEnabled(): boolean {
-  const [enabled, setEnabled] = useState(() => UI_CONSOLE && (cached ?? true));
+  const { permissions } = useAuth();
+  const allowed = permissions.includes(Permission.ConsoleUse);
+  const [enabled, setEnabled] = useState(() => UI_CONSOLE && allowed && (cached ?? true));
 
   useEffect(() => {
-    if (!UI_CONSOLE) { setEnabled(false); return; }
+    if (!UI_CONSOLE || !allowed) { setEnabled(false); return; }
     if (cached !== null) { setEnabled(cached); return; }
 
     let active = true;
@@ -57,7 +71,7 @@ export function useConsoleEnabled(): boolean {
     inflight.then((value) => { cached ??= value; onChange(cached); });
 
     return () => { subscribers.delete(onChange); };
-  }, []);
+  }, [allowed]);
 
   return enabled;
 }

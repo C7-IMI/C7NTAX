@@ -17,14 +17,22 @@ import {
   CONSOLE_GROUPS,
   CONSOLE_OWN_VERBS,
   CONSOLE_UNIVERSAL_FLAGS,
+  Permission,
   describeCommand,
   permittedCommands,
 } from "@C7NTAX/shared";
-import { authenticate, type AuthRequest } from "../middleware/auth";
+import { authenticate, requirePermission, type AuthRequest } from "../middleware/auth";
 import { configFlag } from "../services/appSettings";
 
 export const consoleRouter = Router();
-consoleRouter.use(authenticate);
+/*
+ * `console:use` is required, and it is the reason the icon can be absent rather than disabled: a control
+ * somebody may not use is not a control to show them greyed out, so the web decides whether to draw it
+ * from the same permission this route enforces. The permission grants no operation of its own — every
+ * command a caller receives still names a route that checks its own permission — so this is a gate on
+ * the catalogue, not a widening of anything behind it.
+ */
+consoleRouter.use(authenticate, requirePermission(Permission.ConsoleUse));
 
 /**
  * The catalogue is switched off with the console itself (Workspace → Command console, or
