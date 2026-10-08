@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.048 | Last Updated: 2026-10-08
+## Version: 2026.10.8.049 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,58 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.049 — One path to production: build on dev, promote to prod, and never a second build
+
+The Azure deployment package is now built around the path the work actually takes — **sync to GitHub → push to
+dev → push to production** — with production created up front as a second, independent environment rather than
+something assembled at cut-over. PLAN-016 §16 is the authoritative description; this is what changed in code.
+
+- **[New]** **An environment is created, not just deployed to.** `deploy-env.ps1 -Create` creates the resource
+  group and then the whole stack inside it. The resource group is the one thing Bicep cannot create — a
+  deployment is *scoped to* a group — so the first run of an environment needs the flag and nothing else does.
+  Both environments are created in order: `-Environment dev -Create`, then `-Environment prod -Create`.
+- **[New]** **`-PromoteFrom dev` makes a promotion a promotion.** The script reads the image tag back from what
+  dev is *running* (not from a branch or a sha in the working tree), so no commit dev has not run can reach
+  production, and nothing is built a second time. `-Yes` answers the production confirmation; the pipeline gets
+  the same guarantee from the `prod` GitHub environment's required reviewers.
+- **[Fix]** **Promotion copies the artifact; it used to reference dev's registry.** Each environment has its own
+  registry and a Container App can only pull a registry its own identity holds `AcrPull` on, so prod would have
+  been handed an image it could not pull. Promotion now copies dev's image into prod's registry with
+  `az acr import`, which moves the manifest and layers by digest — the same bytes, and prod stops depending on
+  dev's registry staying in place to keep serving.
+- **[Fix]** **The pipeline resolved dev's registry for prod.** `.github/workflows/deploy-azure.yml` asked
+  `rg-c7ntax-dev` for the registry regardless of the target, so a prod deploy would have pushed prod's revision
+  at an image in the wrong registry. The registry is now resolved per environment, and the job that used to be
+  "build and push" is "prepare the image": it decides between **build** (a push to `main`), **promote** (a prod
+  dispatch with no `image_tag` — the tag is read from dev's Container App) and **deploy a named tag** (a
+  rollback), then proves the tag is present in the target registry before anything else runs.
+- **[Fix]** **A deploy could silently rebuild and overwrite an existing tag.** `-ImageTag <old-tag>` without
+  `-SkipBuild` rebuilt the current commit *under the old tag's name*, which would have broken the one thing a
+  tag means: prod would be running something other than what was verified under that name. Naming a tag that
+  exists in the registry and does not match `HEAD` now stops the script with the two ways forward. The
+  documented rollback line carries `-SkipBuild`.
+- **[Fix]** **Five PowerShell scripts in the repository could not run at all.** Windows PowerShell 5.1 reads a
+  UTF-8 file with no BOM as CP1252, so an em dash inside a *double-quoted* string became `â€"` — and PowerShell
+  accepts that trailing U+201D as a string delimiter, ending the string early and failing to parse the file.
+  `deploy-env.ps1`, `startup/c7ntax-boot.ps1`, `startup/security-scanners.ps1`, `c7ntax-restart.ps1`,
+  `scripts/rollback-ui-p1.ps1`, `installer/outlook-addin/build.ps1` and `O365/New-C7NTAXMailboxApp.ps1` now
+  carry a UTF-8 BOM (honoured by both 5.1 and `pwsh`), and all ten scripts in the tree parse. Recorded in
+  PLAN-029 §5 because the class is not guarded: a script that gains a curly quote later breaks the same way.
+- **[Update]** **PLAN-016 brought in line with what was built.** §16 is new and is the environment model and
+  promotion path — what gets created, in what order, why promotion beats a second build, what the second
+  environment costs, and what is still to come (the sync-command classifier, the ingress module, DNS). §1's
+  port-based framing, §3's "two subscriptions or one", §6/§7's `deploy-env.sh`, §9's pipeline and §14's
+  subscription-topology decision were corrected to match, and `infra/README.md` now creates **both**
+  environments and documents the three-step loop.
+
+**Verified:** all ten `.ps1` files parse (`Parser::ParseFile`); `deploy-env.ps1 -WhatIf` runs end to end on
+three paths — dev build, prod promotion (showing `az acr import` from dev's registry into prod's), and a prod
+rollback with an explicit tag and `-SkipBuild` — each exiting 0; all four workflow files parse, with the build
+job's steps confirmed as login → resolve registry → decide → build/promote → verify. No deployment was possible:
+`az` is not installed on this machine, so the plan modes are the proof available locally.
 
 ---
 

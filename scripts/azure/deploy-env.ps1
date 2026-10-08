@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Builds the C7NTAX image, applies infrastructure, migrates the database and shifts
     traffic to the new revision for one environment (PLAN-016).
@@ -19,12 +19,48 @@
     If the health gate fails, traffic is never shifted and the previous revision keeps
     serving; the script prints the exact command to roll back the image.
 
+    THE PROMOTION PATH (PLAN-016 §1). Work happens on dev, and production receives what dev
+    has already proved:
+
+        1. sync to GitHub   work lands on main (commit + push)
+        2. push to dev      this script with -Environment dev (or the push-to-main workflow,
+                            which does the same thing)
+        3. push to prod     this script with -Environment prod -PromoteFrom dev — or the
+                            "Deploy to Azure" workflow dispatched with environment=prod,
+                            behind the `prod` GitHub environment's reviewers
+
+    -PromoteFrom dev is what makes step 3 a promotion rather than a second build: the tag is
+    read back from the running dev app, so the artifact production runs is byte-for-byte the
+    one dev verified. Nothing is rebuilt, and no commit that dev has not run can reach prod.
+
 .PARAMETER Environment
-    dev or prod. dev is deployed automatically by CI; prod only on an explicit sync.
+    dev or prod. dev is deployed automatically by CI; prod only on an explicit push.
 
 .PARAMETER ImageTag
     Image tag to deploy. Defaults to the short git commit sha, so a deploy is traceable to
-    a commit and the same tag can be used for dev and prod.
+    a commit and the same tag can be used for dev and prod. A tag that already exists in the
+    registry and does not match HEAD is never overwritten: the script stops and asks for
+    -SkipBuild, because rebuilding it would change what that tag refers to.
+
+.PARAMETER SkipBuild
+    Do not build an image — deploy one that already exists in the registry. Implied by
+    -PromoteFrom, and required to re-deploy or roll back to an existing tag.
+
+.PARAMETER PromoteFrom
+    Take the image tag from what this environment is *already running* instead of building a
+    new one — `-PromoteFrom dev` when pushing to production. Implies -SkipBuild. The image is
+    copied from that environment's registry into this one (each environment has its own), so
+    production still runs the exact digest dev verified.
+
+.PARAMETER Create
+    Create the resource group when it does not exist. Bicep creates everything inside it
+    (registry, PostgreSQL, Container Apps environment and app, Key Vault); the group itself
+    is the one thing it cannot create. Use it for the first deployment of an environment —
+    `-Create` on dev, then `-Create` on prod — and never afterwards.
+
+.PARAMETER Yes
+    Answer yes to the production confirmation. Required for a hand-run against prod; the
+    pipeline sets CI=true, which is treated as an already-deliberate action.
 
 .PARAMETER ResourceGroup
     Resource group to deploy into. Defaults to rg-c7ntax-<environment>.
@@ -39,18 +75,29 @@
     Print every command that would run without changing anything.
 
 .EXAMPLE
+    # First time, per environment: create it (secrets exported for this shell).
+    ./scripts/azure/deploy-env.ps1 -Environment dev  -Create
+    ./scripts/azure/deploy-env.ps1 -Environment prod -Create
+
+    # The everyday loop: dev from the working tree, then promote the same tag to prod.
     ./scripts/azure/deploy-env.ps1 -Environment dev
-    ./scripts/azure/deploy-env.ps1 -Environment prod -ImageTag $(git rev-parse --short HEAD)
+    ./scripts/azure/deploy-env.ps1 -Environment prod -PromoteFrom dev -Yes
+
+.EXAMPLE
     ./scripts/azure/deploy-env.ps1 -Environment prod -WhatIf
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][ValidateSet('dev', 'prod')][string]$Environment,
     [string]$ImageTag = '',
+    [ValidateSet('dev', 'prod')][string]$PromoteFrom = '',
+    [switch]$Create,
+    [switch]$Yes,
     [string]$ResourceGroup = '',
     [string]$Registry = '',
     [switch]$SkipInfrastructure,
     [switch]$SkipMigrations,
+    [switch]$SkipBuild,
     [switch]$WhatIf
 )
 
@@ -60,7 +107,34 @@ Set-StrictMode -Version Latest
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $appName = "c7ntax-$Environment"
 if (-not $ResourceGroup) { $ResourceGroup = "rg-c7ntax-$Environment" }
-if (-not $ImageTag) {
+# CI has already been through the environment's approval gate, so the confirmation below is
+# for a human at a keyboard and not for the pipeline.
+$inCi = [bool]$env:CI
+$location = if ($env:AZURE_LOCATION) { $env:AZURE_LOCATION } else { 'eastus2' }
+$sourceRegistry = ''
+$sourceImageTag = ''
+if ($PromoteFrom) { $SkipBuild = $true }
+
+# The promotion path, printed the way the operator said it: sync, dev, prod. Seeing which step
+# this run is makes "did I push that to production or only to dev?" a question the output answers.
+Write-Host "`nC7NTAX deploy — $Environment" -ForegroundColor White
+Write-Host '  sync to GitHub -> push to dev -> push to production' -ForegroundColor DarkGray
+if ($PromoteFrom) {
+    Write-Host "  this run: push to $Environment, promoting the tag $PromoteFrom is running" -ForegroundColor DarkGray
+} elseif ($Environment -eq 'dev') {
+    Write-Host '  this run: push to dev' -ForegroundColor DarkGray
+} else {
+    Write-Host '  this run: push to production' -ForegroundColor DarkGray
+}
+
+if ($Environment -eq 'prod' -and -not $Yes -and -not $inCi -and -not $WhatIf) {
+    # Prod is a deliberate action by design (PLAN-016 §1 step 3). The pipeline gets this from the
+    # `prod` GitHub environment's required reviewers; a human gets it from this question.
+    $answer = Read-Host "Push to PRODUCTION (rg-c7ntax-prod)? Type 'prod' to continue"
+    if ($answer -ne 'prod') { throw 'Production deploy cancelled. Nothing was changed.' }
+}
+
+if (-not $ImageTag -and -not $PromoteFrom) {
     $ImageTag = (git -C $repoRoot rev-parse --short HEAD 2>$null)
     if (-not $ImageTag) { throw 'Could not derive an image tag from git; pass -ImageTag explicitly.' }
 }
@@ -97,24 +171,58 @@ if (-not $azAvailable) {
     if (-not $WhatIf) { throw 'Azure CLI (az) is not installed. Install it (https://aka.ms/azure-cli) or run with -WhatIf to preview the plan.' }
     Write-Info 'az is not installed: showing the plan with placeholder values'
 }
+    if ($WhatIf -and $Create) {
+        # The one action a first run takes that a later run must not, so the dry run says it
+        # whether or not the CLI is installed.
+        Write-Info "would create the resource group $ResourceGroup in $location if it does not exist"
+    }
 if ($azAvailable) {
     $account = Invoke-Az @('account', 'show', '--query', 'name', '-o', 'tsv')
     if ($account) { Write-Info "subscription: $account" }
     if (-not $WhatIf) {
-        $rgExists = & az group exists --name $ResourceGroup
-        if ($rgExists -ne 'true') { throw "Resource group $ResourceGroup does not exist. Create it, or pass -ResourceGroup." }
+        $rgExists = (& az group exists --name $ResourceGroup)
+        if ($rgExists -ne 'true') {
+            # The resource group is the one thing Bicep cannot create - it is the thing a
+            # deployment is scoped *to*. So creating an environment is `-Create` once, and
+            # everything inside it (registry, PostgreSQL, Container Apps environment and app,
+            # Key Vault, the role assignments) comes from the template in the same run.
+            # There are two of these to make: dev and prod, each with its own group.
+            if (-not $Create) {
+                throw "Resource group $ResourceGroup does not exist. Run with -Create to create it (the first deployment of an environment), or pass -ResourceGroup for a different one."
+            }
+            Write-Step "Creating resource group $ResourceGroup"
+            Invoke-Az @('group', 'create', '--name', $ResourceGroup, '--location', $location, '--tags', 'project=c7ntax', "environment=$Environment") | Out-Null
+            Write-Info "created $ResourceGroup in $location"
+        }
     }
 }
-if (-not $Registry) {
-    if ($azAvailable) {
-        $Registry = (& az acr list --resource-group $ResourceGroup --query "[0].name" -o tsv 2>$null)
-    }
-    if (-not $Registry) {
-        if (-not $WhatIf) { throw 'No container registry found in the resource group; pass -Registry.' }
-        $Registry = '<registry>'
+
+if ($PromoteFrom) {
+    # Promotion reads the tag back from the environment that already proved it, so production
+    # cannot receive a commit dev has not run — and nothing is built a second time.
+    Write-Step "Promotion source ($PromoteFrom)"
+    $sourceApp = "c7ntax-$PromoteFrom"
+    $sourceRg = "rg-c7ntax-$PromoteFrom"
+    if ($WhatIf) {
+        Write-Info "would read the image tag running on $sourceApp in $sourceRg"
+        if (-not $ImageTag) { $ImageTag = '<tag-from-dev>' }
+        $sourceRegistry = '<source-registry>'
+    } else {
+        $sourceImage = (& az containerapp show --name $sourceApp --resource-group $sourceRg --query "properties.template.containers[0].image" -o tsv 2>$null)
+        if (-not $sourceImage) { throw "Could not read the running image for $sourceApp in $sourceRg. Deploy $PromoteFrom first — production only receives what dev has verified." }
+        $sourceTag = ($sourceImage -split ':')[-1]
+        $sourceRegistry = (& az acr list --resource-group $sourceRg --query "[0].name" -o tsv 2>$null)
+        if (-not $sourceRegistry) { throw "No container registry found in $sourceRg; cannot promote from $PromoteFrom." }
+        Write-Info "$sourceApp is running $sourceTag, from registry $sourceRegistry"
+        # An explicit -ImageTag wins, because somebody asking for a particular tag has a reason;
+        # it is reported rather than silently obeyed.
+        if ($ImageTag -and $ImageTag -ne $sourceTag) {
+            Write-Info "note: -ImageTag $ImageTag overrides the tag $PromoteFrom is running ($sourceTag)"
+        } else {
+            $ImageTag = $sourceTag
+        }
     }
 }
-Write-Info "registry: $Registry"
 
 if (-not $SkipInfrastructure) {
     Write-Step 'Infrastructure (Bicep)'
@@ -134,10 +242,59 @@ if (-not $SkipInfrastructure) {
         '--parameters', "imageTag=$ImageTag", "postgresAdminPassword=$env:PG_ADMIN_PASSWORD", "jwtSecret=$env:JWT_SECRET_VALUE", "kumoMasterKey=$env:KUMO_MASTER_KEY_VALUE") | Out-Null
 }
 
+Write-Step 'Registry'
+# Resolved after the infrastructure step, because on the first run of an environment the
+# registry is one of the things the Bicep deployment creates. Each environment has its own,
+# so an app only ever pulls from a registry its own identity has AcrPull on.
+if (-not $Registry) {
+    if ($WhatIf) {
+        # Nothing is inspected under -WhatIf: the CLI may not even be installed, and that is
+        # the point of a dry run.
+        $Registry = '<registry>'
+    } elseif ($azAvailable) {
+        $Registry = (& az acr list --resource-group $ResourceGroup --query "[0].name" -o tsv 2>$null)
+        if (-not $Registry) { throw "No container registry found in $ResourceGroup; pass -Registry." }
+    }
+}
+Write-Info "registry: $Registry"
+
 Write-Step 'Image'
 $image = "$Registry.azurecr.io/c7ntax:$ImageTag"
-Invoke-Az @('acr', 'build', '--registry', $Registry, '--image', "c7ntax:$ImageTag", $repoRoot) | Out-Null
-Write-Info "built and pushed $image"
+if ($SkipBuild) {
+    # Promotion and re-deploys must not rebuild: a second build of the same commit is a
+    # *different* image, which would quietly break the guarantee that prod runs what dev ran.
+    if ($PromoteFrom -and $sourceRegistry -and $sourceRegistry -ne $Registry) {
+        # The two environments have their own registries and an app can only pull the registry
+        # its identity holds AcrPull on, so the artifact is copied rather than referenced.
+        # acr import moves the manifest and its layers by digest: still byte-for-byte the
+        # artifact dev verified, and prod stops depending on dev's registry staying put.
+        Write-Info "importing $ImageTag from $sourceRegistry into $Registry"
+        Invoke-Az @('acr', 'import', '--name', $Registry,
+            '--source', "$sourceRegistry.azurecr.io/c7ntax:$ImageTag",
+            '--image', "c7ntax:$ImageTag") | Out-Null
+    }
+    Write-Info "using the existing image $image (no build)"
+    if (-not $WhatIf) {
+        $exists = (& az acr repository show-tags --name $Registry --repository c7ntax --query "[?@=='$ImageTag'] | [0]" -o tsv 2>$null)
+        if (-not $exists) {
+            $hint = if ($PromoteFrom) { "Deploy that tag to $PromoteFrom first, or pass an -ImageTag that exists." } else { 'Drop -SkipBuild to build it, or pass an -ImageTag that exists.' }
+            throw "Image c7ntax:$ImageTag is not in $Registry. $hint"
+        }
+    }
+} else {
+    if (-not $WhatIf -and $azAvailable) {
+        # Overwriting a tag that already names a different commit destroys the meaning of the
+        # tag — prod would be running something other than what dev verified under that name.
+        # Building the current commit is what a build is for, so that case is allowed; anything
+        # else is a rollback or a re-deploy that forgot -SkipBuild.
+        $existing = (& az acr repository show-tags --name $Registry --repository c7ntax --query "[?@=='$ImageTag'] | [0]" -o tsv 2>$null)
+        if ($existing -and $ImageTag -ne (git -C $repoRoot rev-parse --short HEAD 2>$null)) {
+            throw "c7ntax:$ImageTag already exists in $Registry and does not match HEAD. Pass -SkipBuild to deploy that existing image, or choose a tag that does not exist yet."
+        }
+    }
+    Invoke-Az @('acr', 'build', '--registry', $Registry, '--image', "c7ntax:$ImageTag", $repoRoot) | Out-Null
+    Write-Info "built and pushed $image"
+}
 
 if (-not $SkipMigrations) {
     Write-Step 'Database migration'
@@ -201,4 +358,9 @@ else {
     }
     Write-Host "`n$Environment deployed: https://$fqdn (revision $revisionSuffix, image $ImageTag)" -ForegroundColor Green
     Write-Host "Rollback: az containerapp ingress traffic set --name $appName --resource-group $ResourceGroup --revision <previous-revision> --weight 100" -ForegroundColor Yellow
+    if ($Environment -eq 'dev') {
+        Write-Host "Next step in the path: ./scripts/azure/deploy-env.ps1 -Environment prod -PromoteFrom dev -Yes" -ForegroundColor DarkGray
+    } else {
+        Write-Host "Production is running $ImageTag — the tag dev was verified on." -ForegroundColor DarkGray
+    }
 }

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Builds the Windows installer for the C7NTAX Outlook add-in.
 

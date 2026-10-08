@@ -9,6 +9,18 @@ name: Deploy to Azure
 #   · both environments go through the same ordered pipeline (image → schema → revision →
 #     health gate → traffic), so a failed health check leaves the running revision serving
 #
+# The path is sync → dev → prod, and the pipeline enforces the middle step:
+#
+#   · a push to main **builds** the image (the tag is the commit sha) and deploys it to dev
+#   · a manual dispatch for prod, with no image_tag, **promotes what dev is running** — the
+#     tag is read back from dev's Container App and the image is copied from dev's registry
+#     into prod's, so production only ever receives an artifact dev has already served, and
+#     nothing is built twice
+#   · a dispatch with an explicit image_tag deploys that tag without building, which is how
+#     a rollback is done
+#
+# Each environment has its own registry, so the registry is resolved per environment.
+#
 # Authentication is OIDC federated credentials — there is no publish profile or client
 # secret stored in the repository. See infra/README.md for the one-time setup.
 on:
@@ -26,7 +38,7 @@ on:
         type: choice
         options: [dev, prod]
       image_tag:
-        description: 'Image tag to deploy (defaults to the commit sha)'
+        description: 'Deploy this tag instead of building or promoting (leave empty to build on dev, or to promote the tag dev is running)'
         required: false
         type: string
 
@@ -43,24 +55,15 @@ env:
 
 jobs:
   build:
-    name: Build and push image
+    name: Prepare the image
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
-      registry: ${{ steps.login.outputs.registry }}
+      registry: ${{ steps.registry.outputs.server }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - id: tag
-        name: Derive the image tag
-        run: |
-          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            echo "tag=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -69,17 +72,82 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - id: login
-        name: Resolve the registry
+      # Login comes first because promotion has to read the running dev app, and the registry
+      # is the *target* environment's: each environment has its own, and a Container App can
+      # only pull a registry its own identity holds AcrPull on.
+      - id: registry
+        name: Resolve the target environment's registry
         run: |
-          registry=$(az acr list --resource-group "${{ env.RESOURCE_GROUP_DEV }}" --query "[0].loginServer" -o tsv)
-          echo "registry=$registry" >> "$GITHUB_OUTPUT"
+          environment="${{ github.event.inputs.environment || 'dev' }}"
+          server=$(az acr list --resource-group "rg-c7ntax-${environment}" --query "[0].loginServer" -o tsv)
+          if [ -z "$server" ]; then
+            echo "::error::no container registry in rg-c7ntax-${environment}: that environment has to be created before it can be deployed to"
+            exit 1
+          fi
+          echo "server=$server" >> "$GITHUB_OUTPUT"
+          echo "name=${server%%.*}" >> "$GITHUB_OUTPUT"
+          echo "registry: $server"
+
+      - id: tag
+        name: Decide what runs — build, promote, or a named tag
+        run: |
+          set -euo pipefail
+          environment="${{ github.event.inputs.environment || 'dev' }}"
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            # An explicit tag is a deliberate act — re-deploying something already verified, or
+            # rolling back. It is never rebuilt.
+            tag="${{ github.event.inputs.image_tag }}"
+            action=deploy
+          elif [ "$environment" = "prod" ]; then
+            # Push to production: deploy the tag dev is already serving, so no commit that dev
+            # has not run can reach prod.
+            image=$(az containerapp show --name c7ntax-dev --resource-group "${{ env.RESOURCE_GROUP_DEV }}" \
+              --query "properties.template.containers[0].image" -o tsv)
+            if [ -z "$image" ]; then
+              echo "::error::dev is not running an image, so there is nothing to promote — deploy dev first"
+              exit 1
+            fi
+            tag="${image##*:}"
+            action=promote
+          else
+            tag="$(git rev-parse --short HEAD)"
+            action=build
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "action=$action" >> "$GITHUB_OUTPUT"
+          echo "### ${action}: c7ntax:${tag}" >> "$GITHUB_STEP_SUMMARY"
 
       # The image is built once and promoted unchanged: the artifact dev verified is the
       # artifact prod runs, which is the whole point of the dev/prod split.
       - name: Build and push
+        if: steps.tag.outputs.action == 'build'
         run: |
-          az acr build --registry "${REGISTRY%%.*}" --image "c7ntax:${{ steps.tag.outputs.tag }}" .
+          az acr build --registry "${{ steps.registry.outputs.name }}" --image "c7ntax:${{ steps.tag.outputs.tag }}" .
+
+      - name: Copy the artifact from dev (promotion)
+        if: steps.tag.outputs.action == 'promote'
+        run: |
+          source=$(az acr list --resource-group "${{ env.RESOURCE_GROUP_DEV }}" --query "[0].loginServer" -o tsv)
+          target="${{ steps.registry.outputs.server }}"
+          if [ "$source" = "$target" ]; then
+            echo "dev and prod share the registry $source; nothing to copy"
+          else
+            # Import carries the manifest and its layers by digest, so prod still runs exactly
+            # what dev verified — and prod does not depend on dev's registry to keep serving.
+            az acr import --name "${{ steps.registry.outputs.name }}" \
+              --source "${source}/c7ntax:${{ steps.tag.outputs.tag }}" \
+              --image "c7ntax:${{ steps.tag.outputs.tag }}" --only-show-errors
+            echo "copied c7ntax:${{ steps.tag.outputs.tag }} from $source to $target"
+          fi
+
+      - name: Verify the image is in the target registry
+        run: |
+          found=$(az acr repository show-tags --name "${{ steps.registry.outputs.name }}" \
+            --repository c7ntax --query "[?@=='${{ steps.tag.outputs.tag }}'] | [0]" -o tsv)
+          if [ "$found" != "${{ steps.tag.outputs.tag }}" ]; then
+            echo "::error::c7ntax:${{ steps.tag.outputs.tag }} is not in ${{ steps.registry.outputs.server }}"
+            exit 1
+          fi
 
   migrate:
     name: Apply schema (${{ github.event.inputs.environment || 'dev' }})

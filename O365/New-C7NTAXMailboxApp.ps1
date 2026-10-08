@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Creates the Entra ID (Azure AD) app registration that the C7NTAX Microsoft 365 email connector
   needs, and grants it admin consent.

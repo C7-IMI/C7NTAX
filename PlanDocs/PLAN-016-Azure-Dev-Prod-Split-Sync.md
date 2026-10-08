@@ -7,9 +7,9 @@
 
 > **Sequence:** Wave 3 · position 6 of 12 (re-sequenced 2026-10-06) · **Status:** 🟡 Packaged and validated — no deployment yet (no subscription attached). §15 recommends Azure; the final call is still the operator's.
 > **Implemented:** the deployment package now exists in-repo — `Dockerfile` + `.dockerignore` (one image serving the API and the built SPA from one origin), `infra/main.bicep` with `params/{dev,prod}.bicepparam` (VNet, NSG, Log Analytics, Key Vault + secrets, ACR, VNet-injected PostgreSQL Flexible Server, Container Apps environment and app, AcrPull/Key Vault role assignments), `infra/env/.env.production.example` (every variable the API reads), `scripts/azure/preflight.mjs`, `scripts/azure/deploy-env.ps1`, `scripts/azure/validate-bicep.mjs`, `.github/workflows/deploy-azure.yml`, `.github/workflows/security.yml`, and the Prisma migration baseline (`apps/api/prisma/migrations/0_init`) that makes `prisma migrate deploy` possible at all.
-> **Outstanding:** create the subscription-side objects (resource groups, deploy identity with federated credentials and role assignments, GitHub environments), run the first deployment, and add the ingress module (Application Gateway v2 with the two listeners, then Front Door Premium + WAF + DDoS Standard) before production goes live. The runbook in `infra/README.md` lists these in order with the exact commands.
+> **Outstanding:** create the subscription-side objects (resource groups, deploy identity with federated credentials and role assignments, GitHub environments), run the first deployment of **both** environments, and add the ingress module (Application Gateway v2 with the two listeners, then Front Door Premium + WAF + DDoS Standard) before production goes live. The runbook in `infra/README.md` lists these in order with the exact commands; §16 is the environment model and the promotion path the package now implements.
 > **Depends on:** nothing in the repository — PLAN-018 (Wave 0) is complete, which is the security prerequisite this plan assumed. **Unblocks:** PLAN-007's AV/CF/OR controls, PLAN-011's hosting/AI services, PLAN-005's update feed.
-> **Next action:** run `node scripts/azure/preflight.mjs`, then `./scripts/azure/deploy-env.ps1 -Environment dev -WhatIf` against a real subscription, and review the `what-if` output before applying.
+> **Next action:** run `node scripts/azure/preflight.mjs`, then `./scripts/azure/deploy-env.ps1 -Environment dev -WhatIf` against a real subscription, and review the `what-if` output before applying. Create the two environments in this order: `-Environment dev -Create`, then `-Environment prod -Create`; from then on dev is the working environment and prod is fed by `-Environment prod -PromoteFrom dev -Yes` (§16).
 >
 > **HARD STOP — everything from here needs your subscription.** No `az` or `bicep` CLI is available in this environment, no subscription is attached, and no DNS zone or certificate is under our control. The first deployment, the resource groups, the deploy identity with federated credentials, the GitHub environments and the ingress module (Application Gateway v2, then Front Door + WAF) are all blocked on that. Writing more Bicep without a way to compile it (`bicep build`) would be unverifiable text, which is worse than a plan.
 >
@@ -43,10 +43,30 @@
 
 Split the current single-server setup into two Azure environments:
 
-- **Dev** — the existing environment where all future changes are made.
-- **Prod** — a new production deployment running **alongside dev**, reachable on a
-  **different port** so production can be verified by refreshing the browser
-  after pushing changes.
+- **Dev** — the existing environment where all future changes are made. Every
+  change lands here first and stays here.
+- **Prod** — a second environment **created up front**, alongside dev, in its own
+  resource group with its own registry, database and Container App, so production
+  can be verified by refreshing the browser after a promotion. Work does not stop
+  on dev: dev remains the environment under change and the one under test.
+
+**The path every change takes: sync to GitHub → push to dev → push to production.**
+
+```
+   work on the dev server
+            │  commit + push
+            ▼
+   GitHub  main  ──────────────►  build image + deploy dev   (automatic)
+            │                               │
+            │                               │  dev is verified here
+            ▼                               ▼
+   "Push to Prod" / Go Live  ──────►  promote the tag dev is running
+   (GitHub environment approval)      to prod, behind the `prod` gate
+```
+
+- Nothing reaches production that dev has not already run, and nothing is built
+  twice. **§16** is the authoritative description of the two environments, the
+  promotion mechanism and the commands.
 
 **Sync semantics (agent-layer rule, enforced on every future message — identical to PLAN-010):**
 
@@ -105,12 +125,17 @@ Split the current single-server setup into two Azure environments:
 
 ## 3. Environment assumptions
 
-- Both environments live in Azure. Recommended topology: **two subscriptions**
-  (`c7ntax-dev`, `c7ntax-prod`) or one subscription with separate resource
-  groups and strict RBAC — dev identities cannot touch prod resources.
+- Both environments live in Azure, each with **its own resource group**
+  (`rg-c7ntax-dev`, `rg-c7ntax-prod`) and its own registry, database, Key Vault and
+  Container App — so a dev identity cannot reach a prod resource. The package is
+  built for **one subscription with two resource groups** (settled by the
+  implementation: `infra/params/dev.bicepparam` and `prod.bicepparam` are two
+  parameterisations of one `main.bicep`); a second subscription would be a change
+  of parameters, not of design, if the isolation bar rises.
 - The current local dev environment can push changes to **both** the Azure dev
   and Azure production deployments (via `az` CLI / OIDC federated credential —
-  see §6).
+  see §6), but it does so in one direction and in one order: **dev first, then
+  prod** (§16).
 - Region pairing: primary `eastus2`, secondary `centralus` (example; confirm in
   §13.5).
 
@@ -122,8 +147,10 @@ Split the current single-server setup into two Azure environments:
   `seed-service-alerts.ts`), JWT 12h tokens (15-min when
   `AUTH_HARDENING_ENABLED=true`), gzip middleware, service-alert monitor
   (5-min), snapshot poller, PlanDocs registry.
-- No Azure artifacts exist yet. The SOC 2 controls in PLAN-007 (`SOC2.Compliance.md`)
-  are cloud-agnostic in intent and map to the Azure services in §2 and §11.
+- **No Azure artifacts exist yet** — the package is written, compiled and
+  reviewed, but nothing has been deployed (§ header). The SOC 2 controls in
+  PLAN-007 (`SOC2.Compliance.md`) are cloud-agnostic in intent and map to the
+  Azure services in §2 and §11.
 
 ## 5. Proposed architecture
 
@@ -156,7 +183,10 @@ Local dev (Win) ──az CLI / azure deploy script (OIDC)──▶ Azure (VNet, 
   snapshot seed process.
 - **CI/CD:** GitHub Actions: on push → build image → ACR → deploy **dev**
   automatically (new Container Apps revision). **Prod deploys only via the sync
-  command.**
+  command** — and that deployment *promotes the tag dev is running* rather than
+  building: the tag is read back from dev's Container App and the image is copied
+  from dev's registry into prod's, so production runs the exact digest dev
+  verified (§16).
 - **LLM / inference (custom, containerized):** the API's inference path already
   targets OpenAI-compatible endpoints (`INFERENCE_MODEL` override exists).
   Plan: containerize inference with **vLLM** or **Hugging Face TGI** on an ACA
@@ -184,27 +214,35 @@ Local dev (Win) ──az CLI / azure deploy script (OIDC)──▶ Azure (VNet, 
 
 ## 6. Local → Azure push tooling
 
-- `scripts/azure/deploy-env.sh <dev|prod>`: reads env config, tags the image,
-  calls `az acr build` / `docker push`, then
-  `az containerapp update --name c7ntax-<env> --image <acr>/c7ntax:<tag>
-  --revision-suffix <git-sha>`, waits for the revision to become healthy,
-  shifts traffic to the new revision, and prints the health result.
+- `scripts/azure/deploy-env.ps1 -Environment <dev|prod>`: parses the repository
+  (preflight), applies the Bicep deployment, then either builds the image
+  (`az acr build`, tagged with the short commit sha) or — with `-PromoteFrom dev`
+  — copies the image dev is running into this environment's registry. It then runs
+  `prisma migrate deploy` as a one-shot Container Apps job from that same image,
+  creates a new revision at 0% traffic, waits for it to be healthy, shifts traffic
+  to it, and prints the health result plus the rollback command. `-WhatIf` prints
+  every command without running any; `-Create` creates the resource group, which is
+  the one thing Bicep cannot create and therefore the first run of an environment
+  (§16).
+- Promotion is `-Environment prod -PromoteFrom dev`: prod takes its image tag from
+  what dev is already serving, so a commit dev has not run cannot reach production.
 - Local machine: Azure CLI (`az`) authenticated via **workload identity
   federation / OIDC** (GitHub Actions) or a dedicated service principal with a
-  role assignment limited to `AcrPush`, `Container Apps Contributor` (scoped to
-  the two apps), and `Key Vault Secrets User` (dev + prod scoped).
+  role assignment limited to `AcrPush` (both registries, so a promotion can copy
+  across them), `Container Apps Contributor` (scoped to the two apps), and
+  `Key Vault Secrets User` (dev + prod scoped).
 - Both environments reachable from local; prod verification is a browser
-  refresh against the prod App Gateway port.
+  refresh against the prod endpoint.
 
 ## 7. Implementation phases (dependency-ordered — prerequisites first)
 
 | # | Item | Depends on | Risk if prerequisite is skipped |
 |---|---|---|---|
-| 1 | **Base infrastructure (IaC):** Bicep/Terraform — resource groups, VNet, public/private subnets, NAT Gateway, NSGs, private DNS zones | — (no prerequisites) | Everything below fails; no VNet = no resources. |
+| 1 | **Base infrastructure (IaC):** Bicep/Terraform — **both resource groups** (`rg-c7ntax-dev` and `rg-c7ntax-prod`, created by `deploy-env.ps1 -Create` since Bicep cannot create the group it is scoped to), VNet, public/private subnets, NAT Gateway, NSGs, private DNS zones | — (no prerequisites) | Everything below fails; no VNet = no resources. |
 | 2 | **Databases:** PostgreSQL Flexible Server `c7ntax-dev` (Burstable, single-zone) + `c7ntax-prod` (General Purpose, zone-redundant HA + backups + PITR + geo-backup, private subnet), Key Vault secrets (`DATABASE_URL` per env, `JWT_SECRET`, `KUMO_MASTER_KEY`) | #1 | Apps can't boot (no DB), and schema/seed phases (#6) have nowhere to apply. |
 | 3 | **Registry & CI:** ACR repository + GitHub Actions workflow (`azure/login` OIDC; build image, push, deploy dev automatically) | #1, #2 (env vars for connection strings come from Key Vault) | No image pipeline; dev can't be deployed automatically and #4 has no image to run. |
 | 4 | **Compute & ingress:** Container Apps environments + apps `c7ntax-dev` / `c7ntax-prod` (system-assigned managed identity; ACR pull + Key Vault references), Application Gateway v2 with two listeners (dev `:3010`, prod `:3011`); Front Door Premium in front (443) for prod once decided | #1–#3 | Port-based prod verification is impossible; prod has no runtime to verify. |
-| 5 | **Local push tooling:** `scripts/azure/deploy-env.sh` + deploy identity/RBAC, verified against both envs | #4 | No safe path from local to Azure; manual portal deploys are error-prone. |
+| 5 | **Local push tooling:** `scripts/azure/deploy-env.ps1` (with `-PromoteFrom`) + deploy identity/RBAC, verified against both envs | #4 | No safe path from local to Azure; manual portal deploys are error-prone. |
 | 6 | **Schema & data sync:** `prisma migrate deploy` into prod + snapshot reseed pipeline (optional flag), prod seed guards (no `--accept-data-loss`) | #2, #4 | Prod schema drifts from dev → runtime Prisma errors (e.g. missing tables/columns) after sync. |
 | 7 | **Sync-command handler:** agent-layer message classifier (standalone trigger vs negated/longer sentences) + pipeline orchestration script | #5, #6 | Syncs can't be triggered, or worse: incidental sentences trigger prod deploys. |
 | 8 | **Prod hardening:** WAF policy (Front Door + App Gateway), Key Vault customer-managed keys / Managed HSM (PLAN-007 SC-02), prod JWT secret rotation, demo-reseed endpoints disabled, rate limits, Azure Monitor + diagnostic settings to immutable Blob | #4 (prod exists) | Prod inherits dev-grade controls; data loss/abuse risk per PLAN-007 SC-12/PI-03. |
@@ -232,18 +270,27 @@ Classifier rules: message trimmed of punctuation must equal a trigger phrase
 
 ## 9. Sync pipeline (dev → prod), run only on a valid sync command
 
-1. **Pre-flight on dev:** `verify-post-change.ts` + boot health checks green.
-2. **Code sync:** build the tagged image in ACR from the current dev tree.
-3. **Schema sync:** `prisma migrate deploy` against prod Postgres (migrations
-   only — never `db push --accept-data-loss` in prod).
+1. **Pre-flight on dev:** `verify-post-change.ts` + boot health checks green, then
+   `node scripts/azure/preflight.mjs` (lockfile, migrations, env contract, route
+   guards, advisories, non-root image).
+2. **Promote the artifact, do not rebuild it:** read the tag dev is serving from
+   dev's Container App and copy that image from dev's registry into prod's
+   (`az acr import`, or `az acr build` on a dev deploy). A second build of the same
+   commit is a *different* image, which would quietly break the guarantee that prod
+   runs what dev ran.
+3. **Schema sync:** `prisma migrate deploy` against prod Postgres, run as a
+   one-shot Container Apps job from the same image (migrations only — never
+   `db push --accept-data-loss` in prod).
 4. **Data sync (optional flag):** snapshot-based reseed of sample data into
    prod using the defined process (`seed-from-snapshots.ts` +
    `seed-service-alerts.ts`); skipped when the sync command doesn't ask for
    data.
-5. **Deploy:** create a new Container Apps revision
-   (`az containerapp update --revision-suffix <sha>`) and shift 100% traffic to
-   it (single-revision mode; blue/green via multi-revision when required).
-6. **Verify:** health + login + frontend HTTP 200 on the **prod port**; record
+5. **Deploy:** create a new Container Apps revision at **0% traffic**
+   (`az containerapp update --revision-suffix <env>-<tag>`, multi-revision mode),
+   wait for it to report `Healthy`, then shift 100% traffic to it. Because traffic
+   moves last, a revision that fails its health gate leaves the previous one
+   serving.
+6. **Verify:** health + login + frontend HTTP 200 on the **prod endpoint**; record
    the result.
 7. **Log:** BuildNotes entry + Retrace prompt entry + audit trail (per the
    mandatory changelog policy).
@@ -324,8 +371,8 @@ services per §2.
   "serverless AWS packaging / OpenTofu CI/CD / dev=prod" items apply here as
   "Container Apps / Bicep-or-Terraform / dev-prod split".
 - **Tooling:** Bicep (or Terraform `azurerm`) for IaC; GitHub Actions with
-  `azure/login` OIDC for CI; `deploy-env.sh` for local pushes; Container Apps
-  revisions for blue/green.
+  `azure/login` OIDC for CI; `deploy-env.ps1` (with `-PromoteFrom`) for local
+  pushes; Container Apps revisions for blue/green.
 
 ## 14. Open decisions to confirm before implementation
 
@@ -343,7 +390,10 @@ services per §2.
 5. **Regions:** primary region (must support zone-redundant HA) and its paired
    region for geo-redundant backups.
 6. **Subscription topology:** two subscriptions (strongest isolation) vs one
-   subscription with separate resource groups + RBAC.
+   subscription with separate resource groups + RBAC. **Settled by the
+   implementation (§3): one subscription, two resource groups** — `dev` and `prod`
+   are two parameterisations of `infra/main.bicep`, with the deploy identity scoped
+   to those two groups only. Revisit only if the isolation requirement rises.
 7. **Data sync scope:** code-only syncs by default vs data+code when the command
    says "with data".
 8. **Tenancy model (decide BEFORE SC-02 envelope-encryption migration):**
@@ -384,3 +434,121 @@ Comparing this plan (PLAN-016, Azure), PLAN-010 (AWS), PLAN-007 (SOC 2), PLAN-01
 | Existing AWS depth/credits, or Bedrock priority, or Azure OpenAI access blocked | **AWS** |
 
 **Implementation note:** the application code impact is near-zero either way — there are no cloud SDK dependencies (`@aws-sdk/*`, `@azure/*` are absent; adapters are plain HTTP) and the stack (Node/Express + Prisma + PostgreSQL API, React SPA, Electron desktop) is portable across ECS, Container Apps, or AKS. The migration is infrastructure, identity, and operations — not a rewrite. Both plans remain plan-only until this decision is made.
+
+---
+
+## 16. The two environments and the promotion path
+
+**Added 2026-10-08.** This is the authoritative description of what gets created
+in the subscription and how a change travels. It supersedes the port-based framing
+in §1 and the `deploy-env.sh` references in §6/§7 for everything already built.
+
+### 16.1 Two environments, created up front, each self-contained
+
+Both environments are Azure-side objects created in the same subscription. Each is
+its own resource group, and the Bicep template (`infra/main.bicep`, parameterised by
+`infra/params/dev.bicepparam` and `infra/params/prod.bicepparam`) creates a complete,
+independent stack inside it. Nothing is shared between them except the pipeline that
+deploys them and the deploy identity that holds rights on both.
+
+| | Dev | Prod |
+|---|---|---|
+| Resource group | `rg-c7ntax-dev` | `rg-c7ntax-prod` |
+| Container App | `c7ntax-dev` | `c7ntax-prod` |
+| Container Apps environment | `aca-c7ntax-dev` | `aca-c7ntax-prod` |
+| Registry | own ACR (`acrc7ntaxdev<suffix>`) | own ACR (`acrc7ntaxprod<suffix>`) |
+| Database | PostgreSQL Flexible Server, Burstable, single-zone, 7-day backup | PostgreSQL Flexible Server, General Purpose, zone-redundant HA, 30-day backup + geo-redundant copies |
+| Secrets | its own Key Vault | its own Key Vault |
+| Scaling | small | `minReplicas 2`, `maxReplicas 10` |
+| Who deploys it | every push to `main`, automatically | only a deliberate "Push to Prod" |
+
+**Dev is where work continues.** Every future change is made and verified on dev.
+Dev is not a staging copy of prod; it is the environment the product is developed in,
+and it always matches `main`.
+
+**Prod is fed, never edited.** No work is done directly against prod. It receives
+one thing: an artifact dev has already been running.
+
+The two resource groups are created once, in this order, at initial setup —
+
+```powershell
+./scripts/azure/deploy-env.ps1 -Environment dev  -Create   # creates rg-c7ntax-dev  + its stack
+./scripts/azure/deploy-env.ps1 -Environment prod -Create   # creates rg-c7ntax-prod + its stack
+```
+
+— because the resource group is the one thing Bicep cannot create: a deployment is
+*scoped to* a group, so the group has to exist first. `-Create` creates just the
+group, tags it `project=c7ntax environment=<env>`, and then the same run deploys
+everything inside it (registry, database, Key Vault, Container Apps environment and
+app, role assignments). It is safe to leave off afterwards; without it, the script
+stops and tells you the group is missing rather than creating one by accident.
+
+### 16.2 The path: sync to GitHub → push to dev → push to production
+
+```
+ work on dev  ──commit + push──▶  GitHub main  ──▶  build c7ntax:<sha> → deploy dev
+                                        │                    │
+                                        │                    └─ dev verified here
+                                        ▼
+                             "Push to Prod" (manual, approved)
+                                        │
+                                        ▼
+                    promote c7ntax:<sha> → copy into prod's registry → deploy prod
+```
+
+1. **Sync to GitHub.** Work done on the dev server is committed and pushed to
+   `main`. This is the only source of truth; nothing is deployed from a working
+   tree that is not committed.
+2. **Push to dev.** A push to `main` builds the image tagged with the short commit
+   sha and deploys it to dev automatically, through the same ordered pipeline used
+   everywhere else: image → schema → revision at 0% traffic → health gate → traffic
+   shift. A failed gate leaves the previous revision serving.
+3. **Push to production.** A manual dispatch of the *Deploy to Azure* workflow with
+   `environment=prod` — behind the `prod` GitHub environment's required reviewers —
+   promotes the tag dev is running. Prod takes **no** tag of its own.
+
+### 16.3 Why promotion and not a second build
+
+Prod deploys **the tag dev is running**, read back from dev's Container App, and the
+image is copied from dev's registry into prod's. Two consequences worth stating
+plainly:
+
+- **Production cannot receive a commit dev has not run.** There is no way to dispatch
+  a prod deploy that quietly picks up a newer commit; the only tag available to it is
+  the one dev was verified on.
+- **Nothing is built twice.** A second build of the same commit produces a
+  *different* image (different layer digests, different dependency resolution), which
+  would make "it was verified in dev" untrue for the artifact prod is running.
+
+The copy is `az acr import`, which carries the manifest and its layers by digest —
+the same bytes, not a rebuild. Each environment owning its registry is deliberate: a
+Container App can only pull a registry its own identity holds `AcrPull` on, so prod
+does not depend on dev's registry staying in place for prod to keep serving.
+
+An explicit `-ImageTag` (or the workflow's `image_tag` input) bypasses both rules and
+deploys exactly that tag without building. That is the rollback path, and it is
+reported rather than silently obeyed — see the rollback commands in §10.
+
+### 16.4 Cost of the second environment
+
+The dev stack is sized to be cheap (Burstable PostgreSQL, single-zone, 7-day backup,
+minimal replica count) and the prod stack to be safe (General Purpose, zone-redundant
+HA, longer retention, `minReplicas 2`). Both are Container Apps, so an idle
+environment scales to near zero compute; the standing cost of dev is dominated by its
+PostgreSQL server and the registry. **Dev is not torn down between changes** — the
+whole point of the path above is that dev is always running the last thing that was
+verified, which is only true if it persists.
+
+### 16.5 Still to come on this path
+
+- **The sync-command classifier (§8/§9)** — the trigger phrases are still recognised
+  by the agent layer, not by an automated handler, and §7 phase 7 is where that
+  becomes code. Until then "Push to Prod" means a human dispatching the workflow or
+  running the promotion command.
+- **The ingress module** — the two environments are reachable today on their
+  Container Apps FQDNs. The Application Gateway v2 listeners (§5, §13.1) and Front
+  Door + WAF + DDoS Standard (§12.1) sit in front of them for production go-live; the
+  port-based verification scheme in §1 is a property of that module, not of the
+  environments themselves.
+- **DNS, certificates and hostnames** — open decision §14.2, needed by the ingress
+  module.

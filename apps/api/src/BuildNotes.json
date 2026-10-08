@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.8.049",
+    "date": "2026-10-08",
+    "title": "One path to production: build on dev, promote to prod, and never a second build",
+    "changes": [
+      {
+        "text": "**An environment is created, not just deployed to.** `deploy-env.ps1 -Create` creates the resource",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`-PromoteFrom dev` makes a promotion a promotion.** The script reads the image tag back from what",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Promotion copies the artifact; it used to reference dev's registry.** Each environment has its own",
+        "type": "Fix"
+      },
+      {
+        "text": "**The pipeline resolved dev's registry for prod.** `.github/workflows/deploy-azure.yml` asked",
+        "type": "Fix"
+      },
+      {
+        "text": "**A deploy could silently rebuild and overwrite an existing tag.** `-ImageTag <old-tag>` without",
+        "type": "Fix"
+      },
+      {
+        "text": "**Five PowerShell scripts in the repository could not run at all.** Windows PowerShell 5.1 reads a",
+        "type": "Fix"
+      },
+      {
+        "text": "**PLAN-016 brought in line with what was built.** §16 is new and is the environment model and",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.048",
     "date": "2026-10-08",
     "title": "The leftovers: a dead router, a tracked build artifact, three leaky probes, and a register of what was left on purpose",

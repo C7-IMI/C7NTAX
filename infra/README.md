@@ -5,12 +5,17 @@ through the pipeline, and an ingress layer that is added before the first produc
 cut-over. Dev and prod run the **same image** with different configuration, which is what
 makes "verify in dev, then promote" meaningful.
 
+**The path is sync to GitHub → push to dev → push to production.** Work continues on
+dev; production receives only what dev has already run, promoted by tag rather than
+built again. PLAN-016 §16 is the full description of that model.
+
 > **Status:** the package is built and validated as far as this workstation allows —
 > the container image was built and run against the dev database, the Bicep templates
 > compile with no warnings, the PowerShell deploy script parses and its plan mode runs
-> end to end, and both workflows parse. **Nothing has been deployed**: there is no Azure
-> subscription attached yet (`az` is not installed here), so the first run is a
-> bootstrap that must be done interactively and reviewed with `what-if`.
+> end to end (both the dev and the promotion path), and both workflows parse. **Nothing
+> has been deployed**: there is no Azure subscription attached yet (`az` is not installed
+> here), so the first run is a bootstrap that must be done interactively and reviewed with
+> `what-if`.
 
 ## What is in the package
 
@@ -21,8 +26,8 @@ makes "verify in dev, then promote" meaningful.
 | `infra/params/dev.bicepparam`, `prod.bicepparam` | Per-environment sizing: dev is Burstable, single-zone, 7-day backup; prod is General Purpose, zone-redundant HA, 35-day backup with geo-redundant copies. |
 | `infra/env/.env.production.example` | Every environment variable the API reads, with the ones that must be set in Key Vault called out. |
 | `scripts/azure/preflight.mjs` | Fails before a deploy does: stale lockfile, missing migration, undocumented env var, unguarded route, new advisory, non-root image. |
-| `scripts/azure/deploy-env.ps1` | The local push tool: preflight → infrastructure → image → schema → 0%-traffic revision → health gate → traffic shift, with `-WhatIf`. |
-| `.github/workflows/deploy-azure.yml` | CI/CD: build once, deploy **dev** on every push to `main`, deploy **prod** only from a manual dispatch. |
+| `scripts/azure/deploy-env.ps1` | The local push tool: preflight → infrastructure → image → schema → 0%-traffic revision → health gate → traffic shift, with `-WhatIf`, `-Create` and `-PromoteFrom`. |
+| `.github/workflows/deploy-azure.yml` | CI/CD: build once, deploy **dev** on every push to `main`; a prod dispatch **promotes the tag dev is running** (copying the image between registries) instead of building, so prod only ever receives an artifact dev has served. Prod runs only from a manual dispatch, behind the `prod` environment's reviewers. |
 | `.github/workflows/security.yml` | The gate from PLAN-018: route guards, typechecks, the dependency baseline, gitleaks, trivy. |
 | `apps/api/prisma/migrations/0_init` | The schema baseline. Production schema moves with `prisma migrate deploy`, never `db push`. |
 
@@ -31,12 +36,20 @@ makes "verify in dev, then promote" meaningful.
 These steps need a subscription and are done once by someone with owner rights. Replace
 `<...>` as you go.
 
-### 1. Resource groups and a registry
+### 1. Resource groups (one per environment)
+
+Both environments are created up front, each in its own group. Bicep creates everything
+*inside* a resource group, but not the group itself — `deploy-env.ps1 -Create` does that
+(step 3).
 
 ```powershell
 az group create --name rg-c7ntax-dev  --location eastus2
 az group create --name rg-c7ntax-prod --location eastus2
 ```
+
+The two groups are independent: each environment gets its own registry, PostgreSQL server,
+Key Vault, Container Apps environment and app. Nothing is shared but the deploy identity
+below.
 
 ### 2. A deploy identity that cannot do anything else
 
@@ -49,7 +62,9 @@ az ad sp create --id <client-id>
 # Contributor on the two resource groups only (not the subscription)
 az role assignment create --assignee <client-id> --role Contributor --scope /subscriptions/<sub>/resourceGroups/rg-c7ntax-dev
 az role assignment create --assignee <client-id> --role Contributor --scope /subscriptions/<sub>/resourceGroups/rg-c7ntax-prod
-# Plus AcrPush on the registries, so the pipeline can push images
+# Plus AcrPush on both registries, so the pipeline can push on dev and copy the image
+# across registries when it promotes to prod (a promotion is an `az acr import` between
+# the two, which needs push on the target and pull on the source)
 ```
 
 Add the federated credentials for the two workflows (replace the repository and branch):
@@ -73,7 +88,10 @@ Then in GitHub → Settings:
 - **Environments** `dev` and `prod`; add required reviewers to `prod` so the production
   deployment is a deliberate action, which is the "Push to Prod" gate.
 
-### 3. First deployment, in order
+### 3. First deployment, in order — both environments
+
+Create **dev first, then prod**. Dev has to exist before prod can be promoted from, and
+each environment's first run is the only one that needs `-Create`:
 
 ```powershell
 # 1. Preview what will be created — read this list before applying it.
@@ -84,13 +102,20 @@ $env:PG_ADMIN_PASSWORD   = '<generated>'
 $env:JWT_SECRET_VALUE    = '<openssl rand -base64 48>'
 $env:KUMO_MASTER_KEY_VALUE = '<32 random bytes, base64>'
 
-# 3. Create the environment
-./scripts/azure/deploy-env.ps1 -Environment dev
+# 3. Create dev: the resource group (-Create) and everything inside it
+./scripts/azure/deploy-env.ps1 -Environment dev -Create
+
+# 4. Create prod the same way, with its own secrets (never reuse dev's)
+./scripts/azure/deploy-env.ps1 -Environment prod -Create
 ```
 
-The first run creates the registry, then builds into it. If the Container App starts
-before the image exists it will be unhealthy for a minute; the deploy finishes by
-updating the revision to the freshly built tag and shifting traffic to it.
+The first run of an environment creates its registry, then builds into it. If the
+Container App starts before the image exists it will be unhealthy for a minute; the
+deploy finishes by updating the revision to the freshly built tag and shifting traffic
+to it.
+
+After that, `-Create` is never needed again — leave it off, and the script will stop
+with a clear message rather than create a resource group by mistake if one is missing.
 
 ### 4. Ingress (before production)
 
@@ -107,16 +132,29 @@ until the ingress layer is added:
 
 ## Day-to-day
 
+The everyday loop is three steps, in this order: **sync to GitHub → push to dev → push
+to production.** Work continues on dev; prod is only ever promoted to.
+
 ```powershell
-# Deploy a branch to dev (the pipeline does this on every push to main)
+# 1. Sync: work lands on main (commit + push)
+
+# 2. Push to dev — deploy what is on main. The push-to-main workflow does this
+#    automatically; this is the manual equivalent.
 ./scripts/azure/deploy-env.ps1 -Environment dev -ImageTag (git rev-parse --short HEAD)
 
-# Promote to prod: the same tag, unchanged
-./scripts/azure/deploy-env.ps1 -Environment prod -ImageTag 442b128
+# 3. Push to production — promote the tag dev is running, after verifying dev.
+./scripts/azure/deploy-env.ps1 -Environment prod -PromoteFrom dev -Yes
 ```
 
+`-PromoteFrom dev` reads the tag back from **dev's** running Container App and copies
+that image from dev's registry into prod's, so production runs the exact artifact dev
+verified and nothing is built a second time. `-Yes` answers the production confirmation;
+without it (and outside CI) the script asks you to type `prod`.
+
 Or from GitHub: **Actions → Deploy to Azure → Run workflow → environment: prod**, which
-waits on the `prod` environment's reviewers.
+waits on the `prod` environment's reviewers. Leave `image_tag` empty and it promotes what
+dev is running; fill it in and it deploys that tag without building, which is the rollback
+path.
 
 ## Rollback
 
@@ -127,8 +165,9 @@ Three levels, fastest first:
 az containerapp revision list --name c7ntax-prod --resource-group rg-c7ntax-prod -o table
 az containerapp ingress traffic set --name c7ntax-prod --resource-group rg-c7ntax-prod --revision <previous> --weight 100
 
-# 2. Previous image tag
-./scripts/azure/deploy-env.ps1 -Environment prod -ImageTag <previous-tag>
+# 2. Previous image tag (that tag already exists, so -SkipBuild deploys it as it is —
+#    without it the script refuses rather than rebuilding and overwriting the tag)
+./scripts/azure/deploy-env.ps1 -Environment prod -ImageTag <previous-tag> -SkipBuild
 
 # 3. Database: point-in-time restore, prod only, ≤ 35 days
 az postgres flexible-server restore --name psql-c7ntax-prod-<suffix> --resource-group rg-c7ntax-prod \

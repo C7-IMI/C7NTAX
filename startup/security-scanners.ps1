@@ -1,4 +1,4 @@
-# Backlog item 11 — optional CI security scanners (skip silently when tools are absent).
+﻿# Backlog item 11 — optional CI security scanners (skip silently when tools are absent).
 # Runs gitleaks (secret scanning) and trivy (CVE scanning) if available on PATH.
 # Non-blocking: absence of tools is not an error. Gate: AUTH_HARDENING_ENABLED.
 param()
