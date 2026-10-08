@@ -10,7 +10,7 @@
  * payload was "statuses and counts" rendered as "3 items". Every report below names its own tables,
  * so the reader sees rows.
  */
-import { ClipboardList, Timer, DollarSign, Users, Clock, CheckCircle, Calendar, TrendingUp, PieChart, Presentation } from "lucide-react";
+import { ClipboardList, Timer, DollarSign, Users, UserMinus, Clock, CheckCircle, Calendar, TrendingUp, PieChart, Presentation } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { duration, money, number, type Section } from "./reportKit";
 
@@ -23,6 +23,25 @@ export interface ReportFilters {
   period?: boolean;
 }
 
+/**
+ * A control that belongs to one report rather than to every report.
+ *
+ * The shared filter bar answers "which client, which board, which period" because every report has
+ * those; a report like inactive Microsoft 365 accounts has questions of its own — how long counts as
+ * inactive, whether to include accounts that are already disabled — and they are asked in the same
+ * bar, next to the client, so the report reads as one set of choices rather than two.
+ */
+export interface ReportOption {
+  key: string;
+  label: string;
+  /** `tenant` is a select filled from the connected tenants the options endpoint returns. */
+  kind: "number" | "boolean" | "select" | "tenant";
+  default: string | number | boolean;
+  suffix?: string;
+  hint?: string;
+  choices?: Array<{ value: string; label: string }>;
+}
+
 export interface StandardReport {
   id: string;
   title: string;
@@ -30,6 +49,8 @@ export interface StandardReport {
   icon: LucideIcon;
   endpoint: string;
   filters: ReportFilters;
+  /** Report-specific controls, rendered in the filter bar and sent with the filters. */
+  options?: ReportOption[];
   /** True when the report brings its own period (a business review has periods rather than a range). */
   quarters?: boolean;
   /** The noun the cadence uses in a section title — "this week", "this month", "this quarter". */
@@ -1095,6 +1116,134 @@ const qbr = businessReview({
   periodLabel: "Last completed quarter",
 });
 
+// ═══════════════════════════════════════════════════════════════════
+//  10. Inactive Microsoft 365 accounts
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Accounts across every connected tenant that nobody signs in to, per client.
+ *
+ * The report answers the licence-cleanup question in the order it is actually asked: how many
+ * accounts are idle, whose they are, which ones are already disabled, and which ones we simply
+ * cannot tell (no sign-in activity stored — those are reported as unknown, never as dormant, because
+ * a report that funds itself by guessing gets live accounts switched off).
+ */
+const m365Inactive: StandardReport = {
+  id: "m365-inactive-accounts",
+  title: "Inactive Microsoft 365 Accounts",
+  description: "Every idle account across the connected tenants, per client, with the threshold, disabled and unknown accounts under your control",
+  icon: UserMinus,
+  endpoint: "/reports/data/m365-inactive-accounts",
+  filters: { client: true },
+  options: [
+    { key: "inactiveDays", label: "Inactive after", kind: "number", default: 90, suffix: "days", hint: "How long without a sign-in makes an account idle. 30 to catch lapsed users early, 90 to find the ones nobody will miss." },
+    { key: "includeDisabled", label: "Disabled accounts", kind: "boolean", default: true, hint: "Accounts already switched off have been dealt with. Include them to see the whole estate, exclude them to see only what still needs a decision." },
+    { key: "includeUnknown", label: "Unknown sign-in", kind: "boolean", default: true, hint: "Accounts with no sign-in activity recorded. Counting them as idle would be a guess; they are listed as unknown and can be left out entirely." },
+    { key: "tenantId", label: "Tenant", kind: "tenant", default: "", hint: "One connected Microsoft 365 tenant, or all of them." },
+  ],
+  build: payload => {
+    const coverage = record(payload.coverage);
+    const totals = record(payload.totals);
+    const accounts = list<Payload>(payload.accounts);
+    const byClient = list<Payload>(payload.byClient);
+    const byTenant = list<Payload>(payload.byTenant);
+    const notes = list<unknown>(payload.notes).map(String);
+    const inactive = num(totals.inactive);
+    const listed = num(totals.accounts);
+
+    return [
+      {
+        kind: "kpis",
+        title: "Accounts",
+        items: [
+          { label: "Listed", value: number(listed), sub: text(payload.optionsLabel, "") },
+          { label: "Inactive", value: number(inactive), tone: inactive ? "bad" : "good", sub: "No sign-in within the threshold" },
+          { label: "Already disabled", value: number(totals.disabled), tone: "neutral", sub: "Handled — included unless you exclude them" },
+          { label: "Unknown", value: number(totals.unknown), tone: num(totals.unknown) ? "warn" : "good", sub: "No sign-in activity could be read" },
+        ],
+      },
+      {
+        kind: "facts",
+        title: "What this covers",
+        items: [
+          { label: "Scope", value: text(payload.scopeLabel, "All clients") },
+          { label: "Tenants read", value: number(coverage.tenants) },
+          { label: "Accounts synced in scope", value: number(coverage.accountsSynced) },
+          { label: "Accounts listed", value: number(coverage.accountsListed) },
+          { label: "Mapped to a client", value: number(totals.mapped) },
+          { label: "Not mapped to a client", value: number(totals.unmapped) },
+        ],
+      },
+      {
+        kind: "table",
+        title: "By client",
+        columns: [
+          { key: "client", label: "Client" },
+          { key: "accounts", label: "Accounts", align: "right" },
+          { key: "inactive", label: "Inactive", align: "right" },
+          { key: "disabled", label: "Disabled", align: "right" },
+          { key: "unknown", label: "Unknown", align: "right" },
+          { key: "oldestDays", label: "Longest silence", align: "right" },
+          { key: "averageDays", label: "Average silence", align: "right" },
+        ],
+        rows: byClient.map(row => ({
+          client: text(row.clientName),
+          accounts: number(row.accounts),
+          inactive: number(row.inactive),
+          disabled: number(row.disabled),
+          unknown: number(row.unknown),
+          oldestDays: row.oldestDays === null || row.oldestDays === undefined ? "—" : `${row.oldestDays} days`,
+          averageDays: row.averageDays === null || row.averageDays === undefined ? "—" : `${row.averageDays} days`,
+        })),
+        emptyText: "No accounts match these options.",
+      },
+      {
+        kind: "table",
+        title: "By tenant",
+        columns: [
+          { key: "tenant", label: "Connected tenant" },
+          { key: "accounts", label: "Accounts", align: "right" },
+          { key: "inactive", label: "Inactive", align: "right" },
+          { key: "unknown", label: "Unknown", align: "right" },
+        ],
+        rows: byTenant.map(row => ({
+          tenant: text(row.tenantName),
+          accounts: number(row.accounts),
+          inactive: number(row.inactive),
+          unknown: number(row.unknown),
+        })),
+      },
+      {
+        kind: "table",
+        title: "Accounts",
+        columns: [
+          { key: "displayName", label: "Account" },
+          { key: "userPrincipalName", label: "User principal name" },
+          { key: "client", label: "Client" },
+          { key: "tenant", label: "Tenant" },
+          { key: "state", label: "State" },
+          { key: "lastSignIn", label: "Last sign-in" },
+          { key: "days", label: "Days", align: "right" },
+          { key: "title", label: "Job title" },
+        ],
+        rows: accounts.map(row => ({
+          displayName: text(row.displayName),
+          userPrincipalName: text(row.userPrincipalName),
+          client: text(row.clientName),
+          tenant: text(row.tenantName),
+          state: text(row.stateLabel),
+          lastSignIn: text(row.lastSignInDisplay),
+          days: row.daysSinceSignIn === null || row.daysSinceSignIn === undefined ? "—" : number(row.daysSinceSignIn),
+          title: text(row.jobTitle, ""),
+        })),
+        emptyText: "No accounts match these options.",
+      },
+      ...(payload.truncated ? [{ kind: "notes", tone: "warn", title: "Truncated", items: ["Only the 500 worst accounts are listed. Narrow it to one client or one tenant for the rest."] } as Section] : []),
+      ...(notes.length ? [{ kind: "notes", tone: "warn", title: "How to read this", items: notes } as Section] : []),
+    ];
+  },
+};
+
 export const STANDARD_REPORTS: StandardReport[] = [
   ticketVolume,
   sla,
@@ -1105,13 +1254,13 @@ export const STANDARD_REPORTS: StandardReport[] = [
   csat,
   contract,
   clientValue,
+  m365Inactive,
   weeklyReview,
   monthlyReview,
   qbr,
 ];
 
 export const REPORT_BY_ID = new Map(STANDARD_REPORTS.map(r => [r.id, r]));
-
 /** The three business reviews share one builder, so the screen can switch cadence without a reload. */
 export const REVIEW_REPORTS = [weeklyReview, monthlyReview, qbr];
 

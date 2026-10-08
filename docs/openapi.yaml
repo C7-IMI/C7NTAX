@@ -87,7 +87,7 @@ tags:
   - name: "Quotes"
     description: "4 operations"
   - name: "Reports"
-    description: "26 operations"
+    description: "27 operations"
   - name: "Roles"
     description: "5 operations"
   - name: "Schedule"
@@ -5271,6 +5271,20 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/reports/data/m365-inactive-accounts":
+    get:
+      tags: ["Reports"]
+      operationId: "getReportsdatam365InactiveAccounts"
+      summary: "Read reports/data/m365-inactive-accounts"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["report:view"]
+      x-source: "reports.ts · reportsRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
   "/api/reports/data/monthly-business-review":
     get:
       tags: ["Reports"]
@@ -7055,5 +7069,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 58 of 418 operations carry a curated summary from docs/api-operations.json;
+# 58 of 419 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

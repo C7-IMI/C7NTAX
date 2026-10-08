@@ -13,7 +13,7 @@ import {
   catalogForValidation, invalidateTemplateCache, listTemplateRefs, resolveParameters, runTemplateDocument, validateDocument,
 } from "../services/reportTemplates";
 import {
-  agingReport, clientValueReport, contractProfitabilityReport, csatReport, monthlyReviewReport, parsePeriod,
+  agingReport, clientValueReport, contractProfitabilityReport, csatReport, m365InactiveAccountsReport, monthlyReviewReport, parsePeriod,
   qbrReport, revenueReport, slaReport, ticketVolumeReport, timeTrackingReport, utilizationReport, weeklyReviewReport,
   type ReportPeriod,
 } from "../services/reportData";
@@ -28,11 +28,11 @@ reportsRouter.use(authenticate);
  * rather than leaving the reader to guess. `parsePeriod` resolves the client against the account's
  * own scope — a query parameter can narrow a report but never widen it.
  */
-const standardReport = (build: (user: AuthUser | undefined, period: ReportPeriod) => Promise<unknown>) =>
+const standardReport = (build: (user: AuthUser | undefined, period: ReportPeriod, query: Record<string, unknown>) => Promise<unknown>) =>
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const period = await parsePeriod(req.query as Record<string, unknown>, req.user);
-      res.json(await build(req.user, period));
+      res.json(await build(req.user, period, req.query as Record<string, unknown>));
     } catch (e) { next(e); }
   };
 
@@ -45,21 +45,36 @@ reportsRouter.get("/data/time-tracking", requirePermission(Permission.ReportView
 reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), standardReport(csatReport));
 reportsRouter.get("/data/contract-profitability", requirePermission(Permission.ReportView), standardReport(contractProfitabilityReport));
 reportsRouter.get("/data/client-value", requirePermission(Permission.ReportView), standardReport(clientValueReport));
+/**
+ * Inactive Microsoft 365 accounts. Gated on `integration:view` as well as the report permission:
+ * it names individual accounts across every connected tenant, which is integration data rather than
+ * ticket data, and the people who may configure a tenant are the people who should see its users.
+ */
+reportsRouter.get(
+  "/data/m365-inactive-accounts",
+  requirePermission(Permission.ReportView),
+  requirePermission(Permission.IntegrationView),
+  standardReport(m365InactiveAccountsReport),
+);
 reportsRouter.get("/data/quarterly-business-review", requirePermission(Permission.ReportView), standardReport(qbrReport));
 reportsRouter.get("/data/monthly-business-review", requirePermission(Permission.ReportView), standardReport(monthlyReviewReport));
 reportsRouter.get("/data/weekly-business-review", requirePermission(Permission.ReportView), standardReport(weeklyReviewReport));
 
-/** The options a report's own filters offer: the clients and boards the account can see. */
+/** The options a report's own filters offer: the clients, boards and connected tenants in scope. */
 reportsRouter.get("/data/options", requirePermission(Permission.ReportView), async (req: AuthRequest, res, next) => {
   try {
     const scoped = req.user?.companyId;
-    const [clients, boards] = await Promise.all([
+    const [clients, boards, tenants] = await Promise.all([
       scoped
         ? prisma.company.findMany({ where: { id: scoped }, select: { id: true, name: true } })
         : prisma.company.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
       prisma.serviceBoard.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+      // The connected Microsoft 365 tenants, for the reports that are scoped to one of them. Empty
+      // when nothing is connected, which is what makes the tenant filter disappear rather than
+      // offering a list of nothing.
+      prisma.integration.findMany({ where: { kind: { in: ["microsoft365", "azure_ad_sso"] } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     ]);
-    res.json({ clients, boards });
+    res.json({ clients, boards, tenants });
   } catch (e) { next(e); }
 });
 

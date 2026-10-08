@@ -1547,3 +1547,201 @@ export async function clientValueReport(user: AuthUser | undefined, period: Repo
     clients: rows.sort((a, b) => b.invoiced - a.ticketsTotal),
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//  Microsoft 365 inactive accounts
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Inactive Microsoft 365 accounts across every connected tenant, per client.
+ *
+ * This is the reporting half of the M365 sync: the accounts arrive with the sync, and what an MSP
+ * needs from them is "which clients are paying for seats nobody signs in to, and which of those
+ * accounts have already been dealt with". The panel that used to sit on CloudConnect answered it for
+ * one workspace by eye; this answers it for the whole book, with the filters the question actually
+ * has — a threshold rather than a fixed 90 days, one client or all of them, one tenant or all of
+ * them, and whether to include accounts that are already disabled.
+ *
+ * The honesty rule from `services/m365Inactivity.ts` is carried over deliberately: **an account with
+ * no sign-in data is unknown, never dormant.** Azure only reports sign-in activity with Entra ID P1
+ * and `AuditLog.Read.All`, and a report that quietly funds a licence-cleanup by counting "we do not
+ * know" as "nobody signs in" is a report that gets live accounts disabled. Unknown accounts are shown
+ * as their own state, counted separately, and can be excluded outright.
+ */
+export interface M365InactiveOptions {
+  /** How long without a sign-in makes an account inactive. */
+  inactiveDays: number;
+  includeUnknown: boolean;
+  includeDisabled: boolean;
+  tenantId: string | null;
+}
+
+export function m365InactiveOptions(query: Record<string, unknown> = {}): M365InactiveOptions {
+  const days = Number(asString(query.inactiveDays) ?? 90);
+  const flag = (value: unknown, fallback: boolean) => {
+    const text = asString(value);
+    if (text === null) return fallback;
+    return !["false", "0", "no", "off"].includes(text.toLowerCase());
+  };
+  return {
+    inactiveDays: Number.isFinite(days) ? Math.min(Math.max(Math.round(days), 1), 730) : 90,
+    includeUnknown: flag(query.includeUnknown, true),
+    includeDisabled: flag(query.includeDisabled, true),
+    tenantId: asString(query.tenantId),
+  };
+}
+
+export async function m365InactiveAccountsReport(user: AuthUser | undefined, period: ReportPeriod, query: Record<string, unknown> = {}) {
+  const options = m365InactiveOptions(query);
+  const now = Date.now();
+
+  const users = await prisma.m365User.findMany({
+    where: options.tenantId ? { integrationId: options.tenantId } : undefined,
+    orderBy: { displayName: "asc" },
+  });
+
+  const integrationIds = [...new Set(users.map(u => u.integrationId))];
+  const integrations = integrationIds.length
+    ? await prisma.integration.findMany({ where: { id: { in: integrationIds } }, select: { id: true, name: true } })
+    : [];
+  const integrationNameById = new Map(integrations.map(i => [i.id, i.name]));
+
+  // The only link a tenant user has to a client is the contact the sync matched it to, so a user
+  // nobody has mapped is reported as unmapped rather than attributed to somebody.
+  const contactIds = [...new Set(users.map(u => u.contactId).filter((id): id is string => !!id))];
+  const contacts = contactIds.length
+    ? await prisma.contact.findMany({ where: { id: { in: contactIds } }, select: { id: true, companyId: true, company: { select: { name: true } } } })
+    : [];
+  const contactById = new Map(contacts.map(c => [c.id, c]));
+
+  type State = "inactive" | "disabled" | "unknown" | "active";
+  interface Row {
+    id: string; displayName: string; userPrincipalName: string; jobTitle: string | null; department: string | null;
+    accountEnabled: boolean; lastSignInAt: string | null; daysSinceSignIn: number | null; state: State;
+    clientId: string | null; clientName: string; tenantId: string; tenantName: string;
+  }
+
+  const all: Row[] = users.map(user => {
+    const contact = user.contactId ? contactById.get(user.contactId) : undefined;
+    const daysSinceSignIn = user.lastSignInAt ? Math.floor((now - user.lastSignInAt.getTime()) / 86400000) : null;
+    // Disabled comes first: an account that is already switched off has been dealt with, and calling
+    // it "inactive" would put it in the same list as the accounts that still need a decision.
+    const state: State = !user.accountEnabled
+      ? "disabled"
+      : daysSinceSignIn === null
+        ? "unknown"
+        : daysSinceSignIn >= options.inactiveDays
+          ? "inactive"
+          : "active";
+    return {
+      id: user.id,
+      displayName: user.displayName,
+      userPrincipalName: user.userPrincipalName,
+      jobTitle: user.jobTitle,
+      department: user.department,
+      accountEnabled: user.accountEnabled,
+      lastSignInAt: user.lastSignInAt ? user.lastSignInAt.toISOString() : null,
+      daysSinceSignIn,
+      state,
+      clientId: contact?.companyId ?? null,
+      clientName: contact?.company?.name ?? "Not mapped to a client",
+      tenantId: user.integrationId,
+      tenantName: integrationNameById.get(user.integrationId) ?? "Unknown tenant",
+    };
+  });
+
+  // A client filter is a scope, not a convenience: `parsePeriod` has already applied the account's
+  // own restriction, so a client who may only see themselves cannot ask for somebody else.
+  const scoped = period.clientId ? all.filter(row => row.clientId === period.clientId) : all;
+  const rows = scoped.filter(row =>
+    row.state === "unknown" ? options.includeUnknown : row.state === "disabled" ? options.includeDisabled : true);
+
+  const byClient = new Map<string, { clientId: string | null; clientName: string; accounts: number; inactive: number; disabled: number; unknown: number; active: number; days: number[] }>();
+  for (const row of rows) {
+    const key = row.clientId ?? "unmapped";
+    if (!byClient.has(key)) byClient.set(key, { clientId: row.clientId, clientName: row.clientName, accounts: 0, inactive: 0, disabled: 0, unknown: 0, active: 0, days: [] });
+    const group = byClient.get(key)!;
+    group.accounts++;
+    if (row.state === "inactive") group.inactive++;
+    else if (row.state === "disabled") group.disabled++;
+    else if (row.state === "unknown") group.unknown++;
+    else group.active++;
+    if (row.daysSinceSignIn !== null) group.days.push(row.daysSinceSignIn);
+  }
+
+  const byTenant = new Map<string, { tenantId: string; tenantName: string; accounts: number; inactive: number; unknown: number }>();
+  for (const row of rows) {
+    if (!byTenant.has(row.tenantId)) byTenant.set(row.tenantId, { tenantId: row.tenantId, tenantName: row.tenantName, accounts: 0, inactive: 0, unknown: 0 });
+    const group = byTenant.get(row.tenantId)!;
+    group.accounts++;
+    if (row.state === "inactive") group.inactive++;
+    if (row.state === "unknown") group.unknown++;
+  }
+
+  const count = (state: State) => rows.filter(row => row.state === state).length;
+  const withSignInData = rows.filter(row => row.lastSignInAt).length;
+  const withoutSignInData = rows.length - withSignInData;
+  const signInDataUnavailable = rows.length > 0 && withSignInData === 0;
+
+  // Worst first: the longest silence, then accounts with nothing to go on, then the disabled ones
+  // that are already handled, then the accounts that are fine.
+  const stateOrder: State[] = ["inactive", "unknown", "disabled", "active"];
+  const sorted = [...rows].sort((a, b) =>
+    stateOrder.indexOf(a.state) - stateOrder.indexOf(b.state)
+    || (b.daysSinceSignIn ?? -1) - (a.daysSinceSignIn ?? -1)
+    || a.displayName.localeCompare(b.displayName));
+
+  const notes: string[] = [];
+  if (signInDataUnavailable) {
+    notes.push("No sign-in activity is stored for any account in scope, so nothing can be called dormant. Reading it needs Entra ID P1 and the AuditLog.Read.All permission on the app registration, plus a sync afterwards.");
+  } else if (withoutSignInData > 0) {
+    notes.push(`${withoutSignInData} of ${rows.length} accounts have no sign-in activity recorded; they are counted as unknown rather than inactive.`);
+  }
+  if (scoped.length === 0) {
+    notes.push(options.tenantId || period.clientId ? "No accounts match this client and tenant." : "No Microsoft 365 accounts have been synced yet — connect a tenant under CloudConnect and run a sync.");
+  } else if (rows.length === 0) {
+    notes.push("No accounts match these options. Widen the threshold or include disabled and unknown accounts.");
+  }
+
+  return {
+    period,
+    options,
+    optionsLabel: `Inactive after ${options.inactiveDays} days`
+      + (options.includeDisabled ? " · disabled accounts included" : " · disabled accounts excluded")
+      + (options.includeUnknown ? " · unknown sign-in included" : " · unknown sign-in excluded"),
+    scopeLabel: period.clientName ?? "All clients",
+    coverage: {
+      tenants: new Set(rows.map(row => row.tenantId)).size,
+      accountsSynced: scoped.length,
+      accountsListed: rows.length,
+      withSignInData,
+      withoutSignInData,
+      signInDataUnavailable,
+    },
+    totals: {
+      accounts: rows.length,
+      inactive: count("inactive"),
+      disabled: count("disabled"),
+      unknown: count("unknown"),
+      active: count("active"),
+      mapped: rows.filter(row => row.clientId).length,
+      unmapped: rows.filter(row => !row.clientId).length,
+      clients: byClient.size,
+    },
+    byClient: [...byClient.values()]
+      .map(group => ({
+        ...group,
+        oldestDays: group.days.length ? Math.max(...group.days) : null,
+        averageDays: group.days.length ? Math.round(group.days.reduce((sum, d) => sum + d, 0) / group.days.length) : null,
+      }))
+      .sort((a, b) => b.inactive - a.inactive || b.accounts - a.accounts || a.clientName.localeCompare(b.clientName)),
+    byTenant: [...byTenant.values()].sort((a, b) => b.inactive - a.inactive || a.tenantName.localeCompare(b.tenantName)),
+    accounts: sorted.slice(0, 500).map(row => ({
+      ...row,
+      lastSignInDisplay: row.lastSignInAt ? new Date(row.lastSignInAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Never recorded",
+      stateLabel: row.state === "inactive" ? `Over ${options.inactiveDays} days` : row.state === "disabled" ? "Disabled" : row.state === "unknown" ? "Unknown" : "Active",
+    })),
+    truncated: sorted.length > 500,
+    notes,
+  };
+}

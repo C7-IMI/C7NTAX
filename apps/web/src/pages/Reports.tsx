@@ -23,23 +23,42 @@ const TABS: Array<{ id: string; label: string; icon: LucideIcon; to: string }> =
 ];
 
 export interface ReportFilters { from: string; to: string; clientId: string; boardId: string }
-export interface FilterOptions { clients: Array<{ id: string; name: string }>; boards: Array<{ id: string; name: string }> }
+export interface FilterOptions { clients: Array<{ id: string; name: string }>; boards: Array<{ id: string; name: string }>; tenants: Array<{ id: string; name: string }> }
 
 const EMPTY_FILTERS: ReportFilters = { from: "", to: "", clientId: "", boardId: "" };
 
 const filterQuery = (filters: ReportFilters): Record<string, string> =>
   Object.fromEntries(Object.entries(filters).filter(([, value]) => value)) as Record<string, string>;
 
+/** A report's own options, as the query parameters its endpoint reads. */
+type ReportOptionValues = Record<string, string | number | boolean>;
+
+const optionQuery = (report: StandardReport, values: ReportOptionValues): Record<string, string> =>
+  Object.fromEntries(
+    (report.options ?? [])
+      .map(option => [option.key, values[option.key] ?? option.default] as const)
+      .map(([key, value]) => [key, typeof value === "boolean" ? String(value) : String(value)] as const),
+  );
+
+/** Everything the endpoint needs: the shared filters, then the report's own choices. */
+const reportQuery = (report: StandardReport, filters: ReportFilters, values: ReportOptionValues) => ({
+  ...filterQuery(filters),
+  ...optionQuery(report, values),
+});
+
+const defaultOptionValues = (report: StandardReport): ReportOptionValues =>
+  Object.fromEntries((report.options ?? []).map(option => [option.key, option.default]));
+
 /** The period the server actually applied, so the screen can never imply a range it did not use. */
 const periodLabel = (payload: unknown): string => (payload as { period?: { label?: string } } | null)?.period?.label ?? "";
 
 /** The filter options every report shares, loaded once per page. */
 function useReportOptions(): FilterOptions {
-  const [options, setOptions] = useState<FilterOptions>({ clients: [], boards: [] });
+  const [options, setOptions] = useState<FilterOptions>({ clients: [], boards: [], tenants: [] });
   useEffect(() => {
     api.get("/reports/data/options")
-      .then(r => setOptions({ clients: r.data?.clients ?? [], boards: r.data?.boards ?? [] }))
-      .catch(() => setOptions({ clients: [], boards: [] }));
+      .then(r => setOptions({ clients: r.data?.clients ?? [], boards: r.data?.boards ?? [], tenants: r.data?.tenants ?? [] }))
+      .catch(() => setOptions({ clients: [], boards: [], tenants: [] }));
   }, []);
   return options;
 }
@@ -100,7 +119,7 @@ export function ReportsPage({ tab: initialTab, period }: { tab?: string; period?
 // ═══════════════════════════════════════════════════════════════════
 
 function FilterBar({
-  report, filters, onChange, options, onRefresh, busy, quarterPicker,
+  report, filters, onChange, options, onRefresh, busy, quarterPicker, values, onValue,
 }: {
   report: StandardReport;
   filters: ReportFilters;
@@ -109,6 +128,8 @@ function FilterBar({
   onRefresh: () => void;
   busy: boolean;
   quarterPicker?: { value: string; options: Array<{ label: string }>; onSelect: (label: string) => void };
+  values: ReportOptionValues;
+  onValue: (key: string, value: string | number | boolean) => void;
 }) {
   const showPeriod = report.filters.period && !quarterPicker;
   const active = Boolean(filters.from || filters.to || filters.clientId || filters.boardId);
@@ -152,6 +173,48 @@ function FilterBar({
           </select>
         </div>
       )}
+      {/* The report's own questions, asked in the same place as the shared ones. */}
+      {(report.options ?? []).map(option => {
+        const value = values[option.key] ?? option.default;
+        if (option.kind === "boolean") {
+          return (
+            <label key={option.key} className="flex items-center gap-2 pb-2 cursor-pointer" title={option.hint}>
+              <input
+                type="checkbox"
+                checked={Boolean(value)}
+                onChange={e => onValue(option.key, e.target.checked)}
+              />
+              <span className="text-xs text-gray-300">{option.label}</span>
+              {values[option.key] !== option.default && <span className="text-[10px] text-cyber-400">changed</span>}
+            </label>
+          );
+        }
+        if (option.kind === "tenant") {
+          if (options.tenants.length === 0) return null;
+          return (
+            <div key={option.key} title={option.hint}>
+              <label className="text-[11px] text-gray-500 block mb-1">{option.label}</label>
+              <select className="input-field text-sm" value={String(value)} onChange={e => onValue(option.key, e.target.value)}>
+                <option value="">All tenants</option>
+                {options.tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          );
+        }
+        return (
+          <div key={option.key} title={option.hint}>
+            <label className="text-[11px] text-gray-500 block mb-1">{option.label}</label>
+            <input
+              type="number"
+              min={1}
+              className="input-field text-sm w-28"
+              value={Number(value)}
+              onChange={e => onValue(option.key, Number(e.target.value) || option.default)}
+            />
+            {option.suffix && <span className="text-[10px] text-gray-500 ml-1">{option.suffix}</span>}
+          </div>
+        );
+      })}
       {active && (
         <button className="btn-secondary text-xs flex items-center gap-1.5" onClick={() => onChange({ ...EMPTY_FILTERS })}>
           <X size={12} /> Clear filters
@@ -172,7 +235,7 @@ function FilterBar({
 // ═══════════════════════════════════════════════════════════════════
 
 function ReportViewer({
-  report, filters, onFilters, options, onClose, quarterPicker,
+  report, filters, onFilters, options, onClose, quarterPicker, values, onValue,
 }: {
   report: StandardReport;
   filters: ReportFilters;
@@ -180,6 +243,8 @@ function ReportViewer({
   options: FilterOptions;
   onClose?: () => void;
   quarterPicker?: { value: string; options: Array<{ label: string }>; onSelect: (label: string) => void };
+  values: ReportOptionValues;
+  onValue: (key: string, value: string | number | boolean) => void;
 }) {
   const [payload, setPayload] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
@@ -189,11 +254,11 @@ function ReportViewer({
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    api.get(report.endpoint, { params: filterQuery(filters) })
+    api.get(report.endpoint, { params: reportQuery(report, filters, values) })
       .then(r => setPayload(r.data))
       .catch(e => { setError(apiErrorMessage(e, "Could not run the report")); setPayload(null); })
       .finally(() => setLoading(false));
-  }, [report.endpoint, filters]);
+  }, [report, filters, values]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -220,7 +285,7 @@ function ReportViewer({
         </div>
       </div>
 
-      <FilterBar report={report} filters={filters} onChange={onFilters} options={options} onRefresh={load} busy={loading} quarterPicker={quarterPicker} />
+      <FilterBar report={report} filters={filters} onChange={onFilters} options={options} onRefresh={load} busy={loading} quarterPicker={quarterPicker} values={values} onValue={onValue} />
 
       {payload != null && (
         <p className="text-xs text-gray-500">
@@ -239,7 +304,7 @@ function ReportViewer({
       )}
 
       {showExport && (
-        <ExportDialog document_={document_} report={report} filters={filters} options={options} onClose={() => setShowExport(false)} />
+        <ExportDialog document_={document_} report={report} filters={filters} options={options} values={values} onClose={() => setShowExport(false)} />
       )}
     </div>
   );
@@ -250,16 +315,20 @@ function ReportViewer({
 // ═══════════════════════════════════════════════════════════════════
 
 function ExportDialog({
-  document_, report, filters, options, onClose,
+  document_, report, filters, options, onClose, values,
 }: {
   document_: { title: string; subtitle?: string; period?: string; sections: Section[] };
   report: StandardReport;
   filters: ReportFilters;
   options: FilterOptions;
   onClose: () => void;
+  values: ReportOptionValues;
 }) {
   const [format, setFormat] = useState<"pdf" | "excel" | "csv">("pdf");
   const [exportFilters, setExportFilters] = useState<ReportFilters>({ ...filters });
+  // The report's own choices are editable here too — an export is often the moment somebody wants
+  // "every client at 60 days" rather than whatever the screen was showing.
+  const [exportValues, setExportValues] = useState<ReportOptionValues>({ ...values });
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<Section[] | null>(null);
   const [previewPeriod, setPreviewPeriod] = useState("");
@@ -269,7 +338,7 @@ function ExportDialog({
   const runPreview = useCallback(async () => {
     setBusy(true);
     try {
-      const r = await api.get(report.endpoint, { params: filterQuery(exportFilters) });
+      const r = await api.get(report.endpoint, { params: reportQuery(report, exportFilters, exportValues) });
       setPreview(report.build(r.data as Record<string, unknown>));
       setPreviewPeriod(periodLabel(r.data));
     } catch (e) {
@@ -278,7 +347,7 @@ function ExportDialog({
     } finally {
       setBusy(false);
     }
-  }, [report, exportFilters]);
+  }, [report, exportFilters, values]);
 
   useEffect(() => { void runPreview(); }, [runPreview]);
 
@@ -348,6 +417,35 @@ function ExportDialog({
               </select>
             </div>
           )}
+          {(report.options ?? []).map(option => {
+            const value = exportValues[option.key] ?? option.default;
+            if (option.kind === "boolean") {
+              return (
+                <label key={option.key} className="flex items-center gap-2 cursor-pointer" title={option.hint}>
+                  <input type="checkbox" checked={Boolean(value)} onChange={e => setExportValues({ ...exportValues, [option.key]: e.target.checked })} />
+                  <span className="text-xs text-gray-300">{option.label}</span>
+                </label>
+              );
+            }
+            if (option.kind === "tenant") {
+              if (options.tenants.length === 0) return null;
+              return (
+                <div key={option.key} title={option.hint}>
+                  <label className="text-xs text-gray-500 block mb-1">{option.label}</label>
+                  <select className="input-field" value={String(value)} onChange={e => setExportValues({ ...exportValues, [option.key]: e.target.value })}>
+                    <option value="">All tenants</option>
+                    {options.tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </div>
+              );
+            }
+            return (
+              <div key={option.key} title={option.hint}>
+                <label className="text-xs text-gray-500 block mb-1">{option.label}{option.suffix ? ` (${option.suffix})` : ""}</label>
+                <input type="number" min={1} className="input-field" value={Number(value)} onChange={e => setExportValues({ ...exportValues, [option.key]: Number(e.target.value) || option.default })} />
+              </div>
+            );
+          })}
         </div>
 
         <div>
@@ -385,17 +483,48 @@ const reviewCadence = (id: string): string => (id === "weekly-review" ? "week" :
 
 function StandardReportsTab() {
   const options = useReportOptions();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState<StandardReport | null>(null);
   const [filters, setFilters] = useState<ReportFilters>({ ...EMPTY_FILTERS });
   const [exporting, setExporting] = useState<StandardReport | null>(null);
   const [printing, setPrinting] = useState<string | null>(null);
+  const [values, setValues] = useState<ReportOptionValues>({});
   const navigate = useNavigate();
+
+  /**
+   * A report can be opened from a link — the inactive-accounts report is reached from CloudConnect —
+   * and the client and options come with it, so a saved link opens the exact report somebody meant
+   * rather than the list it lives in.
+   */
+  useEffect(() => {
+    const requested = searchParams.get("report");
+    if (!requested) return;
+    const report = REPORT_BY_ID.get(requested);
+    if (!report) return;
+    setOpen(report);
+    setValues(current => ({ ...defaultOptionValues(report), ...current }));
+    const clientId = searchParams.get("clientId");
+    if (clientId) setFilters(current => ({ ...current, clientId }));
+  }, [searchParams]);
+
+  const closeReport = () => {
+    setOpen(null);
+    if (searchParams.get("report")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("report");
+      next.delete("clientId");
+      setSearchParams(next, { replace: true });
+    }
+  };
+
+  /** The options in force for a report: its defaults, overridden by whatever has been chosen. */
+  const valuesFor = (report: StandardReport): ReportOptionValues => ({ ...defaultOptionValues(report), ...values });
 
   /** Print from a card runs the report first and prints *that*, rather than the application. */
   const print = async (report: StandardReport) => {
     setPrinting(report.id);
     try {
-      const r = await api.get(report.endpoint, { params: filterQuery(filters) });
+      const r = await api.get(report.endpoint, { params: reportQuery(report, filters, valuesFor(report)) });
       printReport({
         title: report.title,
         subtitle: report.description,
@@ -410,7 +539,17 @@ function StandardReportsTab() {
   };
 
   if (open) {
-    return <ReportViewer report={open} filters={filters} onFilters={setFilters} options={options} onClose={() => setOpen(null)} />;
+    return (
+      <ReportViewer
+        report={open}
+        filters={filters}
+        onFilters={setFilters}
+        options={options}
+        values={valuesFor(open)}
+        onValue={(key, value) => setValues(current => ({ ...current, [key]: value }))}
+        onClose={closeReport}
+      />
+    );
   }
 
   return (
@@ -441,6 +580,9 @@ function StandardReportsTab() {
                 <Printer size={12} /> {printing === report.id ? "Preparing…" : "Print"}
               </button>
               <button onClick={() => setExporting(report)} className="btn-secondary text-xs flex items-center gap-1.5 px-3 py-1.5"><Download size={12} /> Export</button>
+              {report.options?.length ? (
+                <span className="text-[10px] text-gray-500 ml-1">{report.options.length} option{report.options.length === 1 ? "" : "s"} — threshold, scope and what to include</span>
+              ) : null}
             </div>
           </div>
         ))}
@@ -452,6 +594,7 @@ function StandardReportsTab() {
           report={exporting}
           filters={filters}
           options={options}
+          values={valuesFor(exporting)}
           onClose={() => setExporting(null)}
         />
       )}
@@ -545,6 +688,8 @@ function ReviewsTab({ initialPeriod }: { initialPeriod?: string }) {
         onFilters={setFilters}
         options={options}
         quarterPicker={periods.length ? { value: period, options: periods, onSelect: pickPeriod } : undefined}
+        values={defaultOptionValues(report)}
+        onValue={() => {}}
       />
     </div>
   );

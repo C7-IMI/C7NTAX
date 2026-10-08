@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
@@ -864,6 +865,89 @@ export function CloudConnectPage() {
                 )}
                 <DataSourceNote source={configuringRow.kind} detail="every record here was read from the vendor, not entered in C7NTAX" />
               </div>
+
+              {/*
+                Microsoft 365 accounts (PLAN-015 Phase B #12, moved here in 2026.10.8.017).
+                This used to be a card on the Connected tab, where it was the tallest thing on a
+                screen whose job is "what is connected and is it healthy". It is not health: it is an
+                action on the accounts of one tenant, and the tenant is what this pane configures. The
+                reporting half — every client, every tenant, any threshold — lives in Reporting.
+              */}
+              {configuringRow.kind === "microsoft365" && (
+                <div className="card space-y-3">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div>
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex items-center gap-2">
+                        <Users size={13} className="text-cyber-400" /> Microsoft 365 accounts
+                      </h4>
+                      <p className="text-xs text-gray-500 mt-1">{inactivity?.note ?? "Sign-in activity appears here after a sync."}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Link to="/reports/standard?report=m365-inactive-accounts" className="btn-secondary text-xs flex items-center gap-1.5">
+                        <ExternalLink size={12} /> Inactive accounts report
+                      </Link>
+                      {inactivity && inactivity.clients.length > 0 && (
+                        <button onClick={() => setShowInactive(v => !v)} className="btn-secondary text-xs">{showInactive ? "Hide accounts" : "Show accounts"}</button>
+                      )}
+                    </div>
+                  </div>
+
+                  {inactivity && inactivity.clients.length > 0 && (
+                    <div className="flex items-center gap-3 text-xs flex-wrap">
+                      {(["dormant", "60_90", "30_60", "active", "unknown"] as const).map(bucket => (
+                        <span key={bucket} className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${bucket === "dormant" ? "bg-red-500" : bucket === "60_90" ? "bg-orange-500" : bucket === "30_60" ? "bg-amber-500" : bucket === "active" ? "bg-emerald-500" : "bg-gray-600"}`} />
+                          <span className="text-gray-400">{BUCKET_LABELS[bucket]}</span>
+                          <span className="text-white font-medium">{inactivity.totals[bucket] ?? 0}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {inactivity && inactivity.clients.length === 0 && (
+                    <p className="text-xs text-gray-500">
+                      No accounts synced from this tenant yet. Run a sync, then the accounts, their last sign-in and the
+                      offboarding actions appear here — and the report covers every connected tenant at once.
+                    </p>
+                  )}
+
+                  {showInactive && inactivity && (
+                    <div className="space-y-3 border-t border-surface-border pt-3">
+                      {inactivity.clients.map(group => (
+                        <div key={group.companyId ?? "unmapped"} className="space-y-1">
+                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            {group.clientName}
+                            <span className="text-gray-600 normal-case tracking-normal font-normal ml-2">
+                              {group.counts.dormant ?? 0} over 90 days · {group.disabled} disabled
+                            </span>
+                          </p>
+                          {group.users.filter(u => u.bucket === "dormant" || u.bucket === "60_90" || u.bucket === "unknown").slice(0, 12).map(u => (
+                            <div key={u.id} className="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-surface-lighter/50">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-white truncate">{u.displayName} {!u.accountEnabled && <span className="text-[10px] text-gray-500">(disabled)</span>}</p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {u.userPrincipalName} · {u.lastSignInAt ? `last sign-in ${u.daysSinceSignIn}d ago` : "no sign-in recorded"}
+                                </p>
+                              </div>
+                              <span className="badge bg-surface-lighter text-gray-400 text-[10px] shrink-0">{BUCKET_LABELS[u.bucket] ?? u.bucket}</span>
+                              {canManageIntegrations && inactivity.offboardingEnabled && u.bucket !== "unknown" && (
+                                <button onClick={() => handleOffboard(u.id, u.userPrincipalName)} className="btn-secondary text-xs shrink-0" title="Raise an offboarding checklist — it disables nothing by itself">
+                                  Offboard
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                      <p className="text-xs text-gray-600">
+                        An account with no sign-in recorded is reported as unknown, never as dormant — reading sign-in activity needs Entra ID P1 and <code className="font-mono">AuditLog.Read.All</code>.
+                        Offboarding raises a checklist for a person to work through; it does not disable the account.
+                        For every client and every tenant, with your own threshold, run the <Link to="/reports/standard?report=m365-inactive-accounts" className="text-cyber-400 hover:text-cyber-300">inactive accounts report</Link>.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -872,65 +956,6 @@ export function CloudConnectPage() {
       {/* ═══ Connected ═══ */}
       {tab === "connected" ? (
         <>
-      {/* Microsoft 365 inactivity (PLAN-015 Phase B #12) — only shown once a tenant has synced */}
-      {inactivity && inactivity.clients.length > 0 && (
-        <div className="card space-y-3">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <Users size={15} className="text-cyber-400" /> Microsoft 365 inactive accounts
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">{inactivity.note}</p>
-            </div>
-            <div className="flex items-center gap-3 text-xs">
-              {(["dormant", "60_90", "30_60", "active", "unknown"] as const).map(bucket => (
-                <span key={bucket} className="flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${bucket === "dormant" ? "bg-red-500" : bucket === "60_90" ? "bg-orange-500" : bucket === "30_60" ? "bg-amber-500" : bucket === "active" ? "bg-emerald-500" : "bg-gray-600"}`} />
-                  <span className="text-gray-400">{BUCKET_LABELS[bucket]}</span>
-                  <span className="text-white font-medium">{inactivity.totals[bucket] ?? 0}</span>
-                </span>
-              ))}
-              <button onClick={() => setShowInactive(v => !v)} className="btn-secondary text-xs">{showInactive ? "Hide" : "Show accounts"}</button>
-            </div>
-          </div>
-
-          {showInactive && (
-            <div className="space-y-3 border-t border-surface-border pt-3">
-              {inactivity.clients.map(group => (
-                <div key={group.companyId ?? "unmapped"} className="space-y-1">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    {group.clientName}
-                    <span className="text-gray-600 normal-case tracking-normal font-normal ml-2">
-                      {group.counts.dormant ?? 0} over 90 days · {group.disabled} disabled
-                    </span>
-                  </p>
-                  {group.users.filter(u => u.bucket === "dormant" || u.bucket === "60_90" || u.bucket === "unknown").slice(0, 12).map(u => (
-                    <div key={u.id} className="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-surface-lighter/50">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white truncate">{u.displayName} {!u.accountEnabled && <span className="text-[10px] text-gray-500">(disabled)</span>}</p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {u.userPrincipalName} · {u.lastSignInAt ? `last sign-in ${u.daysSinceSignIn}d ago` : "no sign-in recorded"}
-                        </p>
-                      </div>
-                      <span className="badge bg-surface-lighter text-gray-400 text-[10px] shrink-0">{BUCKET_LABELS[u.bucket] ?? u.bucket}</span>
-                      {canManageIntegrations && inactivity.offboardingEnabled && u.bucket !== "unknown" && (
-                        <button onClick={() => handleOffboard(u.id, u.userPrincipalName)} className="btn-secondary text-xs shrink-0" title="Raise an offboarding checklist — it disables nothing by itself">
-                          Offboard
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-              <p className="text-xs text-gray-600">
-                An account with no sign-in recorded is reported as unknown, never as dormant — reading sign-in activity needs Entra ID P1 and <code className="font-mono">AuditLog.Read.All</code>.
-                Offboarding raises a checklist for a person to work through; it does not disable the account.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Integration List */}
       {(
         loading ? <PageSkeleton /> :
