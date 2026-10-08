@@ -24,6 +24,7 @@ import { assertSafeOutboundUrl, safeFetch } from "./egress";
 import tls from "node:tls";
 import { promises as dns } from "node:dns";
 import { configFlag, configNumber, refreshSettings } from "./appSettings";
+import { alertEventData, emitWebhookEvent } from "./webhookDispatch";
 
 /**
  * The poll interval is read when the monitor starts rather than per poll: it also defines the
@@ -467,7 +468,7 @@ function describeSources(observations: SourceObservation[]): string {
   return observations.map((o) => `${o.source} ${o.verdict}`).join(", ") || "no monitored sources configured";
 }
 
-async function applyObservations(service: { id: string; name: string }, observations: SourceObservation[]): Promise<void> {
+async function applyObservations(service: { id: string; name: string; category: string }, observations: SourceObservation[]): Promise<void> {
   const problems = observations.filter((o) => o.verdict === "problem");
   const restored = observations.filter((o) => o.verdict === "restored");
   const clears = observations.filter((o) => o.verdict === "clear");
@@ -485,7 +486,7 @@ async function applyObservations(service: { id: string; name: string }, observat
       "informational",
     );
     if (!active) {
-      await prisma.serviceAlert.create({
+      const raised = await prisma.serviceAlert.create({
         data: {
           serviceId: service.id,
           title: primary.title || `Possible outage reported for ${service.name}`,
@@ -498,6 +499,7 @@ async function applyObservations(service: { id: string; name: string }, observat
         },
       });
       snapshot.created++;
+      void emitWebhookEvent("service_alert.raised", alertEventData(service, raised));
       log("warn", `New active alert for ${service.name}: ${primary.title} (${describeSources(problems)})`);
       return;
     }
@@ -525,11 +527,12 @@ async function applyObservations(service: { id: string; name: string }, observat
   const restoredItem = restored[0];
   if (restoredItem) {
     clearStreak.delete(service.id);
-    await prisma.serviceAlert.update({
+    const resolvedBySource = await prisma.serviceAlert.update({
       where: { id: active.id },
       data: { status: "resolved", resolvedAt: new Date(), description: append(`Auto-resolved: ${restoredItem.title}`) },
     });
     snapshot.resolved++;
+    void emitWebhookEvent("service_alert.resolved", alertEventData(service, resolvedBySource));
     log("info", `Auto-resolved alert for ${service.name}: ${restoredItem.title}`);
     return;
   }
@@ -543,7 +546,7 @@ async function applyObservations(service: { id: string; name: string }, observat
     const streak = (clearStreak.get(service.id) || 0) + 1;
     clearStreak.set(service.id, streak);
     if (streak >= REQUIRED_CLEAR_POLLS && alertAge >= POLL_INTERVAL_MS) {
-      await prisma.serviceAlert.update({
+      const resolvedQuiet = await prisma.serviceAlert.update({
         where: { id: active.id },
         data: {
           status: "resolved",
@@ -553,6 +556,7 @@ async function applyObservations(service: { id: string; name: string }, observat
       });
       clearStreak.delete(service.id);
       snapshot.resolved++;
+      void emitWebhookEvent("service_alert.resolved", alertEventData(service, resolvedQuiet));
       log("info", `Auto-resolved alert for ${service.name} (all clear from ${clears.map((c) => c.source).join(", ")})`);
     }
     return;
@@ -563,7 +567,7 @@ async function applyObservations(service: { id: string; name: string }, observat
   // keep an incident from weeks ago on the banner.
   clearStreak.delete(service.id);
   if (alertAge < STALE_AFTER_MS) return;
-  await prisma.serviceAlert.update({
+  const stale = await prisma.serviceAlert.update({
     where: { id: active.id },
     data: {
       status: "resolved",
@@ -573,6 +577,7 @@ async function applyObservations(service: { id: string; name: string }, observat
   });
   snapshot.staleResolved++;
   snapshot.resolved++;
+  void emitWebhookEvent("service_alert.resolved", alertEventData(service, stale));
   log("info", `Auto-resolved stale alert for ${service.name} (${STALE_AFTER_HOURS}h with no readable source: ${describeSources(observations)})`);
 }
 

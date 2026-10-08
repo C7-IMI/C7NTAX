@@ -19,6 +19,7 @@ import { Permission } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 import { EgressError, assertSafeUrlLiteral } from "../services/egress";
 import { getMonitorStatus, runAlertCheck } from "../services/alertMonitor";
+import { alertEventData, emitWebhookEvent } from "../services/webhookDispatch";
 
 export const serviceAlertsRouter = Router();
 serviceAlertsRouter.use(authenticate);
@@ -172,6 +173,8 @@ serviceAlertsRouter.post("/", requirePermission(Permission.ServiceAlertManage), 
         source: "manual",
       },
     });
+    // A manual alert is an alert: an endpoint subscribed to "raised" hears about this one too.
+    void emitWebhookEvent("service_alert.raised", alertEventData(service, alert));
     res.status(201).json(alert);
   } catch (e) { next(e); }
 });
@@ -182,7 +185,9 @@ serviceAlertsRouter.post("/:id/resolve", requirePermission(Permission.ServiceAle
     const alert = await prisma.serviceAlert.update({
       where: { id: req.params.id },
       data: { status: "resolved", resolvedAt: new Date() },
+      include: { service: { select: { id: true, name: true, category: true } } },
     });
+    void emitWebhookEvent("service_alert.resolved", alertEventData(alert.service, alert));
     res.json(alert);
   } catch (e) { next(e); }
 });
