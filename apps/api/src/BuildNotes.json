@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.8.030",
+    "date": "2026-10-08",
+    "title": "The Cancel button on \"Select Service Type\" now leaves the flow",
+    "changes": [
+      {
+        "text": "**`C7NC → Services → Connect a service → Cancel`** did nothing. The add flow is a *view* of the Services tab (`add`, like `configure`, keeps Services lit in the tab strip), so what decides whether it is on screen is the tab — but Cancel only called `setShowAdd(false)`, and `showAdd` had been reduced to \"scroll this into view when it opens\". The click was real, the state change was real, and the view did not move. Cancel now leaves the flow the way the tab strip does — back to Services — which is also what fixes it when the flow is left by any other route.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The two Cancels *inside* the flow** (the configuration form's header and its button row) had the same dead flag in them. They now step back one level to the type list, which is what \"Cancel\" means on a form — and the second one no longer implies it is leaving the whole flow when it is not.",
+        "type": "Fix"
+      },
+      {
+        "text": "**The exits are now one rule instead of three variations**: the type list's Cancel ends the flow (Services), the form's Cancel returns to the type list. Nothing else about the flow changed — same fields, same wizard, same creation.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.029",
     "date": "2026-10-08",
     "title": "A Console in the header, and the plan for what it will do (401 commands, PowerShell-grade completion)",

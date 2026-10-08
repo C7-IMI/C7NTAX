@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.029 | Last Updated: 2026-10-08
+## Version: 2026.10.8.030 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,20 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which parses this file on every request, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.030 — The Cancel button on "Select Service Type" now leaves the flow
+
+Cancel in the connector add flow set a flag that nothing looked at, so the screen it was supposed to close stayed exactly where it was. Fixed, and the exits of that flow are now consistent.
+
+- **[Fix]** **`C7NC → Services → Connect a service → Cancel`** did nothing. The add flow is a *view* of the Services tab (`add`, like `configure`, keeps Services lit in the tab strip), so what decides whether it is on screen is the tab — but Cancel only called `setShowAdd(false)`, and `showAdd` had been reduced to "scroll this into view when it opens". The click was real, the state change was real, and the view did not move. Cancel now leaves the flow the way the tab strip does — back to Services — which is also what fixes it when the flow is left by any other route.
+- **[Fix]** **The two Cancels *inside* the flow** (the configuration form's header and its button row) had the same dead flag in them. They now step back one level to the type list, which is what "Cancel" means on a form — and the second one no longer implies it is leaving the whole flow when it is not.
+- **[Update]** **The exits are now one rule instead of three variations**: the type list's Cancel ends the flow (Services), the form's Cancel returns to the type list. Nothing else about the flow changed — same fields, same wizard, same creation.
+
+**Verification (reproduced first, then fixed, then re-walked):** before the change, clicking Cancel on the "Select Service Type" panel left the heading reading *Select Service Type* — asserted against the DOM, not by eye. After it: entering the flow (heading *Select Service Type*), cancelling out (heading gone, the Services list and its "Connect a service" button back), re-entering a **second** time (so this is not a first-click-only fix), choosing *Fill the form* (heading *Configure Microsoft 365*), cancelling there (back to *Select Service Type*, still inside the flow), and cancelling again (out to Services). Web `tsc` clean.
+
+**Checked and not broken:** the connector wizard's own Cancel closes the modal (it calls the wizard's `onClose`, which clears the type), the connection fix dialog's Cancel clears the state it renders on, and a sweep of the other 55 Cancel/Close controls in `apps/web/src` found the same "single state write" shape — all of them writing the value their dialog actually renders on. This defect was the flow whose visibility had moved to the URL-driven tab while its Cancel was still talking to the old flag.
 
 ---
 

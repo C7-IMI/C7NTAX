@@ -5729,3 +5729,34 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **The route/permission dump is worth keeping**: `files/routes-with-permissions.tsv` in this session (437 rows: file, method, path, permission) is the input PLAN-026 Phase 1's generator needs.
 - **Count the catalogue from the document, not from memory.** I wrote "~230 commands" in the registry before counting the tables; the real figure is **401** across sixteen groups, and the per-group breakdown is now in §12's preamble.
 - **`Select-String` counts lines, so count in the document's own range** — a `^\| \`` match over the whole file catches tables outside §12 and overstates the catalogue by 33 rows.
+
+
+---
+
+### Prompt 272 — The Cancel button on "Select Service Type" did nothing
+
+**Timestamp:** 2026-10-08 22:25 | **Status:** Complete (reproduced, fixed, re-walked live) | **Duration:** ~35 min
+
+**BuildNotes IDs:** **2026.10.8.030** — "The Cancel button on \"Select Service Type\" now leaves the flow"
+
+**Prompt**
+
+> The cancel button does not work
+
+**What I did**
+- **Reproduced it before touching anything**, because "does nothing" has three possible causes and only one of them is the button. Drove the real UI: Services → *Connect a service* → the panel opened with the heading *Select Service Type* → clicked Cancel → the heading was **still** *Select Service Type*. Asserted against the DOM, so the evidence is the state of the page rather than my reading of it.
+- **Found the cause in the shape of the flow, not in the handler.** `add` (like `configure`) is a *view* of the Services tab — the tab strip keeps Services lit — so what decides whether the flow is on screen is `tab`. Cancel called `setShowAdd(false)` instead, and `showAdd` had long since been reduced to "scroll this into view when it opens". The click fired, the state changed, and the view did not move. The handler was correct for the design it was written against and wrong for the design the screen now has.
+- **Fixed it by leaving the flow the way the tab strip does** — `goToSection("services")`, the same call the tab uses, which clears the type, the form and the wizard as well as the tab. That also fixes every *other* way the flow is left, since it is now one exit rather than a handler that has to be kept in step with a second one.
+- **Fixed the two Cancels inside the flow while I was in there**, because they carried the same dead flag: the configuration form's header Cancel and its button-row Cancel now step back to the type list, which is what Cancel means on a form and does not leave the reader wondering whether the whole flow is gone.
+- **Re-walked the whole thing, twice round**, because a fix in a flow's entry point can be a first-click-only fix: open → cancel → Services; open again → *Fill the form* → *Configure Microsoft 365* → cancel → back to the type list, still in the flow; cancel again → Services.
+- **Swept the rest of the application for the same defect** rather than assuming it was alone: 55 Cancel/Close controls in `apps/web/src` that call exactly one thing, and every other one writes the value its dialog actually renders on. The wizard's Cancel closes the wizard; the connection fix dialog's Cancel clears its own state.
+
+**Decisions worth remembering**
+- **A URL-driven view makes old flags silently decorative.** This is the pattern behind both of this feature's button bugs (the Add Connection button, and now Cancel): when visibility moves to the tab or the route, any `showX` boolean left behind still *looks* like it controls the screen, and a handler that sets it compiles, runs, and does nothing. Worth checking `showAdd`-shaped state in any screen whose view is chosen by a tab or a path.
+- **One exit, or the second one drifts.** Cancel, the tab strip and the wizard's close all have to agree about what "leaving the add flow" means; routing all three through the same function is the only version of that which stays true.
+- **"Does not work" is a reproduction instruction, not a description.** The 2 minutes spent driving the UI first turned "the button is broken" into "the button works and the view does not change", which is a different fix in a different file.
+
+**Notes for next time**
+- **The dev servers are still running from this session's shells** (`shellId 4726` the API, `webdev` the web app on :3010) and will stop when the session ends.
+- **The session had expired in the shared browser** before I could reproduce anything — the app had been idle past its timeout. Signing back in is the first step of any live verification in a long session, and the login page's own status panel saying "All systems ready" is the quickest confirmation that the API and database are up.
+- **The Add button on this screen is called "Connect a service"** (and "Add a connector" in the empty state), not "Add Connection" — worth knowing before scripting a click against the label.

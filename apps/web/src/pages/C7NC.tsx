@@ -784,7 +784,9 @@ export function C7NCPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Select Service Type</h3>
-                <button onClick={() => setShowAdd(false)} className="text-sm text-gray-500 hover:text-white">Cancel</button>
+                {/* Leaving the add flow is a section change, not a flag: "add" is a view *within*
+                    Services, so Cancel has to take the reader back to the tab it belongs to. */}
+                <button onClick={() => goToSection("services")} className="text-sm text-gray-500 hover:text-white">Cancel</button>
               </div>
               {types.length === 0 ? (
                 <div className="card text-center py-8 text-gray-500">
@@ -850,7 +852,8 @@ export function C7NCPage() {
             <div className="card space-y-5 animate-fade-in">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-white">Configure {selectedType.name}</h3>
-                <button onClick={() => { setShowAdd(false); setSelectedType(null); }} className="text-gray-500 hover:text-white">Cancel</button>
+                {/* Back to the type list, one step — not out of the flow. */}
+                <button onClick={() => setSelectedType(null)} className="text-gray-500 hover:text-white">Cancel</button>
               </div>
               <p className="text-sm text-gray-400 -mt-3">{selectedType.description}</p>
 
@@ -934,7 +937,7 @@ export function C7NCPage() {
               </div>}
               <div className="flex gap-3 pt-2">
                 <button onClick={handleCreate} className="btn-primary">Create Connection</button>
-                <button onClick={() => { setShowAdd(false); setSelectedType(null); }} className="btn-secondary">Cancel</button>
+                <button onClick={() => setSelectedType(null)} className="btn-secondary">Cancel</button>
               </div>
             </div>
           )}
