@@ -191181,6 +191181,37 @@
     "createdAt": "2026-10-08T17:41:37.889Z"
   },
   {
+    "id": "959c0438-f5dc-4d2b-96ba-3481a9bdbc86",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "kumo"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:40:38.595Z"
+  },
+  {
+    "id": "faa0fee1-8653-4f36-8cff-c6319c52c6cc",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "kumo",
+        "reports-dashboard"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:40:40.655Z"
+  },
+  {
     "id": "a8a65de9-4efb-418e-b990-e2cd9ed913b4",
     "action": "billing:create",
     "entity": "billing",
@@ -192910,6 +192941,80 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T18:48:52.347Z"
+  },
+  {
+    "id": "1bf94389-2792-41e8-8424-5f33eefd5f96",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "reports-dashboard",
+        "kumo"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:40:53.562Z"
+  },
+  {
+    "id": "a01d4edf-9a9f-404c-b666-789a8bdc83ad",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "reports-dashboard"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:41:05.220Z"
+  },
+  {
+    "id": "1d54949e-6e12-4320-a50b-02a0974aa28f",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:41:22.819Z"
+  },
+  {
+    "id": "26933c0d-d974-49de-a85f-e05f0ba5cfee",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "kumo"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:41:29.585Z"
+  },
+  {
+    "id": "03c0aeb6-80fb-4eb7-aeaa-055916122cdb",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:41:47.252Z"
   },
   {
     "id": "ff8fc223-667e-49d0-bdcb-2269b95d45c5",
@@ -198806,6 +198911,64 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T18:49:55.977Z"
+  },
+  {
+    "id": "e2d97130-3d2e-4f7b-bc42-5b5d8826d6ae",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "assistant"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:43:46.359Z"
+  },
+  {
+    "id": "99c39cb1-535e-4910-9ba2-4b15a2dd056d",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:43:49.455Z"
+  },
+  {
+    "id": "19ff2c2b-d7fb-4297-a131-4a1258167684",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets",
+        "assistant"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:44:03.389Z"
+  },
+  {
+    "id": "fb886bb6-8ea3-45bc-837d-f8afe149a754",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-08T22:44:05.554Z"
   },
   {
     "id": "ac83dfcd-1695-4e5d-a030-435d0c567cf0",
