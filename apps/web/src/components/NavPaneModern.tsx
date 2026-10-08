@@ -349,9 +349,11 @@ export function NavPaneModern({
       >
         {isKumo && !collapsed ? (
           /* Kumo is branded rather than labelled — the logotype replaces its icon *and* its
-             name, which is the point of branding it. Collapsed, the rail has room for one
-             glyph and not for a wordmark, so it keeps the icon like every other row. */
-          <KumoWordmark height={21} className="shrink-0" />
+             name — but it is still a *row*, so the mark is set at the height of the labels beside
+             it. A larger one reads as a heading, and a heading in the middle of the rail makes the
+             rows under it look like its children, which they are not. Collapsed, the rail has room
+             for one glyph and not for a wordmark, so it keeps the icon like every other row. */
+          <KumoWordmark height={16} className="shrink-0" />
         ) : (
           <domain.icon size={18} className={`shrink-0 ${badge > 0 ? "text-alert-red" : ""}`} />
         )}

@@ -152,22 +152,6 @@ const DOMAIN_SPECS: DomainSpec[] = [
     ],
   },
   {
-    id: "kumo",
-    label: "Kumo",
-    icon: Database,
-    what: "The documentation app inside this one: passwords, configurations, documents and checks.",
-    rows: [
-      { id: "kumo-dashboard" },
-      { id: "kumo-organizations" },
-      { id: "kumo-assets" },
-      { id: "kumo-passwords" },
-      { id: "kumo-configs" },
-      { id: "kumo-documents" },
-      { id: "kumo-checklists" },
-      { id: "kumo-domains" },
-    ],
-  },
-  {
     id: "platform",
     label: "Platform",
     icon: Shield,
@@ -192,8 +176,8 @@ const DOMAIN_SPECS: DomainSpec[] = [
   },
   {
     /**
-     * Service Alerts keeps a parent-level row, and it sits last in the rail — beneath Platform —
-     * as a section of its own.
+     * Service Alerts keeps a parent-level row, and it sits as a section of its own rather than being
+     * buried in the settings drawer.
      *
      * The reason is the badge. This is the only row in the navigation that reports the state of the
      * instance rather than the shape of it: burying it one level inside a domain means the count is
@@ -209,6 +193,32 @@ const DOMAIN_SPECS: DomainSpec[] = [
       { id: "service-alerts" },
       { id: "admin-monitors" },
       { id: "admin-webhooks" },
+    ],
+  },
+  {
+    /**
+     * Kumo goes last, at the foot of the spine and just above the utilities.
+     *
+     * Two reasons, and the second one is the one that shows. It is a product inside this one rather
+     * than a part of the service-desk flow — the mark it carries says so — so it reads better beside
+     * the utilities than in the middle of the delivery rows. And where it stood, between Platform and
+     * Service alerts, a wordmark the height of a heading sat above two ordinary rows and made them
+     * look like its children; at the end it abuts the utilities, which are separated by their own
+     * heading, so nothing can be mistaken for its contents.
+     */
+    id: "kumo",
+    label: "Kumo",
+    icon: Database,
+    what: "The documentation app inside this one: passwords, configurations, documents and checks.",
+    rows: [
+      { id: "kumo-dashboard" },
+      { id: "kumo-organizations" },
+      { id: "kumo-assets" },
+      { id: "kumo-passwords" },
+      { id: "kumo-configs" },
+      { id: "kumo-documents" },
+      { id: "kumo-checklists" },
+      { id: "kumo-domains" },
     ],
   },
 ];

@@ -6563,3 +6563,26 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 
 **Notes for next time**
 - **The right question was "what is actually missing", not "what did the prompt describe".** Half of this request already worked; rebuilding the half that worked would have been invisible work, and adding only the half that did not is what closed it.
+
+### Prompt 297 — Kumo down to the foot of the rail
+
+**Timestamp:** 2026-10-08 18:25 | **Status:** Complete | **Duration:** ~15 min
+
+**BuildNotes ID:** **2026.10.8.056**
+
+**Prompt**
+
+> Also, make Kumo in the nav pane a little smaller so that it's easier to tel that it's a menu item. RIght now it looks like a section header/divider and Platform and Service alerts are part of Kumo, which they are not
+
+> or maybe move Kumo below Service ALerts
+
+**What I did**
+- **Read it as one cause with two symptoms.** A wordmark set two sizes larger than the labels around it does not read as a row; it reads as a *heading*, and a heading in the middle of a list claims everything under it. At 21px among 14px labels, Platform and Service alerts were being adopted by Kumo by simple typography.
+- **Did both of the things offered rather than picking one**, because they answer different halves: size fixes what the row *is* (a menu item), position fixes what it *claims* (the rows below it).
+- **The mark is now 16px** — about the cap height of the neighbouring labels, so the letters stop shouting, while the spider stays Kumo red and the row stays unmistakably branded.
+- **The domain moved to the end of the spine**, above the utilities. That is one array order in `DOMAIN_SPECS`, so everything derived followed on its own: the rail, the keyboard numbering, Favorites, the panel. Two comments had to be corrected with it — the alerts spec said it "sits last in the rail", which is now true of Kumo instead — which is the sort of stale sentence that outlives the change it described.
+- **Verified**: the rail reads Favorites, Today, Service desk, Clients, Delivery, Revenue, Insight, Platform, Service alerts, Kumo, then the *Utilities* heading; the mark measures 71×16 inside a 32px row against 36px for its neighbours; the row still opens Kumo's panel, and Kumo's own panel header still carries the larger 18px mark, where there is nothing to be mistaken for.
+- **Docs**: Help's rail table lists the rows in the order they now appear, with the reason Kumo is last.
+
+**Notes for next time**
+- **A brand is not a licence to be a heading.** A logotype has to be the size of the thing it is standing in for. Set larger than its neighbours it silently re-parents everything beneath it, which is a navigation bug wearing brand colours — and one that no type-checker will ever see.

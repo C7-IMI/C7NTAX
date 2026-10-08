@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.055 | Last Updated: 2026-10-08
+## Version: 2026.10.8.056 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,22 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.056 — Kumo down to the foot of the rail, at the height of a row
+
+The logotype added in 2026.10.8.054 was set two sizes larger than the labels around it, and it stood
+between Platform and Service alerts. A wordmark that reads as a heading makes the rows beneath it look
+like its contents, and those two are not part of Kumo — so it is now both smaller and somewhere else.
+
+- **[Fix]** **The mark is set to the height of the row it lives in** — 16px where it was 21px — so it
+  reads as a menu item rather than as a section divider. It is still a wordmark with its own red
+  spider, so the branding survives the correction: what changed is its weight, not its identity.
+- **[Update]** **Kumo sits last on the spine, just above the utilities.** It is a product inside this
+  one rather than a step in the service-desk flow, and at the foot it abuts the labelled *Utilities*
+  heading instead of sitting in the middle of the delivery rows — so there is nothing left for a
+  reader to mistake for its contents.
+- **[Update]** **Help's rail table lists the rows in the order they are now in**, and says why Kumo is
+  last, so the documentation does not describe a pane the reader cannot see.
 
 ## 2026.10.8.055 — Favorites on the rail, and a right-click that can pin anything
 

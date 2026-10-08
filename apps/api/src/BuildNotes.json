@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.8.056",
+    "date": "2026-10-08",
+    "title": "Kumo down to the foot of the rail, at the height of a row",
+    "changes": [
+      {
+        "text": "**The mark is set to the height of the row it lives in** — 16px where it was 21px — so it",
+        "type": "Fix"
+      },
+      {
+        "text": "**Kumo sits last on the spine, just above the utilities.** It is a product inside this",
+        "type": "Update"
+      },
+      {
+        "text": "**Help's rail table lists the rows in the order they are now in**, and says why Kumo is",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.055",
     "date": "2026-10-08",
     "title": "Favorites on the rail, and a right-click that can pin anything",
