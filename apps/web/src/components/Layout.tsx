@@ -201,7 +201,12 @@ function loadFavorites(): string[] {
   return [];
 }
 
-/** Pinning is a view of the navigation, so it is kept beside the other nav layout preferences. */
+/**
+ * The pins are the account's, so they follow the person from machine to machine. localStorage is
+ * kept as a first-paint cache: the navigation draws the pins it already knows before the API has
+ * answered, and the account's list replaces it a moment later. A machine that has never seen this
+ * account starts empty and fills in.
+ */
 function saveFavorites(ids: string[]): void {
   try { localStorage.setItem("c7_nav_favorites", JSON.stringify(ids)); } catch {}
 }
@@ -461,6 +466,8 @@ export function Layout({ children }: { children: ReactNode }) {
   const [favoriteDragId, setFavoriteDragId] = useState<string | null>(null);
   const navMenu = useContextMenu();
   const favoritesOpen = expanded.has(FAVORITES_NODE_ID);
+  /** Set once the person has changed their pins, so a slow first read cannot undo them. */
+  const favoritesTouched = useRef(false);
   const nodeById = useMemo(() => new Map(walkNav(visibleTree).map(({ node }) => [node.id, node])), [visibleTree]);
   // A section the signed-in role cannot reach is not drawn, whatever is pinned — the pin survives,
   // so it comes back if the permission does.
@@ -470,8 +477,41 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 
   const updateFavorites = useCallback((next: string[]) => {
+    favoritesTouched.current = true;
     saveFavorites(next);
     setFavorites(next);
+    // The account is the record; the cache above only spares the navigation a flicker next time.
+    api.put("/nav/favorites", { favorites: next }).catch(() => {
+      toast.error("Those pins could not be saved to your account", { id: "nav-favorites-save" });
+    });
+  }, []);
+
+  // ── Favorites come from the account ────────────────────────────
+  // The list is per user, so it is the same on any machine. Anything pinned in this browser before
+  // the account kept them is offered up once, rather than being lost to an account with nothing
+  // saved — after that the account decides, and the browser is only a cache.
+  useEffect(() => {
+    let active = true;
+    const beforeAnythingWasSaved = loadFavorites();
+    api.get("/nav/favorites")
+      .then(async (res) => {
+        if (!active || favoritesTouched.current) return;
+        const stored: string[] = Array.isArray(res.data?.favorites) ? res.data.favorites : [];
+        if (!res.data?.personalised && beforeAnythingWasSaved.length > 0) {
+          const { data } = await api.put("/nav/favorites", { favorites: beforeAnythingWasSaved });
+          if (!active) return;
+          const adopted: string[] = Array.isArray(data?.favorites) ? data.favorites : beforeAnythingWasSaved;
+          saveFavorites(adopted);
+          setFavorites(adopted);
+          return;
+        }
+        saveFavorites(stored);
+        setFavorites(stored);
+      })
+      .catch(() => {
+        // No answer: the cache stands in, and the next pin writes again.
+      });
+    return () => { active = false; };
   }, []);
 
   const expandSection = useCallback((id: string) => {

@@ -1,10 +1,15 @@
 /**
- * Per-user dashboard layout (PLAN-015 Phase B #4).
+ * The per-user layout store: the dashboard's widgets (PLAN-015 Phase B #4) and the navigation's
+ * pinned sections.
  *
- * The dashboard is assembled from a saved list of widget ids. That list arrives from a browser, so
- * these assertions are about the two things that make it safe and useful: it is checked against the
- * server's catalogue rather than trusted, and it is scoped to the account that saved it — one
- * user's arrangement must never appear on another user's dashboard.
+ * Both are lists of ids that arrive from a browser, so these assertions are about the two things
+ * that make them safe and useful: they are checked rather than trusted, and they are scoped to the
+ * account that saved them — one person's arrangement must never appear on another's screen.
+ *
+ * The two differ in one deliberate way: a widget is validated against a server-side catalogue, and
+ * a pinned section is only validated for *shape*, because the navigation tree is drawn by the client
+ * and an id it cannot draw is simply not drawn. A pin for a section that has been renamed is kept,
+ * so the pin returns when the section does — that is asserted below in as many words.
  *
  * Run from apps/api:  node probe-dashboard.mjs
  */
@@ -148,6 +153,61 @@ async function main() {
   const anon = await call("GET", "/api/dashboard/layout");
   check(anon.status === 401, `an unauthenticated read is refused (${anon.status})`);
 
+  console.log("\nnavigation pins are kept per account, and cleaned rather than trusted");
+  for (const token of [admin.token, tech.token, readonly.token]) await call("DELETE", "/api/nav/favorites", { token });
+  const noPins = await call("GET", "/api/nav/favorites", { token: admin.token });
+  check(noPins.status === 200 && noPins.data.favorites.length === 0, `an account that has never pinned gets nothing (${noPins.status})`);
+  check(noPins.data.personalised === false, "and is told it has never saved any");
+
+  const pinned = await call("PUT", "/api/nav/favorites", {
+    token: admin.token,
+    body: { favorites: ["billing", "admin-portal", "favorites:administration", "billing"] },
+  });
+  check(pinned.status === 200, `pins can be saved (${pinned.status})`);
+  check(JSON.stringify(pinned.data.favorites) === JSON.stringify(["billing", "admin-portal", "favorites:administration"]),
+    `in the order they were given, with a duplicate collapsed (${JSON.stringify(pinned.data.favorites)})`);
+  check(pinned.data.personalised === true, "and the account now counts as personalised");
+
+  const rereadPins = await call("GET", "/api/nav/favorites", { token: admin.token });
+  check(JSON.stringify(rereadPins.data.favorites) === JSON.stringify(pinned.data.favorites), "the order survives a re-read");
+
+  const junkPins = await call("PUT", "/api/nav/favorites", {
+    token: admin.token,
+    body: { favorites: [1, "", "has spaces", "ok-id", { a: 1 }, "ok-id", "x".repeat(200), null, "billing"] },
+  });
+  check(junkPins.status === 200, `a messy list is accepted and cleaned (${junkPins.status})`);
+  check(JSON.stringify(junkPins.data.favorites) === JSON.stringify(["ok-id", "billing"]),
+    `only ids shaped like a section survive (${JSON.stringify(junkPins.data.favorites)})`);
+  const manyPins = await call("PUT", "/api/nav/favorites", {
+    token: admin.token,
+    body: { favorites: Array.from({ length: 60 }, (_v, i) => `section-${i}`) },
+  });
+  check(manyPins.data.favorites.length === 40, `and the list is capped rather than unbounded (${manyPins.data.favorites.length})`);
+  const pinsNotAnArray = await call("PUT", "/api/nav/favorites", { token: admin.token, body: { favorites: "billing" } });
+  check(pinsNotAnArray.status === 400, `something that is not a list is refused (${pinsNotAnArray.status})`);
+
+  console.log("\na pin for a section the tree does not have is kept, because the tree is the client's");
+  const unknownPin = await call("PUT", "/api/nav/favorites", { token: admin.token, body: { favorites: ["not-a-section-here"] } });
+  check(unknownPin.data.favorites.includes("not-a-section-here"),
+    "an id that is merely unknown is stored rather than deleted, so a rename cannot silently unpin a section");
+
+  console.log("\npins belong to one account and nobody else");
+  await call("PUT", "/api/nav/favorites", { token: admin.token, body: { favorites: ["billing", "tickets"] } });
+  const techPins = await call("GET", "/api/nav/favorites", { token: tech.token });
+  check(techPins.data.favorites.length === 0, `another account does not see them (${techPins.data.favorites.length})`);
+  await call("PUT", "/api/nav/favorites", { token: tech.token, body: { favorites: ["tickets"] } });
+  const adminPinsAfter = await call("GET", "/api/nav/favorites", { token: admin.token });
+  check(JSON.stringify(adminPinsAfter.data.favorites) === JSON.stringify(["billing", "tickets"]), "and its own save leaves the first account alone");
+
+  const clearedPins = await call("DELETE", "/api/nav/favorites", { token: admin.token });
+  check(clearedPins.status === 200 && clearedPins.data.personalised === false, `clearing takes the row away (${clearedPins.status})`);
+  const anonPins = await call("GET", "/api/nav/favorites");
+  check(anonPins.status === 401, `an unauthenticated read of somebody's pins is refused (${anonPins.status})`);
+
+  await prisma.userNavConfig.deleteMany({
+    where: { user: { email: { in: [ADMIN, TECH, READONLY] } } },
+  });
+
   await prisma.userDashboardConfig.deleteMany({
     where: { user: { email: { in: [ADMIN, TECH, READONLY] } } },
   });
@@ -155,6 +215,8 @@ async function main() {
   await prisma.userSession.deleteMany({ where: { userId: { in: personaIds } } });
   const leftovers = await prisma.userDashboardConfig.count({ where: { userId: { in: personaIds } } });
   check(leftovers === 0, `the probe cleaned up after itself (${leftovers} layouts left)`);
+  const pinLeftovers = await prisma.userNavConfig.count({ where: { userId: { in: personaIds } } });
+  check(pinLeftovers === 0, `and left no pins behind (${pinLeftovers} rows)`);
   await prisma.$disconnect();
 
   console.log(`\n${pass} passed, ${fail} failed`);

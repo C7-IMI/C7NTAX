@@ -81,6 +81,7 @@ model User {
   webauthnCredentials WebauthnCredential[]
   pushDevices     PushDevice[]
   dashboardConfig UserDashboardConfig?
+  navConfig       UserNavConfig?
   outlookAddinTokens OutlookAddinToken[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -2075,6 +2076,21 @@ model UserDashboardConfig {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// [{ id, size, visible }] in display order.
   widgets   Json     @default("[]")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+/// A user's own navigation: the sections pinned to Favorites, in their order.
+/// Keyed to the user like the dashboard layout, so pins follow the account rather than the
+/// browser they were made in. The ids are the client's own section ids and are checked for shape
+/// rather than against a catalogue here, because the tree is drawn by the client and an id it no
+/// longer knows is simply not drawn.
+model UserNavConfig {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Section ids, in display order.
+  favorites Json     @default("[]")
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
