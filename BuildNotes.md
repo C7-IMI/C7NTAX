@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.071 | Last Updated: 2026-10-08
+## Version: 2026.10.8.072 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,55 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.072 — The rest of the application, and the report designer
+
+Seven workstreams in parallel, written against one specification; then the designer itself, which is
+the last page because it is the one that proves the model.
+
+- **[New]** **Settings and configuration** read as hubs: a search over every section *and field label*,
+  a chip stating how many settings there are, a left rail of the areas with the current one lit, and a
+  row per setting — name and note on the left, control in the middle, an explicit **Save** on the right
+  — with a figures band where the page already computed one. `data-hl` anchors, the save paths and the
+  deployment's-value fallback are untouched.
+- **[New]** **Kumo's nine pages** (hub, assets, asset detail, documents, passwords, domains,
+  organizations, organization detail, configurations) gained a figures band, views with live counts,
+  count lines, state chips and footers — inside Kumo's own branding, not the service-desk chrome. The
+  credential reveal logic and the secrets are untouched.
+- **[New]** **The utility surfaces** — checklists and a checklist record, an asset record, calendar,
+  PTO, my activity, the console, the assistant, help, What's New, AI Actions, home, section landings,
+  the finance dashboard, C7NC and C7 Flexpoint — took the same treatment at the depth each deserves:
+  views and footers where they hold lists, figures where they hold numbers, chips for state, and for
+  the console, the assistant and the help articles only a header and figures, because those are tools
+  and reading surfaces rather than pages.
+- **[New]** **Reporting, Custom Reports, the Product Catalog, the Knowledge Base and Service Alerts
+  settings** gained views with counts, count lines, footers and — in Reports — the period as a strip
+  (This month, Last month, This quarter, Last quarter, All time) that writes the same `from`/`to` the
+  date fields do, with the way into the designer beside it.
+- **[Update]** **The report designer** kept its layout — it is a tool, three panes and one document —
+  and gained the identity line the mockup puts in the toolbar (*banded · A4 portrait · N data sources ·
+  N bands*) and a **status line** under the canvas stating what is selected, how tall that band is, how
+  many rows the last run returned, how many pages it lays out to, the page setup, and whether the
+  document has anything wrong with it.
+- **[New]** A **working WYSIWYG designer mockup** was built alongside it in the session workspace
+  (`files/report-designer-mockup.html`): an A4 sheet with a ruler and a millimetre grid, eight bands you
+  can select, drag and resize, a field palette you drop onto a band at the millimetre the pointer is at,
+  a properties panel bound to the selection, inline retyping, arrow-key nudging, undo/redo, page setup
+  and zoom — and a preview that unrolls the grouped bands over real rows, computes its aggregates
+  (`count()`, `count(asset.state = "replace")`, `sum(asset.replacement_cost)` → *8 assets, 3 out of
+  cover, $33,960*), repeats the page bands and paginates. It is the specification for the designer's
+  behaviour, not a picture of it.
+
+**Verification:** `tsc --noEmit` clean across `apps/web`; `pnpm build` all packages; in the browser,
+in the redesigned interface: **Users** *All 17 · Active 17 · Inactive 0 · Without 2FA 17 · Locked 0*
+with a footer, **Roles** *6 roles · 17 users assigned · 283 permission grants*, **Billing** (12 chips,
+footer), **Service Alerts** (*3 alerts*), **Boards** *103 open · 88 stale · 7 escalated*, **Kumo assets**
+*210 assets* with a footer, **Settings** *10 settings · each one says where its value comes from*,
+**C7NC** *5 services · no model · 1 companion app — 5 need attention*, **Custom Reports** (4 chips,
+footer), **Contacts** and **Assets** as in the previous entries. Classic renders its original markup in
+every one of them.
 
 ---
 

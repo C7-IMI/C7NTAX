@@ -7215,3 +7215,46 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **The evaluator is the argument.** A designer that only draws is a drawing tool; the reason the
   bands, the parameters and the aggregates are in the mockup is that the product's claim is *one
   figure, one place* — a report that cannot disagree with a dashboard.
+
+### Prompt 315 — Finish the application: seven workstreams, then the designer
+
+**Timestamp:** 2026-10-08 23:10 | **Status:** Complete | **Duration:** ~70 min
+
+**BuildNotes IDs:** **2026.10.8.072**.
+
+**Prompt**
+
+> Keep going. … Finish these up: Knowledge Base, Product Catalog, Users, Roles onto the chrome; then
+> the differently-shaped pages — Service Alerts, Boards, Billing, Reports, Kumo; then
+> Administration/Configuration and the utility surfaces; and the report designer last, mockup first.
+> > Do whatever you need to do to finish everything. I approve
+
+**What I did**
+- **Ran the rest of the application as seven parallel workstreams** — settings and configuration (5
+  files), Kumo (9), the utility surfaces (16), the API/SSO/portal surfaces (5), Users and Roles (2),
+  Billing (1), Service Alerts/Boards/Monitors (3) — each handed the same written specification and the
+  same three constraints, and each reporting its own `tsc` result. All seven landed clean; the two
+  batches before them are committed as `91086b3` and `bfee8f8`.
+- **Finished my own pages**: Reporting (the period strip + the way into the designer), Custom Reports,
+  the Product Catalog, the Knowledge Base and the Service Alerts settings page.
+- **Did the report designer last, mockup first**: the WYSIWYG mockup (driven and verified — a dropped
+  field lands once, the grouped bands unroll to eight detail rows, the aggregates compute, the page
+  footer counts pages), then the designer page's identity line and status line, with Help updated to
+  describe what the toolbar and the stage now answer.
+- **Caught three bugs by driving the mockup**, not by reading it: a page count that counted band
+  instances, an `if(...)` branch whose `format(date, …)` was not evaluated, and a field drop that
+  inserted one element per render because the stage's listeners were attached inside the per-render
+  wiring. Then a cosmetic one the screenshot showed: band labels sitting on top of the report's own
+  text, moved into the page margin.
+
+**Notes for next time**
+- **A wrong URL looks exactly like a broken page.** `/configuration`, `/checklists`, `/products` and
+  `/reports/custom/design` all rendered an empty `<main>` — the routes are `/admin/configuration`,
+  `/kumo/checklists`, the catalog's own path, and `/reports/custom/:id/design`. Read `App.tsx` before
+  debugging a blank page; that is the second time in this pass.
+- **Concurrency has one real hazard: the shared tree.** Agents editing disjoint files is safe; what
+  is not is a stale dev-server module (Vite missed edits, so four pages 500'd while `tsc` said the
+  files were fine) and one `pnpm install` that pruned 60 packages mid-flight. Touching the edited
+  files forced the re-transform; `pnpm install` restored resolution in five seconds.
+- **Login and two-factor setup are deliberately not redesigned** — they are not part of the working
+  interface, and Help says so.

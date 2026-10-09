@@ -980,6 +980,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Data", "The rows the report selected, with the parameters and the date range."],
       ] },
       { kind: "p", text: "Anything the designer cannot work out is listed at the top as a problem or a warning rather than silently printing wrong. Nothing that fails validation can be saved or run." },
+      { kind: "p", text: "The toolbar states the report's own identity — *banded · A4 portrait · 3 data sources · 8 bands* — beside its name, and the line under the canvas answers the four questions a layout tool usually leaves to a tooltip: **what is selected**, **how tall that band is**, **how many rows the last run returned** and **how many pages it lays out to**, followed by the page setup and whether the document has anything wrong with it. The designer keeps its own full-bleed layout rather than the page chrome, because it is a tool: three panes and one document." },
       { kind: "h", text: "Print, PDF, Excel, CSV" },
       { kind: "p", text: "All four read the same laid-out pages, so a page break in the preview is the page break in the PDF. **Print** and **PDF** reproduce the design, including charts. **Excel** and **CSV** take one row per data row with the group each row belongs to, because a spreadsheet of positioned text boxes would be useless." },
       { kind: "h", text: "Scheduling" },

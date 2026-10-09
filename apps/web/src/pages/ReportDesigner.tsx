@@ -36,6 +36,7 @@ import { Palette } from "../components/reports/designer/Palette";
 import { LaidOutPageView } from "../components/reports/designer/PageRenderer";
 import { clearActiveExpressionTarget, isTypingTarget } from "../components/reports/designer/ExpressionInput";
 import type { DesignerCatalog, DesignerRun } from "../lib/designerTypes";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface SavedReport {
   id: string; name: string; description: string | null; type: string;
@@ -45,6 +46,7 @@ interface SavedReport {
 type Tab = "design" | "preview" | "data";
 
 export function ReportDesignerPage() {
+  const redesign = useRedesign();
   const { id = "new" } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -419,6 +421,15 @@ export function ReportDesignerPage() {
           onChange={event => { setName(event.target.value); setDirty(true); }}
         />
         {dirty ? <span className="text-[10px] text-amber-400">unsaved</span> : null}
+        {redesign ? (
+          // The report's own identity, the way the mockup's toolbar states it: what this is, what
+          // paper it prints on and how much is in it.
+          <span className="text-[11px] text-gray-500">
+            · banded · {document.page.size === "custom" ? "Custom" : document.page.size.toUpperCase()} {document.page.orientation}
+            {" · "}{document.dataSources.length} data source{document.dataSources.length === 1 ? "" : "s"}
+            {" · "}{document.bands.length} bands
+          </span>
+        ) : null}
 
         <div className="flex items-center gap-1 ml-2">
           <button type="button" className="btn-icon" title="Undo (Ctrl+Z)" disabled={!past.length} onClick={undo}>↶</button>
@@ -578,6 +589,19 @@ export function ReportDesignerPage() {
               </p>
             </div>
           ) : null}
+
+          {/* The status line the mockup carries: what is selected, how tall the band is, what the last
+              run returned, and how the page is set up — answered on the page rather than in a tooltip. */}
+          {redesign ? (
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-surface-lighter pt-2 text-[11px] text-gray-500">
+              <span>Selected <b className="font-medium text-gray-300">{selectionLabel}</b></span>
+              <span>· Band height <b className="font-medium text-gray-300">{bandHeightLabel}</b></span>
+              <span>· <b className="font-medium text-gray-300">{run?.rows.length ?? 0}</b> row{run?.rows.length === 1 ? "" : "s"}</span>
+              <span>· <b className="font-medium text-gray-300">{laid?.pages.length ?? 0}</b> page{laid?.pages.length === 1 ? "" : "s"}</span>
+              <span>· {pageSetupLabel}</span>
+              <span className="ml-auto">{errorCount ? "Fix the errors before this can save" : warningCount ? "Saves with warnings" : "Preview updates as you type"}</span>
+            </div>
+          ) : null}
         </main>
 
         {/* Property grid */}
@@ -585,6 +609,7 @@ export function ReportDesignerPage() {
           <Inspector
             document={document}
             catalog={catalog}
+            templates={catalog?.templates ?? []}
             selection={selection}
             issues={issues}
             onSelect={select}

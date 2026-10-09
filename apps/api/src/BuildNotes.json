@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.072",
+    "date": "2026-10-08",
+    "title": "The rest of the application, and the report designer",
+    "changes": [
+      {
+        "text": "**Settings and configuration** read as hubs: a search over every section *and field label*,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Kumo's nine pages** (hub, assets, asset detail, documents, passwords, domains,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The utility surfaces** — checklists and a checklist record, an asset record, calendar,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Reporting, Custom Reports, the Product Catalog, the Knowledge Base and Service Alerts",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The report designer** kept its layout — it is a tool, three panes and one document —",
+        "type": "Update"
+      },
+      {
+        "text": "A **working WYSIWYG designer mockup** was built alongside it in the session workspace",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.071",
     "date": "2026-10-08",
     "title": "The working surfaces, onto the design system",
