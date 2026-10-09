@@ -7575,3 +7575,25 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **Test data has to be put back.** Twelve assets, a cleared line, a ticket status and a set of test
   comments were all restored in the same session, so the demo instance is exactly as it was — which is
   also the only way to re-read this change later without wondering which parts were real.
+
+
+### Prompt 323a ? Housekeeping: the two throwaway scripts came back out
+
+**Timestamp:** 2026-10-09 01:12 | **Status:** Complete | **Duration:** ~5 min
+
+**BuildNotes IDs:** none ? this is the removal of the verification scripts that were committed by mistake
+with `2026.10.8.080`, so no version applies.
+
+**What happened**
+- `apps/api/tmp-po-cleanup.mts` and `apps/api/tmp-reopen-notify.mts` — the two throwaway scripts used
+  to verify the receipt-creates-assets and reopen-notifies-the-owner behaviour — were deleted from the
+  working tree, but the deletion did not take (Windows holds a handle on a script a `tsx` child has just
+  run), and `git add -A` swept them into the commit before the next `git status` was read.
+- Both are now removed from the index and the disk, in their own commit, so the history says plainly
+  which commit added them and which one took them away.
+
+**Notes for next time**
+- **Read the whole `git status`, not the first twelve lines.** The truncation is exactly where the
+  untracked temporary files live.
+- **Delete temporary scripts before the commit, and confirm the deletion**, rather than trusting one
+  `Remove-Item` against a file a Node process may still hold.
