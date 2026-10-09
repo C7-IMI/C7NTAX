@@ -1,3 +1,14 @@
+# The Design Language Is Part Of The Change
+
+`DESIGN.md` at the repository root is the authoritative design language, and it is **mandatory reading before any interface change** — a page, a component, a dialog, a badge, a colour, a flag. It is derived from the code (`apps/web/tailwind.config.js`, `apps/web/src/index.css`, `apps/web/src/lib/palette.ts`) rather than written alongside it, and it names the tokens, the shared components (`apps/web/src/components/ui/`) and the component classes to use instead of inventing new ones.
+
+- A screen has **two designs** — modern and classic — and `DESIGN.md` §3 is the pattern, with markup. Read it before writing either arrangement.
+- A change must survive **four axes**: interface, theme, dark/light colour scheme (eight of them), and density. `DESIGN.md` §1 says how to switch each one while testing; §9 is the definition of done.
+- **No colour literals.** `node scripts/lint-design-tokens.mjs` must pass; the legitimate exceptions are listed in that script with their reasons.
+- When a rule in `DESIGN.md` stops being true, it changes **in the same commit** as the code that changed it (`DESIGN.md` §12). A design rule nobody can point at in the code does not belong there.
+
+`AGENTS.md`, `CLAUDE.md` and `GEMINI.md` all point at `DESIGN.md`, so a model that reads any of them lands here.
+
 # Repository Change Logging
 
 - Log every user prompt in `Retrace.md`, including questions, investigations, operational requests, and prompts that result in no code change. Append the next sequential Prompt number and preserve the user's prompt text verbatim in a blockquote. Follow the existing timestamp, status, duration, changes, and BuildNotes ID format.

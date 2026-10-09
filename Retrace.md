@@ -9858,6 +9858,127 @@ rule was then applied to the header chrome, which was still naming the hidden pa
   route, and still announced itself three other ways: in Help's `related` chips, in the page header's title
   and description, and in the breadcrumb. Hiding a thing means auditing every surface that can *name* it.
 
+---
+
+### Prompt 365 — See and control every e-mail the product sends
+
+**Timestamp:** 2026-10-09 16:35 | **Status:** In progress (mockups only, as asked) | **Duration:** —
+
+**BuildNotes IDs:** none — this turn changes no product behaviour. The deliverable is three drawings under
+`docs/mockups/`, the same convention as the Contacts, Boards, login, report-designer and Developer mockups.
+
+**Prompt**
+
+> I need to be able to see and control what the e-mails going out to customers look like when a ticket is
+> updated. As a matter of fact I need to be able to see and control the look of any e-mails going out from
+> C7NTAX look like.
+>
+> I would like them to be e-mail templates that can be edited and previewed. Or even imported from something
+> like Word, Publisher, PowerPoint, etc. Maybe allow for WYSIWYG editing like the custom report designer as
+> well. I'll let you decide how to piece that together.
+>
+> That way when I sent a note to a client, send out an invice from C7NTAX or attach a report and email it to a
+> client, I can see how the message would look and be able to choose what information gets sent.
+>
+> Build the relevant settings, sections, pages, and tie-in logic into the application to enable this feature.
+> Enable the ability to e-mail things like invoices and reports directly from C7NTAX as well.
+>
+> DO a mockup of the e-mail template control section/settings/configuration first. No changes, yet
+
+**What I found before drawing anything**
+- **There is no template system, and never was.** Every message is a string literal in
+  `packages/email/src/EmailService.ts`: seven template functions and eight live senders, with each subject
+  written inline. `grep` for `emailTemplate` across `apps/` and `packages/` returns nothing, and the eight
+  Configuration sections include no Email or Templates section — `integrations` is "C7NC & Email" and holds
+  the **inbound** connectors.
+- **The live catalogue is eight messages**: ticket activity (the customer notification), the reopened-by-client
+  notice to a technician, the follow-up reminder, the ticket-note composer, the overdue reminder, the portal
+  login code, the user invite and the MFA code.
+- **Two senders exist that nothing calls.** `sendInvoice` (subject `` `Invoice ${n} — Due ${due}` ``) and
+  `sendTicketAutoClose` have **no caller anywhere in the repository** — written, correct-looking, and never
+  invoked. That is the sharpest fact in the whole request: the owner asked to be able to "send out an invoice
+  from C7NTAX", and the email for it has been sitting in the code the entire time with no path to it. An
+  invoice's "sent" today is a status change, not a message.
+- **A footer is already hard-coded in the composer.** `routes/tickets/index.ts:515` appends `<hr>` and a fixed
+  paragraph naming the ticket and the client to every note sent from the ticket screen — words a client reads,
+  owned by a string literal.
+- **Recipient rules already exist and are good**: primary contact, `cc` copied on everything, an "additional"
+  contact only for notes and only while their own *email this contact notes* switch is on
+  (`ticketNotifications.ts`).
+- **The safe set is already defined** in `emailHtml.ts` (`EMAIL_TAGS`, `EMAIL_STYLE_PROPS`, the drop list, the
+  `cid` handling for inline images), which means any editor or importer must land inside a known allowlist
+  rather than inventing one.
+
+**What is being drawn** (three files, three agents, one shared vocabulary — *message*, *template*, *blocks*,
+*fields*, *states*, *brand kit*, *overrides*, *send sheet*):
+- `docs/mockups/email-studio.html` — the requested one: the message list with each message's state, the
+  WYSIWYG editor in the report designer's idiom (blocks, fields, conditionals, plain text derived, the
+  sanitiser's allowlist made visible), the preview against real records, version history and reset, and the
+  distinction between a customer message and an internal one.
+- `docs/mockups/email-brand-and-delivery.html` — the brand kit shared with the PDF letterhead, sending
+  identity and what the application can and cannot verify about a domain, the trigger matrix, quiet hours and
+  batching, opt-out and bounce handling, per-client overrides, and the delivery log.
+- `docs/mockups/email-send-and-import.html` — the send sheet for a note, an invoice and a report, the contents
+  chooser, the attachment rules, the Word/Publisher/PowerPoint import as a mapping-and-review step that is
+  honest about what does not survive, and the report-as-PDF beside the report-as-email.
+
+**Notes for next time**
+- **Read the whole sender before briefing anyone about it.** My first brief to three agents said "there is no
+  invoice email", taken from a partial read of the file; the truth was that `sendInvoice` exists and is
+  unreachable, which is a better finding than the one I had. Three agents had to be corrected mid-flight, and
+  a shared vocabulary means a wrong catalogue propagates three times.
+
+---
+
+### Prompt 366 — A design language other models must follow
+
+**Timestamp:** 2026-10-09 16:40 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes IDs:** **2026.10.9.030**.
+
+**Prompt**
+
+> I need you to create a design language framework/doc/markup. This will be used and read by other LLMs like
+> Claude, Grok, etc to ensure the design principles are followed and adhered to when making changes.
+>
+> This is to prevent another model from adding a feature/section/page that doesn't adhere to the interface or
+> theme of the application. It will also make sure that whatever it creates does it for both the modern
+> interface and the classic interface.
+>
+> Place it in the repo somewhere meant for other models or applications to read it and make sure the models
+> know to stick to it before making changes.
+
+**What I did**
+- **Found the gap first.** `AGENTS.md` held nothing but the block Turborepo manages; the house rules were only
+  in `.github/copilot-instructions.md`, which a non-Copilot model never reads; and the existing `DESIGN.md`
+  was a hand-copied token table that had drifted — it gave the accent as `#00c0f4`, which is not what the
+  shipped colour schemes use, and knew nothing about the eight schemes or the two interfaces.
+- **Wrote the design language from the code, not beside it.** Before a word was written I read
+  `tailwind.config.js` (where every colour is a `color-mix`-wrapped custom property, so an opacity modifier
+  works and the theme can still move the value), `index.css` (the variables, both themes, the eight schemes,
+  the component classes and the modern theme), `lib/palette.ts`, `lib/uiFlags.ts`,
+  `hooks/useNavigationStyle.ts`, `components/ui/` (every prop, read out of the signatures) and the two
+  canonical two-arrangement dialogs. Every token, class and component named in the document exists.
+- **Named the four axes**, because they are what a model gets wrong: interface, theme, colour scheme,
+  density — 2 × 2 × 8 × 2 combinations, with the console command to switch each one.
+- **Markup, not just prose.** The two-interface section carries a worked example with both arrangements, and
+  the component tables give real props and real class names.
+- **Entry points for every tool**: `AGENTS.md` rewritten (with the five most common mistakes and the
+  pre-flight command list), `CLAUDE.md` and `GEMINI.md` added as pointers, and the design rule made the first
+  section of `.github/copilot-instructions.md`.
+- **Made the enforcement trustworthy.** `lint-design-tokens.mjs` was failing on five files, and a guard that
+  always fails is a guard a model learns to ignore. It now distinguishes debt (19 occurrences in 8 files,
+  to shrink) from four **structural** exemptions that carry a written reason each — the print/PDF document,
+  the report page's paper defaults, the document style fields, and a client's own portal accent — and the one
+  genuine drift among them (a literal selection ring in the report designer) was fixed rather than exempted.
+
+**Notes for next time**
+- **A hand-written token table drifts, and a drifted one is worse than none**: it is confidently wrong. The
+  document now derives from the files and says so in its first paragraph.
+- **Two of the eight colours are brand constants that must never be re-themed** (`--brand-crimson` for the
+  logo, `--kumo-red` for Kumo), and the light theme keeps a compatibility list of re-mapped Tailwind palette
+  classes. Both are the kind of rule that only exists in a code comment; a model needs them written down.
+
 
 
 

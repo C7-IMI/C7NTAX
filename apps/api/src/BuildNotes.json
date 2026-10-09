@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.9.030",
+    "date": "2026-10-09",
+    "title": "The design language, written down where a model will find it",
+    "changes": [
+      {
+        "text": "**`DESIGN.md` is now the authoritative design language** — 12 sections, derived from the code",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`CLAUDE.md`, `GEMINI.md` and a rewritten `AGENTS.md`** — entry points for the tools that look",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`.github/copilot-instructions.md`** gained the design rule as its first section, next to the",
+        "type": "Update"
+      },
+      {
+        "text": "**The design-token guard now passes, which is what makes it usable.** It was failing on five",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.029",
     "date": "2026-10-09",
     "title": "Developer → the three screens: the catalogue, the purge and the danger zone",

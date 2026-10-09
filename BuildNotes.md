@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.029 | Last Updated: 2026-10-09
+## Version: 2026.10.9.030 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,46 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.030 — The design language, written down where a model will find it
+
+Three files told a model almost nothing. `AGENTS.md` held only the block Turborepo writes; `DESIGN.md` was a
+hand-copied token table that had drifted (it listed the accent as `#00c0f4`, which is *not* what the shipped
+colour schemes use, and said nothing about the eight schemes or the two interfaces); and the house rules
+lived only in `.github/copilot-instructions.md`, which no model reads unless it is Copilot. So a model adding
+a screen had a one-in-four chance of it surviving the interface, theme, scheme and density the user was
+actually looking at.
+
+- **[New]** **`DESIGN.md` is now the authoritative design language** — 12 sections, derived from the code
+  rather than written beside it. It states the **four axes a change must survive** (2 interfaces × 2 themes ×
+  8 colour schemes × 2 densities) and how to switch each while testing; why a colour literal is *the one
+  colour the theme cannot reach* (`tailwind.config.js` wraps every token in `color-mix` so an opacity
+  modifier works); the token, type, spacing, radius, elevation and motion vocabulary; the two-interface
+  pattern with markup for both arrangements; the shared kit (`components/ui/*` props) and the CSS component
+  classes with the rule behind each; page anatomy; status and tone; the contrast rules the stylesheet
+  records; documents and print as a third surface; a **definition of done**; real anti-patterns; and a map of
+  which file is the truth for each question.
+- **[New]** **`CLAUDE.md`, `GEMINI.md` and a rewritten `AGENTS.md`** — entry points for the tools that look
+  for them, each pointing at `DESIGN.md` and the house rules rather than restating them, so there is one
+  source of truth. `AGENTS.md` also lists the five mistakes a model most often makes here and the command
+  line to run before reporting a change as finished.
+- **[Update]** **`.github/copilot-instructions.md`** gained the design rule as its first section, next to the
+  logging, API-document and Help rules it already carried.
+- **[Fix]** **The design-token guard now passes, which is what makes it usable.** It was failing on five
+  files, and **a guard that always fails teaches a model to ignore it**. It now separates the two cases it
+  had been conflating: `LEGACY_ALLOWLIST` is debt to shrink (19 occurrences in 8 files), and
+  `STRUCTURAL_EXEMPT` is *not* debt — four files with a written reason each, because there is genuinely no
+  theme where they render: the print/PDF document (`reportKit.tsx`), the report page's own paper defaults
+  (`PageRenderer.tsx`), the document style fields a person edits (`Inspector.tsx`), and a client's own portal
+  accent colour (`ClientDetail.tsx`). One **real** drift was fixed rather than exempted: the report designer's
+  selection ring was a literal `#22d3ee`, and is now the accent token.
+
+**Verification:** `check-encoding.mjs` passes over all 753 files; the token guard exits 0 and reports what it
+allowed and why; `DESIGN.md`'s every claim was read out of `tailwind.config.js`, `index.css`, `lib/palette.ts`,
+`lib/uiFlags.ts`, `hooks/useNavigationStyle.ts`, `components/ui/` and the two canonical dialog components —
+no component, class or token is named that does not exist in this repository.
 
 ---
 

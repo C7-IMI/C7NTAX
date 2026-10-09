@@ -267,7 +267,13 @@ export function DesignerCanvas({ document, selection, zoom, issues, values, char
                           height: mmToPx(element.h) * zoom,
                           background: style.background ?? undefined,
                           border: style.border ? `${Math.max(1, mmToPx(style.border.width) * zoom)}px solid ${style.border.color}` : undefined,
-                          outline: problems.length ? "1.5px solid rgba(239,68,68,.9)" : isSelected ? "1.5px solid #22d3ee" : undefined,
+                          // The selection ring and the problem ring are interface chrome, not part of the
+                          // document, so they follow the theme: both are `--alert-*` tokens rather than
+                          // literals, which is what the design-token guard expects of anything that is not
+                          // the printed page itself.
+                          outline: problems.length
+                            ? "1.5px solid color-mix(in srgb, var(--alert-red) 90%, transparent)"
+                            : isSelected ? "1.5px solid var(--cyber-500)" : undefined,
                           overflow: "hidden",
                           display: "flex",
                           alignItems: style.valign === "top" ? "flex-start" : style.valign === "bottom" ? "flex-end" : "center",
