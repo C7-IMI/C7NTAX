@@ -7261,9 +7261,9 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 
 ### Prompt 316 — PLAN-030: review it, apply what makes sense, recommend on the rest
 
-**Timestamp:** 2026-10-09 10:35 | **Status:** Complete | **Duration:** ~50 min
+**Timestamp:** 2026-10-08 22:38 | **Status:** Complete | **Duration:** ~50 min
 
-**BuildNotes IDs:** **2026.10.9.074**.
+**BuildNotes IDs:** **2026.10.8.074**.
 
 **Prompt**
 
@@ -7308,9 +7308,9 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 
 ### Prompt 317 — Two review comments on PLAN-030: geo redundancy and reservations
 
-**Timestamp:** 2026-10-09 10:43 | **Status:** Complete | **Duration:** ~15 min
+**Timestamp:** 2026-10-08 22:45 | **Status:** Complete | **Duration:** ~15 min
 
-**BuildNotes IDs:** **2026.10.9.075**.
+**BuildNotes IDs:** **2026.10.8.075**.
 
 **Prompt**
 
@@ -7350,3 +7350,73 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **An easy win is one that is complete when it lands.** Turning a backup-replication default off is
   complete: the template compiles, the next deployment is cheaper, and the switch is one word away with
   its reasoning attached.
+
+
+### Prompt 318 ? Fix the ticket list wrapping, and make the columns resizable
+
+**Timestamp:** 2026-10-08 23:05 | **Status:** Complete | **Duration:** ~40 min
+
+**BuildNotes IDs:** **2026.10.8.076**.
+
+**Prompt**
+
+> Also fix the wrapping on the ticket screen. Make the columns resizeable while you are at it
+
+**What I did**
+- **Read the table before changing it.** The list had no `table-fixed`, so the browser gave each
+  column a share of the panel and folded whichever values did not fit ? ticket numbers over three lines,
+  `MSP Service Desk` and `TECHNICIAN` over two. The fix had to be a layout decision, not a width tweak.
+- **Made every column a width.** `TicketColumnDef` gained `w`, the table became `table-fixed` with a
+  `<colgroup>`, and every non-summary cell got `overflow-hidden text-ellipsis whitespace-nowrap` plus a
+  `title` so a trimmed value is still readable. Summary keeps no width of its own: it is the one column
+  that should absorb what is left.
+- **Added the resize edge** inside each `<th>` ? a 6px handle on the right edge that carries the drag,
+  stops the pointer so it cannot be read as a sort click, and resets to the measured width on
+  double-click. Because it sits inside a header that is already `draggable` for reordering, the reorder
+  handler needed a guard (a ref set for the duration of the gesture) rather than a second hit target.
+- **Persisted widths per user** (`c7_ticket_column_widths`), clamped to 56?720px, and added **Fit columns
+  to content** to Choose Columns as the way back from a table sized entirely by hand.
+
+**Notes for next time**
+- **The list is shared by both interfaces.** The classic screens and the redesign render the same table,
+  so the wrapping was not a redesign defect and the fix is not a redesign fix; checking both is what
+  established that.
+- **A column's default width is a claim about the data.** Mine were guesses, and the first render showed
+  how wrong: a 124px ticket-number column still truncated `MSP-1001-1008`, because 14px medium type needs
+  119px and the cell spends 24px on padding. Guesses that look defensible in a diff are visible in one
+  screenshot.
+
+### Prompt 319 ? Auto-size the columns, and a smaller font
+
+**Timestamp:** 2026-10-08 23:35 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes IDs:** **2026.10.8.076** (the same change, so the same version).
+
+**Prompt**
+
+> At a minimum, auto-resize the columns so they show the full text by default. Make the font smaller to
+> help fit everything within a reasonable limit
+
+**What I did**
+- **Stopped guessing widths and measured them.** A `useLayoutEffect` lays the table out once at its
+  natural width (`table-layout: auto`, `width: max-content`), reads each column's real width back, and
+  keeps those numbers as the baseline ? real badges, real uppercase headers, real 12px timestamps, no
+  font-string approximations. It runs before paint, so there is no flash of the wide table, and it skips
+  any column the user has dragged, because the user's word outranks the browser's.
+- **Made the baseline a floor rather than a ratchet.** The widest value seen wins, so paging into a page
+  with a longer client name grows that column and paging back does not shrink it again; **Fit columns to
+  content** clears the baseline, which is what keeps it a floor.
+- **Dropped the type one size** (`text-xs`, 12px) and the cell padding from 12px to 8px, which is most of
+  what lets the same columns fit in less width, and pinned the header's drag grip inside the header so it
+  contributes nothing to a column's width.
+
+**Notes for next time**
+- **Measure, then leave a hair of slack.** The first fitted pass produced `Acme Corporati?` by exactly one
+  pixel: the column's natural width and the width the string needs to render differ by a fraction, and a
+  fraction is enough to draw an ellipsis. `Math.ceil(width) + 1` fixed every near-miss at once.
+- **The redesign already had a table-padding rule.** `html[data-ui-redesign="true"] table tbody td`
+  overrides Tailwind's `px-2`, so the padding classes on those cells were partly decorative ? worth
+  knowing before "fixing" spacing that a stylesheet is deciding.
+- **A 1280px window cannot show nine readable columns.** Auto-fit plus a smaller font gets every value
+  whole and scrolls for the last two; the honest alternatives are fewer columns or a wider window, and
+  both are the user's call.

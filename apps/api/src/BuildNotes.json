@@ -1,7 +1,38 @@
 [
   {
-    "version": "2026.10.9.075",
-    "date": "2026-10-09",
+    "version": "2026.10.8.076",
+    "date": "2026-10-08",
+    "title": "The queue reads in one line, and its columns are yours to size",
+    "changes": [
+      {
+        "text": "**No cell wraps.** The table is `table-fixed` with `whitespace-nowrap` and an ellipsis on",
+        "type": "Fix"
+      },
+      {
+        "text": "**Columns are fitted to their content.** Auto table layout is the only thing that knows how",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Columns are resizable.** Drag the right edge of any header to set a width; double-click the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"Fit columns to content\"** in Choose Columns forgets every width the user has set, which is",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Smaller type and tighter padding.** The list is a size down (`text-xs`) with 8px cell",
+        "type": "Update"
+      },
+      {
+        "text": "`HelpDoc.tsx`: the *Ticket list columns* walkthrough and its Index row now cover widths",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.8.075",
+    "date": "2026-10-08",
     "title": "Geo-redundant backups off, and the reservation list",
     "changes": [
       {
@@ -19,8 +50,8 @@
     ]
   },
   {
-    "version": "2026.10.9.074",
-    "date": "2026-10-09",
+    "version": "2026.10.8.074",
+    "date": "2026-10-08",
     "title": "PLAN-030 applied: the Azure deployment package, hardened",
     "changes": [
       {

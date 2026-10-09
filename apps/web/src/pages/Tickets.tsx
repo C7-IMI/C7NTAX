@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import api from "../api";
@@ -209,20 +209,40 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 // ── Configurable ticket list columns (PSA-style: Autotask / ConnectWise / HaloPSA reference) ──
-// Priority is available but unchecked by default.
-type TicketColumnDef = { id: string; label: string; defaultVisible: boolean; sortField?: string };
+// Priority is available but unchecked by default. `w` is the starting width in px: the queue is read
+// by scanning, and a column narrow enough to fold a ticket number over three lines cannot be scanned.
+// Summary has no width of its own, because it is the one column that wants whatever is left.
+type TicketColumnDef = { id: string; label: string; defaultVisible: boolean; sortField?: string; w: number };
 const TICKET_COLUMNS: TicketColumnDef[] = [
-  { id: "number", label: "Ticket #", defaultVisible: true, sortField: "ticketNumber" },
-  { id: "title", label: "Summary", defaultVisible: true, sortField: "title" },
-  { id: "status", label: "Status", defaultVisible: true, sortField: "status" },
-  { id: "board", label: "Board", defaultVisible: true, sortField: "board.name" },
-  { id: "client", label: "Client", defaultVisible: true, sortField: "company.name" },
-  { id: "technician", label: "Technician", defaultVisible: true },
-  { id: "age", label: "Age", defaultVisible: true, sortField: "createdAt" },
-  { id: "sla", label: "SLA", defaultVisible: true },
-  { id: "priority", label: "Priority", defaultVisible: false },
-  { id: "timestamp", label: "Timestamp", defaultVisible: true, sortField: "updatedAt" },
+  { id: "number", label: "Ticket #", defaultVisible: true, sortField: "ticketNumber", w: 104 },
+  { id: "title", label: "Summary", defaultVisible: true, sortField: "title", w: 0 },
+  { id: "status", label: "Status", defaultVisible: true, sortField: "status", w: 110 },
+  { id: "board", label: "Board", defaultVisible: true, sortField: "board.name", w: 120 },
+  { id: "client", label: "Client", defaultVisible: true, sortField: "company.name", w: 126 },
+  { id: "technician", label: "Technician", defaultVisible: true, w: 126 },
+  { id: "age", label: "Age", defaultVisible: true, sortField: "createdAt", w: 52 },
+  { id: "sla", label: "SLA", defaultVisible: true, w: 152 },
+  { id: "priority", label: "Priority", defaultVisible: false, w: 92 },
+  { id: "timestamp", label: "Timestamp", defaultVisible: true, sortField: "updatedAt", w: 138 },
 ];
+
+// ── Column widths (dragged on the header edge, persisted per user) ──
+const MIN_COL_W = 56;
+const MAX_COL_W = 720;
+function loadTicketColumnWidths(): Record<string, number> {
+  try {
+    const raw = JSON.parse(localStorage.getItem("c7_ticket_column_widths") || "null");
+    if (raw && typeof raw === "object") {
+      const out: Record<string, number> = {};
+      for (const def of TICKET_COLUMNS) {
+        const value = Math.round(Number((raw as Record<string, unknown>)[def.id]));
+        if (Number.isFinite(value) && value >= MIN_COL_W && value <= MAX_COL_W) out[def.id] = value;
+      }
+      return out;
+    }
+  } catch { /* a width we cannot read is a width we do not have */ }
+  return {};
+}
 
 function loadTicketColumns(): string[] {
   try {
@@ -381,6 +401,84 @@ export function TicketsPage() {
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [dragCol, setDragCol] = useState<string | null>(null);
 
+  /*
+   * Column widths.
+   *
+   * The queue is a table you scan, so a column is either wide enough for the content it actually
+   * holds or it folds that content over three lines and the scan stops. Widths therefore start as a
+   * measurement: the list is laid out once at its natural size, every unclaimed column is read back
+   * at the width its own content asked for, and those widths are kept as the baseline. A drag
+   * replaces the baseline for that column and is saved per user, like the visibility and the order;
+   * Summary is never measured, because it is the column that takes what is left.
+   */
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(loadTicketColumnWidths);
+  const [fittedWidths, setFittedWidths] = useState<Record<string, number>>({});
+  const [fitNonce, setFitNonce] = useState(0);
+  const tableRef = useRef<HTMLTableElement | null>(null);
+  // The drag reads and writes its own copy of the widths: state is a render behind mid-gesture, and
+  // the pointerup handler needs the final value rather than whatever the last render happened to see.
+  const widthsRef = useRef(columnWidths);
+  const applyWidths = (next: Record<string, number>, persist: boolean) => {
+    widthsRef.current = next;
+    setColumnWidths(next);
+    if (persist) {
+      try { localStorage.setItem("c7_ticket_column_widths", JSON.stringify(next)); } catch { /* storage full or unavailable */ }
+    }
+  };
+  /** Dragged width, else measured width, else the definition's; 0 means "take what is left". */
+  const widthOf = (id: string) => columnWidths[id] ?? fittedWidths[id] ?? TICKET_COLUMNS.find((c) => c.id === id)?.w ?? 140;
+  const clampWidth = (w: number) => Math.max(MIN_COL_W, Math.min(MAX_COL_W, Math.round(w)));
+  const refitColumns = () => { setFittedWidths({}); setFitNonce((n) => n + 1); };
+  const clearColumnWidths = () => { applyWidths({}, true); refitColumns(); };
+  const resetColumnWidth = (id: string) => {
+    const next = { ...widthsRef.current };
+    delete next[id];
+    applyWidths(next, true);
+    refitColumns();
+  };
+  // True only between pointerdown and pointerup on a resize edge, so the header does not treat the
+  // same gesture as the start of a reorder.
+  const resizingCol = useRef(false);
+  /** Dragging the right edge of a header, live, then saved on release. */
+  const startColumnResize = (event: React.PointerEvent, id: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    // Measure rather than trust: a flexible column's width reads 0 here, and starting from 0 would
+    // make the column jump to the pointer on the first move.
+    const cell = (event.currentTarget as HTMLElement).parentElement;
+    const startWidth = cell ? cell.getBoundingClientRect().width : widthOf(id);
+    let latest = clampWidth(startWidth);
+    const build = (width: number) => ({ ...widthsRef.current, [id]: width });
+    resizingCol.current = true;
+    const onMove = (ev: PointerEvent) => {
+      latest = clampWidth(startWidth + (ev.clientX - startX));
+      applyWidths(build(latest), false);
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      resizingCol.current = false;
+      applyWidths(build(latest), true);
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+  // Two fixed leading columns (select, row actions) plus the visible ones. Fixed layout holds every
+  // column at its stated width, so the table's own width is the only thing the browser has to scroll.
+  // The column without a width of its own absorbs the slack, but never below FLEX_FLOOR: at a narrow
+  // window the table scrolls rather than squeezing the summary down to nothing, which is the trap the
+  // old wrapping layout fell into from the other side.
+  const LEADING_W = 40 + 44;
+  const LEADING_COLS = 2;
+  const FLEX_FLOOR = 300;
+  const tableWidth = LEADING_W + visibleColumns.reduce((total, id) => total + (widthOf(id) > 0 ? widthOf(id) : FLEX_FLOOR), 0);
+  const clip = "overflow-hidden text-ellipsis whitespace-nowrap";
+
   const saveColumns = (cols: string[]) => { setVisibleColumns(cols); localStorage.setItem("c7_ticket_columns", JSON.stringify(cols)); };
   const toggleColumn = (id: string) => { saveColumns(visibleColumns.includes(id) ? visibleColumns.filter((c) => c !== id) : [...visibleColumns, id]); };
   const moveColumn = (from: string, to: string) => {
@@ -391,32 +489,35 @@ export function TicketsPage() {
 
   const renderTicketCell = (t: any, colId: string) => {
     switch (colId) {
-      case "number": return <td key={colId} className="px-2 py-3"><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium">{t.ticketNumber}</Link></td>;
-      case "title": return <td key={colId} className="px-3 py-3">
-        <div className="flex items-center gap-2 min-w-0">
+      case "number": return <td key={colId} className={`px-2 py-2 ${clip}`}><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium" title={t.ticketNumber}>{t.ticketNumber}</Link></td>;
+      case "title": return <td key={colId} className={`px-2 py-2 ${clip}`}>
+        <div className="flex items-center gap-1.5 min-w-0">
           {/* Priority as a bar rather than a column: it is a thing you notice while reading the
               list, not a field you sort by — and the column it replaces was one of the widest. */}
           <span
-            className={`w-[3px] h-4 rounded-full shrink-0 ${PRIORITY_BAR[t.priority] || "bg-gray-700"}`}
+            className={`w-[3px] h-3.5 rounded-full shrink-0 ${PRIORITY_BAR[t.priority] || "bg-gray-700"}`}
             title={`Priority: ${t.priority}`}
             aria-hidden="true"
           />
-          <Link to={`/tickets/${t.id}`} className="text-gray-300 hover:text-white text-sm leading-snug truncate">{t.title}</Link>
+          <Link to={`/tickets/${t.id}`} className="text-gray-300 hover:text-white truncate" title={t.title}>{t.title}</Link>
         </div>
       </td>;
-      case "status": return <td key={colId} className="px-3 py-3"><span className={`badge ${STATUS_COLORS[t.status]||""}`}>{(t.status)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5">OVERDUE</span> : null}</td>;
-      case "board": return <td key={colId} className="px-3 py-3 text-gray-400 text-xs">{(t.board as {name?:string})?.name||"-"}</td>;
-      case "client": return <td key={colId} className="px-3 py-3 text-gray-400">{(t.company as {name?:string})?.name||"-"}</td>;
-      case "technician": return <td key={colId} className="px-3 py-3 text-gray-300 text-sm">{t.assignedTo ? `${(t.assignedTo as {firstName?:string;lastName?:string}).firstName||""} ${(t.assignedTo as {firstName?:string;lastName?:string}).lastName||""}`.trim() || "-" : "-"}</td>;
-      case "priority": return <td key={colId} className="px-3 py-3"><span className="badge bg-surface-lighter text-gray-300 capitalize">{t.priority || "medium"}</span></td>;
+      case "status": return <td key={colId} className={`px-2 py-2 ${clip}`}><span className={`badge whitespace-nowrap ${STATUS_COLORS[t.status]||""}`}>{(t.status)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5 whitespace-nowrap">OVERDUE</span> : null}</td>;
+      case "board": return <td key={colId} className={`px-2 py-2 ${clip} text-gray-400`} title={(t.board as {name?:string})?.name||""}>{(t.board as {name?:string})?.name||"-"}</td>;
+      case "client": return <td key={colId} className={`px-2 py-2 ${clip} text-gray-400`} title={(t.company as {name?:string})?.name||""}>{(t.company as {name?:string})?.name||"-"}</td>;
+      case "technician": {
+        const name = t.assignedTo ? `${(t.assignedTo as {firstName?:string;lastName?:string}).firstName||""} ${(t.assignedTo as {firstName?:string;lastName?:string}).lastName||""}`.trim() || "-" : "-";
+        return <td key={colId} className={`px-2 py-2 ${clip} text-gray-300`} title={name === "-" ? "Unassigned" : name}>{name}</td>;
+      }
+      case "priority": return <td key={colId} className={`px-2 py-2 ${clip}`}><span className="badge bg-surface-lighter text-gray-300 capitalize whitespace-nowrap">{t.priority || "medium"}</span></td>;
       // Age and SLA are the two columns a queue is actually triaged by: how long has this been
       // waiting, and is the clock still on our side. Both come from fields the ticket already has.
-      case "age": return <td key={colId} className="px-3 py-3 text-xs text-gray-500 whitespace-nowrap" title={t.createdAt ? `Created ${new Date(t.createdAt).toLocaleString()}` : ""}>{relativeAge(t.createdAt) || "—"}</td>;
+      case "age": return <td key={colId} className={`px-2 py-2 ${clip} text-gray-500`} title={t.createdAt ? `Created ${new Date(t.createdAt).toLocaleString()}` : ""}>{relativeAge(t.createdAt) || "—"}</td>;
       case "sla": {
         const chip = slaChipFor(t);
         return (
-          <td key={colId} className="px-3 py-3 whitespace-nowrap">
-            {chip ? <span className={`chip ${chip.tone}`} title={chip.title}>{chip.label}</span> : <span className="text-xs text-gray-600" title="This ticket has no due date or SLA target">—</span>}
+          <td key={colId} className={`px-2 py-2 ${clip}`}>
+            {chip ? <span className={`chip whitespace-nowrap ${chip.tone}`} title={chip.title}>{chip.label}</span> : <span className="text-gray-600" title="This ticket has no due date or SLA target">—</span>}
           </td>
         );
       }
@@ -425,7 +526,7 @@ export function TicketsPage() {
         const updated = t.updatedAt ? new Date(t.updatedAt) : null;
         const changed = created && updated && updated.getTime() > created.getTime();
         return (
-          <td key={colId} className="px-3 py-3 text-gray-500 text-xs"
+          <td key={colId} className={`px-2 py-2 ${clip} text-gray-500`}
             title={changed ? `Created ${created!.toLocaleString()} · Last updated ${updated!.toLocaleString()}` : `Created ${created?.toLocaleString() || "-"}`}>
             {changed ? updated!.toLocaleString() : (created?.toLocaleString() || "-")}
           </td>
@@ -558,6 +659,52 @@ export function TicketsPage() {
   const totalPages = pageSize === "all" ? 1 : Math.max(1, Math.ceil(sortedTickets.length / pageSize));
   const safePage = Math.min(Math.max(page, 1), totalPages);
   const paged = pageSize === "all" ? sortedTickets : sortedTickets.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  /*
+   * Fit the columns to their content.
+   *
+   * Auto table layout is the only thing that knows how wide a rendered badge, an uppercase header or
+   * a 12px timestamp really is, so the fit asks it: the table is laid out once at its natural width,
+   * each measured column is read back, and those numbers become the baseline widths. A column
+   * somebody has dragged is never measured — the user's word outranks the browser's — and Summary is
+   * never measured because it is the column that takes what is left.
+   */
+  const unmeasured = visibleColumns.filter((id) => columnWidths[id] === undefined && (TICKET_COLUMNS.find((c) => c.id === id)?.w ?? 0) > 0);
+  const fitSignature = [visibleColumns.join("|"), safePage, paged.length, sort?.field ?? "", sort?.direction ?? "", fitNonce, Object.keys(columnWidths).join("|")].join("/");
+  useLayoutEffect(() => {
+    const table = tableRef.current;
+    if (!table || unmeasured.length === 0) return;
+    const headers = [...table.querySelectorAll("thead th")];
+    const natural = { layout: table.style.tableLayout, width: table.style.width, minWidth: table.style.minWidth };
+    table.style.tableLayout = "auto";
+    table.style.width = "max-content";
+    table.style.minWidth = "0px";
+    const measured: Record<string, number> = {};
+    for (const id of unmeasured) {
+      const th = headers[visibleColumns.indexOf(id) + LEADING_COLS];
+      // A hair of slack: the natural width and the width a string needs to render without an ellipsis
+      // differ by a fraction, and that fraction is enough to turn a name into "Acme Corporati…".
+      if (th) measured[id] = clampWidth(Math.ceil(th.getBoundingClientRect().width) + 1);
+    }
+    table.style.tableLayout = natural.layout;
+    table.style.width = natural.width;
+    table.style.minWidth = natural.minWidth;
+    // Widest wins: paging into a page with a longer client name grows that column, and paging back
+    // does not shrink it again, so the grid settles instead of twitching once per page. A deliberate
+    // refit clears the baseline first, which is what makes this a floor rather than a ratchet.
+    setFittedWidths((prev) => {
+      const merged: Record<string, number> = {};
+      let changed = Object.keys(prev).length !== unmeasured.length;
+      for (const id of unmeasured) {
+        const value = Math.max(measured[id] ?? 0, prev[id] ?? 0);
+        merged[id] = value;
+        if (prev[id] !== value) changed = true;
+      }
+      return changed ? merged : prev;
+    });
+    // `unmeasured` is derived from what is already in the dependency signature.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitSignature]);
 
   // ── Batch actions ──
   const toggleSelect = (id: string) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -1125,24 +1272,53 @@ export function TicketsPage() {
 
       <div className="card overflow-hidden p-0">
         {loading ? <TableSkeleton /> : tickets.length===0 ? <div className="p-8 text-center text-gray-500">No tickets</div>:(
-          <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
-            <th className="px-4 py-3 w-10"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white" aria-label={paged.length > 0 && paged.every((t: any) => selectedIds.has(t.id)) ? "Deselect all tickets" : "Select all tickets"}>{paged.length > 0 && paged.every((t: any) => selectedIds.has(t.id)) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></th>
-            <th className="px-4 py-3 w-10"></th>
+          <div className="overflow-x-auto">
+            <table ref={tableRef} className="w-full table-fixed text-xs" style={{ minWidth: `${tableWidth}px` }}>
+              <colgroup>
+                <col style={{ width: "40px" }} />
+                <col style={{ width: "44px" }} />
+                {visibleColumns.map((colId) => {
+                  const w = widthOf(colId);
+                  // A column without a width absorbs the slack, which is how Summary stays the widest
+                  // thing on the row until someone drags its edge and makes it a fixed width.
+                  return w > 0 ? <col key={colId} style={{ width: `${w}px` }} /> : <col key={colId} />;
+                })}
+              </colgroup>
+              <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
+            <th className="px-2 py-2"><button onClick={toggleSelectAll} className="text-gray-500 hover:text-white" aria-label={paged.length > 0 && paged.every((t: any) => selectedIds.has(t.id)) ? "Deselect all tickets" : "Select all tickets"}>{paged.length > 0 && paged.every((t: any) => selectedIds.has(t.id)) ? <CheckSquare size={14} className="text-cyber-400"/> : <Square size={14}/>}</button></th>
+            <th className="px-2 py-2"></th>
             {visibleColumns.map((colId) => {
               const def = TICKET_COLUMNS.find((c) => c.id === colId);
               if (!def) return null;
               return (
                 <th key={colId}
                   draggable
-                  onDragStart={() => setDragCol(colId)}
+                  onDragStart={(e) => { if (resizingCol.current) { e.preventDefault(); return; } setDragCol(colId); }}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => { if (dragCol && dragCol !== colId) moveColumn(dragCol, colId); setDragCol(null); }}
                   onDragEnd={() => setDragCol(null)}
                   onClick={() => { if (def.sortField) setSort(nextSort(sort, def.sortField)); }}
-                  className={`px-3 py-3 select-none ${dragCol === colId ? "opacity-50" : ""} ${def.sortField ? "cursor-pointer hover:text-white" : ""}`}
-                  title={def.sortField ? "Click to sort · drag to reorder" : "Drag to reorder"}
+                  className={`relative px-2 py-2 select-none overflow-hidden ${dragCol === colId ? "opacity-50" : ""} ${def.sortField ? "cursor-pointer hover:text-white" : ""}`}
+                  title={`${def.label}${def.sortField ? " · click to sort" : ""} · drag to reorder · drag the right edge to resize`}
                 >
-                  <span className="inline-flex items-center gap-1.5 text-xs uppercase font-semibold">{def.label} <GripVertical size={12} className="text-gray-600 cursor-grab" /></span>
+                  <span className="inline-flex items-center text-xs uppercase font-semibold max-w-full">
+                    <span className="truncate">{def.label}</span>
+                  </span>
+                  {/* The grip and the resize edge are both pinned to the inside of the header rather
+                      than sitting in the flow: a column's width should be decided by the data in it,
+                      not by the size of the two controls that happen to live in its header. */}
+                  <GripVertical size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 cursor-grab pointer-events-none" />
+                  {/* Pointerdown stops here so a drag never reorders or sorts the column. */}
+                  <span
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label={`Resize ${def.label}`}
+                    onPointerDown={(e) => startColumnResize(e, colId)}
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => { e.stopPropagation(); resetColumnWidth(colId); }}
+                    title="Drag to resize · double-click to reset"
+                    className="absolute right-0 inset-y-0 w-1.5 cursor-col-resize hover:bg-cyber-500/60"
+                  />
                 </th>
               );
             })}
@@ -1151,8 +1327,8 @@ export function TicketsPage() {
               onContextMenu={(e) => menu.open(e, ticketMenuEntries(t), ticketMenuHeader(t))}
               onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, ticketMenuEntries(t), ticketMenuHeader(t))}
               className={`border-b border-surface-border/50 hover:bg-surface-light/50 focus:outline-none focus:bg-surface-lighter/40 ${selectedIds.has(t.id) ? "bg-cyber-600/10" : ""}`}>
-              <td className="px-4 py-3"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white" aria-label={selectedIds.has(t.id) ? `Deselect ticket ${t.ticketNumber ?? ""}`.trim() : `Select ticket ${t.ticketNumber ?? ""}`.trim()}>{selectedIds.has(t.id) ? <CheckSquare size={16} className="text-cyber-400"/> : <Square size={16}/>}</button></td>
-              <td className="px-4 py-3">
+              <td className="px-2 py-2"><button onClick={() => toggleSelect(t.id)} className="text-gray-500 hover:text-white" aria-label={selectedIds.has(t.id) ? `Deselect ticket ${t.ticketNumber ?? ""}`.trim() : `Select ticket ${t.ticketNumber ?? ""}`.trim()}>{selectedIds.has(t.id) ? <CheckSquare size={14} className="text-cyber-400"/> : <Square size={14}/>}</button></td>
+              <td className="px-2 py-2">
                 <TicketActionMenu ticketId={t.id} currentStatus={t.status} currentPriority={t.priority} onAction={ticketAction} />
               </td>
               {visibleColumns.map((colId) => renderTicketCell(t, colId))}
@@ -1215,8 +1391,18 @@ export function TicketsPage() {
                 </label>
               ))}
             </div>
-            <p className="text-xs text-gray-600 mt-3">Drag column headers to reorder. Column visibility and order are saved per user.</p>
-            <div className="flex justify-end mt-4"><button className="btn-primary text-sm px-3 py-1.5" onClick={() => setShowColumnModal(false)}>Done</button></div>
+            <p className="text-xs text-gray-600 mt-3">Columns are sized to their content automatically. Drag a header's right edge to set your own width and double-click it to go back to the measured one; drag a header to reorder. Visibility, order and widths are saved per user.</p>
+            <div className="flex items-center justify-between mt-4">
+              <button
+                className="text-xs text-gray-500 hover:text-white transition-colors"
+                onClick={clearColumnWidths}
+                disabled={Object.keys(columnWidths).length === 0}
+                title="Forget every width you have set and fit the columns to their content again"
+              >
+                Fit columns to content
+              </button>
+              <button className="btn-primary text-sm px-3 py-1.5" onClick={() => setShowColumnModal(false)}>Done</button>
+            </div>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.075 | Last Updated: 2026-10-09
+## Version: 2026.10.8.076 | Last Updated: 2026-10-08
 
 ---
 
@@ -14,7 +14,44 @@
 
 ---
 
-## 2026.10.9.075 — Geo-redundant backups off, and the reservation list
+## 2026.10.8.076 — The queue reads in one line, and its columns are yours to size
+
+The ticket list was folding ticket numbers, board names, clients and timestamps over two and three
+lines. A queue is read by scanning it, and a row three lines high cannot be scanned — so every cell is
+now one line, and the widths are measured rather than guessed.
+
+- **[Fix]** **No cell wraps.** The table is `table-fixed` with `whitespace-nowrap` and an ellipsis on
+  every cell, so a long value is trimmed at the column edge instead of becoming a paragraph, and the
+  full value is in the tooltip. `text-ellipsis` alone is not enough — the old table had no `table-fixed`,
+  so the layout gave each column a share of the panel and let the text fold to fit it.
+- **[New]** **Columns are fitted to their content.** Auto table layout is the only thing that knows how
+  wide a rendered badge, an uppercase header or a 12px timestamp really is, so the list is laid out once
+  at its natural width in a `useLayoutEffect`, each column is read back at the width its own content
+  asked for, and those numbers become the baseline. The widest value wins, so paging into a page with a
+  longer client name grows that column and paging back does not shrink it again.
+- **[New]** **Columns are resizable.** Drag the right edge of any header to set a width; double-click the
+  edge for that column to go back to the measured one. Widths are saved per user (`c7_ticket_column_widths`)
+  beside the visibility and the order, and are clamped to 56–720px. The resize edge lives inside the
+  header so it travels with the column when the order changes, and it swallows the pointer so a resize is
+  never mistaken for the header's reorder drag or its sort click — which is why the reorder action needed
+  a guard rather than a second hit target.
+- **[New]** **"Fit columns to content"** in Choose Columns forgets every width the user has set, which is
+  the only way back from a table sized entirely by hand.
+- **[Update]** **Smaller type and tighter padding.** The list is a size down (`text-xs`) with 8px cell
+  padding rather than 12px, which is most of what lets the same columns fit in less width; the header's
+  drag grip is pinned to the inside of the header rather than sitting in the flow, so a column's width is
+  decided by the data in it rather than by the size of the controls that live in its header.
+- **[Update]** `HelpDoc.tsx`: the *Ticket list columns* walkthrough and its Index row now cover widths
+  and the fit, and a FAQ answers why rows stopped wrapping.
+
+**Verification:** `tsc --noEmit` clean, `pnpm build` 6/6; driven in the browser at `/tickets` in both
+interfaces — rows one line high with no cell clipped (checked per cell, `scrollWidth` vs `clientWidth`),
+a header-edge drag persisted through a reload, a double-click restored the measured width, a header click
+still sorted, a header drag still reordered, widths stable across pages, and the help-links guard green.
+
+---
+
+## 2026.10.8.075 — Geo-redundant backups off, and the reservation list
 
 Two review comments on PLAN-030, assessed in §9 of the plan — and one of them applied, because it is
 complete on its own and saves money on the next deployment.
@@ -42,7 +79,7 @@ without warnings*, exit 0, after the change. No application code touched.
 
 ---
 
-## 2026.10.9.074 — PLAN-030 applied: the Azure deployment package, hardened
+## 2026.10.8.074 — PLAN-030 applied: the Azure deployment package, hardened
 
 The plan was reviewed, then implemented against its own recommendations, with four deliberate
 deviations recorded in the templates. The templates now **compile** against the real Bicep CLI.
