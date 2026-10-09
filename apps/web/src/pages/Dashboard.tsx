@@ -356,17 +356,17 @@ export function DashboardPage() {  const { user } = useAuth();
   const alertTone = stats.alerts === 0
     ? {
         panel: "", header: "border-surface-border", icon: "text-emerald-400", title: "text-gray-500",
-        badge: "", subtitle: "text-gray-600", link: "text-cyber-400 hover:bg-surface-lighter",
+        subtitle: "text-gray-600", link: "text-cyber-400 hover:bg-surface-lighter",
       }
     : hasCriticalAlert
       ? {
           panel: "border-alert-red/45 shadow-[0_0_0_1px_rgba(239,68,68,0.12)]", header: "border-alert-red/35 bg-alert-red/10",
-          icon: "text-alert-red", title: "text-alert-red", badge: "text-alert-red bg-alert-red/15",
+          icon: "text-alert-red", title: "text-alert-red",
           subtitle: "text-red-200/80", link: "text-white bg-alert-red/20 hover:bg-alert-red/30",
         }
       : {
           panel: "border-amber-500/40", header: "border-amber-500/30 bg-amber-500/10",
-          icon: "text-amber-400", title: "text-amber-400", badge: "text-amber-300 bg-amber-500/15",
+          icon: "text-amber-400", title: "text-amber-400",
           subtitle: "text-amber-200/75", link: "text-white bg-amber-500/20 hover:bg-amber-500/30",
         };
 
@@ -490,7 +490,9 @@ export function DashboardPage() {  const { user } = useAuth();
                 <ShieldAlert size={13} className={alertTone.icon} />
                 <h3 className={`text-[11px] font-semibold uppercase tracking-wide ${alertTone.title}`}>Service alerts</h3>
                 {alerts.length > 0 && (
-                  <span className={`badge-status shrink-0 ${alertTone.badge}`}>{alerts.length}</span>
+                  /* The same circle as the rail's own alert count: it is the same number, and the tinted
+                     rectangle it used to be was neither that badge nor the panel's own tone. */
+                  <span className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]">{alerts.length}</span>
                 )}
                 <span className={`min-w-0 flex-1 truncate text-[11px] ${alertTone.subtitle}`}>
                   {alerts.length === 0

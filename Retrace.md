@@ -8037,3 +8037,39 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   cheaper than every call site finding out.
 - **When a fix is not necessary, say so and say why.** Two of the three items were real work; the third was
   not a defect at all, and the useful answer was the evidence rather than the action.
+
+### Prompt 336 — The theme context gets the same guard, and the alert count gets the rail's badge
+
+**Timestamp:** 2026-10-09 06:20 | **Status:** Complete | **Duration:** ~20 min
+
+**BuildNotes IDs:** **2026.10.9.008** (theme context), **2026.10.9.009** (the alert count).
+
+**Prompt**
+
+> Fix it: One thing left for your call: useTheme.tsx has the identical latent pattern -
+> createContext<ThemeState>(null!) with a bare useContext, and Layout.tsx and MyAccountMenu.tsx both
+> destructure it. Same failure mode, different feature, so I left it alone; the same guard is a two-line
+> change if you want it applied.
+>
+> Also: I don't like that background highlight on the 3. Change that to either a circle background like
+> pasted image 2 has or get rid of it completely.
+
+**What I did**
+- **Applied the same two halves to `useTheme.tsx`** that the auth context got: the context is kept per tab
+  so a second evaluation of the module reuses the object the mounted provider is already providing, and a
+  genuinely missing provider throws a sentence naming the mistake instead of handing back `null` for two
+  call sites to destructure. The comment says why, in the same terms as the auth fix, so the next person
+  finds one explanation rather than two.
+- **Changed the Service Alerts count on Today to the rail's badge** - the same `badge-count` the rail row
+  for Service Alerts has always worn - rather than restyling the tinted rectangle it was. It is the same
+  number on both surfaces, so it is the same object now, and the panel's severity tone stays in the header
+  where it does its work.
+- **Measured the result instead of trusting the class name**: 18x18px, `border-radius: 9999px`,
+  `background: rgb(220, 38, 38)`, white text - the rail badge's own geometry. `tsc` clean afterwards.
+
+**Notes for next time**
+- **A shape nobody else uses is the thing people notice.** The tinted rectangle was not wrong, it was
+  *only here* - and a count that already exists as a crimson circle three inches away does not need a
+  second, quieter form.
+- **When the same defect class is fixed twice, say so the second time.** The two hooks now carry the same
+  guard with the same reasoning, which is the point: a reader who finds one should expect the other.

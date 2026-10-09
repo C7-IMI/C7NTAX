@@ -1,5 +1,31 @@
 [
   {
+    "version": "2026.10.9.009",
+    "date": "2026-10-09",
+    "title": "The alert count on Today wears the rail's badge",
+    "changes": [
+      {
+        "text": "**It is the rail's badge now** — a crimson circle with the number in it, the same",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.008",
+    "date": "2026-10-09",
+    "title": "The theme context cannot be read from the wrong copy either",
+    "changes": [
+      {
+        "text": "**One theme context per tab**, reused across module evaluations, so a hot reload or a duplicated",
+        "type": "Fix"
+      },
+      {
+        "text": "**A missing provider names itself**: `useTheme()` throws",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.007",
     "date": "2026-10-09",
     "title": "The auth context cannot be read from the wrong copy",

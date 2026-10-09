@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type Context, type ReactNode } from "react";
 
 export type Theme = "dark" | "light";
 
@@ -8,7 +8,21 @@ interface ThemeState {
   setTheme: (t: Theme) => void;
 }
 
-const ThemeContext = createContext<ThemeState>(null!);
+/**
+ * One context object per tab, rather than one per evaluation of this module.
+ *
+ * `createContext` returns a **new** object every time the module runs, and in development it runs again on
+ * every edit — so the provider mounted in the tree can belong to the previous copy while a re-rendered
+ * consumer resolves its import to the new one, and reads a context nothing provides. `useTheme`'s two
+ * callers destructure the result, so that arrives as a TypeError on a property name and a blank screen
+ * rather than as anything a person could act on. The same guard covers the other way a second context
+ * appears: two copies of this file in one bundle. In a real deployment the module is evaluated once and
+ * none of this is reachable — which is why the fix is quiet rather than clever.
+ */
+const ThemeContext = ((): Context<ThemeState | null> => {
+  const tab = globalThis as typeof globalThis & { __c7ThemeContext?: Context<ThemeState | null> };
+  return (tab.__c7ThemeContext ??= createContext<ThemeState | null>(null));
+})();
 
 const STORAGE_KEY = "c7_theme";
 
@@ -57,6 +71,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useTheme() {
-  return useContext(ThemeContext);
+/**
+ * The current theme, from anywhere inside `<ThemeProvider>`.
+ *
+ * A missing context is a mistake in the tree rather than a state the application can be in, so it says
+ * which mistake it is instead of handing back `null` for the caller to trip over.
+ */
+export function useTheme(): ThemeState {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error("useTheme() was called outside <ThemeProvider>");
+  return context;
 }

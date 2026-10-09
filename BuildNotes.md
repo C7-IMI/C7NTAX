@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.007 | Last Updated: 2026-10-09
+## Version: 2026.10.9.009 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,42 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.009 — The alert count on Today wears the rail's badge
+
+The count in the Service Alerts panel's header sat on a tinted rectangle of the panel's own colour —
+neither the badge the same number wears on the rail, nor a shape the design uses anywhere else, and the
+kind of thing you cannot unsee once it has been pointed out.
+
+- **[Update]** **It is the rail's badge now** — a crimson circle with the number in it, the same
+  `badge-count` the **Service Alerts** rail row has carried all along. It is the same number on both
+  surfaces, so it is now the same object, and the tinted rectangle is gone rather than restyled. The panel
+  keeps its severity tone in the header, where the tone is doing the work.
+
+**Verification:** measured on the running page rather than eyeballed — the count renders 18×18px with
+`border-radius: 9999px`, `background: rgb(220, 38, 38)` and white text, which is the rail badge's own
+geometry and colour.
+
+---
+
+## 2026.10.9.008 — The theme context cannot be read from the wrong copy either
+
+The same latent trap the auth context had, in the theme: `createContext<ThemeState>(null!)` with a bare
+`useContext`, and two callers — the header and the account menu — that destructure the result. A consumer
+reading a context nothing provides would therefore fail inside its own destructuring, naming a property
+rather than the mistake, which is exactly the blank screen the auth fix was written for.
+
+- **[Fix]** **One theme context per tab**, reused across module evaluations, so a hot reload or a duplicated
+  copy of the module cannot hand a consumer a context the mounted provider does not provide.
+- **[Fix]** **A missing provider names itself**: `useTheme()` throws
+  *"useTheme() was called outside `<ThemeProvider>`"*, and the context is typed `ThemeState | null` rather
+  than non-null by assertion.
+
+**Verification:** `tsc --noEmit` clean; the app loads with the theme applied (dark, from the stored
+preference) and the account menu's appearance controls work; the pinned context is present in the tab
+(`__c7ThemeContext`).
 
 ---
 
