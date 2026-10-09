@@ -218480,6 +218480,18 @@
     "createdAt": "2026-10-09T03:27:11.061Z"
   },
   {
+    "id": "c3bc843e-68bc-4c11-a75f-0b5917fbf050",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "4dd0c8de-dc4f-474b-a315-6219002d1b63",
+    "changes": {
+      "status": "in_progress"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T05:33:43.906Z"
+  },
+  {
     "id": "3a34b88c-e7fa-4d34-93e2-f01655b65907",
     "action": "configuration:update",
     "entity": "configuration",

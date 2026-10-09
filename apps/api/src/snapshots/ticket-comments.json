@@ -5159,6 +5159,17 @@
     "updatedAt": "2026-10-06T20:27:17.849Z"
   },
   {
+    "id": "d2ff5725-b88a-41ce-8083-9ad7599e6ffd",
+    "body": "Status: New → In Progress",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "4dd0c8de-dc4f-474b-a315-6219002d1b63",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-09T05:33:43.762Z",
+    "updatedAt": "2026-10-09T05:33:43.762Z"
+  },
+  {
     "id": "ce131f1d-f46a-4d3b-bcad-03d05324d570",
     "body": "Email received from jane.doe@contoso.com (Message-ID: <mockup-verify-1@example.com>)\n\nHi team,\nSince yesterday the VPN drops every few minutes.\nThanks,\nJane",
     "isInternal": false,
