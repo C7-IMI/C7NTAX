@@ -1,5 +1,35 @@
 [
   {
+    "version": "2026.10.9.011",
+    "date": "2026-10-09",
+    "title": "A search field keeps its clearance",
+    "changes": [
+      {
+        "text": "**The redesign's `.input-field` rule no longer sets horizontal padding.** It set a `padding`",
+        "type": "Fix"
+      },
+      {
+        "text": "Plain fields are 2px wider on the left in the redesigned screens as a result — the rule was",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.010",
+    "date": "2026-10-09",
+    "title": "The light theme's third voice, and the alert panel's loud one",
+    "changes": [
+      {
+        "text": "**The Service Alerts panel's count line** — *\"3 services reporting a problem\"* — was",
+        "type": "Fix"
+      },
+      {
+        "text": "**The tone chips** — a served SLA, a stale one, a breached one, an active client — measured",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.009",
     "date": "2026-10-09",
     "title": "The alert count on Today wears the rail's badge",

@@ -362,12 +362,12 @@ export function DashboardPage() {  const { user } = useAuth();
       ? {
           panel: "border-alert-red/45 shadow-[0_0_0_1px_rgba(239,68,68,0.12)]", header: "border-alert-red/35 bg-alert-red/10",
           icon: "text-alert-red", title: "text-alert-red",
-          subtitle: "text-red-200/80", link: "text-white bg-alert-red/20 hover:bg-alert-red/30",
+          subtitle: "text-red-300", link: "text-white bg-alert-red/20 hover:bg-alert-red/30",
         }
       : {
           panel: "border-amber-500/40", header: "border-amber-500/30 bg-amber-500/10",
           icon: "text-amber-400", title: "text-amber-400",
-          subtitle: "text-amber-200/75", link: "text-white bg-amber-500/20 hover:bg-amber-500/30",
+          subtitle: "text-amber-300", link: "text-white bg-amber-500/20 hover:bg-amber-500/30",
         };
 
   return (

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.009 | Last Updated: 2026-10-09
+## Version: 2026.10.9.011 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,54 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.011 — A search field keeps its clearance
+
+Every search field in the application drew its magnifier over the first letter of its own placeholder —
+*"S🔍arch articles or tags…"*. One line of CSS caused all nineteen of them, and the line was not about
+search fields at all.
+
+- **[Fix]** **The redesign's `.input-field` rule no longer sets horizontal padding.** It set a `padding`
+  shorthand at a specificity that outranks the utilities, so the `pl-9` that every icon-bearing field
+  carries to clear its magnifier was silently replaced by 10px — less than the 28px the icon occupies. The
+  rule now sets the vertical padding and the radius, which is what it was for; the horizontal padding
+  belongs to the field's own `px-3`, and a `pl-*` beside it is a decision a theme rule should not be able
+  to override.
+- **[Update]** Plain fields are 2px wider on the left in the redesigned screens as a result — the rule was
+  the only thing making them 10px — and every field carrying an icon moves from 10px to the 36px or 32px it
+  asked for.
+
+**Verification:** measured on the rendered page rather than read off the class: the icon's right edge sits
+at 28px and the text now begins at 36px, an 8px clearance where the overlap was 18px. Swept across twenty
+pages — including the classic interface, whose fields were never affected — every field with an absolutely
+positioned icon reports a negative clearance, and **zero** overlap. The command palette's search was
+already correct: its icon is a flex sibling rather than an absolutely positioned overlay.
+
+---
+
+## 2026.10.9.010 — The light theme's third voice, and the alert panel's loud one
+
+Two things were unreadable in the light theme, and both had the same cause: colours authored for a dark
+surface, where near-black around them does the contrast work, left unchanged on white.
+
+- **[Fix]** **The Service Alerts panel's count line** — *"3 services reporting a problem"* — was
+  `text-amber-200/75`: **1.25:1** on the panel's pale amber, which is not a faint label but an invisible
+  one. It and its critical counterpart now use shades the light theme already maps (7:1 and up), and the
+  panel keeps its tone.
+- **[Fix]** **The tone chips** — a served SLA, a stale one, a breached one, an active client — measured
+  **1.9:1 or worse** on white. They keep their family on the dark theme and move to the 800 shade on the
+  light one, the same move the rest of that block makes, with the tint and border left as authored because
+  under a dark label a pale tint is the point.
+
+**Verification:** contrast was computed on the running pages — walking each text node's colour against the
+first opaque background above it — rather than judged by eye, before and after. The page reported four
+failures at 11px-ish (`1.25`, `2.77`, `2.77`, `2.77`); after the change a sweep of fifteen pages in the
+light theme reports **zero** below 4.5:1, including the two that were failing. The first sweep also taught
+me my own instrument was wrong: it read themed colours as white-on-white because Chromium prints
+`color-mix()` results as `color(srgb …)`, which the parser did not know, and it reported every filled
+button in the app as a failure until that was fixed.
 
 ---
 

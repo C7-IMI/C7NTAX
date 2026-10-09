@@ -8073,3 +8073,43 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   second, quieter form.
 - **When the same defect class is fixed twice, say so the second time.** The two hooks now carry the same
   guard with the same reasoning, which is the point: a reader who finds one should expect the other.
+
+### Prompt 337 — Light mode legibility, and the search fields' magnifier
+
+**Timestamp:** 2026-10-09 06:45 | **Status:** Complete | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.9.010** (light mode), **2026.10.9.011** (search overlap).
+
+**Prompt**
+
+> I can't see the text in light mode. Fix that.
+> (then) Fix the overlap in all search bars throughout the app
+
+**What I did**
+- **Measured rather than guessed, and the instrument was wrong first.** I wrote a contrast scan that walks
+  every text node's colour against the first opaque background above it and computes the WCAG ratio, and it
+  reported sixteen failures including every filled button in the application. Those were mine: Chromium
+  prints `color-mix()` results as `color(srgb 0.75 0 0)`, which my parser did not know, so white-on-crimson
+  read as white-on-white at exactly 1.0. Teaching it that one format took the light theme's real failures
+  down to four.
+- **Fixed the four**: the Service Alerts count line at 1.25:1 (`text-amber-200/75` on a pale amber header)
+  and three tone-chip families at 1.92:1, all colours authored for a dark surface. The panel and the chips
+  keep their identities; the light theme moves the shade, which is the move that block already documents.
+  After: **zero** failures below 4.5:1 across fifteen pages in the light theme.
+- **Found the search overlap's single cause**: the redesign's `.input-field` rule set a `padding` shorthand
+  at a specificity above the utilities, so the `pl-9` every icon field relies on was replaced by 10px under
+  an icon that occupies 28px. Nineteen fields, one line rule, and the rule was not about search fields at
+  all - it was the redesign's control sizing. It now sets only the vertical padding and the radius.
+- **Verified the overlap by geometry**, not by looking: for every input with an absolutely positioned icon
+  sibling, compare the icon's right edge with where the text begins. Before: 18px of overlap and "clearance
+  -18". After: 8px of clearance, and zero overlaps across twenty pages including the classic interface. The
+  command palette was already right because its icon is a flex sibling rather than an overlay.
+
+**Notes for next time**
+- **A contrast checker that reads the computed colour is only as good as its parser.** A false failure at
+  exactly 1.0 - text the same colour as its background - is a parser saying "I do not know this colour
+  format", not a design saying "make this white on white". Two of the four things I nearly "fixed" were
+  buttons that were fine.
+- **When every instance of a thing is broken, look for the one rule that outranks them.** Nineteen search
+  fields did not each need a fix; they needed the override above them to stop setting a property it had no
+  business setting. Fixing them individually would have left the next field to hit the same wall.

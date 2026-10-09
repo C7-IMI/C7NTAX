@@ -294,6 +294,17 @@ html[data-theme="light"] .service-alert-banner__details,
 html[data-theme="light"] .service-alert-banner__dismiss { color: #991b1b; }
 html[data-theme="light"] .service-alert-banner__dismiss:hover { color: #7f1d1d; }
 
+/*
+ * The tone chips — a served SLA, a stale one, a breached one, an active client — are pale on purpose on
+ * a dark surface, where the near-black around them does the contrast work. On white the same three
+ * colours measure 1.9:1 or worse, which is a label nobody can read, so the light theme moves the shade
+ * and keeps the family, the same move the rest of this block makes. The border and the tint stay as
+ * authored: under a dark label a pale tint is the point rather than a problem.
+ */
+html[data-theme="light"] .chip--good { color: #166534; }
+html[data-theme="light"] .chip--warn { color: #92400e; }
+html[data-theme="light"] .chip--bad { color: #991b1b; }
+
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -499,7 +510,15 @@ html[data-ui-redesign="true"] .text-2xl { font-size: 1.375rem; line-height: 1.6r
 /* Controls, sized to the new row height rather than to the old one. */
 html[data-ui-redesign="true"] .input-field {
   font-size: 0.8125rem;
-  padding: 0.4375rem 0.625rem;
+  /*
+   * The vertical padding and the radius are the redesign's; the **horizontal** padding is not, because
+   * this rule outranks the utilities — a `padding` shorthand here silently undid the `pl-9` that every
+   * field carrying an icon depends on to keep its text clear of the magnifier, in all nineteen of them.
+   * The field's own `px-3` is the floor, and a `pl-*` beside it is a decision the rule should not have
+   * been able to override.
+   */
+  padding-top: 0.4375rem;
+  padding-bottom: 0.4375rem;
   border-radius: 0.5rem;
 }
 html[data-ui-redesign="true"] .btn-primary,
