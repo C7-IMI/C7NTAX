@@ -8,7 +8,7 @@ import { prisma } from "../index";
 import type { Company } from "@prisma/client";
 import { generateTicketNumber } from "./ticketNumber";
 import { isSettledTicketStatus, TicketStatus } from "@C7NTAX/shared";
-import { ticketStatusLabel } from "./ticketNotifications";
+import { notifyTicketReopenedByClient, ticketStatusLabel } from "./ticketNotifications";
 import {
   stripSubjectPrefixes,
   deduceName,
@@ -522,7 +522,7 @@ export async function appendEmailToTicket(ticketId: string, email: ParsedEmail):
     },
   });
   await attachEmailFiles(ticket.id, email, systemUser.id, comment.id);
-  await reopenIfClientReplied(ticket, email.from.email);
+  await reopenIfClientReplied(ticket, email);
   return true;
 }
 
@@ -531,14 +531,15 @@ export async function appendEmailToTicket(ticketId: string, email: ParsedEmail):
  *
  * Recorded twice on purpose: the status change is what the queue reads, and the internal note is what
  * the person opening the ticket reads next — "the client replied and it came back" is a fact worth one
- * line in the thread rather than something to infer from a status badge.
+ * line in the thread rather than something to infer from a status badge. The owner is emailed as well,
+ * because a ticket that has come back is work again and the queue is not a place everybody watches.
  */
 async function reopenIfClientReplied(
   ticket: { id: string; status: string; companyId: string; contactId: string | null },
-  fromEmail: string,
+  email: ParsedEmail,
 ): Promise<void> {
   if (!isSettledTicketStatus(ticket.status)) return;
-  if (!(await senderIsTicketClient(ticket, fromEmail))) return;
+  if (!(await senderIsTicketClient(ticket, email.from.email))) return;
   try {
     await prisma.ticket.update({
       where: { id: ticket.id },
@@ -554,12 +555,13 @@ async function reopenIfClientReplied(
     await prisma.ticketComment.create({
       data: {
         ticketId: ticket.id,
-        body: `${ticketStatusLabel(ticket.status)} → Customer reopened: the client replied to the closure email from ${fromEmail}.`,
+        body: `${ticketStatusLabel(ticket.status)} → Customer reopened: the client replied to the closure email from ${email.from.email}.`,
         authorId: systemUser.id,
         isInternal: true,
       },
     });
-    console.log(`[EmailConnector] Reopened ticket ${ticket.id} — ${fromEmail} replied to a ${ticket.status} ticket`);
+    console.log(`[EmailConnector] Reopened ticket ${ticket.id} — ${email.from.email} replied to a ${ticket.status} ticket`);
+    await notifyTicketReopenedByClient(ticket.id, { fromEmail: email.from.email, reply: emailBody(email) });
   } catch (err) {
     // The reply is already on the ticket. Failing the whole message over the status change would lose
     // the client's words, which is the one thing here that cannot be fetched again.

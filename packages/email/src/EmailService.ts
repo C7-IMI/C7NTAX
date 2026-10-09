@@ -101,6 +101,32 @@ export class EmailService {
   }
 
   /**
+   * Tell a technician that a ticket they own has been reopened by the client.
+   *
+   * Internal, and therefore not the customer template with different words: it names who replied and
+   * quotes what they said, because the person reading it has to decide what to do about it and the
+   * client is already in the thread. The ticket's own page is the link — an internal email that asks
+   * somebody to reply by email would put the answer in the wrong place.
+   */
+  async sendTicketReopened(
+    to: string,
+    options: {
+      ticketNumber: string;
+      ticketTitle: string;
+      clientName?: string;
+      contactName?: string;
+      replyExcerpt: string;
+      ticketUrl?: string;
+    },
+  ): Promise<void> {
+    await this.send({
+      to,
+      subject: `[${options.ticketNumber}] Reopened by the client — ${options.ticketTitle}`,
+      html: ticketReopenedTemplate(options),
+    });
+  }
+
+  /**
    * Notify a ticket's contact that a customer-visible activity occurred
    * (a non-internal note was added, time was logged, or the status changed).
    * `cc` carries the ticket's CC contacts and anyone the author added.
@@ -272,4 +298,34 @@ function ticketActivityTemplate(o: {
   </div>`;
 }
 
-export { mfaTemplate, followUpTemplate, autoCloseTemplate, invoiceTemplate, overdueTemplate, ticketActivityTemplate };
+/**
+ * An internal notification: a ticket the client has just reopened.
+ *
+ * Its own template rather than the customer one with different words. The reader is a technician who
+ * has to decide what to do next, so it names the person who replied and quotes what they said, and it
+ * links to the ticket instead of inviting a reply — the answer belongs in the thread, not in an inbox.
+ */
+function ticketReopenedTemplate(o: {
+  ticketNumber: string;
+  ticketTitle: string;
+  clientName?: string;
+  contactName?: string;
+  replyExcerpt: string;
+  ticketUrl?: string;
+}): string {
+  return `
+  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; background: #0f1923; color: #e2e8f0; border-radius: 12px; overflow: hidden;">
+    <div style="background: #ea580c; padding: 24px; text-align: center;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 20px;">Reopened by the client</h1>
+    </div>
+    <div style="padding: 32px 24px;">
+      <p style="color: #94a3b8; margin: 0 0 8px;">Ticket <strong style="color: #fff;">${escapeHtml(o.ticketNumber)}</strong> — <em>${escapeHtml(o.ticketTitle)}</em></p>
+      <p style="color: #cbd5e1; margin: 0 0 16px;">${escapeHtml(o.contactName || o.clientName || "The client")} replied to the closing email, so this ticket is back in the queue as <strong style="color: #fff;">Customer reopened</strong>.</p>
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 3px solid #ea580c; border-radius: 8px; padding: 16px; color: #cbd5e1; margin-bottom: 24px;">${escapeHtml(o.replyExcerpt).replace(/\r?\n/g, "<br>")}</div>
+      ${o.ticketUrl ? `<a href="${o.ticketUrl}" style="display: inline-block; background: #c00000; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Open the ticket</a>` : ""}
+      <p style="color: #64748b; font-size: 13px; margin: 16px 0 0;">Sent to the ticket's owner because the client answered a ticket that had been closed.</p>
+    </div>
+  </div>`;
+}
+
+export { mfaTemplate, followUpTemplate, autoCloseTemplate, invoiceTemplate, overdueTemplate, ticketActivityTemplate, ticketReopenedTemplate };

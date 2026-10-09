@@ -37,6 +37,88 @@ procurementRouter.patch("/vendors/:id", requirePermission(Permission.BillingMana
 /** The four states a purchase order moves through, in order. */
 const PO_STATUSES = ["draft", "ordered", "shipped", "received"] as const;
 
+/**
+ * How many asset records one line may create.
+ *
+ * An asset is a thing with a tag somebody sticks on it, so a line of twelve SSDs is twelve records and
+ * a line of a thousand patch leads is not a thousand records — it is stock, and the inventory would
+ * become unreadable. Past the cap the line is recorded once and the count is written into the order's
+ * notes, which is honest about what was not itemised rather than quietly dropping it.
+ */
+const ASSET_UNITS_PER_LINE_CAP = 25;
+
+/** The asset types the inventory knows, so a catalog product's own type lands on one of them. */
+const ASSET_TYPES = new Set(["hardware", "software", "license", "server", "laptop", "mobile", "network", "access_point", "switch", "firewall", "printer", "other"]);
+
+type ReceivedLine = { id: string; description: string; quantity: number; unitPrice: number; productId: string | null };
+
+/**
+ * Record what arrived, as assets.
+ *
+ * Receiving an order is the moment the hardware exists as ours: before it, the lines are intentions.
+ * So a received order writes one asset per unit — unassigned (`companyId` null, status `available`)
+ * until somebody puts it at a client — carrying the price we paid, the date it arrived and the order
+ * it came from, which is what makes "where did this come from and what did it cost" answerable later.
+ *
+ * Idempotent by order number: receiving the same order twice does not double the inventory, and the
+ * check is on the `purchaseOrder` field the assets carry rather than on the status, so a re-receive
+ * after a manual edit is safe.
+ */
+async function createAssetsForReceivedOrder(
+  order: { id: string; poNumber: string; receivedAt: Date | null; vendorId: string },
+  lines: ReceivedLine[],
+  vendorName: string | null,
+): Promise<{ created: number; skipped: number; capped: Array<{ description: string; quantity: number; recorded: number }> }> {
+  const already = await prisma.asset.count({ where: { purchaseOrder: order.poNumber } });
+  if (already) return { created: 0, skipped: already, capped: [] };
+
+  const productIds = [...new Set(lines.map((line) => line.productId).filter((id): id is string => Boolean(id)))];
+  const products = productIds.length
+    ? await prisma.product.findMany({ where: { id: { in: productIds } }, select: { id: true, sku: true, name: true, productType: true, category: true, manufacturer: true } })
+    : [];
+  const receivedOn = order.receivedAt ?? new Date();
+  const capped: Array<{ description: string; quantity: number; recorded: number }> = [];
+  let created = 0;
+
+  for (const [index, line] of lines.entries()) {
+    const product = products.find((p) => p.id === line.productId);
+    const wanted = Math.max(1, Math.round(Number(line.quantity) || 1));
+    const units = Math.min(wanted, ASSET_UNITS_PER_LINE_CAP);
+    if (wanted > units) capped.push({ description: line.description, quantity: wanted, recorded: units });
+    const type = product?.productType && ASSET_TYPES.has(product.productType) ? product.productType : "other";
+    for (let unit = 0; unit < units; unit += 1) {
+      const tag = `${order.poNumber}-${String(index + 1).padStart(2, "0")}-${String(unit + 1).padStart(2, "0")}`;
+      const notes = [
+        `Received against ${order.poNumber}${vendorName ? ` from ${vendorName}` : ""} on ${receivedOn.toISOString().slice(0, 10)}.`,
+        product?.sku ? `Catalog item ${product.sku}.` : null,
+        wanted > units ? `One of ${units} record(s) for a line of ${wanted}.` : null,
+      ].filter(Boolean).join(" ");
+      const asset = await prisma.asset.create({
+        data: {
+          name: line.description || product?.name || order.poNumber,
+          assetTag: tag,
+          type,
+          category: product?.category ?? null,
+          manufacturer: product?.manufacturer ?? null,
+          status: "available",
+          vendor: vendorName,
+          purchaseDate: receivedOn,
+          purchasePrice: Number(line.unitPrice) || 0,
+          purchaseOrder: order.poNumber,
+          notes,
+          companyId: null,
+        },
+        select: { id: true },
+      });
+      // The line remembers the first asset it produced: `POLineItem.assetId` is one id, so a line of
+      // many units records the first and the rest are found by their order number and tag.
+      if (unit === 0) await prisma.pOLineItem.update({ where: { id: line.id }, data: { assetId: asset.id } });
+      created += 1;
+    }
+  }
+  return { created, skipped: 0, capped };
+}
+
 // Purchase Orders
 procurementRouter.get("/orders", requirePermission(Permission.BillingView), async (req: AuthRequest, res, next) => {  try {
     const { status, vendorId, limit = "50", offset = "0" } = req.query as Record<string, string>;

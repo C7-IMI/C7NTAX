@@ -155,6 +155,62 @@ export async function notifyTicketClosure(
   });
 }
 
+/**
+ * Tell the ticket's owner that the client has reopened it.
+ *
+ * The owner is the assignee; with nobody assigned it goes to whoever raised the ticket, because a
+ * reopened ticket with no reader is exactly the failure this exists to prevent. The channel is email:
+ * it is the only staff channel this application actually delivers to — the WebSocket push in `ws.ts`
+ * has no consumer in the interface, so a notification that only pushed would reach nobody.
+ *
+ * Failure is logged, never thrown: the reply is already on the ticket, and losing that would be worse
+ * than a technician hearing about it from the queue instead of from an inbox.
+ */
+export async function notifyTicketReopenedByClient(
+  ticketId: string | undefined,
+  options: { fromEmail: string; reply: string },
+): Promise<void> {
+  if (!ticketId) return;
+  try {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      select: {
+        ticketNumber: true,
+        title: true,
+        assignedToId: true,
+        createdById: true,
+        company: { select: { name: true } },
+        contact: { select: { firstName: true, lastName: true } },
+      },
+    });
+    if (!ticket) return;
+    const recipientId = ticket.assignedToId ?? ticket.createdById;
+    if (!recipientId) return;
+    const recipient = await prisma.user.findUnique({
+      where: { id: recipientId },
+      select: { email: true, isActive: true },
+    });
+    if (!recipient?.email || recipient.isActive === false) return;
+
+    const contactName = [ticket.contact?.firstName, ticket.contact?.lastName].filter(Boolean).join(" ").trim();
+    const excerpt = options.reply.replace(/\s+/g, " ").trim().slice(0, 1200) || "(no message body)";
+    const base = (process.env.WEB_PUBLIC_URL || process.env.APP_URL || "").replace(/\/$/, "");
+    await emailService.sendTicketReopened(recipient.email, {
+      ticketNumber: ticket.ticketNumber,
+      ticketTitle: ticket.title,
+      clientName: ticket.company?.name,
+      contactName: contactName || options.fromEmail,
+      replyExcerpt: excerpt,
+      ticketUrl: base ? `${base}/tickets/${ticketId}` : undefined,
+    });
+  } catch (err) {
+    logger.warn("tickets.notifyReopened", "Failed to tell the ticket's owner it was reopened", {
+      ticketId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 /** Notify the customer of a non-internal note, copying anyone the author picked. */
 export async function notifyTicketNote(
   ticketId: string | undefined,
