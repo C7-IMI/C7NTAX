@@ -9,6 +9,15 @@
     "viewedAt": "2026-10-09T17:04:03.042Z"
   },
   {
+    "id": "c528fede-3b74-4d84-819a-5828427845ef",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "entityName": "Acme Domain Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-10-09T17:04:47.360Z"
+  },
+  {
     "id": "541b5457-d22e-4046-9207-e2566b1e1228",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "asset",
@@ -304,15 +313,6 @@
     "entityName": "Stark Enterprises — file server",
     "entityIcon": "server",
     "viewedAt": "2026-10-08T04:00:50.545Z"
-  },
-  {
-    "id": "c528fede-3b74-4d84-819a-5828427845ef",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "password",
-    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
-    "entityName": "Acme Domain Admin",
-    "entityIcon": "key",
-    "viewedAt": "2026-10-09T15:09:34.228Z"
   },
   {
     "id": "34d255c8-cd22-44a6-b7ac-d93729c3e0c6",
