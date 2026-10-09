@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Copy, KeyRound, Pencil, Send, Trash2, X } from "lucide-react";
+import { Copy, KeyRound, Pencil, Send, ShieldCheck, Trash2, X } from "lucide-react";
 import api from "../api";
-import { EmptyState, PageHeader, Section } from "../components/ui";
+import { EmptyState, ListFooter, ListViews, PageHeader, Section, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import { Chip } from "./Configuration";
 
 interface Hook {
@@ -138,7 +139,10 @@ function EventPicker({ options, selected, onToggle }: {
 }
 
 export function WebhooksPage() {
+  const redesign = useRedesign();
   const [hooks, setHooks] = useState<Hook[]>([]);
+  const [hookView, setHookView] = useState("all");
+  const [deliveryView, setDeliveryView] = useState("all");
   const [options, setOptions] = useState<EventOption[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
@@ -287,12 +291,32 @@ export function WebhooksPage() {
 
   const hookName = (webhookId: string) => hooks.find((h) => h.id === webhookId)?.name ?? "removed endpoint";
 
+  const activeHooks = hooks.filter((hook) => hook.isActive).length;
+  /** A parked endpoint that keeps failing is the combination worth finding, so failing is per hook. */
+  const failingHookIds = new Set(deliveries.filter((d) => d.status === "failed").map((d) => d.webhookId));
+  const shownHooks = hooks.filter((hook) =>
+    hookView === "enabled" ? hook.isActive : hookView === "failing" ? failingHookIds.has(hook.id) : true);
+  const shownDeliveries = deliveries.filter((d) => deliveryView === "all" || d.status === deliveryView);
+  const deliveredCount = deliveries.filter((d) => d.status === "delivered").length;
+  const failedCount = deliveries.filter((d) => d.status === "failed").length;
+  const pendingCount = deliveries.filter((d) => d.status === "pending").length;
+
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <PageHeader
         title="Alert Webhooks"
         subtitle="Endpoints that receive an alert the moment it opens or closes, so another system can act on it."
       />
+
+      {/* ── The figures the page already holds ── */}
+      {redesign ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Endpoints registered" value={hooks.length} icon={<Send size={14} />} tone="cyber" />
+          <StatCard label="Active endpoints" value={activeHooks} icon={<ShieldCheck size={14} />} tone="green" />
+          <StatCard label="Deliveries logged" value={deliveries.length} icon={<KeyRound size={14} />} tone="neutral" />
+          <StatCard label="Failed deliveries" value={failedCount} icon={<Trash2 size={14} />} tone="amber" />
+        </div>
+      ) : null}
 
       {/* ── What this is for ── */}
       <div className="card">
@@ -418,6 +442,25 @@ export function WebhooksPage() {
       ) : null}
 
       {/* ── Registered endpoints ── */}
+      {redesign && !loading && hooks.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews
+            views={[
+              { id: "all", label: "All", count: hooks.length },
+              { id: "enabled", label: "Enabled", count: activeHooks },
+              { id: "failing", label: "Failing", count: hooks.filter((hook) => failingHookIds.has(hook.id)).length },
+            ]}
+            value={hookView}
+            onChange={setHookView}
+            label="Endpoint views"
+          />
+          <span className="text-xs text-gray-500">
+            {shownHooks.length} endpoint{shownHooks.length === 1 ? "" : "s"} shown · {activeHooks} enabled ·{" "}
+            {hooks.length - activeHooks} parked
+          </span>
+        </div>
+      ) : null}
+
       <Section title={`Registered endpoints${hooks.length ? ` (${hooks.length})` : ""}`}>
         {loading ? (
           <div className="card"><p className="text-sm text-gray-500">Loading…</p></div>
@@ -430,7 +473,7 @@ export function WebhooksPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {hooks.map((hook) => {
+            {(redesign ? shownHooks : hooks).map((hook) => {
               const outcome = outcomes[hook.id];
               return (
               <div key={hook.id} className="card">
@@ -496,7 +539,7 @@ export function WebhooksPage() {
                           <Chip tone="info">{hook.retryCount === 1 ? "1 attempt" : `up to ${hook.retryCount} attempts`}</Chip>
                         </div>
                         <p className="text-xs text-gray-400 mt-1 break-all font-mono">{hook.url}</p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className={`text-xs text-gray-500 mt-1${redesign ? " tabular-nums" : ""}`}>
                           registered {formatWhen(hook.createdAt)} · {hook.events.length} event{hook.events.length === 1 ? "" : "s"}
                         </p>
                       </div>
@@ -558,11 +601,45 @@ export function WebhooksPage() {
               </div>
               );
             })}
+            {redesign && shownHooks.length === 0 ? (
+              <div className="card"><p className="text-sm text-gray-500">Nothing in this view.</p></div>
+            ) : null}
+            {redesign && shownHooks.length > 0 ? (
+              <ListFooter
+                from={1}
+                to={shownHooks.length}
+                total={shownHooks.length}
+                page={1}
+                pages={1}
+                onPage={() => {}}
+                note={`${hooks.length} endpoint${hooks.length === 1 ? "" : "s"} registered`}
+              />
+            ) : null}
           </div>
         )}
       </Section>
 
       {/* ── Delivery log ── */}
+      {redesign && deliveries.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews
+            views={[
+              { id: "all", label: "All", count: deliveries.length },
+              { id: "delivered", label: "Delivered", count: deliveredCount },
+              { id: "failed", label: "Failed", count: failedCount },
+              { id: "pending", label: "Pending", count: pendingCount },
+            ]}
+            value={deliveryView}
+            onChange={setDeliveryView}
+            label="Delivery views"
+          />
+          <span className="text-xs text-gray-500">
+            {shownDeliveries.length} deliver{shownDeliveries.length === 1 ? "y" : "ies"} shown ·{" "}
+            {failedCount} failed
+          </span>
+        </div>
+      ) : null}
+
       <Section title="Delivery log">
         <div className="card !p-0 overflow-hidden">
           <div className="divide-y divide-surface-border">
@@ -572,15 +649,21 @@ export function WebhooksPage() {
                 description="The last 100 deliveries appear here. Press Send test on an endpoint to put the first one in the list without waiting for an incident."
               />
             ) : (
-              deliveries.map((delivery) => (
+              (redesign ? shownDeliveries : deliveries).map((delivery) => (
                 <div key={delivery.id} className="px-5 py-3">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-sm text-white">{eventLabel(delivery.event)}</span>
-                    <Chip tone={STATUS_TONE[delivery.status] ?? "muted"}>{delivery.status}</Chip>
-                    <span className="text-xs text-gray-500">
+                    {redesign ? (
+                      <span className={`chip ${delivery.status === "delivered" ? "chip--good" : delivery.status === "failed" ? "chip--bad" : "chip--warn"}`}>
+                        {delivery.status}
+                      </span>
+                    ) : (
+                      <Chip tone={STATUS_TONE[delivery.status] ?? "muted"}>{delivery.status}</Chip>
+                    )}
+                    <span className={`text-xs text-gray-500${redesign ? " tabular-nums" : ""}`}>
                       {delivery.attempts} attempt{delivery.attempts === 1 ? "" : "s"}
                     </span>
-                    <span className="text-xs text-gray-500">{formatWhen(delivery.createdAt)}</span>
+                    <span className={`text-xs text-gray-500${redesign ? " tabular-nums" : ""}`}>{formatWhen(delivery.createdAt)}</span>
                     <span className="text-xs text-gray-400 ml-auto">{hookName(delivery.webhookId)}</span>
                   </div>
                   <details className="mt-2">
@@ -594,7 +677,21 @@ export function WebhooksPage() {
                 </div>
               ))
             )}
+            {redesign && deliveries.length > 0 && shownDeliveries.length === 0 ? (
+              <p className="text-sm text-gray-500 py-6 text-center">Nothing in this view.</p>
+            ) : null}
           </div>
+          {redesign && shownDeliveries.length > 0 ? (
+            <ListFooter
+              from={1}
+              to={shownDeliveries.length}
+              total={shownDeliveries.length}
+              page={1}
+              pages={1}
+              onPage={() => {}}
+              note={`the last ${deliveries.length} deliver${deliveries.length === 1 ? "y" : "ies"} recorded`}
+            />
+          ) : null}
         </div>
         <div className="card">
           <h4 className="text-xs font-semibold text-gray-300 uppercase tracking-wide mb-2">Reading the log</h4>

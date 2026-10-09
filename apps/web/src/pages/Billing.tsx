@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import {
   Plus, Send, DollarSign, CreditCard, Eye, FileText, Clock, Calendar,
   TrendingUp, Download, Receipt, Building2, AlertTriangle, CheckCircle,
-  XCircle, RotateCw, ClipboardList, BarChart3, Timer, Filter,
+  XCircle, RotateCw, ClipboardList, BarChart3, Timer, Filter, Search,
   ExternalLink, Copy, Eraser, Repeat, SquareArrowOutUpRight, AppWindow, Trash2,
   type LucideIcon,
 } from "lucide-react";
@@ -15,7 +15,7 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader, Tabs } from "../components/ui";
+import { ListFooter, ListViews, PageHeader, StatCard, Tabs } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
 
 // Types
@@ -44,6 +44,18 @@ const STATUS_COLORS: Record<string, string> = {
 const PERIOD_COLORS: Record<string, string> = {
   monthly: "bg-blue-600/20 text-blue-400", quarterly: "bg-purple-600/20 text-purple-400",
   annual: "bg-cyber-600/20 text-cyber-400", weekly: "bg-amber-600/20 text-amber-400",
+};
+
+/** Money in the redesigned lists: grouped, at most two decimals, never a bare float. */
+const money = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+
+/** Redesigned status chip: paid is good, overdue bad, partial and draft still in flight. */
+const statusChip = (status: string) => {
+  const s = (status || "").toLowerCase();
+  if (s === "paid") return "chip--good";
+  if (s === "overdue") return "chip--bad";
+  if (s === "partial" || s === "draft") return "chip--warn";
+  return "";
 };
 
 const TABS = [
@@ -118,8 +130,11 @@ export function BillingPage({ tab: initialTab }: { tab?: string }) {
 // ═══════════════════════════════════════════════════════════════════
 
 function InvoicesTab({ companies }: { companies: Company[] }) {
+  const redesign = useRedesign();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState("all");
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showGenerate, setShowGenerate] = useState(false);
   const [genForm, setGenForm] = useState({ companyId: "", agreementId: "" });
@@ -237,6 +252,27 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
     return s;
   }, { count: 0, total: 0, paid: 0, overdue: 0, outstanding: 0 });
 
+  // The redesigned list slices the rows it has already loaded: the views are the invoice states
+  // present in this list, counted live, and the figures under them are the list's own totals.
+  const INVOICE_STATUSES = ["draft", "sent", "partial", "paid", "overdue", "void"] as const;
+  const statusOf = (i: Invoice) => (i.status || "draft").toLowerCase();
+  const invoiceViews = [
+    { id: "all", label: "All", count: invoices.length },
+    ...INVOICE_STATUSES.map(status => ({
+      id: status,
+      label: status.charAt(0).toUpperCase() + status.slice(1),
+      count: invoices.filter(i => statusOf(i) === status).length,
+    })),
+  ];
+  const inView = view === "all" ? invoices : invoices.filter(i => statusOf(i) === view);
+  const query = search.trim().toLowerCase();
+  const shownInvoices = query
+    ? inView.filter(i => `${i.invoiceNumber ?? ""} ${i.company?.name ?? ""}`.toLowerCase().includes(query))
+    : inView;
+  const visibleInvoices = redesign ? shownInvoices : invoices;
+  const shownTotal = shownInvoices.reduce((s, i) => s + i.total, 0);
+  const shownOutstanding = shownInvoices.reduce((s, i) => s + (statusOf(i) === "sent" || statusOf(i) === "partial" ? i.total : 0), 0);
+
   /** Bills an invoice again on its own schedule (POST /invoices/:id/recurring). */
   const makeRecurring = async (inv: Invoice) => {
     try { await api.post(`/billing/invoices/${inv.id}/recurring`, {}); toast.success(`${inv.invoiceNumber} set to repeat`); fetchInvoices(); }
@@ -328,19 +364,45 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <SummaryCard icon={Receipt} label="Total Invoiced" value={`$${totals.total.toLocaleString()}`} color="text-cyber-400" />
-        <SummaryCard icon={CheckCircle} label="Paid" value={`$${totals.paid.toLocaleString()}`} color="text-green-400" />
-        <SummaryCard icon={Clock} label="Outstanding" value={`$${totals.outstanding.toLocaleString()}`} color="text-amber-400" />
-        <SummaryCard icon={AlertTriangle} label="Overdue" value={`$${totals.overdue.toLocaleString()}`} color="text-red-400" />
+        {redesign ? (
+          <>
+            <StatCard label="Total invoiced" value={money(totals.total)} icon={<Receipt size={13} />} />
+            <StatCard label="Paid" value={money(totals.paid)} icon={<CheckCircle size={13} />} tone="green" />
+            <StatCard label="Outstanding" value={money(totals.outstanding)} icon={<Clock size={13} />} tone="amber" />
+            <StatCard label="Overdue" value={money(totals.overdue)} icon={<AlertTriangle size={13} />} tone="red" />
+          </>
+        ) : (
+          <>
+            <SummaryCard icon={Receipt} label="Total Invoiced" value={`$${totals.total.toLocaleString()}`} color="text-cyber-400" />
+            <SummaryCard icon={CheckCircle} label="Paid" value={`$${totals.paid.toLocaleString()}`} color="text-green-400" />
+            <SummaryCard icon={Clock} label="Outstanding" value={`$${totals.outstanding.toLocaleString()}`} color="text-amber-400" />
+            <SummaryCard icon={AlertTriangle} label="Overdue" value={`$${totals.overdue.toLocaleString()}`} color="text-red-400" />
+          </>
+        )}
       </div>
+
+      {/* Views — the redesigned list names its slices and counts them from the rows it has loaded,
+          replacing the status select with the states as chips you press. */}
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={invoiceViews} value={view} onChange={setView} label="Invoice views" />
+          <div className="relative min-w-[13rem] max-w-xs flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input className="input-field pl-9" placeholder="Search number or client…" value={search} onChange={e => setSearch(e.target.value)} aria-label="Search invoices" />
+          </div>
+          <span className="text-xs text-gray-500">{shownInvoices.length} shown · {money(shownOutstanding)} outstanding</span>
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
+        {!redesign && (
         <select className="input-field text-sm py-1.5 w-auto" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="">All Statuses</option>
           <option value="draft">Draft</option><option value="sent">Sent</option><option value="partial">Partial</option>
           <option value="paid">Paid</option><option value="overdue">Overdue</option><option value="void">Void</option>
         </select>
+        )}
         <button onClick={() => setShowGenerate(true)} className="btn-primary flex items-center gap-2 text-sm ml-auto"><Plus size={16} />Generate Invoice</button>
         {batchFlagged && (
           <button onClick={() => setShowBatch(true)} className="btn-secondary flex items-center gap-2 text-sm"><ClipboardList size={16} />Bill through…</button>
@@ -355,7 +417,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase tracking-wider"><SortableHeader field="invoiceNumber" label="Invoice" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="company.name" label="Client" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden sm:table-cell" /><th className="p-3 hidden lg:table-cell">Tickets</th><SortableHeader field="total" label="Amount" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><SortableHeader field="issueDate" label="Issued" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="dueDate" label="Due" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="status" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="p-3" /><th className="p-3 text-right">Actions</th></tr></thead>
-          <tbody>{sortData(invoices, sort?.field || "dueDate", sort?.direction || "desc").map(inv => (
+          <tbody>{sortData(visibleInvoices, sort?.field || "dueDate", sort?.direction || "desc").map(inv => (
             <tr key={inv.id} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 cursor-pointer focus:outline-none focus:bg-surface-lighter/30" onDoubleClick={() => handleInvoicePdf(inv)} onClick={() => setViewInvoice(inv)}
               onContextMenu={(e) => menu.open(e, invoiceMenuEntries(inv), invoiceMenuHeader(inv))}
               onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, invoiceMenuEntries(inv), invoiceMenuHeader(inv))}
@@ -378,10 +440,10 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
                   </div>
                 ) : <span className="text-gray-600">—</span>}
               </td>
-              <td className="p-3">${inv.total.toFixed(2)}</td>
+              <td className={redesign ? "p-3 tabular-nums" : "p-3"}>${inv.total.toFixed(2)}</td>
               <td className="p-3 text-gray-400 hidden md:table-cell">{new Date(inv.issueDate).toLocaleDateString()}</td>
               <td className="p-3 text-gray-400 hidden md:table-cell">{new Date(inv.dueDate).toLocaleDateString()}</td>
-              <td className="p-3"><span className={`badge ${STATUS_COLORS[inv.status] || ""}`}>{inv.status}</span></td>
+              <td className="p-3">{redesign ? <span className={`chip ${statusChip(inv.status)}`}>{inv.status}</span> : <span className={`badge ${STATUS_COLORS[inv.status] || ""}`}>{inv.status}</span>}</td>
               <td className="p-3 text-right">
                 <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                   <button onClick={() => handleInvoicePdf(inv)} className="p-1.5 text-gray-400 hover:text-cyber-400" title="PDF"><FileText size={15} /></button>
@@ -390,8 +452,13 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
                 </div>
               </td>
             </tr>
-          ))}</tbody>
-        </table></div></div>
+          ))}
+          {redesign && shownInvoices.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
+        </table></div>
+        {redesign && shownInvoices.length > 0 && (
+          <ListFooter from={1} to={shownInvoices.length} total={shownInvoices.length} page={1} pages={1} onPage={() => {}} note={`${money(shownTotal)} invoiced in this view`} />
+        )}
+        </div>
       )}
 
       {/* Generate Modal */}
@@ -503,8 +570,10 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
 // ═══════════════════════════════════════════════════════════════════
 
 function AgreementsTab({ companies }: { companies: Company[] }) {
+  const redesign = useRedesign();
   const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: "", companyId: "", description: "", billingPeriod: "monthly", price: 0, startDate: "", endDate: "", autoRenew: true, agreementType: "service", hourlyRate: 0, rateTier: "", blockHoursIncluded: 0, overtimeEnabled: true, overtimeAfter: "18:00", overtimeMultiplier: 1.5 });
   const [sortAg, setSortAg] = useState<SortState | null>(null);
@@ -513,6 +582,16 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
     api.get("/billing/agreements").then(r => setAgreements(r.data || [])).catch(() => toast.error("Failed")).finally(() => setLoading(false));
   };
   useEffect(() => { fetch(); }, []);
+
+  // The redesigned list offers the two states an agreement is actually in, counted from the rows.
+  const agreementViews = [
+    { id: "all", label: "All", count: agreements.length },
+    { id: "active", label: "Active", count: agreements.filter(a => a.isActive).length },
+    { id: "inactive", label: "Inactive", count: agreements.filter(a => !a.isActive).length },
+  ];
+  const shownAgreements = agreements.filter(a => view === "all" || (view === "active" ? a.isActive : !a.isActive));
+  const visibleAgreements = redesign ? shownAgreements : agreements;
+  const shownActive = shownAgreements.filter(a => a.isActive).length;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -588,17 +667,25 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
       onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
+      {redesign ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={agreementViews} value={view} onChange={setView} label="Agreement views" />
+          <span className="text-xs text-gray-500">{shownAgreements.length} shown · {shownActive} active</span>
+          <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm ml-auto"><Plus size={16} />New Agreement</button>
+        </div>
+      ) : (
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-400">{agreements.length} agreements</p>
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />New Agreement</button>
       </div>
+      )}
 
       {loading ? <TableSkeleton /> : agreements.length === 0 ? (
         <div className="text-center py-12 card"><ClipboardList size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No service agreements</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><SortableHeader field="name" label="Name" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /><SortableHeader field="company.name" label="Client" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3 hidden sm:table-cell" /><SortableHeader field="billingPeriod" label="Billing" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /><SortableHeader field="billingAmount" label="Amount" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /><SortableHeader field="startDate" label="Period" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="isActive" label="Status" sort={sortAg} onSort={(f) => setSortAg(nextSort(sortAg, f))} className="p-3" /></tr></thead>
-          <tbody>{sortData(agreements, sortAg?.field || "name", sortAg?.direction || "asc").map(a => (
+          <tbody>{sortData(visibleAgreements, sortAg?.field || "name", sortAg?.direction || "asc").map(a => (
             <tr key={a.id} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 focus:outline-none focus:bg-surface-lighter/30"
               onContextMenu={(e) => menu.open(e, agreementMenuEntries(a), agreementMenuHeader(a))}
               onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, agreementMenuEntries(a), agreementMenuHeader(a))}
@@ -606,18 +693,30 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
               <td className="p-3 font-medium text-white">{a.name}</td>
               <td className="p-3 text-gray-300 hidden sm:table-cell">{a.company?.name || "—"}</td>
               <td className="p-3"><span className={`badge ${PERIOD_COLORS[a.billingPeriod] || ""}`}>{a.billingPeriod}</span></td>
-              <td className="p-3">${a.billingAmount.toLocaleString()}</td>
+              <td className={redesign ? "p-3 tabular-nums" : "p-3"}>${a.billingAmount.toLocaleString()}</td>
               <td className="p-3 text-gray-400 hidden md:table-cell text-xs">{new Date(a.startDate).toLocaleDateString()}{a.endDate ? ` → ${new Date(a.endDate).toLocaleDateString()}` : " (ongoing)"}</td>
               <td className="p-3">
+                {redesign ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className={`chip ${a.isActive ? "chip--good" : ""}`}>{a.isActive ? "Active" : "Inactive"}</span>
+                    {a.autoInvoiceEnabled && <span className="chip">Auto</span>}
+                  </div>
+                ) : (
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${a.isActive ? "bg-green-400" : "bg-gray-600"}`} />
                   <span className="text-xs text-gray-400">{a.isActive ? "Active" : "Inactive"}</span>
                   {a.autoInvoiceEnabled && <span className="badge bg-cyber-600/20 text-cyber-400 text-[10px]">Auto</span>}
                 </div>
+                )}
               </td>
             </tr>
-          ))}</tbody>
-        </table></div></div>
+          ))}
+          {redesign && shownAgreements.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
+        </table></div>
+        {redesign && shownAgreements.length > 0 && (
+          <ListFooter from={1} to={shownAgreements.length} total={shownAgreements.length} page={1} pages={1} onPage={() => {}} note={`${agreements.length} agreements in total`} />
+        )}
+        </div>
       )}
 
       {showCreate && (
@@ -868,8 +967,10 @@ function BatchInvoiceDialog({ companies, onClose, onChanged }: { companies: Comp
 // ═══════════════════════════════════════════════════════════════════
 
 function PaymentsTab() {
+  const redesign = useRedesign();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState("all");
   const [methodFilter, setMethodFilter] = useState("");
   const [sortPay, setSortPay] = useState<SortState | null>(null);
   const navigate = useNavigate();
@@ -890,6 +991,23 @@ function PaymentsTab() {
 
   const filtered = methodFilter ? payments.filter(p => p.method === methodFilter) : payments;
   const total = filtered.reduce((s, p) => s + p.amount, 0);
+
+  // The redesigned list slices by how the money arrived, counted from the rows already loaded.
+  const PAYMENT_METHODS = [
+    { id: "credit_card", label: "Credit card" },
+    { id: "ach", label: "ACH" },
+    { id: "check", label: "Check" },
+    { id: "wire", label: "Wire" },
+    { id: "other", label: "Other" },
+  ];
+  const methodOf = (p: Payment) => (p.method || "other").toLowerCase();
+  const paymentViews = [
+    { id: "all", label: "All", count: filtered.length },
+    ...PAYMENT_METHODS.map(m => ({ id: m.id, label: m.label, count: filtered.filter(p => methodOf(p) === m.id).length })),
+  ];
+  const shownPayments = view === "all" ? filtered : filtered.filter(p => methodOf(p) === view);
+  const visiblePayments = redesign ? shownPayments : filtered;
+  const shownTotal = shownPayments.reduce((s, p) => s + p.amount, 0);
 
   // ── Right-click menu: Payments ──
   const menu = useContextMenu();
@@ -958,6 +1076,12 @@ function PaymentsTab() {
       onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
+      {redesign ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={paymentViews} value={view} onChange={setView} label="Payment views" />
+          <span className="text-xs text-gray-500">{shownPayments.length} payments · {money(shownTotal)} recorded</span>
+        </div>
+      ) : (
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-400">{filtered.length} payments · ${total.toLocaleString()} total</p>
         <select className="input-field text-sm py-1.5 w-auto" value={methodFilter} onChange={e => setMethodFilter(e.target.value)}>
@@ -965,26 +1089,32 @@ function PaymentsTab() {
           <option value="credit_card">Credit Card</option><option value="ach">ACH</option><option value="check">Check</option><option value="wire">Wire</option><option value="other">Other</option>
         </select>
       </div>
+      )}
 
       {loading ? <TableSkeleton /> : filtered.length === 0 ? (
         <div className="text-center py-12 card"><CreditCard size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No payments recorded</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
           <thead className="group"><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><SortableHeader field="invoice.invoiceNumber" label="Invoice" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3" /><SortableHeader field="invoice.company.name" label="Client" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3" /><SortableHeader field="amount" label="Amount" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3" /><SortableHeader field="method" label="Method" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3 hidden sm:table-cell" /><SortableHeader field="processedAt" label="Date" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3 hidden md:table-cell" /><SortableHeader field="reference" label="Reference" sort={sortPay} onSort={(f) => setSortPay(nextSort(sortPay, f))} className="p-3 hidden md:table-cell" /></tr></thead>
-          <tbody>{sortData(filtered, sortPay?.field || "processedAt", sortPay?.direction || "desc").map((p, i) => (
+          <tbody>{sortData(visiblePayments, sortPay?.field || "processedAt", sortPay?.direction || "desc").map((p, i) => (
             <tr key={i} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 focus:outline-none focus:bg-surface-lighter/30"
               onContextMenu={(e) => menu.open(e, paymentMenuEntries(p), paymentMenuHeader(p))}
               onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, paymentMenuEntries(p), paymentMenuHeader(p))}
             >
               <td className="p-3 font-medium text-white">{p.invoice.invoiceNumber}</td>
               <td className="p-3 text-gray-300">{p.invoice.company?.name || "—"}</td>
-              <td className="p-3 text-green-400">${p.amount.toFixed(2)}</td>
+              <td className={redesign ? "p-3 text-green-400 tabular-nums" : "p-3 text-green-400"}>${p.amount.toFixed(2)}</td>
               <td className="p-3 hidden sm:table-cell"><span className="badge bg-surface-lighter text-gray-400 capitalize">{p.method.replace(/_/g, " ")}</span></td>
               <td className="p-3 text-gray-400 hidden md:table-cell">{new Date(p.processedAt).toLocaleDateString()}</td>
               <td className="p-3 text-gray-500 text-xs hidden md:table-cell font-mono">{p.reference || "—"}</td>
             </tr>
-          ))}</tbody>
-        </table></div></div>
+          ))}
+          {redesign && shownPayments.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
+        </table></div>
+        {redesign && shownPayments.length > 0 && (
+          <ListFooter from={1} to={shownPayments.length} total={shownPayments.length} page={1} pages={1} onPage={() => {}} note={`${money(shownTotal)} recorded in this view`} />
+        )}
+        </div>
       )}
     </div>
   );
@@ -995,6 +1125,8 @@ function PaymentsTab() {
 // ═══════════════════════════════════════════════════════════════════
 
 function TimeExpensesTab() {
+  const redesign = useRedesign();
+  const [view, setView] = useState("all");
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [ticketMap, setTicketMap] = useState<Record<string, any>>({});
@@ -1029,6 +1161,21 @@ function TimeExpensesTab() {
   const totalBillable = filtered.filter(e => e.billable).reduce((s, e) => s + e.minutes, 0) / 60;
   const totalUnbilled = filtered.filter(e => e.billable && !e.invoiceId).reduce((s, e) => s + e.minutes, 0) / 60;
   const expenseTotal = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+
+  // The redesigned list slices the loaded entries by what can be done with them — billed,
+  // billable and not yet billed, or written off — and counts each slice live.
+  const timeViews = [
+    { id: "all", label: "All", count: entries.length },
+    { id: "billable", label: "Billable", count: entries.filter(e => e.billable).length },
+    { id: "unbilled", label: "Unbilled", count: entries.filter(e => e.billable && !e.invoiceId).length },
+    { id: "nonbillable", label: "Non-billable", count: entries.filter(e => !e.billable).length },
+  ];
+  const shownEntries = entries.filter(e =>
+    view === "all" ? true : view === "billable" ? e.billable : view === "unbilled" ? e.billable && !e.invoiceId : !e.billable,
+  );
+  const visibleEntries = redesign ? shownEntries : filtered;
+  const shownHours = shownEntries.reduce((s, e) => s + e.minutes, 0) / 60;
+  const shownBillable = shownEntries.filter(e => e.billable).reduce((s, e) => s + e.minutes, 0) / 60;
 
   // ── Right-click menu: Time & Expenses ──
   const menu = useContextMenu();
@@ -1171,24 +1318,42 @@ function TimeExpensesTab() {
         </div>
       )}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <SummaryCard icon={Clock} label="Total Hours" value={`${totalHours.toFixed(1)}h`} color="text-cyber-400" />
-        <SummaryCard icon={DollarSign} label="Billable" value={`${totalBillable.toFixed(1)}h`} color="text-green-400" />
-        <SummaryCard icon={AlertTriangle} label="Unbilled" value={`${totalUnbilled.toFixed(1)}h`} color="text-amber-400" />
-        <SummaryCard icon={RotateCw} label="Entries" value={String(filtered.length)} color="text-gray-400" />
+        {redesign ? (
+          <>
+            <StatCard label="Total hours" value={`${totalHours.toFixed(1)}h`} icon={<Clock size={13} />} />
+            <StatCard label="Billable" value={`${totalBillable.toFixed(1)}h`} icon={<DollarSign size={13} />} tone="green" />
+            <StatCard label="Unbilled" value={`${totalUnbilled.toFixed(1)}h`} icon={<AlertTriangle size={13} />} tone="amber" />
+            <StatCard label="Entries" value={String(filtered.length)} icon={<RotateCw size={13} />} tone="neutral" />
+          </>
+        ) : (
+          <>
+            <SummaryCard icon={Clock} label="Total Hours" value={`${totalHours.toFixed(1)}h`} color="text-cyber-400" />
+            <SummaryCard icon={DollarSign} label="Billable" value={`${totalBillable.toFixed(1)}h`} color="text-green-400" />
+            <SummaryCard icon={AlertTriangle} label="Unbilled" value={`${totalUnbilled.toFixed(1)}h`} color="text-amber-400" />
+            <SummaryCard icon={RotateCw} label="Entries" value={String(filtered.length)} color="text-gray-400" />
+          </>
+        )}
       </div>
+      {redesign ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={timeViews} value={view} onChange={setView} label="Time entry views" />
+          <span className="text-xs text-gray-500">{shownEntries.length} shown · {shownHours.toFixed(1)}h logged</span>
+        </div>
+      ) : (
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-400">{filtered.length} time entries</p>
         <select className="input-field text-sm py-1.5 w-auto" value={billableFilter} onChange={e => setBillableFilter(e.target.value as "" | "true" | "false")}>
           <option value="">All</option><option value="true">Billable</option><option value="false">Non-Billable</option>
         </select>
       </div>
+      )}
 
       {loading ? <TableSkeleton /> : filtered.length === 0 ? (
         <div className="text-center py-12 card"><Timer size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">No time entries</p></div>
       ) : (
         <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm">
           <thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">Ticket</th><th className="p-3 hidden sm:table-cell">Client</th><th className="p-3">Time</th><th className="p-3">Billable</th><th className="p-3 hidden md:table-cell">Invoiced</th><th className="p-3 hidden lg:table-cell">Date</th></tr></thead>
-          <tbody>{filtered.map(e => (
+          <tbody>{visibleEntries.map(e => (
             <tr key={e.id} tabIndex={0} className="border-b border-surface-border/50 hover:bg-surface-lighter/30 focus:outline-none focus:bg-surface-lighter/30"
               onContextMenu={(ev) => menu.open(ev, timeMenuEntries(e), timeMenuHeader(e))}
               onKeyDown={(ev) => menu.onKeyDown(ev, ev.currentTarget, timeMenuEntries(e), timeMenuHeader(e))}
@@ -1200,13 +1365,18 @@ function TimeExpensesTab() {
               <td className="p-3 hidden md:table-cell">{e.invoiceId ? <span className="badge bg-blue-600/20 text-blue-400">invoiced</span> : <span className="text-amber-400 text-xs">unbilled</span>}</td>
               <td className="p-3 text-gray-500 text-xs hidden lg:table-cell">{new Date(e.date).toLocaleDateString()}</td>
             </tr>
-          ))}</tbody>
-        </table></div></div>
+          ))}
+          {redesign && shownEntries.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
+        </table></div>
+        {redesign && shownEntries.length > 0 && (
+          <ListFooter from={1} to={shownEntries.length} total={shownEntries.length} page={1} pages={1} onPage={() => {}} note={`${shownBillable.toFixed(1)}h billable`} />
+        )}
+        </div>
       )}
 
       {/* Expenses — linked from the ticket Expenses tab */}
       <div className="flex justify-between items-center pt-2 border-t border-surface-border">
-        <p className="text-sm text-gray-400">{expenses.length} expenses · <span className="text-cyber-400 font-medium">${expenseTotal.toFixed(2)}</span></p>
+        <p className="text-sm text-gray-400">{expenses.length} expenses · <span className={redesign ? "text-cyber-400 font-medium tabular-nums" : "text-cyber-400 font-medium"}>${expenseTotal.toFixed(2)}</span></p>
       </div>
       {expenses.length === 0 ? (
         <div className="text-center py-8 card"><Receipt size={36} className="text-gray-600 mx-auto mb-2" /><p className="text-gray-500 text-sm">No expenses</p></div>
@@ -1222,10 +1392,14 @@ function TimeExpensesTab() {
               <td className="p-3 text-gray-300 text-xs">{e.description}</td>
               <td className="p-3"><span className="badge bg-purple-600/20 text-purple-400 text-xs capitalize">{e.category}</span></td>
               <td className="p-3 text-gray-500 text-xs hidden md:table-cell">{new Date(e.expenseDate).toLocaleDateString()}</td>
-              <td className="p-3 text-right text-cyber-400 font-medium">${(e.amount || 0).toFixed(2)}</td>
+              <td className={redesign ? "p-3 text-right text-cyber-400 font-medium tabular-nums" : "p-3 text-right text-cyber-400 font-medium"}>${(e.amount || 0).toFixed(2)}</td>
             </tr>
           ))}</tbody>
-        </table></div></div>
+        </table></div>
+        {redesign && expenses.length > 0 && (
+          <ListFooter from={1} to={expenses.length} total={expenses.length} page={1} pages={1} onPage={() => {}} note={`${money(expenseTotal)} expenses`} />
+        )}
+        </div>
       )}
     </div>
   );

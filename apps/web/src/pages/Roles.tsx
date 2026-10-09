@@ -7,7 +7,8 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { PageHeader, ListViews, ListFooter, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface RoleRow {
   id: string; name: string; systemRole: string; permissions: string[];
@@ -19,7 +20,9 @@ function formatPermLabel(perm: Permission): string {
 }
 
 export function RolesPage() {
+  const redesign = useRedesign();
   const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [view, setView] = useState("all");
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<RoleRow | null>(null);
   const [editing, setEditing] = useState(false);
@@ -227,6 +230,32 @@ export function RolesPage() {
     toast.success("Reset to system defaults for this role type");
   };
 
+  // ── Render ──
+  /*
+   * The role inventory, counted from the rows already in hand: a role that grants everything, one
+   * nobody holds, and one that grants nothing at all. Those are the three an administrator audits,
+   * and each is a fact about the row rather than a second request.
+   */
+  const ALL_PERMISSIONS = Object.values(Permission).length;
+  const fullAccess = (r: RoleRow) => ALL_PERMISSIONS > 0 && r.permissions.length >= ALL_PERMISSIONS;
+  const noMembers = (r: RoleRow) => (r._count?.users ?? 0) === 0;
+  const emptyRoles = roles.filter(noMembers).length;
+  const roleViews = [
+    { id: "all", label: "All", count: roles.length },
+    { id: "default", label: "Default", count: roles.filter(r => r.isDefault).length },
+    { id: "full", label: "Full access", count: roles.filter(fullAccess).length },
+    { id: "empty", label: "No members", count: emptyRoles },
+    { id: "none", label: "No permissions", count: roles.filter(r => r.permissions.length === 0).length },
+  ];
+  const inView = (r: RoleRow) =>
+    view === "default" ? r.isDefault
+    : view === "full" ? fullAccess(r)
+    : view === "empty" ? noMembers(r)
+    : view === "none" ? r.permissions.length === 0
+    : true;
+  const shownRoles = redesign ? roles.filter(inView) : roles;
+  const assignedUsers = roles.reduce((n, r) => n + (r._count?.users ?? 0), 0);
+  const permissionGrants = roles.reduce((n, r) => n + r.permissions.length, 0);
   if (loading) return <div className="text-center py-12 text-gray-500">Loading roles...</div>;
 
   return (
@@ -266,14 +295,33 @@ export function RolesPage() {
         </div>
       </div>
 
+      {redesign && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard label="Roles" value={roles.length} icon={<Shield size={14} />} tone="cyber" />
+          <StatCard label="Users assigned" value={assignedUsers} icon={<Users size={14} />} tone="green" />
+          <StatCard label="Permission grants" value={permissionGrants} icon={<CheckSquare size={14} />} tone="neutral" />
+          <StatCard label="Roles with no members" value={emptyRoles} icon={<UserMinus size={14} />} tone="amber" />
+        </div>
+      )}
+
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={roleViews} value={view} onChange={setView} label="Role views" />
+          <span className="text-xs text-gray-500">
+            {shownRoles.length} role{shownRoles.length === 1 ? "" : "s"}
+            {view === "all" ? ` · ${assignedUsers} user${assignedUsers === 1 ? "" : "s"} assigned` : ` · ${roles.length} in total`}
+          </span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Role list */}
         <div className="lg:col-span-1 space-y-2">
           <div className="card p-0 overflow-hidden">
-            {roles.length === 0 ? (
-              <div className="p-6 text-center text-gray-500 text-sm">No roles found</div>
+            {shownRoles.length === 0 ? (
+              <div className="p-6 text-center text-gray-500 text-sm">{roles.length === 0 ? "No roles found" : "Nothing in this view"}</div>
             ) : (
-              roles.map(r => (
+              shownRoles.map(r => (
                 <div
                   key={r.id}
                   onContextMenu={(e) => menu.open(e, roleMenuEntries(r), roleMenuHeader(r))}
@@ -293,7 +341,10 @@ export function RolesPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">{r.name}</p>
-                        <p className="text-xs text-gray-500 capitalize">{r.systemRole.replace(/_/g, " ")}</p>
+                        <p className="text-xs text-gray-500 capitalize">
+                          {r.systemRole.replace(/_/g, " ")}
+                          {redesign && r.isDefault && <span className="chip chip--good text-[10px] ml-2">Default</span>}
+                        </p>
                       </div>
                     </div>
                   </button>
@@ -309,6 +360,17 @@ export function RolesPage() {
                   )}
                 </div>
               ))
+            )}
+            {redesign && shownRoles.length > 0 && (
+              <ListFooter
+                from={1}
+                to={shownRoles.length}
+                total={shownRoles.length}
+                page={1}
+                pages={1}
+                onPage={() => {}}
+                note={`${roles.length} role${roles.length === 1 ? "" : "s"} in total`}
+              />
             )}
           </div>
         </div>
@@ -340,7 +402,10 @@ export function RolesPage() {
                       </div>
                     ) : (
                       <>
-                        <h3 className="text-white font-semibold">{selected.name}</h3>
+                        <h3 className="text-white font-semibold">
+                          {selected.name}
+                          {redesign && selected.isDefault && <span className="chip chip--good text-[10px] ml-2 align-middle">Default</span>}
+                        </h3>
                         <p className="text-xs text-gray-400 capitalize">{selected.systemRole.replace(/_/g, " ")} · {selected.permissions.length} permissions</p>
                       </>
                     )}
@@ -353,7 +418,7 @@ export function RolesPage() {
                       <button onClick={handleSaveRole} disabled={saving} className="btn-primary text-xs py-1 px-2 flex items-center gap-1"><Save size={12} /> {saving ? "Saving..." : "Save"}</button>
                       {(() => {
                         const changed = editPerms.size !== originalPerms.size || [...editPerms].some(p => !originalPerms.has(p));
-                        return changed ? <span className="badge bg-amber-600/20 text-amber-400 text-[10px] px-1.5 py-0.5">Changed</span> : null;
+                        return changed ? (redesign ? <span className="chip chip--warn text-[10px]">Changed</span> : <span className="badge bg-amber-600/20 text-amber-400 text-[10px] px-1.5 py-0.5">Changed</span>) : null;
                       })()}
                     </>
                   ) : (

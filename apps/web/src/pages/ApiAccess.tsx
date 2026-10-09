@@ -22,7 +22,8 @@ import {
   AlertTriangle, Copy, Eye, EyeOff, KeyRound, Plus, RefreshCw, ShieldCheck, Trash2, X,
 } from "lucide-react";
 import api from "../api";
-import { EmptyState, PageHeader, Section } from "../components/ui";
+import { EmptyState, ListFooter, ListViews, PageHeader, Section, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import { Chip } from "./Configuration";
 
 /** What `GET /api/api-keys` returns. Never the secret, never the hash. */
@@ -109,7 +110,9 @@ const when = (iso: string | null): string => {
 };
 
 export function ApiAccessPage() {
+  const redesign = useRedesign();
   const [keys, setKeys] = useState<ApiKeySummary[]>([]);
+  const [keyView, setKeyView] = useState("all");
   const [loading, setLoading] = useState(true);
   const [includeRevoked, setIncludeRevoked] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -262,6 +265,25 @@ export function ApiAccessPage() {
     }
   };
 
+  const activeKeyCount = keys.filter((key) => key.state === "active").length;
+  const revokedKeyCount = keys.filter((key) => key.state === "revoked").length;
+  const unusedKeyCount = keys.filter((key) => !key.lastUsedAt && key.state !== "revoked").length;
+  const requestTotal = keys.reduce((total, key) => total + key.requestCount, 0);
+  const shownKeys = keys.filter((key) => {
+    if (keyView === "active") return key.state === "active";
+    if (keyView === "revoked") return key.state === "revoked";
+    if (keyView === "never") return !key.lastUsedAt && key.state !== "revoked";
+    return true;
+  });
+  /**
+   * Revoked rows only come back when the API is asked for them, so the strip drives the same switch
+   * the checkbox drives rather than inventing a second request.
+   */
+  const selectKeyView = (id: string) => {
+    setKeyView(id);
+    setIncludeRevoked(id === "all" || id === "revoked");
+  };
+
   const eventExample = (token: string) => `curl -s -X POST ${baseUrl}/events \\
   -H "authorization: Bearer ${token}" \\
   -H "content-type: application/json" \\
@@ -285,6 +307,16 @@ export function ApiAccessPage() {
           </button>
         }
       />
+
+      {/* ── The figures the page already holds ── */}
+      {redesign ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Keys in the inventory" value={keys.length} icon={<KeyRound size={14} />} tone="cyber" />
+          <StatCard label="Active" value={activeKeyCount} icon={<ShieldCheck size={14} />} tone="green" />
+          <StatCard label="Revoked" value={revokedKeyCount} icon={<Trash2 size={14} />} tone="red" />
+          <StatCard label="Requests recorded" value={requestTotal.toLocaleString()} icon={<RefreshCw size={14} />} tone="neutral" />
+        </div>
+      ) : null}
 
       {/* ── What the API is, and how to reach it ── */}
       <div className="card">
@@ -518,6 +550,26 @@ export function ApiAccessPage() {
       ) : null}
 
       {/* ── The inventory ── */}
+      {redesign && !loading && !denied && keys.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews
+            views={[
+              { id: "all", label: "All", count: keys.length },
+              { id: "active", label: "Active", count: activeKeyCount },
+              { id: "revoked", label: "Revoked", count: revokedKeyCount },
+              { id: "never", label: "Never used", count: unusedKeyCount },
+            ]}
+            value={keyView}
+            onChange={selectKeyView}
+            label="Key views"
+          />
+          <span className="text-xs text-gray-500">
+            {shownKeys.length} key{shownKeys.length === 1 ? "" : "s"} shown · {activeKeyCount} active ·{" "}
+            {revokedKeyCount} revoked · {unusedKeyCount} never used
+          </span>
+        </div>
+      ) : null}
+
       <Section
         title={`Keys${keys.length ? ` (${keys.length})` : ""}`}
         actions={
@@ -565,7 +617,7 @@ export function ApiAccessPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {keys.map((key) => (
+                  {(redesign ? shownKeys : keys).map((key) => (
                     <tr key={key.id} className="border-b border-surface-border last:border-0 align-top">
                       <td className="px-4 py-3">
                         <p className="text-gray-200">{key.name}</p>
@@ -573,7 +625,7 @@ export function ApiAccessPage() {
                         {key.description ? <p className="text-[11px] text-gray-500 mt-1">{key.description}</p> : null}
                       </td>
                       <td className="px-4 py-3">
-                        <p className="text-xs text-gray-400">{key.permissions.length} scope{key.permissions.length === 1 ? "" : "s"}</p>
+                        <p className={`text-xs text-gray-400${redesign ? " tabular-nums" : ""}`}>{key.permissions.length} scope{key.permissions.length === 1 ? "" : "s"}</p>
                         <p className="text-[11px] text-gray-500 font-mono mt-0.5 break-words max-w-[240px]">
                           {key.permissions.join(", ")}
                         </p>
@@ -585,16 +637,22 @@ export function ApiAccessPage() {
                           : null}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-400">
-                        <p>{when(key.lastUsedAt)}</p>
-                        <p className="text-[11px] text-gray-500 mt-0.5">
+                        <p className={redesign ? "tabular-nums" : undefined}>{when(key.lastUsedAt)}</p>
+                        <p className={`text-[11px] text-gray-500 mt-0.5${redesign ? " tabular-nums" : ""}`}>
                           {key.requestCount.toLocaleString()} request{key.requestCount === 1 ? "" : "s"}
                           {key.lastUsedIp ? ` · ${key.lastUsedIp}` : ""}
                         </p>
                       </td>
                       <td className="px-4 py-3">
-                        <Chip tone={key.state === "active" ? "good" : key.state === "expired" ? "warn" : "muted"}>
-                          {key.state}
-                        </Chip>
+                        {redesign ? (
+                          <span className={`chip ${key.state === "active" ? "chip--good" : key.state === "expired" ? "chip--warn" : "chip--bad"}`}>
+                            {key.state}
+                          </span>
+                        ) : (
+                          <Chip tone={key.state === "active" ? "good" : key.state === "expired" ? "warn" : "muted"}>
+                            {key.state}
+                          </Chip>
+                        )}
                         <p className="text-[11px] text-gray-500 mt-1">
                           {key.state === "revoked"
                             ? `revoked ${when(key.revokedAt)}`
@@ -649,9 +707,27 @@ export function ApiAccessPage() {
                       </td>
                     </tr>
                   ))}
+                  {redesign && shownKeys.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
+                        Nothing in this view.
+                      </td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
+            {redesign && shownKeys.length > 0 ? (
+              <ListFooter
+                from={1}
+                to={shownKeys.length}
+                total={shownKeys.length}
+                page={1}
+                pages={1}
+                onPage={() => {}}
+                note={`${keys.length} key${keys.length === 1 ? "" : "s"} in the inventory`}
+              />
+            ) : null}
           </div>
         )}
       </Section>

@@ -18,7 +18,8 @@ import toast from "react-hot-toast";
 import { Copy, ExternalLink, Eye, Globe, Search, ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
 import api from "../api";
 import { DEFAULT_ACCENT_COLOUR, HEX_COLOUR_PATTERN, ON_ACCENT_COLOUR } from "../lib/colourTokens";
-import { PageHeader, Tabs } from "../components/ui";
+import { ListFooter, ListViews, PageHeader, StatCard, Tabs } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PortalAccessDialog } from "../components/PortalAccessDialog";
 import { PortalPreviewDialog } from "../components/PortalPreviewDialog";
@@ -145,7 +146,10 @@ function PortalPreview({ name, accent, logo, welcome, support }: {
 }
 
 export function CustomerPortalSettingsPage() {
+  const redesign = useRedesign();
   const { section, sections, loaded, loading, error, save, clear } = useConfigurationSection("portal");
+  const [clientView, setClientView] = useState("all");
+  const [sessionView, setSessionView] = useState("all");
   const [searchParams, setSearchParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [overview, setOverview] = useState<PortalOverview | null>(null);
@@ -248,6 +252,13 @@ export function CustomerPortalSettingsPage() {
   const withAccess = (overview?.clients ?? []).filter(c => c.portalEnabled).length;
   const eligibleTotal = (overview?.clients ?? []).reduce((n, c) => n + c.eligibleContacts, 0);
 
+  const shownClients = clients.filter(c =>
+    clientView === "all" ? true : clientView === "enabled" ? c.portalEnabled : !c.portalEnabled);
+  const portalSessions = overview?.sessions ?? [];
+  const signedInSessions = portalSessions.filter(row => row.active).length;
+  const shownSessions = portalSessions.filter(row =>
+    sessionView === "all" ? true : sessionView === "active" ? row.active : !row.active);
+
   if (loading) return <div className="space-y-6 animate-fade-in max-w-6xl"><TableSkeleton /></div>;
   if (!section) {
     return (
@@ -287,6 +298,24 @@ export function CustomerPortalSettingsPage() {
         </div>
       )}
 
+      {redesign ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Portal"
+            value={overview?.enabled ? "Live" : "Off"}
+            icon={<Globe size={14} />}
+            tone={overview?.enabled ? "green" : "neutral"}
+          />
+          <StatCard
+            label="Clients with access"
+            value={`${withAccess} of ${overview?.clients.length ?? 0}`}
+            icon={<Users size={14} />}
+            tone="cyber"
+          />
+          <StatCard label="Contacts who could sign in" value={eligibleTotal} icon={<ShieldCheck size={14} />} tone="cyber" />
+          <StatCard label="Sign-ins completed" value={overview?.signIns ?? 0} icon={<ExternalLink size={14} />} tone="neutral" />
+        </div>
+      ) : (
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="card flex items-start gap-3">
           <div className={`p-2 rounded-lg ${overview?.enabled ? "bg-emerald-500/10" : "bg-surface-lighter"}`}>
@@ -349,6 +378,7 @@ export function CustomerPortalSettingsPage() {
           </div>
         </div>
       </div>
+      )}
 
       {section.requirements.map(requirement => (
         <RequirementBanner key={requirement.label} requirement={requirement} />
@@ -437,6 +467,24 @@ export function CustomerPortalSettingsPage() {
           </div>
         </div>
 
+        {redesign && !overviewLoading && clients.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <ListViews
+              views={[
+                { id: "all", label: "All", count: (overview?.clients ?? []).length },
+                { id: "enabled", label: "Enabled", count: withAccess },
+                { id: "off", label: "Off", count: (overview?.clients ?? []).length - withAccess },
+              ]}
+              value={clientView}
+              onChange={setClientView}
+              label="Client access views"
+            />
+            <span className="text-xs text-gray-500">
+              {shownClients.length} client{shownClients.length === 1 ? "" : "s"} shown · {withAccess} with access
+            </span>
+          </div>
+        ) : null}
+
         {overviewLoading ? <TableSkeleton /> : clients.length === 0 ? (
           <p className="text-sm text-gray-500 py-6 text-center">No clients match that filter.</p>
         ) : (
@@ -455,7 +503,7 @@ export function CustomerPortalSettingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {clients.map(client => (
+                {(redesign ? shownClients : clients).map(client => (
                   <tr key={client.id} className="border-b border-surface-border/60 last:border-b-0">
                     <td className="py-2.5 pr-3">
                       <Link to={`/clients/${client.id}`} className="text-white hover:text-cyber-300">{client.name}</Link>
@@ -468,9 +516,15 @@ export function CustomerPortalSettingsPage() {
                           disabled={!overview?.canEdit || savingClient === client.id}
                           onChange={e => void patchClient(client, { portalEnabled: e.target.checked })}
                         />
-                        <span className={client.portalEnabled ? "text-emerald-300 text-xs" : "text-gray-500 text-xs"}>
-                          {client.portalEnabled ? "Enabled" : "Off"}
-                        </span>
+                        {redesign ? (
+                          <span className={`chip text-[10px] ${client.portalEnabled ? "chip--good" : ""}`}>
+                            {client.portalEnabled ? "Enabled" : "Off"}
+                          </span>
+                        ) : (
+                          <span className={client.portalEnabled ? "text-emerald-300 text-xs" : "text-gray-500 text-xs"}>
+                            {client.portalEnabled ? "Enabled" : "Off"}
+                          </span>
+                        )}
                       </label>
                     </td>
                     <td className="py-2.5 pr-3">
@@ -483,7 +537,7 @@ export function CustomerPortalSettingsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-2.5 pr-3 text-gray-400 text-xs">
+                    <td className={`py-2.5 pr-3 text-gray-400 text-xs${redesign ? " tabular-nums" : ""}`}>
                       {client.eligibleContacts} of {client.contacts} usable
                     </td>
                     <td className="py-2.5 pr-3">
@@ -519,7 +573,7 @@ export function CustomerPortalSettingsPage() {
                         }}
                       />
                     </td>
-                    <td className="py-2.5 text-gray-400 text-xs">{client.tickets}</td>
+                    <td className={`py-2.5 text-gray-400 text-xs${redesign ? " tabular-nums" : ""}`}>{client.tickets}</td>
                     <td className="py-2.5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
@@ -542,10 +596,23 @@ export function CustomerPortalSettingsPage() {
                 ))}
               </tbody>
             </table>
+            {redesign && shownClients.length === 0 ? (
+              <p className="text-sm text-gray-500 py-6 text-center">Nothing in this view.</p>
+            ) : null}
           </div>
         )}
+        {redesign && shownClients.length > 0 ? (
+          <ListFooter
+            from={1}
+            to={shownClients.length}
+            total={shownClients.length}
+            page={1}
+            pages={1}
+            onPage={() => {}}
+            note={`${(overview?.clients ?? []).length} clients in total`}
+          />
+        ) : null}
       </div>
-
       </>
       )}
 
@@ -555,6 +622,23 @@ export function CustomerPortalSettingsPage() {
       <div className="card">
         <h3 className="text-sm font-semibold text-white mb-1">Recent portal sessions</h3>
         <p className="text-xs text-gray-400 mb-4">The last 25 customer sessions, newest first.</p>
+        {redesign && !overviewLoading && portalSessions.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <ListViews
+              views={[
+                { id: "all", label: "All", count: portalSessions.length },
+                { id: "active", label: "Signed in", count: signedInSessions },
+                { id: "ended", label: "Ended", count: portalSessions.length - signedInSessions },
+              ]}
+              value={sessionView}
+              onChange={setSessionView}
+              label="Session views"
+            />
+            <span className="text-xs text-gray-500">
+              {shownSessions.length} session{shownSessions.length === 1 ? "" : "s"} shown · {signedInSessions} signed in
+            </span>
+          </div>
+        ) : null}
         {overviewLoading ? <TableSkeleton /> : (overview?.sessions.length ?? 0) === 0 ? (
           <p className="text-sm text-gray-500 py-6 text-center">Nobody has signed in to the portal yet.</p>
         ) : (
@@ -571,18 +655,22 @@ export function CustomerPortalSettingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {(overview?.sessions ?? []).map(row => (
+                {(redesign ? shownSessions : portalSessions).map(row => (
                   <tr key={row.id} className="border-b border-surface-border/60 last:border-b-0">
                     <td className="py-2.5 pr-3">
                       <p className="text-white text-xs">{row.contactName || row.contactEmail}</p>
                       <p className="text-[11px] text-gray-500">{row.contactEmail}</p>
                     </td>
                     <td className="py-2.5 pr-3 text-gray-400 text-xs">{row.clientName ?? "—"}</td>
-                    <td className="py-2.5 pr-3 text-gray-400 text-xs">{new Date(row.createdAt).toLocaleString()}</td>
-                    <td className="py-2.5 pr-3 text-gray-400 text-xs">{new Date(row.lastActivityAt).toLocaleString()}</td>
+                    <td className={`py-2.5 pr-3 text-gray-400 text-xs${redesign ? " tabular-nums" : ""}`}>{new Date(row.createdAt).toLocaleString()}</td>
+                    <td className={`py-2.5 pr-3 text-gray-400 text-xs${redesign ? " tabular-nums" : ""}`}>{new Date(row.lastActivityAt).toLocaleString()}</td>
                     <td className="py-2.5 pr-3 text-gray-500 text-xs font-mono">{row.ipAddress ?? "—"}</td>
                     <td className="py-2.5">
-                      {row.active
+                      {redesign ? (
+                        <span className={`chip ${row.active ? "chip--good" : row.invalidatedAt ? "" : "chip--warn"}`}>
+                          {row.active ? "signed in" : row.invalidatedAt ? "signed out" : "expired"}
+                        </span>
+                      ) : row.active
                         ? <Chip tone="good">signed in</Chip>
                         : row.invalidatedAt
                           ? <Chip>signed out</Chip>
@@ -592,8 +680,22 @@ export function CustomerPortalSettingsPage() {
                 ))}
               </tbody>
             </table>
+            {redesign && shownSessions.length === 0 ? (
+              <p className="text-sm text-gray-500 py-6 text-center">Nothing in this view.</p>
+            ) : null}
           </div>
         )}
+        {redesign && shownSessions.length > 0 ? (
+          <ListFooter
+            from={1}
+            to={shownSessions.length}
+            total={shownSessions.length}
+            page={1}
+            pages={1}
+            onPage={() => {}}
+            note={`${portalSessions.length} session${portalSessions.length === 1 ? "" : "s"} recorded`}
+          />
+        ) : null}
       </div>
       </>
       )}

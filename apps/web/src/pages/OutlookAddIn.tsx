@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import api from "../api";
 import { PageHeader } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import { Chip } from "./Configuration";
 
 /** The versionless download the page links to; the response carries the real filename. */
@@ -144,6 +145,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export function OutlookAddInPage() {
+  const redesign = useRedesign();
   const [facts, setFacts] = useState<AddinFacts | null>(null);
   const [adminView, setAdminView] = useState(true);
   const [artifact, setArtifact] = useState<Artifact | null>(null);
@@ -329,6 +331,11 @@ pwsh -File ./build.ps1 -ApiUrl ${facts?.origin}`}
               {pluginVersion ? `plugin ${pluginVersion}` : ""}
             </span>
           </div>
+          {redesign ? (
+            <p className="text-xs text-gray-500 mb-3">
+              Every installer is kept, so a mailbox can be rolled back to the version that worked.
+            </p>
+          ) : null}
 
           {artifact?.stale ? (
             <div className="flex gap-3 mb-3 rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
@@ -381,6 +388,11 @@ pwsh -File ./build.ps1 -ApiUrl ${facts?.origin}`}
             <Info size={16} className="text-cyber-400" />
             <h3 className="text-white text-sm font-medium">How this deployment is set up</h3>
           </div>
+          {redesign ? (
+            <p className="text-xs text-gray-500 mb-3">
+              How this instance serves the add-in, and what the installer on offer was built for.
+            </p>
+          ) : null}
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
             <Fact label="Served from">{facts.origin}</Fact>
             <Fact label="Taskpane files">
@@ -460,6 +472,9 @@ pwsh -File ./build.ps1 -ApiUrl ${facts.origin}`}
           <Terminal size={16} className="text-cyber-400" />
           <h3 className="text-white text-sm font-medium">If the button does not appear</h3>
         </div>
+        {redesign ? (
+          <p className="text-xs text-gray-500 mb-3">The four things worth checking, in the order worth checking them.</p>
+        ) : null}
         <ol className="text-sm text-gray-400 space-y-2 list-decimal list-inside leading-relaxed">
           <li>Close Outlook and open it again — the add-in list is read once at start-up.</li>
           <li>

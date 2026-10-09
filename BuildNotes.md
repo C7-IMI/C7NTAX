@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.070 | Last Updated: 2026-10-08
+## Version: 2026.10.8.071 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,38 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.071 — The working surfaces, onto the design system
+
+Six passes' worth of pages, written against the same specification the earlier pages were: views with
+counts above a list, a count line, a countable footer, state as a chip, figures leading a band.
+
+- **[New]** **Users** — views (All, Active, Inactive, Without two-factor, Locked) with live counts, a
+  count line (*N users · N without two-factor*), a Locked chip, and a footer. **Roles** — a four-figure
+  band (roles, users assigned, permission grants, roles with no members), five views (All, Default,
+  Full access, No members, No permissions) and a Default chip on the row and the detail header.
+- **[New]** **Billing** — each section now reads as its own list: invoices get a figures band, seven
+  views, a search over number and client, a count line stating what is outstanding, chips by state and
+  a footer stating what the view is worth; agreements, payments and time & expenses follow the same
+  shape, with time reading *N shown · Xh logged*.
+- **[New]** **Service Alerts** — views (Active, Resolved) with counts, a source filter, a count line
+  (*N alerts · N outage · N degraded · last checked …*) and, underneath, a **Monitors** panel listing
+  what raises those alerts with its state as a chip. There is no Acknowledged view because the model
+  has no such state, and no ticket column because an alert carries no ticket link — an invented filter
+  is worse than a missing one. **Boards** gained a four-figure band from `/boards/metrics` and a stale
+  chip on each board card; **Monitors** gained views (All, Up, Warning, Down), a count line and a state
+  chip, deriving each monitor's state from the poll's own verdict rather than inventing one.
+- **[New]** **API access**, **Webhooks**, **Single sign-on** and the **Customer Portal** settings gained
+  a figures band, views with counts where they hold rows (keys by state, webhooks by delivery health,
+  sessions by state), chips, tabular figures and footers. The **Outlook add-in** page — a documented
+  surface rather than an app page — took the header and panel treatment only.
+
+**Verification:** `tsc --noEmit` clean for every file above; the page-by-page reports are in
+`Retrace.md` under Prompt 314. Classic renders as before in all of them: every change sits inside a
+`redesign` branch and the classic branch is the original markup, so no table, dialog, menu, export,
+permission or request changed.
 
 ---
 

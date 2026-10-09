@@ -7161,3 +7161,57 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **The page's other request is often the join you need.** `/crm/opportunities` does not include the
   company, but the page already loads `/clients?limit=100` for the New Deal dialog — a `companies.find`
   beats adding `include: { company: true }` and regenerating the API document.
+
+---
+
+### Prompt 314 — Do it all: the parallel pass, and a real report designer
+
+**Timestamp:** 2026-10-08 22:30 | **Status:** In progress | **Duration:** ongoing
+
+**BuildNotes IDs:** **2026.10.8.071**, and the passes that follow it.
+
+**Prompt**
+
+> You keep pausing. Don't do that. Keep going. … The next time you stop will be after you've finished
+> the entire application and have created a mockup for the report designer. Do not stop otherwise
+> > Do what you think is best
+> > approved. build it
+
+**What I did**
+- **Changed method, on the operator's approval**: the remaining ~35 pages were split into seven
+  concurrent workstreams, each with the same written specification — the design system's real API
+  (`ListViews`, `ListFooter`, `StatCard`, `useRedesign`), the mockup's rule that a list carries views
+  with counts and a countable footer, and hard constraints (own files only, no commits, no invented
+  figures, no API changes, classic renders byte-for-byte). This turn: Users/Roles, Billing,
+  Service Alerts/Boards/Monitors and the API/SSO/portal surfaces landed and were type-checked.
+- **Built the report designer mockup as a working tool, not a picture.** It is a banded WYSIWYG
+  designer: an A4 sheet with a ruler, grid and eight bands you can select, drag and resize (mm), a
+  field palette you drag *onto* a band at the millimetre the pointer is at, a properties panel that
+  binds to the selection, inline retyping of a label by double-click, arrow-key nudging, undo/redo,
+  page setup, zoom and fit.
+- **It evaluates, groups and paginates.** Preview mode unrolls the per-client and per-row bands over
+  real sample rows — eight detail instances across two groups — computes the aggregates on the page
+  (`count()`, `count(asset.state = "replace")`, `sum(asset.replacement_cost)` → *8 assets, 3 out of
+  cover, $33,960*), repeats the page bands and states the page count. Change a parameter and the rows
+  change with it, which is the argument for parameters rather than forty copies of a pack.
+- **Fixed three real bugs the verification found**: `pageCount()` was counting *band instances* and
+  so printed "Page 1 of 17"; `format(date, …)` inside an `if(...)` branch was not evaluated because
+  the branch evaluator did not know the function, leaving the date column blank; and the stage's drop
+  listeners were being attached inside the per-render wiring, so one dropped field landed three times
+  after three renders. All three were caught by driving the page, not by reading it.
+- **Moved the band labels into the page margin** with the height beneath them (Header 26 mm, Page
+  9 mm, Cols 8 mm, Group 11 mm, Detail 7.5 mm, Total 10 mm, Summary 20 mm, Foot 9 mm) after the first
+  screenshot showed the labels sitting on top of the report's own text — the sheet has to stay a sheet.
+
+**Notes for next time**
+- **Delegation needs a specification, not an instruction.** Seven agents produced seven consistent
+  passes because each was handed the *real* component API, the mockup's rule in the mockup's own
+  words, and the three things that make a redesign safe: own files, no invented figures, classic
+  untouched. The one page that drifted was one I had to fix myself (a missing import) — a moving file
+  under a running agent reads as an error that is not there yet.
+- **A mockup of a tool has to be driven to be believed.** The screenshot showed a plausible designer
+  with three bugs in it. Every one of them came from clicking, dragging and reading the rendered
+  numbers — the same lesson as the ticket screens, at the other end of the project.
+- **The evaluator is the argument.** A designer that only draws is a drawing tool; the reason the
+  bands, the parameters and the aggregates are in the mockup is that the product's claim is *one
+  figure, one place* — a report that cannot disagree with a dashboard.

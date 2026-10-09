@@ -1,9 +1,68 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
-import { PageHeader } from "../components/ui";
+import { ListViews, PageHeader } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
-type MonitorService = { id: string; name: string; monitorKind: string; monitorUrl: string | null; monitorConfig: { expectStatus?: number; sslWarnDays?: number } | null; enabled: boolean };
+type MonitorVerdict = "problem" | "restored" | "clear" | "unknown";
+
+type MonitorService = {
+  id: string; name: string; monitorKind: string; monitorUrl: string | null;
+  monitorConfig: { expectStatus?: number; sslWarnDays?: number } | null;
+  enabled: boolean;
+  /** What the poller last recorded for each of this service's sources, from this same read. */
+  sourceStatus: { checkedAt: string; sources: Array<{ source: string; verdict: MonitorVerdict; detail: string }> } | null;
+  /** The service's active alerts, as the same read returns them: how the poller graded a problem. */
+  alerts?: Array<{ id: string; status: string; severity: string }>;
+};
+
+type MonitorState = "up" | "warning" | "down";
+
+const SEVERITY_RANK: Record<string, number> = { informational: 0, degraded: 1, outage: 2 };
+
+/** The worst severity among a service's active alerts — how the poller graded the problem itself. */
+function worstActiveSeverity(alerts: Array<{ status: string; severity: string }>): string | null {
+  let worst: string | null = null;
+  for (const a of alerts) {
+    if (a.status !== "active") continue;
+    if (worst === null || (SEVERITY_RANK[a.severity] ?? 0) > (SEVERITY_RANK[worst] ?? 0)) worst = a.severity;
+  }
+  return worst;
+}
+
+/**
+ * A monitor's state, from the verdict the same poll recorded for its own check. A check that cannot
+ * be read is a warning — never an all-clear — and one reporting a problem is graded by the alert it
+ * raised, so a failed fetch is down while a certificate merely approaching expiry is a warning.
+ */
+function monitorState(service: MonitorService): MonitorState | null {
+  const reading = service.sourceStatus?.sources.find(s => s.source === service.monitorKind);
+  if (!reading) return null;
+  if (reading.verdict === "unknown") return "warning";
+  if (reading.verdict !== "problem") return "up";
+  const severity = worstActiveSeverity(service.alerts ?? []);
+  return severity === "informational" || severity === "degraded" ? "warning" : "down";
+}
+
+const MONITOR_STATE_CHIP: Record<MonitorState, string> = {
+  up: "chip--good",
+  warning: "chip--warn",
+  down: "chip--bad",
+};
+
+/** The state as a chip, with the reading that decided it in the tooltip. */
+function MonitorStateChip({ service }: { service: MonitorService }) {
+  const state = monitorState(service);
+  const detail = service.sourceStatus?.sources.find(s => s.source === service.monitorKind)?.detail;
+  if (!state) {
+    return <span className="chip" title="The last poll recorded no result for this monitor — switching it on is what gives it a state">No reading</span>;
+  }
+  return (
+    <span className={`chip ${MONITOR_STATE_CHIP[state]}`} title={detail}>
+      {state === "up" ? "Up" : state === "warning" ? "Warning" : "Down"}
+    </span>
+  );
+}
 
 export function MonitorsPage() {
   const [services, setServices] = useState<MonitorService[]>([]);
@@ -13,6 +72,8 @@ export function MonitorsPage() {
   const [sslWarnDays, setSslWarnDays] = useState("30");
   const [expectStatus, setExpectStatus] = useState("200");
   const [message, setMessage] = useState("");
+  const redesign = useRedesign();
+  const [view, setView] = useState("all");
 
   const load = () => api.get("/service-alerts/services").then(r => setServices((r.data.data || r.data || []).filter((s: MonitorService) => s.monitorKind !== "vendor"))).catch(() => setServices([]));
 
@@ -29,6 +90,21 @@ export function MonitorsPage() {
       void load();
     } catch (e: unknown) { setMessage(e instanceof Error ? e.message : "Create failed"); }
   };
+
+  // The state strip and the count line are built from the verdicts the poller already returned
+  // alongside these services, so no number here needs a second request.
+  const counts = {
+    up: services.filter(s => monitorState(s) === "up").length,
+    warning: services.filter(s => monitorState(s) === "warning").length,
+    down: services.filter(s => monitorState(s) === "down").length,
+  };
+  const withReading = counts.up + counts.warning + counts.down;
+  const lastRead = services.reduce<string | null>((latest, s) => {
+    const at = s.sourceStatus?.checkedAt;
+    return at && (!latest || at > latest) ? at : latest;
+  }, null);
+  // Only the redesigned table narrows by the views strip; the classic screen lists every monitor.
+  const shownMonitors = redesign && view !== "all" ? services.filter(s => monitorState(s) === view) : services;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -111,21 +187,42 @@ export function MonitorsPage() {
         <button onClick={create} className="btn-primary text-sm">Add monitor</button>
       </div>
       {message && <p className="text-sm text-cyber-300">{message}</p>}
+      {redesign && services.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews
+            views={[
+              { id: "all", label: "All", count: services.length },
+              { id: "up", label: "Up", count: counts.up },
+              { id: "warning", label: "Warning", count: counts.warning },
+              { id: "down", label: "Down", count: counts.down },
+            ]}
+            value={view}
+            onChange={setView}
+            label="Monitor state"
+          />
+          <span className="ml-auto text-xs text-gray-500 tabular-nums">
+            {services.length} monitor{services.length === 1 ? "" : "s"} · {counts.up} up · {counts.warning} warning · {counts.down} down
+            {services.length > withReading ? ` · ${services.length - withReading} without a reading` : ""}
+            {lastRead ? <> · last checked {new Date(lastRead).toLocaleTimeString()}</> : null}
+          </span>
+        </div>
+      )}
       <div className="card p-0 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase text-gray-500">
-            <tr><th className="px-3 py-2 font-medium">Name</th><th className="px-3 py-2 font-medium">Kind</th><th className="px-3 py-2 font-medium">Target</th><th className="px-3 py-2 font-medium">Enabled</th></tr>
+            <tr><th className="px-3 py-2 font-medium">Name</th><th className="px-3 py-2 font-medium">Kind</th><th className="px-3 py-2 font-medium">Target</th>{redesign && <th className="px-3 py-2 font-medium">State</th>}<th className="px-3 py-2 font-medium">Enabled</th></tr>
           </thead>
           <tbody className="divide-y divide-surface-border">
-            {services.map(s => (
+            {shownMonitors.map(s => (
               <tr key={s.id}>
                 <td className="px-3 py-2 text-gray-200">{s.name}</td>
                 <td className="px-3 py-2 text-gray-400">{s.monitorKind}</td>
                 <td className="px-3 py-2 text-gray-400">{s.monitorUrl}</td>
+                {redesign && <td className="px-3 py-2"><MonitorStateChip service={s} /></td>}
                 <td className="px-3 py-2 text-gray-400">{s.enabled ? "yes" : "no"}</td>
               </tr>
             ))}
-            {services.length === 0 && <tr><td colSpan={4} className="px-3 py-8 text-center text-gray-500">No uptime monitors yet.</td></tr>}
+            {shownMonitors.length === 0 && <tr><td colSpan={redesign ? 5 : 4} className="px-3 py-8 text-center text-gray-500">{redesign && services.length > 0 ? "Nothing in this view." : "No uptime monitors yet."}</td></tr>}
           </tbody>
         </table>
       </div>

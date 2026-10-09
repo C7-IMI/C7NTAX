@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { CheckCircle2, Copy, ExternalLink, KeyRound, RefreshCw, ShieldCheck, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, Globe, KeyRound, RefreshCw, ShieldCheck, Users, XCircle } from "lucide-react";
 import api from "../api";
-import { PageHeader, Section } from "../components/ui";
+import { ListViews, PageHeader, Section, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import { Chip } from "./Configuration";
 
 interface OidcSettingsView {
@@ -62,7 +63,9 @@ function Hint({ children }: { children: React.ReactNode }) {
 }
 
 export function SingleSignOnPage() {
+  const redesign = useRedesign();
   const [settings, setSettings] = useState<OidcSettingsView | null>(null);
+  const [checkView, setCheckView] = useState("all");
   const [roles, setRoles] = useState<RoleChoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -182,6 +185,34 @@ export function SingleSignOnPage() {
 
   const incomplete = !issuer.trim() || !clientId.trim();
 
+  const domainCount = domainText.split(",").map((d) => d.trim()).filter(Boolean).length;
+  const roleChoices = roles.filter((role) => !role.privileged).length;
+  const checkPassed = test ? test.checks.filter((c) => c.ok).length : 0;
+  const shownChecks = test
+    ? test.checks.filter((c) => checkView === "all" || (checkView === "passed" ? c.ok : !c.ok))
+    : [];
+
+  /** The switch and its two buttons; the same controls in both interfaces. */
+  const saveControls = (
+    <>
+      <label className="flex items-center gap-3 cursor-pointer">
+        <input type="checkbox" className="accent-cyber-500" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+        <span className="text-sm text-white">
+          Offer single sign-on on the sign-in page
+          {enabled && incomplete ? <span className="block text-xs text-amber-300 mt-0.5">An issuer and a client id are needed first.</span> : null}
+        </span>
+      </label>
+      <div className="flex items-center gap-2 ml-auto">
+        <button className="btn-secondary text-sm inline-flex items-center gap-1.5" onClick={() => void runTest()} disabled={busy}>
+          <ShieldCheck size={14} /> Check
+        </button>
+        <button className="btn-primary text-sm inline-flex items-center gap-1.5" onClick={() => void save()} disabled={busy}>
+          <KeyRound size={14} /> {busy ? "Saving…" : "Save the provider"}
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <PageHeader
@@ -189,18 +220,63 @@ export function SingleSignOnPage() {
         subtitle="Point sign-in at an identity provider, and decide who it may sign in."
       />
 
+      {/* ── The figures the page already holds ── */}
+      {redesign ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Single sign-on"
+            value={settings?.enabled ? "On" : "Off"}
+            icon={<ShieldCheck size={14} />}
+            tone={settings?.enabled ? "green" : "neutral"}
+          />
+          <StatCard
+            label="Email domains allowed"
+            value={domainCount === 0 ? "Any" : domainCount}
+            icon={<Globe size={14} />}
+            tone="cyber"
+          />
+          <StatCard label="Roles offered" value={roleChoices} icon={<Users size={14} />} tone="neutral" />
+          <StatCard
+            label="Client secret"
+            value={settings?.hasSecret ? "Saved" : "Not set"}
+            icon={<KeyRound size={14} />}
+            tone={settings?.hasSecret ? "green" : "amber"}
+          />
+        </div>
+      ) : null}
+
       {/* ── Status ── */}
       <div className="card">
+        {redesign ? (
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-white">Where sign-in stands</h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Whether the provider is offered, and where these settings come from.
+            </p>
+          </div>
+        ) : null}
         {loading ? (
           <p className="text-sm text-gray-500">Reading the configuration…</p>
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-2">
-              {settings?.enabled ? <Chip tone="good">Sign-in offered</Chip> : <Chip tone="muted">Sign-in not offered</Chip>}
-              <Chip tone={settings?.source === "stored" ? "info" : "muted"}>
-                {settings ? SOURCE_LABEL[settings.source] : ""}
-              </Chip>
-              {settings?.hasSecret ? <Chip tone="muted">client secret saved</Chip> : null}
+              {redesign ? (
+                <>
+                  {settings?.enabled ? <span className="chip chip--good">Sign-in offered</span> : <span className="chip">Sign-in not offered</span>}
+                  <span className={`chip ${settings?.source === "stored" ? "chip--on" : ""}`}>
+                    {settings ? SOURCE_LABEL[settings.source] : ""}
+                  </span>
+                  {settings?.hasSecret ? <span className="chip chip--on">client secret saved</span> : null}
+                </>
+              ) : (
+                <>
+                  {settings?.enabled ? <Chip tone="good">Sign-in offered</Chip> : <Chip tone="muted">Sign-in not offered</Chip>}
+                  <Chip tone={settings?.source === "stored" ? "info" : "muted"}>
+                    {settings ? SOURCE_LABEL[settings.source] : ""}
+                  </Chip>
+                  {settings?.hasSecret ? <Chip tone="muted">client secret saved</Chip> : null}
+                </>
+              )}
             </div>
             <p className="text-sm text-gray-400 leading-relaxed mt-3">
               Password sign-in keeps working either way — this is additive, not a replacement. The
@@ -227,9 +303,26 @@ export function SingleSignOnPage() {
                 <ShieldCheck size={12} /> Check the saved provider
               </button>
             </div>
+            {redesign && test ? (
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                <ListViews
+                  views={[
+                    { id: "all", label: "All", count: test.checks.length },
+                    { id: "passed", label: "Passed", count: checkPassed },
+                    { id: "failed", label: "Failing", count: test.checks.length - checkPassed },
+                  ]}
+                  value={checkView}
+                  onChange={setCheckView}
+                  label="Check views"
+                />
+                <span className="text-xs text-gray-500">
+                  {shownChecks.length} of {test.checks.length} checks shown
+                </span>
+              </div>
+            ) : null}
             {test ? (
               <ul className="mt-3 space-y-1">
-                {test.checks.map((check) => (
+                {(redesign ? shownChecks : test.checks).map((check) => (
                   <li key={check.check} className="text-xs flex items-start gap-2">
                     {check.ok
                       ? <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-emerald-400" />
@@ -241,12 +334,20 @@ export function SingleSignOnPage() {
                 ))}
               </ul>
             ) : null}
+            {redesign && test && shownChecks.length === 0 ? (
+              <p className="text-xs text-gray-500 mt-2">Nothing in this view.</p>
+            ) : null}
           </>
         )}
       </div>
 
       {/* ── The provider ── */}
       <Section title="The provider">
+        {redesign ? (
+          <p className="text-xs text-gray-500">
+            The identity provider this instance trusts, and the client it signs in as.
+          </p>
+        ) : null}
         <div className="card space-y-5">
           <div>
             <Label htmlFor="oidc-issuer">Issuer URL</Label>
@@ -334,6 +435,11 @@ export function SingleSignOnPage() {
 
       {/* ── Who may sign in ── */}
       <Section title="Who may sign in">
+        {redesign ? (
+          <p className="text-xs text-gray-500">
+            Which addresses the provider may vouch for, and what a newly created account gets.
+          </p>
+        ) : null}
         <div className="card space-y-5">
           <div>
             <Label htmlFor="oidc-domains">Email domains</Label>
@@ -409,23 +515,20 @@ export function SingleSignOnPage() {
       </Section>
 
       {/* ── Save ── */}
-      <div className="card flex flex-wrap items-center gap-4">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" className="accent-cyber-500" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-          <span className="text-sm text-white">
-            Offer single sign-on on the sign-in page
-            {enabled && incomplete ? <span className="block text-xs text-amber-300 mt-0.5">An issuer and a client id are needed first.</span> : null}
-          </span>
-        </label>
-        <div className="flex items-center gap-2 ml-auto">
-          <button className="btn-secondary text-sm inline-flex items-center gap-1.5" onClick={() => void runTest()} disabled={busy}>
-            <ShieldCheck size={14} /> Check
-          </button>
-          <button className="btn-primary text-sm inline-flex items-center gap-1.5" onClick={() => void save()} disabled={busy}>
-            <KeyRound size={14} /> {busy ? "Saving…" : "Save the provider"}
-          </button>
+      {redesign ? (
+        <div className="card">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-white">Offer it to staff</h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              The switch that puts a single sign-on button on the sign-in page, and the one save for
+              everything above.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">{saveControls}</div>
         </div>
-      </div>
+      ) : (
+        <div className="card flex flex-wrap items-center gap-4">{saveControls}</div>
+      )}
 
       <p className="text-xs text-gray-500 leading-relaxed">
         Saving writes the provider to this application, and the switch above to the same stored

@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.8.071",
+    "date": "2026-10-08",
+    "title": "The working surfaces, onto the design system",
+    "changes": [
+      {
+        "text": "**Users** — views (All, Active, Inactive, Without two-factor, Locked) with live counts, a",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Billing** — each section now reads as its own list: invoices get a figures band, seven",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Service Alerts** — views (Active, Resolved) with counts, a source filter, a count line",
+        "type": "New Feature"
+      },
+      {
+        "text": "**API access**, **Webhooks**, **Single sign-on** and the **Customer Portal** settings gained",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.070",
     "date": "2026-10-08",
     "title": "Quotes and the pipeline",

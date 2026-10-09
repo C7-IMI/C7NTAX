@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import { RefreshCw, Clock, AlertTriangle, Users, TrendingUp, Inbox, Pause, MessageSquare, Calendar, GripVertical, Pin, PinOff, ArrowUp, ArrowDown, Save, RotateCcw, SlidersHorizontal, type LucideIcon } from "lucide-react";
-import { PageHeader } from "../components/ui";
+import { PageHeader, StatCard } from "../components/ui";
 
 interface BoardMetrics {
   boardId: string; boardName: string; boardDescription: string | null;
@@ -33,6 +34,7 @@ const BOARD_TILE_LABELS: Record<string, string> = {
 export function BoardsPage() {
   const { permissions } = useAuth();
   const canArrange = permissions.includes("board:manage");
+  const redesign = useRedesign();
   const [boards, setBoards] = useState<BoardMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -57,6 +59,12 @@ export function BoardsPage() {
     const interval = setInterval(fetchMetrics, 15000);
     return () => clearInterval(interval);
   }, [fetchMetrics]);
+
+  // The stat band and the count line are sums of the figures the cards already show, so nothing on
+  // this page needs a second read of /boards/metrics.
+  const totalOpen = boards.reduce((n, b) => n + b.metrics.open, 0);
+  const totalStale = boards.reduce((n, b) => n + b.metrics.stale3Days, 0);
+  const totalEscalations = boards.reduce((n, b) => n + b.metrics.escalations, 0);
 
   const startArranging = (board: BoardMetrics) => {
     setEditingBoard(board.boardId);
@@ -132,11 +140,25 @@ export function BoardsPage() {
         <PageHeader variant="section" title="Service Boards" subtitle={<>{boards.length} board{boards.length !== 1 ? "s" : ""}
             {lastUpdated && <span className="text-gray-600 ml-2">· updated {lastUpdated.toLocaleTimeString()}</span>}</>} />
         <div className="flex items-center gap-2">
+          {redesign && (
+            <span className="text-xs text-gray-500 tabular-nums">
+              {totalOpen} open · {totalStale} stale · {totalEscalations} escalated
+            </span>
+          )}
           <button onClick={fetchMetrics} className="btn-secondary text-sm flex items-center gap-1.5" title="Refresh metrics">
             <RefreshCw size={14} /> Refresh
           </button>
         </div>
       </div>
+
+      {redesign && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard label="Boards" value={boards.length} icon={<SlidersHorizontal size={15} />} tone="neutral" />
+          <StatCard label="Open work" value={totalOpen} icon={<Inbox size={15} />} />
+          <StatCard label="Stale work (over 3 days)" value={totalStale} icon={<Clock size={15} />} tone="amber" />
+          <StatCard label="Escalations" value={totalEscalations} icon={<AlertTriangle size={15} />} tone="red" />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {boards.map((board) => {
@@ -166,6 +188,14 @@ export function BoardsPage() {
                     </button>
                   )}
                   <span className="text-[10px] text-gray-600 font-mono">{m.open} open</span>
+                  {redesign && (
+                    <span
+                      className={`chip text-[10px] ${m.stale3Days > 0 ? "chip--warn" : ""}`}
+                      title={`${m.stale3Days} open ticket${m.stale3Days === 1 ? "" : "s"} nobody has touched for more than three days`}
+                    >
+                      {m.stale3Days} stale
+                    </span>
+                  )}
                 </div>
               </div>
 

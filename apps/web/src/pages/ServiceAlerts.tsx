@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import toast from "react-hot-toast";
-import { PageHeader, Tabs } from "../components/ui";
+import { PageHeader, Tabs, StatCard, ListViews } from "../components/ui";
 import {
   AlertTriangle, WifiOff, Activity, CheckCircle2, RefreshCw, ExternalLink,
   Globe, TrendingDown, Info, ShieldCheck, CircleDot, Radio,
@@ -49,6 +51,9 @@ interface AlertService {
   monitorEnabled: boolean;
   enabled: boolean;
   sortOrder: number;
+  /** Uptime monitors only — `vendor` services are read from their status page or feed instead. */
+  monitorKind?: string | null;
+  monitorUrl?: string | null;
   sourceStatus: ServiceSourceStatus | null;
   alerts: ServiceAlertItem[];
 }
@@ -105,6 +110,51 @@ const VERDICT_STYLE: Record<SourceVerdict, { dot: string; text: string; word: st
   unknown: { dot: "bg-gray-600", text: "text-gray-500", word: "not readable" },
 };
 
+/** How a row states the severity the API already reports: `outage`, `degraded` or `informational`. */
+const ALERT_SEVERITY = {
+  outage: { dot: "bg-red-500", badge: "bg-red-600/20 text-red-300", label: "Outage" },
+  degraded: { dot: "bg-amber-500", badge: "bg-amber-500/20 text-amber-300", label: "Degraded" },
+  informational: { dot: "bg-cyber-500", badge: "bg-cyber-600/20 text-cyber-300", label: "Info" },
+} as const;
+
+const MONITOR_KIND_LABELS: Record<string, string> = {
+  website: "Website",
+  ssl: "SSL expiry",
+  dns: "DNS",
+};
+
+const SEVERITY_RANK: Record<string, number> = { informational: 0, degraded: 1, outage: 2 };
+
+/** The worst severity among a service's active alerts — how the poller graded the problem itself. */
+function worstActiveSeverity(alerts: Array<{ status: string; severity: string }>): string | null {
+  let worst: string | null = null;
+  for (const a of alerts) {
+    if (a.status !== "active") continue;
+    if (worst === null || (SEVERITY_RANK[a.severity] ?? 0) > (SEVERITY_RANK[worst] ?? 0)) worst = a.severity;
+  }
+  return worst;
+}
+
+/**
+ * A monitor's state, from the verdict the same poll recorded for its own check. A check that cannot
+ * be read is a warning — never an all-clear — and one reporting a problem is graded by the alert it
+ * raised, so a failed fetch is down while a certificate merely approaching expiry is a warning.
+ */
+function monitorState(service: Pick<AlertService, "monitorKind" | "sourceStatus" | "alerts">): "up" | "warning" | "down" | null {
+  const reading = service.sourceStatus?.sources.find(s => s.source === service.monitorKind);
+  if (!reading) return null;
+  if (reading.verdict === "unknown") return "warning";
+  if (reading.verdict !== "problem") return "up";
+  const severity = worstActiveSeverity(service.alerts);
+  return severity === "informational" || severity === "degraded" ? "warning" : "down";
+}
+
+const MONITOR_STATE_CHIP: Record<"up" | "warning" | "down", string> = {
+  up: "chip--good",
+  warning: "chip--warn",
+  down: "chip--bad",
+};
+
 /** What each of a service's sources reported on the last poll. */
 function SourceChips({ status }: { status: ServiceSourceStatus | null }) {
   if (!status) return null;
@@ -139,6 +189,10 @@ export function ServiceAlertsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<"live" | "board">(() =>
     new URLSearchParams(window.location.search).get("tab") === "board" ? "board" : "live");
+  const redesign = useRedesign();
+  // The redesigned live view's own slice of the page: which status is showing, and which source.
+  const [alertView, setAlertView] = useState<"active" | "resolved">("active");
+  const [sourceFilter, setSourceFilter] = useState("all");
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -201,6 +255,19 @@ export function ServiceAlertsPage() {
 
   const notifyCount = boardRows.filter(r => r.state === "notice").length;
   const blindCount = boardRows.filter(r => r.configuredSources > 0 && r.configuredSources === r.unreadableSources).length;
+
+  // The redesigned live view reads the same two alert collections the classic one does. The views
+  // strip offers Active and Resolved — the only two statuses the API returns — because an
+  // "acknowledged" view would be a chip counting a field this data does not have.
+  const alertSources = [...new Set([...active, ...resolved].map(a => a.source))]
+    .sort((a, b) => (SOURCE_LABELS[a] || a).localeCompare(SOURCE_LABELS[b] || b));
+  const shownAlerts = (alertView === "active" ? orderedActive : resolved)
+    .filter(a => sourceFilter === "all" || a.source === sourceFilter);
+  const shownOutages = shownAlerts.filter(a => a.severity === "outage").length;
+  const shownDegraded = shownAlerts.filter(a => a.severity === "degraded").length;
+  // The uptime monitors behind the alerts above: the page already loads every service, and the
+  // vendor ones are read from a status page or feed rather than by a check of their own.
+  const monitors = enabledServices.filter(s => s.monitorKind && s.monitorKind !== "vendor");
 
   const STATE_STYLE = {
     outage: { badge: "bg-red-600/20 text-red-300", dot: "bg-red-500", icon: WifiOff, label: "Outage" },
@@ -355,6 +422,144 @@ export function ServiceAlertsPage() {
             {monitor?.lastCheckAt && <> Last check {timeAgo(monitor.lastCheckAt)}.</>}
           </p>
         </div>
+      ) : redesign ? (
+      /*
+       * The redesigned live view: one toolbar saying what you are looking at, a row per alert with
+       * its links on it, then the monitors that raise those alerts. The classic screen follows
+       * below, untouched.
+       */
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard label="Outages" value={outageCount} icon={<WifiOff size={15} />} tone="red" />
+          <StatCard label="Degraded" value={degradedCount} icon={<TrendingDown size={15} />} tone="amber" />
+          <StatCard label="Operational" value={operational.length} icon={<CheckCircle2 size={15} />} tone="green" />
+          <StatCard label="Monitored services" value={enabledServices.length} icon={<Activity size={15} />} />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews
+            views={[
+              { id: "active", label: "Active", count: active.length },
+              { id: "resolved", label: "Resolved", count: resolved.length },
+            ]}
+            value={alertView}
+            onChange={id => setAlertView(id as "active" | "resolved")}
+            label="Alert views"
+          />
+          <select
+            className="input-field w-auto"
+            value={sourceFilter}
+            onChange={e => setSourceFilter(e.target.value)}
+            aria-label="Filter alerts by source"
+          >
+            <option value="all">Source: any</option>
+            {alertSources.map(s => <option key={s} value={s}>{SOURCE_LABELS[s] || s}</option>)}
+          </select>
+          <span className="ml-auto text-xs text-gray-500 tabular-nums">
+            {shownAlerts.length} alert{shownAlerts.length === 1 ? "" : "s"} · {shownOutages} outage{shownOutages === 1 ? "" : "s"} · {shownDegraded} degraded
+            {monitor?.lastCheckAt ? <> · last checked {timeAgo(monitor.lastCheckAt)}</> : null}
+          </span>
+        </div>
+
+        <div className="card !p-0 overflow-hidden">
+          {shownAlerts.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-gray-500">Nothing in this view.</p>
+          ) : (
+            <div className="divide-y divide-surface-border">
+              {shownAlerts.map(a => {
+                const sev = ALERT_SEVERITY[a.severity];
+                const status = statusOf(a.service.id);
+                return (
+                  <div key={a.id} className="flex flex-wrap items-start gap-3 px-4 py-3">
+                    <span className={`mt-[7px] w-2 h-2 rounded-full shrink-0 ${sev.dot}`} />
+                    <div className="flex-1 min-w-[240px]">
+                      <p className="text-sm leading-snug">
+                        <span className="font-medium text-white">{a.service.name}</span>
+                        <span className="text-gray-600"> — </span>
+                        <span className="text-gray-200">{a.title}</span>
+                      </p>
+                      {a.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{a.description}</p>}
+                      <p className="text-xs text-gray-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className={`badge ${sev.badge}`}>{sev.label}</span>
+                        <span title={absolute(a.detectedAt) || undefined}>detected {timeAgo(a.detectedAt)}</span>
+                        <span>· from {SOURCE_LABELS[a.source] || a.source}</span>
+                        {a.resolvedAt && <span title={absolute(a.resolvedAt) || undefined}>· resolved {timeAgo(a.resolvedAt)}</span>}
+                      </p>
+                      {status?.sources.length ? <div className="mt-1.5"><SourceChips status={status} /></div> : null}
+                    </div>
+                    {/* The actions this page has always had, on the row rather than behind a click. */}
+                    <div className="flex items-center gap-3 shrink-0 pt-0.5">
+                      {a.sourceUrl && (
+                        <a href={a.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-cyber-400 hover:text-cyber-300">
+                          Source <ExternalLink size={12} />
+                        </a>
+                      )}
+                      {a.service.statusPageUrl && (
+                        <a href={a.service.statusPageUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-cyber-300" title="Official status page">
+                          <Globe size={12} /> Status
+                        </a>
+                      )}
+                      {a.service.downDetectorUrl && (
+                        <a href={a.service.downDetectorUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-cyber-300" title="DownDetector">
+                          <Radio size={12} /> DownDetector
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {monitors.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Monitors</h3>
+                <p className="text-xs text-gray-500 mt-0.5">What raises the alerts above — a failure here becomes an alert there</p>
+              </div>
+              <Link to="/service-alerts/monitors" className="btn-secondary text-xs">Uptime monitors</Link>
+            </div>
+            <div className="card !p-0 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-xs uppercase text-gray-500">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Monitor</th>
+                    <th className="px-3 py-2 font-medium">Check</th>
+                    <th className="px-3 py-2 font-medium">Target</th>
+                    <th className="px-3 py-2 font-medium">State</th>
+                    <th className="px-3 py-2 font-medium">Last result</th>
+                    <th className="px-3 py-2 font-medium">Last checked</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border">
+                  {monitors.map(m => {
+                    const reading = m.sourceStatus?.sources.find(src => src.source === m.monitorKind);
+                    const state = monitorState(m);
+                    return (
+                      <tr key={m.id}>
+                        <td className="px-3 py-2 text-gray-200">{m.name}</td>
+                        <td className="px-3 py-2 text-gray-400">{MONITOR_KIND_LABELS[m.monitorKind ?? ""] || m.monitorKind}</td>
+                        <td className="px-3 py-2 text-gray-400 font-mono text-xs truncate max-w-[16rem]">{m.monitorUrl}</td>
+                        <td className="px-3 py-2">
+                          {state
+                            ? <span className={`chip ${MONITOR_STATE_CHIP[state]}`} title={reading?.detail}>{state === "up" ? "Up" : state === "warning" ? "Warning" : "Down"}</span>
+                            : <span className="chip" title="The last poll recorded no result for this monitor">No reading</span>}
+                        </td>
+                        <td className="px-3 py-2 text-gray-500 text-xs">{reading?.detail || "—"}</td>
+                        <td className="px-3 py-2 text-gray-500 text-xs" title={absolute(m.sourceStatus?.checkedAt ?? null) || undefined}>
+                          {m.sourceStatus?.checkedAt ? timeAgo(m.sourceStatus.checkedAt) : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+      </div>
       ) : (
       <>
       {/* Summary strip */}

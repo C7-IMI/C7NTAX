@@ -16,7 +16,7 @@ import { NewUserDialog, type RoleOption, type ClientOption, isAdministrativeRole
 import { ResetPasswordDialog } from "../components/users/ResetPasswordDialog";
 import { useAuth } from "../hooks/useAuth";
 import { timezoneOptions } from "../lib/timezones";
-import { PageHeader, Tabs } from "../components/ui";
+import { PageHeader, Tabs, ListViews, ListFooter } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -80,6 +80,7 @@ export function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [view, setView] = useState("all");
   const [roles, setRoles] = useState<RoleOption[]>([]);
 
   // Detail panel
@@ -363,6 +364,28 @@ export function UsersPage() {
   // ── Render ──
   // Role and permission edits are an administrator action end to end.
   const canEditPerms = editing && canManageRoles;
+
+  /*
+   * The states an account can be in, counted from the rows already in hand: an account nobody signs
+   * in with, two-factor never enrolled, and a lock an administrator has applied. The redesigned list
+   * shows the slice a view names; classic keeps every row it always showed.
+   */
+  const withoutMfa = users.filter(u => !u.mfaEnabled).length;
+  const userViews = [
+    { id: "all", label: "All", count: users.length },
+    { id: "active", label: "Active", count: users.filter(u => u.isActive).length },
+    { id: "inactive", label: "Inactive", count: users.filter(u => !u.isActive).length },
+    { id: "no-mfa", label: "Without 2FA", count: withoutMfa },
+    { id: "locked", label: "Locked", count: users.filter(u => u.isLocked).length },
+  ];
+  const inView = (u: UserFull) =>
+    view === "active" ? u.isActive
+    : view === "inactive" ? !u.isActive
+    : view === "no-mfa" ? !u.mfaEnabled
+    : view === "locked" ? u.isLocked
+    : true;
+  const sortedUsers = sortData(users, sort?.field || "firstName", sort?.direction || "asc");
+  const viewRows = redesign ? sortedUsers.filter(inView) : sortedUsers;
   if (loading) return <div className="text-center py-12 text-gray-500">Loading users...</div>;
 
   return (
@@ -406,14 +429,16 @@ export function UsersPage() {
 
       {/* ── Filters ── */}
       <div className="flex items-center gap-2 flex-wrap">
+        {redesign && <ListViews views={userViews} value={view} onChange={setView} label="User views" />}
         <div className="relative flex-1 max-w-xs">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input ref={searchRef} className="input-field pl-9" placeholder="Search users..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input-field text-sm py-1.5 w-auto" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
-          <option value="">All Roles</option>
+          <option value="">{redesign ? "Role: any" : "All Roles"}</option>
           {roles.map(r => <option key={r.id} value={r.systemRole}>{r.name}</option>)}
         </select>
+        {redesign && <span className="text-xs text-gray-500">{viewRows.length} user{viewRows.length === 1 ? "" : "s"}{withoutMfa > 0 ? ` · ${withoutMfa} without two-factor` : ""}</span>}
       </div>
 
       {/* ── User Table ── */}
@@ -430,7 +455,7 @@ export function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {sortData(users, sort?.field || "firstName", sort?.direction || "asc").map(u => (
+              {viewRows.map(u => (
                 <tr key={u.id} tabIndex={0}
                   className={`border-b border-surface-border/50 hover:bg-surface-lighter/30 transition-colors cursor-pointer focus:outline-none focus:bg-surface-lighter/30 ${selected?.id === u.id ? "bg-cyber-600/10 border-l-2 border-l-cyber-400" : ""}`}
                   onClick={() => openDetail(u)}
@@ -456,15 +481,38 @@ export function UsersPage() {
                     {u.mfaEnabled ? <Shield size={15} className="text-green-400 mx-auto" /> : <span className="text-gray-600">—</span>}
                   </td>
                   <td className="px-4 py-3">
+                    {redesign ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className={`chip text-[10px] ${u.isActive ? "chip--good" : "chip--warn"}`}>
+                          {u.isActive ? "Active" : "Inactive"}
+                        </span>
+                        {u.isLocked && <span className="chip chip--bad text-[10px]">Locked</span>}
+                      </span>
+                    ) : (
                     <span className={`badge text-xs ${STATUS_COLORS[u.isActive ? "active" : "inactive"]}`}>
                       {u.isActive ? "Active" : "Inactive"}
                     </span>
+                    )}
                   </td>
                 </tr>
               ))}
+              {redesign && viewRows.length === 0 && (
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500 text-sm">Nothing in this view.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
+        {redesign && viewRows.length > 0 && (
+          <ListFooter
+            from={1}
+            to={viewRows.length}
+            total={viewRows.length}
+            page={1}
+            pages={1}
+            onPage={() => {}}
+            note={`${users.length} user${users.length === 1 ? "" : "s"} in total`}
+          />
+        )}
       </div>
 
       {/* Copy from Existing User Modal */}
