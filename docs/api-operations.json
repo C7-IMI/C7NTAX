@@ -216,7 +216,7 @@
   },
   "PATCH /api/tickets/:id": {
     "summary": "Update a ticket, including closing it",
-    "description": "Status, priority, assignment, board and the rest. A status change emails the ticket's contact ? that is what the notifications are ? so two fields exist to control it. `closeNotes` is the reason the ticket is being closed: it is written to the (customer-visible) thread and it is what the closing email says. `notifyCustomer: false` does the same work in silence, for a ticket whose contact has gone or one closed by mistake.\n\nClosing settles the ticket (`closed`, `resolved`, `cancelled`) and emails the client a message that invites a reply. A reply from one of the client's own contacts reopens the ticket as `customer_reopened` and puts it back in the queue ? the reply itself is recorded on the ticket before the status changes.",
+    "description": "Status, priority, assignment, board and the rest. A status change emails the ticket's contact — that is what the notifications are — so two fields exist to control it. `closeNotes` is the reason the ticket is being closed: it is written to the (customer-visible) thread and it is what the closing email says. `notifyCustomer: false` does the same work in silence, for a ticket whose contact has gone or one closed by mistake.\n\nClosing settles the ticket (`closed`, `resolved`, `cancelled`) and emails the client a message that invites a reply. A reply from one of the client's own contacts reopens the ticket as `customer_reopened` and puts it back in the queue — the reply itself is recorded on the ticket before the status changes.",
     "requestExample": {
       "status": "closed",
       "closeNotes": "Replaced the failing switch and confirmed the link is stable.",
@@ -412,6 +412,37 @@
   },
   "POST /api/tickets/batch": {
     "summary": "Apply one change to many tickets",
-    "description": "Status and priority only. `notifyCustomer: false` closes a batch without emailing anybody, which is usually what housekeeping wants; `closeNotes` is recorded on every ticket in the batch. Note that closing a batch *does* email each ticket's contact, one ticket at a time ? there is no digest."
+    "description": "Status and priority only. `notifyCustomer: false` closes a batch without emailing anybody, which is usually what housekeeping wants; `closeNotes` is recorded on every ticket in the batch. Note that closing a batch *does* email each ticket's contact, one ticket at a time — there is no digest."
+  },
+  "GET /api/procurement/orders": {
+    "summary": "List purchase orders",
+    "description": "Filtered by `status` and `vendorId`, newest first, with each order's vendor and lines included. Nothing here is client-scoped: a purchase order is ours, not a customer's."
+  },
+  "GET /api/procurement/orders/:id": {
+    "summary": "One purchase order, in full",
+    "description": "The record rather than the row: the lines as ordered (with the catalog SKU where a line came from the catalog), the vendor's own details, who raised and who approved it, and the four dates that say whether it is late — created, ordered, expected, received."
+  },
+  "POST /api/procurement/orders": {
+    "summary": "Raise a purchase order",
+    "description": "`vendorId` is required and the number is generated (`PO-?`). Totals are computed from the lines, so `subtotal` sent by a caller is ignored.",
+    "requestExample": {
+      "vendorId": "?",
+      "items": [
+        {
+          "description": "1TB NVMe SSD",
+          "quantity": 12,
+          "unitPrice": 200,
+          "productId": "?"
+        }
+      ]
+    }
+  },
+  "PATCH /api/procurement/orders/:id": {
+    "summary": "Move a purchase order along, or re-price it before it arrives",
+    "description": "`status` is one of `draft`, `ordered`, `shipped`, `received`; moving to `ordered` stamps `orderedAt` and moving to `received` stamps `receivedAt` unless a date is sent, so a late delivery can be recorded as the day it actually arrived. `expectedAt` and `notes` are editable at any point.\n\n`lineItems` replaces the lines and recomputes `subtotal` and `total` from them — refused once the order is `received`, because a receipt is a record of what arrived and a line list that can change afterwards is not one. A status moved back from `received` clears `receivedAt`."
+  },
+  "PATCH /api/procurement/vendors/:id": {
+    "summary": "Edit a vendor",
+    "description": "The details that end up on a purchase order: who to contact, how to reach them, the payment terms that decide when their invoice is due, and the tax id it has to match."
   }
 }

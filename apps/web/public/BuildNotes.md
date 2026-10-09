@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.077 | Last Updated: 2026-10-08
+## Version: 2026.10.8.078 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,48 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.078 — A purchase order is a record, not a row
+
+The Procurement list showed two orders and nothing to press: a row was a label, and the only action was a
+**Receive** button on the one row that happened to be shipped. There is now a record behind the row.
+
+- **[New]** **Clicking a purchase order opens it.** The row (and **Enter** on a focused row) opens the
+  order: what was ordered with each line's catalog SKU, the totals, the vendor's details, who raised and
+  who approved it, and the four dates — created, ordered, expected, received. The Actions column keeps its
+  one-click **Receive** and stops the click from opening the record.
+- **[New]** **`GET /api/procurement/orders/:id`** returns the record rather than the row, and
+  **`PATCH /api/procurement/orders/:id`** gained real status semantics: `ordered` stamps `orderedAt`,
+  `received` stamps `receivedAt` (an explicit date wins, so a Tuesday delivery is recorded as Tuesday),
+  moving back out of `received` clears it, and the status is validated against the four it may be.
+- **[New]** **The lines can be re-priced until the order arrives.** `lineItems` replaces the lines and
+  recomputes `subtotal` and `total` from them, in one transaction, refused once the order is `received` —
+  a receipt is a record of what arrived. The dialog's totals are computed from the lines rather than
+  typed, so the header can never disagree with the body.
+- **[New]** **Vendor details are editable from the order they are printed on.** `PATCH
+  /api/procurement/vendors/:id` plus the fields a purchase order gets wrong when they are wrong: contact,
+  email, phone, payment terms, tax id, website, address, notes. The **New PO** form also takes a vendor
+  that is not in the list yet (*…or add a new vendor by name*) and selects it.
+- **[New]** **Designed twice, on purpose.** `components/PurchaseOrderDialog.tsx` carries a modern sheet and
+  a classic form: the modern one puts the identity on the top line with the total beside it, the status as
+  a **track you step along** (pressed, not saved, like a ticket's pills), and the vendor, dates and notes
+  in a column beside the lines; the classic one is a form — a status select, an expected-date field, a
+  labelled field grid, the lines underneath, and Save. `VendorDialog` follows the same rule.
+- **[Update]** **`.github/copilot-instructions.md` gained "Two Interfaces, Two Designs"**, so this is the
+  standing rule rather than something to remember: every interface change is designed individually for the
+  modern and the classic interface, with the pattern named and both to be screenshotted before it is called
+  done.
+- **[Update]** `HelpDoc.tsx`: a new **Procurement & Purchase Orders** walkthrough (the list, opening an
+  order, moving it along, fixing the lines, vendor details), an Index row, and the assets row now names
+  vendor details.
+
+**Verification:** API and web `tsc --noEmit` clean, `pnpm build` clean, `check-help-links`,
+`check-api-docs` and `check-route-guards` green. Driven in the browser in both interfaces: a row opens the
+record, **Mark shipped** advanced the status and the list behind it, **Edit lines** re-priced 12 × $200 to
+10 × $200 and the totals followed, a vendor's phone number was edited and saved through the record, and
+every one of those changes was then put back so the demo data is as it was.
 
 ---
 

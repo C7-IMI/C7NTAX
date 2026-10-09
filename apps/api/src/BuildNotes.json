@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.8.078",
+    "date": "2026-10-08",
+    "title": "A purchase order is a record, not a row",
+    "changes": [
+      {
+        "text": "**Clicking a purchase order opens it.** The row (and **Enter** on a focused row) opens the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /api/procurement/orders/:id`** returns the record rather than the row, and",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The lines can be re-priced until the order arrives.** `lineItems` replaces the lines and",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Vendor details are editable from the order they are printed on.** `PATCH",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Designed twice, on purpose.** `components/PurchaseOrderDialog.tsx` carries a modern sheet and",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`.github/copilot-instructions.md` gained \"Two Interfaces, Two Designs\"**, so this is the",
+        "type": "Update"
+      },
+      {
+        "text": "`HelpDoc.tsx`: a new **Procurement & Purchase Orders** walkthrough (the list, opening an",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.077",
     "date": "2026-10-08",
     "title": "Closing a ticket tells the client, and a reply brings it back",

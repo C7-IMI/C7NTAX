@@ -77,7 +77,7 @@ tags:
   - name: "Portal"
     description: "9 operations"
   - name: "Procurement"
-    description: "5 operations"
+    description: "7 operations"
   - name: "Products"
     description: "9 operations"
   - name: "Projects"
@@ -4724,7 +4724,8 @@ paths:
     get:
       tags: ["Procurement"]
       operationId: "getProcurementorders"
-      summary: "Read procurement/orders"
+      summary: "List purchase orders"
+      description: "Filtered by `status` and `vendorId`, newest first, with each order's vendor and lines included. Nothing here is client-scoped: a purchase order is ours, not a customer's."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["billing:view"]
       x-source: "procurement.ts · procurementRouter.get"
@@ -4737,7 +4738,12 @@ paths:
     post:
       tags: ["Procurement"]
       operationId: "postProcurementorders"
-      summary: "Create or act on procurement/orders"
+      summary: "Raise a purchase order"
+      description: "`vendorId` is required and the number is generated (`PO-?`). Totals are computed from the lines, so `subtotal` sent by a caller is ignored."
+      requestBody:
+        content:
+          application/json:
+            example: {"vendorId":"?","items":[{"description":"1TB NVMe SSD","quantity":12,"unitPrice":200,"productId":"?"}]}
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["billing:manage"]
       x-source: "procurement.ts · procurementRouter.post"
@@ -4748,10 +4754,30 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
   "/api/procurement/orders/{id}":
+    get:
+      tags: ["Procurement"]
+      operationId: "getProcurementordersbyId"
+      summary: "One purchase order, in full"
+      description: "The record rather than the row: the lines as ordered (with the catalog SKU where a line came from the catalog), the vendor's own details, who raised and who approved it, and the four dates that say whether it is late — created, ordered, expected, received."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["billing:view"]
+      x-source: "procurement.ts · procurementRouter.get"
+      parameters:
+        - name: "id"
+          in: path
+          required: true
+          schema: { type: "string" }
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
     patch:
       tags: ["Procurement"]
       operationId: "patchProcurementordersbyId"
-      summary: "Update procurement/orders/the one named"
+      summary: "Move a purchase order along, or re-price it before it arrives"
+      description: "`status` is one of `draft`, `ordered`, `shipped`, `received`; moving to `ordered` stamps `orderedAt` and moving to `received` stamps `receivedAt` unless a date is sent, so a late delivery can be recorded as the day it actually arrived. `expectedAt` and `notes` are editable at any point.\n\n`lineItems` replaces the lines and recomputes `subtotal` and `total` from them — refused once the order is `received`, because a receipt is a record of what arrived and a line list that can change afterwards is not one. A status moved back from `received` clears `receivedAt`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["billing:manage"]
       x-source: "procurement.ts · procurementRouter.patch"
@@ -4787,6 +4813,26 @@ paths:
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["billing:manage"]
       x-source: "procurement.ts · procurementRouter.post"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/procurement/vendors/{id}":
+    patch:
+      tags: ["Procurement"]
+      operationId: "patchProcurementvendorsbyId"
+      summary: "Edit a vendor"
+      description: "The details that end up on a purchase order: who to contact, how to reach them, the payment terms that decide when their invoice is due, and the tax id it has to match."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["billing:manage"]
+      x-source: "procurement.ts · procurementRouter.patch"
+      parameters:
+        - name: "id"
+          in: path
+          required: true
+          schema: { type: "string" }
       responses:
         "200": { description: "OK" }
         "400": { $ref: "#/components/responses/BadRequest" }
@@ -6684,7 +6730,7 @@ paths:
       tags: ["Tickets"]
       operationId: "patchTicketsbyId"
       summary: "Update a ticket, including closing it"
-      description: "Status, priority, assignment, board and the rest. A status change emails the ticket's contact ? that is what the notifications are ? so two fields exist to control it. `closeNotes` is the reason the ticket is being closed: it is written to the (customer-visible) thread and it is what the closing email says. `notifyCustomer: false` does the same work in silence, for a ticket whose contact has gone or one closed by mistake.\n\nClosing settles the ticket (`closed`, `resolved`, `cancelled`) and emails the client a message that invites a reply. A reply from one of the client's own contacts reopens the ticket as `customer_reopened` and puts it back in the queue ? the reply itself is recorded on the ticket before the status changes."
+      description: "Status, priority, assignment, board and the rest. A status change emails the ticket's contact — that is what the notifications are — so two fields exist to control it. `closeNotes` is the reason the ticket is being closed: it is written to the (customer-visible) thread and it is what the closing email says. `notifyCustomer: false` does the same work in silence, for a ticket whose contact has gone or one closed by mistake.\n\nClosing settles the ticket (`closed`, `resolved`, `cancelled`) and emails the client a message that invites a reply. A reply from one of the client's own contacts reopens the ticket as `customer_reopened` and puts it back in the queue — the reply itself is recorded on the ticket before the status changes."
       requestBody:
         content:
           application/json:
@@ -6969,7 +7015,7 @@ paths:
       tags: ["Tickets"]
       operationId: "postTicketsbatch"
       summary: "Apply one change to many tickets"
-      description: "Status and priority only. `notifyCustomer: false` closes a batch without emailing anybody, which is usually what housekeeping wants; `closeNotes` is recorded on every ticket in the batch. Note that closing a batch *does* email each ticket's contact, one ticket at a time ? there is no digest."
+      description: "Status and priority only. `notifyCustomer: false` closes a batch without emailing anybody, which is usually what housekeeping wants; `closeNotes` is recorded on every ticket in the batch. Note that closing a batch *does* email each ticket's contact, one ticket at a time — there is no digest."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["ticket:edit"]
       x-source: "tickets/index.ts · ticketsRouter.post"
@@ -7257,5 +7303,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 64 of 430 operations carry a curated summary from docs/api-operations.json;
+# 69 of 432 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

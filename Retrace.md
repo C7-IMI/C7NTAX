@@ -7352,7 +7352,7 @@ reported failure and the script nevertheless ended with *"All checks passed. App
   its reasoning attached.
 
 
-### Prompt 318 ? Fix the ticket list wrapping, and make the columns resizable
+### Prompt 318 — Fix the ticket list wrapping, and make the columns resizable
 
 **Timestamp:** 2026-10-08 23:05 | **Status:** Complete | **Duration:** ~40 min
 
@@ -7364,17 +7364,17 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 
 **What I did**
 - **Read the table before changing it.** The list had no `table-fixed`, so the browser gave each
-  column a share of the panel and folded whichever values did not fit ? ticket numbers over three lines,
+  column a share of the panel and folded whichever values did not fit — ticket numbers over three lines,
   `MSP Service Desk` and `TECHNICIAN` over two. The fix had to be a layout decision, not a width tweak.
 - **Made every column a width.** `TicketColumnDef` gained `w`, the table became `table-fixed` with a
   `<colgroup>`, and every non-summary cell got `overflow-hidden text-ellipsis whitespace-nowrap` plus a
   `title` so a trimmed value is still readable. Summary keeps no width of its own: it is the one column
   that should absorb what is left.
-- **Added the resize edge** inside each `<th>` ? a 6px handle on the right edge that carries the drag,
+- **Added the resize edge** inside each `<th>` — a 6px handle on the right edge that carries the drag,
   stops the pointer so it cannot be read as a sort click, and resets to the measured width on
   double-click. Because it sits inside a header that is already `draggable` for reordering, the reorder
   handler needed a guard (a ref set for the duration of the gesture) rather than a second hit target.
-- **Persisted widths per user** (`c7_ticket_column_widths`), clamped to 56?720px, and added **Fit columns
+- **Persisted widths per user** (`c7_ticket_column_widths`), clamped to 56–720px, and added **Fit columns
   to content** to Choose Columns as the way back from a table sized entirely by hand.
 
 **Notes for next time**
@@ -7386,7 +7386,7 @@ reported failure and the script nevertheless ended with *"All checks passed. App
   119px and the cell spends 24px on padding. Guesses that look defensible in a diff are visible in one
   screenshot.
 
-### Prompt 319 ? Auto-size the columns, and a smaller font
+### Prompt 319 — Auto-size the columns, and a smaller font
 
 **Timestamp:** 2026-10-08 23:35 | **Status:** Complete | **Duration:** ~35 min
 
@@ -7400,7 +7400,7 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 **What I did**
 - **Stopped guessing widths and measured them.** A `useLayoutEffect` lays the table out once at its
   natural width (`table-layout: auto`, `width: max-content`), reads each column's real width back, and
-  keeps those numbers as the baseline ? real badges, real uppercase headers, real 12px timestamps, no
+  keeps those numbers as the baseline — real badges, real uppercase headers, real 12px timestamps, no
   font-string approximations. It runs before paint, so there is no flash of the wide table, and it skips
   any column the user has dragged, because the user's word outranks the browser's.
 - **Made the baseline a floor rather than a ratchet.** The widest value seen wins, so paging into a page
@@ -7411,18 +7411,18 @@ reported failure and the script nevertheless ended with *"All checks passed. App
   contributes nothing to a column's width.
 
 **Notes for next time**
-- **Measure, then leave a hair of slack.** The first fitted pass produced `Acme Corporati?` by exactly one
+- **Measure, then leave a hair of slack.** The first fitted pass produced `Acme Corporati…` by exactly one
   pixel: the column's natural width and the width the string needs to render differ by a fraction, and a
   fraction is enough to draw an ellipsis. `Math.ceil(width) + 1` fixed every near-miss at once.
 - **The redesign already had a table-padding rule.** `html[data-ui-redesign="true"] table tbody td`
-  overrides Tailwind's `px-2`, so the padding classes on those cells were partly decorative ? worth
+  overrides Tailwind's `px-2`, so the padding classes on those cells were partly decorative — worth
   knowing before "fixing" spacing that a stylesheet is deciding.
 - **A 1280px window cannot show nine readable columns.** Auto-fit plus a smaller font gets every value
   whole and scrolls for the last two; the honest alternatives are fewer columns or a wider window, and
   both are the user's call.
 
 
-### Prompt 320 ? Close a ticket out loud, and let a reply bring it back
+### Prompt 320 — Close a ticket out loud, and let a reply bring it back
 
 **Timestamp:** 2026-10-08 23:58 | **Status:** Complete | **Duration:** ~50 min
 
@@ -7448,8 +7448,8 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **Built one dialog for four entry points** (right-click, row menu, bulk Quick Actions, the record's
   Status pill) with two real designs: a modern *sheet* whose choices carry their consequences, and the
   classic field list with a checkbox. The primary button states what will happen.
-- **Gave the API the same vocabulary** ? `closeNotes` and `notifyCustomer` on `PATCH` and on
-  `/batch` ? and documented it for integrators, because "the ticket will come back on its own" is the
+- **Gave the API the same vocabulary** — `closeNotes` and `notifyCustomer` on `PATCH` and on
+  `/batch` — and documented it for integrators, because "the ticket will come back on its own" is the
   sort of behaviour that surprises a script.
 - **Verified the reopen against the real function**: a client reply reopened a closed ticket with
   `closedAt` cleared, a staff reply did not, and the test removed its own comments afterwards.
@@ -7465,3 +7465,40 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **A dialog that asks is worth more than a checkbox nobody sees.** The consequence is written under each
   choice and repeated on the button, so "I closed it and forgot to tell them" is no longer a thing that
   can happen by pressing the obvious button.
+
+
+### Prompt 321 — The purchase orders are doors now, and both interfaces get their own design
+
+**Timestamp:** 2026-10-09 00:10 | **Status:** Complete | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.8.078**.
+
+**Prompt**
+
+> After you're done: I can't click on these two items in Procurement. I should be able to click on them for
+> more details. Build out the dialogs, screens, configs, etc. Create a modern interface design and a
+> classic interface design. Going forward when making interface changes make sure to individually design
+> them both for the respective modern and classic interfaces.
+
+**What I did**
+- **Made the row a door** (click and Enter) and built the record behind it, rather than adding a "view"
+> button that leaves the row itself inert.
+- **Gave the API the record it was missing**: `GET /orders/:id`, real status semantics in `PATCH`
+  (orderedAt/receivedAt stamping, validated statuses, a received order that cannot go back without
+  clearing its receipt), line replacement with recomputed totals, and `PATCH /vendors/:id`.
+- **Designed it twice, deliberately** — a modern sheet with a status *track you step along* and a classic
+  form with a status select and Save — and **wrote the rule into `.github/copilot-instructions.md`** so
+  the next change starts from it instead of from a memory of this one.
+- **Verified by using it**, in both interfaces, and then put every value back.
+
+**Notes for next time**
+- **A row that does nothing is a bug the moment somebody tries it.** The screenshot said "I can't click
+  on these two items"; the honest read is that a list of records whose rows are not links is a dead end,
+  and the fix is the record, not a tooltip.
+- **The permission a screen needs is not always the permission it has.** The list only ever read
+  (BillingView) and received (BillingManage); the detail *edits* the order and the vendor, so the two new
+  write routes state their permission and the vendor one says why: these are the details somebody else
+  pays against.
+- **A standing preference belongs in the instructions file, not in a commit message.** "Design both
+  individually" would have been forgotten by the third dialog; as a rule with the pattern named beside it,
+  it is read before the next one is written.
