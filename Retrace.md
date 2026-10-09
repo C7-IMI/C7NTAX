@@ -8017,18 +8017,23 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
    previous copy, and a re-rendered consumer read a context nothing provides - with a `null!` default and
    every caller destructuring it. Both halves are now fixed: the context is kept per tab (`globalThis`), and
    a genuinely missing provider throws a sentence that names the mistake.
-3. **Judged the BOM not worth a force-push.** Nothing in the repository parses commit subjects (grepped the
-   scripts: no `git log`/`--format=%s`), so the artefact affects no automation, and rewriting published
-   history on `main` - with an auto-sync task watching that branch - costs more than the speck. The cause is
-   fixed for the future: the second commit was written with a BOM-less `UTF8Encoding($false)`.
+3. **Checked the BOM claim, and the BOM was mine rather than the commit's.** `git cat-file -p 4fc176f`
+   begins `74 72 65 65` — **tree**, the object's first header — so no commit subject was ever
+   BOM-prefixed and nothing needed rewriting. Both the `EF BB BF` I reported and the speck in
+   `git log --oneline` came from the command I measured with: PowerShell's `Out-File -Encoding utf8`
+   writes a BOM into the file it creates, so the measurement added the artefact it then found.
 
 **Notes for next time**
 - **The reported symptom was not the cause, and checking cost two minutes.** "A crash on session expiry" was
   reproducible in the log but not in the path: driving the real expiry showed the redirect working both
   times. The clue was in the message itself - a destructuring failure, not a redirect failure - and the
   thing I had been doing at 05:43 was editing that very file.
+- **A measurement pipeline that writes files can invent what it measures.** Reporting a BOM in a commit
+  needed one command that reads bytes without writing through an encoder; instead I used a tool that
+  prepends one, twice, and told the user a permanent artefact existed that never did. For anything about
+  bytes, read bytes — `git cat-file`'s first four, not a round trip through a file.
 - **`null!` is a promise the type cannot keep.** It silenced the compiler rather than the caller, and turned
   a naming mistake into a blank screen. Typing the default honestly and checking it once, in the hook, is
   cheaper than every call site finding out.
 - **When a fix is not necessary, say so and say why.** Two of the three items were real work; the third was
-  a cosmetic character with a risky remedy, and the useful answer was the judgement plus the prevention.
+  not a defect at all, and the useful answer was the evidence rather than the action.
