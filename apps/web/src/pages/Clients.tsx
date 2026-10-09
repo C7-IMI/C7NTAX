@@ -10,6 +10,7 @@ import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpD
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { monthlyLabel, monthlyValue } from "../lib/agreements";
 
 const TYPE_COLORS: Record<string, string> = {
   Client: "bg-cyber-600/20 text-cyber-400", Prospect: "bg-amber-600/20 text-amber-400",
@@ -20,21 +21,6 @@ const SORT_OPTIONS = [
   { value: "city", label: "City" }, { value: "state", label: "State" },
   { value: "industry", label: "Industry" },
 ];
-
-// How many months each billing period covers, so agreements of different periods can be added up
-// as one monthly figure. Periods that are not recurring (one_time) are deliberately absent.
-const PERIOD_MONTHS: Record<string, number> = {
-  weekly: 12 / 52, monthly: 1, quarterly: 3, semi_annually: 6, annually: 12,
-};
-function monthlyValue(agreements: any[] = []): { amount: number; currency: string } {
-  let amount = 0;
-  for (const a of agreements) {
-    const months = PERIOD_MONTHS[a.billingPeriod];
-    if (months === undefined) continue;
-    amount += (Number(a.billingAmount) || 0) / months;
-  }
-  return { amount, currency: agreements[0]?.currency ?? "USD" };
-}
 
 export function ClientsPage() {
   const redesign = useRedesign();
@@ -235,6 +221,7 @@ export function ClientsPage() {
             {clients.map(c => {
               const contact = c.contacts?.[0];
               const { amount: mrr, currency } = monthlyValue(c.serviceAgreements);
+              const mrrText = monthlyLabel(mrr, currency);
               return (
                 <Link
                   key={c.id}
@@ -254,7 +241,7 @@ export function ClientsPage() {
                   <div className="flex items-end gap-5 border-t border-surface-border pt-2.5 text-[11px] text-gray-500">
                     <span>Tickets<br /><span className="text-sm font-semibold tabular-nums text-white">{c._count?.tickets ?? "—"}</span></span>
                     <span>Contacts<br /><span className="text-sm font-semibold tabular-nums text-white">{c._count?.contacts ?? c.contacts?.length ?? "—"}</span></span>
-                    <span>MRR<br /><span className="text-sm font-semibold tabular-nums text-white">{mrr > 0 ? mrr.toLocaleString(undefined, { style: "currency", currency, maximumFractionDigits: 0 }) : "—"}</span></span>
+                    <span>MRR<br /><span className="text-sm font-semibold tabular-nums text-white">{mrrText}</span></span>
                     <span className="ml-auto min-w-0 text-right">Primary<br />
                       <span className="block truncate text-[11px] text-gray-300">{contact ? `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || contact.email : "—"}</span>
                     </span>

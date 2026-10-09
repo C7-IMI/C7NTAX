@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.065",
+    "date": "2026-10-08",
+    "title": "The client record",
+    "changes": [
+      {
+        "text": "The client's header is one row: `CLIENT-…`, where it is, its name, and **New ticket**,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Overview** leads with **The account**, the identity facts as label-and-value rows",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Brief** — the client's own notes — sits beside **Recent work** (its latest tickets,",
+        "type": "New Feature"
+      },
+      {
+        "text": "A **Configurations** section lists the client's assets — tag, name, type, state, detail,",
+        "type": "New Feature"
+      },
+      {
+        "text": "The first tab is called **Overview** in the redesigned interface, as the ticket",
+        "type": "Update"
+      },
+      {
+        "text": "`apps/web/src/lib/agreements.ts` now owns the monthly-value arithmetic the client list",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.064",
     "date": "2026-10-08",
     "title": "Clients, as cards",

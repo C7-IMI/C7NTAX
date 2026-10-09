@@ -6993,4 +6993,19 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **`clients.map` with `_count` is only as good as the include.** The list route already carried
   `_count` and the primary contact; adding the agreements was three words and removed the temptation
   to fetch per row.
+- **A *record* is a different artifact from a *list*.** The card grid answered "which clients", but
+  opening one still gave a breadcrumb and a five-tab dump. The record now mirrors the ticket's shape
+  — one row of identity, one row of state, sections beneath — and the mockup's `viewClient` supplied
+  the element list for every one of them.
+- **The read view and the edit view can be two presentations of one field set.** "The account" is
+  the mockup's label-and-value list; `Edit` swaps it for the same nine fields as inputs. Nothing was
+  dropped to get the density, which is what made it safe to do.
+- **A `Kv` row list is worth having as a component.** It is how the redesigned screens read a
+  record, and every remaining record page will want it.
+- **Vite missed file edits twice in this pass** (the served module was the pre-edit one, so the
+  browser reported `Kv is not defined` for a file that type-checked). OneDrive touching files behind
+  the watcher's back is the likely cause; setting the file's `LastWriteTime` forced the re-transform.
+  Read the served module before believing the error.
+- **Next up: Dashboard, then the remaining pages in the pass order**, each against its mockup
+  renderer (`viewDashboard` is next in `app-redesign-views.js`), and the report designer last.
 

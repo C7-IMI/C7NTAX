@@ -3,17 +3,27 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
-import { Save, X, ChevronLeft, Building2, Users, FileText, DollarSign, Ticket, ClipboardList, Clock, Mail, Phone, Globe, MapPin, Badge, Briefcase } from "lucide-react";
-import { PageSkeleton } from "../components/ui/Skeleton";
+import { Save, X, ChevronLeft, Building2, Users, FileText, DollarSign, Ticket, ClipboardList, Clock, Mail, Phone, Globe, MapPin, Badge, Briefcase, Plus, Copy, Layers, Pencil, ChevronRight } from "lucide-react";
+import { PageSkeleton, CardSkeleton } from "../components/ui/Skeleton";
 import { FlexpointClientCard } from "../components/FlexpointClientCard";
 import { Permission } from "@C7NTAX/shared";
 import { useAuth } from "../hooks/useAuth";
 import { PageHeader, Tabs } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { monthlyLabel, monthlyValue } from "../lib/agreements";
+import { copyText } from "../lib/menuActions";
 
 const TYPE_OPTIONS = ["Client", "Prospect", "Vendor", "Partner"];
 const INDUSTRY_OPTIONS = ["", "Technology", "Healthcare", "Finance", "Manufacturing", "Legal", "Education", "Government", "Non-Profit", "Retail", "Construction"];
 const LEVEL_OPTIONS = ["", "Standard", "Premium", "Enterprise"];
+
+/** Asset state, as the chip that reads it — the same three words the Assets page uses. */
+function assetStateChip(status: string | undefined): string {
+  if (status === "active" || status === "healthy") return "chip--good";
+  if (status === "warning" || status === "maintenance") return "chip--warn";
+  if (status === "retired" || status === "offline") return "";
+  return "chip--bad";
+}
 
 export function ClientDetailPage() {
   const { id } = useParams();
@@ -41,6 +51,19 @@ export function ClientDetailPage() {
   };
   useEffect(() => { load(); }, [id]);
 
+  /*
+   * The client's assets are fetched the first time the Configurations tab is opened rather than with
+   * the record, because most visits to a client never look at them.
+   */
+  const [configs, setConfigs] = useState<Record<string, any>[] | null>(null);
+  const [configsFailed, setConfigsFailed] = useState(false);
+  useEffect(() => {
+    if (tab !== "configurations" || configs !== null) return;
+    api.get(`/inventory/assets?companyId=${id}&limit=100`)
+      .then(r => setConfigs(r.data?.data || []))
+      .catch(() => { setConfigsFailed(true); setConfigs([]); });
+  }, [tab, id, configs]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -57,15 +80,66 @@ export function ClientDetailPage() {
   if (!client) return <div className="text-center py-12 text-gray-500">Client not found</div>;
 
   const tabs = [
-    { id: "summary", label: "Summary", icon: Building2 },
+    { id: "summary", label: redesign ? "Overview" : "Summary", icon: Building2 },
     { id: "contacts", label: `Contacts (${client._count?.contacts || 0})`, icon: Users },
+    { id: "configurations", label: "Configurations", icon: Layers },
     { id: "agreements", label: `Agreements (${client._count?.serviceAgreements || 0})`, icon: ClipboardList },
     { id: "tickets", label: `Tickets (${client._count?.tickets || 0})`, icon: Ticket },
     { id: "invoices", label: `Invoices (${client._count?.invoices || 0})`, icon: DollarSign },
   ];
+  const clientTabs = redesign ? tabs : tabs.filter(t => t.id !== "configurations");
+  const { amount: mrr, currency } = monthlyValue((client.serviceAgreements || []).filter((a: any) => a.isActive !== false));
+  const agreement = (client.serviceAgreements || []).find((a: any) => a.isActive !== false);
+  const primaryContact = (client.contacts || []).find((c: any) => c.isPrimary);
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-5xl">
+    <div className={redesign ? "space-y-4 animate-fade-in" : "space-y-6 animate-fade-in max-w-5xl"}>
+      {redesign ? (
+        <div className="card overflow-hidden p-0" data-hl="client-details">
+          <div className="flex flex-wrap items-center gap-3 border-b border-surface-border p-3.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                <Link to="/clients" className="hover:text-white">Clients</Link>
+                <span className="text-gray-600">›</span>
+                <span className="font-mono">CLIENT-{String(client.id).slice(0, 8).toUpperCase()}</span>
+                <span className="text-gray-600">·</span>
+                <span className="truncate">{[client.city, client.state].filter(Boolean).join(", ") || "No address"} · {client.companyType || "Client"}</span>
+              </div>
+              <h1 className="mt-0.5 truncate text-base font-semibold text-white">{client.name}</h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {editing ? (
+                <>
+                  <button onClick={() => setEditing(false)} className="btn-secondary flex items-center gap-1.5"><X size={14} /> Cancel</button>
+                  <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-1.5"><Save size={14} /> {saving ? "Saving…" : "Save"}</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => navigate(`/tickets?new=1&companyId=${client.id}`)} className="btn-secondary flex items-center gap-1.5"><Plus size={14} /> New ticket</button>
+                  <button onClick={() => void copyText(client.notes || "", "Client brief")} disabled={!client.notes} className="btn-secondary flex items-center gap-1.5 disabled:opacity-40"><Copy size={14} /> Copy brief</button>
+                  <button onClick={() => setEditing(true)} className="btn-primary flex items-center gap-1.5"><Pencil size={14} /> Edit</button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 px-3.5 py-2">
+            <span className="chip">{client._count?.tickets ?? 0} tickets</span>
+            <span className={`chip ${mrr > 0 ? "chip--good" : ""}`}>{monthlyLabel(mrr, currency)} MRR</span>
+            <span className="chip">{client.serviceLevel || "No service level"}</span>
+            <span className={`chip ${client.isActive ? "chip--good" : ""}`}>{client.isActive ? "Active" : "Inactive"}</span>
+            <span className="chip">{client.industry || "No industry"}</span>
+            <span className="chip">{client.consoleEnabled === false ? "Console off" : "Console on"}</span>
+            {!client.portalEnabled && <span className="chip">Portal off</span>}
+          </div>
+          <Tabs
+            label="Client sections"
+            items={clientTabs.map(t => ({ id: t.id, label: t.label }))}
+            value={tab}
+            onChange={setTab}
+          />
+        </div>
+      ) : (
+      <>
       <div className="flex items-center gap-2 text-sm"><Link to="/clients" className="text-gray-500 hover:text-white flex items-center gap-1"><ChevronLeft size={14} /> Clients</Link></div>
       <div className="flex items-center justify-between" data-hl="client-details">
         <div className="flex items-center gap-3">
@@ -81,30 +155,75 @@ export function ClientDetailPage() {
         )}
       </div>
 
-      {/* Tabs — the redesigned interface uses the application's own segmented control. */}
-      {redesign ? (
-        <Tabs
-          label="Client sections"
-          items={tabs.map(t => ({ id: t.id, label: t.label }))}
-          value={tab}
-          onChange={setTab}
-        />
-      ) : (
       <div className="flex gap-1 border-b border-surface-border overflow-x-auto">
-        {tabs.map(t => (
+        {clientTabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${tab === t.id ? "border-cyber-400 text-cyber-400" : "border-transparent text-gray-500 hover:text-white"}`}>
             <t.icon size={14} /> {t.label}
           </button>
         ))}
       </div>
+      </>
+      )}
+
+      {/* Configurations Tab — the client's assets, which the record is the natural place to read. */}
+      {tab === "configurations" && (
+        <div className="card overflow-hidden p-0">
+          <div className="flex items-center justify-between gap-3 border-b border-surface-border px-4 py-2.5">
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-white"><Layers size={14} /> Configurations</h3>
+            <span className="text-xs text-gray-500">{configs === null ? "Loading…" : `${configs.length} shown`}</span>
+          </div>
+          {configs === null ? <div className="p-6"><CardSkeleton rows={4} /></div> : configsFailed ? (
+            <p className="p-6 text-sm text-amber-400">The inventory could not be read, so this list is incomplete rather than empty.</p>
+          ) : configs.length === 0 ? (
+            <p className="p-6 text-sm text-gray-500">Nothing recorded against this client yet. Assets are added from <Link to="/assets" className="text-cyber-400 hover:underline">Assets</Link>.</p>
+          ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
+                <th className="px-4 py-2">Tag</th><th className="px-4 py-2">Name</th>
+                <th className="px-4 py-2 hidden md:table-cell">Type</th><th className="px-4 py-2">State</th>
+                <th className="px-4 py-2 hidden lg:table-cell">Detail</th><th className="px-4 py-2 hidden lg:table-cell">Warranty</th>
+              </tr></thead>
+              <tbody>
+                {configs.map((a: Record<string, any>) => (
+                  <tr key={a.id} className="border-b border-surface-border/60">
+                    <td className="px-4 py-2 font-mono text-xs text-gray-400">{a.assetTag || "—"}</td>
+                    <td className="px-4 py-2 text-white">{a.name}</td>
+                    <td className="px-4 py-2 hidden md:table-cell text-gray-400">{a.type || "—"}</td>
+                    <td className="px-4 py-2"><span className={`chip text-[10px] ${assetStateChip(a.status)}`}>{a.status || "unknown"}</span></td>
+                    <td className="px-4 py-2 hidden lg:table-cell text-gray-500">{a.detail || [a.manufacturer, a.model].filter(Boolean).join(" ") || "—"}</td>
+                    <td className="px-4 py-2 hidden lg:table-cell text-gray-500">{a.warrantyExpiry ? new Date(a.warrantyExpiry).toLocaleDateString() : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          )}
+        </div>
       )}
 
       {/* Summary Tab */}
       {tab === "summary" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <Card title="General Information">
+            <Card title={redesign ? "The account" : "General Information"}>
+              {redesign && !editing ? (
+                <Kv rows={[
+                  ["Client number", <span className="font-mono">{String(client.id).slice(0, 8).toUpperCase()}</span>],
+                  ["Location", [client.city, client.state].filter(Boolean).join(", ") || null],
+                  ["Type", client.companyType],
+                  ["Service level", client.serviceLevel],
+                  ["Agreement", agreement?.name],
+                  ["Recurring", mrr > 0 ? `${monthlyLabel(mrr, currency)} / month` : null],
+                  ["Contact", primaryContact ? `${primaryContact.firstName || ""} ${primaryContact.lastName || ""}`.trim() || primaryContact.email : null],
+                  ["Industry", client.industry],
+                  ["Territory", client.territory],
+                  ["Region", client.region],
+                  ["Currency", client.currency],
+                  ["Since", client.createdAt ? new Date(client.createdAt).toLocaleDateString() : null],
+                ]} />
+              ) : (
               <Grid cols={3}>
                 <Field label="Client Name" value={client.name} editing={editing} form={form} setForm={setForm} field="name" />
                 <Field label="Legal Name" value={client.legalName} editing={editing} form={form} setForm={setForm} field="legalName" />
@@ -116,6 +235,7 @@ export function ClientDetailPage() {
                 <Field label="Region" value={client.region} editing={editing} form={form} setForm={setForm} field="region" />
                 <Field label="Currency" value={client.currency} editing={editing} form={form} setForm={setForm} field="currency" />
               </Grid>
+              )}
             </Card>
             <Card title="Contact Information">
               <Grid cols={3}>
@@ -233,6 +353,33 @@ export function ClientDetailPage() {
           </div>
 
           <div className="space-y-4">
+            {/* The brief first: one paragraph the next technician reads before touching anything. */}
+            {redesign && (
+              <Card title="Brief">
+                {client.notes ? <p className="whitespace-pre-wrap text-sm text-gray-300">{client.notes}</p> : <p className="text-sm text-gray-600">Nothing written yet — this is the highest-value field on the record.</p>}
+                <button onClick={() => setEditing(true)} className="btn-secondary mt-1 flex w-full items-center justify-center gap-1.5 text-xs"><Pencil size={12} /> Edit the brief</button>
+              </Card>
+            )}
+            {redesign && (
+              <Card title="Recent work">
+                {(client.tickets || []).length === 0 ? <p className="text-sm text-gray-600">No tickets yet</p> : (
+                  <div className="space-y-1.5">
+                    {(client.tickets || []).slice(0, 6).map((t: Record<string, any>) => (
+                      <Link key={t.id} to={`/tickets/${t.id}`} className="flex items-start gap-2 rounded px-1 py-1 hover:bg-surface-lighter">
+                        <span className="font-mono text-[11px] text-gray-500">{t.ticketNumber ? `#${t.ticketNumber}` : "—"}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm text-gray-200">{t.title}</span>
+                          <span className="block text-[11px] text-gray-500">{(t.status || "").replace(/_/g, " ")}{t.assignedTo ? ` · ${t.assignedTo.firstName || ""} ${t.assignedTo.lastName || ""}`.trimEnd() : " · Unassigned"}</span>
+                        </span>
+                        <ChevronRight size={13} className="mt-0.5 shrink-0 text-gray-600" />
+                      </Link>
+                    ))}
+                    <Link to={`/tickets?companyId=${client.id}`} className="block pt-1 text-xs text-cyber-400 hover:underline">All of this client's tickets →</Link>
+                  </div>
+                )}
+              </Card>
+            )}
+            {!redesign && (
             <Card title="Status">
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-gray-500">Active</span><span className={`badge ${client.isActive ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>{client.isActive ? "Yes" : "No"}</span></div>
@@ -241,22 +388,24 @@ export function ClientDetailPage() {
                 <div className="flex justify-between"><span className="text-gray-500">Since</span><span className="text-white">{client.createdAt ? new Date(client.createdAt).toLocaleDateString() : "—"}</span></div>
               </div>
             </Card>
+            )}
             <Card title="Primary Contact">
-              {client.contacts?.find((c:any)=>c.isPrimary) ? (
-                (() => { const pc = client.contacts.find((c:any)=>c.isPrimary); return (
-                  <div className="space-y-1 text-sm">
-                    <p className="text-white">{pc.firstName} {pc.lastName}</p>
-                    {pc.email && <p className="text-gray-400 flex items-center gap-1"><Mail size={12} /> {pc.email}</p>}
-                    {pc.phone && <p className="text-gray-400 flex items-center gap-1"><Phone size={12} /> {pc.phone}</p>}
-                  </div>
-                ); })()
+              {primaryContact ? (
+                <div className="space-y-1 text-sm">
+                  <p className="text-white">{primaryContact.firstName} {primaryContact.lastName}</p>
+                  {primaryContact.email && <p className="text-gray-400 flex items-center gap-1"><Mail size={12} /> {primaryContact.email}</p>}
+                  {primaryContact.phone && <p className="text-gray-400 flex items-center gap-1"><Phone size={12} /> {primaryContact.phone}</p>}
+                  {redesign && <Link to={`/contacts?companyId=${client.id}`} className="block pt-1 text-xs text-cyber-400 hover:underline">All contacts →</Link>}
+                </div>
               ) : <p className="text-sm text-gray-600">No primary contact</p>}
             </Card>
-            <Card title="Quick Stats">
+            <Card title={redesign ? "At a glance" : "Quick Stats"}>
               <div className="space-y-2 text-sm">
                 {[{l:"Contacts",v:client._count?.contacts},{l:"Agreements",v:client._count?.serviceAgreements},{l:"Tickets",v:client._count?.tickets},{l:"Invoices",v:client._count?.invoices}].map(s => (
                   <div key={s.l} className="flex justify-between"><span className="text-gray-500">{s.l}</span><span className="text-white font-medium">{s.v || 0}</span></div>
                 ))}
+                {redesign && configs !== null && <div className="flex justify-between"><span className="text-gray-500">Configurations</span><span className="text-white font-medium">{configs.length}</span></div>}
+                {redesign && <div className="flex justify-between"><span className="text-gray-500">Recurring</span><span className="text-white font-medium">{monthlyLabel(mrr, currency)}</span></div>}
               </div>
             </Card>
           </div>
@@ -353,6 +502,19 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 }
 function Grid({ cols, children }: { cols: number; children: React.ReactNode }) {
   return <div className={`grid grid-cols-2 md:grid-cols-${cols} gap-3`}>{children}</div>;
+}
+/** Label/value rows — how the redesigned screens read a record, as opposed to editing it. */
+function Kv({ rows }: { rows: Array<[string, React.ReactNode]> }) {
+  return (
+    <dl className="divide-y divide-surface-border/60">
+      {rows.map(([k, v]) => (
+        <div key={k} className="flex items-baseline justify-between gap-4 py-1.5">
+          <dt className="shrink-0 text-xs text-gray-500">{k}</dt>
+          <dd className="min-w-0 truncate text-right text-sm text-gray-200">{v || "—"}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 function Field({ label, value, editing, form, setForm, field, type, options, placeholder }: {
   label: string; value: any; editing: boolean; form: Record<string,any>;

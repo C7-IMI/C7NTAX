@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.064 | Last Updated: 2026-10-08
+## Version: 2026.10.8.065 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,41 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.065 — The client record
+
+Clients read as cards now, but a card was only the outside. Opening a client gave a breadcrumb, a
+title and five tabs — no state, no figures and no brief. The record is now the same shape as a
+ticket's: what it is, what it is worth, and what you would have to open it to find out.
+
+- **[New]** The client's header is one row: `CLIENT-…`, where it is, its name, and **New ticket**,
+  **Copy brief** and **Edit**. Beneath it a row of state — **tickets raised**, **MRR**, service
+  level, active/inactive, industry, and whether the console and portal are on — and then the section
+  strip.
+- **[New]** **Overview** leads with **The account**, the identity facts as label-and-value rows
+  (client number, location, type, service level, agreement, recurring value, primary contact,
+  industry, territory, region, currency, joined). **Edit** turns the same rows into inputs, so the
+  full field set is still editable — it is simply not what you read by default.
+- **[New]** **Brief** — the client's own notes — sits beside **Recent work** (its latest tickets,
+  each a link, with status and technician) and **At a glance** (contacts, agreements, tickets,
+  invoices, configurations and the recurring figure). The client brief was reachable before only by
+  scrolling the summary.
+- **[New]** A **Configurations** section lists the client's assets — tag, name, type, state, detail,
+  warranty — read on demand rather than with the record, and it says so in words if the inventory
+  cannot be read rather than showing an empty list.
+- **[Update]** The first tab is called **Overview** in the redesigned interface, as the ticket
+  record's is; Classic keeps **Summary** and every card exactly as it was.
+- **[Update]** `apps/web/src/lib/agreements.ts` now owns the monthly-value arithmetic the client list
+  and the client record both need, so the two cannot drift apart.
+
+**Verification:** `tsc --noEmit` clean; `pnpm build`; in the browser the Acme record shows
+`CLIENT-964AAB06`, seven state chips, six sections and twelve account rows, **Configurations** loads
+two real assets (ACM-FW-01, ACME-DC01) with warranty dates, **Edit** swaps the twelve rows for
+28 inputs with Cancel/Save and the Notes editor, and with `c7_ui_redesign=0` the page is the
+original Summary / General Information / Status / Quick Stats with no Configurations section and no
+label-and-value rows.
 
 ---
 
