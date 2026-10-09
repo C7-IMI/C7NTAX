@@ -1006,8 +1006,8 @@ function AnalyticsTab() {
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Quick actions</h3>
           <div className="space-y-2">
             <button onClick={() => setShowSchedule(true)} className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Calendar size={14} />Schedule a saved report</button>
-            <Link to="/reports/standard" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><ClipboardList size={14} />Standard reports</Link>
-            <Link to="/reports/custom" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Filter size={14} />Custom reports</Link>
+            <Link to="/reports/standard" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><ClipboardList size={14} />Standard Reports</Link>
+            <Link to="/reports/custom" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Filter size={14} />Custom Reports</Link>
             <Link to="/reports/qbr" className="btn-secondary w-full text-sm flex items-center gap-2 justify-center"><Presentation size={14} />Quarterly business review</Link>
           </div>
         </div>

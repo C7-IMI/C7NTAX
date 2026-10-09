@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.078 | Last Updated: 2026-10-08
+## Version: 2026.10.8.079 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,38 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.079 — The same names, spelled the same way, in both interfaces
+
+The two navigation panes disagreed about capitalisation: the tree said **Service Alerts** and **Service
+Boards** while the rail beside it said "Service desk" and "Service alerts". A label is a name, and two
+names for one destination is a defect whether or not anybody reports it — this pass makes the app use one.
+
+- **[Fix]** **The rail's domains and rows are Title Case**, which is what the tree, the page headers and
+  the breadcrumbs already used: **Service Desk**, **Service Alerts**, **My Settings**, **My Activity**,
+  **My Preferences**, **AI Inference**, **Two-Factor Authentication**, **Service Board Settings**,
+  **Alert Settings**, **Configuration Reference**, **Billing Reports**.
+- **[Fix]** **The tree's own stragglers**: "AI models" → **AI Models**, "Companion apps" → **Companion
+  Apps**, so the C7NC rows agree with the pages they open.
+- **[Fix]** **Everywhere the same name is shown**: the standalone page titles (`My Activity`, `AI
+  Inference`, `Two-Factor Authentication`), the C7NC tabs and hub cards, the Assistant's link to the model
+  catalogue, the Reports links, the API Access page title, the Settings tab, the system-settings shortcut
+  rows, the Recent menu's section labels, the customer-portal fallback name, an API error that names the
+  path to connect a model, and the Help walkthrough headings and Index rows for Service Boards, Product
+  Catalog, Customer Portal, Standard Reports, Business Reviews, API Access and Single Sign-On.
+- **[Update]** **The convention is now written down** rather than inferred: names of destinations and
+  features are Title Case; actions, field labels, captions and sentences stay sentence case. That is why
+  the dashboard's stat captions still read "Service alerts" beside "Open tickets" — they are a sentence-cased
+  set of descriptive captions, not the name of the area — and why a setting registered as "Uptime monitors"
+  keeps its own spelling where the page it turns on is **Uptime Monitors**.
+
+**Verification:** web `tsc --noEmit` clean, `check-help-links` green, and both panes read back from the
+running app: the rail now shows Favorites, Today, Service Desk, Clients, Delivery, Revenue, Insight,
+Platform, Service Alerts, Assistant, Help, My Settings, Console, and the classic sidebar shows Tickets,
+Service Alerts, Service Boards, Uptime Monitors, Alert Webhooks, Product Catalog, Audit Logs, API Access,
+AI Actions and the rest in the same style.
 
 ---
 

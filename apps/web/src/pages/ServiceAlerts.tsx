@@ -519,7 +519,7 @@ export function ServiceAlertsPage() {
                 <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Monitors</h3>
                 <p className="text-xs text-gray-500 mt-0.5">What raises the alerts above — a failure here becomes an alert there</p>
               </div>
-              <Link to="/service-alerts/monitors" className="btn-secondary text-xs">Uptime monitors</Link>
+              <Link to="/service-alerts/monitors" className="btn-secondary text-xs">Uptime Monitors</Link>
             </div>
             <div className="card !p-0 overflow-x-auto">
               <table className="w-full text-sm">

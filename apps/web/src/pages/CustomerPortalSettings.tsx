@@ -124,7 +124,7 @@ function PortalPreview({ name, accent, logo, welcome, support }: {
             </div>
           )}
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{name || "Customer portal"}</p>
+          <p className="text-sm font-semibold text-white truncate">{name || "Customer Portal"}</p>
           <p className="text-[11px] text-gray-500 truncate">{welcome || "Sign in to raise and follow your tickets"}</p>
         </div>
       </div>
@@ -277,7 +277,7 @@ export function CustomerPortalSettingsPage() {
     .find(s => s.id === "workspace")
     ?.fields.find(f => f.id === "companyName")?.value;
   const preview = {
-    name: String(workspaceName ?? "Customer portal"),
+    name: String(workspaceName ?? "Customer Portal"),
     accent: String(field("accentColor") ?? ""),
     logo: String(field("logoUrl") ?? ""),
     welcome: String(field("welcomeText") ?? ""),

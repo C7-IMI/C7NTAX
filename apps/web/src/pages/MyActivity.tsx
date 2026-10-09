@@ -19,7 +19,7 @@ import {
 } from "../lib/recentActivity";
 
 /**
- * My activity — where the Recent menu's "Show All" goes, and only ever this person's own history.
+ * My Activity — where the Recent menu's "Show All" goes, and only ever this person's own history.
  *
  * The menu is a five-entry glance and this is the same list read at length, so it is built from the same
  * two sources and rendered the same way. Two deliberate differences from the audit trail at
@@ -158,7 +158,7 @@ export function MyActivityPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl" data-testid="my-activity">
       <PageHeader
-        title="My activity"
+        title="My Activity"
         subtitle="Everything you changed, and the pages that held you for two minutes. This is your own history — changes other people made are not shown here."
         actions={
           canSeeAuditTrail ? (

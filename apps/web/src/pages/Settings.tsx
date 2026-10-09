@@ -32,7 +32,7 @@ const SETTING_GROUPS = [
   { id: "landing", label: "Landing page", count: 1 },
   { id: "security", label: "Security", count: 1 },
   { id: "session", label: "Session timeout", count: 1 },
-  { id: "ai-inference", label: "AI inference", count: 1 },
+  { id: "ai-inference", label: "AI Inference", count: 1 },
   { id: "system", label: "System", count: 3 },
 ] as const;
 

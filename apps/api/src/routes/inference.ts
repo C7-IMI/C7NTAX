@@ -372,10 +372,10 @@ inferenceRouter.post("/assist", requirePermission(Permission.InferenceView), asy
       ? await prisma.aiProviderConfig.findUnique({ where: { id: String(req.body.providerId) } })
       : await activeProviderRecord();
     if (!provider) {
-      throw new AppError("No model is connected. Connect one in CloudConnect → AI models and make it the model the application uses.", 409);
+      throw new AppError("No model is connected. Connect one in CloudConnect → AI Models and make it the model the application uses.", 409);
     }
     if (provider.provider === "local") {
-      throw new AppError("The local keyword engine cannot answer a prompt. Connect a model in CloudConnect → AI models.", 409);
+      throw new AppError("The local keyword engine cannot answer a prompt. Connect a model in CloudConnect → AI Models.", 409);
     }
 
     const config = (provider.config as Record<string, unknown>) ?? {};

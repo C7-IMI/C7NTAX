@@ -299,7 +299,7 @@ export function ApiAccessPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <PageHeader
-        title="API access"
+        title="API Access"
         subtitle="Credentials and settings for the systems that talk to this instance: an RMM, a SIEM, a monitoring platform, an accounting integration or a script of your own."
         actions={
           <button className="btn-primary text-sm inline-flex items-center gap-1.5" onClick={() => setShowForm((open) => !open)}>

@@ -9,9 +9,9 @@
  * therefore by the Recent menu's visit labels, which are built from the trail.
  */
 export const STANDALONE_PAGE_TITLES: Record<string, string> = {
-  "/activity": "My activity",
+  "/activity": "My Activity",
   "/console": "Console",
   "/settings": "Settings",
-  "/settings/ai": "AI inference",
-  "/mfa-setup": "Two-factor authentication",
+  "/settings/ai": "AI Inference",
+  "/mfa-setup": "Two-Factor Authentication",
 };

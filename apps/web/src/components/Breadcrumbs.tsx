@@ -149,7 +149,7 @@ export function orgTrail(
  *
  * - **`/` is the Dashboard's own row and matches nothing else.** A bare `startsWith("/")` is true of
  *   every path in the application, so before this the Dashboard node quietly claimed every page with no
- *   row of its own — the header console, Settings, My activity — and each of them read "Home › Dashboard".
+ *   row of its own — the header console, Settings, My Activity — and each of them read "Home › Dashboard".
  * - **A page with no row anywhere gets its name from `STANDALONE_PAGE_TITLES`**, so a visit recorded
  *   against it (the Recent menu stores the trail's words) says "Console" rather than "Dashboard".
  */

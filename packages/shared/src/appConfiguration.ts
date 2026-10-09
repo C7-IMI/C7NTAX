@@ -275,7 +275,7 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
         label: "Assistant in the navigation rail",
         summary: "Whether the Assistant is a section in the rail or a utility at its foot.",
         detail:
-          "Off, the Assistant sits with Help and My settings: somewhere you go for something rather than somewhere you work, which is where it belongs while its answers are about the screen you are already on. On, it joins the rail itself, for the case where people start their day in it. Only the modern pane has a rail, so this has no effect while the navigation pane is set to classic; the Assistant is always in the sidebar there.",
+          "Off, the Assistant sits with Help and My Settings: somewhere you go for something rather than somewhere you work, which is where it belongs while its answers are about the screen you are already on. On, it joins the rail itself, for the case where people start their day in it. Only the modern pane has a rail, so this has no effect while the navigation pane is set to classic; the Assistant is always in the sidebar there.",
         type: "boolean",
         source: "setting",
         env: "ASSISTANT_IN_RAIL",

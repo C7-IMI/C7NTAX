@@ -492,7 +492,7 @@ export function C7NCPage() {
    *                      why "Add a connector" is a mode of this tab rather than a tab of its own.
    *   · AI models      — which model answers, and what it may do.
    *   · Email          — the mailbox connectors: what is coming in, and where it is going.
-   *   · Companion apps — what a person installs on their own machine (the Outlook add-in).
+   *   · Companion Apps — what a person installs on their own machine (the Outlook add-in).
    *
    * "configure" and "add" are views *within* Services rather than tabs of their own: opening one
    * keeps Services lit in the strip, because that is where the reader still is.
@@ -654,9 +654,9 @@ export function C7NCPage() {
   const TABS: Array<{ id: Section; label: string; count?: number }> = [
     { id: "overview", label: "Overview", count: attention.length || undefined },
     { id: "services", label: "Services", count: integrations.length || undefined },
-    { id: "models", label: "AI models", count: modelStatus?.connected ? modelStatus.counts?.active ?? 1 : undefined },
+    { id: "models", label: "AI Models", count: modelStatus?.connected ? modelStatus.counts?.active ?? 1 : undefined },
     { id: "email", label: "Email" },
-    { id: "apps", label: "Companion apps" },
+    { id: "apps", label: "Companion Apps" },
   ];
 
   /*
@@ -668,9 +668,9 @@ export function C7NCPage() {
   /** The hub's four doors, each with the one line that says what is behind it. */
   const SUBSECTIONS: Array<{ id: Section; icon: LucideIcon; label: string; blurb: string }> = [
     { id: "services", icon: Plug, label: "Services", blurb: `The ${types.length || 16} connectors — directory, security, accounting, documentation, an RMM, a SIEM — and what each has brought in.` },
-    { id: "models", icon: Bot, label: "AI models", blurb: "Which model answers questions, which one the application uses, and what it is allowed to do." },
+    { id: "models", icon: Bot, label: "AI Models", blurb: "Which model answers questions, which one the application uses, and what it is allowed to do." },
     { id: "email", icon: Mail, label: "Email", blurb: "The monitored mailboxes that turn email into tickets, and where what they collect is filed." },
-    { id: "apps", icon: MonitorSmartphone, label: "Companion apps", blurb: "Things a person installs on their own machine — the Outlook add-in, and its installer versions." },
+    { id: "apps", icon: MonitorSmartphone, label: "Companion Apps", blurb: "Things a person installs on their own machine — the Outlook add-in, and its installer versions." },
   ];
 
   return (
@@ -790,7 +790,7 @@ export function C7NCPage() {
                 <Key size={14} /> API Access — the keys other systems use
               </Link>
               <Link to="/admin/webhooks" className="text-cyber-400 hover:text-cyber-300 flex items-center gap-2">
-                <ExternalLink size={14} /> Alert webhooks — what we post out
+                <ExternalLink size={14} /> Alert Webhooks — what we post out
               </Link>
               <Link to="/help/walkthroughs/cloudconnect" className="text-cyber-400 hover:text-cyber-300 flex items-center gap-2">
                 <Info size={14} /> Help — connecting a service, step by step
@@ -831,7 +831,7 @@ export function C7NCPage() {
                         <Bot size={18} className="text-cyber-400" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-white font-medium text-sm truncate">AI models</p>
+                        <p className="text-white font-medium text-sm truncate">AI Models</p>
                         <p className="text-xs text-gray-500 truncate">
                           Claude, GPT, Gemini, DeepSeek, Grok and any OpenAI-compatible endpoint
                         </p>

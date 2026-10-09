@@ -143,13 +143,13 @@ export const NAV_TREE: NavNode[] = [
       // of the two for the whole page, which kept the connection health out of reach of the people
       // who watch it.
       { id: "c7nc-services", to: "/c7nc/services", icon: Plug, label: "Services", permission: Permission.IntegrationView },
-      { id: "c7nc-models", to: "/c7nc/models", icon: Bot, label: "AI models", permission: Permission.InferenceView },
+      { id: "c7nc-models", to: "/c7nc/models", icon: Bot, label: "AI Models", permission: Permission.InferenceView },
       { id: "c7nc-email", to: "/c7nc/email", icon: Mail, label: "Email", permission: Permission.IntegrationView },
       // FlexPoint lives here because it is a service the business already runs, listed beside the
       // others that connect to this one. Unlike the connectors it carries a permission, because
       // everything on its page besides the reading is a write to a financial system.
       { id: "c7nc-flexpoint", to: "/c7nc/flexpoint", icon: CreditCard, label: "FlexPoint Payment Solutions", permission: Permission.IntegrationManage },
-      { id: "c7nc-apps", to: "/c7nc/apps", icon: MonitorSmartphone, label: "Companion apps" },
+      { id: "c7nc-apps", to: "/c7nc/apps", icon: MonitorSmartphone, label: "Companion Apps" },
     ],
   },
   {

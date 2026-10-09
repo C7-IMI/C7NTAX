@@ -5,7 +5,7 @@ import { Bot, PlugZap, Plus, ShieldCheck, Info, Trash2, Power, PowerOff, Pencil,
 import { ModelSetupWizard, type ModelSetupType } from "./ModelSetupWizard";
 
 /**
- * AI models — the connections that let a model work inside C7NTAX.
+ * AI Models — the connections that let a model work inside C7NTAX.
  *
  * Deliberately not a connector row: a data connector reads somebody else's records on a schedule,
  * whereas a model connection is called at the moment somebody asks it something, and its credentials

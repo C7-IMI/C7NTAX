@@ -7502,3 +7502,40 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **A standing preference belongs in the instructions file, not in a commit message.** "Design both
   individually" would have been forgotten by the third dialog; as a rule with the pattern named beside it,
   it is read before the next one is written.
+
+
+### Prompt 322 — Capitalise the D, and make the two panes agree
+
+**Timestamp:** 2026-10-09 00:45 | **Status:** Complete | **Duration:** ~25 min
+
+**BuildNotes IDs:** **2026.10.8.079**.
+
+**Prompt**
+
+> Capital the D in desk. Goo through the app and make sure the capitalization is correct for everything
+> where applicable
+
+**What I did**
+- **Fixed the rail** (Service Desk, Service Alerts, My Settings, My Activity, My Preferences, AI Inference,
+  Two-Factor Authentication, and the five renamed rows) so the modern pane uses the same Title Case the
+  tree, the page headers and the breadcrumbs already did.
+- **Swept the rest of the app for the same name spelled differently**: the tree's "AI models" and
+  "Companion apps", the standalone page titles, the C7NC tabs and cards, the Reports and Assistant links,
+  the API Access page title, the Settings tab, the system-settings shortcuts, the Recent menu's section
+  labels, a customer-portal fallback name, an API error naming the model path, and the Help headings and
+  Index rows for the affected areas.
+- **Audited rather than eyeballed**: a script listed every `label:` and `title` value whose first word
+  was capitalised and a later word was not, and every case-variant pair across `apps/web`, `apps/api`
+  and `packages`. The judgement calls that came out of it are in the BuildNotes entry, because the
+  interesting part is which ones I did **not** change.
+
+**Notes for next time**
+- **Two panes are two chances to disagree.** The rail and the tree are built from different sources, so a
+  label can be right in one and wrong in the other; reading both back from the running app is the only way
+  to see it.
+- **"Correct capitalisation" is not "Title Case everything".** Buttons, field labels, captions and
+  sentences are sentence case on purpose, and changing them to match the navigation would have been a
+  worse bug than the one being fixed — which is why the rule (names vs sentences) is written down in the
+  BuildNotes rather than applied blanket.
+- **A non-ASCII dash does not survive a pipe.** Em dashes written through `node -` arrive as question
+  marks in a later read; use `\u2014` in the script when the file has to keep them.

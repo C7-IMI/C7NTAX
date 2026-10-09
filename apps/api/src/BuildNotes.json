@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.8.079",
+    "date": "2026-10-08",
+    "title": "The same names, spelled the same way, in both interfaces",
+    "changes": [
+      {
+        "text": "**The rail's domains and rows are Title Case**, which is what the tree, the page headers and",
+        "type": "Fix"
+      },
+      {
+        "text": "**The tree's own stragglers**: \"AI models\" → **AI Models**, \"Companion apps\" → **Companion",
+        "type": "Fix"
+      },
+      {
+        "text": "**Everywhere the same name is shown**: the standalone page titles (`My Activity`, `AI",
+        "type": "Fix"
+      },
+      {
+        "text": "**The convention is now written down** rather than inferred: names of destinations and",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.078",
     "date": "2026-10-08",
     "title": "A purchase order is a record, not a row",

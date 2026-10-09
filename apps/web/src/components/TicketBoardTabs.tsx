@@ -54,7 +54,7 @@ export function TicketBoardTabs({ boards, boardId, onSelect }: {
           ]}
           value={current ? current.id : ALL_BOARDS}
           onChange={id => onSelect(id === ALL_BOARDS ? "" : id)}
-          label="Service boards"
+          label="Service Boards"
         />
       </div>
 

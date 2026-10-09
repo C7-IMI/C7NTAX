@@ -35,7 +35,7 @@ import {
 const AREA_SHORTCUTS = [
   { label: "Outlook add-in", to: "/admin/configuration/apps" },
   { label: "Customer portal", to: "/admin/portal" },
-  { label: "Service alerts & monitors", to: "/admin/configuration/monitoring" },
+  { label: "Service Alerts & Monitors", to: "/admin/configuration/monitoring" },
   { label: "Email connectors", to: "/admin/configuration/integrations" },
   { label: "Sessions & security", to: "/admin/configuration/sessions" },
   { label: "Billing & invoicing", to: "/admin/configuration/billing" },

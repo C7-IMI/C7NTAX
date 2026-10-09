@@ -22,7 +22,7 @@ import type { RecentIcon } from "../lib/recentActivity";
  * One icon per kind of activity.
  *
  * Shared rather than declared beside the menu, because the same change is shown in two places — the
- * header's Recent menu and the My activity page — and a ticket that is a ticket glyph in one list and
+ * header's Recent menu and the My Activity page — and a ticket that is a ticket glyph in one list and
  * something else in the other would read as two different kinds of thing.
  */
 export const ACTIVITY_ICONS: Record<RecentIcon, LucideIcon> = {

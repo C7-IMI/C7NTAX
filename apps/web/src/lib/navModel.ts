@@ -55,10 +55,10 @@ interface DomainSpec {
 
 /** Routes that exist but are not in `NAV_TREE`, placed explicitly so the pane can show them. */
 const EXTRA_NODES: Record<string, { to: string; label: string; icon: LucideIcon }> = {
-  activity: { to: "/activity", label: "My activity", icon: Clock },
-  settings: { to: "/settings", label: "My preferences", icon: Settings2 },
-  "settings-ai": { to: "/settings/ai", label: "AI inference", icon: Bot },
-  "mfa-setup": { to: "/mfa-setup", label: "Two-factor authentication", icon: Shield },
+  activity: { to: "/activity", label: "My Activity", icon: Clock },
+  settings: { to: "/settings", label: "My Preferences", icon: Settings2 },
+  "settings-ai": { to: "/settings/ai", label: "AI Inference", icon: Bot },
+  "mfa-setup": { to: "/mfa-setup", label: "Two-Factor Authentication", icon: Shield },
   console: { to: "/console", label: "Console", icon: SquareTerminal },
 };
 
@@ -75,10 +75,10 @@ export const FAVORITES_NODE_ID = "favorites";
  */
 const LABEL_OVERRIDES: Record<string, string> = {
   "kumo-dashboard": "Overview",                     // "Dashboard" again, this time inside Kumo
-  "admin-boards": "Service board settings",         // vs the Service Boards destination
-  "admin-service-alerts": "Alert settings",         // vs the Service Alerts destination
-  "help-configuration": "Configuration reference",  // vs Administration → Configuration
-  "billing-reports": "Billing reports",             // vs Reporting, which is a domain of reports
+  "admin-boards": "Service Board Settings",        // vs the Service Boards destination
+  "admin-service-alerts": "Alert Settings",        // vs the Service Alerts destination
+  "help-configuration": "Configuration Reference",  // vs Administration → Configuration
+  "billing-reports": "Billing Reports",            // vs Reporting, which is a domain of reports
 };
 
 const DOMAIN_SPECS: DomainSpec[] = [
@@ -91,7 +91,7 @@ const DOMAIN_SPECS: DomainSpec[] = [
   },
   {
     id: "desk",
-    label: "Service desk",
+    label: "Service Desk",
     icon: Ticket,
     what: "The queue, the boards it sits on, and the articles you answer with.",
     rows: [
@@ -186,7 +186,7 @@ const DOMAIN_SPECS: DomainSpec[] = [
      * behind in the settings drawer, because a monitor and the alert it opens are one story.
      */
     id: "alerts",
-    label: "Service alerts",
+    label: "Service Alerts",
     icon: AlertTriangle,
     what: "What is currently wrong, and the checks and endpoints that raise it.",
     rows: [
@@ -248,7 +248,7 @@ const UTILITY_SPECS: Record<string, DomainSpec> = {
   },
   prefs: {
     id: "prefs",
-    label: "My settings",
+    label: "My Settings",
     icon: Settings2,
     what: "Your account and your preferences.",
     rows: [{ id: "settings" }, { id: "settings-ai" }, { id: "mfa-setup" }],
