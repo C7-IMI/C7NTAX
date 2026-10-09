@@ -3,7 +3,8 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, BookOpen, Search, Eye, ThumbsUp, Sparkles, Check, Trash2, ExternalLink } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { PageHeader, ListViews } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface Article{id:string;title:string;slug:string;excerpt?:string;content?:string;status:string;visibility:string;tags:string[];viewCount:number;helpfulCount:number;updatedAt:string;aiGenerated?:boolean;sourceTicketId?:string|null;reviewNote?:string|null;}
 
@@ -15,6 +16,8 @@ export function KnowledgeBasePage(){
   const [showNew,setShowNew]=useState(false);
   const [form,setForm]=useState({title:"",content:"",status:"draft",visibility:"internal",tags:""});
   const [selected,setSelected]=useState<Article|null>(null);
+  const redesign = useRedesign();
+  const [view,setView]=useState("all");
 
   const fetch=()=>{api.get("/kb?limit=100").then(r=>setArticles(r.data.data||[])).catch(()=>{}).finally(()=>setLoading(false))};
   // Drafts (including the AI-drafted ones) are a separate read so the review queue is not buried
@@ -37,6 +40,13 @@ export function KnowledgeBasePage(){
   const filtered=articles.filter(a=>!search||a.title.toLowerCase().includes(search.toLowerCase())||a.tags?.some(t=>t.toLowerCase().includes(search.toLowerCase())));
   const SC:Record<string,string>={draft:"bg-gray-600/20 text-gray-400",published:"bg-green-600/20 text-green-400",archived:"bg-red-600/20 text-red-400"};
   const VC:Record<string,string>={internal:"bg-purple-600/20 text-purple-400",public:"bg-blue-600/20 text-blue-400"};
+  const articleViews=[
+    {id:"all",label:"All",count:articles.length},
+    {id:"published",label:"Published",count:articles.filter(a=>a.status==="published").length},
+    {id:"draft",label:"Draft",count:articles.filter(a=>a.status==="draft").length},
+    {id:"public",label:"Public",count:articles.filter(a=>a.visibility==="public").length},
+  ];
+  const shownArticles=filtered.filter(a=>view==="all"||(view==="public"?a.visibility==="public":a.status===view));
 
   return(<div className="space-y-4 animate-fade-in">
     <div className="flex items-center justify-between flex-wrap gap-3">
@@ -46,6 +56,12 @@ export function KnowledgeBasePage(){
 
     <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/><input className="input-field pl-9" placeholder="Search articles or tags..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
 
+    {redesign && articles.length > 0 && (
+      <div className="flex flex-wrap items-center gap-2">
+        <ListViews views={articleViews} value={view} onChange={setView} label="Article views" />
+        <span className="text-xs text-gray-500">{shownArticles.length} shown · {articles.reduce((n,a)=>n+(a.viewCount||0),0).toLocaleString()} reads</span>
+      </div>
+    )}
     {drafts.length > 0 && (
       <div className="card border-l-2 border-l-amber-500 space-y-3">
         <div className="flex items-center gap-2">
@@ -84,9 +100,11 @@ export function KnowledgeBasePage(){
           <div className="flex gap-2"><button type="submit" className="btn-primary text-sm">Create</button><button type="button" onClick={()=>setShowNew(false)} className="btn-secondary text-sm">Cancel</button></div>
         </form></div>)}
 
-        {loading?<TableSkeleton />:filtered.length===0?<div className="text-center py-12 card"><BookOpen size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">No articles</p></div>:filtered.map(a=>(<div key={a.id} className="card hover:border-cyber-500/30 transition-colors cursor-pointer group" onClick={()=>setSelected(a)}>
+        {loading?<TableSkeleton />:shownArticles.length===0?<div className="text-center py-12 card"><BookOpen size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">{articles.length===0?"No articles":"Nothing in this view"}</p></div>:shownArticles.map(a=>(<div key={a.id} className="card hover:border-cyber-500/30 transition-colors cursor-pointer group" onClick={()=>setSelected(a)}>
           <div className="flex items-start justify-between"><div className="flex-1"><h3 className="font-semibold text-white text-sm group-hover:text-cyber-400">{a.title}</h3>{a.excerpt&&<p className="text-xs text-gray-500 mt-1 line-clamp-2">{a.excerpt}</p>}</div>
-            <div className="flex items-center gap-2 shrink-0"><span className={"badge text-xs "+(SC[a.status]||"")}>{a.status}</span><span className={"badge text-xs "+(VC[a.visibility]||"")}>{a.visibility}</span></div></div>
+            <div className="flex items-center gap-2 shrink-0">{redesign
+              ? <><span className={`chip text-[10px] ${a.status==="published"?"chip--good":a.status==="archived"?"chip--bad":""}`}>{a.status}</span><span className="chip text-[10px]">{a.visibility}</span></>
+              : <><span className={"badge text-xs "+(SC[a.status]||"")}>{a.status}</span><span className={"badge text-xs "+(VC[a.visibility]||"")}>{a.visibility}</span></>}</div></div>
           <div className="flex items-center gap-4 mt-2 text-xs text-gray-500"><span className="flex items-center gap-1"><Eye size={12}/>{a.viewCount}</span><span className="flex items-center gap-1"><ThumbsUp size={12}/>{a.helpfulCount}</span><span>{new Date(a.updatedAt).toLocaleDateString()}</span>{a.tags?.map(t=><span key={t} className="bg-surface-lighter rounded px-1.5 py-0.5 text-gray-600">{t}</span>)}</div>
         </div>))}
       </div>
