@@ -7987,3 +7987,48 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   displaying: the same sentence that makes the Help honest reads as noise in a five-line menu.
 - One string, three files read back: the change touched the model, the component's empty state, and the
   BuildNotes - worth grepping the repo for the old phrase rather than assuming one place.
+
+### Prompt 335 — The three follow-ups: test data, the auth context, and the BOM
+
+**Timestamp:** 2026-10-09 06:10 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes IDs:** **2026.10.9.007**.
+
+**Prompt**
+
+> Fix if necessary: 1. Test data in the app - five "Addin probe ..." tickets (MSP-04-1001-1005) and the
+> "Sequence check" ones visible in Recent activity are left over from earlier verification runs. Say so and
+> I'll delete them. 2. A pre-existing crash on session expiry - ProtectedRoutes in App.tsx throws Cannot
+> destructure property 'user' of 'useAuth(...)' as it is null, blanking the app instead of sending you to
+> sign-in. I hit it twice; it's a one-line guard if you want it fixed. 3. A cosmetic artefact of my own:
+> commit 4fc176f's subject carries a stray UTF-8 BOM. Removing it needs a force-push to main, so I left it
+> rather than rewrite pushed history.
+
+**What I did**
+1. **Deleted the test data for real.** Five `Addin probe ...` tickets (109 -> 104) removed through the API;
+   the `Sequence check` ones were already gone, so only their traces in the local Recent list remain. Each
+   deletion is in the audit trail, which is correct: an audit trail that forgot the cleanup would be worse
+   than the rows.
+2. **Found the auth crash's actual cause before changing anything**, and it was not session expiry. The
+   session-expiry path was driven twice: a 401/440 clears the token and replaces the tab with
+   `/login?reason=expired`, which is exactly where the app went both times - *"Your session ended. Sign in
+   to continue."* The crash was the **different-copy** case: `createContext` returns a new object per module
+   evaluation, so editing the auth module re-evaluated it while the mounted provider still belonged to the
+   previous copy, and a re-rendered consumer read a context nothing provides - with a `null!` default and
+   every caller destructuring it. Both halves are now fixed: the context is kept per tab (`globalThis`), and
+   a genuinely missing provider throws a sentence that names the mistake.
+3. **Judged the BOM not worth a force-push.** Nothing in the repository parses commit subjects (grepped the
+   scripts: no `git log`/`--format=%s`), so the artefact affects no automation, and rewriting published
+   history on `main` - with an auto-sync task watching that branch - costs more than the speck. The cause is
+   fixed for the future: the second commit was written with a BOM-less `UTF8Encoding($false)`.
+
+**Notes for next time**
+- **The reported symptom was not the cause, and checking cost two minutes.** "A crash on session expiry" was
+  reproducible in the log but not in the path: driving the real expiry showed the redirect working both
+  times. The clue was in the message itself - a destructuring failure, not a redirect failure - and the
+  thing I had been doing at 05:43 was editing that very file.
+- **`null!` is a promise the type cannot keep.** It silenced the compiler rather than the caller, and turned
+  a naming mistake into a blank screen. Typing the default honestly and checking it once, in the hook, is
+  cheaper than every call site finding out.
+- **When a fix is not necessary, say so and say why.** Two of the three items were real work; the third was
+  a cosmetic character with a risky remedy, and the useful answer was the judgement plus the prevention.

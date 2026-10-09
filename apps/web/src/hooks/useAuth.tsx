@@ -6,6 +6,7 @@ import {
   useCallback,
   useMemo,
   useRef,
+  type Context,
   type ReactNode,
 } from "react";
 import api, { setAuthToken } from "../api";
@@ -80,7 +81,25 @@ interface AuthState {
   setLandingPage: (lp: LandingPage) => void;
 }
 
-const AuthContext = createContext<AuthState>(null!);
+/**
+ * One context object per tab, rather than one per evaluation of this module.
+ *
+ * `createContext` returns a **new** object every time the module runs, and in development the module runs
+ * again every time this file is edited: the provider already mounted in the tree still belongs to the
+ * previous copy while a re-rendered consumer resolves the import to the new one. A consumer holding a
+ * context nothing provides reads the default — which was `null!` — and the first thing every caller does
+ * with it is destructure, so the failure arrives as *"Cannot destructure property 'user' of
+ * 'useAuth(...)' as it is null"*: a blank screen, and a message that names the caller's local variable
+ * instead of the mistake. Reusing the tab's existing context closes that window, and the effect on a real
+ * deployment is nothing at all, since there this module is evaluated once.
+ *
+ * The same guard covers the other way a second context appears: two copies of this file in one bundle
+ * (a duplicate dependency, or a specifier that resolves twice). Both copies then agree on the object.
+ */
+const AuthContext = ((): Context<AuthState | null> => {
+  const tab = globalThis as typeof globalThis & { __c7AuthContext?: Context<AuthState | null> };
+  return (tab.__c7AuthContext ??= createContext<AuthState | null>(null));
+})();
 
 const DEFAULT_SESSION: SessionInfo = { cookieMode: false, timeoutMinutes: 30 };
 
@@ -341,6 +360,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
+/**
+ * The signed-in state, from anywhere inside `<AuthProvider>`.
+ *
+ * A missing context is a mistake in the tree — a consumer rendered outside the provider — rather than a
+ * state the application can be in, so it says which mistake it is instead of handing back `null` for the
+ * caller to trip over.
+ */
+export function useAuth(): AuthState {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth() was called outside <AuthProvider>");
+  return context;
 }

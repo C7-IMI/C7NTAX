@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.006 | Last Updated: 2026-10-09
+## Version: 2026.10.9.007 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,35 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.007 — The auth context cannot be read from the wrong copy
+
+`useAuth()` handed back whatever `useContext` returned, and the context's default was `null!` — a type
+assertion standing in for a value. Anything that read it outside the provider therefore failed inside the
+caller's own destructuring, as *"Cannot destructure property 'user' of 'useAuth(...)' as it is null"*: a
+blank screen, and a message naming a local variable rather than the mistake. This is the fix for the
+different-copy case, which is how it reproduced while the auth module was being edited.
+
+- **[Fix]** **One context object per tab.** `createContext` returns a new object every time the module is
+  evaluated, and in development the module is evaluated again on every edit — so a re-rendered consumer
+  could resolve its import to the new copy while the provider mounted in the tree still belonged to the
+  old one, reading a context nothing provides. The context is now kept on the tab and reused, which also
+  covers the production shape of the same bug: two copies of the module in one bundle.
+- **[Fix]** **A missing provider now names itself.** `useAuth()` throws
+  *"useAuth() was called outside `<AuthProvider>`"* instead of returning `null` for the caller to trip
+  over, and the context is typed `AuthState | null` rather than non-null by assertion.
+
+The application's own session-expiry path was checked before and after, and is **not** this: a 401 or 440
+clears the token and replaces the tab with `/login?reason=expired`, which is what the sign-in page's *"Your
+session ended"* is. That path was driven twice and redirects correctly.
+
+**Verification:** `tsc --noEmit` clean, and the app signed in and rendered its protected routes afterwards.
+Evaluating the module a second time in a live browser — the thing a hot reload does — leaves the tab's
+context object **identical** (`secondEvaluationExportsUseAuth: true, sameContextObject: true,
+stillHasProvider: true`), so a consumer from the second copy reads the context the mounted provider
+provides rather than an empty one.
 
 ---
 
