@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<!--
+  MOCKUP ONLY — nothing in the application has been changed. This file is the whole change: reverting is
+  deleting it. No route, component, token, style or API response was touched to make it.
+
+  ════════════════════════════════════════════════════════════════════════════════════════════════════
+  TODAY, FROM apps/web/src/pages/Login.tsx
+
+  A `min-h-screen` (100vh) navy-950 surface with one `max-w-sm` (384px) column centred in it:
+
+    BrandMark 56px  ·  Wordmark 40px  ·  "Sign in to your PSA dashboard"      (text-center, mb-6)
+    [notice]      — only when ?reason=timeout|expired|logout is in the URL, amber-500/10 border/40
+    <form class="card space-y-4">
+      <input class="input-field" placeholder="Email or username" autocomplete="username webauthn">
+      <input class="input-field" type="password" placeholder="Password">      ← no autocomplete attribute
+      <button class="btn-primary w-full">Sign In / "Signing in..."</button>
+    </form>
+    [Sign in with SSO (OIDC)]         — only when GET /api/auth/sso/status says enabled
+    [Sign in with passkey]            — btn-secondary, full width, under the primary act
+    [Register passkey on this device] — btn-secondary, full width
+    <ServiceHealthPanel/>             — caption + 2x2 grid of four tiles + the "Connecting from" line
+    <AppFooter/>                      — "© 2026 Cyber 7 Group, LLC"
+
+  Errors are `react-hot-toast` toasts: the API's "Invalid credentials" (401), the 423 lockout sentence,
+  "Invalid MFA code", and the client's own "Enter your email first" when the passkey button is pressed
+  with an empty account field. A wrong password is therefore a message that appears somewhere else on the
+  page and takes itself away after a few seconds.
+
+  The second-factor step is a separate `max-w-sm` screen (brand mark 48px, "Two-Factor Authentication",
+  one `maxLength={6}` field, Verify). MFA *enrolment* is not part of sign-in at all — it is `/mfa-setup`
+  inside the shell. An account on a temporary password signs in successfully and is then swapped onto
+  `PasswordChangeGate` (App.tsx), a full screen on a *different* background (navy-900) that never says
+  why; `ChangePasswordForm`'s own docstring claims it is "mounted by the sign-in screen after a temporary
+  password", and Login.tsx does not mount it.
+
+  ════════════════════════════════════════════════════════════════════════════════════════════════════
+  WHAT IS PROPOSED, AND WHY
+
+  A sign-in page is not a dashboard. Its whole job is to get one question answered — who are you, and can
+  you prove it — and everything on it either serves that or is decoration competing with two fields. The
+  eye is given exactly one path: the mark, one sentence, the choice of how to prove it, the field, the act.
+  Nothing on this page moves, animates, or advertises.
+
+  · The way in is the first choice, not the last button. A passkey is the stronger and the faster
+    credential and it is currently the fourth control from the top, below a button it duplicates, and it
+    cannot even be attempted until the email field is filled (pressing it empty is a toast reading "Enter
+    your email first"). It becomes a two-option choice above the field — Passkey | Password — with the
+    account field shared between them, so switching paths never loses what you typed. On a device whose
+    browser has no `PublicKeyCredential` the choice is not drawn at all, because a dead option is worse
+    than no option.
+
+  · "Register passkey on this device" moves to where it can work. It is on the signed-out page today, and
+    it cannot work there: POST /auth/webauthn/register/options is behind `authenticate`, and the hook's own
+    fallback message is "Passkey registration failed (sign in with password first)". It is offered once, in
+    the same card, immediately after a password sign-in — skippable, never nagged.
+
+  · Errors are stated where the person is looking, with the one number that matters. Inline under the field
+    they are about, `role="alert"`, `aria-invalid` on the field, focus moved to it — and, because
+    MAX_LOGIN_ATTEMPTS is 5, the attempts left ("3 left before this account locks") counted down beside it.
+    That count is the only warning the current page never gives.
+
+  · The backend's state is one sentence, not a wall of tiles. Healthy is the state in which there is nothing
+    to do, so it takes one line and the four services go behind a disclosure; degraded is the state in which
+    there *is* something to do, so it takes the room and says the consequence — sign-in cannot complete —
+    before you type. See "the status, without tiles" below: the current panel's Database tile says
+    "Connected" from a probe that never queries the database.
+
+  · Where trust comes from on a sign-in page: the mark and the name, unchanged and undecorated; every
+    message in the product's own voice with no codes and no jargon; the two facts that can be checked
+    (the address this connection arrives from, and the raw probe answers) exactly one press away; and the
+    honesty of saying a sign-in cannot work before asking for a password rather than after.
+
+  · Four steps, one card, one surface: credentials → second factor → (choose your own password | add a
+    passkey). Today each is a different screen on a different background, and the one that needs
+    explaining most — the temporary password — is the one that explains nothing.
+
+  · The sign-in page sits outside the shell and does not read `useRedesign()` today; the proposal keeps one
+    arrangement for both interfaces, because the choice on this page is which *credential* to use, not
+    which furniture you prefer. For the team that wants the branch anyway, the classic arrangement is drawn
+    at the end: labelled fields in a column, the passkey path as a full-width secondary button, the
+    services as a key/value table. Same state, same calls, same words; only the layout differs.
+
+  ════════════════════════════════════════════════════════════════════════════════════════════════════
+  EVERY FIGURE IS READ, NOT INVENTED — from the running instance on 9 October 2026:
+
+    GET /api/health            → {"status":"ok","version":"1.0.0"}
+    GET /api/ready             → {"status":"ready"}
+    GET /api/auth/sso/status   → {"enabled":false,"provider":null,"problem":"Sign-in is switched off in
+                                  Sessions & Security."}     ← so today's page has no SSO button at all
+    GET /api/auth/client-ip    → {"ip":"::1"}
+
+  and cross-read in the code that produces them: apps/api/src/routes/auth.ts (the 401 "Invalid credentials",
+  the 423 "Account locked after too many failed sign-in attempts — ask an administrator to unlock it",
+  MAX_LOGIN_ATTEMPTS = 5 behind AUTH_HARDENING_ENABLED, send-mfa-email / mfa/verify-email, change-password),
+  apps/api/src/index.ts (`/api/health` is deliberately *liveness only* — it answers "is this process
+  listening" and must never query the database; `/api/ready` is the probe that asks the database),
+  apps/web/src/components/ServiceHealthPanel.tsx (the four tiles, their ports, their words and the operator
+  remedies quoted above), packages/shared/src/passwordPolicy.ts (MIN_PASSWORD_LENGTH 12, three of four
+  classes, not your name or email), components/users/ChangePasswordForm.tsx, components/Wordmark.tsx and
+  components/BrandMark.tsx. Where a figure could not be read it is absent rather than illustrated.
+
+  Every colour below is a real token copied from apps/web/src/index.css — none approximated, none invented.
+  The shield is the real artwork, apps/web/public/icon-192.png, embedded as a data URL so the file renders
+  from disk with no request (the API's own CSP already allows `img-src 'self' data:`). It is the only bitmap
+  in the file: the C7NTAX logotype is two alpha masks (/brand/wordmark-mask.png and wordmark-7-mask.png)
+  which this file does not carry, so the name is set in Inter at the masks' 327:78 proportion with the 7
+  overprinted in --brand-crimson — the one place the drawing departs from the asset, and only in the letterforms.
+
+  The page is a drawing, not a prototype: the only things that move are the theme toggle and the disclosure.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Mockup — the sign-in page, redesigned</title>
+<style>
+  /* ── The application's own tokens, copied from apps/web/src/index.css ───────────────────────── */
+  :root {
+    --navy-50:#e8edf5; --navy-100:#c5d1e5; --navy-200:#9eb3d3; --navy-300:#7895c1; --navy-400:#5b7db3;
+    --navy-500:#3e64a5; --navy-600:#365796; --navy-700:#2b4783; --navy-800:#223771; --navy-900:#142454;
+    --navy-950:#0a1628;
+
+    --cyber-50:#e0f7fe; --cyber-100:#b3edfc; --cyber-200:#80e2fa; --cyber-300:#4dd6f8; --cyber-400:#26cbf6;
+    --cyber-500:#00c0f4; --cyber-600:#00aae0; --cyber-700:#0090c4; --cyber-800:#0077a9; --cyber-900:#00507d;
+
+    --brand-crimson:#c00000;
+
+    --surface:#0f1a2e; --surface-light:#162238; --surface-lighter:#1e2d48; --surface-border:#2a3a5c;
+
+    --alert-red:#ef4444; --alert-amber:#f59e0b; --alert-green:#22c55e;
+
+    --text-primary:#ffffff; --text-secondary:#d1d5db; --text-tertiary:#9ca3af;
+    --text-muted:#8b93a1; --text-muted-alt:#7c8598;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -22px rgb(0 0 0 / 0.75);
+
+    /* The ink the accent carries. The app's `--btn-primary-fg` is only ever *defined* inside the colour
+       schemes at the end of index.css (crimson, rose, maroon, plum, oled, brand, rose-tint, contrast) —
+       all eight of which fill with a dark red and therefore need a white label. The default dark theme's
+       accent is cyan (#00aae0), which needs the opposite ink, and its label therefore falls back to
+       --text-primary: white on cyan, measured at 2.68:1. This is the variable's own purpose, finally
+       given a value for the theme it was missing from. (Light theme: white on --cyber-800 = 7.56:1.) */
+    --accent-ink:#0a1628;
+  }
+
+  /* Light theme — the same overrides the application makes. */
+  html[data-theme="light"] {
+    --navy-950:#ffffff; --navy-900:#0d0d0d; --navy-800:#1a1a1a; --navy-700:#2b2b2b; --navy-600:#424242;
+    --navy-500:#5c5c5c; --navy-400:#808080; --navy-300:#b3b3b3; --navy-200:#d9d9d9; --navy-100:#ebebeb;
+    --navy-50:#f5f5f5;
+
+    --cyber-50:#f0f9ff; --cyber-100:#e0f2fe; --cyber-200:#bae6fd; --cyber-300:#075985; --cyber-400:#0369a1;
+    --cyber-500:#0ea5e9; --cyber-600:#0284c7; --cyber-700:#0369a1; --cyber-800:#075985; --cyber-900:#0c4a6e;
+
+    --surface:#ffffff; --surface-light:#f7f7f7; --surface-lighter:#f0f0f0; --surface-border:#b8b8b8;
+
+    --alert-red:#dc2626; --alert-amber:#d97706; --alert-green:#16a34a;
+
+    --text-primary:#1a1a1a; --text-secondary:#363636; --text-tertiary:#525252;
+    --text-muted:#595959; --text-muted-alt:#666666;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 10px 28px -22px rgb(0 0 0 / 0.3);
+
+    --accent-ink:#ffffff;
+  }
+
+  /* ── Base, as the application's base layer sets it ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    min-height: 100dvh; line-height: 1.6;
+    background: var(--navy-950); color: var(--text-secondary);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+  }
+  h1, h2, h3, h4 { font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+  p { margin: 0; }
+  code, .mono, kbd { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--cyber-400); outline-offset: 2px; }
+  .sprite { display: none; }
+  .ico { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8;
+         stroke-linecap: round; stroke-linejoin: round; }
+  .ico--lg { width: 17px; height: 17px; }
+
+  /* ── Mockup-only scaffolding: the frame, the theme toggle, the storyboard ──────────────────── */
+  .mock-frame { max-width: 1560px; margin: 0 auto; padding: 28px 24px 56px; }
+  .mock-tag {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--alert-red); background: color-mix(in srgb, var(--alert-red) 16%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--alert-red) 45%, transparent);
+  }
+  html[data-theme="light"] .mock-tag { color: #a30000; }
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 20;
+    display: inline-flex; gap: 2px; padding: 3px; border-radius: 9999px;
+    background: var(--surface); border: 1px solid var(--surface-border); box-shadow: var(--card-shadow);
+  }
+  .theme-toggle button {
+    font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    background: transparent; border: 0; border-radius: 9999px; padding: 4px 11px;
+  }
+  .theme-toggle button[aria-pressed="true"] { background: var(--surface-lighter); color: var(--text-primary); }
+  .mock-note { font-size: 11px; color: var(--text-muted-alt); }
+  .card {
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 12px; padding: 18px;
+  }
+  .screen { margin-top: 36px; }
+  .screen__label {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-muted);
+  }
+  .screen__label::after { content: ""; flex: 1; height: 1px; background: var(--surface-border); }
+  .screen__head { margin-top: 10px; }
+  .screen__head h2 { font-size: 16px; }
+  .screen__head p { margin-top: 4px; max-width: 118ch; font-size: 13px; color: var(--text-muted); }
+
+  /* The storyboard: each state is the same card, drawn at the 384px column it occupies on any screen,
+     inside a viewport strip the height of a laptop window. One card, fifteen states. */
+  .story { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 20px; margin-top: 16px; }
+  .shot { display: flex; flex-direction: column; gap: 8px; }
+  .viewport {
+    background: var(--navy-950); border: 1px solid var(--surface-border); border-radius: 14px;
+    overflow: hidden; flex: 1; display: flex;
+  }
+  .viewport > .auth-surface { flex: 1; min-height: 604px; }
+  .shot figcaption { font-size: 11.5px; color: var(--text-muted); }
+  .shot figcaption b { display: block; color: var(--text-primary); font-size: 12.5px; font-weight: 600;
+                       line-height: 1.35; }
+  .shot figcaption span { display: block; margin-top: 3px; line-height: 1.6; }
+  .shot figcaption .from { color: var(--text-muted-alt); }
+  .viewport--desktop > .auth-surface { min-height: 660px; }
+
+  /* ── The sign-in surface: the page itself, and nothing else ────────────────────────────────── */
+  /* 100dvh, not 100vh. The current wrapper is `min-h-screen` (100vh), which on a phone is taller than
+     the visible area, so the status line and the footer sit under the browser's own bar. */
+  .auth-surface {
+    min-height: 100dvh; background: var(--navy-950);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px 16px 28px;
+  }
+  /* 384px is the current `max-w-sm`, kept: it is the width of a column that holds two fields and an act
+     without the eye having to travel. */
+  .auth { width: 100%; max-width: 384px; }
+
+  .auth__brand { text-align: center; }
+  /* The real artwork (apps/web/public/icon-192.png), embedded so the file opens from disk. Its black
+     rounded tile is part of the asset — the same on both themes, as BrandMark renders it. */
+  .mark {
+    width: 48px; height: 48px; margin: 0 auto 10px; display: block;
+    background-image: url("data:image/png;base64,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");
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+  }
+  /* The logotype's proportions (327:78) with the crimson 7. See the header note: the real mark is two
+     alpha masks this file does not carry, so the name is set in Inter. */
+  .wordmark {
+    display: inline-flex; align-items: baseline; gap: 0;
+    font-size: 26px; font-weight: 700; letter-spacing: .06em; line-height: 1;
+    color: var(--text-primary);
+  }
+  .wordmark .seven { color: var(--brand-crimson); }
+  .auth__tagline { margin-top: 10px; font-size: 13px; color: var(--text-muted); }
+
+  /* The notice the page arrives with (?reason=…). Coloured by its edge and its dot; the sentence itself is
+     --text-secondary, because on the light theme --alert-amber on white is 3.19:1 — a colour token is not
+     automatically a text colour, and a legible sentence matters more than a tinted one. */
+  .notice {
+    display: flex; align-items: flex-start; gap: 8px; margin-top: 16px;
+    padding: 9px 11px; border-radius: 10px; font-size: 12.5px; color: var(--text-secondary);
+    background: color-mix(in srgb, var(--alert-amber) 9%, transparent);
+    border: 1px solid color-mix(in srgb, var(--alert-amber) 34%, transparent);
+    border-left-width: 2px;
+  }
+  .notice .ico { margin-top: 3px; color: var(--alert-amber); }
+
+  /* The panel is the application's own `.card` (bg-surface, surface-border, rounded-xl 12px, p-5 20px). */
+  .panel {
+    margin-top: 16px; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 12px; padding: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  /* The way in: a two-option choice, the redesign's segmented furniture. Real radios underneath, so the
+     arrow keys work and a screen reader says "Passkey, selected, 1 of 2" — two divs with aria-pressed say
+     nothing, and announce nothing when the choice changes what the next field is. */
+  .seg {
+    display: flex; gap: 3px; padding: 3px; border-radius: 12px;
+    background: var(--surface-lighter); border: 1px solid var(--surface-border);
+  }
+  .seg__opt {
+    flex: 1; position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 34px; border-radius: 9px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary);
+    border: 1px solid transparent; cursor: pointer;
+  }
+  .seg__opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .seg__opt:hover { color: var(--text-primary); }
+  /* The chosen tab takes the accent's fill with its own ink (6.76:1 dark, 7.56:1 light) — the app's
+     `.tab-active` rule, with the label colour the default theme never set. */
+  .seg__opt--on {
+    background: var(--cyber-600); color: var(--accent-ink); font-weight: 600;
+    border-color: color-mix(in srgb, var(--cyber-500) 55%, transparent);
+  }
+  html[data-theme="light"] .seg__opt--on { background: var(--cyber-800); }
+  .seg__opt:focus-within { outline: 2px solid var(--cyber-400); outline-offset: 1px; }
+
+  /* Labels, not placeholders. A placeholder is not a label — it is the only text the current fields have,
+     and it disappears the moment anything is typed, which is exactly when a person needs it. */
+  .field { display: block; }
+  .field + .field { margin-top: 12px; }
+  .field__label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 500; color: var(--text-tertiary); }
+  .input {
+    width: 100%; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 8px; padding: 9px 12px; font: inherit; font-size: 14px; color: var(--text-primary);
+  }
+  .input::placeholder { color: var(--text-muted-alt); }
+  .input:focus { border-color: var(--cyber-500); outline: none;
+                 box-shadow: 0 0 0 1px color-mix(in srgb, var(--cyber-500) 30%, transparent); }
+  .input[aria-invalid="true"] { border-color: color-mix(in srgb, var(--alert-red) 60%, transparent); }
+  .input:disabled { opacity: .6; cursor: not-allowed; }
+  /* The reveal control is a button with a name, inside the field, not an icon that happens to be clickable. */
+  .withbtn { position: relative; }
+  .withbtn .input { padding-right: 44px; }
+  .reveal {
+    position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
+    min-width: 36px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: 0; border-radius: 8px; color: var(--text-muted);
+  }
+  .reveal:hover { color: var(--text-primary); background: var(--surface-lighter); }
+  .input--code { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+                 font-size: 20px; letter-spacing: .28em; text-align: center; }
+
+  .hint { font-size: 11.5px; color: var(--text-muted); line-height: 1.55; }
+  .hint + .hint { margin-top: 5px; }
+  .hint .ico { vertical-align: -2px; margin-right: 4px; }
+  .hint--warn { color: var(--text-secondary); }
+  .hint--warn .ico { color: var(--alert-amber); }
+
+  /* Errors: inline, at the field, announced, never a toast that can expire before it is read. */
+  .err {
+    display: flex; align-items: flex-start; gap: 8px; border-radius: 10px; padding: 9px 11px;
+    font-size: 12.5px; color: var(--text-secondary);
+    background: color-mix(in srgb, var(--alert-red) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--alert-red) 34%, transparent);
+    border-left-width: 2px;
+  }
+  .err .ico { margin-top: 3px; color: var(--alert-red); }
+  .err b { color: var(--text-primary); font-weight: 600; }
+  .err__left { margin-top: 4px; font-size: 11.5px; color: var(--text-secondary); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 42px; padding: 9px 14px; border-radius: 10px; font-size: 13.5px; font-weight: 500;
+    border: 1px solid transparent; text-decoration: none;
+  }
+  .btn--primary { width: 100%; background: var(--cyber-600); color: var(--accent-ink); font-weight: 600; }
+  html[data-theme="light"] .btn--primary { background: var(--cyber-800); }
+  .btn--primary:hover { background: var(--cyber-500); }
+  html[data-theme="light"] .btn--primary:hover { background: var(--cyber-700); }
+  .btn--secondary {
+    width: 100%; background: var(--surface-lighter); border-color: var(--surface-border);
+    color: var(--text-primary);
+  }
+  .btn--secondary:hover { background: var(--surface-border); }
+  .btn--quiet {
+    background: transparent; border-color: var(--surface-border); color: var(--text-secondary);
+  }
+  .btn--quiet:hover { color: var(--text-primary); border-color: var(--text-muted); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .btn--busy .ico { animation: spin 900ms linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .btn--busy .ico { animation: none; } }
+
+  .btn { white-space: nowrap; }
+  .row-end { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .row-end .btn--primary { flex: 1; }
+  .row-end .btn--quiet { flex: none; }
+  .linkish { background: transparent; border: 0; padding: 0; color: var(--text-muted); font-size: 12px;
+             text-decoration: underline; text-underline-offset: 2px; }
+  .linkish:hover { color: var(--text-primary); }
+
+  /* ── The system state: one sentence, and the details one press away ────────────────────────── */
+  .sys { margin-top: 16px; font-size: 12px; }
+  .sys__line { display: flex; align-items: flex-start; gap: 8px; color: var(--text-secondary); }
+  .dot { width: 8px; height: 8px; border-radius: 9999px; flex: none; margin-top: 5px; background: var(--text-muted-alt); }
+  .dot--ok { background: var(--alert-green); }
+  .dot--bad { background: var(--alert-red); }
+  .dot--warn { background: var(--alert-amber); }
+  .sys--ok .dot { box-shadow: 0 0 0 3px color-mix(in srgb, var(--alert-green) 20%, transparent); }
+  .sys--bad .dot { box-shadow: 0 0 0 3px color-mix(in srgb, var(--alert-red) 20%, transparent); }
+  .sys__more { margin-top: 8px; }
+  .sys__more summary {
+    list-style: none; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+    font-size: 11.5px; color: var(--text-muted);
+  }
+  .sys__more summary::-webkit-details-marker { display: none; }
+  .sys__more summary:hover { color: var(--text-primary); }
+  .sys__more summary .chev { transition: transform 150ms; }
+  .sys__more[open] summary .chev { transform: rotate(180deg); }
+  .sys__body {
+    margin-top: 9px; padding: 11px 12px; border-radius: 10px;
+    background: var(--surface-light); border: 1px solid var(--surface-border);
+  }
+  /* A definition list, not a grid of colour blocks. Each service states its own word, so the state is never
+     carried by colour alone — which matters on the light theme, where --alert-amber is 3.19:1 on white. */
+  .svc { display: flex; flex-direction: column; gap: 6px; }
+  .svc__row { display: flex; align-items: baseline; gap: 8px; font-size: 12px; }
+  .svc__row dt { flex: none; width: 98px; color: var(--text-muted); }
+  .svc__row dd { display: flex; align-items: baseline; gap: 6px; color: var(--text-secondary); }
+  .svc__port { color: var(--text-muted-alt); font-size: 10.5px; }
+  .svc__row .dot { margin-top: 0; align-self: center; }
+  .svc__note { margin-top: 10px; font-size: 11px; color: var(--text-muted); line-height: 1.6; }
+  .svc__note code { color: var(--text-secondary); font-size: 10.5px; }
+  .svc__fix {
+    margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--surface-border);
+    font-size: 11px; color: var(--text-muted); line-height: 1.6;
+  }
+  .svc__fix b { color: var(--text-tertiary); font-weight: 600; }
+  .svc__fix code { color: var(--text-secondary); font-size: 10.5px; }
+
+  /* The two facts a person can check, kept quiet at the bottom of the column. */
+  .auth__foot { margin-top: 18px; text-align: center; }
+  .auth__foot .ip { font-size: 11px; color: var(--text-muted-alt); }
+  .auth__foot .ip .mono { color: var(--text-tertiary); }
+  .auth__foot .copy { margin-top: 6px; font-size: 11px; color: var(--text-muted-alt); }
+
+  /* A step's heading, with the mark beside it — the same shape the app's own ChangePasswordForm uses. */
+  .steps { display: flex; align-items: flex-start; gap: 10px; }
+  .steps .icon { width: 30px; height: 30px; flex: none; border-radius: 9px; display: inline-flex;
+                 align-items: center; justify-content: center;
+                 background: color-mix(in srgb, var(--cyber-600) 20%, transparent); color: var(--cyber-400); }
+  .steps h3 { font-size: 14px; }
+  .steps p { margin-top: 3px; font-size: 11.5px; color: var(--text-muted); line-height: 1.6; }
+
+  /* Table for the notes section — the honest comparison, read not guessed. */
+  .tbl { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .tbl th, .tbl td {
+    text-align: left; vertical-align: top; padding: 8px 12px 8px 0; font-size: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent);
+  }
+  .tbl th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt);
+            border-bottom-color: var(--surface-border); font-weight: 600; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl td:first-child { color: var(--text-primary); font-weight: 500; width: 30%; }
+  .tbl .bad { color: var(--text-secondary); }
+  .tbl .good { color: var(--text-primary); }
+  .tbl .num { font-variant-numeric: tabular-nums; }
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px; margin-top: 16px; }
+  .notes h3 { font-size: 13px; }
+  .notes ul { margin: 9px 0 0 16px; }
+  .notes li { font-size: 12px; color: var(--text-muted); line-height: 1.65; }
+  .notes li + li { margin-top: 5px; }
+  .notes li b { color: var(--text-secondary); font-weight: 600; }
+  .notes code { color: var(--text-secondary); font-size: 11px; }
+  /* The mockup's own frame at phone width: the strip of commentary must not be the thing that overflows. */
+  @media (max-width: 420px) {
+    .mock-frame { padding: 20px 12px 40px; }
+    .story { gap: 14px; }
+    .viewport > .auth-surface { min-height: 0; }
+  }
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M12 3.2 19 5.7v5.6c0 4-2.8 6.8-7 8.3-4.2-1.5-7-4.3-7-8.3V5.7Z"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8.5" cy="15.5" r="3.5"/><path d="m11 13 7-7M15.5 5.5 18 8M13.5 7.5 16 10"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+  <symbol id="i-passkey" viewBox="0 0 24 24"><circle cx="10" cy="10" r="3"/><path d="M10 13v6M13 13v3M7 13v4M4.5 10a5.5 5.5 0 1 1 9.6 3.6"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7.5 9 6 9-6"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.5 21 20H3ZM12 10v4.5M12 17.2v.3"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.3"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-spin" viewBox="0 0 24 24"><path d="M12 4.5a7.5 7.5 0 1 0 7.5 7.5"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.2 2.4 3.2 5.4 3.2 8.5S14.2 18.1 12 20.5c-2.2-2.4-3.2-5.4-3.2-8.5S9.8 5.9 12 3.5Z"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="4" y="4.5" width="16" height="6" rx="2"/><rect x="4" y="13.5" width="16" height="6" rx="2"/><path d="M7.5 7.5h.3M7.5 16.5h.3"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6.5" rx="7" ry="2.8"/><path d="M5 6.5v11c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8v-11M5 12c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M3.5 9.5a13 13 0 0 1 17 0M7 13a8.5 8.5 0 0 1 10 0M10.2 16.4a4 4 0 0 1 3.6 0"/><path d="M12 19.6v.3"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+</svg>
+
+<div class="theme-toggle" role="group" aria-label="Theme">
+  <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>
+  <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+</div>
+
+<div class="mock-frame">
+
+  <header>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span class="mock-tag">Mockup — nothing changed</span>
+      <span class="mock-note">The sign-in page, outside the shell · proposed to replace
+        <code>apps/web/src/pages/Login.tsx</code></span>
+    </div>
+
+    <h1 style="font-size:22px; letter-spacing:-.01em; margin-top:10px;">
+      A sign-in page that answers one question
+    </h1>
+    <p style="max-width:118ch; font-size:13.5px; color:var(--text-muted); margin-top:6px;">
+      The current page asks who you are, then spends its remaining height on four health tiles, two
+      identical passkey buttons and a toast that can expire before you finish reading it. This is the
+      same page composed again: the way in is the first choice, the errors are at the field, the backend
+      is one sentence when it is well and one sentence when it is not, and the four states that used to
+      be four screens — credentials, second factor, a temporary password, a new passkey — are four steps
+      in one card. Restraint is the whole design: nothing on the page moves, and nothing competes with
+      the field you are typing in.
+    </p>
+
+    <!-- The visible version of the source comment above: what the current screen is, in its own terms. -->
+    <div class="card" style="margin-top:14px; padding:14px 16px; max-width:130ch;">
+      <p class="mock-note" style="color:var(--text-muted); font-size:12px; line-height:1.7;">
+        <b style="color:var(--text-tertiary);">Today, from apps/web/src/pages/Login.tsx:</b> a
+        <code>min-h-screen</code> navy-950 surface, one 384px column — BrandMark 56, the C7NTAX wordmark,
+        “Sign in to your PSA dashboard”, two fields that carry their names in <i>placeholders</i>
+        (<code>Email or username</code>, <code>Password</code> — the password field has no
+        <code>autocomplete</code> at all), one <b>Sign In</b> button, then <b>Sign in with passkey</b> and
+        <b>Register passkey on this device</b> as two more full-width secondary buttons, then a caption
+        over a 2×2 grid of four service tiles, the address this connection arrives from, and
+        © 2026 Cyber 7 Group, LLC. Every error is a <code>react-hot-toast</code> toast. The second-factor
+        step is a separate screen; MFA enrolment is <code>/mfa-setup</code> in the shell and is not part of
+        signing in; an account on a temporary password signs in and is then swapped onto a full-screen
+        gate on a different background that never says why.
+      </p>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════════
+       THE PAGE — drawn at 1440 x 820, dark theme, first view, everything healthy.
+       The sign-in page is outside the shell, so there is no rail, no header and no footer of the app's:
+       this is the page and nothing else. -->
+  <section class="screen">
+    <div class="screen__label">The page</div>
+    <div class="screen__head">
+      <h2>First view — 1440 × 820, 100% zoom</h2>
+      <p>
+        One path for the eye: mark, one sentence, the choice of credential, the field, the act. The two
+        things below the panel — the system sentence and the two footnotes — are the only other text on
+        the page, and all three are quiet by design. The whole surface is <code>100dvh</code>, so it is
+        the height of the window rather than 100vh of it.
+      </p>
+    </div>
+    <div class="shot" style="margin-top:14px;">
+      <div class="viewport viewport--desktop">
+        <div class="auth-surface">
+          <div class="auth">
+            <div class="auth__brand">
+              <span class="mark"></span>
+              <h1 class="wordmark" role="img" aria-label="C7NTAX">C<span class="seven">7</span>NTAX</h1>
+              <p class="auth__tagline">Sign in to your PSA dashboard</p>
+            </div>
+
+            <div class="panel">
+              <!-- The way in comes first. Passkey is preselected where the browser has
+                   `window.PublicKeyCredential`; where it does not, the choice is not drawn at all and this
+                   is simply a password form — a dead option is worse than no option. -->
+              <div class="seg" role="radiogroup" aria-label="How to sign in">
+                <label class="seg__opt seg__opt--on">
+                  <input type="radio" name="method-hero" checked>
+                  <svg class="ico"><use href="#i-passkey"/></svg>Passkey
+                </label>
+                <label class="seg__opt">
+                  <input type="radio" name="method-hero">
+                  <svg class="ico"><use href="#i-lock"/></svg>Password
+                </label>
+              </div>
+
+              <!-- The account field belongs to both paths, so switching never loses what was typed. -->
+              <label class="field">
+                <span class="field__label">Email or username</span>
+                <input class="input" type="text" autocomplete="username webauthn" autofocus>
+              </label>
+
+              <button class="btn btn--primary" type="button">
+                <svg class="ico ico--lg"><use href="#i-passkey"/></svg>Sign in with a passkey
+              </button>
+
+              <p class="hint">
+                Your device asks for your fingerprint, face or PIN, and the password it holds is never sent
+                to C7NTAX. No passkey on this device? Choose <b style="color:var(--text-secondary);">Password</b>.
+              </p>
+            </div>
+
+            <div class="sys sys--ok">
+              <p class="sys__line" aria-live="polite">
+                <span class="dot dot--ok"></span>
+                <span>All systems ready — the API answered, and so did the database.</span>
+              </p>
+              <details class="sys__more">
+                <summary>
+                  <svg class="ico chev" style="width:11px;height:11px;"><use href="#i-chev"/></svg>
+                  Show the four services
+                </summary>
+                <div class="sys__body">
+                  <dl class="svc">
+                    <div class="svc__row"><dt>Web Server</dt><dd><span class="dot dot--ok"></span>Serving<span class="svc__port">:3010</span></dd></div>
+                    <div class="svc__row"><dt>API Server</dt><dd><span class="dot dot--ok"></span>Healthy<span class="svc__port">:4000</span></dd></div>
+                    <div class="svc__row"><dt>Database</dt><dd><span class="dot dot--ok"></span>Connected<span class="svc__port">:5432</span></dd></div>
+                    <div class="svc__row"><dt>WebSocket</dt><dd><span class="dot dot--ok"></span>Available<span class="svc__port">:4000</span></dd></div>
+                  </dl>
+                  <p class="svc__note">
+                    Read from <code>GET /api/health</code> → <code>{"status":"ok","version":"1.0.0"}</code>
+                    and <code>GET /api/ready</code> → <code>{"status":"ready"}</code>.
+                    “Web Server” is this page having been served at all; the other three share one probe,
+                    so they change together.
+                  </p>
+                </div>
+              </details>
+            </div>
+
+            <div class="auth__foot">
+              <p class="ip">Connecting from <span class="mono">::1</span></p>
+              <p class="copy">© 2026 Cyber 7 Group, LLC</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption style="max-width:118ch;">
+        <span>
+          The status line is one sentence because <i>healthy is the state in which there is nothing to
+          do</i>; the four services are still there, one press down, with the raw probe answers printed
+          beside them. The passkey path is the first control on the page and the strongest credential the
+          product supports, and the password path is a choice away rather than a second button below.
+        </span>
+      </figcaption>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════════
+       EVERY STATE, drawn at the 384px column the card occupies on any screen width. Rendered from one
+       template so that every state really is the same card with different content — the states are a
+       drawing of behaviour, which is why the differences between them are the whole point. -->
+  <section class="screen">
+    <div class="screen__label">Every state</div>
+    <div class="screen__head">
+      <h2>Fifteen states, one card</h2>
+      <p>
+        Each is drawn at the width the column has on a laptop as well as a phone; the wider arrangement
+        is the hero above and adds only empty surface. The descriptors below carry the same copy the
+        application would use, so what differs between two states is the state and nothing else.
+      </p>
+    </div>
+    <div class="story" id="story"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════════
+       NOTES — the four things a reviewer should be able to argue with. Every number is measured (WCAG 2.1
+       relative luminance) from the real tokens, or read from the running instance. -->
+  <section class="screen">
+    <div class="screen__label">Notes</div>
+    <div class="screen__head">
+      <h2>The status, without tiles — and the two colours that were wrong</h2>
+      <p>
+        The status is the one part of this page that has to be believed, so it is the one part that was
+        checked against the code that produces it rather than against how it looks.
+      </p>
+    </div>
+
+    <div class="notes">
+      <div class="card">
+        <h3>Four tiles that are one probe, one of which never asked</h3>
+        <ul>
+          <li><b>“Web Server — Serving” is a tautology.</b> The panel is the page; if the browser is
+              rendering it, the frontend served it. The tile cannot be red.</li>
+          <li><b>The other three are a single request.</b> All three derive from one
+              <code>fetch("/api/health")</code>, so they are all green or all red — three blocks of colour
+              where one fact would do, and no state in which two of them differ.</li>
+          <li><b>“Database — Connected” is not what the probe asked.</b> In
+              <code>apps/api/src/index.ts</code>, <code>/api/health</code> is deliberately liveness only —
+              “is this process listening” — and must never query the database, or an outage becomes a crash
+              storm. It answers <code>{"status":"ok","version":"1.0.0"}</code>. The honest probe already
+              exists at <code>/api/ready</code>, answers <code>{"status":"ready"}</code>, and is
+              unauthenticated, so this page can ask it. The redesign does.</li>
+          <li><b>The remedy is written for the wrong reader.</b> When the API is down, three tiles tell a
+              person signing in to run <code>pnpm dev</code> in <code>apps/api</code> and to check port
+              4000 with <code>netstat</code>. That text is kept — it is accurate and it is somebody's
+              morning — but it moves into the disclosure, under “For whoever runs this instance”, where
+              the person who can use it will find it and the person signing in does not have to read it.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>What the eye is given, and where trust comes from</h3>
+        <ul>
+          <li><b>One path.</b> Mark → one sentence → the choice → the field → the act. Nothing else is at
+              display size, and nothing on the page is a decoration that could be mistaken for a control.</li>
+          <li><b>Trust is not a badge.</b> It comes from the mark and the product name being the real
+              ones and undecorated, from messages in the product's own voice with no error codes, and from
+              two facts that can actually be checked: the address this connection arrives from
+              (<code>GET /api/auth/client-ip</code>) and the raw probe answers, each one press away.</li>
+          <li><b>Honesty is a feature of the state.</b> When the API cannot answer, the page says sign-in
+              cannot complete <i>before</i> a password is typed — and switches the act off rather than
+              leaving it to fail, because a live button under that sentence is the page arguing with
+              itself. The “Connecting from” line is absent in that state because the address cannot be
+              read — which is the fastest way to see the API is down, and is kept.</li>
+          <li><b>Nothing is carried by colour alone.</b> Every service states its own word — Serving,
+              Healthy, Connected, Available, Unreachable — and the dot only repeats it.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Contrast, measured from the real tokens</h3>
+        <table class="tbl">
+          <tr><th>Control</th><th>Today</th><th>Proposed</th></tr>
+          <tr>
+            <td>Primary button, dark</td>
+            <td class="bad"><span class="mono">#ffffff</span> on <span class="mono">--cyber-600 #00aae0</span>
+              — <span class="num">2.68:1</span></td>
+            <td class="good"><span class="mono">--navy-950 #0a1628</span> on the same fill —
+              <span class="num">6.76:1</span></td>
+          </tr>
+          <tr>
+            <td>Primary button, light</td>
+            <td class="bad"><span class="mono">--text-primary #1a1a1a</span> on
+              <span class="mono">#0284c7</span> — <span class="num">4.25:1</span></td>
+            <td class="good"><span class="mono">#ffffff</span> on <span class="mono">--cyber-800 #075985</span>
+              — <span class="num">7.56:1</span></td>
+          </tr>
+          <tr>
+            <td>State colours, light</td>
+            <td class="bad"><span class="mono">--alert-amber #d97706</span> on white —
+              <span class="num">3.19:1</span>; <span class="mono">--alert-green #16a34a</span> —
+              <span class="num">3.30:1</span></td>
+            <td class="good">Carried by the dot and the border only; the sentence is
+              <span class="mono">--text-secondary #363636</span> — <span class="num">12.08:1</span></td>
+          </tr>
+        </table>
+        <p class="mock-note" style="margin-top:10px;">
+          The app's <code>--btn-primary-fg</code> exists for exactly this and is defined only inside the
+          eight colour schemes at the end of <code>index.css</code>, every one of which fills with a dark
+          red and therefore needs a white label. The default theme's cyan accent needs the opposite ink
+          and never gets it, so <b>Sign In</b> — the only control on the page that matters — is white on
+          cyan today. The same fallback reaches the redesign's own <code>.tab-active</code>.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Keyboard, screen reader, narrow window</h3>
+        <ul>
+          <li><b>Real labels.</b> <code>&lt;label for&gt;</code>, not placeholders. The password field gets
+              <code>autocomplete="current-password"</code> — today it has none, so a password manager can
+              fill the first field and not the second.</li>
+          <li><b>A real radiogroup</b> for Passkey | Password, so arrow keys move between them and a
+              screen reader announces the choice and its effect; two <code>aria-pressed</code> divs would
+              announce neither.</li>
+          <li><b>Errors are announced where they are read.</b> <code>role="alert"</code>,
+              <code>aria-invalid</code>, <code>aria-describedby</code> pointing at the message, focus moved
+              to the field. The notice is <code>role="status"</code> (polite) and the system line is
+              <code>aria-live="polite"</code>, so a service going down is announced without stealing focus
+              mid-typing.</li>
+          <li><b>Tab order is the visual order</b> — method, account, password, act, then the disclosure
+              and the two footnotes. The reveal control is a 36px button named “Show password”.</li>
+          <li><b>380px and 100% zoom:</b> the mark drops to 40px, the card keeps 16px gutters, the
+              segmented control stays on one line, and the status sentence wraps to two rather than
+              clipping. At 100% zoom on a 640px-tall window, mark + sentence + choice + two fields + act +
+              status fit above the fold without scrolling.</li>
+          <li><b>Nothing animates</b> except a 150ms colour transition and the disclosure chevron — and the
+              spinner on a busy button, which is suppressed under <code>prefers-reduced-motion</code>.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Deliberately absent</h3>
+        <ul>
+          <li><b>“Forgot password?”</b> — there is no self-service reset in this product: no route in
+              <code>App.tsx</code>, no handler in <code>auth.ts</code>. A link to an absent flow is worse
+              than the sentence that names the only remedy that exists (“ask an administrator”), so the
+              locked state names it and nothing is drawn that cannot happen.</li>
+          <li><b>“Remember this device” / “Keep me signed in”</b> — the session model is the cookie and its
+              configured timeout. Inventing a control here would promise something the API does not do.</li>
+          <li><b>Any SSO button on this instance</b> — <code>GET /api/auth/sso/status</code> answers
+              <code>{"enabled":false}</code> on 9 October 2026, so there is none; the state where an
+              administrator has switched it on is drawn in the storyboard.</li>
+          <li><b>A passkey button on a browser without WebAuthn</b> — <code>Login.tsx</code> already gates
+              on <code>PublicKeyCredential</code>; the redesign keeps that and removes the segmented
+              control entirely rather than showing an option that will fail.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mock-note" style="margin-top:34px; padding-top:16px; border-top:1px solid var(--surface-border); max-width:120ch;">
+    One file, opened from disk, with two themes and fifteen states of the page proposed to replace
+    <code>apps/web/src/pages/Login.tsx</code>. Nothing in the application was changed to draw it: every
+    colour is a token copied from <code>apps/web/src/index.css</code>, every figure was read from the
+    running instance or the code that computes it on 9 October 2026, and the shield is the real
+    <code>apps/web/public/icon-192.png</code> embedded as a data URL so the file makes no request at all.
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+
+    document.querySelectorAll('[data-theme-btn]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        root.setAttribute('data-theme', btn.getAttribute('data-theme-btn'));
+        document.querySelectorAll('[data-theme-btn]').forEach(function (other) {
+          other.setAttribute('aria-pressed', String(other === btn));
+        });
+      });
+    });
+
+    /* ── The storyboard ─────────────────────────────────────────────────────────────────────────
+       One template, so that every state is literally the same card. `copy` strings are the words the
+       application would use; where a string is the API's own, it is quoted exactly. */
+
+    /* ServiceHealthPanel.tsx's four services, with the labels, ports and words it prints. */
+    var SVC = [
+      { name: 'Web Server', role: 'Frontend',   port: '3010', up: 'Serving'   },
+      { name: 'API Server', role: 'Backend',    port: '4000', up: 'Healthy'   },
+      { name: 'Database',   role: 'PostgreSQL', port: '5432', up: 'Connected' },
+      { name: 'WebSocket',  role: 'Real-time',  port: '4000', up: 'Available' }
+    ];
+
+    var REMEDY = {
+      'API Server': 'Run <code>pnpm dev</code> in <code>apps/api</code>. Check that port 4000 is free (<code>netstat -ano | findstr :4000</code>).',
+      'Database': 'Verify PostgreSQL is running (<code>pg_isready</code>). Check <code>DATABASE_URL</code> in <code>apps/api/.env</code> points to a reachable instance.',
+      'WebSocket': 'The WebSocket shares the API port (4000). If the API is up, restart the server (kill stale node processes first).'
+    };
+
+    function ico(id, cls) {
+      return '<svg class="ico ' + (cls || '') + '"><use href="#' + id + '"/></svg>';
+    }
+
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    function brand() {
+      return '<div class="auth__brand">' +
+               '<span class="mark"></span>' +
+               '<h1 class="wordmark" role="img" aria-label="C7NTAX">C<span class="seven">7</span>NTAX</h1>' +
+               '<p class="auth__tagline">Sign in to your PSA dashboard</p>' +
+             '</div>';
+    }
+
+    function notice(text) {
+      if (!text) return '';
+      return '<p class="notice" role="status">' + ico('i-info') + '<span>' + text + '</span></p>';
+    }
+
+    function seg(selected, first, second) {
+      function opt(o) {
+        return '<label class="seg__opt' + (o.on ? ' seg__opt--on' : '') + '">' +
+                 '<input type="radio" name="method-' + Math.random().toString(36).slice(2, 8) + '"' +
+                 (o.on ? ' checked' : '') + (o.disabled ? ' disabled' : '') + '>' +
+                 ico(o.ico) + o.label +
+               '</label>';
+      }
+      return '<div class="seg" role="radiogroup" aria-label="' + first.aria + '">' +
+               opt({ label: first.label, ico: first.ico, on: selected === first.key }) +
+               opt({ label: second.label, ico: second.ico, on: selected === second.key, disabled: second.disabled }) +
+             '</div>';
+    }
+
+    function accountField(s) {
+      return '<label class="field">' +
+               '<span class="field__label">Email or username</span>' +
+               '<input class="input" type="text" value="' + esc(s.loginId || '') + '"' +
+                 ' autocomplete="username webauthn"' + (s.busy ? ' disabled' : '') +
+                 (s.invalid === 'loginId' ? ' aria-invalid="true" aria-describedby="field-error"' : '') +
+               '>' +
+             '</label>';
+    }
+
+    function passwordField(s) {
+      var reveal = '<button class="reveal" type="button" aria-pressed="' + (s.reveal ? 'true' : 'false') + '"' +
+                   ' aria-label="' + (s.reveal ? 'Hide password' : 'Show password') + '">' +
+                   ico(s.reveal ? 'i-x' : 'i-eye') + '</button>';
+      return '<div class="field">' +
+               '<label class="field__label" for="pw">Password</label>' +
+               '<span class="withbtn">' +
+                 '<input class="input" id="pw" type="' + (s.reveal ? 'text' : 'password') + '"' +
+                   ' value="' + esc(s.password || '') + '" autocomplete="current-password"' +
+                   (s.busy ? ' disabled' : '') +
+                   (s.invalid === 'password' ? ' aria-invalid="true" aria-describedby="field-error"' : '') +
+                 '>' + reveal +
+               '</span>' +
+               (s.capsLock
+                 ? '<p class="hint hint--warn">' + ico('i-alert') + 'Caps Lock is on.</p>'
+                 : '') +
+             '</div>';
+    }
+
+    function errorBlock(s) {
+      if (!s.error) return '';
+      var out = '<div class="err" role="alert">' + ico('i-alert') + '<span>' + s.error + '</span></div>';
+      if (s.attempts) out += '<p class="err__left">' + s.attempts + '</p>';
+      return out;
+    }
+
+    /* The status line. Healthy takes one sentence and the detail goes behind a disclosure; degraded takes
+       the room, and says the consequence before the person types anything. */
+    function status(s) {
+      if (s.status === 'checking') {
+        return '<div class="sys">' +
+                 '<p class="sys__line" aria-live="polite"><span class="dot dot--warn"></span>' +
+                 '<span>Checking the services…</span></p>' +
+               '</div>';
+      }
+      if (s.status === 'ready') {
+        return '<div class="sys sys--ok">' +
+                 '<p class="sys__line" aria-live="polite"><span class="dot dot--ok"></span>' +
+                 '<span>All systems ready — the API answered, and so did the database.</span></p>' +
+                 '<details class="sys__more"' + (s.statusOpen ? ' open' : '') + '>' +
+                   '<summary>' + ico('i-chev', 'chev') + 'Show the four services</summary>' +
+                   '<div class="sys__body">' + svcList([]) +
+                     '<p class="svc__note">Read from <code>GET /api/health</code> → ' +
+                     '<code>{"status":"ok","version":"1.0.0"}</code> and <code>GET /api/ready</code> → ' +
+                     '<code>{"status":"ready"}</code>. “Web Server” is this page having been served at all; ' +
+                     'the other three share one probe, so they change together.</p>' +
+                   '</div>' +
+                 '</details>' +
+               '</div>';
+      }
+      // Degraded: the API has not answered, so the probe cannot have, and neither can sign-in.
+      var down = ['API Server', 'Database', 'WebSocket'];
+      return '<div class="sys sys--bad">' +
+               '<div class="err" role="alert" style="margin-top:0;">' + ico('i-alert') +
+                 '<span><b>Sign-in cannot complete.</b> The API is not answering, so no password can be ' +
+                 'checked and no passkey can be verified. This is not your account — everybody sees it.</span>' +
+               '</div>' +
+               '<details class="sys__more"' + (s.statusOpen ? ' open' : '') + '>' +
+                 '<summary>' + ico('i-chev', 'chev') + 'What is down, and what to do about it</summary>' +
+                 '<div class="sys__body">' + svcList(down) +
+                   '<p class="svc__note">Three of the four move together because they are one request: ' +
+                   '<code>GET /api/health</code> never answered. <code>GET /api/ready</code> — the probe ' +
+                   'that asks the database — cannot be reached either.</p>' +
+                   '<p class="svc__fix"><b>For whoever runs this instance:</b> ' +
+                     (REMEDY['API Server']) + ' ' + (REMEDY['Database']) + '</p>' +
+                 '</div>' +
+               '</details>' +
+             '</div>';
+    }
+
+    function svcList(down) {
+      var out = '<dl class="svc">';
+      SVC.forEach(function (sv) {
+        var bad = down.indexOf(sv.name) !== -1;
+        out += '<div class="svc__row"><dt>' + sv.name + '</dt><dd>' +
+                 '<span class="dot ' + (bad ? 'dot--bad' : 'dot--ok') + '"></span>' +
+                 (bad ? 'Unreachable' : sv.up) +
+                 '<span class="svc__port">:' + sv.port + '</span>' +
+               '</dd></div>';
+      });
+      return out + '</dl>';
+    }
+
+    function foot(s) {
+      return '<div class="auth__foot">' +
+               (s.hideIp ? '' : '<p class="ip">Connecting from <span class="mono">::1</span></p>') +
+               '<p class="copy">© 2026 Cyber 7 Group, LLC</p>' +
+             '</div>';
+    }
+
+    /* The credentials step. `method` is 'passkey' or 'password'.
+       When the API is not answering the act is switched off rather than left to fail: a page that says
+       "sign-in cannot complete" and then offers a live button is a page arguing with itself, and the
+       person finds out by typing a password first. The probe is at most three seconds old, so the button
+       comes back on its own when the API does — and the fields stay typeable, because typing costs
+       nothing and the account name is not a secret from this page. */    function credentials(s) {
+      var passkey = s.method !== 'password';
+      var off = s.busy || s.status === 'down';
+      var act = passkey
+        ? '<button class="btn btn--primary' + (s.busy ? ' btn--busy' : '') + '" type="button"' +
+            (off ? ' disabled' : '') + '>' +
+            (s.busy ? ico('i-spin', 'ico--lg') + 'Waiting for passkey…'
+                    : ico('i-passkey', 'ico--lg') + 'Sign in with a passkey') +
+          '</button>'
+        : '<button class="btn btn--primary" type="button"' + (off ? ' disabled' : '') + '>' +
+            (s.busy ? 'Signing in…' : 'Sign In') +
+          '</button>';
+      var blocked = s.status === 'down'
+        ? '<p class="hint hint--warn">' + ico('i-alert') + 'This stays off until the API answers — with it ' +
+          'down, nothing typed here could be checked. The check below is re-run every three seconds, so it ' +
+          'comes back by itself.</p>'
+        : '';
+
+      var hint = passkey
+        ? '<p class="hint">' +
+            (s.busy
+              ? 'Your browser is asking this device to confirm it is you. The password it holds is never sent to C7NTAX.'
+              : 'Your device asks for your fingerprint, face or PIN, and the password it holds is never sent to C7NTAX. ' +
+                'No passkey on this device? Choose <b style="color:var(--text-secondary);">Password</b>.') +
+          '</p>'
+        : '<p class="hint">Trouble signing in? An administrator can unlock the account or reset the password.</p>';
+
+      return '<div class="panel">' +
+        (s.noChoice ? '' : seg(passkey ? 'passkey' : 'password',
+          { key: 'passkey',  label: 'Passkey',  ico: 'i-passkey', aria: 'How to sign in' },
+          { key: 'password', label: 'Password', ico: 'i-lock',    aria: 'How to sign in' })) +
+        accountField(s) +
+        (passkey ? '' : passwordField(s)) +
+        errorBlock(s) +
+        act +
+        hint +
+        blocked +
+      '</div>';
+    }
+
+    /* The second-factor step. The screen offers one field; the API offers TOTP, backup codes *and* an
+       emailed six-digit code (POST /auth/send-mfa-email, POST /auth/mfa/verify-email, 15-minute expiry). */
+    function secondFactor(s) {
+      var emailed = s.delivery === 'email';
+      return '<div class="panel">' +
+        seg(emailed ? 'email' : 'totp',
+          { key: 'totp',  label: 'Authenticator app', ico: 'i-code', aria: 'Where to get the code' },
+          { key: 'email', label: 'Email me a code',   ico: 'i-mail', aria: 'Where to get the code' }) +
+        (emailed
+          ? '<p class="hint">' + ico('i-check') + 'A code is on its way. It is six digits and it expires ' +
+            'in 15 minutes; a backup code works in this field too.</p>'
+          : '') +
+        '<div class="field">' +
+          '<label class="field__label" for="code">6-digit code</label>' +
+          '<input class="input input--code" id="code" type="text" inputmode="numeric" maxlength="6"' +
+            ' autocomplete="one-time-code" placeholder="000000"' +
+            (s.invalid === 'code' ? ' aria-invalid="true" aria-describedby="field-error"' : '') + '>' +
+        '</div>' +
+        errorBlock(s) +
+        '<button class="btn btn--primary" type="button">' + (s.busy ? 'Verifying…' : 'Verify') + '</button>' +
+        (emailed
+          ? '<p class="hint">Nothing after a minute? <button class="linkish" type="button">Send another code</button>' +
+            ' · <button class="linkish" type="button">Use a backup code</button></p>'
+          : '<p class="hint">Prefer the code by email? Choose <b style="color:var(--text-secondary);">Email me a code</b>.' +
+            ' A backup code works in this field too.</p>') +
+      '</div>';
+    }
+
+    /* The temporary-password step. The real form is ChangePasswordForm.tsx and the policy below is
+       packages/shared/src/passwordPolicy.ts: 12 characters, three of four classes, not your name or email. */
+    function newPassword() {
+      return '<div class="panel">' +
+        '<div class="steps">' +
+          '<span class="icon">' + ico('i-mark') + '</span>' +
+          '<div><h3>Choose your own password</h3>' +
+          '<p>You signed in with a temporary password an administrator set — that is why this step is here, ' +
+          'and nothing else is blocked. Pick your own to continue: the temporary one stops working straight away.</p></div>' +
+        '</div>' +
+        '<div class="field">' +
+          '<label class="field__label" for="cur">Current password</label>' +
+          '<span class="withbtn"><input class="input" id="cur" type="password" value="temporary-password"' +
+            ' autocomplete="current-password">' +
+            '<button class="reveal" type="button" aria-label="Show password">' + ico('i-eye') + '</button></span>' +
+          '<p class="hint">Known already — collected on the previous step and not asked for twice.</p>' +
+        '</div>' +
+        '<div class="field">' +
+          '<label class="field__label" for="new">New password</label>' +
+          '<span class="withbtn"><input class="input" id="new" type="password" autocomplete="new-password">' +
+            '<button class="reveal" type="button" aria-label="Show password">' + ico('i-eye') + '</button></span>' +
+          '<p class="hint">At least 12 characters, including three of: lowercase, uppercase, numbers, symbols. ' +
+          'Not your name, your email address or a common word.</p>' +
+        '</div>' +
+        '<div class="field">' +
+          '<label class="field__label" for="conf">Confirm new password</label>' +
+          '<input class="input" id="conf" type="password" autocomplete="new-password">' +
+        '</div>' +
+        '<div class="row-end">' +
+          '<button class="btn btn--quiet" type="button">Sign out</button>' +
+          '<button class="btn btn--primary" type="button">Set password</button>' +
+        '</div>' +
+      '</div>';
+    }
+
+    /* The passkey-registration step — the control that cannot work on the signed-out page. */
+    function addPasskey() {
+      return '<div class="panel">' +
+        '<div class="steps">' +
+          '<span class="icon">' + ico('i-passkey') + '</span>' +
+          '<div><h3>Add a passkey to this device?</h3>' +
+          '<p>Next time, signing in is your fingerprint, your face or your PIN instead of a password. ' +
+          'Your password keeps working either way, and you can remove the passkey later from Settings → Security.</p></div>' +
+        '</div>' +
+        '<div class="row-end">' +
+          '<button class="btn btn--quiet" type="button">Not now</button>' +
+          '<button class="btn btn--primary" type="button">' + ico('i-passkey', 'ico--lg') + 'Add a passkey</button>' +
+        '</div>' +
+        '<p class="hint">Asked once, here, where it can actually be done — <code>/auth/webauthn/register/options</code> ' +
+        'needs a session, which is why the button on today’s signed-out page can only fail.</p>' +
+      '</div>';
+    }
+
+    function ssoButton() {
+      return '<button class="btn btn--secondary" type="button" style="margin-top:12px;">' +
+               'Sign in with SSO (OIDC)' + ico('i-arrow') +
+             '</button>';
+    }
+
+    /* ── The fifteen states ─────────────────────────────────────────────────────────────────── */
+    var STATES = [
+      {
+        cap: '1 · First view — the way in is the first choice',
+        say: 'The account field is shared, so switching between passkey and password never loses what you ' +
+             'typed. The eye is given one path and nothing else is at display size.',
+        from: 'today: passkey is the fourth control from the top and needs the email filled first',
+        build: function (s) { return credentials(s); }, state: { method: 'passkey', status: 'ready' }
+      },
+      {
+        cap: '2 · Typing — the password path, revealed, with the one hint that matters',
+        say: 'A real label, a reveal button with a name and aria-pressed, and Caps Lock stated under the ' +
+             'field it is about. The current fields carry their names in placeholders, which vanish on the ' +
+             'first keystroke, and there is no reveal control at all.',
+        from: 'today: placeholders only, no reveal, no caps-lock warning',
+        build: function (s) { return credentials(s); },
+        state: { method: 'password', loginId: 'k.simmons@cyber7group.com', password: 'correct-horse-battery', reveal: true, capsLock: true, status: 'ready' }
+      },
+      {
+        cap: '3 · Submitting — the act says what it is doing',
+        say: 'The segment and both fields go inert rather than disappearing, so nothing jumps while a ' +
+             'round trip is in flight. One request, one label, and no second button that means the same thing.',
+        from: 'today: "Signing in..." with two live passkey buttons beneath it',
+        build: function (s) { return credentials(s); },
+        state: { method: 'password', loginId: 'k.simmons@cyber7group.com', password: 'correct-horse-battery', busy: true, status: 'ready' }
+      },
+      {
+        cap: '4 · Wrong password — at the field, with the count',
+        say: 'The API answers “Invalid credentials” (401). That is a fact for a log, not a sentence for a ' +
+             'person, so the page says what to try and how many attempts are left — MAX_LOGIN_ATTEMPTS is 5 ' +
+             'behind AUTH_HARDENING_ENABLED, and the count is the only warning the current page never gives.',
+        from: 'today: a toast that can expire before it is read, with no count',
+        build: function (s) { return credentials(s); },
+        state: {
+          method: 'password', loginId: 'k.simmons@cyber7group.com', password: 'wrong-password', invalid: 'password',
+          error: 'That password doesn’t match the one we hold for <b>k.simmons@cyber7group.com</b>.',
+          attempts: '2 attempts left before this account locks.',
+          status: 'ready'
+        }
+      },
+      {
+        cap: '5 · Locked — the API’s 423, once, with nothing that cannot happen',
+        say: '“Account locked after too many failed sign-in attempts — ask an administrator to unlock it” is ' +
+             'the API’s own sentence. The page keeps the remedy and drops the jargon; the fields stay usable ' +
+             'because the form may be for somebody else’s account. There is no self-service unlock in this ' +
+             'product, so no link pretends there is one.',
+        from: 'today: a toast with the same sentence, and a form that looks identical',
+        build: function (s) { return credentials(s); },
+        state: {
+          method: 'password', loginId: 'k.simmons@cyber7group.com',
+          error: '<b>This account is locked.</b> Too many wrong passwords were tried, and an administrator ' +
+                 'has to unlock it — nothing on this page can.',
+          status: 'ready'
+        }
+      },
+      {
+        cap: '6 · Second factor — the emailed code the API already had',
+        say: 'POST /auth/send-mfa-email and POST /auth/mfa/verify-email have existed all along while the ' +
+             'screen offered one authenticator field with the word “email” in its caption and no way to use ' +
+             'it. Codes are six digits and expire in 15 minutes; the field takes a backup code too. ' +
+             'Enrolment itself is not here — that is /mfa-setup, inside the app.',
+        from: 'today: a separate screen, one field, no email option, no resend',
+        build: function (s) { return secondFactor(s); }, state: { delivery: 'email', status: 'ready' }
+      },
+      {
+        cap: '7 · A temporary password — the reason, on the screen that asks',
+        say: 'The credentials succeed and the product immediately needs something else from you. Today the ' +
+             'whole screen is swapped for a gate on a different background and nothing says why; here it is a ' +
+             'step of the same card, in the same tokens, with the reason first. The current password was ' +
+             'collected a moment ago and is not asked for twice — ChangePasswordForm already accepts exactly ' +
+             'that (`currentPassword`, `compact`) and no screen passes it.',
+        from: 'today: PasswordChangeGate, a different background, no explanation',
+        build: function () { return newPassword(); }, state: { status: 'ready' }
+      },
+      {
+        cap: '8 · The moment a passkey can actually be registered',
+        say: '“Register passkey on this device” sits on the signed-out page and cannot work there — ' +
+             'register/options is behind `authenticate`, and the hook’s own fallback message is “sign in with ' +
+             'password first”. Offered once, right after a password sign-in, skippable, and never repeated.',
+        from: 'today: a button on the signed-out page that can only fail',
+        build: function () { return addPasskey(); }, state: { status: 'ready' }
+      },
+      {
+        cap: '9 · Arrived with a reason — ?reason=timeout|expired|logout',
+        say: 'The three sentences are the app’s own. role="status", so it is polite: a screen reader is not ' +
+             'interrupted mid-sentence to be told a session ended.',
+        from: 'today: the same three sentences in an amber banner above the card',
+        build: function (s) { return credentials(s); },
+        state: { method: 'passkey', notice: 'You were signed out after a period of inactivity.', status: 'ready' }
+      },
+      {
+        cap: '10 · All systems ready — one line, four services one press away',
+        say: 'Healthy is the state in which there is nothing to do, so it takes a sentence and the detail ' +
+             'goes behind a disclosure — closed by default, drawn open here so the detail can be judged — ' +
+             'with the raw probe answers printed, because that is the fact a person can hand to whoever ' +
+             'runs the instance.',
+        from: 'today: a caption over eight blocks of colour, on every visit',
+        build: function (s) { return credentials(s); }, state: { method: 'passkey', status: 'ready', statusOpen: true }
+      },
+      {
+        cap: '11 · Degraded — the API is not answering, so three of the four report Unreachable',
+        say: 'Only one probe can fail, so “one of the four down” is not a state this panel can actually be ' +
+             'in: the Web Server tile cannot go red (it is the page) and the other three come from one ' +
+             'request. Today those three red tiles tell a person signing in to run `pnpm dev` and check port ' +
+             '4000 with netstat — after the password has been typed and rejected. The redesign states the ' +
+             'consequence first, switches the act off rather than letting it fail, keeps the operator’s ' +
+             'remedy in the disclosure under “For whoever runs this instance”, and never uses colour alone: ' +
+             'each service prints its own word.',
+        from: 'today: three developer instructions shown to the person signing in',
+        build: function (s) { return credentials(s); },
+        state: { method: 'passkey', status: 'down', statusOpen: true, hideIp: true }
+      },
+      {
+        cap: '12 · Checking — the honest in-between',
+        say: 'Before the first answer there is a third state, and it is drawn rather than hidden: a person ' +
+             'who sees nothing at all will assume the worst.',
+        from: 'today: "Checking services..." over four grey tiles and a spinner',
+        build: function (s) { return credentials(s); }, state: { method: 'passkey', status: 'checking' }
+      },
+      {
+        cap: '13 · 380px, 100% zoom',
+        say: 'The mark drops to 40px, gutters stay at 16px, the segment holds one line, the error wraps ' +
+             'inside its panel and the status sentence takes two lines rather than clipping — the degraded ' +
+             'sentence, the longest on the page, is drawn at this same 384px column in state 11. The ' +
+             'surface is 100dvh: the current wrapper is `min-h-screen` (100vh), which on a phone is taller ' +
+             'than the visible area, so the status and the footer sit under the browser’s own bar.',
+        from: 'today: 100vh — status and footer under the browser chrome on a phone',
+        build: function (s) { return credentials(s); },
+        state: { method: 'password', loginId: 'k.simmons@cyber7group.com', error: '<b>That password doesn’t match</b> the one we hold for that address.', attempts: '2 attempts left before this account locks.', invalid: 'password', status: 'ready', phone: true }
+      },
+      {
+        cap: '14 · Where SSO sits when an administrator enables it',
+        say: 'GET /api/auth/sso/status answers {"enabled":false} on this instance on 9 October 2026, so no ' +
+             'such button exists today. Drawn for the instance that switches it on: a quiet third option ' +
+             'under the primary act, never above it. The callback still carries a single-use code exchanged ' +
+             'in a POST body, so no token ever appears in a URL.',
+        from: 'today: the same button, shown only when /auth/sso/status says enabled',
+        build: function (s) { return credentials(s) + ssoButton(); }, state: { method: 'passkey', status: 'ready' }
+      },
+      {
+        cap: '15 · The same state in the classic interface',
+        say: 'The sign-in page is outside the shell and does not read useRedesign() today; the proposal ' +
+             'keeps one arrangement for both interfaces, because the choice here is which credential to ' +
+             'use rather than which furniture you prefer. If the switch is extended to it, this is the ' +
+             'classic arrangement: labelled fields in a column, the act, the passkey path as a full-width ' +
+             'secondary button, and the services as a key/value table. Same words, same calls — the shared ' +
+             'part is the state, never the layout.',
+        from: 'the escape hatch, drawn rather than described',
+        classic: true
+      }
+    ];
+
+    function classicPanel() {
+      var rows = SVC.map(function (sv) {
+        return '<div class="svc__row"><dt>' + sv.name + '</dt><dd>' +
+                 '<span class="dot dot--ok"></span>' + sv.up +
+                 '<span class="svc__port">:' + sv.port + '</span></dd></div>';
+      }).join('');
+      return '<div class="panel">' +
+        '<label class="field"><span class="field__label">Email or username</span>' +
+          '<input class="input" type="text" autocomplete="username webauthn"></label>' +
+        '<label class="field"><span class="field__label">Password</span>' +
+          '<input class="input" type="password" autocomplete="current-password"></label>' +
+        '<button class="btn btn--primary" type="button">Sign In</button>' +
+        '<div class="field"><span class="field__label" style="margin-bottom:0;">Other ways to sign in</span>' +
+          '<button class="btn btn--secondary" type="button" style="margin-top:6px;">' +
+            ico('i-passkey', 'ico--lg') + 'Sign in with a passkey</button></div>' +
+      '</div>' +
+      '<div class="panel" style="gap:10px;">' +
+        '<p style="font-size:12px; color:var(--text-primary); font-weight:600;">Service status</p>' +
+        '<dl class="svc">' + rows + '</dl>' +
+      '</div>' +
+      '<div class="auth__foot">' +
+        '<p class="ip">Connecting from <span class="mono">::1</span></p>' +
+        '<p class="copy">© 2026 Cyber 7 Group, LLC</p>' +
+      '</div>';
+    }
+
+    var story = document.getElementById('story');
+    STATES.forEach(function (st) {
+      var s = st.state || {};
+      var inner = st.classic
+        ? brand() + classicPanel()
+        : brand() + notice(s.notice) + st.build(s) +
+          (s.status ? status(s) : '') +
+          foot(s);
+      var fig = document.createElement('figure');
+      fig.className = 'shot';
+      fig.innerHTML =
+        '<div class="viewport"' + (s.phone ? ' style="max-width:380px;"' : '') + '>' +
+          '<div class="auth-surface"><div class="auth">' + inner + '</div></div>' +
+        '</div>' +
+        '<figcaption><b>' + st.cap + '</b><span>' + st.say + '</span>' +
+        '<span class="from">' + st.from + '</span></figcaption>';
+      story.appendChild(fig);
+    });
+  })();
+</script>
+</body>
+</html>

@@ -374,6 +374,13 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; 
   .ticket-print-activity { border-top: 1px solid #cccccc; padding: 6pt 0; break-inside: avoid; }
   .ticket-print-activity p { white-space: pre-wrap; margin: 3pt 0; }
   .ticket-print-activity small { color: #555555; }
+  /* The letterhead every printed document wears — the shield on its tile, the wordmark with the
+     crimson 7, and who made it. See components/PrintLetterhead.tsx. */
+  .print-letterhead { display: flex; align-items: center; gap: 10pt; padding-bottom: 6pt; }
+  .print-letterhead img { width: 26pt; height: 26pt; border-radius: 6pt; }
+  .print-letterhead__mark { font: 700 17pt/1 -apple-system, "Segoe UI", Roboto, Helvetica, sans-serif; color: #0f172a; }
+  .print-letterhead__mark b { color: #c00000; }
+  .print-letterhead__who { margin-left: auto; text-align: right; font: 8pt/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, sans-serif; color: #64748b; }
 }
 
 /* ── P1 modernization ─────────────────────────────────────────────────────

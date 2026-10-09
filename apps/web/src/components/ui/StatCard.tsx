@@ -15,17 +15,24 @@ const TONES = {
  * The redesigned tile leads with the number rather than the icon: a dashboard is read by scanning
  * figures, and an icon sitting where the figure belongs makes that scan slower. The glyph moves to
  * the corner, where it labels the figure without competing with it.
+ *
+ * `foot` is for the one or two tiles whose *subject* belongs on the tile and not only in a panel
+ * underneath it — the Customer Portal's address is the example: the figure says whether the portal is
+ * live, and the foot says where a customer goes, which is the next question the figure raises. It is
+ * optional and renders nothing when absent, so every existing tile is unchanged.
  */
 export function StatCard({
   label,
   value,
   icon,
   tone = "cyber",
+  foot,
 }: {
   label: string;
   value: ReactNode;
   icon?: ReactNode;
   tone?: keyof typeof TONES;
+  foot?: ReactNode;
 }) {
   const redesign = useRedesign();
 
@@ -39,6 +46,7 @@ export function StatCard({
           ) : null}
         </div>
         <p className="mt-2 text-2xl font-semibold leading-none tracking-tight text-white tabular-nums">{value}</p>
+        {foot ? <div className="mt-2">{foot}</div> : null}
       </div>
     );
   }
@@ -51,6 +59,7 @@ export function StatCard({
       <div className="min-w-0">
         <p className="text-2xl font-bold text-white leading-none tabular-nums">{value}</p>
         <p className="text-xs text-gray-400 mt-1 truncate">{label}</p>
+        {foot ? <div className="mt-1">{foot}</div> : null}
       </div>
     </div>
   );

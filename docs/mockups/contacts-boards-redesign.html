@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<!--
+  MOCKUP ONLY — nothing in the application has been changed.
+
+  Two screens of the modern interface, reimagined. Not restyled: composed again out of the redesign's
+  own furniture (a rail of choices, pills you press, a detail sheet, a policy track you step along,
+  sentences beside the control that acts, a countable footer), because both screens are lists that
+  never say the thing they were opened to say.
+
+  CONTACTS (apps/web/src/pages/Contacts.tsx)
+  Today the page is a flat column of 21 cards — a name, an email, a phone, a client — with a client
+  <select> that lists five names and tells you nothing about them, four view chips that narrow the
+  list while a single line of text counts the result, and a detail rail that repeats the row's four
+  facts in a larger typeface and then offers Edit and Create Ticket. What a technician opens the page
+  to find out is not on it: whose client this person is, whether they are that client's primary, what
+  they have open, whether they can sign in to the portal, and what you do next from here.
+  Proposed: one rail holding both questions the page is asked (which slice, and whose client — they
+  are the same kind of choice, and a client's own weight belongs beside its name); rows that carry the
+  person *and* their client; a sheet that does the work rather than repeating the row; and a footer
+  that counts.
+
+  SERVICE BOARDS (apps/web/src/pages/Boards.tsx, Administration.tsx → Service Boards)
+  Today four cards repeat six equal tiles each (New, Workable, On hold, Waiting, Escalated, Avg age)
+  and a line of muted text under the board's name. The one policy a technician is judged by — whether
+  closing a ticket on this board emails the client — is not on the page at all: it is a checkbox under
+  Administration → Service Boards, and "SLA 30 / 240 min" is the field, printed. NOC Alerts closes
+  without emailing the client, and nothing on the boards page says so.
+  Proposed: a board's own page — what it is for, how much is on it and how old that is, how it ends a
+  ticket (in words, and as the setting's own answer rather than a caption under the title), what it
+  promises on a track a person can read, the whole policy as one honest table against the other three
+  boards, and the way into editing it.
+
+  EVERY FIGURE IS READ, NOT INVENTED. Read from the running instance on 9 October 2026 through
+  GET /api/clients, /api/clients/contacts, /api/tickets, /api/boards, /api/boards/metrics and
+  /api/configuration, and cross-read in the code that computes them: apps/api/src/routes/boards.ts
+  (the six tiles' definitions), apps/api/prisma/schema.prisma (ServiceBoard, Contact),
+  apps/web/src/pages/Administration.tsx (the board editor's fields), components/CloseTicketDialog.tsx
+  (the wording of a silent close) and src/index.css (every colour below is the real token).
+  Where a figure could not be read, it is absent rather than illustrated.
+
+  The page is a drawing, not a prototype: the only thing that moves is the theme toggle. Reverting is
+  deleting this file.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Contacts and Service Boards, reimagined in the modern interface</title>
+<style>
+  /* ── The application's own tokens, copied from apps/web/src/index.css ───────────────────────── */
+  :root {
+    --navy-50:#e8edf5; --navy-100:#c5d1e5; --navy-200:#9eb3d3; --navy-300:#7895c1; --navy-400:#5b7db3;
+    --navy-500:#3e64a5; --navy-600:#365796; --navy-700:#2b4783; --navy-800:#223771; --navy-900:#142454;
+    --navy-950:#0a1628;
+
+    --cyber-50:#e0f7fe; --cyber-100:#b3edfc; --cyber-200:#80e2fa; --cyber-300:#4dd6f8; --cyber-400:#26cbf6;
+    --cyber-500:#00c0f4; --cyber-600:#00aae0; --cyber-700:#0090c4; --cyber-800:#0077a9; --cyber-900:#00507d;
+
+    --brand-crimson:#c00000;
+
+    --surface:#0f1a2e; --surface-light:#162238; --surface-lighter:#1e2d48; --surface-border:#2a3a5c;
+
+    --alert-red:#ef4444; --alert-amber:#f59e0b; --alert-green:#22c55e;
+
+    --status-new:#38bdf8; --status-open:#60a5fa; --status-progress:#fbbf24; --status-waiting-client:#c084fc;
+    --status-waiting-vendor:#a5b4fc; --status-resolved:#4ade80; --status-closed:#9ca3af; --status-reopened:#fb923c;
+
+    --text-primary:#ffffff; --text-secondary:#d1d5db; --text-tertiary:#9ca3af;
+    --text-muted:#8b93a1; --text-muted-alt:#7c8598;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -22px rgb(0 0 0 / 0.75);
+    --btn-primary-fg:#ffffff;
+  }
+
+  /* Light theme — the same overrides the application makes, including the darkened status tokens. */
+  html[data-theme="light"] {
+    --navy-950:#ffffff; --navy-900:#0d0d0d; --navy-800:#1a1a1a; --navy-700:#2b2b2b; --navy-600:#424242;
+    --navy-500:#5c5c5c; --navy-400:#808080; --navy-300:#b3b3b3; --navy-200:#d9d9d9; --navy-100:#ebebeb;
+    --navy-50:#f5f5f5;
+
+    --cyber-50:#f0f9ff; --cyber-100:#e0f2fe; --cyber-200:#bae6fd; --cyber-300:#075985; --cyber-400:#0369a1;
+    --cyber-500:#0ea5e9; --cyber-600:#0284c7; --cyber-700:#0369a1; --cyber-800:#075985; --cyber-900:#0c4a6e;
+
+    --surface:#ffffff; --surface-light:#f7f7f7; --surface-lighter:#f0f0f0; --surface-border:#b8b8b8;
+
+    --alert-red:#dc2626; --alert-amber:#d97706; --alert-green:#16a34a;
+
+    --status-new:#075985; --status-open:#1e40af; --status-progress:#92400e; --status-waiting-client:#6b21a8;
+    --status-waiting-vendor:#3730a3; --status-resolved:#166534; --status-closed:#374151; --status-reopened:#9a3412;
+
+    --text-primary:#1a1a1a; --text-secondary:#363636; --text-tertiary:#525252;
+    --text-muted:#595959; --text-muted-alt:#666666;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 10px 28px -22px rgb(0 0 0 / 0.3);
+  }
+
+  /* ── Base, as the application's base layer sets it ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    min-height: 100dvh; line-height: 1.6;
+    background: var(--navy-950); color: var(--text-secondary);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+  }
+  h1, h2, h3, h4 { font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  code, .mono, kbd { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .num { font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 2px solid var(--cyber-400); outline-offset: 2px; }
+  .sprite { display: none; }
+  .ico { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8;
+         stroke-linecap: round; stroke-linejoin: round; }
+  .ico--lg { width: 18px; height: 18px; }
+
+  /* ── Mockup-only scaffolding: the frame, the theme toggle, the "Why" control ───────────────── */
+  .mock-frame { max-width: 1560px; margin: 0 auto; padding: 28px 24px 56px; }
+  .mock-tag {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--alert-red); background: color-mix(in srgb, var(--alert-red) 16%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--alert-red) 45%, transparent);
+  }
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 20;
+    display: inline-flex; gap: 2px; padding: 3px; border-radius: 9999px;
+    background: var(--surface); border: 1px solid var(--surface-border); box-shadow: var(--card-shadow);
+  }
+  .theme-toggle button {
+    font: inherit; font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    background: transparent; border: 0; border-radius: 9999px; padding: 4px 11px; cursor: pointer;
+  }
+  .theme-toggle button[aria-pressed="true"] { background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .why {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 9999px;
+    cursor: pointer; font: inherit; font-size: 11px; line-height: 18px; font-weight: 500;
+    color: var(--text-muted); background: transparent; border: 1px dashed var(--surface-border);
+  }
+  .why:hover { color: var(--text-primary); border-color: var(--text-muted); }
+  .why[aria-expanded="true"] { color: var(--cyber-300); border-style: solid;
+    border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); }
+  .why .chev { transition: transform 150ms; }
+  .why[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  .why-body[hidden] { display: none; }
+  .why-body {
+    margin-top: 8px; padding: 10px 12px; border-radius: 10px;
+    background: var(--surface-light); border: 1px dashed var(--surface-border);
+  }
+  .why-body p { font-size: 11.5px; color: var(--text-muted); line-height: 1.65; }
+  .why-body p + p { margin-top: 6px; }
+  .why-body .why-changes { color: var(--text-muted-alt); font-size: 11px; }
+  .mock-note { font-size: 11px; color: var(--text-muted-alt); }
+
+  /* ── The application's components, at their real values ───────────────────────────────────── */
+  .card {
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 12px; padding: 18px 18px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; flex: none; white-space: nowrap;
+    border-radius: 10px; border: 1px solid var(--surface-border); background: var(--surface-lighter);
+    padding: 4px 10px; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  }
+  .chip--on {
+    color: var(--cyber-300);
+    border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent);
+    background-color: color-mix(in srgb, var(--cyber-600) 18%, transparent);
+  }
+  .chip__n {
+    border-radius: 9999px; background: var(--surface-border); padding: 0 6px;
+    font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+  }
+  .chip--on .chip__n {
+    background: color-mix(in srgb, var(--cyber-500) 25%, transparent); color: var(--text-primary);
+  }
+  .chip--good { color:#34d399; border-color: color-mix(in srgb,#34d399 40%, transparent);
+    background-color: color-mix(in srgb,#34d399 14%, transparent); }
+  .chip--warn { color:#fbbf24; border-color: color-mix(in srgb,#fbbf24 40%, transparent);
+    background-color: color-mix(in srgb,#fbbf24 14%, transparent); }
+  html[data-theme="light"] .chip--good { color:#166534; border-color: color-mix(in srgb,#166534 40%, transparent);
+    background-color: color-mix(in srgb,#166534 12%, transparent); }
+  html[data-theme="light"] .chip--warn { color:#92400e; border-color: color-mix(in srgb,#92400e 40%, transparent);
+    background-color: color-mix(in srgb,#92400e 12%, transparent); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 9999px;
+    font-size: 11px; font-weight: 500; white-space: nowrap;
+    background-color: color-mix(in srgb, currentColor 18%, transparent);
+  }
+  .badge--new { color: var(--status-new); }
+  .badge--in_progress { color: var(--status-progress); }
+  .badge--waiting { color: var(--status-waiting-client); }
+  .badge--resolved { color: var(--status-resolved); }
+  .badge--closed { color: var(--status-closed); }
+  .badge--pending { color: var(--status-open); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 500;
+    border-radius: 10px; padding: 6px 12px; cursor: pointer; border: 1px solid transparent;
+  }
+  .btn--primary { background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .btn--secondary { background: var(--surface-lighter); border-color: var(--surface-border); color: var(--text-primary); }
+  .btn--quiet { background: transparent; border-color: var(--surface-border); color: var(--text-secondary); }
+  .btn--done { background: color-mix(in srgb, var(--alert-green) 16%, transparent);
+    border-color: color-mix(in srgb, var(--alert-green) 40%, transparent); color: var(--alert-green); }
+  html[data-theme="light"] .btn--done { color:#15803d; }
+
+  .input-field {
+    width: 100%; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 10px; padding: 7px 11px; font: inherit; font-size: 13px; color: var(--text-primary);
+  }
+  .input-field::placeholder { color: var(--text-muted); }
+
+  .stat {
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px;
+    padding: 12px 13px;
+  }
+  .stat__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .stat__label { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+  .stat__n { margin-top: 7px; font-size: 22px; font-weight: 600; line-height: 1; color: var(--text-primary);
+    letter-spacing: -.01em; }
+  .stat__foot { margin-top: 7px; font-size: 11px; color: var(--text-muted-alt); line-height: 1.5; }
+  .glyph {
+    width: 24px; height: 24px; border-radius: 8px; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .glyph--cyber { background: color-mix(in srgb, var(--cyber-600) 20%, transparent); color: var(--cyber-400); }
+  .glyph--amber { background: color-mix(in srgb, var(--alert-amber) 15%, transparent); color: var(--alert-amber); }
+  .glyph--red { background: color-mix(in srgb, var(--alert-red) 15%, transparent); color: var(--alert-red); }
+  .glyph--neutral { background: var(--surface-lighter); color: var(--text-tertiary); }
+  .glyph--green { background: color-mix(in srgb, var(--alert-green) 15%, transparent); color: var(--alert-green); }
+
+  /* ── The composed screens ─────────────────────────────────────────────────────────────────── */
+  .screen { margin-top: 34px; }
+  .screen__label {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-muted);
+  }
+  .screen__label::after { content: ""; flex: 1; height: 1px; background: var(--surface-border); }
+  .screen__head { margin-top: 10px; }
+  .screen__head h2 { font-size: 16px; }
+  .screen__head p { margin-top: 4px; max-width: 110ch; font-size: 13px; color: var(--text-muted); }
+  .today {
+    margin-top: 10px; padding: 10px 13px; border-radius: 10px; font-size: 12px; line-height: 1.65;
+    color: var(--text-muted); background: color-mix(in srgb, var(--surface-lighter) 60%, transparent);
+    border: 1px dashed var(--surface-border); max-width: 150ch;
+  }
+  .today b { color: var(--text-tertiary); font-weight: 600; }
+
+  .contact-grid { display: grid; grid-template-columns: 208px minmax(0, 1fr) 348px; gap: 14px; margin-top: 14px;
+    align-items: start; }
+  .board-grid { display: grid; grid-template-columns: 252px minmax(0, 1fr); gap: 14px; margin-top: 14px; align-items: start; }
+  @media (max-width: 1180px) {
+    .contact-grid, .board-grid { grid-template-columns: minmax(0, 1fr); }
+    .rail { display: flex; flex-wrap: wrap; gap: 8px; }
+    .rail__group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .rail__head { width: 100%; }
+    .rail__item { width: auto; }
+  }
+
+  /* The rail: the choices the screen is made of, as things you press. */
+  .rail { padding: 12px; }
+  .rail__head {
+    font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted-alt); margin: 0 0 6px 2px;
+  }
+  .rail__group + .rail__group { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--surface-border); }
+  /* A column with one gap, so a row whose second line wraps is spaced exactly like a row whose second
+     line does not. As blocks, the two lines sat at whatever the line boxes produced, and the one card
+     with a longer sentence — NOC Alerts, the one that matters — looked like it belonged to no list. */
+  .rail__item {
+    display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; font: inherit;
+    background: transparent; border: 1px solid transparent; border-radius: 10px;
+    padding: 7px 9px; cursor: pointer; color: var(--text-secondary);
+  }
+  .rail__item:hover { background: var(--surface-lighter); color: var(--text-primary); }
+  .rail__item--on {
+    background: color-mix(in srgb, var(--cyber-600) 14%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent);
+    color: var(--text-primary);
+  }
+  .rail__line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .rail__name { font-size: 13px; font-weight: 500; min-width: 0; }
+  /* The count is two words ("21 open") and must never be split across the line it labels. */
+  .rail__n { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  .rail__item--on .rail__n { color: var(--cyber-300); }
+  /* `pretty` keeps a wrapped sentence from leaving one word on its own line, which is exactly what
+     "closes without / emailing" was doing. */
+  .rail__meta { font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.45; text-wrap: pretty; }
+  /* What the board does when a ticket closes is a *policy*, not another count, so it gets its own line
+     in every card and a dot that says which way it goes. On one line with the counts it wrapped on the
+     one board whose answer is the interesting one — NOC Alerts — and a wrapped exception is a card that
+     reads as a mistake. */
+  .rail__policy { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text-muted-alt); }
+  .rail__policy i { flex: none; width: 6px; height: 6px; border-radius: 99px; background: var(--alert-green); }
+  .rail__policy--silent i { background: var(--text-muted-alt); }
+  .rail__foot { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--surface-border);
+    font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.5; }
+
+  /* The list */
+  .listhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px;
+    border-bottom: 1px solid var(--surface-border); }
+  .listhead__count { font-size: 12px; color: var(--text-muted); }
+  .search { position: relative; margin-left: auto; width: 220px; max-width: 100%; }
+  .search .ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+  .search .input-field { padding-left: 30px; }
+  .rows { padding: 0; }
+  .row {
+    display: flex; align-items: flex-start; gap: 10px; padding: 9px 14px; cursor: pointer;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 55%, transparent);
+  }
+  .row:last-child { border-bottom: 0; }
+  .row:hover { background: var(--surface-light); }
+  .row--on { background: color-mix(in srgb, var(--cyber-600) 12%, transparent);
+    box-shadow: inset 2px 0 0 var(--cyber-500); }
+  .row__av {
+    width: 26px; height: 26px; border-radius: 9999px; flex: none; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700;
+    background: color-mix(in srgb, var(--cyber-600) 26%, transparent); color: var(--cyber-400);
+  }
+  .row__main { min-width: 0; flex: 1; }
+  .row__name { font-size: 13px; font-weight: 500; color: var(--text-primary);
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .row__title { font-weight: 400; font-size: 11.5px; color: var(--text-muted); }
+  .row__sub { font-size: 11.5px; color: var(--text-muted); display: flex; gap: 6px; flex-wrap: wrap; }
+  .row__sub .client { color: var(--cyber-300); }
+  .row__right { display: flex; align-items: center; gap: 6px; flex: none; padding-top: 2px; }
+  .row__raised { font-size: 11px; color: var(--text-muted); }
+  .star { color: var(--alert-amber); font-size: 11px; line-height: 1; }
+  .flag { font-size: 10px; color: var(--text-muted-alt); }
+  .listfoot {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 14px; border-top: 1px solid var(--surface-border); font-size: 11px; color: var(--text-muted);
+  }
+  .listfoot .note { margin-left: auto; font-size: 10.5px; color: var(--text-muted-alt); }
+
+  /* The sheet: the detail pane, doing work rather than repeating the row */
+  .sheet { padding: 0; }
+  .sheet__head { padding: 14px 16px; border-bottom: 1px solid var(--surface-border);
+    display: flex; align-items: flex-start; gap: 10px; }
+  .sheet__av {
+    width: 38px; height: 38px; border-radius: 9999px; flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
+    background: color-mix(in srgb, var(--cyber-600) 26%, transparent); color: var(--cyber-400);
+  }
+  .sheet__body { padding: 4px 16px 16px; }
+  .sheet__block { padding: 13px 0; border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); }
+  .sheet__block:last-child { border-bottom: 0; padding-bottom: 4px; }
+  .sheet__btitle { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted-alt); }
+  .kv { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+  .kv + .kv { margin-top: 5px; }
+  .kv__k { flex: none; width: 104px; color: var(--text-muted); font-size: 11.5px; }
+  .kv__v { color: var(--text-primary); }
+  .say { font-size: 11.5px; color: var(--text-muted); line-height: 1.6; }
+  .actions { display: flex; flex-wrap: wrap; gap: 7px; }
+  .ticketline { padding: 7px 0; font-size: 11.5px;
+    border-bottom: 1px dashed color-mix(in srgb, var(--surface-border) 60%, transparent); }
+  .ticketline:last-of-type { border-bottom: 0; }
+  .ticketline__top { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+  .ticketline__n { font-size: 11.5px; color: var(--cyber-300); }
+  .ticketline__t { color: var(--text-secondary); font-size: 12px; margin-top: 2px; }
+  .ticketline__m { margin-left: auto; flex: none; color: var(--text-muted-alt); font-size: 10.5px; }
+
+  /* A switch and a segmented choice, at the sizes the application draws them */
+  .switch { position: relative; display: inline-flex; align-items: center; width: 42px; height: 23px;
+    flex: none; border-radius: 9999px; border: 0; cursor: pointer; background: var(--surface-border); }
+  .switch--on { background: var(--cyber-600); }
+  .switch__knob { position: absolute; width: 17px; height: 17px; border-radius: 9999px; background: #fff;
+    left: 3px; }
+  .switch--on .switch__knob { left: 22px; }
+  .seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 12px; background: var(--surface-lighter);
+    border: 1px solid var(--surface-border); }
+  .seg__opt { font: inherit; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 6px 11px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .seg__opt--on { background: var(--cyber-600); color: var(--btn-primary-fg); font-weight: 600; }
+
+  /* The policy track: the board's promises, in the order they happen */
+  .track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  @media (max-width: 760px) { .track { grid-template-columns: minmax(0, 1fr); } }
+  .step { position: relative; padding: 12px 13px; background: var(--surface-light);
+    border: 1px solid var(--surface-border); border-radius: 12px; }
+  .step__dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--cyber-500);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyber-500) 22%, transparent); }
+  .step__lbl { margin-top: 8px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text-muted-alt); font-weight: 600; }
+  .step__val { margin-top: 3px; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .step__say { margin-top: 4px; font-size: 11px; color: var(--text-muted); line-height: 1.55; }
+
+  /* The honest table */
+  .ptable { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .ptable th, .ptable td { text-align: left; padding: 8px 10px 8px 0; font-size: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); vertical-align: top; }
+  .ptable th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt);
+    font-weight: 600; border-bottom-color: var(--surface-border); }
+  .ptable td { color: var(--text-secondary); }
+  .ptable tr:last-child td { border-bottom: 0; }
+  .ptable .b-name { color: var(--text-primary); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+  .ptable .b-code { font-size: 10px; color: var(--cyber-300);
+    border: 1px solid color-mix(in srgb, var(--cyber-500) 40%, transparent); border-radius: 6px; padding: 0 4px; }
+  .ptable .b-sub { font-size: 11px; color: var(--text-muted); }
+  .ptable tr.on td { background: color-mix(in srgb, var(--cyber-600) 9%, transparent); }
+  .ptable .silent { color: var(--text-primary); font-weight: 500; }
+  .plain { color: var(--text-primary); }
+
+  /* The band that says which board you are looking at */
+  .band {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-radius: 12px;
+    border: 1px solid var(--surface-border); border-left: 2px solid var(--cyber-500);
+    background: var(--surface-lighter); padding: 11px 14px;
+  }
+  .band__code { font-size: 11px; color: var(--cyber-300); }
+  .band__right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+  .stack > * + * { margin-top: 12px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 980px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  .grid6 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 1100px) { .grid6 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .states { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+  @media (max-width: 980px) { .states { grid-template-columns: minmax(0, 1fr); } }
+  .state { text-align: center; padding: 22px 18px; }
+  .state .ico { margin: 0 auto 8px; width: 26px; height: 26px; color: var(--text-muted-alt); }
+  .state__t { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .state__d { margin: 4px auto 0; max-width: 52ch; font-size: 11.5px; color: var(--text-muted); }
+  .state__a { margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .kbd { font-size: 10.5px; border: 1px solid var(--surface-border); border-radius: 5px;
+    padding: 0 4px; color: var(--text-muted); background: var(--surface-lighter); }
+  .keys { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--text-muted-alt);
+    padding: 9px 14px; border-top: 1px dashed var(--surface-border); }
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7.5 9 6 9-6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.5 3h3l1.5 4-2 1.5a12 12 0 0 0 6 6L16.5 12l4 1.5v3a2 2 0 0 1-2.2 2A15.5 15.5 0 0 1 4.5 5.2 2 2 0 0 1 6.5 3Z"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5Z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 6.5a3 3 0 0 1 0 5.8M17.5 19a5.5 5.5 0 0 0-2.2-4.4"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M5 21V4.5A1.5 1.5 0 0 1 6.5 3h7A1.5 1.5 0 0 1 15 4.5V21M15 10h3.5A1.5 1.5 0 0 1 20 11.5V21M3 21h18M8 7h4M8 11h4M8 15h4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 4 2.5 5.2 5.5.8-4 3.9 1 5.6-5-2.8-5 2.8 1-5.6-4-3.9 5.5-.8Z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M4 13V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7M4 13h4l1.5 2.5h5L16 13h4v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9.5 5.5v13M14.5 5.5v13"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12.5a7.5 7.5 0 0 1-7.5 7.5H8l-4 3v-4.2A7.5 7.5 0 0 1 8 7.5h4.5A7.5 7.5 0 0 1 20 12.5Z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.5 21 20H3ZM12 10v4.5M12 17.2v.3"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.5 19.5 6v6c0 4.2-3 7-7.5 8.5C7.5 19 4.5 16.2 4.5 12V6Z"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M4 16.5 9.5 11l3.5 3.5L20 7.5M20 7.5h-4.5M20 7.5V12"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h10M18 8h2M4 16h4M12 16h8M15 5.5v5M8 13.5v5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5M15 3v5M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0ZM12 17v4"/></symbol>
+  <symbol id="i-life" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="m6 6 3.6 3.6M18 6l-3.6 3.6M6 18l3.6-3.6M18 18l-3.6-3.6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16ZM14 6l4 4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</svg>
+
+<div class="theme-toggle" role="group" aria-label="Theme">
+  <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>
+  <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+</div>
+
+<div class="mock-frame">
+
+  <header class="stack">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span class="mock-tag">Mockup — nothing changed</span>
+      <span class="mock-note">Contacts · Service Boards — the modern interface only (<code>useRedesign()</code>)</span>
+    </div>
+    <h1 style="font-size:22px; letter-spacing:-.01em;">
+      Two lists that never said the thing they were opened to say
+    </h1>
+    <p style="max-width:120ch; font-size:13.5px; color:var(--text-muted);">
+      Contacts is 21 cards and a rail that repeats the card. Service Boards is four cards that restate six
+      equal numbers and print the SLA field as minutes — and never mentions the one policy a technician
+      is judged by, that NOC Alerts closes without emailing the client. Below, each screen is composed
+      again out of the modern interface's own furniture: a rail of the choices it is made of, rows that
+      lead with the person and their client, a sheet that does the work, a policy track read as three
+      sentences and a number, and a table that says what four boards actually do.
+    </p>
+    <p class="mock-note" style="max-width:120ch;">
+      Every figure was read from the running instance on 9 October 2026 —
+      <code>GET /api/clients</code> · <code>/api/clients/contacts</code> · <code>/api/tickets</code> ·
+      <code>/api/boards</code> · <code>/api/boards/metrics</code> · <code>/api/configuration</code> —
+      and cross-read in <code>apps/api/src/routes/boards.ts</code> (how the six tiles are counted),
+      <code>prisma/schema.prisma</code> (<code>ServiceBoard</code>, <code>Contact</code>),
+      <code>Administration.tsx</code> (the board editor), <code>CloseTicketDialog.tsx</code> and
+      <code>src/index.css</code>. Where a figure could not be read it is absent, not illustrated.
+    </p>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN ONE — CONTACTS
+
+       The problem, in full:
+
+       Contacts.tsx renders one flat `<div className="grid ...">` of cards. Each card is a 36px avatar,
+       a name, a title in grey, an email, a phone, a client, a status dot — and every card repeats
+       those same five facts, so 21 of them is 21 identical shapes to scroll. Above it sits a
+       `ListViews` chip strip (All 21 · Primary 5 · Inactive 0 · No email 0 — the counts are real and
+       good), a search, and a client `<select>` whose five options are bare names. Below the list
+       line of grey text says "21 contacts · 5 primary" and nothing else counts anything. The detail
+       column is a second copy of the row in a bigger typeface: company, title, email, phone, address,
+       website, notes, two badges, then Edit and Create Ticket.
+
+       What is missing is what the page is opened for. Two of the 21 people have 12 and 10 tickets;
+       four are addresses rather than people (no title, no phone, nothing ever raised) and the page
+       looks identical for them. Five people are marked primary and the page never says what that
+       means. No client in this instance has its portal switched on, so nobody here can sign in —
+       a fact with a different answer on the client, and nowhere on this screen.
+
+       So: the rail carries both questions (the slice, and the client — with each client's own weight
+       beside its name); the row carries the person and their client; the sheet answers the four
+       questions somebody actually opened the page to ask; and the states that are reachable today —
+       a client with nobody on it, and a view that holds nothing — are drawn rather than left to be
+       discovered. The keyboard and the right-click menu are unchanged; they are listed, because a
+       reimagining that quietly drops them is a redesign nobody asked for.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" id="contacts">
+    <div class="screen__label">Screen one — Contacts</div>
+    <div class="screen__head">
+      <h2>Contacts, as a rail, a list and a sheet that answers something</h2>
+      <p>
+        One rail for the two choices the page is made of; rows led by the person and their client; a
+        sheet that says what the row cannot — the client and its weight, the tickets, whether they can
+        sign in, the last contact, and the four things a technician does from here.
+      </p>
+    </div>
+    <div class="today">
+      <b>Today, from <code>Contacts.tsx</code>:</b> 21 cards, each a name, a title, an email, a phone and a
+      client; a client <code>&lt;select&gt;</code> of five bare names; four view chips; one line of grey
+      text counting the result; and a detail rail that repeats the card in a larger typeface. The page
+      knows which of the 21 people are primary and never says what primary means; it knows nobody can
+      sign in and never says that either.
+    </div>
+
+    <div class="contact-grid">
+
+      <!-- ── The rail: the slice, and the client ─────────────────────────────────────────────── -->
+      <aside class="card rail" aria-label="Views and clients">
+        <div class="rail__group">
+          <p class="rail__head">Views</p>
+          <button type="button" class="rail__item rail__item--on" aria-pressed="true">
+            <span class="rail__line"><span class="rail__name">All</span><span class="rail__n num">21</span></span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Primary</span><span class="rail__n num">5</span></span>
+            <span class="rail__meta">One per client: Acme, Globex, Initech, Stark, Umbrella</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Inactive</span><span class="rail__n num">0</span></span>
+            <span class="rail__meta">Nobody has been deactivated yet</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">No email</span><span class="rail__n num">0</span></span>
+            <span class="rail__meta">All 21 have an address — the view holds nothing</span>
+          </button>
+        </div>
+
+        <div class="rail__group">
+          <p class="rail__head">Clients</p>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Acme Corporation</span><span class="rail__n num">7</span></span>
+            <span class="rail__meta">29 tickets · portal off</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Umbrella Corp</span><span class="rail__n num">6</span></span>
+            <span class="rail__meta">18 tickets · portal off</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Globex Industries</span><span class="rail__n num">3</span></span>
+            <span class="rail__meta">19 tickets · portal off</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Stark Enterprises</span><span class="rail__n num">3</span></span>
+            <span class="rail__meta">18 tickets · portal off</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Initech Solutions</span><span class="rail__n num">2</span></span>
+            <span class="rail__meta">20 tickets · portal off</span>
+          </button>
+        </div>
+
+        <p class="rail__foot">
+          The client's own weight sits beside its name because that is the question the old select could
+          not answer: five names, no indication that one holds 7 of the 21 people and 29 of the 104 tickets.
+        </p>
+      </aside>
+
+      <!-- ── The list ────────────────────────────────────────────────────────────────────────── -->
+      <div class="card" style="padding:0;">
+        <div class="listhead">
+          <span style="font-size:13px; font-weight:600; color:var(--text-primary);">All contacts</span>
+          <span class="listhead__count num">21 people · 5 clients · 5 primary</span>
+          <span class="search">
+            <svg class="ico"><use href="#i-search"/></svg>
+            <input class="input-field" placeholder="Search name, email, title…" aria-label="Search contacts">
+          </span>
+          <button type="button" class="btn btn--primary"><svg class="ico"><use href="#i-users"/></svg>New contact</button>
+        </div>
+
+        <div class="rows">
+          <!-- Acme Corporation — 29 tickets, 7 people -->
+          <div class="row">
+            <span class="row__av">TB</span>
+            <div class="row__main">
+              <p class="row__name">Tom Beckett</p>
+              <p class="row__sub"><span class="client">Acme Corporation</span> · tom.beckett@gmail.com</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">2 raised</span><span class="chip"><span class="num">2 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">DC</span>
+            <div class="row__main">
+              <p class="row__name">David Chen <span class="row__title">IT Director · Information Technology</span> <span class="star" title="Primary contact">★</span></p>
+              <p class="row__sub"><span class="client">Acme Corporation</span> · david@acmecorp.com · +1-555-0101</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">10 raised</span><span class="chip"><span class="num">10 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">JD</span>
+            <div class="row__main">
+              <p class="row__name">Jane A. Doe</p>
+              <p class="row__sub"><span class="client">Acme Corporation</span> · jane.doe@contoso.com</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">5 raised</span><span class="chip"><span class="num">5 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">MG</span>
+            <div class="row__main">
+              <p class="row__name">Maria Garcia <span class="row__title">HR Manager · Human Resources</span></p>
+              <p class="row__sub"><span class="client">Acme Corporation</span> · maria@acmecorp.com · +1-555-0102</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">4 raised</span><span class="chip"><span class="num">4 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">SO</span>
+            <div class="row__main">
+              <p class="row__name">Sara Okafor</p>
+              <p class="row__sub"><span class="client">Acme Corporation</span> · sara.okafor@contoso.com</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">1 raised</span><span class="chip"><span class="num">1 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">JW</span>
+            <div class="row__main">
+              <p class="row__name">James Wilson <span class="row__title">CFO · Finance</span></p>
+              <p class="row__sub"><span class="client">Acme Corporation</span> · jwilson@acmecorp.com · +1-555-0103</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">7 raised</span><span class="chip"><span class="num">5 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">GC</span>
+            <div class="row__main">
+              <p class="row__name">Gina Consumer <span class="flag">no title on record</span></p>
+              <p class="row__sub"><span class="client">Acme Corporation</span> · gina.consumer@gmail.com</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">never raised</span></div>
+          </div>
+
+          <!-- Globex Industries — 19 tickets, 3 people -->
+          <div class="row">
+            <span class="row__av">EJ</span>
+            <div class="row__main">
+              <p class="row__name">Emily Johnson <span class="row__title">VP Operations · Operations</span> <span class="star" title="Primary contact">★</span></p>
+              <p class="row__sub"><span class="client">Globex Industries</span> · emily@globexind.com · +1-555-0201</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">7 raised</span><span class="chip"><span class="num">5 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">RK</span>
+            <div class="row__main">
+              <p class="row__name">Robert Kim <span class="row__title">Network Admin · IT</span></p>
+              <p class="row__sub"><span class="client">Globex Industries</span> · rkim@globexind.com · +1-555-0202</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">8 raised</span><span class="chip"><span class="num">7 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">SL</span>
+            <div class="row__main">
+              <p class="row__name">Sarah Lee <span class="row__title">Office Manager · Administration</span></p>
+              <p class="row__sub"><span class="client">Globex Industries</span> · slee@globexind.com · +1-555-0203</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">4 raised</span><span class="chip"><span class="num">4 open</span></span></div>
+          </div>
+
+          <!-- Initech Solutions — 20 tickets, 2 people -->
+          <div class="row">
+            <span class="row__av">JD</span>
+            <div class="row__main">
+              <p class="row__name">Jessica Davis <span class="row__title">CTO · Engineering</span></p>
+              <p class="row__sub"><span class="client">Initech Solutions</span> · jdavis@initech.io · +1-555-0302</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">8 raised</span><span class="chip"><span class="num">7 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">MB</span>
+            <div class="row__main">
+              <p class="row__name">Michael Brown <span class="row__title">CEO · Executive</span> <span class="star" title="Primary contact">★</span></p>
+              <p class="row__sub"><span class="client">Initech Solutions</span> · mbrown@initech.io · +1-555-0301</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">12 raised</span><span class="chip"><span class="num">10 open</span></span></div>
+          </div>
+
+          <!-- Stark Enterprises — 18 tickets, 3 people -->
+          <div class="row">
+            <span class="row__av">HH</span>
+            <div class="row__main">
+              <p class="row__name">Happy Hogan <span class="row__title">Facilities Manager · Facilities</span></p>
+              <p class="row__sub"><span class="client">Stark Enterprises</span> · happy@starkent.com · +1-555-0503</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">4 raised</span><span class="chip"><span class="num">4 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">PP</span>
+            <div class="row__main">
+              <p class="row__name">Pepper Potts <span class="row__title">Operations Director · Operations</span></p>
+              <p class="row__sub"><span class="client">Stark Enterprises</span> · pepper@starkent.com · +1-555-0502</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">8 raised</span><span class="chip"><span class="num">5 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">TS</span>
+            <div class="row__main">
+              <p class="row__name">Tony Stark <span class="row__title">Owner · Executive</span> <span class="star" title="Primary contact">★</span></p>
+              <p class="row__sub"><span class="client">Stark Enterprises</span> · tony@starkent.com · +1-555-0501</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">6 raised</span><span class="chip"><span class="num">6 open</span></span></div>
+          </div>
+
+          <!-- Umbrella Corp — 18 tickets, 6 people -->
+          <div class="row">
+            <span class="row__av">AP</span>
+            <div class="row__main">
+              <p class="row__name">Addin Probe <span class="flag">no title on record</span></p>
+              <p class="row__sub"><span class="client">Umbrella Corp</span> · someone@umbrellacorp.net</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">never raised</span></div>
+          </div>
+          <div class="row row--on">
+            <span class="row__av">AW</span>
+            <div class="row__main">
+              <p class="row__name">Alice Wong <span class="row__title">Security Officer · Security</span> <span class="star" title="Primary contact">★</span></p>
+              <p class="row__sub"><span class="client">Umbrella Corp</span> · alice@umbrellacorp.net · +1-555-0401</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">9 raised</span><span class="chip"><span class="num">5 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">OS</span>
+            <div class="row__main">
+              <p class="row__name">One Sender <span class="flag">no title on record</span></p>
+              <p class="row__sub"><span class="client">Umbrella Corp</span> · one@umbrellacorp.net</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">never raised</span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">PS</span>
+            <div class="row__main">
+              <p class="row__name">Parent Sender <span class="flag">no title on record</span></p>
+              <p class="row__sub"><span class="client">Umbrella Corp</span> · parent@umbrellacorp.net</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">never raised</span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">TM</span>
+            <div class="row__main">
+              <p class="row__name">Thomas Mueller <span class="row__title">IT Manager · IT</span></p>
+              <p class="row__sub"><span class="client">Umbrella Corp</span> · tmueller@umbrellacorp.net · +1-555-0402</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">9 raised</span><span class="chip"><span class="num">8 open</span></span></div>
+          </div>
+          <div class="row">
+            <span class="row__av">TS</span>
+            <div class="row__main">
+              <p class="row__name">Two Sender <span class="flag">no title on record</span></p>
+              <p class="row__sub"><span class="client">Umbrella Corp</span> · two@umbrellacorp.net</p>
+            </div>
+            <div class="row__right"><span class="row__raised num">never raised</span></div>
+          </div>
+        </div>
+
+        <div class="keys">
+          <span><span class="kbd">↑</span> <span class="kbd">↓</span> moves the selection and the sheet follows</span>
+          <span><span class="kbd">⏎</span> opens the sheet for the row under the cursor</span>
+          <span><span class="kbd">☰</span> the row menu keeps Show details · Edit contact · Create ticket · Open client · View client's tickets · Filter by this company · Make primary · Deactivate · Copy name/email/phone</span>
+        </div>
+
+        <div class="listfoot">
+          <span class="num">1–21 of 21</span>
+          <span class="num">5 primary · 5 clients · 104 tickets between them</span>
+          <button type="button" class="chip">Export as CSV <span class="chip__n num">21 rows</span></button>
+          <span class="note">The whole address book arrives in one page (<code>limit=500</code>), which is why this footer counts rather than pages.</span>
+        </div>
+      </div>
+
+      <!-- ── The sheet ───────────────────────────────────────────────────────────────────────── -->
+      <aside class="card sheet" aria-label="Person detail">
+        <div class="sheet__head">
+          <span class="sheet__av">AW</span>
+          <div style="min-width:0; flex:1;">
+            <p style="font-size:14px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
+              Alice Wong <span class="star" title="Primary contact">★</span>
+            </p>
+            <p style="font-size:11.5px; color:var(--text-muted);">Security Officer · Security</p>
+            <div style="margin-top:7px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <button type="button" class="chip chip--on"><svg class="ico" style="width:11px;height:11px;"><use href="#i-building"/></svg>Umbrella Corp</button>
+              <span class="chip"><span class="num">6 people</span></span>
+            </div>
+          </div>
+          <button type="button" class="btn btn--quiet" title="Edit contact"><svg class="ico"><use href="#i-edit"/></svg>Edit</button>
+        </div>
+
+        <div class="sheet__body">
+
+          <!-- her client -->
+          <div class="sheet__block">
+            <p class="sheet__btitle">Her client</p>
+            <div style="margin-top:8px;">
+              <div class="kv"><span class="kv__k">Client</span><span class="kv__v">Umbrella Corp</span></div>
+              <div class="kv"><span class="kv__k">People</span><span class="kv__v num">6 contacts</span></div>
+              <div class="kv"><span class="kv__k">Tickets</span><span class="kv__v num">18 raised</span></div>
+              <div class="kv"><span class="kv__k">Portal</span><span class="kv__v">Off — nobody at this client can sign in</span></div>
+              <div class="kv"><span class="kv__k">Primary</span><span class="kv__v">Alice Wong <span class="star">★</span></span></div>
+            </div>
+            <p class="say" style="margin-top:8px;">
+              Four of the six have no title, no phone number and have never raised a ticket — the addresses
+              monitoring sends from. The client's own weight belongs here, not in a select of five names.
+            </p>
+            <div class="actions" style="margin-top:9px;">
+              <button type="button" class="btn btn--secondary"><svg class="ico"><use href="#i-external"/></svg>Open the client</button>
+              <button type="button" class="btn btn--quiet">The client's 18 tickets</button>
+            </div>
+          </div>
+
+          <!-- her tickets -->
+          <div class="sheet__block">
+            <p class="sheet__btitle">What she has open</p>
+            <div style="margin-top:8px; display:flex; gap:14px; flex-wrap:wrap;">
+              <div><p class="num" style="font-size:18px; font-weight:600; color:var(--text-primary);">9</p><p class="say">raised</p></div>
+              <div><p class="num" style="font-size:18px; font-weight:600; color:var(--text-primary);">5</p><p class="say">still open</p></div>
+              <div><p class="num" style="font-size:18px; font-weight:600; color:var(--text-primary);">4</p><p class="say">resolved</p></div>
+              <div><p class="num" style="font-size:18px; font-weight:600; color:var(--text-primary);">4</p><p class="say">boards</p></div>
+            </div>
+            <div style="margin-top:9px;">
+              <div class="ticketline">
+                <div class="ticketline__top">
+                  <span class="badge badge--in_progress">In progress</span>
+                  <span class="ticketline__n">NOC-04-2011</span>
+                  <span class="ticketline__m">NOC Alerts · 19 Aug</span>
+                </div>
+                <p class="ticketline__t">API gateway 5xx error spike</p>
+              </div>
+              <div class="ticketline">
+                <div class="ticketline__top">
+                  <span class="badge badge--in_progress">In progress</span>
+                  <span class="ticketline__n">INT-04-2009</span>
+                  <span class="ticketline__m">Intelligence Desk · 19 Aug</span>
+                </div>
+                <p class="ticketline__t">Supply chain risk assessment</p>
+              </div>
+              <div class="ticketline">
+                <div class="ticketline__top">
+                  <span class="badge badge--resolved">Resolved</span>
+                  <span class="ticketline__n">INF-04-2024</span>
+                  <span class="ticketline__m">Infrastructure Desk · 18 Aug</span>
+                </div>
+                <p class="ticketline__t">Proxy server cache errors</p>
+              </div>
+            </div>
+            <p class="say" style="margin-top:7px;">
+              Three of the nine, newest first; the sheet is a way in, not a second ticket list.
+              "Open" is not closed and not resolved — the board figures on the next screen count everything
+              but closed, which is the API's own definition and a different number on purpose.
+            </p>
+            <div class="actions" style="margin-top:9px;">
+              <button type="button" class="btn btn--quiet">All nine on the Tickets board <svg class="ico"><use href="#i-arrow"/></svg></button>
+            </div>
+          </div>
+
+          <!-- the portal -->
+          <div class="sheet__block">
+            <p class="sheet__btitle">Whether she can sign in</p>
+            <div style="margin-top:8px; display:flex; align-items:flex-start; gap:12px;">
+              <div style="flex:1; min-width:0;">
+                <p style="font-size:13px; font-weight:500; color:var(--text-primary);">Cannot sign in to the portal</p>
+                <p class="say" style="margin-top:3px;">
+                  Umbrella Corp has its own portal switched off, so nobody at this client has one — no client
+                  on this instance does. Alice has no override, so her answer is the client's answer.
+                </p>
+              </div>
+            </div>
+            <div style="margin-top:10px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:150px;">
+                <p style="font-size:12px; color:var(--text-primary);">Refuse the portal to this person</p>
+                <p class="say">Off: she follows Umbrella Corp. On would refuse her alone — the switch for the
+                  contractor who should never have one — and it would still refuse her if the client's own
+                  portal were switched on tomorrow.</p>
+              </div>
+              <button type="button" class="switch" role="switch" aria-checked="false" aria-label="Refuse the portal to this person"><span class="switch__knob"></span></button>
+            </div>
+            <div style="margin-top:11px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:150px;">
+                <p style="font-size:12px; color:var(--text-primary);">What she would see</p>
+                <p class="say">Following the client, which is following the instance default of
+                  <b>contact</b>: a ticket she raised, is the contact on, or was added to.</p>
+              </div>
+              <select class="input-field" style="width:172px; flex:none;" aria-label="What she would see">
+                <option>Follows the client</option>
+                <option>Only her own tickets</option>
+                <option>Every ticket at her client</option>
+              </select>
+            </div>
+            <div class="why-wrap" style="margin-top:9px;">
+              <button type="button" class="why" aria-expanded="false">Why <svg class="chev ico" style="width:11px;height:11px;"><use href="#i-chev"/></svg></button>
+              <div class="why-body" hidden>
+                <p>
+                  Both answers are the client's until somebody makes them hers. <code>Contact.portalAccess</code>
+                  is null here (false refuses, true or null follows the client) and
+                  <code>Contact.portalVisibility</code> is null too, so this screen has to say which of the two
+                  is answering rather than showing an empty state that reads like a bug.
+                </p>
+                <p class="why-changes">Read from: <code>GET /api/clients/contacts</code> (both fields null) ·
+                  <code>GET /api/clients</code> (<code>portalEnabled: false</code> on all five) ·
+                  <code>GET /api/configuration</code> → portal.visibility = <code>"contact"</code></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- last contact -->
+          <div class="sheet__block">
+            <p class="sheet__btitle">The last contact</p>
+            <p style="margin-top:7px; font-size:12.5px; color:var(--text-primary);">
+              19 Aug 2026 — the newest ticket she raised: <span class="ticketline__n">NOC-04-2011</span>
+              <span class="say">· API gateway 5xx error spike, still in progress.</span>
+            </p>
+            <p class="say" style="margin-top:5px;">
+              Her record was last changed on 12 Aug 2026. There is no per-person activity log in the product,
+              so the honest answer is the newest thing recorded against her — here a ticket, and the line
+              names it rather than implying a call that nobody logged.
+            </p>
+          </div>
+
+          <!-- actions -->
+          <div class="sheet__block">
+            <p class="sheet__btitle">What you do from here</p>
+            <div style="margin-top:9px; display:flex; flex-direction:column; gap:9px;">
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:150px;">
+                  <p style="font-size:12px; color:var(--text-primary);">Raise a ticket for Alice Wong</p>
+                  <p class="say">Opens the new-ticket form with Umbrella Corp and her name and address already
+                    filled in — the contact, not just the client.</p>
+                </div>
+                <button type="button" class="btn btn--primary"><svg class="ico"><use href="#i-ticket"/></svg>Raise a ticket</button>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:150px;">
+                  <p style="font-size:12px; color:var(--text-primary);">Write to her</p>
+                  <p class="say">alice@umbrellacorp.net — the address a closing mail would go to.</p>
+                </div>
+                <div class="actions">
+                  <button type="button" class="btn btn--secondary"><svg class="ico"><use href="#i-mail"/></svg>Send a mail</button>
+                  <button type="button" class="btn btn--secondary"><svg class="ico"><use href="#i-phone"/></svg>Call +1-555-0401</button>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:150px;">
+                  <p style="font-size:12px; color:var(--text-primary);">Primary contact for Umbrella Corp</p>
+                  <p class="say">Already hers — the star is on. Unsetting it leaves the client without one:
+                    the client record's own <code>primaryContactId</code> is unset for all five, so the flag
+                    on the person is the only answer the product has.</p>
+                </div>
+                <button type="button" class="btn btn--done"><svg class="ico"><use href="#i-star"/></svg>Primary</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+    </div>
+
+    <!-- ── The two states that are reachable today ─────────────────────────────────────────── -->
+    <div class="states">
+      <div class="card state">
+        <svg class="ico"><use href="#i-users"/></svg>
+        <p class="state__t">Nobody here yet</p>
+        <p class="state__d">
+          Contacts are who the portal signs in and who a ticket's client email goes to, so a client with
+          no people is a client nothing can be sent to. Say that, and offer the one thing to do about it.
+        </p>
+        <div class="state__a">
+          <button type="button" class="btn btn--primary">Add the first contact</button>
+          <button type="button" class="btn btn--quiet">Open the client</button>
+        </div>
+        <p class="mock-note" style="margin-top:12px;">
+          A state, not a figure: no client on this instance is without contacts today — 5 clients, 21 people.
+        </p>
+      </div>
+      <div class="card state">
+        <svg class="ico"><use href="#i-mail"/></svg>
+        <p class="state__t">Nothing in No email</p>
+        <p class="state__d">
+          All 21 contacts have an email address, so this view holds 0 of 21 and the way out is the view you
+          came from — not a search box that keeps returning nothing.
+        </p>
+        <div class="state__a">
+          <button type="button" class="chip chip--on">Show all <span class="chip__n num">21</span></button>
+          <button type="button" class="btn btn--quiet">Clear the client filter</button>
+        </div>
+        <p class="mock-note" style="margin-top:12px;">
+          A real zero: <code>Contacts.tsx</code> counts this view as <code>contacts.filter(c =&gt; !c.email).length</code>,
+          and it is 0 today.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN TWO — SERVICE BOARDS
+
+       The problem, in full:
+
+       Boards.tsx draws four cards in a three-up grid. Every card is the same: a name, a description, a
+       "N open" and a stale chip in the corner, six equal metric tiles (New, Workable, On hold, Waiting,
+       Escalated, Avg age), a stale warning strip, a most-active-client line, and a hover-only "View
+       tickets →". Above them a four-tile stat band repeats what the cards already say.
+
+       The policy is not on the page. `ServiceBoard` carries slaResponseMinutes, slaResolutionMinutes,
+       autoCloseEnabled, autoCloseDays, followUpEnabled, followUpIntervalHours, ticketCode and
+       notifyCustomerOnClose; the boards page shows none of them, and Administration → Service Boards
+       prints them as "SLA 120 / 480 min · code INF · auto-closes after 14 days" with the one that
+       matters — closing without emailing the client — as the last clause of a grey line. So the fact
+       that NOC Alerts closes silently, which decides whether a client hears from us, is learned by
+       closing a ticket, or by reading a settings list, and never from the board itself.
+
+       Two smaller truths the reimagining puts on the page rather than in the code: the tiles are the
+       desk's own arrangement (PUT /boards/:id/layout, six tiles, a pin to the front) and "SLA 30 / 240
+       min" is a field, not a sentence a person reads. And a third, which the page should stop hiding:
+       the board's promises are 30 minutes and 4 hours, and the tickets open on it average 54 days old.
+       Both numbers are the API's own answer; showing only the first is how a page flatters a board.
+
+       Note on `followUpIntervalHours`: Administration prints "follow-up every ${followUpIntervalMinutes
+       ?? 120} min" against a column named followUpIntervalHours that holds 24 — so the settings screen
+       currently reads "120 min" for a board that follows up every 24 hours. The board's own page reads
+       the column that exists. That is a real bug, not a design opinion, and it is called out in the Why
+       note rather than quietly corrected here.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" id="boards">
+    <div class="screen__label">Screen two — Service Boards</div>
+    <div class="screen__head">
+      <h2>A board's health and its policy, on the board</h2>
+      <p>
+        What it is for, how much is on it and how old that is, how it ends a ticket said in words, what it
+        promises on a track you can read, the whole policy as one honest table, and the way into editing it.
+      </p>
+    </div>
+    <div class="today">
+      <b>Today, from <code>Boards.tsx</code>:</b> four cards, six equal tiles each, a stale strip, a
+      most-active-client line and a hover link; the SLA minutes, the code, the auto-close days and the
+      closing policy are all absent, and live only on
+      <code>Administration → Service Boards</code> as "SLA 30 / 240 min · code NOC · closes without
+      emailing the client".
+    </div>
+
+    <div class="board-grid">
+
+      <!-- ── The rail of boards ──────────────────────────────────────────────────────────────── -->
+      <aside class="card rail" aria-label="Service boards">
+        <div class="rail__group">
+          <p class="rail__head">Boards · 4</p>
+          <button type="button" class="rail__item rail__item--on" aria-pressed="true">
+            <span class="rail__line"><span class="rail__name">NOC Alerts</span><span class="rail__n num">21 open</span></span>
+            <span class="rail__meta">NOC · 21 of 23 raised</span>
+            <span class="rail__policy rail__policy--silent"><i></i>closes without emailing the client</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Infrastructure Desk</span><span class="rail__n num">32 open</span></span>
+            <span class="rail__meta">INF · 32 of 33 raised</span>
+            <span class="rail__policy"><i></i>emails the client on close</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">MSP Service Desk</span><span class="rail__n num">24 open</span></span>
+            <span class="rail__meta">MSP · 24 of 25 raised</span>
+            <span class="rail__policy"><i></i>emails the client on close</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Intelligence Desk</span><span class="rail__n num">21 open</span></span>
+            <span class="rail__meta">INT · 21 of 23 raised</span>
+            <span class="rail__policy"><i></i>emails the client on close</span>
+          </button>
+        </div>
+        <p class="rail__foot">
+          98 open across 4 boards · 104 raised in all. Every ticket belongs to a board, so the sum is a
+          count rather than an estimate — which is what makes it safe to print.
+        </p>
+      </aside>
+
+      <!-- ── The board's own page ────────────────────────────────────────────────────────────── -->
+      <div class="stack">
+
+        <div class="band">
+          <svg class="ico ico--lg" style="color:var(--cyber-400);"><use href="#i-shield"/></svg>
+          <div style="min-width:0;">
+            <p style="font-size:15px; font-weight:600; color:var(--text-primary);">NOC Alerts</p>
+            <p style="font-size:11.5px; color:var(--text-muted);">Security incidents and alerts</p>
+          </div>
+          <span class="band__code mono">NOC</span>
+          <div class="band__right">
+            <span class="mock-note">refreshed every 15 s</span>
+            <button type="button" class="btn btn--secondary"><svg class="ico"><use href="#i-sliders"/></svg>Edit this board</button>
+          </div>
+        </div>
+
+        <p class="say" style="margin-top:-4px;">
+          Tickets here arrive from monitoring systems — a UPS on battery, a phishing alert, an IDS signature
+          that would not update — so this board takes alerts rather than conversations, and what it does when
+          one closes is a decision about machines, not people.
+        </p>
+
+        <!-- what is on it -->
+        <div class="card">
+          <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:2px;">
+            <h3 style="font-size:13.5px;">What is on it</h3>
+            <span style="font-size:17px; font-weight:600; color:var(--text-primary);" class="num">21 open</span>
+            <span class="mock-note">of the 23 raised here</span>
+            <span class="chip" title="Open tickets nobody has touched for more than three days">0 stale · over 3 days</span>
+            <span class="chip">1 escalation · critical, still open</span>
+          </div>
+          <p class="mock-note" style="margin-top:6px;">
+            In the order this board saved them — nothing pinned to the front yet.
+          </p>
+          <div class="grid6" style="margin-top:11px;">
+            <div class="stat">
+              <div class="stat__top"><p class="stat__label">New</p><span class="glyph glyph--cyber"><svg class="ico" style="width:12px;height:12px;"><use href="#i-inbox"/></svg></span></div>
+              <p class="stat__n num">4</p>
+              <p class="stat__foot">nobody has picked up</p>
+            </div>
+            <div class="stat">
+              <div class="stat__top"><p class="stat__label">Workable</p><span class="glyph glyph--cyber"><svg class="ico" style="width:12px;height:12px;"><use href="#i-clock"/></svg></span></div>
+              <p class="stat__n num">7</p>
+            </div>
+            <div class="stat">
+              <div class="stat__top"><p class="stat__label">On hold</p><span class="glyph glyph--neutral"><svg class="ico" style="width:12px;height:12px;"><use href="#i-pause"/></svg></span></div>
+              <p class="stat__n num">1</p>
+            </div>
+            <div class="stat">
+              <div class="stat__top"><p class="stat__label">Waiting</p><span class="glyph glyph--amber"><svg class="ico" style="width:12px;height:12px;"><use href="#i-chat"/></svg></span></div>
+              <p class="stat__n num">3</p>
+              <p class="stat__foot">on the client or a third party</p>
+            </div>
+            <div class="stat">
+              <div class="stat__top"><p class="stat__label">Escalated</p><span class="glyph glyph--red"><svg class="ico" style="width:12px;height:12px;"><use href="#i-alert"/></svg></span></div>
+              <p class="stat__n num">1</p>
+              <p class="stat__foot">critical priority</p>
+            </div>
+            <div class="stat">
+              <div class="stat__top"><p class="stat__label">Average age</p><span class="glyph glyph--red"><svg class="ico" style="width:12px;height:12px;"><use href="#i-trend"/></svg></span></div>
+              <p class="stat__n num">54d</p>
+              <p class="stat__foot">over two weeks</p>
+            </div>
+          </div>
+          <p class="say" style="margin-top:11px;">
+            The tickets open here average <b class="plain num">54 days</b> old, against a board that promises a
+            resolution in four hours. Both figures come from the same call; printing only the promise is how a
+            page flatters a board. Nothing has gone more than three days untouched, which is the one number on
+            this screen that says the desk is keeping up.
+          </p>
+          <div class="why-wrap" style="margin-top:8px;">
+            <button type="button" class="why" aria-expanded="false">Why <svg class="chev ico" style="width:11px;height:11px;"><use href="#i-chev"/></svg></button>
+            <div class="why-body" hidden>
+              <p>
+                The six figures are the desk's own arrangement, not a fixed set: <code>GET /boards/metrics</code>
+                returns the ordered tile list and <code>PUT /boards/:id/layout</code> saves it, with a pin that
+                moves a tile to the front. This page keeps that — the tiles above are in the board's saved
+                order, and the only reason they are all six is that no layout has been saved here yet.
+              </p>
+              <p class="why-changes">
+                Read from: <code>GET /api/boards/metrics</code> → open 21 · new 4 · workable 7 · onHold 1 ·
+                waitingOnResponse 3 · stale3Days 0 · escalations 1 · averageAgeDays 54
+              </p>
+            </div>
+          </div>
+          <div class="actions" style="margin-top:11px;">
+            <button type="button" class="btn btn--primary">Open the 21 tickets on this board <svg class="ico"><use href="#i-arrow"/></svg></button>
+            <button type="button" class="btn btn--secondary"><svg class="ico"><use href="#i-sliders"/></svg>Arrange these tiles</button>
+          </div>
+        </div>
+
+        <!-- how it closes + what it promises -->
+        <div class="grid2">
+
+          <div class="card">
+            <h3 style="font-size:13.5px;">How a ticket on this board ends</h3>
+            <p style="margin-top:7px; font-size:13px; color:var(--text-primary);">
+              NOC Alerts closes a ticket <b>without emailing the client</b>.
+            </p>
+            <div class="seg" style="margin-top:11px;" role="group" aria-label="Closing policy">
+              <button type="button" class="seg__opt seg__opt--on" aria-pressed="true"><svg class="ico"><use href="#i-mail"/></svg>Close silently</button>
+              <button type="button" class="seg__opt" aria-pressed="false">Email the client</button>
+            </div>
+            <p class="say" style="margin-top:9px;">
+              Nothing is sent. The note is still recorded on the ticket.
+            </p>
+            <p class="say" style="margin-top:7px;">
+              This is the answer the close dialog starts from, so nobody has to remember it at the moment
+              they close something: the board's tickets arrive from monitoring systems at no-reply addresses,
+              and a closure email to one of those is a message to nobody that looks like a notification.
+              Choose <b class="plain">Email the client</b> and every close on this board mails the contact,
+              with a reply reopening the ticket as Customer reopened.
+            </p>
+            <div class="why-wrap" style="margin-top:9px;">
+              <button type="button" class="why" aria-expanded="false">Why <svg class="chev ico" style="width:11px;height:11px;"><use href="#i-chev"/></svg></button>
+              <div class="why-body" hidden>
+                <p>
+                  The choice is the board's own setting — <code>ServiceBoard.notifyCustomerOnClose</code>, false
+                  for NOC Alerts and true for the other three — drawn as the setting's answer rather than as a
+                  caption under a title, because a caption is what the settings screen already does and nobody
+                  reads a board's policy off a grey line.
+                </p>
+                <p class="why-changes">
+                  Read from: <code>GET /api/boards</code> → NOC Alerts <code>notifyCustomerOnClose: false</code> ·
+                  wording from <code>CloseTicketDialog.tsx</code> ("Close silently · Nothing is sent. The note is
+                  still recorded on the ticket.")
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size:13.5px;">Making a board</h3>
+            <p class="say" style="margin-top:7px;">
+              Two fields and one decision: what it is called, what it is for, and whether closing one of its
+              tickets emails the client. Everything else — SLA response and resolution, the code its numbers
+              carry, auto-close days, the follow-up interval — is a later decision, made from the board's own
+              page rather than from the form that creates it.
+            </p>
+            <div style="margin-top:11px; display:flex; align-items:flex-start; gap:12px;">
+              <div style="flex:1; min-width:0;">
+                <p style="font-size:12.5px; color:var(--text-primary);">Email the client when a ticket on this board is closed</p>
+                <p class="say" style="margin-top:3px;">
+                  Turn this off for a board whose tickets arrive from monitoring systems: their addresses are
+                  no-reply, so the closure email reaches nobody. Closing a single ticket can still send one.
+                </p>
+              </div>
+              <button type="button" class="switch switch--on" role="switch" aria-checked="true" aria-label="Email the client when a ticket on this board is closed"><span class="switch__knob"></span></button>
+            </div>
+            <p class="mock-note" style="margin-top:10px;">
+              On by default, and off on exactly one board here. The dialog that creates a board already asks
+              this question — the gap the reimagining closes is the other direction: the board's own page says
+              the answer, so the two never disagree.
+            </p>
+            <div class="why-wrap" style="margin-top:9px;">
+              <button type="button" class="why" aria-expanded="false">Why <svg class="chev ico" style="width:11px;height:11px;"><use href="#i-chev"/></svg></button>
+              <div class="why-body" hidden>
+                <p>
+                  The create form in <code>Administration.tsx</code> posts only <code>name</code>,
+                  <code>description</code> and <code>notifyCustomerOnClose</code>, with the paragraph above
+                  written beside the checkbox — so the decision is already treated as belonging to the moment
+                  a board is defined. This screen keeps that and shows the same switch in the same words, so
+                  "where does a board's close behaviour come from" has one answer in two places.
+                </p>
+                <p class="why-changes">Read from: <code>Administration.tsx → ServiceBoardsSection</code> (create form fields and copy) ·
+                  <code>POST /api/boards</code></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- the SLA track -->
+        <div class="card">
+          <h3 style="font-size:13.5px;">What this board promises, in the order it happens</h3>
+          <div class="track">
+            <div class="step">
+              <div class="step__dot"></div>
+              <p class="step__lbl">First response</p>
+              <p class="step__val num">30 minutes</p>
+              <p class="step__say">The clock starts when the ticket is raised. Half an hour on this board, because
+                what arrives here is an alert and not a request.</p>
+            </div>
+            <div class="step">
+              <div class="step__dot"></div>
+              <p class="step__lbl">Resolved</p>
+              <p class="step__val num">4 hours</p>
+              <p class="step__say">A resolution does not close the ticket: it waits for the client's word, and
+                until that word arrives the ticket is still open on this page.</p>
+            </div>
+            <div class="step">
+              <div class="step__dot"></div>
+              <p class="step__lbl">Follow-up mail</p>
+              <p class="step__val num">every 24 hours</p>
+              <p class="step__say">While a ticket waits, a reminder goes out daily rather than piling up
+                unremarked — <code>followUpEnabled</code>, <code>followUpIntervalHours: 24</code>.</p>
+            </div>
+            <div class="step">
+              <div class="step__dot"></div>
+              <p class="step__lbl">Closed by itself</p>
+              <p class="step__val num">14 days</p>
+              <p class="step__say">Fourteen days without a reply and it closes — and on this board it closes
+                without emailing anybody, which is the decision at the top of the page.</p>
+            </div>
+          </div>
+          <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span class="chip">Every board here: auto-close on, 14 days, follow-up every 24 hours</span>
+            <span class="chip">Response and resolve differ: 30 min / 4 h here, 2 h / 8 h on Infrastructure, 4 h / 24 h on the other two</span>
+          </div>
+          <div class="why-wrap" style="margin-top:10px;">
+            <button type="button" class="why" aria-expanded="false">Why <svg class="chev ico" style="width:11px;height:11px;"><use href="#i-chev"/></svg></button>
+            <div class="why-body" hidden>
+              <p>
+                Minutes are the storage, not the sentence: the columns are <code>slaResponseMinutes</code> 30 and
+                <code>slaResolutionMinutes</code> 240, and Administration prints "SLA 30 / 240 min". Half an hour
+                and four hours are the same two numbers said out loud, which is the whole change — the field
+                stays in the API and the board says what a person reads.
+              </p>
+              <p>
+                The follow-up figure is read from <code>followUpIntervalHours</code>, which holds 24.
+                Administration currently prints "follow-up every 120 min" for the same board, because it reads
+                <code>followUpIntervalMinutes</code> — a column <code>ServiceBoard</code> does not have, falling
+                back to its own default of 120. That is a bug in the settings screen, not a difference of
+                opinion, and this page reads the column that exists.
+              </p>
+              <p class="why-changes">
+                Read from: <code>GET /api/boards</code> → slaResponseMinutes 30 · slaResolutionMinutes 240 ·
+                autoCloseEnabled true · autoCloseDays 14 · followUpEnabled true · followUpIntervalHours 24 ·
+                cross-read <code>schema.prisma</code> (ServiceBoard) and <code>Administration.tsx</code> line 325
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- the policy table -->
+        <div class="card">
+          <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+            <h3 style="font-size:13.5px;">What each board does</h3>
+            <span class="mock-note">one table, four boards, nothing averaged</span>
+          </div>
+          <table class="ptable">
+            <thead>
+              <tr>
+                <th style="width:28%;">Board</th>
+                <th style="width:11%;">Respond in</th>
+                <th style="width:11%;">Resolve in</th>
+                <th style="width:13%;">Auto-close</th>
+                <th style="width:15%;">Follow-up mail</th>
+                <th style="width:22%;">Closing email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="on">
+                <td>
+                  <span class="b-name">NOC Alerts <span class="b-code mono">NOC</span></span>
+                  <span class="b-sub">Security incidents and alerts · 21 open of 23 raised · avg age 54 days</span>
+                </td>
+                <td class="num">30 minutes</td>
+                <td class="num">4 hours</td>
+                <td>After <span class="num">14</span> days</td>
+                <td>Every <span class="num">24</span> hours</td>
+                <td><span class="silent">Closes without emailing the client</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="b-name">Infrastructure Desk <span class="b-code mono">INF</span></span>
+                  <span class="b-sub">Data Center Infrastructure · 32 open of 33 raised · avg age 42 days</span>
+                </td>
+                <td class="num">2 hours</td>
+                <td class="num">8 hours</td>
+                <td>After <span class="num">14</span> days</td>
+                <td>Every <span class="num">24</span> hours</td>
+                <td>Emails the client</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="b-name">MSP Service Desk <span class="b-code mono">MSP</span></span>
+                  <span class="b-sub">General IT support · 24 open of 25 raised · avg age 54 days</span>
+                </td>
+                <td class="num">4 hours</td>
+                <td class="num">24 hours</td>
+                <td>After <span class="num">14</span> days</td>
+                <td>Every <span class="num">24</span> hours</td>
+                <td>Emails the client</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="b-name">Intelligence Desk <span class="b-code mono">INT</span></span>
+                  <span class="b-sub">AI Software Development · 21 open of 23 raised · avg age 55 days</span>
+                </td>
+                <td class="num">4 hours</td>
+                <td class="num">24 hours</td>
+                <td>After <span class="num">14</span> days</td>
+                <td>Every <span class="num">24</span> hours</td>
+                <td>Emails the client</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="mock-note" style="margin-top:10px; display:flex; gap:6px; align-items:flex-start;">
+            <svg class="ico" style="width:11px; height:11px; margin-top:3px;"><use href="#i-plug"/></svg>
+            <span>
+              Board, description, code, SLA, auto-close and closing policy from <code>GET /api/boards</code>;
+              open, average age and escalations from <code>GET /api/boards/metrics</code>; raised from
+              <code>_count.tickets</code>. Read 9 October 2026 — a page that prints a promise without the
+              practice beside it is a page that has stopped watching.
+            </span>
+          </p>
+        </div>
+
+        <div class="card" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <svg class="ico ico--lg" style="color:var(--text-tertiary);"><use href="#i-life"/></svg>
+          <div style="flex:1; min-width:220px;">
+            <p style="font-size:12.5px; color:var(--text-primary);">Everything on this page is set on Administration → Service Boards</p>
+            <p class="say">The SLA minutes, the code its ticket numbers carry, auto-close days, the follow-up
+              interval and the closing policy are edited there today, one board at a time. This page shows the
+              answers and hands you over; what it does not do is ask you to remember which screen knows them.</p>
+          </div>
+          <button type="button" class="btn btn--secondary">Open Service Boards settings <svg class="ico"><use href="#i-arrow"/></svg></button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="mock-note" style="margin-top:34px; padding-top:16px; border-top:1px solid var(--surface-border); max-width:120ch;">
+    Drawn from the modern interface only (<code>useRedesign()</code> — the classic screens keep their forms,
+    grids and dialogs, and nothing above is a proposal for them). No route, component, token or figure was
+    changed to make this page: it is one file, opened from disk, with two themes and a "Why" beside every
+    control that needed one.
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+
+    document.querySelectorAll('[data-theme-btn]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var theme = btn.getAttribute('data-theme-btn');
+        root.setAttribute('data-theme', theme);
+        document.querySelectorAll('[data-theme-btn]').forEach(function (other) {
+          other.setAttribute('aria-pressed', String(other === btn));
+        });
+      });
+    });
+
+    document.querySelectorAll('.why').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var wrap = btn.closest('.why-wrap');
+        var body = wrap && wrap.querySelector('.why-body');
+        if (!body) return;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        body.hidden = open;
+      });
+    });
+  })();
+</script>
+</body>
+</html>

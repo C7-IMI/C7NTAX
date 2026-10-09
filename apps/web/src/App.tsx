@@ -48,6 +48,7 @@ import { ReportsPage, ReviewsPage } from "./pages/Reports";
 import { CustomReportsPage } from "./pages/CustomReports";
 import { ReportDesignerPage } from "./pages/ReportDesigner";
 import { SectionLanding, SECTION_DESCRIPTIONS } from "./pages/SectionLanding";
+import { NotFoundPage } from "./pages/NotFound";
 import { ProductCatalogPage } from "./pages/ProductCatalog";
 import { OutlookAddInPage } from "./pages/OutlookAddIn";
 import { C7NCFlexpointPage } from "./pages/C7NCFlexpoint";
@@ -211,6 +212,9 @@ function ProtectedRoutes() {
         <Route path="/mfa-setup" element={<MFASetupPage />} />
         {/* Section landing pages — shown when clicking parent section in collapsed sidebar */}
         <Route path="/section/:sectionId" element={<SectionLandingRoute />} />
+        {/* Every path the application does not address lands here rather than in the shell with an
+            empty main, which is what a stale bookmark or a renamed route used to leave behind. */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Layout>
   );

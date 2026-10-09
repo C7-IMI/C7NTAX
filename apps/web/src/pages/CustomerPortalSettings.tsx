@@ -305,6 +305,50 @@ export function CustomerPortalSettingsPage() {
             value={overview?.enabled ? "Live" : "Off"}
             icon={<Globe size={14} />}
             tone={overview?.enabled ? "green" : "neutral"}
+            /* The address belongs on the tile that says whether there is a portal at all: the figure
+               raises the question "where is it?", and answering it here is the difference between a
+               card that reports and a card you can act on. Same link and copy button as the classic
+               card, and the same line saying which of the three decided the address. */
+            foot={
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {overview?.enabled ? (
+                    <a
+                      href={overview.portalUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="Open the customer portal"
+                      title={overview.portalUrl}
+                      className="text-[11px] text-cyber-400 hover:text-cyber-300 inline-flex items-center gap-1 min-w-0"
+                    >
+                      <span className="truncate">{overview.portalUrl}</span>
+                      <ExternalLink size={11} className="shrink-0" />
+                    </a>
+                  ) : (
+                    <span className="text-[11px] text-gray-500 truncate" title={overview?.portalUrl ?? ""}>
+                      {overview?.portalUrl ?? "/portal"}
+                    </span>
+                  )}
+                  {overview?.portalUrl && (
+                    <button
+                      type="button"
+                      onClick={() => void copyPortalUrl(overview.portalUrl)}
+                      aria-label="Copy the portal address"
+                      title="Copy the portal address"
+                      className="text-gray-500 hover:text-gray-300 shrink-0"
+                    >
+                      <Copy size={11} />
+                    </button>
+                  )}
+                </div>
+                {addressSourceLabel(overview?.portalUrlSource) && (
+                  <p className="text-[10px] text-gray-600 mt-0.5 leading-snug">{addressSourceLabel(overview?.portalUrlSource)}</p>
+                )}
+                {!overview?.enabled && (
+                  <p className="text-[10px] text-gray-600 mt-0.5 leading-snug">Every portal route answers 404 until it is switched on.</p>
+                )}
+              </div>
+            }
           />
           <StatCard
             label="Clients with access"
@@ -333,6 +377,7 @@ export function CustomerPortalSettingsPage() {
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Open the customer portal"
+                  title={overview.portalUrl}
                   className="text-xs text-cyber-400 hover:text-cyber-300 inline-flex items-center gap-1 min-w-0"
                 >
                   <span className="truncate">{overview.portalUrl}</span>

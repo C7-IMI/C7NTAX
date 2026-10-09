@@ -281,7 +281,21 @@ function getPageTitle(nodes: NavNode[], pathname: string): string {
     }
   };
   walk(nodes);
-  if (matches.length === 0) return STANDALONE_PAGE_TITLES[pathname] ?? "Today";
+  if (matches.length === 0) {
+    const standalone = STANDALONE_PAGE_TITLES[pathname];
+    if (standalone) return standalone;
+    // `/section/<id>` is where a collapsed section in the classic pane lands: a real page, whose
+    // name is the domain's. Without this it fell through to the fallback and the tab above every
+    // page read "Today" while the page itself was a section's own landing page.
+    if (pathname.startsWith("/section/")) {
+      const section = nodes.find(n => n.id === pathname.slice("/section/".length));
+      if (section) return section.label;
+    }
+    // Nothing addresses this path, so the header says so rather than naming a page the reader is
+    // not on. `/login` and the two legacy redirects are the only other paths that reach this, and
+    // none of them renders inside the shell.
+    return "Not found";
+  }
   return matches.reduce((a, b) => (b.to.length > a.to.length ? b : a)).label;
 }
 

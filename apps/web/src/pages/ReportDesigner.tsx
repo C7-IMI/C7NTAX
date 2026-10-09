@@ -19,7 +19,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   AGGREGATE_SCOPES, BAND_BY_KIND, DOCUMENT_VERSION, contentBox, createElement, labelFor,
-  layoutReport, normaliseDocument, pageDimensions,
+  layoutReport, mmToPx, normaliseDocument, pageDimensions,
   type LaidOutChart, type ReportTemplateDocument, type TemplateElement, type TemplateIssue,
 } from "@C7NTAX/shared";
 import api from "../api";
@@ -35,6 +35,7 @@ import { Inspector, type Selection } from "../components/reports/designer/Inspec
 import { Palette } from "../components/reports/designer/Palette";
 import { LaidOutPageView } from "../components/reports/designer/PageRenderer";
 import { clearActiveExpressionTarget, isTypingTarget } from "../components/reports/designer/ExpressionInput";
+import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog";
 import type { DesignerCatalog, DesignerRun } from "../lib/designerTypes";
 import { useRedesign } from "../hooks/useNavigationStyle";
 
@@ -61,6 +62,10 @@ export function ReportDesignerPage() {
   const [future, setFuture] = useState<ReportTemplateDocument[]>([]);
   const [selection, setSelection] = useState<Selection>({ kind: "report" });
   const [zoom, setZoom] = useState(1);
+  const [palettePane, setPalettePane] = useState<"bands" | "data" | "parameters" | "fields" | "expressions" | "schedule">("bands");
+  const [showSchedule, setShowSchedule] = useState(false);
+  /** The scrolling stage, measured for Fit width. */
+  const stageRef = useRef<HTMLDivElement | null>(null);
   const [tab, setTab] = useState<Tab>("design");
   const [parameters, setParameters] = useState<Record<string, string>>({});
   const [from, setFrom] = useState("");
@@ -533,6 +538,22 @@ export function ReportDesignerPage() {
 
   const issueColour = errorCount ? "text-red-400" : warningCount ? "text-amber-400" : "text-green-400";
 
+  /**
+   * The six things a report is made of, in the order you build it — the redesigned designer's left
+   * panel, taken from the report-designer mockup. The classic designer keeps its single scrolling
+   * column of fields, built-ins, functions and elements; this is the arrangement the redesign uses
+   * instead, and one pane is on screen at a time.
+   */
+  const palettePanes = [
+    { id: "bands", label: "Bands" },
+    { id: "data", label: "Data" },
+    { id: "parameters", label: "Parameters" },
+    { id: "fields", label: "Fields" },
+    { id: "expressions", label: "Expressions" },
+    { id: "schedule", label: "Schedule" },
+  ] as const;
+  type PalettePaneId = (typeof palettePanes)[number]["id"];
+
   /*
    * The status line the redesigned designer carries: what is selected, how tall the band is, what
    * the last run returned and how the page is set up — the four questions a designer answers with a
@@ -548,6 +569,20 @@ export function ReportDesignerPage() {
     : statusBand ? statusBand.kind : "the report";
   const bandHeightLabel = statusBand ? `${statusBand.height} mm` : `${document.bands.reduce((total, band) => total + band.height, 0)} mm total`;
   const pageSetupLabel = `${document.page.size === "custom" ? "Custom" : document.page.size.toUpperCase()} ${document.page.orientation} · grid 10 mm · snap 1 mm`;
+
+  /**
+   * Fit width: the zoom at which the sheet fills the stage. The mockup's argument for it is that a
+   * designer's first act is to see the whole page, and at 100% an A4 sheet is wider than the space
+   * between the two panels on a laptop.
+   */
+  const fitWidth = () => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const available = stage.clientWidth - 32; // the stage's own padding
+    const pageWidthPx = mmToPx(pageDimensions(document.page).width);
+    if (available <= 0 || pageWidthPx <= 0) return;
+    setZoom(Math.max(0.35, Math.min(2, Math.round((available / pageWidthPx) * 100) / 100)));
+  };
 
   return (
     <div className={`flex flex-col gap-3 ${poppedOut ? "h-screen" : "h-[calc(100vh-9rem)] min-h-[560px]"}`}>
@@ -612,7 +647,13 @@ export function ReportDesignerPage() {
           <button type="button" className="btn-icon" title="Zoom out" onClick={() => setZoom(value => Math.max(0.35, Math.round((value - 0.1) * 100) / 100))}>−</button>
           <span className="text-[11px] text-gray-400 w-10 text-center">{Math.round(zoom * 100)}%</span>
           <button type="button" className="btn-icon" title="Zoom in" onClick={() => setZoom(value => Math.min(2, Math.round((value + 0.1) * 100) / 100))}>+</button>
-          <button type="button" className="text-[10px] text-gray-400 hover:text-gray-200" onClick={() => setZoom(1)}>100%</button>
+          {redesign ? (
+            <button type="button" className="btn-secondary text-xs" title="Zoom so the whole sheet fits the width of the stage" onClick={fitWidth}>
+              Fit width
+            </button>
+          ) : (
+            <button type="button" className="text-[10px] text-gray-400 hover:text-gray-200" onClick={() => setZoom(1)}>100%</button>
+          )}
         </div>
 
         <div className="flex items-center gap-1 ml-2 rounded border border-surface-lighter overflow-hidden">
@@ -698,6 +739,141 @@ export function ReportDesignerPage() {
       <div className="flex-1 flex gap-3 min-h-0">
         {/* Palette */}
         <aside className="w-64 shrink-0 surface-card overflow-hidden flex flex-col">
+          {redesign ? (
+            /* The redesigned palette: the six things a report is made of, one at a time, in the order
+               they are built. The classic column below shows every one of them at once, which is why
+               it is still there. */
+            <>
+              <div className="flex flex-wrap gap-1 border-b border-surface-lighter px-2 py-2">
+                {palettePanes.map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setPalettePane(item.id)}
+                    aria-pressed={palettePane === item.id}
+                    className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
+                      palettePane === item.id
+                        ? "bg-cyber-600/15 text-cyber-200 border border-cyber-500/30"
+                        : "border border-transparent text-gray-400 hover:bg-surface-lighter hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              {palettePane === "bands" ? (
+                <div className="flex-1 overflow-y-auto px-3 py-2">
+                  <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Bands, in print order</h4>
+                  <div className="space-y-1">
+                    {document.bands.map(band => (
+                      <button
+                        key={band.id}
+                        type="button"
+                        onClick={() => { select({ kind: "band", bandId: band.id }); setTab("design"); }}
+                        className={`w-full rounded border px-2 py-1.5 text-left text-[11px] transition-colors ${
+                          selection.kind !== "report" && selection.bandId === band.id
+                            ? "border-cyber-500/50 bg-cyber-600/10 text-white"
+                            : "border-surface-lighter text-gray-300 hover:border-cyber-500/40"
+                        }`}
+                      >
+                        <span className="flex items-baseline justify-between gap-2">
+                          <span className="capitalize">{band.kind.replace(/([A-Z])/g, " $1").toLowerCase()}</span>
+                          <span className="tabular-nums text-gray-500">{band.height} mm</span>
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          {band.elements.length} element{band.elements.length === 1 ? "" : "s"}
+                          {band.groupKey ? ` · grouped on ${band.groupKey}` : ""}
+                          {band.pageBreakBefore ? " · starts a page" : ""}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-[10px] leading-snug text-gray-500">
+                    A band prints where it appears in this list. Selecting one makes the palette insert
+                    into it.
+                  </p>
+                  <div className="mt-3 border-t border-surface-lighter pt-2">
+                    <Palette
+                      document={document}
+                      catalog={catalog}
+                      selection={selection}
+                      onAddElement={onAddElement}
+                      onEditElement={onEditElement}
+                      onSelect={select}
+                      pane="elements"
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              {palettePane === "data" ? (
+                <div className="flex-1 overflow-y-auto px-3 py-2">
+                  <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">What this report reads</h4>
+                  {document.dataSources.map(source => {
+                    const label = catalog?.sources.find(candidate => candidate.key === source.source)?.label ?? source.source;
+                    return (
+                      <div key={source.key} className="mb-2 rounded border border-surface-lighter px-2 py-1.5 text-[11px]">
+                        <p className="text-gray-200">{source.label || label}</p>
+                        <p className="text-[10px] text-gray-500">
+                          {label} · up to {source.limit} rows
+                          {source.sortBy ? ` · sorted by ${source.sortBy} ${source.sortDir ?? "asc"}` : ""}
+                          {source.filters.length ? ` · ${source.filters.length} filter${source.filters.length === 1 ? "" : "s"}` : ""}
+                        </p>
+                      </div>
+                    );
+                  })}
+                  <p className="mt-2 text-[10px] leading-snug text-gray-500">
+                    The Fields pane offers this source's columns, and the row limit is edited on the right
+                    when the report itself is selected.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn-secondary mt-3 w-full text-[11px]"
+                    onClick={() => { select({ kind: "report" }); }}
+                  >
+                    Show the report's data settings
+                  </button>
+                </div>
+              ) : null}
+
+              {palettePane === "schedule" ? (
+                <div className="flex-1 overflow-y-auto px-3 py-2">
+                  <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Schedule</h4>
+                  <p className="text-[11px] leading-snug text-gray-400">
+                    A schedule runs this report on its own and mails it — once, daily, weekly or monthly,
+                    as PDF, Excel or CSV.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn-primary mt-3 w-full text-[11px]"
+                    disabled={!reportId}
+                    title={reportId ? "Choose when it runs and who receives it" : "Save the report first — a schedule needs something to run"}
+                    onClick={() => setShowSchedule(true)}
+                  >
+                    Schedule this report…
+                  </button>
+                  {!reportId ? (
+                    <p className="mt-2 text-[10px] leading-snug text-gray-500">
+                      A report nobody has created has nothing to schedule yet. Save it, and this opens.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {palettePane === "fields" || palettePane === "expressions" || palettePane === "parameters" ? (
+                <Palette
+                  document={document}
+                  catalog={catalog}
+                  selection={selection}
+                  onAddElement={onAddElement}
+                  onEditElement={onEditElement}
+                  onSelect={select}
+                  pane={palettePane}
+                />
+              ) : null}
+            </>
+          ) : (
           <Palette
             document={document}
             catalog={catalog}
@@ -706,10 +882,11 @@ export function ReportDesignerPage() {
             onEditElement={onEditElement}
             onSelect={select}
           />
+          )}
         </aside>
 
         {/* Canvas / preview / data */}
-        <main className="flex-1 min-w-0 overflow-auto surface-card p-4">
+        <main ref={stageRef} className="flex-1 min-w-0 overflow-auto surface-card p-4">
           {tab === "design" ? (
             <DesignerCanvas
               document={document}
@@ -807,18 +984,10 @@ export function ReportDesignerPage() {
             </div>
           ) : null}
 
-          {/* The status line the mockup carries: what is selected, how tall the band is, what the last
-              run returned, and how the page is set up — answered on the page rather than in a tooltip. */}
-          {redesign ? (
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-surface-lighter pt-2 text-[11px] text-gray-500">
-              <span>Selected <b className="font-medium text-gray-300">{selectionLabel}</b></span>
-              <span>· Band height <b className="font-medium text-gray-300">{bandHeightLabel}</b></span>
-              <span>· <b className="font-medium text-gray-300">{run?.rows.length ?? 0}</b> row{run?.rows.length === 1 ? "" : "s"}</span>
-              <span>· <b className="font-medium text-gray-300">{laid?.pages.length ?? 0}</b> page{laid?.pages.length === 1 ? "" : "s"}</span>
-              <span>· {pageSetupLabel}</span>
-              <span className="ml-auto">{errorCount ? "Fix the errors before this can save" : warningCount ? "Saves with warnings" : "Preview updates as you type"}</span>
-            </div>
-          ) : null}
+          {/* The status line the mockup carries sits *below the three panels*, across the whole width,
+              so it describes the designer rather than the canvas — what is selected, how tall the band
+              is, what the last run returned, and how the page is set up. The classic designer has no
+              status line, and keeps none. */}
         </main>
 
         {/* Property grid */}
@@ -845,8 +1014,24 @@ export function ReportDesignerPage() {
           </section>
         </aside>
       </div>
+
+      {/* The status bar, across the whole width and below all three panels — the mockup's arrangement,
+          and the reason it moved: inside the centre column it read as a caption on the canvas, while
+          what it describes is the designer as a whole. */}
+      {redesign ? (
+        <div className="surface-card flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 text-[11px] text-gray-500">
+          <span>Selected <b className="font-medium text-gray-300">{selectionLabel}</b></span>
+          <span>· Band height <b className="font-medium text-gray-300">{bandHeightLabel}</b></span>
+          <span>· <b className="font-medium text-gray-300">{run?.rows.length ?? 0}</b> row{run?.rows.length === 1 ? "" : "s"}</span>
+          <span>· <b className="font-medium text-gray-300">{laid?.pages.length ?? 0}</b> page{laid?.pages.length === 1 ? "" : "s"}</span>
+          <span>· {pageSetupLabel}</span>
+          <span className="ml-auto">{errorCount ? "Fix the errors before this can save" : warningCount ? "Saves with warnings" : "Preview updates as you type"}</span>
+        </div>
+      ) : null}
       </>
       )}
+
+      {showSchedule && reportId ? <ScheduleReportDialog reportId={reportId} onClose={() => setShowSchedule(false)} /> : null}
 
       {/* Clicking away with unsaved changes asks once, and the answer is already on the device. */}
       {showDraftPrompt ? (

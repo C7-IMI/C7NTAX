@@ -12,6 +12,7 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { TicketBoardTabs } from "../components/TicketBoardTabs";
 import { RichTextEditor, toAttachmentDraft, EMAIL_PROFILE, type EmailAttachmentDraft } from "../components/richText";
+import { PrintLetterhead } from "../components/PrintLetterhead";
 import { RecipientField, recipientFromContact, offOrgRecipients, offOrgSummary, type Recipient, type RecipientSuggestion } from "../components/RecipientField";
 import { ProductPicker } from "../components/ProductPicker";
 import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
@@ -2626,6 +2627,11 @@ export function TicketDetailPage() {
       </div>
 
       <section className="ticket-print-only" aria-hidden="true">
+              <PrintLetterhead
+                kind="Ticket"
+                subject={(ticket.ticketNumber as string) || undefined}
+                meta={`Printed ${new Date().toLocaleString()}`}
+              />
               <h1>{(ticket.ticketNumber as string) || `Ticket ${id}`}</h1>
               <h2>{(ticket.title as string) || "Untitled ticket"}</h2>
               <p>{(ticket.description as string) || "No description provided."}</p>

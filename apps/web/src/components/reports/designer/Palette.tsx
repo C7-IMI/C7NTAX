@@ -22,7 +22,18 @@ interface PaletteProps {
   onAddElement: (bandId: string, element: TemplateElement, options?: { growBandTo?: number }) => void;
   onEditElement: (bandId: string, elementId: string, patch: Partial<TemplateElement>) => void;
   onSelect: (selection: Selection) => void;
+  /**
+   * Which pane of the palette to draw.
+   *
+   * The redesigned designer shows the six things a report is made of as six panes, so one of them is
+   * on screen at a time. **Absent means every section**, which is what the classic designer has
+   * always shown in one scrolling column — so the classic screen is untouched by this prop.
+   */
+  pane?: PalettePane;
 }
+
+/** The panes the palette itself owns. Bands, data sources and the schedule are the designer's. */
+export type PalettePane = "fields" | "expressions" | "parameters" | "elements";
 
 const FIELD_TYPE_ORDER = ["text", "number", "money", "minutes", "date", "boolean"];
 
@@ -42,9 +53,12 @@ export function fitInBand(band: { height: number; elements: unknown[] }, index: 
   return { y, h };
 }
 
-export function Palette({ document, catalog, selection, onAddElement, onEditElement, onSelect }: PaletteProps) {
+export function Palette({ document, catalog, selection, onAddElement, onEditElement, onSelect, pane }: PaletteProps) {
   const [search, setSearch] = useState("");
   const [openCategory, setOpenCategory] = useState<string | null>("Aggregate");
+
+  /** Absent `pane` is the classic column: every section, in the order it has always had them. */
+  const shows = (section: PalettePane) => !pane || pane === section;
 
   const source = document.dataSources[0];
   const sourceCatalog = catalog?.sources.find(candidate => candidate.key === source?.source);
@@ -169,6 +183,7 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {shows("fields") ? (
         <section className="px-3 py-2">
           <h4 className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Fields</h4>
           {!fields.length ? <p className="text-[10px] text-gray-500">The catalog is loading…</p> : null}
@@ -193,8 +208,9 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
             </div>
           ))}
         </section>
+        ) : null}
 
-        {document.parameters.length ? (
+        {document.parameters.length && shows("parameters") ? (
           <section className="px-3 py-2 border-t border-surface-lighter">
             <h4 className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Parameters</h4>
             <div className="flex flex-wrap gap-1">
@@ -212,6 +228,8 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
           </section>
         ) : null}
 
+        {shows("expressions") ? (
+        <>
         <section className="px-3 py-2 border-t border-surface-lighter">
           <h4 className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Built-ins</h4>
           <div className="flex flex-wrap gap-1">
@@ -265,7 +283,10 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
             </div>
           ))}
         </section>
+        </>
+        ) : null}
 
+        {shows("elements") ? (
         <section className="px-3 py-2 border-t border-surface-lighter">
           <h4 className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Elements</h4>
           <div className="flex flex-wrap gap-1">
@@ -301,6 +322,7 @@ export function Palette({ document, catalog, selection, onAddElement, onEditElem
             ))}
           </div>
         </section>
+        ) : null}
       </div>
     </div>
   );

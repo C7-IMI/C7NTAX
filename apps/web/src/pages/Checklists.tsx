@@ -431,11 +431,11 @@ export function ChecklistsPage() {
                       {allVisibleSelected ? <SquareCheckBig size={14} /> : <Square size={14} />}
                     </button>
                   </th>
-                  {shows("name") && <th className="px-3 py-2"><SortableHeader label="Checklist Name" field="name" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} /></th>}
-                  {shows("company") && <th className="px-3 py-2"><SortableHeader label="Client" field="company.name" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} /></th>}
-                  {shows("assignee") && <th className="px-3 py-2"><SortableHeader label="Assignee" field="assignedTo.firstName" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} /></th>}
-                  {shows("due") && <th className="px-3 py-2"><SortableHeader label="Due" field="dueDate" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} /></th>}
-                  {shows("progress") && <th className="px-3 py-2"><SortableHeader label="Tasks" field="completedCount" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} /></th>}
+                  {shows("name") && <SortableHeader label="Checklist Name" field="name" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} className="px-3 py-2" />}
+                  {shows("company") && <SortableHeader label="Client" field="company.name" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} className="px-3 py-2" />}
+                  {shows("assignee") && <SortableHeader label="Assignee" field="assignedTo.firstName" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} className="px-3 py-2" />}
+                  {shows("due") && <SortableHeader label="Due" field="dueDate" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} className="px-3 py-2" />}
+                  {shows("progress") && <SortableHeader label="Tasks" field="completedCount" sort={sort} onSort={(field) => setSort(nextSort(sort, field))} className="px-3 py-2" />}
                   <th className="w-24 px-3 py-2 text-right">Actions</th>
                 </tr>
               </thead>

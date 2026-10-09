@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import api from "../api";
+import { hoursInWords, minutesInWords } from "../components/boards/boardPolicy";
 import { ListFooter, ListViews, PageHeader } from "../components/ui";
 import { FileText, ChevronDown, ChevronRight, Shield, Clock, User, Plus } from "lucide-react";
 import toast from "react-hot-toast";
@@ -225,10 +226,25 @@ export function ServiceBoardsSection() {
   const redesign = useRedesign();
   const [view, setView] = useState("all");
 
+  const startEdit = (b: any) => { setEditingId(b.id); setEditForm({ name: b.name, description: b.description, ticketCode: b.ticketCode, slaResponseMinutes: b.slaResponseMinutes, slaResolutionMinutes: b.slaResolutionMinutes, autoCloseEnabled: b.autoCloseEnabled, autoCloseDays: b.autoCloseDays, followUpEnabled: b.followUpEnabled, followUpIntervalMinutes: b.followUpIntervalMinutes, notifyCustomerOnClose: b.notifyCustomerOnClose !== false }); };
+
+  // A board's own page hands over to the editor with ?board=<id> (Boards.tsx → "Edit this board"), so
+  // somebody who asked to edit *this* board arrives with it already open instead of with a list to
+  // search. Consumed once, because `fetch` also runs after a save and re-opening the form then would
+  // undo the action that just succeeded. Read only in the redesigned interface: the classic screen has
+  // no link that carries the parameter and must keep rendering exactly as it does today.
+  const deepLinkRead = useRef(false);
+
   const fetch = () => {
     api.get("/boards").then(r => {
       const data = Array.isArray(r.data) ? r.data : (r.data?.data || r.data || []);
       setBoards(data);
+      if (redesign && !deepLinkRead.current) {
+        deepLinkRead.current = true;
+        const requested = new URLSearchParams(window.location.search).get("board");
+        const match = requested ? data.find((b: any) => b.id === requested) : null;
+        if (match) startEdit(match);
+      }
     }).catch(() => {}).finally(() => setLoading(false));
   };
   useEffect(() => { fetch(); }, []);
@@ -238,8 +254,6 @@ export function ServiceBoardsSection() {
     try { await api.post("/boards", newBoard); toast.success("Board created"); setShowCreate(false); setNewBoard({ name: "", description: "", notifyCustomerOnClose: true }); fetch(); }
     catch { toast.error("Failed"); }
   };
-
-  const startEdit = (b: any) => { setEditingId(b.id); setEditForm({ name: b.name, description: b.description, ticketCode: b.ticketCode, slaResponseMinutes: b.slaResponseMinutes, slaResolutionMinutes: b.slaResolutionMinutes, autoCloseEnabled: b.autoCloseEnabled, autoCloseDays: b.autoCloseDays, followUpEnabled: b.followUpEnabled, followUpIntervalMinutes: b.followUpIntervalMinutes, notifyCustomerOnClose: b.notifyCustomerOnClose !== false }); };
   const saveEdit = async (id: string) => {
     try { await api.patch(`/boards/${id}`, editForm); toast.success("Updated"); setEditingId(null); fetch(); }
     catch { toast.error("Failed"); }
@@ -317,12 +331,22 @@ export function ServiceBoardsSection() {
                     <div className="min-w-0">
                       <h3 className="text-white font-semibold">{b.name}</h3>
                       {redesign && (
+                        /*
+                         * The same promise the board's own page states, in the same words, read through
+                         * the same helpers: two screens that both print a board's policy must not make
+                         * the reader convert one of them. The follow-up figure is read from
+                         * `followUpIntervalHours`, which is the column the record has — the minutes
+                         * column this line used to ask for does not exist, so it always answered with the
+                         * expression's own fallback and disagreed with every other screen.
+                         */
                         <p className="text-xs text-gray-500 truncate">
-                          SLA {b.slaResponseMinutes ?? "—"} / {b.slaResolutionMinutes ?? "—"} min
+                          Responds in {minutesInWords(b.slaResponseMinutes) ?? "—"} · resolves in {minutesInWords(b.slaResolutionMinutes) ?? "—"}
                           {b.ticketCode ? ` · code ${b.ticketCode}` : ""}
                           {b.autoCloseEnabled ? ` · auto-closes after ${b.autoCloseDays ?? 14} days` : ""}
-                          {b.followUpEnabled ? ` · follow-up every ${b.followUpIntervalMinutes ?? 120} min` : ""}
-                          {b.notifyCustomerOnClose === false ? " · closes without emailing the client" : ""}
+                          {b.followUpEnabled
+                            ? ` · follow-up ${hoursInWords(b.followUpIntervalHours) ? `every ${hoursInWords(b.followUpIntervalHours)}` : "on"}`
+                            : " · no follow-up"}
+                          {b.notifyCustomerOnClose === false ? " · closes without emailing the client" : " · emails the client on close"}
                         </p>
                       )}
                     </div>

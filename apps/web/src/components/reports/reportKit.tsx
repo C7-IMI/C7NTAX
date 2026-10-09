@@ -10,6 +10,7 @@
 import type { ReactNode } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { DOCUMENT_BRAND, documentMetaLine, shieldDataUrl } from "../../lib/documentBrand";
 import {
   duration as durationValue, formatValue as formatValueIn, labelFor as labelForValue,
   money as moneyValue, number as numberValue, unwrapValue, type ValueFormat,
@@ -360,6 +361,409 @@ ${body || "<p>No data available.</p>"}
   return window_;
 }
 
+// ── Generated documents ─────────────────────────────────────────────
+//
+// A *generated* document — a standard report, a dashboard, the queue's own print — is laid out here
+// from its sections, so a KPI block prints as tiles, a bar list prints as bars and a table prints as
+// a table. The table writers above stay for the banded designer's output, whose bands decide their
+// own geometry and whose author placed the header themselves.
+//
+// The brand is in `lib/documentBrand.ts`; nothing below invents a colour.
+
+/** Tone colours on paper, matched to the screen's tones so a figure reads the same both places. */
+const TONE_INK: Record<Tone, { fill: string; ink: string }> = {
+  neutral: { fill: DOCUMENT_BRAND.tint, ink: DOCUMENT_BRAND.ink },
+  good: { fill: "#dcfce7", ink: "#166534" },
+  warn: { fill: "#fef3c7", ink: "#92400e" },
+  bad: { fill: "#fee2e2", ink: "#991b1b" },
+  info: { fill: "#cffafe", ink: "#155e75" },
+};
+
+const hexToRgb = (hex: string): [number, number, number] => {
+  const value = hex.replace("#", "");
+  return [parseInt(value.slice(0, 2), 16), parseInt(value.slice(2, 4), 16), parseInt(value.slice(4, 6), 16)];
+};
+
+/**
+ * The letterhead, drawn once per document: the shield, the product's wordmark with its crimson 7, the
+ * company, then the title, the meta line and the accent rule the document hangs from.
+ *
+ * The wordmark is drawn as three runs rather than one because the 7 is crimson and the rest is ink —
+ * the same treatment the interface gives it through two masks, done here with three `text` calls and
+ * the measured width of what came before.
+ */
+function drawLetterhead(doc: jsPDF, title: string, subtitle?: string, period?: string, shield?: string | null): number {
+  const margin = 40;
+  const width = doc.internal.pageSize.getWidth();
+  let textLeft = margin;
+
+  if (shield) {
+    try {
+      doc.addImage(shield, "PNG", margin, 32, 24, 24);
+      textLeft = margin + 32;
+    } catch {
+      textLeft = margin; // An unreadable image must not cost the document its identity or its layout.
+    }
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.setTextColor(DOCUMENT_BRAND.ink);
+  doc.text("C", textLeft, 50);
+  const afterC = textLeft + doc.getTextWidth("C");
+  doc.setTextColor(DOCUMENT_BRAND.crimson);
+  doc.text("7", afterC, 50);
+  const afterSeven = afterC + doc.getTextWidth("7");
+  doc.setTextColor(DOCUMENT_BRAND.ink);
+  doc.text("NTAX", afterSeven + 3.4, 50); // the logotype's own tracking between the 7 and the N
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(DOCUMENT_BRAND.muted);
+  doc.text(DOCUMENT_BRAND.company, width - margin, 44, { align: "right" });
+  doc.text("Reporting", width - margin, 54, { align: "right" });
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(17);
+  doc.setTextColor(DOCUMENT_BRAND.ink);
+  doc.text(title, margin, 80);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(DOCUMENT_BRAND.muted);
+  doc.text(documentMetaLine(subtitle, period), margin, 93);
+
+  doc.setDrawColor(...hexToRgb(DOCUMENT_BRAND.accent));
+  doc.setLineWidth(2);
+  doc.line(margin, 100, width - margin, 100);
+  return 118;
+}
+
+/** A section heading: a small caps label over a hairline, so a page of figures still has chapters. */
+function drawSectionHeading(doc: jsPDF, label: string, y: number): number {
+  const margin = 40;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(DOCUMENT_BRAND.body);
+  doc.text(label.toUpperCase(), margin, y, { charSpace: 0.6 });
+  doc.setDrawColor(...hexToRgb(DOCUMENT_BRAND.hairline));
+  doc.setLineWidth(0.6);
+  doc.line(margin, y + 5, doc.internal.pageSize.getWidth() - margin, y + 5);
+  return y + 18;
+}
+
+function drawKpis(doc: jsPDF, section: Extract<Section, { kind: "kpis" }>, y: number): number {
+  const margin = 40;
+  const gap = 10;
+  const perRow = 4;
+  const width = doc.internal.pageSize.getWidth();
+  const tileWidth = (width - margin * 2 - gap * (perRow - 1)) / perRow;
+  const tileHeight = 46;
+
+  section.items.forEach((item, index) => {
+    const column = index % perRow;
+    const row = Math.floor(index / perRow);
+    const x = margin + column * (tileWidth + gap);
+    const top = y + row * (tileHeight + gap);
+    const tone = TONE_INK[item.tone ?? "neutral"];
+
+    doc.setFillColor(...hexToRgb(tone.fill));
+    doc.setDrawColor(...hexToRgb(DOCUMENT_BRAND.hairline));
+    doc.setLineWidth(0.6);
+    doc.roundedRect(x, top, tileWidth, tileHeight, 3, 3, "FD");
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.8);
+    doc.setTextColor(DOCUMENT_BRAND.muted);
+    doc.text(item.label.toUpperCase(), x + 8, top + 12, { charSpace: 0.4 });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(...hexToRgb(tone.ink));
+    doc.text(item.value, x + 8, top + 30);
+
+    if (item.sub) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(DOCUMENT_BRAND.muted);
+      doc.text(item.sub, x + 8, top + 40);
+    }
+  });
+
+  const rows = Math.max(1, Math.ceil(section.items.length / perRow));
+  return y + rows * (tileHeight + gap) + 6;
+}
+
+function drawBars(doc: jsPDF, section: Extract<Section, { kind: "bars" }>, y: number): number {
+  const margin = 40;
+  const width = doc.internal.pageSize.getWidth();
+  const trackWidth = width - margin * 2 - 150;
+  const max = Math.max(...section.rows.map(row => row.value), 1);
+
+  for (const row of section.rows) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(DOCUMENT_BRAND.body);
+    doc.text(row.label, margin, y + 5);
+
+    doc.setFillColor(...hexToRgb(DOCUMENT_BRAND.tint));
+    doc.roundedRect(margin + 110, y - 1, trackWidth, 7, 3.5, 3.5, "F");
+    const filled = Math.max(4, (row.value / max) * trackWidth);
+    const tone = TONE_INK[row.tone ?? "neutral"];
+    doc.setFillColor(...hexToRgb(row.tone === "neutral" || !row.tone ? DOCUMENT_BRAND.accent : tone.ink));
+    doc.roundedRect(margin + 110, y - 1, filled, 7, 3.5, 3.5, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(DOCUMENT_BRAND.body);
+    doc.text(row.display ?? number(row.value), width - margin, y + 5, { align: "right" });
+    y += 15;
+  }
+  return y + (section.note ? 0 : 8);
+}
+
+function drawFacts(doc: jsPDF, section: Extract<Section, { kind: "facts" }>, y: number): number {
+  const margin = 40;
+  const width = doc.internal.pageSize.getWidth();
+  const half = (width - margin * 2 - 20) / 2;
+
+  section.items.forEach((item, index) => {
+    const column = index % 2;
+    const row = Math.floor(index / 2);
+    const x = margin + column * (half + 20);
+    const top = y + row * 15;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(DOCUMENT_BRAND.muted);
+    doc.text(item.label, x, top);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(DOCUMENT_BRAND.ink);
+    doc.text(item.value, x + half, top, { align: "right" });
+  });
+
+  return y + Math.ceil(section.items.length / 2) * 15 + 6;
+}
+
+function drawNotes(doc: jsPDF, section: Extract<Section, { kind: "notes" }>, y: number): number {
+  const margin = 40;
+  const width = doc.internal.pageSize.getWidth();
+  const tone = TONE_INK[section.tone];
+  doc.setFillColor(...hexToRgb(tone.fill));
+  doc.roundedRect(margin, y - 10, width - margin * 2, section.items.length * 13 + 16, 3, 3, "F");
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...hexToRgb(tone.ink));
+  section.items.forEach((item, index) => {
+    doc.text(`•  ${item}`, margin + 10, y + index * 13 + 4);
+  });
+  return y + section.items.length * 13 + 18;
+}
+
+/** The footer the whole document wears, written after the pages exist so it can count them. */
+function drawFooters(doc: jsPDF, title: string): void {
+  const margin = 40;
+  const width = doc.internal.pageSize.getWidth();
+  const height = doc.internal.pageSize.getHeight();
+  const total = doc.getNumberOfPages();
+
+  for (let page = 1; page <= total; page++) {
+    doc.setPage(page);
+    doc.setDrawColor(...hexToRgb(DOCUMENT_BRAND.hairline));
+    doc.setLineWidth(0.6);
+    doc.line(margin, height - 34, width - margin, height - 34);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(DOCUMENT_BRAND.muted);
+    doc.text(`${DOCUMENT_BRAND.product} Reporting · ${title}`, margin, height - 22);
+    doc.text(`Page ${page} of ${total}`, width - margin, height - 22, { align: "right" });
+  }
+}
+
+/**
+ * The PDF of a generated document, laid out from its sections.
+ *
+ * Asynchronous only because the shield is an image: everything else is drawn synchronously once the
+ * data URL is in hand. A missing badge costs the letterhead its glyph and nothing else.
+ */
+export async function documentToPdf(document_: ReportDocument): Promise<void> {
+  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+  const shield = await shieldDataUrl();
+  let y = drawLetterhead(doc, document_.title, document_.subtitle, document_.period, shield);
+  const bottom = doc.internal.pageSize.getHeight() - 52;
+
+  const newPage = () => { doc.addPage(); y = 52; };
+
+  for (const section of document_.sections) {
+    // A section that cannot fit under the cursor starts a page rather than being broken across two,
+    // because a table split under its own heading reads as a table without a heading.
+    if (y > bottom - 60) newPage();
+
+    if (section.kind === "kpis" || section.kind === "bars" || section.kind === "facts" || section.kind === "notes") {
+      if (section.title) y = drawSectionHeading(doc, section.title, y);
+      if (section.kind === "kpis") y = drawKpis(doc, section, y);
+      else if (section.kind === "bars") y = drawBars(doc, section, y);
+      else if (section.kind === "facts") y = drawFacts(doc, section, y);
+      else y = drawNotes(doc, section, y);
+      y += 10;
+      continue;
+    }
+
+    y = drawSectionHeading(doc, section.title, y);
+    const numeric = section.columns.map(column => column.format !== undefined && column.format !== "text");
+    autoTable(doc, {
+      head: [section.columns.map(column => column.label)],
+      body: section.rows.map(row => section.columns.map(column => String(row[column.key] ?? "—"))),
+      startY: y - 8,
+      styles: { fontSize: 8, cellPadding: { top: 5, bottom: 5, left: 7, right: 7 }, lineColor: hexToRgb(DOCUMENT_BRAND.hairline), lineWidth: 0.4, textColor: hexToRgb(DOCUMENT_BRAND.body) },
+      headStyles: { fillColor: hexToRgb(DOCUMENT_BRAND.ink), textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+      alternateRowStyles: { fillColor: hexToRgb(DOCUMENT_BRAND.zebra) },
+      columnStyles: Object.fromEntries(numeric.map((isNumeric, index) => [index, { halign: isNumeric ? "right" : "left" }])),
+      margin: { left: 40, right: 40, bottom: 52 },
+      didParseCell: data => {
+        if (data.section === "body" && data.column.index === 0) data.cell.styles.textColor = hexToRgb(DOCUMENT_BRAND.ink);
+      },
+    });
+    const final = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable;
+    y = (final?.finalY ?? y) + (section.note ? 24 : 30);
+    if (section.note) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7.5);
+      doc.setTextColor(DOCUMENT_BRAND.muted);
+      doc.text(section.note, 40, y - 14);
+    }
+  }
+
+  drawFooters(doc, document_.title);
+  doc.save(`${fileBase(document_.title)}.pdf`);
+}
+
+/**
+ * The printable version of a generated document — the same document as the PDF, in HTML.
+ *
+ * It is a real document rather than `window.print()` on the screen, because printing the screen
+ * printed the sidebar and the header with it. The shield is an `<img>` here (a print window is HTML
+ * and can fetch one), the page boxes are the browser's, and `thead` repeats on every page because a
+ * table that loses its column labels on page two is a table nobody can read.
+ */
+export function documentToPrintWindow(document_: ReportDocument): Window | null {
+  const window_ = window.open("", "_blank", "width=1000,height=780");
+  if (!window_) return null;
+
+  const tiles = (section: Extract<Section, { kind: "kpis" }>) => `
+    ${section.title ? `<h2>${escapeHtml(section.title)}</h2>` : ""}
+    <div class="tiles">${section.items.map(item => `
+      <div class="tile tone-${item.tone ?? "neutral"}">
+        <p class="tile__label">${escapeHtml(item.label)}</p>
+        <p class="tile__value">${escapeHtml(item.value)}</p>
+        ${item.sub ? `<p class="tile__sub">${escapeHtml(item.sub)}</p>` : ""}
+      </div>`).join("")}</div>`;
+
+  const bars = (section: Extract<Section, { kind: "bars" }>) => {
+    const max = Math.max(...section.rows.map(row => row.value), 1);
+    return `
+    <h2>${escapeHtml(section.title)}</h2>
+    ${section.rows.map(row => `
+      <div class="bar">
+        <span class="bar__label">${escapeHtml(row.label)}</span>
+        <span class="bar__track"><span class="bar__fill tone-${row.tone ?? "neutral"}" style="width:${Math.max(2, Math.round((row.value / max) * 100))}%"></span></span>
+        <span class="bar__value">${escapeHtml(row.display ?? number(row.value))}</span>
+      </div>`).join("")}
+    ${section.note ? `<p class="note">${escapeHtml(section.note)}</p>` : ""}`;
+  };
+
+  const facts = (section: Extract<Section, { kind: "facts" }>) => `
+    <h2>${escapeHtml(section.title)}</h2>
+    <dl class="facts">${section.items.map(item => `
+      <div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(item.value)}</dd></div>`).join("")}
+    </dl>`;
+
+  const notes = (section: Extract<Section, { kind: "notes" }>) => `
+    <div class="callout tone-${section.tone}">
+      <h3>${escapeHtml(section.title)}</h3>
+      <ul>${section.items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+    </div>`;
+
+  const table = (section: Extract<Section, { kind: "table" }>) => `
+    <h2>${escapeHtml(section.title)}</h2>
+    <table>
+      <thead><tr>${section.columns.map(column => `<th class="${column.format && column.format !== "text" ? "num" : ""}">${escapeHtml(column.label)}</th>`).join("")}</tr></thead>
+      <tbody>${section.rows.map(row => `<tr>${section.columns.map(column => `<td class="${column.format && column.format !== "text" ? "num" : ""}">${escapeHtml(String(row[column.key] ?? "—"))}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table>
+    ${section.note ? `<p class="note">${escapeHtml(section.note)}</p>` : ""}`;
+
+  const body = document_.sections.map(section => {
+    if (section.kind === "kpis") return tiles(section);
+    if (section.kind === "bars") return bars(section);
+    if (section.kind === "facts") return facts(section);
+    if (section.kind === "notes") return notes(section);
+    return table(section);
+  }).join("");
+
+  window_.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(document_.title)}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @page{margin:14mm}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fff;color:${DOCUMENT_BRAND.body};padding:26px 30px 40px}
+  .letterhead{display:flex;align-items:center;gap:12px;padding-bottom:10px}
+  .letterhead img{width:30px;height:30px;border-radius:8px}
+  .letterhead .mark{font-size:19px;font-weight:700;color:${DOCUMENT_BRAND.ink};letter-spacing:.01em}
+  .letterhead .mark b{color:${DOCUMENT_BRAND.crimson}}
+  .letterhead .who{margin-left:auto;text-align:right;font-size:10px;color:${DOCUMENT_BRAND.muted};line-height:1.5}
+  h1{font-size:21px;color:${DOCUMENT_BRAND.ink};margin-top:8px}
+  .meta{font-size:11px;color:${DOCUMENT_BRAND.muted};margin:5px 0 0}
+  .rule{height:2px;background:${DOCUMENT_BRAND.accent};margin:12px 0 22px;border-radius:2px}
+  h2{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:${DOCUMENT_BRAND.body};margin:24px 0 8px;padding-bottom:5px;border-bottom:1px solid ${DOCUMENT_BRAND.hairline};page-break-after:avoid}
+  h2:first-of-type{margin-top:6px}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;page-break-inside:avoid}
+  .tile{border:1px solid ${DOCUMENT_BRAND.hairline};border-radius:8px;padding:9px 11px;background:${DOCUMENT_BRAND.tint}}
+  .tile__label{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:${DOCUMENT_BRAND.muted}}
+  .tile__value{font-size:19px;font-weight:700;color:${DOCUMENT_BRAND.ink};margin-top:3px}
+  .tile__sub{font-size:10px;color:${DOCUMENT_BRAND.muted};margin-top:2px}
+  .tone-good{background:#dcfce7;border-color:#bbf7d0} .tone-good .tile__value{color:#166534}
+  .tone-warn{background:#fef3c7;border-color:#fde68a} .tone-warn .tile__value{color:#92400e}
+  .tone-bad{background:#fee2e2;border-color:#fecaca} .tone-bad .tile__value{color:#991b1b}
+  .tone-info{background:#cffafe;border-color:#a5f3fc} .tone-info .tile__value{color:#155e75}
+  .bar{display:grid;grid-template-columns:190px 1fr 80px;align-items:center;gap:10px;padding:3px 0;page-break-inside:avoid}
+  .bar__label{font-size:11px}
+  .bar__track{height:9px;background:${DOCUMENT_BRAND.tint};border-radius:99px;overflow:hidden}
+  .bar__fill{display:block;height:100%;border-radius:99px;background:${DOCUMENT_BRAND.accent}}
+  .tone-good.bar__fill{background:#16a34a} .tone-warn.bar__fill{background:#f59e0b} .tone-bad.bar__fill{background:#dc2626}
+  .bar__value{font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+  .facts div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid ${DOCUMENT_BRAND.hairline};padding:5px 0}
+  .facts dt{font-size:11px;color:${DOCUMENT_BRAND.muted}}
+  .facts dd{font-size:11px;font-weight:600;color:${DOCUMENT_BRAND.ink}}
+  .callout{border-radius:8px;padding:12px 14px;background:${DOCUMENT_BRAND.tint};border:1px solid ${DOCUMENT_BRAND.hairline}}
+  .callout h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .callout ul{margin-left:16px;font-size:11px} .callout li{margin:2px 0}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  thead{display:table-header-group}
+  th{text-align:left;padding:7px 9px;background:${DOCUMENT_BRAND.ink};color:#fff;font-weight:600;font-size:10px}
+  td{padding:6px 9px;border-bottom:1px solid ${DOCUMENT_BRAND.hairline};vertical-align:top}
+  tbody tr:nth-child(even) td{background:${DOCUMENT_BRAND.zebra}}
+  td:first-child{color:${DOCUMENT_BRAND.ink}}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .note{font-size:10px;color:${DOCUMENT_BRAND.muted};margin-top:6px;font-style:italic}
+  .foot{margin-top:28px;padding-top:8px;border-top:1px solid ${DOCUMENT_BRAND.hairline};font-size:9.5px;color:${DOCUMENT_BRAND.muted};display:flex;justify-content:space-between}
+  @media print{body{padding:0} .tiles,.bar,.facts div{page-break-inside:avoid}}
+</style></head><body>
+<div class="letterhead">
+  <img src="${DOCUMENT_BRAND.shield}" alt="">
+  <span class="mark">C<b>7</b>NTAX</span>
+  <span class="who">${escapeHtml(DOCUMENT_BRAND.company)}<br>Reporting</span>
+</div>
+<h1>${escapeHtml(document_.title)}</h1>
+<p class="meta">${escapeHtml(documentMetaLine(document_.subtitle, document_.period))}</p>
+<div class="rule"></div>
+${body || "<p>No data available.</p>"}
+<div class="foot"><span>${escapeHtml(DOCUMENT_BRAND.product)} Reporting · ${escapeHtml(document_.title)}</span><span>${escapeHtml(new Date().toLocaleString())}</span></div>
+</body></html>`);
+  window_.document.close();
+  window_.focus();
+  return window_;
+}
+
 // ── Print ───────────────────────────────────────────────────────────
 
 /**
@@ -368,7 +772,7 @@ ${body || "<p>No data available.</p>"}
  * is what the Print button used to do.
  */
 export function printReport(document_: ReportDocument): void {
-  const window_ = tablesToPrintWindow(sectionsToTables(document_.sections), document_.title, document_.subtitle, document_.period);
+  const window_ = documentToPrintWindow(document_);
   if (!window_) return;
   setTimeout(() => window_.print(), 400);
 }
@@ -376,7 +780,9 @@ export function printReport(document_: ReportDocument): void {
 // ── PDF ─────────────────────────────────────────────────────────────
 
 export function exportPdf(document_: ReportDocument): void {
-  tablesToPdf(sectionsToTables(document_.sections), document_.title, document_.subtitle, document_.period);
+  // The shield is an image, so the document is drawn once it has one; the caller does not wait for a
+  // download it did not ask to manage.
+  void documentToPdf(document_);
 }
 
 // ── CSV ─────────────────────────────────────────────────────────────
