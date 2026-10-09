@@ -203919,6 +203919,18 @@
     "createdAt": "2026-10-09T04:32:14.938Z"
   },
   {
+    "id": "9afca5f5-3269-4711-b50d-ad99fbb349da",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+    "changes": {
+      "followUpIntervalHours": 24
+    },
+    "userId": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T16:04:03.365Z"
+  },
+  {
     "id": "6cc54326-8d50-46f6-b79a-3d6f9e5e0403",
     "action": "reports:create",
     "entity": "reports",
@@ -205268,6 +205280,18 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T04:32:39.722Z"
+  },
+  {
+    "id": "599489d5-5cf5-4f31-a7b5-edaa4d9105d3",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+    "changes": {
+      "followUpIntervalHours": 24
+    },
+    "userId": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T16:05:24.529Z"
   },
   {
     "id": "5260f9c7-9143-404a-a6a2-d21a66fae905",
@@ -210659,6 +210683,18 @@
     "createdAt": "2026-10-09T04:32:41.935Z"
   },
   {
+    "id": "bff218ce-9c8f-4dd5-841b-474198101920",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+    "changes": {
+      "followUpIntervalMinutes": 120
+    },
+    "userId": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T16:05:24.534Z"
+  },
+  {
     "id": "5cbaf6ee-141e-43b9-acd4-94e63b73ba01",
     "action": "company:update",
     "entity": "company",
@@ -212863,6 +212899,18 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T04:53:21.648Z"
+  },
+  {
+    "id": "9645146f-685a-4b03-b5f3-76109c4a3f81",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+    "changes": {
+      "followUpIntervalHours": 24
+    },
+    "userId": "632e5daf-5190-4f6c-8352-ce24896d4e41",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T16:05:24.539Z"
   },
   {
     "id": "60476a31-9ee8-4398-9a16-91d977c90864",

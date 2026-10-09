@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.021 | Last Updated: 2026-10-09
+## Version: 2026.10.9.022 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,108 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.022 — Two screens rebuilt from their mockups, a sign-in page replaced, documents that look like documents, and the pages that reported "Today"
+
+A day of reimagining: three designs that had been drawn as mockups and approved are now the product, a fourth
+screen that had no mockup is now a real page instead of a blank one, and every document this application
+generates has been given a letterhead. The classic interface keeps its own design on all of it — that is the
+rule, and each one was checked in both.
+
+### The screens that were redesigned
+- **[New]** **Contacts (`/clients/contacts`) is a rail, a list and a sheet.** The rail holds both choices the
+  page is asked — the view (all, primary, inactive, no email, each with its count and a line saying what it
+  means) and the client, whose own weight now sits beside its name (people, tickets, portal on or off).
+  Rows carry the person **and** their client, and how many tickets they have raised and still have open. The
+  sheet does the work the row cannot: the client and its weight, what they have raised with the newest
+  tickets linking through, whether they can sign in to the portal (with the switch, for those who may change
+  it), the last contact, and the four things a technician does from here.
+- **[New]** **Service Boards (`/boards`) leads with the answer a technician is judged by.** A rail of the
+  four boards, each showing what is open, how many were raised and **what the board does when a ticket
+  closes, in words** — NOC Alerts reads "closes without emailing the client" from the navigation itself.
+  The selected board gets its own page: what it is for, what is on it, the six figures the API returns in the
+  board's saved order, the average age set against the promise it makes, a policy track a person can read
+  (first response, resolved, follow-up, closed by itself) instead of `30 / 240 min`, and the whole policy
+  compared across all four boards. *Edit this board* deep-links to `/admin/boards?board=<id>`.
+- **[New]** **The report designer's modern arrangement** now matches the mockup that was built for it: the
+  six things a report is made of as six panes (bands in print order, the data sources, parameters, fields,
+  expressions, schedule), **Fit width**, and the status bar across the whole width beneath the three panels
+  rather than as a caption inside the canvas.
+- **[New]** **The sign-in page is replaced in the modern interface.** The way in is now a choice —
+  **passkey or password** — above a shared account field, so switching never loses what you typed; passkey is
+  offered first where the device has one and the control is not drawn where it does not. Errors sit at the
+  field, say how many attempts are left, and move focus. The status of the four services is **one sentence**
+  ("All systems ready — the API answered, and so did the database") with the four probes behind a disclosure,
+  and it now asks `/api/ready` rather than inferring "Database — Connected" from a liveness probe that never
+  touches one.
+
+### Documents
+- **[New]** **Every generated document wears the shield.** The icon variation from the brand composite sheet
+  (the shield and 7 on its tile, the source of the app icons) opens the page, with the wordmark beside it and
+  the 7 in brand crimson — drawn in the PDF as three text runs because the 7 is a different colour, and as an
+  image in the print window. **A custom report designed in the banded designer keeps its own header bands**:
+  its author placed them, and overruling that is not this feature's business.
+- **[Update]** **Generated reports are laid out from their sections instead of being flattened into tables.**
+  A KPI block prints as tiles in the tones the screen uses, a bar list prints as **bars** with their values,
+  a fact list as a two-column definition grid, and a table with a dark header, hairline rules, right-aligned
+  numeric columns and its note under it. Every page carries a footer with the product line and **Page N of M**,
+  written after the pages exist so it can count them.
+- **[Update]** **A printed ticket wears the same letterhead** (`components/PrintLetterhead.tsx`), so the paper
+  a ticket produces and the PDF a report produces cannot drift apart — one set of brand constants in
+  `lib/documentBrand.ts` for both.
+
+### The pages that were lying about where you were
+- **[New]** **A Not Found screen.** A path the application does not address used to render the shell with an
+  **empty `<main>`** — a blank page that reads as a broken build, which cost three debugging sessions in this
+  project and is what a stale bookmark or a renamed route leaves a user. It now says what happened, shows the
+  address in mono, offers search (⌘K) and a row of real destinations **filtered by the reader's own
+  permissions**, taken from the navigation tree so the suggestions cannot drift from it.
+- **[Fix]** **`/admin` no longer reports itself as "Today".** The Configuration hub has two addresses and only
+  the longer one matches a row in the navigation, so the shorter fell through to the header's fallback.
+- **[Fix]** **`/section/<domain>` no longer reports itself as "Today"** either — the section's own name is the
+  answer, and it is read from the tree.
+- **[Fix]** **A path that addresses nothing now says `Not found`** in the header rather than naming a page the
+  reader is not on. Every real route was checked first: the only other paths that reach the fallback are
+  `/login` and the two legacy redirects, none of which render inside the shell.
+
+### Fixes found while doing it
+- **[Fix]** **A board's follow-up interval could not be saved at all.** `PATCH /api/boards/:id` wrote
+  `followUpIntervalMinutes`, which no model has, so the update was refused the moment the field was included —
+  and the screens that printed the interval each fell back to their own default and disagreed. The route now
+  writes `followUpIntervalHours`, the column the record actually has, and converts a caller that still sends
+  minutes rather than dropping it silently. The editor's field is hours too.
+- **[Fix]** **The count on the rail.** Collapsed, the navigation pane showed the **Favorites** count and not
+  the alert count — the one number on the rail that is about something being *wrong*. Service Alerts now
+  keeps its badge when the pane is collapsed and wears it on the icon's own top-right corner, where a rail
+  with no labels has room for it; Favorites keeps its count only when the labels are there to read it against.
+- **[Fix]** **Signing in failed with the address typed in the wrong case.** `email` is a unique text column, so
+  the lookup compared it byte for byte: an account stored as `admin@C7NTAX.com` refused `admin@c7ntax.com`
+  with "Invalid credentials" — which reads as a wrong password, and sent somebody looking for a password that
+  had never changed. The sign-in lookup is now case-insensitive, as `clients.ts`, `emailToTicket.ts` and
+  `portalAuth.ts` already were; the password is still compared exactly. **Two more sign-in paths had the same
+  defect and were worse**: passkey sign-in asked for the address in lower case and then matched it exactly, so
+  a passkey was unusable for any account with a capital in its address; and single sign-on did the same, where
+  a miss with just-in-time provisioning on does not merely refuse the sign-in but creates a *second* account
+  for somebody who already has one.
+- **[Fix]** **`/kumo/checklists` rendered a `<th>` inside a `<th>`.** `SortableHeader` *is* a `th`, and the
+  checklist table wrapped it in another one, which React warns about on every render. The wrapper is gone and
+  its padding moved onto the component.
+- **[Fix]** **The Customer Portal's address is back on the modern screen.** The tile was rebuilt during the
+  redesign and lost the link, the copy button and the line saying where the address comes from — so the one
+  card that tells you a portal exists had stopped telling you where it is. `StatCard` grew an optional `foot`
+  for exactly this: a figure whose next question belongs on the tile.
+
+**Verification:** `tsc` clean on both apps; `guard:encoding`, `guard:routes`, `guard:api-docs` and
+`guard:help-links` pass. The redesigned screens were checked at 1440 **and** 1280 wide with no horizontal
+overflow, and every figure on them was read from the running API rather than drawn. The classic interface was
+loaded for each redesigned screen (`c7_ui_redesign=0`) and renders its previous design. The board interval fix
+was proved against the live API (write, legacy conversion, and the value restored); the checklist fix by the
+console warning going and staying away; the Not Found screen by walking a path that does not exist; the
+letterhead by capturing the document the code produces and looking at it. The sign-in fix was proved by
+signing in as the documented account in four spellings — all four now reach the same record — while a wrong
+password is still refused; the rail badge by measuring it against its icon in both pane states.
 
 ---
 

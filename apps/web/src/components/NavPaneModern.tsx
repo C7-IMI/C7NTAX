@@ -356,6 +356,14 @@ export function NavPaneModern({
              rows under it look like its children, which they are not. Collapsed, the rail has room
              for one glyph and not for a wordmark, so it keeps the icon like every other row. */
           <KumoWordmark height={16} className="shrink-0" />
+        ) : collapsed && badge > 0 ? (
+          /* Collapsed, the count rides the icon's own top-right corner instead of sitting at the end
+             of an empty row: with no label between them a trailing pill drifts away from the glyph it
+             belongs to, and on a rail this narrow the corner is where the eye already is. */
+          <span className="relative shrink-0" title={`${badge} active service alert${badge === 1 ? "" : "s"}`}>
+            <domain.icon size={18} className="text-alert-red" />
+            <span className="badge-count absolute -right-1.5 -top-1 h-[15px] min-w-[15px] px-[3px] text-[9px] leading-none">{badge}</span>
+          </span>
         ) : (
           <domain.icon size={18} className={`shrink-0 ${badge > 0 ? "text-alert-red" : ""}`} />
         )}
@@ -446,9 +454,10 @@ export function NavPaneModern({
       >
         <Star size={18} className={`shrink-0 ${count ? "text-amber-400" : ""}`} />
         {!collapsed && <span className="min-w-0 flex-1 truncate text-left">Favorites</span>}
-        {collapsed
-          ? count > 0 && <span className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]">{count}</span>
-          : count > 0 && <span className="shrink-0 text-[10px] text-gray-500">{count}</span>}
+        {/* The count is a property of the list, not a warning, and it only means anything beside the
+            word "Favorites". Collapsed there is no word to read it against — and the one badge the
+            rail has room for is reserved for what is *wrong*, which is Service Alerts' red count. */}
+        {!collapsed && count > 0 && <span className="shrink-0 text-[10px] text-gray-500">{count}</span>}
       </button>
     );
   };

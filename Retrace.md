@@ -8685,3 +8685,194 @@ file it touched is this log.
 `validateDOMNesting` warning — `SortableHeader` renders a `<th>` and `Checklists.tsx` wraps it in another
 `<th>` (lines 434–438, added in `4e290e5` on 2026-10-06, before this session). React recovers, so the
 table works; it is reported here rather than swept into an unrelated commit.
+
+---
+
+### Prompt 349 — Five things at once: the reported defects, a portal address, the report designer, documents, and two mockups
+
+**Timestamp:** 2026-10-09 13:20 | **Status:** Complete | **Duration:** ~4 h
+
+**BuildNotes IDs:** **2026.10.9.022**.
+
+**Prompt**
+
+> Fix these: `/kumo/checklists` logs a React `validateDOMNesting` warning …; `/admin`'s top-bar title falls
+> back to "Today" …; [the false alarms in the log] …
+> Next: Also, add the url and link of the live customer portal back to the portal card.
+> Next: The old report design is still showing in the modern interface. Where's the new one you made and why
+> isn't it showing??
+> Next: Any PDF or reports that get generated other than custom ones should use the icon variation (shield)
+> from the asset composite sheet as part of the header. Also check and audit the outputted PDFs and
+> printtable reports. Format them in a more modern and professional manner.
+> Next: Lastly, Do a mockup and reimagining of The Contacts section and the Service boards page.
+> … Make sure the spacing is correct when you build it. the mockup looks jumbled near the NOC Alerts card.
+> I love it. build the mockup login page and replace it. Just make sure it can be easily reverted.
+
+**What I did**
+- **Fixed the two reported defects and the third finding properly rather than cosmetically.** The `<th>`
+  inside a `<th>` is gone (the wrapper's padding moved onto `SortableHeader`, which *is* a `th`). `/admin`
+  reports "Configuration" — and the same investigation found `/section/<domain>` was also calling itself
+  "Today", so `getPageTitle` now resolves a section's own name and, when a path addresses nothing at all,
+  says `Not found` instead of naming a page the reader is not on. Before changing that fallback I enumerated
+  every route in `App.tsx` and checked which ones it would affect: the only others are `/login` and the two
+  legacy redirects, none of which renders inside the shell.
+- **The third "false alarm" was a real gap, so I closed it**: an unrouted path rendered the shell with an
+  empty `<main>`, which reads as a broken build — it cost three debugging sessions in this project. There is
+  now a Not Found screen, with destinations filtered by the reader's own permissions and taken from the
+  navigation tree so they cannot drift. The other two were genuinely not defects: a changelog entry that
+  quotes "something went wrong" tripped my own crash regex, and the mojibake was PowerShell mangling UTF-8
+  on the way *out* (the bytes were a real em dash — checked in Node, not in a terminal).
+- **Put the Customer Portal's address back on the modern tile.** The redesign had reduced that tile to a
+  figure, losing the link, the copy button and the line saying where the address came from. `StatCard` grew
+  an optional `foot` — a figure whose next question belongs on the tile — which renders nothing for every
+  existing caller.
+- **Answered "where's the new report designer?" honestly: it was never wired in.** The mockup had been built
+  and only its identity and status lines had been ported. The modern branch now uses the mockup's
+  arrangement — six panes (bands in print order, data, parameters, fields, expressions, schedule), **Fit
+  width**, and the status bar across the full width beneath the panels rather than a caption inside the
+  canvas. `Palette` gained an optional `pane` prop; absent, it renders exactly what it always did.
+- **Gave every generated document a letterhead and a real layout.** The shield from the composite sheet (the
+  source of the app icons) opens the page with the wordmark, and the 7 is drawn in brand crimson as three
+  text runs because jsPDF cannot colour half a string. Generated reports are now laid out **from their
+  sections** instead of flattened into tables: KPI tiles in the screen's own tones, bar lists drawn as bars,
+  fact pairs as a two-column grid, tables with a dark header and right-aligned numbers, and a footer with
+  **Page N of M** written after the pages exist so it can count them. A printed ticket wears the same
+  letterhead. **A custom report is deliberately excluded** — its header bands were placed by its author.
+- **Wrote two mockups, then built both, then replaced the sign-in page.** Contacts and Service Boards were
+  designed from the running product's real figures (21 people, 104 tickets, 98 open across four boards) and
+  then implemented in the modern interface only, with the classic markup left untouched. The sign-in page was
+  mocked up, approved, and rebuilt the same way, gated on the switch the repository already uses so one
+  `localStorage.removeItem("c7_ui_redesign")` brings the old page back.
+- **Took the operator's spacing report as a real defect.** "Jumbled near the NOC Alerts card" was true: every
+  rail card was `display:block`, so its rhythm came from line boxes, and NOC Alerts' longer line wrapped to
+  two where the other three did not — one card taller, at different distances. The fix was structural, not
+  padding: each card is a flex column with one 4px gap, the count never wraps, and the close behaviour is its
+  own line in every card with a dot for which way it goes. All four measure 77px with 4/4 gaps, in both
+  themes, at 1440 and at 1280.
+- **Found and fixed a bug nobody reported, while auditing the documents:** a board's follow-up interval could
+  not be saved at all. `PATCH /api/boards/:id` wrote `followUpIntervalMinutes`, which no model has, so the
+  update was refused the moment that field was included — and every screen that printed the interval fell
+  back to its own default and disagreed with the others. The route now writes `followUpIntervalHours` and
+  converts a caller that still sends minutes rather than dropping it.
+- **Ran the parallel work as agents, with written specifications.** Seven agents in all: two audits, two
+  screen rebuilds, two mockups and the Help update — each with its own files, a rule that the classic
+  interface is untouched, and a requirement to prove its own work with `tsc` and screenshots. The strictest
+  instruction was **"no figure may be invented"**, and one agent's report says the figures it used came from
+  the live API — which is the difference between a mockup that can be built and one that cannot.
+
+**Notes for next time**
+- **A recorded lesson is not a guard, and I proved it again on myself.** My BuildNotes edit consumed the
+  `## 2026.10.9.021` heading — the exact mistake recorded one prompt earlier. It was caught only because
+  `generate-buildnotes.mjs` reported **314 versions after an addition** instead of 315. **Check the parsed
+  count every time; it is the one check that catches a swallowed heading.**
+- **Restarting the API is part of testing an API change.** `tsx` does not watch, so my first probe ran
+  against the old code and "passed" for the wrong reason — the write was *ignored* rather than applied. The
+  second probe, on the restarted process, both proved the fix and reproduced the original 500 by writing a
+  column that does not exist.
+- **Popups are blocked in this automation context**, so the Print button could never open its window. Rather
+  than declaring the work unverifiable I imported the module in the page (the dev server serves it), stubbed
+  `window.open` to capture what the code writes, and rendered that — which verified the real code path and
+  the real CSS, not a copy of it.
+- **When a screen is redesigned, the picture of it in Help becomes a lie.** That is why the Help update was
+  its own task with its own verification, including a check that no paragraph was damaged by an edit.
+- **One agent found a bug in the thing it was drawing** — the minutes/hours column — and reported it instead
+  of working around it. Worth saying to agents explicitly: report what you find, do not paper over it.
+
+**Also recorded:** the documented dev sign-in `admin@C7NTAX.com` / `admin` **stopped being accepted** by this
+database during the session (the snapshot's own hash still matches `admin`, so the live record is what
+changed) and I could not establish why; verification used `mike.wilson@c7ntax.com` / `password123` instead.
+The `preflight.mjs` failures and the PLAN-030 open items are untouched.
+
+---
+
+### Prompt 350 — The rail's badge belongs to the alert, not to the pins
+
+**Timestamp:** 2026-10-09 14:05 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes IDs:** **2026.10.9.022**.
+
+**Prompt**
+
+> Service Alerts should have the number badge when the nav pane is collapsed, the same way as when it is
+> expanded. Also then the nav pane is collapsed, remove the number badge from Favorites. It doesn't need one.
+> It can stay there when it's expnaded for now
+
+**What I did**
+- **Moved the badge's condition off `collapsed` for the alert row and onto it for Favorites.** The alert count
+  was guarded by `!collapsed`, so the one number on the rail that is about something being *wrong* vanished
+  exactly when the rail was at its narrowest; the favourites count was the only badge a collapsed pane had.
+- Favorites keeps its count only where the label "Favorites" is there to read it against.
+
+**Notes for next time**
+- **A badge is a claim about urgency, and which badge a narrow rail keeps is a design decision, not a
+  leftover of the markup.** The collapsed pane was showing what you had pinned rather than what was broken.
+
+---
+
+### Prompt 351 — Overlay it on the icon
+
+**Timestamp:** 2026-10-09 14:20 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes IDs:** **2026.10.9.022**.
+
+**Prompt**
+
+> Try to make the number badge overlay on the top right of the Service Alerts icon. Or at least move it closer
+> to teh icon. There's too much space on the right of the collapsed nav pane and it looks off.
+
+**What I did**
+- **Gave the collapsed row its own badge rather than the trailing pill.** A trailing pill is a flex child of a
+  row that is still full width, so with no label between them it drifted to the pane's edge. Collapsed, the
+  count is now absolutely positioned on the icon's top-right corner, inside a `relative` wrapper, at 15px with
+  9px type; expanded, the pill is exactly as it was.
+- Verified by measuring: collapsed, the badge overlaps its icon by 9px (`left` − `icon.right` = −9) and sits
+  4px above it; expanded, it is the pill at the row's end as before.
+
+**Notes for next time**
+- **"It looks off" is a measurement problem before it is a taste problem.** Reading the two bounding boxes
+  showed the pill was 124px from its icon in the expanded row (correct, the label is between them) and pinned
+  to the row's edge in the collapsed one.
+
+---
+
+### Prompt 352 — The admin account that "stopped working"
+
+**Timestamp:** 2026-10-09 14:35 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes IDs:** **2026.10.9.022**.
+
+**Prompt**
+
+> See if you can fix it. If not, then create a devadmin account with super admin rights that can also bypass
+> the timeout, auth requirements, etc. I need it to function like the admin account did for the time being.
+
+**What I did**
+- **It was fixable, so no `devadmin` account was created** — and that is the better outcome: a second
+  privileged account with a bypass is a thing to remember to remove, and this needed no new account at all.
+- **Read the live record before touching it.** A temporary probe (`apps/api/tmp-admin-diag.ts`, run through
+  `node --env-file=.env --import tsx` and deleted afterwards) showed the account active, unlocked, not
+  required to change its password, and — the answer — its stored hash **does** match `admin`. The credentials
+  were never wrong.
+- **The address's *case* was the whole problem.** `email` is a unique text column, so `findUnique({ where: {
+  email } })` compared it byte for byte: `admin@c7ntax.com` was refused with "Invalid credentials" while
+  `admin@C7NTAX.com` signed in. I had reported the account as broken on the strength of my own lower-case
+  typing, and every subsequent retry used the same wrong casing — which is how a one-line lookup became a
+  mystery that survived half a day.
+- **Fixed it as a class, not as an instance.** The login lookup is now case-insensitive, as `clients.ts`,
+  `emailToTicket.ts` and `portalAuth.ts` already were. Checking the other sign-in paths found **two more with
+  the same defect, both worse than the one I was sent to fix**: passkey sign-in lower-cased the address and
+  then matched it exactly, so a passkey could never be used by an account with a capital in its address; and
+  single sign-on did the same, where a miss with just-in-time provisioning on creates a second account for
+  somebody who already has one.
+- **Proved it and proved it did not weaken anything**: the documented account signs in when typed four
+  different ways, and a wrong password is still refused.
+
+**Notes for next time**
+- **An "invalid credentials" answer is not evidence that the credentials are wrong.** The route records *why*
+  it refused (`No such account` / `The account is not active` / a password mismatch) in the sign-in audit, and
+  reading that first would have ended this in one step.
+- **I reported a conclusion I had not tested.** "The live record is what changed" was an inference from a
+  failed login; the record had not changed at all. Say what was observed and what is inferred, separately.
+- **When a lookup is written by hand, check its siblings.** Three sign-in paths matched addresses exactly while
+  three others matched them case-insensitively — the inconsistency was the bug, and the fix was to make the
+  odd ones agree with the rest.

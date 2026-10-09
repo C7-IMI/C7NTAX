@@ -147,7 +147,7 @@ boardsRouter.post("/", requirePermission(Permission.BoardManage), async (req: Au
 // ── Update board ──
 boardsRouter.patch("/:id", requirePermission(Permission.BoardManage), async (req: AuthRequest, res, next) => {
   try {
-    const { name, description, enabled, ticketCode, slaResponseMinutes, slaResolutionMinutes, autoCloseEnabled, autoCloseDays, followUpEnabled, followUpIntervalMinutes, notifyCustomerOnClose } = req.body;
+    const { name, description, enabled, ticketCode, slaResponseMinutes, slaResolutionMinutes, autoCloseEnabled, autoCloseDays, followUpEnabled, followUpIntervalHours, notifyCustomerOnClose } = req.body;
     const data: Record<string, unknown> = {};
     if (name !== undefined) data.name = name;
     if (description !== undefined) data.description = description;
@@ -158,7 +158,14 @@ boardsRouter.patch("/:id", requirePermission(Permission.BoardManage), async (req
     if (autoCloseEnabled !== undefined) data.autoCloseEnabled = autoCloseEnabled;
     if (autoCloseDays !== undefined) data.autoCloseDays = autoCloseDays;
     if (followUpEnabled !== undefined) data.followUpEnabled = followUpEnabled;
-    if (followUpIntervalMinutes !== undefined) data.followUpIntervalMinutes = followUpIntervalMinutes;
+    // `followUpIntervalHours` is the column the record has. This route used to write
+    // `followUpIntervalMinutes`, which no model has, so a board edit that included that field was
+    // refused by Prisma — the follow-up interval could not be changed at all, and the screens that
+    // print it fell back to their own default and disagreed with each other. Minutes are accepted
+    // from a caller that still sends them, converted, because the field was documented under that
+    // name for a while and silently dropping it would be worse than honouring it.
+    if (followUpIntervalHours !== undefined) data.followUpIntervalHours = followUpIntervalHours;
+    else if (req.body.followUpIntervalMinutes !== undefined) data.followUpIntervalHours = Math.max(1, Math.round(Number(req.body.followUpIntervalMinutes) / 60));
     if (notifyCustomerOnClose !== undefined) data.notifyCustomerOnClose = notifyCustomerOnClose === true;
     const board = await prisma.serviceBoard.update({ where: { id: req.params.id }, data });
     res.json(board);

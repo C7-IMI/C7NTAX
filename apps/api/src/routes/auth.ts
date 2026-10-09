@@ -110,9 +110,17 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
 
     // Allow login by email OR username — include role relation. The company comes with the role because
     // the effective set below cannot apply the client's console switch without it.
+    //
+    // **The lookup is case-insensitive, and that is a fix rather than a convenience.** `email` is a
+    // unique *text* column, so `findUnique` compared it byte for byte: an address stored as
+    // `admin@C7NTAX.com` refused `admin@c7ntax.com` with "Invalid credentials", which reads as a wrong
+    // password and sent somebody looking for a password that had never changed. Nobody types the
+    // capitals back, and an address is not a password — the same address spelled differently is the
+    // same account. The password is still compared exactly, and the sign-in row still records what was
+    // typed, so a genuine attempt on the wrong account looks the same as it always did.
     const user = email
-      ? await prisma.user.findUnique({ where: { email }, include: { ...PERMISSION_SUBJECT_INCLUDE } })
-      : await prisma.user.findUnique({ where: { username }, include: { ...PERMISSION_SUBJECT_INCLUDE } });
+      ? await prisma.user.findFirst({ where: { email: { equals: String(email), mode: "insensitive" } }, include: { ...PERMISSION_SUBJECT_INCLUDE } })
+      : await prisma.user.findFirst({ where: { username: { equals: String(username), mode: "insensitive" } }, include: { ...PERMISSION_SUBJECT_INCLUDE } });
     if (!user || !user.isActive) {
       // The row is written even though no account matched: an attempt at an address that is not a user
       // is exactly the row an investigation is looking for.

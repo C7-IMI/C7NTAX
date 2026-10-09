@@ -125,7 +125,10 @@ ssoExchangeRouter.get("/oidc/callback", async (req, res, next) => {
       return res.status(403).json({ error: `${email} is not in a domain this deployment accepts for single sign-on` });
     }
 
-    let user = await prisma.user.findUnique({ where: { email }, include: { role: true } });
+    // Matched case-insensitively. The provider's address is lower-cased above, so an exact match
+    // missed any account stored with a capital in it — and a miss here is not merely a failed sign-in:
+    // with just-in-time provisioning on it creates a *second* account for somebody who already has one.
+    let user = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, include: { role: true } });
     if (!user) {
       if (!settings.jitProvisioning) {
         return res.status(403).json({ error: "No account exists for that address — ask an administrator to create one" });

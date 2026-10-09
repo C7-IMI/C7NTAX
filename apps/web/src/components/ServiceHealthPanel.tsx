@@ -19,7 +19,14 @@ function statusIcon(s: ServiceStatus["status"]) {
   return <XCircle size={13} className="text-red-400" />;
 }
 
-const HELP_MESSAGES: Record<string, string> = {
+/**
+ * What to do about each service, in the words the person who runs this instance needs.
+ *
+ * Exported because the sign-in page's status line (`SignInStatus`) quotes the same two sentences:
+ * the advice is the same question asked on a different surface, and a copy of it that drifts is
+ * advice that contradicts itself.
+ */
+export const HELP_MESSAGES: Record<string, string> = {
   "Web Server": "The frontend is serving this page, so Vite is running. No action needed.",
   "API Server": "Run 'pnpm dev' in apps/api. Check that port 4000 is free (netstat -ano | findstr :4000).",
   Database: "Verify PostgreSQL is running (pg_isready). Check DATABASE_URL in apps/api/.env points to a reachable instance.",

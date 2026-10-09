@@ -115,8 +115,12 @@ webauthnRouter.post("/register/verify", authenticate, async (req: AuthRequest, r
 
 webauthnRouter.post("/login/options", rateLimitPasskeys, async (req, res, next) => {
   try {
-    const email = String(req.body.email || "").toLowerCase();
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Lower-cased for the lookup, and compared case-insensitively: this asked for the address in
+    // lower case and then matched it exactly, so an account stored as `admin@C7NTAX.com` could never
+    // sign in with a passkey while its password worked — the passkey path was silently unusable for
+    // exactly the accounts most likely to have one.
+    const email = String(req.body.email || "").trim();
+    const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
     if (!user) throw new AppError("User not found", 404);
     const credentials = await prisma.webauthnCredential.findMany({ where: { userId: user.id } });
     if (credentials.length === 0) throw new AppError("No passkeys registered for this user");

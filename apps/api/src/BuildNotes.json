@@ -1,5 +1,76 @@
 [
   {
+    "version": "2026.10.9.022",
+    "date": "2026-10-09",
+    "title": "Two screens rebuilt from their mockups, a sign-in page replaced, documents that look like documents, and the pages that reported \"Today\"",
+    "changes": [
+      {
+        "text": "**Contacts (`/clients/contacts`) is a rail, a list and a sheet.** The rail holds both choices the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Service Boards (`/boards`) leads with the answer a technician is judged by.** A rail of the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The report designer's modern arrangement** now matches the mockup that was built for it: the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The sign-in page is replaced in the modern interface.** The way in is now a choice —",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Every generated document wears the shield.** The icon variation from the brand composite sheet",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Generated reports are laid out from their sections instead of being flattened into tables.**",
+        "type": "Update"
+      },
+      {
+        "text": "**A printed ticket wears the same letterhead** (`components/PrintLetterhead.tsx`), so the paper",
+        "type": "Update"
+      },
+      {
+        "text": "**A Not Found screen.** A path the application does not address used to render the shell with an",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`/admin` no longer reports itself as \"Today\".** The Configuration hub has two addresses and only",
+        "type": "Fix"
+      },
+      {
+        "text": "**`/section/<domain>` no longer reports itself as \"Today\"** either — the section's own name is the",
+        "type": "Fix"
+      },
+      {
+        "text": "**A path that addresses nothing now says `Not found`** in the header rather than naming a page the",
+        "type": "Fix"
+      },
+      {
+        "text": "**A board's follow-up interval could not be saved at all.** `PATCH /api/boards/:id` wrote",
+        "type": "Fix"
+      },
+      {
+        "text": "**The count on the rail.** Collapsed, the navigation pane showed the **Favorites** count and not",
+        "type": "Fix"
+      },
+      {
+        "text": "**Signing in failed with the address typed in the wrong case.** `email` is a unique text column, so",
+        "type": "Fix"
+      },
+      {
+        "text": "**`/kumo/checklists` rendered a `<th>` inside a `<th>`.** `SortableHeader` *is* a `th`, and the",
+        "type": "Fix"
+      },
+      {
+        "text": "**The Customer Portal's address is back on the modern screen.** The tile was rebuilt during the",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.021",
     "date": "2026-10-09",
     "title": "Two files carried three-times-encoded text, and there is now a guard for it",

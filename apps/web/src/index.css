@@ -805,3 +805,32 @@ html[data-theme="light"][data-palette-light="contrast"] {
   -webkit-mask-image: url("/brand/kumo-spider-mask.png");
   mask-image: url("/brand/kumo-spider-mask.png");
 }
+
+/* ── The sign-in page ────────────────────────────────────────────────────────
+   The one rule below belongs to the redesigned sign-in page and nothing else, and
+   it is scoped to `.signin-surface`, that page's own root, so no other screen moves.
+
+   **The two-option choice.** A radiogroup of real radios — the input is hidden, the
+   label is the control — so the arrow keys move between the two and a screen reader
+   announces which is chosen and what it changed; two `aria-pressed` divs announce
+   neither. The chosen tab takes the accent's fill with `--btn-primary-fg`, the ink
+   every colour scheme in this file already states for its own accent, and falls back
+   the way `.btn-primary` does when no scheme is in play. A tint of the accent was the
+   alternative and it was rejected: on a near-black surface a tint reads as decoration
+   rather than as the one thing on the page that cannot be mistaken for a label. */
+.signin-surface .choice {
+  display: flex; gap: 3px; padding: 3px; border-radius: 12px;
+  background: var(--surface-lighter); border: 1px solid var(--surface-border);
+}
+.signin-surface .choice__opt {
+  position: relative; flex: 1; display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; min-height: 34px; border-radius: 9px; cursor: pointer;
+  border: 1px solid transparent; font-size: 12.5px; font-weight: 500; color: var(--text-secondary);
+}
+.signin-surface .choice__opt:hover { color: var(--text-primary); }
+.signin-surface .choice__opt--on {
+  background: var(--cyber-600); color: var(--btn-primary-fg, var(--text-primary)); font-weight: 600;
+  border-color: color-mix(in srgb, var(--cyber-500) 55%, transparent);
+}
+.signin-surface .choice__opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.signin-surface .choice__opt:focus-within { outline: 2px solid var(--cyber-400); outline-offset: 1px; }

@@ -42,7 +42,7 @@ function friendlyField(key: string): string {
     budget: "budget", serviceAgreementId: "service agreement",
     slaResponseMinutes: "SLA response", slaResolutionMinutes: "SLA resolution",
     autoCloseEnabled: "auto-close", autoCloseDays: "auto-close days",
-    followUpEnabled: "follow-up", followUpIntervalMinutes: "follow-up interval",
+    followUpEnabled: "follow-up", followUpIntervalHours: "follow-up interval",
     ticketCode: "ticket code", location: "location", color: "color",
     password: "password", passwordHash: "password", ipAddress: "IP address",
     sessionLockoutMinutes: "session lockout", requireMfa: "require MFA",
@@ -226,7 +226,7 @@ export function ServiceBoardsSection() {
   const redesign = useRedesign();
   const [view, setView] = useState("all");
 
-  const startEdit = (b: any) => { setEditingId(b.id); setEditForm({ name: b.name, description: b.description, ticketCode: b.ticketCode, slaResponseMinutes: b.slaResponseMinutes, slaResolutionMinutes: b.slaResolutionMinutes, autoCloseEnabled: b.autoCloseEnabled, autoCloseDays: b.autoCloseDays, followUpEnabled: b.followUpEnabled, followUpIntervalMinutes: b.followUpIntervalMinutes, notifyCustomerOnClose: b.notifyCustomerOnClose !== false }); };
+  const startEdit = (b: any) => { setEditingId(b.id); setEditForm({ name: b.name, description: b.description, ticketCode: b.ticketCode, slaResponseMinutes: b.slaResponseMinutes, slaResolutionMinutes: b.slaResolutionMinutes, autoCloseEnabled: b.autoCloseEnabled, autoCloseDays: b.autoCloseDays, followUpEnabled: b.followUpEnabled, followUpIntervalHours: b.followUpIntervalHours, notifyCustomerOnClose: b.notifyCustomerOnClose !== false }); };
 
   // A board's own page hands over to the editor with ?board=<id> (Boards.tsx → "Edit this board"), so
   // somebody who asked to edit *this* board arrives with it already open instead of with a list to
@@ -372,7 +372,7 @@ export function ServiceBoardsSection() {
                   <div className="flex items-center gap-2"><input type="checkbox" checked={!!editForm.autoCloseEnabled} onChange={e => setEditForm({ ...editForm, autoCloseEnabled: e.target.checked })} /><label className="text-xs text-gray-400">Auto-close</label></div>
                   {editForm.autoCloseEnabled && <div><label className="text-xs text-gray-500 block mb-1">Auto-close Days</label><input className="input-field" type="number" value={String(editForm.autoCloseDays || 14)} onChange={e => setEditForm({ ...editForm, autoCloseDays: Number(e.target.value) })} /></div>}
                   <div className="flex items-center gap-2"><input type="checkbox" checked={!!editForm.followUpEnabled} onChange={e => setEditForm({ ...editForm, followUpEnabled: e.target.checked })} /><label className="text-xs text-gray-400">Follow-up</label></div>
-                  {editForm.followUpEnabled && <div><label className="text-xs text-gray-500 block mb-1">Follow-up Interval (min)</label><input className="input-field" type="number" value={String(editForm.followUpIntervalMinutes || 120)} onChange={e => setEditForm({ ...editForm, followUpIntervalMinutes: Number(e.target.value) })} /></div>}
+                  {editForm.followUpEnabled && <div><label className="text-xs text-gray-500 block mb-1">Follow-up Interval (hours)</label><input className="input-field" type="number" value={String(editForm.followUpIntervalHours ?? 24)} onChange={e => setEditForm({ ...editForm, followUpIntervalHours: Number(e.target.value) })} /></div>}
                   <div className="col-span-2 flex items-start gap-2 border-t border-surface-border pt-3">
                     <input type="checkbox" className="accent-cyber-500 mt-0.5" checked={editForm.notifyCustomerOnClose !== false} onChange={e => setEditForm({ ...editForm, notifyCustomerOnClose: e.target.checked })} />
                     <div>
