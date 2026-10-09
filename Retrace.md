@@ -7305,3 +7305,48 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **Two reviews found more than one pass would have**: the plan's author found the deploy blockers by
   reading; driving the mockup found three bugs in it; and applying the plan found a pre-existing defect
   in the deploy workflow that the plan itself had not seen.
+
+### Prompt 317 — Two review comments on PLAN-030: geo redundancy and reservations
+
+**Timestamp:** 2026-10-09 10:43 | **Status:** Complete | **Duration:** ~15 min
+
+**BuildNotes IDs:** **2026.10.9.075**.
+
+**Prompt**
+
+> Tell me what you think of these two comments … "Probably dont need geo redundancy. Thatll shave the
+> cost. It did find some security issues in the design so id check those." / "And getting reservations
+> configured will bring the price down a lot. So dont forget those pieces." — see how they coincide with
+> the codebase as well as plan 030 and tell me if any actions can be or should be taken. Plan doc only,
+> no changes yet, unless they are easy wins that don't depend on something else to be considered
+> complete and fully implemented
+
+**What I did**
+- **Read the template before agreeing with anyone.** "Redundancy" in this design is three different
+  things: `geoRedundantBackup` (the paired region — the comment's target), `highAvailability.mode =
+  ZoneRedundant` (a second availability zone, same region, ~$130/mo), and `zoneRedundant` on the
+  Container Apps environment. Only the first is geo, and only the second is the large number — so
+  agreeing with the comment as written would have turned off the cheap thing and left the expensive one
+  unexamined.
+- **Applied the one easy win**: `geoRedundantBackup` is off by default in both environments, now a
+  parameter with the reasoning beside it, verified by compiling the template. The argument is not only
+  cost: there is no compute, no ingress origin and no vault in the paired region, so the restore it buys
+  is a rebuild this package cannot perform.
+- **Kept zone redundancy and made its cost legible**: the parameter's description now says `SameZone`
+  halves the compute and survives no availability-zone failure.
+- **Wrote §9 of the plan**: the redundancy table, the *(verify)* that geo-redundant backup may be
+  settable only at creation, the reservation shopping list with the instrument per SKU and the trigger
+  for each, and why none of it is code — a reservation is a purchase, priced per SKU and region, sized by
+  decisions (HA mode, D1) that are still open.
+
+**Notes for next time**
+- **A review comment in the operator's own vocabulary is not a specification.** "Geo redundancy" meant
+  backups to the reviewer and could equally have meant HA; the only way to answer honestly was to grep
+  the template and separate what is actually there. Two of the three findings were the opposite of what
+  the comment implied.
+- **The right response to "configure reservations" is a shopping list, not a parameter.** It is the
+  single biggest saving and it is un-encodable: nothing can verify a purchase that needs a subscription,
+  and reserving before the SKU is settled reserves the wrong size.
+- **An easy win is one that is complete when it lands.** Turning a backup-replication default off is
+  complete: the template compiles, the next deployment is cheaper, and the switch is one word away with
+  its reasoning attached.

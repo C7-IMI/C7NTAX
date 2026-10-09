@@ -67,8 +67,8 @@ These are East US 2 pay-as-you-go list prices in USD, from memory rather than a 
 
 | Resource | Prod | Dev |
 |---|---|---|
-| PostgreSQL compute (D2ds_v5 with zone-redundant HA, so compute ×2 / B1ms) | ~$260 | ~$12 |
-| PostgreSQL storage (128 GB ×2 / 32 GB) + backup (35-day geo-redundant / 7-day) | ~$40–60 | ~$4 |
+| PostgreSQL compute (D2ds_v5 with zone-redundant HA, so compute ×2 / B1ms; `SameZone` halves it — §8.5) | ~$260 | ~$12 |
+| PostgreSQL storage (128 GB / 32 GB) + backup (35-day **local** retention / 7-day) — geo-redundant copies are off by default (§9.3) | ~$35–55 | ~$4 |
 | Container Apps (2 always-on replicas at 2 vCPU/4 GiB / 1 at 1 vCPU/2 GiB; idle → busy) | ~$95–310 | ~$20–75 |
 | Container Registry (Premium / Basic) | ~$50 | ~$5 |
 | Log Analytics (prod 5–10 GB/mo, 365-day retention) | ~$20–50 | ~$5 |
@@ -143,6 +143,7 @@ templates or the README:
 **Not applied, for the operator to decide** (each is written up in `infra/README.md` as an open item):
 
 | Not applied | Why |
+|---|---|
 |---|---|
 | 2.3 least-privilege Postgres role and Entra database auth | Needs a SQL role script and a token path in the Prisma connection. The app still connects as the server administrator — the highest-value open item in this plan. |
 | 2.8 private ACR in prod | D3 defers it: an ACR agent pool or a VNet runner is ~$40+/mo. Prod's registry stays public, which is why no ACR private DNS zone is created. |
@@ -333,5 +334,100 @@ Minimum before a production deployment, in this order, leaving 2.8 and secret ex
 4. **The workflow fix** (8.10).
 5. **The four §3 checks** that only a subscription can confirm, run against dev first, then prod with a
    saved `what-if`.
+
+## 9. Two review comments, assessed
+
+### 9.1 — "Probably don't need geo redundancy. That'll shave the cost."
+
+**Agreed, and it is worth separating three things this template calls redundancy — because only one of
+them is geo, and only one of them is the big saving.**
+
+| Where | What it actually is | Cost | Verdict |
+|---|---|---|---|
+| `postgres.backup.geoRedundantBackup` (was `Enabled` in prod) | Backups replicated to the **paired region** | a slice of the storage+backup line | **Agreed — turned off, and now a parameter (§9.3)** |
+| `postgres.highAvailability.mode = 'ZoneRedundant'` in prod | A standby in a **second availability zone, in the same region** | ≈ doubles the compute — about **$130/mo** | **Deliberate. This is the real lever, but it is an availability decision, not a redundancy one — see below** |
+| `containerAppsEnvironment.zoneRedundant` in prod (2.11) | Replicas spread across zones | small | Keep |
+
+**Why the distinction matters more than the saving.** A geo-redundant backup buys you a restore into
+the paired region — where this template puts **no compute, no Container Apps environment, no Front Door
+origin, no Key Vault and no DNS**. There is nothing to restore *to*, so the recovery is a rebuild this
+package cannot perform: it is the second half of a disaster plan whose first half has not been written.
+Turning it off costs you a promise you could not have kept. Zone-redundant HA is a different thing
+entirely: it survives the loss of one availability zone *in the region you actually serve from*, which
+is a failure this application does meet, and it is the one that earns its ~$130/mo.
+
+So: **geo off** (done), and **zone redundancy kept as a conscious choice** — now one word,
+`postgresHaMode: 'SameZone'` — with the consequence written on the parameter itself so nobody changes it
+without reading what it costs them.
+
+Two caveats to carry forward:
+
+- *(verify)* Azure documents geo-redundant backup for Flexible Server as settable **at server creation**,
+  so a server built without it may not be able to gain it later without a restore. Confirm against the
+  subscription before relying on "we can always turn it on".
+- If a contract or a SOC 2 commitment requires region-level backup retention, the honest answer is to
+  **build the second region** — or to get the requirement waived in writing — not to pay for a
+  replicated backup of a region you cannot serve from.
+
+On *"it did find some security issues in the design so I'd check those"*: agreed, and they are already
+triaged in this plan. §1 is the set that stops the deployment working at all; of the High items, **2.2**
+and **2.4** are applied, **2.1** is behind a switch waiting on D1, and the one that matters most is still
+open: **2.3**, the application connecting as the server administrator. §8.11 is the short bar.
+
+### 9.2 — "Getting reservations configured will bring the price down a lot."
+
+**Agreed — it is the single largest saving available on this design.** Concretely, for the SKUs this
+template deploys:
+
+| Instrument | Covers | Typical saving | Buy it when |
+|---|---|---|---|
+| **PostgreSQL Flexible Server reserved capacity**, 1 year (3 year is bigger) | The Postgres **compute**, the largest line | ~35–40% (3-year ≈55%) | **After the HA decision settles** — while `ZoneRedundant` stands, the standby is billed, so the reservation must cover **twice** the SKU; reserving for one and then switching to `SameZone` over-reserves by half |
+| **Container Registry Premium reserved capacity**, 1 year | The ACR Premium daily fee (~$50/mo) | Modest but certain | Once prod's registry exists |
+| **A savings plan for compute**, or the service's own reserved offering if the region has one | Container Apps compute | Variable | After 30 days of real usage, when the always-on floor is known |
+| **Log Analytics commitment tier** | Ingestion | *Do not buy it* — at 5–10 GB/month the per-GB tier is cheaper; a commitment tier is for ≥100 GB/day | Only if ingest grows by an order of magnitude |
+| Stop the dev database out of hours | Dev Postgres compute | ~30–40% of the dev line | Immediately — a runbook job, not a purchase |
+
+**Why none of it is in the code.** A reservation is a **purchase against a live subscription**, priced
+per SKU *and* per region, and it depends on decisions that are still open: the HA mode decides the
+Postgres reservation size, and D1 decides whether Front Door Premium is bought at all. Buying now
+reserves the wrong thing — so the deliverable here is a shopping list, not a parameter.
+
+**Do these two things at the same time as the purchase:** a **Cost Management budget alert at 80%** of
+the figure you choose (the mechanism that catches a wrong estimate, rather than a better table), and a
+diary note for the **30-day** mark, because that is when the always-on floor is real rather than
+guessed.
+
+*(I am deliberately not asserting Container Apps' eligibility for a savings plan as fact — it varies by
+offer and region, and a verify item is more useful than a confident error.)*
+
+### 9.3 — What was applied now (the easy wins, complete on their own)
+
+- **`geoRedundantBackup` is off by default in both environments**, exposed as
+  `postgresGeoRedundantBackup` (allowed values `Enabled`/`Disabled`) so it is one word to turn back on,
+  with the reasoning and the *(verify)* caveat written beside it in `infra/main.bicep`.
+  **Verified:** all templates still compile with Bicep CLI 0.48.1, no warnings.
+- **The HA parameter now carries its consequence**: `postgresHaMode`'s description says that
+  `SameZone` halves the compute cost and survives no availability-zone failure, so the ~$130/mo
+  decision is legible where it is made.
+- **§4's storage-and-backup line comes down**, though not by much: the geo-redundant portion of
+  prod's backup storage is charged at a higher rate than local, so expect roughly **$5–15/mo** at
+  128 GB with 35-day retention — worth confirming in the calculator, and far smaller than the two
+  levers above it.
+
+### 9.4 — The reservation shopping list, from the template's own defaults
+
+Take these to the reservations blade *after* the HA and D1 decisions, and confirm the resolved SKUs from
+a saved `what-if` rather than from this table:
+
+1. **PostgreSQL Flexible Server**, `Standard_D2ds_v5` / `GeneralPurpose`, **×2 if `ZoneRedundant`
+   (the standby is billed), ×1 if `SameZone`**, in the deployment region, 1 year.
+2. **Azure Container Registry**, Premium tier, 1 registry, 1 year.
+3. **Container Apps compute** via a savings plan for the always-on floor — amount from 30 days of
+   observed usage, not from an estimate.
+4. **Nothing** for Log Analytics, Key Vault, private DNS, private endpoints or the VNet: none of them
+   has a reservation, and the commitment tier is the wrong shape at this volume.
+5. **Dev**: nothing reserved. Stop the database out of hours instead, which is a bigger saving on that
+   line than any reservation would be.
+
 
 

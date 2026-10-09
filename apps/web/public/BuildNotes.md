@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.074 | Last Updated: 2026-10-09
+## Version: 2026.10.9.075 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,34 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.075 — Geo-redundant backups off, and the reservation list
+
+Two review comments on PLAN-030, assessed in §9 of the plan — and one of them applied, because it is
+complete on its own and saves money on the next deployment.
+
+- **[Update]** **Geo-redundant Postgres backups are off by default** in both environments, exposed as
+  `postgresGeoRedundantBackup` so it is one word to turn back on. The reasoning is written beside the
+  parameter: the application runs in one region, and a geo-redundant backup buys a restore into the
+  paired region — where this template puts no compute, no ingress origin and no vault, so the recovery
+  would be a rebuild this package cannot perform. It is the second half of a disaster plan whose first
+  half has not been written.
+- **[Update]** **Zone redundancy is deliberately kept, and the parameter now says what it costs.**
+  `postgresHaMode` documents that `SameZone` halves the compute (~$130/mo) and survives no
+  availability-zone failure — a different thing from geo redundancy, and a failure this application
+  does meet.
+- **[Update]** `PlanDocs/PLAN-030` gained **§9**: the three things this template calls redundancy
+  separated into a table with their real costs and verdicts; the caveat that geo-redundant backup may
+  only be settable at server creation; the reservation shopping list with the instrument that applies to
+  each SKU, the saving, and the trigger for buying it; and why none of it is encoded as code — a
+  reservation is a purchase against a live subscription, priced per SKU and region, and the HA and
+  ingress decisions that size it are still open. §4's storage-and-backup line now reflects local-only
+  retention.
+
+**Verification:** `node scripts/azure/validate-bicep.mjs` with Bicep CLI 0.48.1 → *all templates compile
+without warnings*, exit 0, after the change. No application code touched.
 
 ---
 

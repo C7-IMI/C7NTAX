@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.9.075",
+    "date": "2026-10-09",
+    "title": "Geo-redundant backups off, and the reservation list",
+    "changes": [
+      {
+        "text": "**Geo-redundant Postgres backups are off by default** in both environments, exposed as",
+        "type": "Update"
+      },
+      {
+        "text": "**Zone redundancy is deliberately kept, and the parameter now says what it costs.**",
+        "type": "Update"
+      },
+      {
+        "text": "`PlanDocs/PLAN-030` gained **§9**: the three things this template calls redundancy",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.074",
     "date": "2026-10-09",
     "title": "PLAN-030 applied: the Azure deployment package, hardened",

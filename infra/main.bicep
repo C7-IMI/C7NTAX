@@ -46,11 +46,25 @@ param postgresAdminLogin string = 'c7ntaxadmin'
 @minLength(16)
 param postgresAdminPassword string
 
-@description('prod gets General Purpose with zone-redundant HA; dev gets a Burstable single-zone server.')
+@description('prod gets General Purpose with HA; dev gets a Burstable single-zone server. SameZone halves the compute cost but survives no availability-zone failure — see PLAN-030 §8.5.')
 param postgresSkuName string = environment == 'prod' ? 'Standard_D2ds_v5' : 'Standard_B1ms'
 param postgresSkuTier string = environment == 'prod' ? 'GeneralPurpose' : 'Burstable'
 param postgresHaMode string = environment == 'prod' ? 'ZoneRedundant' : 'Disabled'
 param postgresStorageGb int = environment == 'prod' ? 128 : 32
+
+// Off in both environments, on the reviewer's instruction and for a reason worth stating: the
+// application runs in exactly **one** region. A geo-redundant backup is the ability to restore into
+// the paired region — where this template puts no compute, no Front Door origin and no vault, so
+// there is nothing to restore *to* and the recovery would be a rebuild that only exists on paper.
+// It is the second half of a disaster plan whose first half has not been written. Turn it on the day
+// a second region is real; the switch is one word here.
+//
+// (verify) Azure documents geo-redundant backup for Flexible Server as settable at *creation*, so a
+// server built without it may not be able to gain it later without a restore. The operator should
+// confirm that against the subscription before relying on "we can always turn it on".
+@description('Geo-redundant Postgres backups. Disabled by default: single-region deployment, nothing to fail over to (PLAN-030 §9).')
+@allowed(['Enabled', 'Disabled'])
+param postgresGeoRedundantBackup string = 'Disabled'
 
 // Required, with no default (PLAN-030 §1.3 and §2.7). deploy-env.ps1 passes the tag the app is
 // already running, so a Bicep run restates the live image instead of introducing one; on the
@@ -391,7 +405,7 @@ resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' = {
     storage: { storageSizeGB: postgresStorageGb, autoGrow: 'Enabled' }
     backup: {
       backupRetentionDays: environment == 'prod' ? 35 : 7
-      geoRedundantBackup: environment == 'prod' ? 'Enabled' : 'Disabled'
+      geoRedundantBackup: postgresGeoRedundantBackup
     }
     highAvailability: { mode: postgresHaMode }
     network: {
