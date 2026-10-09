@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.9.014",
+    "date": "2026-10-09",
+    "title": "A board can say that closing a ticket does not email the client",
+    "changes": [
+      {
+        "text": "**`ServiceBoard.notifyCustomerOnClose`**, on for every board and off for NOC Alerts. Every",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The close dialog opens on the board's answer.** A ticket on a silent board starts at",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The switch is on the board form**, in **Create** (on by default, with the reason it exists",
+        "type": "New Feature"
+      },
+      {
+        "text": "**An absent `notifyCustomer` now means \"ask the board\"** rather than \"email\". `PATCH",
+        "type": "Update"
+      },
+      {
+        "text": "**A mixed bulk selection still tells the real clients.** The dialog only starts silent when",
+        "type": "Update"
+      },
+      {
+        "text": "The seeded snapshot carries the field, so a database rebuilt from snapshots keeps NOC",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.013",
     "date": "2026-10-09",
     "title": "The Workable tile is outlined again, and a pin is a ring rather than a border",

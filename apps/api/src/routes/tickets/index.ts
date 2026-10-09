@@ -136,7 +136,7 @@ ticketsRouter.get("/", requirePermission(Permission.TicketView), async (req: Aut
         skip: Number(offset),
         take: Number(limit),
         orderBy: { updatedAt: "desc" },
-        include: { company: { select: { id: true, name: true } }, assignedTo: { select: { id: true, firstName: true, lastName: true } }, board: { select: { id: true, name: true } } },
+        include: { company: { select: { id: true, name: true } }, assignedTo: { select: { id: true, firstName: true, lastName: true } }, board: { select: { id: true, name: true, notifyCustomerOnClose: true } } },
       }),
       prisma.ticket.count({ where }),
     ]);
@@ -262,7 +262,12 @@ ticketsRouter.post("/", requirePermission(Permission.TicketCreate), async (req: 
 // ── Update ticket ──
 ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req: AuthRequest, res, next) => {
   try {
-    const ticket = await prisma.ticket.findUnique({ where: { id: req.params.id } });
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: req.params.id },
+      // The board's closure policy travels with the ticket: it is the default for `notifyCustomer`
+      // below, and reading it here rather than in the notification keeps the decision in one place.
+      include: { board: { select: { notifyCustomerOnClose: true } } },
+    });
     if (!ticket) throw new AppError("Ticket not found", 404);
     const oldStatus = ticket.status;
 
@@ -362,9 +367,16 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
      * what the closure email carries. `notifyCustomer: false` is the deliberate silence — the ticket
      * ends and nothing is sent — which is what a close on a ticket whose contact bounced, or one
      * closed by mistake, needs to be able to do.
+     *
+     * An **absent** `notifyCustomer` is not silence: it means the caller has no opinion and the board
+     * decides. A NOC board's tickets arrive from monitoring systems, whose addresses are no-reply, so
+     * its closure mail is sent to nobody — see `notifyCustomerOnClose` on ServiceBoard. An explicit
+     * value always wins, in both directions: a person closing a NOC ticket by hand can still send one.
      */
     const closeNotes = typeof req.body?.closeNotes === "string" ? req.body.closeNotes.trim().slice(0, 4000) : "";
-    const notifyCustomer = req.body?.notifyCustomer !== false;
+    const notifyCustomer = typeof req.body?.notifyCustomer === "boolean"
+      ? req.body.notifyCustomer
+      : ticket.board?.notifyCustomerOnClose !== false;
     if (closeNotes && updates.status && updates.status !== oldStatus) {
       await prisma.ticketComment.create({
         data: { ticketId: ticket.id, body: closeNotes, authorId: req.user!.userId, isInternal: false },
@@ -742,7 +754,10 @@ ticketsRouter.post("/batch", requirePermission(Permission.TicketEdit), async (re
       data.resolvedAt = null;
     }
     const previousStatuses = status
-      ? await prisma.ticket.findMany({ where: { id: { in: ticketIds } }, select: { id: true, status: true } })
+      ? await prisma.ticket.findMany({
+          where: { id: { in: ticketIds } },
+          select: { id: true, status: true, board: { select: { notifyCustomerOnClose: true } } },
+        })
       : [];
     const result = await prisma.ticket.updateMany({ where: { id: { in: ticketIds } }, data });
 
@@ -760,13 +775,23 @@ ticketsRouter.post("/batch", requirePermission(Permission.TicketEdit), async (re
       });
     }
 
-    // Email each contact whose ticket status actually changed, unless the caller asked for silence:
-    // a bulk close is often housekeeping, and emailing two hundred clients about it is not.
-    if (status && req.body?.notifyCustomer !== false) {
-      const previous = new Map(previousStatuses.map((t) => [t.id, t.status] as const));
+    /*
+     * Email each contact whose ticket status actually changed.
+     *
+     * A bulk close is often housekeeping, and emailing two hundred clients about it is not, so an
+     * explicit `notifyCustomer: false` silences the whole batch and an explicit `true` speaks for all
+     * of them. When the caller has **no** opinion the board decides **per ticket**, because a single
+     * selection can span boards: the NOC board's tickets are answered by no-reply addresses and must
+     * stay quiet while the ones beside them are told.
+     */
+    const requested = req.body?.notifyCustomer;
+    if (status && requested !== false) {
+      const previous = new Map(previousStatuses.map((t) => [t.id, { status: t.status, boardEmails: t.board?.notifyCustomerOnClose !== false }] as const));
       for (const ticketId of ticketIds) {
-        const oldStatus = previous.get(ticketId);
-        if (oldStatus) await notifyTicketStatusChange(ticketId, oldStatus, String(status));
+        const before = previous.get(ticketId);
+        if (!before) continue;
+        const notify = typeof requested === "boolean" ? requested : before.boardEmails;
+        if (notify) await notifyTicketStatusChange(ticketId, before.status, String(status));
       }
     }
 

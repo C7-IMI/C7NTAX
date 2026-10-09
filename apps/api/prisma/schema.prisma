@@ -303,6 +303,14 @@ model ServiceBoard {
   followUpEnabled      Boolean @default(true)
   followUpIntervalHours Int    @default(24)
 
+  // Whether closing or resolving a ticket on this board emails the client.
+  //
+  // On for every board, and off only where the client contact is not a person: a NOC board's tickets
+  // arrive from automated systems, whose addresses are no-reply, so the closure email is sent to
+  // nobody and the noise is mistaken for a notification. The close dialog starts from this, and an
+  // operator can still tick the box to send one.
+  notifyCustomerOnClose Boolean @default(true)
+
   // Relationships
   tickets         Ticket[]
   emailConnectors EmailConnector[]

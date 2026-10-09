@@ -129,9 +129,17 @@ boardsRouter.get("/:id", requirePermission(Permission.BoardView), async (req: Au
 // ── Create board ──
 boardsRouter.post("/", requirePermission(Permission.BoardManage), async (req: AuthRequest, res, next) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, notifyCustomerOnClose } = req.body;
     if (!name) throw new AppError("name required");
-    const board = await prisma.serviceBoard.create({ data: { name, description: description || "" } });
+    const board = await prisma.serviceBoard.create({
+      data: {
+        name,
+        description: description || "",
+        // Only when it is a boolean: the column's own default (on) is the answer for a board that does
+        // not say, and `false` is the interesting value — it is what a NOC board is created with.
+        ...(typeof notifyCustomerOnClose === "boolean" ? { notifyCustomerOnClose } : {}),
+      },
+    });
     res.status(201).json(board);
   } catch (e) { next(e); }
 });
@@ -139,7 +147,7 @@ boardsRouter.post("/", requirePermission(Permission.BoardManage), async (req: Au
 // ── Update board ──
 boardsRouter.patch("/:id", requirePermission(Permission.BoardManage), async (req: AuthRequest, res, next) => {
   try {
-    const { name, description, enabled, ticketCode, slaResponseMinutes, slaResolutionMinutes, autoCloseEnabled, autoCloseDays, followUpEnabled, followUpIntervalMinutes } = req.body;
+    const { name, description, enabled, ticketCode, slaResponseMinutes, slaResolutionMinutes, autoCloseEnabled, autoCloseDays, followUpEnabled, followUpIntervalMinutes, notifyCustomerOnClose } = req.body;
     const data: Record<string, unknown> = {};
     if (name !== undefined) data.name = name;
     if (description !== undefined) data.description = description;
@@ -151,6 +159,7 @@ boardsRouter.patch("/:id", requirePermission(Permission.BoardManage), async (req
     if (autoCloseDays !== undefined) data.autoCloseDays = autoCloseDays;
     if (followUpEnabled !== undefined) data.followUpEnabled = followUpEnabled;
     if (followUpIntervalMinutes !== undefined) data.followUpIntervalMinutes = followUpIntervalMinutes;
+    if (notifyCustomerOnClose !== undefined) data.notifyCustomerOnClose = notifyCustomerOnClose === true;
     const board = await prisma.serviceBoard.update({ where: { id: req.params.id }, data });
     res.json(board);
   } catch (e) { next(e); }

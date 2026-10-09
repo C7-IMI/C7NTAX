@@ -30,6 +30,16 @@ export interface CloseTicketTarget {
   id: string;
   ticketNumber?: string | null;
   title?: string | null;
+  /**
+   * Whether the ticket's board emails the client on closure.
+   *
+   * The board's answer decides the checkbox below, because it is the board that knows what its tickets
+   * are: a NOC board's arrive from monitoring systems and are answered by no-reply addresses, so a
+   * closure email is a message to nobody that looks like a notification.
+   */
+  boardNotifiesOnClose?: boolean | null;
+  /** The board, named, for the line that explains why the choice started where it did. */
+  boardName?: string | null;
 }
 
 type CloseStatus = "closed" | "resolved";
@@ -45,7 +55,21 @@ export function CloseTicketDialog({
   const redesign = useRedesign();
   const many = tickets.length > 1;
   const first = tickets[0];
+  /*
+   * Where the choice starts.
+   *
+   * A board that does not email on closure (the NOC board, whose contacts are no-reply addresses) makes
+   * that the default for its tickets, and it wins over the remembered preference — an installed
+   * preference is not a reason to mail a robot. Every other ticket keeps the behaviour it had: the way
+   * this person closed the last one, or "email" if they never have.
+   *
+   * A bulk selection that spans boards is the one case with no single right answer, and it is resolved
+   * towards telling people: silence needs *every* selected ticket to have asked for it, so a mixed
+   * selection behaves like the boards that do email rather than like the one that does not.
+   */
+  const silentBoard = tickets.length > 0 && tickets.every((ticket) => ticket.boardNotifiesOnClose === false);
   const [notify, setNotify] = useState(() => {
+    if (silentBoard) return false;
     try { return localStorage.getItem(NOTIFY_PREFERENCE_KEY) !== "0"; } catch { return true; }
   });
   const [status, setStatus] = useState<CloseStatus>("closed");
@@ -174,6 +198,13 @@ export function CloseTicketDialog({
                   </span>
                 </button>
               </div>
+              {silentBoard && (
+                <p className="mt-2 text-xs text-gray-400">
+                  <span className="text-gray-300">{first?.boardName || "This board"}</span> closes without
+                  emailing the client, because its tickets usually arrive from monitoring systems at no-reply
+                  addresses. Choose <span className="text-gray-300">Email</span> above to send one anyway.
+                </p>
+              )}
             </div>
 
             <div>
@@ -282,6 +313,12 @@ export function CloseTicketDialog({
               If the client replies to that email the ticket reopens as Customer reopened. Untick this to
               close without notifying anybody.
             </span>
+            {silentBoard && (
+              <span className="block text-xs text-gray-400 mt-1">
+                {first?.boardName || "This board"} closes without emailing the client, because its tickets
+                usually arrive from monitoring systems at no-reply addresses.
+              </span>
+            )}
           </span>
         </label>
 

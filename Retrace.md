@@ -8219,3 +8219,63 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
 - **A computed-but-unused variable is a fingerprint.** `const pinned = tile.pinned ? "ring-1 ..." : ""` sat
   there passed to nothing: the pin was *meant* to be a ring, and the border was the casualty of it not
   being wired up.
+
+---
+
+### Prompt 340 — A board can close a ticket without emailing the client
+
+**Timestamp:** 2026-10-09 07:20 | **Status:** Complete | **Duration:** ~70 min
+
+**BuildNotes IDs:** **2026.10.9.014**.
+
+**Prompt**
+
+> Tickets assigned to the NOC Alerts board should by default not email the client when marked completed or closed. THe reason being that the email usually come from automated systems or no-reply addresses.
+>
+> This is only the case for tickets on the NOC Alerts board. the other boards or newly created ones should remain the same. On by default
+>
+> On the board creation screen there should be an option to define whether the default close action is to email the client or not.
+
+**What I did**
+- **Put the answer on the board rather than on the NOC ticket.** Every close route already accepted an
+  explicit `notifyCustomer`, and the dialog already remembered the operator's last choice, so neither could
+  carry a per-board policy. `ServiceBoard.notifyCustomerOnClose` (default `true`) is the one place that can:
+  it survives new tickets, new contacts and a new operator, and it says *why* in one field.
+- **Changed "absent" from meaning "email" to meaning "ask the board".** `PATCH /api/tickets/:id` now reads the
+  ticket's board when the caller has no opinion; the batch close decides **per ticket**, because one
+  selection can span boards. An explicit `true` or `false` still wins in both directions, so nothing that
+  sends a value - and the dialog always does - behaves differently.
+- **Made the dialog open on the board's answer, not just the API.** A ticket on a silent board starts at
+  **Close silently** with the reason written beside the choices and the button reading accordingly; a mixed
+  selection only starts silent when *every* ticket in it is silent, so ticking a NOC ticket and a client
+  ticket together still tells the client. The remembered preference is deliberately overruled by the board -
+  a preference is not a reason to mail a machine.
+- **Put the switch where the user asked for it** - the board **Create** form (on by default) and the **Edit**
+  form - and added the board's state to its Administration summary line, in both interfaces.
+- **Wrote the migration by hand with its rationale**, matching NOC Alerts by name and setting the column on
+  every existing row, and added the field to `snapshots/service-boards.json` so a database rebuilt from
+  snapshots keeps the board silent.
+- **Verified through the running API, not by reading the branch.** Three probe tickets: a plain close on NOC
+  produced **no email attempt**, the same close on MSP produced one, and a NOC close with
+  `notifyCustomer: true` produced one. Then deleted everything the probe made (6 comments, 3 audit rows, 3
+  tickets) and reverted the snapshot files the poller had captured them into - the same trap that left the
+  last set of probe tickets visible in the product.
+- Checked the browser too: the NOC dialog reports `Close silently=true` with the explanatory line and the
+  MSP dialog `Email the client=true` with none, and updated Help (close walkthrough, Service Boards
+  reference table, a new FAQ), `docs/API.md` and the curated OpenAPI prose.
+
+**Notes for next time**
+- **Prisma does not accept `/** */` block comments in the schema.** It parsed fine by eye and failed
+  validation with "not a valid field or attribute definition" pointing at the closing line - `//` is the
+  supported form, and the eight validation errors were all this one comment.
+- **`prisma generate` needs the dev API stopped.** The running server holds
+  `node_modules/.prisma/client/query_engine-windows.dll.node`, and the rename fails with `EPERM`. Find the
+  listener (`Get-NetTCPConnection -LocalPort 4000`) and stop that exact PID.
+- **A poller-owned snapshot is a place test data survives deletion.** Creating probe rows and deleting them
+  is not enough if the snapshot poller ran in between: `tickets.json`, `ticket-comments.json`,
+  `audit-logs.json` and the deltas had to be checked out of git again.
+- **A JWT can be minted for manual testing instead of signing in.** `jwt.sign` with the API's own
+  `JWT_SECRET` and the user's real `tokenVersion` authenticates against the live server without a login,
+  which is what kept the operator's browser session intact.
+- **A per-ticket-create requirement chain is worth probing early**: `Ticket` needed `board`, `company`,
+  `createdBy` as relations (not the `boardId`/`companyId` scalars) before the probe would run at all.

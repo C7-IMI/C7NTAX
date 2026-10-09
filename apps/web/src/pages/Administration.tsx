@@ -219,7 +219,7 @@ export function ServiceBoardsSection() {
   const [boards, setBoards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [newBoard, setNewBoard] = useState({ name: "", description: "" });
+  const [newBoard, setNewBoard] = useState({ name: "", description: "", notifyCustomerOnClose: true });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, any>>({});
   const redesign = useRedesign();
@@ -235,11 +235,11 @@ export function ServiceBoardsSection() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    try { await api.post("/boards", newBoard); toast.success("Board created"); setShowCreate(false); setNewBoard({ name: "", description: "" }); fetch(); }
+    try { await api.post("/boards", newBoard); toast.success("Board created"); setShowCreate(false); setNewBoard({ name: "", description: "", notifyCustomerOnClose: true }); fetch(); }
     catch { toast.error("Failed"); }
   };
 
-  const startEdit = (b: any) => { setEditingId(b.id); setEditForm({ name: b.name, description: b.description, ticketCode: b.ticketCode, slaResponseMinutes: b.slaResponseMinutes, slaResolutionMinutes: b.slaResolutionMinutes, autoCloseEnabled: b.autoCloseEnabled, autoCloseDays: b.autoCloseDays, followUpEnabled: b.followUpEnabled, followUpIntervalMinutes: b.followUpIntervalMinutes }); };
+  const startEdit = (b: any) => { setEditingId(b.id); setEditForm({ name: b.name, description: b.description, ticketCode: b.ticketCode, slaResponseMinutes: b.slaResponseMinutes, slaResolutionMinutes: b.slaResolutionMinutes, autoCloseEnabled: b.autoCloseEnabled, autoCloseDays: b.autoCloseDays, followUpEnabled: b.followUpEnabled, followUpIntervalMinutes: b.followUpIntervalMinutes, notifyCustomerOnClose: b.notifyCustomerOnClose !== false }); };
   const saveEdit = async (id: string) => {
     try { await api.patch(`/boards/${id}`, editForm); toast.success("Updated"); setEditingId(null); fetch(); }
     catch { toast.error("Failed"); }
@@ -258,7 +258,7 @@ export function ServiceBoardsSection() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
-      <PageHeader title="Service Boards" subtitle="Manage board SLAs, auto-close, and follow-up settings">
+      <PageHeader title="Service Boards" subtitle="Manage board SLAs, auto-close, follow-up, and whether closing a ticket emails the client">
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> New Board</button>
       </PageHeader>
 
@@ -277,6 +277,26 @@ export function ServiceBoardsSection() {
             <h3 className="text-lg font-semibold text-white">Create Service Board</h3>
             <input className="input-field" placeholder="Board name" value={newBoard.name} onChange={e => setNewBoard({ ...newBoard, name: e.target.value })} required autoFocus />
             <textarea className="input-field" placeholder="Description (optional)" value={newBoard.description} onChange={e => setNewBoard({ ...newBoard, description: e.target.value })} rows={2} />
+            {/*
+              The closure policy belongs on the create form, not only in Edit afterwards: a NOC board is
+              the reason this exists, and the answer is known when the board is (see ServiceBoard in the
+              API's schema). On by default, which is what every board did before the switch existed.
+            */}
+            <label className="flex items-start gap-2 text-sm text-gray-300 cursor-pointer">
+              <input
+                type="checkbox"
+                className="accent-cyber-500 mt-0.5"
+                checked={newBoard.notifyCustomerOnClose}
+                onChange={e => setNewBoard({ ...newBoard, notifyCustomerOnClose: e.target.checked })}
+              />
+              <span>
+                Email the client when a ticket on this board is closed
+                <span className="block text-xs text-gray-500 mt-0.5">
+                  Turn this off for a board whose tickets arrive from monitoring systems: their addresses are
+                  no-reply, so the closure email reaches nobody. Closing a single ticket can still send one.
+                </span>
+              </span>
+            </label>
             <div className="flex gap-2 justify-end"><button type="button" onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button><button type="submit" className="btn-primary text-sm">Create</button></div>
           </form>
         </div>
@@ -302,6 +322,7 @@ export function ServiceBoardsSection() {
                           {b.ticketCode ? ` · code ${b.ticketCode}` : ""}
                           {b.autoCloseEnabled ? ` · auto-closes after ${b.autoCloseDays ?? 14} days` : ""}
                           {b.followUpEnabled ? ` · follow-up every ${b.followUpIntervalMinutes ?? 120} min` : ""}
+                          {b.notifyCustomerOnClose === false ? " · closes without emailing the client" : ""}
                         </p>
                       )}
                     </div>
@@ -328,6 +349,13 @@ export function ServiceBoardsSection() {
                   {editForm.autoCloseEnabled && <div><label className="text-xs text-gray-500 block mb-1">Auto-close Days</label><input className="input-field" type="number" value={String(editForm.autoCloseDays || 14)} onChange={e => setEditForm({ ...editForm, autoCloseDays: Number(e.target.value) })} /></div>}
                   <div className="flex items-center gap-2"><input type="checkbox" checked={!!editForm.followUpEnabled} onChange={e => setEditForm({ ...editForm, followUpEnabled: e.target.checked })} /><label className="text-xs text-gray-400">Follow-up</label></div>
                   {editForm.followUpEnabled && <div><label className="text-xs text-gray-500 block mb-1">Follow-up Interval (min)</label><input className="input-field" type="number" value={String(editForm.followUpIntervalMinutes || 120)} onChange={e => setEditForm({ ...editForm, followUpIntervalMinutes: Number(e.target.value) })} /></div>}
+                  <div className="col-span-2 flex items-start gap-2 border-t border-surface-border pt-3">
+                    <input type="checkbox" className="accent-cyber-500 mt-0.5" checked={editForm.notifyCustomerOnClose !== false} onChange={e => setEditForm({ ...editForm, notifyCustomerOnClose: e.target.checked })} />
+                    <div>
+                      <label className="text-xs text-gray-400">Email the client when a ticket on this board is closed</label>
+                      <p className="text-[10px] text-gray-600 mt-0.5">Off is for a board whose tickets arrive from monitoring systems: their addresses are no-reply, so the closure email reaches nobody. It is the default the close dialog offers, and closing a single ticket can still send one.</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -342,7 +370,7 @@ export function ServiceBoardsSection() {
           page={1}
           pages={1}
           onPage={() => { /* every board is on this page */ }}
-          note="SLAs, auto-close and follow-up are per board"
+          note="SLAs, auto-close, follow-up and closing emails are per board"
         />
       )}
     </div>

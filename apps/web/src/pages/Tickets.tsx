@@ -812,11 +812,7 @@ export function TicketsPage() {
     if (fail > 0) toast.error(`${fail} action${fail!==1?"s":""} failed`);
     setCheckedActions(new Set());
     if (closing) {
-      openCloseDialog(
-        tickets
-          .filter((row: any) => selectedIds.has(row.id))
-          .map((row: any) => ({ id: row.id, ticketNumber: row.ticketNumber, title: row.title })),
-      );
+      openCloseDialog(tickets.filter((row: any) => selectedIds.has(row.id)).map(closeTargetFor));
       return;
     }
     setSelectedIds(new Set());
@@ -837,6 +833,20 @@ export function TicketsPage() {
   };
 
   // ── Individual ticket action ──
+  /**
+   * A row as the close dialog needs it.
+   *
+   * The board's closure policy comes along so the dialog can start from it: a NOC board's tickets are
+   * answered by no-reply addresses and close without emailing. See CloseTicketDialog.
+   */
+  const closeTargetFor = (row: any): CloseTicketTarget => ({
+    id: row.id,
+    ticketNumber: row.ticketNumber,
+    title: row.title,
+    boardNotifiesOnClose: row.board?.notifyCustomerOnClose ?? null,
+    boardName: row.board?.name ?? null,
+  });
+
   const openCloseDialog = (targets: CloseTicketTarget[]) => {
     if (targets.length) setCloseTargets(targets);
   };
@@ -847,7 +857,7 @@ export function TicketsPage() {
         // Closing asks a question — email the client or not — so it opens the dialog rather than
         // firing a silent PATCH that someone would have to undo by hand.
         const ticket = tickets.find((row: any) => row.id === ticketId);
-        openCloseDialog([{ id: ticketId, ticketNumber: ticket?.ticketNumber, title: ticket?.title }]);
+        openCloseDialog([ticket ? closeTargetFor(ticket) : { id: ticketId }]);
         return;
       } else if (action === "acknowledge") {
         await api.patch(`/tickets/${ticketId}`, { status: "in_progress" });
@@ -1090,11 +1100,7 @@ export function TicketsPage() {
                   <button
                     onClick={() => {
                       setQuickOpen(false);
-                      openCloseDialog(
-                        tickets
-                          .filter((row: any) => selectedIds.has(row.id))
-                          .map((row: any) => ({ id: row.id, ticketNumber: row.ticketNumber, title: row.title })),
-                      );
+                      openCloseDialog(tickets.filter((row: any) => selectedIds.has(row.id)).map(closeTargetFor));
                     }}
                     className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white"
                   >
@@ -2199,7 +2205,14 @@ export function TicketDetailPage() {
     // whether to tell them, and what to say. See CloseTicketDialog.
     if (field === "status" && SETTLED_STATUSES.includes(value)) {
       if (!id || !ticket) return;
-      setCloseTargets([{ id, ticketNumber: ticket.ticketNumber as string, title: ticket.title as string }]);
+      const board = ticket.board as { name?: string; notifyCustomerOnClose?: boolean } | undefined;
+      setCloseTargets([{
+        id,
+        ticketNumber: ticket.ticketNumber as string,
+        title: ticket.title as string,
+        boardNotifiesOnClose: board?.notifyCustomerOnClose ?? null,
+        boardName: board?.name ?? null,
+      }]);
       return;
     }
     setMoreActionsBusy(true);

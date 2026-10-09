@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.013 | Last Updated: 2026-10-09
+## Version: 2026.10.9.014 | Last Updated: 2026-10-09
 
 ---
 
@@ -13,6 +13,46 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.9.014 — A board can say that closing a ticket does not email the client
+
+Closing a ticket on **NOC Alerts** emailed the client's contact, and the contact on a NOC ticket is
+usually not a person: the tickets arrive from monitoring systems, so the address is a no-reply one and
+the closure mail is a message to nobody that still looks like a notification. The board now carries the
+answer, and the close dialog starts from it.
+
+- **[New]** **`ServiceBoard.notifyCustomerOnClose`**, on for every board and off for NOC Alerts. Every
+  board keeps the behaviour it had, and the one board whose contacts are machines stops mailing them.
+- **[New]** **The close dialog opens on the board's answer.** A ticket on a silent board starts at
+  **Close silently**, with the reason beside the choices — *"NOC Alerts closes without emailing the
+  client, because its tickets usually arrive from monitoring systems at no-reply addresses"* — and the
+  primary button reads **Close silently**. It is a default, not a rule: **Email the client** is one click
+  away, and taking it overrides the board for that closure.
+- **[New]** **The switch is on the board form**, in **Create** (on by default, with the reason it exists
+  written underneath) and in **Edit**, and the board's summary line in Administration says when it is off.
+- **[Update]** **An absent `notifyCustomer` now means "ask the board"** rather than "email". `PATCH
+  /api/tickets/:id` reads the ticket's board when the caller has no opinion; a batch close decides
+  **per ticket**, because one selection can span boards; and an explicit `true` or `false` always wins.
+  Every caller that sends a value — which is the close dialog, always — behaves exactly as before.
+- **[Update]** **A mixed bulk selection still tells the real clients.** The dialog only starts silent when
+  *every* selected ticket is on a silent board, so ticking a NOC ticket and a client ticket together
+  emails the client ticket rather than quietly closing both.
+- **[Update]** The seeded snapshot carries the field, so a database rebuilt from snapshots keeps NOC
+  Alerts silent; Help (the close walkthrough, the Service Boards reference, and a new FAQ), `docs/API.md`
+  and the curated OpenAPI description of both close routes say what the default does.
+
+**Verification:** through the running API rather than by reading the branch — a probe ticket on **NOC
+Alerts** closed with no `notifyCustomer` produced **no email attempt** (nothing in the log for it), the
+same close on **MSP Service Desk** produced one, and the NOC ticket closed with `notifyCustomer: true`
+produced one, so the override works in the direction that matters. The three probe tickets were then
+deleted, with their comments and audit rows (6 comments, 3 audit rows, 3 tickets), and the snapshot files
+the poller had captured them into were reverted. In the browser: a NOC ticket's dialog reports
+`Close silently=true` with the explanatory line, an MSP ticket's reports `Email the client=true` with no
+line, and the buttons read accordingly. `tsc` clean in web and API; `check-route-guards`,
+`check-help-links`, `generate-openapi` + `check-api-docs` all pass.
+
+---
+
 
 ## 2026.10.9.013 — The Workable tile is outlined again, and a pin is a ring rather than a border
 

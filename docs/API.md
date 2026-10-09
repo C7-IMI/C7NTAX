@@ -363,7 +363,10 @@ you do:
   written to the customer-visible thread as well as into that email. `notifyCustomer: false` does the
   same work without sending anything — which is what a ticket whose contact has left needs, and what
   housekeeping on a batch of stale tickets wants (`POST /api/tickets/batch` takes the same two fields;
-  it still emails one ticket at a time, with no digest).
+  it still emails one ticket at a time, with no digest). Leaving `notifyCustomer` **out** is not the
+  same as sending it: the ticket's board decides, and a board can be set to stop emailing on closure —
+  which is what the NOC Alerts board does, because its tickets arrive from monitoring systems at
+  no-reply addresses. An explicit `true` or `false` always wins on a single ticket.
 * **A reply from the client reopens a closed ticket.** The closing email invites one, and the email
   connector acts on it: a reply from one of the client's own contacts on a `closed`, `resolved` or
   `cancelled` ticket puts the status back to `customer_reopened` and returns it to the queue. The reply
