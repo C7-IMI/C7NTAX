@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.8.070",
+    "date": "2026-10-08",
+    "title": "Quotes and the pipeline",
+    "changes": [
+      {
+        "text": "**Quotes** gained views with counts for each state (**All 3 · draft 1 · sent 2 ·",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Sales Pipeline** now states each column's **value** beside its count — *qualified 2 ·",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.069",
     "date": "2026-10-08",
     "title": "Projects and Procurement",

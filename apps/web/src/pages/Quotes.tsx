@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import api from "../api";
 import { ProductPicker } from "../components/ProductPicker";
 import { PageHeader } from "../components/ui";
+import { ListViews, ListFooter } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 type Quote = { id: string; quoteNumber: string; title: string; status: string; total: number; company: { id: string; name: string } | null };
 type Client = { id: string; name: string };
 
 export function QuotesPage() {
+  const redesign = useRedesign();
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [view, setView] = useState("all");
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
@@ -25,6 +29,16 @@ export function QuotesPage() {
   };
 
   useEffect(() => { load(); api.get("/clients?limit=200").then(r => setClients(r.data.data || [])).catch(() => {}); }, []);
+
+  // Quotes are counted by state, and the value worth watching is what has not been converted yet.
+  const QUOTE_STATUSES = ["draft", "sent", "accepted", "declined", "converted"] as const;
+  const statusOf = (q: Quote) => (q.status || "draft").toLowerCase();
+  const quoteViews = [
+    { id: "all", label: "All", count: quotes.length },
+    ...QUOTE_STATUSES.map(status => ({ id: status, label: status, count: quotes.filter(q => statusOf(q) === status).length })),
+  ];
+  const shownQuotes = quotes.filter(q => view === "all" || statusOf(q) === view);
+  const OPEN_VALUE = quotes.filter(q => statusOf(q) !== "converted").reduce((n, q) => n + (Number(q.total) || 0), 0);
 
   const create = async () => {
     if (!title || !companyId || !description) { setMessage("Title, client, and description required"); return; }
@@ -67,6 +81,14 @@ export function QuotesPage() {
         <button onClick={create} className="btn-primary text-sm">Create quote</button>
       </div>
       {message && <p className="text-sm text-cyber-300">{message}</p>}
+      {redesign && quotes.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={quoteViews} value={view} onChange={setView} label="Quote views" />
+          <span className="text-xs text-gray-500">
+            {shownQuotes.length} shown · ${OPEN_VALUE.toLocaleString(undefined, { maximumFractionDigits: 2 })} not yet invoiced
+          </span>
+        </div>
+      )}
       {loading ? <p className="text-sm text-gray-500">Loading…</p> : (
         <div className="card p-0 overflow-x-auto">
           <table className="w-full text-sm">
@@ -76,19 +98,22 @@ export function QuotesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
-              {quotes.map(q => (
+              {shownQuotes.map(q => (
                 <tr key={q.id}>
                   <td className="px-3 py-2 font-mono text-xs text-gray-400">{q.quoteNumber}</td>
                   <td className="px-3 py-2 text-gray-200">{q.title}</td>
                   <td className="px-3 py-2 text-gray-400">{q.company?.name || "—"}</td>
-                  <td className="px-3 py-2 text-gray-200">${q.total.toFixed(2)}</td>
-                  <td className="px-3 py-2 text-gray-400">{q.status}</td>
-                  <td className="px-3 py-2">{q.status !== "converted" && <button onClick={() => convert(q.id)} className="btn-secondary text-xs">Convert to invoice</button>}</td>
+                  <td className="px-3 py-2 tabular-nums text-gray-200">${q.total.toFixed(2)}</td>
+                  <td className="px-3 py-2">{redesign ? <span className={`chip text-[10px] ${statusOf(q) === "accepted" || statusOf(q) === "converted" ? "chip--good" : statusOf(q) === "declined" ? "chip--bad" : "chip--warn"}`}>{statusOf(q)}</span> : <span className="text-gray-400">{q.status}</span>}</td>
+                  <td className="px-3 py-2">{statusOf(q) !== "converted" && <button onClick={() => convert(q.id)} className="btn-secondary text-xs">Convert to invoice</button>}</td>
                 </tr>
               ))}
-              {quotes.length === 0 && <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-500">No quotes yet.</td></tr>}
+              {shownQuotes.length === 0 && <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-500">{quotes.length === 0 ? "No quotes yet." : "Nothing in this view."}</td></tr>}
             </tbody>
           </table>
+          {redesign && shownQuotes.length > 0 && (
+            <ListFooter from={1} to={shownQuotes.length} total={shownQuotes.length} page={1} pages={1} onPage={() => {}} note={`${quotes.length} quotes in total`} />
+          )}
         </div>
       )}
     </div>

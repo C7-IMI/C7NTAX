@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.069 | Last Updated: 2026-10-08
+## Version: 2026.10.8.070 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,25 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.070 — Quotes and the pipeline
+
+- **[New]** **Quotes** gained views with counts for each state (**All 3 · draft 1 · sent 2 ·
+  accepted 0 · declined 0 · converted 0** — five figures, because the state that matters is whether
+  it has been invoiced), a line stating what is *not yet invoiced*, a status chip per row instead of
+  bare text, tabular amounts and a footer range.
+- **[New]** **Sales Pipeline** now states each column's **value** beside its count — *qualified 2 ·
+  $46,600* — and puts the **client's name on every card**, joined from the client list the page
+  already loads. A deals board whose cards do not say who the deal is with is a board of names and
+  numbers, and the count line *8 deals · $70,030 weighted* now sits in the toolbar where the mockup
+  puts it.
+
+**Verification:** `tsc --noEmit` clean; in the browser Quotes reads *All 3 · draft 1 · sent 2* with
+*3 shown · $11,892 not yet invoiced* and three rows, and the pipeline's six columns read *prospect 1 ·
+$7,800*, *qualified 2 · $46,600*, *proposal 2 · $32,500*, *negotiation 1 · $45,000*, *won 1 ·
+$9,600*, *lost 1 · $31,000* with *8 deals · $70,030 weighted* beside the board/table switch.
 
 ---
 

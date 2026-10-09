@@ -7108,6 +7108,7 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 
 ---
 
+
 ### Prompt 312 — Keep going: Projects and Procurement
 
 **Timestamp:** 2026-10-08 21:55 | **Status:** Complete | **Duration:** ~15 min
@@ -7134,3 +7135,29 @@ reported failure and the script nevertheless ended with *"All checks passed. App
   to read. A `{pageRows.map(...)}` closing with `)}` instead of `))}` is a syntax error `tsc` catches
   immediately; the `ListFooter` block above it is written the same way and is where the mistake came
   from.
+
+---
+
+### Prompt 313 — Keep going: Quotes and the pipeline
+
+**Timestamp:** 2026-10-08 22:05 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes IDs:** **2026.10.8.070**.
+
+**Prompt**
+
+> Do what you think is best
+
+**What I did**
+- **Quotes onto the shared chrome**: views with counts for the five states, a *3 shown · $11,892 not
+  yet invoiced* line, a status chip per row, tabular amounts and a footer range.
+- **The pipeline states each column's value** beside its count (*qualified 2 · $46,600*) and puts the
+  **client's name on every card**. The client list the page already fetched supplies the name, so
+  naming the deal's client cost nothing and needed no API change.
+
+**Notes for next time**
+- **A kanban column of deals is a column of money.** The count alone ("2") says nothing about whether
+  the column is worth opening; the value beside it is the reason the mockup prints it.
+- **The page's other request is often the join you need.** `/crm/opportunities` does not include the
+  company, but the page already loads `/clients?limit=100` for the New Deal dialog — a `companies.find`
+  beats adding `include: { company: true }` and regenerating the API document.
