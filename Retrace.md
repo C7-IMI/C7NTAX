@@ -8429,3 +8429,43 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
 - **The plan documents were the right place for the "not run against Azure" status.** Two fixes that
   compile and pass local checks are still not proof, and saying so in the same breath as the fix is what
   keeps the go-live checklist honest.
+
+---
+
+### Prompt 344 — C7NC wears the C7NTAX crimson 7
+
+**Timestamp:** 2026-10-09 09:40 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes IDs:** **2026.10.9.018**.
+
+**Prompt**
+
+> I want C7NC to have the red 7 just like C7NTAX. Do that throughout the app
+
+**What I did**
+- **Read the existing mark before drawing anything.** The C7NTAX logotype is not an image: it is two alpha
+  masks painted by CSS — the letters in the inherited text colour, the 7 overprinted in brand crimson — so
+  the mark is theme-independent. That told me both what "just like C7NTAX" means (the crimson 7, in that
+  face, at that tracking) and how to get it without inventing artwork.
+- **Composed the C7NC masks from the C7NTAX ones** rather than drawing a lookalike:
+  `scripts/brand/build-c7nc-wordmark.py` finds the glyph runs in the existing masks — the letters mask has
+  `C`, `N`, `TA` and `X` (T and A touch) and the seven mask has the 7 on its own layer — sorts the run
+  starts into the five columns the mark uses (0, 51, 111, 167, 275), and lays `C7NC` onto the first four.
+  The spacing is therefore the mark's own rhythm, not a guess at it.
+- **Two mistakes, both caught by looking rather than reasoning.** The first version derived glyph
+  advances arithmetically and produced an uneven, over-wide mark; the second trimmed the canvas on the
+  letters layer alone, which clipped the bottom of the 7, because the 7 descends below the baseline. Both
+  were found by rendering the composed masks to a PNG and *viewing* it — the arithmetic looked right in
+  both cases.
+- **Applied it where the name is drawn rather than written**: the C7NC page header (all five tabs go
+  through it) and the Outlook add-in's heading, which was the other place the product's name is a heading.
+  `PageHeader`'s `title` now accepts a node so a header that *is* a mark can say so.
+
+**Notes for next time**
+- **A brand mark is a mechanism before it is an image.** Once the existing one turned out to be masks plus
+  CSS, the cheapest correct answer was to recompose it — no new artwork, no new colour decisions, and the
+  two products cannot drift apart.
+- **Look at the output.** Twice the numbers said the composition was right and the picture said otherwise.
+  Rendering a preview PNG and viewing it cost one tool call each time.
+- **"Throughout the app" is a question about where the name appears as a mark.** Prose mentions (`C7NC`
+  in a sentence, a Help link label, a nav row) stay text; headings and logotypes get the mark.

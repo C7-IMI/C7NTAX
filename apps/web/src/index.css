@@ -731,6 +731,22 @@ html[data-theme="light"][data-palette-light="contrast"] {
   mask-image: url("/brand/wordmark-7-mask.png");
 }
 
+/* ── C7NC: the same mark, two letters shorter ────────────────────────────────
+   C7NC is the same logotype as C7NTAX — same face, same tracking, same crimson 7 —
+   so it is composed from those same masks rather than drawn again (see
+   `scripts/brand/build-c7nc-wordmark.py`), and only the mask files and the aspect
+   ratio differ. It therefore reads as the sibling product it is, in any scheme.
+   Geometry: 214 x 75 at native resolution. */
+.c7-wordmark--c7nc { aspect-ratio: 214 / 75; }
+.c7-wordmark--c7nc .c7-wordmark__letters {
+  -webkit-mask-image: url("/brand/wordmark-c7nc-mask.png");
+  mask-image: url("/brand/wordmark-c7nc-mask.png");
+}
+.c7-wordmark--c7nc .c7-wordmark__seven {
+  -webkit-mask-image: url("/brand/wordmark-c7nc-7-mask.png");
+  mask-image: url("/brand/wordmark-c7nc-7-mask.png");
+}
+
 /* ── Kumo wordmark ───────────────────────────────────────────────────────────
    Kumo is its own product inside this one — the documentation app — so it
    carries its own logotype rather than a line in the navigation: the letters

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.017 | Last Updated: 2026-10-09
+## Version: 2026.10.9.018 | Last Updated: 2026-10-09
 
 ---
 
@@ -13,6 +13,34 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.9.018 — C7NC wears the same mark as C7NTAX, crimson 7 and all
+
+C7NC was drawn as plain text next to a C7NTAX wordmark that has the 7 in brand crimson — the one
+signature the logotype has. A companion product inside the same application reading as a lookalike rather
+than a sibling is the kind of drift that is invisible until the two are side by side.
+
+- **[Update]** **C7NC's header is the logotype, not the word.** Same face, same tracking, same crimson
+  7, because it is not new artwork: the masks are **composed from the C7NTAX ones** —
+  `scripts/brand/build-c7nc-wordmark.py` finds the glyph slots in the existing masks (`C`, the `7` on its
+  own crimson layer, `N`, and `TA`/`X` where T and A touch) and lays `C7NC` onto the first four of them.
+  The slot columns come from the artwork, so the spacing is the mark's own rhythm rather than a guess;
+  an earlier version of that script derived advances arithmetically and produced an uneven, over-wide
+  mark.
+- **[Update]** **The Outlook add-in's heading got the same treatment** (`C**7**NTAX`, with the 7 in the
+  add-in's own `--brand`), because it was the other place the product's name is drawn rather than written.
+- **[Update]** `PageHeader`'s `title` accepts a node, so a header that *is* a mark can say so; every other
+  page still passes a string.
+
+**Verification:** in the browser, the C7NC header measures 54×19 at `aspect-ratio: 214 / 75`, carries
+`aria-label="C7NC"`, and its two layers resolve to `wordmark-c7nc-mask.png` and
+`wordmark-c7nc-7-mask.png` — with the 7 painted from the crimson layer, checked by rendering the composed
+masks to a preview and looking at them rather than trusting the arithmetic. `tsc` clean; `check-help-links`
+passes. The trim was initially taken from the letters layer alone, which clipped the bottom of the 7 — the
+preview is what caught it, and the ink is now the union of both layers (214×75 rather than 214×50).
+
+---
+
 
 ## 2026.10.9.017 — A readiness check that can see the database, and a second push that no longer fails
 

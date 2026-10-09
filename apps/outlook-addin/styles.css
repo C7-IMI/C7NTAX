@@ -62,6 +62,10 @@ header h1 {
   flex: 1;
 }
 
+/* The 7 in brand crimson, the one thing the logotype does that plain text cannot:
+   the same treatment the application's own wordmark gives it. */
+header h1 .brand-seven { color: var(--brand); }
+
 main {
   display: flex;
   flex-direction: column;

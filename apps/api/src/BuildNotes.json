@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.9.018",
+    "date": "2026-10-09",
+    "title": "C7NC wears the same mark as C7NTAX, crimson 7 and all",
+    "changes": [
+      {
+        "text": "**C7NC's header is the logotype, not the word.** Same face, same tracking, same crimson",
+        "type": "Update"
+      },
+      {
+        "text": "**The Outlook add-in's heading got the same treatment** (`C**7**NTAX`, with the 7 in the",
+        "type": "Update"
+      },
+      {
+        "text": "`PageHeader`'s `title` accepts a node, so a header that *is* a mark can say so; every other",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.017",
     "date": "2026-10-09",
     "title": "A readiness check that can see the database, and a second push that no longer fails",

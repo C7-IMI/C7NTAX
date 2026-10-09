@@ -29,7 +29,8 @@ export function PageHeader({
   variant = "page",
   icon,
 }: {
-  title: string;
+  /** A string in almost every case. A node for a header that *is* a mark — C7NC's is its logotype. */
+  title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
   children?: ReactNode;

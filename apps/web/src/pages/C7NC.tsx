@@ -21,6 +21,7 @@ import { Tabs } from "../components/ui/Tabs";
 import { OutlookAddInPage } from "./OutlookAddIn";
 import { PageHeader } from "../components/ui";
 import { ListViews, StatCard } from "../components/ui";
+import { Wordmark } from "../components/Wordmark";
 import { useRedesign } from "../hooks/useNavigationStyle";
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -676,7 +677,11 @@ export function C7NCPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <PageHeader variant="section" title="C7NC" subtitle={hubSentence} />
+        <PageHeader
+          variant="section"
+          title={<Wordmark mark="c7nc" height={19} className="align-middle" />}
+          subtitle={hubSentence}
+        />
         {tab !== "add" ? (
           <button onClick={() => { setSelectedType(null); setShowAdd(true); setTab("add"); }} className="btn-primary flex items-center gap-2">
             <Plus size={16} /> Connect a service
