@@ -7663,3 +7663,22 @@ so no version applies.
   `MSD-04-1005` under F, which is the whole argument for a board code.
 - **The sample set is the design.** Eight tickets across four boards and five clients is enough to show
   padding, collisions and width; a single example would have shown a format and nothing else.
+
+
+### Prompt 326 — A + F against A alone, in plain terms
+
+**Timestamp:** 2026-10-09 01:50 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes IDs:** none — an explanation of two options, with nothing changed, so no version applies.
+
+**Prompt**
+
+> Explain A+F a bit more in simple terms vs just A
+
+**What I did**
+- Explained the difference as one question: **who is the first octet about?** A keeps it as the client's
+  type (a fact about the client); F makes it the board's code (a fact about the queue).
+- Stated the trade neither way hides: A's prefix stays true forever because a ticket never changes client,
+  while F's prefix records the board it was `+raised` on and can drift if the ticket is later moved.
+- Named the work: A is one generator function plus the reply-lookup fix; A + F adds a `code` field on
+  `ServiceBoard`, an admin field and a code per existing board (four in this instance).
