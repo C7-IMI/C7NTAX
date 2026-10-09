@@ -6,9 +6,19 @@
 // infra/README.md) because they are the ingress layer and are validated against a live
 // subscription before the first production cut-over.
 //
-// The templates have not been deployed: `az` and the Bicep CLI are not available in the
-// development environment, so validate before the first run with:
-//     az bicep build --file infra/main.bicep
+// PLAN-030 hardened this file for go-live. Two rules it follows on purpose:
+//
+//   · Bicep never owns what is *running*. `imageTag` has no default and `deploy-env.ps1` passes
+//     the tag the app is already running (a full public bootstrap image on the first run of an
+//     environment), and no `traffic` rule is declared here at all — the promotion path's
+//     update → 0%-traffic revision → health gate → traffic shift is the only thing that moves
+//     either of them.
+//   · A subnet is declared once, inline, with its NSG attached there. Every other resource
+//     refers to the inline subnet through an `existing` handle, so a redeploy does not detach
+//     and re-attach an NSG.
+//
+// Nothing here has been deployed yet, so validate before the first run with:
+//     node scripts/azure/validate-bicep.mjs     (or: az bicep build --file infra/main.bicep)
 //     az deployment group what-if --resource-group rg-c7ntax-<env> --template-file infra/main.bicep --parameters infra/params/<env>.bicepparam
 //
 // One environment per deployment. Dev and prod are separate resource groups (or separate
@@ -33,6 +43,7 @@ param postgresAdminLogin string = 'c7ntaxadmin'
 
 @description('PostgreSQL administrator password. Supply from Key Vault or a pipeline secret, never from a file in the repository.')
 @secure()
+@minLength(16)
 param postgresAdminPassword string
 
 @description('prod gets General Purpose with zone-redundant HA; dev gets a Burstable single-zone server.')
@@ -41,8 +52,14 @@ param postgresSkuTier string = environment == 'prod' ? 'GeneralPurpose' : 'Burst
 param postgresHaMode string = environment == 'prod' ? 'ZoneRedundant' : 'Disabled'
 param postgresStorageGb int = environment == 'prod' ? 128 : 32
 
-@description('Container image tag to deploy (normally the git commit sha).')
-param imageTag string = 'latest'
+// Required, with no default (PLAN-030 §1.3 and §2.7). deploy-env.ps1 passes the tag the app is
+// already running, so a Bicep run restates the live image instead of introducing one; on the
+// first run of an environment, when there is nothing to restate, it passes a full public
+// bootstrap reference such as mcr.microsoft.com/k8se/quickstart:latest. That is what makes a
+// Bicep-only run unable to move the running image: whatever is passed here is only the starting
+// point for a new revision, and the script's own update is still the only thing that promotes.
+@description('The image the app starts with: the tag the app is already running in this environment\'s registry, or a full public image reference on the first run. Never a default.')
+param imageTag string
 
 @description('Container registry login server, without the protocol. Leave empty to create one.')
 param acrName string = 'acrc7ntax${environment}${uniqueSuffix}'
@@ -51,15 +68,27 @@ param acrName string = 'acrc7ntax${environment}${uniqueSuffix}'
 param minReplicas int = environment == 'prod' ? 2 : 1
 param maxReplicas int = environment == 'prod' ? 10 : 3
 
+// Minimum lengths, and no defaults anywhere (PLAN-030 §2.2): an empty signing key or vault
+// master key written into Key Vault is worse than a deployment that fails, because the app would
+// sign tokens with nothing and the Kumo vault would encrypt under nothing.
 @description('Secrets that must exist before the app starts. Values are supplied at deploy time and stored in Key Vault, never in the template.')
 @secure()
+@minLength(32)
 param jwtSecret string
 
 @secure()
+@minLength(32)
 param kumoMasterKey string
 
 @description('Public origin of this environment, used for WEB_ORIGIN/CORS_ORIGIN.')
 param webOrigin string
+
+// PLAN-030 §2.1. Turning this on restricts the app's ingress to Front Door's backend service
+// tag, which is only correct once the Front Door module from the ingress work (PLAN-016 §4)
+// exists: with it on and no Front Door in front, nothing can reach the app at all. Off by
+// default, and prod.bicepparam says when to flip it.
+@description('Restrict ingress to the AzureFrontDoor.Backend service tag. Requires the Front Door module to exist first.')
+param lockIngressToFrontDoor bool = false
 
 @description('Apply tags to every resource for cost and incident attribution.')
 var commonTags = {
@@ -68,6 +97,21 @@ var commonTags = {
   managedBy: 'bicep'
   plan: 'PLAN-016'
 }
+
+// The subnets live in one place because the NSG rules have to name the same prefixes: a literal
+// that drifts from the subnet it guards is a firewall rule that quietly stops matching.
+var addressSpace = '10.20.0.0/16'
+var subnets = {
+  postgres: '10.20.1.0/24'
+  aca: '10.20.2.0/23' // at least /23: a Container Apps environment reserves a large block
+  appgw: '10.20.4.0/24' // Application Gateway requires a dedicated subnet
+  pe: '10.20.5.0/24' // private endpoints: Key Vault now, ACR if prod ever takes one
+}
+
+// A tag is composed into this environment's registry; a full reference (which always contains a
+// slash) is used as it stands — that is the bootstrap image on the first run of an environment,
+// which has to pull without a registry identity.
+var containerImage = contains(imageTag, '/') ? imageTag : '${acr.properties.loginServer}/c7ntax:${imageTag}'
 
 // ── Observability: everything logs here, and diagnostics point at it ──
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -93,7 +137,14 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableSoftDelete: true
     softDeleteRetentionInDays: 90
     enablePurgeProtection: true
-    publicNetworkAccess: 'Enabled' // private endpoint in phase 2 of the ingress work
+    // prod only (PLAN-030 §2.4): in production the vault is reached through the private endpoint
+    // in snet-pe and its public data plane is closed. Deployments are unaffected — ARM writes the
+    // secrets through the resource provider, not through the vault's public endpoint.
+    //
+    // Dev stays public *deliberately*: dev is exercised from a laptop that cannot reach a private
+    // endpoint, so closing it there would break local development. The endpoint and zone below
+    // are still created in dev, so the private path is proven before prod depends on it.
+    publicNetworkAccess: environment == 'prod' ? 'Disabled' : 'Enabled'
     networkAcls: { defaultAction: 'Allow', bypass: 'AzureServices' }
   }
 }

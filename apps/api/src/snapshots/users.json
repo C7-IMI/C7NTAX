@@ -719,14 +719,14 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-09T02:25:19.574Z",
+    "lastLoginAt": "2026-10-09T02:30:19.173Z",
     "emailVerified": true,
     "mustChangePassword": false,
     "passwordChangedAt": null,
     "tokenVersion": 0,
     "department": "IT Operations",
     "timezone": "America/Chicago",
-    "landingPage": "/c7nc",
+    "landingPage": null,
     "addinPreferences": null,
     "costRate": null,
     "reportsToId": "7ce93cee-bd43-4a5c-86a6-9bf3c11d839c",
@@ -740,6 +740,6 @@
     "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-10-09T02:25:19.575Z"
+    "updatedAt": "2026-10-09T02:41:48.356Z"
   }
 ]
