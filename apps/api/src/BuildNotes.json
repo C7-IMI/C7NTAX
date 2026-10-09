@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.9.019",
+    "date": "2026-10-09",
+    "title": "A sign-in audit, live sessions you can end, and the devices on each account",
+    "changes": [
+      {
+        "text": "**`SignInEvent`**: one row per attempt, written by **every** way in — the password form, both",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Administration → Sign-in Audit** (three tabs, all needing `security:manage`).",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`/api/security/*`** — sign-ins with filters and a summary, sessions with a state filter,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A revoked session stops working immediately** — the row is stamped, not deleted, and the",
+        "type": "Update"
+      },
+      {
+        "text": "**The audit write is best-effort on purpose**: a sign-in must never fail because its audit",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.018",
     "date": "2026-10-09",
     "title": "C7NC wears the same mark as C7NTAX, crimson 7 and all",

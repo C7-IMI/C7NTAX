@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.018 | Last Updated: 2026-10-09
+## Version: 2026.10.9.019 | Last Updated: 2026-10-09
 
 ---
 
@@ -13,6 +13,49 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.9.019 — A sign-in audit, live sessions you can end, and the devices on each account
+
+Nothing in the product recorded *who tried to sign in*. A wrong password was a `401` and a counter on the
+account's own row, a lockout was a flag on the same row, and the audit trail skips `/api/auth/` entirely
+(it would otherwise file a password change as a write) — so "an account was attacked last night" was
+answerable only by the person who had been watching the log at the time.
+
+- **[New]** **`SignInEvent`**: one row per attempt, written by **every** way in — the password form, both
+  MFA steps, a passkey, single sign-on, and signing out — successes and failures alike. The row carries
+  the address typed, the result, the **method** (password, authenticator app, emailed code, passkey, SSO),
+  the reason a failure failed, the device parsed from the user agent, the IP address, and the session it
+  opened. `userId` is null when the address was not an account: the attempt still happened.
+- **[New]** **Administration → Sign-in Audit** (three tabs, all needing `security:manage`).
+  *Sign-in audit* is the Entra-shaped log — summary tiles that count the **filtered** window rather than
+  the page, a search across address/device/IP/reason, and outcomes of Signed in, Failed, Locked out, MFA
+  failed and Signed out. *Active sessions* lists what is signed in now with the person, device, method, IP
+  address and last activity, with **Revoke** for one session and **Sign out everywhere** for an account.
+  *Devices* lists the passkeys and notification subscriptions each account has registered, and removes
+  them.
+- **[New]** **`/api/security/*`** — sign-ins with filters and a summary, sessions with a state filter,
+  session revocation (one or all for a user), and the device list with two delete routes. `result` is
+  validated against the known outcomes, so a typo answers `400` rather than looking like "no failures".
+- **[Update]** **A revoked session stops working immediately** — the row is stamped, not deleted, and the
+  cookie stops resolving on the next request. The session list reports the method that opened each one, so
+  "signed in with a passkey" is visible rather than only "signed in".
+- **[Update]** **The audit write is best-effort on purpose**: a sign-in must never fail because its audit
+  row could not be written, and a gap is reported in the server log instead of locking people out.
+
+**Verification:** through the running API, not by reading the branch — a wrong password wrote a `failure`
+row carrying `Wrong password (attempt 1 of 5)` and `Chrome on Windows`; the right password wrote
+`success` with a session id; that session appeared in the session list with its method and device;
+**revoking it worked** (`{"revoked":true}` and it left the active list, which also signed the browser out
+of the session I had used to test it); signing out wrote a `signed_out` row; and the devices endpoint
+returned the registered subscription. The screen was checked in the browser: tabs with counts, tiles
+`Signed in 2 / Failed 1 / Locked out 0 / People-devices 1-1`, four rows, and the Devices tab listing its
+row with the account and a working Remove. `tsc` clean in both apps; `check-route-guards` (443 routes),
+`check-help-links` (30 walkthroughs), `generate-openapi` + `check-api-docs` (440 operations, 79 curated)
+all pass. The probe rows were deliberately **kept**: they are the first entries of the audit trail, and
+deleting the evidence an audit exists to hold would be the wrong sort of tidy.
+
+---
+
 
 ## 2026.10.9.018 — C7NC wears the same mark as C7NTAX, crimson 7 and all
 

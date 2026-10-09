@@ -34,6 +34,7 @@ import { AssetDetailPage } from "./pages/AssetDetail";
 import { KnowledgeBasePage } from "./pages/KnowledgeBase";
 import { AuditLogsSection, ServiceBoardsSection } from "./pages/Administration";
 import { ConfigurationHub, ConfigurationSectionPage } from "./pages/Configuration";
+import { SecurityPage } from "./pages/Security";
 import { CustomerPortalSettingsPage } from "./pages/CustomerPortalSettings";
 import { ChangelogPage } from "./pages/Changelog";
 import { ConsolePage } from "./pages/ConsolePage";
@@ -181,6 +182,7 @@ function ProtectedRoutes() {
         <Route path="/admin/system" element={<SystemSettingsPage />} />
         <Route path="/admin/configuration" element={<ConfigurationHub />} />
         <Route path="/admin/configuration/:sectionId" element={<ConfigurationSectionPage />} />
+        <Route path="/admin/security" element={<SecurityPage />} />
         <Route path="/admin/portal" element={<CustomerPortalSettingsPage />} />
         {/* C7NC — the companion clients. Not under Administration: these are things a user
             installs on their own machine, and the page is offered to anyone who can sign in.

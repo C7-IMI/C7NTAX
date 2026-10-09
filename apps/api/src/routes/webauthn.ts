@@ -4,6 +4,7 @@ import { authenticate, signToken, type AuthRequest } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
 import { rateLimiter } from "../middleware/rateLimiter";
 import { startSession } from "../services/signIn";
+import { newestSessionId, recordSignIn } from "../services/signInAudit";
 import {
   generateRegistrationOptions, verifyRegistrationResponse,
   generateAuthenticationOptions, verifyAuthenticationResponse,
@@ -150,7 +151,10 @@ webauthnRouter.post("/login/verify", rateLimitPasskeys, async (req, res, next) =
         transports: JSON.parse(credential.transports || "[]"),
       },
     });
-    if (!verification.verified || !verification.authenticationInfo) throw new AppError("Authentication verification failed");
+    if (!verification.verified || !verification.authenticationInfo) {
+      await recordSignIn(req, { email: userId, userId, result: "mfa_failed", method: "passkey", reason: "Passkey verification failed" });
+      throw new AppError("Authentication verification failed");
+    }
     await prisma.webauthnCredential.update({
       where: { id: credential.id },
       data: { counter: verification.authenticationInfo.newCounter, lastUsedAt: new Date() },
@@ -159,6 +163,13 @@ webauthnRouter.post("/login/verify", rateLimitPasskeys, async (req, res, next) =
     const user = await prisma.user.findUnique({ where: { id: userId }, include: { role: true } });
     if (!user) throw new AppError("User not found", 404);
     const token = await startSession(req, res, { id: user.id, email: user.email, role: (user.role?.systemRole ?? "admin") as SystemRole, tokenVersion: user.tokenVersion });
+    await recordSignIn(req, {
+      email: user.email,
+      userId: user.id,
+      result: "success",
+      method: "passkey",
+      sessionId: await newestSessionId(user.id),
+    });
     res.json({ token });
   } catch (e) { next(e); }
 });

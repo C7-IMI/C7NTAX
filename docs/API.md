@@ -753,10 +753,44 @@ issued with replaces it. Nothing needs invalidating and nothing needs to expire 
 hold — so a caller that caches `permissions` for longer than a request is the one thing that can make
 a revocation appear not to work.
 
+### Sign-ins, sessions and devices
+
+The same three facts exist as an API, for an operator who wants them beside their own monitoring rather
+than only on a screen. All of it needs **`security:manage`**: an address, a device and a failed attempt
+are facts about people, and these endpoints exist to be read by somebody investigating an account.
+
+```bash
+GET    /api/security/sign-ins?result=&userId=&from=&to=&search=&limit=&offset=
+GET    /api/security/sessions?userId=&state=active|ended|all
+DELETE /api/security/sessions/{id}              # revoke one
+POST   /api/security/sessions/revoke-user       # { "userId": "…" } — everywhere
+GET    /api/security/devices?userId=
+DELETE /api/security/devices/passkey/{id}
+DELETE /api/security/devices/push/{id}
+```
+
+`GET /api/security/sign-ins` returns the attempts newest first with a `summary` computed over the whole
+**filtered** set rather than over the page — `success`, `failure`, `locked`, `mfaFailed`, `signedOut`,
+and how many distinct people and devices are in it. `result` accepts `success`, `failure`, `locked`,
+`mfa_failed`, `code_failed` or `signed_out`; anything else is a `400` rather than an empty list, because
+a typo that looks like "no failures" is the worst possible answer to that question. `search` looks at the
+address, the device, the IP address and the reason.
+
+Each row carries `method` — `password`, `totp`, `email_code`, `passkey`, `sso` or `portal_code` — which is
+what separates "signed in" from "signed in with a second factor". A session's row in
+`GET /api/security/sessions` reports the same `method`, read from the sign-in that opened it, so a live
+session can be traced back to how it began. `apply`-style revocation is a stamp (`invalidatedAt`) rather
+than a delete: the row keeps saying what happened, and the cookie it belonged to stops resolving on the
+next request — there is no window in which a revoked session still works.
+
+A row is written for **every** way in and for signing out, successes included, and the write is
+**best-effort**: a sign-in never fails because its audit row could not be written, and a gap is reported
+in the server log instead. `userId` is null when the address typed was not an account — the attempt still
+happened, and it is kept.
+
 ---
 
 ## 13. What integration work looks like, end to end
-
 1. **Decide the direction.** If another system is telling you about an incident, use the event gateway
    (§7). If it is reading your data, or you are reading its, use a connector (§9). If you need to
    notify a third party, register a webhook (§11).

@@ -186840,6 +186840,18 @@
     "createdAt": "2026-10-08T20:39:39.396Z"
   },
   {
+    "id": "6afe8c39-adfe-4740-878f-fad6b41a5c84",
+    "action": "security:delete",
+    "entity": "security",
+    "entityId": "3f8c4164-f419-404c-9aa0-a37bc8763b88",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:47:32.831Z"
+  },
+  {
     "id": "be1fd89a-bbbe-4a44-99f7-eaedc651f3f8",
     "action": "configuration:update",
     "entity": "configuration",
@@ -226779,6 +226791,43 @@
     "createdAt": "2026-10-08T19:36:01.608Z"
   },
   {
+    "id": "248206cd-da72-4c5c-ad68-9c2cd60c17fb",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "fca6b140-561f-49b0-83d7-1b3d7ae7e230",
+    "changes": {
+      "user": "alerts@probe.example",
+      "folder": "Inbox",
+      "boardId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+      "authType": "clientSecret",
+      "clientId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "tenantId": "11111111-2222-3333-4444-555555555555",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 300
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:09:52.632Z"
+  },
+  {
+    "id": "cacc586c-3c82-4857-b470-11089aec6670",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "59be6b80-7253-47c8-b0d3-44b3704eaaff",
+    "changes": {
+      "user": "servicedesk@probe.example",
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "authType": "clientSecret",
+      "transport": "graph",
+      "pollIntervalSec": 300,
+      "reuseAppFromConnectorId": "fca6b140-561f-49b0-83d7-1b3d7ae7e230"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:09:52.651Z"
+  },
+  {
     "id": "147a69f8-7fde-4a5a-9b13-13347214aa25",
     "action": "flexpoint:create",
     "entity": "flexpoint",
@@ -228249,6 +228298,21 @@
     "createdAt": "2026-10-09T03:28:16.056Z"
   },
   {
+    "id": "62e0e3cb-6d19-4006-bd0f-9dc990a6ce5c",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "0dc25f34-d5e5-40f2-9aff-431f2ffe1dd8",
+    "changes": {
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "authType": "clientSecret",
+      "transport": "graph",
+      "reuseAppFromConnectorId": "fca6b140-561f-49b0-83d7-1b3d7ae7e230"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:09:52.676Z"
+  },
+  {
     "id": "a53ebd22-fa9f-4fee-98a3-18e9a1555b49",
     "action": "events:create",
     "entity": "events",
@@ -228333,6 +228397,26 @@
     "createdAt": "2026-10-08T07:30:54.045Z"
   },
   {
+    "id": "63a81bf7-f5a5-4344-8b3b-fa84014cde34",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "fc47a1da-f38e-45b8-953e-e586f235704a",
+    "changes": {
+      "user": "alerts@probe.example",
+      "folder": "Inbox",
+      "boardId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+      "authType": "clientSecret",
+      "clientId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "tenantId": "11111111-2222-3333-4444-555555555555",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 300
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:10:40.435Z"
+  },
+  {
     "id": "d3fd4fc6-bf85-4f1a-ae62-e819c7a02f93",
     "action": "api-keys:create",
     "entity": "api-keys",
@@ -228350,6 +228434,23 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T07:45:11.424Z"
+  },
+  {
+    "id": "33021df3-0d5d-499a-b15e-21a82589773a",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "22d7c98d-354b-47fe-871f-7940f484425f",
+    "changes": {
+      "user": "servicedesk@probe.example",
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "authType": "clientSecret",
+      "transport": "graph",
+      "pollIntervalSec": 300,
+      "reuseAppFromConnectorId": "fc47a1da-f38e-45b8-953e-e586f235704a"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:10:40.455Z"
   },
   {
     "id": "6a7de9a4-478d-4292-a7ca-bd13afd9cd7b",
@@ -230308,6 +230409,43 @@
     "createdAt": "2026-10-09T03:28:16.070Z"
   },
   {
+    "id": "87d28e7f-186b-41a6-95b1-2477e3c7021d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "6d0ce189-fc63-4ecd-9446-0fc7e354bd2e",
+    "changes": {
+      "user": "alerts@probe.example",
+      "folder": "Inbox",
+      "boardId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+      "authType": "clientSecret",
+      "clientId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "tenantId": "11111111-2222-3333-4444-555555555555",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 300
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:10:49.839Z"
+  },
+  {
+    "id": "501b7dde-8b9b-4293-9b96-c5c3df9f26cb",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "7af14e79-43a7-45c2-9dd9-07d56289743f",
+    "changes": {
+      "user": "servicedesk@probe.example",
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "authType": "clientSecret",
+      "transport": "graph",
+      "pollIntervalSec": 300,
+      "reuseAppFromConnectorId": "6d0ce189-fc63-4ecd-9446-0fc7e354bd2e"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:10:49.862Z"
+  },
+  {
     "id": "6850381b-7e5f-4c45-b053-fb1b5b0eb2de",
     "action": "kb:create",
     "entity": "kb",
@@ -232206,6 +232344,42 @@
     "userId": "6bb72b44-e692-47a4-8a97-0af6c8a1d598",
     "ipAddress": "::ffff:127.0.0.1",
     "createdAt": "2026-10-08T19:53:00.606Z"
+  },
+  {
+    "id": "71874591-f78d-42e9-a971-a1359f438c1d",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "f277ee01-76b4-4813-948f-a54904aa034c",
+    "changes": {
+      "user": "alerts@cyber7group.com",
+      "boardId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+      "authType": "clientSecret",
+      "clientId": "3f7b1c9a-2d54-4e11-9a3b-7c8d5e6f1a20",
+      "tenantId": "9c1e22b4-6c33-4f0a-a8d5-1f2c3d4e5f60",
+      "transport": "graph",
+      "clientSecret": "***",
+      "pollIntervalSec": 60
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:10:58.529Z"
+  },
+  {
+    "id": "4957cc39-66a5-46dd-8d1f-0030ec0423f2",
+    "action": "email-connectors:create",
+    "entity": "email-connectors",
+    "entityId": "89d31f3d-5e4e-47e3-ad24-6a546c59b508",
+    "changes": {
+      "user": "servicedesk@cyber7group.com",
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "authType": "clientSecret",
+      "transport": "graph",
+      "pollIntervalSec": 60,
+      "reuseAppFromConnectorId": "f277ee01-76b4-4813-948f-a54904aa034c"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T07:10:58.543Z"
   },
   {
     "id": "1cc3ff2f-0db0-49a2-9a82-f8bcc6ca59e8",

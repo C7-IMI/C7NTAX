@@ -11,6 +11,7 @@ import { EmailService } from "@C7NTAX/email";
 import { rateLimiter, isLoopback } from "../middleware/rateLimiter";
 import { isBypassAccount, isBypassLoginAttempt, logBypassSignIn } from "../services/testBypass";
 import { startSession, endSessionsForUser } from "../services/signIn";
+import { newestSessionId, recordSignIn } from "../services/signInAudit";
 import {
   clearSessionCookies,
   getSessionTimeoutMs,
@@ -113,6 +114,14 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
       ? await prisma.user.findUnique({ where: { email }, include: { ...PERMISSION_SUBJECT_INCLUDE } })
       : await prisma.user.findUnique({ where: { username }, include: { ...PERMISSION_SUBJECT_INCLUDE } });
     if (!user || !user.isActive) {
+      // The row is written even though no account matched: an attempt at an address that is not a user
+      // is exactly the row an investigation is looking for.
+      await recordSignIn(req, {
+        email: String(email || username || ""),
+        result: "failure",
+        method: "password",
+        reason: user ? "The account is not active" : "No such account",
+      });
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
@@ -120,19 +129,38 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
     const bypass = isBypassAccount(user.email);
 
     if (LOCKOUT_ENABLED && user.isLocked && !bypass) {
-      res.status(423).json({ error: "Account locked after too many failed sign-in attempts â€” ask an administrator to unlock it" });
+      await recordSignIn(req, {
+        email: user.email,
+        userId: user.id,
+        result: "locked",
+        method: "password",
+        reason: `Account locked after ${MAX_LOGIN_ATTEMPTS} failed attempts`,
+      });
+      res.status(423).json({ error: "Account locked after too many failed sign-in attempts — ask an administrator to unlock it" });
       return;
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
+      let lockedNow = false;
       if (LOCKOUT_ENABLED && !bypass) {
         const attempts = user.loginAttempts + 1;
+        lockedNow = attempts >= MAX_LOGIN_ATTEMPTS;
         await prisma.user.update({
           where: { id: user.id },
           data: { loginAttempts: attempts, ...(attempts >= MAX_LOGIN_ATTEMPTS ? { isLocked: true } : {}) },
         });
       }
+      await recordSignIn(req, {
+        email: user.email,
+        userId: user.id,
+        result: lockedNow ? "locked" : "failure",
+        method: "password",
+        // The count is what makes a pattern visible: four attempts is somebody mistyping, forty is not.
+        reason: lockedNow
+          ? `Account locked after ${MAX_LOGIN_ATTEMPTS} failed attempts`
+          : `Wrong password (attempt ${(bypass || !LOCKOUT_ENABLED ? 0 : user.loginAttempts) + 1} of ${MAX_LOGIN_ATTEMPTS})`,
+      });
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
@@ -152,7 +180,8 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
       await prisma.user.update({ where: { id: user.id }, data: { passwordHash: upgraded } });
     }
 
-    // If MFA is enabled, send back a temporary token
+    // If MFA is enabled, send back a temporary token. Nothing is recorded yet: the sign-in has not
+    // happened, and the MFA step writes its own row — success, or an outright failure.
     if (user.mfaEnabled) {
       const mfaToken = signMfaToken(user.id);
       res.json({ mfaRequired: true, mfaToken, mustChangePassword: user.mustChangePassword });
@@ -165,6 +194,14 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
       firstName: user.firstName, lastName: user.lastName,
       mfaEnabled: user.mfaEnabled, active: user.isActive,
       tokenVersion: user.tokenVersion,
+    });
+
+    await recordSignIn(req, {
+      email: user.email,
+      userId: user.id,
+      result: "success",
+      method: "password",
+      sessionId: await newestSessionId(user.id),
     });
 
     // Update last login
@@ -297,7 +334,10 @@ authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
       // Check backup codes
       const codes = (user.mfaBackupCodes as string[]) || [];
       const codeIndex = codes.indexOf(code);
-      if (codeIndex === -1) { res.status(400).json({ error: "Invalid MFA code" }); return; }
+      if (codeIndex === -1) {
+        await recordSignIn(req, { email: user.email, userId: user.id, result: "mfa_failed", method: "totp", reason: "Wrong authenticator code" });
+        res.status(400).json({ error: "Invalid MFA code" }); return;
+      }
       // Remove used backup code
       codes.splice(codeIndex, 1);
       await prisma.user.update({ where: { id: user.id }, data: { mfaBackupCodes: codes } });
@@ -312,6 +352,15 @@ authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
     });
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+
+    // The method, not just the result: this is the row that says a second factor was actually used.
+    await recordSignIn(req, {
+      email: user.email,
+      userId: user.id,
+      result: "success",
+      method: "totp",
+      sessionId: await newestSessionId(user.id),
+    });
 
     res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, mustChangePassword: user.mustChangePassword });
   } catch (e) { next(e); }
@@ -359,7 +408,10 @@ authRouter.post("/mfa/verify-email", credentialLimiter, async (req, res, next) =
       res.status(400).json({ error: "Code expired or not requested" }); return;
     }
 
-    if (!codesMatch(user.mfaEmailCode, String(code))) { res.status(400).json({ error: "Invalid code" }); return; }
+    if (!codesMatch(user.mfaEmailCode, String(code))) {
+      await recordSignIn(req, { email: user.email, userId: user.id, result: "code_failed", method: "email_code", reason: "Wrong emailed code" });
+      res.status(400).json({ error: "Invalid code" }); return;
+    }
 
     // Clear code
     await prisma.user.update({ where: { id: user.id }, data: { mfaEmailCode: null, mfaEmailCodeExpires: null } });
@@ -373,6 +425,14 @@ authRouter.post("/mfa/verify-email", credentialLimiter, async (req, res, next) =
     });
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+
+    await recordSignIn(req, {
+      email: user.email,
+      userId: user.id,
+      result: "success",
+      method: "email_code",
+      sessionId: await newestSessionId(user.id),
+    });
 
     res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, mustChangePassword: user.mustChangePassword });
   } catch (e) { next(e); }
@@ -508,11 +568,29 @@ authRouter.post("/logout", async (req: AuthRequest, res) => {
   if (header?.startsWith("Bearer ")) {
     try {
       const payload = jwt.verify(header.slice(7), JWT_SECRET) as { userId?: string };
-      if (payload.userId) ended += await invalidateSessionsForUser(payload.userId);
+      if (payload.userId) {
+        ended += await invalidateSessionsForUser(payload.userId);
+        await recordSignOut(req, payload.userId);
+      }
     } catch { /* an expired token still gets its cookies cleared below */ }
   }
   const result = await resolveSession(req);
-  if (result.status === "ok") ended += await invalidateSessionsForUser(result.session.userId);
+  if (result.status === "ok") {
+    ended += await invalidateSessionsForUser(result.session.userId);
+    await recordSignOut(req, result.session.userId);
+  }
   clearSessionCookies(res);
   res.json({ message: "Signed out", sessionsEnded: ended });
 });
+
+/**
+ * A sign-out is worth a row of its own.
+ *
+ * "Ended at 09:14" is what tells a reader whether a burst of failed attempts at 09:20 was somebody
+ * mistyping after signing out or somebody else on the same account — the two look identical in a log
+ * of attempts alone.
+ */
+async function recordSignOut(req: AuthRequest, userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+  await recordSignIn(req, { email: user?.email ?? userId, userId, result: "signed_out", method: "password" });
+}

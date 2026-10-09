@@ -410,8 +410,35 @@
     "summary": "Where a deployment got to, without contacting Microsoft",
     "description": "The session's own state: pending, authorized, declined, expired or failed, plus the tenant, mode, mailbox and display name it was started with."
   },
-  "GET /api/email-connectors": {
-    "summary": "Every watched mailbox, and the board it files into",
+  "GET /api/security/sign-ins": {
+    "summary": "The sign-in log: every attempt, and how it ended",
+    "description": "Newest first, filterable by `result` (`success`, `failure`, `locked`, `mfa_failed`, `code_failed`, `signed_out`), `userId`, a `from`/`to` window and a `search` across the address, device, IP address and reason. The `summary` beside the rows counts the whole **filtered** set, not the page, so \"how many of these were lockouts\" is answerable per window. Each row names the `method` — password, authenticator app, emailed code, passkey, single sign-on or portal code — which is what separates \"signed in\" from \"signed in with a second factor\". A row is written for every way in and for signing out, successes included, and `userId` is null when the address typed was not an account. Requires `security:manage`."
+  },
+  "GET /api/security/sessions": {
+    "summary": "Who is signed in right now",
+    "description": "One row per browser session with the person, the device read from the user agent, the `method` that opened it (from the sign-in event, not the session row), the address it arrived from, when it started and when it was last seen. `state` is `active` (the default), `ended` or `all`. Requires `security:manage`."
+  },
+  "DELETE /api/security/sessions/:id": {
+    "summary": "Revoke one session",
+    "description": "Stamps `invalidatedAt` rather than deleting the row: the session keeps saying what happened, and the cookie it belonged to stops resolving on the next request. Revoking one that has already ended answers `{ \"revoked\": false }` rather than failing. Requires `security:manage`."
+  },
+  "POST /api/security/sessions/revoke-user": {
+    "summary": "Sign one account out everywhere",
+    "description": "Ends every live session a user has, for the day a laptop is lost or a password is suspected leaked. Body is `{ \"userId\": \"…\" }`; the answer is how many sessions were ended. Changing a password or disabling an account already does this, so it exists for when neither has happened and it is needed now. Requires `security:manage`."
+  },
+  "GET /api/security/devices": {
+    "summary": "The devices registered to accounts",
+    "description": "Passkeys (which sign in) and browser notification subscriptions (which receive), each with the account it belongs to, when it was registered and when it was last used. Filter with `userId`. Both kinds are *added* by the person they belong to, so this is the half an administrator needs: seeing a device nobody recognises, and a path to a lost phone. Requires `security:manage`."
+  },
+  "DELETE /api/security/devices/passkey/:id": {
+    "summary": "Remove a registered passkey",
+    "description": "Deletes the credential, so the device can no longer sign in as that person. The recovery path for a lost phone as much as the response to a device that should not be there — the account holder can also do it themselves, under My Settings → Security. Requires `security:manage`."
+  },
+  "DELETE /api/security/devices/push/:id": {
+    "summary": "Remove a notification subscription",
+    "description": "Deletes the browser's push subscription, so alerts stop arriving there. Separate from the passkey route because it deletes from a different table: a mistake in a shared handler would be a mistake in both. Requires `security:manage`."
+  },
+  "GET /api/email-connectors": {    "summary": "Every watched mailbox, and the board it files into",
     "description": "One row per watched address, which is the mapping: `alerts@` files to the NOC board, `servicedesk@` to the service desk. Each row carries its transport and health — last poll, messages processed, last error — so a mailbox that has stopped working is visible without opening it. Secrets are never returned: `hasPassword`, `hasClientSecret` and `hasRefreshToken` say whether one is set."
   },
   "GET /api/email-connectors/m365-apps": {

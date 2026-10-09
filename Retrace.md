@@ -8469,3 +8469,54 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   Rendering a preview PNG and viewing it cost one tool call each time.
 - **"Throughout the app" is a question about where the name appears as a mark.** Prose mentions (`C7NC`
   in a sentence, a Help link label, a nav row) stay text; headings and logotypes get the mark.
+
+---
+
+### Prompt 345 — A sign-in audit, live sessions and registered devices
+
+**Timestamp:** 2026-10-09 10:35 | **Status:** Complete | **Duration:** ~110 min
+
+**BuildNotes IDs:** **2026.10.9.019**.
+
+**Prompt**
+
+> I need an audit log for sign-ins that will show sucess, fail, attempts, lockouts, etc. I also want to see active sessions, with the ability to revoke them. It should show user, device, IP address, MFA type used, etc. Also on the user accounts/Manage Users and/or wherever it makes sense, there should be a listing of the registered devices, with the option to remove the device. Use Microsoft 365/Entra sign-in audit as a refernce. Build the proper configurations/options/sections/screens to manage these requests.
+
+**What I did**
+- **Found out what already existed before building any of it, and most of the plumbing did.** `UserSession`
+  already holds the cookie hash, IP, user agent, last activity and an `invalidatedAt` stamp;
+  `WebauthnCredential` already has a device label and `lastUsedAt`; `PushDevice` holds subscriptions; and
+  `webauthn.ts` already lets a person delete their own passkey. What did not exist was the *log*: a failed
+  sign-in was a 401 and a counter on the user's own row, and the audit middleware skips `/api/auth/`
+  entirely, so "somebody attacked this account last night" was answerable only by whoever had been
+  watching the log at the time.
+- **Added one table and wrote to it from every way in** — password, TOTP, emailed code, passkey, SSO and
+  sign-out — because a log of successes alone answers the wrong question and a log without the method
+  cannot tell a passkey from a password. The address typed is stored even when no account matched.
+- **Built the three screens the request implies, on one page**, in the order the questions are asked when
+  something looks wrong: did anybody try to get in (the log, Entra-shaped, with tiles that count the
+  filtered window), who is signed in now (sessions, revocable one at a time or everywhere), and on what
+  (devices, removable). They are read together, so three separate pages would have made the reader stop
+  halfway.
+- **Made revocation honest**: the row is stamped rather than deleted, `invalidateSessionsForUser` already
+  existed, and the session list reads the signing-in *method* from the audit event rather than the session
+  row, so "signed in with a passkey" is visible.
+- **Wrote the audit best-effort on purpose.** A sign-in must never fail because its audit row could not be
+  written — that would turn a database hiccup into "nobody can sign in" — so failures are logged and
+  swallowed, and the trade is written down in the service.
+- **Verified through the running API**: failure row with reason and device, success row with a session id,
+  the session listed with its method, revocation working (which signed my own test browser out — the
+  feature caught its own tester), the sign-out row, and the devices list. Then the page in the browser.
+- Documented it in `docs/API.md`, the curated OpenAPI entries, and a new Help walkthrough with three
+  screenshots; the Index, the FAQ and the guide all point at it.
+
+**Notes for next time**
+- **Ask what exists before designing.** Four of the five pieces were already there; the feature was mostly
+  a table, a screen, and the decision to record failures as carefully as successes.
+- **A best-effort audit write is a decision, not an oversight** — and it needs saying out loud, because
+  the next reader will otherwise "fix" it into a blocking write and reintroduce the outage it avoids.
+- **Validating a filter value against the known set matters more than it looks.** An unrecognised
+  `result` that silently matches nothing reads as "no failures", which is the single worst answer an
+  audit screen can give.
+- **Do not tidy away the evidence.** The probe's rows are the first entries of the audit trail, so they
+  were left in place — the opposite of the usual instruction to clean up after a test.

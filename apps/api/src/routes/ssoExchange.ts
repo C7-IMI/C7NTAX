@@ -3,6 +3,7 @@ import { prisma } from "../index";
 import { signToken, JWT_SECRET } from "../middleware/auth";
 import { safeFetch } from "../services/egress";
 import { startSession } from "../services/signIn";
+import { newestSessionId, recordSignIn } from "../services/signInAudit";
 import { domainAllowed, resolveOidcSettings, type OidcSettings } from "../services/ssoSettings";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
@@ -217,6 +218,15 @@ ssoExchangeRouter.post("/exchange", async (req, res, next) => {
         await startSession(req, res, {
           id: account.id, email: account.email, role: (account.role?.systemRole ?? "read_only") as SystemRole,
           companyId: account.companyId, tokenVersion: account.tokenVersion,
+        });
+        // The method is the point of this row: an SSO sign-in was authenticated by the identity
+        // provider, not by anything this application checked.
+        await recordSignIn(req, {
+          email: account.email,
+          userId: account.id,
+          result: "success",
+          method: "sso",
+          sessionId: await newestSessionId(account.id),
         });
       }
     }

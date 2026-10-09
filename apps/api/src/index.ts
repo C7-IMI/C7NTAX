@@ -36,6 +36,7 @@ import { cloudConnectRouter } from "./routes/cloudconnect";
 import { flexpointRouter } from "./routes/flexpoint";
 import { apiKeysRouter } from "./routes/apiKeys";
 import { eventsRouter } from "./routes/events";
+import { securityRouter } from "./routes/security";
 import { crmRouter } from "./routes/crm";
 import { projectsRouter } from "./routes/projects";
 import { scheduleRouter } from "./routes/schedule";
@@ -282,6 +283,7 @@ app.use("/api/cloudconnect", cloudConnectRouter);
 app.use("/api/flexpoint", flexpointRouter);
 app.use("/api/api-keys", apiKeysRouter);
 app.use("/api/events", eventsRouter);
+app.use("/api/security", securityRouter);
 
 // New feature routes
 app.use("/api/crm", crmRouter);

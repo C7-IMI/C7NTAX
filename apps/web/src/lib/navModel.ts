@@ -227,6 +227,7 @@ const DOMAIN_SPECS: DomainSpec[] = [
       { id: "users-list" },
       { id: "users-roles" },
       { id: "admin-api" },
+      { id: "admin-security" },
       { id: "admin-sso" },
       { id: "admin-logs" },
       { id: "admin-system" },

@@ -85,6 +85,7 @@ model User {
   notifications   Notification[]
   webauthnCredentials WebauthnCredential[]
   pushDevices     PushDevice[]
+  signInEvents    SignInEvent[]
   dashboardConfig UserDashboardConfig?
   navConfig       UserNavConfig?
   outlookAddinTokens OutlookAddinToken[]
@@ -146,6 +147,39 @@ model UserSession {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+/// One sign-in attempt or outcome: Entra's sign-in log, in miniature (PLAN: security audit).
+///
+/// Every way in writes one — the password form, the MFA step, a passkey, the OIDC exchange, a portal
+/// code — successes and failures alike, because the failures are what an audit is *for*. `userId` is
+/// null when the address typed was not an account: the attempt still happened, and a blank user is
+/// more honest than dropping the row. The method is recorded separately from the result because
+/// "signed in with a passkey" and "signed in with a password" are different facts about a person, and
+/// the second is the one worth asking about.
+model SignInEvent {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /// What was typed, which is not always an account that exists.
+  email     String
+  /// success | failure | locked | mfa_failed | code_failed | signed_out
+  result    String
+  /// password | totp | email_code | passkey | sso | portal_code
+  method    String
+  /// Why it failed, in the words the screen shows a reader.
+  reason    String?
+  ipAddress String?
+  userAgent String?
+  /// Parsed from the user agent, e.g. "Chrome on Windows". Null when it could not be read.
+  device    String?
+  /// The `UserSession` this sign-in opened, so a session can be traced back to how it began.
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([result, createdAt])
 }
 
 // ─── Tenant / MSP Multi-Tenancy ────────────────────────────────────
@@ -387,7 +421,6 @@ model EmailConnector {
 }
 
 // ─── Tickets ────────────────────────────────────────────────────────
-
 model Ticket {
   id          String   @id @default(uuid())
   ticketNumber String  @unique // Auto-generated e.g. C7-00000001
