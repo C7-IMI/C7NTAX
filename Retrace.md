@@ -6950,3 +6950,47 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **A mockup's vocabulary is a draft, not a decision.** "Estate" was my attempt at a better name and
   it cost the user a moment of confusion every time they opened a ticket. When a design renames an
   established concept, the burden of proof is on the rename.
+
+---
+
+### Prompt 311 — Keep going: Clients, as cards
+
+**Timestamp:** 2026-10-09 02:40 | **Status:** In progress | **Duration:** ongoing
+
+**BuildNotes IDs:** **2026.10.8.064**.
+
+**Prompt**
+
+> Ok. Keep going. don't stop until the entire thing is done. If you finish a pass, then immediately
+> move onto the next one. Don't stop and tell me what you're going to do next. just do it.
+
+**What I did**
+- **Rebuilt Clients against the mockup's card grid** — the first page of the pass. State gained a
+  `view` (`cards` | `table`), the toolbar gained a Cards/Table chip pair and a count line, and cards
+  became the default in the redesigned interface while the table stayed behind the chip and
+  untouched in `classic`.
+- **A card states what the mockup's card states, from real fields**: `name`, `city · companyType ·
+  serviceLevel`, an Active/Inactive pill, **Tickets** (`_count.tickets`), **Contacts**
+  (`_count.contacts`), **MRR**, the primary contact (`contacts[0]`, primary only, from the existing
+  include) and the client **brief** (`notes`). The card is a `Link`, and it keeps the client's
+  right-click menu.
+- **`GET /clients` now returns each client's active service agreements** (`billingAmount`,
+  `billingPeriod`, `currency`) so MRR needs no request per row. Weekly/quarterly/semi-annual/annual
+  amounts are normalised to a month by a `PERIOD_MONTHS` map; periods that are not recurring
+  (`one_time`) are skipped rather than guessed at, and a client with no recurring agreement shows
+  `—`.
+- **I renamed the mockup's "Open" stat to "Tickets"** rather than mislabel a total. `_count.tickets`
+  counts every ticket the client has ever had, and calling that "open" would be a lie in the one
+  place a reader is most likely to trust it.
+- **Help: *The client screens*** added to the Interface walkthrough, beside *The ticket screens*, and
+  a FAQ answer for "can I have the table back".
+
+**Notes for next time**
+- **The mockup's element list is the specification, but its *labels* are not.** Two of the four card
+  stats had a real field behind them as written; the third needed an API field added (MRR) and the
+  fourth would have needed a wrong word ("Open" over a lifetime count). Adding the field is the
+  right fix; relabelling the stat is the honest one when the number cannot be had cheaply.
+- **`clients.map` with `_count` is only as good as the include.** The list route already carried
+  `_count` and the primary contact; adding the agreements was three words and removed the temptation
+  to fetch per row.
+

@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.064",
+    "date": "2026-10-08",
+    "title": "Clients, as cards",
+    "changes": [
+      {
+        "text": "**Clients** carries a **Cards / Table** switch. Cards is the default in the redesigned",
+        "type": "New Feature"
+      },
+      {
+        "text": "The **Clients** toolbar states the working set — **N clients · M tickets** — beside the",
+        "type": "New Feature"
+      },
+      {
+        "text": "`GET /clients` returns each client's **active service-agreement amounts** and currency,",
+        "type": "New Feature"
+      },
+      {
+        "text": "The client **brief** (`notes`) is now visible from the list — it was reachable only",
+        "type": "Update"
+      },
+      {
+        "text": "Help: the Interface walkthrough gained **The client screens** and a question about",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.063",
     "date": "2026-10-08",
     "title": "Configurations, by its own name",

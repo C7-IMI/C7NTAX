@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.063 | Last Updated: 2026-10-08
+## Version: 2026.10.8.064 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,42 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.064 — Clients, as cards
+
+The client list was a table and nothing else. A client is a *relationship*, and the four things you
+want about one — what it is worth, how much work is open against it, who to ring, and what its brief
+says — do not fit in columns. The redesigned interface reads the list as a grid of cards; the table
+is still there, one chip away, for the questions columns answer better.
+
+- **[New]** **Clients** carries a **Cards / Table** switch. Cards is the default in the redesigned
+  interface, and each card states the name, `city · type · service level`, an Active/Inactive pill,
+  **Tickets**, **Contacts**, **MRR**, the primary contact and the client brief. The card is a link,
+  so a click anywhere opens the client, and right-click still raises the client's action menu.
+- **[New]** The **Clients** toolbar states the working set — **N clients · M tickets** — beside the
+  search box, the type filter and the view switch.
+- **[New]** `GET /clients` returns each client's **active service-agreement amounts** and currency,
+  so a card can state MRR without a request per row. One-off agreements are excluded because they
+  are not a recurring commitment, and weekly, quarterly, semi-annual and annual amounts are
+  normalised to a month before they are added.
+- **[Update]** The client **brief** (`notes`) is now visible from the list — it was reachable only
+  by opening the client.
+- **[Update]** Help: the Interface walkthrough gained **The client screens** and a question about
+  getting the table back.
+
+The table, its filters, its sort order, its right-click menu and its CSV export are untouched, and
+Classic still gets the table with no view switch at all.
+
+**Verification:** `tsc --noEmit` clean for both `apps/web` and `apps/api`; `pnpm build` all packages;
+`node scripts/generate-openapi.mjs` (430 operations) followed by `check-api-docs` (430 operations,
+63 curated, 46 tags), `check-route-guards` (433 routes) and `check-help-links` (87 routes, 28
+walkthroughs) all pass. In the browser, five client cards render with live figures — Tickets 29/19/
+20/18/23, MRR $2,500 / $8,000 / $3,500 / $12,000 / $1,500 — and the toolbar reads *5 clients · 109
+tickets*; the Table chip swaps to the original six-column table and back; and with
+`c7_ui_redesign=0` the page is the original table, its original *All Types* / *Name* controls, and
+no cards.
 
 ---
 
