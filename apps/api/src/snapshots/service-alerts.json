@@ -1092,6 +1092,20 @@
     "updatedAt": "2026-10-08T04:57:40.204Z"
   },
   {
+    "id": "44953696-587e-4dd4-bc58-81cc7d868ccd",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "Delayed Costs data in the Compliance API",
+    "description": "Status: Identified We have identified an issue causing delays in publishing Costs data through the Compliance API. The API Platform organization costs endpoint and ChatGPT usage are not affected, and other reporting channels remain available. We are working to restore normal data freshness. Affected components Compliance API (Degraded performance)",
+    "severity": "degraded",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.openai.com//incidents/01M4GV1M2A3K38T73JCVCD9G0R",
+    "detectedAt": "2026-10-09T17:26:38.782Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-09T17:26:38.784Z",
+    "updatedAt": "2026-10-09T17:31:38.372Z"
+  },
+  {
     "id": "dc9c78ac-cc36-4cdd-b68f-51bf6f6040b2",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Unable to create new ChatGPT Work threads in latest version of desktop app",
