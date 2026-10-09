@@ -825,6 +825,17 @@
     "updatedAt": "2026-10-06T20:27:17.510Z"
   },
   {
+    "id": "6637b7ee-3eb1-49e1-a68f-4d107f3fa171",
+    "body": "Priority: Medium → High",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "a3b44cd6-66aa-47d5-85e2-d30ba832ddd1",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-02T20:27:17.158Z",
+    "updatedAt": "2026-10-06T20:27:17.673Z"
+  },
+  {
     "id": "ea49a12d-fcc2-4b3e-8743-e76936e2ab51",
     "body": "Internal note: Picked this up and reproduced it on the test tenant. Investigating the policy that applies to the affected users.",
     "isInternal": true,
@@ -1186,17 +1197,6 @@
     "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "createdAt": "2026-09-24T20:27:17.158Z",
     "updatedAt": "2026-10-06T20:27:17.510Z"
-  },
-  {
-    "id": "6637b7ee-3eb1-49e1-a68f-4d107f3fa171",
-    "body": "Priority: Medium → High",
-    "isInternal": true,
-    "isEmail": false,
-    "fromEmail": null,
-    "ticketId": "a3b44cd6-66aa-47d5-85e2-d30ba832ddd1",
-    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "createdAt": "2026-10-02T20:27:17.158Z",
-    "updatedAt": "2026-10-06T20:27:17.673Z"
   },
   {
     "id": "1969e9ac-a8fc-40ee-9a28-279e91c9ace4",

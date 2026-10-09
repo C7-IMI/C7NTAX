@@ -462,6 +462,20 @@
     "updatedAt": "2026-08-20T01:24:52.125Z"
   },
   {
+    "id": "59ff79dc-8451-425b-afab-62de52b3f29f",
+    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
+    "title": "Possible service degradation reported for GitHub (DownDetector)",
+    "description": "Auto-resolved: Elevated rate of errors for OpenAI models provided by Copilot\n\nDownDetector is reporting problems for GitHub.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/github/",
+    "detectedAt": "2026-09-01T01:19:17.073Z",
+    "resolvedAt": "2026-09-01T02:24:14.028Z",
+    "createdAt": "2026-09-01T01:19:17.074Z",
+    "updatedAt": "2026-09-01T02:24:14.030Z"
+  },
+  {
     "id": "6618bcd0-aa90-4d46-af5f-31418d5fcde5",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Intermittent failures creating agent tasks",
@@ -670,20 +684,6 @@
     "resolvedAt": "2026-09-01T01:24:18.024Z",
     "createdAt": "2026-08-31T17:44:45.694Z",
     "updatedAt": "2026-09-01T01:24:18.026Z"
-  },
-  {
-    "id": "59ff79dc-8451-425b-afab-62de52b3f29f",
-    "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
-    "title": "Possible service degradation reported for GitHub (DownDetector)",
-    "description": "Auto-resolved: Elevated rate of errors for OpenAI models provided by Copilot\n\nDownDetector is reporting problems for GitHub.",
-    "severity": "degraded",
-    "status": "resolved",
-    "source": "downdetector",
-    "sourceUrl": "https://downdetector.com/status/github/",
-    "detectedAt": "2026-09-01T01:19:17.073Z",
-    "resolvedAt": "2026-09-01T02:24:14.028Z",
-    "createdAt": "2026-09-01T01:19:17.074Z",
-    "updatedAt": "2026-09-01T02:24:14.030Z"
   },
   {
     "id": "1626c64b-1d21-44fe-8aca-2e7f7274e3e9",
@@ -1095,7 +1095,7 @@
     "id": "44953696-587e-4dd4-bc58-81cc7d868ccd",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Delayed Costs data in the Compliance API",
-    "description": "Status: Identified We have identified an issue causing delays in publishing Costs data through the Compliance API. The API Platform organization costs endpoint and ChatGPT usage are not affected, and other reporting channels remain available. We are working to restore normal data freshness. Affected components Compliance API (Degraded performance)",
+    "description": "Status: Identified Some customers may continue to experience delayed Costs data through the Compliance API. ChatGPT usage and API Platform requests are not affected, and other reporting channels remain available. We have identified the cause and are continuing work to restore normal data freshness. We will provide another update as work progresses. Affected components Compliance API (Degraded performance)",
     "severity": "degraded",
     "status": "active",
     "source": "rss",
@@ -1103,7 +1103,7 @@
     "detectedAt": "2026-10-09T17:26:38.782Z",
     "resolvedAt": null,
     "createdAt": "2026-10-09T17:26:38.784Z",
-    "updatedAt": "2026-10-09T17:31:38.372Z"
+    "updatedAt": "2026-10-09T18:48:02.034Z"
   },
   {
     "id": "dc9c78ac-cc36-4cdd-b68f-51bf6f6040b2",
@@ -1468,6 +1468,20 @@
     "resolvedAt": "2026-08-21T23:34:59.545Z",
     "createdAt": "2026-08-21T23:25:01.474Z",
     "updatedAt": "2026-08-21T23:34:59.547Z"
+  },
+  {
+    "id": "69d36d11-7c8b-41ee-be1c-d743ffdfc4d2",
+    "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
+    "title": "Possible service degradation reported for Google Workspace (DownDetector)",
+    "description": "Auto-resolved: monitored sources for Google Workspace report no active incidents or degradations (all clear).\n\nDownDetector is reporting problems for Google Workspace.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/gmail/",
+    "detectedAt": "2026-09-03T08:29:09.405Z",
+    "resolvedAt": "2026-09-03T09:39:11.983Z",
+    "createdAt": "2026-09-03T08:29:09.407Z",
+    "updatedAt": "2026-09-03T09:39:11.985Z"
   },
   {
     "id": "5e879c8d-eb9d-4c64-97c0-172d8fb12c08",
@@ -1916,20 +1930,6 @@
     "resolvedAt": "2026-09-03T06:48:49.466Z",
     "createdAt": "2026-09-03T04:33:56.001Z",
     "updatedAt": "2026-09-03T06:48:49.467Z"
-  },
-  {
-    "id": "69d36d11-7c8b-41ee-be1c-d743ffdfc4d2",
-    "serviceId": "c2335589-62b0-4bfa-8a39-12b8f0758697",
-    "title": "Possible service degradation reported for Google Workspace (DownDetector)",
-    "description": "Auto-resolved: monitored sources for Google Workspace report no active incidents or degradations (all clear).\n\nDownDetector is reporting problems for Google Workspace.",
-    "severity": "degraded",
-    "status": "resolved",
-    "source": "downdetector",
-    "sourceUrl": "https://downdetector.com/status/gmail/",
-    "detectedAt": "2026-09-03T08:29:09.405Z",
-    "resolvedAt": "2026-09-03T09:39:11.983Z",
-    "createdAt": "2026-09-03T08:29:09.407Z",
-    "updatedAt": "2026-09-03T09:39:11.985Z"
   },
   {
     "id": "855b076e-6b20-45b8-b675-a2d3d6cb6b0a",

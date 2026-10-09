@@ -4499,6 +4499,17 @@
     "encryptedValue": null
   },
   {
+    "id": "4e51a72a-5924-484e-80ff-c019761c20b1",
+    "assetId": "ca65bc22-f34e-4fde-ae37-f6a437ee3d7a",
+    "fieldId": "45a2ff94-261e-4441-8c3c-78af3a8e1cf9",
+    "valueText": null,
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": "WPA2-PSK",
+    "encryptedValue": null
+  },
+  {
     "id": "2563f52f-78d2-4ace-ae17-5de333078ac0",
     "assetId": "87e01454-efef-446a-ae10-ea4792b5c4b1",
     "fieldId": "6cc3df4b-3adf-4497-82d8-a23083136065",
@@ -8008,6 +8019,17 @@
     "encryptedValue": null
   },
   {
+    "id": "6e22f64d-5d0d-4437-9759-f8fe89cc4c56",
+    "assetId": "ca65bc22-f34e-4fde-ae37-f6a437ee3d7a",
+    "fieldId": "394bd816-2dfe-469e-818f-ad0195792976",
+    "valueText": null,
+    "valueNum": null,
+    "valueBool": null,
+    "valueDate": null,
+    "valueJson": "2.4 GHz",
+    "encryptedValue": null
+  },
+  {
     "id": "fd799927-924a-4f69-8e08-290e1b2ce637",
     "assetId": "1b04d94c-0ee9-42fc-a964-8631bb3b0ce1",
     "fieldId": "1d6ade29-123b-4c1a-9a65-25715aa27dd2",
@@ -9017,28 +9039,6 @@
     "valueBool": null,
     "valueDate": null,
     "valueJson": null,
-    "encryptedValue": null
-  },
-  {
-    "id": "4e51a72a-5924-484e-80ff-c019761c20b1",
-    "assetId": "ca65bc22-f34e-4fde-ae37-f6a437ee3d7a",
-    "fieldId": "45a2ff94-261e-4441-8c3c-78af3a8e1cf9",
-    "valueText": null,
-    "valueNum": null,
-    "valueBool": null,
-    "valueDate": null,
-    "valueJson": "WPA2-PSK",
-    "encryptedValue": null
-  },
-  {
-    "id": "6e22f64d-5d0d-4437-9759-f8fe89cc4c56",
-    "assetId": "ca65bc22-f34e-4fde-ae37-f6a437ee3d7a",
-    "fieldId": "394bd816-2dfe-469e-818f-ad0195792976",
-    "valueText": null,
-    "valueNum": null,
-    "valueBool": null,
-    "valueDate": null,
-    "valueJson": "2.4 GHz",
     "encryptedValue": null
   },
   {
