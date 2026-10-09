@@ -1,5 +1,14 @@
 [
   {
+    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "organization",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "entityName": "Acme Corporation",
+    "entityIcon": "building",
+    "viewedAt": "2026-10-09T17:04:03.042Z"
+  },
+  {
     "id": "541b5457-d22e-4046-9207-e2566b1e1228",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "asset",
@@ -295,15 +304,6 @@
     "entityName": "Stark Enterprises — file server",
     "entityIcon": "server",
     "viewedAt": "2026-10-08T04:00:50.545Z"
-  },
-  {
-    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "organization",
-    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "entityName": "Acme Corporation",
-    "entityIcon": "building",
-    "viewedAt": "2026-10-09T02:26:12.149Z"
   },
   {
     "id": "c528fede-3b74-4d84-819a-5828427845ef",

@@ -214595,6 +214595,473 @@
     "createdAt": "2026-10-09T03:24:35.058Z"
   },
   {
+    "id": "d4f7e169-5596-425c-81d8-4429682dd49e",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "validate",
+    "changes": {
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 0,
+                "y": 2,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:21.779Z"
+  },
+  {
     "id": "4f410b83-8be2-4559-8b9d-b551d17e15a1",
     "action": "sso:update",
     "entity": "sso",
@@ -215548,6 +216015,1880 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T04:53:21.666Z"
+  },
+  {
+    "id": "da04bd9b-fc5c-4e94-90a1-ed2aad11f578",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "preview",
+    "changes": {
+      "to": "",
+      "from": "",
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 0,
+                "y": 2,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      },
+      "parameters": {}
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:22.042Z"
+  },
+  {
+    "id": "0f7814ce-f8e1-4e11-9be1-6696c0b5d956",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "validate",
+    "changes": {
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 8,
+                "y": 5,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:27.655Z"
+  },
+  {
+    "id": "c48b19fd-924e-4575-8526-38e22ce227e7",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "preview",
+    "changes": {
+      "to": "",
+      "from": "",
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 8,
+                "y": 5,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      },
+      "parameters": {}
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:27.855Z"
+  },
+  {
+    "id": "441d1292-1926-42cd-960f-53967f49b2c7",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "validate",
+    "changes": {
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 15,
+                "y": 0,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:28.986Z"
   },
   {
     "id": "719f0460-5355-48f0-9f88-f1b70e4744de",
@@ -217315,6 +219656,2350 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T04:55:05.515Z"
+  },
+  {
+    "id": "3bddab47-8053-4d1e-9e55-941bf5ab11fc",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "preview",
+    "changes": {
+      "to": "",
+      "from": "",
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 15,
+                "y": 0,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      },
+      "parameters": {}
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:29.077Z"
+  },
+  {
+    "id": "638018b5-35f9-418e-afd8-470bfffa5dd4",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "validate",
+    "changes": {
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 3,
+                "y": 3,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:47.656Z"
+  },
+  {
+    "id": "f2a79a4a-fce7-4e3e-b095-0c272dae1ece",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "preview",
+    "changes": {
+      "to": "",
+      "from": "",
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 3,
+                "y": 3,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      },
+      "parameters": {}
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:47.911Z"
+  },
+  {
+    "id": "6924b43c-4b74-4adb-9b3c-73955e882a1a",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "validate",
+    "changes": {
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 3,
+                "y": 3,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 113,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:49.621Z"
+  },
+  {
+    "id": "57469e42-1135-403f-8129-b0d176028e07",
+    "action": "reports:create",
+    "entity": "reports",
+    "entityId": "preview",
+    "changes": {
+      "to": "",
+      "from": "",
+      "name": "Tickets — Grouped list with totals",
+      "document": {
+        "name": "Tickets — Grouped list with totals",
+        "page": {
+          "size": "a4",
+          "width": 210,
+          "height": 297,
+          "margins": {
+            "top": 12,
+            "left": 12,
+            "right": 12,
+            "bottom": 12
+          },
+          "orientation": "portrait"
+        },
+        "bands": [
+          {
+            "id": "band_mv17pmc21enc",
+            "kind": "pageHeader",
+            "height": 12,
+            "elements": [
+              {
+                "h": 7,
+                "w": 126,
+                "x": 3,
+                "y": 3,
+                "id": "el_mv17pmc2ttp",
+                "text": "{{Report.name}}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 14,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 60,
+                "x": 126,
+                "y": 3,
+                "id": "el_mv17pmc2u51",
+                "text": "{{FORMATDATE(NOW(), 'dd MMM yyyy HH:mm')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc213ng",
+            "kind": "columnHeader",
+            "height": 7,
+            "elements": [
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc215ek",
+                "text": "Ticket Number",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc21787",
+                "text": "Title",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 7,
+                "w": 46.5,
+                "x": 113,
+                "y": 0,
+                "id": "el_mv17pmc219gt",
+                "text": "Priority",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#334155",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          },
+          {
+            "id": "band_mv17pmc2zx3",
+            "kind": "groupHeader",
+            "height": 9,
+            "elements": [
+              {
+                "h": 6,
+                "w": 111.6,
+                "x": 0,
+                "y": 1,
+                "id": "el_mv17pmc2103l",
+                "text": "{{Fields.status }}",
+                "type": "text",
+                "style": {
+                  "bold": true,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 10,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 74.4,
+                "x": 111.6,
+                "y": 1,
+                "id": "el_mv17pmc211u8",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 8.4,
+                "id": "el_mv17pmc212sp",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#22d3ee",
+                    "width": 0.4
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc214ye",
+            "kind": "detail",
+            "height": 6,
+            "elements": [
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc216ak",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.ticketNumber"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 46.5,
+                "y": 0,
+                "id": "el_mv17pmc218lr",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.title"
+              },
+              {
+                "h": 6,
+                "w": 46.5,
+                "x": 93,
+                "y": 0,
+                "id": "el_mv17pmc21ao5",
+                "type": "field",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                },
+                "format": "text",
+                "expression": "Fields.priority"
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc21bym",
+            "kind": "groupFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc21cxl",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 6,
+                "w": 186,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc21dh0",
+                "text": "{{COUNT(Fields.ticketNumber, 'group')}} row(s)",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 8,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "groupKey": "group1",
+            "pageBreakBefore": false,
+            "repeatOnNewPage": false
+          },
+          {
+            "id": "band_mv17pmc2vvi",
+            "kind": "pageFooter",
+            "height": 8,
+            "elements": [
+              {
+                "h": 5,
+                "w": 146,
+                "x": 0,
+                "y": 1.5,
+                "id": "el_mv17pmc2w6i",
+                "text": "Tickets · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 5,
+                "w": 40,
+                "x": 146,
+                "y": 1.5,
+                "id": "el_mv17pmc2x29",
+                "text": "Page {{Page.number}} of {{Page.totalPages}}",
+                "type": "text",
+                "style": {
+                  "bold": false,
+                  "align": "right",
+                  "color": "#64748b",
+                  "border": null,
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 7.5,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              },
+              {
+                "h": 0.4,
+                "w": 186,
+                "x": 0,
+                "y": 0,
+                "id": "el_mv17pmc2yex",
+                "type": "line",
+                "style": {
+                  "bold": false,
+                  "align": "left",
+                  "color": "#111827",
+                  "border": {
+                    "color": "#cbd5e1",
+                    "width": 0.3
+                  },
+                  "italic": false,
+                  "valign": "middle",
+                  "padding": 1,
+                  "fontSize": 9,
+                  "underline": false,
+                  "background": null,
+                  "fontFamily": "sans"
+                }
+              }
+            ],
+            "pageBreakBefore": false,
+            "repeatOnNewPage": true
+          }
+        ],
+        "groups": [
+          {
+            "key": "group1",
+            "sort": "asc",
+            "label": "Status",
+            "expression": "Fields.status",
+            "keepTogether": true
+          }
+        ],
+        "version": 1,
+        "parameters": [],
+        "dataSources": [
+          {
+            "key": "main",
+            "label": "Main",
+            "limit": 500,
+            "source": "tickets",
+            "filters": [],
+            "sortDir": "asc"
+          }
+        ]
+      },
+      "parameters": {}
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:01:49.894Z"
   },
   {
     "id": "a9125f80-f8e4-4ed6-8712-adc4abafccc2",
