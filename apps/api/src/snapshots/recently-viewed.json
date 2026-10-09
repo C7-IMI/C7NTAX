@@ -198,24 +198,6 @@
     "viewedAt": "2026-10-06T19:44:08.563Z"
   },
   {
-    "id": "c528fede-3b74-4d84-819a-5828427845ef",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "password",
-    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
-    "entityName": "Acme Domain Admin",
-    "entityIcon": "key",
-    "viewedAt": "2026-10-06T20:57:14.757Z"
-  },
-  {
-    "id": "7ec2cabc-94f4-4e62-8fab-b4eab90a914d",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "document",
-    "entityId": "493a0ec4-910c-480f-937d-be0baa32b992",
-    "entityName": "Acme Network Topology Overview",
-    "entityIcon": "book",
-    "viewedAt": "2026-10-06T20:57:19.804Z"
-  },
-  {
     "id": "6aa75c1c-25e9-4c20-a76b-2e3e17892645",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "asset",
@@ -259,15 +241,6 @@
     "entityName": "Password Policy",
     "entityIcon": "book",
     "viewedAt": "2026-10-07T01:41:23.677Z"
-  },
-  {
-    "id": "0ecb409e-f25c-4a5a-8bcc-557e395e6c34",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "document",
-    "entityId": "626b9f7b-c83b-494c-8612-bd8c9d513738",
-    "entityName": "Server Reboot Procedure",
-    "entityIcon": "book",
-    "viewedAt": "2026-10-07T01:41:29.864Z"
   },
   {
     "id": "eea3b238-9650-43cc-bc1b-7e66004e0f05",
@@ -315,15 +288,6 @@
     "viewedAt": "2026-10-07T07:32:02.422Z"
   },
   {
-    "id": "a0be5ab9-2251-48b6-8294-51b3f12afc8b",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "config",
-    "entityId": "6168d7ac-d059-44ba-8bbf-0ad702763cf1",
-    "entityName": "Umbrella Corp — file server",
-    "entityIcon": "server",
-    "viewedAt": "2026-10-08T04:00:48.197Z"
-  },
-  {
     "id": "3848da6c-c0a3-4b05-810a-d1038faa0a03",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "config",
@@ -333,15 +297,6 @@
     "viewedAt": "2026-10-08T04:00:50.545Z"
   },
   {
-    "id": "34d255c8-cd22-44a6-b7ac-d93729c3e0c6",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "config",
-    "entityId": "7f8966a5-73d1-4e5c-90f3-17f9caffed17",
-    "entityName": "Initech Solutions — domain controller",
-    "entityIcon": "server",
-    "viewedAt": "2026-10-08T04:00:51.534Z"
-  },
-  {
     "id": "e12c91db-d55d-4283-8615-78e5e613d603",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "organization",
@@ -349,5 +304,50 @@
     "entityName": "Acme Corporation",
     "entityIcon": "building",
     "viewedAt": "2026-10-09T02:26:12.149Z"
+  },
+  {
+    "id": "c528fede-3b74-4d84-819a-5828427845ef",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "password",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "entityName": "Acme Domain Admin",
+    "entityIcon": "key",
+    "viewedAt": "2026-10-09T15:09:34.228Z"
+  },
+  {
+    "id": "34d255c8-cd22-44a6-b7ac-d93729c3e0c6",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "config",
+    "entityId": "7f8966a5-73d1-4e5c-90f3-17f9caffed17",
+    "entityName": "Initech Solutions — domain controller",
+    "entityIcon": "server",
+    "viewedAt": "2026-10-09T15:09:47.072Z"
+  },
+  {
+    "id": "a0be5ab9-2251-48b6-8294-51b3f12afc8b",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "config",
+    "entityId": "6168d7ac-d059-44ba-8bbf-0ad702763cf1",
+    "entityName": "Umbrella Corp — file server",
+    "entityIcon": "server",
+    "viewedAt": "2026-10-09T15:09:48.566Z"
+  },
+  {
+    "id": "0ecb409e-f25c-4a5a-8bcc-557e395e6c34",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "document",
+    "entityId": "626b9f7b-c83b-494c-8612-bd8c9d513738",
+    "entityName": "Server Reboot Procedure",
+    "entityIcon": "book",
+    "viewedAt": "2026-10-09T15:10:12.966Z"
+  },
+  {
+    "id": "7ec2cabc-94f4-4e62-8fab-b4eab90a914d",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "document",
+    "entityId": "493a0ec4-910c-480f-937d-be0baa32b992",
+    "entityName": "Acme Network Topology Overview",
+    "entityIcon": "book",
+    "viewedAt": "2026-10-09T15:10:17.979Z"
   }
 ]

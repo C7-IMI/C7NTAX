@@ -798,6 +798,20 @@
     "updatedAt": "2026-10-07T02:37:58.009Z"
   },
   {
+    "id": "7ef9c018-9808-4b4d-858d-c5e474264098",
+    "serviceId": "d2abce0b-f02e-46c4-86c4-441a23f69571",
+    "title": "Sample Website Monitor: website check failed: Could not resolve example.com",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Sample Website Monitor (website clear).\n\nwebsite monitor (https://example.com)",
+    "severity": "outage",
+    "status": "resolved",
+    "source": "website",
+    "sourceUrl": "https://example.com",
+    "detectedAt": "2026-10-09T10:07:11.551Z",
+    "resolvedAt": "2026-10-09T10:30:03.835Z",
+    "createdAt": "2026-10-09T10:07:11.553Z",
+    "updatedAt": "2026-10-09T10:30:03.837Z"
+  },
+  {
     "id": "ac6845d4-bd2f-418b-97fb-db14733d1424",
     "serviceId": "dbd49f7b-4199-4ee3-8b16-a816eedd0ed7",
     "title": "Incident with Git Operations, Issues, Actions and Pull Requests",
@@ -1048,6 +1062,20 @@
     "resolvedAt": "2026-08-20T20:55:03.664Z",
     "createdAt": "2026-08-20T19:45:19.101Z",
     "updatedAt": "2026-08-20T20:55:03.674Z"
+  },
+  {
+    "id": "68fba334-ae2c-4fde-8756-c45fe63e5433",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "Possible service degradation reported for OpenAI (DownDetector)",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for OpenAI (rss clear, statuspage clear, downdetector unknown).\n\nDownDetector is reporting problems for OpenAI.",
+    "severity": "degraded",
+    "status": "resolved",
+    "source": "downdetector",
+    "sourceUrl": "https://downdetector.com/status/openai/",
+    "detectedAt": "2026-10-09T12:48:02.903Z",
+    "resolvedAt": "2026-10-09T13:53:14.915Z",
+    "createdAt": "2026-10-09T12:48:02.904Z",
+    "updatedAt": "2026-10-09T13:53:14.917Z"
   },
   {
     "id": "0b1d5a3e-284a-4792-81a6-4e980fd0f3d1",

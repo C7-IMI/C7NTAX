@@ -719,7 +719,7 @@
     "isActive": true,
     "isLocked": false,
     "loginAttempts": 0,
-    "lastLoginAt": "2026-10-09T07:47:32.782Z",
+    "lastLoginAt": "2026-10-09T15:03:18.400Z",
     "emailVerified": true,
     "mustChangePassword": false,
     "passwordChangedAt": null,
@@ -731,7 +731,7 @@
     "costRate": null,
     "reportsToId": "7ce93cee-bd43-4a5c-86a6-9bf3c11d839c",
     "mfaEnabled": false,
-    "mfaSecret": "HFYUCTCOKZUGWSBOKNBSK4JZFBTGEKRILA4T4IZSHYZT6UKEFZLA",
+    "mfaSecret": "EFNFGVR7PBFDMNRMKYYEOSCMHZUEWMBTIZYS6WCDERGF4RKDKYZA",
     "mfaBackupCodes": [],
     "mfaEmailCode": null,
     "mfaEmailCodeExpires": null,
@@ -740,6 +740,6 @@
     "deniedPermissions": [],
     "companyId": null,
     "createdAt": "2026-08-12T06:04:14.788Z",
-    "updatedAt": "2026-10-09T07:47:32.784Z"
+    "updatedAt": "2026-10-09T15:07:05.507Z"
   }
 ]
