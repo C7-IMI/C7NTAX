@@ -1030,6 +1030,18 @@ export function Layout({ children }: { children: ReactNode }) {
       ? { width: "200px" }
       : { width: `${sidebarWidth}px` };
 
+  /*
+   * The report designer can be popped out into a window of its own — that window is the tool and
+   * nothing else. The rail, the bar and the working set belong to the window you are working in, and
+   * repeating them here would spend the height the sheet needs. Read from the URL rather than a hook,
+   * because a popped-out window never navigates, and placed after every hook so the hook order is the
+   * same in both windows.
+   */
+  const poppedOut = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("popout") === "1";
+  if (poppedOut) {
+    return <div className="min-h-screen bg-surface text-gray-100">{children}</div>;
+  }
+
   return (
     <BreadcrumbTrailProvider>
     <div

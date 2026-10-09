@@ -49,6 +49,7 @@ export function ReportDesignerPage() {
   const redesign = useRedesign();
   const { id = "new" } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const poppedOut = searchParams.get("popout") === "1";
   const navigate = useNavigate();
   const isNew = id === "new";
 
@@ -73,6 +74,22 @@ export function ReportDesignerPage() {
   const [reportId, setReportId] = useState<string | null>(isNew ? null : id);
   const [showIssues, setShowIssues] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  /*
+   * Autosave, and the draft behind it.
+   *
+   * Two layers, on purpose. The **device draft** is written to `localStorage` a second or so after the
+   * last change — no request, so nothing about typing a label waits on the network — and the **server
+   * save** follows a few seconds later, silently, once the document validates and the report exists.
+   * A document that has never been created has nowhere on the server to go, so it lives as a draft
+   * until somebody presses Create.
+   */
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [autosaving, setAutosaving] = useState(false);
+  const [draftAt, setDraftAt] = useState<Date | null>(null);
+  const [showDraftPrompt, setShowDraftPrompt] = useState(false);
+  const [restorable, setRestorable] = useState<{ savedAt: string; name: string } | null>(null);
+  const [poppedOutHere, setPoppedOutHere] = useState(false);
+  const popoutWindow = useRef<Window | null>(null);
   const initialised = useRef(false);
 
   const applyDocument = useCallback((next: ReportTemplateDocument, options?: { push?: boolean }) => {
@@ -366,6 +383,128 @@ export function ReportDesignerPage() {
     }
   }, [document, name, description, errorCount, reportId]);
 
+  // ── Autosave, the device draft, and the popout ────────────────────
+
+  /** Where this document's device draft lives. A report that exists gets its own key. */
+  const draftKey = `c7_designer_draft:${reportId ?? "new"}`;
+
+  /** The payload both the manual save and the autosave write, so the two cannot disagree. */
+  const payloadFor = useCallback((doc: ReportTemplateDocument) => ({
+    name: name.trim() || "Untitled report",
+    description: description || null,
+    type: "template",
+    config: { document: { ...doc, name: name.trim() || "Untitled report", description } },
+  }), [name, description]);
+
+  /** Writes the draft to this device. No request, so it can follow every change. */
+  const saveDraftLocally = useCallback((doc: ReportTemplateDocument) => {
+    try {
+      const at = new Date().toISOString();
+      localStorage.setItem(draftKey, JSON.stringify({ savedAt: at, name: name.trim() || "Untitled report", document: doc }));
+      setDraftAt(new Date(at));
+    } catch {
+      /* a full or unavailable localStorage is not worth an error: the server save still happens */
+    }
+  }, [draftKey, name]);
+
+  /** The silent server save. Only for a report that exists, and only when it validates. */
+  const autosaveToServer = useCallback(async () => {
+    if (!document || !reportId || errorCount) return;
+    setAutosaving(true);
+    try {
+      await api.patch(`/reports/${reportId}`, payloadFor(document));
+      setDirty(false);
+      setSavedAt(new Date());
+    } catch {
+      /* Autosave failures stay quiet — the draft is on the device and the toolbar says "not saved" */
+    } finally {
+      setAutosaving(false);
+    }
+  }, [document, reportId, errorCount, payloadFor]);
+
+  // The device draft follows the change; the server save waits longer, so a burst of edits is one write.
+  useEffect(() => {
+    if (!document || !dirty) return;
+    const local = setTimeout(() => saveDraftLocally(document), 1200);
+    const server = setTimeout(() => { void autosaveToServer(); }, 5000);
+    return () => { clearTimeout(local); clearTimeout(server); };
+  }, [document, dirty, saveDraftLocally, autosaveToServer]);
+
+  /** Once saved by hand, the device draft has been superseded. */
+  useEffect(() => {
+    if (dirty || !reportId) return;
+    try { localStorage.removeItem(draftKey); } catch { /* nothing to clean */ }
+    setDraftAt(null);
+  }, [dirty, reportId, draftKey]);
+
+  /** Offer a draft this device kept, when it is newer than what the server sent. */
+  const draftOffered = useRef(false);
+  useEffect(() => {
+    // Once, and only once a document exists: the first render has none, and re-offering the draft after
+    // every edit would turn a recovery into a nag.
+    if (!document || draftOffered.current) return;
+    draftOffered.current = true;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { savedAt: string; name: string; document: ReportTemplateDocument };
+      // Offered when it actually differs from what the server sent: a draft identical to the document
+      // is not a recovery, it is a nuisance.
+      if (draft.document?.bands?.length && JSON.stringify(draft.document) !== JSON.stringify(document)) {
+        setRestorable({ savedAt: draft.savedAt, name: draft.name });
+      }
+    } catch { /* a draft we cannot read is a draft we do not offer */ }
+  }, [draftKey, document]);
+
+  /** Closing or reloading the window with unsaved changes gets the browser's own question. */
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      // The string is ignored by every current browser, which show their own wording.
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  /*
+   * Clicking away is the other half of the question. Losing focus is not leaving — a dialog, a colour
+   * picker or another monitor does not mean the work is abandoned — so this asks, and asks once: the
+   * draft is already on the device by the time it can appear.
+   */
+  useEffect(() => {
+    if (!dirty) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const onBlur = () => {
+      timer = setTimeout(() => {
+        // `document` is the template here, so the window's document is named in full.
+        if (!window.document.hasFocus()) setShowDraftPrompt(true);
+      }, 800);
+    };
+    window.addEventListener("blur", onBlur);
+    return () => { window.removeEventListener("blur", onBlur); if (timer) clearTimeout(timer); };
+  }, [dirty]);
+
+  const openPopout = useCallback(() => {
+    if (!document) return;
+    const url = `${window.location.pathname}?popout=1`;
+    const win = window.open(url, "c7-report-designer", "width=1500,height=950,menubar=no,toolbar=no,location=no,status=no");
+    if (!win) {
+      toast.error("The browser blocked the window — allow pop-ups for this site, then try again");
+      return;
+    }
+    popoutWindow.current = win;
+    setPoppedOutHere(true);
+    win.focus();
+  }, [document]);
+
+  const bringPopoutForward = useCallback(() => {
+    const win = popoutWindow.current;
+    if (win && !win.closed) { win.focus(); return; }
+    openPopout();
+  }, [openPopout]);
+
   // ── Output ────────────────────────────────────────────────────────
   const output = useCallback((kind: "print" | "pdf" | "excel" | "csv" | "tables") => {
     if (!document || !laid) return;
@@ -411,7 +550,40 @@ export function ReportDesignerPage() {
   const pageSetupLabel = `${document.page.size === "custom" ? "Custom" : document.page.size.toUpperCase()} ${document.page.orientation} · grid 10 mm · snap 1 mm`;
 
   return (
-    <div className="flex flex-col gap-3 h-[calc(100vh-9rem)] min-h-[560px]">
+    <div className={`flex flex-col gap-3 ${poppedOut ? "h-screen" : "h-[calc(100vh-9rem)] min-h-[560px]"}`}>
+
+      {/* A draft this device kept, offered rather than applied: silently replacing the document would
+          be the one thing autosave must never do. */}
+      {restorable ? (
+        <div className="surface-card flex flex-wrap items-center gap-2 border-l-2 border-l-cyber-500 px-3 py-2 text-xs">
+          <span className="text-gray-300">
+            This device has a draft of <b className="text-white">{restorable.name}</b> from{" "}
+            {new Date(restorable.savedAt).toLocaleString()}.
+          </span>
+          <button
+            type="button"
+            className="btn-secondary text-xs"
+            onClick={() => {
+              try {
+                const raw = localStorage.getItem(draftKey);
+                if (raw) {
+                  const draft = JSON.parse(raw) as { document: ReportTemplateDocument; name: string };
+                  applyDocument(normaliseDocument(draft.document), { push: true });
+                  setName(draft.name);
+                  setDirty(true);
+                  toast.success("Draft restored");
+                }
+              } catch { toast.error("That draft could not be read"); }
+              setRestorable(null);
+            }}
+          >Restore it</button>
+          <button
+            type="button"
+            className="text-xs text-gray-400 hover:text-gray-200"
+            onClick={() => { setRestorable(null); try { localStorage.removeItem(draftKey); } catch { /* nothing to clean */ } }}
+          >Discard the draft</button>
+        </div>
+      ) : null}
       {/* Toolbar */}
       <div className="surface-card flex flex-wrap items-center gap-2 px-3 py-2">
         <button type="button" className="text-xs text-gray-400 hover:text-gray-200" onClick={() => navigate("/reports/custom")}>← Custom Reports</button>
@@ -469,6 +641,30 @@ export function ReportDesignerPage() {
 
         <span className="text-[11px] text-gray-500">{running ? "running…" : run ? `${run.rows.length} row${run.rows.length === 1 ? "" : "s"}${laid ? ` · ${laid.pages.length} page${laid.pages.length === 1 ? "" : "s"}` : ""}` : ""}</span>
 
+        {/* Autosave, stated the way a word processor states it: what happened, and when. */}
+        <button
+          type="button"
+          className={`text-[11px] ${errorCount ? "text-red-400" : autosaving || saving ? "text-cyber-300" : dirty ? "text-amber-400" : "text-gray-500"}`}
+          title={dirty && !errorCount ? "The draft is on this device; the report saves itself when it validates" : "Autosave"}
+          onClick={() => { if (errorCount) setShowIssues(true); }}
+        >
+          {errorCount
+            ? `Fix ${errorCount} error${errorCount === 1 ? "" : "s"} to save`
+            : saving || autosaving
+              ? "Saving…"
+              : dirty
+                ? draftAt ? `Draft saved ${draftAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Unsaved changes"
+                : savedAt ? `All changes saved ${savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : reportId ? "Saved" : "Not saved yet"}
+        </button>
+
+        <button
+          type="button"
+          className="btn-secondary text-xs"
+          onClick={poppedOutHere ? bringPopoutForward : openPopout}
+          title="Open the designer in its own window, so the rest of the application stays usable"
+        >
+          {poppedOutHere ? "Bring it forward" : "Pop out"}
+        </button>
         <button type="button" className="btn-secondary text-xs" onClick={() => output("print")} disabled={!laid?.pages.length}>Print</button>
         <button type="button" className="btn-secondary text-xs" onClick={() => output("pdf")} disabled={!laid?.pages.length}>PDF</button>
         <button type="button" className="btn-secondary text-xs" onClick={() => output("excel")} disabled={!laid?.pages.length}>Excel</button>
@@ -478,6 +674,27 @@ export function ReportDesignerPage() {
         </button>
       </div>
 
+      {/* The report is open in its own window, so this one steps back rather than letting two windows
+          edit one document. */}
+      {poppedOutHere && !poppedOut ? (
+        <div className="surface-card flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+          <h2 className="text-base font-semibold text-white">{name || "This report"} is open in its own window</h2>
+          <p className="max-w-md text-sm text-gray-400">
+            The popped-out designer is the one editing it. Keep working here — the report saves itself as you
+            type in that window — or bring it back into this one.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button type="button" className="btn-primary text-xs" onClick={bringPopoutForward}>Bring it forward</button>
+            <button
+              type="button"
+              className="btn-secondary text-xs"
+              onClick={() => { popoutWindow.current?.close(); popoutWindow.current = null; setPoppedOutHere(false); }}
+            >Return it to this window</button>
+          </div>
+          <p className="text-[11px] text-gray-600">Closing that window returns the designer here on its own.</p>
+        </div>
+      ) : (
+      <>
       <div className="flex-1 flex gap-3 min-h-0">
         {/* Palette */}
         <aside className="w-64 shrink-0 surface-card overflow-hidden flex flex-col">
@@ -628,6 +845,30 @@ export function ReportDesignerPage() {
           </section>
         </aside>
       </div>
+      </>
+      )}
+
+      {/* Clicking away with unsaved changes asks once, and the answer is already on the device. */}
+      {showDraftPrompt ? (
+        <div className="surface-card flex flex-wrap items-center gap-2 border-l-2 border-l-amber-500 px-3 py-2 text-xs">
+          <span className="text-amber-300">You looked away with unsaved changes.</span>
+          <span className="text-gray-400">
+            {draftAt ? `A draft was saved on this device at ${draftAt.toLocaleTimeString()}.` : "A draft will be saved on this device."}
+          </span>
+          <button
+            type="button"
+            className="btn-primary text-xs"
+            onClick={() => { setShowDraftPrompt(false); void save(); }}
+            disabled={errorCount > 0}
+          >Save it now</button>
+          <button type="button" className="btn-secondary text-xs" onClick={() => { if (document) saveDraftLocally(document); setShowDraftPrompt(false); }}>
+            Save a draft
+          </button>
+          <button type="button" className="text-xs text-gray-400 hover:text-gray-200" onClick={() => setShowDraftPrompt(false)}>
+            Keep editing
+          </button>
+        </div>
+      ) : null}
 
       {/* Validation */}
       {showIssues ? (

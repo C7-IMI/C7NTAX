@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.073",
+    "date": "2026-10-08",
+    "title": "The designer in its own window, and autosave",
+    "changes": [
+      {
+        "text": "**Pop out** in the report designer opens it in a window of its own — the rail, the bar and",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Autosave, in two layers.** A draft is written to this device a second after the last",
+        "type": "New Feature"
+      },
+      {
+        "text": "A draft that differs from the report is **offered, never applied** — *This device has a",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Leaving with unsaved changes asks.** Looking away raises *You looked away with unsaved",
+        "type": "New Feature"
+      },
+      {
+        "text": "Help: *Its own window, and autosave* added to the Designing a Report walkthrough.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.072",
     "date": "2026-10-08",
     "title": "The rest of the application, and the report designer",

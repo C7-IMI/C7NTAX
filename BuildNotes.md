@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.072 | Last Updated: 2026-10-08
+## Version: 2026.10.8.073 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,34 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.073 — The designer in its own window, and autosave
+
+- **[New]** **Pop out** in the report designer opens it in a window of its own — the rail, the bar and
+  the working set are left behind deliberately, and the height they occupied goes to the sheet. The
+  window it was popped from steps back with an explanation rather than letting two windows edit one
+  document: **Bring it forward** returns to the other window, **Return it to this window** closes it.
+- **[New]** **Autosave, in two layers.** A draft is written to this device a second after the last
+  change — no request, so nothing you type waits on the network — and the report itself saves a few
+  seconds later, silently, once it validates and exists. The toolbar states which: *Draft saved 22:27*,
+  *All changes saved 22:27*, *Not saved yet* for a report nobody has created, or *Fix N errors to save*.
+- **[New]** A draft that differs from the report is **offered, never applied** — *This device has a
+  draft of … from 8 Oct 2026, 22:27* with **Restore it** and **Discard the draft**. Silently replacing
+  your work is the one thing autosave must not do.
+- **[New]** **Leaving with unsaved changes asks.** Looking away raises *You looked away with unsaved
+  changes* with **Save it now** / **Save a draft** / **Keep editing**, and closing or reloading the
+  window gets the browser's own question — the draft is already on the device by then.
+- **[Update]** Help: *Its own window, and autosave* added to the Designing a Report walkthrough.
+
+**Verification:** `tsc --noEmit` clean. In the browser: **Pop out** is present and
+`?popout=1` renders the designer with no rail, no brand and no working set (**rail: false**, **brand:
+false**, **working set: false**, designer present); editing an element wrote
+`c7_designer_draft:new` to `localStorage` and the toolbar changed to *Draft saved 10:27 PM*; reopening
+the page offered *This device has a draft of Tickets — Simple list from 10/8/2026, 10:27:12 PM* with a
+**Restore it** button; and navigating away with unsaved changes was stopped by the browser's own
+beforeunload question. The status line reads *Selected the report · Band height 33 mm total*.
 
 ---
 
